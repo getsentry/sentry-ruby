@@ -1,5 +1,5 @@
-require 'raven'
 require File::expand_path('../../spec_helper', __FILE__)
+require 'raven'
 
 describe 'A raven client' do
 
