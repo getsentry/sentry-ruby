@@ -1,16 +1,16 @@
 PATH
-  remote: raven-rails
-  specs:
-    raven-rails (0.1)
-      raven
-
-PATH
   remote: raven
   specs:
     raven (0.1)
       faraday
       mixlib-log
       uuidtools
+
+PATH
+  remote: raven-rails
+  specs:
+    raven-rails (0.1)
+      raven
 
 GEM
   remote: https://rubygems.org/
