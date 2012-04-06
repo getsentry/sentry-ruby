@@ -1,7 +1,7 @@
 require File::expand_path('../../spec_helper', __FILE__)
 require 'raven'
 
-describe 'A raven client' do
+describe Raven::Client do
 
   shared_examples 'a configured client' do
     it 'should have a server' do
