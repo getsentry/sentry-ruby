@@ -12,6 +12,7 @@ Gem::Specification.new do |gem|
   gem.has_rdoc = true
   gem.extra_rdoc_files = ["README.md", "LICENSE"]
   gem.files = Dir['lib/**/*']
+  gem.add_dependency "faraday"
   gem.add_dependency "uuidtools"
   gem.add_dependency "mixlib-log"
 end
