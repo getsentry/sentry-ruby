@@ -1,6 +1,10 @@
 require 'uri'
+require 'uuidtools'
 
 module Raven
+
+  class Error < Exception
+  end
 
   class Client
 
@@ -26,6 +30,29 @@ module Raven
       @public_key = options[:public_key]
       @secret_key = options[:secret_key]
       @project_id = options[:project_id]
+    end
+
+  end
+
+  class Event
+
+    attr_reader :id
+    attr_accessor :message, :timestamp, :level
+
+    def initialize(options={}, &block)
+      @id = UUIDTools::UUID.random_create.hexdigest
+
+      @message = options[:message]
+      raise Error.new('A message is required for all events') unless @message && !@message.empty?
+
+      @timestamp = options[:timestamp] || Time.now.utc
+      @timestamp = @timestamp.strftime('%Y-%m-%dT%H:%M:%S') if @timestamp.is_a?(Time)
+      raise Error.new('A timestamp is required for all events') unless @timestamp
+
+      @level = options[:level]
+      raise Error.new('A level is required for all events') unless @level && !@level.empty?
+
+      block.call(self) if block
     end
 
   end
