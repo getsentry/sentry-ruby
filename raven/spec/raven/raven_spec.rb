@@ -3,7 +3,7 @@ require 'raven'
 
 describe 'A raven client' do
 
-  describe 'being initialized with a DSN string' do
+  context 'being initialized with a DSN string' do
     before do
       @client = Raven::Client.new('http://12345:67890@sentry.localdomain/sentry/42')
     end
@@ -25,7 +25,7 @@ describe 'A raven client' do
     end
   end
 
-  describe 'being initialized with a DSN option' do
+  context 'being initialized with a DSN option' do
     before do
       @client = Raven::Client.new(:dsn => 'http://12345:67890@sentry.localdomain/sentry/42')
     end
