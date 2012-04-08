@@ -3,4 +3,5 @@ rvm:
   - 1.8.7
   - 1.9.2
   - 1.9.3
-install: ( cd raven && bundle install ) && ( cd raven-rails && bundle install )
+before_install: gem install rake
+install: rake install
