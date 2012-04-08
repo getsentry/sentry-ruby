@@ -24,15 +24,10 @@ module Raven
       @id = options[:id] || UUIDTools::UUID.random_create.hexdigest
 
       @message = options[:message]
-      raise Error.new('A message is required for all events') unless @message && !@message.empty?
 
       @timestamp = options[:timestamp] || Time.now.utc
-      @timestamp = @timestamp.strftime('%Y-%m-%dT%H:%M:%S') if @timestamp.is_a?(Time)
-      raise Error.new('A timestamp is required for all events') unless @timestamp
 
-      @level = options[:level]
-      @level = LOG_LEVELS[@level.downcase] if @level.is_a?(String)
-      raise Error.new('A level is required for all events') unless @level
+      @level = options[:level] || :error
 
       @logger = options[:logger] || 'root'
       @culprit = options[:culprit]
@@ -40,7 +35,32 @@ module Raven
       @modules = options[:modules] || Gem::Specification.each.inject({}){|memo, spec| memo[spec.name] = spec.version; memo}
       @extra = options[:extra]
 
+      @interfaces = {}
+
       block.call(self) if block
+
+      # Some type coercion
+      @timestamp = @timestamp.strftime('%Y-%m-%dT%H:%M:%S') if @timestamp.is_a?(Time)
+      @level = LOG_LEVELS[@level.to_s.downcase] if @level.is_a?(String) || @level.is_a?(Symbol)
+
+      # Basic sanity checking
+      raise Error.new('A message is required for all events') unless @message && !@message.empty?
+      raise Error.new('A timestamp is required for all events') unless @timestamp
+    end
+
+    def interface(name, value=nil, &block)
+      int = Raven::find_interface(name)
+      raise Error.new("Unknown interface: #{name}") unless int
+      @interfaces[int.name] = int.new(value, &block) if value || block
+      @interfaces[int.name]
+    end
+
+    def [](key)
+      interface(key)
+    end
+
+    def []=(key, value)
+      interface(key, value)
     end
 
     def to_hash
@@ -60,6 +80,13 @@ module Raven
     end
 
     def self.from_exception(exc)
+      self.new do |evt|
+        evt.message = exc.message
+        evt.level = :error
+        evt.interface :message do |int|
+          int.message = exc.message
+        end
+      end
     end
 
   end
