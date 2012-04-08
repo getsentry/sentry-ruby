@@ -16,4 +16,5 @@ Gem::Specification.new do |gem|
   gem.add_dependency "uuidtools"
   gem.add_dependency "mixlib-log"
   gem.add_dependency "yajl-ruby"
+  gem.add_dependency "hashie"
 end
