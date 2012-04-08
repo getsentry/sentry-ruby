@@ -1,3 +1,5 @@
+require 'rubygems'
+require 'socket'
 require 'uri'
 require 'uuidtools'
 
@@ -38,6 +40,7 @@ module Raven
 
     attr_reader :id
     attr_accessor :message, :timestamp, :level
+    attr_accessor :culprit, :server_name, :modules, :extra
 
     def initialize(options={}, &block)
       @id = UUIDTools::UUID.random_create.hexdigest
@@ -51,6 +54,11 @@ module Raven
 
       @level = options[:level]
       raise Error.new('A level is required for all events') unless @level && !@level.empty?
+
+      @culprit = options[:culprit]
+      @server_name = options[:server_name] || Socket.gethostbyname(Socket.gethostname).first
+      @modules = options[:modules] || Gem::Specification.each.map{|spec| [spec.name, spec.version]}
+      @extra = options[:extra]
 
       block.call(self) if block
     end
