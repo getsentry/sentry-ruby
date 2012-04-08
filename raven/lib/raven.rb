@@ -45,7 +45,6 @@ module Raven
 
     def conn
       @conn ||=  Faraday.new(:url => self.server) do |builder|
-        builder.response :logger
         builder.adapter  :net_http
       end
     end
@@ -70,8 +69,7 @@ module Raven
     def send(event)
       # Set the project ID correctly
       event.project = self.project_id
-      self.conn.post do |req|
-        req.url '/api/store/'
+      self.conn.post '/api/store/' do |req|
         req.headers['Content-Type'] = 'application/json'
         req.body = Yajl::Encoder.encode(event.to_hash)
         req.headers[AUTH_HEADER_KEY] = self.generate_auth_header(req.body)
@@ -82,12 +80,20 @@ module Raven
 
   class Event
 
+    LOG_LEVELS = {
+      "debug" => 10,
+      "info" => 20,
+      "warn" => 30,
+      "warning" => 30,
+      "error" => 40,
+    }
+
     attr_reader :id
     attr_accessor :project, :message, :timestamp, :level
     attr_accessor :logger, :culprit, :server_name, :modules, :extra
 
     def initialize(options={}, &block)
-      @id = UUIDTools::UUID.random_create.hexdigest
+      @id = options[:id] || UUIDTools::UUID.random_create.hexdigest
 
       @message = options[:message]
       raise Error.new('A message is required for all events') unless @message && !@message.empty?
@@ -97,12 +103,13 @@ module Raven
       raise Error.new('A timestamp is required for all events') unless @timestamp
 
       @level = options[:level]
-      raise Error.new('A level is required for all events') unless @level && !@level.empty?
+      @level = LOG_LEVELS[@level.downcase] if @level.is_a?(String)
+      raise Error.new('A level is required for all events') unless @level
 
       @logger = options[:logger] || 'root'
       @culprit = options[:culprit]
-      #@server_name = options[:server_name] || Socket.gethostbyname(Socket.gethostname).first
-      #@modules = options[:modules] || Gem::Specification.each.map{|spec| [spec.name, spec.version]}
+      @server_name = options[:server_name] || Socket.gethostbyname(Socket.gethostname).first
+      @modules = options[:modules] || Gem::Specification.each.inject({}){|memo, spec| memo[spec.name] = spec.version; memo}
       @extra = options[:extra]
 
       block.call(self) if block
