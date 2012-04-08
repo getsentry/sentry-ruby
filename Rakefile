@@ -1,9 +1,10 @@
 SUBPROJECTS = Dir['*'].select{|f| File::directory? f}
 
 desc "Run all the bundle installs"
-task :install do
+task :bundle do
   SUBPROJECTS.each do |name|
-    Dir.chdir(name) { sh "bundle install" }
+    without = ENV["BUNDLE_WITHOUT"] ? ENV["BUNDLE_WITHOUT"].split(",").map{|s| "--without #{s}"}.join(" ") : ""
+    Dir.chdir(name) { sh "bundle install #{without}" }
   end
 end
 

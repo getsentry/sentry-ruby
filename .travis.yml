@@ -4,4 +4,4 @@ rvm:
   - 1.9.2
   - 1.9.3
 before_install: gem install rake
-install: rake install
+install: env BUNDLE_WITHOUT=development rake bundle
