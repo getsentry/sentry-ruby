@@ -32,7 +32,10 @@ module Raven
 
       def to_hash
         data = super
-        data.delete('vars') unless self.vars
+        data.delete('vars') unless self.vars && !self.vars.empty?
+        data.delete('pre_context') unless self.pre_context && !self.pre_context.empty?
+        data.delete('post_context') unless self.post_context && !self.post_context.empty?
+        data.delete('context_line') unless self.context_line && !self.context_line.empty?
         data
       end
     end
