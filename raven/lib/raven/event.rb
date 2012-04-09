@@ -1,6 +1,11 @@
 require 'rubygems'
 require 'socket'
 require 'uuidtools'
+if RUBY_VERSION.start_with?('1.9')
+  require 'linecache19'
+else
+  require 'linecache'
+end
 
 require 'raven/error'
 
@@ -15,6 +20,8 @@ module Raven
       "warning" => 30,
       "error" => 40,
     }
+
+    BACKTRACE_RE = /^(.+?):(\d+)(?::in `(.+?)')$/
 
     attr_reader :id
     attr_accessor :project, :message, :timestamp, :level
@@ -92,6 +99,26 @@ module Raven
           class_parts = exc.class.to_s.split('::')
           class_parts.pop
           int.module = class_parts.join('::')
+        end
+        evt.interface :stack_trace do |int|
+          int.frames = exc.backtrace.reverse.map do |trace_line|
+            md = BACKTRACE_RE.match(trace_line)
+            raise Error.new("Unable to parse backtrace line: #{trace_line.inspect}") unless md
+            int.frame do |frame|
+              frame.abs_path = md[1]
+              frame.lineno = md[2].to_i
+              frame.function = md[3] if md[3]
+              lib_path = $:.select{|s| frame.abs_path.start_with?(s)}.sort_by{|s| s.length}.last
+              if lib_path
+                frame.filename = frame.abs_path[lib_path.chomp(File::SEPARATOR).length+1..frame.abs_path.length]
+              else
+                frame.filename = frame.abs_path
+              end
+              frame.context_line = LineCache::getline(frame.abs_path, frame.lineno)
+              frame.pre_context = (frame.lineno-3..frame.lineno-1).map{|i| LineCache.getline(frame.abs_path, i)}.select{|line| line}
+              frame.post_context = (frame.lineno+1..frame.lineno+3).map{|i| LineCache.getline(frame.abs_path, i)}.select{|line| line}
+            end
+          end
         end
       end
     end

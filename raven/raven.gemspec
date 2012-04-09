@@ -17,4 +17,6 @@ Gem::Specification.new do |gem|
   gem.add_dependency "mixlib-log"
   gem.add_dependency "yajl-ruby"
   gem.add_dependency "hashie"
+  # What do I do about this?
+  gem.add_dependency "linecache19", ">= 0.5.11"
 end
