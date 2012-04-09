@@ -76,17 +76,29 @@ module Raven
       data['server_name'] = self.server_name if self.server_name
       data['modules'] = self.modules if self.modules
       data['extra'] = self.extra if self.extra
+      @interfaces.each_pair do |name, int_data|
+        data[name] = int_data.to_hash
+      end
       data
     end
 
-    def self.from_exception(exc)
+    def self.capture_exception(exc)
       self.new do |evt|
         evt.message = exc.message
         evt.level = :error
-        evt.interface :message do |int|
-          int.message = exc.message
+        evt.interface :exception do |int|
+          int.type = exc.class.to_s
+          int.value = exc.message
+          class_parts = exc.class.to_s.split('::')
+          class_parts.pop
+          int.module = class_parts.join('::')
         end
       end
+    end
+
+    # For cross-language compat
+    class << self
+      alias :captionException :capture_exception
     end
 
   end
