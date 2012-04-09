@@ -69,7 +69,7 @@ module Raven
         req.body = Yajl::Encoder.encode(event.to_hash)
         req.headers[AUTH_HEADER_KEY] = self.generate_auth_header(req.body)
       end
-      raise Error.new("Error from Sentry server (#{response.status_code}): #{response.body}") unless response.status_code == 200
+      raise Error.new("Error from Sentry server (#{response.status}): #{response.body}") unless response.status == 200
       response
     end
 
