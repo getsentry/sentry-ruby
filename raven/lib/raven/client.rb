@@ -32,10 +32,10 @@ module Raven
         options[:public_key] = uri.user
         options[:secret_key] = uri.password
       end
-      self.server = options[:server]
-      self.public_key = options[:public_key]
-      self.secret_key = options[:secret_key]
-      self.project_id = options[:project_id]
+      @server = options[:server]
+      @public_key = options[:public_key]
+      @secret_key = options[:secret_key]
+      @project_id = options[:project_id]
       block.call(self) if block
       raise Error.new('No server specified') unless self.server
       raise Error.new('No public key specified') unless self.public_key
