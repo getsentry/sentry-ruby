@@ -16,7 +16,7 @@ module Raven
 
     attr_reader :server, :public_key, :secret_key, :project_id
 
-    def initialize(dsn, options={})
+    def initialize(dsn=nil, options={}, &block)
       if options.empty? && dsn.is_a?(Hash)
         dsn, options = nil, dsn
       end
@@ -32,10 +32,15 @@ module Raven
         options[:public_key] = uri.user
         options[:secret_key] = uri.password
       end
-      @server = options[:server]
-      @public_key = options[:public_key]
-      @secret_key = options[:secret_key]
-      @project_id = options[:project_id]
+      self.server = options[:server]
+      self.public_key = options[:public_key]
+      self.secret_key = options[:secret_key]
+      self.project_id = options[:project_id]
+      block.call(self) if block
+      raise Error.new('No server specified') unless self.server
+      raise Error.new('No public key specified') unless self.public_key
+      raise Error.new('No secret key specified') unless self.secret_key
+      raise Error.new('No project ID specified') unless self.project_id
     end
 
     def conn
