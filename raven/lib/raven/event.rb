@@ -1,13 +1,9 @@
 require 'rubygems'
 require 'socket'
 require 'uuidtools'
-if RUBY_VERSION.start_with?('1.9')
-  require 'linecache19'
-else
-  require 'linecache'
-end
 
 require 'raven/error'
+require 'raven/linecache'
 
 module Raven
 
@@ -89,7 +85,7 @@ module Raven
       data
     end
 
-    def self.capture_exception(exc)
+    def self.capture_exception(exc, options={})
       self.new do |evt|
         evt.message = exc.message
         evt.level = :error
@@ -114,9 +110,11 @@ module Raven
               else
                 frame.filename = frame.abs_path
               end
-              frame.context_line = LineCache::getline(frame.abs_path, frame.lineno)
-              frame.pre_context = (frame.lineno-3..frame.lineno-1).map{|i| LineCache.getline(frame.abs_path, i)}.select{|line| line}
-              frame.post_context = (frame.lineno+1..frame.lineno+3).map{|i| LineCache.getline(frame.abs_path, i)}.select{|line| line}
+              unless options[:no_context]
+                frame.context_line = Raven::LineCache::getline(frame.abs_path, frame.lineno)
+                frame.pre_context = (frame.lineno-3..frame.lineno-1).map{|i| Raven::LineCache.getline(frame.abs_path, i)}.select{|line| line}
+                frame.post_context = (frame.lineno+1..frame.lineno+3).map{|i| Raven::LineCache.getline(frame.abs_path, i)}.select{|line| line}
+              end
             end
           end
         end
@@ -126,6 +124,12 @@ module Raven
     # For cross-language compat
     class << self
       alias :captionException :capture_exception
+    end
+
+    private
+
+    # Because linecache can go to hell
+    def self._source_lines(path, from, to)
     end
 
   end
