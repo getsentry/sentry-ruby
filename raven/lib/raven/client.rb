@@ -45,7 +45,7 @@ module Raven
 
     def conn
       @conn ||=  Faraday.new(:url => self.server) do |builder|
-        builder.adapter  :net_http
+        builder.adapter  Faraday.default_adapter
       end
     end
 
