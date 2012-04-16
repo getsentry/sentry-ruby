@@ -40,9 +40,11 @@ module Raven
     #   end
     def configure(silent = false)
       yield(configuration)
-      self.sender = Sender.new(configuration)
+      self.client = Client.new(configuration)
       report_ready unless silent
-      self.sender
+      self.client
+    end
+
     end
 
   end
