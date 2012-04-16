@@ -16,8 +16,12 @@ module Raven
     # Logger to use internally
     attr_accessor :logger
 
+    # Number of lines of code context to capture, or nil for none
+    attr_accessor :context_lines
+
     def initialize
       self.server = ENV['SENTRY_DSN'] if ENV['SENTRY_DSN']
+      @context_lines = 3
     end
 
     def server=(value)

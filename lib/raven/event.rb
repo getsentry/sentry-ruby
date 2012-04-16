@@ -85,7 +85,7 @@ module Raven
       data
     end
 
-    def self.capture_exception(exc, options={})
+    def self.capture_exception(exc, configuration={})
       self.new do |evt|
         evt.message = exc.message
         evt.level = :error
@@ -110,10 +110,10 @@ module Raven
               else
                 frame.filename = frame.abs_path
               end
-              unless options[:no_context]
+              if configuration[:context_lines]
                 frame.context_line = Raven::LineCache::getline(frame.abs_path, frame.lineno)
-                frame.pre_context = (frame.lineno-3..frame.lineno-1).map{|i| Raven::LineCache.getline(frame.abs_path, i)}.select{|line| line}
-                frame.post_context = (frame.lineno+1..frame.lineno+3).map{|i| Raven::LineCache.getline(frame.abs_path, i)}.select{|line| line}
+                frame.pre_context = (frame.lineno-configuration[:context_lines]..frame.lineno-1).map{|i| Raven::LineCache.getline(frame.abs_path, i)}.select{|line| line}
+                frame.post_context = (frame.lineno+1..frame.lineno+configuration[:context_lines]).map{|i| Raven::LineCache.getline(frame.abs_path, i)}.select{|line| line}
               end
             end
           end
