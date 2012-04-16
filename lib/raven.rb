@@ -45,6 +45,34 @@ module Raven
       self.client
     end
 
+    # Capture and process any exceptions from the given block, or globally if
+    # no block is given
+    #
+    # @example
+    #   Raven.capture do
+    #     MyApp.run
+    #   end
+    def capture(&block)
+      if block
+        begin
+          block.call
+        rescue Error => e
+          raise e # Don't capture Raven errors
+        rescue Exception => e
+          evt = Event.capture_exception(e, configuration)
+          @client.send(evt) if @client && evt
+          raise e
+        end
+      else
+        # Install at_exit hook
+        at_exit do
+          if $!
+            logger.debug "Caught a post-mortem exception: #{$!.inspect}"
+            evt = Event.capture_exception($!, configuration)
+            @client.send(evt) if @client && evt
+          end
+        end
+      end
     end
 
   end
