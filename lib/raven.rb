@@ -1,5 +1,6 @@
 require 'raven/version'
 require 'raven/configuration'
+require 'raven/logger'
 require 'raven/client'
 require 'raven/event'
 require 'raven/interfaces/message'

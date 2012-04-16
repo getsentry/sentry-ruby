@@ -13,6 +13,9 @@ module Raven
     # Project ID number to send to the Sentry server
     attr_accessor :project_id
 
+    # Logger to use internally
+    attr_accessor :logger
+
     def initialize
       self.server = ENV['SENTRY_DSN'] if ENV['SENTRY_DSN']
     end
