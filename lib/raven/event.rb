@@ -86,6 +86,11 @@ module Raven
     end
 
     def self.capture_exception(exc, configuration={})
+      if exc.is_a?(Raven::Error)
+        # Try to prevent error reporting loops
+        Raven.logger.info "Refusing to capture Raven error: #{exc.inspect}"
+        return nil
+      end
       self.new do |evt|
         evt.message = exc.message
         evt.level = :error
