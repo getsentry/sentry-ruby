@@ -14,44 +14,29 @@ module Raven
     USER_AGENT = "raven-ruby/#{Raven::VERSION}"
     AUTH_HEADER_KEY = 'X-Sentry-Auth'
 
-    attr_reader :server, :public_key, :secret_key, :project_id
+    attr_accessor :configuration
 
-    def initialize(dsn=nil, options={}, &block)
-      if options.empty? && dsn.is_a?(Hash)
-        dsn, options = nil, dsn
-      end
-      dsn ||= options[:dsn]
-      dsn ||= ENV['SENTRY_DSN']
-      if dsn && !dsn.empty?
-        uri = URI::parse(dsn)
-        uri_path = uri.path.split('/')
-        options[:project_id] = uri_path.pop
-        options[:server] = "#{uri.scheme}://#{uri.host}"
-        options[:server] << ":#{uri.port}" unless uri.port == {'http'=>80,'https'=>443}[uri.scheme]
-        options[:server] << uri_path.join('/')
-        options[:public_key] = uri.user
-        options[:secret_key] = uri.password
-      end
-      @server = options[:server]
-      @public_key = options[:public_key]
-      @secret_key = options[:secret_key]
-      @project_id = options[:project_id]
-      block.call(self) if block
-      raise Error.new('No server specified') unless self.server
-      raise Error.new('No public key specified') unless self.public_key
-      raise Error.new('No secret key specified') unless self.secret_key
-      raise Error.new('No project ID specified') unless self.project_id
+    def initialize(configuration)
+      @configuration = configuration
     end
 
     def conn
-      @conn ||=  Faraday.new(:url => self.server) do |builder|
+      # Error checking
+      raise Error.new('No server specified') unless self.configuration[:server]
+      raise Error.new('No public key specified') unless self.configuration[:public_key]
+      raise Error.new('No secret key specified') unless self.configuration[:secret_key]
+      raise Error.new('No project ID specified') unless self.configuration[:project_id]
+
+      Raven.logger.debug "Raven client connecting to #{self.configuration[:server]}"
+
+      @conn ||=  Faraday.new(:url => self.configuration[:server]) do |builder|
         builder.adapter  Faraday.default_adapter
       end
     end
 
 
     def generate_signature(timestamp, data)
-      OpenSSL::HMAC.hexdigest(OpenSSL::Digest::Digest.new('sha1'), self.secret_key, "#{timestamp} #{data}")
+      OpenSSL::HMAC.hexdigest(OpenSSL::Digest::Digest.new('sha1'), self.configuration[:secret_key], "#{timestamp} #{data}")
     end
 
     def generate_auth_header(data)
@@ -60,7 +45,7 @@ module Raven
         'sentry_version' => PROTOCOL_VERSION,
         'sentry_client' => USER_AGENT,
         'sentry_timestamp' => now,
-        'sentry_key' => self.public_key,
+        'sentry_key' => self.configuration[:public_key],
         'sentry_signature' => generate_signature(now, data)
       }
       'Sentry ' + fields.map{|key, value| "#{key}=#{value}"}.join(', ')
@@ -68,7 +53,8 @@ module Raven
 
     def send(event)
       # Set the project ID correctly
-      event.project = self.project_id
+      event.project = self.configuration[:project_id]
+      Raven.logger.debug "Sending event #{event.id} to Sentry"
       response = self.conn.post '/api/store/' do |req|
         req.headers['Content-Type'] = 'application/json'
         req.body = Yajl::Encoder.encode(event.to_hash)
