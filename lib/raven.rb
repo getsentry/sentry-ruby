@@ -57,11 +57,11 @@ module Raven
         begin
           block.call
         rescue Error => e
-          raise e # Don't capture Raven errors
+          raise # Don't capture Raven errors
         rescue Exception => e
           evt = Event.capture_exception(e, configuration)
           @client.send(evt) if @client && evt
-          raise e
+          raise
         end
       else
         # Install at_exit hook
