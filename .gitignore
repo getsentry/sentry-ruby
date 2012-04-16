@@ -1,4 +1,2 @@
-raven/coverage
-raven/pkg
-raven-rails/coverage
-raven-rails/pkg
+coverage
+pkg
