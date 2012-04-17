@@ -85,7 +85,8 @@ module Raven
       data
     end
 
-    def self.capture_exception(exc, configuration={})
+    def self.capture_exception(exc, configuration=nil, &block)
+      configuration ||= Raven.configuration
       if exc.is_a?(Raven::Error)
         # Try to prevent error reporting loops
         Raven.logger.info "Refusing to capture Raven error: #{exc.inspect}"
@@ -123,6 +124,17 @@ module Raven
             end
           end
         end
+        block.call(evt) if block
+      end
+    end
+
+    def self.capture_rack_exception(exc, rack_env, configuration=nil, &block)
+      configuration ||= Raven.configuration
+      capture_exception(exc, configuration) do |evt|
+        evt.interface :http do |int|
+          int.from_rack(rack_env)
+        end
+        block.call(evt) if block
       end
     end
 

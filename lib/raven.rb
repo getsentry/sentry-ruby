@@ -3,9 +3,11 @@ require 'raven/configuration'
 require 'raven/logger'
 require 'raven/client'
 require 'raven/event'
+require 'raven/rack'
 require 'raven/interfaces/message'
 require 'raven/interfaces/exception'
 require 'raven/interfaces/stack_trace'
+require 'raven/interfaces/http'
 
 module Raven
   class << self
@@ -45,6 +47,15 @@ module Raven
       self.client
     end
 
+    # Send an event to the configured Sentry server
+    #
+    # @example
+    #   evt = Raven::Event.new(:message => "An error")
+    #   Raven.send(evt)
+    def send(evt)
+      @client.send(evt) if @client
+    end
+
     # Capture and process any exceptions from the given block, or globally if
     # no block is given
     #
@@ -59,8 +70,8 @@ module Raven
         rescue Error => e
           raise # Don't capture Raven errors
         rescue Exception => e
-          evt = Event.capture_exception(e, configuration)
-          @client.send(evt) if @client && evt
+          evt = Event.capture_exception(e)
+          send(evt) if evt
           raise
         end
       else
@@ -68,8 +79,8 @@ module Raven
         at_exit do
           if $!
             logger.debug "Caught a post-mortem exception: #{$!.inspect}"
-            evt = Event.capture_exception($!, configuration)
-            @client.send(evt) if @client && evt
+            evt = Event.capture_exception($!)
+            send(evt) if evt
           end
         end
       end
