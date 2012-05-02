@@ -1,4 +1,3 @@
-require 'rack'
 require 'raven/interfaces'
 
 module Raven
@@ -15,6 +14,7 @@ module Raven
     property :env, :default => {}
 
     def from_rack(env)
+      require 'rack'
       req = ::Rack::Request.new(env)
       self.url = req.url.split('?').first
       self.method = req.request_method
