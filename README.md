@@ -42,6 +42,7 @@ Raven.configure do |config|
 end
 
 use Raven::Rack
+```
 
 ### Other Ruby
 
