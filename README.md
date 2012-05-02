@@ -18,11 +18,13 @@ Add the following to your `Gemfile`:
 
 Add a `config/initializers/raven.rb` containing:
 
-    require 'raven'
+```ruby
+require 'raven'
 
-    Raven.configure do |config|
-      config.server = 'https://...'
-    end
+Raven.configure do |config|
+  config.server = 'https://...'
+end
+```
 
 ### Rails 2
 
@@ -32,30 +34,34 @@ No support for Rails 2 yet.
 
 Basic RackUp file.
 
-    require 'raven'
+```ruby
+require 'raven'
 
-    Raven.configure do |config|
-      config.server = 'http://...'
-    end
+Raven.configure do |config|
+  config.server = 'http://...'
+end
 
-    use Raven::Rack
+use Raven::Rack
 
 ### Other Ruby
 
-    require 'raven'
+```ruby
+require 'raven'
 
-    Raven.configure do |config|
-      config.server = 'http://...'
-    end
+Raven.configure do |config|
+  config.server = 'http://...'
+end
 
-    Raven.capture # Global style
+Raven.capture # Global style
 
-    Raven.capture do # Block style
-      ...
-    end
-
+Raven.capture do # Block style
+  ...
+end
+```
 
 ## Testing
 
-    bundle install
-    rake spec
+```bash
+$ bundle install
+$ rake spec
+```
