@@ -10,7 +10,9 @@ This library is still forming, so if you are looking to just use it, please chec
 
 Add the following to your `Gemfile`:
 
-    gem "raven", :git => "https://github.com/coderanger/raven-ruby.git"
+```ruby
+gem "raven", :git => "https://github.com/coderanger/raven-ruby.git"
+```
 
 ## Usage
 
