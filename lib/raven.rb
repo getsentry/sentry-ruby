@@ -9,6 +9,8 @@ require 'raven/interfaces/exception'
 require 'raven/interfaces/stack_trace'
 require 'raven/interfaces/http'
 
+require 'raven/railtie' if defined?(Rails::Railtie)
+
 module Raven
   class << self
     # The client object is responsible for delivering formatted data to the Sentry server.
