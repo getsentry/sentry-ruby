@@ -2,7 +2,7 @@ $:.unshift File.expand_path('../lib', __FILE__)
 require 'raven/version'
 
 Gem::Specification.new do |gem|
-  gem.name = "raven"
+  gem.name = "sentry-raven"
   gem.version = Raven::VERSION
   gem.platform = Gem::Platform::RUBY
   gem.summary = "A gem that provides a client interface for the Sentry error logger"
