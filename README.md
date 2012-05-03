@@ -24,7 +24,7 @@ Add a `config/initializers/raven.rb` containing:
 require 'raven'
 
 Raven.configure do |config|
-  config.server = 'https://...'
+  config.dsn = 'http://public:secret@example.com/project-id'
 end
 ```
 
@@ -40,7 +40,7 @@ Basic RackUp file.
 require 'raven'
 
 Raven.configure do |config|
-  config.server = 'http://...'
+  config.dsn = 'http://public:secret@example.com/project-id'
 end
 
 use Raven::Rack
@@ -52,7 +52,7 @@ use Raven::Rack
 require 'raven'
 
 Raven.configure do |config|
-  config.server = 'http://...'
+  config.dsn = 'http://public:secret@example.com/project-id'
 end
 
 Raven.capture # Global style
