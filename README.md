@@ -11,7 +11,12 @@ This library is still forming, so if you are looking to just use it, please chec
 Add the following to your `Gemfile`:
 
 ```ruby
-gem "raven", :git => "https://github.com/coderanger/raven-ruby.git"
+gem "sentry-raven", :git => "https://github.com/coderanger/raven-ruby.git"
+```
+
+Or install manually
+```bash
+$ gem install sentry-raven
 ```
 
 ## Usage
