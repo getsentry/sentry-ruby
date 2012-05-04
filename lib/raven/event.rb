@@ -17,7 +17,7 @@ module Raven
       "error" => 40,
     }
 
-    BACKTRACE_RE = /^(.+?):(\d+)(?::in `(.+?)')$/
+    BACKTRACE_RE = /^(.+?):(\d+)(?::in `(.+?)')?$/
 
     attr_reader :id
     attr_accessor :project, :message, :timestamp, :level
