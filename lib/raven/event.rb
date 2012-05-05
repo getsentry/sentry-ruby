@@ -103,7 +103,7 @@ module Raven
           int.module = class_parts.join('::')
         end
         evt.interface :stack_trace do |int|
-          int.frames = exc.backtrace.reverse.map do |trace_line|
+          int.frames = exc.backtrace.map do |trace_line|
             md = BACKTRACE_RE.match(trace_line)
             raise Error.new("Unable to parse backtrace line: #{trace_line.inspect}") unless md
             int.frame do |frame|
