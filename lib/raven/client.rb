@@ -52,6 +52,8 @@ module Raven
     end
 
     def send(event)
+      return unless configuration.send_in_current_environment?
+
       # Set the project ID correctly
       event.project = self.configuration[:project_id]
       Raven.logger.debug "Sending event #{event.id} to Sentry"

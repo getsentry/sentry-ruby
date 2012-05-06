@@ -19,9 +19,16 @@ module Raven
     # Number of lines of code context to capture, or nil for none
     attr_accessor :context_lines
 
+    # Whitelist of environments that will send notifications to Sentry
+    attr_accessor :environments
+
+    attr_reader :current_environment
+
     def initialize
       self.server = ENV['SENTRY_DSN'] if ENV['SENTRY_DSN']
       @context_lines = 3
+      self.environments = %w[ production ]
+      self.current_environment = ENV['RACK_ENV']
     end
 
     def server=(value)
@@ -47,6 +54,14 @@ module Raven
     # @param [Symbol] option Key for a given attribute
     def [](option)
       send(option)
+    end
+
+    def current_environment=(environment)
+      @current_environment = environment.to_s
+    end
+
+    def send_in_current_environment?
+      environments.include? current_environment
     end
 
   end
