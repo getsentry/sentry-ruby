@@ -34,7 +34,7 @@ module Raven
 
       @logger = options[:logger] || 'root'
       @culprit = options[:culprit]
-      @server_name = options[:server_name] || Socket.gethostbyname(Socket.gethostname).first
+      @server_name = options[:server_name] || Socket.gethostname
       @modules = options[:modules] || Gem::Specification.each.inject({}){|memo, spec| memo[spec.name] = spec.version; memo}
       @extra = options[:extra]
 
