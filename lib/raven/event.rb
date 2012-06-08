@@ -34,7 +34,12 @@ module Raven
 
       @logger = options[:logger] || 'root'
       @culprit = options[:culprit]
-      @server_name = options[:server_name] || Socket.gethostname
+
+      # Sometimes OS X gets upset with Socket.gethostbyname, so fall back
+      # to plain old hostname if it fails.
+      hostname = Socket.gethostname
+      @server_name = options[:server_name] || Socket.gethostbyname(hostname) rescue hostname
+
       @modules = options[:modules] || Gem::Specification.each.inject({}){|memo, spec| memo[spec.name] = spec.version; memo}
       @extra = options[:extra]
 
