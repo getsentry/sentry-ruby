@@ -35,8 +35,7 @@ module Raven
       @logger = options[:logger] || 'root'
       @culprit = options[:culprit]
 
-      # Sometimes OS X gets upset with Socket.gethostbyname, so fall back
-      # to plain old hostname if it fails.
+      # Try to resolve the hostname to an FQDN, but fall back to whatever the load name is
       hostname = Socket.gethostname
       @server_name = options[:server_name] || Socket.gethostbyname(hostname) rescue hostname
 
