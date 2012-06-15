@@ -28,7 +28,7 @@ module Raven
       self.server = ENV['SENTRY_DSN'] if ENV['SENTRY_DSN']
       @context_lines = 3
       self.environments = %w[ production ]
-      self.current_environment = ENV['RACK_ENV']
+      self.current_environment = ENV['RAILS_ENV'] || ENV['RACK_ENV'] || 'development'
     end
 
     def server=(value)
