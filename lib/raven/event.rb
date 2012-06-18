@@ -37,7 +37,8 @@ module Raven
 
       # Try to resolve the hostname to an FQDN, but fall back to whatever the load name is
       hostname = Socket.gethostname
-      @server_name = options[:server_name] || Socket.gethostbyname(hostname) rescue hostname
+      hostname = Socket.gethostbyname(hostname).first rescue hostname
+      @server_name = options[:server_name] || hostname
 
       @modules = options[:modules] || Gem::Specification.each.inject({}){|memo, spec| memo[spec.name] = spec.version; memo}
       @extra = options[:extra]
