@@ -23,15 +23,13 @@ module Raven
     attr_accessor :project, :message, :timestamp, :level
     attr_accessor :logger, :culprit, :server_name, :modules, :extra
 
-    def initialize(options={}, &block)
+    def initialize(options={}, configuration=nil, &block)
+      configuration ||= Raven.configuration
+
       @id = options[:id] || UUIDTools::UUID.random_create.hexdigest
-
       @message = options[:message]
-
       @timestamp = options[:timestamp] || Time.now.utc
-
       @level = options[:level] || :error
-
       @logger = options[:logger] || 'root'
       @culprit = options[:culprit]
 
@@ -40,7 +38,11 @@ module Raven
       hostname = Socket.gethostbyname(hostname).first rescue hostname
       @server_name = options[:server_name] || hostname
 
-      @modules = options[:modules] || Gem::Specification.each.inject({}){|memo, spec| memo[spec.name] = spec.version; memo}
+      if configuration.send_modules && !options.has_key?(:modules)
+        options[:modules] = Hash[Gem::Specification.map {|spec| [spec.name, spec.version]}]
+      end
+      @modules = options[:modules]
+
       @extra = options[:extra]
 
       @interfaces = {}
