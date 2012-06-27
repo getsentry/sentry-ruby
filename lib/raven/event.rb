@@ -99,7 +99,7 @@ module Raven
         Raven.logger.info "Refusing to capture Raven error: #{exc.inspect}"
         return nil
       end
-      self.new do |evt|
+      self.new({}, configuration) do |evt|
         evt.message = exc.message
         evt.level = :error
         evt.interface :exception do |int|
