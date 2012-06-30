@@ -22,6 +22,9 @@ module Raven
     # Whitelist of environments that will send notifications to Sentry
     attr_accessor :environments
 
+    # Include module versions in reports?
+    attr_accessor :send_modules
+
     attr_reader :current_environment
 
     def initialize
@@ -29,6 +32,7 @@ module Raven
       @context_lines = 3
       self.environments = %w[ production ]
       self.current_environment = ENV['RAILS_ENV'] || ENV['RACK_ENV'] || 'development'
+      self.send_modules = true
     end
 
     def server=(value)
