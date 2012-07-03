@@ -41,7 +41,7 @@ module Raven
       @server_name = options[:server_name] || hostname
 
       if @configuration.send_modules && !options.has_key?(:modules)
-        options[:modules] = Hash[Gem::Specification.map {|spec| [spec.name, spec.version]}]
+        options[:modules] = Hash[Gem::Specification.map {|spec| [spec.name, spec.version.to_s]}]
       end
       @modules = options[:modules]
 
