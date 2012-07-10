@@ -15,6 +15,8 @@ module Raven
       if defined?(::ActionDispatch::DebugExceptions)
         require 'raven/rails/middleware/debug_exceptions_catcher'
         ::ActionDispatch::DebugExceptions.send(:include, Raven::Rails::Middleware::DebugExceptionsCatcher)
+      else
+        Rails.configuration.middleware.use "Raven::Rack"
       end
     end
   end
