@@ -66,7 +66,7 @@ end
 Raven.capture # Global style
 
 Raven.capture do # Block style
-  ...
+  1 / 0
 end
 ```
 
