@@ -1,6 +1,6 @@
 require 'openssl'
 require 'uri'
-require 'yajl'
+require 'multi_json'
 require 'faraday'
 
 require 'raven/version'
@@ -59,7 +59,7 @@ module Raven
       Raven.logger.debug "Sending event #{event.id} to Sentry"
       response = self.conn.post '/api/store/' do |req|
         req.headers['Content-Type'] = 'application/json'
-        req.body = Yajl::Encoder.encode(event.to_hash)
+        req.body = MultiJson.encode(event.to_hash)
         req.headers[AUTH_HEADER_KEY] = self.generate_auth_header(req.body)
       end
       raise Error.new("Error from Sentry server (#{response.status}): #{response.body}") unless response.status == 200
