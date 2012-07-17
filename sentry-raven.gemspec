@@ -14,6 +14,6 @@ Gem::Specification.new do |gem|
   gem.files = Dir['lib/**/*']
   gem.add_dependency "faraday", "~> 0.8.0.rc2"
   gem.add_dependency "uuidtools"
-  gem.add_dependency "yajl-ruby"
+  gem.add_dependency "multi_json", "~> 1.0"
   gem.add_dependency "hashie"
 end
