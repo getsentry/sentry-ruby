@@ -10,8 +10,14 @@ module Raven
     property :data
     property :query_string
     property :cookies
-    property :headers, :default => {}
-    property :env, :default => {}
+    property :headers
+    property :env
+
+    def initialize(*arguments)
+      self.headers = {}
+      self.env = {}
+      super(*arguments)
+    end
 
     def from_rack(env)
       require 'rack'
