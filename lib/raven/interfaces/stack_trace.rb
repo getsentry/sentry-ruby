@@ -9,6 +9,11 @@ module Raven
     name 'sentry.interfaces.Stacktrace'
     property :frames, :default => []
 
+    def initialize(*arguments)
+      self.frames = []
+      super(*arguments)
+    end
+
     def to_hash
       data = super
       data['frames'] = data['frames'].map{|frame| frame.to_hash}
@@ -24,11 +29,18 @@ module Raven
       property :abs_path
       property :filename, :required => true
       property :function
-      property :vars, :default => {}
-      property :pre_context, :default => []
-      property :post_context, :default => []
+      property :vars
+      property :pre_context
+      property :post_context
       property :context_line
       property :lineno, :required => true
+
+      def initialize(*arguments)
+        self.vars= {}
+        self.pre_context = []
+        self.post_context = []
+        super(*arguments)
+      end
 
       def to_hash
         data = super
