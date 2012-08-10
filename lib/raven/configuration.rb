@@ -25,6 +25,9 @@ module Raven
     # Include module versions in reports?
     attr_accessor :send_modules
 
+    # Which exceptions should never be sent
+    attr_accessor :excluded_exceptions
+
     attr_reader :current_environment
 
     def initialize
