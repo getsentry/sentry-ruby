@@ -36,6 +36,7 @@ module Raven
       self.environments = %w[ production ]
       self.current_environment = ENV['RAILS_ENV'] || ENV['RACK_ENV'] || 'development'
       self.send_modules = true
+      self.excluded_exceptions = []
     end
 
     def server=(value)
