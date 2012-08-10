@@ -92,9 +92,11 @@ Raven.configure do |config|
 end
 ```
 
-## Exclusion of specific exceptions
+## Excluding exceptions
 
-If you wish to exclude specific exceptions from your notifications, specify 'excluded_exceptions' in your config file. In Rails, certain exceptions are using to generate 404 responses and aren't useful for notifications such as RecordNotFound and RoutingError.
+If you never wish to be notified of certain exceptions, specify 'excluded_exceptions' in your config file.
+
+In the example below, the exceptions Rails uses to generate 404 responses will be suppressed.
 
 ```ruby
 require 'raven'
@@ -104,4 +106,3 @@ Raven.configure do |config|
   config.excluded_exceptions = ['ActionController::RoutingError', 'ActiveRecord::RecordNotFound']
 end
 ```
-
