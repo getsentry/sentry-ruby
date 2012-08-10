@@ -101,8 +101,7 @@ module Raven
         return nil
       end
       if exc.class.name.include? configuration[:excluded_exceptions]
-        Raven.logger.info "User excluded exception: #{exc.inspect}"
-        return nil
+        return
       end
       self.new({}, configuration) do |evt|
         evt.message = exc.message
