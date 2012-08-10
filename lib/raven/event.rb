@@ -100,6 +100,10 @@ module Raven
         Raven.logger.info "Refusing to capture Raven error: #{exc.inspect}"
         return nil
       end
+      if exc.class.name.include? configuration.excluded_exceptions
+        Raven.logger.info "User excluded exception: #{exc.inspect}"
+        return nil
+      end
       self.new({}, configuration) do |evt|
         evt.message = exc.message
         evt.level = :error
