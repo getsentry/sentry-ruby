@@ -91,3 +91,17 @@ Raven.configure do |config|
   config.environments = %w[ development production ]
 end
 ```
+
+## Exclusion of specific exceptions
+
+If you wish to exclude specific exceptions from your notifications, specify 'excluded_exceptions' in your config file. In Rails, certain exceptions are using to generate 404 responses and aren't useful for notifications such as RecordNotFound and RoutingError.
+
+```ruby
+require 'raven'
+
+Raven.configure do |config|
+  config.dsn = 'http://public:secret@example.com/project-id'
+  config.excluded_exceptions = ['ActionController::RoutingError', 'ActiveRecord::RecordNotFound']
+end
+```
+
