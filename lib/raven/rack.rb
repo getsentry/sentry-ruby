@@ -27,10 +27,6 @@ module Raven
         response = @app.call(env)
       rescue Error => e
         raise # Don't capture Raven errors
-      rescue ActiveRecord::RecordNotFound => e
-        raise # Don't capture ActiveRecord 404 errors
-      rescue ActionController::RoutingError => e
-        raise # Don't capture Routing 404 errors
       rescue Exception => e
         evt = Event.capture_rack_exception(e, env)
         Raven.send(evt) if evt
