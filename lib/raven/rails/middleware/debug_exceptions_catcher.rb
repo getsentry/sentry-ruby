@@ -7,7 +7,7 @@ module Raven
         end
 
         def render_exception_with_raven(env, exception)
-          if exception.class.name != 'ActionController::RoutingError' and exception.class.name != 'RecordNotFound'
+          if exception.class.name != 'ActionController::RoutingError' and exception.class.name != 'ActiveRecord::RecordNotFound'
             evt = Raven::Event.capture_rack_exception(exception, env)
             Raven.send(evt) if evt
           end
