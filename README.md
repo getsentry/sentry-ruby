@@ -91,3 +91,18 @@ Raven.configure do |config|
   config.environments = %w[ development production ]
 end
 ```
+
+## Excluding exceptions
+
+If you never wish to be notified of certain exceptions, specify 'excluded_exceptions' in your config file.
+
+In the example below, the exceptions Rails uses to generate 404 responses will be suppressed.
+
+```ruby
+require 'raven'
+
+Raven.configure do |config|
+  config.dsn = 'http://public:secret@example.com/project-id'
+  config.excluded_exceptions = ['ActionController::RoutingError', 'ActiveRecord::RecordNotFound']
+end
+```
