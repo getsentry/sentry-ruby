@@ -1,6 +1,6 @@
 source "http://rubygems.org"
 
 gem "rails", "~> 3.2.6"
-gem "raven", :path => "../"
+gem "sentry-raven", :path => "../"
 
 gemspec :path => "../"
