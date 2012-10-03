@@ -4,7 +4,7 @@ require 'rails'
 module Raven
   class Railtie < ::Rails::Railtie
     initializer "raven.use_rack_middleware" do |app|
-      app.config.middleware.use "Raven::Rack" unless defined?(::ActionDispatch::DebugExceptions)
+      app.config.middleware.insert 0, "Raven::Rack"
     end
 
     config.after_initialize do
@@ -15,6 +15,9 @@ module Raven
       if defined?(::ActionDispatch::DebugExceptions)
         require 'raven/rails/middleware/debug_exceptions_catcher'
         ::ActionDispatch::DebugExceptions.send(:include, Raven::Rails::Middleware::DebugExceptionsCatcher)
+      elsif defined?(::ActionDispatch::ShowExceptions)
+        require 'raven/rails/middleware/debug_exceptions_catcher'
+        ::ActionDispatch::ShowExceptions.send(:include, Raven::Rails::Middleware::DebugExceptionsCatcher)
       end
     end
   end
