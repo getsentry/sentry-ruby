@@ -11,17 +11,33 @@ describe Raven::Rack do
 
   it 'should capture exceptions' do
     exception = build_exception()
-    env = { 'key' => 'value' }
+    env = {}
+    
+    Raven::Event.should_receive(:capture_rack_exception).with(exception, env)
+    Raven.should_receive(:send).with(@event)
 
     app = lambda do |e|
       raise exception
     end
 
     stack = Raven::Rack.new(app)
+    lambda {stack.call(env)}.should raise_error(exception)
+  end
+
+  it 'should capture rack.exception' do
+    exception = build_exception()
+    env = {}
 
     Raven::Event.should_receive(:capture_rack_exception).with(exception, env)
     Raven.should_receive(:send).with(@event)
-    
-    lambda {stack.call(env)}.should raise_error(exception)
+
+    app = lambda do |e|
+      e['rack.exception'] = exception
+      [200, {}, ['okay']]
+    end
+
+    stack = Raven::Rack.new(app)
+
+    stack.call(env)
   end
 end

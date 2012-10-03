@@ -34,7 +34,7 @@ module Raven
       end
 
       if env['rack.exception']
-        evt = Event.capture_rack_exception(e, env)
+        evt = Event.capture_rack_exception(env['rack.exception'], env)
         Raven.send(evt) if evt
       end
 
