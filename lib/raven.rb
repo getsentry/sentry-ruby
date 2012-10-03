@@ -72,8 +72,7 @@ module Raven
         rescue Error => e
           raise # Don't capture Raven errors
         rescue Exception => e
-          evt = Event.capture_exception(e)
-          send(evt) if evt
+          self.captureException(e)
           raise
         end
       else
@@ -81,11 +80,20 @@ module Raven
         at_exit do
           if $!
             logger.debug "Caught a post-mortem exception: #{$!.inspect}"
-            evt = Event.capture_exception($!)
-            send(evt) if evt
+            self.captureException($!)
           end
         end
       end
+    end
+
+    def captureException(exception)
+      evt = Event.capture_exception(exception)
+      send(evt) if evt
+    end
+
+    def captureMessage(message)
+      evt = Event.capture_message(message)
+      send(evt) if evt
     end
 
   end

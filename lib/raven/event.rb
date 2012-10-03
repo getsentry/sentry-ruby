@@ -150,6 +150,17 @@ module Raven
       end
     end
 
+    def self.capture_message(message, configuration=nil)
+      configuration ||= Raven.configuration
+      self.new({}, configuration) do |evt|
+        evt.message = message
+        evt.level = :error
+        evt.interface :message do |int|
+          int.message = message
+        end
+      end
+    end
+
     # For cross-language compat
     class << self
       alias :captionException :capture_exception
