@@ -105,7 +105,7 @@ module Raven
         return nil
       end
       self.new({}, configuration) do |evt|
-        evt.message = exc.message
+        evt.message = "#{exc.class.to_s}: #{exc.message}"
         evt.level = :error
         evt.interface :exception do |int|
           int.type = exc.class.to_s
