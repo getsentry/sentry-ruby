@@ -37,7 +37,7 @@ end
 
 No support for Rails 2 yet.
 
-### Other Rack Servers
+### Rack
 
 Basic RackUp file.
 
@@ -49,6 +49,23 @@ Raven.configure do |config|
 end
 
 use Raven::Rack
+```
+
+### Sinatra
+
+```
+require 'sinatra'
+require 'raven'
+
+Raven.configure do |config|
+  config.dsn = 'http://public:secret@example.com/project-id'
+end
+
+use Raven::Rack
+
+get '/' do
+  1 / 0
+end
 ```
 
 ### Other Ruby
