@@ -29,7 +29,7 @@ module Raven
         raise # Don't capture Raven errors
       rescue Exception => e
         evt = Event.capture_rack_exception(e, env)
-        Raven.send(evt) if evt
+        Raven.send(evt)
         raise
       end
 
