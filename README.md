@@ -1,8 +1,8 @@
 # Raven-Ruby
 
-[![Build Status](https://secure.travis-ci.org/coderanger/raven-ruby.png?branch=master)](http://travis-ci.org/coderanger/raven-ruby)
+[![Build Status](https://secure.travis-ci.org/getsentry/raven-ruby.png?branch=master)](http://travis-ci.org/getsentry/raven-ruby)
 
-A client and integration layer for the [Sentry](https://github.com/dcramer/sentry) error reporting API.
+A client and integration layer for the [Sentry](https://github.com/getsentry/sentry) error reporting API.
 
 This library is still forming, so if you are looking to just use it, please check back in a few weeks.
 
@@ -11,7 +11,7 @@ This library is still forming, so if you are looking to just use it, please chec
 Add the following to your `Gemfile`:
 
 ```ruby
-gem "sentry-raven", :git => "https://github.com/coderanger/raven-ruby.git"
+gem "sentry-raven", :git => "https://github.com/getsentry/raven-ruby.git"
 ```
 
 Or install manually
