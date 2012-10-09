@@ -7,7 +7,7 @@ describe Raven::Processor::SanitizeData do
     @processor = Raven::Processor::SanitizeData.new(@client)
   end
 
-  it 'does filter http data' do
+  it 'should filter http data' do
     data = {
       'sentry.interfaces.Http' => {
         'data' => {
