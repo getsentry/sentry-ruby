@@ -19,7 +19,7 @@ describe Raven::Event do
     evt = Raven::Event.capture_exception(exception)
     evt.message.should eq("ZeroDivisionError: divided by 0")
     evt.level.should eq(40)
-    evt.culprit.should eq("spec_helper.rb in /")
+    evt.culprit.should eq("spec_helper.rb in build_exception")
   end
 
 end

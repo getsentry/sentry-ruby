@@ -135,7 +135,7 @@ module Raven
               end
             end
           end
-          lastframe = int.frames.last
+          lastframe = int.frames[-2]
           evt.culprit = "#{lastframe.filename} in #{lastframe.function}" if lastframe
         end
         block.call(evt) if block
