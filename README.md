@@ -53,7 +53,7 @@ use Raven::Rack
 
 ### Sinatra
 
-```
+```ruby
 require 'sinatra'
 require 'raven'
 
