@@ -5,7 +5,7 @@ module Raven
     class SanitizeData < Processor
 
       MASK = '********'
-      FIELDS_RE = /(password|passwd|secret)/i
+      FIELDS_RE = /(authorization|password|passwd|secret)/i
       VALUES_RE = /^\d{16}$/
 
       def apply(value, key=nil, &block)
