@@ -109,7 +109,7 @@ Raven.configure do |config|
 end
 ```
 
-## Excluding exceptions
+## Excluding Exceptions
 
 If you never wish to be notified of certain exceptions, specify 'excluded_exceptions' in your config file.
 
@@ -123,3 +123,19 @@ Raven.configure do |config|
   config.excluded_exceptions = ['ActionController::RoutingError', 'ActiveRecord::RecordNotFound']
 end
 ```
+
+## Sanitizing Data (Processors)
+
+If you need to sanitize or pre-process (before its sent to the server) data, you can do so using the Processors
+implementation. By default, a single processor is installed (Raven::Processors::SanitizeData), which will attempt to
+sanitize keys that match various patterns (e.g. password) and values that resemble credit card numbers.
+
+To specify your own (or to remove the defaults), simply pass them with your configuration:
+
+```ruby
+require 'raven'
+
+Raven.configure do |config|
+  config.dsn = 'http://public:secret@example.com/project-id'
+  config.processors = [Raven::Processors::SanitizeData]
+end
