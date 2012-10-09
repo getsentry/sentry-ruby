@@ -24,7 +24,8 @@ module Raven
     attr_accessor :logger, :culprit, :server_name, :modules, :extra
 
     def initialize(options={}, configuration=nil, &block)
-      configuration ||= Raven.configuration
+      @configuration = configuration || Raven.configuration
+      @interfaces = {}
 
       @id = options[:id] || UUIDTools::UUID.random_create.hexdigest
       @message = options[:message]
@@ -32,6 +33,7 @@ module Raven
       @level = options[:level] || :error
       @logger = options[:logger] || 'root'
       @culprit = options[:culprit]
+      @extra = options[:extra]
 
       # Try to resolve the hostname to an FQDN, but fall back to whatever the load name is
       hostname = Socket.gethostname
@@ -39,14 +41,10 @@ module Raven
       @server_name = options[:server_name] || hostname
 
       # Older versions of Rubygems don't support iterating over all specs
-      if configuration.send_modules && Gem::Specification.respond_to?(:map)
+      if @configuration.send_modules && Gem::Specification.respond_to?(:map)
         options[:modules] ||= Hash[Gem::Specification.map {|spec| [spec.name, spec.version.to_s]}]
       end
       @modules = options[:modules]
-
-      @extra = options[:extra]
-
-      @interfaces = {}
 
       block.call(self) if block
 
@@ -107,36 +105,14 @@ module Raven
       self.new({}, configuration) do |evt|
         evt.message = "#{exc.class.to_s}: #{exc.message}"
         evt.level = :error
-        evt.interface :exception do |int|
-          int.type = exc.class.to_s
-          int.value = exc.message
-          class_parts = exc.class.to_s.split('::')
-          class_parts.pop
-          int.module = class_parts.join('::')
-        end
-        evt.interface :stack_trace do |int|
-          int.frames = exc.backtrace.reverse.map do |trace_line|
-            md = BACKTRACE_RE.match(trace_line)
-            raise Error.new("Unable to parse backtrace line: #{trace_line.inspect}") unless md
-            int.frame do |frame|
-              frame.abs_path = md[1]
-              frame.lineno = md[2].to_i
-              frame.function = md[3] if md[3]
-              lib_path = $:.select{|s| frame.abs_path.start_with?(s)}.sort_by{|s| s.length}.last
-              if lib_path
-                frame.filename = frame.abs_path[lib_path.chomp(File::SEPARATOR).length+1..frame.abs_path.length]
-              else
-                frame.filename = frame.abs_path
-              end
-              if configuration[:context_lines]
-                frame.context_line = Raven::LineCache::getline(frame.abs_path, frame.lineno)
-                frame.pre_context = (frame.lineno-configuration[:context_lines]..frame.lineno-1).map{|i| Raven::LineCache.getline(frame.abs_path, i)}.select{|line| line}
-                frame.post_context = (frame.lineno+1..frame.lineno+configuration[:context_lines]).map{|i| Raven::LineCache.getline(frame.abs_path, i)}.select{|line| line}
-              end
+        evt.parse_exception(exc)
+        if (exc.backtrace)
+          evt.interface :stack_trace do |int|
+            int.frames = exc.backtrace.reverse.map do |trace_line|
+              int.frame {|frame| evt.parse_backtrace_line(trace_line, frame) }
             end
+            evt.culprit = evt.get_culprit(int.frames)
           end
-          lastframe = int.frames[-2]
-          evt.culprit = "#{lastframe.filename} in #{lastframe.function}" if lastframe
         end
         block.call(evt) if block
       end
@@ -163,6 +139,33 @@ module Raven
       end
     end
 
+    def get_culprit(frames)
+        lastframe = frames[-2]
+        "#{lastframe.filename} in #{lastframe.function}" if lastframe
+    end
+
+    def parse_exception(exception)
+      interface(:exception) do |int|
+        int.type = exception.class.to_s
+        int.value = exception.message
+        int.module = exception.class.to_s.split('::')[0...-1].join('::')
+      end
+    end
+
+    def parse_backtrace_line(line, frame)
+      md = BACKTRACE_RE.match(line)
+      raise Error.new("Unable to parse backtrace line: #{line.inspect}") unless md
+      frame.abs_path = md[1]
+      frame.lineno = md[2].to_i
+      frame.function = md[3] if md[3]
+      frame.filename = strip_load_path_from(frame.abs_path)
+      if context_lines = @configuration[:context_lines]
+        frame.pre_context, frame.context_line, frame.post_context = \
+          get_context(frame.abs_path, frame.lineno, context_lines)
+      end
+      frame
+    end
+
     # For cross-language compat
     class << self
       alias :captionException :capture_exception
@@ -175,6 +178,16 @@ module Raven
     def self._source_lines(path, from, to)
     end
 
-  end
+    def get_context(path, line, context)
+      lines = (2 * context + 1).times.map do |i|
+        Raven::LineCache::getline(path, line - context + i)
+      end
+      [lines[0..(context-1)], lines[context], lines[(context+1)..-1]]
+    end
 
+    def strip_load_path_from(path)
+      prefix = $:.select {|s| path.start_with?(s)}.sort_by {|s| s.length}.last
+      prefix ? path[prefix.chomp(File::SEPARATOR).length+1..-1] : path
+    end
+  end
 end
