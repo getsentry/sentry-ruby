@@ -8,22 +8,23 @@ module Raven
       FIELDS_RE = /(password|passwd|secret)/i
       VALUES_RE = /^\d{16}$/
 
-      def apply(value, callback, key=nil)
+      def apply(value, key=nil, &block)
         if value.is_a?(Hash)
-          value.each do |k, v|
-            value[k] = apply(v, callback, k)
+          value.each.inject({}) do |memo, (k, v)|
+            memo[k] = apply(v, k, &block)
+            memo
           end
         elsif value.is_a?(Array)
           value.map do |value|
-            apply(value, callback, key)
+            apply(value, key, &block)
           end
         else
-          callback.call(key, value)
+          block.call(key, value)
         end
       end
 
       def sanitize(key, value)
-        if value.empty?
+        if !value || value.empty?
           value
         elsif VALUES_RE.match(value) or FIELDS_RE.match(key)
           MASK
@@ -33,7 +34,9 @@ module Raven
       end
 
       def process(data)
-        apply(data, method(:sanitize))
+        apply(data) do |key, value|
+          sanitize(key, value)
+        end
       end
     end
   end
