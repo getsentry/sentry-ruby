@@ -8,6 +8,7 @@ require 'raven/interfaces/message'
 require 'raven/interfaces/exception'
 require 'raven/interfaces/stack_trace'
 require 'raven/interfaces/http'
+require 'raven/processors/sanitizedata'
 
 require 'raven/railtie' if defined?(Rails::Railtie)
 

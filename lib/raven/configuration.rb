@@ -28,6 +28,9 @@ module Raven
     # Which exceptions should never be sent
     attr_accessor :excluded_exceptions
 
+    # Processors to run on data before sending upstream
+    attr_accessor :processors
+
     attr_reader :current_environment
 
     def initialize
@@ -37,6 +40,7 @@ module Raven
       self.current_environment = ENV['RAILS_ENV'] || ENV['RACK_ENV'] || 'development'
       self.send_modules = true
       self.excluded_exceptions = []
+      self.processors = [Raven::Processor::SanitizeData]
     end
 
     def server=(value)
