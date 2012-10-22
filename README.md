@@ -139,3 +139,12 @@ Raven.configure do |config|
   config.dsn = 'http://public:secret@example.com/project-id'
   config.processors = [Raven::Processors::SanitizeData]
 end
+
+Resources
+---------
+
+* `Bug Tracker <http://github.com/getsentry/raven-ruby/issues>`_
+* `Code <http://github.com/getsentry/raven-ruby>`_
+* `Mailing List <https://groups.google.com/group/getsentry>`_
+* `IRC <irc://irc.freenode.net/sentry>`_  (irc.freenode.net, #sentry)
+
