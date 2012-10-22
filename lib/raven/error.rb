@@ -1,6 +1,6 @@
 module Raven
 
-  class Error < Exception
+  class Error < StandardError
   end
 
 end
