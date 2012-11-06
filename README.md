@@ -144,8 +144,7 @@ end
 Resources
 ---------
 
-* `Bug Tracker <http://github.com/getsentry/raven-ruby/issues>`_
-* `Code <http://github.com/getsentry/raven-ruby>`_
-* `Mailing List <https://groups.google.com/group/getsentry>`_
-* `IRC <irc://irc.freenode.net/sentry>`_  (irc.freenode.net, #sentry)
-
+* [Bug Tracker](http://github.com/getsentry/raven-ruby/issues>)
+* [Code](http://github.com/getsentry/raven-ruby>)
+* [Mailing List](https://groups.google.com/group/getsentry>)
+* [IRC](irc://irc.freenode.net/sentry>)  (irc.freenode.net, #sentry)
