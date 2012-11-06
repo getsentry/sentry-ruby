@@ -139,6 +139,7 @@ Raven.configure do |config|
   config.dsn = 'http://public:secret@example.com/project-id'
   config.processors = [Raven::Processors::SanitizeData]
 end
+```
 
 Resources
 ---------
