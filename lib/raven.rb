@@ -90,13 +90,17 @@ module Raven
     end
 
     def capture_exception(exception, options={})
-      evt = Event.capture_exception(exception, options)
-      send(evt) if evt
+      if evt = Event.capture_exception(exception, options)
+        yield evt if block_given?
+        send(evt)
+      end
     end
 
     def capture_message(message, options={})
-      evt = Event.capture_message(message, options)
-      send(evt) if evt
+      if evt = Event.capture_message(message, options)
+        yield evt if block_given?
+        send(evt)
+      end
     end
 
     # For cross-language compat
