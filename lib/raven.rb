@@ -87,15 +87,18 @@ module Raven
       end
     end
 
-    def captureException(exception)
+    def capture_exception(exception)
       evt = Event.capture_exception(exception)
       send(evt) if evt
     end
 
-    def captureMessage(message)
+    def capture_message(message)
       evt = Event.capture_message(message)
       send(evt) if evt
     end
 
+    # For cross-language compat
+    alias :captureException :capture_exception
+    alias :captureMessage :capture_message
   end
 end

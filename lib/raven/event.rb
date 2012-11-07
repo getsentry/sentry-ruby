@@ -168,7 +168,7 @@ module Raven
 
     # For cross-language compat
     class << self
-      alias :captionException :capture_exception
+      alias :captureException :capture_exception
       alias :captureMessage :capture_message
     end
 
