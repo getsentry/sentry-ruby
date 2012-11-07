@@ -140,8 +140,8 @@ module Raven
     end
 
     def get_culprit(frames)
-        lastframe = frames[-2]
-        "#{lastframe.filename} in #{lastframe.function}" if lastframe
+      lastframe = frames[-1]
+      "#{lastframe.filename} in #{lastframe.function}" if lastframe
     end
 
     def parse_exception(exception)
