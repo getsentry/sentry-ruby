@@ -12,16 +12,19 @@ describe Raven do
 
   it 'captureMessage should send result of Event.capture_message' do
     message = "Test message"
-    Raven::Event.should_receive(:capture_message).with(message)
+    options = {}
+
+    Raven::Event.should_receive(:capture_message).with(message, options)
     Raven.should_receive(:send).with(@event)
 
-    Raven.captureMessage(message)
+    Raven.captureMessage(message, options)
   end
 
   it 'captureException should send result of Event.capture_exception' do
     exception = build_exception()
+    options   = {}
 
-    Raven::Event.should_receive(:capture_exception).with(exception)
+    Raven::Event.should_receive(:capture_exception).with(exception, options)
     Raven.should_receive(:send).with(@event)
 
     Raven.captureException(exception)

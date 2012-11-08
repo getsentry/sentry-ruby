@@ -18,6 +18,10 @@ describe Raven::Event do
       it 'has level ERROR' do
         hash['level'].should == 40
       end
+
+      it 'accepts an options hash' do
+        Raven::Event.capture_message(message, {:logger => 'logger'}).logger.should == 'logger'
+      end
     end
   end
 
@@ -110,6 +114,9 @@ describe Raven::Event do
         end
       end
     end
-  end
 
+    it 'accepts an options hash' do
+      Raven::Event.capture_exception(exception, {:logger => 'logger'}).logger.should == 'logger'
+    end
+  end
 end
