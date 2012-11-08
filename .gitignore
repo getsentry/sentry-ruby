@@ -3,3 +3,4 @@ pkg
 ruby/
 .bundle
 *.gem
+Gemfile.lock
