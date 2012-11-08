@@ -150,15 +150,6 @@ module Raven
       end
     end
 
-    def self.capture_rack_exception(exc, rack_env, options={}, &block)
-      capture_exception(exc, options) do |evt|
-        evt.interface :http do |int|
-          int.from_rack(rack_env)
-        end
-        block.call(evt) if block
-      end
-    end
-
     def self.capture_message(message, options={})
       new(options) do |evt|
         evt.message = message
