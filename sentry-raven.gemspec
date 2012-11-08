@@ -13,8 +13,13 @@ Gem::Specification.new do |gem|
   gem.has_rdoc = true
   gem.extra_rdoc_files = ["README.md", "LICENSE"]
   gem.files = Dir['lib/**/*']
+
   gem.add_dependency "faraday", ">= 0.7.6"
   gem.add_dependency "uuidtools"
   gem.add_dependency "multi_json", "~> 1.0"
   gem.add_dependency "hashie"
+
+  gem.add_development_dependency "rake"
+  gem.add_development_dependency "rspec", "~> 2.10"
+  gem.add_development_dependency "simplecov"
 end
