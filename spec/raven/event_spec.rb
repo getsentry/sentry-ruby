@@ -2,6 +2,49 @@ require File::expand_path('../../spec_helper', __FILE__)
 require 'raven'
 
 describe Raven::Event do
+  context 'a fully implemented event' do
+    let(:hash) { Raven::Event.new({
+        :message => 'test',
+        :level => 'warning',
+        :logger => 'foo',
+        :tags => {
+          'foo' => 'bar'
+        },
+        :extra => {
+          'my_custom_variable' => 'value'
+        },
+        :server_name => 'foo.local',
+      }).to_hash()}
+
+    it 'has message' do
+      hash['message'].should == 'test'
+    end
+
+    it 'has level' do
+      hash['level'].should == 30
+    end
+
+    it 'has logger' do
+      hash['logger'].should == 'foo'
+    end
+
+    it 'has server name' do
+      hash['server_name'].should == 'foo.local'
+    end
+
+    it 'has tag data' do
+      hash['tags'].should == {
+        'foo' => 'bar'
+      }
+    end
+
+    it 'has extra data' do
+      hash['extra'].should == {
+        'my_custom_variable' => 'value'
+      }
+    end
+  end
+
   describe '.capture_message' do
     let(:message) { 'This is a message' }
     let(:hash) { Raven::Event.capture_message(message).to_hash }

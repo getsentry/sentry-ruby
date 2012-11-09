@@ -115,7 +115,10 @@ Additional context can be passed to the capture methods.
 Raven.capture_message("My event", {
   :logger => 'logger',
   :extra => {
-    :my_custom_variable => 'value'
+    'my_custom_variable' => 'value'
+  },
+  :tags => {
+    'environment' => 'production',
   }
 })
 ```
@@ -123,9 +126,10 @@ Raven.capture_message("My event", {
 The following attributes are available:
 
 * `logger`: the logger name to record this event under
-* `extra`: a hash of arbitrary context
 * `level`: a string representing the level of this event (fatal, error, warning, info, debug)
 * `server_name`: the hostname of the server
+* `tags`: a mapping of tags describing this event
+* `extra`: a mapping of arbitrary context
 
 ## Testing
 

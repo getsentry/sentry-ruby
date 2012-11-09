@@ -15,13 +15,14 @@ module Raven
       "warn" => 30,
       "warning" => 30,
       "error" => 40,
+      "fatal" => 50,
     }
 
     BACKTRACE_RE = /^(.+?):(\d+)(?::in `(.+?)')?$/
 
     attr_reader :id
     attr_accessor :project, :message, :timestamp, :level
-    attr_accessor :logger, :culprit, :server_name, :modules, :extra
+    attr_accessor :logger, :culprit, :server_name, :modules, :extra, :tags
 
     def initialize(options={}, &block)
       @configuration = options[:configuration] || Raven.configuration
@@ -34,6 +35,7 @@ module Raven
       @logger = options[:logger] || 'root'
       @culprit = options[:culprit]
       @extra = options[:extra]
+      @tags = options[:tags]
 
       # Try to resolve the hostname to an FQDN, but fall back to whatever the load name is
       hostname = Socket.gethostname
@@ -85,6 +87,7 @@ module Raven
       data['server_name'] = self.server_name if self.server_name
       data['modules'] = self.modules if self.modules
       data['extra'] = self.extra if self.extra
+      data['tags'] = self.tags if self.tags
       @interfaces.each_pair do |name, int_data|
         data[name] = int_data.to_hash
       end
