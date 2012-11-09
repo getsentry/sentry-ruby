@@ -23,8 +23,8 @@ module Raven
     attr_accessor :project, :message, :timestamp, :level
     attr_accessor :logger, :culprit, :server_name, :modules, :extra
 
-    def initialize(options={}, configuration=nil, &block)
-      @configuration = configuration || Raven.configuration
+    def initialize(options={}, &block)
+      @configuration = options[:configuration] || Raven.configuration
       @interfaces = {}
 
       @id = options[:id] || UUIDTools::UUID.random_create.hexdigest
@@ -91,8 +91,8 @@ module Raven
       data
     end
 
-    def self.capture_exception(exc, configuration=nil, &block)
-      configuration ||= Raven.configuration
+    def self.capture_exception(exc, options={}, &block)
+      configuration = options[:configuration] || Raven.configuration
       if exc.is_a?(Raven::Error)
         # Try to prevent error reporting loops
         Raven.logger.info "Refusing to capture Raven error: #{exc.inspect}"
@@ -102,7 +102,7 @@ module Raven
         Raven.logger.info "User excluded error: #{exc.inspect}"
         return nil
       end
-      self.new({}, configuration) do |evt|
+      new(options) do |evt|
         evt.message = "#{exc.class.to_s}: #{exc.message}"
         evt.level = :error
         evt.parse_exception(exc)
@@ -118,9 +118,8 @@ module Raven
       end
     end
 
-    def self.capture_rack_exception(exc, rack_env, configuration=nil, &block)
-      configuration ||= Raven.configuration
-      capture_exception(exc, configuration) do |evt|
+    def self.capture_rack_exception(exc, rack_env, options={}, &block)
+      capture_exception(exc, options) do |evt|
         evt.interface :http do |int|
           int.from_rack(rack_env)
         end
@@ -128,9 +127,8 @@ module Raven
       end
     end
 
-    def self.capture_message(message, configuration=nil)
-      configuration ||= Raven.configuration
-      self.new({}, configuration) do |evt|
+    def self.capture_message(message, options={})
+      new(options) do |evt|
         evt.message = message
         evt.level = :error
         evt.interface :message do |int|
