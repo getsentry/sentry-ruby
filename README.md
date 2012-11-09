@@ -80,12 +80,52 @@ Raven.configure do |config|
   config.current_environment = 'production'
 end
 
-Raven.capture # Global style
 
-Raven.capture do # Block style
+## Capturing Events
+
+Many implementations will automatically capture uncaught exceptions (such as Rails, or by using
+the Rack middleware). Sometimes you may want to catch those exceptions, but still report on them.
+
+Several helps are available to assist with this.
+
+### Capture Exceptions in a Block
+
+```
+Raven.capture do
+  # capture any exceptions which happen during execution of this block
   1 / 0
 end
 ```
+
+### Capture an Exception by Value
+
+```
+begin
+  1 / 0
+rescue ZeroDivisionError => exception
+  Raven.capture_exception(exception)
+end
+```
+
+### Additional Context
+
+Additional context can be passed to the capture methods.
+
+```
+Raven.capture_message("My event", {
+  :logger => 'logger',
+  :extra => {
+    :my_custom_variable => 'value'
+  }
+})
+```
+
+The following attributes are available:
+
+* `logger`: the logger name to record this event under
+* `extra`: a hash of arbitrary context
+* `level`: a string representing the level of this event (fatal, error, warning, info, debug)
+* `server_name`: the hostname of the server
 
 ## Testing
 
