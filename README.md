@@ -79,7 +79,7 @@ Raven.configure do |config|
   # manually configure environment if ENV['RACK_ENV'] is not defined
   config.current_environment = 'production'
 end
-
+```
 
 ## Capturing Events
 
