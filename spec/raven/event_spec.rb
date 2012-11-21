@@ -129,14 +129,42 @@ describe Raven::Event do
       end
 
       it 'parses the backtrace' do
-        hash['sentry.interfaces.Stacktrace']['frames'].length.should == 2
-        hash['sentry.interfaces.Stacktrace']['frames'][0]['lineno'].should == 1412
-        hash['sentry.interfaces.Stacktrace']['frames'][0]['function'].should == 'other_function'
-        hash['sentry.interfaces.Stacktrace']['frames'][0]['filename'].should == '/some/other/path'
+        hash['sentry.interfaces.Stacktrace']['frames'].length.should eq(2)
+        hash['sentry.interfaces.Stacktrace']['frames'][0]['lineno'].should eq(1412)
+        hash['sentry.interfaces.Stacktrace']['frames'][0]['function'].should eq('other_function')
+        hash['sentry.interfaces.Stacktrace']['frames'][0]['filename'].should eq('/some/other/path')
 
-        hash['sentry.interfaces.Stacktrace']['frames'][1]['lineno'].should == 22
-        hash['sentry.interfaces.Stacktrace']['frames'][1]['function'].should == 'function_name'
-        hash['sentry.interfaces.Stacktrace']['frames'][1]['filename'].should == '/path/to/some/file'
+        hash['sentry.interfaces.Stacktrace']['frames'][1]['lineno'].should eq(22)
+        hash['sentry.interfaces.Stacktrace']['frames'][1]['function'].should eq('function_name')
+        hash['sentry.interfaces.Stacktrace']['frames'][1]['filename'].should eq('/path/to/some/file')
+        hash['sentry.interfaces.Stacktrace']['frames'][0]['in_app'].should eq(false)
+        hash['sentry.interfaces.Stacktrace']['frames'][0]['in_app'].should eq(false)
+      end
+
+      context 'in a rails environment' do
+
+        before do
+          rails = double('Rails')
+          rails.stub(:root) { 'lolwut' }
+          stub_const('Rails', rails)
+        end
+
+        context 'with an application stacktrace' do
+          let(:exception) do
+            e = Exception.new(message)
+            e.stub(:backtrace).and_return([
+              "/path/to/some/file:22:in `function_name'",
+              "/app/some/other/path:1412:in `other_function'",
+            ])
+            e
+          end
+
+          it 'marks in_app correctly' do
+            hash['sentry.interfaces.Stacktrace']['frames'][0]['in_app'].should eq(false)
+            hash['sentry.interfaces.Stacktrace']['frames'][1]['in_app'].should eq(true)
+          end
+
+        end
       end
 
       it "sets the culprit" do
@@ -153,7 +181,7 @@ describe Raven::Event do
         end
 
         it 'strips prefixes in the load path from frame filenames' do
-          hash['sentry.interfaces.Stacktrace']['frames'][0]['filename'].should == 'other/path'
+          hash['sentry.interfaces.Stacktrace']['frames'][0]['filename'].should eq('other/path')
         end
       end
     end

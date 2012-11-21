@@ -34,6 +34,7 @@ module Raven
       property :post_context
       property :context_line
       property :lineno, :required => true
+      property :in_app
 
       def initialize(*arguments)
         self.vars= {}
