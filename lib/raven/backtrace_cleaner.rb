@@ -72,12 +72,17 @@ module Raven
       filtered = filter_backtrace(backtrace)
 
       backtrace.reverse.map do |trace_line|
-        in_app = @silencers.any? do |s|
-          s.call(line)
-        end
+        in_app = frame_in_app?(trace_line)
         [trace_line, in_app]
       end
     end
+
+    def frame_in_app?(trace_line)
+      @silencers.any? do |s|
+        s.call(trace_line)
+      end
+    end
+
 
     # Adds a filter from the block provided. Each line in the backtrace will be
     # mapped against this filter.
