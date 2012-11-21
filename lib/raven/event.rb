@@ -4,6 +4,7 @@ require 'uuidtools'
 
 require 'raven/error'
 require 'raven/linecache'
+require 'raven/backtrace_cleaner'
 
 module Raven
 
@@ -111,8 +112,8 @@ module Raven
         evt.parse_exception(exc)
         if (exc.backtrace)
           evt.interface :stack_trace do |int|
-            int.frames = exc.backtrace.reverse.map do |trace_line|
-              int.frame {|frame| evt.parse_backtrace_line(trace_line, frame) }
+            int.frames = Raven::BacktraceCleaner.new.clean(exc.backtrace).map do |trace_line, in_app|
+              int.frame { |frame| evt.parse_backtrace_line(trace_line, frame, in_app) }
             end
             evt.culprit = evt.get_culprit(int.frames)
           end
@@ -153,13 +154,14 @@ module Raven
       end
     end
 
-    def parse_backtrace_line(line, frame)
+    def parse_backtrace_line(line, frame, in_app)
       md = BACKTRACE_RE.match(line)
       raise Error.new("Unable to parse backtrace line: #{line.inspect}") unless md
       frame.abs_path = md[1]
       frame.lineno = md[2].to_i
       frame.function = md[3] if md[3]
       frame.filename = strip_load_path_from(frame.abs_path)
+      frame.in_app = in_app
       if context_lines = @configuration[:context_lines]
         frame.pre_context, frame.context_line, frame.post_context = \
           get_context(frame.abs_path, frame.lineno, context_lines)
