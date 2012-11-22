@@ -160,10 +160,11 @@ describe Raven::Event do
           end
 
           it 'marks in_app correctly' do
+            hash['sentry.interfaces.Stacktrace']['frames'][0]['filename'].should eq("/app/some/other/path")
             hash['sentry.interfaces.Stacktrace']['frames'][0]['in_app'].should eq(true)
+            hash['sentry.interfaces.Stacktrace']['frames'][1]['filename'].should eq("/rails/root/foobar")
             hash['sentry.interfaces.Stacktrace']['frames'][1]['in_app'].should eq(false)
           end
-
         end
       end
 

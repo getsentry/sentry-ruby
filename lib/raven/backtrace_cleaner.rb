@@ -56,7 +56,7 @@ module Raven
     def initialize
       @filters, @silencers = [], []
       if defined? ::Rails
-        add_filter   { |line| line.sub("#{::Rails.root}/", '') }
+        add_filter   { |line| line.sub(::Rails.root, '') }
         add_filter   { |line| line.sub(RENDER_TEMPLATE_PATTERN, '') }
         add_silencer { |line| line !~ APP_DIRS_PATTERN }
       end
