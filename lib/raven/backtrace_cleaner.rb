@@ -55,15 +55,10 @@ module Raven
 
     def initialize
       @filters, @silencers = [], []
-      if defined? ::Rails
-        # TODO: this should simply be used to transform the filename from relative to absolute
-        # add_filter   { |line| line.sub(::Rails.root, '') }
-        add_filter   { |line| line.sub(RENDER_TEMPLATE_PATTERN, '') }
-        add_silencer { |line| line !~ APP_DIRS_PATTERN }
-      end
 
       add_filter   { |line| line.sub('./', '/') } # for tests
 
+      add_rails_filters
       add_gem_filters      
     end
 
@@ -121,6 +116,14 @@ module Raven
 
         gems_regexp = %r{(#{gems_paths.join('|')})/gems/([^/]+)-([\w.]+)/(.*)}
         add_filter { |line| line.sub(gems_regexp, '\2 (\3) \4') }
+      end
+
+      def add_rails_filters
+        return if !defined? ::Rails
+        # TODO: this should simply be used to transform the filename from relative to absolute
+        # add_filter   { |line| line.sub(::Rails.root, '') }
+        add_filter   { |line| line.sub(RENDER_TEMPLATE_PATTERN, '') }
+        add_silencer { |line| line !~ APP_DIRS_PATTERN }
       end
 
       def filter_backtrace(backtrace)
