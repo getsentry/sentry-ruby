@@ -145,7 +145,7 @@ describe Raven::Event do
 
         before do
           rails = double('Rails')
-          rails.stub(:root) { 'lolwut' }
+          rails.stub(:root) { '/rails/root' }
           stub_const('Rails', rails)
         end
 
@@ -153,15 +153,15 @@ describe Raven::Event do
           let(:exception) do
             e = Exception.new(message)
             e.stub(:backtrace).and_return([
-              "/path/to/some/file:22:in `function_name'",
+              "/rails/root/foobar:132:in `new_function'",
               "/app/some/other/path:1412:in `other_function'",
             ])
             e
           end
 
           it 'marks in_app correctly' do
-            hash['sentry.interfaces.Stacktrace']['frames'][0]['in_app'].should eq(false)
-            hash['sentry.interfaces.Stacktrace']['frames'][1]['in_app'].should eq(true)
+            hash['sentry.interfaces.Stacktrace']['frames'][0]['in_app'].should eq(true)
+            hash['sentry.interfaces.Stacktrace']['frames'][1]['in_app'].should eq(false)
           end
 
         end
