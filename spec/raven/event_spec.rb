@@ -137,8 +137,6 @@ describe Raven::Event do
         hash['sentry.interfaces.Stacktrace']['frames'][1]['lineno'].should eq(22)
         hash['sentry.interfaces.Stacktrace']['frames'][1]['function'].should eq('function_name')
         hash['sentry.interfaces.Stacktrace']['frames'][1]['filename'].should eq('/path/to/some/file')
-        hash['sentry.interfaces.Stacktrace']['frames'][0]['in_app'].should eq(false)
-        hash['sentry.interfaces.Stacktrace']['frames'][0]['in_app'].should eq(false)
       end
 
       context 'in a rails environment' do
