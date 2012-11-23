@@ -185,6 +185,14 @@ Raven.configure do |config|
 end
 ```
 
+## Command Line Interface
+
+Raven includes a basic CLI for testing your DSN:
+
+```ruby
+ruby -Ilib ./bin/raven test <DSN>
+```
+
 Resources
 ---------
 
