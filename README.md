@@ -90,7 +90,7 @@ Several helps are available to assist with this.
 
 ### Capture Exceptions in a Block
 
-```
+```ruby
 Raven.capture do
   # capture any exceptions which happen during execution of this block
   1 / 0
@@ -99,7 +99,7 @@ end
 
 ### Capture an Exception by Value
 
-```
+```ruby
 begin
   1 / 0
 rescue ZeroDivisionError => exception
@@ -111,7 +111,7 @@ end
 
 Additional context can be passed to the capture methods.
 
-```
+```ruby
 Raven.capture_message("My event", {
   :logger => 'logger',
   :extra => {
