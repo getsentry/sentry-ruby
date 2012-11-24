@@ -74,6 +74,10 @@ module Raven
     end
 
     def frame_in_app?(trace_line)
+      if !@silencers
+        return true
+      end
+
       @silencers.any? do |s|
         !s.call(trace_line)
       end
