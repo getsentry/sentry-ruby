@@ -50,7 +50,7 @@ module Raven
   #
   # Inspired by the Quiet Backtrace gem by Thoughtbot.
   class BacktraceCleaner
-    APP_DIRS_PATTERN = /^\/?(app|config|lib|test)/
+    APP_DIRS_PATTERN = /^\/?(bin|app|config|lib|test)/
     RENDER_TEMPLATE_PATTERN = /:in `_render_template_\w*'/
 
     def initialize
