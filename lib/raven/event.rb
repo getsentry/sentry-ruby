@@ -108,7 +108,7 @@ module Raven
       end
       new(options) do |evt|
         evt.message = "#{exc.class.to_s}: #{exc.message}"
-        evt.level = :error
+        evt.level = options[:level] || :error
         evt.parse_exception(exc)
         if (exc.backtrace)
           evt.interface :stack_trace do |int|
@@ -134,7 +134,7 @@ module Raven
     def self.capture_message(message, options={})
       new(options) do |evt|
         evt.message = message
-        evt.level = :error
+        evt.level = options[:level] || :error
         evt.interface :message do |int|
           int.message = message
         end
