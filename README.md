@@ -83,7 +83,7 @@ end
 
 ## Capturing Events
 
-Many implementations will automatically capture uncaught exceptions (such as Rails, or by using
+Many implementations will automatically capture uncaught exceptions (such as Rails, Sidekiq or by using
 the Rack middleware). Sometimes you may want to catch those exceptions, but still report on them.
 
 Several helps are available to assist with this.

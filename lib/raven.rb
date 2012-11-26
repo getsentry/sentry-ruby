@@ -11,6 +11,8 @@ require 'raven/interfaces/http'
 require 'raven/processors/sanitizedata'
 
 require 'raven/railtie' if defined?(Rails::Railtie)
+require 'raven/sidekiq' if defined?(Sidekiq)
+
 
 module Raven
   class << self
