@@ -18,6 +18,22 @@ module Raven
   #
   # Use a standard Raven.configure call to configure your server credentials.
   class Rack
+    def self.capture_exception(exception, env, options = {})
+      Raven.capture_exception(exception, options) do |evt|
+        evt.interface :http do |int|
+          int.from_rack(env)
+        end
+      end
+    end
+
+    def self.capture_message(message, env, options = {})
+      Raven.capture_message(message, options) do |evt|
+        evt.interface :http do |int|
+          int.from_rack(env)
+        end
+      end
+    end
+
     def initialize(app)
       @app = app
     end
@@ -28,14 +44,12 @@ module Raven
       rescue Error => e
         raise # Don't capture Raven errors
       rescue Exception => e
-        evt = Event.capture_rack_exception(e, env)
-        Raven.send(evt)
+        Raven::Rack.capture_exception(e, env)
         raise
       end
 
       if env['rack.exception']
-        evt = Event.capture_rack_exception(env['rack.exception'], env)
-        Raven.send(evt) if evt
+        Raven::Rack.capture_exception(env['rack.exception'], env)
       end
 
       response

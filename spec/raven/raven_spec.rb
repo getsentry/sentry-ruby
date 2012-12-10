@@ -2,31 +2,42 @@ require File::expand_path('../../spec_helper', __FILE__)
 require 'raven'
 
 describe Raven do
+  let(:event) { double("event") }
+  let(:options) { double("options") }
+
   before do
-    @send = double("send")
-    @event = double("event")
-    Raven.stub(:send) { @send }
-    Raven::Event.stub(:capture_message) { @event }
-    Raven::Event.stub(:capture_exception) { @event }
+    Raven.stub(:send)
+    Raven::Event.stub(:capture_message) { event }
+    Raven::Event.stub(:capture_exception) { event }
   end
 
-  it 'captureMessage should send result of Event.capture_message' do
-    message = "Test message"
-    options = {}
+  describe '#capture_message' do
+    let(:message) { "Test message" }
 
-    Raven::Event.should_receive(:capture_message).with(message, options)
-    Raven.should_receive(:send).with(@event)
+    it 'sends the result of Event.capture_message' do
+      Raven::Event.should_receive(:capture_message).with(message, options)
+      Raven.should_receive(:send).with(event)
 
-    Raven.captureMessage(message, options)
+      Raven.capture_message(message, options)
+    end
+
+    it 'yields the event to a passed block' do
+      expect { |b| Raven.capture_message(message, options, &b) }.to yield_with_args(event)
+    end
   end
 
-  it 'captureException should send result of Event.capture_exception' do
-    exception = build_exception()
-    options   = {}
+  describe '#capture_exception' do
+    let(:exception) { build_exception }
 
-    Raven::Event.should_receive(:capture_exception).with(exception, options)
-    Raven.should_receive(:send).with(@event)
+    it 'sends the result of Event.capture_exception' do
+      Raven::Event.should_receive(:capture_exception).with(exception, options)
+      Raven.should_receive(:send).with(event)
 
-    Raven.captureException(exception)
+      Raven.capture_exception(exception, options)
+    end
+
+    it 'yields the event to a passed block' do
+      expect { |b| Raven.capture_exception(exception, options, &b) }.to yield_with_args(event)
+    end
   end
 end
