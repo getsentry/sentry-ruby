@@ -1,14 +1,20 @@
 module Raven
   class Configuration
 
-    # Base URL of the Sentry server
-    attr_accessor :server
+    # Simple server string (setter provided below)
+    attr_reader :server
 
     # Public key for authentication with the Sentry server
     attr_accessor :public_key
 
     # Secret key for authentication with the Sentry server
     attr_accessor :secret_key
+
+    # Accessors for the component parts of the DSN
+    attr_accessor :scheme
+    attr_accessor :host
+    attr_accessor :port
+    attr_accessor :path
 
     # Project ID number to send to the Sentry server
     attr_accessor :project_id
@@ -51,18 +57,24 @@ module Raven
 
     def server=(value)
       uri = URI::parse(value)
+      uri_path = uri.path.split('/')
+
       if uri.user
         # DSN-style string
-        uri_path = uri.path.split('/')
         @project_id = uri_path.pop
-        @server = "#{uri.scheme}://#{uri.host}"
-        @server << ":#{uri.port}" unless uri.port == {'http'=>80,'https'=>443}[uri.scheme]
-        @server << uri_path.join('/')
         @public_key = uri.user
         @secret_key = uri.password
-      else
-        @server = value
       end
+
+      @scheme = uri.scheme
+      @host = uri.host
+      @port = uri.port if uri.port
+      @path = uri_path.join('/')
+
+      # For anyone who wants to read the base server string
+      @server = "#{@scheme}://#{@host}"
+      @server << ":#{@port}" unless @port == {'http'=>80,'https'=>443}[@scheme]
+      @server << @path
     end
 
     alias_method :dsn=, :server=
