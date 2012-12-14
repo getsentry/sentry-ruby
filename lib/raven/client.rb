@@ -1,5 +1,7 @@
 require 'openssl'
 require 'multi_json'
+require 'zlib'
+require 'base64'
 
 require 'raven/version'
 require 'raven/transports/http'
@@ -17,6 +19,31 @@ module Raven
 
     def initialize(configuration)
       @configuration = configuration
+    end
+
+    def send(event)
+      return unless configuration.send_in_current_environment?
+
+      # Set the project ID correctly
+      event.project = self.configuration[:project_id]
+      Raven.logger.debug "Sending event #{event.id} to Sentry"
+      content_type, encoded_data = encode(event)
+      transport.send(generate_auth_header(encoded_data), encoded_data,
+                     content_type: content_type)
+    end
+
+  private
+
+    def encode(event)
+      encoded = MultiJson.encode(event.to_hash)
+      case self.configuration.encoding
+      when 'gzip'
+        gzipped = Zlib::Deflate.deflate(encoded)
+        b64_encoded = Base64.strict_encode64(gzipped)
+        return 'application/octet-stream', b64_encoded
+      else
+        return 'application/json', encoded
+      end
     end
 
     def transport
@@ -44,23 +71,6 @@ module Raven
         'sentry_signature' => generate_signature(now, data)
       }
       'Sentry ' + fields.map{|key, value| "#{key}=#{value}"}.join(', ')
-    end
-
-    def send(event)
-      return unless configuration.send_in_current_environment?
-
-      # Set the project ID correctly
-      event.project = self.configuration[:project_id]
-      Raven.logger.debug "Sending event #{event.id} to Sentry"
-      encoded_data = encode(event)
-      self.transport.send(self.generate_auth_header(encoded_data), encoded_data,
-                          content_type: CONTENT_TYPE)
-    end
-
-  private
-
-    def encode(event)
-      MultiJson.encode(event.to_hash)
     end
 
   end

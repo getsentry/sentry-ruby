@@ -19,6 +19,9 @@ module Raven
     # Project ID number to send to the Sentry server
     attr_accessor :project_id
 
+    # Encoding type for event bodies
+    attr_reader :encoding
+
     # Logger to use internally
     attr_accessor :logger
 
@@ -53,6 +56,7 @@ module Raven
       self.send_modules = true
       self.excluded_exceptions = []
       self.processors = [Raven::Processor::SanitizeData]
+      self.encoding = 'json'
     end
 
     def server=(value)
@@ -75,6 +79,11 @@ module Raven
       @server = "#{@scheme}://#{@host}"
       @server << ":#{@port}" unless @port == {'http'=>80,'https'=>443}[@scheme]
       @server << @path
+    end
+
+    def encoding=(encoding)
+      raise Error.new('Unsupported encoding') unless ['gzip', 'json'].include? encoding
+      @encoding = encoding
     end
 
     alias_method :dsn=, :server=
