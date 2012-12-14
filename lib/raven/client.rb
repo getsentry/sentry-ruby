@@ -1,10 +1,8 @@
 require 'openssl'
-require 'uri'
 require 'multi_json'
-require 'faraday'
 
 require 'raven/version'
-require 'raven/error'
+require 'raven/transports/http'
 
 module Raven
 
@@ -12,7 +10,7 @@ module Raven
 
     PROTOCOL_VERSION = '2.0'
     USER_AGENT = "raven-ruby/#{Raven::VERSION}"
-    AUTH_HEADER_KEY = 'X-Sentry-Auth'
+    CONTENT_TYPE = 'application/json'
 
     attr_accessor :configuration
 
@@ -20,22 +18,9 @@ module Raven
       @configuration = configuration
     end
 
-    def conn
-      # Error checking
-      raise Error.new('No server specified') unless self.configuration[:server]
-      raise Error.new('No public key specified') unless self.configuration[:public_key]
-      raise Error.new('No secret key specified') unless self.configuration[:secret_key]
-      raise Error.new('No project ID specified') unless self.configuration[:project_id]
-
-      Raven.logger.debug "Raven client connecting to #{self.configuration[:server]}"
-
-      @conn ||=  Faraday.new(:url => self.configuration[:server]) do |builder|
-        builder.adapter  Faraday.default_adapter
-        builder.options[:timeout] = self.configuration.timeout if self.configuration.timeout
-        builder.options[:open_timeout] = self.configuration.open_timeout if self.configuration.open_timeout
-      end
+    def transport
+      @transport ||= Transport::HTTP.new self.configuration
     end
-
 
     def generate_signature(timestamp, data)
       OpenSSL::HMAC.hexdigest(OpenSSL::Digest::Digest.new('sha1'), self.configuration[:secret_key], "#{timestamp} #{data}")
@@ -59,13 +44,15 @@ module Raven
       # Set the project ID correctly
       event.project = self.configuration[:project_id]
       Raven.logger.debug "Sending event #{event.id} to Sentry"
-      response = self.conn.post '/api/store/' do |req|
-        req.headers['Content-Type'] = 'application/json'
-        req.body = MultiJson.encode(event.to_hash)
-        req.headers[AUTH_HEADER_KEY] = self.generate_auth_header(req.body)
-      end
-      raise Error.new("Error from Sentry server (#{response.status}): #{response.body}") unless response.status == 200
-      response
+      encoded_data = encode(event)
+      self.transport.send(self.generate_auth_header(encoded_data), encoded_data,
+                          content_type: CONTENT_TYPE)
+    end
+
+  private
+
+    def encode(event)
+      MultiJson.encode(event.to_hash)
     end
 
   end
