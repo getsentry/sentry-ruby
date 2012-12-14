@@ -3,6 +3,7 @@ require 'multi_json'
 
 require 'raven/version'
 require 'raven/transports/http'
+require 'raven/transports/udp'
 
 module Raven
 
@@ -19,7 +20,14 @@ module Raven
     end
 
     def transport
-      @transport ||= Transport::HTTP.new self.configuration
+      @transport ||= case self.configuration.scheme
+        when 'udp'
+          Transport::UDP.new self.configuration
+        when 'http', 'https'
+          Transport::HTTP.new self.configuration
+        else
+          raise "Unknown transport scheme '#{self.configuration.scheme}'"
+        end
     end
 
     def generate_signature(timestamp, data)
