@@ -1,20 +1,18 @@
 require 'faraday'
 
-require 'raven/transport'
+require 'raven/transports'
 require 'raven/error'
 
 module Raven
 
-  module Transport
+  module Transports
 
     class HTTP < Transport
-
-      AUTH_HEADER_KEY = 'X-Sentry-Auth'
 
       def send(auth_header, data, options = {})
         response = conn.post '/api/store/' do |req|
           req.headers['Content-Type'] = options[:content_type]
-          req.headers[AUTH_HEADER_KEY] = auth_header
+          req.headers['X-Sentry-Auth'] = auth_header
           req.body = data
         end
         raise Error.new("Error from Sentry server (#{response.status}): #{response.body}") unless response.status == 200

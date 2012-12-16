@@ -25,11 +25,11 @@ module Raven
       return unless configuration.send_in_current_environment?
 
       # Set the project ID correctly
-      event.project = self.configuration[:project_id]
+      event.project = self.configuration.project_id
       Raven.logger.debug "Sending event #{event.id} to Sentry"
       content_type, encoded_data = encode(event)
       transport.send(generate_auth_header(encoded_data), encoded_data,
-                     content_type: content_type)
+                     :content_type => content_type)
     end
 
   private
@@ -49,16 +49,16 @@ module Raven
     def transport
       @transport ||= case self.configuration.scheme
         when 'udp'
-          Transport::UDP.new self.configuration
+          Transports::UDP.new self.configuration
         when 'http', 'https'
-          Transport::HTTP.new self.configuration
+          Transports::HTTP.new self.configuration
         else
-          raise "Unknown transport scheme '#{self.configuration.scheme}'"
+          raise Error.new("Unknown transport scheme '#{self.configuration.scheme}'")
         end
     end
 
     def generate_signature(timestamp, data)
-      OpenSSL::HMAC.hexdigest(OpenSSL::Digest::Digest.new('sha1'), self.configuration[:secret_key], "#{timestamp} #{data}")
+      OpenSSL::HMAC.hexdigest(OpenSSL::Digest::Digest.new('sha1'), self.configuration.secret_key, "#{timestamp} #{data}")
     end
 
     def generate_auth_header(data)
@@ -67,7 +67,7 @@ module Raven
         'sentry_version' => PROTOCOL_VERSION,
         'sentry_client' => USER_AGENT,
         'sentry_timestamp' => now,
-        'sentry_key' => self.configuration[:public_key],
+        'sentry_key' => self.configuration.public_key,
         'sentry_signature' => generate_signature(now, data)
       }
       'Sentry ' + fields.map{|key, value| "#{key}=#{value}"}.join(', ')

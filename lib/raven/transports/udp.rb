@@ -1,24 +1,25 @@
 require 'socket'
 
-require 'raven/transport'
+require 'raven/transports'
 require 'raven/error'
 
 module Raven
 
-  module Transport
+  module Transports
 
     class UDP < Transport
 
       def send(auth_header, data, options = {})
-        payload = auth_header + "\n\n" + data
-        conn.send payload, 0
+        conn.send "#{auth_header}\n\n#{data}", 0
       end
 
     private
 
       def conn
-        @conn ||= UDPSocket.new.tap do |sock|
+        @conn ||= begin
+          sock = UDPSocket.new
           sock.connect(self.configuration.host, self.configuration.port)
+          sock
         end
       end
 
