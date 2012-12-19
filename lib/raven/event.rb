@@ -97,6 +97,7 @@ module Raven
 
     def self.capture_exception(exc, options={}, &block)
       configuration = options[:configuration] || Raven.configuration
+      cleaner = configuration.backtrace_cleaner || Raven::BacktraceCleaner.new
       if exc.is_a?(Raven::Error)
         # Try to prevent error reporting loops
         Raven.logger.info "Refusing to capture Raven error: #{exc.inspect}"
@@ -112,7 +113,7 @@ module Raven
         evt.parse_exception(exc)
         if (exc.backtrace)
           evt.interface :stack_trace do |int|
-            int.frames = Raven::BacktraceCleaner.new.clean(exc.backtrace).map do |trace_line, in_app|
+            int.frames = cleaner.clean(exc.backtrace).map do |trace_line, in_app|
               int.frame { |frame| evt.parse_backtrace_line(trace_line, frame, in_app) }
             end
             evt.culprit = evt.get_culprit(int.frames)
