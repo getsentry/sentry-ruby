@@ -102,7 +102,7 @@ module Raven
         Raven.logger.info "Refusing to capture Raven error: #{exc.inspect}"
         return nil
       end
-      if configuration[:excluded_exceptions].include? exc.class.name
+      if configuration[:excluded_exceptions].any? { |x| x === exc || x == exc.class.name }
         Raven.logger.info "User excluded error: #{exc.inspect}"
         return nil
       end
