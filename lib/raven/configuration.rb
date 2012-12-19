@@ -31,6 +31,9 @@ module Raven
     # Processors to run on data before sending upstream
     attr_accessor :processors
 
+    # The default backtrace cleaner to use
+    attr_accessor :backtrace_cleaner
+
     attr_reader :current_environment
 
     def initialize
