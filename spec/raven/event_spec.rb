@@ -118,6 +118,28 @@ describe Raven::Event do
       end
     end
 
+    context 'for an excluded exception type' do
+      it 'returns nil for a string match' do
+        config = Raven::Configuration.new
+        config.excluded_exceptions << 'RuntimeError'
+        Raven::Event.capture_exception(RuntimeError.new,
+                                       configuration: config).should be_nil
+      end
+
+      it 'returns nil for a class match' do
+        module Raven::Test
+          class BaseExc < Exception; end
+          class SubExc < BaseExc; end
+        end
+
+        config = Raven::Configuration.new
+        config.excluded_exceptions << Raven::Test::BaseExc
+
+        Raven::Event.capture_exception(Raven::Test::SubExc.new,
+                                       configuration: config).should be_nil
+      end
+    end
+
     context 'when the exception has a backtrace' do
       let(:exception) do
         e = Exception.new(message)
