@@ -4,7 +4,6 @@ require 'uuidtools'
 
 require 'raven/error'
 require 'raven/linecache'
-require 'raven/backtrace_cleaner'
 
 module Raven
 
@@ -106,14 +105,27 @@ module Raven
         Raven.logger.info "User excluded error: #{exc.inspect}"
         return nil
       end
+
+      context_lines = configuration[:context_lines]
+
       new(options) do |evt|
         evt.message = "#{exc.class.to_s}: #{exc.message}"
         evt.level = options[:level] || :error
         evt.parse_exception(exc)
         if (exc.backtrace)
           evt.interface :stack_trace do |int|
-            int.frames = Raven::BacktraceCleaner.new.clean(exc.backtrace).map do |trace_line, in_app|
-              int.frame { |frame| evt.parse_backtrace_line(trace_line, frame, in_app) }
+            backtrace = Backtrace.parse(exc.backtrace)
+            int.frames = backtrace.lines.reverse.map do |line|
+              int.frame do |frame|
+                frame.abs_path = line.file
+                frame.function = line.method
+                frame.lineno = line.number
+                frame.in_app = line.in_app
+                if context_lines
+                  frame.pre_context, frame.context_line, frame.post_context = \
+                    evt.get_context(frame.abs_path, frame.lineno, context_lines)
+                end
+              end
             end
             evt.culprit = evt.get_culprit(int.frames)
           end
@@ -141,6 +153,17 @@ module Raven
       end
     end
 
+    # Because linecache can go to hell
+    def self._source_lines(path, from, to)
+    end
+
+    def get_context(filename, lineno, context)
+      lines = (2 * context + 1).times.map do |i|
+        Raven::LineCache::getline(filename, lineno - context + i)
+      end
+      [lines[0..(context-1)], lines[context], lines[(context+1)..-1]]
+    end
+
     def get_culprit(frames)
       lastframe = frames[-1]
       "#{lastframe.filename} in #{lastframe.function}" if lastframe
@@ -154,21 +177,6 @@ module Raven
       end
     end
 
-    def parse_backtrace_line(line, frame, in_app)
-      md = BACKTRACE_RE.match(line)
-      raise Error.new("Unable to parse backtrace line: #{line.inspect}") unless md
-      frame.abs_path = md[1]
-      frame.lineno = md[2].to_i
-      frame.function = md[3] if md[3]
-      frame.filename = strip_load_path_from(frame.abs_path)
-      frame.in_app = in_app
-      if context_lines = @configuration[:context_lines]
-        frame.pre_context, frame.context_line, frame.post_context = \
-          get_context(frame.abs_path, frame.lineno, context_lines)
-      end
-      frame
-    end
-
     # For cross-language compat
     class << self
       alias :captureException :capture_exception
@@ -176,21 +184,5 @@ module Raven
     end
 
     private
-
-    # Because linecache can go to hell
-    def self._source_lines(path, from, to)
-    end
-
-    def get_context(path, line, context)
-      lines = (2 * context + 1).times.map do |i|
-        Raven::LineCache::getline(path, line - context + i)
-      end
-      [lines[0..(context-1)], lines[context], lines[(context+1)..-1]]
-    end
-
-    def strip_load_path_from(path)
-      prefix = $:.select {|s| path.start_with?(s)}.sort_by {|s| s.length}.last
-      prefix ? path[prefix.chomp(File::SEPARATOR).length+1..-1] : path
-    end
   end
 end
