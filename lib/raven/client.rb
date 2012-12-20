@@ -31,6 +31,8 @@ module Raven
 
       @conn ||=  Faraday.new(:url => self.configuration[:server]) do |builder|
         builder.adapter  Faraday.default_adapter
+        builder.options[:timeout] = self.configuration.timeout if self.configuration.timeout
+        builder.options[:open_timeout] = self.configuration.open_timeout if self.configuration.open_timeout
       end
     end
 

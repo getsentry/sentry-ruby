@@ -31,6 +31,12 @@ module Raven
     # Processors to run on data before sending upstream
     attr_accessor :processors
 
+    # Timeout when waiting for the server to return data in seconds
+    attr_accessor :timeout
+
+    # Timeout waiting for the connection to open in seconds
+    attr_accessor :open_timeout
+
     attr_reader :current_environment
 
     def initialize
