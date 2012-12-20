@@ -1,10 +1,11 @@
 require 'openssl'
-require 'uri'
 require 'multi_json'
-require 'faraday'
+require 'zlib'
+require 'base64'
 
 require 'raven/version'
-require 'raven/error'
+require 'raven/transports/http'
+require 'raven/transports/udp'
 
 module Raven
 
@@ -12,7 +13,7 @@ module Raven
 
     PROTOCOL_VERSION = '2.0'
     USER_AGENT = "raven-ruby/#{Raven::VERSION}"
-    AUTH_HEADER_KEY = 'X-Sentry-Auth'
+    CONTENT_TYPE = 'application/json'
 
     attr_accessor :configuration
 
@@ -20,25 +21,44 @@ module Raven
       @configuration = configuration
     end
 
-    def conn
-      # Error checking
-      raise Error.new('No server specified') unless self.configuration[:server]
-      raise Error.new('No public key specified') unless self.configuration[:public_key]
-      raise Error.new('No secret key specified') unless self.configuration[:secret_key]
-      raise Error.new('No project ID specified') unless self.configuration[:project_id]
+    def send(event)
+      return unless configuration.send_in_current_environment?
 
-      Raven.logger.debug "Raven client connecting to #{self.configuration[:server]}"
+      # Set the project ID correctly
+      event.project = self.configuration.project_id
+      Raven.logger.debug "Sending event #{event.id} to Sentry"
+      content_type, encoded_data = encode(event)
+      transport.send(generate_auth_header(encoded_data), encoded_data,
+                     :content_type => content_type)
+    end
 
-      @conn ||=  Faraday.new(:url => self.configuration[:server]) do |builder|
-        builder.adapter  Faraday.default_adapter
-        builder.options[:timeout] = self.configuration.timeout if self.configuration.timeout
-        builder.options[:open_timeout] = self.configuration.open_timeout if self.configuration.open_timeout
+  private
+
+    def encode(event)
+      encoded = MultiJson.encode(event.to_hash)
+      case self.configuration.encoding
+      when 'gzip'
+        gzipped = Zlib::Deflate.deflate(encoded)
+        b64_encoded = Base64.strict_encode64(gzipped)
+        return 'application/octet-stream', b64_encoded
+      else
+        return 'application/json', encoded
       end
     end
 
+    def transport
+      @transport ||= case self.configuration.scheme
+        when 'udp'
+          Transports::UDP.new self.configuration
+        when 'http', 'https'
+          Transports::HTTP.new self.configuration
+        else
+          raise Error.new("Unknown transport scheme '#{self.configuration.scheme}'")
+        end
+    end
 
     def generate_signature(timestamp, data)
-      OpenSSL::HMAC.hexdigest(OpenSSL::Digest::Digest.new('sha1'), self.configuration[:secret_key], "#{timestamp} #{data}")
+      OpenSSL::HMAC.hexdigest(OpenSSL::Digest::Digest.new('sha1'), self.configuration.secret_key, "#{timestamp} #{data}")
     end
 
     def generate_auth_header(data)
@@ -47,25 +67,10 @@ module Raven
         'sentry_version' => PROTOCOL_VERSION,
         'sentry_client' => USER_AGENT,
         'sentry_timestamp' => now,
-        'sentry_key' => self.configuration[:public_key],
+        'sentry_key' => self.configuration.public_key,
         'sentry_signature' => generate_signature(now, data)
       }
       'Sentry ' + fields.map{|key, value| "#{key}=#{value}"}.join(', ')
-    end
-
-    def send(event)
-      return unless configuration.send_in_current_environment?
-
-      # Set the project ID correctly
-      event.project = self.configuration[:project_id]
-      Raven.logger.debug "Sending event #{event.id} to Sentry"
-      response = self.conn.post '/api/store/' do |req|
-        req.headers['Content-Type'] = 'application/json'
-        req.body = MultiJson.encode(event.to_hash)
-        req.headers[AUTH_HEADER_KEY] = self.generate_auth_header(req.body)
-      end
-      raise Error.new("Error from Sentry server (#{response.status}): #{response.body}") unless response.status == 200
-      response
     end
 
   end
