@@ -1,4 +1,5 @@
 require 'raven/version'
+require 'raven/backtrace'
 require 'raven/configuration'
 require 'raven/logger'
 require 'raven/client'

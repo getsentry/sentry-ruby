@@ -39,13 +39,21 @@ module Raven
 
     attr_reader :current_environment
 
+    IGNORE_DEFAULT = ['ActiveRecord::RecordNotFound',
+                      'ActionController::RoutingError',
+                      'ActionController::InvalidAuthenticityToken',
+                      'CGI::Session::CookieStore::TamperedWithCookie',
+                      'ActionController::UnknownAction',
+                      'AbstractController::ActionNotFound',
+                      'Mongoid::Errors::DocumentNotFound']
+
     def initialize
       self.server = ENV['SENTRY_DSN'] if ENV['SENTRY_DSN']
       @context_lines = 3
       self.environments = %w[ production ]
       self.current_environment = ENV['RAILS_ENV'] || ENV['RACK_ENV'] || 'development'
       self.send_modules = true
-      self.excluded_exceptions = []
+      self.excluded_exceptions = IGNORE_DEFAULT
       self.processors = [Raven::Processor::SanitizeData]
     end
 
