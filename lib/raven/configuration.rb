@@ -37,6 +37,9 @@ module Raven
     # Timeout waiting for the connection to open in seconds
     attr_accessor :open_timeout
 
+    # Should the SSL certificate of the server be verified?
+    attr_accessor :ssl_verification
+
     attr_reader :current_environment
 
     IGNORE_DEFAULT = ['ActiveRecord::RecordNotFound',
@@ -55,6 +58,7 @@ module Raven
       self.send_modules = true
       self.excluded_exceptions = IGNORE_DEFAULT
       self.processors = [Raven::Processor::SanitizeData]
+      self.ssl_verification = true
     end
 
     def server=(value)
