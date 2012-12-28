@@ -175,15 +175,18 @@ describe Raven::Event do
             e.stub(:backtrace).and_return([
               "/rails/root/foobar:132:in `new_function'",
               "/app/some/other/path:1412:in `other_function'",
+              "test/some/other/path:1412:in `other_function'",
             ])
             e
           end
 
           it 'marks in_app correctly' do
-            hash['sentry.interfaces.Stacktrace']['frames'][0]['filename'].should eq("/app/some/other/path")
+            hash['sentry.interfaces.Stacktrace']['frames'][0]['filename'].should eq("test/some/other/path")
             hash['sentry.interfaces.Stacktrace']['frames'][0]['in_app'].should eq(true)
-            hash['sentry.interfaces.Stacktrace']['frames'][1]['filename'].should eq("/rails/root/foobar")
-            hash['sentry.interfaces.Stacktrace']['frames'][1]['in_app'].should eq(false)
+            hash['sentry.interfaces.Stacktrace']['frames'][1]['filename'].should eq("/app/some/other/path")
+            hash['sentry.interfaces.Stacktrace']['frames'][1]['in_app'].should eq(true)
+            hash['sentry.interfaces.Stacktrace']['frames'][2]['filename'].should eq("/rails/root/foobar")
+            hash['sentry.interfaces.Stacktrace']['frames'][2]['in_app'].should eq(false)
           end
         end
       end
