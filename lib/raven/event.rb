@@ -20,6 +20,8 @@ module Raven
 
     BACKTRACE_RE = /^(.+?):(\d+)(?::in `(.+?)')?$/
 
+    PLATFORM = "ruby"
+
     attr_reader :id
     attr_accessor :project, :message, :timestamp, :level
     attr_accessor :logger, :culprit, :server_name, :modules, :extra, :tags
@@ -82,6 +84,7 @@ module Raven
         'level' => self.level,
         'project' => self.project,
         'logger' => self.logger,
+        'platform' => PLATFORM,
       }
       data['culprit'] = self.culprit if self.culprit
       data['server_name'] = self.server_name if self.server_name

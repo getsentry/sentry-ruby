@@ -43,6 +43,11 @@ describe Raven::Event do
         'my_custom_variable' => 'value'
       }
     end
+
+    it 'has platform' do
+      hash['platform'].should == 'ruby'
+    end
+
   end
 
   describe '.capture_message' do
