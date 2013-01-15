@@ -12,12 +12,28 @@ describe Raven::Configuration do
       subject[:server].should == 'http://sentry.localdomain/sentry'
     end
 
+    it 'should have a scheme' do
+      subject[:scheme].should == 'http'
+    end
+
     it 'should have a public key' do
       subject[:public_key].should == '12345'
     end
 
     it 'should have a secret key' do
       subject[:secret_key].should == '67890'
+    end
+
+    it 'should have a host' do
+      subject[:host].should == 'sentry.localdomain'
+    end
+
+    it 'should have a port' do
+      subject[:port].should == 80
+    end
+
+    it 'should have a path' do
+      subject[:path].should == '/sentry'
     end
 
     it 'should have a project ID' do
