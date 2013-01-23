@@ -124,7 +124,7 @@ module Raven
                 frame.function = line.method
                 frame.lineno = line.number
                 frame.in_app = line.in_app
-                if context_lines
+                if context_lines and frame.abs_path
                   frame.pre_context, frame.context_line, frame.post_context = \
                     evt.get_context(frame.abs_path, frame.lineno, context_lines)
                 end
