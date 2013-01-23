@@ -40,4 +40,22 @@ describe Raven::Rack do
 
     stack.call(env)
   end
+
+  it 'should capture sinatra errors' do
+    exception = build_exception()
+    env = {}
+
+    Raven::Event.should_receive(:capture_rack_exception).with(exception, env)
+    Raven.should_receive(:send).with(@event)
+
+    app = lambda do |e|
+      e['sinatra.error'] = exception
+      [200, {}, ['okay']]
+    end
+
+    stack = Raven::Rack.new(app)
+
+    stack.call(env)
+  end
+
 end

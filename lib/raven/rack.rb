@@ -33,8 +33,10 @@ module Raven
         raise
       end
 
-      if env['rack.exception']
-        evt = Event.capture_rack_exception(env['rack.exception'], env)
+      error = env['rack.exception'] || env['sinatra.error']
+
+      if error
+        evt = Event.capture_rack_exception(error, env)
         Raven.send(evt) if evt
       end
 
