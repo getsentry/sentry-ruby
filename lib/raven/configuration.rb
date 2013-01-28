@@ -69,6 +69,8 @@ module Raven
       self.processors = [Raven::Processor::SanitizeData]
       self.ssl_verification = true
       self.encoding = 'json'
+      self.timeout = 1
+      self.open_timeout = 1
     end
 
     def server=(value)
