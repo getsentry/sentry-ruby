@@ -118,7 +118,7 @@ module Raven
         if (exc.backtrace)
           evt.interface :stack_trace do |int|
             backtrace = Backtrace.parse(exc.backtrace)
-            int.frames = backtrace.lines.reverse.map do |line|
+            int.frames = backtrace.lines.reverse.map { |line|
               int.frame do |frame|
                 frame.abs_path = line.file
                 frame.function = line.method
@@ -129,7 +129,7 @@ module Raven
                     evt.get_context(frame.abs_path, frame.lineno, context_lines)
                 end
               end
-            end
+            }.select{ |f| f.filename }
             evt.culprit = evt.get_culprit(int.frames)
           end
         end
