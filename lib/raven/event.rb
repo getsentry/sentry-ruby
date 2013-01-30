@@ -183,7 +183,7 @@ module Raven
     end
 
     def get_culprit(frames)
-      lastframe = frames[-1]
+      lastframe = frames.reverse.detect { |f| f.in_app } || frames.last
       "#{lastframe.filename} in #{lastframe.function}" if lastframe
     end
 
