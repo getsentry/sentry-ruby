@@ -30,26 +30,4 @@ describe Raven do
     Raven.captureException(exception)
   end
 
-  describe '#context' do
-    before do
-      Thread.current[:sentry_context] = nil
-    end
- 
-    it 'should bind context to Thread' do
-      Raven.context({ :foo => :bar })
-
-      Thread.current[:sentry_context].should == { :foo => :bar }
-    end
-    
-    describe '#clear!' do
-      it 'should empty the contest' do
-        Thread.current[:sentry_context] = { :foo => :bar }
-        Raven.context.clear!
-
-        Thread.current[:sentry_context].should eq(nil)
-      end
-    end
-
-  end
-
 end

@@ -54,15 +54,10 @@ describe Raven::Event do
 
   end
 
-  context 'a fully filled out Raven#context' do
+  context 'user context specified' do
     let(:hash) {
-      Raven.context({
-        :tags => {
-          'key' => 'value',
-        },
-        :extra => {
-          'other_var' => 'value2'
-        },
+      Raven.user_context({
+        'id' => 'hello',
       })
 
       Raven::Event.new({
@@ -78,22 +73,66 @@ describe Raven::Event do
       }).to_hash()
     }
   
-    it "merges tags with context from Raven#context" do
+    it "add user data" do
+      hash['sentry.interfaces.User'].should == {
+        'id' => 'hello',
+      }
+    end
+  end
+
+  context 'tags context specified' do
+    let(:hash) {
+      Raven.tags_context({
+        'key' => 'value',
+      })
+
+      Raven::Event.new({
+        :level => 'warning',
+        :logger => 'foo',
+        :tags => {
+          'foo' => 'bar'
+        },
+        :extra => {
+          'my_custom_variable' => 'value'
+        },
+        :server_name => 'foo.local',
+      }).to_hash()
+    }
+  
+    it "merges tags data" do
       hash['tags'].should == {
         'key' => 'value',
         'foo' => 'bar',
       }
     end
+  end
 
-    it "merges extra with context from Raven#context" do
+  context 'extra context specified' do
+    let(:hash) {
+      Raven.extra_context({
+        'key' => 'value',
+      })
+
+      Raven::Event.new({
+        :level => 'warning',
+        :logger => 'foo',
+        :tags => {
+          'foo' => 'bar'
+        },
+        :extra => {
+          'my_custom_variable' => 'value'
+        },
+        :server_name => 'foo.local',
+      }).to_hash()
+    }
+  
+    it "merges extra data" do
       hash['extra'].should == {
-        'other_var' => 'value2',
+        'key' => 'value',
         'my_custom_variable' => 'value',
       }
     end
-
   end
-
 
   describe '.capture_message' do
     let(:message) { 'This is a message' }

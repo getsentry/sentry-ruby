@@ -1,9 +1,10 @@
 require 'raven/version'
 require 'raven/backtrace'
 require 'raven/configuration'
-require 'raven/logger'
+require 'raven/context'
 require 'raven/client'
 require 'raven/event'
+require 'raven/logger'
 require 'raven/rack'
 require 'raven/interfaces/message'
 require 'raven/interfaces/exception'
@@ -25,13 +26,15 @@ module Raven
     # values for all Raven configuration options. See Raven::Configuration.
     attr_writer :configuration
 
-    def logger
-      @logger ||= Logger.new
+    # Additional context for events
+    attr_writer :context
+
+    def context
+      @context ||= Context.new
     end
 
-    # Tell the log that the client is good to go
-    def report_ready
-      self.logger.info "Raven #{VERSION} ready to catch errors"
+    def logger
+      @logger ||= Logger.new
     end
 
     # The configuration object.
@@ -43,6 +46,11 @@ module Raven
     # The client object is responsible for delivering formatted data to the Sentry server.
     def client
       @client ||= Client.new(configuration)
+    end
+
+    # Tell the log that the client is good to go
+    def report_ready
+      self.logger.info "Raven #{VERSION} ready to catch errors"
     end
 
     # Call this method to modify defaults in your initializers.
@@ -108,22 +116,16 @@ module Raven
       send(evt) if evt
     end
 
-    # Bind context for any future events
-    #
-    # @example
-    #   Raven.context({
-    #     :tags => {
-    #       'key' => 'value',
-    #     }
-    #   })
-    def context(hash = {})
-      Thread.current[:sentry_context] ||= {}
-      Thread.current[:sentry_context].merge!(hash)
-      self
+    def user_context(options={})
+      self.context.user.merge!(options)
     end
 
-    def clear!
-      Thread.current[:sentry_context] = nil
+    def tags_context(options={})
+      self.context.tags.merge!(options)
+    end
+
+    def extra_context(options={})
+      self.context.extra.merge!(options)
     end
 
     # For cross-language compat

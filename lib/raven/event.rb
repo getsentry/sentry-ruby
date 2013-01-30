@@ -23,27 +23,22 @@ module Raven
     PLATFORM = "ruby"
 
     attr_reader :id
-    attr_accessor :project, :message, :timestamp, :level, :context
+    attr_accessor :project, :message, :timestamp, :level
     attr_accessor :logger, :culprit, :server_name, :modules, :extra, :tags
 
     def initialize(options={}, &block)
       @configuration = options[:configuration] || Raven.configuration
       @interfaces = {}
 
-      @context = Thread.current[:sentry_context] || {}
+      context = options[:context] || Raven.context
 
       @id = options[:id] || UUIDTools::UUID.random_create.hexdigest
       @message = options[:message]
       @timestamp = options[:timestamp] || Time.now.utc
 
-      @level = options[:level]
-      @logger = options[:logger]
+      @level = options[:level] || :error
+      @logger = options[:logger] || 'root'
       @culprit = options[:culprit]
-
-      @extra = options[:extra] || {}
-      @tags = options[:tags] || {}
-
-      # Try to resolve the hostname to an FQDN, but fall back to whatever the load name is
       @server_name = options[:server_name] || get_hostname
 
       if @configuration.send_modules
@@ -51,15 +46,16 @@ module Raven
       end
       @modules = options[:modules]
 
+      @user = options[:user] || {}
+      @user.merge!(context.user)
+
+      @extra = options[:extra] || {}
+      @extra.merge!(context.extra)
+
+      @tags = options[:tags] || {}
+      @tags.merge!(context.tags)
+
       block.call(self) if block
-
-      # Merge in context
-      @level ||= @context[:level] || :error
-      @logger ||= @context[:logger] || 'root'
-      @culprit ||= @context[:culprit]
-
-      @tags.merge!(@context[:tags]) if @context[:tags]
-      @extra.merge!(@context[:extra]) if @context[:extra]
 
       # Some type coercion
       @timestamp = @timestamp.strftime('%Y-%m-%dT%H:%M:%S') if @timestamp.is_a?(Time)
@@ -67,6 +63,7 @@ module Raven
     end
 
     def get_hostname
+      # Try to resolve the hostname to an FQDN, but fall back to whatever the load name is
       hostname = Socket.gethostname
       hostname = Socket.gethostbyname(hostname).first rescue hostname
     end
@@ -93,19 +90,20 @@ module Raven
 
     def to_hash
       data = {
-        'event_id' => self.id,
-        'message' => self.message,
-        'timestamp' => self.timestamp,
-        'level' => self.level,
-        'project' => self.project,
-        'logger' => self.logger,
+        'event_id' => @id,
+        'message' => @message,
+        'timestamp' => @timestamp,
+        'level' => @level,
+        'project' => @project,
+        'logger' => @logger,
         'platform' => PLATFORM,
       }
-      data['culprit'] = self.culprit if self.culprit
-      data['server_name'] = self.server_name if self.server_name
-      data['modules'] = self.modules if self.modules
-      data['extra'] = self.extra if self.extra
-      data['tags'] = self.tags if self.tags
+      data['culprit'] = @culprit if @culprit
+      data['server_name'] = @server_name if @server_name
+      data['modules'] = @modules if @modules
+      data['extra'] = @extra if @extra
+      data['tags'] = @tags if @tags
+      data['sentry.interfaces.User'] = @user if @user
       @interfaces.each_pair do |name, int_data|
         data[name] = int_data.to_hash
       end
