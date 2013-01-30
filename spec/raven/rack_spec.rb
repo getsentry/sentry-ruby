@@ -58,4 +58,15 @@ describe Raven::Rack do
     stack.call(env)
   end
 
+  it 'should clear context after app is called' do
+    Thread.current[:sentry_context] = { :foo => :bar }
+
+    app = lambda { |env| ['response', {}, env] }
+    stack = Raven::Rack.new(app)
+
+    response = stack.call({})
+
+    Thread.current[:sentry_context].should eq(nil)
+  end
+
 end

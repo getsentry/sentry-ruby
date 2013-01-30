@@ -23,42 +23,57 @@ module Raven
     PLATFORM = "ruby"
 
     attr_reader :id
-    attr_accessor :project, :message, :timestamp, :level
+    attr_accessor :project, :message, :timestamp, :level, :context
     attr_accessor :logger, :culprit, :server_name, :modules, :extra, :tags
 
     def initialize(options={}, &block)
       @configuration = options[:configuration] || Raven.configuration
       @interfaces = {}
 
+      @context = Thread.current[:sentry_context] || {}
+
       @id = options[:id] || UUIDTools::UUID.random_create.hexdigest
       @message = options[:message]
       @timestamp = options[:timestamp] || Time.now.utc
-      @level = options[:level] || :error
-      @logger = options[:logger] || 'root'
+
+      @level = options[:level]
+      @logger = options[:logger]
       @culprit = options[:culprit]
-      @extra = options[:extra]
-      @tags = options[:tags]
+
+      @extra = options[:extra] || {}
+      @tags = options[:tags] || {}
 
       # Try to resolve the hostname to an FQDN, but fall back to whatever the load name is
-      hostname = Socket.gethostname
-      hostname = Socket.gethostbyname(hostname).first rescue hostname
-      @server_name = options[:server_name] || hostname
+      @server_name = options[:server_name] || get_hostname
 
-      # Older versions of Rubygems don't support iterating over all specs
-      if @configuration.send_modules && Gem::Specification.respond_to?(:map)
-        options[:modules] ||= Hash[Gem::Specification.map {|spec| [spec.name, spec.version.to_s]}]
+      if @configuration.send_modules
+        options[:modules] ||= get_modules
       end
       @modules = options[:modules]
 
       block.call(self) if block
 
+      # Merge in context
+      @level ||= @context[:level] || :error
+      @logger ||= @context[:logger] || 'root'
+      @culprit ||= @context[:culprit]
+
+      @tags.merge!(@context[:tags]) if @context[:tags]
+      @extra.merge!(@context[:extra]) if @context[:extra]
+
       # Some type coercion
       @timestamp = @timestamp.strftime('%Y-%m-%dT%H:%M:%S') if @timestamp.is_a?(Time)
       @level = LOG_LEVELS[@level.to_s.downcase] if @level.is_a?(String) || @level.is_a?(Symbol)
+    end
 
-      # Basic sanity checking
-      raise Error.new('A message is required for all events') unless @message && !@message.empty?
-      raise Error.new('A timestamp is required for all events') unless @timestamp
+    def get_hostname
+      hostname = Socket.gethostname
+      hostname = Socket.gethostbyname(hostname).first rescue hostname
+    end
+
+    def get_modules
+      # Older versions of Rubygems don't support iterating over all specs
+      Hash[Gem::Specification.map {|spec| [spec.name, spec.version.to_s]}] if Gem::Specification.respond_to?(:map)
     end
 
     def interface(name, value=nil, &block)
@@ -126,7 +141,7 @@ module Raven
                 frame.in_app = line.in_app
                 if context_lines and frame.abs_path
                   frame.pre_context, frame.context_line, frame.post_context = \
-                    evt.get_context(frame.abs_path, frame.lineno, context_lines)
+                    evt.get_file_context(frame.abs_path, frame.lineno, context_lines)
                 end
               end
             }.select{ |f| f.filename }
@@ -160,7 +175,7 @@ module Raven
     def self._source_lines(path, from, to)
     end
 
-    def get_context(filename, lineno, context)
+    def get_file_context(filename, lineno, context)
       lines = (2 * context + 1).times.map do |i|
         Raven::LineCache::getline(filename, lineno - context + i)
       end

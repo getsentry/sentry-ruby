@@ -2,6 +2,10 @@ require File::expand_path('../../spec_helper', __FILE__)
 require 'raven'
 
 describe Raven::Event do
+  before do
+    Raven.context.clear!
+  end
+
   context 'a fully implemented event' do
     let(:hash) { Raven::Event.new({
         :message => 'test',
@@ -49,6 +53,47 @@ describe Raven::Event do
     end
 
   end
+
+  context 'a fully filled out Raven#context' do
+    let(:hash) {
+      Raven.context({
+        :tags => {
+          'key' => 'value',
+        },
+        :extra => {
+          'other_var' => 'value2'
+        },
+      })
+
+      Raven::Event.new({
+        :level => 'warning',
+        :logger => 'foo',
+        :tags => {
+          'foo' => 'bar'
+        },
+        :extra => {
+          'my_custom_variable' => 'value'
+        },
+        :server_name => 'foo.local',
+      }).to_hash()
+    }
+  
+    it "merges tags with context from Raven#context" do
+      hash['tags'].should == {
+        'key' => 'value',
+        'foo' => 'bar',
+      }
+    end
+
+    it "merges extra with context from Raven#context" do
+      hash['extra'].should == {
+        'other_var' => 'value2',
+        'my_custom_variable' => 'value',
+      }
+    end
+
+  end
+
 
   describe '.capture_message' do
     let(:message) { 'This is a message' }

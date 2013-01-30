@@ -10,7 +10,7 @@ describe Raven do
     Raven::Event.stub(:capture_exception) { @event }
   end
 
-  it 'captureMessage should send result of Event.capture_message' do
+  it 'captureMessage should send result of Event#capture_message' do
     message = "Test message"
     options = {}
 
@@ -20,7 +20,7 @@ describe Raven do
     Raven.captureMessage(message, options)
   end
 
-  it 'captureException should send result of Event.capture_exception' do
+  it 'captureException should send result of Event#capture_exception' do
     exception = build_exception()
     options   = {}
 
@@ -29,4 +29,27 @@ describe Raven do
 
     Raven.captureException(exception)
   end
+
+  describe '#context' do
+    before do
+      Thread.current[:sentry_context] = nil
+    end
+ 
+    it 'should bind context to Thread' do
+      Raven.context({ :foo => :bar })
+
+      Thread.current[:sentry_context].should == { :foo => :bar }
+    end
+    
+    describe '#clear!' do
+      it 'should empty the contest' do
+        Thread.current[:sentry_context] = { :foo => :bar }
+        Raven.context.clear!
+
+        Thread.current[:sentry_context].should eq(nil)
+      end
+    end
+
+  end
+
 end

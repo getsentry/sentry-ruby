@@ -31,6 +31,8 @@ module Raven
         evt = Event.capture_rack_exception(e, env)
         Raven.send(evt)
         raise
+      ensure
+        Raven.context.clear!
       end
 
       error = env['rack.exception'] || env['sinatra.error']

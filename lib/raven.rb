@@ -108,6 +108,24 @@ module Raven
       send(evt) if evt
     end
 
+    # Bind context for any future events
+    #
+    # @example
+    #   Raven.context({
+    #     :tags => {
+    #       'key' => 'value',
+    #     }
+    #   })
+    def context(hash = {})
+      Thread.current[:sentry_context] ||= {}
+      Thread.current[:sentry_context].merge!(hash)
+      self
+    end
+
+    def clear!
+      Thread.current[:sentry_context] = nil
+    end
+
     # For cross-language compat
     alias :captureException :capture_exception
     alias :captureMessage :capture_message
