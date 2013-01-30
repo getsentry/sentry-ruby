@@ -1,4 +1,3 @@
-require 'openssl'
 require 'multi_json'
 require 'zlib'
 require 'base64'
@@ -11,7 +10,7 @@ module Raven
 
   class Client
 
-    PROTOCOL_VERSION = '2.0'
+    PROTOCOL_VERSION = '3.0'
     USER_AGENT = "raven-ruby/#{Raven::VERSION}"
     CONTENT_TYPE = 'application/json'
 
@@ -57,10 +56,6 @@ module Raven
         end
     end
 
-    def generate_signature(timestamp, data)
-      OpenSSL::HMAC.hexdigest(OpenSSL::Digest::Digest.new('sha1'), self.configuration.secret_key, "#{timestamp} #{data}")
-    end
-
     def generate_auth_header(data)
       now = Time.now.to_i.to_s
       fields = {
@@ -68,7 +63,7 @@ module Raven
         'sentry_client' => USER_AGENT,
         'sentry_timestamp' => now,
         'sentry_key' => self.configuration.public_key,
-        'sentry_signature' => generate_signature(now, data)
+        'sentry_secret' => self.configuration.secret_key,
       }
       'Sentry ' + fields.map{|key, value| "#{key}=#{value}"}.join(', ')
     end
