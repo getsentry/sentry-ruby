@@ -19,7 +19,7 @@ module Raven
   class << self
     # The client object is responsible for delivering formatted data to the Sentry server.
     # Must respond to #send. See Raven::Client.
-    attr_accessor :client
+    attr_writer :client
 
     # A Raven configuration object. Must act like a hash and return sensible
     # values for all Raven configuration options. See Raven::Configuration.
@@ -40,6 +40,11 @@ module Raven
       @configuration ||= Configuration.new
     end
 
+    # The client object is responsible for delivering formatted data to the Sentry server.
+    def client
+      @client ||= Client.new(configuration)
+    end
+
     # Call this method to modify defaults in your initializers.
     #
     # @example
@@ -47,7 +52,10 @@ module Raven
     #     config.server = 'http://...'
     #   end
     def configure(silent = false)
-      yield(configuration)
+      if block_given?
+        yield(configuration)
+      end
+
       self.client = Client.new(configuration)
       report_ready unless silent
       self.client
@@ -59,7 +67,7 @@ module Raven
     #   evt = Raven::Event.new(:message => "An error")
     #   Raven.send(evt)
     def send(evt)
-      @client.send(evt) if @client
+      client.send(evt)
     end
 
     # Capture and process any exceptions from the given block, or globally if
