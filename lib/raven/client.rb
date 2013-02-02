@@ -10,7 +10,7 @@ module Raven
 
   class Client
 
-    PROTOCOL_VERSION = '3.0'
+    PROTOCOL_VERSION = '3'
     USER_AGENT = "raven-ruby/#{Raven::VERSION}"
     CONTENT_TYPE = 'application/json'
 
