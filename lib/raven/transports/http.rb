@@ -30,11 +30,15 @@ module Raven
             :url => self.configuration[:server],
             :ssl => {:verify => self.configuration.ssl_verification}
           ) do |builder|
-            builder.adapter Faraday.default_adapter
+            builder.adapter(*adapter)
             builder.options[:timeout] = self.configuration.timeout if self.configuration.timeout
             builder.options[:open_timeout] = self.configuration.open_timeout if self.configuration.open_timeout
           end
         end
+      end
+
+      def adapter
+        configuration.http_adapter || Faraday.default_adapter
       end
 
     end
