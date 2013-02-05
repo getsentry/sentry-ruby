@@ -116,14 +116,34 @@ module Raven
       send(evt) if evt
     end
 
+    # Bind user context. Merges with existing context (if any).
+    #
+    # It is recommending that you send at least the ``id`` and ``email``
+    # values. All other values are arbitrary.
+    #
+    # @example
+    #   Raven.user_context('id' => 1, 'email' => 'foo@example.com')
     def user_context(options={})
       self.context.user.merge!(options)
     end
 
+    # Bind tags context. Merges with existing context (if any).
+    #
+    # Tags are key / value pairs which generally represent things like application version,
+    # environment, role, and server names.
+    #
+    # @example
+    #   Raven.tags_context('my_custom_tag' => 'tag_value')
     def tags_context(options={})
       self.context.tags.merge!(options)
     end
 
+    # Bind extra context. Merges with existing context (if any).
+    #
+    # Extra context shows up as Additional Data within Sentry, and is completely arbitrary.
+    #
+    # @example
+    #   Raven.tags_context('my_custom_data' => 'value')
     def extra_context(options={})
       self.context.extra.merge!(options)
     end
