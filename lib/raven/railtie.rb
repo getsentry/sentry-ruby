@@ -10,6 +10,7 @@ module Raven
     config.after_initialize do
       Raven.configure(true) do |config|
         config.logger ||= ::Rails.logger
+        config.project_root ||= ::Rails.root
       end
 
       if defined?(::ActionDispatch::DebugExceptions)

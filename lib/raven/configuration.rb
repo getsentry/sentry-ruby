@@ -19,6 +19,9 @@ module Raven
     # Project ID number to send to the Sentry server
     attr_accessor :project_id
 
+    # Project directory root
+    attr_accessor :project_root
+
     # Encoding type for event bodies
     attr_reader :encoding
 
