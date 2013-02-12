@@ -37,7 +37,7 @@ module Raven
             conn.options[:timeout] = self.configuration.timeout
           end
           if self.configuration.open_timeout
-            conn.options[:open_timeout] = self.configuration.open_timeout 
+            conn.options[:open_timeout] = self.configuration.open_timeout
           end
 
           conn
