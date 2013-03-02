@@ -24,7 +24,7 @@ module Raven
       end
 
       def sanitize(key, value)
-        if !value || value.empty?
+        if !value.is_a?(String) || value.empty?
           value
         elsif VALUES_RE.match(value) or FIELDS_RE.match(key)
           MASK
