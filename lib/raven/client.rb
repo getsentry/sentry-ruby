@@ -39,8 +39,8 @@ module Raven
       hash = event.to_hash
 
       # apply processors
-      for processor in @processors
-        hash = processor.process(hash)
+      hash = @processors.reduce(hash) do |memo, processor|
+        processor.process(memo)
       end
 
       encoded = MultiJson.encode(hash)
