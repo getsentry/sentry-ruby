@@ -18,6 +18,7 @@ module Raven
 
     def initialize(configuration)
       @configuration = configuration
+      @processors = configuration.processors.map { |v| v.new(self) }
     end
 
     def send(event)
@@ -26,6 +27,7 @@ module Raven
       # Set the project ID correctly
       event.project = self.configuration.project_id
       Raven.logger.debug "Sending event #{event.id} to Sentry"
+
       content_type, encoded_data = encode(event)
       transport.send(generate_auth_header(encoded_data), encoded_data,
                      :content_type => content_type)
@@ -34,7 +36,15 @@ module Raven
   private
 
     def encode(event)
-      encoded = MultiJson.encode(event.to_hash)
+      hash = event.to_hash
+
+      # apply processors
+      hash = @processors.reduce(hash) do |memo, processor|
+        processor.process(memo)
+      end
+
+      encoded = MultiJson.encode(hash)
+
       case self.configuration.encoding
       when 'gzip'
         gzipped = Zlib::Deflate.deflate(encoded)
