@@ -1,5 +1,3 @@
-VERSION=
-
 test:
 	bundle install
 	rake spec
