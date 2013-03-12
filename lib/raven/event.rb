@@ -39,7 +39,7 @@ module Raven
       @level = options[:level] || :error
       @logger = options[:logger] || 'root'
       @culprit = options[:culprit]
-      @server_name = options[:server_name] || Raven.configuration.server_name || get_hostname
+      @server_name = options[:server_name] || @configuration.server_name || get_hostname
 
       if @configuration.send_modules
         options[:modules] ||= get_modules
