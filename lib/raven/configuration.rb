@@ -57,6 +57,8 @@ module Raven
     # The Faraday adapter to be used. Will default to Net::HTTP when not set.
     attr_accessor :http_adapter
 
+    attr_accessor :server_name
+
     IGNORE_DEFAULT = ['ActiveRecord::RecordNotFound',
                       'ActionController::RoutingError',
                       'ActionController::InvalidAuthenticityToken',
