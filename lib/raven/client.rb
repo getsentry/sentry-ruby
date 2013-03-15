@@ -29,8 +29,12 @@ module Raven
       Raven.logger.debug "Sending event #{event.id} to Sentry"
 
       content_type, encoded_data = encode(event)
-      transport.send(generate_auth_header(encoded_data), encoded_data,
+      begin
+        transport.send(generate_auth_header(encoded_data), encoded_data,
                      :content_type => content_type)
+      rescue
+        logger.error "Unable to record event with remote Sentry server"
+      end
     end
 
   private
