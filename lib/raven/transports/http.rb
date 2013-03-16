@@ -15,7 +15,7 @@ module Raven
           req.headers['X-Sentry-Auth'] = auth_header
           req.body = data
         end
-        raise Error.new("Error from Sentry server (#{response.status}): #{response.body}") unless response.status == 200
+        Raven.logger.warn "Error from Sentry server (#{response.status}): #{response.body}" unless response.status == 200
       end
 
     private
