@@ -3,7 +3,7 @@ require 'raven'
 
 describe Raven::Event do
   before do
-    Raven.context.clear!
+    Raven::Context.clear!
   end
 
   context 'a fully implemented event' do

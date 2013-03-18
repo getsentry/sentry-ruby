@@ -32,7 +32,7 @@ module Raven
         Raven.send(evt)
         raise
       ensure
-        Raven.context.clear!
+        Context.clear!
       end
 
       error = env['rack.exception'] || env['sinatra.error']
