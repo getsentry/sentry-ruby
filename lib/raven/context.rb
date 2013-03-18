@@ -1,10 +1,10 @@
 module Raven
   class Context
-    def current
+    def self.current
       Thread.current[:sentry_context] ||= new
     end
     
-    def clear!
+    def self.clear!
       Thread.current[:sentry_context] = nil
     end
     

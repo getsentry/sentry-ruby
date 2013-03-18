@@ -26,11 +26,8 @@ module Raven
     # values for all Raven configuration options. See Raven::Configuration.
     attr_writer :configuration
 
-    # Additional context for events
-    attr_writer :context
-
     def context
-      @context ||= Context.new
+      Context.current
     end
 
     def logger
