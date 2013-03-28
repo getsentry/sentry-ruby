@@ -59,6 +59,9 @@ module Raven
 
     attr_accessor :server_name
 
+    # request.env params to include in Environment
+    attr_accessor :extra_request_vars
+
     IGNORE_DEFAULT = ['ActiveRecord::RecordNotFound',
                       'ActionController::RoutingError',
                       'ActionController::InvalidAuthenticityToken',
@@ -79,6 +82,7 @@ module Raven
       self.encoding = 'json'
       self.timeout = 1
       self.open_timeout = 1
+      self.extra_request_vars = []
     end
 
     def server=(value)
