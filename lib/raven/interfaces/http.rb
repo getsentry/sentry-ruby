@@ -26,6 +26,7 @@ module Raven
       self.method = req.request_method
       self.query_string = req.query_string
       env.each_pair do |key, value|
+        self.env[key] = value.to_s if Raven.configuration.extra_request_vars.include? key
         next unless key.upcase == key # Non-upper case stuff isn't either
         if key.start_with?('HTTP_')
           # Header

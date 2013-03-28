@@ -39,6 +39,17 @@ describe Raven::Configuration do
     it 'should have a project ID' do
       subject[:project_id].should == '42'
     end
+
+    it 'should have an empty extra_request_vars array' do
+      subject[:extra_request_vars].should eq []
+    end
+
+    shared_examples 'a request vars configuration' do
+      it 'should have extra_request_vars' do
+        subject[:extra_request_vars].should eq ["rack.session", "action_dispatch.request.params"]
+      end
+    end
+
   end
 
   context 'being initialized with a server string' do
@@ -71,5 +82,13 @@ describe Raven::Configuration do
       Raven::Configuration.new
     end
     it_should_behave_like 'a complete configuration'
+  end
+
+  context 'being initialized with extra_request_vars options' do
+    before do
+      subject.server = 'http://12345:67890@sentry.localdomain/sentry/42'
+      subject.extra_request_vars = %w[ rack.session action_dispatch.request.params ]
+    end
+    it_should_behave_like 'a request vars configuration'
   end
 end
