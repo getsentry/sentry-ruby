@@ -35,11 +35,12 @@ module Raven
       property :lineno, :required => true
       property :in_app
 
-      def initialize(*arguments)
+      def initialize(attributes)
         self.vars = {}
         self.pre_context = []
         self.post_context = []
-        super(*arguments)
+        yield self if block_given?
+        super(attributes)
       end
 
       def filename
