@@ -138,18 +138,18 @@ $ bundle install
 $ rake spec
 ```
 
-## Notifications in development mode
+## Environments
 
-By default events will only be sent to Sentry if your application is running in a production environment. This is configured by default if you are running a Rack application (i.e. anytime `ENV['RACK_ENV']` is set).
+By default events will be sent to Sentry if your application is running in all environments except 'test'.
 
-You can configure Raven to run in non-production environments by configuring the `environments` whitelist:
+You can configure Raven to run only in certain environments by configuring the `environments` whitelist:
 
 ```ruby
 require 'raven'
 
 Raven.configure do |config|
   config.dsn = 'http://public:secret@example.com/project-id'
-  config.environments = %w[ development production ]
+  config.environments = %w[ production ]
 end
 ```
 
