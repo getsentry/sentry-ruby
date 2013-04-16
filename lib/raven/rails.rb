@@ -13,6 +13,7 @@ module Raven
       end
 
       Raven.configure(true) do |config|
+        config.project_root = defined?(::Rails.root) && ::Rails.root || defined?(RAILS_ROOT) && RAILS_ROOT
         config.logger ||= if defined?(::Rails.logger)
           ::Rails.logger
         elsif defined?(RAILS_DEFAULT_LOGGER)
