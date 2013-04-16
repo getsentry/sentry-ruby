@@ -82,9 +82,17 @@ describe Raven::Configuration do
   end
 
   context 'being initialized in a test environment' do
-    it 'should not send events' do
+    before(:each) do
       subject.current_environment = 'test'
+    end
+
+    it 'should not send events' do
       subject.send_in_current_environment?.should be_false
+    end
+
+    it 'should send events if test is whitelisted' do
+      subject.environments = %w[ test ]
+      subject.send_in_current_environment?.should be_true
     end
   end
 end
