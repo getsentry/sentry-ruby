@@ -8,6 +8,8 @@ describe Raven::Configuration do
   end
 
   shared_examples 'a complete configuration' do
+
+
     it 'should have a server' do
       subject[:server].should == 'http://sentry.localdomain/sentry'
     end
@@ -71,5 +73,18 @@ describe Raven::Configuration do
       Raven::Configuration.new
     end
     it_should_behave_like 'a complete configuration'
+  end
+
+  context 'being initialized in a non-test environment' do
+    it 'should send events' do
+      subject.send_in_current_environment?.should be_true
+    end
+  end
+
+  context 'being initialized in a test environment' do
+    it 'should not send events' do
+      subject.current_environment = 'test'
+      subject.send_in_current_environment?.should be_false
+    end
   end
 end
