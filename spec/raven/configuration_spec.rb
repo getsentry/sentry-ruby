@@ -5,6 +5,8 @@ describe Raven::Configuration do
   before do
     # Make sure we reset the env in case something leaks in
     ENV.delete('SENTRY_DSN')
+    ENV.delete('RAILS_ENV')
+    ENV.delete('RACK_ENV')
   end
 
   shared_examples 'a complete configuration' do
