@@ -212,7 +212,7 @@ describe Raven::Event do
         config = Raven::Configuration.new
         config.excluded_exceptions << 'RuntimeError'
         Raven::Event.capture_exception(RuntimeError.new,
-                                       configuration: config).should be_nil
+                                       :configuration => config).should be_nil
       end
 
       it 'returns nil for a class match' do
@@ -225,7 +225,7 @@ describe Raven::Event do
         config.excluded_exceptions << Raven::Test::BaseExc
 
         Raven::Event.capture_exception(Raven::Test::SubExc.new,
-                                       configuration: config).should be_nil
+                                       :configuration => config).should be_nil
       end
     end
 
