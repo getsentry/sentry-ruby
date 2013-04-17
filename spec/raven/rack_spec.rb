@@ -21,7 +21,7 @@ describe Raven::Rack do
     end
 
     stack = Raven::Rack.new(app)
-    lambda {stack.call(env)}.should raise_error(exception)
+    expect { stack.call(env) }.to raise_error
   end
 
   it 'should capture rack.exception' do

@@ -6,7 +6,7 @@ A client and integration layer for the [Sentry](https://github.com/getsentry/sen
 
 ## Requirements
 
-We test on Ruby 1.9.3. Other versions/VMs are untested but we will accept pull requests to support them. Ruby 1.8 is not supported at this time.
+We test on Ruby 1.9.2, 1.9.3 and 2.0.0. Other versions/VMs are untested but we will accept pull requests to support them. Ruby 1.8 is not supported at this time.
 
 ## Installation
 
