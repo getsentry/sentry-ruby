@@ -8,9 +8,9 @@ module Raven
     property :message, :required => true
     property :params
 
-    def initialize(*arguments)
+    def initialize(attributes)
       self.params = []
-      super(*arguments)
+      super(attributes)
     end
   end
 

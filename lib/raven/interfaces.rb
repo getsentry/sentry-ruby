@@ -5,10 +5,10 @@ module Raven
   INTERFACES = {}
 
   class Interface < Hashie::Dash
-    def initialize(attributes={}, &block)
+    def initialize(attributes = {})
       @check_required = false
       super(attributes)
-      block.call(self) if block
+      yield self if block_given?
       @check_required = true
       assert_required_properties_set!
     end

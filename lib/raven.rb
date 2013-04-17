@@ -150,3 +150,8 @@ module Raven
     alias :captureMessage :capture_message
   end
 end
+
+# If Rails < 3 then load legacy support
+# This needs to be called after Raven module to prevent order dependency issues
+rails_version = defined?(Rails.version) && Rails.version || defined?(Rails::VERSION::STRING) && Rails::VERSION::STRING
+require 'raven/rails'   if rails_version && rails_version.to_f < 3

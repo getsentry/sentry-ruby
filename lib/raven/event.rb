@@ -26,7 +26,7 @@ module Raven
     attr_accessor :project, :message, :timestamp, :level
     attr_accessor :logger, :culprit, :server_name, :modules, :extra, :tags
 
-    def initialize(options={}, &block)
+    def initialize(options={})
       @configuration = options[:configuration] || Raven.configuration
       @interfaces = {}
 
@@ -55,7 +55,7 @@ module Raven
       @tags = options[:tags] || {}
       @tags.merge!(context.tags)
 
-      block.call(self) if block
+      yield self if block_given?
 
       # Some type coercion
       @timestamp = @timestamp.strftime('%Y-%m-%dT%H:%M:%S') if @timestamp.is_a?(Time)
@@ -70,14 +70,13 @@ module Raven
 
     def get_modules
       # Older versions of Rubygems don't support iterating over all specs
-      Hash[Gem::Specification.map {|spec| [spec.name, spec.version.to_s]}] if Gem::Specification.respond_to?(:map)
+      Hash[Gem::Specification.map { |spec| [spec.name, spec.version.to_s] }] if Gem::Specification.respond_to?(:map)
     end
 
     def interface(name, value=nil, &block)
       int = Raven::find_interface(name)
       raise Error.new("Unknown interface: #{name}") unless int
-      @interfaces[int.name] = int.new(value, &block) if value || block
-      @interfaces[int.name]
+      @interfaces[int.name] ||= int.new(value, &block)
     end
 
     def [](key)
@@ -110,7 +109,7 @@ module Raven
       data
     end
 
-    def self.capture_exception(exc, options={}, &block)
+    def self.capture_exception(exc, options={})
       configuration = options[:configuration] || Raven.configuration
       if exc.is_a?(Raven::Error)
         # Try to prevent error reporting loops
@@ -146,16 +145,16 @@ module Raven
             evt.culprit = evt.get_culprit(int.frames)
           end
         end
-        block.call(evt) if block
+        yield evt if block_given?
       end
     end
 
-    def self.capture_rack_exception(exc, rack_env, options={}, &block)
+    def self.capture_rack_exception(exc, rack_env, options={})
       capture_exception(exc, options) do |evt|
         evt.interface :http do |int|
           int.from_rack(rack_env)
         end
-        block.call(evt) if block
+        yield evt if block_given?
       end
     end
 
