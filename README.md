@@ -11,7 +11,7 @@ We test on Ruby MRI 1.8.7, 1.9.2, 1.9.3 and 2.0.0. Other versions/VMs are untest
 ## Installation
 
 ```ruby
-gem "sentry-raven", :require => 'raven', :github => "getsentry/raven-ruby"
+gem "sentry-raven" #, :github => "getsentry/raven-ruby"
 ```
 
 ## Usage
@@ -20,7 +20,16 @@ You'll want to set your ```SENTRY_DSN``` environment variable to the URL on your
 
 ### Rails 3
 
-In Rails 3, Sentry will "just work". 
+In Rails 3, Sentry will "just work," capturing any exceptions thrown in your app. All Rails integrations also
+have mixed-in methods for capturing exceptions you've rescued yourself inside of controllers:
+
+```ruby
+ # ...
+ rescue => exception
+   capture_exception(exception) # or capture_message('Flux overload')
+   flash[:error] = 'Your flux capacitor is overloaded!'
+ end
+```
 
 ### Rails 2
 
