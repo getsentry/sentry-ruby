@@ -1,6 +1,9 @@
 require 'simplecov'
 SimpleCov.start
 
+require 'coveralls'
+Coveralls.wear!
+
 def build_exception()
   begin
     1 / 0

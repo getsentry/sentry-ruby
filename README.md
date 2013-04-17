@@ -1,6 +1,6 @@
 # Raven-Ruby
 
-[![Build Status](https://secure.travis-ci.org/getsentry/raven-ruby.png?branch=master)](http://travis-ci.org/getsentry/raven-ruby)
+[![Build Status](https://secure.travis-ci.org/getsentry/raven-ruby.png?branch=master)](http://travis-ci.org/getsentry/raven-ruby) [![Coverage Status](https://coveralls.io/repos/getsentry/raven-ruby/badge.png?branch=master)](https://coveralls.io/r/getsentry/raven-ruby)
 
 A client and integration layer for the [Sentry](https://github.com/getsentry/sentry) error reporting API.
 

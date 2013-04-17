@@ -4,3 +4,4 @@ ruby/
 .bundle
 *.gem
 Gemfile.lock
+.coveralls.yml
