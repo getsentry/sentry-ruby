@@ -70,8 +70,7 @@ module Raven
     def initialize
       self.server = ENV['SENTRY_DSN'] if ENV['SENTRY_DSN']
       @context_lines = 3
-      self.current_environment = ENV['RAILS_ENV'] || ENV['RACK_ENV'] || 'development'
-      self.environments = %W[ #{current_environment} ] unless current_environment == 'test'
+      self.current_environment = ENV['RAILS_ENV'] || ENV['RACK_ENV'] || 'default'
       self.send_modules = true
       self.excluded_exceptions = IGNORE_DEFAULT
       self.processors = [Raven::Processor::SanitizeData]
@@ -122,7 +121,11 @@ module Raven
     end
 
     def send_in_current_environment?
-      environments.include? current_environment
+      if environments
+        environments.include?(current_environment)
+      else
+        !%w[test cucumber development].include?(current_environment)
+      end
     end
 
   end

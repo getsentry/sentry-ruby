@@ -96,5 +96,17 @@ describe Raven::Configuration do
       subject.environments = %w[ test ]
       subject.send_in_current_environment?.should be_true
     end
+
+    it 'should not send events in a cucumber environment' do
+      subject.current_environment = 'cucumber'
+      subject.send_in_current_environment?.should be_false
+    end
+  end
+
+  context 'being initialized in a development environment' do
+    it 'should not send events' do
+      subject.current_environment = 'development'
+      subject.send_in_current_environment?.should be_false
+    end
   end
 end
