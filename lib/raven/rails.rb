@@ -1,11 +1,9 @@
-require 'raven/rails/action_controller_catcher'
-
 module Raven
   module Rails
     def self.initialize
 
       if defined?(ActionController::Base)
-        ActionController::Base.send(:include, Raven::Rails::ActionControllerCatcher)
+        ActionController::Base.send(:include, Raven::Rails::ControllerMethods)
       end
 
       if defined?(::Rails.configuration) && ::Rails.configuration.respond_to?(:middleware)

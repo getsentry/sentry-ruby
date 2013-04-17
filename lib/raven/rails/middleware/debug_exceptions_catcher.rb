@@ -7,8 +7,7 @@ module Raven
         end
 
         def render_exception_with_raven(env, exception)
-          evt = Raven::Event.capture_rack_exception(exception, env)
-          Raven.send(evt) if evt
+          Raven::Rack.capture_exception(exception, env)
           render_exception_without_raven(env, exception)
         end
       end

@@ -13,6 +13,8 @@ module Raven
         config.project_root ||= ::Rails.root
       end
 
+      Raven::Rails.initialize
+
       if defined?(::ActionDispatch::DebugExceptions)
         require 'raven/rails/middleware/debug_exceptions_catcher'
         ::ActionDispatch::DebugExceptions.send(:include, Raven::Rails::Middleware::DebugExceptionsCatcher)
