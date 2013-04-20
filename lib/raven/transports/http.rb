@@ -10,7 +10,8 @@ module Raven
     class HTTP < Transport
 
       def send(auth_header, data, options = {})
-        response = conn.post '/api/store/' do |req|
+        project_id = self.configuration[:project_id]
+        response = conn.post "/api/#{project_id}/store/" do |req|
           req.headers['Content-Type'] = options[:content_type]
           req.headers['X-Sentry-Auth'] = auth_header
           req.body = data
