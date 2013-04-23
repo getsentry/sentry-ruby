@@ -7,6 +7,13 @@ module Raven
       app.config.middleware.insert 0, "Raven::Rack"
     end
 
+    initializer 'raven.action_controller' do
+      ActiveSupport.on_load :action_controller do
+        require 'raven/rails/controller_methods'
+        include Raven::Rails::ControllerMethods
+      end
+    end
+
     config.after_initialize do
       Raven.configure(true) do |config|
         config.logger ||= ::Rails.logger
@@ -23,3 +30,4 @@ module Raven
     end
   end
 end
+
