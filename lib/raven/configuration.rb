@@ -52,6 +52,9 @@ module Raven
     # Should the SSL certificate of the server be verified?
     attr_accessor :ssl_verification
 
+    # Ssl settings passed direactly to faraday's ssl option
+    attr_accessor :ssl
+
     attr_reader :current_environment
 
     # The Faraday adapter to be used. Will default to Net::HTTP when not set.
