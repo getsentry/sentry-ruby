@@ -1,3 +1,5 @@
+require 'raven/rails/controller_methods'
+
 module Raven
   module Rails
     def self.initialize
