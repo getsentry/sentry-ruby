@@ -173,7 +173,7 @@ module Raven
 
     def get_culprit(frames)
       lastframe = frames.reverse.detect { |f| f.in_app } || frames.last
-      "#{lastframe.filename} in #{lastframe.function}" if lastframe
+      "#{lastframe.filename} in #{lastframe.function} at line #{lastframe.lineno}" if lastframe
     end
 
     def parse_exception(exception)

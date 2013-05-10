@@ -281,7 +281,7 @@ describe Raven::Event do
       end
 
       it "sets the culprit" do
-        hash['culprit'].should eq("/path/to/some/file in function_name")
+        hash['culprit'].should eq("/path/to/some/file in function_name at line 22")
       end
 
       context 'when a path in the stack trace is on the laod path' do
