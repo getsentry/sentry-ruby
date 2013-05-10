@@ -256,6 +256,9 @@ describe Raven::Event do
           rails = double('Rails')
           rails.stub(:root) { '/rails/root' }
           stub_const('Rails', rails)
+          Raven.configure(true) do |config|
+            config.project_root ||= ::Rails.root
+          end
         end
 
         context 'with an application stacktrace' do
@@ -263,6 +266,7 @@ describe Raven::Event do
             e = Exception.new(message)
             e.stub(:backtrace).and_return([
               "/rails/root/foobar:132:in `new_function'",
+              "/gem/lib/path:87:in `a_function'",
               "/app/some/other/path:1412:in `other_function'",
               "test/some/other/path:1412:in `other_function'",
             ])
@@ -270,12 +274,15 @@ describe Raven::Event do
           end
 
           it 'marks in_app correctly' do
+            Raven.configuration.project_root.should eq('/rails/root')
             hash['sentry.interfaces.Stacktrace']['frames'][0]['filename'].should eq("test/some/other/path")
             hash['sentry.interfaces.Stacktrace']['frames'][0]['in_app'].should eq(true)
             hash['sentry.interfaces.Stacktrace']['frames'][1]['filename'].should eq("/app/some/other/path")
-            hash['sentry.interfaces.Stacktrace']['frames'][1]['in_app'].should eq(true)
-            hash['sentry.interfaces.Stacktrace']['frames'][2]['filename'].should eq("/rails/root/foobar")
+            hash['sentry.interfaces.Stacktrace']['frames'][1]['in_app'].should eq(false)
+            hash['sentry.interfaces.Stacktrace']['frames'][2]['filename'].should eq("/gem/lib/path")
             hash['sentry.interfaces.Stacktrace']['frames'][2]['in_app'].should eq(false)
+            hash['sentry.interfaces.Stacktrace']['frames'][3]['filename'].should eq("/rails/root/foobar")
+            hash['sentry.interfaces.Stacktrace']['frames'][3]['in_app'].should eq(true)
           end
         end
       end
