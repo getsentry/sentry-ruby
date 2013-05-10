@@ -11,7 +11,7 @@ module Raven
       # regexp (optionnally allowing leading X: for windows support)
       INPUT_FORMAT = %r{^((?:[a-zA-Z]:)?[^:]+):(\d+)(?::in `([^']+)')?$}.freeze
 
-      APP_DIRS_PATTERN = /^\/?(bin|app|config|lib|test)/
+      APP_DIRS_PATTERN = /^(bin|app|config|lib|test)/
 
       # The file portion of the line (such as app/models/user.rb)
       attr_reader :file
@@ -37,11 +37,16 @@ module Raven
       end
 
       def in_app
-        if self.file =~ APP_DIRS_PATTERN
+        if (project_root && self.file.start_with?(project_root)) ||
+            (self.file =~ APP_DIRS_PATTERN)
           true
         else
           false
         end
+      end
+
+      def project_root
+        @project_root ||= Raven.configuration.project_root && Raven.configuration.project_root.to_s
       end
 
       # Reconstructs the line in a readable fashion
