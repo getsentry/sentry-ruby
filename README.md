@@ -16,7 +16,11 @@ gem "sentry-raven" #, :github => "getsentry/raven-ruby"
 
 ## Usage
 
-You'll want to set your ```SENTRY_DSN``` environment variable to the URL on your project's API Keys setting page (e.g. ```https://secret:public@app.getsentry.com/9999```). For more information, see [Configuration](#configuration).
+The easiest way to configure Raven is by setting the ``SENTRY_DSN`` environment variable.
+
+You'll find this value on your project settings page, and it should resemble something like ```https://secret:public@app.getsentry.com/9999```.
+
+For alternative configuration methods, and other options see [Configuration](#configuration).
 
 ### Rails 3
 
@@ -169,7 +173,8 @@ Client configuration:
 Sending a test event:
 -> event ID: 033c343c852b45c2a3add98e425ea4b4
 
-Done!```
+Done!
+```
 
 A couple of things to note:
 
