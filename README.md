@@ -93,13 +93,6 @@ The following attributes are available:
 * `tags`: a mapping of [tags](https://www.getsentry.com/docs/tags/) describing this event
 * `extra`: a mapping of arbitrary context
 
-## Testing
-
-```bash
-$ bundle install
-$ rake spec
-```
-
 ## Configuration
 
 ### SENTRY_DSN
@@ -160,12 +153,43 @@ Raven.configure do |config|
 end
 ```
 
-## Command Line Interface
+## Testing Your Configuration
 
-Raven includes a basic CLI for testing your DSN:
+To ensure you've setup your configuration correctly we recommend running the
+included rake task::
 
-```ruby
-ruby -Ilib ./bin/raven test <DSN>
+```bash
+$ rake raven:test[https://public:secret@app.getsentry.com/3825]
+Client configuration:
+-> server: https://app.getsentry.com
+-> project_id: 3825
+-> public_key: public
+-> secret_key: secret
+
+Sending a test event:
+-> event ID: 033c343c852b45c2a3add98e425ea4b4
+
+Done!```
+
+A couple of things to note:
+
+* This won't test your environment configuration. The test CLI forces the your
+  coniguration to represent itself as if it were running in the production env.
+* If you're running within Rails (or anywhere else that will bootstrap the
+  rake environment), you should be able to omit the DSN argument.
+
+## Contributing
+
+### Bootstrap
+
+```bash
+$ bundle install
+```
+
+### Running the test suite
+
+```bash
+$ rake spec
 ```
 
 Resources
