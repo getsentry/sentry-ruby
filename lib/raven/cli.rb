@@ -18,8 +18,11 @@ module Raven
       end
 
       # wipe out env settings to ensure we send the event
-      Raven.configuration.current_environment = 'production'
-      Raven.configuration.environments = ['production']
+      if !Raven.configuration.send_in_current_environment? then
+        env_name = Raven.coniguration.environments[0]
+        puts "Setting environment to #{env_name}"
+        Raven.configuration.current_environment = env_name
+      end
 
       if !Raven.configuration.server then
         puts "Your client is not configured!"
