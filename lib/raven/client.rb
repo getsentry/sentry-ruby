@@ -22,7 +22,10 @@ module Raven
     end
 
     def send(event)
-      return unless configuration.send_in_current_environment?
+      if !configuration.send_in_current_environment?
+        Raven.logger.debug "Event not sent due to excluded environment: #{configuration.current_environment}"
+        return
+      end
 
       # Set the project ID correctly
       event.project = self.configuration.project_id
@@ -34,7 +37,10 @@ module Raven
                      :content_type => content_type)
       rescue => e
         Raven.logger.error "Unable to record event with remote Sentry server (#{e.class} - #{e.message})"
+        return
       end
+
+      return event
     end
 
   private

@@ -1,6 +1,7 @@
 #!/usr/bin/env ruby
 
 require "raven"
+require "raven/cli"
 require "optparse"
 
 options = {}
@@ -34,21 +35,7 @@ case ARGV[0]
     if !dsn
       puts "Usage: raven test <dsn>"
     else
-      Raven.configure do |config|
-        config.dsn = dsn
-        config.current_environment = 'production'
-      end
-
-      puts "Sending test event"
-
-      begin
-        1 / 0
-      rescue ZeroDivisionError => exception
-        Raven.capture_exception(exception)
-      end
-
-      puts "Done!"
-
+      Raven::CLI::test(dsn)
     end
   else
     puts parser

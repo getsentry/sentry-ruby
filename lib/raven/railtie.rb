@@ -28,6 +28,10 @@ module Raven
         ::ActionDispatch::ShowExceptions.send(:include, Raven::Rails::Middleware::DebugExceptionsCatcher)
       end
     end
+
+    rake_tasks do
+      require 'raven/tasks'
+    end
   end
 end
 
