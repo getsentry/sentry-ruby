@@ -140,7 +140,9 @@ describe Raven::Event do
       Raven.rack_context({
         'REQUEST_METHOD' => 'POST',
         'QUERY_STRING' => 'biz=baz',
-        'HTTP_HOST' => 'localhost:80',
+        'HTTP_HOST' => 'localhost',
+        'SERVER_NAME' => 'localhost',
+        'SERVER_PORT' => '80',
         'PATH_INFO' => '/lol',
         'rack.url_scheme' => 'http',
         'rack.input' => StringIO.new('foo=bar'),
@@ -162,8 +164,8 @@ describe Raven::Event do
     it "adds http data" do
       hash['sentry.interfaces.Http'].should == {
         'data' => {'foo' => 'bar'},
-        'env' => {},
-        'headers' => {'Host' => 'localhost:80'},
+        'env' => {'SERVER_NAME' => 'localhost', 'SERVER_PORT' => '80'},
+        'headers' => {'Host' => 'localhost'},
         'method' => 'POST',
         'query_string' => 'biz=baz',
         'url' => 'http://localhost/lol'
