@@ -19,7 +19,8 @@ module Raven
 
       # wipe out env settings to ensure we send the event
       if !Raven.configuration.send_in_current_environment? then
-        env_name = Raven.coniguration.environments[0]
+        environments = Raven.configuration.environments
+        env_name = (environments && environments[0]) || 'production'
         puts "Setting environment to #{env_name}"
         Raven.configuration.current_environment = env_name
       end
