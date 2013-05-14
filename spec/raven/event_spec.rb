@@ -73,7 +73,7 @@ describe Raven::Event do
       }).to_hash()
     }
   
-    it "add user data" do
+    it "adds user data" do
       hash['sentry.interfaces.User'].should == {
         'id' => 'hello',
       }
@@ -130,6 +130,43 @@ describe Raven::Event do
       hash['extra'].should == {
         'key' => 'value',
         'my_custom_variable' => 'value',
+      }
+    end
+  end
+
+  context 'rack context specified' do
+    require 'stringio'
+    let(:hash) {
+      Raven.rack_context({
+        'REQUEST_METHOD' => 'POST',
+        'QUERY_STRING' => 'biz=baz',
+        'HTTP_HOST' => 'localhost:80',
+        'PATH_INFO' => '/lol',
+        'rack.url_scheme' => 'http',
+        'rack.input' => StringIO.new('foo=bar'),
+      })
+
+      Raven::Event.new({
+        :level => 'warning',
+        :logger => 'foo',
+        :tags => {
+          'foo' => 'bar'
+        },
+        :extra => {
+          'my_custom_variable' => 'value'
+        },
+        :server_name => 'foo.local',
+      }).to_hash()
+    }
+  
+    it "adds http data" do
+      hash['sentry.interfaces.Http'].should == {
+        'data' => {'foo' => 'bar'},
+        'env' => {},
+        'headers' => {'Host' => 'localhost:80'},
+        'method' => 'POST',
+        'query_string' => 'biz=baz',
+        'url' => 'http://localhost/lol'
       }
     end
   end

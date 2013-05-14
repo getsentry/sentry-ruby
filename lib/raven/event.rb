@@ -55,13 +55,13 @@ module Raven
       @tags = options[:tags] || {}
       @tags.merge!(context.tags)
 
-      if context.rack_env
+      block.call(self) if block
+
+      if !self[:http] && context.rack_env
         self.interface :http do |int|
           int.from_rack(context.rack_env)
         end
       end
-
-      block.call(self) if block
 
       # Some type coercion
       @timestamp = @timestamp.strftime('%Y-%m-%dT%H:%M:%S') if @timestamp.is_a?(Time)

@@ -59,4 +59,19 @@ describe Raven::Rack do
     Raven::Context.current.tags.should eq({})
   end
 
+  it 'should bind request context' do
+    Raven::Context.current.rack_env = nil
+
+    app = lambda do |env|
+      Raven::Context.current.rack_env.should eq(env)
+
+      ['response', {}, env]
+    end
+    stack = Raven::Rack.new(app)
+
+    env = {:foo => :bar}
+
+    response = stack.call(env)
+  end
+
 end
