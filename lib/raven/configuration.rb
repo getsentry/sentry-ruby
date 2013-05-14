@@ -77,7 +77,7 @@ module Raven
       self.send_modules = true
       self.excluded_exceptions = IGNORE_DEFAULT
       self.processors = [Raven::Processor::SanitizeData]
-      self.ssl_verification = true
+      self.ssl_verification = false
       self.encoding = 'json'
       self.timeout = 1
       self.open_timeout = 1
