@@ -7,15 +7,15 @@ describe Raven do
 
   before do
     Raven.stub(:send)
-    Raven::Event.stub(:capture_message) { event }
-    Raven::Event.stub(:capture_exception) { event }
+    Raven::Event.stub(:from_message) { event }
+    Raven::Event.stub(:from_exception) { event }
   end
 
   describe '.capture_message' do
     let(:message) { "Test message" }
 
     it 'sends the result of Event.capture_message' do
-      Raven::Event.should_receive(:capture_message).with(message, options)
+      Raven::Event.should_receive(:from_message).with(message, options)
       Raven.should_receive(:send).with(event)
 
       Raven.capture_message(message, options)
@@ -30,7 +30,7 @@ describe Raven do
     let(:exception) { build_exception }
 
     it 'sends the result of Event.capture_exception' do
-      Raven::Event.should_receive(:capture_exception).with(exception, options)
+      Raven::Event.should_receive(:from_exception).with(exception, options)
       Raven.should_receive(:send).with(event)
 
       Raven.capture_exception(exception, options)

@@ -39,6 +39,10 @@ module Raven
     end
 
     def call(env)
+      # store the current environment in our local context for arbitrary
+      # callers
+      Raven.rack_context(env)
+
       begin
         response = @app.call(env)
       rescue Error => e

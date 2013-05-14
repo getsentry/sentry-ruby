@@ -105,14 +105,14 @@ module Raven
     end
 
     def capture_exception(exception, options={})
-      if evt = Event.capture_exception(exception, options)
+      if evt = Event.from_exception(exception, options)
         yield evt if block_given?
         send(evt)
       end
     end
 
     def capture_message(message, options={})
-      if evt = Event.capture_message(message, options)
+      if evt = Event.from_message(message, options)
         yield evt if block_given?
         send(evt)
       end
@@ -148,6 +148,10 @@ module Raven
     #   Raven.tags_context('my_custom_data' => 'value')
     def extra_context(options={})
       self.context.extra.merge!(options)
+    end
+
+    def rack_context(env)
+      self.context.rack_env = env
     end
 
     # For cross-language compat

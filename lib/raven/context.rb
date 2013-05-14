@@ -9,11 +9,13 @@ module Raven
     end
     
     attr_reader :extra, :tags, :user
+    attr_accessor :rack_env
     
     def initialize
-      @extra  = {}
-      @tags   = {}
-      @user   = {}
+      @extra = {}
+      @tags = {}
+      @user = {}
+      @rack_env = nil
     end
   end
 end

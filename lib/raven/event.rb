@@ -55,6 +55,12 @@ module Raven
       @tags = options[:tags] || {}
       @tags.merge!(context.tags)
 
+      if context.rack_env
+        self.interface :http do |int|
+          int.from_rack(context.rack_env)
+        end
+      end
+
       block.call(self) if block
 
       # Some type coercion
@@ -110,7 +116,7 @@ module Raven
       data
     end
 
-    def self.capture_exception(exc, options={}, &block)
+    def self.from_exception(exc, options={}, &block)
       configuration = options[:configuration] || Raven.configuration
       if exc.is_a?(Raven::Error)
         # Try to prevent error reporting loops
@@ -150,7 +156,7 @@ module Raven
       end
     end
 
-    def self.capture_message(message, options={})
+    def self.from_message(message, options={})
       new(options) do |evt|
         evt.message = message
         evt.level = options[:level] || :error
@@ -186,8 +192,10 @@ module Raven
 
     # For cross-language compat
     class << self
-      alias :captureException :capture_exception
-      alias :captureMessage :capture_message
+      alias :captureException :from_exception
+      alias :captureMessage :from_message
+      alias :capture_exception :from_exception
+      alias :capture_message :from_message
     end
 
     private
