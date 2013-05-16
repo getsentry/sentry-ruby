@@ -143,6 +143,18 @@ Raven.configure do |config|
 end
 ```
 
+### SSL Verification
+
+By default SSL certificate verification is **disabled** in the client. This choice
+was made due to root CAs not being commonly available on systems. If you'd like
+to change this, you can enable verification by passing the ``ssl_verification``
+flag:
+
+```ruby
+Raven.configure do |config|
+  config.ssl_verification = true
+```
+
 ## Sanitizing Data (Processors)
 
 If you need to sanitize or pre-process (before its sent to the server) data, you can do so using the Processors
