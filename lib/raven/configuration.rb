@@ -62,6 +62,9 @@ module Raven
 
     attr_accessor :server_name
 
+    # Hash of rate limit rules include in the format { seconds => allowed_count }
+    attr_accessor :rate_limits
+
     IGNORE_DEFAULT = ['ActiveRecord::RecordNotFound',
                       'ActionController::RoutingError',
                       'ActionController::InvalidAuthenticityToken',

@@ -27,6 +27,13 @@ module Raven
         return
       end
 
+      if rate_limiter.limited?
+        Raven.logger.debug "Event not sent due to rate limit."
+        return
+      else
+        rate_limiter.increment
+      end
+
       # Set the project ID correctly
       event.project = self.configuration.project_id
       Raven.logger.debug "Sending event #{event.id} to Sentry"
@@ -86,6 +93,10 @@ module Raven
         'sentry_secret' => self.configuration.secret_key,
       }
       'Sentry ' + fields.map{|key, value| "#{key}=#{value}"}.join(', ')
+    end
+
+    def rate_limiter
+      @rate_limiter ||= RateLimiter.new configuration
     end
 
   end
