@@ -9,7 +9,7 @@ module Raven
     class Line
 
       # regexp (optionnally allowing leading X: for windows support)
-      INPUT_FORMAT = %r{^((?:[a-zA-Z]:)?[^:]+):(\d+)(?::in `([^']+)')?$}.freeze
+      INPUT_FORMAT = %r{^((?:[a-zA-Z]:)?[^:]+|<.*>):(\d+)(?::in `([^']+)')?$}.freeze
 
       APP_DIRS_PATTERN = /^(bin|app|config|lib|test)/
 
