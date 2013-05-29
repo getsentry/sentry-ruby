@@ -5,11 +5,16 @@ gemfile:
   - gemfiles/rails32.gemfile
 rvm:
   - 1.8.7
-  - 1.9.2
   - 1.9.3
+  - jruby-19mode
+  - rbx-19mode
   - 2.0.0
 notifications:
   irc:
     channels: "irc.freenode.org#sentry"
     on_success: change
     on_failure: change
+matrix:
+  allow_failures:
+    - rvm: jruby-19mode
+    - rvm: rbx-19mode
