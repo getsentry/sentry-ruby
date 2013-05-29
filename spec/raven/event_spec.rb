@@ -289,6 +289,20 @@ describe Raven::Event do
         hash['sentry.interfaces.Stacktrace']['frames'][1]['filename'].should eq('/path/to/some/file')
       end
 
+      context 'with internal backtrace' do
+        let(:exception) do
+          e = Exception.new(message)
+          e.stub(:backtrace).and_return(["<internal:prelude>:10:in `synchronize'"])
+          e
+        end
+
+        it 'marks filename and in_app correctly' do
+          hash['sentry.interfaces.Stacktrace']['frames'][0]['lineno'].should eq(10)
+          hash['sentry.interfaces.Stacktrace']['frames'][0]['function'].should eq("synchronize")
+          hash['sentry.interfaces.Stacktrace']['frames'][0]['filename'].should eq("<internal:prelude>")
+        end
+      end
+
       context 'in a rails environment' do
 
         before do
