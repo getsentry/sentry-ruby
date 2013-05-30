@@ -318,10 +318,12 @@ describe Raven::Event do
           let(:exception) do
             e = Exception.new(message)
             e.stub(:backtrace).and_return([
-              "/rails/root/foobar:132:in `new_function'",
+              "/rails/root/vendor/bundle/cache/other_gem.rb:10:in `public_method'",
+              "vendor/bundle/some_gem.rb:10:in `a_method'",
+              "/rails/root/app/foobar:132:in `new_function'",
               "/gem/lib/path:87:in `a_function'",
               "/app/some/other/path:1412:in `other_function'",
-              "test/some/other/path:1412:in `other_function'",
+              "test/some/other/path:1412:in `other_function'"
             ])
             e
           end
@@ -334,8 +336,12 @@ describe Raven::Event do
             hash['sentry.interfaces.Stacktrace']['frames'][1]['in_app'].should eq(false)
             hash['sentry.interfaces.Stacktrace']['frames'][2]['filename'].should eq("/gem/lib/path")
             hash['sentry.interfaces.Stacktrace']['frames'][2]['in_app'].should eq(false)
-            hash['sentry.interfaces.Stacktrace']['frames'][3]['filename'].should eq("/rails/root/foobar")
+            hash['sentry.interfaces.Stacktrace']['frames'][3]['filename'].should eq("/rails/root/app/foobar")
             hash['sentry.interfaces.Stacktrace']['frames'][3]['in_app'].should eq(true)
+            hash['sentry.interfaces.Stacktrace']['frames'][4]['filename'].should eq("vendor/bundle/some_gem.rb")
+            hash['sentry.interfaces.Stacktrace']['frames'][4]['in_app'].should eq(false)
+            hash['sentry.interfaces.Stacktrace']['frames'][5]['filename'].should eq("/rails/root/vendor/bundle/cache/other_gem.rb")
+            hash['sentry.interfaces.Stacktrace']['frames'][5]['in_app'].should eq(false)
           end
         end
       end
