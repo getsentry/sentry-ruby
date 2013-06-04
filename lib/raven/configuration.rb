@@ -81,6 +81,11 @@ module Raven
       self.encoding = 'json'
       self.timeout = 1
       self.open_timeout = 1
+
+      self.server_name = Socket.gethostname rescue nil
+      if self.server_name
+        self.server_name = Socket.gethostbyname(self.server_name).first rescue self.server_name
+      end
     end
 
     def server=(value)
