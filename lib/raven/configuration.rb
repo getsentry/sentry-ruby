@@ -65,6 +65,8 @@ module Raven
     # The JSON adapter to be used. When unset, use multi_json's
     # intelligent defaults.
     attr_accessor :json_adapter
+    # Configure the maximum stack depth for json processor, if supported.
+    attr_accessor :json_limit
 
     IGNORE_DEFAULT = ['ActiveRecord::RecordNotFound',
                       'ActionController::RoutingError',
