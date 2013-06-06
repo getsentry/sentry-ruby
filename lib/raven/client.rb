@@ -53,7 +53,14 @@ module Raven
         processor.process(memo)
       end
 
-      encoded = MultiJson.encode(hash)
+
+      new_adapter = configuration.json_adapter
+      begin
+        old_adapter, MultiJson.adapter = MultiJson.adapter, new_adapter if new_adapter
+        MultiJson.encode(hash)
+      ensure
+        MultiJson.adapter = old_adapter if new_adapter
+      end
 
       case self.configuration.encoding
       when 'gzip'
