@@ -45,16 +45,38 @@ module Raven
 
   private
 
-    def encode(event)
-      hash = event.to_hash
+    def safe_encode(event)
+      event_hash = event.to_hash
 
       # apply processors
-      hash = @processors.reduce(hash) do |memo, processor|
+      event_hash = @processors.reduce(event_hash) do |memo, processor|
         processor.process(memo)
       end
 
-      encoded = MultiJson.encode(hash)
+      # We don't want the exception handler raising exceptions, or even worse
+      # crashing the process. Lets be safe and try to catch
+      new_adapter = configuration.json_adapter
+      begin
+        old_adapter, MultiJson.adapter = MultiJson.adapter, new_adapter if new_adapter
+        MultiJson.dump(event_hash, :limit => configuration.json_limit || 1000)
+      rescue SystemStackError => exception
+        original_event = event.to_hash
+        extras = original_event.delete('extra')
+        send(
+          Event.capture_exception(exception, :extra => {
+            :original_extra => extras.map(&:to_s),
+            :original_event => original_event,
+          })
+        )
+        event.extra = nil
+        safe_encode(event)
+      ensure
+        MultiJson.adapter = old_adapter if new_adapter
+      end
+    end
 
+    def encode(event)
+      encoded = safe_encode(event)
       case self.configuration.encoding
       when 'gzip'
         gzipped = Zlib::Deflate.deflate(encoded)
