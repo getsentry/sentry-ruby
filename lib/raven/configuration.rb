@@ -62,6 +62,10 @@ module Raven
 
     attr_accessor :server_name
 
+    # The JSON adapter to be used. When unset, use multi_json's
+    # intelligent defaults.
+    attr_accessor :json_adapter
+
     IGNORE_DEFAULT = ['ActiveRecord::RecordNotFound',
                       'ActionController::RoutingError',
                       'ActionController::InvalidAuthenticityToken',
