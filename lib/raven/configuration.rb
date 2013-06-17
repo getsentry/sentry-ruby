@@ -1,3 +1,5 @@
+require 'logger'
+
 module Raven
   class Configuration
 
