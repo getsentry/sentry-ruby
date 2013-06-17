@@ -14,7 +14,7 @@ module Raven
         msg ||= block.call if block
         logger = Raven.configuration[:logger]
         if logger.nil?
-          logger = ::Logger.new(STDERR)
+          logger = ::Logger.new(STDOUT)
         end
         logger.send(level, "#{LOG_PREFIX}#{msg}") if logger
       end
