@@ -12,7 +12,10 @@ module Raven
       define_method level do |*args, &block|
         msg = args[0] # Block-level default args is a 1.9 feature
         msg ||= block.call if block
-        logger = Raven.configuration[:logger] || ::Logger.new(STDERR)
+        logger = Raven.configuration[:logger]
+        if logger.nil?
+          logger = ::Logger.new(STDERR)
+        end
         logger.send(level, "#{LOG_PREFIX}#{msg}") if logger
       end
     end
