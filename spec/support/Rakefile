@@ -5,8 +5,12 @@ require 'rubygems'
 require 'raven'
 require 'raven/rake'
 
-task :raven do
+task :raven_raise do
   raise 'test'
+end
+
+task :raven_no_raise do
+  puts "Only this, and nothing more"
 end
 
 module Raven
