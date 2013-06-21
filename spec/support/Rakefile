@@ -1,0 +1,17 @@
+# A test harness for RakeHandler
+#
+require 'rake'
+require 'rubygems'
+require 'raven'
+require 'raven/rake'
+
+task :raven do
+  raise 'test'
+end
+
+module Raven
+  def self.capture_exception(exception, options)
+    $stderr.puts "[raven] error caught"
+  end
+end
+
