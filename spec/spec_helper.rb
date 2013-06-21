@@ -33,15 +33,15 @@ def run(command)
 
   cmd_stdout = nil
 
-  mode = {:external_encoding=>"UTF-8"}
+  mode = RUBY_VERSION =~ /^1\.8\.7/ ? 'r' : {:external_encoding=>"UTF-8"}
 
   IO.popen("#{command} 2> #{stderr_file.path}", mode) do |io|
     cmd_stdout = io.read
   end
 
   {
-    exit_status: $?.exitstatus,
-    stderr: IO.read(stderr_file.path),
-    stdout: cmd_stdout
+    :exit_status => $?.exitstatus,
+    :stderr      => IO.read(stderr_file.path),
+    :stdout      => cmd_stdout
   }
 end
