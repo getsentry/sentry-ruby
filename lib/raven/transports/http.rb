@@ -28,7 +28,7 @@ module Raven
           Raven.logger.debug "Raven HTTP Transport connecting to #{self.configuration.server}"
 
           ssl_configuration = self.configuration.ssl || {}
-          ssl_configuration[:verify] = self.configuration.ssl_verification if self.configuration.ssl_verification
+          ssl_configuration[:verify] = self.configuration.ssl_verification
 
           conn = Faraday.new(
             :url => self.configuration[:server],
