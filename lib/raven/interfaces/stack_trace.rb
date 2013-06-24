@@ -45,7 +45,7 @@ module Raven
       def filename
         return nil if self.abs_path.nil?
 
-        prefix = $:.select {|s| self.abs_path.start_with?(s)}.sort_by {|s| s.length}.last
+        prefix = $:.select {|s| self.abs_path.start_with?(s.to_s)}.sort_by {|s| s.length}.last
         prefix ? self.abs_path[prefix.chomp(File::SEPARATOR).length+1..-1] : self.abs_path
       end
 
