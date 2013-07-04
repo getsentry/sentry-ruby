@@ -68,6 +68,9 @@ module Raven
     # intelligent defaults.
     attr_accessor :json_adapter
 
+    # Default tags for events 
+    attr_accessor :tags
+
     IGNORE_DEFAULT = ['ActiveRecord::RecordNotFound',
                       'ActionController::RoutingError',
                       'ActionController::InvalidAuthenticityToken',
@@ -87,6 +90,7 @@ module Raven
       self.encoding = 'json'
       self.timeout = 1
       self.open_timeout = 1
+      self.tags = {}
     end
 
     def server=(value)

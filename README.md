@@ -143,6 +143,17 @@ Raven.configure do |config|
 end
 ```
 
+### Tags
+
+You can configure default tags to be sent with every event. These can be
+overridden in the context or event.
+
+```ruby
+Raven.configure do |config|
+  config.tags = { environment: Rails.env }
+end
+```
+
 ### SSL Verification
 
 By default SSL certificate verification is **disabled** in the client. This choice
