@@ -173,6 +173,30 @@ describe Raven::Event do
     end
   end
 
+  context 'configuration tags specified' do
+    let(:hash) {
+      config = Raven::Configuration.new
+      config.tags = { 'key' => 'value' }
+
+      Raven::Event.new({
+        :level => 'warning',
+        :logger => 'foo',
+        :tags => {
+          'foo' => 'bar'
+        },
+        :server_name => 'foo.local',
+        :configuration => config
+      }).to_hash()
+    }
+
+    it 'merges tags data' do
+      hash['tags'].should == { 
+        'key' => 'value', 
+        'foo' => 'bar'
+      }
+    end
+  end
+
   describe '.capture_message' do
     let(:message) { 'This is a message' }
     let(:hash) { Raven::Event.capture_message(message).to_hash }
