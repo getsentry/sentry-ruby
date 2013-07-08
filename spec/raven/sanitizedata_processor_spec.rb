@@ -41,4 +41,17 @@ describe Raven::Processor::SanitizeData do
     result["ccnumba"].should eq(Raven::Processor::SanitizeData::MASK)
   end
 
+  it 'should cleanup circular dependendencies' do
+    data = {}
+    data['data'] = data
+    data['ary'] = []
+    data['ary'].push('x' => data['ary'])
+    data['ary2'] = data['ary']
+
+    result = @processor.process(data)
+    result['data'].should eq('{...}')
+    result['ary'].first['x'].should eq('[...]')
+    result['ary2'].should_not eq('[...]')
+  end
+
 end
