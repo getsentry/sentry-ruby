@@ -81,7 +81,7 @@ module OkJson
     when false   then "false"
     when nil     then "null"
     else
-      raise Error, "cannot encode #{x.class}: #{x.inspect}"
+      strenc((x.inspect rescue $!.to_s))
     end
   end
 
@@ -439,7 +439,7 @@ private
     case k
     when String then strenc(k)
     else
-      raise Error, "Hash key is not a string: #{k.inspect}"
+      strenc(k.inspect)
     end
   end
 
@@ -483,8 +483,10 @@ private
 
 
   def numenc(x)
-    if ((x.nan? || x.infinite?) rescue false)
-      raise Error, "Numeric cannot be represented: #{x}"
+    if (x.nan? rescue false)
+      '"NaN"'
+    elsif (x.infinite? rescue false)
+      '"Infinite"'
     end
     "#{x}"
   end
