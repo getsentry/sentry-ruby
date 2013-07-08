@@ -62,19 +62,20 @@ module OkJson
   # is not a String.
   # Strings contained in x must be valid UTF-8.
   def encode(x)
+    visited = []
     case x
-    when Hash    then objenc(x)
-    when Array   then arrenc(x)
+    when Hash    then objenc(x, visited)
+    when Array   then arrenc(x, visited)
     else
       raise Error, 'root value must be an Array or a Hash'
     end
   end
 
 
-  def valenc(x)
+  def valenc(x, visited)
     case x
-    when Hash    then objenc(x)
-    when Array   then arrenc(x)
+    when Hash    then objenc(x, visited)
+    when Array   then arrenc(x, visited)
     when String  then strenc(x)
     when Numeric then numenc(x)
     when true    then "true"
@@ -425,13 +426,18 @@ private
   end
 
 
-  def objenc(x)
-    '{' + x.map{|k,v| keyenc(k) + ':' + valenc(v)}.join(',') + '}'
+  def objenc(x, visited)
+    return '"{...}"' if visited.include?(x.__id__)
+    visited += [x.__id__]
+    '{' + x.map{|k,v| keyenc(k) + ':' + valenc(v, visited)}.join(',') + '}'
   end
 
 
-  def arrenc(a)
-    '[' + a.map{|x| valenc(x)}.join(',') + ']'
+  def arrenc(a, visited)
+    return '"[...]"' if visited.include?(a.__id__)
+    visited += [a.__id__]
+
+    '[' + a.map{|x| valenc(x, visited)}.join(',') + ']'
   end
 
 
