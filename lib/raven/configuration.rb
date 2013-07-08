@@ -64,8 +64,7 @@ module Raven
 
     attr_accessor :server_name
 
-    # The JSON adapter to be used. When unset, use multi_json's
-    # intelligent defaults.
+    # DEPRECATED: This option is now ignored as we use our own adapter.
     attr_accessor :json_adapter
 
     # Default tags for events 
