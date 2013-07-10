@@ -16,7 +16,6 @@ Gem::Specification.new do |gem|
 
   gem.add_dependency "faraday", ">= 0.7.6"
   gem.add_dependency "uuidtools"
-  gem.add_dependency "multi_json", "~> 1.0"
   gem.add_dependency "hashie", ">= 1.1.0"
 
   gem.add_development_dependency "rake"
