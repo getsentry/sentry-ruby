@@ -1,8 +1,8 @@
-require 'multi_json'
 require 'zlib'
 require 'base64'
 
 require 'raven/version'
+require 'raven/okjson'
 require 'raven/transports/http'
 require 'raven/transports/udp'
 
@@ -53,13 +53,7 @@ module Raven
         processor.process(memo)
       end
 
-      new_adapter = configuration.json_adapter
-      begin
-        old_adapter, MultiJson.adapter = MultiJson.adapter, new_adapter if new_adapter
-        encoded = MultiJson.encode(hash)
-      ensure
-        MultiJson.adapter = old_adapter if new_adapter
-      end
+      encoded = OkJson.encode(hash)
 
       case self.configuration.encoding
       when 'gzip'
