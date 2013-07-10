@@ -8,7 +8,7 @@ module Raven
       FIELDS_RE = /(authorization|password|passwd|secret)/i
       VALUES_RE = /^\d{16}$/
 
-      def apply(value, key=nil, visited, &block)
+      def apply(value, key=nil, visited=[], &block)
         if value.is_a?(Hash)
           return "{...}" if visited.include?(value.__id__)
           visited += [value.__id__]
@@ -40,7 +40,7 @@ module Raven
       end
 
       def process(data)
-        apply(data, nil, []) do |key, value|
+        apply(data) do |key, value|
           sanitize(key, value)
         end
       end
