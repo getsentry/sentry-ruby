@@ -11,10 +11,10 @@ require 'raven/interfaces/exception'
 require 'raven/interfaces/stack_trace'
 require 'raven/interfaces/http'
 require 'raven/processors/sanitizedata'
-require 'raven/tasks'
 
 require 'raven/railtie' if defined?(Rails::Railtie)
 require 'raven/sidekiq' if defined?(Sidekiq)
+require 'raven/tasks' if defined?(Rake)
 
 
 module Raven
