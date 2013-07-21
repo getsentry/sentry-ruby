@@ -32,10 +32,10 @@ module Raven
       def sanitize(key, value)
         if !value.is_a?(String) || value.empty?
           value
-        elsif VALUES_RE.match(value) or FIELDS_RE.match(key)
+        elsif VALUES_RE.match(clean_invalid_utf8_bytes(value)) or FIELDS_RE.match(key)
           MASK
         else
-          value
+          clean_invalid_utf8_bytes(value)
         end
       end
 
@@ -43,6 +43,17 @@ module Raven
         apply(data) do |key, value|
           sanitize(key, value)
         end
+      end
+
+      private
+      def clean_invalid_utf8_bytes(text)
+        text.encode(
+          'UTF-8',
+          'binary',
+          invalid: :replace,
+          undef: :replace,
+          replace: ''
+        )
       end
     end
   end
