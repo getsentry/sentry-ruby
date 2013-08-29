@@ -203,8 +203,8 @@ Done!
 
 A couple of things to note:
 
-* This won't test your environment configuration. The test CLI forces the your
-  coniguration to represent itself as if it were running in the production env.
+* This won't test your environment configuration. The test CLI forces your
+  configuration to represent itself as if it were running in the production env.
 * If you're running within Rails (or anywhere else that will bootstrap the
   rake environment), you should be able to omit the DSN argument.
 
