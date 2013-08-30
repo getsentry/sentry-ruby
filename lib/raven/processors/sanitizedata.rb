@@ -54,7 +54,7 @@ module Raven
             'UTF-8',
             'binary',
             :invalid => :replace,
-            :undex => :replace,
+            :undef => :replace,
             :replace => ''
           )
         end
