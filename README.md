@@ -168,6 +168,20 @@ Raven.configure do |config|
   config.ssl_verification = true
 ```
 
+### Logging
+
+You can use any logger with Raven - just set config.logger. Raven respects logger
+levels.
+
+```ruby
+logger = ::Logger.new(STDOUT)
+logger.level = ::Logger::WARN
+
+Raven.configure do |config|
+  config.logger = logger
+end
+```
+
 ## Sanitizing Data (Processors)
 
 If you need to sanitize or pre-process (before its sent to the server) data, you can do so using the Processors
