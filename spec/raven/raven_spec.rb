@@ -40,4 +40,20 @@ describe Raven do
       expect { |b| Raven.capture_exception(exception, options, &b) }.to yield_with_args(event)
     end
   end
+
+  describe '.annotate_exception' do
+    let(:exception) { build_exception }
+
+    def ivars(object)
+      object.instance_variables.map { |name| name.to_s }
+    end
+
+    it 'adds an annotation to the exception' do
+      expect(ivars(exception)).not_to include("@__raven_context")
+      Raven.annotate_exception(exception, {})
+      expect(ivars(exception)).to include("@__raven_context")
+      expect(exception.instance_variable_get(:@__raven_context)).to \
+        be_kind_of Hash
+    end
+  end
 end
