@@ -118,6 +118,32 @@ module Raven
       end
     end
 
+    # Provides extra context to the exception prior to it being handled by
+    # Raven. An exception can have multiple annotations, which are merged
+    # together.
+    #
+    # The options (annotation) is treated the same as the ``options``
+    # parameter to ``capture_exception`` or ``Event.from_exception``, and
+    # can contain the same ``:user``, ``:tags``, etc. options as these
+    # methods.
+    #
+    # These will be merged with the ``options`` parameter to
+    # ``Event.from_exception`` at the top of execution.
+    #
+    # @example
+    #   begin
+    #     raise "Hello"
+    #   rescue => exc
+    #     Raven.annotate_exception(exc, :user => { 'id' => 1,
+    #                              'email' => 'foo@example.com' })
+    #   end
+    def annotate_exception(exc, options = {})
+      notes = exc.instance_variable_get(:@__raven_context) || {}
+      notes.merge!(options)
+      exc.instance_variable_set(:@__raven_context, notes)
+      exc
+    end
+
     # Bind user context. Merges with existing context (if any).
     #
     # It is recommending that you send at least the ``id`` and ``email``
@@ -157,5 +183,7 @@ module Raven
     # For cross-language compat
     alias :captureException :capture_exception
     alias :captureMessage :capture_message
+    alias :annotateException :annotate_exception
+    alias :annotate :annotate_exception
   end
 end

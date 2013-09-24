@@ -392,5 +392,10 @@ describe Raven::Event do
     it 'accepts an options hash' do
       Raven::Event.capture_exception(exception, {:logger => 'logger'}).logger.should == 'logger'
     end
+
+    it 'uses an annotation if one exists' do
+      Raven.annotate_exception(exception, :logger => 'logger')
+      expect(Raven::Event.capture_exception(exception).logger).to eq('logger')
+    end
   end
 end

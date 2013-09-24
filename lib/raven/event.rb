@@ -118,6 +118,9 @@ module Raven
     end
 
     def self.from_exception(exc, options={}, &block)
+      notes = exc.instance_variable_get(:@__raven_context) || {}
+      options = notes.merge(options)
+
       configuration = options[:configuration] || Raven.configuration
       if exc.is_a?(Raven::Error)
         # Try to prevent error reporting loops
