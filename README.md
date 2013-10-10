@@ -47,6 +47,18 @@ Add ```use Raven::Rack``` to your ```config.ru``` (or other rackup file).
 
 Like any other Rack middleware, add ```use Raven::Rack``` to your Sinatra app.
 
+### Sidekiq
+
+Raven includes [Sidekiq middleware](https://github.com/mperham/sidekiq/wiki/Middleware) which takes
+care of reporting errors that occur in Sidekiq jobs. To use it, just require the middleware by doing
+
+```ruby
+require 'raven/sidekiq'
+```
+after you require Sidekiq. If you are using Sidekiq with Rails, just put this
+require somewhere in the initializers.
+
+
 ## Capturing Events
 
 Many implementations will automatically capture uncaught exceptions (such as Rails, Sidekiq or by using
