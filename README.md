@@ -6,7 +6,7 @@ A client and integration layer for the [Sentry](https://github.com/getsentry/sen
 
 ## Requirements
 
-We test on Ruby MRI 1.8.7, 1.9.2, 1.9.3 and 2.0.0. Other versions/VMs are untested but we will accept pull requests to support them.
+We test on Ruby MRI 1.8.7, 1.9.3 and 2.0.0. Rubinius and JRuby support is experimental.
 
 ## Installation
 
