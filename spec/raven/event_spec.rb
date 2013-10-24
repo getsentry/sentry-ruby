@@ -72,7 +72,7 @@ describe Raven::Event do
         :server_name => 'foo.local',
       }).to_hash()
     }
-  
+
     it "adds user data" do
       hash['sentry.interfaces.User'].should == {
         'id' => 'hello',
@@ -98,7 +98,7 @@ describe Raven::Event do
         :server_name => 'foo.local',
       }).to_hash()
     }
-  
+
     it "merges tags data" do
       hash['tags'].should == {
         'key' => 'value',
@@ -125,7 +125,7 @@ describe Raven::Event do
         :server_name => 'foo.local',
       }).to_hash()
     }
-  
+
     it "merges extra data" do
       hash['extra'].should == {
         'key' => 'value',
@@ -160,7 +160,7 @@ describe Raven::Event do
         :server_name => 'foo.local',
       }).to_hash()
     }
-  
+
     it "adds http data" do
       hash['sentry.interfaces.Http'].should == {
         'data' => {'foo' => 'bar'},
@@ -190,10 +190,20 @@ describe Raven::Event do
     }
 
     it 'merges tags data' do
-      hash['tags'].should == { 
-        'key' => 'value', 
+      hash['tags'].should == {
+        'key' => 'value',
         'foo' => 'bar'
       }
+    end
+  end
+
+  describe '.initialize' do
+    it 'should not touch the env object for an ignored environment' do
+      Raven.configure(true) do |config|
+        config.current_environment = 'test'
+      end
+      Raven.rack_context({})
+      expect { Raven::Event.new }.not_to raise_error
     end
   end
 

@@ -58,9 +58,11 @@ module Raven
 
       block.call(self) if block
 
-      if !self[:http] && context.rack_env
-        self.interface :http do |int|
-          int.from_rack(context.rack_env)
+      if @configuration.send_in_current_environment?
+        if !self[:http] && context.rack_env
+          self.interface :http do |int|
+            int.from_rack(context.rack_env)
+          end
         end
       end
 
