@@ -5,7 +5,7 @@ describe Raven::Rack do
   it 'should capture exceptions' do
     exception = build_exception()
     env = {}
-    
+
     Raven::Rack.should_receive(:capture_exception).with(exception, env)
 
     app = lambda do |e|
@@ -57,6 +57,12 @@ describe Raven::Rack do
     response = stack.call({})
 
     Raven::Context.current.tags.should eq({})
+  end
+
+  it 'should allow empty rack env in rspec tests' do
+    env = {} # the rack env is empty when running rails/rspec tests
+    Raven.rack_context(env)
+    expect { Raven.capture_exception(build_exception()) }.not_to raise_error
   end
 
   it 'should bind request context' do
