@@ -37,6 +37,7 @@ module Raven
                      :content_type => content_type)
       rescue => e
         Raven.logger.error "Unable to record event with remote Sentry server (#{e.class} - #{e.message})"
+        e.backtrace[0..10].each { |line| Raven.logger.error(line) }
         return
       end
 
