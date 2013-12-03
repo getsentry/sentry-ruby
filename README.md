@@ -41,7 +41,7 @@ No support for Rails 2 yet, but it is being worked on.
 
 ### Rack
 
-Add ```use Raven::Rack``` to your ```config.ru``` (or other rackup file). 
+Add ```use Raven::Rack``` to your ```config.ru``` (or other rackup file).
 
 ### Sinatra
 
@@ -108,6 +108,41 @@ The following attributes are available:
 * `server_name`: the hostname of the server
 * `tags`: a mapping of [tags](https://www.getsentry.com/docs/tags/) describing this event
 * `extra`: a mapping of arbitrary context
+
+## Providing Request Context
+
+Most of the time you're not actually calling out to Raven directly, but you still want to provide some additional context. This lifecycle generally constists of something like the following:
+
+- Set some context via a middleware (e.g. the logged in user)
+- Send all given context with any events during the request lifecycle
+- Cleanup context
+
+There are three primary methods for providing request context:
+
+```ruby
+# bind the logged in user
+Raven.user_context({'email' => 'foo@example.com'})
+
+# tag the request with something interesting
+Raven.tags_context({'interesting' => 'yes'})
+
+# provide a bit of additional context
+Raven.extra_context({'happiness' => 'very'})
+```
+
+Additionally, if you're using Rack (without the middleware), you can easily provide context with the ``rack_context`` helper:
+
+```ruby
+Raven.rack_context(env)
+```
+
+If you're using the Rack middleware, we've already taken care of cleanup for you, otherwise you'll need to ensure you perform it manually:
+
+```ruby
+Raven.context.clear!
+```
+
+Note: the rack and user context will perform a set operation, whereas tags and extra context will merge with any existing request context.
 
 ## Configuration
 
