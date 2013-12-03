@@ -16,7 +16,6 @@ require 'raven/railtie' if defined?(Rails::Railtie)
 require 'raven/sidekiq' if defined?(Sidekiq)
 require 'raven/tasks' if defined?(Rake)
 
-
 module Raven
   class << self
     # The client object is responsible for delivering formatted data to the Sentry server.
@@ -58,9 +57,7 @@ module Raven
     #     config.server = 'http://...'
     #   end
     def configure(silent = false)
-      if block_given?
-        yield(configuration)
-      end
+      yield(configuration) if block_given?
 
       self.client = Client.new(configuration)
       report_ready unless silent
@@ -83,11 +80,11 @@ module Raven
     #   Raven.capture do
     #     MyApp.run
     #   end
-    def capture(options={}, &block)
+    def capture(options = {}, &block)
       if block
         begin
           block.call
-        rescue Error => e
+        rescue Error
           raise # Don't capture Raven errors
         rescue Exception => e
           capture_exception(e, options)
@@ -96,22 +93,22 @@ module Raven
       else
         # Install at_exit hook
         at_exit do
-          if $!
-            logger.debug "Caught a post-mortem exception: #{$!.inspect}"
-            capture_exception($!, options)
+          if $ERROR_INFO
+            logger.debug "Caught a post-mortem exception: #{$ERROR_INFO.inspect}"
+            capture_exception($ERROR_INFO, options)
           end
         end
       end
     end
 
-    def capture_exception(exception, options={})
+    def capture_exception(exception, options = {})
       if evt = Event.from_exception(exception, options)
         yield evt if block_given?
         send(evt)
       end
     end
 
-    def capture_message(message, options={})
+    def capture_message(message, options = {})
       if evt = Event.from_message(message, options)
         yield evt if block_given?
         send(evt)
@@ -151,7 +148,7 @@ module Raven
     #
     # @example
     #   Raven.user_context('id' => 1, 'email' => 'foo@example.com')
-    def user_context(options={})
+    def user_context(options = {})
       self.context.user.merge!(options)
     end
 
@@ -162,7 +159,7 @@ module Raven
     #
     # @example
     #   Raven.tags_context('my_custom_tag' => 'tag_value')
-    def tags_context(options={})
+    def tags_context(options = {})
       self.context.tags.merge!(options)
     end
 
@@ -172,7 +169,7 @@ module Raven
     #
     # @example
     #   Raven.tags_context('my_custom_data' => 'value')
-    def extra_context(options={})
+    def extra_context(options = {})
       self.context.extra.merge!(options)
     end
 

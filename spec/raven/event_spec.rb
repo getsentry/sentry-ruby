@@ -1,4 +1,4 @@
-require File::expand_path('../../spec_helper', __FILE__)
+require File.expand_path('../../spec_helper', __FILE__)
 require 'raven'
 
 describe Raven::Event do
@@ -7,7 +7,8 @@ describe Raven::Event do
   end
 
   context 'a fully implemented event' do
-    let(:hash) { Raven::Event.new({
+    let(:hash) do
+      Raven::Event.new(
         :message => 'test',
         :level => 'warning',
         :logger => 'foo',
@@ -18,7 +19,8 @@ describe Raven::Event do
           'my_custom_variable' => 'value'
         },
         :server_name => 'foo.local',
-      }).to_hash()}
+      ).to_hash
+    end
 
     it 'has message' do
       hash['message'].should == 'test'
@@ -55,12 +57,12 @@ describe Raven::Event do
   end
 
   context 'user context specified' do
-    let(:hash) {
-      Raven.user_context({
+    let(:hash) do
+      Raven.user_context(
         'id' => 'hello',
-      })
+      )
 
-      Raven::Event.new({
+      Raven::Event.new(
         :level => 'warning',
         :logger => 'foo',
         :tags => {
@@ -70,8 +72,8 @@ describe Raven::Event do
           'my_custom_variable' => 'value'
         },
         :server_name => 'foo.local',
-      }).to_hash()
-    }
+      ).to_hash
+    end
 
     it "adds user data" do
       hash['sentry.interfaces.User'].should == {
@@ -81,12 +83,12 @@ describe Raven::Event do
   end
 
   context 'tags context specified' do
-    let(:hash) {
-      Raven.tags_context({
+    let(:hash) do
+      Raven.tags_context(
         'key' => 'value',
-      })
+      )
 
-      Raven::Event.new({
+      Raven::Event.new(
         :level => 'warning',
         :logger => 'foo',
         :tags => {
@@ -96,8 +98,8 @@ describe Raven::Event do
           'my_custom_variable' => 'value'
         },
         :server_name => 'foo.local',
-      }).to_hash()
-    }
+      ).to_hash
+    end
 
     it "merges tags data" do
       hash['tags'].should == {
@@ -108,12 +110,12 @@ describe Raven::Event do
   end
 
   context 'extra context specified' do
-    let(:hash) {
-      Raven.extra_context({
+    let(:hash) do
+      Raven.extra_context(
         'key' => 'value',
-      })
+      )
 
-      Raven::Event.new({
+      Raven::Event.new(
         :level => 'warning',
         :logger => 'foo',
         :tags => {
@@ -123,8 +125,8 @@ describe Raven::Event do
           'my_custom_variable' => 'value'
         },
         :server_name => 'foo.local',
-      }).to_hash()
-    }
+      ).to_hash
+    end
 
     it "merges extra data" do
       hash['extra'].should == {
@@ -136,8 +138,9 @@ describe Raven::Event do
 
   context 'rack context specified' do
     require 'stringio'
-    let(:hash) {
-      Raven.rack_context({
+
+    let(:hash) do
+      Raven.rack_context(
         'REQUEST_METHOD' => 'POST',
         'QUERY_STRING' => 'biz=baz',
         'HTTP_HOST' => 'localhost',
@@ -146,9 +149,9 @@ describe Raven::Event do
         'PATH_INFO' => '/lol',
         'rack.url_scheme' => 'http',
         'rack.input' => StringIO.new('foo=bar'),
-      })
+      )
 
-      Raven::Event.new({
+      Raven::Event.new(
         :level => 'warning',
         :logger => 'foo',
         :tags => {
@@ -158,14 +161,14 @@ describe Raven::Event do
           'my_custom_variable' => 'value'
         },
         :server_name => 'foo.local',
-      }).to_hash()
-    }
+      ).to_hash
+    end
 
     it "adds http data" do
       hash['sentry.interfaces.Http'].should == {
-        'data' => {'foo' => 'bar'},
-        'env' => {'SERVER_NAME' => 'localhost', 'SERVER_PORT' => '80'},
-        'headers' => {'Host' => 'localhost'},
+        'data' => { 'foo' => 'bar' },
+        'env' => { 'SERVER_NAME' => 'localhost', 'SERVER_PORT' => '80' },
+        'headers' => { 'Host' => 'localhost' },
         'method' => 'POST',
         'query_string' => 'biz=baz',
         'url' => 'http://localhost/lol'
@@ -174,11 +177,11 @@ describe Raven::Event do
   end
 
   context 'configuration tags specified' do
-    let(:hash) {
+    let(:hash) do
       config = Raven::Configuration.new
       config.tags = { 'key' => 'value' }
 
-      Raven::Event.new({
+      Raven::Event.new(
         :level => 'warning',
         :logger => 'foo',
         :tags => {
@@ -186,8 +189,8 @@ describe Raven::Event do
         },
         :server_name => 'foo.local',
         :configuration => config
-      }).to_hash()
-    }
+      ).to_hash
+    end
 
     it 'merges tags data' do
       hash['tags'].should == {
@@ -225,7 +228,7 @@ describe Raven::Event do
       end
 
       it 'accepts an options hash' do
-        Raven::Event.capture_message(message, {:logger => 'logger'}).logger.should == 'logger'
+        Raven::Event.capture_message(message, :logger => 'logger').logger.should == 'logger'
       end
     end
   end
@@ -400,7 +403,7 @@ describe Raven::Event do
     end
 
     it 'accepts an options hash' do
-      Raven::Event.capture_exception(exception, {:logger => 'logger'}).logger.should == 'logger'
+      Raven::Event.capture_exception(exception, :logger => 'logger').logger.should == 'logger'
     end
 
     it 'uses an annotation if one exists' do

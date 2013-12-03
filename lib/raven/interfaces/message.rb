@@ -1,7 +1,6 @@
 require 'raven/interfaces'
 
 module Raven
-
   class MessageInterface < Interface
 
     name 'sentry.interfaces.Message'
@@ -15,5 +14,4 @@ module Raven
   end
 
   register_interface :message => MessageInterface
-
 end

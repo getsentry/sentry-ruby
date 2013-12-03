@@ -1,9 +1,7 @@
 require 'raven/error'
 
 module Raven
-
   module Transports
-
     class Transport
 
       attr_accessor :configuration
@@ -16,7 +14,7 @@ module Raven
         raise Error.new('Abstract method not implemented')
       end
 
-    protected
+      protected
 
       def verify_configuration
         raise Error.new('No server specified') unless self.configuration.server
@@ -24,9 +22,6 @@ module Raven
         raise Error.new('No secret key specified') unless self.configuration.secret_key
         raise Error.new('No project ID specified') unless self.configuration.project_id
       end
-
     end
-
   end
-
 end

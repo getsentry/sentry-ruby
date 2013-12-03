@@ -13,9 +13,9 @@ describe "Integration tests" do
 
     Raven.configure do |config|
       config.server = 'http://12345:67890@sentry.localdomain/sentry/42'
-      config.environments = [ "test" ]
+      config.environments = ["test"]
       config.current_environment = "test"
-      config.http_adapter = [ :test, stubs ]
+      config.http_adapter = [:test, stubs]
     end
 
     Raven.capture_exception(build_exception)
@@ -32,13 +32,13 @@ describe "Integration tests" do
 
     Raven.configure do |config|
       config.server = 'http://12345:67890@sentry.localdomain/sentry/42'
-      config.environments = [ "test" ]
+      config.environments = ["test"]
       config.current_environment = "test"
-      config.http_adapter = [ :test, stubs ]
+      config.http_adapter = [:test, stubs]
     end
 
     Raven.logger.should_receive(:warn).exactly(1).times
-    expect { Raven.capture_exception(build_exception) }.not_to raise_error(Raven::Error)
+    expect { Raven.capture_exception(build_exception) }.not_to raise_error
 
     stubs.verify_stubbed_calls
 

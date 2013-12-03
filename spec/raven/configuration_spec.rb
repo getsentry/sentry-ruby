@@ -1,4 +1,4 @@
-require File::expand_path('../../spec_helper', __FILE__)
+require File.expand_path('../../spec_helper', __FILE__)
 require 'raven'
 
 describe Raven::Configuration do
@@ -10,8 +10,6 @@ describe Raven::Configuration do
   end
 
   shared_examples 'a complete configuration' do
-
-
     it 'should have a server' do
       subject[:server].should == 'http://sentry.localdomain/sentry'
     end

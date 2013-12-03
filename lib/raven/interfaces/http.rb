@@ -1,7 +1,6 @@
 require 'raven/interfaces'
 
 module Raven
-
   class HttpInterface < Interface
 
     name 'sentry.interfaces.Http'
@@ -29,7 +28,7 @@ module Raven
         next unless key.upcase == key # Non-upper case stuff isn't either
         if key.start_with?('HTTP_')
           # Header
-          http_key = key[5..key.length-1].split('_').map{|s| s.capitalize}.join('-')
+          http_key = key[5..key.length - 1].split('_').map { |s| s.capitalize }.join('-')
           self.headers[http_key] = value.to_s
         elsif ['CONTENT_TYPE', 'CONTENT_LENGTH'].include? key
           self.headers[key.capitalize] = value.to_s
@@ -38,17 +37,17 @@ module Raven
           self.env[key] = value.to_s
         end
       end
-      self.data = if req.form_data?
-        req.POST
-      elsif req.body
-        data = req.body.read
-        req.body.rewind
-        data
-      end
-    end
 
+      self.data =
+        if req.form_data?
+          req.POST
+        elsif req.body
+          data = req.body.read
+          req.body.rewind
+          data
+        end
+    end
   end
 
   register_interface :http => HttpInterface
-
 end

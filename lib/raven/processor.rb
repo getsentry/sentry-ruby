@@ -1,5 +1,4 @@
 module Raven
-
   module Processor
     class Processor
       def initialize(client)
@@ -11,5 +10,4 @@ module Raven
       end
     end
   end
-
 end

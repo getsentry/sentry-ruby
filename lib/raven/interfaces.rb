@@ -5,7 +5,7 @@ module Raven
   INTERFACES = {}
 
   class Interface < Hashie::Dash
-    def initialize(attributes={}, &block)
+    def initialize(attributes = {}, &block)
       @check_required = false
       super(attributes)
       block.call(self) if block
@@ -17,7 +17,7 @@ module Raven
       super if @check_required
     end
 
-    def self.name(value=nil)
+    def self.name(value = nil)
       @interface_name = value if value
       @interface_name
     end
@@ -33,5 +33,4 @@ module Raven
   def self.find_interface(name)
     INTERFACES[name.to_s]
   end
-
 end

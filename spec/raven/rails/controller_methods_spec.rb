@@ -5,7 +5,7 @@ require 'raven/rails/controller_methods'
 describe Raven::Rails::ControllerMethods do
   include described_class
 
-  let(:env) { {"foo" => "bar"} }
+  let(:env) { { "foo" => "bar" } }
   let(:request) { double('request', :env => env) }
   let(:options) { double('options') }
 

@@ -1,11 +1,11 @@
-require File::expand_path('../../spec_helper', __FILE__)
+require File.expand_path('../../spec_helper', __FILE__)
 require 'raven'
 
 describe Raven::Rack do
   it 'should capture exceptions' do
-    exception = build_exception()
+    exception = build_exception
     env = {}
-    
+
     Raven::Rack.should_receive(:capture_exception).with(exception, env)
 
     app = lambda do |e|
@@ -17,7 +17,7 @@ describe Raven::Rack do
   end
 
   it 'should capture rack.exception' do
-    exception = build_exception()
+    exception = build_exception
     env = {}
 
     Raven::Rack.should_receive(:capture_exception).with(exception, env)
@@ -33,7 +33,7 @@ describe Raven::Rack do
   end
 
   it 'should capture sinatra errors' do
-    exception = build_exception()
+    exception = build_exception
     env = {}
 
     Raven::Rack.should_receive(:capture_exception).with(exception, env)
@@ -54,7 +54,7 @@ describe Raven::Rack do
     app = lambda { |env| ['response', {}, env] }
     stack = Raven::Rack.new(app)
 
-    response = stack.call({})
+    stack.call({})
 
     Raven::Context.current.tags.should eq({})
   end
@@ -69,9 +69,9 @@ describe Raven::Rack do
     end
     stack = Raven::Rack.new(app)
 
-    env = {:foo => :bar}
+    env = { :foo => :bar }
 
-    response = stack.call(env)
+    stack.call(env)
   end
 
 end

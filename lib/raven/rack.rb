@@ -45,7 +45,7 @@ module Raven
 
       begin
         response = @app.call(env)
-      rescue Error => e
+      rescue Error
         raise # Don't capture Raven errors
       rescue Exception => e
         Raven::Rack.capture_exception(e, env)
@@ -56,9 +56,7 @@ module Raven
 
       error = env['rack.exception'] || env['sinatra.error']
 
-      if error
-        Raven::Rack.capture_exception(error, env)
-      end
+      Raven::Rack.capture_exception(error, env) if error
 
       response
     end
