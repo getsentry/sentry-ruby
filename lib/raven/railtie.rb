@@ -34,4 +34,3 @@ module Raven
     end
   end
 end
-

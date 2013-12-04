@@ -3,7 +3,6 @@ require 'hashie'
 require 'raven/interfaces'
 
 module Raven
-
   class StacktraceInterface < Interface
 
     name 'sentry.interfaces.Stacktrace'
@@ -16,11 +15,11 @@ module Raven
 
     def to_hash
       data = super
-      data['frames'] = data['frames'].map{|frame| frame.to_hash}
+      data['frames'] = data['frames'].map { |frame| frame.to_hash }
       data
     end
 
-    def frame(attributes=nil, &block)
+    def frame(attributes = nil, &block)
       Frame.new(attributes, &block)
     end
 
@@ -45,7 +44,7 @@ module Raven
       def filename
         return nil if self.abs_path.nil?
 
-        prefix = $:.select {|s| self.abs_path.start_with?(s.to_s)}.sort_by {|s| s.to_s.length}.last
+        prefix = $LOAD_PATH.select { |s| self.abs_path.start_with?(s.to_s) }.sort_by { |s| s.to_s.length }.last
         prefix ? self.abs_path[prefix.chomp(File::SEPARATOR).length+1..-1] : self.abs_path
       end
 
@@ -59,9 +58,7 @@ module Raven
         data
       end
     end
-
   end
 
   register_interface :stack_trace => StacktraceInterface
-
 end

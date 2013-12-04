@@ -26,7 +26,7 @@ module Raven
     attr_accessor :project, :message, :timestamp, :level
     attr_accessor :logger, :culprit, :server_name, :modules, :extra, :tags
 
-    def initialize(options={}, &block)
+    def initialize(options = {}, &block)
       @configuration = options[:configuration] || Raven.configuration
       @interfaces = {}
 
@@ -41,9 +41,8 @@ module Raven
       @culprit = options[:culprit]
       @server_name = options[:server_name] || @configuration.server_name || get_hostname
 
-      if @configuration.send_modules
-        options[:modules] ||= get_modules
-      end
+      options[:modules] ||= get_modules if @configuration.send_modules
+
       @modules = options[:modules]
 
       @user = options[:user] || {}
@@ -79,11 +78,11 @@ module Raven
 
     def get_modules
       # Older versions of Rubygems don't support iterating over all specs
-      Hash[Gem::Specification.map {|spec| [spec.name, spec.version.to_s]}] if Gem::Specification.respond_to?(:map)
+      Hash[Gem::Specification.map { |spec| [spec.name, spec.version.to_s] }] if Gem::Specification.respond_to?(:map)
     end
 
-    def interface(name, value=nil, &block)
-      int = Raven::find_interface(name)
+    def interface(name, value = nil, &block)
+      int = Raven.find_interface(name)
       raise Error.new("Unknown interface: #{name}") unless int
       @interfaces[int.name] = int.new(value, &block) if value || block
       @interfaces[int.name]
@@ -119,7 +118,7 @@ module Raven
       data
     end
 
-    def self.from_exception(exc, options={}, &block)
+    def self.from_exception(exc, options = {}, &block)
       notes = exc.instance_variable_get(:@__raven_context) || {}
       options = notes.merge(options)
 
@@ -140,21 +139,21 @@ module Raven
         evt.message = "#{exc.class.to_s}: #{exc.message}"
         evt.level = options[:level] || :error
         evt.parse_exception(exc)
-        if (exc.backtrace)
+        if exc.backtrace
           evt.interface :stack_trace do |int|
             backtrace = Backtrace.parse(exc.backtrace)
-            int.frames = backtrace.lines.reverse.map { |line|
+            int.frames = backtrace.lines.reverse.map do |line|
               int.frame do |frame|
                 frame.abs_path = line.file
                 frame.function = line.method
                 frame.lineno = line.number
                 frame.in_app = line.in_app
-                if context_lines and frame.abs_path
+                if context_lines && frame.abs_path
                   frame.pre_context, frame.context_line, frame.post_context = \
                     evt.get_file_context(frame.abs_path, frame.lineno, context_lines)
                 end
               end
-            }.select{ |f| f.filename }
+            end.select { |f| f.filename }
             evt.culprit = evt.get_culprit(int.frames)
           end
         end
@@ -162,7 +161,7 @@ module Raven
       end
     end
 
-    def self.from_message(message, options={})
+    def self.from_message(message, options = {})
       new(options) do |evt|
         evt.message = message
         evt.level = options[:level] || :error
@@ -178,13 +177,13 @@ module Raven
 
     def get_file_context(filename, lineno, context)
       lines = (2 * context + 1).times.map do |i|
-        Raven::LineCache::getline(filename, lineno - context + i)
+        Raven::LineCache.getline(filename, lineno - context + i)
       end
-      [lines[0..(context-1)], lines[context], lines[(context+1)..-1]]
+      [lines[0..(context - 1)], lines[context], lines[(context + 1)..-1]]
     end
 
     def get_culprit(frames)
-      lastframe = frames.reverse.detect { |f| f.in_app } || frames.last
+      lastframe = frames.reverse.find { |f| f.in_app } || frames.last
       "#{lastframe.filename} in #{lastframe.function} at line #{lastframe.lineno}" if lastframe
     end
 
@@ -203,7 +202,5 @@ module Raven
       alias :capture_exception :from_exception
       alias :capture_message :from_message
     end
-
-    private
   end
 end

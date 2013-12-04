@@ -16,10 +16,8 @@ module Raven
 
       def getline(path, n)
         return nil if n < 1
-        getlines(path)[n-1]
+        getlines(path)[n - 1]
       end
-
     end
   end
-
 end

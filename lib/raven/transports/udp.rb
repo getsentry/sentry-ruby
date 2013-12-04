@@ -4,9 +4,7 @@ require 'raven/transports'
 require 'raven/error'
 
 module Raven
-
   module Transports
-
     class UDP < Transport
 
       def send(auth_header, data, options = {})
@@ -27,9 +25,6 @@ module Raven
         super
         raise Error.new('No port specified') unless self.configuration.port
       end
-
     end
-
   end
-
 end

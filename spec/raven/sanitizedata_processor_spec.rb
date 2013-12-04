@@ -1,4 +1,4 @@
-require File::expand_path('../../spec_helper', __FILE__)
+require File.expand_path('../../spec_helper', __FILE__)
 require 'raven/processors/sanitizedata'
 
 describe Raven::Processor::SanitizeData do
@@ -59,7 +59,7 @@ describe Raven::Processor::SanitizeData do
       data = {}
       data['invalid'] = "invalid utf8 string goes here\255".force_encoding('UTF-8')
 
-      expect { @processor.process(data) }.not_to raise_error(ArgumentError)
+      expect { @processor.process(data) }.not_to raise_error
     end
 
     it 'should cleanup invalid UTF-8 bytes' do

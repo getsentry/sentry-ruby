@@ -4,9 +4,7 @@ require 'raven/transports'
 require 'raven/error'
 
 module Raven
-
   module Transports
-
     class HTTP < Transport
 
       def send(auth_header, data, options = {})
@@ -19,7 +17,7 @@ module Raven
         Raven.logger.warn "Error from Sentry server (#{response.status}): #{response.body}" unless response.status == 200
       end
 
-    private
+      private
 
       def conn
         @conn ||= begin
@@ -51,9 +49,6 @@ module Raven
       def adapter
         configuration.http_adapter || Faraday.default_adapter
       end
-
     end
-
   end
-
 end

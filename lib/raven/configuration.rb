@@ -67,7 +67,7 @@ module Raven
     # DEPRECATED: This option is now ignored as we use our own adapter.
     attr_accessor :json_adapter
 
-    # Default tags for events 
+    # Default tags for events
     attr_accessor :tags
 
     IGNORE_DEFAULT = ['ActiveRecord::RecordNotFound',
@@ -93,7 +93,7 @@ module Raven
     end
 
     def server=(value)
-      uri = URI::parse(value)
+      uri = URI.parse(value)
       uri_path = uri.path.split('/')
 
       if uri.user
@@ -110,7 +110,7 @@ module Raven
 
       # For anyone who wants to read the base server string
       @server = "#{@scheme}://#{@host}"
-      @server << ":#{@port}" unless @port == {'http'=>80,'https'=>443}[@scheme]
+      @server << ":#{@port}" unless @port == { 'http' => 80, 'https' => 443 }[@scheme]
       @server << @path
     end
 
@@ -139,6 +139,5 @@ module Raven
         !%w[test cucumber development].include?(current_environment)
       end
     end
-
   end
 end

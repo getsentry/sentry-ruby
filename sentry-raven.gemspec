@@ -20,5 +20,6 @@ Gem::Specification.new do |gem|
 
   gem.add_development_dependency "rake"
   gem.add_development_dependency "rspec", "~> 2.10"
+  gem.add_development_dependency "mime-types", "~> 1.16"
   gem.add_development_dependency "coveralls"
 end

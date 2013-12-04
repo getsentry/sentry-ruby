@@ -22,7 +22,7 @@ module Raven
     end
 
     def send(event)
-      if !configuration.send_in_current_environment?
+      unless configuration.send_in_current_environment?
         Raven.logger.debug "Event not sent due to excluded environment: #{configuration.current_environment}"
         return
       end
@@ -34,17 +34,17 @@ module Raven
       content_type, encoded_data = encode(event)
       begin
         transport.send(generate_auth_header(encoded_data), encoded_data,
-                     :content_type => content_type)
+                       :content_type => content_type)
       rescue => e
         Raven.logger.error "Unable to record event with remote Sentry server (#{e.class} - #{e.message})"
         e.backtrace[0..10].each { |line| Raven.logger.error(line) }
         return
       end
 
-      return event
+      event
     end
 
-  private
+    private
 
     def encode(event)
       hash = event.to_hash
@@ -67,7 +67,8 @@ module Raven
     end
 
     def transport
-      @transport ||= case self.configuration.scheme
+      @transport ||=
+        case self.configuration.scheme
         when 'udp'
           Transports::UDP.new self.configuration
         when 'http', 'https'
@@ -86,9 +87,7 @@ module Raven
         'sentry_key' => self.configuration.public_key,
         'sentry_secret' => self.configuration.secret_key,
       }
-      'Sentry ' + fields.map{|key, value| "#{key}=#{value}"}.join(', ')
+      'Sentry ' + fields.map { |key, value| "#{key}=#{value}" }.join(', ')
     end
-
   end
-
 end

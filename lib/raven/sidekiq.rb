@@ -1,12 +1,10 @@
 module Raven
   class Sidekiq
     def call(worker, msg, queue)
-      begin
-        yield
-      rescue => ex
-        Raven.capture_exception(ex, :extra => {:sidekiq => msg})
-        raise
-      end
+      yield
+    rescue => ex
+      Raven.capture_exception(ex, :extra => { :sidekiq => msg })
+      raise
     end
   end
 end

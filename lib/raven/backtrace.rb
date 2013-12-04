@@ -76,12 +76,12 @@ module Raven
 
       filters = opts[:filters] || []
       filtered_lines = ruby_lines.to_a.map do |line|
-        filters.inject(line) do |line, proc|
+        filters.reduce(line) do |line, proc|
           proc.call(line)
         end
       end.compact
 
-      lines = filtered_lines.collect do |unparsed_line|
+      lines = filtered_lines.map do |unparsed_line|
         Line.parse(unparsed_line)
       end
 
@@ -93,7 +93,7 @@ module Raven
     end
 
     def inspect
-      "<Backtrace: " + lines.collect { |line| line.inspect }.join(", ") + ">"
+      "<Backtrace: " + lines.map { |line| line.inspect }.join(", ") + ">"
     end
 
     def to_s
