@@ -177,6 +177,9 @@ module Raven
     end
 
     def rack_context(env)
+      if env.empty?
+        env = nil
+      end
       self.context.rack_env = env
     end
 
