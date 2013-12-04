@@ -8,7 +8,7 @@ describe Raven::Event do
 
   context 'a fully implemented event' do
     let(:hash) do
-      Raven::Event.new(
+      Raven::Event.new({
         :message => 'test',
         :level => 'warning',
         :logger => 'foo',
@@ -19,7 +19,7 @@ describe Raven::Event do
           'my_custom_variable' => 'value'
         },
         :server_name => 'foo.local',
-      ).to_hash
+      }).to_hash
     end
 
     it 'has message' do
@@ -58,11 +58,11 @@ describe Raven::Event do
 
   context 'user context specified' do
     let(:hash) do
-      Raven.user_context(
+      Raven.user_context({
         'id' => 'hello',
-      )
+      })
 
-      Raven::Event.new(
+      Raven::Event.new({
         :level => 'warning',
         :logger => 'foo',
         :tags => {
@@ -72,7 +72,7 @@ describe Raven::Event do
           'my_custom_variable' => 'value'
         },
         :server_name => 'foo.local',
-      ).to_hash
+      }).to_hash
     end
 
     it "adds user data" do
@@ -84,11 +84,11 @@ describe Raven::Event do
 
   context 'tags context specified' do
     let(:hash) do
-      Raven.tags_context(
+      Raven.tags_context({
         'key' => 'value',
-      )
+      })
 
-      Raven::Event.new(
+      Raven::Event.new({
         :level => 'warning',
         :logger => 'foo',
         :tags => {
@@ -98,7 +98,7 @@ describe Raven::Event do
           'my_custom_variable' => 'value'
         },
         :server_name => 'foo.local',
-      ).to_hash
+      }).to_hash
     end
 
     it "merges tags data" do
@@ -111,11 +111,11 @@ describe Raven::Event do
 
   context 'extra context specified' do
     let(:hash) do
-      Raven.extra_context(
+      Raven.extra_context({
         'key' => 'value',
-      )
+      })
 
-      Raven::Event.new(
+      Raven::Event.new({
         :level => 'warning',
         :logger => 'foo',
         :tags => {
@@ -125,7 +125,7 @@ describe Raven::Event do
           'my_custom_variable' => 'value'
         },
         :server_name => 'foo.local',
-      ).to_hash
+      }).to_hash
     end
 
     it "merges extra data" do
@@ -140,7 +140,7 @@ describe Raven::Event do
     require 'stringio'
 
     let(:hash) do
-      Raven.rack_context(
+      Raven.rack_context({
         'REQUEST_METHOD' => 'POST',
         'QUERY_STRING' => 'biz=baz',
         'HTTP_HOST' => 'localhost',
@@ -149,9 +149,9 @@ describe Raven::Event do
         'PATH_INFO' => '/lol',
         'rack.url_scheme' => 'http',
         'rack.input' => StringIO.new('foo=bar'),
-      )
+      })
 
-      Raven::Event.new(
+      Raven::Event.new({
         :level => 'warning',
         :logger => 'foo',
         :tags => {
@@ -161,7 +161,7 @@ describe Raven::Event do
           'my_custom_variable' => 'value'
         },
         :server_name => 'foo.local',
-      ).to_hash
+      }).to_hash
     end
 
     it "adds http data" do
