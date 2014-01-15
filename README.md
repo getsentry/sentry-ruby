@@ -18,7 +18,7 @@ gem "sentry-raven" #, :github => "getsentry/raven-ruby"
 
 The easiest way to configure Raven is by setting the ``SENTRY_DSN`` environment variable.
 
-You'll find this value on your project settings page, and it should resemble something like ```https://secret:public@app.getsentry.com/9999```.
+You'll find this value on your project settings page, and it should resemble something like ```https://public:secret@app.getsentry.com/9999```.
 
 For alternative configuration methods, and other options see [Configuration](#configuration).
 
