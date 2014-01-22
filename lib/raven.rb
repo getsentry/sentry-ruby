@@ -123,7 +123,7 @@ module Raven
       if @configuration.send_in_current_environment?
         yield if block_given?
       else
-        logger.debug "Event not sent due to excluded environment: #{@configuration.current_environment}"
+        @configuration.log_excluded_environment_message
       end
     end
 
