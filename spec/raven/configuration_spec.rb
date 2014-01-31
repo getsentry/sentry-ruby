@@ -41,6 +41,11 @@ describe Raven::Configuration do
     it 'should have a project ID' do
       subject[:project_id].should == '42'
     end
+    
+    it 'should not be async' do
+      subject[:async].should == false
+      subject[:async?].should == false
+    end
   end
 
   context 'being initialized with a server string' do
@@ -79,6 +84,20 @@ describe Raven::Configuration do
     it 'should send events' do
       subject.send_in_current_environment?.should be_true
     end
+
+    it 'should be configurable to send events async' do
+      subject.async = lambda { |event| :ok }
+      subject.async.respond_to?(:call).should be_true
+      subject.async.call('event').should == :ok
+    end
+
+    it 'should raise when setting async to anything other than callable or false' do
+      expect { subject.async = Proc.new {} }.to_not raise_error
+      expect { subject.async = lambda {} }.to_not raise_error
+      expect { subject.async = false }.to_not raise_error
+      expect { subject.async = true }.to raise_error(ArgumentError)
+    end
+    
   end
 
   context 'being initialized in a test environment' do
@@ -107,4 +126,5 @@ describe Raven::Configuration do
       subject.send_in_current_environment?.should be_false
     end
   end
+
 end
