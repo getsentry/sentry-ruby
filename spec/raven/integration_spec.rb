@@ -8,7 +8,7 @@ describe "Integration tests" do
   example "posting an exception" do
 
     stubs = Faraday::Adapter::Test::Stubs.new do |stub|
-      stub.post('/api/42/store') { [200, {}, 'ok'] }
+      stub.post('/api/42/store/') { [200, {}, 'ok'] }
     end
 
     Raven.configure do |config|
@@ -27,7 +27,7 @@ describe "Integration tests" do
   example "hitting quota limit shouldn't swallow exception" do
 
     stubs = Faraday::Adapter::Test::Stubs.new do |stub|
-      stub.post('/api/42/store') { [403, {}, 'Creation of this event was blocked'] }
+      stub.post('/api/42/store/') { [403, {}, 'Creation of this event was blocked'] }
     end
 
     Raven.configure do |config|
