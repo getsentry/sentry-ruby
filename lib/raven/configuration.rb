@@ -70,6 +70,9 @@ module Raven
     # Default tags for events
     attr_accessor :tags
 
+    # Exceptions from these directories to be ignored
+    attr_accessor :app_dirs_pattern
+
     IGNORE_DEFAULT = ['ActiveRecord::RecordNotFound',
                       'ActionController::RoutingError',
                       'ActionController::InvalidAuthenticityToken',
