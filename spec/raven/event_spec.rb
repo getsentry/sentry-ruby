@@ -139,6 +139,10 @@ describe Raven::Event do
   context 'rack context specified' do
     require 'stringio'
 
+    before do
+      Raven.configuration.current_environment = "production"
+    end
+
     let(:hash) do
       Raven.rack_context({
         'REQUEST_METHOD' => 'POST',
