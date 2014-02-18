@@ -139,7 +139,7 @@ Raven.rack_context(env)
 If you're using the Rack middleware, we've already taken care of cleanup for you, otherwise you'll need to ensure you perform it manually:
 
 ```ruby
-Raven.context.clear!
+Raven::Context.clear!
 ```
 
 Note: the rack and user context will perform a set operation, whereas tags and extra context will merge with any existing request context.
