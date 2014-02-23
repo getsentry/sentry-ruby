@@ -1,6 +1,8 @@
 # Raven-Ruby
 
-[![Gem Version](https://badge.fury.io/rb/sentry-raven.png)](http://badge.fury.io/rb/sentry-raven) [![Build Status](https://secure.travis-ci.org/getsentry/raven-ruby.png?branch=master)](http://travis-ci.org/getsentry/raven-ruby) [![Coverage Status](https://coveralls.io/repos/getsentry/raven-ruby/badge.png?branch=master)](https://coveralls.io/r/getsentry/raven-ruby)
+[![Gem Version](https://img.shields.io/gem/v/sentry-raven.svg)](https://rubygems.org/gems/sentry-raven)
+[![Build Status](https://img.shields.io/travis/getsentry/raven-ruby/master.svg)](https://travis-ci.org/getsentry/raven-ruby)
+[![Coverage Status](https://img.shields.io/coveralls/getsentry/raven-ruby/master.svg)](https://coveralls.io/r/getsentry/raven-ruby)
 
 A client and integration layer for the [Sentry](https://github.com/getsentry/sentry) error reporting API.
 
