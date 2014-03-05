@@ -37,6 +37,30 @@ have mixed-in methods for capturing exceptions you've rescued yourself inside of
  end
 ```
 
+#### Delayed::Job
+
+The easiest way of enabling Raven for all your delayed jobs is to use [delayed-plugins-raven](https://github.com/qiushihe/delayed-plugins-raven) gem. First add it to  your application's Gemfile:
+
+```
+gem 'delayed-plugins-raven'
+```
+
+And then extend your Raven configuration (eg. in ```config/initializers/raven.rb``` file):
+
+```ruby
+require 'raven'
+require 'delayed-plugins-raven'
+
+Raven.configure do |config|
+    config.dsn = 'https://public:secret@app.getsentry.com/9999'
+    ...
+end
+
+Delayed::Worker.plugins << Delayed::Plugins::Raven::Plugin
+```
+
+For more configuration options check delayed-plugins-raven [documentation](https://github.com/qiushihe/delayed-plugins-raven).
+
 ### Rails 2
 
 No support for Rails 2 yet, but it is being worked on.
@@ -144,6 +168,27 @@ Raven::Context.clear!
 ```
 
 Note: the rack and user context will perform a set operation, whereas tags and extra context will merge with any existing request context.
+
+### Authlogic
+
+When using Authlogic for authentication, you can provide user context by binding to session ```after_persisting``` and ```after_destroy``` events in ```user_session.rb```:
+
+```ruby
+class UserSession < Authlogic::Session::Base
+  # events binding
+  after_persisting :raven_set_user_context
+  after_destroy :raven_clear_user_context
+
+  def raven_set_user_context
+    Raven.user_context( { 'id' => self.user.id, 'email' => self.user.email, 'username' => self.user.username } )
+  end
+
+  def raven_clear_user_context
+    Raven.user_context({})
+  end
+end
+```
+
 
 ## Configuration
 
