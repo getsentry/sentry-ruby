@@ -37,6 +37,30 @@ have mixed-in methods for capturing exceptions you've rescued yourself inside of
  end
 ```
 
+#### Delayed::Job
+
+The easiest way of enabling Raven for all your delayed jobs is to use [delayed-plugins-raven](https://github.com/qiushihe/delayed-plugins-raven) gem. First add it to  your application's Gemfile:
+
+```
+gem 'delayed-plugins-raven'
+```
+
+And then extend your Raven configuration (eg. in ```config/initializers/raven.rb``` file):
+
+```ruby
+require 'raven'
+require 'delayed-plugins-raven'
+
+Raven.configure do |config|
+    config.dsn = 'https://public:secret@app.getsentry.com/9999'
+    ...
+end
+
+Delayed::Worker.plugins << Delayed::Plugins::Raven::Plugin
+```
+
+For more configuration options check delayed-plugins-raven [documentation](https://github.com/qiushihe/delayed-plugins-raven).
+
 ### Rails 2
 
 No support for Rails 2 yet, but it is being worked on.
