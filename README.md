@@ -146,6 +146,27 @@ Raven::Context.clear!
 
 Note: the rack and user context will perform a set operation, whereas tags and extra context will merge with any existing request context.
 
+### Authlogic
+
+When using Authlogic for authentication, you can provide user context by bingding to session ```after_persisting``` and ```after_destroy``` events in ```user_session.rb```:
+
+```ruby
+class UserSession < Authlogic::Session::Base
+  # events binding
+  after_persisting :raven_set_user_context
+  after_destroy :raven_clear_user_context
+
+  def raven_set_user_context
+    Raven.user_context( { 'id' => self.user.id, 'email' => self.user.email, 'username' => self.user.username } )
+  end
+
+  def raven_clear_user_context
+    Raven.user_context({})
+  end
+end
+```
+
+
 ## Configuration
 
 ### SENTRY_DSN
