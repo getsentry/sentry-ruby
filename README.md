@@ -172,7 +172,7 @@ Note: the rack and user context will perform a set operation, whereas tags and e
 
 ### Authlogic
 
-When using Authlogic for authentication, you can provide user context by bingding to session ```after_persisting``` and ```after_destroy``` events in ```user_session.rb```:
+When using Authlogic for authentication, you can provide user context by binding to session ```after_persisting``` and ```after_destroy``` events in ```user_session.rb```:
 
 ```ruby
 class UserSession < Authlogic::Session::Base
