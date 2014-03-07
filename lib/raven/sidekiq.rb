@@ -9,8 +9,15 @@ module Raven
   end
 end
 
-::Sidekiq.configure_server do |config|
-  config.server_middleware do |chain|
-    chain.add ::Raven::Sidekiq
+if Sidekiq::VERSION < '3'
+  # old behavior
+  ::Sidekiq.configure_server do |config|
+    config.server_middleware do |chain|
+      chain.add ::Raven::Sidekiq
+    end
+  end
+else
+  Sidekiq.configure_server do |config|
+    config.error_handlers << Proc.new {|ex,context| Raven.capture_exception(ex, context) }
   end
 end
