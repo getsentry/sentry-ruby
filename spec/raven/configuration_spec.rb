@@ -41,6 +41,10 @@ describe Raven::Configuration do
     it 'should have a project ID' do
       subject[:project_id].should == '42'
     end
+
+    it 'should have a environment' do
+      subject[:current_environment] == "development"
+    end
   end
 
   context 'being initialized with a server string' do
@@ -76,6 +80,9 @@ describe Raven::Configuration do
   end
 
   context 'being initialized in a non-test environment' do
+    before do
+      subject.current_environment= "production"
+    end
     it 'should send events' do
       subject.send_in_current_environment?.should be_true
     end

@@ -81,7 +81,7 @@ module Raven
     def initialize
       self.server = ENV['SENTRY_DSN'] if ENV['SENTRY_DSN']
       @context_lines = 3
-      self.current_environment = ENV['RAILS_ENV'] || ENV['RACK_ENV'] || 'default'
+      self.current_environment = ENV['RAILS_ENV'] || ENV['RACK_ENV'] || 'development'
       self.send_modules = true
       self.excluded_exceptions = IGNORE_DEFAULT
       self.processors = [Raven::Processor::SanitizeData]
