@@ -217,6 +217,22 @@ Raven.configure do |config|
   config.ssl_verification = true
 ```
 
+### Asynchronous Delivery
+
+When an error occurs, the notification is immediately sent to Sentry. Raven can be configured 
+to send notifications asynchronously:
+
+```ruby
+Raven.configure do |config|
+  config.async = lambda { |event|
+    Thread.new { Raven.send(event) }
+  }
+end
+```
+
+This example uses a thread, but other tools can be used (GirlFriday, Resque, Sidekiq, etc...) as 
+long as the `event` argument is eventually passed to `Raven.send`.
+
 ### Logging
 
 You can use any logger with Raven - just set config.logger. Raven respects logger
