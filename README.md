@@ -92,15 +92,14 @@ end
 Additional context can be passed to the capture methods.
 
 ```ruby
-Raven.capture_message("My event", {
-  :logger => 'logger',
-  :extra => {
-    'my_custom_variable' => 'value'
+Raven.capture_message "My event",
+  logger: 'logger',
+  extra: {
+    my_custom_variable: 'value'
   },
-  :tags => {
-    'environment' => 'production',
+  tags: {
+    environment: 'production'
   }
-})
 ```
 
 The following attributes are available:
@@ -123,13 +122,13 @@ There are three primary methods for providing request context:
 
 ```ruby
 # bind the logged in user
-Raven.user_context({'email' => 'foo@example.com'})
+Raven.user_context email: 'foo@example.com'
 
 # tag the request with something interesting
-Raven.tags_context({'interesting' => 'yes'})
+Raven.tags_context interesting: 'yes'
 
 # provide a bit of additional context
-Raven.extra_context({'happiness' => 'very'})
+Raven.extra_context happiness: 'very'
 ```
 
 Additionally, if you're using Rack (without the middleware), you can easily provide context with the ``rack_context`` helper:
