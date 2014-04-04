@@ -214,6 +214,7 @@ flag:
 ```ruby
 Raven.configure do |config|
   config.ssl_verification = true
+end
 ```
 
 ### Asynchronous Delivery
