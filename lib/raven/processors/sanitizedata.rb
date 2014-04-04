@@ -1,4 +1,5 @@
 require 'raven/processor'
+require 'json'
 
 module Raven
   module Processor
@@ -24,6 +25,16 @@ module Raven
           value.map do |value_|
             apply(value_, key, visited, &block)
           end
+        elsif value.is_a?(String) && json_hash = JSON.parse(value) rescue nil
+          return "[...]" if visited.include?(value.__id__)
+          visited += [value.__id__]
+
+          json_hash = json_hash.each.reduce({}) do |memo, (k, v)|
+            memo[k] = apply(v, k, visited, &block)
+            memo
+          end
+
+          json_hash.to_json
         else
           block.call(key, value)
         end

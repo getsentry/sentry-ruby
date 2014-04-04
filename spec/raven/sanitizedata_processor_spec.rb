@@ -32,6 +32,27 @@ describe Raven::Processor::SanitizeData do
     vars["test"].should eq(1)
   end
 
+  it 'should filter json data' do
+    data = {
+      'foo' => 'bar',
+      'password' => 'hello',
+      'the_secret' => 'hello',
+      'a_password_here' => 'hello',
+      'mypasswd' => 'hello',
+      'test' => 1
+    }.to_json
+
+    result = JSON.parse(@processor.process(data))
+
+    vars = result
+    vars["foo"].should eq("bar")
+    vars["password"].should eq(Raven::Processor::SanitizeData::MASK)
+    vars["the_secret"].should eq(Raven::Processor::SanitizeData::MASK)
+    vars["a_password_here"].should eq(Raven::Processor::SanitizeData::MASK)
+    vars["mypasswd"].should eq(Raven::Processor::SanitizeData::MASK)
+    vars["test"].should eq(1)
+  end
+
   it 'should filter credit card values' do
     data = {
       'ccnumba' => '4242424242424242'
