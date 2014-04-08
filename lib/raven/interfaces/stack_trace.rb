@@ -13,8 +13,8 @@ module Raven
       super(*arguments)
     end
 
-    def to_hash
-      data = super
+    def to_hash(*args)
+      data = super(*args)
       data['frames'] = data['frames'].map { |frame| frame.to_hash }
       data
     end
@@ -48,8 +48,8 @@ module Raven
         prefix ? self.abs_path[prefix.chomp(File::SEPARATOR).length+1..-1] : self.abs_path
       end
 
-      def to_hash
-        data = super
+      def to_hash(*args)
+        data = super(*args)
         data['filename'] = self.filename
         data.delete('vars') unless self.vars && !self.vars.empty?
         data.delete('pre_context') unless self.pre_context && !self.pre_context.empty?
