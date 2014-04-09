@@ -37,7 +37,8 @@ module Raven
       end
 
       def in_app
-        @in_app_pattern ||= Regexp.new("^(#{project_root}/)?#{APP_DIRS_PATTERN}")
+        app_dirs = Raven.configuration.app_dirs_pattern || APP_DIRS_PATTERN
+        @in_app_pattern ||= Regexp.new("^(#{project_root}/)?#{app_dirs}")
 
         if self.file =~ @in_app_pattern
           true

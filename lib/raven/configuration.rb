@@ -73,6 +73,9 @@ module Raven
     # Optional Proc to be used to send events asynchronously.
     attr_reader :async
 
+    # Exceptions from these directories to be ignored
+    attr_accessor :app_dirs_pattern
+
     IGNORE_DEFAULT = ['ActiveRecord::RecordNotFound',
                       'ActionController::RoutingError',
                       'ActionController::InvalidAuthenticityToken',
