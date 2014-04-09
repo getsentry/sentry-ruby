@@ -18,7 +18,7 @@ Gem::Specification.new do |gem|
   gem.add_dependency "uuidtools"
   gem.add_dependency "hashie", ">= 1.1.0"
 
-  gem.add_development_dependency "rake"
+  gem.add_development_dependency "rake", "< 10.2"
   gem.add_development_dependency "rspec", "~> 2.10"
   gem.add_development_dependency "mime-types", "~> 1.16"
   gem.add_development_dependency "coveralls"
