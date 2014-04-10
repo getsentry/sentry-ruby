@@ -190,7 +190,7 @@ module Raven
     def parse_exception(exception)
       interface(:exception) do |int|
         int.type = exception.class.to_s
-        int.value = exception.message
+        int.value = exception.to_s
         int.module = exception.class.to_s.split('::')[0...-1].join('::')
       end
     end

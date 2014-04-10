@@ -70,6 +70,12 @@ module Raven
     # Default tags for events
     attr_accessor :tags
 
+    # Optional Proc to be used to send events asynchronously.
+    attr_reader :async
+
+    # Exceptions from these directories to be ignored
+    attr_accessor :app_dirs_pattern
+
     IGNORE_DEFAULT = ['ActiveRecord::RecordNotFound',
                       'ActionController::RoutingError',
                       'ActionController::InvalidAuthenticityToken',
@@ -90,6 +96,7 @@ module Raven
       self.timeout = 1
       self.open_timeout = 1
       self.tags = {}
+      self.async = false
     end
 
     def server=(value)
@@ -120,6 +127,13 @@ module Raven
     end
 
     alias_method :dsn=, :server=
+
+    def async=(value)
+      raise ArgumentError.new("async must be callable (or false to disable)") unless (value == false || value.respond_to?(:call))
+      @async = value
+    end
+
+    alias_method :async?, :async
 
     # Allows config options to be read like a hash
     #

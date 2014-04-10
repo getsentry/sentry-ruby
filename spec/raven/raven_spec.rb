@@ -26,6 +26,21 @@ describe Raven do
     end
   end
 
+  describe '.capture_message when async' do
+    let(:message) { "Test message" }
+
+    it 'sends the result of Event.capture_message' do
+      Raven::Event.should_receive(:from_message).with(message, options)
+      Raven.should_not_receive(:send).with(event)
+
+      prior_async = Raven.configuration.async
+      Raven.configuration.async = lambda { |e| :ok }
+      Raven.configuration.async.should_receive(:call).with(event)
+      Raven.capture_message(message, options)
+      Raven.configuration.async = prior_async
+    end
+  end
+
   describe '.capture_exception' do
     let(:exception) { build_exception }
 
@@ -38,6 +53,21 @@ describe Raven do
 
     it 'yields the event to a passed block' do
       expect { |b| Raven.capture_exception(exception, options, &b) }.to yield_with_args(event)
+    end
+  end
+
+  describe '.capture_exception when async' do
+    let(:exception) { build_exception }
+
+    it 'sends the result of Event.capture_exception' do
+      Raven::Event.should_receive(:from_exception).with(exception, options)
+      Raven.should_not_receive(:send).with(event)
+
+      prior_async = Raven.configuration.async
+      Raven.configuration.async = lambda { |e| :ok }
+      Raven.configuration.async.should_receive(:call).with(event)
+      Raven.capture_exception(exception, options)
+      Raven.configuration.async = prior_async
     end
   end
 
@@ -56,4 +86,7 @@ describe Raven do
         be_kind_of Hash
     end
   end
+
+  
+
 end

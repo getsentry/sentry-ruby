@@ -1,6 +1,8 @@
 # Raven-Ruby
 
-[![Gem Version](https://badge.fury.io/rb/sentry-raven.png)](http://badge.fury.io/rb/sentry-raven) [![Build Status](https://secure.travis-ci.org/getsentry/raven-ruby.png?branch=master)](http://travis-ci.org/getsentry/raven-ruby) [![Coverage Status](https://coveralls.io/repos/getsentry/raven-ruby/badge.png?branch=master)](https://coveralls.io/r/getsentry/raven-ruby)
+[![Gem Version](https://img.shields.io/gem/v/sentry-raven.svg)](https://rubygems.org/gems/sentry-raven)
+[![Build Status](https://img.shields.io/travis/getsentry/raven-ruby/master.svg)](https://travis-ci.org/getsentry/raven-ruby)
+[![Coverage Status](https://img.shields.io/coveralls/getsentry/raven-ruby/master.svg)](https://coveralls.io/r/getsentry/raven-ruby)
 
 A client and integration layer for the [Sentry](https://github.com/getsentry/sentry) error reporting API.
 
@@ -34,6 +36,30 @@ have mixed-in methods for capturing exceptions you've rescued yourself inside of
    flash[:error] = 'Your flux capacitor is overloaded!'
  end
 ```
+
+#### Delayed::Job
+
+The easiest way of enabling Raven for all your delayed jobs is to use [delayed-plugins-raven](https://github.com/qiushihe/delayed-plugins-raven) gem. First add it to  your application's Gemfile:
+
+```
+gem 'delayed-plugins-raven'
+```
+
+And then extend your Raven configuration (eg. in ```config/initializers/raven.rb``` file):
+
+```ruby
+require 'raven'
+require 'delayed-plugins-raven'
+
+Raven.configure do |config|
+    config.dsn = 'https://public:secret@app.getsentry.com/9999'
+    ...
+end
+
+Delayed::Worker.plugins << Delayed::Plugins::Raven::Plugin
+```
+
+For more configuration options check delayed-plugins-raven [documentation](https://github.com/qiushihe/delayed-plugins-raven).
 
 ### Rails 2
 
@@ -90,15 +116,14 @@ end
 Additional context can be passed to the capture methods.
 
 ```ruby
-Raven.capture_message("My event", {
-  :logger => 'logger',
-  :extra => {
-    'my_custom_variable' => 'value'
+Raven.capture_message "My event",
+  logger: 'logger',
+  extra: {
+    my_custom_variable: 'value'
   },
-  :tags => {
-    'environment' => 'production',
+  tags: {
+    environment: 'production'
   }
-})
 ```
 
 The following attributes are available:
@@ -121,13 +146,13 @@ There are three primary methods for providing request context:
 
 ```ruby
 # bind the logged in user
-Raven.user_context({'email' => 'foo@example.com'})
+Raven.user_context email: 'foo@example.com'
 
 # tag the request with something interesting
-Raven.tags_context({'interesting' => 'yes'})
+Raven.tags_context interesting: 'yes'
 
 # provide a bit of additional context
-Raven.extra_context({'happiness' => 'very'})
+Raven.extra_context happiness: 'very'
 ```
 
 Additionally, if you're using Rack (without the middleware), you can easily provide context with the ``rack_context`` helper:
@@ -139,10 +164,31 @@ Raven.rack_context(env)
 If you're using the Rack middleware, we've already taken care of cleanup for you, otherwise you'll need to ensure you perform it manually:
 
 ```ruby
-Raven.context.clear!
+Raven::Context.clear!
 ```
 
 Note: the rack and user context will perform a set operation, whereas tags and extra context will merge with any existing request context.
+
+### Authlogic
+
+When using Authlogic for authentication, you can provide user context by binding to session ```after_persisting``` and ```after_destroy``` events in ```user_session.rb```:
+
+```ruby
+class UserSession < Authlogic::Session::Base
+  # events binding
+  after_persisting :raven_set_user_context
+  after_destroy :raven_clear_user_context
+
+  def raven_set_user_context
+    Raven.user_context( { 'id' => self.user.id, 'email' => self.user.email, 'username' => self.user.username } )
+  end
+
+  def raven_clear_user_context
+    Raven.user_context({})
+  end
+end
+```
+
 
 ## Configuration
 
@@ -213,7 +259,24 @@ flag:
 ```ruby
 Raven.configure do |config|
   config.ssl_verification = true
+end
 ```
+
+### Asynchronous Delivery
+
+When an error occurs, the notification is immediately sent to Sentry. Raven can be configured 
+to send notifications asynchronously:
+
+```ruby
+Raven.configure do |config|
+  config.async = lambda { |event|
+    Thread.new { Raven.send(event) }
+  }
+end
+```
+
+This example uses a thread, but other tools can be used (GirlFriday, Resque, Sidekiq, etc...) as 
+long as the `event` argument is eventually passed to `Raven.send`.
 
 ### Logging
 

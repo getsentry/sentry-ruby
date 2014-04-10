@@ -77,6 +77,7 @@ module OkJson
     when Hash    then objenc(x, visited)
     when Array   then arrenc(x, visited)
     when String  then strenc(x)
+    when Symbol  then strenc(x.to_s)
     when Numeric then numenc(x)
     when true    then "true"
     when false   then "false"
@@ -444,6 +445,7 @@ private
   def keyenc(k)
     case k
     when String then strenc(k)
+    when Symbol then strenc(k.to_s)
     else
       strenc(k.inspect)
     end
