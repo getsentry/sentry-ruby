@@ -153,5 +153,9 @@ module Raven
         !%w[test cucumber development].include?(current_environment)
       end
     end
+
+    def log_excluded_environment_message
+      Raven.logger.debug "Event not sent due to excluded environment: #{current_environment}"
+    end
   end
 end

@@ -98,7 +98,7 @@ module Raven
     end
 
     def capture_exception(exception, options = {})
-      if configuration.send_in_current_environment?
+      send_or_skip do
         if evt = Event.from_exception(exception, options)
           yield evt if block_given?
           if configuration.async?
@@ -107,13 +107,11 @@ module Raven
             send(evt)
           end
         end
-      else
-        logger.debug "Event not sent due to excluded environment: #{@configuration.current_environment}"
       end
     end
 
     def capture_message(message, options = {})
-      if configuration.send_in_current_environment?
+      send_or_skip do
         if evt = Event.from_message(message, options)
           yield evt if block_given?
           if configuration.async?
@@ -122,8 +120,14 @@ module Raven
             send(evt)
           end
         end
+      end
+    end
+
+    def send_or_skip
+      if configuration.send_in_current_environment?
+        yield if block_given?
       else
-        logger.debug "Event not sent due to excluded environment: #{@configuration.current_environment}"
+        configuration.log_excluded_environment_message
       end
     end
 

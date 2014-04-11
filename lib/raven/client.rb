@@ -23,7 +23,7 @@ module Raven
 
     def send(event)
       unless configuration.send_in_current_environment?
-        Raven.logger.debug "Event not sent due to excluded environment: #{configuration.current_environment}"
+        configuration.log_excluded_environment_message
         return
       end
 
