@@ -1,3 +1,5 @@
+require 'time'
+
 module Raven
   # Middleware for Rack applications. Any errors raised by the upstream
   # application will be delivered to Sentry and re-raised.
@@ -19,6 +21,7 @@ module Raven
   # Use a standard Raven.configure call to configure your server credentials.
   class Rack
     def self.capture_exception(exception, env, options = {})
+      options[:time_spent] = Time.now-env[:requested_at]
       Raven.capture_exception(exception, options) do |evt|
         evt.interface :http do |int|
           int.from_rack(env)
@@ -27,6 +30,7 @@ module Raven
     end
 
     def self.capture_message(message, env, options = {})
+      options[:time_spent] = Time.now-env[:requested_at]
       Raven.capture_message(message, options) do |evt|
         evt.interface :http do |int|
           int.from_rack(env)
@@ -41,6 +45,7 @@ module Raven
     def call(env)
       # store the current environment in our local context for arbitrary
       # callers
+      env[:requested_at] = Time.now
       Raven.rack_context(env)
 
       begin
