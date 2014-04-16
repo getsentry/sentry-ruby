@@ -26,7 +26,7 @@ For alternative configuration methods, and other options see [Configuration](#co
 
 ### Rails 3
 
-In Rails 3, Sentry will "just work," capturing any exceptions thrown in your app. All Rails integrations also
+In Rails 3, Sentry will "just work" capturing any exceptions thrown in your app. All Rails integrations also
 have mixed-in methods for capturing exceptions you've rescued yourself inside of controllers:
 
 ```ruby
@@ -39,27 +39,7 @@ have mixed-in methods for capturing exceptions you've rescued yourself inside of
 
 #### Delayed::Job
 
-The easiest way of enabling Raven for all your delayed jobs is to use [delayed-plugins-raven](https://github.com/qiushihe/delayed-plugins-raven) gem. First add it to  your application's Gemfile:
-
-```
-gem 'delayed-plugins-raven'
-```
-
-And then extend your Raven configuration (eg. in ```config/initializers/raven.rb``` file):
-
-```ruby
-require 'raven'
-require 'delayed-plugins-raven'
-
-Raven.configure do |config|
-    config.dsn = 'https://public:secret@app.getsentry.com/9999'
-    ...
-end
-
-Delayed::Worker.plugins << Delayed::Plugins::Raven::Plugin
-```
-
-For more configuration options check delayed-plugins-raven [documentation](https://github.com/qiushihe/delayed-plugins-raven).
+Reporting errors raised in delayed jobs should work out-of the box. Usage of [delayed-plugins-raven](https://github.com/qiushihe/delayed-plugins-raven) gem is deprecated.
 
 ### Rails 2
 
