@@ -14,23 +14,23 @@ if defined?(Delayed)
             rescue Exception => exception
               # Log error to Sentry
               ::Raven.capture_exception(exception,
-                                        logger => 'delayed_job',
-                                        tags => {
-                                           delayed_job_queue: job.queue
+                                        logger  => 'delayed_job',
+                                        tags    => {
+                                           delayed_job_queue => job.queue
                                         },
                                         extra => {
                                             delayed_job => {
-                                                id => job.id,
-                                                priority => job.priority,
-                                                attempts => job.attempts,
-                                                handler => job.handler,
-                                                last_error => job.last_error,
-                                                run_at => job.run_at,
-                                                locked_at => job.locked_at,
-                                                #failed_at => job.failed_at,
-                                                locked_by => job.locked_by,
-                                                queue => job.queue,
-                                                created_at => job.created_at
+                                                id          => job.id,
+                                                priority    => job.priority,
+                                                attempts    => job.attempts,
+                                                handler     => job.handler,
+                                                last_error  => job.last_error,
+                                                run_at      => job.run_at,
+                                                locked_at   => job.locked_at,
+                                                #failed_at  => job.failed_at,
+                                                locked_by   => job.locked_by,
+                                                queue       => job.queue,
+                                                created_at  => job.created_at
                                             }
                                         })
 
