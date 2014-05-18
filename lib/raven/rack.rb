@@ -39,6 +39,9 @@ module Raven
     end
 
     def call(env)
+      # clear context at the beginning of the request to ensure a clean slate
+      Context.clear!
+
       # store the current environment in our local context for arbitrary
       # callers
       Raven.rack_context(env)
@@ -50,8 +53,6 @@ module Raven
       rescue Exception => e
         Raven::Rack.capture_exception(e, env)
         raise
-      ensure
-        Context.clear!
       end
 
       error = env['rack.exception'] || env['sinatra.error']
