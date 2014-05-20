@@ -23,7 +23,7 @@ module Raven
     PLATFORM = "ruby"
 
     attr_reader :id
-    attr_accessor :project, :message, :timestamp, :level
+    attr_accessor :project, :message, :timestamp, :time_spent, :level
     attr_accessor :logger, :culprit, :server_name, :modules, :extra, :tags
 
     def initialize(options = {}, &block)
@@ -35,6 +35,7 @@ module Raven
       @id = options[:id] || UUIDTools::UUID.random_create.hexdigest
       @message = options[:message]
       @timestamp = options[:timestamp] || Time.now.utc
+      @time_spent = options[:time_spent]
 
       @level = options[:level] || :error
       @logger = options[:logger] || 'root'
@@ -67,6 +68,7 @@ module Raven
 
       # Some type coercion
       @timestamp = @timestamp.strftime('%Y-%m-%dT%H:%M:%S') if @timestamp.is_a?(Time)
+      @time_spent = (@time_spent*1000).to_i if @time_spent.is_a?(Float)
       @level = LOG_LEVELS[@level.to_s.downcase] if @level.is_a?(String) || @level.is_a?(Symbol)
     end
 
@@ -101,6 +103,7 @@ module Raven
         'event_id' => @id,
         'message' => @message,
         'timestamp' => @timestamp,
+        'time_spent' => @time_spent,
         'level' => @level,
         'project' => @project,
         'logger' => @logger,
