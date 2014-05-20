@@ -5,7 +5,7 @@ require 'raven/interfaces'
 module Raven
   class StacktraceInterface < Interface
 
-    name 'sentry.interfaces.Stacktrace'
+    name 'stacktrace'
     property :frames, :default => []
 
     def initialize(*arguments)

@@ -111,7 +111,7 @@ module Raven
       data['modules'] = @modules if @modules
       data['extra'] = @extra if @extra
       data['tags'] = @tags if @tags
-      data['sentry.interfaces.User'] = @user if @user
+      data['user'] = @user if @user
       @interfaces.each_pair do |name, int_data|
         data[name] = int_data.to_hash
       end
@@ -138,25 +138,35 @@ module Raven
       new(options) do |evt|
         evt.message = "#{exc.class.to_s}: #{exc.message}"
         evt.level = options[:level] || :error
-        evt.parse_exception(exc)
-        if exc.backtrace
-          evt.interface :stack_trace do |int|
-            backtrace = Backtrace.parse(exc.backtrace)
-            int.frames = backtrace.lines.reverse.map do |line|
-              int.frame do |frame|
-                frame.abs_path = line.file
-                frame.function = line.method
-                frame.lineno = line.number
-                frame.in_app = line.in_app
-                if context_lines && frame.abs_path
-                  frame.pre_context, frame.context_line, frame.post_context = \
-                    evt.get_file_context(frame.abs_path, frame.lineno, context_lines)
+
+        evt.interface(:exception) do |int|
+          int.type = exc.class.to_s
+          int.value = exc.to_s
+          int.module = exc.class.to_s.split('::')[0...-1].join('::')
+
+          # TODO(dcramer): this needs cleaned up, but I couldn't figure out how to
+          # work Hashie as a non-Rubyist
+          if exc.backtrace
+            int.stacktrace = StacktraceInterface.new do |stacktrace|
+              backtrace = Backtrace.parse(exc.backtrace)
+              stacktrace.frames = backtrace.lines.reverse.map do |line|
+                stacktrace.frame do |frame|
+                  frame.abs_path = line.file
+                  frame.function = line.method
+                  frame.lineno = line.number
+                  frame.in_app = line.in_app
+                  if context_lines && frame.abs_path
+                    frame.pre_context, frame.context_line, frame.post_context = \
+                      evt.get_file_context(frame.abs_path, frame.lineno, context_lines)
+                  end
                 end
-              end
-            end.select { |f| f.filename }
-            evt.culprit = evt.get_culprit(int.frames)
+              end.select { |f| f.filename }
+
+              evt.culprit = evt.get_culprit(stacktrace.frames)
+            end
           end
         end
+
         block.call(evt) if block
       end
     end
@@ -185,14 +195,6 @@ module Raven
     def get_culprit(frames)
       lastframe = frames.reverse.find { |f| f.in_app } || frames.last
       "#{lastframe.filename} in #{lastframe.function} at line #{lastframe.lineno}" if lastframe
-    end
-
-    def parse_exception(exception)
-      interface(:exception) do |int|
-        int.type = exception.class.to_s
-        int.value = exception.to_s
-        int.module = exception.class.to_s.split('::')[0...-1].join('::')
-      end
     end
 
     # For cross-language compat

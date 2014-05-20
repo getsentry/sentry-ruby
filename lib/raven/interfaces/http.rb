@@ -3,7 +3,7 @@ require 'raven/interfaces'
 module Raven
   class HttpInterface < Interface
 
-    name 'sentry.interfaces.Http'
+    name 'request'
     property :url, :required => true
     property :method, :required => true
     property :data

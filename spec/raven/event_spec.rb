@@ -76,7 +76,7 @@ describe Raven::Event do
     end
 
     it "adds user data" do
-      hash['sentry.interfaces.User'].should == {
+      hash['user'].should == {
         'id' => 'hello',
       }
     end
@@ -165,7 +165,7 @@ describe Raven::Event do
     end
 
     it "adds http data" do
-      hash['sentry.interfaces.Http'].should == {
+      hash['request'].should == {
         'data' => { 'foo' => 'bar' },
         'env' => { 'SERVER_NAME' => 'localhost', 'SERVER_PORT' => '80' },
         'headers' => { 'Host' => 'localhost' },
@@ -253,15 +253,15 @@ describe Raven::Event do
       end
 
       it 'uses the exception class name as the exception type' do
-        hash['sentry.interfaces.Exception']['type'].should == 'Exception'
+        hash['exception']['type'].should == 'Exception'
       end
 
       it 'uses the exception message as the exception value' do
-        hash['sentry.interfaces.Exception']['value'].should == message
+        hash['exception']['value'].should == message
       end
 
       it 'does not belong to a module' do
-        hash['sentry.interfaces.Exception']['module'].should == ''
+        hash['exception']['module'].should == ''
       end
     end
 
@@ -272,7 +272,7 @@ describe Raven::Event do
       let(:exception) { Raven::Test::Exception.new(message) }
 
       it 'sends the module name as part of the exception info' do
-        hash['sentry.interfaces.Exception']['module'].should == 'Raven::Test'
+        hash['exception']['module'].should == 'Raven::Test'
       end
     end
 
@@ -316,14 +316,15 @@ describe Raven::Event do
       end
 
       it 'parses the backtrace' do
-        hash['sentry.interfaces.Stacktrace']['frames'].length.should eq(2)
-        hash['sentry.interfaces.Stacktrace']['frames'][0]['lineno'].should eq(1412)
-        hash['sentry.interfaces.Stacktrace']['frames'][0]['function'].should eq('other_function')
-        hash['sentry.interfaces.Stacktrace']['frames'][0]['filename'].should eq('/some/other/path')
+        frames = hash['exception']['stacktrace']['frames']
+        frames.length.should eq(2)
+        frames[0]['lineno'].should eq(1412)
+        frames[0]['function'].should eq('other_function')
+        frames[0]['filename'].should eq('/some/other/path')
 
-        hash['sentry.interfaces.Stacktrace']['frames'][1]['lineno'].should eq(22)
-        hash['sentry.interfaces.Stacktrace']['frames'][1]['function'].should eq('function_name')
-        hash['sentry.interfaces.Stacktrace']['frames'][1]['filename'].should eq('/path/to/some/file')
+        frames[1]['lineno'].should eq(22)
+        frames[1]['function'].should eq('function_name')
+        frames[1]['filename'].should eq('/path/to/some/file')
       end
 
       context 'with internal backtrace' do
@@ -334,9 +335,10 @@ describe Raven::Event do
         end
 
         it 'marks filename and in_app correctly' do
-          hash['sentry.interfaces.Stacktrace']['frames'][0]['lineno'].should eq(10)
-          hash['sentry.interfaces.Stacktrace']['frames'][0]['function'].should eq("synchronize")
-          hash['sentry.interfaces.Stacktrace']['frames'][0]['filename'].should eq("<internal:prelude>")
+        frames = hash['exception']['stacktrace']['frames']
+          frames[0]['lineno'].should eq(10)
+          frames[0]['function'].should eq("synchronize")
+          frames[0]['filename'].should eq("<internal:prelude>")
         end
       end
 
@@ -367,18 +369,19 @@ describe Raven::Event do
 
           it 'marks in_app correctly' do
             Raven.configuration.project_root.should eq('/rails/root')
-            hash['sentry.interfaces.Stacktrace']['frames'][0]['filename'].should eq("test/some/other/path")
-            hash['sentry.interfaces.Stacktrace']['frames'][0]['in_app'].should eq(true)
-            hash['sentry.interfaces.Stacktrace']['frames'][1]['filename'].should eq("/app/some/other/path")
-            hash['sentry.interfaces.Stacktrace']['frames'][1]['in_app'].should eq(false)
-            hash['sentry.interfaces.Stacktrace']['frames'][2]['filename'].should eq("/gem/lib/path")
-            hash['sentry.interfaces.Stacktrace']['frames'][2]['in_app'].should eq(false)
-            hash['sentry.interfaces.Stacktrace']['frames'][3]['filename'].should eq("/rails/root/app/foobar")
-            hash['sentry.interfaces.Stacktrace']['frames'][3]['in_app'].should eq(true)
-            hash['sentry.interfaces.Stacktrace']['frames'][4]['filename'].should eq("vendor/bundle/some_gem.rb")
-            hash['sentry.interfaces.Stacktrace']['frames'][4]['in_app'].should eq(false)
-            hash['sentry.interfaces.Stacktrace']['frames'][5]['filename'].should eq("/rails/root/vendor/bundle/cache/other_gem.rb")
-            hash['sentry.interfaces.Stacktrace']['frames'][5]['in_app'].should eq(false)
+            frames = hash['exception']['stacktrace']['frames']
+            frames[0]['filename'].should eq("test/some/other/path")
+            frames[0]['in_app'].should eq(true)
+            frames[1]['filename'].should eq("/app/some/other/path")
+            frames[1]['in_app'].should eq(false)
+            frames[2]['filename'].should eq("/gem/lib/path")
+            frames[2]['in_app'].should eq(false)
+            frames[3]['filename'].should eq("/rails/root/app/foobar")
+            frames[3]['in_app'].should eq(true)
+            frames[4]['filename'].should eq("vendor/bundle/some_gem.rb")
+            frames[4]['in_app'].should eq(false)
+            frames[5]['filename'].should eq("/rails/root/vendor/bundle/cache/other_gem.rb")
+            frames[5]['in_app'].should eq(false)
           end
         end
       end
@@ -397,7 +400,8 @@ describe Raven::Event do
         end
 
         it 'strips prefixes in the load path from frame filenames' do
-          hash['sentry.interfaces.Stacktrace']['frames'][0]['filename'].should eq('other/path')
+          frames = hash['exception']['stacktrace']['frames']
+          frames[0]['filename'].should eq('other/path')
         end
       end
     end
