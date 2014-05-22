@@ -11,6 +11,7 @@ require 'raven/interfaces/exception'
 require 'raven/interfaces/stack_trace'
 require 'raven/interfaces/http'
 require 'raven/processors/sanitizedata'
+require 'raven/integrations/delayed_job'
 
 module Raven
   class << self
