@@ -41,10 +41,10 @@ describe Raven::Configuration do
     it 'should have a project ID' do
       subject[:project_id].should == '42'
     end
-    
+
     it 'should not be async' do
-      subject[:async].should == false
-      subject[:async?].should == false
+      expect(subject[:async]).to eq(false)
+      expect(subject[:async?]).to eq(false)
     end
   end
 
@@ -82,12 +82,12 @@ describe Raven::Configuration do
 
   context 'being initialized in a non-test environment' do
     it 'should send events' do
-      subject.send_in_current_environment?.should be_true
+      expect(subject.send_in_current_environment?).to eq(true)
     end
 
     it 'should be configurable to send events async' do
       subject.async = lambda { |event| :ok }
-      subject.async.respond_to?(:call).should be_true
+      expect(subject.async.respond_to?(:call)).to eq(true)
       subject.async.call('event').should == :ok
     end
 
@@ -97,7 +97,7 @@ describe Raven::Configuration do
       expect { subject.async = false }.to_not raise_error
       expect { subject.async = true }.to raise_error(ArgumentError)
     end
-    
+
   end
 
   context 'being initialized in a test environment' do
@@ -106,24 +106,24 @@ describe Raven::Configuration do
     end
 
     it 'should not send events' do
-      subject.send_in_current_environment?.should be_false
+      expect(subject.send_in_current_environment?).to eq(false)
     end
 
     it 'should send events if test is whitelisted' do
       subject.environments = %w[ test ]
-      subject.send_in_current_environment?.should be_true
+      expect(subject.send_in_current_environment?).to eq(true)
     end
 
     it 'should not send events in a cucumber environment' do
       subject.current_environment = 'cucumber'
-      subject.send_in_current_environment?.should be_false
+      expect(subject.send_in_current_environment?).to eq(false)
     end
   end
 
   context 'being initialized in a development environment' do
     it 'should not send events' do
       subject.current_environment = 'development'
-      subject.send_in_current_environment?.should be_false
+      expect(subject.send_in_current_environment?).to eq(false)
     end
   end
 
