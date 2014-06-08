@@ -5,6 +5,9 @@ module Raven
   INTERFACES = {}
 
   class Interface < Hashie::Dash
+    
+    include Hashie::Extensions::Dash::IndifferentAccess
+    
     def initialize(attributes = {}, &block)
       @check_required = false
       super(attributes)
