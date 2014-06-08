@@ -4,5 +4,6 @@ gem "rails", "~> 3.2.6"
 gem "rake"
 gem "rspec"
 gem "simplecov"
+gem "hashie", "~> 2.1.1"
 
 gemspec :path => "../"
