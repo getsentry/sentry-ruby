@@ -11,7 +11,6 @@ require 'raven/interfaces/exception'
 require 'raven/interfaces/stack_trace'
 require 'raven/interfaces/http'
 require 'raven/processors/sanitizedata'
-require 'raven/integrations/delayed_job'
 
 module Raven
   class << self
@@ -197,9 +196,11 @@ module Raven
       self.context.rack_env = env
     end
 
-    # Injects rails
+    # Injects various integrations
     def inject
-      require 'raven/railtie' if defined?(Rails::Railtie)
+      # TODO(dcramer): integrations should have a way to opt-out
+      require 'raven/integrations/delayed_job' if defined?(::Delayed::Plugin)
+      require 'raven/railtie' if defined?(::Rails::Railtie)
       require 'raven/sidekiq' if defined?(Sidekiq)
       require 'raven/tasks' if defined?(Rake)
     end
