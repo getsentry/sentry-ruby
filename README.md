@@ -18,28 +18,18 @@ gem "sentry-raven" #, :github => "getsentry/raven-ruby"
 
 ## Usage
 
-The easiest way to configure Raven is by setting the ``SENTRY_DSN`` environment variable.
+The minimum configuration require setting the ``SENTRY_DSN`` with value found on your Sentry project settings page. It should resemble something like ```https://public:secret@app.getsentry.com/9999```. See [Configuration](#configuration) for configuration methods, and other options.
 
-You'll find this value on your project settings page, and it should resemble something like ```https://public:secret@app.getsentry.com/9999```.
+Many implementations will automatically capture uncaught exceptions (such as Rails, Sidekiq or by using
+the Rack middleware). If you catch those exceptions yourself, but still want to report on them, see section [Capturing Events](#capturing-events).
 
-For alternative configuration methods, and other options see [Configuration](#configuration).
+### Rails 3 or 4
 
-### Rails 3
-
-In Rails 3, Sentry will "just work" capturing any exceptions thrown in your app. All Rails integrations also
-have mixed-in methods for capturing exceptions you've rescued yourself inside of controllers:
-
-```ruby
- # ...
- rescue => exception
-   capture_exception(exception) # or capture_message('Flux overload')
-   flash[:error] = 'Your flux capacitor is overloaded!'
- end
-```
+In Rails 3 or 4 all uncaught exceptions will be automatically reported.
 
 #### Delayed::Job
 
-Reporting errors raised in delayed jobs should work out-of the box. Usage of [delayed-plugins-raven](https://github.com/qiushihe/delayed-plugins-raven) gem is deprecated.
+No extra configuration required. Usage of [delayed-plugins-raven](https://github.com/qiushihe/delayed-plugins-raven) gem is deprecated.
 
 ### Rails 2
 
@@ -61,8 +51,7 @@ care of reporting errors that occur in Sidekiq jobs. To use it, just require the
 ```ruby
 require 'raven/sidekiq'
 ```
-after you require Sidekiq. If you are using Sidekiq with Rails, just put this
-require somewhere in the initializers.
+after you require Sidekiq. If you are using Sidekiq with Rails, just put this require somewhere in the initializers.
 
 
 ## Capturing Events
