@@ -15,7 +15,7 @@ module Raven
       block.call(self) if block
       @check_required = true
 
-      if self.respond_to?(:assert_required_attributes_set!, true)
+      if self.private_methods.include?(:assert_required_attributes_set!)
         assert_required_attributes_set!
       else
         assert_required_properties_set!
