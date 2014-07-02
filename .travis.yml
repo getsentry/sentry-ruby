@@ -4,11 +4,11 @@ gemfile:
   - gemfiles/rails31.gemfile
   - gemfiles/rails32.gemfile
   - gemfiles/rails41.gemfile
+  - gemfiles/hashie_pre3_1.gemfile
 rvm:
   - 1.8.7
   - 1.9.3
   - jruby-19mode
-  - rbx-19mode
   - 2.0.0
   - 2.1.0
 notifications:
@@ -20,3 +20,6 @@ matrix:
   allow_failures:
     - rvm: jruby-19mode
     - rvm: rbx-19mode
+  exclude:
+    - rvm: 1.8.7
+      gemfile: gemfiles/rails41.gemfile

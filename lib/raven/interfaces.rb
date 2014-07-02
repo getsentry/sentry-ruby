@@ -14,7 +14,17 @@ module Raven
       super(attributes)
       block.call(self) if block
       @check_required = true
-      assert_required_properties_set!
+
+      begin
+        assert_required_attributes_set!
+      rescue NoMethodError
+        assert_required_properties_set!
+      end
+
+    end
+
+    def assert_required_attributes_set!
+      super if @check_required
     end
 
     def assert_required_properties_set!
