@@ -46,6 +46,10 @@ describe Raven::Configuration do
       expect(subject[:async]).to eq(false)
       expect(subject[:async?]).to eq(false)
     end
+
+    it 'should catch_debugged_exceptions' do
+      expect(subject[:catch_debugged_exceptions]).to eq(true)
+    end
   end
 
   context 'being initialized with a server string' do

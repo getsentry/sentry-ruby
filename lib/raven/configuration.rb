@@ -76,6 +76,10 @@ module Raven
     # Exceptions from these directories to be ignored
     attr_accessor :app_dirs_pattern
 
+    # Catch exceptions before they're been processed by
+    # ActionDispatch::ShowExceptions or ActionDispatch::DebugExceptions
+    attr_accessor :catch_debugged_exceptions
+
     IGNORE_DEFAULT = ['ActiveRecord::RecordNotFound',
                       'ActionController::RoutingError',
                       'ActionController::InvalidAuthenticityToken',
@@ -97,6 +101,7 @@ module Raven
       self.open_timeout = 1
       self.tags = {}
       self.async = false
+      self.catch_debugged_exceptions = true
     end
 
     def server=(value)
