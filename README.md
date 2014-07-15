@@ -261,6 +261,8 @@ Raven.configure do |config|
 end
 ```
 
+If you are using Rails, Raven will default to using Rails.logger as the logger.
+
 ## Sanitizing Data (Processors)
 
 If you need to sanitize or pre-process (before its sent to the server) data, you can do so using the Processors
