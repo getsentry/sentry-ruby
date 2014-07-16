@@ -21,7 +21,7 @@ module Raven
   # Use a standard Raven.configure call to configure your server credentials.
   class Rack
     def self.capture_exception(exception, env, options = {})
-      if env[:requested_at]
+      if env['requested_at']
         options[:time_spent] = Time.now - env[:requested_at]
       end
       Raven.capture_exception(exception, options) do |evt|
@@ -32,7 +32,7 @@ module Raven
     end
 
     def self.capture_message(message, env, options = {})
-      if env[:requested_at]
+      if env['requested_at']
         options[:time_spent] = Time.now - env[:requested_at]
       end
       Raven.capture_message(message, options) do |evt|
@@ -52,7 +52,7 @@ module Raven
 
       # store the current environment in our local context for arbitrary
       # callers
-      env[:requested_at] = Time.now
+      env['requested_at'] = Time.now
       Raven.rack_context(env)
 
       begin
