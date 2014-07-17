@@ -175,9 +175,11 @@ end
 
 ### Environments
 
-By default events will be sent to Sentry in all environments except 'test', 'development', and 'cucumber'.
+By default, events will be sent to Sentry in all environments. If you do not wish
+to send events in an environment, we suggest you unset the ```SENTRY_DSN```
+variable in that environment.
 
-You can configure Raven to run only in certain environments by configuring the `environments` whitelist. For example, to only run Sentry in production:
+Alternately, you can configure Raven to run only in certain environments by configuring the `environments` whitelist. For example, to only run Sentry in production:
 
 ```ruby
 Raven.configure do |config|
