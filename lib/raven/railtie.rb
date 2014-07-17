@@ -20,12 +20,14 @@ module Raven
         config.project_root ||= ::Rails.root
       end
 
-      if defined?(::ActionDispatch::DebugExceptions)
-        require 'raven/rails/middleware/debug_exceptions_catcher'
-        ::ActionDispatch::DebugExceptions.send(:include, Raven::Rails::Middleware::DebugExceptionsCatcher)
-      elsif defined?(::ActionDispatch::ShowExceptions)
-        require 'raven/rails/middleware/debug_exceptions_catcher'
-        ::ActionDispatch::ShowExceptions.send(:include, Raven::Rails::Middleware::DebugExceptionsCatcher)
+      if Raven.configuration.catch_debugged_exceptions
+        if defined?(::ActionDispatch::DebugExceptions)
+          require 'raven/rails/middleware/debug_exceptions_catcher'
+          ::ActionDispatch::DebugExceptions.send(:include, Raven::Rails::Middleware::DebugExceptionsCatcher)
+        elsif defined?(::ActionDispatch::ShowExceptions)
+          require 'raven/rails/middleware/debug_exceptions_catcher'
+          ::ActionDispatch::ShowExceptions.send(:include, Raven::Rails::Middleware::DebugExceptionsCatcher)
+        end
       end
     end
 
