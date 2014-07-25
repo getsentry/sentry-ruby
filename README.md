@@ -265,6 +265,21 @@ end
 
 If you are using Rails, Raven will default to using Rails.logger as the logger.
 
+### Silencing the ready message
+
+Upon start, Raven will write the following message to the log at the INFO level:
+
+    ** [out :: hostname.example.com] I, [2014-07-22T15:32:57.498368 #30897]  INFO -- : ** [Raven] Raven 0.9.4 ready to catch errors"
+
+You can turn off this message by passing `true` to `Raven.configure`
+
+```ruby
+Raven.configure(true) do |config|
+   ...
+end
+```
+
+
 ## Sanitizing Data (Processors)
 
 If you need to sanitize or pre-process (before its sent to the server) data, you can do so using the Processors
