@@ -21,7 +21,7 @@ Gem::Specification.new do |gem|
   gem.add_dependency "hashie", ">= 1.1.0" if RUBY_VERSION > '1.8.7'
 
   gem.add_development_dependency "rake"
-  gem.add_development_dependency "rspec", "~> 2.10"
+  gem.add_development_dependency "rspec", "~> 3.0"
   gem.add_development_dependency "mime-types", "~> 1.16"
   gem.add_development_dependency "coveralls"
   gem.add_development_dependency "rest-client", "< 1.7.0" if RUBY_VERSION == '1.8.7'

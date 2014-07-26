@@ -23,35 +23,35 @@ describe Raven::Event do
     end
 
     it 'has message' do
-      hash['message'].should == 'test'
+      expect(hash['message']).to eq('test')
     end
 
     it 'has level' do
-      hash['level'].should == 30
+      expect(hash['level']).to eq(30)
     end
 
     it 'has logger' do
-      hash['logger'].should == 'foo'
+      expect(hash['logger']).to eq('foo')
     end
 
     it 'has server name' do
-      hash['server_name'].should == 'foo.local'
+      expect(hash['server_name']).to eq('foo.local')
     end
 
     it 'has tag data' do
-      hash['tags'].should == {
+      expect(hash['tags']).to eq({
         'foo' => 'bar'
-      }
+      })
     end
 
     it 'has extra data' do
-      hash['extra'].should == {
+      expect(hash['extra']).to eq({
         'my_custom_variable' => 'value'
-      }
+      })
     end
 
     it 'has platform' do
-      hash['platform'].should == 'ruby'
+      expect(hash['platform']).to eq('ruby')
     end
 
   end
@@ -76,9 +76,9 @@ describe Raven::Event do
     end
 
     it "adds user data" do
-      hash['user'].should == {
+      expect(hash['user']).to eq({
         'id' => 'hello',
-      }
+      })
     end
   end
 
@@ -102,10 +102,10 @@ describe Raven::Event do
     end
 
     it "merges tags data" do
-      hash['tags'].should == {
+      expect(hash['tags']).to eq({
         'key' => 'value',
         'foo' => 'bar',
-      }
+      })
     end
   end
 
@@ -129,10 +129,10 @@ describe Raven::Event do
     end
 
     it "merges extra data" do
-      hash['extra'].should == {
+      expect(hash['extra']).to eq({
         'key' => 'value',
         'my_custom_variable' => 'value',
-      }
+      })
     end
   end
 
@@ -165,14 +165,14 @@ describe Raven::Event do
     end
 
     it "adds http data" do
-      hash['request'].should == {
+      expect(hash['request']).to eq({
         'data' => { 'foo' => 'bar' },
         'env' => { 'SERVER_NAME' => 'localhost', 'SERVER_PORT' => '80' },
         'headers' => { 'Host' => 'localhost' },
         'method' => 'POST',
         'query_string' => 'biz=baz',
         'url' => 'http://localhost/lol'
-      }
+      })
     end
   end
 
@@ -193,10 +193,10 @@ describe Raven::Event do
     end
 
     it 'merges tags data' do
-      hash['tags'].should == {
+      expect(hash['tags']).to eq({
         'key' => 'value',
         'foo' => 'bar'
-      }
+      })
     end
   end
 
@@ -216,19 +216,19 @@ describe Raven::Event do
 
     context 'for a Message' do
       it 'returns an event' do
-        Raven::Event.capture_message(message).should be_a(Raven::Event)
+        expect(Raven::Event.capture_message(message)).to be_a(Raven::Event)
       end
 
       it "sets the message to the value passed" do
-        hash['message'].should == message
+        expect(hash['message']).to eq(message)
       end
 
       it 'has level ERROR' do
-        hash['level'].should == 40
+        expect(hash['level']).to eq(40)
       end
 
       it 'accepts an options hash' do
-        Raven::Event.capture_message(message, :logger => 'logger').logger.should == 'logger'
+        expect(Raven::Event.capture_message(message, :logger => 'logger').logger).to eq('logger')
       end
     end
   end
@@ -240,28 +240,28 @@ describe Raven::Event do
 
     context 'for an Exception' do
       it 'returns an event' do
-        Raven::Event.capture_exception(exception).should be_a(Raven::Event)
+        expect(Raven::Event.capture_exception(exception)).to be_a(Raven::Event)
       end
 
       it "sets the message to the exception's message and type" do
-        hash['message'].should == "Exception: #{message}"
+        expect(hash['message']).to eq("Exception: #{message}")
       end
 
       # sentry uses python's logging values; 40 is the value of logging.ERROR
       it 'has level ERROR' do
-        hash['level'].should == 40
+        expect(hash['level']).to eq(40)
       end
 
       it 'uses the exception class name as the exception type' do
-        hash['exception']['type'].should == 'Exception'
+        expect(hash['exception']['type']).to eq('Exception')
       end
 
       it 'uses the exception message as the exception value' do
-        hash['exception']['value'].should == message
+        expect(hash['exception']['value']).to eq(message)
       end
 
       it 'does not belong to a module' do
-        hash['exception']['module'].should == ''
+        expect(hash['exception']['module']).to eq('')
       end
     end
 
@@ -272,14 +272,14 @@ describe Raven::Event do
       let(:exception) { Raven::Test::Exception.new(message) }
 
       it 'sends the module name as part of the exception info' do
-        hash['exception']['module'].should == 'Raven::Test'
+        expect(hash['exception']['module']).to eq('Raven::Test')
       end
     end
 
     context 'for a Raven::Error' do
       let(:exception) { Raven::Error.new }
       it 'does not create an event' do
-        Raven::Event.capture_exception(exception).should be_nil
+        expect(Raven::Event.capture_exception(exception)).to be_nil
       end
     end
 
@@ -287,8 +287,8 @@ describe Raven::Event do
       it 'returns nil for a string match' do
         config = Raven::Configuration.new
         config.excluded_exceptions << 'RuntimeError'
-        Raven::Event.capture_exception(RuntimeError.new,
-                                       :configuration => config).should be_nil
+        expect(Raven::Event.capture_exception(RuntimeError.new,
+                                       :configuration => config)).to be_nil
       end
 
       it 'returns nil for a class match' do
@@ -300,15 +300,15 @@ describe Raven::Event do
         config = Raven::Configuration.new
         config.excluded_exceptions << Raven::Test::BaseExc
 
-        Raven::Event.capture_exception(Raven::Test::SubExc.new,
-                                       :configuration => config).should be_nil
+        expect(Raven::Event.capture_exception(Raven::Test::SubExc.new,
+                                       :configuration => config)).to be_nil
       end
     end
 
     context 'when the exception has a backtrace' do
       let(:exception) do
         e = Exception.new(message)
-        e.stub(:backtrace).and_return([
+        allow(e).to receive(:backtrace).and_return([
           "/path/to/some/file:22:in `function_name'",
           "/some/other/path:1412:in `other_function'",
         ])
@@ -317,28 +317,28 @@ describe Raven::Event do
 
       it 'parses the backtrace' do
         frames = hash['exception']['stacktrace']['frames']
-        frames.length.should eq(2)
-        frames[0]['lineno'].should eq(1412)
-        frames[0]['function'].should eq('other_function')
-        frames[0]['filename'].should eq('/some/other/path')
+        expect(frames.length).to eq(2)
+        expect(frames[0]['lineno']).to eq(1412)
+        expect(frames[0]['function']).to eq('other_function')
+        expect(frames[0]['filename']).to eq('/some/other/path')
 
-        frames[1]['lineno'].should eq(22)
-        frames[1]['function'].should eq('function_name')
-        frames[1]['filename'].should eq('/path/to/some/file')
+        expect(frames[1]['lineno']).to eq(22)
+        expect(frames[1]['function']).to eq('function_name')
+        expect(frames[1]['filename']).to eq('/path/to/some/file')
       end
 
       context 'with internal backtrace' do
         let(:exception) do
           e = Exception.new(message)
-          e.stub(:backtrace).and_return(["<internal:prelude>:10:in `synchronize'"])
+          allow(e).to receive(:backtrace).and_return(["<internal:prelude>:10:in `synchronize'"])
           e
         end
 
         it 'marks filename and in_app correctly' do
         frames = hash['exception']['stacktrace']['frames']
-          frames[0]['lineno'].should eq(10)
-          frames[0]['function'].should eq("synchronize")
-          frames[0]['filename'].should eq("<internal:prelude>")
+          expect(frames[0]['lineno']).to eq(10)
+          expect(frames[0]['function']).to eq("synchronize")
+          expect(frames[0]['filename']).to eq("<internal:prelude>")
         end
       end
 
@@ -346,7 +346,7 @@ describe Raven::Event do
 
         before do
           rails = double('Rails')
-          rails.stub(:root) { '/rails/root' }
+          allow(rails).to receive(:root) { '/rails/root' }
           stub_const('Rails', rails)
           Raven.configure(true) do |config|
             config.project_root ||= ::Rails.root
@@ -356,7 +356,7 @@ describe Raven::Event do
         context 'with an application stacktrace' do
           let(:exception) do
             e = Exception.new(message)
-            e.stub(:backtrace).and_return([
+            allow(e).to receive(:backtrace).and_return([
               "/rails/root/vendor/bundle/cache/other_gem.rb:10:in `public_method'",
               "vendor/bundle/some_gem.rb:10:in `a_method'",
               "/rails/root/app/foobar:132:in `new_function'",
@@ -368,26 +368,26 @@ describe Raven::Event do
           end
 
           it 'marks in_app correctly' do
-            Raven.configuration.project_root.should eq('/rails/root')
+            expect(Raven.configuration.project_root).to eq('/rails/root')
             frames = hash['exception']['stacktrace']['frames']
-            frames[0]['filename'].should eq("test/some/other/path")
-            frames[0]['in_app'].should eq(true)
-            frames[1]['filename'].should eq("/app/some/other/path")
-            frames[1]['in_app'].should eq(false)
-            frames[2]['filename'].should eq("/gem/lib/path")
-            frames[2]['in_app'].should eq(false)
-            frames[3]['filename'].should eq("/rails/root/app/foobar")
-            frames[3]['in_app'].should eq(true)
-            frames[4]['filename'].should eq("vendor/bundle/some_gem.rb")
-            frames[4]['in_app'].should eq(false)
-            frames[5]['filename'].should eq("/rails/root/vendor/bundle/cache/other_gem.rb")
-            frames[5]['in_app'].should eq(false)
+            expect(frames[0]['filename']).to eq("test/some/other/path")
+            expect(frames[0]['in_app']).to eq(true)
+            expect(frames[1]['filename']).to eq("/app/some/other/path")
+            expect(frames[1]['in_app']).to eq(false)
+            expect(frames[2]['filename']).to eq("/gem/lib/path")
+            expect(frames[2]['in_app']).to eq(false)
+            expect(frames[3]['filename']).to eq("/rails/root/app/foobar")
+            expect(frames[3]['in_app']).to eq(true)
+            expect(frames[4]['filename']).to eq("vendor/bundle/some_gem.rb")
+            expect(frames[4]['in_app']).to eq(false)
+            expect(frames[5]['filename']).to eq("/rails/root/vendor/bundle/cache/other_gem.rb")
+            expect(frames[5]['in_app']).to eq(false)
           end
         end
       end
 
       it "sets the culprit" do
-        hash['culprit'].should eq("/path/to/some/file in function_name at line 22")
+        expect(hash['culprit']).to eq("/path/to/some/file in function_name at line 22")
       end
 
       context 'when a path in the stack trace is on the laod path' do
@@ -401,13 +401,13 @@ describe Raven::Event do
 
         it 'strips prefixes in the load path from frame filenames' do
           frames = hash['exception']['stacktrace']['frames']
-          frames[0]['filename'].should eq('other/path')
+          expect(frames[0]['filename']).to eq('other/path')
         end
       end
     end
 
     it 'accepts an options hash' do
-      Raven::Event.capture_exception(exception, :logger => 'logger').logger.should == 'logger'
+      expect(Raven::Event.capture_exception(exception, :logger => 'logger').logger).to eq('logger')
     end
 
     it 'uses an annotation if one exists' do
