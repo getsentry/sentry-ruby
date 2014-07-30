@@ -22,6 +22,6 @@ if Sidekiq::VERSION < '3'
   end
 else
   Sidekiq.configure_server do |config|
-    config.error_handlers << Proc.new {|ex,context| Raven.capture_exception(ex, context) }
+    config.error_handlers << Proc.new {|ex,context| Raven.capture_exception(ex, :extra => {:sidekiq => context}) }
   end
 end
