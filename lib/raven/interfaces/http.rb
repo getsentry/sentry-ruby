@@ -4,13 +4,13 @@ module Raven
   class HttpInterface < Interface
 
     name 'request'
-    property :url, :required => true
-    property :method, :required => true
-    property :data
-    property :query_string
-    property :cookies
-    property :headers
-    property :env
+    attr_accessor :url, :required => true
+    attr_accessor :method, :required => true
+    attr_accessor :data
+    attr_accessor :query_string
+    attr_accessor :cookies
+    attr_accessor :headers
+    attr_accessor :env
 
     def initialize(*arguments)
       self.headers = {}

@@ -4,7 +4,6 @@ gemfile:
   - gemfiles/rails31.gemfile
   - gemfiles/rails32.gemfile
   - gemfiles/rails41.gemfile
-  - gemfiles/hashie_pre3_1.gemfile
 rvm:
   - 1.8.7
   - 1.9.3

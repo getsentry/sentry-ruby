@@ -1,12 +1,10 @@
-require 'hashie'
-
 require 'raven/interfaces'
 
 module Raven
   class StacktraceInterface < Interface
 
     name 'stacktrace'
-    property :frames, :default => []
+    attr_accessor :frames, :default => []
 
     def initialize(*arguments)
       self.frames = []
@@ -25,14 +23,15 @@ module Raven
 
     # Not actually an interface, but I want to use the same style
     class Frame < Interface
-      property :abs_path
-      property :function
-      property :vars
-      property :pre_context
-      property :post_context
-      property :context_line
-      property :lineno, :required => true
-      property :in_app
+      attr_accessor :abs_path 
+      attr_accessor :abs_path
+      attr_accessor :function
+      attr_accessor :vars
+      attr_accessor :pre_context
+      attr_accessor :post_context
+      attr_accessor :context_line
+      attr_accessor :lineno, :required => true
+      attr_accessor :in_app
 
       def initialize(*arguments)
         self.vars = {}

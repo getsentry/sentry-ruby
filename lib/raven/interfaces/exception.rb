@@ -4,10 +4,10 @@ module Raven
   class ExceptionInterface < Interface
 
     name 'exception'
-    property :type, :required => true
-    property :value, :required => true
-    property :module
-    property :stacktrace
+    attr_accessor :type, :required => true
+    attr_accessor :value, :required => true
+    attr_accessor :module
+    attr_accessor :stacktrace
 
     def to_hash(*args)
       data = super(*args)
