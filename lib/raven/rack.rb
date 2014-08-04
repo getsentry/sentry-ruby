@@ -60,7 +60,7 @@ module Raven
       rescue Error
         raise # Don't capture Raven errors
       rescue Exception => e
-        Raven.logger.debug "Collecting %p: %s" % [ exception.class, exception.message ]
+        Raven.logger.debug "Collecting %p: %s" % [ e.class, e.message ]
         Raven::Rack.capture_exception(e, env)
         raise
       end
