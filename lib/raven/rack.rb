@@ -22,7 +22,7 @@ module Raven
   class Rack
     def self.capture_exception(exception, env, options = {})
       if env['requested_at']
-        options[:time_spent] = Time.now - env[:requested_at]
+        options[:time_spent] = Time.now - env['requested_at']
       end
       Raven.capture_exception(exception, options) do |evt|
         evt.interface :http do |int|
@@ -33,7 +33,7 @@ module Raven
 
     def self.capture_message(message, env, options = {})
       if env['requested_at']
-        options[:time_spent] = Time.now - env[:requested_at]
+        options[:time_spent] = Time.now - env['requested_at']
       end
       Raven.capture_message(message, options) do |evt|
         evt.interface :http do |int|
