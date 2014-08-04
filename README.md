@@ -25,7 +25,15 @@ the Rack middleware). If you catch those exceptions yourself, but still want to 
 
 ### Rails 3 or 4
 
-In Rails 3 or 4 all uncaught exceptions will be automatically reported.
+In Rails 3 or 4 all uncaught exceptions will be automatically reported under most situations.
+
+You'll still want to ensure you've disabled anything that would prevent errors from being propagated to the ```Raven::Rack``` middleware:
+
+Disable ```ActionDispatch::ShowExceptions```:
+
+```ruby
+config.action_dispatch.show_exceptions = false
+```
 
 #### Delayed::Job
 
@@ -235,7 +243,7 @@ end
 
 ### Asynchronous Delivery
 
-When an error occurs, the notification is immediately sent to Sentry. Raven can be configured 
+When an error occurs, the notification is immediately sent to Sentry. Raven can be configured
 to send notifications asynchronously:
 
 ```ruby
@@ -246,7 +254,7 @@ Raven.configure do |config|
 end
 ```
 
-This example uses a thread, but other tools can be used (GirlFriday, Resque, Sidekiq, etc...) as 
+This example uses a thread, but other tools can be used (GirlFriday, Resque, Sidekiq, etc...) as
 long as the `event` argument is eventually passed to `Raven.send`.
 
 ### Logging
