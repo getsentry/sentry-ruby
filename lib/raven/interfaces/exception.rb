@@ -4,8 +4,8 @@ module Raven
   class ExceptionInterface < Interface
 
     name 'exception'
-    attr_accessor :type, :required => true
-    attr_accessor :value, :required => true
+    attr_accessor :type
+    attr_accessor :value
     attr_accessor :module
     attr_accessor :stacktrace
 

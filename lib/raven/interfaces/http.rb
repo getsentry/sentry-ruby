@@ -4,8 +4,8 @@ module Raven
   class HttpInterface < Interface
 
     name 'request'
-    attr_accessor :url, :required => true
-    attr_accessor :method, :required => true
+    attr_accessor :url
+    attr_accessor :method
     attr_accessor :data
     attr_accessor :query_string
     attr_accessor :cookies

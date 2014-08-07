@@ -14,8 +14,6 @@ module Raven
       end if attributes
 
       yield self if block_given?
-
-      assert_required_attributes_set!
     end
 
     def self.name(value = nil)

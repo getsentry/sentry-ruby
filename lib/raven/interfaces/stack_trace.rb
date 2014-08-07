@@ -30,7 +30,7 @@ module Raven
       attr_accessor :pre_context
       attr_accessor :post_context
       attr_accessor :context_line
-      attr_accessor :lineno, :required => true
+      attr_accessor :lineno
       attr_accessor :in_app
 
       def initialize(*arguments)
