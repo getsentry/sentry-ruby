@@ -109,25 +109,23 @@ describe Raven::Configuration do
       subject.current_environment = 'test'
     end
 
-    it 'should not send events' do
-      expect(subject.send_in_current_environment?).to eq(false)
+    it 'should send events' do
+      expect(subject.send_in_current_environment?).to eq(true)
     end
 
     it 'should send events if test is whitelisted' do
       subject.environments = %w[ test ]
       expect(subject.send_in_current_environment?).to eq(true)
     end
-
-    it 'should not send events in a cucumber environment' do
-      subject.current_environment = 'cucumber'
-      expect(subject.send_in_current_environment?).to eq(false)
-    end
   end
 
   context 'being initialized in a development environment' do
-    it 'should not send events' do
+    before(:each) do
       subject.current_environment = 'development'
-      expect(subject.send_in_current_environment?).to eq(false)
+    end
+
+    it 'should send events' do
+      expect(subject.send_in_current_environment?).to eq(true)
     end
   end
 

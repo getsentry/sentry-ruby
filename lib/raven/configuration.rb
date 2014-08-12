@@ -155,7 +155,7 @@ module Raven
       if environments
         environments.include?(current_environment)
       else
-        !%w[test cucumber development].include?(current_environment)
+        true
       end
     end
 
