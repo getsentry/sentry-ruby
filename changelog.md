@@ -1,3 +1,10 @@
+0.10.0
+------
+
+- Environments are ignored by default unless explicitly set. To disable
+  events it is recommend to unset the SENTRY_DSN value.
+
+
 0.9.0
 -----
 
