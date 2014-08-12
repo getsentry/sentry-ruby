@@ -273,6 +273,18 @@ end
 
 If you are using Rails, Raven will default to using Rails.logger as the logger.
 
+### Encoding
+
+While unlikely that you'll need to change it, by default Raven compresses outgoing messages with gzip. This has a slight impact on performance, but due to the size of many Ruby stacktrace it's required for the serve to accept the content.
+
+To disable gzip, set the encoding to 'json':
+
+```ruby
+Raven.configure do |config|
+  config.encoding = 'json'
+end
+```
+
 ### Silencing the ready message
 
 Upon start, Raven will write the following message to the log at the INFO level:

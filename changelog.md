@@ -3,6 +3,7 @@
 
 - Environments are ignored by default unless explicitly set. To disable
   events it is recommend to unset the SENTRY_DSN value.
+- gzip is now the default encoding
 
 
 0.9.0
