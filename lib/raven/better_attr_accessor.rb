@@ -33,8 +33,8 @@ module Raven
         define_method attr do
           if instance_variable_defined? "@#{attr}"
             instance_variable_get "@#{attr}"
-          else
-            options[:default]
+          elsif options.key? :default
+            instance_variable_set "@#{attr}", options[:default].dup
           end
         end
         attr_writer attr

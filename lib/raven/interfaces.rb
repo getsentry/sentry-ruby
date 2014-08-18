@@ -4,7 +4,7 @@ module Raven
 
   INTERFACES = {}
 
-  class Interface # TODO: indifferent access?
+  class Interface
     include BetterAttrAccessor
     alias_method :to_hash, :attributes
 
