@@ -26,9 +26,9 @@ module Raven
       attr_accessor :abs_path 
       attr_accessor :abs_path
       attr_accessor :function
-      attr_accessor :vars,         default: []
-      attr_accessor :pre_context,  default: []
-      attr_accessor :post_context, default: []
+      attr_accessor :vars,         :default => []
+      attr_accessor :pre_context,  :default => []
+      attr_accessor :post_context, :default => []
       attr_accessor :context_line
       attr_accessor :lineno
       attr_accessor :in_app

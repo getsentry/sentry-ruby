@@ -8,7 +8,7 @@ describe Raven::BetterAttrAccessor do
       include Raven::BetterAttrAccessor
 
       attr_accessor :a
-      attr_accessor :b, default: []
+      attr_accessor :b, :default => []
       attr_accessor :c
     end
   end
