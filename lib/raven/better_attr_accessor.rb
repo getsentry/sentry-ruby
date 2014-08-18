@@ -28,10 +28,14 @@ module Raven
 
       def attr_accessor(attr, options = {})
         @attributes ||= Set.new
-        @attributes << attr.to_sym
+        @attributes << attr.to_s
 
         define_method attr do
-          instance_variable_get("@#{attr}") || options[:default]
+          if instance_variable_defined? "@#{attr}"
+            instance_variable_get "@#{attr}"
+          else
+            options[:default]
+          end
         end
         attr_writer attr
       end
