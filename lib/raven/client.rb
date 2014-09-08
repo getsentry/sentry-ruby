@@ -59,7 +59,7 @@ module Raven
       case self.configuration.encoding
       when 'gzip'
         gzipped = Zlib::Deflate.deflate(encoded)
-        b64_encoded = Base64.strict_encode64(gzipped)
+        b64_encoded = strict_encode64(gzipped)
         return 'application/octet-stream', b64_encoded
       else
         return 'application/json', encoded
@@ -89,5 +89,16 @@ module Raven
       }
       'Sentry ' + fields.map { |key, value| "#{key}=#{value}" }.join(', ')
     end
+
+    private
+
+    def strict_encode64(string)
+      if Base64.respond_to? :strict_encode64
+        Base64.strict_encode64 string
+      else # Ruby 1.8
+        Base64.encode64(string)[0..-2]
+      end
+    end
+
   end
 end

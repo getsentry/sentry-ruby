@@ -171,7 +171,8 @@ describe Raven::Event do
         'headers' => { 'Host' => 'localhost' },
         'method' => 'POST',
         'query_string' => 'biz=baz',
-        'url' => 'http://localhost/lol'
+        'url' => 'http://localhost/lol',
+        'cookies' => nil
       }
     end
   end

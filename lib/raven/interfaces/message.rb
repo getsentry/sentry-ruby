@@ -4,8 +4,8 @@ module Raven
   class MessageInterface < Interface
 
     name 'sentry.interfaces.Message'
-    property :message, :required => true
-    property :params
+    attr_accessor :message
+    attr_accessor :params
 
     def initialize(*arguments)
       self.params = []

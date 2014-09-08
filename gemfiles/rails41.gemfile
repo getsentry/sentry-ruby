@@ -5,6 +5,5 @@ gem "rake"
 gem "rspec"
 gem "simplecov"
 gem "sentry-raven", :path => "../"
-gem "hashie", "~> 3.0.0"
 
 gemspec :path => "../"

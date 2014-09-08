@@ -1,39 +1,23 @@
-require 'hashie'
+require 'raven/better_attr_accessor'
 
 module Raven
 
   INTERFACES = {}
 
-  class Interface < Hashie::Dash
-    if defined?(Hashie::Extensions::Dash::IndifferentAccess)
-      include Hashie::Extensions::Dash::IndifferentAccess
-    end
+  class Interface
+    include BetterAttrAccessor
+    alias_method :to_hash, :attributes
 
-    def initialize(attributes = {}, &block)
-      @check_required = false
-      super(attributes)
-      block.call(self) if block
-      @check_required = true
+    def initialize(attributes = nil)
+      attributes.each do |attr, value|
+        send "#{attr}=", value
+      end if attributes
 
-      begin
-        assert_required_attributes_set!
-      rescue NoMethodError
-        assert_required_properties_set!
-      end
-
-    end
-
-    def assert_required_attributes_set!
-      super if @check_required
-    end
-
-    def assert_required_properties_set!
-      super if @check_required
+      yield self if block_given?
     end
 
     def self.name(value = nil)
-      @interface_name = value if value
-      @interface_name
+      @interface_name ||= value
     end
   end
 
