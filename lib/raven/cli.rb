@@ -12,7 +12,7 @@ module Raven
       end
 
       Raven.configuration.logger = logger
-
+      Raven.configuration.timeout = 5
       Raven.configuration.dsn = dsn if dsn
 
       # wipe out env settings to ensure we send the event
