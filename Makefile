@@ -1,6 +1,6 @@
 test:
 	bundle install
-	rake spec
+	bundle exec rake spec
 
 release:
 	# lol
