@@ -6,17 +6,17 @@ describe Raven do
   let(:options) { double("options") }
 
   before do
-    Raven.stub(:send)
-    Raven::Event.stub(:from_message) { event }
-    Raven::Event.stub(:from_exception) { event }
+    allow(Raven).to receive(:send)
+    allow(Raven::Event).to receive(:from_message) { event }
+    allow(Raven::Event).to receive(:from_exception) { event }
   end
 
   describe '.capture_message' do
     let(:message) { "Test message" }
 
     it 'sends the result of Event.capture_message' do
-      Raven::Event.should_receive(:from_message).with(message, options)
-      Raven.should_receive(:send).with(event)
+      expect(Raven::Event).to receive(:from_message).with(message, options)
+      expect(Raven).to receive(:send).with(event)
 
       Raven.capture_message(message, options)
     end
@@ -30,12 +30,12 @@ describe Raven do
     let(:message) { "Test message" }
 
     it 'sends the result of Event.capture_message' do
-      Raven::Event.should_receive(:from_message).with(message, options)
-      Raven.should_not_receive(:send).with(event)
+      expect(Raven::Event).to receive(:from_message).with(message, options)
+      expect(Raven).not_to receive(:send).with(event)
 
       prior_async = Raven.configuration.async
       Raven.configuration.async = lambda { |e| :ok }
-      Raven.configuration.async.should_receive(:call).with(event)
+      expect(Raven.configuration.async).to receive(:call).with(event)
       Raven.capture_message(message, options)
       Raven.configuration.async = prior_async
     end
@@ -45,8 +45,8 @@ describe Raven do
     let(:exception) { build_exception }
 
     it 'sends the result of Event.capture_exception' do
-      Raven::Event.should_receive(:from_exception).with(exception, options)
-      Raven.should_receive(:send).with(event)
+      expect(Raven::Event).to receive(:from_exception).with(exception, options)
+      expect(Raven).to receive(:send).with(event)
 
       Raven.capture_exception(exception, options)
     end
@@ -60,12 +60,12 @@ describe Raven do
     let(:exception) { build_exception }
 
     it 'sends the result of Event.capture_exception' do
-      Raven::Event.should_receive(:from_exception).with(exception, options)
-      Raven.should_not_receive(:send).with(event)
+      expect(Raven::Event).to receive(:from_exception).with(exception, options)
+      expect(Raven).not_to receive(:send).with(event)
 
       prior_async = Raven.configuration.async
       Raven.configuration.async = lambda { |e| :ok }
-      Raven.configuration.async.should_receive(:call).with(event)
+      expect(Raven.configuration.async).to receive(:call).with(event)
       Raven.capture_exception(exception, options)
       Raven.configuration.async = prior_async
     end

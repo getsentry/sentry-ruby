@@ -37,7 +37,7 @@ describe "Integration tests" do
       config.http_adapter = [:test, stubs]
     end
 
-    Raven.logger.should_receive(:warn).exactly(1).times
+    expect(Raven.logger).to receive(:warn).exactly(1).times
     expect { Raven.capture_exception(build_exception) }.not_to raise_error
 
     stubs.verify_stubbed_calls

@@ -13,7 +13,7 @@ describe Raven::Rails::ControllerMethods do
     let(:message) { double('message') }
 
     it "captures a message with the request environment" do
-      Raven::Rack.should_receive(:capture_message).with(message, env, options)
+      expect(Raven::Rack).to receive(:capture_message).with(message, env, options)
       capture_message(message, options)
     end
   end
@@ -22,7 +22,7 @@ describe Raven::Rails::ControllerMethods do
     let(:exception) { double('exception') }
 
     it "captures a exception with the request environment" do
-      Raven::Rack.should_receive(:capture_exception).with(exception, env, options)
+      expect(Raven::Rack).to receive(:capture_exception).with(exception, env, options)
       capture_exception(exception, options)
     end
   end

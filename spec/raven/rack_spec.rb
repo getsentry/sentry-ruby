@@ -6,7 +6,7 @@ describe Raven::Rack do
     exception = build_exception
     env = {}
 
-    Raven::Rack.should_receive(:capture_exception).with(exception, env)
+    expect(Raven::Rack).to receive(:capture_exception).with(exception, env)
 
     app = lambda do |e|
       raise exception
@@ -20,7 +20,7 @@ describe Raven::Rack do
     exception = build_exception
     env = {}
 
-    Raven::Rack.should_receive(:capture_exception).with(exception, env)
+    expect(Raven::Rack).to receive(:capture_exception).with(exception, env)
 
     app = lambda do |e|
       e['rack.exception'] = exception
@@ -36,7 +36,7 @@ describe Raven::Rack do
     exception = build_exception
     env = {}
 
-    Raven::Rack.should_receive(:capture_exception).with(exception, env)
+    expect(Raven::Rack).to receive(:capture_exception).with(exception, env)
 
     app = lambda do |e|
       e['sinatra.error'] = exception
@@ -56,7 +56,7 @@ describe Raven::Rack do
 
     stack.call({})
 
-    Raven::Context.current.tags.should eq({})
+    expect(Raven::Context.current.tags).to eq({})
   end
 
   it 'should allow empty rack env in rspec tests' do
@@ -69,7 +69,7 @@ describe Raven::Rack do
     Raven::Context.current.rack_env = nil
 
     app = lambda do |env|
-      Raven::Context.current.rack_env.should eq(env)
+      expect(Raven::Context.current.rack_env).to eq(env)
 
       ['response', {}, env]
     end

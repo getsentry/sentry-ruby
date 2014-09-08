@@ -11,35 +11,35 @@ describe Raven::Configuration do
 
   shared_examples 'a complete configuration' do
     it 'should have a server' do
-      subject[:server].should == 'http://sentry.localdomain/sentry'
+      expect(subject[:server]).to eq('http://sentry.localdomain/sentry')
     end
 
     it 'should have a scheme' do
-      subject[:scheme].should == 'http'
+      expect(subject[:scheme]).to eq('http')
     end
 
     it 'should have a public key' do
-      subject[:public_key].should == '12345'
+      expect(subject[:public_key]).to eq('12345')
     end
 
     it 'should have a secret key' do
-      subject[:secret_key].should == '67890'
+      expect(subject[:secret_key]).to eq('67890')
     end
 
     it 'should have a host' do
-      subject[:host].should == 'sentry.localdomain'
+      expect(subject[:host]).to eq('sentry.localdomain')
     end
 
     it 'should have a port' do
-      subject[:port].should == 80
+      expect(subject[:port]).to eq(80)
     end
 
     it 'should have a path' do
-      subject[:path].should == '/sentry'
+      expect(subject[:path]).to eq('/sentry')
     end
 
     it 'should have a project ID' do
-      subject[:project_id].should == '42'
+      expect(subject[:project_id]).to eq('42')
     end
 
     it 'should not be async' do
@@ -92,7 +92,7 @@ describe Raven::Configuration do
     it 'should be configurable to send events async' do
       subject.async = lambda { |event| :ok }
       expect(subject.async.respond_to?(:call)).to eq(true)
-      subject.async.call('event').should == :ok
+      expect(subject.async.call('event')).to eq(:ok)
     end
 
     it 'should raise when setting async to anything other than callable or false' do
