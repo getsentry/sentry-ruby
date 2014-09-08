@@ -23,7 +23,6 @@ module Raven
 
     # Not actually an interface, but I want to use the same style
     class Frame < Interface
-      attr_accessor :abs_path 
       attr_accessor :abs_path
       attr_accessor :function
       attr_accessor :vars,         :default => []
