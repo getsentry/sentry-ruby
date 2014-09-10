@@ -45,12 +45,12 @@ describe Raven::Processor::SanitizeData do
     result = JSON.parse(@processor.process(data))
 
     vars = result
-    vars["foo"].should eq("bar")
-    vars["password"].should eq(Raven::Processor::SanitizeData::MASK)
-    vars["the_secret"].should eq(Raven::Processor::SanitizeData::MASK)
-    vars["a_password_here"].should eq(Raven::Processor::SanitizeData::MASK)
-    vars["mypasswd"].should eq(Raven::Processor::SanitizeData::MASK)
-    vars["test"].should eq(1)
+    expect(vars["foo"]).to eq("bar")
+    expect(vars["password"]).to eq(Raven::Processor::SanitizeData::MASK)
+    expect(vars["the_secret"]).to eq(Raven::Processor::SanitizeData::MASK)
+    expect(vars["a_password_here"]).to eq(Raven::Processor::SanitizeData::MASK)
+    expect(vars["mypasswd"]).to eq(Raven::Processor::SanitizeData::MASK)
+    expect(vars["test"]).to eq(1)
   end
 
   it 'should filter credit card values' do
