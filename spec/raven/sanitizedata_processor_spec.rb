@@ -90,6 +90,14 @@ describe Raven::Processor::SanitizeData do
       results = @processor.process(data)
       expect(results['invalid']).to eq("invalid utf8 string goes here")
     end
+
+    it 'should keep valid UTF-8 bytes after cleaning' do
+      data = {}
+      data['invalid'] = "한국, 中國, 日本(にっぽん)\255".force_encoding('UTF-8')
+
+      results = @processor.process(data)
+      expect(results['invalid']).to eq("한국, 中國, 日本(にっぽん)")
+    end
   end
 
 end

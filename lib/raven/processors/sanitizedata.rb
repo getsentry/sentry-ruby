@@ -64,7 +64,6 @@ module Raven
         else
           text.encode(
             'UTF-8',
-            'binary',
             :invalid => :replace,
             :undef => :replace,
             :replace => ''
