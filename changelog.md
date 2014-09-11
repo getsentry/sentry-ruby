@@ -1,3 +1,10 @@
+0.10.1
+------
+
+- Updated to RSpec 3.
+- Apply filters to encoded JSON data.
+
+
 0.10.0
 ------
 
