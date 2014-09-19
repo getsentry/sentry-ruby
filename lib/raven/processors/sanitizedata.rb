@@ -5,8 +5,9 @@ module Raven
   module Processor
     class SanitizeData < Processor
 
-      MASK = '********'
-      FIELDS_RE = /(authorization|password|passwd|secret)/i
+      STRING_MASK = '********'
+      INT_MASK = 0
+      FIELDS_RE = /(authorization|password|passwd|secret|ssn|social(.*)?sec)/i
       VALUES_RE = /^\d{16}$/
 
       def apply(value, key = nil, visited = [], &block)
@@ -41,12 +42,23 @@ module Raven
       end
 
       def sanitize(key, value)
-        if !value.is_a?(String) || value.empty?
-          value
-        elsif VALUES_RE.match(clean_invalid_utf8_bytes(value)) || FIELDS_RE.match(key)
-          MASK
+        case value
+        when Integer
+          if VALUES_RE.match(clean_invalid_utf8_bytes(value.to_s)) || FIELDS_RE.match(key)
+            INT_MASK
+          else
+            value
+          end
+        when String
+          if value.empty?
+            value
+          elsif VALUES_RE.match(clean_invalid_utf8_bytes(value)) || FIELDS_RE.match(key)
+            STRING_MASK
+          else
+            clean_invalid_utf8_bytes(value)
+          end
         else
-          clean_invalid_utf8_bytes(value)
+          value
         end
       end
 
