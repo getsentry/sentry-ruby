@@ -183,7 +183,7 @@ end
 
 ### Environments
 
-By default, events will be sent to Sentry in all environments. If you do not wish
+As of [v0.10.0](https://github.com/getsentry/raven-ruby/blob/21cb3164e0d0ab91394ba98b78195c4f6342b4bb/changelog.md#0100), events will be sent to Sentry in all environments. If you do not wish
 to send events in an environment, we suggest you unset the ```SENTRY_DSN```
 variable in that environment.
 
