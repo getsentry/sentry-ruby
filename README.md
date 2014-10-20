@@ -215,7 +215,7 @@ Raven.configure do |config|
 end
 ```
 
-You can find the list of exceptions that are excluded by default in [Raven::Configuration::IGNORE_DEFAULT](https://github.com/getsentry/raven-ruby/blob/master/lib/raven/configuration.rb#L74-L80). Remember you'll be overriding those defaults by setting this configuration.
+You can find the list of exceptions that are excluded by default in [Raven::Configuration::IGNORE_DEFAULT](https://github.com/getsentry/raven-ruby/blob/master/lib/raven/configuration.rb). Remember you'll be overriding those defaults by setting this configuration.
 
 ### Tags
 
