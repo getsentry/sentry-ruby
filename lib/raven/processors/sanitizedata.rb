@@ -74,12 +74,13 @@ module Raven
         if RUBY_VERSION <= '1.8.7'
           text
         else
-          text.encode(
-            'UTF-8',
+          utf16 = text.encode(
+            'UTF-16',
             :invalid => :replace,
             :undef => :replace,
             :replace => ''
           )
+          utf16.encode('UTF-8')
         end
       end
     end
