@@ -8,8 +8,7 @@
 0.10.0
 ------
 
-- Environments are ignored by default unless explicitly set. To disable
-  events it is recommend to unset the SENTRY_DSN value.
+- Breaking: by default, no environments will be ignored. Previously "test", "cucumber" and "development" environments were ignored by default.
 - gzip is now the default encoding
 - Removed hashie dependency
 
