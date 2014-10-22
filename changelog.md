@@ -8,8 +8,7 @@
 0.10.0
 ------
 
-- Environments are ignored by default unless explicitly set. To disable
-  events it is recommend to unset the SENTRY_DSN value.
+- Events are now sent to Sentry in all environments. To change this behavior, either unset ```SENTRY_DSN``` or explicitly configure it via ```Raven.configure```.
 - gzip is now the default encoding
 - Removed hashie dependency
 
