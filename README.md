@@ -8,7 +8,7 @@ A client and integration layer for the [Sentry](https://github.com/getsentry/sen
 
 ## Requirements
 
-We test on Ruby MRI 1.8.7, 1.9.3 and 2.0.0. Rubinius and JRuby support is experimental.
+We test on Ruby MRI 1.8.7, 1.9.3, 2.0 and 2.1. Rubinius and JRuby support is experimental - check TravisCI to see if the build is passing or failing for those Rubies.
 
 ## Installation
 
@@ -18,30 +18,26 @@ gem "sentry-raven" #, :github => "getsentry/raven-ruby"
 
 ## Usage
 
-The minimum configuration require setting the ``SENTRY_DSN`` with value found on your Sentry project settings page. It should resemble something like ```https://public:secret@app.getsentry.com/9999```. See [Configuration](#configuration) for configuration methods, and other options.
+Set the ``SENTRY_DSN`` environment variable with the value found on your Sentry project settings page. It should resemble something like ```https://public:secret@app.getsentry.com/9999```.
 
 Many implementations will automatically capture uncaught exceptions (such as Rails, Sidekiq or by using
 the Rack middleware). If you catch those exceptions yourself, but still want to report on them, see section [Capturing Events](#capturing-events).
 
-### Rails 3 or 4
+### Rails
 
-In Rails 3 or 4 all uncaught exceptions will be automatically reported under most situations.
+In Rails, all uncaught exceptions will be automatically reported.
 
 You'll still want to ensure you've disabled anything that would prevent errors from being propagated to the ```Raven::Rack``` middleware:
 
 Disable ```ActionDispatch::ShowExceptions```:
 
 ```ruby
-config.action_dispatch.show_exceptions = false
+config.action_dispatch.show_exceptions = false # this is the default setting in production
 ```
 
 #### Delayed::Job
 
 No extra configuration required. Usage of [delayed-plugins-raven](https://github.com/qiushihe/delayed-plugins-raven) gem is deprecated.
-
-### Rails 2
-
-No support for Rails 2 yet, but it is being worked on.
 
 ### Rack
 
@@ -165,7 +161,6 @@ class UserSession < Authlogic::Session::Base
   end
 end
 ```
-
 
 ## Configuration
 
