@@ -1,6 +1,6 @@
 source "http://rubygems.org"
 
-gem "rails", "~> 3.0.15"
+gem "rails", "~> 4.0.0"
 gem "rake"
 gem "rspec"
 gem "simplecov"
