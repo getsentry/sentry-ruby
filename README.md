@@ -57,6 +57,9 @@ require 'raven/sidekiq'
 ```
 after you require Sidekiq. If you are using Sidekiq with Rails, just put this require somewhere in the initializers.
 
+### Rake
+
+To report errors within rake tasks, require `raven/rake`. Under Rails, you should place this in an initializer.
 
 ## Capturing Events
 
