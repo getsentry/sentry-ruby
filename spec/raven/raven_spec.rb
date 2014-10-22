@@ -70,6 +70,20 @@ describe Raven do
     end
   end
 
+  describe '.capture_exception with a should_send callback' do
+    let(:exception) { build_exception }
+
+    it 'sends the result of Event.capture_exception according to the result of should_send' do
+      expect(Raven).not_to receive(:send).with(event)
+
+      prior_should_send = Raven.configuration.should_send
+      Raven.configuration.should_send = Proc.new { |e| false }
+      expect(Raven.configuration.should_send).to receive(:call).with(exception)
+      Raven.capture_exception(exception, options)
+      Raven.configuration.should_send = prior_should_send
+    end
+  end
+
   describe '.annotate_exception' do
     let(:exception) { build_exception }
 

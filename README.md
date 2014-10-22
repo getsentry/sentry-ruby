@@ -209,6 +209,16 @@ end
 
 You can find the list of exceptions that are excluded by default in [Raven::Configuration::IGNORE_DEFAULT](https://github.com/getsentry/raven-ruby/blob/master/lib/raven/configuration.rb). Remember you'll be overriding those defaults by setting this configuration.
 
+You can also use a configuration option to determine if an individual event should
+be sent to Sentry. Events are passed to the Proc or lambda you provide - returning
+`false` will stop the event from sending to Sentry:
+
+```ruby
+Raven.configure do |config|
+  config.should_send = Proc.new { |e| true unless e.contains_sensitive_info? }
+end
+```
+
 ### Tags
 
 You can configure default tags to be sent with every event. These can be

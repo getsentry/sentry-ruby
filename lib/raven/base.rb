@@ -101,7 +101,7 @@ module Raven
     end
 
     def capture_exception(exception, options = {})
-      send_or_skip do
+      send_or_skip(exception) do
         if evt = Event.from_exception(exception, options)
           yield evt if block_given?
           if configuration.async?
@@ -114,7 +114,7 @@ module Raven
     end
 
     def capture_message(message, options = {})
-      send_or_skip do
+      send_or_skip(message) do
         if evt = Event.from_message(message, options)
           yield evt if block_given?
           if configuration.async?
@@ -126,8 +126,14 @@ module Raven
       end
     end
 
-    def send_or_skip
-      if configuration.send_in_current_environment?
+    def send_or_skip(exc)
+      should_send = if configuration.should_send
+        configuration.should_send.call(*[exc])
+      else
+        true
+      end
+
+      if configuration.send_in_current_environment? && should_send
         yield if block_given?
       else
         configuration.log_excluded_environment_message

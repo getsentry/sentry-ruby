@@ -80,6 +80,9 @@ module Raven
     # ActionDispatch::ShowExceptions or ActionDispatch::DebugExceptions
     attr_accessor :catch_debugged_exceptions
 
+    # Provide a configurable callback to block or send events
+    attr_accessor :should_send
+
     IGNORE_DEFAULT = ['ActiveRecord::RecordNotFound',
                       'ActionController::RoutingError',
                       'ActionController::InvalidAuthenticityToken',
