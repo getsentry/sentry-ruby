@@ -26,7 +26,7 @@ module Raven
           value.map do |value_|
             apply(value_, key, visited, &block)
           end
-        elsif value.is_a?(String) && json_hash = JSON.parse(value) rescue nil
+        elsif value.is_a?(String) && json_hash = parse_json_or_nil(value)
           return "[...]" if visited.include?(value.__id__)
           visited += [value.__id__]
 
@@ -81,6 +81,14 @@ module Raven
             :replace => ''
           )
           utf16.encode('UTF-8')
+        end
+      end
+
+      def parse_json_or_nil(json)
+        begin
+          JSON.parse(json)
+        rescue JSON::ParserError
+          nil
         end
       end
     end
