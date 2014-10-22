@@ -46,8 +46,10 @@ module Raven
         evt = Raven.capture_exception(exception)
       end
 
-      if evt
+      if evt && !(evt.is_a? Thread)
         puts "-> event ID: #{evt.id}"
+      elsif evt #async configuration
+        puts "-> event ID: #{evt.value.id}"
       else
         puts ""
         puts "An error occurred while attempting to send the event."
