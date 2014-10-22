@@ -171,6 +171,7 @@ After you complete setting up a project, you'll be given a value which we call a
 With Raven, you may either set the ```SENTRY_DSN``` environment variable (recommended), or set your DSN manually in a config block:
 
 ```ruby
+# in Rails, this might be in config/initializers/sentry.rb
 Raven.configure do |config|
   config.dsn = 'http://public:secret@example.com/project-id'
 end
