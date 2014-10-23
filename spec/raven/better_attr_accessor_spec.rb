@@ -1,5 +1,4 @@
-require File.expand_path('../../spec_helper', __FILE__)
-require 'raven/better_attr_accessor'
+require 'spec_helper'
 
 describe Raven::BetterAttrAccessor do
 
