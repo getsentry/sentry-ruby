@@ -1,7 +1,4 @@
 require 'spec_helper'
-require 'raven'
-require 'raven/error'
-require 'logger'
 
 describe "Integration tests" do
 

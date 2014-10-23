@@ -1,5 +1,4 @@
-require File.expand_path('../../spec_helper', __FILE__)
-require 'raven'
+require 'spec_helper'
 
 describe Raven::Event do
   before do

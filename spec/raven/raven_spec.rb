@@ -1,5 +1,4 @@
-require File.expand_path('../../spec_helper', __FILE__)
-require 'raven'
+require 'spec_helper'
 
 describe Raven do
   let(:event) { double("event") }
@@ -87,6 +86,6 @@ describe Raven do
     end
   end
 
-  
+
 
 end

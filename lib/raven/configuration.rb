@@ -94,7 +94,7 @@ module Raven
       self.current_environment = ENV['RAILS_ENV'] || ENV['RACK_ENV'] || 'default'
       self.send_modules = true
       self.excluded_exceptions = IGNORE_DEFAULT
-      self.processors = [Raven::Processor::SanitizeData]
+      self.processors = [Raven::Processor::RemoveCircularReferences, Raven::Processor::UTF8Conversion, Raven::Processor::SanitizeData]
       self.ssl_verification = false
       self.encoding = 'gzip'
       self.timeout = 1
