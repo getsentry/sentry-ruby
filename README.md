@@ -8,12 +8,12 @@ A client and integration layer for the [Sentry](https://github.com/getsentry/sen
 
 ## Requirements
 
-We test on Ruby MRI 1.8.7, 1.9.3, 2.0 and 2.1. Rubinius and JRuby support is experimental - check TravisCI to see if the build is passing or failing for those Rubies.
+We test on Ruby MRI 1.8.7/REE, 1.9.3, 2.0 and 2.1. JRuby support is experimental - check TravisCI to see if the build is passing or failing.
 
 ## Installation
 
 ```ruby
-gem "sentry-raven" #, :github => "getsentry/raven-ruby"
+gem "sentry-raven", :require => 'raven' #, :github => "getsentry/raven-ruby"
 ```
 
 ## Usage
@@ -27,9 +27,7 @@ the Rack middleware). If you catch those exceptions yourself, but still want to 
 
 In Rails, all uncaught exceptions will be automatically reported.
 
-You'll still want to ensure you've disabled anything that would prevent errors from being propagated to the ```Raven::Rack``` middleware:
-
-Disable ```ActionDispatch::ShowExceptions```:
+You'll still want to ensure you've disabled anything that would prevent errors from being propagated to the ```Raven::Rack``` middleware, like ```ActionDispatch::ShowExceptions```:
 
 ```ruby
 config.action_dispatch.show_exceptions = false # this is the default setting in production
@@ -41,7 +39,7 @@ No extra configuration required. Usage of [delayed-plugins-raven](https://github
 
 ### Rack
 
-Add ```use Raven::Rack``` to your ```config.ru``` (or other rackup file).
+Add ```use Raven::Rack``` to your ```config.ru``` or other rackup file (this is automatically inserted in Rails).
 
 ### Sinatra
 
@@ -50,12 +48,7 @@ Like any other Rack middleware, add ```use Raven::Rack``` to your Sinatra app.
 ### Sidekiq
 
 Raven includes [Sidekiq middleware](https://github.com/mperham/sidekiq/wiki/Middleware) which takes
-care of reporting errors that occur in Sidekiq jobs. To use it, just require the middleware by doing
-
-```ruby
-require 'raven/sidekiq'
-```
-after you require Sidekiq. If you are using Sidekiq with Rails, just put this require somewhere in the initializers.
+care of reporting errors that occur in Sidekiq jobs. To use it, just ```require 'raven/sidekiq'``` after you require Sidekiq. If you are using Sidekiq with Rails, just put this require somewhere in the initializers.
 
 ### Rake
 
