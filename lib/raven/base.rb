@@ -10,10 +10,7 @@ require 'raven/interfaces/message'
 require 'raven/interfaces/exception'
 require 'raven/interfaces/stack_trace'
 require 'raven/interfaces/http'
-require 'raven/processor'
-require 'raven/processor/sanitizedata'
-require 'raven/processor/removecircularreferences'
-require 'raven/processor/utf8conversion'
+require 'raven/processors/sanitizedata'
 
 module Raven
   class << self

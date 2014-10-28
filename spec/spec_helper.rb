@@ -1,5 +1,3 @@
-require 'raven'
-
 require 'coveralls'
 Coveralls.wear!
 
