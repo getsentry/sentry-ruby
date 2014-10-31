@@ -1,0 +1,26 @@
+module Raven
+  class Processor::UTF8Conversion < Processor
+
+    def process(value)
+      if value.is_a? Array
+        value.map { |v_| process v_ }
+      elsif value.is_a? Hash
+        value.merge(value) { |k, v_| process v_ }
+      else
+        clean_invalid_utf8_bytes(value)
+      end
+    end
+
+    private
+
+    def clean_invalid_utf8_bytes(obj)
+      if obj.respond_to?(:to_utf8)
+        obj.to_utf8
+      elsif obj.respond_to?(:encoding)
+        obj.encode('UTF-16', :invalid => :replace, :undef => :replace, :replace => '').encode('UTF-8')
+      else
+        obj
+      end
+    end
+  end
+end

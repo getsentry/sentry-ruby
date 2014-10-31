@@ -1,5 +1,4 @@
-require File.expand_path('../../spec_helper', __FILE__)
-require 'raven'
+require 'spec_helper'
 
 describe Raven::Rack do
   it 'should capture exceptions' do
