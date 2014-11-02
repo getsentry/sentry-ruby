@@ -7,9 +7,9 @@ Gem::Specification.new do |gem|
   gem.executables << "raven"
   gem.platform = Gem::Platform::RUBY
   gem.summary = "A gem that provides a client interface for the Sentry error logger"
-  gem.email = "noah@coderanger.net"
+  gem.email = "getsentry@googlegroups.com"
   gem.homepage = "http://github.com/getsentry/raven-ruby"
-  gem.authors = ["Noah Kantrowitz", "David Cramer"]
+  gem.authors = ["Sentry Team"]
   gem.has_rdoc = true
   gem.extra_rdoc_files = ["README.md", "LICENSE"]
   gem.files = Dir['lib/**/*']
