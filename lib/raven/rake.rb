@@ -1,16 +1,13 @@
 require 'raven'
 require 'rake/task'
 
-# Monkey patch Rake::Task#execute to capture and report exceptions on sentry
-# Include this file in an initializer 
 module Rake
-  class Task
-    alias :orig_execute :execute
-    def execute(args = nil)
-      Raven.capture :logger => 'rake', :tags => { 'rake_task' => @name } do
-        orig_execute(args)
-      end
+  class Application
+    alias :orig_display_error_messsage :display_error_message
+    def display_error_message(ex)
+      Raven.capture_exception ex, :logger => 'rake', :tags => { 'rake_task' => @name }
+      orig_display_error_messsage(ex)
     end
   end
 end
- 
+

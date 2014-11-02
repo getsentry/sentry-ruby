@@ -33,10 +33,6 @@ You'll still want to ensure you've disabled anything that would prevent errors f
 config.action_dispatch.show_exceptions = false # this is the default setting in production
 ```
 
-#### Delayed::Job
-
-No extra configuration required. Usage of [delayed-plugins-raven](https://github.com/qiushihe/delayed-plugins-raven) gem is deprecated.
-
 ### Rack
 
 Add ```use Raven::Rack``` to your ```config.ru``` or other rackup file (this is automatically inserted in Rails).
@@ -45,14 +41,9 @@ Add ```use Raven::Rack``` to your ```config.ru``` or other rackup file (this is 
 
 Like any other Rack middleware, add ```use Raven::Rack``` to your Sinatra app.
 
-### Sidekiq
+### Sidekiq, Delayed::Job and Rake
 
-Raven includes [Sidekiq middleware](https://github.com/mperham/sidekiq/wiki/Middleware) which takes
-care of reporting errors that occur in Sidekiq jobs. To use it, just ```require 'raven/sidekiq'``` after you require Sidekiq. If you are using Sidekiq with Rails, just put this require somewhere in the initializers.
-
-### Rake
-
-To report errors within rake tasks, require `raven/rake`. Under Rails, you should place this in an initializer.
+Raven works out-of-the-box with all these tools!
 
 ## Capturing Events
 

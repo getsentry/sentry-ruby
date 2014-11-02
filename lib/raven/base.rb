@@ -207,11 +207,13 @@ module Raven
 
     # Injects various integrations
     def inject
-      # TODO(dcramer): integrations should have a way to opt-out
       require 'raven/integrations/delayed_job' if defined?(::Delayed::Plugin)
       require 'raven/railtie' if defined?(::Rails::Railtie)
       require 'raven/sidekiq' if defined?(Sidekiq)
-      require 'raven/tasks' if defined?(Rake)
+      if defined?(Rake)
+        require 'raven/rake'
+        require 'raven/tasks'
+      end
     end
 
     # For cross-language compat
