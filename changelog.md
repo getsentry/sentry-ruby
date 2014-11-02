@@ -1,4 +1,4 @@
-0.11.0
+0.11.1
 ------
 
 - Raven now captures exceptions in Rake tasks automatically. [nateberkopec, troelskn #222]
