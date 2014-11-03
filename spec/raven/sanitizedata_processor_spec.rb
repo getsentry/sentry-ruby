@@ -62,6 +62,22 @@ describe Raven::Processor::SanitizeData do
     expect(vars["social_security_number"]).to eq(Raven::Processor::SanitizeData::INT_MASK)
   end
 
+  it 'should filter json embedded in a ruby object' do
+    data_with_embedded_json = {
+      'data' => {
+        'json' => ['foo','bar'].to_json,
+        'json_hash' => {'foo' => 'bar'}.to_json,
+        'sensitive' => {'password' => 'secret'}.to_json
+        }
+      }
+
+    result = @processor.process(data_with_embedded_json)
+
+    expect(JSON.parse(result["data"]["json"])).to eq(['foo','bar'])
+    expect(JSON.parse(result["data"]["json_hash"])).to eq({'foo' => 'bar'})
+    expect(JSON.parse(result["data"]["sensitive"])).to eq({'password' => Raven::Processor::SanitizeData::STRING_MASK})
+  end
+
   it 'should filter credit card values' do
     data = {
       'ccnumba' => '4242424242424242',
