@@ -2,7 +2,6 @@ require 'faraday'
 
 require 'raven/transports'
 require 'raven/error'
-require 'pry'
 
 module Raven
   module Transports
