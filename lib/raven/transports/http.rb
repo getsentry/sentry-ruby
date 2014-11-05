@@ -2,6 +2,7 @@ require 'faraday'
 
 require 'raven/transports'
 require 'raven/error'
+require 'pry'
 
 module Raven
   module Transports
@@ -9,7 +10,9 @@ module Raven
 
       def send(auth_header, data, options = {})
         project_id = self.configuration[:project_id]
-        response = conn.post "/api/#{project_id}/store/" do |req|
+        path = self.configuration[:path].gsub('/sentry', '') + "/"
+
+        response = conn.post "#{path}api/#{project_id}/store/" do |req|
           req.headers['Content-Type'] = options[:content_type]
           req.headers['X-Sentry-Auth'] = auth_header
           req.body = data
