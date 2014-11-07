@@ -6,7 +6,7 @@ Gem::Specification.new do |gem|
   gem.version = Raven::VERSION
   gem.executables << "raven"
   gem.platform = Gem::Platform::RUBY
-  gem.summary = "A gem that provides a client interface for the Sentry error logger"
+  gem.description = gem.summary = "A gem that provides a client interface for the Sentry error logger"
   gem.email = "getsentry@googlegroups.com"
   gem.homepage = "http://github.com/getsentry/raven-ruby"
   gem.authors = ["Sentry Team"]
