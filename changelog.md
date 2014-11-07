@@ -1,3 +1,9 @@
+0.11.2
+------
+
+- Fix some issues with the SanitizeData processor when processing strings that look like JSON
+
+
 0.11.1
 ------
 
