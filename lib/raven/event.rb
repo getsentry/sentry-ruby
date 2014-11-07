@@ -1,6 +1,6 @@
 require 'rubygems'
 require 'socket'
-require 'uuidtools'
+require 'securerandom'
 
 require 'raven/error'
 require 'raven/linecache'
@@ -32,7 +32,7 @@ module Raven
 
       context = options[:context] || Raven.context
 
-      @id = options[:id] || UUIDTools::UUID.random_create.hexdigest
+      @id = options[:id] || generate_event_id
       @message = options[:message]
       @timestamp = options[:timestamp] || Time.now.utc
       @time_spent = options[:time_spent]
@@ -206,6 +206,18 @@ module Raven
       alias :captureMessage :from_message
       alias :capture_exception :from_exception
       alias :capture_message :from_message
+    end
+
+    private
+
+    def generate_event_id
+      # generate a uuid. copy-pasted from SecureRandom, this method is not
+      # available in <1.9.
+      ary = SecureRandom.random_bytes(16).unpack("NnnnnN")
+      ary[2] = (ary[2] & 0x0fff) | 0x4000
+      ary[3] = (ary[3] & 0x3fff) | 0x8000
+      uuid = "%08x-%04x-%04x-%04x-%04x%08x" % ary
+      Digest::MD5.hexdigest(uuid)
     end
   end
 end
