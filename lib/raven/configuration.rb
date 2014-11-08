@@ -83,6 +83,9 @@ module Raven
     # Provide a configurable callback to block or send events
     attr_accessor :should_send
 
+    # additional fields to sanitize
+    attr_accessor :sanitize_fields
+
     IGNORE_DEFAULT = ['ActiveRecord::RecordNotFound',
                       'ActionController::RoutingError',
                       'ActionController::InvalidAuthenticityToken',
@@ -105,6 +108,7 @@ module Raven
       self.tags = {}
       self.async = false
       self.catch_debugged_exceptions = true
+      self.sanitize_fields = []
     end
 
     def server=(value)
