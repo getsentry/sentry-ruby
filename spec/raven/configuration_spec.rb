@@ -49,6 +49,10 @@ describe Raven::Configuration do
     it 'should catch_debugged_exceptions' do
       expect(subject[:catch_debugged_exceptions]).to eq(true)
     end
+
+    it 'should have no sanitize fields' do
+      expect(subject[:sanitize_fields]).to eq([])
+    end
   end
 
   context 'being initialized with a server string' do
