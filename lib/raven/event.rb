@@ -47,14 +47,14 @@ module Raven
       @modules = options[:modules]
 
       @user = options[:user] || {}
-      @user.merge!(context.user)
+      @user.merge!(context.user) if context.respond_to?(:user)
 
       @extra = options[:extra] || {}
-      @extra.merge!(context.extra)
+      @extra.merge!(context.extra) if context.respond_to?(:extra)
 
       @tags = @configuration.tags
       @tags.merge!(options[:tags] || {})
-      @tags.merge!(context.tags)
+      @tags.merge!(context.tags) if context.respond_to?(:tags)
 
       block.call(self) if block
 
