@@ -4,6 +4,7 @@ require 'raven/processor/removestacktrace'
 describe Raven::Processor::RemoveStacktrace do
   before do
     @client = double("client")
+    allow(@client).to receive_message_chain(:configuration, :sanitize_fields) { [] }
     @processor = Raven::Processor::RemoveStacktrace.new(@client)
   end
 
