@@ -1,6 +1,6 @@
 require 'spec_helper'
 require 'raven'
-require 'raven/rails/controller_methods'
+require 'raven/integrations/rails/controller_methods'
 
 describe Raven::Rails::ControllerMethods do
   include described_class

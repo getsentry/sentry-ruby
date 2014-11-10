@@ -1,4 +1,5 @@
 require 'time'
+require 'sidekiq'
 
 module Raven
   class Sidekiq

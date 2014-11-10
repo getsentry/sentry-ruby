@@ -1,5 +1,5 @@
 module Raven
-  module Rails
+  class Rails
     module Middleware
       module DebugExceptionsCatcher
         def self.included(base)

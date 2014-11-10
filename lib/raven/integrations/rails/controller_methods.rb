@@ -1,5 +1,5 @@
 module Raven
-  module Rails
+  class Rails
     module ControllerMethods
       def capture_message(message, options = {})
         Raven::Rack.capture_message(message, request.env, options)

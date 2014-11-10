@@ -5,7 +5,6 @@ require 'raven/context'
 require 'raven/client'
 require 'raven/event'
 require 'raven/logger'
-require 'raven/rack'
 require 'raven/interfaces/message'
 require 'raven/interfaces/exception'
 require 'raven/interfaces/stack_trace'
@@ -207,13 +206,9 @@ module Raven
 
     # Injects various integrations
     def inject
-      require 'raven/integrations/delayed_job' if defined?(::Delayed::Plugin)
-      require 'raven/railtie' if defined?(::Rails::Railtie)
-      require 'raven/sidekiq' if defined?(Sidekiq)
-      if defined?(Rake)
-        require 'raven/rake'
-        require 'raven/tasks'
-      end
+      available_integrations = %w[delayed_job rails sidekiq rack rake]
+      integrations_to_load = available_integrations & Gem.loaded_specs.keys
+      integrations_to_load.each { |integration| require "raven/integrations/#{integration}" }
     end
 
     # For cross-language compat

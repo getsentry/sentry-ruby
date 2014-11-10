@@ -1,4 +1,5 @@
 require 'time'
+require 'rack'
 
 module Raven
   # Middleware for Rack applications. Any errors raised by the upstream
@@ -20,6 +21,7 @@ module Raven
   #
   # Use a standard Raven.configure call to configure your server credentials.
   class Rack
+
     def self.capture_exception(exception, env, options = {})
       if env['requested_at']
         options[:time_spent] = Time.now - env['requested_at']

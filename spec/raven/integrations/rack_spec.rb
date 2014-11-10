@@ -1,4 +1,5 @@
 require 'spec_helper'
+require 'raven/integrations/rack'
 
 describe Raven::Rack do
   it 'should capture exceptions' do

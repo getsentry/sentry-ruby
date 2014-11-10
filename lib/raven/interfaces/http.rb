@@ -19,12 +19,12 @@ module Raven
     end
 
     def from_rack(env)
-      require 'rack'
       req = ::Rack::Request.new(env)
-      self.url = req.url.split('?').first
+      self.url = req.scheme && req.url.split('?').first
       self.method = req.request_method
       self.query_string = req.query_string
       env.each_pair do |key, value|
+        key = key.to_s #rack env can contain symbols
         next unless key.upcase == key # Non-upper case stuff isn't either
         if key.start_with?('HTTP_')
           # Header
