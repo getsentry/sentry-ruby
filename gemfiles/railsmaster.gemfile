@@ -1,0 +1,7 @@
+source "http://rubygems.org"
+
+gem "rails", :github => 'rails/rails'
+gem "rspec"
+gem "simplecov"
+
+gemspec :path => "../"

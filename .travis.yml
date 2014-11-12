@@ -3,6 +3,7 @@ gemfile:
   - gemfiles/rails32.gemfile
   - gemfiles/rails40.gemfile
   - gemfiles/rails41.gemfile
+  - gemfiles/railsmaster.gemfile
 rvm:
   - jruby-19mode
   - ree
@@ -20,9 +21,13 @@ matrix:
     - rvm: jruby-19mode
   exclude:
     - rvm: 1.8.7
+      gemfile: gemfiles/railsmaster.gemfile
+    - rvm: 1.8.7
       gemfile: gemfiles/rails41.gemfile
     - rvm: 1.8.7
       gemfile: gemfiles/rails40.gemfile
+    - rvm: ree
+      gemfile: gemfiles/railsmaster.gemfile
     - rvm: ree
       gemfile: gemfiles/rails41.gemfile
     - rvm: ree
