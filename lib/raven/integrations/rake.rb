@@ -1,5 +1,6 @@
-require 'raven'
+require 'rake'
 require 'rake/task'
+require 'raven/integrations/tasks'
 
 module Rake
   class Application
@@ -10,4 +11,3 @@ module Rake
     end
   end
 end
-
