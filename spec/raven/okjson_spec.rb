@@ -24,4 +24,9 @@ describe Raven::OkJson do
     expect(Raven::OkJson.decode("[123e090]")).to eq [123000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000]
   end
 
+  it 'it raises the correct error on strings that look like incomplete objects' do
+    expect{Raven::OkJson.decode("{")}.to raise_error(Raven::OkJson::Error)
+    expect{Raven::OkJson.decode("[")}.to raise_error(Raven::OkJson::Error)
+  end
+
 end
