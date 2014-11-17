@@ -16,7 +16,7 @@ module Raven
     def clean_invalid_utf8_bytes(obj)
       if obj.respond_to?(:to_utf8)
         obj.to_utf8
-      elsif obj.respond_to?(:encoding)
+      elsif obj.respond_to?(:encoding) && obj.is_a?(String)
         obj.encode('UTF-16', :invalid => :replace, :undef => :replace, :replace => '').encode('UTF-8')
       else
         obj
