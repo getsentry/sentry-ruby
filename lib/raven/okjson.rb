@@ -132,6 +132,10 @@ private
     ts = eat('{', ts)
     obj = {}
 
+    unless ts[0]
+      raise Error, "unexpected end of object"
+    end
+
     if ts[0][0] == '}'
       return obj, ts[1..-1]
     end
@@ -174,6 +178,10 @@ private
   def arrparse(ts)
     ts = eat('[', ts)
     arr = []
+
+    unless ts[0]
+      raise Error, "unexpected end of array"
+    end
 
     if ts[0][0] == ']'
       return arr, ts[1..-1]
