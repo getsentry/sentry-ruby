@@ -28,9 +28,8 @@ require 'stringio'
 # http://golang.org/src/pkg/json/decode.go and
 # http://golang.org/src/pkg/utf8/utf8.go
 module Raven
-
 module OkJson
-  Upstream = '42'
+  Upstream = '43'
   extend self
 
 
@@ -62,20 +61,19 @@ module OkJson
   # is not a String.
   # Strings contained in x must be valid UTF-8.
   def encode(x)
-    visited = []
     case x
-    when Hash    then objenc(x, visited)
-    when Array   then arrenc(x, visited)
+    when Hash    then objenc(x)
+    when Array   then arrenc(x)
     else
       raise Error, 'root value must be an Array or a Hash'
     end
   end
 
 
-  def valenc(x, visited)
+  def valenc(x)
     case x
-    when Hash    then objenc(x, visited)
-    when Array   then arrenc(x, visited)
+    when Hash    then objenc(x)
+    when Array   then arrenc(x)
     when String  then strenc(x)
     when Symbol  then strenc(x.to_s)
     when Numeric then numenc(x)
@@ -83,7 +81,7 @@ module OkJson
     when false   then "false"
     when nil     then "null"
     else
-      strenc((x.inspect rescue $!.to_s))
+      raise Error, "cannot encode #{x.class}: #{x.inspect}"
     end
   end
 
@@ -427,18 +425,13 @@ private
   end
 
 
-  def objenc(x, visited)
-    return '"{...}"' if visited.include?(x.__id__)
-    visited += [x.__id__]
-    '{' + x.map{|k,v| keyenc(k) + ':' + valenc(v, visited)}.join(',') + '}'
+  def objenc(x)
+    '{' + x.map{|k,v| keyenc(k) + ':' + valenc(v)}.join(',') + '}'
   end
 
 
-  def arrenc(a, visited)
-    return '"[...]"' if visited.include?(a.__id__)
-    visited += [a.__id__]
-
-    '[' + a.map{|x| valenc(x, visited)}.join(',') + ']'
+  def arrenc(a)
+    '[' + a.map{|x| valenc(x)}.join(',') + ']'
   end
 
 
@@ -447,7 +440,7 @@ private
     when String then strenc(k)
     when Symbol then strenc(k.to_s)
     else
-      strenc(k.inspect)
+      raise Error, "Hash key is not a string: #{k.inspect}"
     end
   end
 
@@ -471,11 +464,16 @@ private
         # In ruby >= 1.9, s[r] is a codepoint, not a byte.
         if rubydoesenc?
           begin
-            c.ord # will raise an error if c is invalid UTF-8
+            # c.ord will raise an error if c is invalid UTF-8
+            if c.ord < Spc.ord
+              c = "\\u%04x" % [c.ord]
+            end
             t.write(c)
           rescue
             t.write(Ustrerr)
           end
+        elsif c < Spc
+          t.write("\\u%04x" % c)
         elsif Spc <= c && c <= ?~
           t.putc(c)
         else
@@ -491,10 +489,8 @@ private
 
 
   def numenc(x)
-    if (x.nan? rescue false)
-      '"NaN"'
-    elsif (x.infinite? rescue false)
-      '"Infinite"'
+    if ((x.nan? || x.infinite?) rescue false)
+      raise Error, "Numeric cannot be represented: #{x}"
     end
     "#{x}"
   end
@@ -605,5 +601,4 @@ private
   Spc = ' '[0]
   Unesc = {?b=>?\b, ?f=>?\f, ?n=>?\n, ?r=>?\r, ?t=>?\t}
 end
-
 end
