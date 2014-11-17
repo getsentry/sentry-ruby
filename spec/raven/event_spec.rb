@@ -200,6 +200,31 @@ describe Raven::Event do
     end
   end
 
+  context 'configuration tags unspecified' do
+    it 'should not persist tags between unrelated events' do
+      config = Raven::Configuration.new
+
+      Raven::Event.new(
+        :level => 'warning',
+        :logger => 'foo',
+        :tags => {
+          'foo' => 'bar'
+        },
+        :server_name => 'foo.local',
+        :configuration => config
+      )
+
+      hash = Raven::Event.new(
+        :level => 'warning',
+        :logger => 'foo',
+        :server_name => 'foo.local',
+        :configuration => config
+      ).to_hash
+
+      expect(hash['tags']).to eq({})
+    end
+  end
+
   describe '.initialize' do
     it 'should not touch the env object for an ignored environment' do
       Raven.configure(true) do |config|
