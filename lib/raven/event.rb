@@ -52,7 +52,8 @@ module Raven
       @extra = options[:extra] || {}
       @extra.merge!(context.extra)
 
-      @tags = @configuration.tags
+      @tags = {}
+      @tags.merge!(@configuration.tags)
       @tags.merge!(options[:tags] || {})
       @tags.merge!(context.tags)
 
