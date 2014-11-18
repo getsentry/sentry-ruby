@@ -48,5 +48,12 @@ describe Raven::Processor::UTF8Conversion do
       results = @processor.process(data)
       expect(results[2][1]).to eq("invalid utf8 string goes here")
     end
+
+    it 'should not blow up on symbols' do
+      data = {:key => :value}
+
+      results = @processor.process(data)
+      expect(results[:key]).to eq(:value)
+    end
   end
 end
