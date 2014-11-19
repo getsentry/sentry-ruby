@@ -1,3 +1,10 @@
+0.12.1
+------
+
+- Integrations (Sidekiq, DelayedJob, etc) now load independently of your Gemfile order. [nateberkopec, #236]
+- Fixed bug where setting tags mutated your configuration [berg, #239]
+- Fixed several issues with SanitizeData and UTF8 sanitization processors [nateberkopec, #238, #241, #244]
+
 0.12.0
 ------
 
