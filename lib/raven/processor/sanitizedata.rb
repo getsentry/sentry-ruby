@@ -8,32 +8,31 @@ module Raven
     def process(value)
       fields_re = /(#{(DEFAULT_FIELDS + @sanitize_fields).join("|")})/i
 
-      value.inject(value) do |value,(k,v)|
+      value.inject(value) do |memo,(k,v)|
         v = k if v.nil?
-        if v.is_a?(Hash) || v.is_a?(Array)
-          process(v)
+        memo = if v.is_a?(Hash) || v.is_a?(Array)
+          modify_in_place(memo, k, process(v))
         elsif v.is_a?(String) && (json = parse_json_or_nil(v))
           #if this string is actually a json obj, convert and sanitize
-          value = modify_in_place(value, [k,v], process(json).to_json)
+          modify_in_place(memo, k, process(json).to_json)
         elsif v.is_a?(Integer) && (VALUES_RE.match(v.to_s) || fields_re.match(k.to_s))
-          value = modify_in_place(value, [k,v], INT_MASK)
+          modify_in_place(memo, k, INT_MASK)
         elsif VALUES_RE.match(v.to_s) || fields_re.match(k.to_s)
-          value = modify_in_place(value, [k,v], STRING_MASK)
+          modify_in_place(memo, k, STRING_MASK)
         else
-          value
+          memo
         end
       end
-      value
     end
 
     private
 
-    def modify_in_place(original_parent, original_child, new_child)
+    def modify_in_place(original_parent, original_child, new_value)
       if original_parent.is_a?(Array)
-        index = original_parent.index(original_child[0])
-        original_parent[index] = new_child
+        index = original_parent.index(original_child)
+        original_parent[index] = new_value
       elsif original_parent.is_a?(Hash)
-        original_parent[original_child[0]] = new_child
+        original_parent[original_child] = new_value
       end
       original_parent
     end
