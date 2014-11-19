@@ -1,4 +1,5 @@
 require 'logger'
+require 'uri'
 
 module Raven
   class Configuration
