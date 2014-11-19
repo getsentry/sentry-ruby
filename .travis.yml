@@ -1,9 +1,5 @@
 language: ruby
-gemfile:
-  - gemfiles/rails32.gemfile
-  - gemfiles/rails40.gemfile
-  - gemfiles/rails41.gemfile
-  - gemfiles/railsmaster.gemfile
+
 rvm:
   - jruby-19mode
   - ree
@@ -12,11 +8,21 @@ rvm:
   - 2.0.0
   - 2.1.2
   - ruby-head
+
+gemfile:
+  - gemfiles/rails32.gemfile
+  - gemfiles/rails40.gemfile
+  - gemfiles/rails41.gemfile
+  - gemfiles/railsmaster.gemfile
+
+sudo: false
+
 notifications:
   irc:
     channels: "irc.freenode.org#sentry"
     on_success: change
     on_failure: change
+
 matrix:
   allow_failures:
     - rvm: jruby-19mode
