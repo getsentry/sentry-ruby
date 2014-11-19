@@ -94,4 +94,14 @@ describe Raven::Processor::SanitizeData do
     expect(result["ccnumba_int"]).to eq(Raven::Processor::SanitizeData::INT_MASK)
   end
 
+  it 'sanitizes hashes nested in arrays' do
+    data = {
+      "empty_array"=> [],
+      "array"=>[{'password' => 'secret'}],
+    }
+
+    result = @processor.process(data)
+
+    expect(result["array"][0]['password']).to eq(Raven::Processor::SanitizeData::STRING_MASK)
+  end
 end

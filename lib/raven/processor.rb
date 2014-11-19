@@ -17,8 +17,7 @@ module Raven
 
     def parse_json_or_nil(string)
       begin
-        result = OkJson.decode(string)
-        result.is_a?(String) ? nil : result
+        OkJson.decode(string)
       rescue Raven::OkJson::Error
         nil
       end
