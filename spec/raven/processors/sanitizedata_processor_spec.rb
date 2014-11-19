@@ -87,20 +87,21 @@ describe Raven::Processor::SanitizeData do
     data = {
       'ccnumba' => '4242424242424242',
       'ccnumba_int' => 4242424242424242,
-      'ccnumba_in_array' => ['4242424242424242']
     }
 
     result = @processor.process(data)
     expect(result["ccnumba"]).to eq(Raven::Processor::SanitizeData::STRING_MASK)
     expect(result["ccnumba_int"]).to eq(Raven::Processor::SanitizeData::INT_MASK)
-    expect(result["ccnumba_in_array"]).to eq([Raven::Processor::SanitizeData::STRING_MASK])
   end
 
-  it 'does not raise errors on empty objects' do
+  it 'sanitizes hashes nested in arrays' do
     data = {
       "empty_array"=> [],
-      "empty_fake_json"=>"[]",
+      "array"=>[{'password' => 'secret'}],
     }
-    expect{@processor.process(data)}.to_not raise_error
+
+    result = @processor.process(data)
+
+    expect(result["array"][0]['password']).to eq(Raven::Processor::SanitizeData::STRING_MASK)
   end
 end
