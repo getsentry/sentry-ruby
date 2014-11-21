@@ -81,7 +81,7 @@ module OkJson
     when false   then "false"
     when nil     then "null"
     else
-      raise Error, "cannot encode #{x.class}: #{x.inspect}"
+      strenc((x.inspect rescue $!.to_s))
     end
   end
 

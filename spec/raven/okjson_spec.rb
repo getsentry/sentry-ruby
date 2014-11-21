@@ -20,6 +20,13 @@ describe Raven::OkJson do
     end
   end
 
+  it 'encodes anything that responds to to_s' do
+    data = [
+      (1..5)
+    ]
+    expect(Raven::OkJson.encode(data)).to eq '["1..5"]'
+  end
+
   it 'parses zero-leading exponent numbers correctly' do
     expect(Raven::OkJson.decode("[123e090]")).to eq [123000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000]
   end
