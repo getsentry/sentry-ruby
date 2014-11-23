@@ -4,8 +4,6 @@ require "raven"
 require "raven/cli"
 require "optparse"
 
-options = {}
-
 parser = OptionParser.new do |opt|
   opt.banner = "Usage: raven COMMAND [OPTIONS]"
   opt.separator  ""

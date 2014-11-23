@@ -86,7 +86,7 @@ module Raven
         Line.parse(unparsed_line)
       end
 
-      instance = new(lines)
+      new(lines)
     end
 
     def initialize(lines)

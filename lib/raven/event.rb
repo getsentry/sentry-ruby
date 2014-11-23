@@ -76,7 +76,7 @@ module Raven
     def get_hostname
       # Try to resolve the hostname to an FQDN, but fall back to whatever the load name is
       hostname = Socket.gethostname
-      hostname = Socket.gethostbyname(hostname).first rescue hostname
+      Socket.gethostbyname(hostname).first rescue hostname
     end
 
     def get_modules
