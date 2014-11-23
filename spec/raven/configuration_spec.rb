@@ -93,7 +93,7 @@ describe Raven::Configuration do
     end
 
     it 'should be configurable to send events async' do
-      subject.async = lambda { |event| :ok }
+      subject.async = lambda { |_e| :ok }
       expect(subject.async.respond_to?(:call)).to eq(true)
       expect(subject.async.call('event')).to eq(:ok)
     end

@@ -10,8 +10,8 @@ module Raven
         @configuration = configuration
       end
 
-      def send(auth_header, data, options = {})
-        raise Error.new('Abstract method not implemented')
+      def send#(auth_header, data, options = {})
+        raise NotImplementedError.new('Abstract method not implemented')
       end
 
       protected

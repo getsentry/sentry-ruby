@@ -33,7 +33,7 @@ describe Raven do
       expect(Raven).not_to receive(:send).with(event)
 
       prior_async = Raven.configuration.async
-      Raven.configuration.async = lambda { |e| :ok }
+      Raven.configuration.async = lambda { :ok }
       expect(Raven.configuration.async).to receive(:call).with(event)
       Raven.capture_message(message, options)
       Raven.configuration.async = prior_async
@@ -63,7 +63,7 @@ describe Raven do
       expect(Raven).not_to receive(:send).with(event)
 
       prior_async = Raven.configuration.async
-      Raven.configuration.async = lambda { |e| :ok }
+      Raven.configuration.async = lambda { :ok }
       expect(Raven.configuration.async).to receive(:call).with(event)
       Raven.capture_exception(exception, options)
       Raven.configuration.async = prior_async
@@ -77,7 +77,7 @@ describe Raven do
       expect(Raven).not_to receive(:send).with(event)
 
       prior_should_send = Raven.configuration.should_send
-      Raven.configuration.should_send = Proc.new { |e| false }
+      Raven.configuration.should_send = Proc.new { false }
       expect(Raven.configuration.should_send).to receive(:call).with(exception)
       Raven.capture_exception(exception, options)
       Raven.configuration.should_send = prior_should_send

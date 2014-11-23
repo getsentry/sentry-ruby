@@ -61,7 +61,7 @@ module Raven
       end
 
       def inspect
-        "<Line:#{to_s}>"
+        "<Line:#{self}>"
       end
 
       private
@@ -77,8 +77,8 @@ module Raven
 
       filters = opts[:filters] || []
       filtered_lines = ruby_lines.to_a.map do |line|
-        filters.reduce(line) do |line, proc|
-          proc.call(line)
+        filters.reduce(line) do |nested_line, proc|
+          proc.call(nested_line)
         end
       end.compact
 
@@ -86,7 +86,7 @@ module Raven
         Line.parse(unparsed_line)
       end
 
-      instance = new(lines)
+      new(lines)
     end
 
     def initialize(lines)

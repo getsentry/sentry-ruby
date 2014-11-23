@@ -7,7 +7,7 @@ module Raven
   module Transports
     class UDP < Transport
 
-      def send(auth_header, data, options = {})
+      def send(auth_header, data, _options = {})
         conn.send "#{auth_header}\n\n#{data}", 0
       end
 

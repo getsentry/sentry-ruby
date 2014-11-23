@@ -3,10 +3,10 @@ require 'sidekiq'
 
 module Raven
   class Sidekiq
-    def call(worker, msg, queue)
+    def call(_worker, msg, _queue)
       started_at = Time.now
       yield
-    rescue => ex
+    rescue Exception => ex
       Raven.capture_exception(ex, :extra => { :sidekiq => msg },
                                   :time_spent => Time.now-started_at)
       raise

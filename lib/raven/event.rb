@@ -76,7 +76,7 @@ module Raven
     def get_hostname
       # Try to resolve the hostname to an FQDN, but fall back to whatever the load name is
       hostname = Socket.gethostname
-      hostname = Socket.gethostbyname(hostname).first rescue hostname
+      Socket.gethostbyname(hostname).first rescue hostname
     end
 
     def get_modules
@@ -140,7 +140,7 @@ module Raven
       context_lines = configuration[:context_lines]
 
       new(options) do |evt|
-        evt.message = "#{exc.class.to_s}: #{exc.message}"
+        evt.message = "#{exc.class}: #{exc.message}"
         evt.level = options[:level] || :error
 
         evt.interface(:exception) do |int|
@@ -186,7 +186,7 @@ module Raven
     end
 
     # Because linecache can go to hell
-    def self._source_lines(path, from, to)
+    def self._source_lines(_path, _from, _to)
     end
 
     def get_file_context(filename, lineno, context)
