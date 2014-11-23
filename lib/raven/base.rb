@@ -101,7 +101,7 @@ module Raven
 
     def capture_exception(exception, options = {})
       send_or_skip(exception) do
-        if evt = Event.from_exception(exception, options)
+        if (evt = Event.from_exception(exception, options))
           yield evt if block_given?
           if configuration.async?
             configuration.async.call(evt)
@@ -114,7 +114,7 @@ module Raven
 
     def capture_message(message, options = {})
       send_or_skip(message) do
-        if evt = Event.from_message(message, options)
+        if (evt = Event.from_message(message, options))
           yield evt if block_given?
           if configuration.async?
             configuration.async.call(evt)
