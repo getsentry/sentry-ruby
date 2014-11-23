@@ -61,7 +61,7 @@ module Raven
       end
 
       def inspect
-        "<Line:#{to_s}>"
+        "<Line:#{self}>"
       end
 
       private

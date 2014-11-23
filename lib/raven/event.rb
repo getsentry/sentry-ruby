@@ -140,7 +140,7 @@ module Raven
       context_lines = configuration[:context_lines]
 
       new(options) do |evt|
-        evt.message = "#{exc.class.to_s}: #{exc.message}"
+        evt.message = "#{exc.class}: #{exc.message}"
         evt.level = options[:level] || :error
 
         evt.interface(:exception) do |int|
