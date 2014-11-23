@@ -7,7 +7,7 @@ module Raven
 
       logger = ::Logger.new(STDOUT)
       logger.level = ::Logger::ERROR
-      logger.formatter = proc do |severity, datetime, progname, msg|
+      logger.formatter = proc do |_severity, _datetime, _progname, msg|
         "-> #{msg}\n"
       end
 

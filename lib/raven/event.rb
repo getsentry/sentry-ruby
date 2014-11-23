@@ -186,7 +186,7 @@ module Raven
     end
 
     # Because linecache can go to hell
-    def self._source_lines(path, from, to)
+    def self._source_lines(_path, _from, _to)
     end
 
     def get_file_context(filename, lineno, context)

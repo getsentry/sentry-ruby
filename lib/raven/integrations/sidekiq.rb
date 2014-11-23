@@ -3,7 +3,7 @@ require 'sidekiq'
 
 module Raven
   class Sidekiq
-    def call(worker, msg, queue)
+    def call(_worker, msg, _queue)
       started_at = Time.now
       yield
     rescue => ex

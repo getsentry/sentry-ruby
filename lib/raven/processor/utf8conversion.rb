@@ -3,9 +3,9 @@ module Raven
 
     def process(value)
       if value.is_a? Array
-        value.map { |v_| process v_ }
+        value.map { |v| process v }
       elsif value.is_a? Hash
-        value.merge(value) { |k, v_| process v_ }
+        value.merge(value) { |_, v| process v }
       else
         clean_invalid_utf8_bytes(value)
       end
