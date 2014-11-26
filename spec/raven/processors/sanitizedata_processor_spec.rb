@@ -86,11 +86,14 @@ describe Raven::Processor::SanitizeData do
   it 'should filter credit card values' do
     data = {
       'ccnumba' => '4242424242424242',
+      'ccnumba_13' => '4242424242424',
+      'ccnumba-dash' => '4242-4242-4242-4242',
       'ccnumba_int' => 4242424242424242,
     }
 
     result = @processor.process(data)
     expect(result["ccnumba"]).to eq(Raven::Processor::SanitizeData::STRING_MASK)
+    expect(result["ccnumba_13"]).to eq(Raven::Processor::SanitizeData::STRING_MASK)
     expect(result["ccnumba_int"]).to eq(Raven::Processor::SanitizeData::INT_MASK)
   end
 
