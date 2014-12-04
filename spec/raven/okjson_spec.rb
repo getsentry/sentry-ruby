@@ -22,9 +22,10 @@ describe Raven::OkJson do
 
   it 'encodes anything that responds to to_s' do
     data = [
-      (1..5)
+      (1..5),
+      :symbol
     ]
-    expect(Raven::OkJson.encode(data)).to eq '["1..5"]'
+    expect(Raven::OkJson.encode(data)).to eq "[\"1..5\",\"symbol\"]"
   end
 
   it 'parses zero-leading exponent numbers correctly' do

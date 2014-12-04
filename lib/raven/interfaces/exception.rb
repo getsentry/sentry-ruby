@@ -11,8 +11,8 @@ module Raven
 
     def to_hash(*args)
       data = super(*args)
-      if data['stacktrace']
-        data['stacktrace'] = data['stacktrace'].to_hash
+      if data[:stacktrace]
+        data[:stacktrace] = data[:stacktrace].to_hash
       end
       data
     end

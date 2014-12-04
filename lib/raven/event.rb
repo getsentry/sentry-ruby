@@ -101,23 +101,23 @@ module Raven
 
     def to_hash
       data = {
-        'event_id' => @id,
-        'message' => @message,
-        'timestamp' => @timestamp,
-        'time_spent' => @time_spent,
-        'level' => @level,
-        'project' => @project,
-        'logger' => @logger,
-        'platform' => PLATFORM,
+        :event_id => @id,
+        :message => @message,
+        :timestamp => @timestamp,
+        :time_spent => @time_spent,
+        :level => @level,
+        :project => @project,
+        :logger => @logger,
+        :platform => PLATFORM,
       }
-      data['culprit'] = @culprit if @culprit
-      data['server_name'] = @server_name if @server_name
-      data['modules'] = @modules if @modules
-      data['extra'] = @extra if @extra
-      data['tags'] = @tags if @tags
-      data['user'] = @user if @user
+      data[:culprit] = @culprit if @culprit
+      data[:server_name] = @server_name if @server_name
+      data[:modules] = @modules if @modules
+      data[:extra] = @extra if @extra
+      data[:tags] = @tags if @tags
+      data[:user] = @user if @user
       @interfaces.each_pair do |name, int_data|
-        data[name] = int_data.to_hash
+        data[name.to_sym] = int_data.to_hash
       end
       data
     end

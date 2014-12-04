@@ -22,35 +22,35 @@ describe Raven::Event do
     end
 
     it 'has message' do
-      expect(hash['message']).to eq('test')
+      expect(hash[:message]).to eq('test')
     end
 
     it 'has level' do
-      expect(hash['level']).to eq(30)
+      expect(hash[:level]).to eq(30)
     end
 
     it 'has logger' do
-      expect(hash['logger']).to eq('foo')
+      expect(hash[:logger]).to eq('foo')
     end
 
     it 'has server name' do
-      expect(hash['server_name']).to eq('foo.local')
+      expect(hash[:server_name]).to eq('foo.local')
     end
 
     it 'has tag data' do
-      expect(hash['tags']).to eq({
+      expect(hash[:tags]).to eq({
         'foo' => 'bar'
       })
     end
 
     it 'has extra data' do
-      expect(hash['extra']).to eq({
+      expect(hash[:extra]).to eq({
         'my_custom_variable' => 'value'
       })
     end
 
     it 'has platform' do
-      expect(hash['platform']).to eq('ruby')
+      expect(hash[:platform]).to eq('ruby')
     end
 
   end
@@ -75,7 +75,7 @@ describe Raven::Event do
     end
 
     it "adds user data" do
-      expect(hash['user']).to eq({
+      expect(hash[:user]).to eq({
         'id' => 'hello',
       })
     end
@@ -101,7 +101,7 @@ describe Raven::Event do
     end
 
     it "merges tags data" do
-      expect(hash['tags']).to eq({
+      expect(hash[:tags]).to eq({
         'key' => 'value',
         'foo' => 'bar',
       })
@@ -128,7 +128,7 @@ describe Raven::Event do
     end
 
     it "merges extra data" do
-      expect(hash['extra']).to eq({
+      expect(hash[:extra]).to eq({
         'key' => 'value',
         'my_custom_variable' => 'value',
       })
@@ -164,14 +164,14 @@ describe Raven::Event do
     end
 
     it "adds http data" do
-      expect(hash['request']).to eq({
-        'data' => { 'foo' => 'bar' },
-        'env' => { 'SERVER_NAME' => 'localhost', 'SERVER_PORT' => '80' },
-        'headers' => { 'Host' => 'localhost' },
-        'method' => 'POST',
-        'query_string' => 'biz=baz',
-        'url' => 'http://localhost/lol',
-        'cookies' => nil
+      expect(hash[:request]).to eq({
+        :data => { 'foo' => 'bar' },
+        :env => { 'SERVER_NAME' => 'localhost', 'SERVER_PORT' => '80' },
+        :headers => { 'Host' => 'localhost' },
+        :method => 'POST',
+        :query_string => 'biz=baz',
+        :url => 'http://localhost/lol',
+        :cookies => nil
       })
     end
   end
@@ -193,7 +193,7 @@ describe Raven::Event do
     end
 
     it 'merges tags data' do
-      expect(hash['tags']).to eq({
+      expect(hash[:tags]).to eq({
         'key' => 'value',
         'foo' => 'bar'
       })
@@ -221,7 +221,7 @@ describe Raven::Event do
         :configuration => config
       ).to_hash
 
-      expect(hash['tags']).to eq({})
+      expect(hash[:tags]).to eq({})
     end
   end
 
@@ -245,11 +245,11 @@ describe Raven::Event do
       end
 
       it "sets the message to the value passed" do
-        expect(hash['message']).to eq(message)
+        expect(hash[:message]).to eq(message)
       end
 
       it 'has level ERROR' do
-        expect(hash['level']).to eq(40)
+        expect(hash[:level]).to eq(40)
       end
 
       it 'accepts an options hash' do
@@ -269,24 +269,24 @@ describe Raven::Event do
       end
 
       it "sets the message to the exception's message and type" do
-        expect(hash['message']).to eq("Exception: #{message}")
+        expect(hash[:message]).to eq("Exception: #{message}")
       end
 
       # sentry uses python's logging values; 40 is the value of logging.ERROR
       it 'has level ERROR' do
-        expect(hash['level']).to eq(40)
+        expect(hash[:level]).to eq(40)
       end
 
       it 'uses the exception class name as the exception type' do
-        expect(hash['exception']['type']).to eq('Exception')
+        expect(hash[:exception][:type]).to eq('Exception')
       end
 
       it 'uses the exception message as the exception value' do
-        expect(hash['exception']['value']).to eq(message)
+        expect(hash[:exception][:value]).to eq(message)
       end
 
       it 'does not belong to a module' do
-        expect(hash['exception']['module']).to eq('')
+        expect(hash[:exception][:module]).to eq('')
       end
     end
 
@@ -297,7 +297,7 @@ describe Raven::Event do
       let(:exception) { Raven::Test::Exception.new(message) }
 
       it 'sends the module name as part of the exception info' do
-        expect(hash['exception']['module']).to eq('Raven::Test')
+        expect(hash[:exception][:module]).to eq('Raven::Test')
       end
     end
 
@@ -341,15 +341,15 @@ describe Raven::Event do
       end
 
       it 'parses the backtrace' do
-        frames = hash['exception']['stacktrace']['frames']
+        frames = hash[:exception][:stacktrace][:frames]
         expect(frames.length).to eq(2)
-        expect(frames[0]['lineno']).to eq(1412)
-        expect(frames[0]['function']).to eq('other_function')
-        expect(frames[0]['filename']).to eq('/some/other/path')
+        expect(frames[0][:lineno]).to eq(1412)
+        expect(frames[0][:function]).to eq('other_function')
+        expect(frames[0][:filename]).to eq('/some/other/path')
 
-        expect(frames[1]['lineno']).to eq(22)
-        expect(frames[1]['function']).to eq('function_name')
-        expect(frames[1]['filename']).to eq('/path/to/some/file')
+        expect(frames[1][:lineno]).to eq(22)
+        expect(frames[1][:function]).to eq('function_name')
+        expect(frames[1][:filename]).to eq('/path/to/some/file')
       end
 
       context 'with internal backtrace' do
@@ -360,10 +360,10 @@ describe Raven::Event do
         end
 
         it 'marks filename and in_app correctly' do
-        frames = hash['exception']['stacktrace']['frames']
-          expect(frames[0]['lineno']).to eq(10)
-          expect(frames[0]['function']).to eq("synchronize")
-          expect(frames[0]['filename']).to eq("<internal:prelude>")
+        frames = hash[:exception][:stacktrace][:frames]
+          expect(frames[0][:lineno]).to eq(10)
+          expect(frames[0][:function]).to eq("synchronize")
+          expect(frames[0][:filename]).to eq("<internal:prelude>")
         end
       end
 
@@ -394,28 +394,28 @@ describe Raven::Event do
 
           it 'marks in_app correctly' do
             expect(Raven.configuration.project_root).to eq('/rails/root')
-            frames = hash['exception']['stacktrace']['frames']
-            expect(frames[0]['filename']).to eq("test/some/other/path")
-            expect(frames[0]['in_app']).to eq(true)
-            expect(frames[1]['filename']).to eq("/app/some/other/path")
-            expect(frames[1]['in_app']).to eq(false)
-            expect(frames[2]['filename']).to eq("/gem/lib/path")
-            expect(frames[2]['in_app']).to eq(false)
-            expect(frames[3]['filename']).to eq("/rails/root/app/foobar")
-            expect(frames[3]['in_app']).to eq(true)
-            expect(frames[4]['filename']).to eq("vendor/bundle/some_gem.rb")
-            expect(frames[4]['in_app']).to eq(false)
-            expect(frames[5]['filename']).to eq("/rails/root/vendor/bundle/cache/other_gem.rb")
-            expect(frames[5]['in_app']).to eq(false)
+            frames = hash[:exception][:stacktrace][:frames]
+            expect(frames[0][:filename]).to eq("test/some/other/path")
+            expect(frames[0][:in_app]).to eq(true)
+            expect(frames[1][:filename]).to eq("/app/some/other/path")
+            expect(frames[1][:in_app]).to eq(false)
+            expect(frames[2][:filename]).to eq("/gem/lib/path")
+            expect(frames[2][:in_app]).to eq(false)
+            expect(frames[3][:filename]).to eq("/rails/root/app/foobar")
+            expect(frames[3][:in_app]).to eq(true)
+            expect(frames[4][:filename]).to eq("vendor/bundle/some_gem.rb")
+            expect(frames[4][:in_app]).to eq(false)
+            expect(frames[5][:filename]).to eq("/rails/root/vendor/bundle/cache/other_gem.rb")
+            expect(frames[5][:in_app]).to eq(false)
           end
         end
       end
 
       it "sets the culprit" do
-        expect(hash['culprit']).to eq("/path/to/some/file in function_name at line 22")
+        expect(hash[:culprit]).to eq("/path/to/some/file in function_name at line 22")
       end
 
-      context 'when a path in the stack trace is on the laod path' do
+      context 'when a path in the stack trace is on the load path' do
         before do
           $LOAD_PATH << '/some'
         end
@@ -425,8 +425,8 @@ describe Raven::Event do
         end
 
         it 'strips prefixes in the load path from frame filenames' do
-          frames = hash['exception']['stacktrace']['frames']
-          expect(frames[0]['filename']).to eq('other/path')
+          frames = hash[:exception][:stacktrace][:frames]
+          expect(frames[0][:filename]).to eq('other/path')
         end
       end
     end
