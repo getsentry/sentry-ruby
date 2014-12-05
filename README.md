@@ -13,7 +13,7 @@ We test on Ruby MRI 1.8.7/REE, 1.9.3, 2.0 and 2.1. JRuby support is experimental
 ## Getting Started
 ### Install
 ```ruby
-gem "sentry-raven", :require => 'raven' #, :github => "getsentry/raven-ruby"
+gem "sentry-raven" #, :github => "getsentry/raven-ruby"
 ```
 ### Set SENTRY_DSN
 ```bash
