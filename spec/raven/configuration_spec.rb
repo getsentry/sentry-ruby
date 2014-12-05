@@ -55,6 +55,17 @@ describe Raven::Configuration do
     end
   end
 
+  context 'being initialized without server configuration' do
+    before do
+      subject.environments = %w[ test ]
+    end
+
+    it 'should not send events' do
+      expect(subject[:server]).to eq(nil)
+      expect(subject.send_in_current_environment?).to eq(false)
+    end
+  end
+
   context 'being initialized with a server string' do
     before do
       subject.server = 'http://12345:67890@sentry.localdomain/sentry/42'
@@ -87,11 +98,7 @@ describe Raven::Configuration do
     it_should_behave_like 'a complete configuration'
   end
 
-  context 'being initialized in a non-test environment' do
-    it 'should send events' do
-      expect(subject.send_in_current_environment?).to eq(true)
-    end
-
+  context 'configuring for async' do
     it 'should be configurable to send events async' do
       subject.async = lambda { |_e| :ok }
       expect(subject.async.respond_to?(:call)).to eq(true)
@@ -104,31 +111,22 @@ describe Raven::Configuration do
       expect { subject.async = false }.to_not raise_error
       expect { subject.async = true }.to raise_error(ArgumentError)
     end
-
   end
 
-  context 'being initialized in a test environment' do
+  context 'being initialized with a current environment' do
     before(:each) do
       subject.current_environment = 'test'
-    end
-
-    it 'should send events' do
-      expect(subject.send_in_current_environment?).to eq(true)
+      subject.server = 'http://sentry.localdomain/sentry'
     end
 
     it 'should send events if test is whitelisted' do
       subject.environments = %w[ test ]
       expect(subject.send_in_current_environment?).to eq(true)
     end
-  end
 
-  context 'being initialized in a development environment' do
-    before(:each) do
-      subject.current_environment = 'development'
-    end
-
-    it 'should send events' do
-      expect(subject.send_in_current_environment?).to eq(true)
+    it 'should not send events if test is not whitelisted' do
+      subject.environments = %w[ not_test ]
+      expect(subject.send_in_current_environment?).to eq(false)
     end
   end
 

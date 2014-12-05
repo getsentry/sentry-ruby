@@ -160,11 +160,7 @@ module Raven
     end
 
     def send_in_current_environment?
-      if environments
-        environments.include?(current_environment)
-      else
-        true
-      end
+      !!server && (!environments || environments.include?(current_environment))
     end
 
     def log_excluded_environment_message
