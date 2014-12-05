@@ -1,6 +1,6 @@
 source "http://rubygems.org"
 
-gem "rails", :github => 'rails/rails'
+gem "rails", '4.2.0.rc1'
 gem "rspec"
 gem "simplecov"
 
