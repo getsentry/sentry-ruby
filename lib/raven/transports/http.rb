@@ -9,7 +9,7 @@ module Raven
 
       def send(auth_header, data, options = {})
         project_id = self.configuration[:project_id]
-        path = self.configuration[:path].gsub('/sentry', '') + "/"
+        path = self.configuration[:path] + "/"
 
         response = conn.post "#{path}api/#{project_id}/store/" do |req|
           req.headers['Content-Type'] = options[:content_type]
