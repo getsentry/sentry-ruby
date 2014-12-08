@@ -271,7 +271,8 @@ private
       elsif m[2]
         [:val, m[0], Float(m[0])]
       else
-        [:val, m[0], Integer(m[1])*(10**Integer(m[3][1..-1]))]
+        # We don't convert scientific notation
+        [:val, m[0], m[0]]
       end
     else
       []
@@ -603,5 +604,8 @@ private
   Spc = ' '[0]
   Unesc = {?b=>?\b, ?f=>?\f, ?n=>?\n, ?r=>?\r, ?t=>?\t}
 end
+<<<<<<< HEAD
 
+=======
+>>>>>>> 665c07f... Remove scientific computation from okjson
 end
