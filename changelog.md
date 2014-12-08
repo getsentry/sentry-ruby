@@ -1,3 +1,7 @@
+0.12.2
+------
+- OKJson no longer parses scientific notation. [dcramer, #262]
+
 0.12.1
 ------
 
