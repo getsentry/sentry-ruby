@@ -278,7 +278,8 @@ private
       elsif m[2]
         [:val, m[0], Float(m[0])]
       else
-        [:val, m[0], Integer(m[1])*(10**m[3][1..-1].to_i(10))]
+        # We don't convert scientific notation
+        [:val, m[0], m[0]]
       end
     else
       []
