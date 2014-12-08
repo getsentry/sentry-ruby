@@ -20,8 +20,8 @@ describe Raven::OkJson do
     end
   end
 
-  it 'parses zero-leading exponent numbers correctly' do
-    expect(Raven::OkJson.decode("[123e090]")).to eq [123000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000]
+  it 'does not parse scientific notation' do
+    expect(Raven::OkJson.decode("[123e090]")).to eq ["123e090"]
   end
 
   it 'it raises the correct error on strings that look like incomplete objects' do
