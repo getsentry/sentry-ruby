@@ -208,7 +208,17 @@ module Raven
     def inject
       available_integrations = %w[delayed_job rails sidekiq rack rake]
       integrations_to_load = available_integrations & Gem.loaded_specs.keys
-      integrations_to_load.each { |integration| require "raven/integrations/#{integration}" }
+      # TODO(dcramer): integrations should have some additional checks baked-in
+      # or we should break them out into their own repos. Specifically both the
+      # rails and delayed_job checks are not always valid (i.e. Rails 2.3) and
+      # https://github.com/getsentry/raven-ruby/issues/180
+      integrations_to_load.each do |integration|
+        begin
+          require "raven/integrations/#{integration}"
+        rescue Exception => error
+          self.logger.warning "Unable to load raven/integrations/#{integration}: #{error}"
+        end
+      end
     end
 
     # For cross-language compat
