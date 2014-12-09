@@ -1,6 +1,4 @@
 require 'rake'
-require 'rake/task'
-require 'raven/integrations/tasks'
 
 module Rake
   class Application
