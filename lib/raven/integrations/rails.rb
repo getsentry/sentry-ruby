@@ -32,7 +32,7 @@ module Raven
     end
 
     rake_tasks do
-      require 'raven/integrations/tasks'
+      load "raven/tasks/test.rake"
     end
   end
 end
