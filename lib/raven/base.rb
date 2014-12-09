@@ -216,7 +216,7 @@ module Raven
         begin
           require "raven/integrations/#{integration}"
         rescue Exception => error
-          self.logger.warning "Unable to load raven/integrations/#{integration}: #{error}"
+          self.logger.warn "Unable to load raven/integrations/#{integration}: #{error}"
         end
       end
     end
