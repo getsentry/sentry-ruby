@@ -58,4 +58,19 @@ describe "Integration tests" do
     stubs.verify_stubbed_calls
 
   end
+
+  example "timed backoff should prevent sends" do
+    Raven.configure do |config|
+      config.server = 'http://12345:67890@sentry.localdomain/sentry/42'
+      config.environments = ["test"]
+      config.current_environment = "test"
+      config.http_adapter = [:test, nil]
+    end
+
+    expect_any_instance_of(Raven::Transports::HTTP).to receive(:send).exactly(1).times.and_raise(Faraday::Error::ConnectionFailed, "conn failed")
+    expect { Raven.capture_exception(build_exception) }.not_to raise_error
+
+    expect(Raven.logger).to receive(:error).exactly(1).times
+    expect { Raven.capture_exception(build_exception) }.not_to raise_error
+  end
 end
