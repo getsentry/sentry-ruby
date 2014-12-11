@@ -25,26 +25,26 @@ describe Raven::ClientState do
   end
 
   it 'should try again after retry_after' do
-    Timecop.freeze(-1) { state.failure(1) }
+    Timecop.freeze(-2) { state.failure(1) }
     expect(state.should_try?).to eq(true)
   end
 
   it 'should exponentially backoff' do
     Timecop.freeze do
       state.failure()
-      Timecop.travel(1)
+      Timecop.travel(2)
       expect(state.should_try?).to eq(true)
 
       state.failure()
       Timecop.travel(3)
       expect(state.should_try?).to eq(false)
-      Timecop.travel(1)
+      Timecop.travel(2)
       expect(state.should_try?).to eq(true)
 
       state.failure()
       Timecop.travel(8)
       expect(state.should_try?).to eq(false)
-      Timecop.travel(1)
+      Timecop.travel(2)
       expect(state.should_try?).to eq(true)
     end
   end
