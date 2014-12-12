@@ -47,7 +47,7 @@ module Raven
         return
       end
 
-      successful_send()
+      successful_send
 
       event
     end
@@ -113,11 +113,11 @@ module Raven
     end
 
     def successful_send
-      @state.success()
+      @state.success
     end
 
     def failed_send(e, event)
-      @state.failure()
+      @state.failure
       Raven.logger.error "Unable to record event with remote Sentry server (#{e.class} - #{e.message})"
       e.backtrace[0..10].each { |line| Raven.logger.error(line) }
       Raven.logger.error("Failed to submit event: #{get_log_message(event)}")

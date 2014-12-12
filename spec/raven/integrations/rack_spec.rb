@@ -60,7 +60,7 @@ describe Raven::Rack do
   it 'should allow empty rack env in rspec tests' do
     env = {} # the rack env is empty when running rails/rspec tests
     Raven.rack_context(env)
-    expect { Raven.capture_exception(build_exception()) }.not_to raise_error
+    expect { Raven.capture_exception(build_exception) }.not_to raise_error
   end
 
   it 'should bind request context' do
