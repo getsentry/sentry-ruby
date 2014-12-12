@@ -19,6 +19,7 @@ module Raven
     def initialize(configuration)
       @configuration = configuration
       @processors = configuration.processors.map { |v| v.new(self) }
+      @state = ClientState.new
     end
 
     def send(event)
@@ -29,6 +30,12 @@ module Raven
 
       # Set the project ID correctly
       event.project = self.configuration.project_id
+
+      if !@state.should_try?
+        Raven.logger.error("Not sending event due to previous failure(s): #{get_log_message(event)}")
+        return
+      end
+
       Raven.logger.debug "Sending event #{event.id} to Sentry"
 
       content_type, encoded_data = encode(event)
@@ -36,10 +43,11 @@ module Raven
         transport.send(generate_auth_header, encoded_data,
                        :content_type => content_type)
       rescue => e
-        Raven.logger.error "Unable to record event with remote Sentry server (#{e.class} - #{e.message})"
-        e.backtrace[0..10].each { |line| Raven.logger.error(line) }
+        failed_send(e, event)
         return
       end
+
+      successful_send
 
       event
     end
@@ -64,6 +72,10 @@ module Raven
       else
         return 'application/json', encoded
       end
+    end
+
+    def get_log_message(event)
+      (event && event.message) || '<no message value>'
     end
 
     def transport
@@ -100,5 +112,53 @@ module Raven
       end
     end
 
+    def successful_send
+      @state.success
+    end
+
+    def failed_send(e, event)
+      @state.failure
+      Raven.logger.error "Unable to record event with remote Sentry server (#{e.class} - #{e.message})"
+      e.backtrace[0..10].each { |line| Raven.logger.error(line) }
+      Raven.logger.error("Failed to submit event: #{get_log_message(event)}")
+    end
+
+  end
+
+  class ClientState
+    def initialize
+      reset
+    end
+
+    def should_try?
+      return true if @status == :online
+
+      interval = @retry_after || [@retry_number, 6].min ** 2
+      return true if Time.now - @last_check >= interval
+
+      false
+    end
+
+    def failure(retry_after = nil)
+      @status = :error
+      @retry_number += 1
+      @last_check = Time.now
+      @retry_after = retry_after
+    end
+
+    def success
+      reset
+    end
+
+    def reset
+      @status = :online
+      @retry_number = 0
+      @last_check = nil
+      @retry_after = nil
+    end
+
+    def failed?
+      @status == :error
+    end
   end
 end
