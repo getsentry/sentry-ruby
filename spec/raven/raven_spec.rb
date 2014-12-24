@@ -70,17 +70,17 @@ describe Raven do
     end
   end
 
-  describe '.capture_exception with a should_send callback' do
+  describe '.capture_exception with a should_capture callback' do
     let(:exception) { build_exception }
 
-    it 'sends the result of Event.capture_exception according to the result of should_send' do
+    it 'sends the result of Event.capture_exception according to the result of should_capture' do
       expect(Raven).not_to receive(:send).with(event)
 
-      prior_should_send = Raven.configuration.should_send
-      Raven.configuration.should_send = Proc.new { false }
-      expect(Raven.configuration.should_send).to receive(:call).with(exception)
-      Raven.capture_exception(exception, options)
-      Raven.configuration.should_send = prior_should_send
+      prior_should_capture = Raven.configuration.should_capture
+      Raven.configuration.should_capture = Proc.new { false }
+      expect(Raven.configuration.should_capture).to receive(:call).with(exception)
+      expect(Raven.capture_exception(exception, options)).to be false
+      Raven.configuration.should_capture = prior_should_capture
     end
   end
 

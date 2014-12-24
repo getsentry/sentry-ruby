@@ -7,9 +7,8 @@ require 'raven/transports/http'
 require 'raven/transports/udp'
 
 module Raven
-
+  # Encodes events and sends them to the Sentry server.
   class Client
-
     PROTOCOL_VERSION = '5'
     USER_AGENT = "raven-ruby/#{Raven::VERSION}"
     CONTENT_TYPE = 'application/json'
@@ -23,13 +22,7 @@ module Raven
     end
 
     def send(event)
-      unless configuration.send_in_current_environment?
-        configuration.log_excluded_environment_message
-        return
-      end
-
-      # Set the project ID correctly
-      event.project = self.configuration.project_id
+      return false unless configuration_allows_sending
 
       if !@state.should_try?
         Raven.logger.error("Not sending event due to previous failure(s): #{get_log_message(event)}")
@@ -39,6 +32,7 @@ module Raven
       Raven.logger.debug "Sending event #{event.id} to Sentry"
 
       content_type, encoded_data = encode(event)
+
       begin
         transport.send(generate_auth_header, encoded_data,
                        :content_type => content_type)
@@ -54,23 +48,24 @@ module Raven
 
     private
 
-    def encode(event)
-      hash = event.to_hash
-
-      # apply processors
-      hash = @processors.reduce(hash) do |memo, processor|
-        processor.process(memo)
+    def configuration_allows_sending
+      if configuration.send_in_current_environment?
+        true
+      else
+        configuration.log_excluded_environment_message
+        false
       end
+    end
 
+    def encode(event)
+      hash = @processors.reduce(event.to_hash) { |memo, p| p.process(memo) }
       encoded = OkJson.encode(hash)
 
-      case self.configuration.encoding
+      case configuration.encoding
       when 'gzip'
-        gzipped = Zlib::Deflate.deflate(encoded)
-        b64_encoded = strict_encode64(gzipped)
-        return 'application/octet-stream', b64_encoded
+        ['application/octet-stream', strict_encode64(Zlib::Deflate.deflate(encoded))]
       else
-        return 'application/json', encoded
+        ['application/json', encoded]
       end
     end
 
@@ -80,13 +75,13 @@ module Raven
 
     def transport
       @transport ||=
-        case self.configuration.scheme
+        case configuration.scheme
         when 'udp'
-          Transports::UDP.new self.configuration
+          Transports::UDP.new(configuration)
         when 'http', 'https'
-          Transports::HTTP.new self.configuration
+          Transports::HTTP.new(configuration)
         else
-          raise Error.new("Unknown transport scheme '#{self.configuration.scheme}'")
+          raise Error, "Unknown transport scheme '#{self.configuration.scheme}'"
         end
     end
 
@@ -96,13 +91,11 @@ module Raven
         'sentry_version' => PROTOCOL_VERSION,
         'sentry_client' => USER_AGENT,
         'sentry_timestamp' => now,
-        'sentry_key' => self.configuration.public_key,
-        'sentry_secret' => self.configuration.secret_key,
+        'sentry_key' => configuration.public_key,
+        'sentry_secret' => configuration.secret_key
       }
       'Sentry ' + fields.map { |key, value| "#{key}=#{value}" }.join(', ')
     end
-
-    private
 
     def strict_encode64(string)
       if Base64.respond_to? :strict_encode64
