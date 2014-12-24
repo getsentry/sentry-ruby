@@ -43,7 +43,6 @@ describe Raven::Configuration do
 
     it 'should not be async' do
       expect(subject[:async]).to eq(false)
-      expect(subject[:async?]).to eq(false)
     end
 
     it 'should catch_debugged_exceptions' do

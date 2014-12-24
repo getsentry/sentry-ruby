@@ -2,10 +2,6 @@ require 'spec_helper'
 
 describe Raven::Logger do
   context 'without a backend logger' do
-    before do
-      allow(Raven.configuration).to receive(:logger) { nil }
-    end
-
     it 'should not error' do
       subject.fatal 'fatalmsg'
       subject.error 'errormsg'
@@ -18,7 +14,7 @@ describe Raven::Logger do
   context 'with a backend logger' do
     before do
       @logger = double('logger')
-      allow(Raven.configuration).to receive(:logger) { @logger }
+      Raven.configuration.logger = @logger
     end
 
     it 'should log fatal messages' do
