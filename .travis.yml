@@ -5,8 +5,8 @@ rvm:
   - ree
   - 1.8.7
   - 1.9.3
-  - 2.0.0
   - 2.1.2
+  - 2.2.0
   - ruby-head
 
 gemfile:
@@ -31,11 +31,7 @@ matrix:
       gemfile: gemfiles/rails42.gemfile
     - rvm: 1.8.7
       gemfile: gemfiles/rails41.gemfile
-    - rvm: 1.8.7
-      gemfile: gemfiles/rails40.gemfile
     - rvm: ree
       gemfile: gemfiles/rails42.gemfile
     - rvm: ree
       gemfile: gemfiles/rails41.gemfile
-    - rvm: ree
-      gemfile: gemfiles/rails40.gemfile
