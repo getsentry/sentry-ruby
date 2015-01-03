@@ -192,7 +192,7 @@ module Raven
     # Extra context shows up as Additional Data within Sentry, and is completely arbitrary.
     #
     # @example
-    #   Raven.tags_context('my_custom_data' => 'value')
+    #   Raven.extra_context('my_custom_data' => 'value')
     def extra_context(options = {})
       self.context.extra.merge!(options)
     end
