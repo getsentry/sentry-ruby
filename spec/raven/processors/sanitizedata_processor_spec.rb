@@ -107,4 +107,19 @@ describe Raven::Processor::SanitizeData do
 
     expect(result["array"][0]['password']).to eq(Raven::Processor::SanitizeData::STRING_MASK)
   end
+
+  it 'sanitizes query strings' do
+    data = {
+      'sentry.interfaces.Http' => {
+        'data' => {
+          'query_string' => 'foo=bar&password=barfoo'
+        }
+      }
+    }
+
+    result = @processor.process(data)
+
+    vars = result["sentry.interfaces.Http"]["data"]
+    expect(vars["query_string"]).to eq("foo=bar&password=#{Raven::Processor::SanitizeData::STRING_MASK}")
+  end
 end

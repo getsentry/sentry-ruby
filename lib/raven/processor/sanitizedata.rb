@@ -14,6 +14,8 @@ module Raven
         process(v)
       elsif v.is_a?(Array)
         v.map{|a| sanitize(nil, a)}
+      elsif k == 'query_string'
+        sanitize_query_string(v)
       elsif v.is_a?(String) && (json = parse_json_or_nil(v))
         #if this string is actually a json obj, convert and sanitize
         json.is_a?(Hash) ? process(json).to_json : v
@@ -27,6 +29,13 @@ module Raven
     end
 
     private
+
+    def sanitize_query_string(query_string)
+      query_string.split('&').map do |key_val_pairs|
+        key, val = key_val_pairs.split('=')
+        "#{key}=#{sanitize(key, val)}"
+      end.join('&')
+    end
 
     def fields_re
       @fields_re ||= /(#{(DEFAULT_FIELDS + @sanitize_fields).join("|")})/i
