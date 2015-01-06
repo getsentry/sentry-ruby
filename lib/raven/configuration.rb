@@ -55,8 +55,11 @@ module Raven
     # Should the SSL certificate of the server be verified?
     attr_accessor :ssl_verification
 
-    # Ssl settings passed direactly to faraday's ssl option
+    # SSl settings passed direactly to faraday's ssl option
     attr_accessor :ssl
+
+    # Proxy information to pass to the HTTP adapter
+    attr_accessor :proxy
 
     attr_reader :current_environment
 
@@ -106,6 +109,7 @@ module Raven
       self.encoding = 'gzip'
       self.timeout = 1
       self.open_timeout = 1
+      self.proxy = nil
       self.tags = {}
       self.async = false
       self.catch_debugged_exceptions = true
