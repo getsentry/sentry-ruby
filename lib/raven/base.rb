@@ -14,6 +14,11 @@ require 'raven/processor/sanitizedata'
 require 'raven/processor/removecircularreferences'
 require 'raven/processor/utf8conversion'
 
+major, minor, patch = RUBY_VERSION.split('.').map(&:to_i)
+if (major == 1 && minor < 9) || (major == 1 && minor == 9 && patch < 2)
+  require 'raven/backports/uri'
+end
+
 module Raven
   class << self
     # The client object is responsible for delivering formatted data to the Sentry server.
