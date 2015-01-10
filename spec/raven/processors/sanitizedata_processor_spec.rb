@@ -112,7 +112,7 @@ describe Raven::Processor::SanitizeData do
     data = {
       'sentry.interfaces.Http' => {
         'data' => {
-          'query_string' => 'foo=bar&password=barfoo'
+          'query_string' => 'foo=bar&password=secret'
         }
       }
     }
@@ -120,6 +120,6 @@ describe Raven::Processor::SanitizeData do
     result = @processor.process(data)
 
     vars = result["sentry.interfaces.Http"]["data"]
-    expect(vars["query_string"]).to eq("foo=bar&password=#{Raven::Processor::SanitizeData::STRING_MASK}")
+    expect(vars["query_string"]).to_not include("secret")
   end
 end
