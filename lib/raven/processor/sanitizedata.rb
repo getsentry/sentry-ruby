@@ -13,7 +13,9 @@ module Raven
       if v.is_a?(Hash)
         process(v)
       elsif v.is_a?(Array)
-        v.map{|a| sanitize(nil, a)}
+        v.map{|a| sanitize(k, a)}
+      elsif k == 'query_string'
+        sanitize_query_string(v)
       elsif v.is_a?(String) && (json = parse_json_or_nil(v))
         #if this string is actually a json obj, convert and sanitize
         json.is_a?(Hash) ? process(json).to_json : v
@@ -27,6 +29,12 @@ module Raven
     end
 
     private
+
+    def sanitize_query_string(query_string)
+      query_hash = CGI::parse(query_string)
+      processed_query_hash = process(query_hash)
+      URI.encode_www_form(processed_query_hash)
+    end
 
     def fields_re
       @fields_re ||= /(#{(DEFAULT_FIELDS + @sanitize_fields).join("|")})/i

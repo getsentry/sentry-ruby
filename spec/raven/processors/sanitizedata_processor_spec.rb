@@ -107,4 +107,59 @@ describe Raven::Processor::SanitizeData do
 
     expect(result["array"][0]['password']).to eq(Raven::Processor::SanitizeData::STRING_MASK)
   end
+
+  context "query strings" do
+    it 'sanitizes' do
+      data = {
+        'sentry.interfaces.Http' => {
+          'data' => {
+            'query_string' => 'foo=bar&password=secret'
+          }
+        }
+      }
+
+      result = @processor.process(data)
+
+      vars = result["sentry.interfaces.Http"]["data"]
+      expect(vars["query_string"]).to_not include("secret")
+    end
+
+    it 'handles multiple values for a key' do
+      data = {
+        'sentry.interfaces.Http' => {
+          'data' => {
+            'query_string' => 'foo=bar&foo=fubar&foo=barfoo'
+          }
+        }
+      }
+
+      result = @processor.process(data)
+
+      vars = result["sentry.interfaces.Http"]["data"]
+      query_string = vars["query_string"].split('&')
+      expect(query_string).to include("foo=bar")
+      expect(query_string).to include("foo=fubar")
+      expect(query_string).to include("foo=barfoo")
+    end
+
+    it 'handles url encoded keys and values' do
+      encoded_query_string = 'Bio+4%24=cA%24%7C-%7C+M%28%29n3%5E'
+      data = {
+        'sentry.interfaces.Http' => {
+          'data' => {
+            'query_string' => encoded_query_string
+          }
+        }
+      }
+
+      result = @processor.process(data)
+
+      vars = result["sentry.interfaces.Http"]["data"]
+      expect(vars["query_string"]).to eq(encoded_query_string)
+    end
+
+    it 'handles url encoded values' do
+
+    end
+  end
 end
