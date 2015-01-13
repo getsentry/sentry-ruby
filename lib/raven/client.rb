@@ -29,7 +29,14 @@ module Raven
         return
       end
 
-      Raven.logger.debug "Sending event #{event.id} to Sentry"
+      event_id = if event.respond_to?(:id)
+                   event.id
+                 elsif event.respond_to?(:[])
+                   event['id']
+                 else
+                   '<no event id>'
+                 end
+      Raven.logger.debug "Sending event #{event_id} to Sentry"
 
       content_type, encoded_data = encode(event)
 
@@ -70,7 +77,13 @@ module Raven
     end
 
     def get_log_message(event)
-      (event && event.message) || '<no message value>'
+      if event && event.respond_to?(:message)
+        event.message
+      elsif event && event.respond_to?(:[])
+        event['message']
+      else
+        '<no message value>'
+      end
     end
 
     def transport
