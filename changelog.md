@@ -1,3 +1,8 @@
+0.12.2
+------
+
+- Security fix where exponential numbers in specially crafted params could cause a CPU attack [dcramer, #262]
+
 0.12.1
 ------
 
