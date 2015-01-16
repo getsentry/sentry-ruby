@@ -95,9 +95,10 @@ module Raven
       end
     end
 
-    def capture_exception(exception, options = {})
-      return false unless should_capture?(exception)
-      if (evt = Event.from_exception(exception, options))
+    def capture_type(obj, options = {})
+      return false unless should_capture?(obj)
+      message_or_exc = obj.is_a?(String) ? "message" : "exception"
+      if (evt = Event.public_send("from_" + message_or_exc, obj, options))
         yield evt if block_given?
         if configuration.async?
           configuration.async.call(evt)
@@ -106,22 +107,12 @@ module Raven
         end
       end
     end
+    alias_method :capture_message, :capture_type
+    alias_method :capture_exception, :capture_type
 
-    def capture_message(message, options = {})
-      return false unless should_capture?(message)
-      if (evt = Event.from_message(message, options))
-        yield evt if block_given?
-        if configuration.async?
-          configuration.async.call(evt)
-        else
-          send(evt)
-        end
-      end
-    end
-
-    def should_capture?(exc)
+    def should_capture?(message_or_exc)
       if configuration.should_capture
-        configuration.should_capture.call(*[exc])
+        configuration.should_capture.call(*[message_or_exc])
       else
         true
       end
