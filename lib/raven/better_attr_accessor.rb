@@ -6,7 +6,7 @@ module Raven
     def attributes
       Hash[
         self.class.attributes.map do |attr|
-          [attr, send(attr)]
+          [attr.to_sym, send(attr)]
         end
       ]
     end
@@ -28,7 +28,7 @@ module Raven
 
       def attr_accessor(attr, options = {})
         @attributes ||= Set.new
-        @attributes << attr.to_s
+        @attributes << attr
 
         define_method attr do
           if instance_variable_defined? "@#{attr}"

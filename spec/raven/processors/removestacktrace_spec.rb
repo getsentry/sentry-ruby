@@ -11,10 +11,10 @@ describe Raven::Processor::RemoveStacktrace do
   it 'should remove stacktraces' do
     data = Raven::Event.capture_exception(build_exception).to_hash
 
-    expect(data['exception']['stacktrace']).to_not eq(nil)
+    expect(data[:exception][:stacktrace]).to_not eq(nil)
     result = @processor.process(data)
 
-    expect(result['exception']['stacktrace']).to eq(nil)
+    expect(result[:exception][:stacktrace]).to eq(nil)
   end
 
 end

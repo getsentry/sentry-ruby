@@ -60,10 +60,10 @@ describe Raven::BetterAttrAccessor do
   describe '.attributes' do
     it 'should be a Set of all attributes set up' do
       expect(klass.attributes).to be_a Set
-      expect(klass.attributes).to eq %w[a b c].to_set
+      expect(klass.attributes).to eq %w[a b c].map( &:to_sym ).to_set
     end
     it 'should work with inheritance' do
-      expect(child.attributes).to eq %w[d a b c].to_set
+      expect(child.attributes).to eq %w[d a b c].map( &:to_sym ).to_set
     end
   end
 
@@ -72,9 +72,9 @@ describe Raven::BetterAttrAccessor do
       subject.a = {'foo' => :bar}
       subject.b << 8
       expect(subject.attributes).to eq \
-        'a' => {'foo' => :bar},
-        'b' => [8],
-        'c' => nil
+        :a => {'foo' => :bar},
+        :b => [8],
+        :c => nil
     end
 
     describe 'inheritance' do
@@ -87,10 +87,10 @@ describe Raven::BetterAttrAccessor do
 
       it 'should work' do
         expect(subject.attributes).to eq \
-          'a' => 21,
-          'b' => [],
-          'c' => nil,
-          'd' => true
+          :a => 21,
+          :b => [],
+          :c => nil,
+          :d => true
       end
     end
   end

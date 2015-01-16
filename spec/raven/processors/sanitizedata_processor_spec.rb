@@ -17,7 +17,7 @@ describe Raven::Processor::SanitizeData do
           'a_password_here' => 'hello',
           'mypasswd' => 'hello',
           'test' => 1,
-          'ssn' => '123-45-6789',
+          :ssn => '123-45-6789', # test symbol handling
           'social_security_number' => 123456789,
           'user_field' => 'user'
         }
@@ -33,7 +33,7 @@ describe Raven::Processor::SanitizeData do
     expect(vars["a_password_here"]).to eq(Raven::Processor::SanitizeData::STRING_MASK)
     expect(vars["mypasswd"]).to eq(Raven::Processor::SanitizeData::STRING_MASK)
     expect(vars["test"]).to eq(1)
-    expect(vars["ssn"]).to eq(Raven::Processor::SanitizeData::STRING_MASK)
+    expect(vars[:ssn]).to eq(Raven::Processor::SanitizeData::STRING_MASK)
     expect(vars["social_security_number"]).to eq(Raven::Processor::SanitizeData::INT_MASK)
     expect(vars["user_field"]).to eq(Raven::Processor::SanitizeData::STRING_MASK)
   end
