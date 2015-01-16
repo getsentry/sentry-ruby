@@ -1,3 +1,16 @@
+0.12.3
+------
+
+- URL query parameters are now sanitized for sensitive data [pcorliss, #275]
+- Raven::Client can now use a proxy server when sending events to Sentry [dcramer, #277]
+- Raven::Client will now use a timed backoff strategy if the server fails [codekitchen, #267]
+- Automatic integration loading is now a lot less brittle [dcramer, handlers, #263, #264]
+- Fixed some issues with prefixes and DSN strings [nateberkopec, #259]
+- If Raven is initialized without a server config, it will no longer send events [nateberkopec, #258]
+- Slightly nicer credit-card-like number scrubbing [nateberkopec, #254]
+- Fix some exceptions not being caught by Sidekiq middleware [nateberkopec, #251]
+- Uncommon types are now encoded correctly [nateberkopec, #249]
+
 0.12.2
 ------
 
