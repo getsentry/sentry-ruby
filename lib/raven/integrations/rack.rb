@@ -22,26 +22,19 @@ module Raven
   # Use a standard Raven.configure call to configure your server credentials.
   class Rack
 
-    def self.capture_exception(exception, env, options = {})
+    def self.capture_type(message, env, options = {})
       if env['requested_at']
         options[:time_spent] = Time.now - env['requested_at']
       end
-      Raven.capture_exception(exception, options) do |evt|
+      Raven.capture_type(exception, options) do |evt|
         evt.interface :http do |int|
           int.from_rack(env)
         end
       end
     end
-
-    def self.capture_message(message, env, options = {})
-      if env['requested_at']
-        options[:time_spent] = Time.now - env['requested_at']
-      end
-      Raven.capture_message(message, options) do |evt|
-        evt.interface :http do |int|
-          int.from_rack(env)
-        end
-      end
+    class << self
+      alias_method :capture_message, :capture_type
+      alias_method :capture_exception, :capture_type
     end
 
     def initialize(app)
