@@ -83,24 +83,15 @@ module Raven
     #   Raven.capture do
     #     MyApp.run
     #   end
-    def capture(options = {}, &block)
-      if block
-        begin
-          block.call
-        rescue Error
-          raise # Don't capture Raven errors
-        rescue Exception => e
-          capture_exception(e, options)
-          raise
-        end
-      else
-        # Install at_exit hook
-        at_exit do
-          if $ERROR_INFO
-            logger.debug "Caught a post-mortem exception: #{$ERROR_INFO.inspect}"
-            capture_exception($ERROR_INFO, options)
-          end
-        end
+    def capture(options = {})
+      install_at_exit_hook unless block_given?
+      begin
+        yield
+      rescue Error
+        raise # Don't capture Raven errors
+      rescue Exception => e
+        capture_exception(e, options)
+        raise
       end
     end
 
@@ -231,5 +222,14 @@ module Raven
     alias :captureMessage :capture_message
     alias :annotateException :annotate_exception
     alias :annotate :annotate_exception
+
+    private
+
+    def install_at_exit_hook
+      at_exit do
+        logger.debug "Caught a post-mortem exception: #{$ERROR_INFO.inspect}"
+        capture_exception($ERROR_INFO, options)
+      end
+    end
   end
 end
