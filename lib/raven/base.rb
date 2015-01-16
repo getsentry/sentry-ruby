@@ -98,7 +98,7 @@ module Raven
     def capture_type(obj, options = {})
       return false unless should_capture?(obj)
       message_or_exc = obj.is_a?(String) ? "message" : "exception"
-      if (evt = Event.public_send("from_" + message_or_exc, obj, options))
+      if (evt = Event.send("from_" + message_or_exc, obj, options))
         yield evt if block_given?
         if configuration.async?
           configuration.async.call(evt)
