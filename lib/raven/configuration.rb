@@ -31,6 +31,9 @@ module Raven
     # Logger to use internally
     attr_accessor :logger
 
+    # Silence ready message
+    attr_accessor :silence_ready
+
     # Number of lines of code context to capture, or nil for none
     attr_accessor :context_lines
 

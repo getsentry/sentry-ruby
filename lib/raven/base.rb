@@ -50,7 +50,7 @@ module Raven
 
     # Tell the log that the client is good to go
     def report_ready
-      self.logger.info "Raven #{VERSION} ready to catch errors"
+      logger.info "Raven #{VERSION} ready to catch errors"
     end
 
     # Call this method to modify defaults in your initializers.
@@ -59,11 +59,11 @@ module Raven
     #   Raven.configure do |config|
     #     config.server = 'http://...'
     #   end
-    def configure(silent = false)
+    def configure
       yield(configuration) if block_given?
 
       self.client = Client.new(configuration)
-      report_ready unless silent
+      report_ready unless client.configuration.silence_ready
       self.client
     end
 

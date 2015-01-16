@@ -227,7 +227,7 @@ describe Raven::Event do
 
   describe '.initialize' do
     it 'should not touch the env object for an ignored environment' do
-      Raven.configure(true) do |config|
+      Raven.configure do |config|
         config.current_environment = 'test'
       end
       Raven.rack_context({})
@@ -373,7 +373,7 @@ describe Raven::Event do
           rails = double('Rails')
           allow(rails).to receive(:root) { '/rails/root' }
           stub_const('Rails', rails)
-          Raven.configure(true) do |config|
+          Raven.configure do |config|
             config.project_root ||= ::Rails.root
           end
         end
