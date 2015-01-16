@@ -23,52 +23,45 @@ module Raven
     PLATFORM = "ruby"
 
     attr_reader :id
-    attr_accessor :project, :message, :timestamp, :time_spent, :level
-    attr_accessor :logger, :culprit, :server_name, :modules, :extra, :tags
+    attr_accessor :project, :message, :timestamp, :time_spent, :level, :logger,
+      :culprit, :server_name, :modules, :extra, :tags, :context
 
-    def initialize(options = {}, &block)
-      @configuration = options[:configuration] || Raven.configuration
-      @interfaces = {}
+    def initialize(init = {})
+      @configuration = Raven.configuration
+      @interfaces    = {}
+      @context       = Raven.context
+      @id            = generate_event_id
+      @message       = nil
+      @timestamp     = Time.now.utc
+      @time_spent    = nil
+      @level         = :error
+      @logger        = 'root'
+      @culprit       = nil
+      @server_name   = @configuration.server_name || get_hostname
+      @modules       = get_modules if @configuration.send_modules
+      @user          = {}
+      @extra         = {}
+      @tags          = {}
 
-      context = options[:context] || Raven.context
+      yield self if block_given?
 
-      @id = options[:id] || generate_event_id
-      @message = options[:message]
-      @timestamp = options[:timestamp] || Time.now.utc
-      @time_spent = options[:time_spent]
-
-      @level = options[:level] || :error
-      @logger = options[:logger] || 'root'
-      @culprit = options[:culprit]
-      @server_name = options[:server_name] || @configuration.server_name || get_hostname
-
-      options[:modules] ||= get_modules if @configuration.send_modules
-
-      @modules = options[:modules]
-
-      @user = options[:user] || {}
-      @user.merge!(context.user)
-
-      @extra = options[:extra] || {}
-      @extra.merge!(context.extra)
-
-      @tags = {}
-      @tags.merge!(@configuration.tags)
-      @tags.merge!(options[:tags] || {})
-      @tags.merge!(context.tags)
-
-      block.call(self) if block
-
-      if !self[:http] && context.rack_env
-        self.interface :http do |int|
-          int.from_rack(context.rack_env)
+      if !self[:http] && @context.rack_env
+        interface :http do |int|
+          int.from_rack(@context.rack_env)
         end
       end
 
+      init.each_pair  { |key, val| instance_variable_set('@' + key.to_s, val) }
+
+      @user.merge!(@context.user)
+      @extra.merge!(@context.extra)
+      @tags.merge!(@configuration.tags)
+      @tags.merge!(@context.tags)
+
       # Some type coercion
-      @timestamp = @timestamp.strftime('%Y-%m-%dT%H:%M:%S') if @timestamp.is_a?(Time)
+      @timestamp  = @timestamp.strftime('%Y-%m-%dT%H:%M:%S') if @timestamp.is_a?(Time)
       @time_spent = (@time_spent*1000).to_i if @time_spent.is_a?(Float)
-      @level = LOG_LEVELS[@level.to_s.downcase] if @level.is_a?(String) || @level.is_a?(Symbol)
+      @level      = LOG_LEVELS[@level.to_s.downcase] if @level.is_a?(String) || @level.is_a?(Symbol)
     end
 
     def get_hostname
