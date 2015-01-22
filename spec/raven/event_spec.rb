@@ -401,11 +401,11 @@ describe Raven::Event do
             expect(frames[1][:in_app]).to eq(false)
             expect(frames[2][:filename]).to eq("/gem/lib/path")
             expect(frames[2][:in_app]).to eq(false)
-            expect(frames[3][:filename]).to eq("/rails/root/app/foobar")
+            expect(frames[3][:filename]).to eq("app/foobar")
             expect(frames[3][:in_app]).to eq(true)
             expect(frames[4][:filename]).to eq("vendor/bundle/some_gem.rb")
             expect(frames[4][:in_app]).to eq(false)
-            expect(frames[5][:filename]).to eq("/rails/root/vendor/bundle/cache/other_gem.rb")
+            expect(frames[5][:filename]).to eq("vendor/bundle/cache/other_gem.rb")
             expect(frames[5][:in_app]).to eq(false)
           end
         end
