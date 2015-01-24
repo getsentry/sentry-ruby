@@ -368,7 +368,6 @@ describe Raven::Event do
       end
 
       context 'in a rails environment' do
-
         before do
           rails = double('Rails')
           allow(rails).to receive(:root) { '/rails/root' }
@@ -384,7 +383,7 @@ describe Raven::Event do
             allow(e).to receive(:backtrace).and_return([
               "/rails/root/vendor/bundle/cache/other_gem.rb:10:in `public_method'",
               "vendor/bundle/some_gem.rb:10:in `a_method'",
-              "/rails/root/app/foobar:132:in `new_function'",
+              "/rails/root/app/models/user.rb:132:in `new_function'",
               "/gem/lib/path:87:in `a_function'",
               "/app/some/other/path:1412:in `other_function'",
               "test/some/other/path:1412:in `other_function'"
@@ -401,12 +400,27 @@ describe Raven::Event do
             expect(frames[1][:in_app]).to eq(false)
             expect(frames[2][:filename]).to eq("/gem/lib/path")
             expect(frames[2][:in_app]).to eq(false)
-            expect(frames[3][:filename]).to eq("app/foobar")
+            expect(frames[3][:filename]).to eq("app/models/user.rb")
             expect(frames[3][:in_app]).to eq(true)
             expect(frames[4][:filename]).to eq("vendor/bundle/some_gem.rb")
             expect(frames[4][:in_app]).to eq(false)
             expect(frames[5][:filename]).to eq("vendor/bundle/cache/other_gem.rb")
             expect(frames[5][:in_app]).to eq(false)
+          end
+
+          context 'when a path under project_root is on the load path' do
+            before do
+              $LOAD_PATH << '/rails/root/app/models'
+            end
+
+            after do
+              $LOAD_PATH.delete('/rails/root/app/models')
+            end
+
+            it "doesn't remove any path information under project_root" do
+              frames = hash[:exception][:stacktrace][:frames]
+              expect(frames[3][:filename]).to eq("app/models/user.rb")
+            end
           end
         end
       end
