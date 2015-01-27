@@ -35,14 +35,17 @@ module Raven
       def filename
         return nil if self.abs_path.nil?
 
-        prefix = $LOAD_PATH.select { |s| self.abs_path.start_with?(s.to_s) }.sort_by { |s| s.to_s.length }.last
-        if prefix.nil? && Raven.configuration.project_root
-          project_root = Raven.configuration.project_root.to_s
-          if self.abs_path.start_with?(project_root)
-            prefix = project_root
-          end
+        prefix = if project_root && self.abs_path.start_with?(project_root)
+          project_root
+        else
+          $LOAD_PATH.select { |s| self.abs_path.start_with?(s.to_s) }.sort_by { |s| s.to_s.length }.last
         end
+
         prefix ? self.abs_path[prefix.to_s.chomp(File::SEPARATOR).length+1..-1] : self.abs_path
+      end
+
+      def project_root
+        @project_root ||= Raven.configuration.project_root && Raven.configuration.project_root.to_s
       end
 
       def to_hash(*args)
