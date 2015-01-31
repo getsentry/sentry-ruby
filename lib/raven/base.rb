@@ -29,6 +29,10 @@ module Raven
     # values for all Raven configuration options. See Raven::Configuration.
     attr_writer :configuration
 
+    # Alias #send to preserve original method functionality.
+    # Must come before method definition.
+    alias :send_object_message :send
+
     def context
       Context.current
     end

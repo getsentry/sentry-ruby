@@ -99,7 +99,13 @@ describe Raven do
         be_kind_of Hash
     end
   end
+  describe ".send_object_message" do
+    before do
+      module Raven; class << self; def foo; 'foo'; end; end; end
+    end
 
-
-
+    it "calls methods by name" do
+      expect(Raven.send_object_message(:foo)).to eq 'foo'
+    end
+  end
 end
