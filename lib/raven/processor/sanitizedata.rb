@@ -37,7 +37,7 @@ module Raven
     end
 
     def fields_re
-      @fields_re ||= /(#{(DEFAULT_FIELDS + @sanitize_fields).join("|")})/i
+      @fields_re ||= /(#{(DEFAULT_FIELDS | @sanitize_fields).join("|")})/i
     end
   end
 end
