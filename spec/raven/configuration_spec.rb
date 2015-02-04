@@ -51,7 +51,7 @@ describe Raven::Configuration do
     end
 
     it 'should have no sanitize fields' do
-      expect(subject[:sanitize_fields]).to eq([])
+      expect(subject[:sanitize_fields]).to eq(Raven::Processor::SanitizeData::DEFAULT_FIELDS)
     end
   end
 

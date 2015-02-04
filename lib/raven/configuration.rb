@@ -116,7 +116,7 @@ module Raven
       self.tags = {}
       self.async = false
       self.catch_debugged_exceptions = true
-      self.sanitize_fields = []
+      self.sanitize_fields = Raven::Processor::SanitizeData::DEFAULT_FIELDS
     end
 
     def server=(value)

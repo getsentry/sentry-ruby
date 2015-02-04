@@ -5,7 +5,6 @@ require 'spec_helper'
 describe Raven::Processor::UTF8Conversion do
   before do
     @client = double("client")
-    allow(@client).to receive_message_chain(:configuration, :sanitize_fields) { [] }
     @processor = Raven::Processor::UTF8Conversion.new(@client)
   end
 

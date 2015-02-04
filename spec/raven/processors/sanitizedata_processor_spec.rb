@@ -3,7 +3,9 @@ require 'spec_helper'
 describe Raven::Processor::SanitizeData do
   before do
     @client = double("client")
-    allow(@client).to receive_message_chain(:configuration, :sanitize_fields) { ['user_field'] }
+    allow(@client).to receive_message_chain(:configuration, :sanitize_fields) {
+      [Raven::Processor::SanitizeData::DEFAULT_FIELDS]
+    }
     @processor = Raven::Processor::SanitizeData.new(@client)
   end
 
@@ -19,7 +21,6 @@ describe Raven::Processor::SanitizeData do
           'test' => 1,
           :ssn => '123-45-6789', # test symbol handling
           'social_security_number' => 123456789,
-          'user_field' => 'user'
         }
       }
     }
@@ -35,7 +36,6 @@ describe Raven::Processor::SanitizeData do
     expect(vars["test"]).to eq(1)
     expect(vars[:ssn]).to eq(Raven::Processor::SanitizeData::STRING_MASK)
     expect(vars["social_security_number"]).to eq(Raven::Processor::SanitizeData::INT_MASK)
-    expect(vars["user_field"]).to eq(Raven::Processor::SanitizeData::STRING_MASK)
   end
 
   it 'should filter json data' do
@@ -48,8 +48,7 @@ describe Raven::Processor::SanitizeData do
         'mypasswd' => 'hello',
         'test' => 1,
         'ssn' => '123-45-6789',
-        'social_security_number' => 123456789,
-        'user_field' => 'user'
+        'social_security_number' => 123456789
         }.to_json
       }
 
@@ -64,7 +63,6 @@ describe Raven::Processor::SanitizeData do
     expect(vars["test"]).to eq(1)
     expect(vars["ssn"]).to eq(Raven::Processor::SanitizeData::STRING_MASK)
     expect(vars["social_security_number"]).to eq(Raven::Processor::SanitizeData::INT_MASK)
-    expect(vars["user_field"]).to eq(Raven::Processor::SanitizeData::STRING_MASK)
   end
 
   it 'should filter json embedded in a ruby object' do
@@ -95,6 +93,23 @@ describe Raven::Processor::SanitizeData do
     expect(result["ccnumba"]).to eq(Raven::Processor::SanitizeData::STRING_MASK)
     expect(result["ccnumba_13"]).to eq(Raven::Processor::SanitizeData::STRING_MASK)
     expect(result["ccnumba_int"]).to eq(Raven::Processor::SanitizeData::INT_MASK)
+  end
+
+  it "should allow configuration" do
+    @client = double("client")
+    allow(@client).to receive_message_chain(:configuration, :sanitize_fields) {
+      ["user_field"]
+    }
+    @processor = Raven::Processor::SanitizeData.new(@client)
+    data = {
+      "user_field" => "sanitize me!",
+      "password" => "don't sanitize me anymore!"
+    }
+
+    result = @processor.process(data)
+
+    expect(data["user_field"]).to eq(Raven::Processor::SanitizeData::STRING_MASK)
+    expect(data["password"]).to eq("don't sanitize me anymore!")
   end
 
   it 'sanitizes hashes nested in arrays' do

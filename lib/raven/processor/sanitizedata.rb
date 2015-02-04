@@ -5,6 +5,13 @@ module Raven
     DEFAULT_FIELDS = %w(authorization password passwd secret ssn social(.*)?sec)
     CREDIT_CARD_RE = /^(?:\d[ -]*?){13,16}$/
 
+    attr_accessor :sanitize_fields
+
+    def initialize(client)
+      super
+      self.sanitize_fields = client.configuration.sanitize_fields
+    end
+
     def process(value)
       value.inject(value) { |memo,(k,v)|  memo[k] = sanitize(k,v); memo }
     end
@@ -37,7 +44,7 @@ module Raven
     end
 
     def fields_re
-      @fields_re ||= /(#{(DEFAULT_FIELDS + @sanitize_fields).join("|")})/i
+      @fields_re ||= /(#{(sanitize_fields).join("|")})/i
     end
   end
 end
