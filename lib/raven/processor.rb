@@ -2,11 +2,8 @@ require 'json'
 
 module Raven
   class Processor
-    attr_accessor :sanitize_fields
-
     def initialize(client)
       @client = client
-      @sanitize_fields = client.configuration.sanitize_fields
     end
 
     def process(data)
@@ -22,6 +19,5 @@ module Raven
         nil
       end
     end
-
   end
 end
