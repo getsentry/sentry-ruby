@@ -83,6 +83,18 @@ describe Raven::Processor::SanitizeData do
     expect(JSON.parse(result["data"]["sensitive"])).to eq({'password' => Raven::Processor::SanitizeData::STRING_MASK})
   end
 
+  it 'should not fail when json is invalid' do
+    data_with_invalid_json = {
+      'data' => {
+          'invalid' => "{\r\n\"key\":\"value\",\r\n \"foo\":{\"bar\":\"baz\"}\r\n"
+        }
+      }
+
+    result = @processor.process(data_with_invalid_json)
+
+    expect{JSON.parse(result["data"]["invalid"])}.to raise_exception(JSON::ParserError)
+  end
+
   it 'should filter credit card values' do
     data = {
       'ccnumba' => '4242424242424242',
