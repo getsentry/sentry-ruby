@@ -24,12 +24,15 @@ module Raven
     def send(event)
       return false unless configuration_allows_sending
 
+      # Convert to hash
+      event = event.to_hash
+
       if !@state.should_try?
         Raven.logger.error("Not sending event due to previous failure(s): #{get_log_message(event)}")
         return
       end
 
-      Raven.logger.debug "Sending event #{event.id} to Sentry"
+      Raven.logger.debug "Sending event #{event['id']} to Sentry"
 
       content_type, encoded_data = encode(event)
 
@@ -70,7 +73,7 @@ module Raven
     end
 
     def get_log_message(event)
-      (event && event.message) || '<no message value>'
+      (event && event['message']) || '<no message value>'
     end
 
     def transport
