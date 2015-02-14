@@ -2,6 +2,5 @@ source "http://rubygems.org"
 
 gem "rails", '4.2.0'
 gem "rspec"
-gem "simplecov"
 
 gemspec :path => "../"
