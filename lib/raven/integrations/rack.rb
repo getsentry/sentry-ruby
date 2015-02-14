@@ -68,3 +68,61 @@ module Raven
     end
   end
 end
+
+module Raven
+  module InterfaceFromRack
+    CGI_VARIABLES = Set.new(%W[
+        AUTH_TYPE
+        CONTENT_LENGTH
+        CONTENT_TYPE
+        GATEWAY_INTERFACE
+        HTTPS
+        PATH_INFO
+        PATH_TRANSLATED
+        QUERY_STRING
+        REMOTE_ADDR
+        REMOTE_HOST
+        REMOTE_IDENT
+        REMOTE_USER
+        REQUEST_METHOD
+        SCRIPT_NAME
+        SERVER_NAME
+        SERVER_PORT
+        SERVER_PROTOCOL
+        SERVER_SOFTWARE
+      ]).freeze
+
+    def from_rack(rack_env)
+      set_headers_and_env(rack_env)
+      set_request_data(rack_env)
+    end
+
+    def set_request_data(rack_env)
+      req = ::Rack::Request.new(rack_env)
+      self.url = req.scheme && req.url.split('?').first
+      self.method = req.request_method
+      self.query_string = req.query_string
+      self.data = req.form_data? ? req.POST : req.body && req.body.string
+    end
+
+    def set_headers_and_env(rack_env)
+      rack_env = Hash[rack_env.map{ |k, v| [k.to_s, v.to_s] }.select { |ary| ary[0].upcase == ary[0] }]
+      rack_env.each_pair do |key, value|
+        if key.start_with?('HTTP_')
+          # Header
+          http_key = key[5..key.length - 1].split('_').map { |s| s.capitalize }.join('-')
+          self.headers[http_key] = value
+        elsif CGI_VARIABLES.include? key
+          # Environment
+          self.env[key] = value
+        end
+      end
+    end
+  end
+end
+
+module Raven
+  class HttpInterface
+    include InterfaceFromRack
+  end
+end

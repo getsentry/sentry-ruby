@@ -166,7 +166,11 @@ describe Raven::Event do
     it "adds http data" do
       expect(hash[:request]).to eq({
         :data => { 'foo' => 'bar' },
-        :env => { 'SERVER_NAME' => 'localhost', 'SERVER_PORT' => '80' },
+        :env => {
+          "REQUEST_METHOD" => "POST", "QUERY_STRING" => "biz=baz",
+          "SERVER_NAME" => "localhost", "SERVER_PORT" => "80",
+          "PATH_INFO" => "/lol"
+        },
         :headers => { 'Host' => 'localhost' },
         :method => 'POST',
         :query_string => 'biz=baz',
