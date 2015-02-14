@@ -1,3 +1,4 @@
+require 'json'
 module Raven
   class Processor::SanitizeData < Processor
     STRING_MASK = '********'
@@ -45,6 +46,14 @@ module Raven
 
     def fields_re
       @fields_re ||= /(#{(DEFAULT_FIELDS | sanitize_fields).join("|")})/i
+    end
+
+    def parse_json_or_nil(string)
+      begin
+        OkJson.decode(string)
+      rescue Raven::OkJson::Error, NoMethodError
+        nil
+      end
     end
   end
 end
