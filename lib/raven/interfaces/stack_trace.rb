@@ -17,10 +17,6 @@ module Raven
       data
     end
 
-    def frame(attributes = nil, &block)
-      Frame.new(attributes, &block)
-    end
-
     # Not actually an interface, but I want to use the same style
     class Frame < Interface
       attr_accessor :abs_path

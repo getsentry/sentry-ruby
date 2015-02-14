@@ -24,7 +24,7 @@ module Raven
 
     attr_reader :id
     attr_accessor :project, :message, :timestamp, :time_spent, :level, :logger,
-      :culprit, :server_name, :modules, :extra, :tags, :context
+      :culprit, :server_name, :modules, :extra, :tags, :context, :configuration
 
     def initialize(init = {})
       @configuration = Raven.configuration
@@ -128,52 +128,65 @@ module Raven
         return nil
       end
 
-      context_lines = configuration[:context_lines]
-
       new(options) do |evt|
+        evt.configuration = configuration
         evt.message = "#{exc.class}: #{exc.message}"
         evt.level = options[:level] || :error
 
-        evt.interface(:exception) do |int|
-          int.type = exc.class.to_s
-          int.value = exc.to_s
-          int.module = exc.class.to_s.split('::')[0...-1].join('::')
-
-          # TODO(dcramer): this needs cleaned up, but I couldn't figure out how to
-          # work Hashie as a non-Rubyist
-          if exc.backtrace
-            int.stacktrace = StacktraceInterface.new do |stacktrace|
-              backtrace = Backtrace.parse(exc.backtrace)
-              stacktrace.frames = backtrace.lines.reverse.map do |line|
-                stacktrace.frame do |frame|
-                  frame.abs_path = line.file
-                  frame.function = line.method
-                  frame.lineno = line.number
-                  frame.in_app = line.in_app
-                  if context_lines && frame.abs_path
-                    frame.pre_context, frame.context_line, frame.post_context = \
-                      evt.get_file_context(frame.abs_path, frame.lineno, context_lines)
-                  end
-                end
-              end.select { |f| f.filename }
-
-              evt.culprit = evt.get_culprit(stacktrace.frames)
-            end
-          end
-        end
+        add_exception_interface(evt, exc)
 
         block.call(evt) if block
       end
     end
 
     def self.from_message(message, options = {})
+      configuration = options[:configuration] || Raven.configuration
       new(options) do |evt|
+        evt.configuration = configuration
         evt.message = message
         evt.level = options[:level] || :error
         evt.interface :message do |int|
           int.message = message
         end
+        if options[:backtrace]
+          evt.interface(:stacktrace) do |int|
+            stacktrace_interface_from(int, evt, options[:backtrace])
+          end
+        end
       end
+    end
+
+    def self.add_exception_interface(evt, exc)
+      evt.interface(:exception) do |int|
+        int.type = exc.class.to_s
+        int.value = exc.to_s
+        int.module = exc.class.to_s.split('::')[0...-1].join('::')
+
+        int.stacktrace = if exc.backtrace
+          StacktraceInterface.new do |stacktrace|
+            stacktrace_interface_from(stacktrace, evt, exc.backtrace)
+          end
+        end
+      end
+    end
+
+    def self.stacktrace_interface_from(int, evt, backtrace)
+      backtrace = Backtrace.parse(backtrace)
+      int.frames = backtrace.lines.reverse.map do |line|
+        StacktraceInterface::Frame.new.tap do |frame|
+          frame.abs_path = line.file
+          frame.function = line.method
+          frame.lineno = line.number
+          frame.in_app = line.in_app
+
+          if evt.configuration[:context_lines] && frame.abs_path
+            frame.pre_context, frame.context_line, frame.post_context = \
+              evt.get_file_context(frame.abs_path, frame.lineno, evt.configuration[:context_lines])
+          end
+        end
+      end.select { |f| f.filename }
+
+      evt.culprit = evt.get_culprit(int.frames)
     end
 
     # Because linecache can go to hell

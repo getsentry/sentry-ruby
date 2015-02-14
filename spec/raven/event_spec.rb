@@ -255,6 +255,23 @@ describe Raven::Event do
       it 'accepts an options hash' do
         expect(Raven::Event.capture_message(message, :logger => 'logger').logger).to eq('logger')
       end
+
+      it 'accepts a stacktrace' do
+        backtrace = ["/path/to/some/file:22:in `function_name'",
+          "/some/other/path:1412:in `other_function'"]
+        evt = Raven::Event.capture_message(message, :backtrace => backtrace)
+        expect(evt[:stacktrace]).to be_a(Raven::StacktraceInterface)
+
+        frames = evt[:stacktrace].to_hash[:frames]
+        expect(frames.length).to eq(2)
+        expect(frames[0][:lineno]).to eq(1412)
+        expect(frames[0][:function]).to eq('other_function')
+        expect(frames[0][:filename]).to eq('/some/other/path')
+
+        expect(frames[1][:lineno]).to eq(22)
+        expect(frames[1][:function]).to eq('function_name')
+        expect(frames[1][:filename]).to eq('/path/to/some/file')
+      end
     end
   end
 
