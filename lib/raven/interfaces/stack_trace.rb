@@ -4,7 +4,7 @@ module Raven
   class StacktraceInterface < Interface
 
     name 'stacktrace'
-    attr_accessor :frames, :default => []
+    attr_accessor :frames
 
     def initialize(*arguments)
       self.frames = []
@@ -25,12 +25,17 @@ module Raven
     class Frame < Interface
       attr_accessor :abs_path
       attr_accessor :function
-      attr_accessor :vars,         :default => []
-      attr_accessor :pre_context,  :default => []
-      attr_accessor :post_context, :default => []
+      attr_accessor :vars
+      attr_accessor :pre_context
+      attr_accessor :post_context
       attr_accessor :context_line
       attr_accessor :lineno
       attr_accessor :in_app
+
+      def initialize(*arguments)
+        self.vars, self.pre_context, self.post_context = [], [], []
+        super(*arguments)
+      end
 
       def filename
         return nil if self.abs_path.nil?

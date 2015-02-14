@@ -15,6 +15,7 @@ module Raven
     def initialize(*arguments)
       self.headers = {}
       self.env = {}
+      self.cookies = nil
       super(*arguments)
     end
 

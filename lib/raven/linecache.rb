@@ -1,7 +1,6 @@
 # A much simpler source line cacher because linecache sucks at platform compat
 
 module Raven
-
   class LineCache
     class << self
       CACHE = {}
