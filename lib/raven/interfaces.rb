@@ -1,16 +1,11 @@
-require 'raven/better_attr_accessor'
-
 module Raven
 
   INTERFACES = {}
 
   class Interface
-    include BetterAttrAccessor
-    alias_method :to_hash, :attributes
-
     def initialize(attributes = nil)
       attributes.each do |attr, value|
-        send "#{attr}=", value
+        public_send "#{attr}=", value
       end if attributes
 
       yield self if block_given?
@@ -18,6 +13,10 @@ module Raven
 
     def self.name(value = nil)
       @interface_name ||= value
+    end
+
+    def to_hash
+      Hash[instance_variables.map { |name| [name[1..-1].to_sym, instance_variable_get(name)] } ]
     end
   end
 
