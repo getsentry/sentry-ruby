@@ -2,7 +2,6 @@
 
 [![Gem Version](https://img.shields.io/gem/v/sentry-raven.svg)](https://rubygems.org/gems/sentry-raven)
 [![Build Status](https://img.shields.io/travis/getsentry/raven-ruby/master.svg)](https://travis-ci.org/getsentry/raven-ruby)
-[![Coverage Status](https://img.shields.io/coveralls/getsentry/raven-ruby/master.svg)](https://coveralls.io/r/getsentry/raven-ruby)
 
 A client and integration layer for the [Sentry](https://github.com/getsentry/sentry) error reporting API.
 
@@ -45,7 +44,7 @@ end
 
 ## More Information
 
-Full documentation and more information on advanced configuration, sending more information, scrubbing sensitive data, and more can be found on [the wiki](https://github.com/getsentry/raven-ruby/wiki). 
+Full documentation and more information on advanced configuration, sending more information, scrubbing sensitive data, and more can be found on [the wiki](https://github.com/getsentry/raven-ruby/wiki).
 
 * [Documentation](https://github.com/getsentry/raven-ruby/wiki)
 * [Bug Tracker](http://github.com/getsentry/raven-ruby/issues>)
