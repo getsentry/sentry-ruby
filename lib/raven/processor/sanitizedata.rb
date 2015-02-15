@@ -24,13 +24,17 @@ module Raven
         v.map{|a| sanitize(k, a)}
       elsif k == 'query_string'
         sanitize_query_string(v)
-      elsif v.is_a?(String) && (json = parse_json_or_nil(v))
-        #if this string is actually a json obj, convert and sanitize
-        json.is_a?(Hash) ? process(json).to_json : v
-      elsif v.is_a?(Integer) && (CREDIT_CARD_RE.match(v.to_s) || fields_re.match(k.to_s))
+      elsif v.is_a?(Integer) && matches_regexes?(k,v)
         INT_MASK
-      elsif v.is_a?(String)  && (CREDIT_CARD_RE.match(v.to_s) || fields_re.match(k.to_s))
-        STRING_MASK
+      elsif v.is_a?(String)
+        if fields_re.match(v.to_s) && (json = parse_json_or_nil(v))
+          #if this string is actually a json obj, convert and sanitize
+          json.is_a?(Hash) ? process(json).to_json : v
+        elsif matches_regexes?(k,v)
+          STRING_MASK
+        else
+          v
+        end
       else
         v
       end
@@ -42,6 +46,10 @@ module Raven
       query_hash = CGI::parse(query_string)
       processed_query_hash = process(query_hash)
       URI.encode_www_form(processed_query_hash)
+    end
+
+    def matches_regexes?(k, v)
+      CREDIT_CARD_RE.match(v.to_s) || fields_re.match(k.to_s)
     end
 
     def fields_re
