@@ -49,9 +49,15 @@ module Raven
     end
 
     # Tell the log that the client is good to go
-    def report_ready
-      logger.info "Raven #{VERSION} ready to catch errors"
+    def report_status
+      return if client.configuration.silence_ready
+      if client.configuration.send_in_current_environment?
+        logger.info "Raven #{VERSION} ready to catch errors"
+      else
+        logger.info "Raven #{VERSION} configured not to send errors."
+      end
     end
+    alias_method :report_ready, :report_status
 
     # Call this method to modify defaults in your initializers.
     #
@@ -63,7 +69,7 @@ module Raven
       yield(configuration) if block_given?
 
       self.client = Client.new(configuration)
-      report_ready unless client.configuration.silence_ready
+      report_status
       self.client
     end
 
