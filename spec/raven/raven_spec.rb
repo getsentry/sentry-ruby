@@ -100,6 +100,35 @@ describe Raven do
     end
   end
 
+  describe '.report_status' do
+    let(:ready_message) do
+      "Raven #{Raven::VERSION} ready to catch errors"
+    end
 
+    let(:not_ready_message) do
+      "Raven #{Raven::VERSION} configured not to send errors."
+    end
 
+    it 'logs a ready message when configured' do
+      Raven.configuration.silence_ready = false
+      expect(Raven.configuration).to(
+        receive(:send_in_current_environment?).and_return(true))
+      expect(Raven.logger).to receive(:info).with(ready_message)
+      Raven.report_status
+    end
+
+    it 'logs not ready message if the config does not send in current environment' do
+      Raven.configuration.silence_ready = false
+      expect(Raven.configuration).to(
+        receive(:send_in_current_environment?).and_return(false))
+      expect(Raven.logger).to receive(:info).with(not_ready_message)
+      Raven.report_status
+    end
+
+    it 'logs nothing if "silence_ready" configuration is true' do
+      Raven.configuration.silence_ready = true
+      expect(Raven.logger).not_to receive(:info)
+      Raven.report_status
+    end
+  end
 end
