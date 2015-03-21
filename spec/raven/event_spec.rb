@@ -18,6 +18,7 @@ describe Raven::Event do
           'my_custom_variable' => 'value'
         },
         :server_name => 'foo.local',
+        :release => '721e41770371db95eee98ca2707686226b993eda',
       }).to_hash
     end
 
@@ -35,6 +36,10 @@ describe Raven::Event do
 
     it 'has server name' do
       expect(hash[:server_name]).to eq('foo.local')
+    end
+
+    it 'has release' do
+      expect(hash[:release]).to eq('721e41770371db95eee98ca2707686226b993eda')
     end
 
     it 'has tag data' do
