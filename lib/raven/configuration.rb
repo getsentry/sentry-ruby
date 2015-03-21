@@ -71,6 +71,8 @@ module Raven
 
     attr_accessor :server_name
 
+    attr_accessor :release
+
     # DEPRECATED: This option is now ignored as we use our own adapter.
     attr_accessor :json_adapter
 
