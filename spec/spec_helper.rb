@@ -10,3 +10,27 @@ def build_exception
 rescue ZeroDivisionError => exception
   return exception
 end
+
+def build_exception_with_cause
+  begin
+    1 / 0
+  rescue ZeroDivisionError
+    1 / 0
+  end
+rescue ZeroDivisionError => exception
+  return exception
+end
+
+def build_exception_with_two_causes
+  begin
+    begin
+      1 / 0
+    rescue ZeroDivisionError
+      1 / 0
+    end
+  rescue ZeroDivisionError
+    1 / 0
+  end
+rescue ZeroDivisionError => exception
+  return exception
+end
