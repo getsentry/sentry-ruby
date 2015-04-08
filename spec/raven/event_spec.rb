@@ -300,15 +300,15 @@ describe Raven::Event do
       end
 
       it 'uses the exception class name as the exception type' do
-        expect(hash[:exception][:type]).to eq('Exception')
+        expect(hash[:exception][:values][0][:type]).to eq('Exception')
       end
 
       it 'uses the exception message as the exception value' do
-        expect(hash[:exception][:value]).to eq(message)
+        expect(hash[:exception][:values][0][:value]).to eq(message)
       end
 
       it 'does not belong to a module' do
-        expect(hash[:exception][:module]).to eq('')
+        expect(hash[:exception][:values][0][:module]).to eq('')
       end
     end
 
@@ -319,7 +319,7 @@ describe Raven::Event do
       let(:exception) { Raven::Test::Exception.new(message) }
 
       it 'sends the module name as part of the exception info' do
-        expect(hash[:exception][:module]).to eq('Raven::Test')
+        expect(hash[:exception][:values][0][:module]).to eq('Raven::Test')
       end
     end
 
@@ -352,6 +352,25 @@ describe Raven::Event do
       end
     end
 
+    # Only check causes when they're supported
+    if Exception.new.respond_to? :cause
+      context 'when the exception has a cause' do
+        let(:exception) { build_exception_with_cause }
+
+        it 'captures the cause' do
+          expect(hash[:exception][:values].length).to eq(2)
+        end
+      end
+
+      context 'when the exception has nested causes' do
+        let(:exception) { build_exception_with_two_causes }
+
+        it 'captures nested causes' do
+          expect(hash[:exception][:values].length).to eq(3)
+        end
+      end
+    end
+
     context 'when the exception has a backtrace' do
       let(:exception) do
         e = Exception.new(message)
@@ -363,7 +382,7 @@ describe Raven::Event do
       end
 
       it 'parses the backtrace' do
-        frames = hash[:exception][:stacktrace][:frames]
+        frames = hash[:exception][:values][0][:stacktrace][:frames]
         expect(frames.length).to eq(2)
         expect(frames[0][:lineno]).to eq(1412)
         expect(frames[0][:function]).to eq('other_function')
@@ -382,7 +401,7 @@ describe Raven::Event do
         end
 
         it 'marks filename and in_app correctly' do
-        frames = hash[:exception][:stacktrace][:frames]
+        frames = hash[:exception][:values][0][:stacktrace][:frames]
           expect(frames[0][:lineno]).to eq(10)
           expect(frames[0][:function]).to eq("synchronize")
           expect(frames[0][:filename]).to eq("<internal:prelude>")
@@ -415,7 +434,7 @@ describe Raven::Event do
 
           it 'marks in_app correctly' do
             expect(Raven.configuration.project_root).to eq('/rails/root')
-            frames = hash[:exception][:stacktrace][:frames]
+            frames = hash[:exception][:values][0][:stacktrace][:frames]
             expect(frames[0][:filename]).to eq("test/some/other/path")
             expect(frames[0][:in_app]).to eq(true)
             expect(frames[1][:filename]).to eq("/app/some/other/path")
@@ -440,7 +459,7 @@ describe Raven::Event do
             end
 
             it "doesn't remove any path information under project_root" do
-              frames = hash[:exception][:stacktrace][:frames]
+              frames = hash[:exception][:values][0][:stacktrace][:frames]
               expect(frames[3][:filename]).to eq("app/models/user.rb")
             end
           end
@@ -461,7 +480,7 @@ describe Raven::Event do
         end
 
         it 'strips prefixes in the load path from frame filenames' do
-          frames = hash[:exception][:stacktrace][:frames]
+          frames = hash[:exception][:values][0][:stacktrace][:frames]
           expect(frames[0][:filename]).to eq('other/path')
         end
       end

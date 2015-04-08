@@ -159,14 +159,25 @@ module Raven
     end
 
     def self.add_exception_interface(evt, exc)
-      evt.interface(:exception) do |int|
-        int.type = exc.class.to_s
-        int.value = exc.to_s
-        int.module = exc.class.to_s.split('::')[0...-1].join('::')
+      evt.interface(:exception) do |exc_int|
+        exceptions = [exc]
+        while exc.respond_to?(:cause) && exc.cause
+          exceptions << exc.cause
+          exc = exc.cause
+        end
+        exceptions.reverse!
 
-        int.stacktrace = if exc.backtrace
-          StacktraceInterface.new do |stacktrace|
-            stacktrace_interface_from(stacktrace, evt, exc.backtrace)
+        exc_int.values = exceptions.map do |exc|
+          SingleExceptionInterface.new do |int|
+            int.type = exc.class.to_s
+            int.value = exc.to_s
+            int.module = exc.class.to_s.split('::')[0...-1].join('::')
+
+            int.stacktrace = if exc.backtrace
+              StacktraceInterface.new do |stacktrace|
+                stacktrace_interface_from(stacktrace, evt, exc.backtrace)
+              end
+            end
           end
         end
       end
