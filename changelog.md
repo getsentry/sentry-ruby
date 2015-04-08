@@ -1,3 +1,17 @@
+0.13.0
+------
+
+- Support exception chaining [javawizard, #312]
+- Add support for sending release version [eugeneius, #310]
+- Better status reports on configuration [faber, #309]
+- Client "send" method accepts an event in object or hash format - this will make it much easier to send Sentry events in a delayed job! [marclennox, #300]
+- Fix duplicate fields in SanitizeData [wyattisimo, #294]
+- Always preserve filename paths under project_root [eugeneius, #291]
+- Truncate project root prefixes from filenames [eagletmt, #278]
+- Renamed should_send callback to should_capture [nateberkopec, #270]
+- Silencing the ready message now happens in the config as normal [nateberkopec, #260]
+- Various internal refactorings [see here](https://github.com/getsentry/raven-ruby/compare/0-12-stable...master)
+
 0.12.3
 ------
 
