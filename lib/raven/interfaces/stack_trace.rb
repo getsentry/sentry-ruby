@@ -36,17 +36,27 @@ module Raven
       def filename
         return nil if self.abs_path.nil?
 
-        prefix = if project_root && self.abs_path.start_with?(project_root)
+        prefix = if under_project_root? && in_app
           project_root
+        elsif under_project_root?
+          longest_load_path || project_root
         else
-          $LOAD_PATH.select { |s| self.abs_path.start_with?(s.to_s) }.sort_by { |s| s.to_s.length }.last
+          longest_load_path
         end
 
         prefix ? self.abs_path[prefix.to_s.chomp(File::SEPARATOR).length+1..-1] : self.abs_path
       end
 
+      def under_project_root?
+        project_root && abs_path.start_with?(project_root)
+      end
+
       def project_root
         @project_root ||= Raven.configuration.project_root && Raven.configuration.project_root.to_s
+      end
+
+      def longest_load_path
+        $LOAD_PATH.select { |s| self.abs_path.start_with?(s.to_s) }.sort_by { |s| s.to_s.length }.last
       end
 
       def to_hash(*args)
