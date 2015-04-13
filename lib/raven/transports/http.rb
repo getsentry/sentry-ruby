@@ -17,6 +17,7 @@ module Raven
           req.body = data
         end
         Raven.logger.warn "Error from Sentry server (#{response.status}): #{response.body}" unless response.status == 200
+        response
       end
 
       private
