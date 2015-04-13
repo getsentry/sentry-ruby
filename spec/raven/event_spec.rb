@@ -449,7 +449,7 @@ describe Raven::Event do
             expect(frames[5][:in_app]).to eq(false)
           end
 
-          context 'when a path under project_root is on the load path' do
+          context 'when an in_app path under project_root is on the load path' do
             before do
               $LOAD_PATH << '/rails/root/app/models'
             end
@@ -458,9 +458,31 @@ describe Raven::Event do
               $LOAD_PATH.delete('/rails/root/app/models')
             end
 
-            it "doesn't remove any path information under project_root" do
+            it 'normalizes the filename using project_root' do
               frames = hash[:exception][:values][0][:stacktrace][:frames]
               expect(frames[3][:filename]).to eq("app/models/user.rb")
+            end
+          end
+
+          context 'when a non-in_app path under project_root is on the load path' do
+            before do
+              $LOAD_PATH << '/rails/root/vendor/bundle'
+            end
+
+            after do
+              $LOAD_PATH.delete('/rails/root/vendor/bundle')
+            end
+
+            it 'normalizes the filename using the load path' do
+              frames = hash[:exception][:values][0][:stacktrace][:frames]
+              expect(frames[5][:filename]).to eq("cache/other_gem.rb")
+            end
+          end
+
+          context "when a non-in_app path under project_root isn't on the load path" do
+            it 'normalizes the filename using project_root' do
+              frames = hash[:exception][:values][0][:stacktrace][:frames]
+              expect(frames[5][:filename]).to eq("vendor/bundle/cache/other_gem.rb")
             end
           end
         end
