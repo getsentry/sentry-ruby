@@ -47,7 +47,11 @@ module Raven
       end
 
       if evt && !(evt.is_a? Thread)
-        puts "-> event ID: #{evt.id}"
+        if evt.is_a? Hash
+          puts "-> event ID: #{evt[:event_id]}"
+        else
+          puts "-> event ID: #{evt.id}"
+        end
       elsif evt #async configuration
         puts "-> event ID: #{evt.value.id}"
       else
