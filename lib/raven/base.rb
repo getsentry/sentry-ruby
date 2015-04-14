@@ -91,14 +91,17 @@ module Raven
     #     MyApp.run
     #   end
     def capture(options = {})
-      install_at_exit_hook unless block_given?
-      begin
-        yield
-      rescue Error
-        raise # Don't capture Raven errors
-      rescue Exception => e
-        capture_exception(e, options)
-        raise
+      if block_given?
+        begin
+          yield
+        rescue Error
+          raise # Don't capture Raven errors
+        rescue Exception => e
+          capture_exception(e, options)
+          raise
+        end
+      else
+        install_at_exit_hook(options)
       end
     end
 
@@ -215,10 +218,12 @@ module Raven
 
     private
 
-    def install_at_exit_hook
+    def install_at_exit_hook(options)
       at_exit do
-        logger.debug "Caught a post-mortem exception: #{$ERROR_INFO.inspect}"
-        capture_exception($ERROR_INFO, options)
+        if $ERROR_INFO
+          logger.debug "Caught a post-mortem exception: #{$ERROR_INFO.inspect}"
+          capture_exception($ERROR_INFO, options)
+        end
       end
     end
   end
