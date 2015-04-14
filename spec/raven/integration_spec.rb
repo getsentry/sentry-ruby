@@ -7,18 +7,21 @@ describe "Integration tests" do
     stubs = Faraday::Adapter::Test::Stubs.new do |stub|
       stub.post('sentry/api/42/store/') { [200, {}, 'ok'] }
     end
+    io = StringIO.new
 
     Raven.configure do |config|
       config.server = 'http://12345:67890@sentry.localdomain/sentry/42'
       config.environments = ["test"]
       config.current_environment = "test"
       config.http_adapter = [:test, stubs]
+      config.logger = Logger.new(io)
     end
 
     Raven.capture_exception(build_exception)
 
     stubs.verify_stubbed_calls
 
+    expect(io.string).to match(/Sending event \h+ to Sentry$/)
   end
 
   example "posting an exception to a prefixed DSN" do
@@ -60,11 +63,13 @@ describe "Integration tests" do
   end
 
   example "timed backoff should prevent sends" do
+    io = StringIO.new
     Raven.configure do |config|
       config.server = 'http://12345:67890@sentry.localdomain/sentry/42'
       config.environments = ["test"]
       config.current_environment = "test"
       config.http_adapter = [:test, nil]
+      config.logger = Logger.new(io)
     end
 
     expect_any_instance_of(Raven::Transports::HTTP).to receive(:send).exactly(1).times.and_raise(Faraday::Error::ConnectionFailed, "conn failed")
@@ -72,5 +77,6 @@ describe "Integration tests" do
 
     expect(Raven.logger).to receive(:error).exactly(1).times
     expect { Raven.capture_exception(build_exception) }.not_to raise_error
+    expect(io.string).to match(/Failed to submit event: ZeroDivisionError: divided by 0$/)
   end
 end

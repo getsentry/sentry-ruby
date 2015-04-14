@@ -32,7 +32,7 @@ module Raven
         return
       end
 
-      Raven.logger.debug "Sending event #{event['id']} to Sentry"
+      Raven.logger.debug "Sending event #{event[:event_id]} to Sentry"
 
       content_type, encoded_data = encode(event)
 
@@ -73,7 +73,7 @@ module Raven
     end
 
     def get_log_message(event)
-      (event && event['message']) || '<no message value>'
+      (event && event[:message]) || '<no message value>'
     end
 
     def transport
