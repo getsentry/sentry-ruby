@@ -97,7 +97,7 @@ describe Raven do
     end
 
     context 'not given a block' do
-      let(:options) { { key: 'value' } }
+      let(:options) { { :key => 'value' } }
 
       it 'does not yield' do
         # As there is no yield matcher that does not require a probe (e.g. this
