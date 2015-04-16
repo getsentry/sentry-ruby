@@ -84,6 +84,36 @@ describe Raven do
     end
   end
 
+  describe '.capture' do
+    context 'given a block' do
+      it 'yields to the given block' do
+        expect { |b| described_class.capture &b }.to yield_with_no_args
+      end
+
+      it 'does not install an exit_hook' do
+        expect(described_class).not_to receive(:install_at_exit_hook)
+        described_class.capture() {}
+      end
+    end
+
+    context 'not given a block' do
+      let(:options) { { :key => 'value' } }
+
+      it 'does not yield' do
+        # As there is no yield matcher that does not require a probe (e.g. this
+        # is not valid: expect { |b| described_class.capture }.to_not yield_control),
+        # expect that a LocalJumpError, which is raised when yielding when no
+        # block is defined, is not raised.
+        expect { described_class.capture }.not_to raise_error
+      end
+
+      it 'installs an at exit hook' do
+        expect(described_class).to receive(:install_at_exit_hook).with(options)
+        described_class.capture(options)
+      end
+    end
+  end
+
   describe '.annotate_exception' do
     let(:exception) { build_exception }
 
