@@ -1,3 +1,12 @@
+0.13.1
+------
+
+- Raven::Transports::HTTP#send returns the response now. [eagletmt, #317]
+- Filenames now work a lot better when you vendor your gems. [eugeneius, #316]
+- Fix raven:test issue when testing non-async configurations. [weynsee, #318]
+- Fix blockless Raven#capture. [dinosaurjr, #320]
+- Fix some log messages [eagletmt, #319]
+
 0.13.0
 ------
 
