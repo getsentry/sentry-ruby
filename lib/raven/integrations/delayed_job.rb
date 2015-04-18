@@ -15,7 +15,8 @@ module Delayed
             ::Raven.capture_exception(exception,
               :logger  => 'delayed_job',
               :tags    => {
-                 :delayed_job_queue => job.queue
+                 :delayed_job_queue => job.queue,
+                 :delayed_job_id => job.id
               },
               :extra => {
                   :delayed_job => {
