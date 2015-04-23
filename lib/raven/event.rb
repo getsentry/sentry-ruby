@@ -56,8 +56,12 @@ module Raven
 
       @user.merge!(@context.user)
       @extra.merge!(@context.extra)
+
+      tags = @tags.dup
+      @tags = {}
       @tags.merge!(@configuration.tags)
       @tags.merge!(@context.tags)
+      @tags.merge!(tags)
 
       # Some type coercion
       @timestamp  = @timestamp.strftime('%Y-%m-%dT%H:%M:%S') if @timestamp.is_a?(Time)

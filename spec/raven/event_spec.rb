@@ -230,6 +230,50 @@ describe Raven::Event do
     end
   end
 
+  context 'tags hierarchy respected' do
+    let(:hash) do
+      config = Raven::Configuration.new
+      config.tags = {
+          'configuration_context_event_key' => 'configuration_value',
+          'configuration_context_key' => 'configuration_value',
+          'configuration_event_key' => 'configuration_value',
+          'configuration_key' => 'configuration_value',
+      }
+
+      Raven.tags_context({
+        'configuration_context_event_key' => 'context_value',
+        'configuration_context_key' => 'context_value',
+        'context_event_key' => 'context_value',
+        'context_key' => 'context_value',
+      })
+
+      Raven::Event.new(
+        :level => 'warning',
+        :logger => 'foo',
+        :tags => {
+          'configuration_context_event_key' => 'event_value',
+          'configuration_event_key' => 'event_value',
+          'context_event_key' => 'event_value',
+          'event_key' => 'event_value',
+        },
+        :server_name => 'foo.local',
+        :configuration => config
+      ).to_hash
+    end
+
+    it 'merges tags data' do
+      expect(hash[:tags]).to eq({
+        'configuration_context_event_key' => 'event_value',
+        'configuration_context_key' => 'context_value',
+        'configuration_event_key' => 'event_value',
+        'context_event_key' => 'event_value',
+        'configuration_key' => 'configuration_value',
+        'context_key' => 'context_value',
+        'event_key' => 'event_value',
+      })
+    end
+  end
+
   describe '.initialize' do
     it 'should not touch the env object for an ignored environment' do
       Raven.configure do |config|
