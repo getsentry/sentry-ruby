@@ -195,7 +195,7 @@ module Raven
 
     # Injects various integrations
     def inject
-      available_integrations = %w[delayed_job rails sidekiq rack rake]
+      available_integrations = %w[delayed_job railties sidekiq rack rake]
       integrations_to_load = available_integrations & Gem.loaded_specs.keys
       # TODO(dcramer): integrations should have some additional checks baked-in
       # or we should break them out into their own repos. Specifically both the
