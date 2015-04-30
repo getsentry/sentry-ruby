@@ -14,6 +14,13 @@ module Raven
       end
     end
 
+    initializer 'raven.active_job' do
+      ActiveSupport.on_load :active_job do
+        require 'raven/integrations/rails/active_job'
+        include Raven::Rails::ActiveJob
+      end
+    end
+
     config.after_initialize do
       Raven.configure do |config|
         config.logger ||= ::Rails.logger
