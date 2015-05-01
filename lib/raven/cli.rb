@@ -53,7 +53,11 @@ module Raven
           puts "-> event ID: #{evt.id}"
         end
       elsif evt #async configuration
-        puts "-> event ID: #{evt.value.id}"
+        if evt.value.is_a? Hash
+          puts "-> event ID: #{evt.value[:event_id]}"
+        else
+          puts "-> event ID: #{evt.value.id}"
+        end
       else
         puts ""
         puts "An error occurred while attempting to send the event."
