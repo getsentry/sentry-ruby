@@ -184,13 +184,35 @@ module Raven
     end
 
     def self.stacktrace_interface_from(int, evt, backtrace)
+      orig_backtrace = backtrace
+      begin
+        root_path = ::Rails.root.to_s
+      rescue
+        root_path = nil
+      end
+
       backtrace = Backtrace.parse(backtrace)
-      int.frames = backtrace.lines.reverse.map do |line|
+      int.frames = backtrace.lines.reverse.map.each_with_index do |line, idx|
         StacktraceInterface::Frame.new.tap do |frame|
           frame.abs_path = line.file
           frame.function = line.method
           frame.lineno = line.number
           frame.in_app = line.in_app
+
+          target_idx = orig_backtrace.length - idx - 1
+          stack_info = orig_backtrace[target_idx].instance_variable_get(:@stack_info)
+          if !stack_info.nil? && !root_path.nil?
+            iseq = stack_info.instance_variable_get(:@iseq)
+            filepath = iseq.path.to_s
+
+            if filepath.include? root_path
+              frame.vars = {}
+              locals = stack_info.eval('local_variables')
+              locals.each do |key|
+                frame.vars[key.to_s] = stack_info.eval("#{key}").to_s
+              end
+            end
+          end
 
           if evt.configuration[:context_lines] && frame.abs_path
             frame.pre_context, frame.context_line, frame.post_context = \

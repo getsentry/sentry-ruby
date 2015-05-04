@@ -14,10 +14,34 @@ require 'raven/processor'
 require 'raven/processor/sanitizedata'
 require 'raven/processor/removecircularreferences'
 require 'raven/processor/utf8conversion'
+require 'binding_of_caller'
 
 major, minor, patch = RUBY_VERSION.split('.').map(&:to_i)
 if (major == 1 && minor < 9) || (major == 1 && minor == 9 && patch < 2)
   require 'raven/backports/uri'
+end
+
+module Kernel
+  original_raise = method(:raise)
+  define_method(:raise) do |*args|
+    begin
+      original_raise.call(*args)
+    rescue Exception => e
+      prev_stack_info = e.instance_variable_get(:@stack_info)
+      if prev_stack_info.nil?
+        pop_length = 2
+
+        callers = binding.callers.drop(pop_length)
+        e.instance_variable_set(:@stack_info, callers)
+        e.set_backtrace(e.backtrace.drop(pop_length))
+
+        callers.each_with_index do |caller_obj, idx|
+          e.backtrace[idx].instance_variable_set(:@stack_info, caller_obj)
+        end
+      end
+      original_raise.call(e)
+    end
+  end
 end
 
 module Raven
