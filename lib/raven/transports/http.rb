@@ -6,8 +6,7 @@ require 'raven/error'
 module Raven
   module Transports
     class HTTP < Transport
-
-      def send(auth_header, data, options = {})
+      def send_event(auth_header, data, options = {})
         project_id = self.configuration[:project_id]
         path = self.configuration[:path] + "/"
 
@@ -18,6 +17,12 @@ module Raven
         end
         Raven.logger.warn "Error from Sentry server (#{response.status}): #{response.body}" unless response.status == 200
         response
+      end
+
+      def send(auth_header, data, options = {})
+        Raven.logger.warn "DEPRECATION WARNING: Calling #send on a Transport will be \
+          removed in Raven-Ruby 0.14! Use #send_event instead!"
+        send_event(auth_header, data, options)
       end
 
       private
