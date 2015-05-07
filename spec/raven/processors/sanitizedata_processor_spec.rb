@@ -4,6 +4,7 @@ describe Raven::Processor::SanitizeData do
   before do
     @client = double("client")
     allow(@client).to receive_message_chain(:configuration, :sanitize_fields) { ['user_field'] }
+    allow(@client).to receive_message_chain(:configuration, :sanitize_credit_cards) { true }
     @processor = Raven::Processor::SanitizeData.new(@client)
   end
 
@@ -107,6 +108,21 @@ describe Raven::Processor::SanitizeData do
     expect(result["ccnumba"]).to eq(Raven::Processor::SanitizeData::STRING_MASK)
     expect(result["ccnumba_13"]).to eq(Raven::Processor::SanitizeData::STRING_MASK)
     expect(result["ccnumba_int"]).to eq(Raven::Processor::SanitizeData::INT_MASK)
+  end
+
+  it 'should pass through credit card values if configured' do
+    @processor.sanitize_credit_cards = false
+    data = {
+      'ccnumba' => '4242424242424242',
+      'ccnumba_13' => '4242424242424',
+      'ccnumba-dash' => '4242-4242-4242-4242',
+      'ccnumba_int' => 4242424242424242,
+    }
+
+    result = @processor.process(data)
+    expect(result["ccnumba"]).to eq('4242424242424242')
+    expect(result["ccnumba_13"]).to eq('4242424242424')
+    expect(result["ccnumba_int"]).to eq(4242424242424242)
   end
 
   it 'sanitizes hashes nested in arrays' do
