@@ -6,11 +6,12 @@ module Raven
     DEFAULT_FIELDS = %w(authorization password passwd secret ssn social(.*)?sec)
     CREDIT_CARD_RE = /^(?:\d[ -]*?){13,16}$/
 
-    attr_accessor :sanitize_fields
+    attr_accessor :sanitize_fields, :sanitize_credit_cards
 
     def initialize(client)
       super
       self.sanitize_fields = client.configuration.sanitize_fields
+      self.sanitize_credit_cards = client.configuration.sanitize_credit_cards
     end
 
     def process(value)
@@ -49,7 +50,8 @@ module Raven
     end
 
     def matches_regexes?(k, v)
-      CREDIT_CARD_RE.match(v.to_s) || fields_re.match(k.to_s)
+      (sanitize_credit_cards && CREDIT_CARD_RE.match(v.to_s)) ||
+        fields_re.match(k.to_s)
     end
 
     def fields_re
@@ -65,4 +67,3 @@ module Raven
     end
   end
 end
-
