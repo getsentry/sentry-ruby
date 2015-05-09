@@ -274,6 +274,58 @@ describe Raven::Event do
     end
   end
 
+  context 'merging user context' do
+    before do
+      Raven.user_context({
+        'context_event_key' => 'context_value',
+        'context_key' => 'context_value',
+      })
+    end
+
+    let(:hash) do
+      Raven::Event.new({
+        :user => {
+          'context_event_key' => 'event_value',
+          'event_key' => 'event_value',
+        },
+      }).to_hash
+    end
+
+    it 'prioritizes event context over request context' do
+      expect(hash[:user]).to eq({
+        'context_event_key' => 'event_value',
+        'context_key' => 'context_value',
+        'event_key' => 'event_value',
+      })
+    end
+  end
+
+  context 'merging extra context' do
+    before do
+      Raven.extra_context({
+        'context_event_key' => 'context_value',
+        'context_key' => 'context_value',
+      })
+    end
+
+    let(:hash) do
+      Raven::Event.new({
+        :extra => {
+          'context_event_key' => 'event_value',
+          'event_key' => 'event_value',
+        },
+      }).to_hash
+    end
+
+    it 'prioritizes event context over request context' do
+      expect(hash[:extra]).to eq({
+        'context_event_key' => 'event_value',
+        'context_key' => 'context_value',
+        'event_key' => 'event_value',
+      })
+    end
+  end
+
   describe '.initialize' do
     it 'should not touch the env object for an ignored environment' do
       Raven.configure do |config|
