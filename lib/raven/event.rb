@@ -54,14 +54,9 @@ module Raven
 
       init.each_pair  { |key, val| instance_variable_set('@' + key.to_s, val) }
 
-      @user.merge!(@context.user)
-      @extra.merge!(@context.extra)
-
-      tags = @tags.dup
-      @tags = {}
-      @tags.merge!(@configuration.tags)
-      @tags.merge!(@context.tags)
-      @tags.merge!(tags)
+      @user = @context.user.merge(@user)
+      @extra = @context.extra.merge(@extra)
+      @tags = @configuration.tags.merge(@context.tags).merge(@tags)
 
       # Some type coercion
       @timestamp  = @timestamp.strftime('%Y-%m-%dT%H:%M:%S') if @timestamp.is_a?(Time)
