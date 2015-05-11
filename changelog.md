@@ -1,3 +1,13 @@
+0.13.2
+------
+
+- DelayedJob integration now includes the job id [javawizard, #321]
+- Rails integration now works properly when you're not using all parts of Rails (e.g. just ActiveRecord) [lucasmazza, #323]
+- Bugfix CLI tool when async config is on [if1live, #324]
+- Fix and standardize tag hierarchies. Event tags > context tags > configuration tags in all cases. [JonathanBatten, #322 and eugeneius, #330]
+- Using #send on Client, Base, and Transports is now deprecated. See [the commit](https://github.com/getsentry/raven-ruby/commit/9f482022a648ab662c22177ba24fd2e2b6794c34) (or the deprecation message) for their replacements. [nateberkopec, #326]
+- You can now disable credit-card-like value filtering. [codekitchen, #329]
+
 0.13.1
 ------
 
