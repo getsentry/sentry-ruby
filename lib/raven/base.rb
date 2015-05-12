@@ -78,7 +78,7 @@ module Raven
     #
     # @example
     #   evt = Raven::Event.new(:message => "An error")
-    #   Raven.send(evt)
+    #   Raven.send_event(evt)
     def send_event(event)
       client.send_event(event)
     end
@@ -119,7 +119,7 @@ module Raven
         if configuration.async?
           configuration.async.call(evt)
         else
-          send(evt)
+          send_event(evt)
         end
       end
     end
