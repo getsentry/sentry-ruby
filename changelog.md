@@ -1,3 +1,8 @@
+0.13.3
+------
+
+- Fix a deprecation warning being shown in regular operation [ripta, #332]
+
 0.13.2
 ------
 
