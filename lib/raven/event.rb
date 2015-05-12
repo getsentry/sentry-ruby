@@ -207,6 +207,7 @@ module Raven
     end
 
     def get_file_context(filename, lineno, context)
+      return nil, nil, nil unless Raven::LineCache.is_valid_file(filename)
       lines = (2 * context + 1).times.map do |i|
         Raven::LineCache.getline(filename, lineno - context + i)
       end
