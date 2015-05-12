@@ -9,7 +9,10 @@ module Raven
     class Line
 
       # regexp (optionnally allowing leading X: for windows support)
-      INPUT_FORMAT = %r{^((?:[a-zA-Z]:)?[^:]+|<.*>):(\d+)(?::in `([^']+)')?$}.freeze
+      RUBY_INPUT_FORMAT = %r{^((?:[a-zA-Z]:)?[^:]+|<.*>):(\d+)(?::in `([^']+)')?$}.freeze
+
+      # org.jruby.runtime.callsite.CachingCallSite.call(CachingCallSite.java:170)
+      JAVA_INPUT_FORMAT = %r{^([^\(]+)\(([^\:]+)\:(\d+)\)$}.freeze
 
       APP_DIRS_PATTERN = /(bin|app|config|lib|test)/
 
@@ -26,7 +29,13 @@ module Raven
       # @param [String] unparsed_line The raw line from +caller+ or some backtrace
       # @return [Line] The parsed backtrace line
       def self.parse(unparsed_line)
-        _, file, number, method = unparsed_line.match(INPUT_FORMAT).to_a
+        ruby_match = unparsed_line.match(RUBY_INPUT_FORMAT)
+        if ruby_match
+          _, file, number, method = ruby_match.to_a
+        else
+          java_match = unparsed_line.match(JAVA_INPUT_FORMAT)
+          file, method, number = java_match.to_a
+        end
         new(file, number, method)
       end
 
