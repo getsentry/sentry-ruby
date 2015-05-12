@@ -186,10 +186,11 @@ module Raven
       backtrace = Backtrace.parse(backtrace)
       int.frames = backtrace.lines.reverse.map do |line|
         StacktraceInterface::Frame.new.tap do |frame|
-          frame.abs_path = line.file
-          frame.function = line.method
+          frame.abs_path = line.file if line.file
+          frame.function = line.method if line.method
           frame.lineno = line.number
           frame.in_app = line.in_app
+          frame.module = line.module_name if line.module_name
 
           if evt.configuration[:context_lines] && frame.abs_path
             frame.pre_context, frame.context_line, frame.post_context = \

@@ -9,7 +9,10 @@ module Raven
     class Line
 
       # regexp (optionnally allowing leading X: for windows support)
-      INPUT_FORMAT = %r{^((?:[a-zA-Z]:)?[^:]+|<.*>):(\d+)(?::in `([^']+)')?$}.freeze
+      RUBY_INPUT_FORMAT = %r{^((?:[a-zA-Z]:)?[^:]+|<.*>):(\d+)(?::in `([^']+)')?$}.freeze
+
+      # org.jruby.runtime.callsite.CachingCallSite.call(CachingCallSite.java:170)
+      JAVA_INPUT_FORMAT = %r{^(.+)\.([^\.]+)\(([^\:]+)\:(\d+)\)$}.freeze
 
       APP_DIRS_PATTERN = /(bin|app|config|lib|test)/
 
@@ -22,16 +25,27 @@ module Raven
       # The method of the line (such as index)
       attr_reader :method
 
+      # The module name (JRuby)
+      attr_reader :module_name
+
       # Parses a single line of a given backtrace
       # @param [String] unparsed_line The raw line from +caller+ or some backtrace
       # @return [Line] The parsed backtrace line
       def self.parse(unparsed_line)
-        _, file, number, method = unparsed_line.match(INPUT_FORMAT).to_a
-        new(file, number, method)
+        ruby_match = unparsed_line.match(RUBY_INPUT_FORMAT)
+        if ruby_match
+          _, file, number, method = ruby_match.to_a
+          module_name = nil
+        else
+          java_match = unparsed_line.match(JAVA_INPUT_FORMAT)
+          _, module_name, method, file, number = java_match.to_a
+        end
+        new(file, number, method, module_name)
       end
 
-      def initialize(file, number, method)
+      def initialize(file, number, method, module_name)
         self.file = file
+        self.module_name = module_name
         self.number = number.to_i
         self.method = method
       end
@@ -66,7 +80,7 @@ module Raven
 
       private
 
-      attr_writer :file, :number, :method
+      attr_writer :file, :number, :method, :module_name
     end
 
     # holder for an Array of Backtrace::Line instances

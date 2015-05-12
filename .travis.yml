@@ -24,7 +24,6 @@ notifications:
 
 matrix:
   allow_failures:
-    - rvm: jruby-19mode
     - rvm: ruby-head
   exclude:
     - rvm: 1.8.7
