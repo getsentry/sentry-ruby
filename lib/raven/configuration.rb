@@ -95,6 +95,9 @@ module Raven
     # additional fields to sanitize
     attr_accessor :sanitize_fields
 
+    # capture local variable if exception thrown
+    attr_accessor :capture_locals
+
     IGNORE_DEFAULT = ['ActiveRecord::RecordNotFound',
                       'ActionController::RoutingError',
                       'ActionController::InvalidAuthenticityToken',
@@ -119,6 +122,7 @@ module Raven
       self.async = false
       self.catch_debugged_exceptions = true
       self.sanitize_fields = []
+      self.capture_locals = false
     end
 
     def server=(value)
