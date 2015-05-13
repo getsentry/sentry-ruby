@@ -230,6 +230,102 @@ describe Raven::Event do
     end
   end
 
+  context 'tags hierarchy respected' do
+    let(:hash) do
+      config = Raven::Configuration.new
+      config.tags = {
+          'configuration_context_event_key' => 'configuration_value',
+          'configuration_context_key' => 'configuration_value',
+          'configuration_event_key' => 'configuration_value',
+          'configuration_key' => 'configuration_value',
+      }
+
+      Raven.tags_context({
+        'configuration_context_event_key' => 'context_value',
+        'configuration_context_key' => 'context_value',
+        'context_event_key' => 'context_value',
+        'context_key' => 'context_value',
+      })
+
+      Raven::Event.new(
+        :level => 'warning',
+        :logger => 'foo',
+        :tags => {
+          'configuration_context_event_key' => 'event_value',
+          'configuration_event_key' => 'event_value',
+          'context_event_key' => 'event_value',
+          'event_key' => 'event_value',
+        },
+        :server_name => 'foo.local',
+        :configuration => config
+      ).to_hash
+    end
+
+    it 'merges tags data' do
+      expect(hash[:tags]).to eq({
+        'configuration_context_event_key' => 'event_value',
+        'configuration_context_key' => 'context_value',
+        'configuration_event_key' => 'event_value',
+        'context_event_key' => 'event_value',
+        'configuration_key' => 'configuration_value',
+        'context_key' => 'context_value',
+        'event_key' => 'event_value',
+      })
+    end
+  end
+
+  context 'merging user context' do
+    before do
+      Raven.user_context({
+        'context_event_key' => 'context_value',
+        'context_key' => 'context_value',
+      })
+    end
+
+    let(:hash) do
+      Raven::Event.new({
+        :user => {
+          'context_event_key' => 'event_value',
+          'event_key' => 'event_value',
+        },
+      }).to_hash
+    end
+
+    it 'prioritizes event context over request context' do
+      expect(hash[:user]).to eq({
+        'context_event_key' => 'event_value',
+        'context_key' => 'context_value',
+        'event_key' => 'event_value',
+      })
+    end
+  end
+
+  context 'merging extra context' do
+    before do
+      Raven.extra_context({
+        'context_event_key' => 'context_value',
+        'context_key' => 'context_value',
+      })
+    end
+
+    let(:hash) do
+      Raven::Event.new({
+        :extra => {
+          'context_event_key' => 'event_value',
+          'event_key' => 'event_value',
+        },
+      }).to_hash
+    end
+
+    it 'prioritizes event context over request context' do
+      expect(hash[:extra]).to eq({
+        'context_event_key' => 'event_value',
+        'context_key' => 'context_value',
+        'event_key' => 'event_value',
+      })
+    end
+  end
+
   describe '.initialize' do
     it 'should not touch the env object for an ignored environment' do
       Raven.configure do |config|
@@ -367,6 +463,23 @@ describe Raven::Event do
 
         it 'captures nested causes' do
           expect(hash[:exception][:values].length).to eq(3)
+        end
+      end
+    end
+
+    if RUBY_PLATFORM == "java"
+      context 'when running under jRuby' do
+        let(:exception) do
+          begin
+            raise java.lang.OutOfMemoryError.new("A Java error")
+          rescue Exception => e
+            return e
+          end
+        end
+
+        it 'should have a backtrace' do
+          frames = hash[:exception][:values][0][:stacktrace][:frames]
+          expect(frames.length).not_to eq(0)
         end
       end
     end

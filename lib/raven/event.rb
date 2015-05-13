@@ -54,10 +54,9 @@ module Raven
 
       init.each_pair  { |key, val| instance_variable_set('@' + key.to_s, val) }
 
-      @user.merge!(@context.user)
-      @extra.merge!(@context.extra)
-      @tags.merge!(@configuration.tags)
-      @tags.merge!(@context.tags)
+      @user = @context.user.merge(@user)
+      @extra = @context.extra.merge(@extra)
+      @tags = @configuration.tags.merge(@context.tags).merge(@tags)
 
       # Some type coercion
       @timestamp  = @timestamp.strftime('%Y-%m-%dT%H:%M:%S') if @timestamp.is_a?(Time)
@@ -189,10 +188,11 @@ module Raven
       backtrace = Backtrace.parse(backtrace)
       int.frames = backtrace.lines.reverse.map.each_with_index do |line, idx|
         StacktraceInterface::Frame.new.tap do |frame|
-          frame.abs_path = line.file
-          frame.function = line.method
+          frame.abs_path = line.file if line.file
+          frame.function = line.method if line.method
           frame.lineno = line.number
           frame.in_app = line.in_app
+          frame.module = line.module_name if line.module_name
 
           if evt.configuration.capture_locals
             target_idx = orig_backtrace.length - idx - 1

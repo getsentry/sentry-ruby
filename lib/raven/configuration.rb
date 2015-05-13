@@ -95,6 +95,9 @@ module Raven
     # additional fields to sanitize
     attr_accessor :sanitize_fields
 
+    # Sanitize values that look like credit card numbers
+    attr_accessor :sanitize_credit_cards
+
     # capture local variable if exception thrown
     attr_accessor :capture_locals
 
@@ -122,6 +125,8 @@ module Raven
       self.async = false
       self.catch_debugged_exceptions = true
       self.sanitize_fields = []
+      self.sanitize_credit_cards = true
+      self.environments = []
       self.capture_locals = false
     end
 
@@ -173,11 +178,18 @@ module Raven
     end
 
     def send_in_current_environment?
-      !!server && (!environments || environments.include?(current_environment))
+      !!server && (environments.empty? || environments.include?(current_environment))
     end
 
     def log_excluded_environment_message
       Raven.logger.debug "Event not sent due to excluded environment: #{current_environment}"
+    end
+
+    def verify!
+      raise Error.new('No server specified') unless server
+      raise Error.new('No public key specified') unless public_key
+      raise Error.new('No secret key specified') unless secret_key
+      raise Error.new('No project ID specified') unless project_id
     end
   end
 end

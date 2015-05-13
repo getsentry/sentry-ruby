@@ -21,7 +21,7 @@ module Raven
       @state = ClientState.new
     end
 
-    def send(event)
+    def send_event(event)
       return false unless configuration_allows_sending
 
       # Convert to hash
@@ -37,7 +37,7 @@ module Raven
       content_type, encoded_data = encode(event)
 
       begin
-        transport.send(generate_auth_header, encoded_data,
+        transport.send_event(generate_auth_header, encoded_data,
                        :content_type => content_type)
       rescue => e
         failed_send(e, event)
@@ -47,6 +47,12 @@ module Raven
       successful_send
 
       event
+    end
+
+    def send(event)
+      Raven.logger.warn "DEPRECATION WARNING: Calling #send on a Client will be \
+        removed in Raven-Ruby 0.14! Use #send_event instead!"
+      send_event(event)
     end
 
     private

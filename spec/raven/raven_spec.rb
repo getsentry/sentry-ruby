@@ -5,7 +5,7 @@ describe Raven do
   let(:options) { double("options") }
 
   before do
-    allow(Raven).to receive(:send)
+    allow(Raven).to receive(:send_event)
     allow(Raven::Event).to receive(:from_message) { event }
     allow(Raven::Event).to receive(:from_exception) { event }
   end
@@ -15,7 +15,7 @@ describe Raven do
 
     it 'sends the result of Event.capture_message' do
       expect(Raven::Event).to receive(:from_message).with(message, options)
-      expect(Raven).to receive(:send).with(event)
+      expect(Raven).to receive(:send_event).with(event)
 
       Raven.capture_message(message, options)
     end
@@ -30,7 +30,7 @@ describe Raven do
 
     it 'sends the result of Event.capture_message' do
       expect(Raven::Event).to receive(:from_message).with(message, options)
-      expect(Raven).not_to receive(:send).with(event)
+      expect(Raven).not_to receive(:send_event).with(event)
 
       prior_async = Raven.configuration.async
       Raven.configuration.async = lambda { :ok }
@@ -45,7 +45,7 @@ describe Raven do
 
     it 'sends the result of Event.capture_exception' do
       expect(Raven::Event).to receive(:from_exception).with(exception, options)
-      expect(Raven).to receive(:send).with(event)
+      expect(Raven).to receive(:send_event).with(event)
 
       Raven.capture_exception(exception, options)
     end
@@ -60,7 +60,7 @@ describe Raven do
 
     it 'sends the result of Event.capture_exception' do
       expect(Raven::Event).to receive(:from_exception).with(exception, options)
-      expect(Raven).not_to receive(:send).with(event)
+      expect(Raven).not_to receive(:send_event).with(event)
 
       prior_async = Raven.configuration.async
       Raven.configuration.async = lambda { :ok }
@@ -74,7 +74,7 @@ describe Raven do
     let(:exception) { build_exception }
 
     it 'sends the result of Event.capture_exception according to the result of should_capture' do
-      expect(Raven).not_to receive(:send).with(event)
+      expect(Raven).not_to receive(:send_event).with(event)
 
       prior_should_capture = Raven.configuration.should_capture
       Raven.configuration.should_capture = Proc.new { false }

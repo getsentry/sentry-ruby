@@ -17,28 +17,15 @@ module Raven
 
       # wipe out env settings to ensure we send the event
       unless Raven.configuration.send_in_current_environment?
-        environments = Raven.configuration.environments
-        env_name = (environments && environments[0]) || 'production'
+        env_name = Raven.configuration.environments.pop || 'production'
         puts "Setting environment to #{env_name}"
         Raven.configuration.current_environment = env_name
       end
 
-      unless Raven.configuration.server
-        puts "Your client is not configured!"
-        exit 1
-      end
-
-      puts "Client configuration:"
-      ['server', 'project_id', 'public_key', 'secret_key'].each do |key|
-        unless Raven.configuration[key]
-          puts "Missing configuration for #{key}"
-          exit 1
-        end
-        puts "-> #{key}: #{Raven.configuration[key]}"
-      end
-      puts ""
+      Raven.configuration.verify!
 
       puts "Sending a test event:"
+      puts ""
 
       begin
         1 / 0

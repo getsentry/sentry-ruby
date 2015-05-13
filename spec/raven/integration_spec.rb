@@ -55,11 +55,10 @@ describe "Integration tests" do
       config.http_adapter = [:test, stubs]
     end
 
-    expect(Raven.logger).to receive(:warn).exactly(1).times
+    expect(Raven.logger).to receive(:warn).once
     expect { Raven.capture_exception(build_exception) }.not_to raise_error
 
     stubs.verify_stubbed_calls
-
   end
 
   example "timed backoff should prevent sends" do
@@ -72,7 +71,7 @@ describe "Integration tests" do
       config.logger = Logger.new(io)
     end
 
-    expect_any_instance_of(Raven::Transports::HTTP).to receive(:send).exactly(1).times.and_raise(Faraday::Error::ConnectionFailed, "conn failed")
+    expect_any_instance_of(Raven::Transports::HTTP).to receive(:send_event).exactly(1).times.and_raise(Faraday::Error::ConnectionFailed, "conn failed")
     expect { Raven.capture_exception(build_exception) }.not_to raise_error
 
     expect(Raven.logger).to receive(:error).exactly(1).times
