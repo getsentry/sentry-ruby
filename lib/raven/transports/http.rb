@@ -35,6 +35,7 @@ module Raven
 
           ssl_configuration = self.configuration.ssl || {}
           ssl_configuration[:verify] = self.configuration.ssl_verification
+          ssl_configuration[:ca_file] = self.configuration.ssl_ca_file
 
           conn = Faraday.new(
             :url => self.configuration[:server],
