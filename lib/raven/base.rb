@@ -73,7 +73,12 @@ module Kernel
       rescue Exception => e
         prev_stack_info = e.instance_variable_get(:@stack_info)
         if prev_stack_info.nil?
-          pop_length = 2
+          line_backtrace = Raven::Backtrace::Line.parse(e.backtrace[0])
+          if line_backtrace.file == __FILE__
+            pop_length = 2
+          else
+            pop_length = 0
+          end
 
           callers = binding.callers.drop(pop_length)
           e.instance_variable_set(:@stack_info, callers)
