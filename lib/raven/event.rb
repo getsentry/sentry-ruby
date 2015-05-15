@@ -186,7 +186,7 @@ module Raven
       orig_backtrace = backtrace
 
       backtrace = Backtrace.parse(backtrace)
-      int.frames = backtrace.lines.reverse.map.each_with_index do |line, idx|
+      int.frames = backtrace.lines.reverse.each_with_index.map do |line, idx|
         StacktraceInterface::Frame.new.tap do |frame|
           frame.abs_path = line.file if line.file
           frame.function = line.method if line.method
