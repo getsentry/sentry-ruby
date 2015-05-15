@@ -153,11 +153,13 @@ module Raven
         caller_info = caller_candidates.min do
           |a, b| target_number - a[:line_no] <=> target_number - b[:line_no]
         end
-        pop_count = caller_info[:count]
+        unless caller_info.nil?
+          pop_count = caller_info[:count]
 
-        exc.instance_variable_set(:@stack_info, binding.callers.drop(pop_count))
-        binding.callers.drop(pop_count).each_with_index do |caller_obj, idx|
-          exc.backtrace[idx].instance_variable_set(:@stack_info, caller_obj)
+          exc.instance_variable_set(:@stack_info, binding.callers.drop(pop_count))
+          binding.callers.drop(pop_count).each_with_index do |caller_obj, idx|
+            exc.backtrace[idx].instance_variable_set(:@stack_info, caller_obj)
+          end
         end
       end
 
