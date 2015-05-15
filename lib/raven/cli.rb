@@ -15,8 +15,6 @@ module Raven
       Raven.configuration.timeout = 5
       Raven.configuration.dsn = dsn if dsn
 
-      Raven.configuration.capture_locals = true
-
       # wipe out env settings to ensure we send the event
       unless Raven.configuration.send_in_current_environment?
         env_name = Raven.configuration.environments.pop || 'production'

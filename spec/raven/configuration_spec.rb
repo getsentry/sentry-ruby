@@ -159,15 +159,15 @@ describe Raven::Configuration do
 
         it 'should override default raise function' do
           subject.capture_locals = true
-          client = Raven::Client.new(subject)
           expect(Kernel.monkey_patch_raise_occur).to eq(true)
+          expect(subject.capture_locals).to eq(true)
         end
       end
 
       it 'do not use captues local' do
         subject.capture_locals = false
-        client = Raven::Client.new(subject)
         expect(Kernel.monkey_patch_raise_occur).to eq(false)
+        expect(subject.capture_locals).to eq(false)
       end
     end
   end
