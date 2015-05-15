@@ -146,27 +146,29 @@ describe Raven::Configuration do
     end
   end
 
-  context 'configuration for capture locals' do
-    context 'use captures local' do
-      after do
-        module Kernel
-          define_method(:raise) do |*args|
-            Kernel.monkey_patch_original_raise.call(*args)
+  if RUBY_VERSION >= '1.9.2'
+    context 'configuration for capture locals' do
+      context 'use captures local' do
+        after do
+          module Kernel
+            define_method(:raise) do |*args|
+              Kernel.monkey_patch_original_raise.call(*args)
+            end
           end
+        end
+
+        it 'should override default raise function' do
+          subject.capture_locals = true
+          client = Raven::Client.new(subject)
+          expect(Kernel.monkey_patch_raise_occur).to eq(true)
         end
       end
 
-      it 'should override default raise function' do
-        subject.capture_locals = true
+      it 'do not use captues local' do
+        subject.capture_locals = false
         client = Raven::Client.new(subject)
-        expect(Kernel.monkey_patch_raise_occur).to eq(true)
+        expect(Kernel.monkey_patch_raise_occur).to eq(false)
       end
-    end
-
-    it 'do not use captues local' do
-      subject.capture_locals = false
-      client = Raven::Client.new(subject)
-      expect(Kernel.monkey_patch_raise_occur).to eq(false)
     end
   end
 end

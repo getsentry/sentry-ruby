@@ -14,8 +14,11 @@ require 'raven/processor'
 require 'raven/processor/sanitizedata'
 require 'raven/processor/removecircularreferences'
 require 'raven/processor/utf8conversion'
-require 'binding_of_caller'
-require 'thread'
+
+if RUBY_VERSION >= '1.9.2'
+  require 'binding_of_caller'
+  require 'thread'
+end
 
 major, minor, patch = RUBY_VERSION.split('.').map(&:to_i)
 if (major == 1 && minor < 9) || (major == 1 && minor == 9 && patch < 2)
@@ -24,6 +27,8 @@ end
 
 module Kernel
   def self.monkey_patch_raise
+    return false if RUBY_VERSION < '1.9.2'
+
     if @@monkey_patch_raise_occur == true
       return
     end
