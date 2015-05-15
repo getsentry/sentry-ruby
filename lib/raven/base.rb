@@ -15,6 +15,7 @@ require 'raven/processor/sanitizedata'
 require 'raven/processor/removecircularreferences'
 require 'raven/processor/utf8conversion'
 require 'binding_of_caller'
+require 'thread'
 
 major, minor, patch = RUBY_VERSION.split('.').map(&:to_i)
 if (major == 1 && minor < 9) || (major == 1 && minor == 9 && patch < 2)
@@ -26,16 +27,30 @@ module Kernel
     if @@monkey_patch_raise_occur == true
       return
     end
-    apply_monkey_patch_raise
-    @@monkey_patch_raise_occur = true
+
+    @@monkey_patch_raise_mutex.synchronize {
+      return if @@monkey_patch_raise_occur == true
+
+      apply_monkey_patch_raise
+      @@monkey_patch_raise_occur = true
+    }
+  end
+
+  def self.monkey_patch_raise_occur
+    @@monkey_patch_raise_occur
+  end
+
+  def self.monkey_patch_original_raise
+    @@original_raise
   end
 
   private
   def self.apply_monkey_patch_raise
-    original_raise = method(:raise)
+    @@original_raise = method(:raise)
+
     define_method(:raise) do |*args|
       begin
-        original_raise.call(*args)
+        @@original_raise.call(*args)
       rescue Exception => e
         prev_stack_info = e.instance_variable_get(:@stack_info)
         if prev_stack_info.nil?
@@ -49,12 +64,14 @@ module Kernel
             e.backtrace[idx].instance_variable_set(:@stack_info, caller_obj)
           end
         end
-        original_raise.call(e)
+        @@original_raise.call(e)
       end
     end
   end
 
   @@monkey_patch_raise_occur = false
+  @@monkey_patch_raise_mutex = Mutex.new
+  @@original_raise = nil
 end
 
 module Raven
@@ -109,10 +126,6 @@ module Raven
       self.client = Client.new(configuration)
       report_status
       self.client
-
-      if configuration.capture_locals
-        Kernel.monkey_patch_raise
-      end
     end
 
     # Send an event to the configured Sentry server
