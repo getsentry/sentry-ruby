@@ -19,10 +19,6 @@ module Raven
       @configuration = configuration
       @processors = configuration.processors.map { |v| v.new(self) }
       @state = ClientState.new
-
-      if configuration.capture_locals
-        Kernel.monkey_patch_raise
-      end
     end
 
     def send_event(event)

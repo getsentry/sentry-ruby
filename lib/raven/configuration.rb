@@ -171,6 +171,15 @@ module Raven
 
     alias_method :async?, :async
 
+    def capture_locals=(value)
+      if value
+        Kernel.monkey_patch_raise
+      else
+        Kernel.monkey_patch_raise_rollback
+      end
+      @capture_locals = value
+    end
+
     # Allows config options to be read like a hash
     #
     # @param [Symbol] option Key for a given attribute

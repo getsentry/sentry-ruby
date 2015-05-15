@@ -41,6 +41,20 @@ module Kernel
     }
   end
 
+  def self.monkey_patch_raise_rollback
+    return if @@monkey_patch_raise_occur == false
+
+    @@monkey_patch_raise_mutex.synchronize {
+      return if @@monkey_patch_raise_occur == false
+      return if @@original_raise.nil?
+
+      define_method(:raise) do |*args|
+        @@original_raise.call(*args)
+      end
+      @@monkey_patch_raise_occur = false
+    }
+  end
+
   def self.monkey_patch_raise_occur
     @@monkey_patch_raise_occur
   end
