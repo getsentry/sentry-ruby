@@ -1,3 +1,4 @@
+require 'certifi'
 require 'logger'
 require 'uri'
 
@@ -58,6 +59,9 @@ module Raven
     # Should the SSL certificate of the server be verified?
     attr_accessor :ssl_verification
 
+    # The path to the SSL certificate file
+    attr_accessor :ssl_ca_file
+
     # SSl settings passed direactly to faraday's ssl option
     attr_accessor :ssl
 
@@ -116,7 +120,8 @@ module Raven
       self.send_modules = true
       self.excluded_exceptions = IGNORE_DEFAULT
       self.processors = [Raven::Processor::RemoveCircularReferences, Raven::Processor::UTF8Conversion, Raven::Processor::SanitizeData]
-      self.ssl_verification = false
+      self.ssl_verification = true
+      self.ssl_ca_file = Certifi.where
       self.encoding = 'gzip'
       self.timeout = 1
       self.open_timeout = 1

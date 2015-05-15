@@ -16,6 +16,7 @@ Gem::Specification.new do |gem|
   gem.license = 'Apache-2.0'
 
   gem.add_dependency "faraday", ">= 0.7.6"
+  gem.add_dependency "certifi"
   gem.add_dependency "binding_of_caller"
 
   gem.add_development_dependency "rake"
