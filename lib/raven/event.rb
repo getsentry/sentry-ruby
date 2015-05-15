@@ -143,8 +143,8 @@ module Raven
 
           if path == target_file && line_no <= target_number
             caller_candidates << {
-              count: idx,
-              line_no: line_no
+              :count => idx,
+              :line_no => line_no
             }
           end
         end
