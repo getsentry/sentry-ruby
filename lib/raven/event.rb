@@ -226,7 +226,8 @@ module Raven
           frame.in_app = line.in_app
           frame.module = line.module_name if line.module_name
 
-          if evt.configuration.capture_locals
+          # if dump all stack frame, data is too large
+          if evt.configuration.capture_locals && frame.in_app
             target_idx = orig_backtrace.length - idx - 1
             stack_info = orig_backtrace[target_idx].instance_variable_get(:@stack_info)
             if !stack_info.nil?
