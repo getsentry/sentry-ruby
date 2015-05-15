@@ -15,7 +15,7 @@ require 'raven/processor/sanitizedata'
 require 'raven/processor/removecircularreferences'
 require 'raven/processor/utf8conversion'
 
-if RUBY_VERSION >= '1.9.2'
+if RUBY_VERSION >= '1.9.2' && !defined?(JRUBY_VERSION)
   require 'binding_of_caller'
   require 'thread'
 end
@@ -27,7 +27,7 @@ end
 
 module Kernel
   def self.monkey_patch_raise
-    return false if RUBY_VERSION < '1.9.2'
+    return false if RUBY_VERSION < '1.9.2' || defined?(JRUBY_VERSION)
 
     if @@monkey_patch_raise_occur == true
       return

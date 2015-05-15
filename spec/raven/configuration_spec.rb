@@ -146,7 +146,7 @@ describe Raven::Configuration do
     end
   end
 
-  if RUBY_VERSION >= '1.9.2'
+  if RUBY_VERSION >= '1.9.2' && !defined?(JRUBY_VERSION)
     context 'configuration for capture locals' do
       context 'use captures local' do
         after do

@@ -17,7 +17,7 @@ Gem::Specification.new do |gem|
 
   gem.add_dependency "faraday", ">= 0.7.6"
   gem.add_dependency "certifi"
-  gem.add_dependency "binding_of_caller" if RUBY_VERSION >= '1.9.2'
+  gem.add_dependency "binding_of_caller" if RUBY_VERSION >= '1.9.2' && !defined?(JRUBY_VERSION)
 
   gem.add_development_dependency "rake"
   gem.add_development_dependency "rspec", "~> 3.0"
