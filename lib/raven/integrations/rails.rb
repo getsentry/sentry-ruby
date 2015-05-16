@@ -34,5 +34,9 @@ module Raven
     rake_tasks do
       require 'raven/integrations/tasks'
     end
+
+    runner do
+      Raven.capture
+    end
   end
 end
