@@ -24,7 +24,8 @@ module Raven
 
     attr_reader :id
     attr_accessor :project, :message, :timestamp, :time_spent, :level, :logger,
-      :culprit, :server_name, :release, :modules, :extra, :tags, :context, :configuration
+      :culprit, :server_name, :release, :modules, :extra, :tags, :context, :configuration,
+      :checksum
 
     def initialize(init = {})
       @configuration = Raven.configuration
@@ -43,6 +44,7 @@ module Raven
       @user          = {}
       @extra         = {}
       @tags          = {}
+      @checksum      = nil
 
       yield self if block_given?
 
@@ -108,6 +110,7 @@ module Raven
       data[:extra] = @extra if @extra
       data[:tags] = @tags if @tags
       data[:user] = @user if @user
+      data[:checksum] = @checksum if @checksum
       @interfaces.each_pair do |name, int_data|
         data[name.to_sym] = int_data.to_hash
       end

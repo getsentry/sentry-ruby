@@ -629,5 +629,10 @@ describe Raven::Event do
       Raven.annotate_exception(exception, :logger => 'logger')
       expect(Raven::Event.capture_exception(exception).logger).to eq('logger')
     end
+
+    it 'accepts a checksum' do
+      expect(Raven::Event.capture_exception(exception, :checksum => 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa').checksum).to eq('aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa')
+    end
+
   end
 end
