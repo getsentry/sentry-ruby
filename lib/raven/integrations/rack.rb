@@ -60,7 +60,7 @@ module Raven
         raise
       end
 
-      error = env['rack.exception'] || env['sinatra.error']
+      error = env['rack.exception'] || env['sinatra.error'] || env['action_dispatch.exception']
 
       Raven::Rack.capture_exception(error, env) if error
 
