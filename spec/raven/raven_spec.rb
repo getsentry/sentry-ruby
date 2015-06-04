@@ -28,15 +28,24 @@ describe Raven do
   describe '.capture_message when async' do
     let(:message) { "Test message" }
 
+    around do |example|
+      prior_async = Raven.configuration.async
+      Raven.configuration.async = lambda { |event| :ok }
+      example.run
+      Raven.configuration.async = prior_async
+    end
+
     it 'sends the result of Event.capture_message' do
       expect(Raven::Event).to receive(:from_message).with(message, options)
       expect(Raven).not_to receive(:send_event).with(event)
 
-      prior_async = Raven.configuration.async
-      Raven.configuration.async = lambda { :ok }
       expect(Raven.configuration.async).to receive(:call).with(event)
       Raven.capture_message(message, options)
-      Raven.configuration.async = prior_async
+    end
+
+    it 'returns the generated event' do
+      returned = Raven.capture_message(message, options)
+      expect(returned).to eq(event)
     end
   end
 
@@ -58,15 +67,24 @@ describe Raven do
   describe '.capture_exception when async' do
     let(:exception) { build_exception }
 
+    around do |example|
+      prior_async = Raven.configuration.async
+      Raven.configuration.async = lambda { |event| :ok }
+      example.run
+      Raven.configuration.async = prior_async
+    end
+
     it 'sends the result of Event.capture_exception' do
       expect(Raven::Event).to receive(:from_exception).with(exception, options)
       expect(Raven).not_to receive(:send_event).with(event)
 
-      prior_async = Raven.configuration.async
-      Raven.configuration.async = lambda { :ok }
       expect(Raven.configuration.async).to receive(:call).with(event)
       Raven.capture_exception(exception, options)
-      Raven.configuration.async = prior_async
+    end
+
+    it 'returns the generated event' do
+      returned = Raven.capture_exception(exception, options)
+      expect(returned).to eq(event)
     end
   end
 
