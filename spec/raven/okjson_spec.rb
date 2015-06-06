@@ -23,9 +23,11 @@ describe Raven::OkJson do
   it 'encodes anything that responds to to_s' do
     data = [
       (1..5),
-      :symbol
+      :symbol,
+      1/0.0,
+      0/0.0
     ]
-    expect(Raven::OkJson.encode(data)).to eq "[\"1..5\",\"symbol\"]"
+    expect(Raven::OkJson.encode(data)).to eq "[\"1..5\",\"symbol\",\"Infinity\",\"NaN\"]"
   end
 
   it 'does not parse scientific notation' do

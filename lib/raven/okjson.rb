@@ -499,7 +499,7 @@ private
 
   def numenc(x)
     if ((x.nan? || x.infinite?) rescue false)
-      raise Error, "Numeric cannot be represented: #{x}"
+      return strenc(x.to_s)
     end
     "#{x}"
   end
