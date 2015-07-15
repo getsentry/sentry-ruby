@@ -46,7 +46,7 @@ describe Raven::Rack do
     stack.call(env)
   end
 
-  it 'should capture rails errors' do
+  it 'should capture rails errors when ActionDispatch::ShowExceptions is enabled' do
     exception = build_exception
     env = {}
 
