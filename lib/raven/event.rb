@@ -1,6 +1,7 @@
 require 'rubygems'
 require 'socket'
 require 'securerandom'
+require 'digest/md5'
 
 require 'raven/error'
 require 'raven/linecache'
@@ -24,7 +25,8 @@ module Raven
 
     attr_reader :id
     attr_accessor :project, :message, :timestamp, :time_spent, :level, :logger,
-      :culprit, :server_name, :release, :modules, :extra, :tags, :context, :configuration
+      :culprit, :server_name, :release, :modules, :extra, :tags, :context, :configuration,
+      :checksum
 
     def initialize(init = {})
       @configuration = Raven.configuration
@@ -43,6 +45,7 @@ module Raven
       @user          = {}
       @extra         = {}
       @tags          = {}
+      @checksum      = nil
 
       yield self if block_given?
 
@@ -108,6 +111,7 @@ module Raven
       data[:extra] = @extra if @extra
       data[:tags] = @tags if @tags
       data[:user] = @user if @user
+      data[:checksum] = @checksum if @checksum
       @interfaces.each_pair do |name, int_data|
         data[name.to_sym] = int_data.to_hash
       end
@@ -186,10 +190,11 @@ module Raven
       backtrace = Backtrace.parse(backtrace)
       int.frames = backtrace.lines.reverse.map do |line|
         StacktraceInterface::Frame.new.tap do |frame|
-          frame.abs_path = line.file
-          frame.function = line.method
+          frame.abs_path = line.file if line.file
+          frame.function = line.method if line.method
           frame.lineno = line.number
           frame.in_app = line.in_app
+          frame.module = line.module_name if line.module_name
 
           if evt.configuration[:context_lines] && frame.abs_path
             frame.pre_context, frame.context_line, frame.post_context = \
@@ -206,6 +211,7 @@ module Raven
     end
 
     def get_file_context(filename, lineno, context)
+      return nil, nil, nil unless Raven::LineCache.is_valid_file(filename)
       lines = (2 * context + 1).times.map do |i|
         Raven::LineCache.getline(filename, lineno - context + i)
       end
@@ -234,7 +240,7 @@ module Raven
       ary[2] = (ary[2] & 0x0fff) | 0x4000
       ary[3] = (ary[3] & 0x3fff) | 0x8000
       uuid = "%08x-%04x-%04x-%04x-%04x%08x" % ary
-      Digest::MD5.hexdigest(uuid)
+      ::Digest::MD5.hexdigest(uuid)
     end
   end
 end

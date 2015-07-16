@@ -467,6 +467,23 @@ describe Raven::Event do
       end
     end
 
+    if RUBY_PLATFORM == "java"
+      context 'when running under jRuby' do
+        let(:exception) do
+          begin
+            raise java.lang.OutOfMemoryError.new("A Java error")
+          rescue Exception => e
+            return e
+          end
+        end
+
+        it 'should have a backtrace' do
+          frames = hash[:exception][:values][0][:stacktrace][:frames]
+          expect(frames.length).not_to eq(0)
+        end
+      end
+    end
+
     context 'when the exception has a backtrace' do
       let(:exception) do
         e = Exception.new(message)
@@ -612,5 +629,10 @@ describe Raven::Event do
       Raven.annotate_exception(exception, :logger => 'logger')
       expect(Raven::Event.capture_exception(exception).logger).to eq('logger')
     end
+
+    it 'accepts a checksum' do
+      expect(Raven::Event.capture_exception(exception, :checksum => 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa').checksum).to eq('aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa')
+    end
+
   end
 end

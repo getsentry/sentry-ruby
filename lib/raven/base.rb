@@ -121,6 +121,8 @@ module Raven
         else
           send_event(evt)
         end
+
+        evt
       end
     end
     alias_method :capture_message, :capture_type

@@ -25,6 +25,7 @@ module Raven
       attr_accessor :pre_context
       attr_accessor :post_context
       attr_accessor :context_line
+      attr_accessor :module
       attr_accessor :lineno
       attr_accessor :in_app
 
