@@ -1,7 +1,14 @@
-.. class:: platform-ruby
+.. sentry:edition:: self
 
-Ruby
-====
+    Raven Ruby
+    ==========
+
+.. sentry:edition:: hosted, on-premise
+
+    .. class:: platform-ruby
+
+    Ruby
+    ====
 
 Raven for Ruby is a client and integration layer for the Sentry error
 reporting API.  It supports Ruby MRI 1.8.7/REE, 1.9.3, 2.0, 2.1 and 2.2.
