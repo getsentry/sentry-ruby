@@ -1,3 +1,15 @@
+0.14.0
+------
+
+- Correct handling of JRuby stacktraces [dcramer]
+- Better handling of unreachable file contexts [dcramer, #335]
+- SSL is now default ON [dcramer, #338]
+- Capture exceptions in runner tasks [eugeneius, #339]
+- ActiveJob integration [lucasmazza, #327]
+- Cleanup return values of async blocks [lucasmazza, #344]
+- Better handling when sending NaN/Infinity JSON values [Alric, #345]
+- Fix issues with digest/md5 namespace [lsb, #346]
+
 0.13.3
 ------
 
