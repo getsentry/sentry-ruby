@@ -1,6 +1,7 @@
 coverage
 pkg
 ruby/
+docs/_build
 .bundle
 *.gem
 gemfiles/*.lock
