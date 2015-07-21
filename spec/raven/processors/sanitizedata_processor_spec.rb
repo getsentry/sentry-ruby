@@ -152,6 +152,21 @@ describe Raven::Processor::SanitizeData do
       expect(vars["query_string"]).to_not include("secret")
     end
 
+    it 'handles :query_string as symbol' do
+      data = {
+        'sentry.interfaces.Http' => {
+          'data' => {
+            :query_string => 'foo=bar&password=secret'
+          }
+        }
+      }
+
+      result = @processor.process(data)
+
+      vars = result["sentry.interfaces.Http"]["data"]
+      expect(vars[:query_string]).to_not include("secret")
+    end
+
     it 'handles multiple values for a key' do
       data = {
         'sentry.interfaces.Http' => {
