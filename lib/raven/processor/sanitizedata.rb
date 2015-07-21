@@ -23,7 +23,7 @@ module Raven
         process(v)
       elsif v.is_a?(Array)
         v.map{|a| sanitize(k, a)}
-      elsif k == 'query_string'
+      elsif k.to_s == 'query_string'
         sanitize_query_string(v)
       elsif v.is_a?(Integer) && matches_regexes?(k,v)
         INT_MASK
