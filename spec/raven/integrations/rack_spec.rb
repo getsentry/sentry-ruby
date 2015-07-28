@@ -78,4 +78,15 @@ describe Raven::Rack do
     stack.call(env)
   end
 
+  it 'should pass rack/lint' do
+    env = Rack::MockRequest.env_for("/test")
+
+    app = lambda do |e|
+      [200, {'Content-Type' => 'text/plain'}, ['OK']]
+    end
+
+    stack = Raven::Rack.new(Rack::Lint.new(app))
+    expect { stack.call(env) }.to_not raise_error(Rack::Lint::LintError)
+  end
+
 end
