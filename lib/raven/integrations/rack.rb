@@ -23,8 +23,8 @@ module Raven
   class Rack
 
     def self.capture_type(exception, env, options = {})
-      if env['requested_at']
-        options[:time_spent] = Time.now - env['requested_at']
+      if env['raven.requested_at']
+        options[:time_spent] = Time.now - env['raven.requested_at']
       end
       Raven.capture_type(exception, options) do |evt|
         evt.interface :http do |int|
@@ -47,7 +47,7 @@ module Raven
 
       # store the current environment in our local context for arbitrary
       # callers
-      env['requested_at'] = Time.now
+      env['raven.requested_at'] = Time.now
       Raven.rack_context(env)
 
       begin
