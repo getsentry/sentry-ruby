@@ -15,9 +15,87 @@ require 'raven/processor/sanitizedata'
 require 'raven/processor/removecircularreferences'
 require 'raven/processor/utf8conversion'
 
+if RUBY_VERSION >= '1.9.2' && !defined?(JRUBY_VERSION)
+  require 'binding_of_caller'
+  require 'thread'
+end
+
 major, minor, patch = RUBY_VERSION.split('.').map(&:to_i)
 if (major == 1 && minor < 9) || (major == 1 && minor == 9 && patch < 2)
   require 'raven/backports/uri'
+end
+
+module Kernel
+  def self.monkey_patch_raise
+    return false if RUBY_VERSION < '1.9.2' || defined?(JRUBY_VERSION)
+
+    if @@monkey_patch_raise_occur == true
+      return
+    end
+
+    @@monkey_patch_raise_mutex.synchronize {
+      return if @@monkey_patch_raise_occur == true
+
+      apply_monkey_patch_raise
+      @@monkey_patch_raise_occur = true
+    }
+  end
+
+  def self.monkey_patch_raise_rollback
+    return if @@monkey_patch_raise_occur == false
+
+    @@monkey_patch_raise_mutex.synchronize {
+      return if @@monkey_patch_raise_occur == false
+      return if @@original_raise.nil?
+
+      define_method(:raise) do |*args|
+        @@original_raise.call(*args)
+      end
+      @@monkey_patch_raise_occur = false
+    }
+  end
+
+  def self.monkey_patch_raise_occur
+    @@monkey_patch_raise_occur
+  end
+
+  def self.monkey_patch_original_raise
+    @@original_raise
+  end
+
+  private
+  def self.apply_monkey_patch_raise
+    @@original_raise = method(:raise)
+
+    define_method(:raise) do |*args|
+      begin
+        @@original_raise.call(*args)
+      rescue Exception => e
+        prev_stack_info = e.instance_variable_get(:@stack_info)
+        if prev_stack_info.nil?
+          line_backtrace = Raven::Backtrace::Line.parse(e.backtrace[0])
+          if line_backtrace.file == __FILE__
+            pop_length = 2
+          else
+            pop_length = 0
+          end
+
+          callers = binding.callers.drop(pop_length)
+          e.instance_variable_set(:@stack_info, callers)
+          e.set_backtrace(e.backtrace.drop(pop_length))
+
+          callers.each_with_index do |caller_obj, idx|
+            e.backtrace[idx].instance_variable_set(:@stack_info, caller_obj)
+          end
+        end
+        @@original_raise.call(e)
+      end
+    end
+  end
+
+  @@monkey_patch_raise_occur = false
+  @@monkey_patch_raise_mutex = Mutex.new
+  @@original_raise = nil
 end
 
 module Raven

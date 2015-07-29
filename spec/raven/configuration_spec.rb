@@ -53,6 +53,10 @@ describe Raven::Configuration do
     it 'should have no sanitize fields' do
       expect(subject[:sanitize_fields]).to eq([])
     end
+
+    it 'should capture locals is false' do
+      expect(subject[:capture_locals]).to eq(false)
+    end
   end
 
   context 'being initialized without server configuration' do
@@ -142,4 +146,29 @@ describe Raven::Configuration do
     end
   end
 
+  if RUBY_VERSION >= '1.9.2' && !defined?(JRUBY_VERSION)
+    context 'configuration for capture locals' do
+      context 'use captures local' do
+        after do
+          module Kernel
+            define_method(:raise) do |*args|
+              Kernel.monkey_patch_original_raise.call(*args)
+            end
+          end
+        end
+
+        it 'should override default raise function' do
+          subject.capture_locals = true
+          expect(Kernel.monkey_patch_raise_occur).to eq(true)
+          expect(subject.capture_locals).to eq(true)
+        end
+      end
+
+      it 'do not use captues local' do
+        subject.capture_locals = false
+        expect(Kernel.monkey_patch_raise_occur).to eq(false)
+        expect(subject.capture_locals).to eq(false)
+      end
+    end
+  end
 end

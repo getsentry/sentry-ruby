@@ -133,6 +133,40 @@ module Raven
         return nil
       end
 
+      if configuration.capture_locals
+        # fill local variables of caller
+        backtrace = Backtrace.parse(exc.backtrace)
+        target_file = backtrace.lines[0].file
+        target_number = backtrace.lines[0].number
+
+        caller_candidates = []
+        binding.callers.each_with_index do |caller_obj, idx|
+          iseq = caller_obj.instance_variable_get(:@iseq)
+          path = iseq.path
+          line_no = iseq.first_lineno
+
+          if path == target_file && line_no <= target_number
+            caller_candidates << {
+              :count => idx,
+              :line_no => line_no
+            }
+          end
+        end
+
+        # find closest caller
+        caller_info = caller_candidates.min do
+          |a, b| target_number - a[:line_no] <=> target_number - b[:line_no]
+        end
+        unless caller_info.nil?
+          pop_count = caller_info[:count]
+
+          exc.instance_variable_set(:@stack_info, binding.callers.drop(pop_count))
+          binding.callers.drop(pop_count).each_with_index do |caller_obj, idx|
+            exc.backtrace[idx].instance_variable_set(:@stack_info, caller_obj)
+          end
+        end
+      end
+
       new(options) do |evt|
         evt.configuration = configuration
         evt.message = "#{exc.class}: #{exc.message}"
@@ -187,14 +221,29 @@ module Raven
     end
 
     def self.stacktrace_interface_from(int, evt, backtrace)
+      orig_backtrace = backtrace
+
       backtrace = Backtrace.parse(backtrace)
-      int.frames = backtrace.lines.reverse.map do |line|
+      int.frames = backtrace.lines.reverse.each_with_index.map do |line, idx|
         StacktraceInterface::Frame.new.tap do |frame|
           frame.abs_path = line.file if line.file
           frame.function = line.method if line.method
           frame.lineno = line.number
           frame.in_app = line.in_app
           frame.module = line.module_name if line.module_name
+
+          # if dump all stack frame, data is too large
+          if evt.configuration.capture_locals && frame.in_app
+            target_idx = orig_backtrace.length - idx - 1
+            stack_info = orig_backtrace[target_idx].instance_variable_get(:@stack_info)
+            if !stack_info.nil?
+              frame.vars = {}
+              locals = stack_info.eval('local_variables')
+              locals.each do |key|
+                frame.vars[key.to_s] = stack_info.eval("#{key}").to_s
+              end
+            end
+          end
 
           if evt.configuration[:context_lines] && frame.abs_path
             frame.pre_context, frame.context_line, frame.post_context = \

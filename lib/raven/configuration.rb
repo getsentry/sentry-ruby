@@ -102,6 +102,9 @@ module Raven
     # Sanitize values that look like credit card numbers
     attr_accessor :sanitize_credit_cards
 
+    # capture local variable if exception thrown
+    attr_accessor :capture_locals
+
     IGNORE_DEFAULT = ['ActiveRecord::RecordNotFound',
                       'ActionController::RoutingError',
                       'ActionController::InvalidAuthenticityToken',
@@ -129,6 +132,7 @@ module Raven
       self.sanitize_fields = []
       self.sanitize_credit_cards = true
       self.environments = []
+      self.capture_locals = false
     end
 
     def server=(value)
@@ -166,6 +170,15 @@ module Raven
     end
 
     alias_method :async?, :async
+
+    def capture_locals=(value)
+      if value
+        Kernel.monkey_patch_raise
+      else
+        Kernel.monkey_patch_raise_rollback
+      end
+      @capture_locals = value
+    end
 
     # Allows config options to be read like a hash
     #
