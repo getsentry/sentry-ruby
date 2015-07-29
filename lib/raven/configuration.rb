@@ -1,4 +1,3 @@
-require 'certifi'
 require 'logger'
 require 'uri'
 
@@ -118,7 +117,6 @@ module Raven
       self.excluded_exceptions = IGNORE_DEFAULT
       self.processors = [Raven::Processor::RemoveCircularReferences, Raven::Processor::UTF8Conversion, Raven::Processor::SanitizeData]
       self.ssl_verification = true
-      self.ssl_ca_file = Certifi.where
       self.encoding = 'gzip'
       self.timeout = 1
       self.open_timeout = 1
