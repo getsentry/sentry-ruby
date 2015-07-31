@@ -169,8 +169,8 @@ module Raven
     #
     # @example
     #   Raven.user_context('id' => 1, 'email' => 'foo@example.com')
-    def user_context(options = {})
-      self.context.user = options
+    def user_context(options = nil)
+      self.context.user = options || {}
     end
 
     # Bind tags context. Merges with existing context (if any).
@@ -180,8 +180,8 @@ module Raven
     #
     # @example
     #   Raven.tags_context('my_custom_tag' => 'tag_value')
-    def tags_context(options = {})
-      self.context.tags.merge!(options)
+    def tags_context(options = nil)
+      self.context.tags.merge!(options || {})
     end
 
     # Bind extra context. Merges with existing context (if any).
@@ -190,8 +190,8 @@ module Raven
     #
     # @example
     #   Raven.extra_context('my_custom_data' => 'value')
-    def extra_context(options = {})
-      self.context.extra.merge!(options)
+    def extra_context(options = nil)
+      self.context.extra.merge!(options || {})
     end
 
     def rack_context(env)
