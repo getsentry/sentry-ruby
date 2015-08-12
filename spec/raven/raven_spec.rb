@@ -156,7 +156,6 @@ describe Raven do
         captured_message = capture_in_separate_process { raise 'test error' }
         expect(captured_message).to eq('test error')
       end
-
     end
   end
 
