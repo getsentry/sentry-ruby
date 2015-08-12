@@ -125,7 +125,7 @@ describe Raven do
           described_class.capture(options)
 
           allow(Raven).to receive(:capture_exception) do |exception, options|
-            pipe_out.print exception.message
+            pipe_out.puts exception.message
           end
 
           # silence process
@@ -137,10 +137,11 @@ describe Raven do
         end
 
         pipe_out.close
-        captured_message = pipe_in.read
+        captured_messages = pipe_in.read
         pipe_in.close
 
-        captured_message
+        # sometimes the at_exit hook was registered multiple times
+        captured_messages.split("\n").last
       end
 
       it 'does not yield' do
