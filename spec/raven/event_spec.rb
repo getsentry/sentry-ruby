@@ -467,6 +467,14 @@ describe Raven::Event do
       end
     end
 
+    context 'when the exception has a recursive cause' do
+      let(:exception) { build_exception_with_recursive_cause }
+
+      it 'should handle it gracefully' do
+        expect(hash[:exception][:values].length).to eq(2)
+      end
+    end
+
     if RUBY_PLATFORM == "java"
       context 'when running under jRuby' do
         let(:exception) do
