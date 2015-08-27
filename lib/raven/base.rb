@@ -21,6 +21,8 @@ if (major == 1 && minor < 9) || (major == 1 && minor == 9 && patch < 2)
 end
 
 module Raven
+  AVAILABLE_INTEGRATIONS = %w[delayed_job railties sidekiq rack rake]
+
   class << self
     # The client object is responsible for delivering formatted data to the Sentry server.
     # Must respond to #send. See Raven::Client.
@@ -202,8 +204,8 @@ module Raven
     end
 
     # Injects various integrations
-    def inject
-      available_integrations = %w[delayed_job railties sidekiq rack rake]
+    def inject(*include_integrations)
+      available_integrations = Raven::AVAILABLE_INTEGRATIONS & include_integrations.map(&:to_s)
       integrations_to_load = available_integrations & Gem.loaded_specs.keys
       # TODO(dcramer): integrations should have some additional checks baked-in
       # or we should break them out into their own repos. Specifically both the
@@ -216,6 +218,11 @@ module Raven
           self.logger.warn "Unable to load raven/integrations/#{integration}: #{error}"
         end
       end
+    end
+
+    def inject_without(*exclude_integrations)
+      include_integrations = Raven::AVAILABLE_INTEGRATIONS - exclude_integrations.map(&:to_s)
+      inject(*include_integrations)
     end
 
     # For cross-language compat
