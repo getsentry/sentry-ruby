@@ -179,4 +179,42 @@ describe Raven do
       Raven.report_status
     end
   end
+
+  describe '.inject_only' do
+    before do
+      allow(Gem.loaded_specs).to receive(:keys).and_return(%w[railties rack sidekiq])
+    end
+
+    it 'loads integrations when they are valid configurations' do
+      expect(Raven).to receive(:load_integration).once.with('railties')
+      expect(Raven).to receive(:load_integration).once.with('sidekiq')
+
+      Raven.inject_only(:railties, :sidekiq)
+    end
+
+    it 'skips any integrations that are not supported' do
+      expect(Raven).to receive(:load_integration).once.with('railties')
+      expect(Raven.logger).to receive(:warn).with('Integrations do not exist: doesnot, exist')
+
+      Raven.inject_only(:railties, :doesnot, :exist)
+    end
+
+    it 'skips any integrations that are not loaded in the gemspec' do
+      expect(Raven).to receive(:load_integration).once.with('railties')
+
+      Raven.inject_only(:railties, :delayed_job)
+    end
+  end
+
+  describe '.inject_without' do
+    before do
+      allow(Gem.loaded_specs).to receive(:keys).and_return(Raven::AVAILABLE_INTEGRATIONS)
+    end
+
+    it 'injects all integrations except those passed as an argument' do
+      expect(Raven).to receive(:load_integration).once.with('rake')
+
+      Raven.inject_without(:delayed_job, :railties, :sidekiq, :rack)
+    end
+  end
 end

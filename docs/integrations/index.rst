@@ -12,7 +12,7 @@ features if you want.
    rails
    rack
 
-The following integrations are available :
+The following integrations are available:
 
 *   Sidekiq (``:sidekiq``)
 *   ``Delayed::Job`` (``:delayed_job``)
@@ -32,7 +32,7 @@ To explicitly include integrations:
 ::
 
    require 'sentry-raven-without-integrations'
-   Raven.inject(:railties, :rack, :rake)
+   Raven.inject_only(:railties, :rack, :rake)
 
 
 To blacklist integrations:
