@@ -642,5 +642,9 @@ describe Raven::Event do
       expect(Raven::Event.capture_exception(exception, :checksum => 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa').checksum).to eq('aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa')
     end
 
+    it 'accepts a release' do
+      expect(Raven::Event.capture_exception(exception, :release => '1.0').release).to eq('1.0')
+    end
+
   end
 end
