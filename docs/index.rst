@@ -97,6 +97,7 @@ the library and the client integrations.
    :titlesonly:
 
    install
+   config
    usage
    context
    integrations/index
