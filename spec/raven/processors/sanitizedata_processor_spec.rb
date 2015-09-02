@@ -20,7 +20,8 @@ describe Raven::Processor::SanitizeData do
           'test' => 1,
           :ssn => '123-45-6789', # test symbol handling
           'social_security_number' => 123456789,
-          'user_field' => 'user'
+          'user_field' => 'user',
+          'user_field_foo' => 'hello'
         }
       }
     }
@@ -37,6 +38,7 @@ describe Raven::Processor::SanitizeData do
     expect(vars[:ssn]).to eq(Raven::Processor::SanitizeData::STRING_MASK)
     expect(vars["social_security_number"]).to eq(Raven::Processor::SanitizeData::INT_MASK)
     expect(vars["user_field"]).to eq(Raven::Processor::SanitizeData::STRING_MASK)
+    expect(vars["user_field_foo"]).to eq('hello')
   end
 
   it 'should filter json data' do
@@ -50,7 +52,8 @@ describe Raven::Processor::SanitizeData do
         'test' => 1,
         'ssn' => '123-45-6789',
         'social_security_number' => 123456789,
-        'user_field' => 'user'
+        'user_field' => 'user',
+        'user_field_foo' => 'hello'
         }.to_json
       }
 
@@ -66,6 +69,7 @@ describe Raven::Processor::SanitizeData do
     expect(vars["ssn"]).to eq(Raven::Processor::SanitizeData::STRING_MASK)
     expect(vars["social_security_number"]).to eq(Raven::Processor::SanitizeData::INT_MASK)
     expect(vars["user_field"]).to eq(Raven::Processor::SanitizeData::STRING_MASK)
+    expect(vars["user_field_foo"]).to eq('hello')
   end
 
   it 'should filter json embedded in a ruby object' do
