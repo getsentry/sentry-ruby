@@ -6,7 +6,7 @@ will honor the ``SENTRY_DSN`` environment variable.  You can find it on
 the project settings page under API Keys.  You can either export it as
 environment variable or manually configure it with ``Raven.configure``:
 
-.. sourcecode:: ruby
+.. code-block:: ruby
 
     Raven.configure do |config|
       config.dsn = '___DSN___'
@@ -15,7 +15,7 @@ environment variable or manually configure it with ``Raven.configure``:
 If you only want to send events to Sentry in certain environments, you
 should set ``config.environments`` too:
 
-.. sourcecode:: ruby
+.. code-block:: ruby
 
     Raven.configure do |config|
       config.dsn = '___DSN___'
@@ -50,22 +50,78 @@ Reporting Messages
 If you want to report a message rather than an exception you can use the
 ``capture_message`` method:
 
-.. sourcecode:: ruby
+.. code-block:: ruby
 
     Raven.capture_message("Something went very wrong")
 
-Additional Data
----------------
+Optional Attributes
+-------------------
 
 With calls to ``capture_exception`` or ``capture_message`` additional data
-can be supplied.  You can either do it at the time the call is made or you
-can use the context helpers (see :doc:`context`).
+can be supplied::
 
-To provide a user for instance, you can invoke a method like this:
+  .. code-block:: ruby
 
-.. sourcecode:: ruby
+      Raven.capture_message("...", :attr => 'value')
 
-    Raven.capture_message("Something went very wrong", :user => {
-        'id' => 42,
-        'email' => 'clever-girl'
-    })
+.. describe:: extra
+
+    Additional context for this event. Must be a mapping. Children can be any native JSON type.
+
+    .. code-block:: javascript
+
+        {
+            :extra => {'key': 'value'}
+        }
+
+.. describe:: fingerprint
+
+    The fingerprint for grouping this event.
+
+    .. code-block:: ruby
+
+        {
+            // dont group events from the same NODE_ENV together
+            :fingerprint => ['{{ default }}', process.env.NODE_ENV]
+        }
+
+.. describe:: level
+
+    The level of the event. Defaults to ``error``.
+
+    .. code-block:: ruby
+
+        {
+            :level => 'warning'
+        }
+
+    Sentry is aware of the following levels:
+
+    * debug (the least serious)
+    * info
+    * warning
+    * error
+    * fatal (the most serious)
+
+.. describe:: tags
+
+    Tags to index with this event. Must be a mapping of strings.
+
+    .. code-block:: ruby
+
+        {
+            :tags => {'key': 'value'}
+        }
+
+.. describe:: user
+
+    The acting user.
+
+    .. code-block:: ruby
+
+        {
+            :user => {
+                'id' => 42,
+                'email' => 'clever-girl'
+            }
+        }
