@@ -103,6 +103,16 @@ can be supplied::
     * error
     * fatal (the most serious)
 
+.. describe:: logger
+
+    The logger name for the event.
+
+    .. code-block:: ruby
+
+        {
+            :logger => 'default'
+        }
+
 .. describe:: tags
 
     Tags to index with this event. Must be a mapping of strings.
