@@ -68,7 +68,7 @@ can be supplied::
 
     Additional context for this event. Must be a mapping. Children can be any native JSON type.
 
-    .. code-block:: javascript
+    .. code-block:: ruby
 
         {
             :extra => {'key': 'value'}
