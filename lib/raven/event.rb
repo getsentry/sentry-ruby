@@ -37,7 +37,7 @@ module Raven
       @timestamp     = Time.now.utc
       @time_spent    = nil
       @level         = :error
-      @logger        = 'root'
+      @logger        = ''
       @culprit       = nil
       @server_name   = @configuration.server_name || get_hostname
       @release       = @configuration.release
@@ -102,9 +102,9 @@ module Raven
         :time_spent => @time_spent,
         :level => @level,
         :project => @project,
-        :logger => @logger,
         :platform => PLATFORM,
       }
+      data[:logger] = @logger if @logger
       data[:culprit] = @culprit if @culprit
       data[:server_name] = @server_name if @server_name
       data[:release] = @release if @release
