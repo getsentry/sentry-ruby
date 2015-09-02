@@ -646,5 +646,9 @@ describe Raven::Event do
       expect(Raven::Event.capture_exception(exception, :release => '1.0').release).to eq('1.0')
     end
 
+    it 'accepts a fingerprint' do
+      expect(Raven::Event.capture_exception(exception, :fingerprint => ['{{ default }}', 'foo']).fingerprint).to eq(['{{ default }}', 'foo'])
+    end
+
   end
 end
