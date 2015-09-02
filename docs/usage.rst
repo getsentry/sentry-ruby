@@ -71,7 +71,7 @@ can be supplied::
     .. code-block:: ruby
 
         {
-            :extra => {'key': 'value'}
+            :extra => {'key' => 'value'}
         }
 
 .. describe:: fingerprint
@@ -120,7 +120,7 @@ can be supplied::
     .. code-block:: ruby
 
         {
-            :tags => {'key': 'value'}
+            :tags => {'key' => 'value'}
         }
 
 .. describe:: user
