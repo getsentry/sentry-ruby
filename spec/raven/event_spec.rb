@@ -650,5 +650,9 @@ describe Raven::Event do
       expect(Raven::Event.capture_exception(exception, :fingerprint => ['{{ default }}', 'foo']).fingerprint).to eq(['{{ default }}', 'foo'])
     end
 
+    it 'accepts a logger' do
+      expect(Raven::Event.capture_exception(exception, :logger => 'root').logger).to eq('root')
+    end
+
   end
 end
