@@ -228,9 +228,9 @@ module Raven
 
     def install_at_exit_hook(options)
       at_exit do
-        if $ERROR_INFO
-          logger.debug "Caught a post-mortem exception: #{$ERROR_INFO.inspect}"
-          capture_exception($ERROR_INFO, options)
+        if $!
+          logger.debug "Caught a post-mortem exception: #{$!.inspect}"
+          capture_exception($!, options)
         end
       end
     end

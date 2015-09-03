@@ -117,6 +117,33 @@ describe Raven do
     context 'not given a block' do
       let(:options) { { :key => 'value' } }
 
+      def capture_in_separate_process
+        pipe_in, pipe_out = IO.pipe
+
+        fork do
+          pipe_in.close
+          described_class.capture(options)
+
+          allow(Raven).to receive(:capture_exception) do |exception, options|
+            pipe_out.puts exception.message
+          end
+
+          # silence process
+          $stderr.reopen('/dev/null', 'w')
+          $stdout.reopen('/dev/null', 'w')
+
+          raise 'test error'
+          exit
+        end
+
+        pipe_out.close
+        captured_messages = pipe_in.read
+        pipe_in.close
+
+        # sometimes the at_exit hook was registered multiple times
+        captured_messages.split("\n").last
+      end
+
       it 'does not yield' do
         # As there is no yield matcher that does not require a probe (e.g. this
         # is not valid: expect { |b| described_class.capture }.to_not yield_control),
@@ -125,9 +152,10 @@ describe Raven do
         expect { described_class.capture }.not_to raise_error
       end
 
-      it 'installs an at exit hook' do
-        expect(described_class).to receive(:install_at_exit_hook).with(options)
-        described_class.capture(options)
+      it 'installs an at exit hook that will capture exceptions' do
+        skip('fork not supported in jruby') if RUBY_PLATFORM == 'java'
+        captured_message = capture_in_separate_process { raise 'test error' }
+        expect(captured_message).to eq('test error')
       end
     end
   end
