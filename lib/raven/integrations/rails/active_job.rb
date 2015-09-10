@@ -7,7 +7,14 @@ module Raven
             # Do not capture exceptions when using Sidekiq so we don't capture
             # The same exception twice.
             unless self.class.queue_adapter.to_s == 'ActiveJob::QueueAdapters::SidekiqAdapter'
-              Raven.capture_exception(exception, :extra => { :active_job => self.class.name })
+              Raven.capture_exception(exception, :extra => {
+                :active_job => self.class.name,
+                :arguments => arguments,
+                :scheduled_at => scheduled_at,
+                :job_id => job_id,
+                :provider_job_id => provider_job_id,
+                :locale => locale,
+              })
               raise exception
             end
           end
