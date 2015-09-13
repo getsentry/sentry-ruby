@@ -21,6 +21,8 @@ if (major == 1 && minor < 9) || (major == 1 && minor == 9 && patch < 2)
 end
 
 module Raven
+  AVAILABLE_INTEGRATIONS = %w[delayed_job railties sidekiq rack rake]
+
   class << self
     # The client object is responsible for delivering formatted data to the Sentry server.
     # Must respond to #send. See Raven::Client.
@@ -201,21 +203,37 @@ module Raven
       self.context.rack_env = env
     end
 
-    # Injects various integrations
+    # Injects various integrations. Default behavior: inject all available integrations
     def inject
-      available_integrations = %w[delayed_job railties sidekiq rack rake]
-      integrations_to_load = available_integrations & Gem.loaded_specs.keys
+      inject_only(*Raven::AVAILABLE_INTEGRATIONS)
+    end
+
+    def inject_without(*exclude_integrations)
+      include_integrations = Raven::AVAILABLE_INTEGRATIONS - exclude_integrations.map(&:to_s)
+      inject_only(*include_integrations)
+    end
+
+    def inject_only(*only_integrations)
+      only_integrations = only_integrations.map(&:to_s)
+      integrations_to_load = Raven::AVAILABLE_INTEGRATIONS & only_integrations
+      not_found_integrations = only_integrations - integrations_to_load
+      if not_found_integrations.any?
+        self.logger.warn "Integrations do not exist: #{not_found_integrations.join ', '}"
+      end
+      integrations_to_load &= Gem.loaded_specs.keys
       # TODO(dcramer): integrations should have some additional checks baked-in
       # or we should break them out into their own repos. Specifically both the
       # rails and delayed_job checks are not always valid (i.e. Rails 2.3) and
       # https://github.com/getsentry/raven-ruby/issues/180
       integrations_to_load.each do |integration|
-        begin
-          require "raven/integrations/#{integration}"
-        rescue Exception => error
-          self.logger.warn "Unable to load raven/integrations/#{integration}: #{error}"
-        end
+        load_integration(integration)
       end
+    end
+
+    def load_integration(integration)
+      require "raven/integrations/#{integration}"
+    rescue Exception => error
+      self.logger.warn "Unable to load raven/integrations/#{integration}: #{error}"
     end
 
     # For cross-language compat
