@@ -132,13 +132,14 @@ describe Raven::Configuration do
 
   context 'configuration for sanitize fields' do
     it 'should union default sanitize fields with user-defined sanitize fields' do
-      fields = Raven::Processor::SanitizeData::DEFAULT_FIELDS | %w(test monkeybutt)
+      fields = Raven::Processor::SanitizeData::DEFAULT_FIELDS | %w(test monkeybutt foo(.*)?bar)
 
       subject.sanitize_fields = fields
       client = Raven::Client.new(subject)
       processor = Raven::Processor::SanitizeData.new(client)
+      expected_fields_re = /authorization|password|passwd|secret|ssn|social(.*)?sec|\btest\b|\bmonkeybutt\b|foo(.*)?bar/i
 
-      expect(processor.send(:fields_re)).to eq(/(#{fields.join('|')})/i)
+      expect(processor.send(:fields_re)).to eq(expected_fields_re)
     end
   end
 

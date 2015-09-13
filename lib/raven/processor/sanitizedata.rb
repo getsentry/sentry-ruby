@@ -5,6 +5,7 @@ module Raven
     INT_MASK = 0
     DEFAULT_FIELDS = %w(authorization password passwd secret ssn social(.*)?sec)
     CREDIT_CARD_RE = /^(?:\d[ -]*?){13,16}$/
+    REGEX_SPECIAL_CHARACTERS = %w(. $ ^ { [ ( | ) * + ?)
 
     attr_accessor :sanitize_fields, :sanitize_credit_cards
 
@@ -55,7 +56,17 @@ module Raven
     end
 
     def fields_re
-      @fields_re ||= /(#{(DEFAULT_FIELDS | sanitize_fields).join("|")})/i
+      @fields_re ||= /#{(DEFAULT_FIELDS | sanitize_fields).map do |f|
+        use_boundary?(f) ? "\\b#{f}\\b" : f
+      end.join("|")}/i
+    end
+
+    def use_boundary?(string)
+      !DEFAULT_FIELDS.include?(string) && !special_characters?(string)
+    end
+
+    def special_characters?(string)
+      REGEX_SPECIAL_CHARACTERS.select { |r| string.include?(r) }.any?
     end
 
     def parse_json_or_nil(string)
