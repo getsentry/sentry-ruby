@@ -1,3 +1,19 @@
+0.15.0
+------
+
+- Remove Certifi and use default Ruby SSL config [zanker, #352]
+- Support for ``fingerprint`` [dcramer]
+- Improved documentation and tests around various attributes [dcramer]
+- Allow configurable integrations [cthornton]
+- Prevent recursion with ``Exception.cause`` [dcramer, #357]
+- Use empty hash if false-y value [GeekOnCoffee, #354]
+- Correct some behavior with at_exit error capturing [kratob, #355]
+- Sanitize matches whole words [alyssa, #361]
+- Expose more debugging info to active_job integration [tonywok, #365]
+- Capture exceptions swallowed by rails [robertclancy, #343]
+- Sanitize the query string when the key is a symbol [jason-o-matic, #349]
+- Moved documentation to docs.getsentry.com [mitsuhiko]
+
 0.14.0
 ------
 
