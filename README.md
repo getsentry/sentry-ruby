@@ -47,7 +47,7 @@ end
 Full documentation and more information on advanced configuration, sending more information, scrubbing sensitive data, and more can be found on [the wiki](https://github.com/getsentry/raven-ruby/wiki).
 
 * [Documentation](https://github.com/getsentry/raven-ruby/wiki)
-* [Bug Tracker](http://github.com/getsentry/raven-ruby/issues>)
-* [Code](http://github.com/getsentry/raven-ruby>)
+* [Bug Tracker](https://github.com/getsentry/raven-ruby/issues>)
+* [Code](https://github.com/getsentry/raven-ruby>)
 * [Mailing List](https://groups.google.com/group/getsentry>)
 * [IRC](irc://irc.freenode.net/sentry>)  (irc.freenode.net, #sentry)
