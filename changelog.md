@@ -1,3 +1,8 @@
+0.15.1
+------
+
+- Fix ActiveJob support [greysteil, #367]
+
 0.15.0
 ------
 
