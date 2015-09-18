@@ -46,22 +46,6 @@ describe Raven::Rack do
     stack.call(env)
   end
 
-  it 'should capture rails errors when ActionDispatch::ShowExceptions is enabled' do
-    exception = build_exception
-    env = {}
-
-    expect(Raven::Rack).to receive(:capture_exception).with(exception, env)
-
-    app = lambda do |e|
-      e['action_dispatch.exception'] = exception
-      [200, {}, ['okay']]
-    end
-
-    stack = Raven::Rack.new(app)
-
-    stack.call(env)
-  end
-
   it 'should clear context after app is called' do
     Raven::Context.current.tags[:environment] = :test
 
@@ -102,7 +86,7 @@ describe Raven::Rack do
     end
 
     stack = Raven::Rack.new(Rack::Lint.new(app))
-    expect { stack.call(env) }.to_not raise_error(Rack::Lint::LintError)
+    expect { stack.call(env) }.to_not raise_error
   end
 
 end
