@@ -1,3 +1,8 @@
+0.15.2
+------
+
+- Reverted ActiveJob support due to conflicts [#368]
+
 0.15.1
 ------
 
