@@ -1,0 +1,35 @@
+{
+  "wizards": {
+    "ruby": {
+      "name": "Ruby",
+      "client_lib": "raven-ruby",
+      "is_framework": false,
+      "doc_link": "",
+      "snippets": [
+        "index#installation",
+        "index#configuration",
+        "index#reporting-failures"
+      ]
+    },
+    "ruby-rack": {
+      "name": "Rack",
+      "client_lib": "raven-ruby",
+      "is_framework": true,
+      "doc_link": "integrations/rack/",
+      "snippets": [
+        "index#installation",
+        "integrations/rack#rack-sinatra-etc"
+      ]
+    },
+    "ruby-rails": {
+      "name": "Rails",
+      "client_lib": "raven-ruby",
+      "is_framework": true,
+      "doc_link": "integrations/rails/",
+      "snippets": [
+        "index#installation",
+        "integrations/rails#ruby-on-rails"
+      ]
+    }
+  }
+}
