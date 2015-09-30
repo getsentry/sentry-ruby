@@ -24,7 +24,7 @@ using Bundler just add this to your ``Gemfile``:
 
     gem "sentry-raven"
 
-For other means of installation see :ref:`install`.
+For other means of installation see :doc:`install`.
 
 Configuration
 -------------
