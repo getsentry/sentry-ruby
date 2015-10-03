@@ -49,12 +49,6 @@ module Raven
       event
     end
 
-    def send(event)
-      Raven.logger.warn "DEPRECATION WARNING: Calling #send on a Client will be \
-        removed in Raven-Ruby 0.14! Use #send_event instead!"
-      send_event(event)
-    end
-
     private
 
     def configuration_allows_sending
