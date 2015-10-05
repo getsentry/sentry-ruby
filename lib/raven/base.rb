@@ -85,12 +85,6 @@ module Raven
       client.send_event(event)
     end
 
-    def send(event)
-      Raven.logger.warn "DEPRECATION WARNING: Calling #send on Raven::Base will be \
-        removed in Raven-Ruby 0.14! Use #send_event instead!"
-      client.send_event(event)
-    end
-
     # Capture and process any exceptions from the given block, or globally if
     # no block is given
     #
