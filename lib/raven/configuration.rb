@@ -127,6 +127,16 @@ module Raven
       self.sanitize_fields = []
       self.sanitize_credit_cards = true
       self.environments = []
+
+      self.release = ENV['HEROKU_SLUG_COMMIT']
+
+      if self.release.nil? || self.release.empty?
+        self.release = `git rev-parse --short HEAD`.strip rescue nil
+      end
+
+      if (self.release.nil? || self.release.empty?) && File.exists?('REVISION')
+        self.release = File.read('REVISION').strip
+      end
     end
 
     def server=(value)
