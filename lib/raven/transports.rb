@@ -2,8 +2,9 @@ require 'raven/error'
 
 module Raven
   module Transports
-    class Transport
+    class NonFatalConnectionError < StandardError; end
 
+    class Transport
       attr_accessor :configuration
 
       def initialize(configuration)

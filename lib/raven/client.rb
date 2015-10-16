@@ -23,12 +23,15 @@ module Raven
 
     def send_event(event)
       return false unless configuration_allows_sending
+      unsent_event = configuration.unsent_event
 
       # Convert to hash
       event = event.to_hash
 
       if !@state.should_try?
-        Raven.logger.error("Not sending event due to previous failure(s): #{get_log_message(event)}")
+        message = "Not sending event due to previous failure(s): #{get_log_message(event)}"
+        unsent_event.call(event, message)  if unsent_event.respond_to?(:call)
+        Raven.logger.error(message)
         return
       end
 
@@ -39,8 +42,12 @@ module Raven
       begin
         transport.send_event(generate_auth_header, encoded_data,
                        :content_type => content_type)
+      rescue Raven::Transports::NonFatalConnectionError => e
+        Raven.logger.warn(e.message)
+        unsent_event.call(event, e.message)  if unsent_event.respond_to?(:call)
       rescue => e
         failed_send(e, event)
+        unsent_event.call(event, e.message)  if unsent_event.respond_to?(:call)
         return
       end
 

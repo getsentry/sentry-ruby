@@ -15,7 +15,11 @@ module Raven
           req.headers['X-Sentry-Auth'] = auth_header
           req.body = data
         end
-        Raven.logger.warn "Error from Sentry server (#{response.status}): #{response.body}" unless response.status == 200
+
+        unless response.status == 200
+          raise Raven::Transports::NonFatalConnectionError, "Error from Sentry server (#{response.status}): #{response.body}"
+        end
+
         response
       end
 
