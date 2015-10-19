@@ -131,11 +131,11 @@ module Raven
       self.release = ENV['HEROKU_SLUG_COMMIT']
 
       if self.release.nil? || self.release.empty?
-        self.release = `git rev-parse --short HEAD`.strip rescue nil
+        self.release = File.read(File.join(Rails.root, 'REVISION')).strip rescue nil
       end
 
-      if (self.release.nil? || self.release.empty?) && File.exists?('REVISION')
-        self.release = File.read('REVISION').strip
+      if self.release.nil? || self.release.empty?
+        self.release = `git rev-parse --short HEAD`.strip rescue nil
       end
     end
 
