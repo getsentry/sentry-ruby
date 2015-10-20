@@ -12,27 +12,30 @@ module Delayed
 
           rescue Exception => exception
             # Log error to Sentry
+            extra = {
+              :delayed_job => {
+                :id          => job.id,
+                :priority    => job.priority,
+                :attempts    => job.attempts,
+                :handler     => job.handler,
+                :last_error  => job.last_error,
+                :run_at      => job.run_at,
+                :locked_at   => job.locked_at,
+                :locked_by   => job.locked_by,
+                :queue       => job.queue,
+                :created_at  => job.created_at
+                }
+            }
+            if job.respond_to?('payload_object') && job.payload_object.respond_to?('job_data')
+              extra.merge!(:active_job => job.payload_object.job_data)
+            end
             ::Raven.capture_exception(exception,
               :logger  => 'delayed_job',
               :tags    => {
                  :delayed_job_queue => job.queue,
                  :delayed_job_id => job.id
               },
-              :extra => {
-                  :delayed_job => {
-                      :id          => job.id,
-                      :priority    => job.priority,
-                      :attempts    => job.attempts,
-                      :handler     => job.handler,
-                      :last_error  => job.last_error,
-                      :run_at      => job.run_at,
-                      :locked_at   => job.locked_at,
-                      #failed_at  => job.failed_at,
-                      :locked_by   => job.locked_by,
-                      :queue       => job.queue,
-                      :created_at  => job.created_at
-                  }
-              })
+              :extra => extra)
 
             # Make sure we propagate the failure!
             raise exception
