@@ -101,13 +101,16 @@ module Raven
     # Sanitize values that look like credit card numbers
     attr_accessor :sanitize_credit_cards
 
-    IGNORE_DEFAULT = ['ActiveRecord::RecordNotFound',
-                      'ActionController::RoutingError',
-                      'ActionController::InvalidAuthenticityToken',
-                      'CGI::Session::CookieStore::TamperedWithCookie',
-                      'ActionController::UnknownAction',
-                      'AbstractController::ActionNotFound',
-                      'Mongoid::Errors::DocumentNotFound']
+    IGNORE_DEFAULT = [
+      'AbstractController::ActionNotFound',
+      'ActionController::InvalidAuthenticityToken',
+      'ActionController::RoutingError',
+      'ActionController::UnknownAction',
+      'ActiveRecord::RecordNotFound',
+      'CGI::Session::CookieStore::TamperedWithCookie',
+      'Mongoid::Errors::DocumentNotFound',
+      'Sinatra::NotFound',
+    ]
 
     def initialize
       self.server = ENV['SENTRY_DSN'] if ENV['SENTRY_DSN']
