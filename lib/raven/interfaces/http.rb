@@ -24,9 +24,16 @@ module Raven
       self.url = req.scheme && req.url.split('?').first
       self.method = req.request_method
       self.query_string = req.query_string
+      server_protocol = env['SERVER_PROTOCOL']
       env.each_pair do |key, value|
         key = key.to_s #rack env can contain symbols
         next unless key.upcase == key # Non-upper case stuff isn't either
+        # Rack adds in an incorrect HTTP_VERSION key, which causes downstream
+        # to think this is a Version header. Instead, this is mapped to
+        # env['SERVER_PROTOCOL']. But we don't want to ignore a valid header
+        # if the request has legitimately sent a Version header themselves.
+        # See: https://github.com/rack/rack/blob/028438f/lib/rack/handler/cgi.rb#L29
+        next if key == 'HTTP_VERSION' and value == server_protocol
         if key.start_with?('HTTP_')
           # Header
           http_key = key[5..key.length - 1].split('_').map { |s| s.capitalize }.join('-')
