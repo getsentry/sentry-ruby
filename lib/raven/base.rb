@@ -14,6 +14,7 @@ require 'raven/processor'
 require 'raven/processor/sanitizedata'
 require 'raven/processor/removecircularreferences'
 require 'raven/processor/utf8conversion'
+require 'raven/friendly_thread_queue'
 
 major, minor, patch = RUBY_VERSION.split('.').map(&:to_i)
 if (major == 1 && minor < 9) || (major == 1 && minor == 9 && patch < 2)
