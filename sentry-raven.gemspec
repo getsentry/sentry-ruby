@@ -14,6 +14,7 @@ Gem::Specification.new do |gem|
   gem.extra_rdoc_files = ["README.md", "LICENSE"]
   gem.files = Dir['lib/**/*']
   gem.license = 'Apache-2.0'
+  gem.required_ruby_version = '>= 1.8.7'
 
   gem.add_dependency "faraday", ">= 0.7.6"
 
