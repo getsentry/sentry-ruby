@@ -3,6 +3,8 @@ Ruby on Rails
 
 In Rails, all uncaught exceptions will be automatically reported.
 
+We support Rails 3 and newer.
+
 You'll still want to ensure you've disabled anything that would prevent
 errors from being propagated to the ``Raven::Rack`` middleware, ``like
 ActionDispatch::ShowExceptions``:
