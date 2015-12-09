@@ -2,7 +2,6 @@ require 'raven/interfaces'
 
 module Raven
   class HttpInterface < Interface
-
     name 'request'
     attr_accessor :url
     attr_accessor :method

@@ -104,5 +104,4 @@ describe Raven::Rack do
     stack = Raven::Rack.new(Rack::Lint.new(app))
     expect { stack.call(env) }.to_not raise_error
   end
-
 end

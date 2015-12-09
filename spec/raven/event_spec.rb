@@ -57,7 +57,6 @@ describe Raven::Event do
     it 'has platform' do
       expect(hash[:platform]).to eq('ruby')
     end
-
   end
 
   context 'user context specified' do
@@ -653,6 +652,5 @@ describe Raven::Event do
     it 'accepts a logger' do
       expect(Raven::Event.capture_exception(exception, :logger => 'root').logger).to eq('root')
     end
-
   end
 end

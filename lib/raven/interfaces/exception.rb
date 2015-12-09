@@ -2,7 +2,6 @@ require 'raven/interfaces'
 
 module Raven
   class ExceptionInterface < Interface
-
     name 'exception'
     attr_accessor :values
 

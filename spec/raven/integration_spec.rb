@@ -1,9 +1,7 @@
 require 'spec_helper'
 
 describe "Integration tests" do
-
   example "posting an exception" do
-
     stubs = Faraday::Adapter::Test::Stubs.new do |stub|
       stub.post('sentry/api/42/store/') { [200, {}, 'ok'] }
     end
@@ -25,7 +23,6 @@ describe "Integration tests" do
   end
 
   example "posting an exception to a prefixed DSN" do
-
     stubs = Faraday::Adapter::Test::Stubs.new do |stub|
       stub.post('/prefix/sentry/api/42/store/') { [200, {}, 'ok'] }
     end
@@ -43,7 +40,6 @@ describe "Integration tests" do
   end
 
   example "hitting quota limit shouldn't swallow exception" do
-
     stubs = Faraday::Adapter::Test::Stubs.new do |stub|
       stub.post('sentry/api/42/store/') { [403, {}, 'Creation of this event was blocked'] }
     end

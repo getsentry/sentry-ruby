@@ -3,7 +3,6 @@ require 'uri'
 
 module Raven
   class Configuration
-
     # Simple server string (setter provided below)
     attr_reader :server
 

@@ -3,7 +3,6 @@ require 'raven/error'
 module Raven
   module Transports
     class Transport
-
       attr_accessor :configuration
 
       def initialize(configuration)

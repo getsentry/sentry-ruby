@@ -1,7 +1,6 @@
 require 'spec_helper'
 
 describe "CLI tests" do
-
   example "posting an exception" do
     stubs = Faraday::Adapter::Test::Stubs.new do |stub|
       stub.post('sentry/api/42/store/') { [200, {}, 'ok'] }
@@ -20,7 +19,6 @@ describe "CLI tests" do
   end
 
   example "posting an exception to a prefixed DSN" do
-
     stubs = Faraday::Adapter::Test::Stubs.new do |stub|
       stub.post('/prefix/sentry/api/42/store/') { [200, {}, 'ok'] }
     end

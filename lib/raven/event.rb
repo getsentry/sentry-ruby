@@ -9,7 +9,6 @@ require 'raven/linecache'
 module Raven
 
   class Event
-
     LOG_LEVELS = {
       "debug" => 10,
       "info" => 20,
