@@ -33,7 +33,7 @@ case ARGV[0]
     if !dsn
       puts "Usage: raven test <dsn>"
     else
-      Raven::CLI::test(dsn)
+      Raven::CLI.test(dsn)
     end
   else
     puts parser

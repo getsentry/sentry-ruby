@@ -153,12 +153,6 @@ Style/ClassAndModuleChildren:
     - 'lib/raven/processor/utf8conversion.rb'
     - 'spec/raven/event_spec.rb'
 
-# Offense count: 2
-# Cop supports --auto-correct.
-Style/ColonMethodCall:
-  Exclude:
-    - 'bin/raven'
-    - 'lib/raven/processor/sanitizedata.rb'
 
 # Offense count: 37
 # Configuration parameters: Exclude.

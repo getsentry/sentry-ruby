@@ -45,7 +45,7 @@ module Raven
     private
 
     def sanitize_query_string(query_string)
-      query_hash = CGI::parse(query_string)
+      query_hash = CGI.parse(query_string)
       processed_query_hash = process(query_hash)
       URI.encode_www_form(processed_query_hash)
     end
