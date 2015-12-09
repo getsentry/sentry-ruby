@@ -554,18 +554,6 @@ Style/SpaceAfterComma:
     - 'lib/raven/processor/sanitizedata.rb'
     - 'spec/raven/processors/sanitizedata_processor_spec.rb'
 
-# Offense count: 1
-# Cop supports --auto-correct.
-Style/SpaceAfterNot:
-  Exclude:
-    - 'lib/raven/okjson.rb'
-
-# Offense count: 1
-# Cop supports --auto-correct.
-# Configuration parameters: EnforcedStyle, SupportedStyles.
-Style/SpaceAroundEqualsInParameterDefault:
-  Enabled: false
-
 # Offense count: 72
 # Cop supports --auto-correct.
 # Configuration parameters: MultiSpaceAllowedForOperators.
@@ -585,12 +573,6 @@ Style/SpaceAroundOperators:
 # Configuration parameters: EnforcedStyle, SupportedStyles.
 Style/SpaceBeforeBlockBraces:
   Enabled: false
-
-# Offense count: 1
-# Cop supports --auto-correct.
-Style/SpaceBeforeComment:
-  Exclude:
-    - 'lib/raven/transports.rb'
 
 # Offense count: 17
 # Cop supports --auto-correct.
@@ -635,14 +617,6 @@ Style/SymbolProc:
     - 'lib/raven/interfaces/http.rb'
     - 'lib/raven/interfaces/stack_trace.rb'
     - 'spec/raven/raven_spec.rb'
-
-# Offense count: 2
-# Cop supports --auto-correct.
-# Configuration parameters: EnforcedStyle, SupportedStyles.
-Style/TrailingBlankLines:
-  Exclude:
-    - 'bin/raven'
-    - 'lib/raven/integrations/rake.rb'
 
 # Offense count: 33
 # Cop supports --auto-correct.
