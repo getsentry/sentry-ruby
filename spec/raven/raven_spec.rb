@@ -164,7 +164,7 @@ describe Raven do
     let(:exception) { build_exception }
 
     def ivars(object)
-      object.instance_variables.map { |name| name.to_s }
+      object.instance_variables.map(&:to_s)
     end
 
     it 'adds an annotation to the exception' do

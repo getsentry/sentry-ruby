@@ -209,7 +209,7 @@ module Raven
               evt.get_file_context(frame.abs_path, frame.lineno, evt.configuration[:context_lines])
           end
         end
-      end.select { |f| f.filename }
+      end.select(&:filename)
 
       evt.culprit = evt.get_culprit(int.frames)
     end
@@ -227,7 +227,7 @@ module Raven
     end
 
     def get_culprit(frames)
-      lastframe = frames.reverse.find { |f| f.in_app } || frames.last
+      lastframe = frames.reverse.find(&:in_app) || frames.last
       "#{lastframe.filename} in #{lastframe.function} at line #{lastframe.lineno}" if lastframe
     end
 

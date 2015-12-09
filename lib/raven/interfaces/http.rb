@@ -36,7 +36,7 @@ module Raven
         next if key == 'HTTP_VERSION' and value == server_protocol
         if key.start_with?('HTTP_')
           # Header
-          http_key = key[5..key.length - 1].split('_').map { |s| s.capitalize }.join('-')
+          http_key = key[5..key.length - 1].split('_').map(&:capitalize).join('-')
           self.headers[http_key] = value.to_s
         elsif %w(CONTENT_TYPE CONTENT_LENGTH).include? key
           self.headers[key.capitalize] = value.to_s

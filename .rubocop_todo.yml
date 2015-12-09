@@ -596,17 +596,6 @@ Style/SpecialGlobalVars:
 Style/StringLiterals:
   Enabled: false
 
-# Offense count: 6
-# Cop supports --auto-correct.
-# Configuration parameters: IgnoredMethods.
-Style/SymbolProc:
-  Exclude:
-    - 'lib/raven/backtrace.rb'
-    - 'lib/raven/event.rb'
-    - 'lib/raven/interfaces/http.rb'
-    - 'lib/raven/interfaces/stack_trace.rb'
-    - 'spec/raven/raven_spec.rb'
-
 # Offense count: 33
 # Cop supports --auto-correct.
 # Configuration parameters: EnforcedStyleForMultiline, SupportedStyles.
