@@ -7,7 +7,7 @@ module Raven
 
       def is_valid_file(path)
         lines = getlines(path)
-        return lines != nil
+        return !lines.nil?
       end
 
       def getlines(path)

@@ -376,13 +376,6 @@ Style/NilComparison:
     - 'lib/raven/linecache.rb'
     - 'lib/raven/okjson.rb'
 
-# Offense count: 1
-# Cop supports --auto-correct.
-# Configuration parameters: IncludeSemanticChanges.
-Style/NonNilCheck:
-  Exclude:
-    - 'lib/raven/linecache.rb'
-
 # Offense count: 5
 # Cop supports --auto-correct.
 Style/NumericLiterals:
