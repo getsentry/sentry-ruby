@@ -85,6 +85,9 @@ module Raven
     # Optional Proc to be used to send events asynchronously.
     attr_reader :async
 
+    # Optional Proc to called if an event cannot be sent to Sentry
+    attr_reader :unsent_event
+
     # Exceptions from these directories to be ignored
     attr_accessor :app_dirs_pattern
 
@@ -126,6 +129,7 @@ module Raven
       self.proxy = nil
       self.tags = {}
       self.async = false
+      self.unsent_event = false
       self.catch_debugged_exceptions = true
       self.sanitize_fields = []
       self.sanitize_credit_cards = true
@@ -177,6 +181,13 @@ module Raven
     end
 
     alias_method :async?, :async
+
+    def unsent_event=(value)
+      raise ArgumentError.new("unsent_event must be callable (or false to disable)") unless (value == false || value.respond_to?(:call))
+      @unsent_event = value
+    end
+
+    alias_method :unsent_event?, :unsent_event
 
     # Allows config options to be read like a hash
     #

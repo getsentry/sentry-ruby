@@ -46,6 +46,11 @@ describe Raven::Configuration do
       expect(subject[:async?]).to eq(false)
     end
 
+    it 'should not have unsent_event' do
+      expect(subject[:unsent_event]).to eq(false)
+      expect(subject[:unsent_event?]).to eq(false)
+    end
+
     it 'should catch_debugged_exceptions' do
       expect(subject[:catch_debugged_exceptions]).to eq(true)
     end
@@ -110,6 +115,20 @@ describe Raven::Configuration do
       expect { subject.async = lambda {} }.to_not raise_error
       expect { subject.async = false }.to_not raise_error
       expect { subject.async = true }.to raise_error(ArgumentError)
+    end
+  end
+
+  context 'configuring for server error callback' do
+    it 'should be configurable to send server errors to a callback' do
+      subject.unsent_event = lambda { |_e| :ok }
+      expect(subject.unsent_event.respond_to?(:call)).to eq(true)
+    end
+
+    it 'should raise when setting unsent_event to anything other than callable or false' do
+      expect { subject.unsent_event = Proc.new {} }.to_not raise_error
+      expect { subject.unsent_event = lambda {} }.to_not raise_error
+      expect { subject.unsent_event = false }.to_not raise_error
+      expect { subject.unsent_event = true }.to raise_error(ArgumentError)
     end
   end
 
