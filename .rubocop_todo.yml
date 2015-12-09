@@ -89,11 +89,6 @@ Metrics/PerceivedComplexity:
 Style/AccessModifierIndentation:
   Enabled: false
 
-# Offense count: 2
-Style/AccessorMethodName:
-  Exclude:
-    - 'lib/raven/event.rb'
-
 # Offense count: 9
 # Cop supports --auto-correct.
 Style/Alias:

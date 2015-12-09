@@ -39,9 +39,9 @@ module Raven
       @level         = :error
       @logger        = ''
       @culprit       = nil
-      @server_name   = @configuration.server_name || get_hostname
+      @server_name   = @configuration.server_name || resolve_hostname
       @release       = @configuration.release
-      @modules       = get_modules if @configuration.send_modules
+      @modules       = list_gem_specs if @configuration.send_modules
       @user          = {}
       @extra         = {}
       @tags          = {}
@@ -68,13 +68,13 @@ module Raven
       @level      = LOG_LEVELS[@level.to_s.downcase] if @level.is_a?(String) || @level.is_a?(Symbol)
     end
 
-    def get_hostname
+    def resolve_hostname
       # Try to resolve the hostname to an FQDN, but fall back to whatever the load name is
       hostname = Socket.gethostname
       Socket.gethostbyname(hostname).first rescue hostname
     end
 
-    def get_modules
+    def list_gem_specs
       # Older versions of Rubygems don't support iterating over all specs
       Hash[Gem::Specification.map { |spec| [spec.name, spec.version.to_s] }] if Gem::Specification.respond_to?(:map)
     end
