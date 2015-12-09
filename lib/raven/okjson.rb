@@ -289,7 +289,7 @@ private
 
   def strtok(s)
     m = /"([^"\\]|\\["\/\\bfnrt]|\\u[0-9a-fA-F]{4})*"/.match(s)
-    if ! m
+    if !m
       raise Error, "invalid string literal at #{abbrev(s)}"
     end
     [:str, m[0], unquote(m[0])]
