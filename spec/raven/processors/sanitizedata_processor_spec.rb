@@ -206,7 +206,6 @@ describe Raven::Processor::SanitizeData do
     end
 
     it 'handles url encoded values' do
-
     end
   end
 end

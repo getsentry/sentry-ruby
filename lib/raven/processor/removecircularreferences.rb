@@ -1,6 +1,5 @@
 module Raven
   class Processor::RemoveCircularReferences < Processor
-
     def process(v, visited = [])
       return "(...)" if visited.include?(v.__id__)
       visited += [v.__id__]
@@ -12,6 +11,5 @@ module Raven
         v
       end
     end
-
   end
 end
