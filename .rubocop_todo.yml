@@ -11,12 +11,6 @@ Lint/AmbiguousOperator:
   Exclude:
     - 'spec/raven/raven_spec.rb'
 
-# Offense count: 2
-# Cop supports --auto-correct.
-# Configuration parameters: AlignWith, SupportedStyles, AutoCorrect.
-Lint/EndAlignment:
-  Enabled: false
-
 # Offense count: 6
 Lint/RescueException:
   Exclude:

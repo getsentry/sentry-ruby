@@ -184,8 +184,8 @@ module Raven
             int.value = exc.to_s
             int.module = exc.class.to_s.split('::')[0...-1].join('::')
 
-            int.stacktrace = if exc.backtrace
-              StacktraceInterface.new do |stacktrace|
+            if exc.backtrace
+              int.stacktrace = StacktraceInterface.new do |stacktrace|
                 stacktrace_interface_from(stacktrace, evt, exc.backtrace)
               end
             end
