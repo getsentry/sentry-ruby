@@ -42,5 +42,4 @@ describe Raven::Processor::RemoveStacktrace do
       expect(result[:exception][:values][2][:stacktrace]).to eq(nil)
     end
   end
-
 end

@@ -1,7 +1,6 @@
 require 'spec_helper'
 
 describe Raven::OkJson do
-
   ['foo', :foo].each do |obj|
     it "works with #{obj.class} keys" do
       expect(Raven::OkJson.encode(obj => 'bar')).to eq '{"foo":"bar"}'
@@ -38,5 +37,4 @@ describe Raven::OkJson do
     expect{Raven::OkJson.decode("{")}.to raise_error(Raven::OkJson::Error)
     expect{Raven::OkJson.decode("[")}.to raise_error(Raven::OkJson::Error)
   end
-
 end

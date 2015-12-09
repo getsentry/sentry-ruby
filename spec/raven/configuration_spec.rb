@@ -142,5 +142,4 @@ describe Raven::Configuration do
       expect(processor.send(:fields_re)).to eq(expected_fields_re)
     end
   end
-
 end
