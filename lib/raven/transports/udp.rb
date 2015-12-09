@@ -22,7 +22,7 @@ module Raven
 
       def verify_configuration
         super
-        raise Error.new('No port specified') unless self.configuration.port
+        fail Error.new('No port specified') unless self.configuration.port
       end
     end
   end

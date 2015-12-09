@@ -50,7 +50,7 @@ module URI
   #
   # See URI.encode_www_form_component, URI.decode_www_form
   def self.decode_www_form_component(str, enc = nil)
-    raise ArgumentError, "invalid %-encoding (#{str})" unless /\A(?:%[0-9a-fA-F]{2}|[^%])*\z/ =~ str
+    fail ArgumentError, "invalid %-encoding (#{str})" unless /\A(?:%[0-9a-fA-F]{2}|[^%])*\z/ =~ str
     str.gsub(/\+|%[0-9a-fA-F]{2}/) {|m| TBLDECWWWCOMP_[m]}
   end
 

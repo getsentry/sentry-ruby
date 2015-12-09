@@ -10,7 +10,7 @@ module Raven
       end
 
       def send_event #(auth_header, data, options = {})
-        raise NotImplementedError.new('Abstract method not implemented')
+        fail NotImplementedError.new('Abstract method not implemented')
       end
 
       protected

@@ -389,23 +389,6 @@ Style/Semicolon:
     - 'lib/raven/processor/removecircularreferences.rb'
     - 'lib/raven/processor/sanitizedata.rb'
 
-# Offense count: 47
-# Cop supports --auto-correct.
-# Configuration parameters: EnforcedStyle, SupportedStyles.
-Style/SignalException:
-  Exclude:
-    - 'lib/raven/backports/uri.rb'
-    - 'lib/raven/client.rb'
-    - 'lib/raven/configuration.rb'
-    - 'lib/raven/event.rb'
-    - 'lib/raven/integrations/rails/active_job.rb'
-    - 'lib/raven/processor.rb'
-    - 'lib/raven/transports.rb'
-    - 'lib/raven/transports/udp.rb'
-    - 'spec/raven/event_spec.rb'
-    - 'spec/raven/integrations/rack_spec.rb'
-    - 'spec/raven/raven_spec.rb'
-
 # Offense count: 1
 # Configuration parameters: Methods.
 Style/SingleLineBlockParams:

@@ -5,7 +5,7 @@ module Raven
     end
 
     def process(data)
-      raise NotImplementedError
+      fail NotImplementedError
     end
   end
 end

@@ -21,7 +21,7 @@ module Raven
               end
 
               Raven.capture_exception(exception, :extra => active_job_details)
-              raise exception
+              fail exception
             end
           end
         end

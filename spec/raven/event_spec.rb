@@ -478,7 +478,7 @@ describe Raven::Event do
       context 'when running under jRuby' do
         let(:exception) do
           begin
-            raise java.lang.OutOfMemoryError.new("A Java error")
+            fail java.lang.OutOfMemoryError.new("A Java error")
           rescue Exception => e
             return e
           end

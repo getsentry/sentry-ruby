@@ -8,7 +8,7 @@ describe Raven::Rack do
 
     expect(Raven::Rack).to receive(:capture_exception).with(exception, env)
 
-    app = lambda { |_e| raise exception }
+    app = lambda { |_e| fail exception }
 
     stack = Raven::Rack.new(app)
     expect { stack.call(env) }.to raise_error
