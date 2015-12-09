@@ -75,7 +75,7 @@ describe Raven::Processor::SanitizeData do
   it 'should filter json embedded in a ruby object' do
     data_with_embedded_json = {
       'data' => {
-        'json' => %w(foo, bar).to_json,
+        'json' => %w(foo bar).to_json,
         'json_hash' => {'foo' => 'bar'}.to_json,
         'sensitive' => {'password' => 'secret'}.to_json
         }
@@ -83,7 +83,7 @@ describe Raven::Processor::SanitizeData do
 
     result = @processor.process(data_with_embedded_json)
 
-    expect(JSON.parse(result["data"]["json"])).to eq(%w(foo, bar))
+    expect(JSON.parse(result["data"]["json"])).to eq(%w(foo bar))
     expect(JSON.parse(result["data"]["json_hash"])).to eq({'foo' => 'bar'})
     expect(JSON.parse(result["data"]["sensitive"])).to eq({'password' => Raven::Processor::SanitizeData::STRING_MASK})
   end
