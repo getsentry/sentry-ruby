@@ -383,13 +383,6 @@ Style/ParallelAssignment:
     - 'lib/raven/interfaces/stack_trace.rb'
     - 'lib/raven/okjson.rb'
 
-# Offense count: 1
-# Cop supports --auto-correct.
-# Configuration parameters: AllowSafeAssignment.
-Style/ParenthesesAroundCondition:
-  Exclude:
-    - 'lib/raven/configuration.rb'
-
 # Offense count: 5
 # Cop supports --auto-correct.
 # Configuration parameters: PreferredDelimiters.

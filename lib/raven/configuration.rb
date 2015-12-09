@@ -172,7 +172,7 @@ module Raven
     alias_method :dsn=, :server=
 
     def async=(value)
-      raise ArgumentError.new("async must be callable (or false to disable)") unless (value == false || value.respond_to?(:call))
+      raise ArgumentError.new("async must be callable (or false to disable)") unless value == false || value.respond_to?(:call)
       @async = value
     end
 
