@@ -522,7 +522,7 @@ describe Raven::Event do
         end
 
         it 'marks filename and in_app correctly' do
-        frames = hash[:exception][:values][0][:stacktrace][:frames]
+          frames = hash[:exception][:values][0][:stacktrace][:frames]
           expect(frames[0][:lineno]).to eq(10)
           expect(frames[0][:function]).to eq("synchronize")
           expect(frames[0][:filename]).to eq("<internal:prelude>")
