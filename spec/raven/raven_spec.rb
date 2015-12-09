@@ -105,7 +105,7 @@ describe Raven do
   describe '.capture' do
     context 'given a block' do
       it 'yields to the given block' do
-        expect { |b| described_class.capture &b }.to yield_with_no_args
+        expect { |b| described_class.capture(&b) }.to yield_with_no_args
       end
 
       it 'does not install an exit_hook' do
