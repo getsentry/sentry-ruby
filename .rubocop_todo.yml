@@ -641,14 +641,6 @@ Style/SymbolProc:
     - 'lib/raven/interfaces/stack_trace.rb'
     - 'spec/raven/raven_spec.rb'
 
-# Offense count: 2
-# Cop supports --auto-correct.
-# Configuration parameters: EnforcedStyle, SupportedStyles.
-Style/TrailingBlankLines:
-  Exclude:
-    - 'bin/raven'
-    - 'lib/raven/integrations/rake.rb'
-
 # Offense count: 33
 # Cop supports --auto-correct.
 # Configuration parameters: EnforcedStyleForMultiline, SupportedStyles.
