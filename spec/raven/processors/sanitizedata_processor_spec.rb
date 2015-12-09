@@ -84,8 +84,8 @@ describe Raven::Processor::SanitizeData do
     result = @processor.process(data_with_embedded_json)
 
     expect(JSON.parse(result["data"]["json"])).to eq(%w(foo bar))
-    expect(JSON.parse(result["data"]["json_hash"])).to eq({'foo' => 'bar'})
-    expect(JSON.parse(result["data"]["sensitive"])).to eq({'password' => Raven::Processor::SanitizeData::STRING_MASK})
+    expect(JSON.parse(result["data"]["json_hash"])).to eq('foo' => 'bar')
+    expect(JSON.parse(result["data"]["sensitive"])).to eq('password' => Raven::Processor::SanitizeData::STRING_MASK)
   end
 
   it 'should not fail when json is invalid' do
