@@ -84,7 +84,7 @@ module Raven
         when 'http', 'https'
           Transports::HTTP.new(configuration)
         else
-          raise Error, "Unknown transport scheme '#{self.configuration.scheme}'"
+          fail Error, "Unknown transport scheme '#{self.configuration.scheme}'"
         end
     end
 

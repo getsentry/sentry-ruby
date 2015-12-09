@@ -132,7 +132,7 @@ describe Raven do
           $stderr.reopen('/dev/null', 'w')
           $stdout.reopen('/dev/null', 'w')
 
-          raise 'test error'
+          fail 'test error'
           exit
         end
 
@@ -154,7 +154,7 @@ describe Raven do
 
       it 'installs an at exit hook that will capture exceptions' do
         skip('fork not supported in jruby') if RUBY_PLATFORM == 'java'
-        captured_message = capture_in_separate_process { raise 'test error' }
+        captured_message = capture_in_separate_process { fail 'test error' }
         expect(captured_message).to eq('test error')
       end
     end

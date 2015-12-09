@@ -165,14 +165,14 @@ module Raven
     end
 
     def encoding=(encoding)
-      raise Error.new('Unsupported encoding') unless %w(gzip json).include? encoding
+      fail Error.new('Unsupported encoding') unless %w(gzip json).include? encoding
       @encoding = encoding
     end
 
     alias_method :dsn=, :server=
 
     def async=(value)
-      raise ArgumentError.new("async must be callable (or false to disable)") unless value == false || value.respond_to?(:call)
+      fail ArgumentError.new("async must be callable (or false to disable)") unless value == false || value.respond_to?(:call)
       @async = value
     end
 
@@ -198,10 +198,10 @@ module Raven
     end
 
     def verify!
-      raise Error.new('No server specified') unless server
-      raise Error.new('No public key specified') unless public_key
-      raise Error.new('No secret key specified') unless secret_key
-      raise Error.new('No project ID specified') unless project_id
+      fail Error.new('No server specified') unless server
+      fail Error.new('No public key specified') unless public_key
+      fail Error.new('No secret key specified') unless secret_key
+      fail Error.new('No project ID specified') unless project_id
     end
   end
 end
