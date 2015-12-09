@@ -56,7 +56,7 @@ module Raven
         end
       end
 
-      init.each_pair  { |key, val| instance_variable_set('@' + key.to_s, val) }
+      init.each_pair { |key, val| instance_variable_set('@' + key.to_s, val) }
 
       @user = @context.user.merge(@user)
       @extra = @context.extra.merge(@extra)

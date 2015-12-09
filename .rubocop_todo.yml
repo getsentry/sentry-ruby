@@ -261,10 +261,10 @@ Style/EmptyLinesAroundModuleBody:
 # Offense count: 2
 # Cop supports --auto-correct.
 # Configuration parameters: AllowForAlignment.
-Style/ExtraSpacing:
-  Exclude:
-    - 'lib/raven/event.rb'
-    - 'lib/raven/processor/sanitizedata.rb'
+# Style/ExtraSpacing:
+#   Exclude:
+#     - 'lib/raven/event.rb'
+#     - 'lib/raven/processor/sanitizedata.rb'
 
 # Offense count: 2
 # Configuration parameters: Exclude.
