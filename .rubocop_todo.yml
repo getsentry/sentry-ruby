@@ -77,7 +77,7 @@ Metrics/MethodLength:
 # Offense count: 2
 # Configuration parameters: CountComments.
 Metrics/ModuleLength:
-  Max: 413
+  Max: 419
 
 # Offense count: 14
 Metrics/PerceivedComplexity:
@@ -535,7 +535,6 @@ Style/SingleLineBlockParams:
 # Configuration parameters: AllowIfMethodIsEmpty.
 Style/SingleLineMethods:
   Exclude:
-    - 'lib/raven/okjson.rb'
 
 # Offense count: 5
 # Cop supports --auto-correct.
