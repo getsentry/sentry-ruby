@@ -26,22 +26,6 @@ Lint/UnreachableCode:
   Exclude:
     - 'spec/raven/raven_spec.rb'
 
-# Offense count: 4
-# Cop supports --auto-correct.
-# Configuration parameters: IgnoreEmptyBlocks.
-Lint/UnusedBlockArgument:
-  Exclude:
-    - 'spec/raven/integrations/rack_spec.rb'
-    - 'spec/raven/raven_spec.rb'
-
-# Offense count: 2
-# Cop supports --auto-correct.
-# Configuration parameters: AllowUnusedKeywordArguments, IgnoreEmptyMethods.
-Lint/UnusedMethodArgument:
-  Exclude:
-    - 'lib/raven/backports/uri.rb'
-    - 'lib/raven/processor.rb'
-
 # Offense count: 29
 Metrics/AbcSize:
   Max: 73

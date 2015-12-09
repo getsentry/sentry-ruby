@@ -97,7 +97,7 @@ describe Raven::Rack do
   it 'should pass rack/lint' do
     env = Rack::MockRequest.env_for("/test")
 
-    app = lambda do |e|
+    app = proc do
       [200, {'Content-Type' => 'text/plain'}, ['OK']]
     end
 
