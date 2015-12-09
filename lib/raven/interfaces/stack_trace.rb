@@ -2,7 +2,6 @@ require 'raven/interfaces'
 
 module Raven
   class StacktraceInterface < Interface
-
     name 'stacktrace'
     attr_accessor :frames
 

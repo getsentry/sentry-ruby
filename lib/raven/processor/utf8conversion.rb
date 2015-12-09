@@ -1,6 +1,5 @@
 module Raven
   class Processor::UTF8Conversion < Processor
-
     def process(value)
       if value.is_a? Array
         value.map { |v| process v }

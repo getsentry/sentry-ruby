@@ -118,7 +118,6 @@ module Raven
       e.backtrace[0..10].each { |line| Raven.logger.error(line) }
       Raven.logger.error("Failed to submit event: #{get_log_message(event)}")
     end
-
   end
 
   class ClientState

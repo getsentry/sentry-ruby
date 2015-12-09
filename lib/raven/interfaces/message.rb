@@ -2,7 +2,6 @@ require 'raven/interfaces'
 
 module Raven
   class MessageInterface < Interface
-
     name 'sentry.interfaces.Message'
     attr_accessor :message
     attr_accessor :params

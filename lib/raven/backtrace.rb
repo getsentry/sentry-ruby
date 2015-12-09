@@ -4,10 +4,8 @@ module Raven
 
   # Front end to parsing the backtrace for each notice
   class Backtrace
-
     # Handles backtrace parsing line by line
     class Line
-
       # regexp (optionnally allowing leading X: for windows support)
       RUBY_INPUT_FORMAT = %r{^((?:[a-zA-Z]:)?[^:]+|<.*>):(\d+)(?::in `([^']+)')?$}.freeze
 

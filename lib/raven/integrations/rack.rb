@@ -21,7 +21,6 @@ module Raven
   #
   # Use a standard Raven.configure call to configure your server credentials.
   class Rack
-
     def self.capture_type(exception, env, options = {})
       if env['raven.requested_at']
         options[:time_spent] = Time.now - env['raven.requested_at']

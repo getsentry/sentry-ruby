@@ -204,26 +204,6 @@ Style/EmptyLinesAroundBlockBody:
     - 'spec/raven/processors/removestacktrace_spec.rb'
     - 'spec/raven/processors/sanitizedata_processor_spec.rb'
 
-# Offense count: 17
-# Cop supports --auto-correct.
-# Configuration parameters: EnforcedStyle, SupportedStyles.
-Style/EmptyLinesAroundClassBody:
-  Exclude:
-    - 'lib/raven/backtrace.rb'
-    - 'lib/raven/client.rb'
-    - 'lib/raven/configuration.rb'
-    - 'lib/raven/event.rb'
-    - 'lib/raven/integrations/rack.rb'
-    - 'lib/raven/interfaces/exception.rb'
-    - 'lib/raven/interfaces/http.rb'
-    - 'lib/raven/interfaces/message.rb'
-    - 'lib/raven/interfaces/single_exception.rb'
-    - 'lib/raven/interfaces/stack_trace.rb'
-    - 'lib/raven/processor/removecircularreferences.rb'
-    - 'lib/raven/processor/removestacktrace.rb'
-    - 'lib/raven/processor/utf8conversion.rb'
-    - 'lib/raven/transports.rb'
-
 # Offense count: 5
 # Cop supports --auto-correct.
 # Configuration parameters: EnforcedStyle, SupportedStyles.
