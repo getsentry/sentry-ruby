@@ -143,12 +143,6 @@ Style/CaseEquality:
 Style/CaseIndentation:
   Enabled: false
 
-# Offense count: 54
-# Cop supports --auto-correct.
-Style/CharacterLiteral:
-  Exclude:
-    - 'lib/raven/okjson.rb'
-
 # Offense count: 6
 # Configuration parameters: EnforcedStyle, SupportedStyles.
 Style/ClassAndModuleChildren:
@@ -165,11 +159,6 @@ Style/ColonMethodCall:
   Exclude:
     - 'bin/raven'
     - 'lib/raven/processor/sanitizedata.rb'
-
-# Offense count: 17
-Style/ConstantName:
-  Exclude:
-    - 'lib/raven/okjson.rb'
 
 # Offense count: 37
 # Configuration parameters: Exclude.
@@ -193,18 +182,10 @@ Style/ElseAlignment:
   Exclude:
     - 'lib/raven/interfaces/stack_trace.rb'
 
-# Offense count: 2
-# Cop supports --auto-correct.
-# Configuration parameters: AllowAdjacentOneLineDefs.
-Style/EmptyLineBetweenDefs:
-  Exclude:
-    - 'lib/raven/okjson.rb'
-
 # Offense count: 33
 # Cop supports --auto-correct.
 Style/EmptyLines:
   Exclude:
-    - 'lib/raven/okjson.rb'
     - 'spec/spec_helper.rb'
 
 # Offense count: 17
@@ -275,7 +256,6 @@ Style/FormatString:
     - 'lib/raven/backports/uri.rb'
     - 'lib/raven/event.rb'
     - 'lib/raven/integrations/rack.rb'
-    - 'lib/raven/okjson.rb'
 
 # Offense count: 1
 # Configuration parameters: AllowedVariables.
@@ -305,7 +285,6 @@ Style/IfUnlessModifier:
     - 'lib/raven/event.rb'
     - 'lib/raven/interfaces/exception.rb'
     - 'lib/raven/interfaces/single_exception.rb'
-    - 'lib/raven/okjson.rb'
 
 # Offense count: 58
 # Cop supports --auto-correct.
@@ -321,7 +300,6 @@ Style/IndentationWidth:
   Exclude:
     - 'lib/raven/event.rb'
     - 'lib/raven/interfaces/stack_trace.rb'
-    - 'lib/raven/okjson.rb'
     - 'spec/raven/event_spec.rb'
 
 # Offense count: 6
@@ -342,11 +320,6 @@ Style/LeadingCommentSpace:
     - 'lib/raven/transports.rb'
 
 # Offense count: 1
-Style/ModuleFunction:
-  Exclude:
-    - 'lib/raven/okjson.rb'
-
-# Offense count: 1
 Style/MultilineBlockChain:
   Exclude:
     - 'lib/raven/event.rb'
@@ -356,7 +329,6 @@ Style/MultilineBlockChain:
 Style/NegatedIf:
   Exclude:
     - 'lib/raven/client.rb'
-    - 'lib/raven/okjson.rb'
 
 # Offense count: 1
 # Cop supports --auto-correct.
@@ -376,7 +348,6 @@ Style/ParallelAssignment:
   Exclude:
     - 'lib/raven/backports/uri.rb'
     - 'lib/raven/interfaces/stack_trace.rb'
-    - 'lib/raven/okjson.rb'
 
 # Offense count: 5
 # Cop supports --auto-correct.
@@ -424,7 +395,6 @@ Style/RedundantBegin:
 Style/RedundantReturn:
   Exclude:
     - 'lib/raven/linecache.rb'
-    - 'lib/raven/okjson.rb'
     - 'spec/spec_helper.rb'
 
 # Offense count: 45
@@ -446,7 +416,6 @@ Style/RedundantSelf:
 Style/RegexpLiteral:
   Exclude:
     - 'lib/raven/backtrace.rb'
-    - 'lib/raven/okjson.rb'
 
 # Offense count: 6
 # Cop supports --auto-correct.
@@ -454,13 +423,6 @@ Style/RescueModifier:
   Exclude:
     - 'lib/raven/configuration.rb'
     - 'lib/raven/event.rb'
-    - 'lib/raven/okjson.rb'
-
-# Offense count: 1
-# Cop supports --auto-correct.
-Style/SelfAssignment:
-  Exclude:
-    - 'lib/raven/okjson.rb'
 
 # Offense count: 2
 # Cop supports --auto-correct.
@@ -480,7 +442,6 @@ Style/SignalException:
     - 'lib/raven/configuration.rb'
     - 'lib/raven/event.rb'
     - 'lib/raven/integrations/rails/active_job.rb'
-    - 'lib/raven/okjson.rb'
     - 'lib/raven/processor.rb'
     - 'lib/raven/transports.rb'
     - 'lib/raven/transports/udp.rb'
@@ -493,13 +454,6 @@ Style/SignalException:
 Style/SingleLineBlockParams:
   Exclude:
     - 'lib/raven/client.rb'
-
-# Offense count: 3
-# Cop supports --auto-correct.
-# Configuration parameters: AllowIfMethodIsEmpty.
-Style/SingleLineMethods:
-  Exclude:
-    - 'lib/raven/okjson.rb'
 
 # Offense count: 5
 # Cop supports --auto-correct.
@@ -514,7 +468,6 @@ Style/SpaceAfterComma:
     - 'bin/raven'
     - 'lib/raven/backports/uri.rb'
     - 'lib/raven/integrations/sidekiq.rb'
-    - 'lib/raven/okjson.rb'
     - 'lib/raven/processor/sanitizedata.rb'
     - 'spec/raven/processors/sanitizedata_processor_spec.rb'
 
@@ -528,7 +481,6 @@ Style/SpaceAroundOperators:
     - 'lib/raven/event.rb'
     - 'lib/raven/integrations/sidekiq.rb'
     - 'lib/raven/interfaces/stack_trace.rb'
-    - 'lib/raven/okjson.rb'
     - 'spec/raven/okjson_spec.rb'
     - 'spec/raven/processors/sanitizedata_processor_spec.rb'
 
@@ -562,7 +514,6 @@ Style/SpaceInsideHashLiteralBraces:
 Style/SpecialGlobalVars:
   Exclude:
     - 'lib/raven/base.rb'
-    - 'lib/raven/okjson.rb'
     - 'sentry-raven.gemspec'
 
 # Offense count: 201
