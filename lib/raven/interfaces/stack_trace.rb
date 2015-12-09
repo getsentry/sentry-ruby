@@ -13,7 +13,7 @@ module Raven
 
     def to_hash(*args)
       data = super(*args)
-      data[:frames] = data[:frames].map { |frame| frame.to_hash }
+      data[:frames] = data[:frames].map(&:to_hash)
       data
     end
 
