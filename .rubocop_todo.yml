@@ -123,6 +123,15 @@ Style/BlockDelimiters:
   Exclude:
     - 'spec/raven/cli_spec.rb'
 
+# Offense count: 27
+# Cop supports --auto-correct.
+# Configuration parameters: EnforcedStyle, SupportedStyles.
+Style/BracesAroundHashParameters:
+  Exclude:
+    - 'spec/raven/event_spec.rb'
+    - 'spec/raven/processors/removecirculareferences_spec.rb'
+    - 'spec/raven/processors/sanitizedata_processor_spec.rb'
+
 # Offense count: 1
 Style/CaseEquality:
   Exclude:
