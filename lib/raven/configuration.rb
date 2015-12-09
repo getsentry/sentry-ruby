@@ -165,7 +165,7 @@ module Raven
     end
 
     def encoding=(encoding)
-      raise Error.new('Unsupported encoding') unless ['gzip', 'json'].include? encoding
+      raise Error.new('Unsupported encoding') unless %w(gzip json).include? encoding
       @encoding = encoding
     end
 
