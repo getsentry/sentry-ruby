@@ -38,9 +38,9 @@ module Raven
           # Header
           http_key = key[5..key.length - 1].split('_').map { |s| s.capitalize }.join('-')
           self.headers[http_key] = value.to_s
-        elsif ['CONTENT_TYPE', 'CONTENT_LENGTH'].include? key
+        elsif %w(CONTENT_TYPE CONTENT_LENGTH).include? key
           self.headers[key.capitalize] = value.to_s
-        elsif ['REMOTE_ADDR', 'SERVER_NAME', 'SERVER_PORT'].include? key
+        elsif %w(REMOTE_ADDR SERVER_NAME SERVER_PORT).include? key
           # Environment
           self.env[key] = value.to_s
         end

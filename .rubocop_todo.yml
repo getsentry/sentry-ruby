@@ -655,9 +655,3 @@ Style/TrailingComma:
     - 'lib/raven/logger.rb'
     - 'spec/raven/event_spec.rb'
     - 'spec/raven/processors/sanitizedata_processor_spec.rb'
-
-# Offense count: 5
-# Cop supports --auto-correct.
-# Configuration parameters: WordRegex.
-Style/WordArray:
-  MinSize: 3
