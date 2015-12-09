@@ -318,12 +318,6 @@ Style/IfUnlessModifier:
 Style/IndentHash:
   Enabled: false
 
-# Offense count: 3
-# Cop supports --auto-correct.
-# Configuration parameters: EnforcedStyle, SupportedStyles.
-Style/IndentationConsistency:
-  Exclude:
-    - 'spec/raven/event_spec.rb'
 
 # Offense count: 4
 # Cop supports --auto-correct.
