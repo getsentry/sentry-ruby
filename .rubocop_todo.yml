@@ -6,11 +6,6 @@
 # Note that changes in the inspected code, or installation of new
 # versions of RuboCop, may require this file to be generated again.
 
-# Offense count: 2
-# Cop supports --auto-correct.
-# Configuration parameters: AlignWith, SupportedStyles, AutoCorrect.
-Lint/EndAlignment:
-  Enabled: false
 
 # Offense count: 6
 Lint/RescueException:
@@ -58,7 +53,7 @@ Metrics/BlockNesting:
 # Offense count: 2
 # Configuration parameters: CountComments.
 Metrics/ClassLength:
-  Max: 199
+  Max: 200
 
 # Offense count: 15
 Metrics/CyclomaticComplexity:
@@ -261,10 +256,10 @@ Style/EmptyLinesAroundModuleBody:
 # Offense count: 2
 # Cop supports --auto-correct.
 # Configuration parameters: AllowForAlignment.
-Style/ExtraSpacing:
-  Exclude:
-    - 'lib/raven/event.rb'
-    - 'lib/raven/processor/sanitizedata.rb'
+# Style/ExtraSpacing:
+#   Exclude:
+#     - 'lib/raven/event.rb'
+#     - 'lib/raven/processor/sanitizedata.rb'
 
 # Offense count: 2
 # Configuration parameters: Exclude.
@@ -318,12 +313,6 @@ Style/IfUnlessModifier:
 Style/IndentHash:
   Enabled: false
 
-# Offense count: 3
-# Cop supports --auto-correct.
-# Configuration parameters: EnforcedStyle, SupportedStyles.
-Style/IndentationConsistency:
-  Exclude:
-    - 'spec/raven/event_spec.rb'
 
 # Offense count: 4
 # Cop supports --auto-correct.
@@ -376,6 +365,13 @@ Style/NilComparison:
     - 'lib/raven/linecache.rb'
     - 'lib/raven/okjson.rb'
 
+# Offense count: 1
+# Cop supports --auto-correct.
+# Configuration parameters: IncludeSemanticChanges.
+Style/NonNilCheck:
+  Exclude:
+    - 'lib/raven/linecache.rb'
+
 # Offense count: 5
 # Cop supports --auto-correct.
 Style/NumericLiterals:
@@ -388,13 +384,6 @@ Style/ParallelAssignment:
     - 'lib/raven/backports/uri.rb'
     - 'lib/raven/interfaces/stack_trace.rb'
     - 'lib/raven/okjson.rb'
-
-# Offense count: 1
-# Cop supports --auto-correct.
-# Configuration parameters: AllowSafeAssignment.
-Style/ParenthesesAroundCondition:
-  Exclude:
-    - 'lib/raven/configuration.rb'
 
 # Offense count: 5
 # Cop supports --auto-correct.
@@ -589,17 +578,6 @@ Style/SpecialGlobalVars:
 Style/StringLiterals:
   Enabled: false
 
-# Offense count: 6
-# Cop supports --auto-correct.
-# Configuration parameters: IgnoredMethods.
-Style/SymbolProc:
-  Exclude:
-    - 'lib/raven/backtrace.rb'
-    - 'lib/raven/event.rb'
-    - 'lib/raven/interfaces/http.rb'
-    - 'lib/raven/interfaces/stack_trace.rb'
-    - 'spec/raven/raven_spec.rb'
-
 # Offense count: 33
 # Cop supports --auto-correct.
 # Configuration parameters: EnforcedStyleForMultiline, SupportedStyles.
@@ -611,9 +589,3 @@ Style/TrailingComma:
     - 'lib/raven/logger.rb'
     - 'spec/raven/event_spec.rb'
     - 'spec/raven/processors/sanitizedata_processor_spec.rb'
-
-# Offense count: 5
-# Cop supports --auto-correct.
-# Configuration parameters: WordRegex.
-Style/WordArray:
-  MinSize: 3

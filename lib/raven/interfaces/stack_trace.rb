@@ -13,7 +13,7 @@ module Raven
 
     def to_hash(*args)
       data = super(*args)
-      data[:frames] = data[:frames].map { |frame| frame.to_hash }
+      data[:frames] = data[:frames].map(&:to_hash)
       data
     end
 
@@ -37,13 +37,14 @@ module Raven
       def filename
         return nil if self.abs_path.nil?
 
-        prefix = if under_project_root? && in_app
-          project_root
-        elsif under_project_root?
-          longest_load_path || project_root
-        else
-          longest_load_path
-        end
+        prefix =
+          if under_project_root? && in_app
+            project_root
+          elsif under_project_root?
+            longest_load_path || project_root
+          else
+            longest_load_path
+          end
 
         prefix ? self.abs_path[prefix.to_s.chomp(File::SEPARATOR).length+1..-1] : self.abs_path
       end

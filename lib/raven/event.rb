@@ -56,7 +56,7 @@ module Raven
         end
       end
 
-      init.each_pair  { |key, val| instance_variable_set('@' + key.to_s, val) }
+      init.each_pair { |key, val| instance_variable_set('@' + key.to_s, val) }
 
       @user = @context.user.merge(@user)
       @extra = @context.extra.merge(@extra)
@@ -184,11 +184,12 @@ module Raven
             int.value = exc.to_s
             int.module = exc.class.to_s.split('::')[0...-1].join('::')
 
-            int.stacktrace = if exc.backtrace
-              StacktraceInterface.new do |stacktrace|
-                stacktrace_interface_from(stacktrace, evt, exc.backtrace)
+            int.stacktrace =
+              if exc.backtrace
+                StacktraceInterface.new do |stacktrace|
+                  stacktrace_interface_from(stacktrace, evt, exc.backtrace)
+                end
               end
-            end
           end
         end
       end
@@ -209,7 +210,7 @@ module Raven
               evt.get_file_context(frame.abs_path, frame.lineno, evt.configuration[:context_lines])
           end
         end
-      end.select { |f| f.filename }
+      end.select(&:filename)
 
       evt.culprit = evt.get_culprit(int.frames)
     end
@@ -227,7 +228,7 @@ module Raven
     end
 
     def get_culprit(frames)
-      lastframe = frames.reverse.find { |f| f.in_app } || frames.last
+      lastframe = frames.reverse.find(&:in_app) || frames.last
       "#{lastframe.filename} in #{lastframe.function} at line #{lastframe.lineno}" if lastframe
     end
 
