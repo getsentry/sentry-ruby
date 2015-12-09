@@ -21,7 +21,7 @@ module Raven
       def getline(path, n)
         return nil if n < 1
         lines = getlines(path)
-        return nil if lines == nil
+        return nil if lines.nil?
         lines[n - 1]
       end
     end
