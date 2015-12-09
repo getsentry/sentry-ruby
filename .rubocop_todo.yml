@@ -353,12 +353,6 @@ Style/LeadingCommentSpace:
     - 'lib/raven/transports.rb'
 
 # Offense count: 1
-# Cop supports --auto-correct.
-Style/MethodCallParentheses:
-  Exclude:
-    - 'spec/raven/raven_spec.rb'
-
-# Offense count: 1
 Style/ModuleFunction:
   Exclude:
     - 'lib/raven/okjson.rb'

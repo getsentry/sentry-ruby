@@ -110,7 +110,7 @@ describe Raven do
 
       it 'does not install an exit_hook' do
         expect(described_class).not_to receive(:install_at_exit_hook)
-        described_class.capture() {}
+        described_class.capture {}
       end
     end
 
