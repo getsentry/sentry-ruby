@@ -30,7 +30,7 @@ describe Raven do
 
     around do |example|
       prior_async = Raven.configuration.async
-      Raven.configuration.async = lambda { |event| :ok }
+      Raven.configuration.async = Proc.new { :ok }
       example.run
       Raven.configuration.async = prior_async
     end
@@ -69,7 +69,7 @@ describe Raven do
 
     around do |example|
       prior_async = Raven.configuration.async
-      Raven.configuration.async = lambda { |event| :ok }
+      Raven.configuration.async = Proc.new { :ok }
       example.run
       Raven.configuration.async = prior_async
     end
@@ -124,7 +124,7 @@ describe Raven do
           pipe_in.close
           described_class.capture(options)
 
-          allow(Raven).to receive(:capture_exception) do |exception, options|
+          allow(Raven).to receive(:capture_exception) do |exception, _options|
             pipe_out.puts exception.message
           end
 

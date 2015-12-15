@@ -4,7 +4,7 @@ module Raven
       @client = client
     end
 
-    def process(data)
+    def process(_data)
       raise NotImplementedError
     end
   end
