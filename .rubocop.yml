@@ -3,6 +3,7 @@ inherit_from: .rubocop_todo.yml
 AllCops:
   Exclude:
     - 'lib/raven/okjson.rb'
+    - 'lib/raven/backports/uri.rb'
 
 Lint/UnusedMethodArgument:   
   Exclude:   
