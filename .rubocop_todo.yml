@@ -195,15 +195,8 @@ Style/FileName:
 # Configuration parameters: EnforcedStyle, SupportedStyles.
 Style/FormatString:
   Exclude:
-    - 'lib/raven/backports/uri.rb'
     - 'lib/raven/event.rb'
     - 'lib/raven/integrations/rack.rb'
-
-# Offense count: 1
-# Configuration parameters: AllowedVariables.
-Style/GlobalVars:
-  Exclude:
-    - 'lib/raven/backports/uri.rb'
 
 # Offense count: 2
 # Configuration parameters: MinBodyLength.
@@ -281,7 +274,6 @@ Style/NumericLiterals:
 # Cop supports --auto-correct.
 Style/ParallelAssignment:
   Exclude:
-    - 'lib/raven/backports/uri.rb'
     - 'lib/raven/interfaces/stack_trace.rb'
 
 # Offense count: 5
@@ -292,12 +284,6 @@ Style/PercentLiteralDelimiters:
     - 'lib/raven/base.rb'
     - 'spec/raven/configuration_spec.rb'
     - 'spec/raven/raven_spec.rb'
-
-# Offense count: 2
-# Cop supports --auto-correct.
-Style/PerlBackrefs:
-  Exclude:
-    - 'lib/raven/backports/uri.rb'
 
 # Offense count: 1
 # Configuration parameters: NamePrefix, NamePrefixBlacklist, NameWhitelist.
@@ -372,7 +358,6 @@ Style/Semicolon:
 # Configuration parameters: EnforcedStyle, SupportedStyles.
 Style/SignalException:
   Exclude:
-    - 'lib/raven/backports/uri.rb'
     - 'lib/raven/client.rb'
     - 'lib/raven/configuration.rb'
     - 'lib/raven/event.rb'
@@ -401,7 +386,6 @@ Style/SingleSpaceBeforeFirstArg:
 Style/SpaceAfterComma:
   Exclude:
     - 'bin/raven'
-    - 'lib/raven/backports/uri.rb'
     - 'lib/raven/integrations/sidekiq.rb'
     - 'lib/raven/processor/sanitizedata.rb'
     - 'spec/raven/processors/sanitizedata_processor_spec.rb'
@@ -411,7 +395,6 @@ Style/SpaceAfterComma:
 # Configuration parameters: MultiSpaceAllowedForOperators.
 Style/SpaceAroundOperators:
   Exclude:
-    - 'lib/raven/backports/uri.rb'
     - 'lib/raven/client.rb'
     - 'lib/raven/event.rb'
     - 'lib/raven/integrations/sidekiq.rb'
