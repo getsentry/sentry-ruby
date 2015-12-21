@@ -379,13 +379,13 @@ Style/SingleLineBlockParams:
 # Cop supports --auto-correct.
 Style/SingleSpaceBeforeFirstArg:
   Exclude:
-    - 'bin/raven'
+    - 'exe/raven'
 
 # Offense count: 45
 # Cop supports --auto-correct.
 Style/SpaceAfterComma:
   Exclude:
-    - 'bin/raven'
+    - 'exe/raven'
     - 'lib/raven/integrations/sidekiq.rb'
     - 'lib/raven/processor/sanitizedata.rb'
     - 'spec/raven/processors/sanitizedata_processor_spec.rb'

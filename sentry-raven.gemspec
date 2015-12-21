@@ -4,7 +4,6 @@ require 'raven/version'
 Gem::Specification.new do |gem|
   gem.name = "sentry-raven"
   gem.version = Raven::VERSION
-  gem.executables << "raven"
   gem.platform = Gem::Platform::RUBY
   gem.description = gem.summary = "A gem that provides a client interface for the Sentry error logger"
   gem.email = "getsentry@googlegroups.com"
@@ -13,6 +12,7 @@ Gem::Specification.new do |gem|
   gem.has_rdoc = true
   gem.extra_rdoc_files = ["README.md", "LICENSE"]
   gem.files = Dir['lib/**/*']
+  gem.executables = gem.files.grep(%r{^exe/}) { |f| File.basename(f) }
   gem.license = 'Apache-2.0'
   gem.required_ruby_version = '>= 1.8.7'
 
