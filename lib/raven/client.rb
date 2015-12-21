@@ -49,6 +49,20 @@ module Raven
       event
     end
 
+    def transport
+      @transport ||=
+        case configuration.scheme
+        when 'udp'
+          Transports::UDP.new(configuration)
+        when 'http', 'https'
+          Transports::HTTP.new(configuration)
+        when 'dummy'
+          Transports::Dummy.new(configuration)
+        else
+          fail "Unknown transport scheme '#{configuration.scheme}'"
+        end
+    end
+
     private
 
     def configuration_allows_sending
@@ -74,18 +88,6 @@ module Raven
 
     def get_log_message(event)
       (event && event[:message]) || '<no message value>'
-    end
-
-    def transport
-      @transport ||=
-        case configuration.scheme
-        when 'udp'
-          Transports::UDP.new(configuration)
-        when 'http', 'https'
-          Transports::HTTP.new(configuration)
-        else
-          raise Error, "Unknown transport scheme '#{self.configuration.scheme}'"
-        end
     end
 
     def generate_auth_header

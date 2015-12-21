@@ -426,19 +426,19 @@ describe Raven::Event do
     end
 
     context 'for an excluded exception type' do
+      module Raven::Test
+        class BaseExc < Exception; end
+        class SubExc < BaseExc; end
+      end
+
       it 'returns nil for a string match' do
         config = Raven::Configuration.new
-        config.excluded_exceptions << 'RuntimeError'
-        expect(Raven::Event.capture_exception(RuntimeError.new,
+        config.excluded_exceptions << 'Raven::Test::BaseExc'
+        expect(Raven::Event.capture_exception(Raven::Test::BaseExc.new,
                                        :configuration => config)).to be_nil
       end
 
       it 'returns nil for a class match' do
-        module Raven::Test
-          class BaseExc < Exception; end
-          class SubExc < BaseExc; end
-        end
-
         config = Raven::Configuration.new
         config.excluded_exceptions << Raven::Test::BaseExc
 
@@ -525,86 +525,6 @@ describe Raven::Event do
           expect(frames[0][:lineno]).to eq(10)
           expect(frames[0][:function]).to eq("synchronize")
           expect(frames[0][:filename]).to eq("<internal:prelude>")
-        end
-      end
-
-      context 'in a rails environment' do
-        before do
-          rails = double('Rails')
-          allow(rails).to receive(:root) { '/rails/root' }
-          stub_const('Rails', rails)
-          Raven.configure do |config|
-            config.project_root ||= ::Rails.root
-          end
-        end
-
-        context 'with an application stacktrace' do
-          let(:exception) do
-            e = Exception.new(message)
-            allow(e).to receive(:backtrace).and_return([
-              "/rails/root/vendor/bundle/cache/other_gem.rb:10:in `public_method'",
-              "vendor/bundle/some_gem.rb:10:in `a_method'",
-              "/rails/root/app/models/user.rb:132:in `new_function'",
-              "/gem/lib/path:87:in `a_function'",
-              "/app/some/other/path:1412:in `other_function'",
-              "test/some/other/path:1412:in `other_function'"
-            ])
-            e
-          end
-
-          it 'marks in_app correctly' do
-            expect(Raven.configuration.project_root).to eq('/rails/root')
-            frames = hash[:exception][:values][0][:stacktrace][:frames]
-            expect(frames[0][:filename]).to eq("test/some/other/path")
-            expect(frames[0][:in_app]).to eq(true)
-            expect(frames[1][:filename]).to eq("/app/some/other/path")
-            expect(frames[1][:in_app]).to eq(false)
-            expect(frames[2][:filename]).to eq("/gem/lib/path")
-            expect(frames[2][:in_app]).to eq(false)
-            expect(frames[3][:filename]).to eq("app/models/user.rb")
-            expect(frames[3][:in_app]).to eq(true)
-            expect(frames[4][:filename]).to eq("vendor/bundle/some_gem.rb")
-            expect(frames[4][:in_app]).to eq(false)
-            expect(frames[5][:filename]).to eq("vendor/bundle/cache/other_gem.rb")
-            expect(frames[5][:in_app]).to eq(false)
-          end
-
-          context 'when an in_app path under project_root is on the load path' do
-            before do
-              $LOAD_PATH << '/rails/root/app/models'
-            end
-
-            after do
-              $LOAD_PATH.delete('/rails/root/app/models')
-            end
-
-            it 'normalizes the filename using project_root' do
-              frames = hash[:exception][:values][0][:stacktrace][:frames]
-              expect(frames[3][:filename]).to eq("app/models/user.rb")
-            end
-          end
-
-          context 'when a non-in_app path under project_root is on the load path' do
-            before do
-              $LOAD_PATH << '/rails/root/vendor/bundle'
-            end
-
-            after do
-              $LOAD_PATH.delete('/rails/root/vendor/bundle')
-            end
-
-            it 'normalizes the filename using the load path' do
-              frames = hash[:exception][:values][0][:stacktrace][:frames]
-              expect(frames[5][:filename]).to eq("cache/other_gem.rb")
-            end
-          end
-
-          context "when a non-in_app path under project_root isn't on the load path" do
-            it 'normalizes the filename using project_root' do
-              frames = hash[:exception][:values][0][:stacktrace][:frames]
-              expect(frames[5][:filename]).to eq("vendor/bundle/cache/other_gem.rb")
-            end
-          end
         end
       end
 
