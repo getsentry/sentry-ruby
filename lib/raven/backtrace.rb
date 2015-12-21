@@ -12,7 +12,7 @@ module Raven
       # org.jruby.runtime.callsite.CachingCallSite.call(CachingCallSite.java:170)
       JAVA_INPUT_FORMAT = %r{^(.+)\.([^\.]+)\(([^\:]+)\:(\d+)\)$}.freeze
 
-      APP_DIRS_PATTERN = /(bin|app|config|lib|test)/
+      APP_DIRS_PATTERN = /(bin|exe|app|config|lib|test)/
 
       # The file portion of the line (such as app/models/user.rb)
       attr_reader :file
