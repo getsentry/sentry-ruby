@@ -34,3 +34,7 @@ matrix:
       gemfile: gemfiles/rails42.gemfile
     - rvm: ree
       gemfile: gemfiles/rails41.gemfile
+    - rvm: 2.2.4
+      gemfile: gemfiles/rails32.gemfile
+    - rvm: ruby-head
+      gemfile: gemfiles/rails32.gemfile
