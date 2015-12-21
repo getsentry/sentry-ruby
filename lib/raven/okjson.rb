@@ -448,6 +448,7 @@ private
     case k
     when String then strenc(k)
     when Symbol then strenc(k.to_s)
+    when Fixnum then strenc(k.to_s)
     else
       raise Error, "Hash key is not a string: #{k.inspect}"
     end
