@@ -3,7 +3,7 @@ require 'rails'
 module Raven
   class Rails < ::Rails::Railtie
     initializer "raven.use_rack_middleware" do |app|
-      app.config.middleware.insert 0, "Raven::Rack"
+      app.config.middleware.insert 0, Raven::Rack
     end
 
     initializer 'raven.action_controller' do
