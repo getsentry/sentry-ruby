@@ -4,7 +4,10 @@ module Raven
       return "(...)" if visited.include?(v.__id__)
       visited += [v.__id__]
       if v.is_a?(Hash)
-        v.reduce({}) { |memo, (k, v_)| memo[k] = process(v_, visited); memo }
+        v.reduce({}) do |memo, (k, v_)|
+          memo[k] = process(v_, visited)
+          memo
+        end
       elsif v.is_a?(Array)
         v.map { |v_| process(v_, visited) }
       else
