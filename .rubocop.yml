@@ -5,6 +5,9 @@ AllCops:
     - 'lib/raven/okjson.rb'
     - 'lib/raven/backports/uri.rb'
 
-Lint/UnusedMethodArgument:   
-  Exclude:   
+Lint/UnusedMethodArgument:
+  Exclude:
      - 'lib/raven/backports/uri.rb'
+
+Style/SignalException:
+  Enabled: false
