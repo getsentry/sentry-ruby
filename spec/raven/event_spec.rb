@@ -426,19 +426,19 @@ describe Raven::Event do
     end
 
     context 'for an excluded exception type' do
+      module Raven::Test
+        class BaseExc < Exception; end
+        class SubExc < BaseExc; end
+      end
+
       it 'returns nil for a string match' do
         config = Raven::Configuration.new
-        config.excluded_exceptions << 'RuntimeError'
-        expect(Raven::Event.capture_exception(RuntimeError.new,
+        config.excluded_exceptions << 'Raven::Test::BaseExc'
+        expect(Raven::Event.capture_exception(Raven::Test::BaseExc.new,
                                        :configuration => config)).to be_nil
       end
 
       it 'returns nil for a class match' do
-        module Raven::Test
-          class BaseExc < Exception; end
-          class SubExc < BaseExc; end
-        end
-
         config = Raven::Configuration.new
         config.excluded_exceptions << Raven::Test::BaseExc
 
