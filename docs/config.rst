@@ -20,7 +20,7 @@ Optional settings
     .. code-block:: ruby
 
         config.async = lambda { |event|
-            Thread.new { Raven.send_event(event) }
+            SentryJob.perform_later(event)
         }
 
 .. describe:: encoding
@@ -32,6 +32,20 @@ Optional settings
     .. code-block:: ruby
 
         config.encoding = 'json'
+
+.. describe:: environments
+
+    As of v0.10.0, events will be sent to Sentry in all environments. If you do not wish to send events in an environment, we suggest you unset the SENTRY_DSN variable in that environment.
+
+    Alternately, you can configure Raven to run only in certain environments by configuring the environments whitelist. For example, to only run Sentry in production:
+
+    .. code-block:: ruby
+        config.environments = %w[ production ]
+    
+    Sentry automatically sets the current environment to RAILS_ENV, or if it is not present, RACK_ENV. If you are using Sentry outside of Rack or Rails, you'll need to set the current environment yourself:
+
+    .. code-block:: ruby
+        config.current_environment = 'my_cool_environment'
 
 .. describe:: excluded_exceptions
 
@@ -51,7 +65,37 @@ Optional settings
 
     .. code-block:: ruby
 
-        config.logger = 'default'
+        config.logger = ::Logger.new(STDOUT)
+
+    Raven respects logger levels. 
+
+.. describe:: processors
+
+    If you need to sanitize or pre-process (before its sent to the server) data, you can do so using the Processors implementation. By default, a few processors are installed. The most important is ``Raven::Processor::SanitizeData``, which will attempt to sanitize keys that match various patterns (e.g. password) and values that resemble credit card numbers.
+
+    To specify your own (or to remove the defaults), simply pass them with your configuration:
+
+    .. code-block:: ruby
+
+        config.processors = [Raven::Processor::SanitizeData]
+
+    Check out ``Raven::Processor::SanitizeData`` to see how a Processor is implemented.
+
+    You can also specify values to be sanitized. Any strings matched will be replaced with the string mask (********). One good use for this is to copy Rails' filter_parameters:
+
+    .. code-block:: ruby
+
+        config.sanitize_fields = Rails.application.config.filter_parameters.map(&:to_s)
+
+    By default, Sentry sends up a stacktrace with an exception. This stacktrace may contain data which you may consider to be sensitive, including lines of source code, line numbers, module names, and source paths. To wipe the stacktrace from all error reports, require and add the RemoveStacktrace processor:
+
+    .. code-block:: ruby
+
+        require 'raven/processor/removestacktrace'
+
+        Raven.configure do |config|
+          config.processors << Raven::Processor::RemoveStacktrace
+        end
 
 .. describe:: release
 
@@ -60,6 +104,35 @@ Optional settings
     .. code-block:: ruby
 
         config.release = '721e41770371db95eee98ca2707686226b993eda'
+
+.. describe:: should_capture
+    
+    By providing a proc or lambda, you can control what events are captured. Events are passed to the Proc or lambda you provide - returning false will stop the event from sending to Sentry:
+
+    .. code-block:: ruby
+
+        config.should_capture = Proc.new { |e| true unless e.contains_sensitive_info? }
+
+.. describe:: silence_ready
+
+    Upon start, Raven will write the following message to the log at the INFO level:
+
+    ``
+    ** [out :: hostname.example.com] I, [2014-07-22T15:32:57.498368 #30897]  INFO -- : ** [Raven] Raven 0.9.4 ready to catch errors"
+    ``
+
+    You can turn off this message:
+
+    .. code-block:: ruby
+
+        config.silence_ready = true
+
+.. describe:: ssl_verification
+
+    By default SSL certificate verification is enabled in the client. It can be disabled.
+
+    .. code-block:: ruby
+        config.ssl_verification = false
 
 .. describe:: tags
 
@@ -74,5 +147,13 @@ Environment Variables
 ---------------------
 
 .. describe:: SENTRY_DSN
+    
+    After you complete setting up a project, you'll be given a value which we call a DSN, or Data Source Name. It looks a lot like a standard URL, but it's actually just a representation of the configuration required by Raven (the Sentry client). It consists of a few pieces, including the protocol, public and secret keys, the server address, and the project identifier.
 
-    Optionally declare the DSN to use for the client through the environment. Initializing the client in your app won't require setting the DSN.
+    With Raven, you may either set the SENTRY_DSN environment variable (recommended), or set your DSN manually in a config block:
+
+    .. code-block:: ruby
+        # in Rails, this might be in config/initializers/sentry.rb
+        Raven.configure do |config|
+          config.dsn = 'http://public:secret@example.com/project-id'
+        end
