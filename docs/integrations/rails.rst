@@ -37,6 +37,22 @@ should set ``config.environments`` too:
       config.environments = ['staging', 'production']
     end
 
+Params and sessions
+-------------------
+
+.. sourcecode:: ruby
+
+  class ApplicationController < ActionController::Base
+    before_action :set_raven_context
+
+    private
+
+    def set_raven_context
+      Raven.user_context(user_id: session[:current_user_id]) # or anything else in session
+      Raven.extra_context(params: params.to_hash, url: request.url)
+    end
+  end
+
 Authlogic
 ---------
 
