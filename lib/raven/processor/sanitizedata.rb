@@ -16,7 +16,7 @@ module Raven
     end
 
     def process(value)
-      value.inject(value) { |memo,(k,v)| memo[k] = sanitize(k,v); memo }
+      value.each_with_object(value) { |(k,v), memo| memo[k] = sanitize(k,v) }
     end
 
     def sanitize(k,v)

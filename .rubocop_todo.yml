@@ -345,14 +345,6 @@ Style/RescueModifier:
     - 'lib/raven/configuration.rb'
     - 'lib/raven/event.rb'
 
-# Offense count: 2
-# Cop supports --auto-correct.
-# Configuration parameters: AllowAsExpressionSeparator.
-Style/Semicolon:
-  Exclude:
-    - 'lib/raven/processor/removecircularreferences.rb'
-    - 'lib/raven/processor/sanitizedata.rb'
-
 # Offense count: 1
 # Configuration parameters: Methods.
 Style/SingleLineBlockParams:
