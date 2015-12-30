@@ -26,7 +26,7 @@ Raven.configure do |config|
 end
 ```
 ### Call
-If you use Rails, you're already done - no more configuration required! Check [Integrations](https://github.com/getsentry/raven-ruby/wiki/Integrations) for more details on other gems Sentry integrates with automatically.
+If you use Rails, you're already done - no more configuration required! Check [Integrations](https://docs.getsentry.com/hosted/clients/ruby/integrations/) for more details on other gems Sentry integrates with automatically.
 
 Otherwise, Raven supports two methods of capturing exceptions:
 ```ruby
@@ -44,9 +44,7 @@ end
 
 ## More Information
 
-Full documentation and more information on advanced configuration, sending more information, scrubbing sensitive data, and more can be found on [the wiki](https://github.com/getsentry/raven-ruby/wiki).
-
-* [Documentation](https://github.com/getsentry/raven-ruby/wiki)
+* [Documentation](https://docs.getsentry.com/hosted/clients/ruby/)
 * [Bug Tracker](https://github.com/getsentry/raven-ruby/issues>)
 * [Code](https://github.com/getsentry/raven-ruby>)
 * [Mailing List](https://groups.google.com/group/getsentry>)
