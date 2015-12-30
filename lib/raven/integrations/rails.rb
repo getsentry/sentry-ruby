@@ -35,8 +35,10 @@ module Raven
       require 'raven/integrations/tasks'
     end
 
-    runner do
-      Raven.capture
+    if defined?(runner)
+      runner do
+        Raven.capture
+      end
     end
   end
 end
