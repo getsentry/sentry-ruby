@@ -40,11 +40,13 @@ Optional settings
     Alternately, you can configure Raven to run only in certain environments by configuring the environments whitelist. For example, to only run Sentry in production:
 
     .. code-block:: ruby
+
         config.environments = %w[ production ]
     
     Sentry automatically sets the current environment to RAILS_ENV, or if it is not present, RACK_ENV. If you are using Sentry outside of Rack or Rails, you'll need to set the current environment yourself:
 
     .. code-block:: ruby
+
         config.current_environment = 'my_cool_environment'
 
 .. describe:: excluded_exceptions
@@ -132,6 +134,7 @@ Optional settings
     By default SSL certificate verification is enabled in the client. It can be disabled.
 
     .. code-block:: ruby
+
         config.ssl_verification = false
 
 .. describe:: tags
@@ -153,6 +156,7 @@ Environment Variables
     With Raven, you may either set the SENTRY_DSN environment variable (recommended), or set your DSN manually in a config block:
 
     .. code-block:: ruby
+
         # in Rails, this might be in config/initializers/sentry.rb
         Raven.configure do |config|
           config.dsn = 'http://public:secret@example.com/project-id'
