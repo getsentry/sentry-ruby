@@ -29,6 +29,11 @@ module Raven
           ::ActionDispatch::ShowExceptions.send(:include, Raven::Rails::Middleware::DebugExceptionsCatcher)
         end
       end
+
+      if defined?(::ActionDispatch::PublicExceptions)
+        require 'raven/integrations/rails/middleware/public_exceptions_catcher'
+        ::ActionDispatch::PublicExceptions.send(:include, Raven::Rails::Middleware::PublicExceptionsCatcher)
+      end
     end
 
     rake_tasks do
