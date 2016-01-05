@@ -66,4 +66,62 @@ module Raven
       response
     end
   end
+
+  module RackInterface
+    def from_rack(env_hash)
+      req = ::Rack::Request.new(env_hash)
+
+      self.url = req.scheme && req.url.split('?').first
+      self.method = req.request_method
+      self.query_string = req.query_string
+      self.data = read_data_from(req)
+
+      self.headers = format_headers_for_sentry(env_hash)
+      self.env = format_env_for_sentry(env_hash)
+    end
+
+    private
+
+    def read_data_from(request)
+      if request.form_data?
+        request.POST
+      elsif request.body
+        data = request.body.read
+        request.body.rewind
+        data
+      end
+    end
+
+    def format_headers_for_sentry(env_hash)
+      env_hash.each_with_object({}) do |(key, value), memo|
+        key = key.to_s # rack env can contain symbols
+        value = value.to_s
+        next unless key.upcase == key # Non-upper case stuff isn't either
+        # Rack adds in an incorrect HTTP_VERSION key, which causes downstream
+        # to think this is a Version header. Instead, this is mapped to
+        # env['SERVER_PROTOCOL']. But we don't want to ignore a valid header
+        # if the request has legitimately sent a Version header themselves.
+        # See: https://github.com/rack/rack/blob/028438f/lib/rack/handler/cgi.rb#L29
+        next if key == 'HTTP_VERSION' && value == ENV['SERVER_PROTOCOL']
+        if key.start_with?('HTTP_')
+          # Header
+          http_key = key[5..key.length - 1].split('_').map(&:capitalize).join('-')
+          memo[http_key] = value
+        elsif %w(CONTENT_TYPE CONTENT_LENGTH).include? key
+          memo[key.capitalize] = value
+        end
+      end
+    end
+
+    def format_env_for_sentry(env_hash)
+      trimmed_hash = env_hash.select do |k, _v|
+        %w(REMOTE_ADDR SERVER_NAME SERVER_PORT).include? k.to_s
+      end
+      Hash[trimmed_hash] # select returns an Array in Ruby 1.8
+    end
+  end
+
+  class HttpInterface
+    include RackInterface
+  end
 end
