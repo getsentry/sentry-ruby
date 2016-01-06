@@ -1,5 +1,4 @@
 require 'rake'
-require 'raven'
 require 'raven/cli'
 
 namespace :raven do

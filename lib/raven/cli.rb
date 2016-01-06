@@ -1,5 +1,3 @@
-require 'raven'
-
 module Raven
   class CLI
     def self.test(dsn = nil)

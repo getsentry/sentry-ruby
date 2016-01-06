@@ -32,6 +32,7 @@ module Raven
       @interfaces    = {}
       @context       = Raven.context
       @id            = generate_event_id
+      @project       = nil
       @message       = nil
       @timestamp     = Time.now.utc
       @time_spent    = nil
@@ -120,7 +121,7 @@ module Raven
     end
 
     def self.from_exception(exc, options = {}, &block)
-      notes = exc.instance_variable_get(:@__raven_context) || {}
+      notes = (exc.instance_variable_defined?(:@__raven_context) && exc.instance_variable_get(:@__raven_context)) || {}
       options = notes.merge(options)
 
       configuration = options[:configuration] || Raven.configuration
@@ -177,16 +178,16 @@ module Raven
         end
         exceptions.reverse!
 
-        exc_int.values = exceptions.map do |exc|
+        exc_int.values = exceptions.map do |e|
           SingleExceptionInterface.new do |int|
-            int.type = exc.class.to_s
-            int.value = exc.to_s
-            int.module = exc.class.to_s.split('::')[0...-1].join('::')
+            int.type = e.class.to_s
+            int.value = e.to_s
+            int.module = e.class.to_s.split('::')[0...-1].join('::')
 
             int.stacktrace =
-              if exc.backtrace
+              if e.backtrace
                 StacktraceInterface.new do |stacktrace|
-                  stacktrace_interface_from(stacktrace, evt, exc.backtrace)
+                  stacktrace_interface_from(stacktrace, evt, e.backtrace)
                 end
               end
           end
