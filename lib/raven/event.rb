@@ -177,16 +177,16 @@ module Raven
         end
         exceptions.reverse!
 
-        exc_int.values = exceptions.map do |exc|
+        exc_int.values = exceptions.map do |e|
           SingleExceptionInterface.new do |int|
-            int.type = exc.class.to_s
-            int.value = exc.to_s
-            int.module = exc.class.to_s.split('::')[0...-1].join('::')
+            int.type = e.class.to_s
+            int.value = e.to_s
+            int.module = e.class.to_s.split('::')[0...-1].join('::')
 
             int.stacktrace =
-              if exc.backtrace
+              if e.backtrace
                 StacktraceInterface.new do |stacktrace|
-                  stacktrace_interface_from(stacktrace, evt, exc.backtrace)
+                  stacktrace_interface_from(stacktrace, evt, e.backtrace)
                 end
               end
           end
