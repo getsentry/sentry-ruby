@@ -1,4 +1,3 @@
-require 'raven'
 require 'rails'
 
 module Raven
