@@ -5,6 +5,10 @@ module Raven
         value.map { |v| process v }
       elsif value.is_a? Hash
         value.merge(value) { |_, v| process v }
+      elsif value.is_a?(Exception) && !value.message.valid_encoding?
+        clean_exc = value.class.new(clean_invalid_utf8_bytes(value.message))
+        clean_exc.set_backtrace(value.backtrace)
+        clean_exc
       else
         clean_invalid_utf8_bytes(value)
       end
