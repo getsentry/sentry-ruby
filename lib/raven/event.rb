@@ -32,6 +32,7 @@ module Raven
       @interfaces    = {}
       @context       = Raven.context
       @id            = generate_event_id
+      @project       = nil
       @message       = nil
       @timestamp     = Time.now.utc
       @time_spent    = nil
