@@ -121,7 +121,7 @@ module Raven
     end
 
     def self.from_exception(exc, options = {}, &block)
-      notes = exc.instance_variable_get(:@__raven_context) || {}
+      notes = (exc.instance_variable_defined?(:@__raven_context) && exc.instance_variable_get(:@__raven_context)) || {}
       options = notes.merge(options)
 
       configuration = options[:configuration] || Raven.configuration

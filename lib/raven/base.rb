@@ -152,7 +152,7 @@ module Raven
     #                              'email' => 'foo@example.com' })
     #   end
     def annotate_exception(exc, options = {})
-      notes = exc.instance_variable_get(:@__raven_context) || {}
+      notes = (exc.instance_variable_defined?(:@__raven_context) && exc.instance_variable_get(:@__raven_context)) || {}
       notes.merge!(options)
       exc.instance_variable_set(:@__raven_context, notes)
       exc
