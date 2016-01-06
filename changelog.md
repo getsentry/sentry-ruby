@@ -1,3 +1,17 @@
+0.15.3
+------
+
+- Double exception reporting in Rails FIXED! [nateberkopec, #422]
+- Rails 3 users having issues with undefined runner fixed [nateberkopec, #428]
+- Sidekiq integration works properly when ActiveJob enabled [mattrobenolt]
+- Fix problems with invalid UTF-8 in exception messages [nateberkopec, #426]
+- Backtraces now consider "exe" directories part of the app [nateberkopec, #420]
+- Sinatra::NotFound now ignored by default [drcapulet, #383]
+- Release versions now properly set. Support for Heroku, Capistrano, and Git. [iloveitaly #377, Sija #380]
+- DelayedJob integration plays well with ActiveJob [kkumler, #378]
+- DelayedJob handlers now truncated [nateberkopec, #431]
+- Tons of code quality improvements [amatsuda, ddrmanxbxfr, pmbrent, cpizzaia, wdhorton, PepperTeasdale]
+
 0.15.2
 ------
 
