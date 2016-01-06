@@ -1,4 +1,5 @@
 require 'spec_helper'
+require 'raven/cli'
 
 describe "CLI tests" do
   example "posting an exception" do
