@@ -84,7 +84,9 @@ module Raven
     # Optional Proc to be used to send events asynchronously.
     attr_reader :async
 
-    # Exceptions from these directories to be ignored
+    # Directories to be recognized as part of your app. e.g. if you
+    # have an `engines` dir at the root of your project, you may want
+    # to set this to something like /(app|config|engines|lib)/
     attr_accessor :app_dirs_pattern
 
     # Catch exceptions before they're been processed by
