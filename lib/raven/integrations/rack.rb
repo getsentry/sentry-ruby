@@ -32,8 +32,8 @@ module Raven
       end
     end
     class << self
-      alias_method :capture_message, :capture_type
-      alias_method :capture_exception, :capture_type
+      alias capture_message capture_type
+      alias capture_exception capture_type
     end
 
     def initialize(app)

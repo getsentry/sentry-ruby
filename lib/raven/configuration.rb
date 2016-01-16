@@ -111,14 +111,14 @@ module Raven
       'CGI::Session::CookieStore::TamperedWithCookie',
       'Mongoid::Errors::DocumentNotFound',
       'Sinatra::NotFound',
-    ]
+    ].freeze
 
     def initialize
       self.server = ENV['SENTRY_DSN'] if ENV['SENTRY_DSN']
       @context_lines = 3
       self.current_environment = ENV['RAILS_ENV'] || ENV['RACK_ENV'] || 'default'
       self.send_modules = true
-      self.excluded_exceptions = IGNORE_DEFAULT
+      self.excluded_exceptions = IGNORE_DEFAULT.dup
       self.processors = [Raven::Processor::RemoveCircularReferences, Raven::Processor::UTF8Conversion, Raven::Processor::SanitizeData]
       self.ssl_verification = true
       self.encoding = 'gzip'
@@ -170,14 +170,14 @@ module Raven
       @encoding = encoding
     end
 
-    alias_method :dsn=, :server=
+    alias dsn= server=
 
     def async=(value)
       raise ArgumentError.new("async must be callable (or false to disable)") unless value == false || value.respond_to?(:call)
       @async = value
     end
 
-    alias_method :async?, :async
+    alias async? async
 
     # Allows config options to be read like a hash
     #

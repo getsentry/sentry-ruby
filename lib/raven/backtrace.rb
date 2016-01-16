@@ -7,10 +7,10 @@ module Raven
     # Handles backtrace parsing line by line
     class Line
       # regexp (optionnally allowing leading X: for windows support)
-      RUBY_INPUT_FORMAT = %r{^((?:[a-zA-Z]:)?[^:]+|<.*>):(\d+)(?::in `([^']+)')?$}.freeze
+      RUBY_INPUT_FORMAT = %r{^((?:[a-zA-Z]:)?[^:]+|<.*>):(\d+)(?::in `([^']+)')?$}
 
       # org.jruby.runtime.callsite.CachingCallSite.call(CachingCallSite.java:170)
-      JAVA_INPUT_FORMAT = %r{^(.+)\.([^\.]+)\(([^\:]+)\:(\d+)\)$}.freeze
+      JAVA_INPUT_FORMAT = %r{^(.+)\.([^\.]+)\(([^\:]+)\:(\d+)\)$}
 
       APP_DIRS_PATTERN = /(bin|exe|app|config|lib|test)/
 
@@ -84,8 +84,8 @@ module Raven
     # holder for an Array of Backtrace::Line instances
     attr_reader :lines
 
-    def self.parse(ruby_backtrace, opts = {})
-      ruby_lines = split_multiline_backtrace(ruby_backtrace)
+    def self.parse(backtrace, opts = {})
+      ruby_lines = backtrace.is_a?(Array) ? backtrace : backtrace.split(/\n\s*/)
 
       filters = opts[:filters] || []
       filtered_lines = ruby_lines.to_a.map do |line|
@@ -128,13 +128,5 @@ module Raven
     private
 
     attr_writer :lines
-
-    def self.split_multiline_backtrace(backtrace)
-      if backtrace.to_a.size == 1
-        backtrace.to_a.first.split(/\n\s*/)
-      else
-        backtrace
-      end
-    end
   end
 end

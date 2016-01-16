@@ -1,3 +1,5 @@
+require 'spec_helper'
+
 describe Raven::Event do
   context 'in a rails environment' do
     before do
@@ -9,14 +11,14 @@ describe Raven::Event do
     context 'with an application stacktrace' do
       let(:exception) do
         e = Exception.new("Oh no!")
-        allow(e).to receive(:backtrace).and_return([
+        allow(e).to receive(:backtrace).and_return [
           "#{Rails.root}/vendor/bundle/cache/other_gem.rb:10:in `public_method'",
           "vendor/bundle/some_gem.rb:10:in `a_method'",
           "#{Rails.root}/app/models/user.rb:132:in `new_function'",
           "/gem/lib/path:87:in `a_function'",
           "/app/some/other/path:1412:in `other_function'",
           "test/some/other/path:1412:in `other_function'"
-        ])
+        ]
         e
       end
 

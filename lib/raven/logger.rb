@@ -1,6 +1,7 @@
+# frozen_string_literal: true
 module Raven
   class Logger
-    LOG_PREFIX = "** [Raven] "
+    LOG_PREFIX = "** [Raven] ".freeze
 
     [
       :fatal,

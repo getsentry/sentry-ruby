@@ -494,10 +494,10 @@ describe Raven::Event do
     context 'when the exception has a backtrace' do
       let(:exception) do
         e = Exception.new(message)
-        allow(e).to receive(:backtrace).and_return([
+        allow(e).to receive(:backtrace).and_return [
           "/path/to/some/file:22:in `function_name'",
-          "/some/other/path:1412:in `other_function'",
-        ])
+          "/some/other/path:1412:in `other_function'"
+        ]
         e
       end
 

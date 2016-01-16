@@ -1,6 +1,7 @@
 module Raven
 
-  INTERFACES = {}
+  # TODO: a constant isn't appropriate here, refactor
+  INTERFACES = {} # rubocop:disable Style/MutableConstant
 
   class Interface
     def initialize(attributes = nil)

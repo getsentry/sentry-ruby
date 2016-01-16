@@ -17,7 +17,7 @@ module Raven
 
               # Add provider_job_id details if Rails 5
               if defined?(provider_job_id)
-                active_job_details.merge!(:provider_job_id => provider_job_id)
+                active_job_details[:provider_job_id] = provider_job_id
               end
 
               Raven.capture_exception(exception, :extra => active_job_details)

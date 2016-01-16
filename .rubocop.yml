@@ -11,3 +11,6 @@ Lint/UnusedMethodArgument:
 
 Style/SignalException:
   Enabled: false
+
+Performance/Casecmp:
+  Enabled: false
