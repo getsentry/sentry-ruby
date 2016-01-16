@@ -29,7 +29,7 @@ module Delayed
                 }
             }
             if job.respond_to?('payload_object') && job.payload_object.respond_to?('job_data')
-              extra.merge!(:active_job => job.payload_object.job_data)
+              extra[:active_job] = job.payload_object.job_data
             end
             ::Raven.capture_exception(exception,
               :logger  => 'delayed_job',

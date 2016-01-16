@@ -39,8 +39,7 @@ rescue ZeroDivisionError => exception
 end
 
 def build_exception_with_recursive_cause
-  backtrace = double("Backtrace")
-  allow(backtrace).to receive(:to_a).and_return([])
+  backtrace = []
 
   exception = double("Exception")
   allow(exception).to receive(:cause).and_return(exception)

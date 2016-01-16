@@ -21,7 +21,7 @@ if (major == 1 && minor < 9) || (major == 1 && minor == 9 && patch < 2)
 end
 
 module Raven
-  AVAILABLE_INTEGRATIONS = %w[delayed_job railties sidekiq rack rake]
+  AVAILABLE_INTEGRATIONS = %w[delayed_job railties sidekiq rack rake].freeze
 
   class << self
     # The client object is responsible for delivering formatted data to the Sentry server.

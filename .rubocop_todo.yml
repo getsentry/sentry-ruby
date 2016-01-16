@@ -353,7 +353,7 @@ Style/SingleLineBlockParams:
 
 # Offense count: 5
 # Cop supports --auto-correct.
-Style/SingleSpaceBeforeFirstArg:
+Style/SpaceBeforeFirstArg:
   Exclude:
     - 'exe/raven'
 

@@ -1,3 +1,4 @@
+# frozen_string_literal: true
 require 'rubygems'
 require 'socket'
 require 'securerandom'
@@ -16,11 +17,11 @@ module Raven
       "warning" => 30,
       "error" => 40,
       "fatal" => 50,
-    }
+    }.freeze
 
     BACKTRACE_RE = /^(.+?):(\d+)(?::in `(.+?)')?$/
 
-    PLATFORM = "ruby"
+    PLATFORM = "ruby".freeze
 
     attr_reader :id
     attr_accessor :project, :message, :timestamp, :time_spent, :level, :logger,
@@ -221,7 +222,7 @@ module Raven
 
     def get_file_context(filename, lineno, context)
       return nil, nil, nil unless Raven::LineCache.is_valid_file(filename)
-      lines = (2 * context + 1).times.map do |i|
+      lines = Array.new(2 * context + 1) do |i|
         Raven::LineCache.getline(filename, lineno - context + i)
       end
       [lines[0..(context - 1)], lines[context], lines[(context + 1)..-1]]
