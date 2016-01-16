@@ -419,7 +419,7 @@ Style/StringLiterals:
 # Offense count: 33
 # Cop supports --auto-correct.
 # Configuration parameters: EnforcedStyleForMultiline, SupportedStyles.
-Style/TrailingComma:
+Style/TrailingCommaInLiteral:
   Exclude:
     - 'lib/raven/configuration.rb'
     - 'lib/raven/event.rb'

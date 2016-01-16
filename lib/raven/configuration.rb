@@ -135,7 +135,7 @@ module Raven
       self.release = ENV['HEROKU_SLUG_COMMIT']
 
       if self.release.nil? || self.release.empty?
-        self.release = File.read(File.join(Rails.root, 'REVISION')).strip rescue nil
+        self.release = File.read(File.join(::Rails.root, 'REVISION')).strip rescue nil
       end
 
       if self.release.nil? || self.release.empty?
