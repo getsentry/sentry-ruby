@@ -139,7 +139,7 @@ module Raven
       end
 
       if self.release.nil? || self.release.empty?
-        self.release = `git rev-parse --short HEAD`.strip rescue nil
+        self.release = `git rev-parse --short HEAD 2> /dev/null`.strip rescue nil
       end
     end
 
