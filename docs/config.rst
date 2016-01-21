@@ -42,7 +42,7 @@ Optional settings
     .. code-block:: ruby
 
         config.environments = %w[ production ]
-    
+
     Sentry automatically sets the current environment to RAILS_ENV, or if it is not present, RACK_ENV. If you are using Sentry outside of Rack or Rails, you'll need to set the current environment yourself:
 
     .. code-block:: ruby
@@ -69,7 +69,7 @@ Optional settings
 
         config.logger = ::Logger.new(STDOUT)
 
-    Raven respects logger levels. 
+    Raven respects logger levels.
 
 .. describe:: processors
 
@@ -103,12 +103,18 @@ Optional settings
 
     Track the version of your application in Sentry.
 
+    We guess the release intelligently in the following order of preference:
+
+    * Heroku's HEROKU_SLUG_COMMIT environment variable
+    * Reading from the REVISION file in the app root 
+    * Commit SHA of the last commit (git)
+
     .. code-block:: ruby
 
         config.release = '721e41770371db95eee98ca2707686226b993eda'
 
 .. describe:: should_capture
-    
+
     By providing a proc or lambda, you can control what events are captured. Events are passed to the Proc or lambda you provide - returning false will stop the event from sending to Sentry:
 
     .. code-block:: ruby
@@ -145,12 +151,11 @@ Optional settings
 
         config.tags = { environment: Rails.env }
 
-
 Environment Variables
 ---------------------
 
 .. describe:: SENTRY_DSN
-    
+
     After you complete setting up a project, you'll be given a value which we call a DSN, or Data Source Name. It looks a lot like a standard URL, but it's actually just a representation of the configuration required by Raven (the Sentry client). It consists of a few pieces, including the protocol, public and secret keys, the server address, and the project identifier.
 
     With Raven, you may either set the SENTRY_DSN environment variable (recommended), or set your DSN manually in a config block:
