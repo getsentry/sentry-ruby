@@ -132,15 +132,7 @@ module Raven
       self.sanitize_credit_cards = true
       self.environments = []
 
-      self.release = ENV['HEROKU_SLUG_COMMIT']
-
-      if self.release.nil? || self.release.empty?
-        self.release = File.read(File.join(::Rails.root, 'REVISION')).strip rescue nil
-      end
-
-      if self.release.nil? || self.release.empty?
-        self.release = `git rev-parse --short HEAD`.strip rescue nil
-      end
+      self.release = detect_release
     end
 
     def server=(value)
@@ -203,6 +195,26 @@ module Raven
       raise Error.new('No public key specified') unless public_key
       raise Error.new('No secret key specified') unless secret_key
       raise Error.new('No project ID specified') unless project_id
+    end
+
+    private
+
+    def detect_release
+      detect_release_from_heroku ||
+        detect_release_from_rails ||
+        detect_release_from_git
+    end
+
+    def detect_release_from_heroku
+      ENV['HEROKU_SLUG_COMMIT']
+    end
+
+    def detect_release_from_rails
+      File.read(File.join(::Rails.root, 'REVISION')).strip rescue nil
+    end
+
+    def detect_release_from_git
+      `git rev-parse --short HEAD`.strip if File.directory?(".git") rescue nil
     end
   end
 end
