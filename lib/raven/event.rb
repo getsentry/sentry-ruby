@@ -8,7 +8,6 @@ require 'raven/error'
 require 'raven/linecache'
 
 module Raven
-
   class Event
     LOG_LEVELS = {
       "debug" => 10,
@@ -25,8 +24,8 @@ module Raven
 
     attr_reader :id
     attr_accessor :project, :message, :timestamp, :time_spent, :level, :logger,
-      :culprit, :server_name, :release, :modules, :extra, :tags, :context, :configuration,
-      :checksum, :fingerprint
+                  :culprit, :server_name, :release, :modules, :extra, :tags, :context, :configuration,
+                  :checksum, :fingerprint
 
     def initialize(init = {})
       @configuration = Raven.configuration
@@ -65,7 +64,7 @@ module Raven
 
       # Some type coercion
       @timestamp  = @timestamp.strftime('%Y-%m-%dT%H:%M:%S') if @timestamp.is_a?(Time)
-      @time_spent = (@time_spent*1000).to_i if @time_spent.is_a?(Float)
+      @time_spent = (@time_spent * 1000).to_i if @time_spent.is_a?(Float)
       @level      = LOG_LEVELS[@level.to_s.downcase] if @level.is_a?(String) || @level.is_a?(Symbol)
     end
 
@@ -172,9 +171,7 @@ module Raven
           exceptions << exc.cause
           exc = exc.cause
           # TODO(dcramer): ideally this would log to inform the user
-          if context.include?(exc.object_id)
-            break
-          end
+          break if context.include?(exc.object_id)
           context.add(exc.object_id)
         end
         exceptions.reverse!
@@ -235,10 +232,10 @@ module Raven
 
     # For cross-language compat
     class << self
-      alias :captureException :from_exception
-      alias :captureMessage :from_message
-      alias :capture_exception :from_exception
-      alias :capture_message :from_message
+      alias_method :captureException, :from_exception
+      alias_method :captureMessage, :from_message
+      alias_method :capture_exception, :from_exception
+      alias_method :capture_message, :from_message
     end
 
     private

@@ -32,8 +32,8 @@ module Raven
       end
     end
     class << self
-      alias capture_message capture_type
-      alias capture_exception capture_type
+      alias_method :capture_message, :capture_type
+      alias_method :capture_exception, :capture_type
     end
 
     def initialize(app)
@@ -54,7 +54,7 @@ module Raven
       rescue Error
         raise # Don't capture Raven errors
       rescue Exception => e
-        Raven.logger.debug "Collecting %p: %s" % [ e.class, e.message ]
+        Raven.logger.debug "Collecting %p: %s" % [e.class, e.message]
         Raven::Rack.capture_exception(e, env)
         raise
       end
@@ -106,7 +106,7 @@ module Raven
           # Header
           http_key = key[5..key.length - 1].split('_').map(&:capitalize).join('-')
           memo[http_key] = value
-        elsif %w(CONTENT_TYPE CONTENT_LENGTH).include? key
+        elsif %w[CONTENT_TYPE CONTENT_LENGTH].include? key
           memo[key.capitalize] = value
         end
       end
@@ -114,7 +114,7 @@ module Raven
 
     def format_env_for_sentry(env_hash)
       trimmed_hash = env_hash.select do |k, _v|
-        %w(REMOTE_ADDR SERVER_NAME SERVER_PORT).include? k.to_s
+        %w[REMOTE_ADDR SERVER_NAME SERVER_PORT].include? k.to_s
       end
       Hash[trimmed_hash] # select returns an Array in Ruby 1.8
     end

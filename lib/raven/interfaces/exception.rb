@@ -7,9 +7,7 @@ module Raven
 
     def to_hash(*args)
       data = super(*args)
-      if data[:values]
-        data[:values] = data[:values].map(&:to_hash)
-      end
+      data[:values] = data[:values].map(&:to_hash) if data[:values]
       data
     end
   end

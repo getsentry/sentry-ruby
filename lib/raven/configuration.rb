@@ -158,18 +158,18 @@ module Raven
     end
 
     def encoding=(encoding)
-      raise Error.new('Unsupported encoding') unless %w(gzip json).include? encoding
+      raise Error.new('Unsupported encoding') unless %w[gzip json].include? encoding
       @encoding = encoding
     end
 
-    alias dsn= server=
+    alias_method :dsn=, :server=
 
     def async=(value)
       raise ArgumentError.new("async must be callable (or false to disable)") unless value == false || value.respond_to?(:call)
       @async = value
     end
 
-    alias async? async
+    alias_method :async?, :async
 
     # Allows config options to be read like a hash
     #

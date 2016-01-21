@@ -1,5 +1,4 @@
 module Raven
-
   # TODO: a constant isn't appropriate here, refactor
   INTERFACES = {} # rubocop:disable Style/MutableConstant
 
@@ -17,7 +16,7 @@ module Raven
     end
 
     def to_hash
-      Hash[instance_variables.map { |name| [name[1..-1].to_sym, instance_variable_get(name)] } ]
+      Hash[instance_variables.map { |name| [name[1..-1].to_sym, instance_variable_get(name)] }]
     end
   end
 

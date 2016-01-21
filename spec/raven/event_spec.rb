@@ -7,19 +7,17 @@ describe Raven::Event do
 
   context 'a fully implemented event' do
     let(:hash) do
-      Raven::Event.new({
-        :message => 'test',
-        :level => 'warning',
-        :logger => 'foo',
-        :tags => {
-          'foo' => 'bar'
-        },
-        :extra => {
-          'my_custom_variable' => 'value'
-        },
-        :server_name => 'foo.local',
-        :release => '721e41770371db95eee98ca2707686226b993eda',
-      }).to_hash
+      Raven::Event.new(:message => 'test',
+                       :level => 'warning',
+                       :logger => 'foo',
+                       :tags => {
+                         'foo' => 'bar',
+                       },
+                       :extra => {
+                         'my_custom_variable' => 'value',
+                       },
+                       :server_name => 'foo.local',
+                       :release => '721e41770371db95eee98ca2707686226b993eda').to_hash
     end
 
     it 'has message' do
@@ -43,15 +41,11 @@ describe Raven::Event do
     end
 
     it 'has tag data' do
-      expect(hash[:tags]).to eq({
-        'foo' => 'bar'
-      })
+      expect(hash[:tags]).to eq('foo' => 'bar')
     end
 
     it 'has extra data' do
-      expect(hash[:extra]).to eq({
-        'my_custom_variable' => 'value'
-      })
+      expect(hash[:extra]).to eq('my_custom_variable' => 'value')
     end
 
     it 'has platform' do
@@ -61,81 +55,63 @@ describe Raven::Event do
 
   context 'user context specified' do
     let(:hash) do
-      Raven.user_context({
-        'id' => 'hello',
-      })
+      Raven.user_context('id' => 'hello')
 
-      Raven::Event.new({
-        :level => 'warning',
-        :logger => 'foo',
-        :tags => {
-          'foo' => 'bar'
-        },
-        :extra => {
-          'my_custom_variable' => 'value'
-        },
-        :server_name => 'foo.local',
-      }).to_hash
+      Raven::Event.new(:level => 'warning',
+                       :logger => 'foo',
+                       :tags => {
+                         'foo' => 'bar',
+                       },
+                       :extra => {
+                         'my_custom_variable' => 'value',
+                       },
+                       :server_name => 'foo.local').to_hash
     end
 
     it "adds user data" do
-      expect(hash[:user]).to eq({
-        'id' => 'hello',
-      })
+      expect(hash[:user]).to eq('id' => 'hello')
     end
   end
 
   context 'tags context specified' do
     let(:hash) do
-      Raven.tags_context({
-        'key' => 'value',
-      })
+      Raven.tags_context('key' => 'value')
 
-      Raven::Event.new({
-        :level => 'warning',
-        :logger => 'foo',
-        :tags => {
-          'foo' => 'bar'
-        },
-        :extra => {
-          'my_custom_variable' => 'value'
-        },
-        :server_name => 'foo.local',
-      }).to_hash
+      Raven::Event.new(:level => 'warning',
+                       :logger => 'foo',
+                       :tags => {
+                         'foo' => 'bar',
+                       },
+                       :extra => {
+                         'my_custom_variable' => 'value',
+                       },
+                       :server_name => 'foo.local').to_hash
     end
 
     it "merges tags data" do
-      expect(hash[:tags]).to eq({
-        'key' => 'value',
-        'foo' => 'bar',
-      })
+      expect(hash[:tags]).to eq('key' => 'value',
+                                'foo' => 'bar')
     end
   end
 
   context 'extra context specified' do
     let(:hash) do
-      Raven.extra_context({
-        'key' => 'value',
-      })
+      Raven.extra_context('key' => 'value')
 
-      Raven::Event.new({
-        :level => 'warning',
-        :logger => 'foo',
-        :tags => {
-          'foo' => 'bar'
-        },
-        :extra => {
-          'my_custom_variable' => 'value'
-        },
-        :server_name => 'foo.local',
-      }).to_hash
+      Raven::Event.new(:level => 'warning',
+                       :logger => 'foo',
+                       :tags => {
+                         'foo' => 'bar',
+                       },
+                       :extra => {
+                         'my_custom_variable' => 'value',
+                       },
+                       :server_name => 'foo.local').to_hash
     end
 
     it "merges extra data" do
-      expect(hash[:extra]).to eq({
-        'key' => 'value',
-        'my_custom_variable' => 'value',
-      })
+      expect(hash[:extra]).to eq('key' => 'value',
+                                 'my_custom_variable' => 'value')
     end
   end
 
@@ -143,40 +119,34 @@ describe Raven::Event do
     require 'stringio'
 
     let(:hash) do
-      Raven.rack_context({
-        'REQUEST_METHOD' => 'POST',
-        'QUERY_STRING' => 'biz=baz',
-        'HTTP_HOST' => 'localhost',
-        'SERVER_NAME' => 'localhost',
-        'SERVER_PORT' => '80',
-        'PATH_INFO' => '/lol',
-        'rack.url_scheme' => 'http',
-        'rack.input' => StringIO.new('foo=bar'),
-      })
+      Raven.rack_context('REQUEST_METHOD' => 'POST',
+                         'QUERY_STRING' => 'biz=baz',
+                         'HTTP_HOST' => 'localhost',
+                         'SERVER_NAME' => 'localhost',
+                         'SERVER_PORT' => '80',
+                         'PATH_INFO' => '/lol',
+                         'rack.url_scheme' => 'http',
+                         'rack.input' => StringIO.new('foo=bar'))
 
-      Raven::Event.new({
-        :level => 'warning',
-        :logger => 'foo',
-        :tags => {
-          'foo' => 'bar'
-        },
-        :extra => {
-          'my_custom_variable' => 'value'
-        },
-        :server_name => 'foo.local',
-      }).to_hash
+      Raven::Event.new(:level => 'warning',
+                       :logger => 'foo',
+                       :tags => {
+                         'foo' => 'bar',
+                       },
+                       :extra => {
+                         'my_custom_variable' => 'value',
+                       },
+                       :server_name => 'foo.local').to_hash
     end
 
     it "adds http data" do
-      expect(hash[:request]).to eq({
-        :data => { 'foo' => 'bar' },
-        :env => { 'SERVER_NAME' => 'localhost', 'SERVER_PORT' => '80' },
-        :headers => { 'Host' => 'localhost' },
-        :method => 'POST',
-        :query_string => 'biz=baz',
-        :url => 'http://localhost/lol',
-        :cookies => nil
-      })
+      expect(hash[:request]).to eq(:data => { 'foo' => 'bar' },
+                                   :env => { 'SERVER_NAME' => 'localhost', 'SERVER_PORT' => '80' },
+                                   :headers => { 'Host' => 'localhost' },
+                                   :method => 'POST',
+                                   :query_string => 'biz=baz',
+                                   :url => 'http://localhost/lol',
+                                   :cookies => nil)
     end
   end
 
@@ -189,7 +159,7 @@ describe Raven::Event do
         :level => 'warning',
         :logger => 'foo',
         :tags => {
-          'foo' => 'bar'
+          'foo' => 'bar',
         },
         :server_name => 'foo.local',
         :configuration => config
@@ -197,10 +167,8 @@ describe Raven::Event do
     end
 
     it 'merges tags data' do
-      expect(hash[:tags]).to eq({
-        'key' => 'value',
-        'foo' => 'bar'
-      })
+      expect(hash[:tags]).to eq('key' => 'value',
+                                'foo' => 'bar')
     end
   end
 
@@ -212,7 +180,7 @@ describe Raven::Event do
         :level => 'warning',
         :logger => 'foo',
         :tags => {
-          'foo' => 'bar'
+          'foo' => 'bar',
         },
         :server_name => 'foo.local',
         :configuration => config
@@ -233,18 +201,16 @@ describe Raven::Event do
     let(:hash) do
       config = Raven::Configuration.new
       config.tags = {
-          'configuration_context_event_key' => 'configuration_value',
-          'configuration_context_key' => 'configuration_value',
-          'configuration_event_key' => 'configuration_value',
-          'configuration_key' => 'configuration_value',
+        'configuration_context_event_key' => 'configuration_value',
+        'configuration_context_key' => 'configuration_value',
+        'configuration_event_key' => 'configuration_value',
+        'configuration_key' => 'configuration_value',
       }
 
-      Raven.tags_context({
-        'configuration_context_event_key' => 'context_value',
-        'configuration_context_key' => 'context_value',
-        'context_event_key' => 'context_value',
-        'context_key' => 'context_value',
-      })
+      Raven.tags_context('configuration_context_event_key' => 'context_value',
+                         'configuration_context_key' => 'context_value',
+                         'context_event_key' => 'context_value',
+                         'context_key' => 'context_value')
 
       Raven::Event.new(
         :level => 'warning',
@@ -261,67 +227,53 @@ describe Raven::Event do
     end
 
     it 'merges tags data' do
-      expect(hash[:tags]).to eq({
-        'configuration_context_event_key' => 'event_value',
-        'configuration_context_key' => 'context_value',
-        'configuration_event_key' => 'event_value',
-        'context_event_key' => 'event_value',
-        'configuration_key' => 'configuration_value',
-        'context_key' => 'context_value',
-        'event_key' => 'event_value',
-      })
+      expect(hash[:tags]).to eq('configuration_context_event_key' => 'event_value',
+                                'configuration_context_key' => 'context_value',
+                                'configuration_event_key' => 'event_value',
+                                'context_event_key' => 'event_value',
+                                'configuration_key' => 'configuration_value',
+                                'context_key' => 'context_value',
+                                'event_key' => 'event_value')
     end
   end
 
   context 'merging user context' do
     before do
-      Raven.user_context({
-        'context_event_key' => 'context_value',
-        'context_key' => 'context_value',
-      })
+      Raven.user_context('context_event_key' => 'context_value',
+                         'context_key' => 'context_value')
     end
 
     let(:hash) do
-      Raven::Event.new({
-        :user => {
-          'context_event_key' => 'event_value',
-          'event_key' => 'event_value',
-        },
-      }).to_hash
+      Raven::Event.new(:user => {
+                         'context_event_key' => 'event_value',
+                         'event_key' => 'event_value',
+                       }).to_hash
     end
 
     it 'prioritizes event context over request context' do
-      expect(hash[:user]).to eq({
-        'context_event_key' => 'event_value',
-        'context_key' => 'context_value',
-        'event_key' => 'event_value',
-      })
+      expect(hash[:user]).to eq('context_event_key' => 'event_value',
+                                'context_key' => 'context_value',
+                                'event_key' => 'event_value')
     end
   end
 
   context 'merging extra context' do
     before do
-      Raven.extra_context({
-        'context_event_key' => 'context_value',
-        'context_key' => 'context_value',
-      })
+      Raven.extra_context('context_event_key' => 'context_value',
+                          'context_key' => 'context_value')
     end
 
     let(:hash) do
-      Raven::Event.new({
-        :extra => {
-          'context_event_key' => 'event_value',
-          'event_key' => 'event_value',
-        },
-      }).to_hash
+      Raven::Event.new(:extra => {
+                         'context_event_key' => 'event_value',
+                         'event_key' => 'event_value',
+                       }).to_hash
     end
 
     it 'prioritizes event context over request context' do
-      expect(hash[:extra]).to eq({
-        'context_event_key' => 'event_value',
-        'context_key' => 'context_value',
-        'event_key' => 'event_value',
-      })
+      expect(hash[:extra]).to eq('context_event_key' => 'event_value',
+                                 'context_key' => 'context_value',
+                                 'event_key' => 'event_value')
     end
   end
 
@@ -358,7 +310,7 @@ describe Raven::Event do
 
       it 'accepts a stacktrace' do
         backtrace = ["/path/to/some/file:22:in `function_name'",
-          "/some/other/path:1412:in `other_function'"]
+                     "/some/other/path:1412:in `other_function'"]
         evt = Raven::Event.capture_message(message, :backtrace => backtrace)
         expect(evt[:stacktrace]).to be_a(Raven::StacktraceInterface)
 
@@ -435,7 +387,7 @@ describe Raven::Event do
         config = Raven::Configuration.new
         config.excluded_exceptions << 'Raven::Test::BaseExc'
         expect(Raven::Event.capture_exception(Raven::Test::BaseExc.new,
-                                       :configuration => config)).to be_nil
+                                              :configuration => config)).to be_nil
       end
 
       it 'returns nil for a class match' do
@@ -443,7 +395,7 @@ describe Raven::Event do
         config.excluded_exceptions << Raven::Test::BaseExc
 
         expect(Raven::Event.capture_exception(Raven::Test::SubExc.new,
-                                       :configuration => config)).to be_nil
+                                              :configuration => config)).to be_nil
       end
     end
 
@@ -496,7 +448,7 @@ describe Raven::Event do
         e = Exception.new(message)
         allow(e).to receive(:backtrace).and_return [
           "/path/to/some/file:22:in `function_name'",
-          "/some/other/path:1412:in `other_function'"
+          "/some/other/path:1412:in `other_function'",
         ]
         e
       end

@@ -82,7 +82,7 @@ describe Raven::Rack do
     env = Rack::MockRequest.env_for("/test")
 
     app = proc do
-      [200, {'Content-Type' => 'text/plain'}, ['OK']]
+      [200, { 'Content-Type' => 'text/plain' }, ['OK']]
     end
 
     stack = Raven::Rack.new(Rack::Lint.new(app))
