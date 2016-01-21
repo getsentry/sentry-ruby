@@ -210,7 +210,7 @@ module Raven
     end
 
     def detect_release_from_rails
-      File.read(File.join(::Rails.root, 'REVISION')).strip rescue nil
+      File.read(File.join(project_root, 'REVISION')).strip rescue nil
     end
 
     def detect_release_from_git
