@@ -2,7 +2,6 @@ require 'delayed_job'
 
 module Delayed
   module Plugins
-
     class Raven < ::Delayed::Plugin
       callbacks do |lifecycle|
         lifecycle.around(:invoke_job) do |job, *args, &block|
@@ -20,7 +19,7 @@ module Delayed
                 # handlers are YAML objects in strings, we definitely can't
                 # report all of that or the event will get truncated randomly
                 :handler     => job.handler[0...100],
-                :last_error  => job.last_error,
+                :last_error  => job.last_error[0...100],
                 :run_at      => job.run_at,
                 :locked_at   => job.locked_at,
                 :locked_by   => job.locked_by,
