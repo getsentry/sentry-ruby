@@ -1,3 +1,10 @@
+0.15.4
+------
+
+- DelayedJob integration now also truncates last_error to 100 characters [nateberkopec]
+- Fix several issues with release detection - silence git log message, fix Capistrano detection [nateberkopec, kkumler]
+
+
 0.15.3
 ------
 
