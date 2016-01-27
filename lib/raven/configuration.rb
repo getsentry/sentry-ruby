@@ -197,19 +197,19 @@ module Raven
       raise Error.new('No project ID specified') unless project_id
     end
 
-    private
-
     def detect_release
       detect_release_from_heroku ||
-        detect_release_from_rails ||
+        detect_release_from_capistrano ||
         detect_release_from_git
     end
+
+    private
 
     def detect_release_from_heroku
       ENV['HEROKU_SLUG_COMMIT']
     end
 
-    def detect_release_from_rails
+    def detect_release_from_capistrano
       File.read(File.join(project_root, 'REVISION')).strip rescue nil
     end
 

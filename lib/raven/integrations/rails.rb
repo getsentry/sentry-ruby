@@ -17,6 +17,7 @@ module Raven
       Raven.configure do |config|
         config.logger ||= ::Rails.logger
         config.project_root ||= ::Rails.root
+        config.release = config.detect_release # if project_root has changed, need to re-check
       end
 
       if Raven.configuration.catch_debugged_exceptions
