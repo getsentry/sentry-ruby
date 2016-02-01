@@ -1,5 +1,5 @@
 # lol
-VERSION := `cat lib/raven/version.rb | grep -e 'VERSION =' | cut -c 14- | rev | cut -c 9- | rev`
+VERSION := `grep '\d+\.\d+\.\d+' -o -E --color=never lib/raven/version.rb`
 
 test:
 	bundle install
