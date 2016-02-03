@@ -19,7 +19,6 @@ module Delayed
                 # handlers are YAML objects in strings, we definitely can't
                 # report all of that or the event will get truncated randomly
                 :handler     => job.handler[0...100],
-                :last_error  => job.last_error[0...100],
                 :run_at      => job.run_at,
                 :locked_at   => job.locked_at,
                 :locked_by   => job.locked_by,
@@ -27,6 +26,9 @@ module Delayed
                 :created_at  => job.created_at
                 }
             }
+            # last_error can be nil
+            extra[:last_error] = job.last_error[0...100] if job.last_error
+
             if job.respond_to?('payload_object') && job.payload_object.respond_to?('job_data')
               extra[:active_job] = job.payload_object.job_data
             end
