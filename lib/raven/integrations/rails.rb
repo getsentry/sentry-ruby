@@ -13,7 +13,7 @@ module Raven
       end
     end
 
-    config.after_initialize do
+    config.before_initialize do
       Raven.configure do |config|
         config.logger ||= ::Rails.logger
         config.project_root ||= ::Rails.root

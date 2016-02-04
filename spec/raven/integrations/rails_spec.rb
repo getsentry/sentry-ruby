@@ -7,6 +7,7 @@ describe TestApp, :type => :request do
     Raven.configure do |config|
       config.dsn = 'dummy://notaserver'
       config.encoding = 'json'
+      config.logger = nil
     end
     Rails.env = "production"
     TestApp.initialize!
@@ -34,5 +35,17 @@ describe TestApp, :type => :request do
     event = JSON.parse!(event[1])
 
     expect(event['request']['url']).to eq("http://www.example.com/exception")
+  end
+
+  it "sets Raven.configuration.logger correctly" do
+    expect(Raven.configuration.logger).to eq(Rails.logger)
+  end
+
+  it "sets Raven.configuration.project_root correctly" do
+    expect(Raven.configuration.project_root).to eq(Rails.root)
+  end
+
+  it "doesn't clobber a manually configured release" do
+    expect(Raven.configuration.release).to eq('beta')
   end
 end
