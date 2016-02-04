@@ -25,6 +25,12 @@ class TestApp < Rails::Application
     get "/exception", :to => "hello#exception"
     root :to => "hello#world"
   end
+
+  initializer :configure_release do
+    Raven.configure do |config|
+      config.release = 'beta'
+    end
+  end
 end
 
 class HelloController < ActionController::Base
