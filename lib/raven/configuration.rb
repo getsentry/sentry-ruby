@@ -210,7 +210,10 @@ module Raven
     end
 
     def detect_release_from_capistrano
-      File.read(File.join(project_root, 'REVISION')).strip rescue nil
+      version = File.read(File.join(project_root, 'REVISION')).strip rescue nil
+
+      # Capistrano 3.0 - 3.1.x
+      version || File.open(File.join(project_root, '..', 'revisions.log')).to_a.last.strip.sub(/.*as release ([0-9]+).*/, '\1') rescue nil
     end
 
     def detect_release_from_git
