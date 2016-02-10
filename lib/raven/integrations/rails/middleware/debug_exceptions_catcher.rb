@@ -10,7 +10,7 @@ module Raven
           env = env_or_request.respond_to?(:env) ? env_or_request.env : env_or_request
           Raven::Rack.capture_exception(exception, env)
         ensure
-          render_exception_without_raven(env, exception)
+          render_exception_without_raven(env_or_request, exception)
         end
       end
     end
