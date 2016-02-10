@@ -20,6 +20,6 @@ describe Raven::Processor::RemoveCircularReferences do
     expect(result['data']).to eq('(...)')
     expect(result['ary'].first['x']).to eq('(...)')
     expect(result['ary2']).not_to eq('(...)')
-    expect(result['leave intact']).to eq({ 'not a circular reference' => true })
+    expect(result['leave intact']).to eq('not a circular reference' => true)
   end
 end

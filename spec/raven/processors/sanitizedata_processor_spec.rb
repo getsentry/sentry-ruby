@@ -19,11 +19,11 @@ describe Raven::Processor::SanitizeData do
           'mypasswd' => 'hello',
           'test' => 1,
           :ssn => '123-45-6789', # test symbol handling
-          'social_security_number' => 123456789,
+          'social_security_number' => 123_456_789,
           'user_field' => 'user',
-          'user_field_foo' => 'hello'
-        }
-      }
+          'user_field_foo' => 'hello',
+        },
+      },
     }
 
     result = @processor.process(data)
@@ -51,11 +51,11 @@ describe Raven::Processor::SanitizeData do
         'mypasswd' => 'hello',
         'test' => 1,
         'ssn' => '123-45-6789',
-        'social_security_number' => 123456789,
+        'social_security_number' => 123_456_789,
         'user_field' => 'user',
-        'user_field_foo' => 'hello'
-        }.to_json
-      }
+        'user_field_foo' => 'hello',
+      }.to_json,
+    }
 
     result = JSON.parse(@processor.process(data_with_json)['json'])
 
@@ -75,29 +75,29 @@ describe Raven::Processor::SanitizeData do
   it 'should filter json embedded in a ruby object' do
     data_with_embedded_json = {
       'data' => {
-        'json' => %w(foo bar).to_json,
-        'json_hash' => {'foo' => 'bar'}.to_json,
-        'sensitive' => {'password' => 'secret'}.to_json
-        }
-      }
+        'json' => %w[foo bar].to_json,
+        'json_hash' => { 'foo' => 'bar' }.to_json,
+        'sensitive' => { 'password' => 'secret' }.to_json,
+      },
+    }
 
     result = @processor.process(data_with_embedded_json)
 
-    expect(JSON.parse(result["data"]["json"])).to eq(%w(foo bar))
-    expect(JSON.parse(result["data"]["json_hash"])).to eq({'foo' => 'bar'})
-    expect(JSON.parse(result["data"]["sensitive"])).to eq({'password' => Raven::Processor::SanitizeData::STRING_MASK})
+    expect(JSON.parse(result["data"]["json"])).to eq(%w[foo bar])
+    expect(JSON.parse(result["data"]["json_hash"])).to eq('foo' => 'bar')
+    expect(JSON.parse(result["data"]["sensitive"])).to eq('password' => Raven::Processor::SanitizeData::STRING_MASK)
   end
 
   it 'should not fail when json is invalid' do
     data_with_invalid_json = {
       'data' => {
-          'invalid' => "{\r\n\"key\":\"value\",\r\n \"foo\":{\"bar\":\"baz\"}\r\n"
-        }
-      }
+        'invalid' => "{\r\n\"key\":\"value\",\r\n \"foo\":{\"bar\":\"baz\"}\r\n",
+      },
+    }
 
     result = @processor.process(data_with_invalid_json)
 
-    expect{JSON.parse(result["data"]["invalid"])}.to raise_exception(JSON::ParserError)
+    expect { JSON.parse(result["data"]["invalid"]) }.to raise_exception(JSON::ParserError)
   end
 
   it 'should filter credit card values' do
@@ -105,7 +105,7 @@ describe Raven::Processor::SanitizeData do
       'ccnumba' => '4242424242424242',
       'ccnumba_13' => '4242424242424',
       'ccnumba-dash' => '4242-4242-4242-4242',
-      'ccnumba_int' => 4242424242424242,
+      'ccnumba_int' => 4_242_424_242_424_242,
     }
 
     result = @processor.process(data)
@@ -120,19 +120,19 @@ describe Raven::Processor::SanitizeData do
       'ccnumba' => '4242424242424242',
       'ccnumba_13' => '4242424242424',
       'ccnumba-dash' => '4242-4242-4242-4242',
-      'ccnumba_int' => 4242424242424242,
+      'ccnumba_int' => 4_242_424_242_424_242,
     }
 
     result = @processor.process(data)
     expect(result["ccnumba"]).to eq('4242424242424242')
     expect(result["ccnumba_13"]).to eq('4242424242424')
-    expect(result["ccnumba_int"]).to eq(4242424242424242)
+    expect(result["ccnumba_int"]).to eq(4_242_424_242_424_242)
   end
 
   it 'sanitizes hashes nested in arrays' do
     data = {
-      "empty_array"=> [],
-      "array"=>[{'password' => 'secret'}],
+      "empty_array" => [],
+      "array" => [{ 'password' => 'secret' }],
     }
 
     result = @processor.process(data)
@@ -145,9 +145,9 @@ describe Raven::Processor::SanitizeData do
       data = {
         'sentry.interfaces.Http' => {
           'data' => {
-            'query_string' => 'foo=bar&password=secret'
-          }
-        }
+            'query_string' => 'foo=bar&password=secret',
+          },
+        },
       }
 
       result = @processor.process(data)
@@ -160,9 +160,9 @@ describe Raven::Processor::SanitizeData do
       data = {
         'sentry.interfaces.Http' => {
           'data' => {
-            :query_string => 'foo=bar&password=secret'
-          }
-        }
+            :query_string => 'foo=bar&password=secret',
+          },
+        },
       }
 
       result = @processor.process(data)
@@ -175,9 +175,9 @@ describe Raven::Processor::SanitizeData do
       data = {
         'sentry.interfaces.Http' => {
           'data' => {
-            'query_string' => 'foo=bar&foo=fubar&foo=barfoo'
-          }
-        }
+            'query_string' => 'foo=bar&foo=fubar&foo=barfoo',
+          },
+        },
       }
 
       result = @processor.process(data)
@@ -194,9 +194,9 @@ describe Raven::Processor::SanitizeData do
       data = {
         'sentry.interfaces.Http' => {
           'data' => {
-            'query_string' => encoded_query_string
-          }
-        }
+            'query_string' => encoded_query_string,
+          },
+        },
       }
 
       result = @processor.process(data)

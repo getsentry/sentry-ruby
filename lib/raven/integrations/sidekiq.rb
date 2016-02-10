@@ -8,7 +8,7 @@ module Raven
       yield
     rescue Exception => ex
       Raven.capture_exception(ex, :extra => { :sidekiq => msg },
-                                  :time_spent => Time.now-started_at)
+                                  :time_spent => Time.now - started_at)
       raise
     end
   end
@@ -25,8 +25,8 @@ else
   Sidekiq.configure_server do |config|
     config.error_handlers << Proc.new do |ex, context|
       Raven.capture_exception(ex, :extra => {
-        :sidekiq => filter_context(context)
-      })
+                                :sidekiq => filter_context(context),
+                              })
     end
   end
 end

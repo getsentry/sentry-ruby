@@ -14,3 +14,23 @@ Style/SignalException:
 
 Performance/Casecmp:
   Enabled: false
+
+Style/StringLiterals:
+  Enabled: false
+
+Style/RescueModifier:
+  Enabled: false
+
+Style/HashSyntax:
+  EnforcedStyle: hash_rockets
+
+Style/Alias:
+  EnforcedStyle: prefer_alias_method
+
+Style/TrailingCommaInLiteral:
+  EnforcedStyleForMultiline: comma
+
+Style/PercentLiteralDelimiters:
+  PreferredDelimiters:
+    '%i': '[]'
+    '%w': '[]'

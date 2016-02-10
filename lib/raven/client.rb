@@ -28,7 +28,7 @@ module Raven
       # Convert to hash
       event = event.to_hash
 
-      if !@state.should_try?
+      unless @state.should_try?
         Raven.logger.error("Not sending event due to previous failure(s): #{get_log_message(event)}")
         return
       end
@@ -39,7 +39,7 @@ module Raven
 
       begin
         transport.send_event(generate_auth_header, encoded_data,
-                       :content_type => content_type)
+                             :content_type => content_type)
       rescue => e
         failed_send(e, event)
         return
@@ -98,7 +98,7 @@ module Raven
         'sentry_client' => USER_AGENT,
         'sentry_timestamp' => now,
         'sentry_key' => configuration.public_key,
-        'sentry_secret' => configuration.secret_key
+        'sentry_secret' => configuration.secret_key,
       }
       'Sentry ' + fields.map { |key, value| "#{key}=#{value}" }.join(', ')
     end
@@ -131,7 +131,7 @@ module Raven
     def should_try?
       return true if @status == :online
 
-      interval = @retry_after || [@retry_number, 6].min ** 2
+      interval = @retry_after || [@retry_number, 6].min**2
       return true if Time.now - @last_check >= interval
 
       false

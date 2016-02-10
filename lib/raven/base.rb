@@ -73,7 +73,7 @@ module Raven
 
       self.client = Client.new(configuration)
       report_status
-      self.client
+      client
     end
 
     # Send an event to the configured Sentry server
@@ -166,7 +166,7 @@ module Raven
     # @example
     #   Raven.user_context('id' => 1, 'email' => 'foo@example.com')
     def user_context(options = nil)
-      self.context.user = options || {}
+      context.user = options || {}
     end
 
     # Bind tags context. Merges with existing context (if any).
@@ -177,7 +177,7 @@ module Raven
     # @example
     #   Raven.tags_context('my_custom_tag' => 'tag_value')
     def tags_context(options = nil)
-      self.context.tags.merge!(options || {})
+      context.tags.merge!(options || {})
     end
 
     # Bind extra context. Merges with existing context (if any).
@@ -187,14 +187,12 @@ module Raven
     # @example
     #   Raven.extra_context('my_custom_data' => 'value')
     def extra_context(options = nil)
-      self.context.extra.merge!(options || {})
+      context.extra.merge!(options || {})
     end
 
     def rack_context(env)
-      if env.empty?
-        env = nil
-      end
-      self.context.rack_env = env
+      env = nil if env.empty?
+      context.rack_env = env
     end
 
     # Injects various integrations. Default behavior: inject all available integrations
@@ -212,7 +210,7 @@ module Raven
       integrations_to_load = Raven::AVAILABLE_INTEGRATIONS & only_integrations
       not_found_integrations = only_integrations - integrations_to_load
       if not_found_integrations.any?
-        self.logger.warn "Integrations do not exist: #{not_found_integrations.join ', '}"
+        logger.warn "Integrations do not exist: #{not_found_integrations.join ', '}"
       end
       integrations_to_load &= Gem.loaded_specs.keys
       # TODO(dcramer): integrations should have some additional checks baked-in
@@ -227,22 +225,22 @@ module Raven
     def load_integration(integration)
       require "raven/integrations/#{integration}"
     rescue Exception => error
-      self.logger.warn "Unable to load raven/integrations/#{integration}: #{error}"
+      logger.warn "Unable to load raven/integrations/#{integration}: #{error}"
     end
 
     # For cross-language compat
-    alias :captureException :capture_exception
-    alias :captureMessage :capture_message
-    alias :annotateException :annotate_exception
-    alias :annotate :annotate_exception
+    alias_method :captureException, :capture_exception
+    alias_method :captureMessage, :capture_message
+    alias_method :annotateException, :annotate_exception
+    alias_method :annotate, :annotate_exception
 
     private
 
     def install_at_exit_hook(options)
       at_exit do
-        if $!
-          logger.debug "Caught a post-mortem exception: #{$!.inspect}"
-          capture_exception($!, options)
+        if (exc = $!) # rubocop:disable Style/SpecialGlobalVars
+          logger.debug "Caught a post-mortem exception: #{exc.inspect}"
+          capture_exception(exc, options)
         end
       end
     end
