@@ -1,3 +1,11 @@
+0.15.5
+------
+
+- DelayedJob integration fixed when last_error not present [dcramer, #454]
+- Release detection doesn't overwrite manual release setting in Rails [eugeneius, #450]
+- Deal properly with Cap 3.0/3.1 revision logs [timcheadle, #449]
+- Rails 5 support [nateberkopec, #423]
+
 0.15.4
 ------
 
