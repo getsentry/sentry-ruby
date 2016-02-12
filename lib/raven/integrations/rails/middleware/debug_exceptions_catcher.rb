@@ -2,6 +2,15 @@ module Raven
   class Rails
     module Middleware
       module DebugExceptionsCatcher
+        def render_exception(env_or_request, exception)
+          env = env_or_request.respond_to?(:env) ? env_or_request.env : env_or_request
+          Raven::Rack.capture_exception(exception, env)
+        ensure
+          super
+        end
+      end
+
+      module OldDebugExceptionsCatcher
         def self.included(base)
           base.send(:alias_method_chain, :render_exception, :raven)
         end
