@@ -19,7 +19,9 @@ module Raven
         config.project_root ||= ::Rails.root
         config.release = config.detect_release # if project_root has changed, need to re-check
       end
+    end
 
+    config.after_initialize do
       if Raven.configuration.catch_debugged_exceptions
         require 'raven/integrations/rails/middleware/debug_exceptions_catcher'
         if defined?(::ActionDispatch::DebugExceptions)
