@@ -48,4 +48,24 @@ describe TestApp, :type => :request do
   it "doesn't clobber a manually configured release" do
     expect(Raven.configuration.release).to eq('beta')
   end
+
+  context "when catch_debugged_exceptions is disabled" do
+    before do
+      Raven.configure do |config|
+        config.catch_debugged_exceptions = false
+      end
+    end
+
+    after do
+      Raven.configure do |config|
+        config.catch_debugged_exceptions = true
+      end
+    end
+
+    it "doesn't capture exceptions automatically" do
+      get "/exception"
+      expect(response.status).to eq(500)
+      expect(Raven.client.transport.events.size).to eq(0)
+    end
+  end
 end

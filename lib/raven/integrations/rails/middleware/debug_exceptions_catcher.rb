@@ -5,7 +5,7 @@ module Raven
         def render_exception(env_or_request, exception)
           begin
             env = env_or_request.respond_to?(:env) ? env_or_request.env : env_or_request
-            Raven::Rack.capture_exception(exception, env)
+            Raven::Rack.capture_exception(exception, env) if Raven.configuration.catch_debugged_exceptions
           rescue # rubocop:disable Lint/HandleExceptions
           end
           super
@@ -20,7 +20,7 @@ module Raven
         def render_exception_with_raven(env_or_request, exception)
           begin
             env = env_or_request.respond_to?(:env) ? env_or_request.env : env_or_request
-            Raven::Rack.capture_exception(exception, env)
+            Raven::Rack.capture_exception(exception, env) if Raven.configuration.catch_debugged_exceptions
           rescue # rubocop:disable Lint/HandleExceptions
           end
           render_exception_without_raven(env_or_request, exception)

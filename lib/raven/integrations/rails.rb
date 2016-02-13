@@ -22,19 +22,17 @@ module Raven
     end
 
     config.after_initialize do
-      if Raven.configuration.catch_debugged_exceptions
-        require 'raven/integrations/rails/middleware/debug_exceptions_catcher'
-        if defined?(::ActionDispatch::DebugExceptions)
-          exceptions_class = ::ActionDispatch::DebugExceptions
-        elsif defined?(::ActionDispatch::ShowExceptions)
-          exceptions_class = ::ActionDispatch::ShowExceptions
-        end
-        unless exceptions_class.nil?
-          if RUBY_VERSION.to_f < 2.0
-            exceptions_class.send(:include, Raven::Rails::Middleware::OldDebugExceptionsCatcher)
-          else
-            exceptions_class.send(:prepend, Raven::Rails::Middleware::DebugExceptionsCatcher)
-          end
+      require 'raven/integrations/rails/middleware/debug_exceptions_catcher'
+      if defined?(::ActionDispatch::DebugExceptions)
+        exceptions_class = ::ActionDispatch::DebugExceptions
+      elsif defined?(::ActionDispatch::ShowExceptions)
+        exceptions_class = ::ActionDispatch::ShowExceptions
+      end
+      unless exceptions_class.nil?
+        if RUBY_VERSION.to_f < 2.0
+          exceptions_class.send(:include, Raven::Rails::Middleware::OldDebugExceptionsCatcher)
+        else
+          exceptions_class.send(:prepend, Raven::Rails::Middleware::DebugExceptionsCatcher)
         end
       end
     end
