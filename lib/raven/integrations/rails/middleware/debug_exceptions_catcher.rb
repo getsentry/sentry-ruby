@@ -3,9 +3,11 @@ module Raven
     module Middleware
       module DebugExceptionsCatcher
         def render_exception(env_or_request, exception)
-          env = env_or_request.respond_to?(:env) ? env_or_request.env : env_or_request
-          Raven::Rack.capture_exception(exception, env)
-        ensure
+          begin
+            env = env_or_request.respond_to?(:env) ? env_or_request.env : env_or_request
+            Raven::Rack.capture_exception(exception, env)
+          rescue # rubocop:disable Lint/HandleExceptions
+          end
           super
         end
       end
@@ -16,9 +18,11 @@ module Raven
         end
 
         def render_exception_with_raven(env_or_request, exception)
-          env = env_or_request.respond_to?(:env) ? env_or_request.env : env_or_request
-          Raven::Rack.capture_exception(exception, env)
-        ensure
+          begin
+            env = env_or_request.respond_to?(:env) ? env_or_request.env : env_or_request
+            Raven::Rack.capture_exception(exception, env)
+          rescue # rubocop:disable Lint/HandleExceptions
+          end
           render_exception_without_raven(env_or_request, exception)
         end
       end
