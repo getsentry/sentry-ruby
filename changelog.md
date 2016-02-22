@@ -1,3 +1,10 @@
+0.15.6
+------
+
+- Fixed bug where return value of debug middleware was nil [eugeneius, #461]
+- Fixed a bug in checking `catch_debugged_exceptions` [greysteil, #458]
+- Fixed a deprecation warning for Rails 5 [Elektron1c97, #457]
+
 0.15.5
 ------
 
