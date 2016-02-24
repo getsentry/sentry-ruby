@@ -7,8 +7,8 @@ module Raven
       started_at = Time.now
       yield
     rescue Exception => ex
-      Raven.capture_exception(ex, :extra => { :sidekiq => msg },
-                                  :time_spent => Time.now-started_at)
+      Raven.capture_exception(ex, extra: { sidekiq: msg },
+                                  time_spent: Time.now - started_at)
       raise
     end
   end
@@ -23,10 +23,10 @@ if Sidekiq::VERSION < '3'
   end
 else
   Sidekiq.configure_server do |config|
-    config.error_handlers << Proc.new do |ex, context|
-      Raven.capture_exception(ex, :extra => {
-        :sidekiq => filter_context(context)
-      })
+    config.error_handlers << proc do |ex, context|
+      Raven.capture_exception(ex, extra: {
+                                sidekiq: filter_context(context),
+                              })
     end
   end
 end

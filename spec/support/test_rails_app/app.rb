@@ -22,8 +22,8 @@ class TestApp < Rails::Application
   config.logger = Logger.new(STDOUT)
 
   routes.append do
-    get "/exception", :to => "hello#exception"
-    root :to => "hello#world"
+    get "/exception", to: "hello#exception"
+    root to: "hello#world"
   end
 
   initializer :configure_release do
@@ -39,7 +39,7 @@ class HelloController < ActionController::Base
   end
 
   def world
-    render :text => "Hello World!"
+    render text: "Hello World!"
   end
 end
 

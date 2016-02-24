@@ -100,14 +100,14 @@ describe Raven::Configuration do
 
   context 'configuring for async' do
     it 'should be configurable to send events async' do
-      subject.async = lambda { |_e| :ok }
+      subject.async = ->(_e) { :ok }
       expect(subject.async.respond_to?(:call)).to eq(true)
       expect(subject.async.call('event')).to eq(:ok)
     end
 
     it 'should raise when setting async to anything other than callable or false' do
-      expect { subject.async = Proc.new {} }.to_not raise_error
-      expect { subject.async = lambda {} }.to_not raise_error
+      expect { subject.async = proc {} }.to_not raise_error
+      expect { subject.async = -> {} }.to_not raise_error
       expect { subject.async = false }.to_not raise_error
       expect { subject.async = true }.to raise_error(ArgumentError)
     end
@@ -132,7 +132,7 @@ describe Raven::Configuration do
 
   context 'configuration for sanitize fields' do
     it 'should union default sanitize fields with user-defined sanitize fields' do
-      fields = Raven::Processor::SanitizeData::DEFAULT_FIELDS | %w(test monkeybutt foo(.*)?bar)
+      fields = Raven::Processor::SanitizeData::DEFAULT_FIELDS | %w[test monkeybutt foo(.*)?bar]
 
       subject.sanitize_fields = fields
       client = Raven::Client.new(subject)

@@ -1,5 +1,6 @@
 inherit_from: .rubocop_todo.yml
 
+# This is vendored code
 AllCops:
   Exclude:
     - 'lib/raven/okjson.rb'
@@ -7,5 +8,59 @@ AllCops:
 Style/SignalException:
   Enabled: false
 
+# Not enough perf gain to care
 Performance/Casecmp:
+  Enabled: false
+
+# We're an exception catcher, we catch all exceptions.
+Lint/RescueException:
+  Enabled: false
+
+# We don't enforce documentation
+Style/Documentation:
+  Enabled: false
+
+# Some methods have a boolean contract, so we need to do this
+Style/DoubleNegation:
+  Enabled: false
+
+# this ship has sailed, lol
+Style/FileName:
+  Exclude:
+    - 'lib/sentry-raven-without-integrations.rb'
+    - 'lib/sentry-raven.rb'
+
+# Just our style
+Style/TrailingCommaInLiteral:
+  EnforcedStyleForMultiline: comma
+
+# Appeal to sanity
+Style/PercentLiteralDelimiters:
+  PreferredDelimiters:
+    '%i': '[]'
+    '%w': '[]'
+
+# All of the numbers in this lib are CC numbers and SSNs, for which this rule
+# makes no sense.
+Style/NumericLiterals:
+  Enabled: false
+
+# We live on the edge
+Style/RescueModifier:
+  Enabled: false
+
+# Silly rules
+Style/CaseEquality:
+  Enabled: false
+
+Style/ClassAndModuleChildren:
+  Enabled: false
+
+Style/ParallelAssignment:
+  Enabled: false
+
+Style/SingleLineBlockParams:
+  Enabled: false
+
+Style/StringLiterals:
   Enabled: false

@@ -4,11 +4,9 @@ require 'socket'
 require 'securerandom'
 require 'digest/md5'
 
-require 'raven/error'
 require 'raven/linecache'
 
 module Raven
-
   class Event
     LOG_LEVELS = {
       "debug" => 10,
@@ -25,14 +23,14 @@ module Raven
 
     attr_reader :id
     attr_accessor :project, :message, :timestamp, :time_spent, :level, :logger,
-      :culprit, :server_name, :release, :modules, :extra, :tags, :context, :configuration,
-      :checksum, :fingerprint
+                  :culprit, :server_name, :release, :modules, :extra, :tags, :context, :configuration,
+                  :checksum, :fingerprint
 
     def initialize(init = {})
       @configuration = Raven.configuration
       @interfaces    = {}
       @context       = Raven.context
-      @id            = generate_event_id
+      @id            = ::Digest::MD5.hexdigest(SecureRandom.uuid)
       @project       = nil
       @message       = nil
       @timestamp     = Time.now.utc
@@ -65,7 +63,7 @@ module Raven
 
       # Some type coercion
       @timestamp  = @timestamp.strftime('%Y-%m-%dT%H:%M:%S') if @timestamp.is_a?(Time)
-      @time_spent = (@time_spent*1000).to_i if @time_spent.is_a?(Float)
+      @time_spent = (@time_spent * 1000).to_i if @time_spent.is_a?(Float)
       @level      = LOG_LEVELS[@level.to_s.downcase] if @level.is_a?(String) || @level.is_a?(Symbol)
     end
 
@@ -82,7 +80,7 @@ module Raven
 
     def interface(name, value = nil, &block)
       int = Raven.find_interface(name)
-      raise Error.new("Unknown interface: #{name}") unless int
+      raise Error, "Unknown interface: #{name}" unless int
       @interfaces[int.name] = int.new(value, &block) if value || block
       @interfaces[int.name]
     end
@@ -97,13 +95,13 @@ module Raven
 
     def to_hash
       data = {
-        :event_id => @id,
-        :message => @message,
-        :timestamp => @timestamp,
-        :time_spent => @time_spent,
-        :level => @level,
-        :project => @project,
-        :platform => PLATFORM,
+        event_id: @id,
+        message: @message,
+        timestamp: @timestamp,
+        time_spent: @time_spent,
+        level: @level,
+        project: @project,
+        platform: PLATFORM,
       }
       data[:logger] = @logger if @logger
       data[:culprit] = @culprit if @culprit
@@ -172,9 +170,7 @@ module Raven
           exceptions << exc.cause
           exc = exc.cause
           # TODO(dcramer): ideally this would log to inform the user
-          if context.include?(exc.object_id)
-            break
-          end
+          break if context.include?(exc.object_id)
           context.add(exc.object_id)
         end
         exceptions.reverse!
@@ -221,7 +217,7 @@ module Raven
     end
 
     def get_file_context(filename, lineno, context)
-      return nil, nil, nil unless Raven::LineCache.is_valid_file(filename)
+      return nil, nil, nil unless Raven::LineCache.valid_file?(filename)
       lines = Array.new(2 * context + 1) do |i|
         Raven::LineCache.getline(filename, lineno - context + i)
       end
@@ -235,22 +231,10 @@ module Raven
 
     # For cross-language compat
     class << self
-      alias :captureException :from_exception
-      alias :captureMessage :from_message
-      alias :capture_exception :from_exception
-      alias :capture_message :from_message
-    end
-
-    private
-
-    def generate_event_id
-      # generate a uuid. copy-pasted from SecureRandom, this method is not
-      # available in <1.9.
-      ary = SecureRandom.random_bytes(16).unpack("NnnnnN")
-      ary[2] = (ary[2] & 0x0fff) | 0x4000
-      ary[3] = (ary[3] & 0x3fff) | 0x8000
-      uuid = "%08x-%04x-%04x-%04x-%04x%08x" % ary
-      ::Digest::MD5.hexdigest(uuid)
+      alias captureException from_exception
+      alias captureMessage from_message
+      alias capture_exception from_exception
+      alias capture_message from_message
     end
   end
 end

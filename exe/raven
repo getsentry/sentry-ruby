@@ -20,7 +20,7 @@ parser = OptionParser.new do |opt|
   #   options[:daemon] = true
   # end
 
-  opt.on("-h","--help","help") do
+  opt.on("-h", "--help", "help") do
     puts parser
   end
 end
@@ -28,13 +28,13 @@ end
 parser.parse!
 
 case ARGV[0]
-  when "test"
-    dsn = ARGV[1] if ARGV.length > 1
-    if !dsn
-      puts "Usage: raven test <dsn>"
-    else
-      Raven::CLI.test(dsn)
-    end
+when "test"
+  dsn = ARGV[1] if ARGV.length > 1
+  if !dsn
+    puts "Usage: raven test <dsn>"
   else
-    puts parser
+    Raven::CLI.test(dsn)
+  end
+else
+  puts parser
 end

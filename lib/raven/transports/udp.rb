@@ -1,7 +1,5 @@
 require 'socket'
-
 require 'raven/transports'
-require 'raven/error'
 
 module Raven
   module Transports
@@ -10,19 +8,19 @@ module Raven
         conn.send "#{auth_header}\n\n#{data}", 0
       end
 
-    private
+      private
 
       def conn
         @conn ||= begin
           sock = UDPSocket.new
-          sock.connect(self.configuration.host, self.configuration.port)
+          sock.connect(configuration.host, configuration.port)
           sock
         end
       end
 
       def verify_configuration
         super
-        raise Error.new('No port specified') unless self.configuration.port
+        raise Error, 'No port specified' unless configuration.port
       end
     end
   end

@@ -8,7 +8,7 @@ describe Raven::Rack do
 
     expect(Raven::Rack).to receive(:capture_exception).with(exception, env)
 
-    app = lambda { |_e| raise exception }
+    app = ->(_e) { raise exception }
 
     stack = Raven::Rack.new(app)
     expect { stack.call(env) }.to raise_error
@@ -49,7 +49,7 @@ describe Raven::Rack do
   it 'should clear context after app is called' do
     Raven::Context.current.tags[:environment] = :test
 
-    app = lambda { |env| ['response', {}, env] }
+    app = ->(env) { ['response', {}, env] }
     stack = Raven::Rack.new(app)
 
     stack.call({})
@@ -73,7 +73,7 @@ describe Raven::Rack do
     end
     stack = Raven::Rack.new(app)
 
-    env = { :foo => :bar }
+    env = { foo: :bar }
 
     stack.call(env)
   end
@@ -82,7 +82,7 @@ describe Raven::Rack do
     env = Rack::MockRequest.env_for("/test")
 
     app = proc do
-      [200, {'Content-Type' => 'text/plain'}, ['OK']]
+      [200, { 'Content-Type' => 'text/plain' }, ['OK']]
     end
 
     stack = Raven::Rack.new(Rack::Lint.new(app))

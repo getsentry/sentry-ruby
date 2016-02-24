@@ -1,7 +1,5 @@
 require 'faraday'
-
 require 'raven/transports'
-require 'raven/error'
 
 module Raven
   module Transports
@@ -39,8 +37,8 @@ module Raven
         ssl_configuration[:ca_file] = configuration.ssl_ca_file
 
         conn = Faraday.new(
-          :url => configuration[:server],
-          :ssl => ssl_configuration
+          url: configuration[:server],
+          ssl: ssl_configuration
         ) do |builder|
           builder.adapter(*adapter)
         end
