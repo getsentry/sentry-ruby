@@ -17,7 +17,7 @@ describe Raven::Event do
           "#{Rails.root}/app/models/user.rb:132:in `new_function'",
           "/gem/lib/path:87:in `a_function'",
           "/app/some/other/path:1412:in `other_function'",
-          "test/some/other/path:1412:in `other_function'"
+          "test/some/other/path:1412:in `other_function'",
         ]
         e
       end

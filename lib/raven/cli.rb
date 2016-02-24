@@ -37,7 +37,7 @@ module Raven
         else
           puts "-> event ID: #{evt.id}"
         end
-      elsif evt #async configuration
+      elsif evt # async configuration
         if evt.value.is_a? Hash
           puts "-> event ID: #{evt.value[:event_id]}"
         else

@@ -1,16 +1,15 @@
 ## Inspired by Rails' and Airbrake's backtrace parsers.
 
 module Raven
-
   # Front end to parsing the backtrace for each notice
   class Backtrace
     # Handles backtrace parsing line by line
     class Line
       # regexp (optionnally allowing leading X: for windows support)
-      RUBY_INPUT_FORMAT = %r{^((?:[a-zA-Z]:)?[^:]+|<.*>):(\d+)(?::in `([^']+)')?$}
+      RUBY_INPUT_FORMAT = /^((?:[a-zA-Z]:)?[^:]+|<.*>):(\d+)(?::in `([^']+)')?$/
 
       # org.jruby.runtime.callsite.CachingCallSite.call(CachingCallSite.java:170)
-      JAVA_INPUT_FORMAT = %r{^(.+)\.([^\.]+)\(([^\:]+)\:(\d+)\)$}
+      JAVA_INPUT_FORMAT = /^(.+)\.([^\.]+)\(([^\:]+)\:(\d+)\)$/
 
       APP_DIRS_PATTERN = /(bin|exe|app|config|lib|test)/
 
@@ -52,7 +51,7 @@ module Raven
         app_dirs = Raven.configuration.app_dirs_pattern || APP_DIRS_PATTERN
         @in_app_pattern ||= Regexp.new("^(#{project_root}/)?#{app_dirs}")
 
-        if self.file =~ @in_app_pattern
+        if file =~ @in_app_pattern
           true
         else
           false

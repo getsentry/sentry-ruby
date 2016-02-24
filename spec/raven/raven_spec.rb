@@ -30,7 +30,7 @@ describe Raven do
 
     around do |example|
       prior_async = Raven.configuration.async
-      Raven.configuration.async = Proc.new { :ok }
+      Raven.configuration.async = proc { :ok }
       example.run
       Raven.configuration.async = prior_async
     end
@@ -69,7 +69,7 @@ describe Raven do
 
     around do |example|
       prior_async = Raven.configuration.async
-      Raven.configuration.async = Proc.new { :ok }
+      Raven.configuration.async = proc { :ok }
       example.run
       Raven.configuration.async = prior_async
     end
@@ -95,7 +95,7 @@ describe Raven do
       expect(Raven).not_to receive(:send_event).with(event)
 
       prior_should_capture = Raven.configuration.should_capture
-      Raven.configuration.should_capture = Proc.new { false }
+      Raven.configuration.should_capture = proc { false }
       expect(Raven.configuration.should_capture).to receive(:call).with(exception)
       expect(Raven.capture_exception(exception, options)).to be false
       Raven.configuration.should_capture = prior_should_capture
@@ -115,7 +115,7 @@ describe Raven do
     end
 
     context 'not given a block' do
-      let(:options) { { :key => 'value' } }
+      let(:options) { { key: 'value' } }
 
       def capture_in_separate_process
         pipe_in, pipe_out = IO.pipe
@@ -133,7 +133,6 @@ describe Raven do
           $stdout.reopen('/dev/null', 'w')
 
           raise 'test error'
-          exit
         end
 
         pipe_out.close

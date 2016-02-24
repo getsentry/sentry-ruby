@@ -19,5 +19,5 @@ module Raven
     end
   end
 
-  register_interface :http => HttpInterface
+  register_interface http: HttpInterface
 end

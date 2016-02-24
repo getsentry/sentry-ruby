@@ -12,16 +12,16 @@ module Delayed
           rescue Exception => exception
             # Log error to Sentry
             extra = {
-              :delayed_job => {
-                :id          => job.id,
-                :priority    => job.priority,
-                :attempts    => job.attempts,
-                :run_at      => job.run_at,
-                :locked_at   => job.locked_at,
-                :locked_by   => job.locked_by,
-                :queue       => job.queue,
-                :created_at  => job.created_at
-                }
+              delayed_job: {
+                id: job.id,
+                priority: job.priority,
+                attempts: job.attempts,
+                run_at: job.run_at,
+                locked_at: job.locked_at,
+                locked_by: job.locked_by,
+                queue: job.queue,
+                created_at: job.created_at,
+              },
             }
             # last_error can be nil
             extra[:last_error] = job.last_error[0...100] if job.last_error
@@ -33,12 +33,12 @@ module Delayed
               extra[:active_job] = job.payload_object.job_data
             end
             ::Raven.capture_exception(exception,
-              :logger  => 'delayed_job',
-              :tags    => {
-                 :delayed_job_queue => job.queue,
-                 :delayed_job_id => job.id
-              },
-              :extra => extra)
+                                      logger: 'delayed_job',
+                                      tags: {
+                                        delayed_job_queue: job.queue,
+                                        delayed_job_id: job.id,
+                                      },
+                                      extra: extra)
 
             # Make sure we propagate the failure!
             raise exception
@@ -46,7 +46,6 @@ module Delayed
         end
       end
     end
-
   end
 end
 

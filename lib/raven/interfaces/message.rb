@@ -12,5 +12,5 @@ module Raven
     end
   end
 
-  register_interface :message => MessageInterface
+  register_interface message: MessageInterface
 end

@@ -2,7 +2,7 @@ require "spec_helper"
 require "rspec/rails"
 require "raven/transports/dummy"
 
-describe TestApp, :type => :request do
+describe TestApp, type: :request do
   before(:all) do
     Raven.configure do |config|
       config.dsn = 'dummy://notaserver'

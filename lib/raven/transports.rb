@@ -1,5 +1,3 @@
-require 'raven/error'
-
 module Raven
   module Transports
     class Transport
@@ -9,8 +7,8 @@ module Raven
         @configuration = configuration
       end
 
-      def send_event #(auth_header, data, options = {})
-        raise NotImplementedError.new('Abstract method not implemented')
+      def send_event # (auth_header, data, options = {})
+        raise NotImplementedError, 'Abstract method not implemented'
       end
 
       protected

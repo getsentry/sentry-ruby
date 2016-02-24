@@ -2,9 +2,9 @@ require 'spec_helper'
 
 describe Raven::OkJson do
   data = [
-    OpenStruct.new(:key => 'foo', :val => 'bar', :enc_key => '"foo"', :enc_val => '"bar"'),
-    OpenStruct.new(:key => :foo, :val => :bar, :enc_key => '"foo"', :enc_val => '"bar"'),
-    OpenStruct.new(:key => 1, :val => 1, :enc_key => '"1"', :enc_val => '1')
+    OpenStruct.new(key: 'foo', val: 'bar', enc_key: '"foo"', enc_val: '"bar"'),
+    OpenStruct.new(key: :foo, val: :bar, enc_key: '"foo"', enc_val: '"bar"'),
+    OpenStruct.new(key: 1, val: 1, enc_key: '"1"', enc_val: '1'),
   ]
 
   data.each do |obj|
@@ -21,7 +21,7 @@ describe Raven::OkJson do
     end
 
     it "works with a hash of #{obj.val.class}s" do
-      expect(Raven::OkJson.encode('bar' => {obj.key => obj.val})).to eq "{\"bar\":{#{obj.enc_key}:#{obj.enc_val}}}"
+      expect(Raven::OkJson.encode('bar' => { obj.key => obj.val })).to eq "{\"bar\":{#{obj.enc_key}:#{obj.enc_val}}}"
     end
   end
 
@@ -29,8 +29,8 @@ describe Raven::OkJson do
     data = [
       (1..5),
       :symbol,
-      1/0.0,
-      0/0.0
+      1 / 0.0,
+      0 / 0.0,
     ]
     expect(Raven::OkJson.encode(data)).to eq "[\"1..5\",\"symbol\",\"Infinity\",\"NaN\"]"
   end
@@ -40,7 +40,7 @@ describe Raven::OkJson do
   end
 
   it 'it raises the correct error on strings that look like incomplete objects' do
-    expect{Raven::OkJson.decode("{")}.to raise_error(Raven::OkJson::Error)
-    expect{Raven::OkJson.decode("[")}.to raise_error(Raven::OkJson::Error)
+    expect { Raven::OkJson.decode("{") }.to raise_error(Raven::OkJson::Error)
+    expect { Raven::OkJson.decode("[") }.to raise_error(Raven::OkJson::Error)
   end
 end
