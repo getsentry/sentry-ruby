@@ -10,10 +10,8 @@ begin
   require 'rubygems'
   require 'rspec/core/rake_task'
 
-  if RUBY_VERSION > '1.8.7'
-    require 'rubocop/rake_task'
-    RuboCop::RakeTask.new(:rubocop)
-  end
+  require 'rubocop/rake_task'
+  RuboCop::RakeTask.new(:rubocop)
 
   RSpec::Core::RakeTask.new(:spec) do |spec|
     spec.pattern = 'spec/**/*_spec.rb'
@@ -25,8 +23,4 @@ rescue LoadError
   end
 end
 
-if RUBY_VERSION > '1.8.7'
-  task :default => [:rubocop, :spec]
-else
-  task :default => :spec
-end
+task :default => [:rubocop, :spec]

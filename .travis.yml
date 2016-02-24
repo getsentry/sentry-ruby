@@ -2,8 +2,6 @@ language: ruby
 
 rvm:
   - jruby-19mode
-  - ree
-  - 1.8.7
   - 1.9.3
   - 2.2.4
   - 2.3.0
@@ -26,18 +24,10 @@ matrix:
   allow_failures:
     - rvm: ruby-head
   exclude:
-    - rvm: 1.8.7
-      gemfile: gemfiles/rails42.gemfile
-    - rvm: ree
-      gemfile: gemfiles/rails42.gemfile
     - rvm: 2.2.4
       gemfile: gemfiles/rails32.gemfile
     - rvm: ruby-head
       gemfile: gemfiles/rails32.gemfile
-    - rvm: 1.8.7
-      gemfile: gemfiles/rails5.gemfile
-    - rvm: ree
-      gemfile: gemfiles/rails5.gemfile
     - rvm: 1.9.3
       gemfile: gemfiles/rails5.gemfile
     - rvm: jruby-19mode
