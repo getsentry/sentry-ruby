@@ -127,17 +127,6 @@ Style/CaseEquality:
 Style/CaseIndentation:
   Enabled: false
 
-# Offense count: 6
-# Configuration parameters: EnforcedStyle, SupportedStyles.
-Style/ClassAndModuleChildren:
-  Exclude:
-    - 'lib/raven/processor/removecircularreferences.rb'
-    - 'lib/raven/processor/removestacktrace.rb'
-    - 'lib/raven/processor/sanitizedata.rb'
-    - 'lib/raven/processor/utf8conversion.rb'
-    - 'spec/raven/event_spec.rb'
-
-
 # Offense count: 37
 # Configuration parameters: Exclude.
 Style/Documentation:

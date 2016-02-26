@@ -9,3 +9,6 @@ Style/SignalException:
 
 Performance/Casecmp:
   Enabled: false
+
+Style/ClassAndModuleChildren:
+  Enabled: false

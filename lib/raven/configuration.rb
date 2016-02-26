@@ -113,13 +113,21 @@ module Raven
       'Sinatra::NotFound',
     ].freeze
 
+    DEFAULT_PROCESSORS = [
+      Raven::Processor::RemoveCircularReferences,
+      Raven::Processor::UTF8Conversion,
+      Raven::Processor::SanitizeData,
+      Raven::Processor::Cookies,
+      Raven::Processor::PostData,
+    ].freeze
+
     def initialize
       self.server = ENV['SENTRY_DSN'] if ENV['SENTRY_DSN']
       @context_lines = 3
       self.current_environment = ENV['RAILS_ENV'] || ENV['RACK_ENV'] || 'default'
       self.send_modules = true
       self.excluded_exceptions = IGNORE_DEFAULT.dup
-      self.processors = [Raven::Processor::RemoveCircularReferences, Raven::Processor::UTF8Conversion, Raven::Processor::SanitizeData]
+      self.processors = DEFAULT_PROCESSORS.dup
       self.ssl_verification = true
       self.encoding = 'gzip'
       self.timeout = 1
