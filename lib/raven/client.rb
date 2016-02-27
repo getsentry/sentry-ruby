@@ -5,7 +5,6 @@ require 'base64'
 require 'raven/version'
 require 'raven/okjson'
 require 'raven/transports/http'
-require 'raven/transports/udp'
 
 module Raven
   # Encodes events and sends them to the Sentry server.
@@ -53,8 +52,6 @@ module Raven
     def transport
       @transport ||=
         case configuration.scheme
-        when 'udp'
-          Transports::UDP.new(configuration)
         when 'http', 'https'
           Transports::HTTP.new(configuration)
         when 'dummy'

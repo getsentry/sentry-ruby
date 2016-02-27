@@ -318,7 +318,6 @@ Style/RedundantSelf:
     - 'lib/raven/interfaces/http.rb'
     - 'lib/raven/interfaces/stack_trace.rb'
     - 'lib/raven/transports/http.rb'
-    - 'lib/raven/transports/udp.rb'
 
 # Offense count: 3
 # Cop supports --auto-correct.
