@@ -141,6 +141,10 @@ module Raven
       self.environments = []
 
       self.release = detect_release
+
+      # Try to resolve the hostname to an FQDN, but fall back to whatever the load name is
+      self.server_name = Socket.gethostname
+      self.server_name = Socket.gethostbyname(hostname).first rescue server_name
     end
 
     def server=(value)
