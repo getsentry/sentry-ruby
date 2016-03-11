@@ -102,6 +102,9 @@ module Raven
     # Sanitize values that look like credit card numbers
     attr_accessor :sanitize_credit_cards
 
+    # Sanitize data within a stacktrace frames (paths, functions, filenames) and modules (gems used)
+    attr_accessor :sanitize_internal_data
+
     # JSON serializer/deserializer to use
     attr_accessor :json_class
 
@@ -141,6 +144,7 @@ module Raven
       self.catch_debugged_exceptions = true
       self.sanitize_fields = []
       self.sanitize_credit_cards = true
+      self.sanitize_internal_data = true
       self.environments = []
       self.json_class = OkJson
 
