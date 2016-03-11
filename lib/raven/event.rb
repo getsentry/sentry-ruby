@@ -198,20 +198,23 @@ module Raven
 
     def self.stacktrace_interface_from(int, evt, backtrace)
       backtrace = Backtrace.parse(backtrace)
-      int.frames = backtrace.lines.reverse.map do |line|
-        StacktraceInterface::Frame.new.tap do |frame|
-          frame.abs_path = line.file if line.file
-          frame.function = line.method if line.method
-          frame.lineno = line.number
-          frame.in_app = line.in_app
-          frame.module = line.module_name if line.module_name
 
-          if evt.configuration[:context_lines] && frame.abs_path
-            frame.pre_context, frame.context_line, frame.post_context = \
-              evt.get_file_context(frame.abs_path, frame.lineno, evt.configuration[:context_lines])
-          end
+      int.frames = []
+      backtrace.lines.reverse_each do |line|
+        frame = StacktraceInterface::Frame.new
+        frame.abs_path = line.file if line.file
+        frame.function = line.method if line.method
+        frame.lineno = line.number
+        frame.in_app = line.in_app
+        frame.module = line.module_name if line.module_name
+
+        if evt.configuration[:context_lines] && frame.abs_path
+          frame.pre_context, frame.context_line, frame.post_context = \
+            evt.get_file_context(frame.abs_path, frame.lineno, evt.configuration[:context_lines])
         end
-      end.select(&:filename)
+
+        int.frames << frame if frame.filename
+      end
 
       evt.culprit = evt.get_culprit(int.frames)
     end
