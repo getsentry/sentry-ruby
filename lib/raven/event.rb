@@ -40,7 +40,7 @@ module Raven
       @level         = :error
       @logger        = ''
       @culprit       = nil
-      @server_name   = @configuration.server_name || resolve_hostname
+      @server_name   = @configuration.server_name
       @release       = @configuration.release
       @modules       = list_gem_specs if @configuration.send_modules
       @user          = {}
@@ -67,12 +67,6 @@ module Raven
       @timestamp  = @timestamp.strftime('%Y-%m-%dT%H:%M:%S') if @timestamp.is_a?(Time)
       @time_spent = (@time_spent*1000).to_i if @time_spent.is_a?(Float)
       @level      = LOG_LEVELS[@level.to_s.downcase] if @level.is_a?(String) || @level.is_a?(Symbol)
-    end
-
-    def resolve_hostname
-      # Try to resolve the hostname to an FQDN, but fall back to whatever the load name is
-      hostname = Socket.gethostname
-      Socket.gethostbyname(hostname).first rescue hostname
     end
 
     def list_gem_specs
