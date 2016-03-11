@@ -30,7 +30,7 @@ module Raven
           exceptions_class = ::ActionDispatch::ShowExceptions
         end
         unless exceptions_class.nil?
-          if RUBY_VERSION.to_f < 2.0
+          if RUBY_VERSION.to_f < 2.0 || RUBY_PLATFORM == 'java'
             exceptions_class.send(:include, Raven::Rails::Middleware::OldDebugExceptionsCatcher)
           else
             exceptions_class.send(:prepend, Raven::Rails::Middleware::DebugExceptionsCatcher)
