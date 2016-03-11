@@ -30,8 +30,12 @@ require 'stringio'
 module Raven
 module OkJson
   Upstream = '43'
+
   extend self
 
+  def error_class
+    Error
+  end
 
   # Decodes a json document in string s and
   # returns the corresponding ruby value.

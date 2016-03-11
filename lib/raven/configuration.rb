@@ -102,6 +102,9 @@ module Raven
     # Sanitize values that look like credit card numbers
     attr_accessor :sanitize_credit_cards
 
+    # JSON serializer/deserializer to use
+    attr_accessor :json_class
+
     IGNORE_DEFAULT = [
       'AbstractController::ActionNotFound',
       'ActionController::InvalidAuthenticityToken',
@@ -139,6 +142,7 @@ module Raven
       self.sanitize_fields = []
       self.sanitize_credit_cards = true
       self.environments = []
+      self.json_class = OkJson
 
       self.release = detect_release
     end

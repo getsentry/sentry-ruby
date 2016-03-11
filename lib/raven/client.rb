@@ -74,7 +74,7 @@ module Raven
 
     def encode(event)
       hash = @processors.reduce(event.to_hash) { |memo, p| p.process(memo) }
-      encoded = OkJson.encode(hash)
+      encoded = configuration.json_class.encode(hash)
 
       case configuration.encoding
       when 'gzip'
