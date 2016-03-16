@@ -72,8 +72,8 @@ module Raven
 
     def parse_json_or_nil(string)
       begin
-        OkJson.decode(string)
-      rescue Raven::OkJson::Error, NoMethodError
+        Raven.configuration.json_class.decode(string)
+      rescue Raven.configuration.json_class.error_class, NoMethodError
         nil
       end
     end

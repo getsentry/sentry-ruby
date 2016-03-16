@@ -63,6 +63,40 @@ module Raven
 
     private
 
+    def process_event(hash)
+      # Optimizations to disable stack trace processing aren't enabled, just run it all through
+      if configuration.sanitize_internal_data || !hash[:exception] || !hash[:exception][:values]
+        return @processors.reduce(hash) { |memo, p| p.process(memo) }
+      end
+
+      # Strip out modules
+      modules = hash.delete(:modules)
+
+      # Strip out the stacktrace from the hash
+      stacktraces = {}
+      hash[:exception][:values].each_with_index do |exc, index|
+        stacktraces[index] = exc.delete(:stacktrace)
+        # Store the index ID just in case any of the processors reorganize or generally mess with things
+        exc[:_trace_id] = index
+      end
+
+      # Sanitize everything
+      @processors.each do |processor|
+        hash = processor.process(hash)
+      end
+
+      # Restore the stacktraces
+      hash[:exception][:values].each do |exc|
+        exc[:stacktrace] = stacktraces[exc.delete(:_trace_id)]
+      end
+
+      # Restore the modules
+      hash[:modules] = modules if modules
+
+      # Return sanitized
+      hash
+    end
+
     def configuration_allows_sending
       if configuration.send_in_current_environment?
         true
@@ -73,8 +107,7 @@ module Raven
     end
 
     def encode(event)
-      hash = @processors.reduce(event.to_hash) { |memo, p| p.process(memo) }
-      encoded = OkJson.encode(hash)
+      encoded = configuration.json_class.encode(process_event(event.to_hash))
 
       case configuration.encoding
       when 'gzip'
