@@ -36,21 +36,64 @@ generally constists of something like the following:
 *   Send all given context with any events during the request lifecycle
 *   Cleanup context
 
-There are three primary methods for providing request context:
+There are three primary methods for providing request context.
+
+User Context
+~~~~~~~~~~~~
+
+User context describes the current actor.
 
 .. sourcecode:: ruby
 
     # bind the logged in user
-    Raven.user_context email: 'foo@example.com'
+    Raven.user_context(
+      # a unique ID which represents this user
+      id: current_user.id, # 1
+
+      # the actor's email address, if available
+      email: current_user.email, # "example@example.org"
+
+      # the actor's username, if available
+      username: current_user.username, # "foo"
+
+      # the actor's IP address, if available
+      ip_address: request.ip # '127.0.0.1'
+    )
+
+When dealing with anonymous users you will still want to send basic user context to ensure Sentry can count them against the unique users:
+
+    Raven.user_context(
+      # the actor's IP address, if available
+      ip_address: request.ip # '127.0.0.1'
+    )
+
+Tags
+~~~~
+
+You can provide a set of key/value pairs called tags which Sentry will index and aggregate. This will help you understand the distribution of issues, as well as enabling easy lookup via search.
+
+.. sourcecode:: ruby
 
     # tag the request with something interesting
-    Raven.tags_context interesting: 'yes'
+    Raven.tags_context(
+      language: I18n.locale, # "en-us"
+      timezone: current_user.time_zone # "PST"
+    )
+
+
+Additional Context
+~~~~~~~~~~~~~~~~~~
+
+In addition to the supported structured data of Sentry, you can provide additional context. This is a key/value mapping, where the values must be JSON compatible, but can be of a rich datatype.
 
     # provide a bit of additional context
-    Raven.extra_context happiness: 'very'
+    Raven.extra_context(
+      happiness: 'very',
+      emoji: ['much']
+    )
 
-Rack Context
-------------
+Rack (HTTP) Context
+~~~~~~~~~~~~~~~~~~~
 
 Additionally, if you're using Rack (without the middleware), you can
 easily provide context with the ``rack_context`` helper:
