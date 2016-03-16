@@ -47,7 +47,7 @@ module Raven
       end
 
       def in_app
-        if self.file =~ Backtrace.in_app_pattern
+        if self.file =~ self.class.in_app_pattern
           true
         else
           false
@@ -65,6 +65,13 @@ module Raven
 
       def inspect
         "<Line:#{self}>"
+      end
+
+      def self.in_app_pattern
+        @in_app_pattern ||= begin
+          project_root = Raven.configuration.project_root && Raven.configuration.project_root.to_s
+          Regexp.new("^(#{project_root}/)?#{Raven.configuration.app_dirs_pattern || APP_DIRS_PATTERN}")
+        end
       end
 
       private
@@ -92,13 +99,6 @@ module Raven
       end
 
       new(lines)
-    end
-
-    def self.in_app_pattern
-      @in_app_pattern ||= begin
-        project_root = Raven.configuration.project_root && Raven.configuration.project_root.to_s
-        Regexp.new("^(#{project_root}/)?#{Raven.configuration.app_dirs_pattern || APP_DIRS_PATTERN}")
-      end
     end
 
     def initialize(lines)

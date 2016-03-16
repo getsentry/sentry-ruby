@@ -215,6 +215,11 @@ module Raven
         detect_release_from_git
     end
 
+    def project_root=(root_dir)
+      @project_root = root_dir
+      Backtrace::Line.instance_variable_set(:@in_app_pattern, nil) # blow away cache
+    end
+
     private
 
     def detect_release_from_heroku
