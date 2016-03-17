@@ -7,14 +7,20 @@ A client and integration layer for the [Sentry](https://github.com/getsentry/sen
 
 ## Requirements
 
-We test on Ruby 1.9, 2.2 and 2.3 at the latest patchlevel/teeny version. JRuby support is experimental - check TravisCI to see if the build is passing or failing.
+We test on Ruby 1.9, 2.2 and 2.3 at the latest patchlevel/teeny version. Our Rails integration works with Rails 4.2+. JRuby support is experimental - check TravisCI to see if the build is passing or failing.
 
 ## Getting Started
+
 ### Install
+
 ```ruby
-gem "sentry-raven" #, :github => "getsentry/raven-ruby"
+gem "sentry-raven"
 ```
+
 ### Set SENTRY_DSN
+
+Raven will send capture and send exceptions to the Sentry server whenever its DSN is set. This makes environment-based configuration easy - if you don't want to send errors in a certain environment, just don't set the DSN in that environment!
+
 ```bash
 # Set your SENTRY_DSN environment variable.
 export SENTRY_DSN=http://public:secret@example.com/project-id
@@ -25,10 +31,13 @@ Raven.configure do |config|
   config.dsn = 'http://public:secret@example.com/project-id'
 end
 ```
+
 ### Call
+
 If you use Rails, you're already done - no more configuration required! Check [Integrations](https://docs.getsentry.com/hosted/clients/ruby/integrations/) for more details on other gems Sentry integrates with automatically.
 
 Otherwise, Raven supports two methods of capturing exceptions:
+
 ```ruby
 Raven.capture do
   # capture any exceptions which happen during execution of this block
