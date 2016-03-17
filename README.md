@@ -17,7 +17,7 @@ We test on Ruby 1.9, 2.2 and 2.3 at the latest patchlevel/teeny version. Our Rai
 gem "sentry-raven"
 ```
 
-### Set SENTRY_DSN
+### Raven only runs when SENTRY_DSN is set
 
 Raven will send capture and send exceptions to the Sentry server whenever its DSN is set. This makes environment-based configuration easy - if you don't want to send errors in a certain environment, just don't set the DSN in that environment!
 
@@ -31,6 +31,12 @@ Raven.configure do |config|
   config.dsn = 'http://public:secret@example.com/project-id'
 end
 ```
+
+### Raven doesn't report some kinds of data by default.
+
+Raven ignores some exceptions by default - most of these are related to 404s or controller actions not being found. [For a complete list, see the `IGNORE_DEFAULT` constant](https://github.com/getsentry/raven-ruby/blob/master/lib/raven/configuration.rb).
+
+Raven doesn't report POST data or cookies by default. In addition, it will attempt to remove any obviously sensitive data, such as credit card or Social Security numbers. For more information about how Sentry processes your data, [check out the documentation on the `processors` config setting.](https://docs.getsentry.com/hosted/clients/ruby/config/)
 
 ### Call
 
