@@ -50,6 +50,10 @@ describe Raven::Configuration do
       expect(subject[:rails_report_rescued_exceptions]).to eq(true)
     end
 
+    it 'should not have a failure callback' do
+      expect(subject[:transport_failure_callback]).to eq(false)
+    end
+
     it 'should have no sanitize fields' do
       expect(subject[:sanitize_fields]).to eq([])
     end
@@ -101,15 +105,21 @@ describe Raven::Configuration do
   context 'configuring for async' do
     it 'should be configurable to send events async' do
       subject.async = lambda { |_e| :ok }
-      expect(subject.async.respond_to?(:call)).to eq(true)
       expect(subject.async.call('event')).to eq(:ok)
     end
 
     it 'should raise when setting async to anything other than callable or false' do
-      expect { subject.async = Proc.new {} }.to_not raise_error
-      expect { subject.async = lambda {} }.to_not raise_error
-      expect { subject.async = false }.to_not raise_error
+      subject.transport_failure_callback = lambda {}
+      subject.transport_failure_callback = false
       expect { subject.async = true }.to raise_error(ArgumentError)
+    end
+  end
+
+  context 'configuring for server error callback' do
+    it 'should raise when setting to anything other than callable or false' do
+      subject.transport_failure_callback = lambda {}
+      subject.transport_failure_callback = false
+      expect { subject.transport_failure_callback = true }.to raise_error(ArgumentError)
     end
   end
 

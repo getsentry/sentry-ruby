@@ -2,6 +2,12 @@ require 'spec_helper'
 require 'raven/integrations/rack'
 
 describe Raven::Rack do
+  before(:all) do
+    Raven.configure do |config|
+      config.dsn = 'dummy://notaserver'
+    end
+  end
+
   it 'should capture exceptions' do
     exception = build_exception
     env = {}
@@ -60,7 +66,7 @@ describe Raven::Rack do
   it 'should allow empty rack env in rspec tests' do
     env = {} # the rack env is empty when running rails/rspec tests
     Raven.rack_context(env)
-    expect { Raven.capture_exception(build_exception) }.not_to raise_error
+    Raven.capture_exception(build_exception)
   end
 
   it 'should bind request context' do

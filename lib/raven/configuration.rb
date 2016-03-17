@@ -84,6 +84,9 @@ module Raven
     # Optional Proc to be used to send events asynchronously.
     attr_reader :async
 
+    # Optional Proc, called when the Sentry server cannot be contacted for any reason
+    attr_accessor :transport_failure_callback
+
     # Directories to be recognized as part of your app. e.g. if you
     # have an `engines` dir at the root of your project, you may want
     # to set this to something like /(app|config|engines|lib)/
@@ -140,6 +143,7 @@ module Raven
       self.tags = {}
       self.async = false
       self.rails_report_rescued_exceptions = true
+      self.transport_failure_callback = false
       self.sanitize_fields = []
       self.sanitize_credit_cards = true
       self.environments = []
@@ -186,6 +190,11 @@ module Raven
     end
 
     alias async? async
+
+    def transport_failure_callback=(value)
+      raise ArgumentError.new("transport_failure_callback must be callable (or false to disable)") unless value == false || value.respond_to?(:call)
+      @transport_failure_callback = value
+    end
 
     # Allows config options to be read like a hash
     #

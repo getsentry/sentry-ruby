@@ -9,8 +9,6 @@ describe "Integration tests" do
 
     Raven.configure do |config|
       config.server = 'http://12345:67890@sentry.localdomain/sentry/42'
-      config.environments = ["test"]
-      config.current_environment = "test"
       config.http_adapter = [:test, stubs]
       config.logger = Logger.new(io)
     end
@@ -29,8 +27,6 @@ describe "Integration tests" do
 
     Raven.configure do |config|
       config.server = 'http://12345:67890@sentry.localdomain/prefix/sentry/42'
-      config.environments = ["test"]
-      config.current_environment = "test"
       config.http_adapter = [:test, stubs]
     end
 
@@ -46,8 +42,6 @@ describe "Integration tests" do
 
     Raven.configure do |config|
       config.server = 'http://12345:67890@sentry.localdomain/sentry/42'
-      config.environments = ["test"]
-      config.current_environment = "test"
       config.http_adapter = [:test, stubs]
     end
 
@@ -61,17 +55,25 @@ describe "Integration tests" do
     io = StringIO.new
     Raven.configure do |config|
       config.server = 'http://12345:67890@sentry.localdomain/sentry/42'
-      config.environments = ["test"]
-      config.current_environment = "test"
       config.http_adapter = [:test, nil]
       config.logger = Logger.new(io)
     end
 
     expect_any_instance_of(Raven::Transports::HTTP).to receive(:send_event).exactly(1).times.and_raise(Faraday::Error::ConnectionFailed, "conn failed")
-    expect { Raven.capture_exception(build_exception) }.not_to raise_error
-
-    expect(Raven.logger).to receive(:error).exactly(1).times
-    expect { Raven.capture_exception(build_exception) }.not_to raise_error
+    2.times { Raven.capture_exception(build_exception) }
     expect(io.string).to match(/Failed to submit event: ZeroDivisionError: divided by 0$/)
+  end
+
+  example "transport failure should call transport_failure_callback" do
+    io = StringIO.new
+    Raven.configure do |config|
+      config.server = 'http://12345:67890@sentry.localdomain/sentry/42'
+      config.http_adapter = [:test, nil]
+      config.transport_failure_callback = proc { |_e| io.puts "OK!" }
+    end
+
+    expect_any_instance_of(Raven::Transports::HTTP).to receive(:send_event).exactly(1).times.and_raise(Faraday::Error::ConnectionFailed, "conn failed")
+    Raven.capture_exception(build_exception)
+    expect(io.string).to match(/OK!$/)
   end
 end
