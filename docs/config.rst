@@ -20,9 +20,10 @@ Optional settings
     .. code-block:: ruby
 
         config.async = lambda { |event|
-          SentryJob.perform_later(event.to_hash)
+          Thread.new { Raven.send_event(event) }
         }
 
+    Using a thread to send events will be adequate for truly parallel Ruby platforms such as JRuby, though the benefit on MRI/CRuby will be limited.
 
     We recommend creating a background job, using your background job processor, that will send Sentry notifications in the background. Rather than enqueuing an entire Raven::Event object, we recommend providing the Hash representation of an event as a job argument. Here's an example for ActiveJob:
 
