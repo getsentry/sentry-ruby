@@ -46,8 +46,8 @@ describe Raven::Configuration do
       expect(subject[:async?]).to eq(false)
     end
 
-    it 'should catch_debugged_exceptions' do
-      expect(subject[:catch_debugged_exceptions]).to eq(true)
+    it 'should catch rescued exceptions' do
+      expect(subject[:rails_report_rescued_exceptions]).to eq(true)
     end
 
     it 'should have no sanitize fields' do

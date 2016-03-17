@@ -89,8 +89,12 @@ module Raven
     # to set this to something like /(app|config|engines|lib)/
     attr_accessor :app_dirs_pattern
 
-    # Catch exceptions before they're been processed by
-    # ActionDispatch::ShowExceptions or ActionDispatch::DebugExceptions
+    # Rails catches exceptions in the ActionDispatch::ShowExceptions or
+    # ActionDispatch::DebugExceptions middlewares, depending on the environment.
+    # When `rails_report_rescued_exceptions` is true (it is by default), Raven
+    # will report exceptions even when they are rescued by these middlewares.
+    attr_accessor :rails_report_rescued_exceptions
+    # Deprecated accessor
     attr_accessor :catch_debugged_exceptions
 
     # Provide a configurable callback to determine event capture
@@ -135,7 +139,7 @@ module Raven
       self.proxy = nil
       self.tags = {}
       self.async = false
-      self.catch_debugged_exceptions = true
+      self.rails_report_rescued_exceptions = true
       self.sanitize_fields = []
       self.sanitize_credit_cards = true
       self.environments = []
@@ -218,6 +222,13 @@ module Raven
     def project_root=(root_dir)
       @project_root = root_dir
       Backtrace::Line.instance_variable_set(:@in_app_pattern, nil) # blow away cache
+    end
+
+    def catch_debugged_exceptions=(boolean)
+      Raven.logger.warn "DEPRECATION WARNING: catch_debugged_exceptions has been \
+        renamed to rails_report_rescued_exceptions. catch_debugged_exceptions will \
+        be removed in raven-ruby 0.17.0"
+      self.rails_report_rescued_exceptions = boolean
     end
 
     private
