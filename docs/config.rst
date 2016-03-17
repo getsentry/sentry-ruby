@@ -15,13 +15,26 @@ Optional settings
 
 .. describe:: async
 
-    When an error occurs, the notification is immediately sent to Sentry. Raven can be configured to send notifications asynchronously:
+    When an error or message occurs, the notification is immediately sent to Sentry. Raven can be configured to send asynchronously:
 
     .. code-block:: ruby
 
         config.async = lambda { |event|
-            SentryJob.perform_later(event)
+          SentryJob.perform_later(event.to_hash)
         }
+
+
+    We recommend creating a background job, using your background job processor, that will send Sentry notifications in the background. Rather than enqueuing an entire Raven::Event object, we recommend providing the Hash representation of an event as a job argument. Here's an example for ActiveJob:
+
+    .. code-block:: ruby
+
+        class SentryJob < ActiveJob::Base
+          queue_as :default
+
+          def perform(event)
+            Raven.send_event(event)
+          end
+        end
 
 .. describe:: encoding
 
