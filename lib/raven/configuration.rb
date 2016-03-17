@@ -113,13 +113,21 @@ module Raven
       'Sinatra::NotFound',
     ].freeze
 
+    DEFAULT_PROCESSORS = [
+      Raven::Processor::RemoveCircularReferences,
+      Raven::Processor::UTF8Conversion,
+      Raven::Processor::SanitizeData,
+      Raven::Processor::Cookies,
+      Raven::Processor::PostData,
+    ].freeze
+
     def initialize
       self.server = ENV['SENTRY_DSN'] if ENV['SENTRY_DSN']
       @context_lines = 3
       self.current_environment = ENV['RAILS_ENV'] || ENV['RACK_ENV'] || 'default'
       self.send_modules = true
       self.excluded_exceptions = IGNORE_DEFAULT.dup
-      self.processors = [Raven::Processor::RemoveCircularReferences, Raven::Processor::UTF8Conversion, Raven::Processor::SanitizeData]
+      self.processors = DEFAULT_PROCESSORS.dup
       self.ssl_verification = true
       self.encoding = 'gzip'
       self.timeout = 1
@@ -133,6 +141,10 @@ module Raven
       self.environments = []
 
       self.release = detect_release
+
+      # Try to resolve the hostname to an FQDN, but fall back to whatever the load name is
+      self.server_name = Socket.gethostname
+      self.server_name = Socket.gethostbyname(hostname).first rescue server_name
     end
 
     def server=(value)
@@ -201,6 +213,11 @@ module Raven
       detect_release_from_heroku ||
         detect_release_from_capistrano ||
         detect_release_from_git
+    end
+
+    def project_root=(root_dir)
+      @project_root = root_dir
+      Backtrace::Line.instance_variable_set(:@in_app_pattern, nil) # blow away cache
     end
 
     private

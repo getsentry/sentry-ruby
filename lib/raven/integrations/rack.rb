@@ -113,10 +113,9 @@ module Raven
     end
 
     def format_env_for_sentry(env_hash)
-      trimmed_hash = env_hash.select do |k, _v|
+      env_hash.select do |k, _v|
         %w(REMOTE_ADDR SERVER_NAME SERVER_PORT).include? k.to_s
       end
-      Hash[trimmed_hash] # select returns an Array in Ruby 1.8
     end
   end
 

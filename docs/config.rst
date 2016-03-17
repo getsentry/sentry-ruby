@@ -99,6 +99,16 @@ Optional settings
           config.processors << Raven::Processor::RemoveStacktrace
         end
 
+    By default, Sentry does not send POST data or cookies if present. To re-enable, remove the respective processor from the chain:
+
+    .. code-block:: ruby
+
+        Raven.configure do |config|
+          config.processors -= Raven::Processor::PostData # Do this to send POST data
+          config.processors -= Raven::Processor::Cookies # Do this to send cookies by default
+        end
+
+
 .. describe:: release
 
     Track the version of your application in Sentry.
@@ -106,7 +116,7 @@ Optional settings
     We guess the release intelligently in the following order of preference:
 
     * Heroku's HEROKU_SLUG_COMMIT environment variable
-    * Reading from the REVISION file in the app root 
+    * Reading from the REVISION file in the app root
     * Commit SHA of the last commit (git)
 
     .. code-block:: ruby

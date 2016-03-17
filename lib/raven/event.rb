@@ -40,7 +40,7 @@ module Raven
       @level         = :error
       @logger        = ''
       @culprit       = nil
-      @server_name   = @configuration.server_name || resolve_hostname
+      @server_name   = @configuration.server_name
       @release       = @configuration.release
       @modules       = list_gem_specs if @configuration.send_modules
       @user          = {}
@@ -67,12 +67,6 @@ module Raven
       @timestamp  = @timestamp.strftime('%Y-%m-%dT%H:%M:%S') if @timestamp.is_a?(Time)
       @time_spent = (@time_spent*1000).to_i if @time_spent.is_a?(Float)
       @level      = LOG_LEVELS[@level.to_s.downcase] if @level.is_a?(String) || @level.is_a?(Symbol)
-    end
-
-    def resolve_hostname
-      # Try to resolve the hostname to an FQDN, but fall back to whatever the load name is
-      hostname = Socket.gethostname
-      Socket.gethostbyname(hostname).first rescue hostname
     end
 
     def list_gem_specs
@@ -198,20 +192,23 @@ module Raven
 
     def self.stacktrace_interface_from(int, evt, backtrace)
       backtrace = Backtrace.parse(backtrace)
-      int.frames = backtrace.lines.reverse.map do |line|
-        StacktraceInterface::Frame.new.tap do |frame|
-          frame.abs_path = line.file if line.file
-          frame.function = line.method if line.method
-          frame.lineno = line.number
-          frame.in_app = line.in_app
-          frame.module = line.module_name if line.module_name
 
-          if evt.configuration[:context_lines] && frame.abs_path
-            frame.pre_context, frame.context_line, frame.post_context = \
-              evt.get_file_context(frame.abs_path, frame.lineno, evt.configuration[:context_lines])
-          end
+      int.frames = []
+      backtrace.lines.reverse_each do |line|
+        frame = StacktraceInterface::Frame.new
+        frame.abs_path = line.file if line.file
+        frame.function = line.method if line.method
+        frame.lineno = line.number
+        frame.in_app = line.in_app
+        frame.module = line.module_name if line.module_name
+
+        if evt.configuration[:context_lines] && frame.abs_path
+          frame.pre_context, frame.context_line, frame.post_context = \
+            evt.get_file_context(frame.abs_path, frame.lineno, evt.configuration[:context_lines])
         end
-      end.select(&:filename)
+
+        int.frames << frame if frame.filename
+      end
 
       evt.culprit = evt.get_culprit(int.frames)
     end

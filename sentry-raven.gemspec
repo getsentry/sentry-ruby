@@ -14,18 +14,16 @@ Gem::Specification.new do |gem|
   gem.files = Dir['lib/**/*']
   gem.executables = gem.files.grep(%r{^exe/}) { |f| File.basename(f) }
   gem.license = 'Apache-2.0'
-  gem.required_ruby_version = '>= 1.8.7'
+  gem.required_ruby_version = '>= 1.9.0'
 
   gem.add_dependency "faraday", ">= 0.7.6"
 
   gem.add_development_dependency "rake"
-  gem.add_development_dependency "rubocop", "~> 0.36.0" if RUBY_VERSION > '1.8.7'
-  gem.add_development_dependency "rspec", "~> 3.0"
+  gem.add_development_dependency "rubocop"
+  gem.add_development_dependency "rspec"
   gem.add_development_dependency "rspec-rails"
-  gem.add_development_dependency "mime-types", "~> 1.16"
-  gem.add_development_dependency "rest-client", "< 1.7.0" if RUBY_VERSION == '1.8.7'
-  gem.add_development_dependency "rest-client" if RUBY_VERSION > '1.8.7'
-  gem.add_development_dependency "timecop", "0.6.1" if RUBY_VERSION == '1.8.7'
-  gem.add_development_dependency "timecop" if RUBY_VERSION > '1.8.7'
+  gem.add_development_dependency "mime-types"
+  gem.add_development_dependency "rest-client"
+  gem.add_development_dependency "timecop"
   gem.add_development_dependency "test-unit" if RUBY_VERSION > '2.2'
 end

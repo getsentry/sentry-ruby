@@ -5,7 +5,6 @@ require 'base64'
 require 'raven/version'
 require 'raven/okjson'
 require 'raven/transports/http'
-require 'raven/transports/udp'
 
 module Raven
   # Encodes events and sends them to the Sentry server.
@@ -53,8 +52,6 @@ module Raven
     def transport
       @transport ||=
         case configuration.scheme
-        when 'udp'
-          Transports::UDP.new(configuration)
         when 'http', 'https'
           Transports::HTTP.new(configuration)
         when 'dummy'
@@ -81,7 +78,7 @@ module Raven
 
       case configuration.encoding
       when 'gzip'
-        ['application/octet-stream', strict_encode64(Zlib::Deflate.deflate(encoded))]
+        ['application/octet-stream', Base64.strict_encode64(Zlib::Deflate.deflate(encoded))]
       else
         ['application/json', encoded]
       end
@@ -101,14 +98,6 @@ module Raven
         'sentry_secret' => configuration.secret_key
       }
       'Sentry ' + fields.map { |key, value| "#{key}=#{value}" }.join(', ')
-    end
-
-    def strict_encode64(string)
-      if Base64.respond_to? :strict_encode64
-        Base64.strict_encode64 string
-      else # Ruby 1.8
-        Base64.encode64(string)[0..-2]
-      end
     end
 
     def successful_send

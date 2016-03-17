@@ -12,8 +12,6 @@ module Raven
       # org.jruby.runtime.callsite.CachingCallSite.call(CachingCallSite.java:170)
       JAVA_INPUT_FORMAT = %r{^(.+)\.([^\.]+)\(([^\:]+)\:(\d+)\)$}
 
-      APP_DIRS_PATTERN = /(bin|exe|app|config|lib|test)/
-
       # The file portion of the line (such as app/models/user.rb)
       attr_reader :file
 
@@ -49,18 +47,11 @@ module Raven
       end
 
       def in_app
-        app_dirs = Raven.configuration.app_dirs_pattern || APP_DIRS_PATTERN
-        @in_app_pattern ||= Regexp.new("^(#{project_root}/)?#{app_dirs}")
-
-        if self.file =~ @in_app_pattern
+        if self.file =~ self.class.in_app_pattern
           true
         else
           false
         end
-      end
-
-      def project_root
-        @project_root ||= Raven.configuration.project_root && Raven.configuration.project_root.to_s
       end
 
       # Reconstructs the line in a readable fashion
@@ -76,10 +67,19 @@ module Raven
         "<Line:#{self}>"
       end
 
+      def self.in_app_pattern
+        @in_app_pattern ||= begin
+          project_root = Raven.configuration.project_root && Raven.configuration.project_root.to_s
+          Regexp.new("^(#{project_root}/)?#{Raven.configuration.app_dirs_pattern || APP_DIRS_PATTERN}")
+        end
+      end
+
       private
 
       attr_writer :file, :number, :method, :module_name
     end
+
+    APP_DIRS_PATTERN = /(bin|exe|app|config|lib|test)/
 
     # holder for an Array of Backtrace::Line instances
     attr_reader :lines
