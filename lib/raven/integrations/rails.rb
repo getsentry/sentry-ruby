@@ -22,7 +22,7 @@ module Raven
     end
 
     config.after_initialize do
-      if Raven.configuration.catch_debugged_exceptions
+      if Raven.configuration.rails_report_rescued_exceptions
         require 'raven/integrations/rails/middleware/debug_exceptions_catcher'
         if defined?(::ActionDispatch::DebugExceptions)
           exceptions_class = ::ActionDispatch::DebugExceptions

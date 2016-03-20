@@ -122,6 +122,15 @@ Optional settings
           config.processors -= Raven::Processor::Cookies # Do this to send cookies by default
         end
 
+.. describe:: rails_report_rescued_exceptions
+
+    Rails catches exceptions in the ActionDispatch::ShowExceptions or ActionDispatch::DebugExceptions middlewares, depending on the environment. When `rails_report_rescued_exceptions` is true (it is by default), Raven will report exceptions even when they are rescued by these middlewares.
+
+    If you are using a custom exceptions app, you may wish to disable this behavior:
+    
+    .. code-block:: ruby
+
+        config.rails_report_rescued_exceptions = false
 
 .. describe:: release
 
