@@ -62,6 +62,8 @@ User context describes the current actor.
 
 When dealing with anonymous users you will still want to send basic user context to ensure Sentry can count them against the unique users:
 
+.. sourcecode:: ruby
+
     Raven.user_context(
       # the actor's IP address, if available
       ip_address: request.ip # '127.0.0.1'
