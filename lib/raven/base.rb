@@ -228,6 +228,15 @@ module Raven
       self.logger.warn "Unable to load raven/integrations/#{integration}: #{error}"
     end
 
+    def rails_safely_prepend(module_name, opts = {})
+      return if opts[:to].nil?
+      if opts[:to].respond_to?(:prepend, true)
+        opts[:to].send(:prepend, Raven::Rails::Overrides.const_get(module_name))
+      else
+        opts[:to].send(:include, Raven::Rails::Overrides.const_get("Old" + module_name))
+      end
+    end
+
     # For cross-language compat
     alias :captureException :capture_exception
     alias :captureMessage :capture_message
