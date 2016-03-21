@@ -184,6 +184,16 @@ Optional settings
 
         config.tags = { environment: Rails.env }
 
+.. describe:: transport_failure_callback
+
+    If the transport fails to send an event to Sentry for any reason (either the Sentry server has returned a 4XX or 5XX response), this Proc or lambda will be called.
+
+    .. code-block:: ruby
+
+        config.transport_failure_callback = lambda { |event|
+          AdminMailer.email_admins("Oh god, it's on fire!").deliver_later
+        }
+
 Environment Variables
 ---------------------
 

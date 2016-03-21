@@ -27,8 +27,8 @@ module Raven
       # Convert to hash
       event = event.to_hash
 
-      if !@state.should_try?
-        Raven.logger.error("Not sending event due to previous failure(s): #{get_log_message(event)}")
+      unless @state.should_try?
+        failed_send(nil, event)
         return
       end
 
@@ -39,12 +39,11 @@ module Raven
       begin
         transport.send_event(generate_auth_header, encoded_data,
                        :content_type => content_type)
+        successful_send
       rescue => e
         failed_send(e, event)
         return
       end
-
-      successful_send
 
       event
     end
@@ -106,9 +105,14 @@ module Raven
 
     def failed_send(e, event)
       @state.failure
-      Raven.logger.error "Unable to record event with remote Sentry server (#{e.class} - #{e.message})"
-      e.backtrace[0..10].each { |line| Raven.logger.error(line) }
+      if e # exception was raised
+        Raven.logger.error "Unable to record event with remote Sentry server (#{e.class} - #{e.message})"
+        e.backtrace[0..10].each { |line| Raven.logger.error(line) }
+      else
+        Raven.logger.error "Not sending event due to previous failure(s)."
+      end
       Raven.logger.error("Failed to submit event: #{get_log_message(event)}")
+      configuration.transport_failure_callback.call(event) if configuration.transport_failure_callback
     end
   end
 
