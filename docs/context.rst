@@ -88,6 +88,8 @@ Additional Context
 
 In addition to the supported structured data of Sentry, you can provide additional context. This is a key/value mapping, where the values must be JSON compatible, but can be of a rich datatype.
 
+.. sourcecode:: ruby
+
     # provide a bit of additional context
     Raven.extra_context(
       happiness: 'very',
