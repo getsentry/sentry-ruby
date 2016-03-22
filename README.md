@@ -19,7 +19,7 @@ gem "sentry-raven"
 
 ### Raven only runs when SENTRY_DSN is set
 
-Raven will send capture and send exceptions to the Sentry server whenever its DSN is set. This makes environment-based configuration easy - if you don't want to send errors in a certain environment, just don't set the DSN in that environment!
+Raven will capture and send exceptions to the Sentry server whenever its DSN is set. This makes environment-based configuration easy - if you don't want to send errors in a certain environment, just don't set the DSN in that environment!
 
 ```bash
 # Set your SENTRY_DSN environment variable.
