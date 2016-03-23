@@ -29,6 +29,12 @@ Optional settings
 
     .. code-block:: ruby
 
+        config.async = lambda { |event|
+          SentryJob.perform_later(event.to_hash)
+        }
+
+    .. code-block:: ruby
+
         class SentryJob < ActiveJob::Base
           queue_as :default
 
@@ -127,7 +133,7 @@ Optional settings
     Rails catches exceptions in the ActionDispatch::ShowExceptions or ActionDispatch::DebugExceptions middlewares, depending on the environment. When `rails_report_rescued_exceptions` is true (it is by default), Raven will report exceptions even when they are rescued by these middlewares.
 
     If you are using a custom exceptions app, you may wish to disable this behavior:
-    
+
     .. code-block:: ruby
 
         config.rails_report_rescued_exceptions = false
