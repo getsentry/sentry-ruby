@@ -163,12 +163,11 @@ module Raven
         exceptions = [exc]
         context = Set.new [exc.object_id]
         while exc.respond_to?(:cause) && exc.cause
-          exceptions << exc.cause
           exc = exc.cause
-          # TODO(dcramer): ideally this would log to inform the user
           if context.include?(exc.object_id)
             break
           end
+          exceptions << exc
           context.add(exc.object_id)
         end
         exceptions.reverse!
