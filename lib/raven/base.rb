@@ -16,6 +16,7 @@ require 'raven/interfaces/exception'
 require 'raven/interfaces/single_exception'
 require 'raven/interfaces/stack_trace'
 require 'raven/interfaces/http'
+require 'raven/utils/deep_merge'
 
 module Raven
   AVAILABLE_INTEGRATIONS = %w[delayed_job railties sidekiq rack rake].freeze

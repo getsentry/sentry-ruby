@@ -325,6 +325,35 @@ describe Raven::Event do
     end
   end
 
+  context 'merging exception context' do
+    class ExceptionWithContext < StandardError
+      def raven_context
+        { :extra => {
+            'context_event_key' => 'context_value',
+            'context_key' => 'context_value'
+          }
+        }
+      end
+    end
+
+    let(:hash) do
+      Raven::Event.from_exception(ExceptionWithContext.new, {
+        :extra => {
+          'context_event_key' => 'event_value',
+          'event_key' => 'event_value',
+        },
+      }).to_hash
+    end
+
+    it 'prioritizes event context over request context' do
+      expect(hash[:extra]).to eq({
+        'context_event_key' => 'event_value',
+        'context_key' => 'context_value',
+        'event_key' => 'event_value',
+      })
+    end
+  end
+
   describe '.initialize' do
     it 'should not touch the env object for an ignored environment' do
       Raven.configure do |config|
