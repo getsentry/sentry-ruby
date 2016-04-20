@@ -1,7 +1,7 @@
 require 'spec_helper'
 
 describe Raven do
-  let(:event) { double("event") }
+  let(:event) { double("event", :id => "event_id") }
   let(:options) { double("options") }
 
   before do
@@ -243,6 +243,22 @@ describe Raven do
       expect(Raven).to receive(:load_integration).once.with('rake')
 
       Raven.inject_without(:delayed_job, :railties, :sidekiq, :rack)
+    end
+  end
+
+  describe '.last_event_id' do
+    let(:message) { "Test message" }
+
+    it 'sends the result of Event.capture_message' do
+      expect(Raven).to receive(:send_event).with(event)
+
+      Raven.capture_message("Test message", options)
+
+      expect(Raven.last_event_id).to eq(event.id)
+    end
+
+    it 'yields the event to a passed block' do
+      expect { |b| Raven.capture_message(message, options, &b) }.to yield_with_args(event)
     end
   end
 end

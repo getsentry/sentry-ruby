@@ -54,6 +54,30 @@ If you want to report a message rather than an exception you can use the
 
     Raven.capture_message("Something went very wrong")
 
+Referencing Events
+------------------
+
+The client exposes a ``last_event_id`` accessor allowing you to easily
+reference the last captured event. This is useful, for example, if you wanted
+to show the user a reference on your error page::
+
+.. code-block:: ruby
+
+    # somewhere deep in the stack
+    Raven.capture do
+      1 / 0
+    end
+
+Now you can easily expose this to your error handler:
+
+.. code-block:: ruby
+
+    class ErrorsController < ApplicationController
+      def internal_server_error
+        render(:status => 500, :sentry_event_id => Raven.last_event_id)
+      end
+    end
+
 Optional Attributes
 -------------------
 
