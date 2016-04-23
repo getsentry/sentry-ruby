@@ -8,7 +8,7 @@ automatically inserted in Rails):
 
     require 'raven'
 
-    Raven.configure(true) do |config|
+    Raven.configure do |config|
       config.dsn = '___DSN___'
     end
 
