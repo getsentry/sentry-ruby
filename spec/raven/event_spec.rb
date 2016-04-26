@@ -470,7 +470,7 @@ describe Raven::Event do
       let(:exception) { build_exception_with_recursive_cause }
 
       it 'should handle it gracefully' do
-        expect(hash[:exception][:values].length).to eq(2)
+        expect(hash[:exception][:values].length).to eq(1)
       end
     end
 
