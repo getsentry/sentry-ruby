@@ -69,6 +69,120 @@ module Raven
       @level      = LOG_LEVELS[@level.to_s.downcase] if @level.is_a?(String) || @level.is_a?(Symbol)
     end
 
+    class << self
+      def from_exception(exc, options = {}, &block)
+        exception_context = get_exception_context(exc) || {}
+        options = Raven::Utils::DeepMergeHash.deep_merge(exception_context, options)
+
+        configuration = options[:configuration] || Raven.configuration
+        if exc.is_a?(Raven::Error)
+          # Try to prevent error reporting loops
+          Raven.logger.info "Refusing to capture Raven error: #{exc.inspect}"
+          return nil
+        end
+        if configuration[:excluded_exceptions].any? { |x| (x === exc rescue false) || x == exc.class.name }
+          Raven.logger.info "User excluded error: #{exc.inspect}"
+          return nil
+        end
+
+        new(options) do |evt|
+          evt.configuration = configuration
+          evt.message = "#{exc.class}: #{exc.message}"
+          evt.level = options[:level] || :error
+
+          add_exception_interface(evt, exc)
+
+          yield evt if block
+        end
+      end
+
+      def from_message(message, options = {})
+        configuration = options[:configuration] || Raven.configuration
+        new(options) do |evt|
+          evt.configuration = configuration
+          evt.message = message
+          evt.level = options[:level] || :error
+          evt.interface :message do |int|
+            int.message = message
+          end
+          if options[:backtrace]
+            evt.interface(:stacktrace) do |int|
+              stacktrace_interface_from(int, evt, options[:backtrace])
+            end
+          end
+        end
+      end
+
+      private
+
+      def get_exception_context(exc)
+        if exc.instance_variable_defined?(:@__raven_context)
+          exc.instance_variable_get(:@__raven_context)
+        elsif exc.respond_to?(:raven_context)
+          exc.raven_context
+        end
+      end
+
+      def add_exception_interface(evt, exc)
+        evt.interface(:exception) do |exc_int|
+          exceptions = [exc]
+          context = Set.new [exc.object_id]
+
+          while exc.respond_to?(:cause) && exc.cause
+            exc = exc.cause
+            if context.include?(exc.object_id)
+              break
+            end
+            exceptions << exc
+            context.add(exc.object_id)
+          end
+          exceptions.reverse!
+
+          exc_int.values = exceptions.map do |e|
+            SingleExceptionInterface.new do |int|
+              int.type = e.class.to_s
+              int.value = e.to_s
+              int.module = e.class.to_s.split('::')[0...-1].join('::')
+
+              int.stacktrace =
+                if e.backtrace
+                  StacktraceInterface.new do |stacktrace|
+                    stacktrace_interface_from(stacktrace, evt, e.backtrace)
+                  end
+                end
+            end
+          end
+        end
+      end
+
+      def stacktrace_interface_from(int, evt, backtrace)
+        backtrace = Backtrace.parse(backtrace)
+
+        int.frames = []
+        backtrace.lines.reverse_each do |line|
+          frame = StacktraceInterface::Frame.new
+          frame.abs_path = line.file if line.file
+          frame.function = line.method if line.method
+          frame.lineno = line.number
+          frame.in_app = line.in_app
+          frame.module = line.module_name if line.module_name
+
+          if evt.configuration[:context_lines] && frame.abs_path
+            frame.pre_context, frame.context_line, frame.post_context = \
+              evt.get_file_context(frame.abs_path, frame.lineno, evt.configuration[:context_lines])
+          end
+
+          int.frames << frame if frame.filename
+        end
+
+        evt.culprit = evt.get_culprit(int.frames)
+      end
+
+      # Because linecache can go to hell
+      def _source_lines(_path, _from, _to)
+      end
+    end
+
     def list_gem_specs
       # Older versions of Rubygems don't support iterating over all specs
       Hash[Gem::Specification.map { |spec| [spec.name, spec.version.to_s] }] if Gem::Specification.respond_to?(:map)
@@ -113,107 +227,6 @@ module Raven
         data[name.to_sym] = int_data.to_hash
       end
       data
-    end
-
-    def self.from_exception(exc, options = {}, &block)
-      notes = (exc.instance_variable_defined?(:@__raven_context) && exc.instance_variable_get(:@__raven_context)) || {}
-      options = notes.merge(options)
-
-      configuration = options[:configuration] || Raven.configuration
-      if exc.is_a?(Raven::Error)
-        # Try to prevent error reporting loops
-        Raven.logger.info "Refusing to capture Raven error: #{exc.inspect}"
-        return nil
-      end
-      if configuration[:excluded_exceptions].any? { |x| (x === exc rescue false) || x == exc.class.name }
-        Raven.logger.info "User excluded error: #{exc.inspect}"
-        return nil
-      end
-
-      new(options) do |evt|
-        evt.configuration = configuration
-        evt.message = "#{exc.class}: #{exc.message}"
-        evt.level = options[:level] || :error
-
-        add_exception_interface(evt, exc)
-
-        block.call(evt) if block
-      end
-    end
-
-    def self.from_message(message, options = {})
-      configuration = options[:configuration] || Raven.configuration
-      new(options) do |evt|
-        evt.configuration = configuration
-        evt.message = message
-        evt.level = options[:level] || :error
-        evt.interface :message do |int|
-          int.message = message
-        end
-        if options[:backtrace]
-          evt.interface(:stacktrace) do |int|
-            stacktrace_interface_from(int, evt, options[:backtrace])
-          end
-        end
-      end
-    end
-
-    def self.add_exception_interface(evt, exc)
-      evt.interface(:exception) do |exc_int|
-        exceptions = [exc]
-        context = Set.new [exc.object_id]
-        while exc.respond_to?(:cause) && exc.cause
-          exc = exc.cause
-          if context.include?(exc.object_id)
-            break
-          end
-          exceptions << exc
-          context.add(exc.object_id)
-        end
-        exceptions.reverse!
-
-        exc_int.values = exceptions.map do |e|
-          SingleExceptionInterface.new do |int|
-            int.type = e.class.to_s
-            int.value = e.to_s
-            int.module = e.class.to_s.split('::')[0...-1].join('::')
-
-            int.stacktrace =
-              if e.backtrace
-                StacktraceInterface.new do |stacktrace|
-                  stacktrace_interface_from(stacktrace, evt, e.backtrace)
-                end
-              end
-          end
-        end
-      end
-    end
-
-    def self.stacktrace_interface_from(int, evt, backtrace)
-      backtrace = Backtrace.parse(backtrace)
-
-      int.frames = []
-      backtrace.lines.reverse_each do |line|
-        frame = StacktraceInterface::Frame.new
-        frame.abs_path = line.file if line.file
-        frame.function = line.method if line.method
-        frame.lineno = line.number
-        frame.in_app = line.in_app
-        frame.module = line.module_name if line.module_name
-
-        if evt.configuration[:context_lines] && frame.abs_path
-          frame.pre_context, frame.context_line, frame.post_context = \
-            evt.get_file_context(frame.abs_path, frame.lineno, evt.configuration[:context_lines])
-        end
-
-        int.frames << frame if frame.filename
-      end
-
-      evt.culprit = evt.get_culprit(int.frames)
-    end
-
-    # Because linecache can go to hell
-    def self._source_lines(_path, _from, _to)
     end
 
     def get_file_context(filename, lineno, context)
