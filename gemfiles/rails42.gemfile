@@ -1,6 +1,7 @@
 source "http://rubygems.org"
 
 gem "rails", "~> 4.2.0"
+gem "mime-types", "< 3.0.0"
 gem "rspec"
 
 gemspec :path => "../"
