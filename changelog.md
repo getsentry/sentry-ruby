@@ -1,3 +1,24 @@
+1.0.0
+-----
+
+We (i.e. @nateberkopec) decided that `raven-ruby` has been stable enough for some time that it's time for a 1.0.0 release!
+
+BREAKING CHANGES:
+
+- Dropped support for Ruby 1.8.7 [nateberkopec, #465]
+- `raven-ruby` no longer reports form POST data or web cookies by default. To re-enable this behavior, remove the appropriate Processors from your config (see docs or PR) [nateberkopec, #466]
+- UDP transport has been removed [dcramer, #472]
+
+OTHER CHANGES:
+
+- Improved performance [zanker]
+- Deprecated `config.catch_debugged_exceptions`, replaced with `config.rails_report_rescued_exceptions`. `catch_debugged_exceptions` will be removed in 1.1. [nateberkopec, #483]
+- Added `config.transport_failure_callback`. Provide a lambda or proc to this config setting, which will be `call`ed when Sentry returns a 4xx/5xx response. [nateberkopec, #484]
+- JRuby builds fixed [RobinDaugherty]
+- Fix problems with duplicate exceptions and `Exception.cause` [dcramer, #490]
+- Added Exception Context. Any Exception class can define a `raven_context` instance variable, which will be merged into any Event's context which contains this exception. [nateberkopec, #491]
++ Documentation from shaneog, squirly, dcramer, ehfeng, nateberkopec.
+
 0.15.6
 ------
 
