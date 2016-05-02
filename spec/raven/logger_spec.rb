@@ -22,32 +22,32 @@ describe Raven::Logger do
     end
 
     it 'should log fatal messages' do
-      expect(@logger).to receive(:fatal).with('** [Raven] fatalmsg')
+      expect(@logger).to receive(:add).with(Logger::FATAL, '** [Raven] fatalmsg', 'sentry')
       subject.fatal 'fatalmsg'
     end
 
     it 'should log error messages' do
-      expect(@logger).to receive(:error).with('** [Raven] errormsg')
+      expect(@logger).to receive(:add).with(Logger::ERROR, '** [Raven] errormsg', 'sentry')
       subject.error 'errormsg'
     end
 
     it 'should log warning messages' do
-      expect(@logger).to receive(:warn).with('** [Raven] warnmsg')
+      expect(@logger).to receive(:add).with(Logger::WARN, '** [Raven] warnmsg', 'sentry')
       subject.warn 'warnmsg'
     end
 
     it 'should log info messages' do
-      expect(@logger).to receive(:info).with('** [Raven] infomsg')
+      expect(@logger).to receive(:add).with(Logger::INFO, '** [Raven] infomsg', 'sentry')
       subject.info 'infomsg'
     end
 
     it 'should log debug messages' do
-      expect(@logger).to receive(:debug).with('** [Raven] debugmsg')
+      expect(@logger).to receive(:add).with(Logger::DEBUG, '** [Raven] debugmsg', 'sentry')
       subject.debug 'debugmsg'
     end
 
     it 'should log messages from blocks' do
-      expect(@logger).to receive(:info).with('** [Raven] infoblock')
+      expect(@logger).to receive(:add).with(Logger::INFO, '** [Raven] infoblock', 'sentry')
       subject.info { 'infoblock' }
     end
   end

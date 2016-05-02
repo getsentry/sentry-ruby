@@ -13,14 +13,22 @@ module Raven
       ActiveSupport.on_load :action_controller do
         include Raven::Rails::ControllerMethods
         if ::Rails::VERSION::STRING >= "4.0.0"
-          Raven.rails_safely_prepend("StreamingReporter", :to => ActionController::Live)
+          Raven.safely_prepend(
+            "StreamingReporter",
+            :from => Raven::Rails::Overrides,
+            :to => ActionController::Live
+          )
         end
       end
     end
 
     initializer 'raven.action_view' do
       ActiveSupport.on_load :action_view do
-        Raven.rails_safely_prepend("StreamingReporter", :to => ActionView::StreamingTemplateRenderer::Body)
+        Raven.safely_prepend(
+          "StreamingReporter",
+          :from => Raven::Rails::Overrides,
+          :to => ActionView::StreamingTemplateRenderer::Body
+        )
       end
     end
 
@@ -31,6 +39,11 @@ module Raven
         config.release ||= config.detect_release # if project_root has changed, need to re-check
       end
 
+      if Raven.configuration.rails_activesupport_breadcrumbs
+        require 'raven/breadcrumbs/activesupport'
+        Raven::ActiveSupportBreadcrumbs.inject
+      end
+
       if Raven.configuration.rails_report_rescued_exceptions
         require 'raven/integrations/rails/overrides/debug_exceptions_catcher'
         if defined?(::ActionDispatch::DebugExceptions)
@@ -38,7 +51,12 @@ module Raven
         elsif defined?(::ActionDispatch::ShowExceptions)
           exceptions_class = ::ActionDispatch::ShowExceptions
         end
-        Raven.rails_safely_prepend("DebugExceptionsCatcher", :to => exceptions_class)
+
+        Raven.safely_prepend(
+          "DebugExceptionsCatcher",
+          :from => Raven::Rails::Overrides,
+          :to => exceptions_class
+        )
       end
     end
 

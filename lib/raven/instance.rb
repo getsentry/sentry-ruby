@@ -204,6 +204,10 @@ module Raven
       context.rack_env = env
     end
 
+    def breadcrumbs
+      BreadcrumbBuffer.current
+    end
+
     private
 
     def install_at_exit_hook(options)

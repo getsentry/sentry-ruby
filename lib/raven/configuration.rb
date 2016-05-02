@@ -100,6 +100,9 @@ module Raven
     # Deprecated accessor
     attr_accessor :catch_debugged_exceptions
 
+    # Turns on ActiveSupport breadcrumbs integration
+    attr_accessor :rails_activesupport_breadcrumbs
+
     # Provide a configurable callback to determine event capture
     attr_accessor :should_capture
 
@@ -108,6 +111,9 @@ module Raven
 
     # Sanitize values that look like credit card numbers
     attr_accessor :sanitize_credit_cards
+
+    # Logger 'progname's to exclude from breadcrumbs
+    attr_accessor :exclude_loggers
 
     IGNORE_DEFAULT = [
       'AbstractController::ActionNotFound',
@@ -137,16 +143,18 @@ module Raven
       self.processors = DEFAULT_PROCESSORS.dup
       self.ssl_verification = true
       self.encoding = 'gzip'
-      self.timeout = 1
+      self.timeout = 2
       self.open_timeout = 1
       self.proxy = nil
       self.tags = {}
       self.async = false
       self.rails_report_rescued_exceptions = true
+      self.rails_activesupport_breadcrumbs = false
       self.transport_failure_callback = false
       self.sanitize_fields = []
       self.sanitize_credit_cards = true
       self.environments = []
+      self.exclude_loggers = []
 
       self.release = detect_release
 

@@ -31,6 +31,7 @@ module Raven
     def initialize(init = {})
       @configuration = Raven.configuration
       @interfaces    = {}
+      @breadcrumbs   = Raven.breadcrumbs
       @context       = Raven.context
       @id            = generate_event_id
       @project       = nil
@@ -224,6 +225,7 @@ module Raven
       data[:extra] = @extra if @extra
       data[:tags] = @tags if @tags
       data[:user] = @user if @user
+      data[:breadcrumbs] = @breadcrumbs.to_hash unless @breadcrumbs.empty?
       data[:checksum] = @checksum if @checksum
       @interfaces.each_pair do |name, int_data|
         data[name.to_sym] = int_data.to_hash

@@ -1,7 +1,17 @@
 # frozen_string_literal: true
+require 'logger'
+
 module Raven
   class Logger
     LOG_PREFIX = "** [Raven] ".freeze
+
+    LEVELS = {
+      :debug => ::Logger::DEBUG,
+      :info => ::Logger::INFO,
+      :warn => ::Logger::WARN,
+      :error => ::Logger::ERROR,
+      :fatal => ::Logger::FATAL
+    }.freeze
 
     [
       :fatal,
@@ -16,7 +26,7 @@ module Raven
         logger = Raven.configuration[:logger]
         logger = ::Logger.new(STDOUT) if logger.nil?
 
-        logger.send(level, "#{LOG_PREFIX}#{msg}") if logger
+        logger.add(LEVELS[level], "#{LOG_PREFIX}#{msg}", "sentry") if logger
       end
     end
   end
