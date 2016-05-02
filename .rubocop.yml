@@ -2,6 +2,7 @@ inherit_from: .rubocop_todo.yml
 
 AllCops:
   Exclude:
+    - 'examples/**/*'
     - 'lib/raven/okjson.rb'
     - 'lib/raven/utils/deep_merge.rb'
 
