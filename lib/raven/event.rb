@@ -127,6 +127,7 @@ module Raven
         evt.interface(:exception) do |exc_int|
           exceptions = [exc]
           context = Set.new [exc.object_id]
+          backtraces = Set.new
 
           while exc.respond_to?(:cause) && exc.cause
             exc = exc.cause
@@ -145,7 +146,8 @@ module Raven
               int.module = e.class.to_s.split('::')[0...-1].join('::')
 
               int.stacktrace =
-                if e.backtrace
+                if e.backtrace && !backtraces.include?(e.backtrace.object_id)
+                  backtraces << e.backtrace.object_id
                   StacktraceInterface.new do |stacktrace|
                     stacktrace_interface_from(stacktrace, evt, e.backtrace)
                   end
