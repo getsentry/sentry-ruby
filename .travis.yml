@@ -14,12 +14,6 @@ gemfile:
 
 sudo: false
 
-notifications:
-  irc:
-    channels: "irc.freenode.org#sentry"
-    on_success: change
-    on_failure: change
-
 matrix:
   include:
     - rvm: jruby-1.7.24
