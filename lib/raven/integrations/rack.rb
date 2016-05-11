@@ -106,8 +106,10 @@ module Raven
           # Header
           http_key = key[5..key.length - 1].split('_').map(&:capitalize).join('-')
           memo[http_key] = value
-        elsif %w(CONTENT_TYPE CONTENT_LENGTH).include? key
-          memo[key.capitalize] = value
+        elsif key == 'CONTENT_TYPE'
+          memo['Content-Type'] = value
+        elsif key == 'CONTENT_LENGTH'
+          memo['Content-Length'] = value
         end
       end
     end
