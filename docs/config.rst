@@ -124,8 +124,8 @@ Optional settings
     .. code-block:: ruby
 
         Raven.configure do |config|
-          config.processors -= Raven::Processor::PostData # Do this to send POST data
-          config.processors -= Raven::Processor::Cookies # Do this to send cookies by default
+          config.processors -= [Raven::Processor::PostData] # Do this to send POST data
+          config.processors -= [Raven::Processor::Cookies] # Do this to send cookies by default
         end
 
 .. describe:: rails_report_rescued_exceptions
