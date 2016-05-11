@@ -331,8 +331,7 @@ describe Raven::Event do
         { :extra => {
             'context_event_key' => 'context_value',
             'context_key' => 'context_value'
-          }
-        }
+        } }
       end
     end
 
