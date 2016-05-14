@@ -11,6 +11,7 @@
 Lint/RescueException:
   Exclude:
     - 'lib/raven/base.rb'
+    - 'lib/raven/instance.rb'
     - 'lib/raven/integrations/delayed_job.rb'
     - 'lib/raven/integrations/rack.rb'
     - 'lib/raven/integrations/sidekiq.rb'
