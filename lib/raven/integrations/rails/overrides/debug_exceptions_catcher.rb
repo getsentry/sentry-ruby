@@ -1,6 +1,6 @@
 module Raven
   class Rails
-    module Middleware
+    module Overrides
       module DebugExceptionsCatcher
         def render_exception(env_or_request, exception)
           begin

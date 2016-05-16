@@ -2,14 +2,25 @@ require 'rails'
 
 module Raven
   class Rails < ::Rails::Railtie
+    require 'raven/integrations/rails/overrides/streaming_reporter'
+    require 'raven/integrations/rails/controller_methods'
+
     initializer "raven.use_rack_middleware" do |app|
       app.config.middleware.insert 0, Raven::Rack
     end
 
     initializer 'raven.action_controller' do
       ActiveSupport.on_load :action_controller do
-        require 'raven/integrations/rails/controller_methods'
         include Raven::Rails::ControllerMethods
+        if ::Rails::VERSION::STRING >= "4.0.0"
+          Raven.rails_safely_prepend("StreamingReporter", :to => ActionController::Live)
+        end
+      end
+    end
+
+    initializer 'raven.action_view' do
+      ActiveSupport.on_load :action_view do
+        Raven.rails_safely_prepend("StreamingReporter", :to => ActionView::StreamingTemplateRenderer::Body)
       end
     end
 
@@ -23,19 +34,13 @@ module Raven
 
     config.after_initialize do
       if Raven.configuration.rails_report_rescued_exceptions
-        require 'raven/integrations/rails/middleware/debug_exceptions_catcher'
+        require 'raven/integrations/rails/overrides/debug_exceptions_catcher'
         if defined?(::ActionDispatch::DebugExceptions)
           exceptions_class = ::ActionDispatch::DebugExceptions
         elsif defined?(::ActionDispatch::ShowExceptions)
           exceptions_class = ::ActionDispatch::ShowExceptions
         end
-        unless exceptions_class.nil?
-          if exceptions_class.respond_to?(:prepend, true)
-            exceptions_class.send(:prepend, Raven::Rails::Middleware::DebugExceptionsCatcher)
-          else
-            exceptions_class.send(:include, Raven::Rails::Middleware::OldDebugExceptionsCatcher)
-          end
-        end
+        Raven.rails_safely_prepend("DebugExceptionsCatcher", :to => exceptions_class)
       end
     end
 
