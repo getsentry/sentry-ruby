@@ -115,12 +115,16 @@ module Raven
         else
           send_event(evt)
         end
-
+        Thread.current[:sentry_last_event_id] = evt.id
         evt
       end
     end
     alias_method :capture_message, :capture_type
     alias_method :capture_exception, :capture_type
+
+    def last_event_id
+      Thread.current[:sentry_last_event_id]
+    end
 
     def should_capture?(message_or_exc)
       if configuration.should_capture
