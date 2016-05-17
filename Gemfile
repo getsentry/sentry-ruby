@@ -9,5 +9,4 @@ end
 group :development do
   gem "pry"
   gem "benchmark-ips"
-  gem "derailed_benchmarks"
 end
