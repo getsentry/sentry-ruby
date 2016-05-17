@@ -59,7 +59,7 @@ Referencing Events
 
 The client exposes a ``last_event_id`` accessor allowing you to easily
 reference the last captured event. This is useful, for example, if you wanted
-to show the user a reference on your error page::
+to show the user a reference on your error page:
 
 .. code-block:: ruby
 
@@ -82,7 +82,7 @@ Optional Attributes
 -------------------
 
 With calls to ``capture_exception`` or ``capture_message`` additional data
-can be supplied::
+can be supplied:
 
   .. code-block:: ruby
 
