@@ -5,7 +5,7 @@ describe Raven do
   let(:options) { double("options") }
 
   before do
-    allow(Raven).to receive(:send_event)
+    allow(Raven.instance).to receive(:send_event)
     allow(Raven::Event).to receive(:from_message) { event }
     allow(Raven::Event).to receive(:from_exception) { event }
   end
@@ -15,7 +15,7 @@ describe Raven do
 
     it 'sends the result of Event.capture_message' do
       expect(Raven::Event).to receive(:from_message).with(message, options)
-      expect(Raven).to receive(:send_event).with(event)
+      expect(Raven.instance).to receive(:send_event).with(event)
 
       Raven.capture_message(message, options)
     end
@@ -54,7 +54,7 @@ describe Raven do
 
     it 'sends the result of Event.capture_exception' do
       expect(Raven::Event).to receive(:from_exception).with(exception, options)
-      expect(Raven).to receive(:send_event).with(event)
+      expect(Raven.instance).to receive(:send_event).with(event)
 
       Raven.capture_exception(exception, options)
     end
@@ -124,7 +124,7 @@ describe Raven do
           pipe_in.close
           described_class.capture(options)
 
-          allow(Raven).to receive(:capture_exception) do |exception, _options|
+          allow(Raven.instance).to receive(:capture_type) do |exception, _options|
             pipe_out.puts exception.message
           end
 
@@ -132,14 +132,13 @@ describe Raven do
           $stderr.reopen('/dev/null', 'w')
           $stdout.reopen('/dev/null', 'w')
 
-          raise 'test error'
+          yield
           exit
         end
 
         pipe_out.close
         captured_messages = pipe_in.read
         pipe_in.close
-
         # sometimes the at_exit hook was registered multiple times
         captured_messages.split("\n").last
       end
@@ -252,7 +251,7 @@ describe Raven do
     let(:message) { "Test message" }
 
     it 'sends the result of Event.capture_message' do
-      expect(Raven).to receive(:send_event).with(event)
+      expect(Raven.instance).to receive(:send_event).with(event)
 
       Raven.capture_message("Test message", options)
 

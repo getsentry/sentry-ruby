@@ -206,7 +206,6 @@ Style/HashSyntax:
 # Configuration parameters: MaxLineLength.
 Style/IfUnlessModifier:
   Exclude:
-    - 'lib/raven/base.rb'
     - 'lib/raven/event.rb'
     - 'lib/raven/interfaces/exception.rb'
     - 'lib/raven/interfaces/single_exception.rb'

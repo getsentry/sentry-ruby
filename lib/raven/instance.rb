@@ -1,4 +1,5 @@
 require 'raven/base'
+require 'English'
 
 module Raven
   # A copy of Raven's base module class methods, minus some of the integration
@@ -29,8 +30,16 @@ module Raven
     # values for all Raven configuration options. See Raven::Configuration.
     attr_writer :configuration
 
+    def initialize(context = nil)
+      @context = @explicit_context = context
+    end
+
     def context
-      @context ||= Context.new
+      if @explicit_context
+        @context ||= Context.new
+      else
+        Context.current
+      end
     end
 
     def logger
@@ -58,7 +67,6 @@ module Raven
         logger.info "Raven #{VERSION} configured not to send errors."
       end
     end
-    alias_method :report_ready, :report_status
 
     # Call this method to modify defaults in your initializers.
     #
@@ -71,7 +79,7 @@ module Raven
 
       self.client = Client.new(configuration)
       report_status
-      self.client
+      client
     end
 
     # Send an event to the configured Sentry server
@@ -90,13 +98,17 @@ module Raven
     #     MyApp.run
     #   end
     def capture(options = {})
-      begin
-        yield
-      rescue Error
-        raise # Don't capture Raven errors
-      rescue Exception => e
-        capture_exception(e, options)
-        raise
+      if block_given?
+        begin
+          yield
+        rescue Error
+          raise # Don't capture Raven errors
+        rescue Exception => e
+          capture_type(e, options)
+          raise
+        end
+      else
+        install_at_exit_hook(options)
       end
     end
 
@@ -114,8 +126,6 @@ module Raven
         evt
       end
     end
-    alias_method :capture_message, :capture_type
-    alias_method :capture_exception, :capture_type
 
     def last_event_id
       Thread.current["sentry_#{object_id}_last_event_id".to_sym]
@@ -194,10 +204,16 @@ module Raven
       context.rack_env = env
     end
 
-    # For cross-language compat
-    alias :captureException :capture_exception
-    alias :captureMessage :capture_message
-    alias :annotateException :annotate_exception
-    alias :annotate :annotate_exception
+    private
+
+    def install_at_exit_hook(options)
+      at_exit do
+        exception = $ERROR_INFO
+        if exception
+          logger.debug "Caught a post-mortem exception: #{exception.inspect}"
+          capture_type(exception, options)
+        end
+      end
+    end
   end
 end

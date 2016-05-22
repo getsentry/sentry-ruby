@@ -17,95 +17,97 @@ describe Raven::Instance do
     it 'is different than Raven.context'
   end
 
-  describe '#capture_message' do
-    let(:message) { "Test message" }
+  describe '#capture_type' do
+    describe 'as #capture_message' do
+      let(:message) { "Test message" }
 
-    it 'sends the result of Event.capture_message' do
-      expect(Raven::Event).to receive(:from_message).with(message, options)
-      expect(subject).to receive(:send_event).with(event)
+      it 'sends the result of Event.capture_message' do
+        expect(Raven::Event).to receive(:from_message).with(message, options)
+        expect(subject).to receive(:send_event).with(event)
 
-      subject.capture_message(message, options)
+        subject.capture_type(message, options)
+      end
+
+      it 'yields the event to a passed block' do
+        expect { |b| subject.capture_type(message, options, &b) }.to yield_with_args(event)
+      end
     end
 
-    it 'yields the event to a passed block' do
-      expect { |b| subject.capture_message(message, options, &b) }.to yield_with_args(event)
-    end
-  end
+    describe 'as #capture_message when async' do
+      let(:message) { "Test message" }
 
-  describe '#capture_message when async' do
-    let(:message) { "Test message" }
+      around do |example|
+        prior_async = subject.configuration.async
+        subject.configuration.async = proc { :ok }
+        example.run
+        subject.configuration.async = prior_async
+      end
 
-    around do |example|
-      prior_async = subject.configuration.async
-      subject.configuration.async = proc { :ok }
-      example.run
-      subject.configuration.async = prior_async
-    end
+      it 'sends the result of Event.capture_type' do
+        expect(Raven::Event).to receive(:from_message).with(message, options)
+        expect(subject).not_to receive(:send_event).with(event)
 
-    it 'sends the result of Event.capture_message' do
-      expect(Raven::Event).to receive(:from_message).with(message, options)
-      expect(subject).not_to receive(:send_event).with(event)
+        expect(subject.configuration.async).to receive(:call).with(event)
+        subject.capture_type(message, options)
+      end
 
-      expect(subject.configuration.async).to receive(:call).with(event)
-      subject.capture_message(message, options)
-    end
-
-    it 'returns the generated event' do
-      returned = subject.capture_message(message, options)
-      expect(returned).to eq(event)
-    end
-  end
-
-  describe '#capture_exception' do
-    let(:exception) { build_exception }
-
-    it 'sends the result of Event.capture_exception' do
-      expect(Raven::Event).to receive(:from_exception).with(exception, options)
-      expect(subject).to receive(:send_event).with(event)
-
-      subject.capture_exception(exception, options)
+      it 'returns the generated event' do
+        returned = subject.capture_type(message, options)
+        expect(returned).to eq(event)
+      end
     end
 
-    it 'yields the event to a passed block' do
-      expect { |b| subject.capture_exception(exception, options, &b) }.to yield_with_args(event)
-    end
-  end
+    describe 'as #capture_exception' do
+      let(:exception) { build_exception }
 
-  describe '#capture_exception when async' do
-    let(:exception) { build_exception }
+      it 'sends the result of Event.capture_exception' do
+        expect(Raven::Event).to receive(:from_exception).with(exception, options)
+        expect(subject).to receive(:send_event).with(event)
 
-    around do |example|
-      prior_async = subject.configuration.async
-      subject.configuration.async = proc { :ok }
-      example.run
-      subject.configuration.async = prior_async
-    end
+        subject.capture_type(exception, options)
+      end
 
-    it 'sends the result of Event.capture_exception' do
-      expect(Raven::Event).to receive(:from_exception).with(exception, options)
-      expect(subject).not_to receive(:send_event).with(event)
-
-      expect(subject.configuration.async).to receive(:call).with(event)
-      subject.capture_exception(exception, options)
+      it 'yields the event to a passed block' do
+        expect { |b| subject.capture_type(exception, options, &b) }.to yield_with_args(event)
+      end
     end
 
-    it 'returns the generated event' do
-      returned = subject.capture_exception(exception, options)
-      expect(returned).to eq(event)
+    describe 'as #capture_exception when async' do
+      let(:exception) { build_exception }
+
+      around do |example|
+        prior_async = subject.configuration.async
+        subject.configuration.async = proc { :ok }
+        example.run
+        subject.configuration.async = prior_async
+      end
+
+      it 'sends the result of Event.capture_exception' do
+        expect(Raven::Event).to receive(:from_exception).with(exception, options)
+        expect(subject).not_to receive(:send_event).with(event)
+
+        expect(subject.configuration.async).to receive(:call).with(event)
+        subject.capture_type(exception, options)
+      end
+
+      it 'returns the generated event' do
+        returned = subject.capture_type(exception, options)
+        expect(returned).to eq(event)
+      end
     end
-  end
 
-  describe '#capture_exception with a should_capture callback' do
-    let(:exception) { build_exception }
+    describe 'as #capture_exception with a should_capture callback' do
+      let(:exception) { build_exception }
 
-    it 'sends the result of Event.capture_exception according to the result of should_capture' do
-      expect(subject).not_to receive(:send_event).with(event)
+      it 'sends the result of Event.capture_exception according to the result of should_capture' do
+        expect(subject).not_to receive(:send_event).with(event)
 
-      prior_should_capture = subject.configuration.should_capture
-      subject.configuration.should_capture = proc { false }
-      expect(subject.configuration.should_capture).to receive(:call).with(exception)
-      expect(subject.capture_exception(exception, options)).to be false
-      subject.configuration.should_capture = prior_should_capture
+        prior_should_capture = subject.configuration.should_capture
+        subject.configuration.should_capture = proc { false }
+        expect(subject.configuration.should_capture).to receive(:call).with(exception)
+        expect(subject.capture_type(exception, options)).to be false
+        subject.configuration.should_capture = prior_should_capture
+      end
     end
   end
 
@@ -170,16 +172,16 @@ describe Raven::Instance do
   describe '.last_event_id' do
     let(:message) { "Test message" }
 
-    it 'sends the result of Event.capture_message' do
+    it 'sends the result of Event.capture_type' do
       expect(subject).to receive(:send_event).with(event)
 
-      subject.capture_message("Test message", options)
+      subject.capture_type("Test message", options)
 
       expect(subject.last_event_id).to eq(event.id)
     end
 
     it 'yields the event to a passed block' do
-      expect { |b| subject.capture_message(message, options, &b) }.to yield_with_args(event)
+      expect { |b| subject.capture_type(message, options, &b) }.to yield_with_args(event)
     end
   end
 end
