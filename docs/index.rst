@@ -43,9 +43,11 @@ environment variable or manually configure it with ``Raven.configure``:
 Reporting Failures
 ------------------
 
-If you use Rails, Rake, Rack etc, you're already done - no more
+If you use Rails, Rake, Sidekiq, etc, you're already done - no more
 configuration required! Check :doc:`integrations/index` for more details on
 other gems Sentry integrates with automatically.
+
+Rack requires a little more setup: :doc:`integrations/rack`
 
 Otherwise, Raven supports two methods of capturing exceptions:
 
