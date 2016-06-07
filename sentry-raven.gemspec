@@ -16,7 +16,7 @@ Gem::Specification.new do |gem|
   gem.license = 'Apache-2.0'
   gem.required_ruby_version = '>= 1.9.0'
 
-  gem.add_dependency "faraday", ">= 0.7.6", "<= 0.9.x"
+  gem.add_dependency "faraday", ">= 0.7.6", "< 0.10.x"
 
   gem.add_development_dependency "rake"
   gem.add_development_dependency "rubocop"
