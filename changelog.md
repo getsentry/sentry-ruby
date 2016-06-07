@@ -1,3 +1,10 @@
+1.1.0
+-----
+
+* The client exposes a ``last_event_id`` accessor at `Raven.last_event_id`. [dcramer, #493]
+* PERFORMANCE: Skip identical backtraces from "re-raised" exceptions [databus23, #499]
+* Support for ActionController::Live and Rails template streaming [nateberkopec, #486]
+
 1.0.0
 -----
 
