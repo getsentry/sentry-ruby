@@ -1,9 +1,9 @@
 # frozen_string_literal: true
-require 'zlib'
 require 'base64'
+require 'json'
+require 'zlib'
 
 require 'raven/version'
-require 'raven/okjson'
 require 'raven/transports/http'
 
 module Raven
@@ -73,7 +73,7 @@ module Raven
 
     def encode(event)
       hash = @processors.reduce(event.to_hash) { |memo, p| p.process(memo) }
-      encoded = OkJson.encode(hash)
+      encoded = JSON.generate(hash)
 
       case configuration.encoding
       when 'gzip'
