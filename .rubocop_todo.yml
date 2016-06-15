@@ -363,7 +363,6 @@ Style/SpaceAroundOperators:
     - 'lib/raven/event.rb'
     - 'lib/raven/integrations/sidekiq.rb'
     - 'lib/raven/interfaces/stack_trace.rb'
-    - 'spec/raven/okjson_spec.rb'
     - 'spec/raven/processors/sanitizedata_processor_spec.rb'
 
 # Offense count: 6

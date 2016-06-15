@@ -1,5 +1,6 @@
 # frozen_string_literal: true
 require 'json'
+
 module Raven
   class Processor::SanitizeData < Processor
     STRING_MASK = '********'.freeze
@@ -72,8 +73,8 @@ module Raven
 
     def parse_json_or_nil(string)
       begin
-        OkJson.decode(string)
-      rescue Raven::OkJson::Error, NoMethodError
+        JSON.parse(string)
+      rescue JSON::ParserError, NoMethodError
         nil
       end
     end
