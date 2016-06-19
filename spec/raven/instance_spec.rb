@@ -4,8 +4,9 @@ require 'raven/instance'
 describe Raven::Instance do
   let(:event) { double("event", :id => "event_id") }
   let(:options) { double("options") }
+  let(:context) { nil }
 
-  subject { described_class.new }
+  subject { described_class.new(context) }
 
   before do
     allow(subject).to receive(:send_event)
@@ -14,7 +15,17 @@ describe Raven::Instance do
   end
 
   describe '#context' do
-    it 'is different than Raven.context'
+    it 'is Raven.context by default' do
+      expect(subject.context).to equal(Raven.context)
+    end
+
+    context 'initialized with a context' do
+      let(:context) { :explicit }
+
+      it 'is not Raven.context' do
+        expect(subject.context).to_not equal(Raven.context)
+      end
+    end
   end
 
   describe '#capture_type' do
@@ -116,6 +127,11 @@ describe Raven::Instance do
       it 'yields to the given block' do
         expect { |b| subject.capture(&b) }.to yield_with_no_args
       end
+    end
+
+    it 'does not install an at_exit hook' do
+      expect(Kernel).not_to receive(:at_exit)
+      subject.capture {}
     end
   end
 
