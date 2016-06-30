@@ -43,6 +43,7 @@ module Raven
     def call(env)
       # clear context at the beginning of the request to ensure a clean slate
       Context.clear!
+      BreadcrumbBuffer.clear!
 
       # store the current environment in our local context for arbitrary
       # callers

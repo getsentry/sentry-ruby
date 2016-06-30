@@ -3,6 +3,7 @@ require 'spec_helper'
 describe Raven::Event do
   before do
     Raven::Context.clear!
+    Raven::BreadcrumbBuffer.clear!
   end
 
   context 'a fully implemented event' do

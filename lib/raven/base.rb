@@ -1,5 +1,6 @@
 require 'raven/version'
 require 'raven/backtrace'
+require 'raven/breadcrumbs'
 require 'raven/processor'
 require 'raven/processor/sanitizedata'
 require 'raven/processor/removecircularreferences'
@@ -34,7 +35,7 @@ module Raven
     def_delegators :instance, :client=, :configuration=, :context, :logger, :configuration,
                    :client, :report_status, :configure, :send_event, :capture, :capture_type,
                    :last_event_id, :should_capture?, :annotate_exception, :user_context,
-                   :tags_context, :extra_context, :rack_context
+                   :tags_context, :extra_context, :rack_context, :breadcrumbs
 
     def_delegator :instance, :report_status, :report_ready
     def_delegator :instance, :capture_type, :capture_message
@@ -78,12 +79,12 @@ module Raven
       self.logger.warn "Unable to load raven/integrations/#{integration}: #{error}"
     end
 
-    def rails_safely_prepend(module_name, opts = {})
-      return if opts[:to].nil?
+    def safely_prepend(module_name, opts = {})
+      return if opts[:to].nil? || opts[:from].nil?
       if opts[:to].respond_to?(:prepend, true)
-        opts[:to].send(:prepend, Raven::Rails::Overrides.const_get(module_name))
+        opts[:to].send(:prepend, opts[:from].const_get(module_name))
       else
-        opts[:to].send(:include, Raven::Rails::Overrides.const_get("Old" + module_name))
+        opts[:to].send(:include, opts[:from].const_get("Old" + module_name))
       end
     end
 
