@@ -1,5 +1,6 @@
 require 'benchmark/ips'
 require 'raven'
+require 'raven/breadcrumbs/logger'
 require 'rack/test'
 require_relative "../spec/support/test_rails_app/app"
 
@@ -29,11 +30,14 @@ Raven.configure do |config|
   config.dsn = "dummy://woopwoop"
 end
 
+LOGGER = Logger.new(nil)
+
 Benchmark.ips do |x|
   x.config(:time => 5, :warmup => 2)
 
   x.report("simple") { Raven.capture_exception(DIVIDE_BY_ZERO) }
   x.report("rails") { Raven.capture_exception(RAILS_EXC) }
+  x.report("lots o logs") { 100.times { LOGGER.debug("foo") }; Raven.capture_exception(DIVIDE_BY_ZERO)}
 
   x.compare!
 end

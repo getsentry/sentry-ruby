@@ -24,8 +24,14 @@ module Raven
       [type, value]
     end
 
-    def add(severity, message = nil, progname = nil, &block)
-      return if progname == "sentry" || Raven.configuration.exclude_loggers.include?(progname)
+    def add(*args)
+      add_breadcrumb(*args)
+      super
+    end
+
+    def add_breadcrumb(severity, message = nil, progname = nil, &block)
+      message = progname if message.nil? # see Ruby's Logger docs for why
+      return if ignored_logger?(progname)
       return if message.nil? || message == ""
 
       # some loggers will add leading/trailing space as they (incorrectly, mind you)
@@ -53,18 +59,38 @@ module Raven
             crumb.category = progname || 'logger'
             crumb.message = message
           end
+
         end
       end
+    end
 
-      super
+    private
+
+    def ignored_logger?(progname)
+      progname == "sentry" ||
+        Raven.configuration.exclude_loggers.include?(progname)
+    end
+  end
+  module OldBreadcrumbLogger
+    def self.included(base)
+      base.class_eval do
+        include Raven::BreadcrumbLogger
+        alias_method :add_without_raven, :add
+        alias_method :add, :add_with_raven
+      end
+    end
+
+    def add_with_raven(*args)
+
+      add_breadcrumb(*args)
+
+      add_without_raven(*args)
     end
   end
 end
 
-class Logger
-  Raven.safely_prepend(
-    "BreadcrumbLogger",
-    :from => Raven,
-    :to => self
-  )
-end
+Raven.safely_prepend(
+  "BreadcrumbLogger",
+  :from => Raven,
+  :to => ::Logger
+)
