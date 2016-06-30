@@ -437,7 +437,7 @@ describe Raven::Event do
 
     context 'for a nested exception type' do
       module Raven::Test
-        class Exception < Exception; end
+        class Exception < RuntimeError; end
       end
       let(:exception) { Raven::Test::Exception.new(message) }
 
@@ -455,7 +455,7 @@ describe Raven::Event do
 
     context 'for an excluded exception type' do
       module Raven::Test
-        class BaseExc < Exception; end
+        class BaseExc < RuntimeError; end
         class SubExc < BaseExc; end
       end
 

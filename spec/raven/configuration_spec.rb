@@ -61,7 +61,7 @@ describe Raven::Configuration do
 
   context 'being initialized without server configuration' do
     before do
-      subject.environments = %w[ test ]
+      subject.environments = %w[test]
     end
 
     it 'should not send events' do
@@ -130,12 +130,12 @@ describe Raven::Configuration do
     end
 
     it 'should send events if test is whitelisted' do
-      subject.environments = %w[ test ]
+      subject.environments = %w[test]
       expect(subject.send_in_current_environment?).to eq(true)
     end
 
     it 'should not send events if test is not whitelisted' do
-      subject.environments = %w[ not_test ]
+      subject.environments = %w[not_test]
       expect(subject.send_in_current_environment?).to eq(false)
     end
   end
