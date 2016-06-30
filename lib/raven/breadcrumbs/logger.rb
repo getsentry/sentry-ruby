@@ -29,7 +29,7 @@ module Raven
       super
     end
 
-    def add_breadcrumb(severity, message = nil, progname = nil, &block)
+    def add_breadcrumb(severity, message = nil, progname = nil)
       message = progname if message.nil? # see Ruby's Logger docs for why
       return if ignored_logger?(progname)
       return if message.nil? || message == ""
@@ -59,7 +59,6 @@ module Raven
             crumb.category = progname || 'logger'
             crumb.message = message
           end
-
         end
       end
     end
@@ -81,9 +80,7 @@ module Raven
     end
 
     def add_with_raven(*args)
-
       add_breadcrumb(*args)
-
       add_without_raven(*args)
     end
   end

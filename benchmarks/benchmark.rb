@@ -37,7 +37,10 @@ Benchmark.ips do |x|
 
   x.report("simple") { Raven.capture_exception(DIVIDE_BY_ZERO) }
   x.report("rails") { Raven.capture_exception(RAILS_EXC) }
-  x.report("lots o logs") { 100.times { LOGGER.debug("foo") }; Raven.capture_exception(DIVIDE_BY_ZERO)}
+  x.report("lots o logs") do
+    100.times { LOGGER.debug(rand(100_000).to_s) }
+    Raven.capture_exception(DIVIDE_BY_ZERO)
+  end
 
   x.compare!
 end
