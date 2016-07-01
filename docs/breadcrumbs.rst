@@ -1,9 +1,10 @@
 Breadcrumbs
-=======
+===========
 
 Breadcrumbs are a trail of events which happened prior to an issue. Often, these events are very similar to traditional logs, but Breadcrumbs also can record rich, structured data.
 
 .. sourcecode:: ruby
+
     Raven.breadcrumbs.record do |crumb|
       crumb.data = data
       crumb.category = name
@@ -21,6 +22,7 @@ The following attributes are available:
 Appropriate places to inject Breadcrumbs may be places like your HTTP library:
 
 .. sourcecode:: ruby
+
     # Instrumenting Faraday with a middleware:
 
     class RavenFaradayMiddleware
