@@ -18,13 +18,11 @@ module Raven
         project_id = configuration[:project_id]
         path = configuration[:path] + "/"
 
-        response = conn.post "#{path}api/#{project_id}/store/" do |req|
+        conn.post "#{path}api/#{project_id}/store/" do |req|
           req.headers['Content-Type'] = options[:content_type]
           req.headers['X-Sentry-Auth'] = auth_header
           req.body = data
         end
-        Raven.logger.warn "Error from Sentry server (#{response.status}): #{response.body}" unless response.status == 200
-        response
       end
 
       private
@@ -42,6 +40,7 @@ module Raven
           :url => configuration[:server],
           :ssl => ssl_configuration
         ) do |builder|
+          builder.response :raise_error
           builder.adapter(*adapter)
         end
 
