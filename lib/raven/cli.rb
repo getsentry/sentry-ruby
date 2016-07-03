@@ -14,7 +14,7 @@ module Raven
       Raven.configuration.dsn = dsn if dsn
 
       # wipe out env settings to ensure we send the event
-      unless Raven.configuration.send_in_current_environment?
+      unless Raven.configuration.capture_in_current_environment?
         env_name = Raven.configuration.environments.pop || 'production'
         puts "Setting environment to #{env_name}"
         Raven.configuration.current_environment = env_name

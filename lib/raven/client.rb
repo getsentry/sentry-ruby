@@ -22,8 +22,6 @@ module Raven
     end
 
     def send_event(event)
-      return false unless configuration_allows_sending
-
       # Convert to hash
       event = event.to_hash
 
@@ -61,15 +59,6 @@ module Raven
     end
 
     private
-
-    def configuration_allows_sending
-      if configuration.send_in_current_environment?
-        true
-      else
-        configuration.log_excluded_environment_message
-        false
-      end
-    end
 
     def encode(event)
       hash = @processors.reduce(event.to_hash) { |memo, p| p.process(memo) }

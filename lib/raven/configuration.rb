@@ -215,12 +215,8 @@ module Raven
       @current_environment = environment.to_s
     end
 
-    def send_in_current_environment?
+    def capture_in_current_environment?
       !!server && (environments.empty? || environments.include?(current_environment))
-    end
-
-    def log_excluded_environment_message
-      Raven.logger.debug "Event not sent due to excluded environment: #{current_environment}"
     end
 
     def verify!

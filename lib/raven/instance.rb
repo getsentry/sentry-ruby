@@ -61,10 +61,10 @@ module Raven
     # Tell the log that the client is good to go
     def report_status
       return if client.configuration.silence_ready
-      if client.configuration.send_in_current_environment?
+      if client.configuration.capture_in_current_environment?
         logger.info "Raven #{VERSION} ready to catch errors"
       else
-        logger.info "Raven #{VERSION} configured not to send errors."
+        logger.info "Raven #{VERSION} configured not to capture errors."
       end
     end
 
@@ -113,7 +113,11 @@ module Raven
     end
 
     def capture_type(obj, options = {})
-      return false unless should_capture?(obj)
+      unless should_capture?(obj)
+        Raven.logger.debug("#{obj} excluded from capture due to environment or should_capture callback")
+        return false
+      end
+
       message_or_exc = obj.is_a?(String) ? "message" : "exception"
       if (evt = Event.send("from_" + message_or_exc, obj, options))
         yield evt if block_given?
@@ -132,11 +136,13 @@ module Raven
     end
 
     def should_capture?(message_or_exc)
-      if configuration.should_capture
-        configuration.should_capture.call(*[message_or_exc])
-      else
-        true
-      end
+      configuration.capture_in_current_environment? &&
+        capture_allowed_by_callback?(message_or_exc)
+    end
+
+    def capture_allowed_by_callback?(message_or_exc)
+      return true unless configuration.should_capture
+      configuration.should_capture.call(*[message_or_exc])
     end
 
     # Provides extra context to the exception prior to it being handled by
