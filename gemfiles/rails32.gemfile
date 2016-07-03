@@ -1,6 +1,5 @@
 source "http://rubygems.org"
 
 gem "rails", ["~> 3.2.6", "!= 3.2.22.1"]
-gem "rspec"
 
 gemspec :path => "../"
