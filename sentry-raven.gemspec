@@ -22,8 +22,6 @@ Gem::Specification.new do |gem|
   gem.add_development_dependency "rubocop", "~> 0.41.1"
   gem.add_development_dependency "rspec"
   gem.add_development_dependency "rspec-rails"
-  gem.add_development_dependency "mime-types"
-  gem.add_development_dependency "rest-client"
   gem.add_development_dependency "timecop"
   gem.add_development_dependency "test-unit" if RUBY_VERSION > '2.2'
 end
