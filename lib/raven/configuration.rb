@@ -215,12 +215,21 @@ module Raven
       @current_environment = environment.to_s
     end
 
-    def send_in_current_environment?
+    def capture_allowed?(message_or_exc)
+      capture_in_current_environment? &&
+        capture_allowed_by_callback?(message_or_exc)
+    end
+
+    # If we cannot capture, we cannot send.
+    alias sending_allowed? capture_allowed?
+
+    def capture_in_current_environment?
       !!server && (environments.empty? || environments.include?(current_environment))
     end
 
-    def log_excluded_environment_message
-      Raven.logger.debug "Event not sent due to excluded environment: #{current_environment}"
+    def capture_allowed_by_callback?(message_or_exc)
+      return true unless should_capture
+      should_capture.call(*[message_or_exc])
     end
 
     def verify!

@@ -66,7 +66,7 @@ describe Raven::Configuration do
 
     it 'should not send events' do
       expect(subject[:server]).to eq(nil)
-      expect(subject.send_in_current_environment?).to eq(false)
+      expect(subject.capture_in_current_environment?).to eq(false)
     end
   end
 
@@ -131,12 +131,12 @@ describe Raven::Configuration do
 
     it 'should send events if test is whitelisted' do
       subject.environments = %w[test]
-      expect(subject.send_in_current_environment?).to eq(true)
+      expect(subject.capture_in_current_environment?).to eq(true)
     end
 
     it 'should not send events if test is not whitelisted' do
       subject.environments = %w[not_test]
-      expect(subject.send_in_current_environment?).to eq(false)
+      expect(subject.capture_in_current_environment?).to eq(false)
     end
   end
 
