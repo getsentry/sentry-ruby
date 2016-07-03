@@ -87,16 +87,5 @@ module Raven
         opts[:to].send(:include, opts[:from].const_get("Old" + module_name))
       end
     end
-
-    private
-
-    def install_at_exit_hook(options)
-      at_exit do
-        if $!
-          logger.debug "Caught a post-mortem exception: #{$!.inspect}"
-          capture_exception($!, options)
-        end
-      end
-    end
   end
 end
