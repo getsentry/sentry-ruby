@@ -14,7 +14,7 @@ describe "CLI tests" do
       config.http_adapter = [:test, stubs]
     end
 
-    expect { Raven::CLI.test }.not_to raise_error
+    Raven::CLI.test
 
     stubs.verify_stubbed_calls
   end
@@ -30,9 +30,7 @@ describe "CLI tests" do
       config.http_adapter = [:test, stubs]
     end
 
-    expect {
-      Raven::CLI.test 'http://12345:67890@sentry.localdomain/prefix/sentry/42'
-    }.not_to raise_error
+    Raven::CLI.test 'http://12345:67890@sentry.localdomain/prefix/sentry/42'
 
     stubs.verify_stubbed_calls
   end

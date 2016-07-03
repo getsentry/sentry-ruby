@@ -12,7 +12,7 @@ describe Raven::Processor::UTF8Conversion do
     data = {}
     data['invalid'] = "invalid utf8 string goes here\255".force_encoding('UTF-8')
 
-    expect { @processor.process(data) }.not_to raise_error
+    @processor.process(data)
   end
 
   it 'should cleanup invalid UTF-8 bytes' do

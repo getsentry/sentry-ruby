@@ -143,7 +143,7 @@ describe Raven do
         # is not valid: expect { |b| described_class.capture }.to_not yield_control),
         # expect that a LocalJumpError, which is raised when yielding when no
         # block is defined, is not raised.
-        expect { described_class.capture }.not_to raise_error
+        described_class.capture
       end
 
       it 'installs an at exit hook that will capture exceptions' do

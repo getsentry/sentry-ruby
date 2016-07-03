@@ -46,7 +46,7 @@ describe "Integration tests" do
     end
 
     expect(Raven.logger).to receive(:error).at_least(10).times
-    expect { Raven.capture_exception(build_exception) }.not_to raise_error
+    Raven.capture_exception(build_exception)
 
     stubs.verify_stubbed_calls
   end

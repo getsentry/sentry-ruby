@@ -360,7 +360,7 @@ describe Raven::Event do
         config.current_environment = 'test'
       end
       Raven.rack_context({})
-      expect { Raven::Event.new }.not_to raise_error
+      Raven::Event.new
     end
   end
 
