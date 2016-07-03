@@ -1,3 +1,12 @@
+1.2.0
+-----
+
+* FEATURE: Raven now supports Breadcrumbs, though they aren't on by default. Check the docs for how to enable. [dcramer, #497]
+* FEATURE: Raven is no longer a singleton, you may have many `Raven::Instance`s. [phillbaker, #504]
+* PERFORMANCE: Raven no longer uses a vendored JSON implementation. JSON processing and encoding should be up to 6x faster. [dcramer, #510]
+* BUGFIX: silence_ready now works for Rails apps. [ream88, #512]
+* BUGFIX: transport_failure_callback now works correctly [nateberkopec, #508]
+
 1.1.0
 -----
 
