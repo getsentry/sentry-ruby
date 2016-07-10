@@ -34,7 +34,7 @@ module Raven
 
     def_delegators :instance, :client=, :configuration=, :context, :logger, :configuration,
                    :client, :report_status, :configure, :send_event, :capture, :capture_type,
-                   :last_event_id, :should_capture?, :annotate_exception, :user_context,
+                   :last_event_id, :annotate_exception, :user_context,
                    :tags_context, :extra_context, :rack_context, :breadcrumbs
 
     def_delegator :instance, :report_status, :report_ready

@@ -12,6 +12,8 @@ describe Raven::Instance do
     allow(subject).to receive(:send_event)
     allow(Raven::Event).to receive(:from_message) { event }
     allow(Raven::Event).to receive(:from_exception) { event }
+
+    subject.configuration.dsn = "dummy://woopwoop"
   end
 
   describe '#context' do
@@ -157,13 +159,13 @@ describe Raven::Instance do
     end
 
     let(:not_ready_message) do
-      "Raven #{Raven::VERSION} configured not to send errors."
+      "Raven #{Raven::VERSION} configured not to capture errors."
     end
 
     it 'logs a ready message when configured' do
       subject.configuration.silence_ready = false
       expect(subject.configuration).to(
-        receive(:send_in_current_environment?).and_return(true)
+        receive(:capture_in_current_environment?).and_return(true)
       )
       expect(subject.logger).to receive(:info).with(ready_message)
       subject.report_status
@@ -172,7 +174,7 @@ describe Raven::Instance do
     it 'logs not ready message if the config does not send in current environment' do
       subject.configuration.silence_ready = false
       expect(subject.configuration).to(
-        receive(:send_in_current_environment?).and_return(false)
+        receive(:capture_in_current_environment?).and_return(false)
       )
       expect(subject.logger).to receive(:info).with(not_ready_message)
       subject.report_status
