@@ -10,6 +10,9 @@ module Raven
       Raven.capture_exception(ex, :extra => { :sidekiq => msg },
                                   :time_spent => Time.now-started_at)
       raise
+    ensure
+      Context.clear!
+      BreadcrumbBuffer.clear!
     end
   end
 end
