@@ -42,6 +42,9 @@ module Delayed
 
             # Make sure we propagate the failure!
             raise exception
+          ensure
+            Context.clear!
+            BreadcrumbBuffer.clear!
           end
         end
       end
