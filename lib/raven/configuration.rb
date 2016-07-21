@@ -112,6 +112,9 @@ module Raven
     # Sanitize values that look like credit card numbers
     attr_accessor :sanitize_credit_cards
 
+    # Truncate any strings longer than this bytesize before sending
+    attr_accessor :event_bytesize_limit
+
     # Logger 'progname's to exclude from breadcrumbs
     attr_accessor :exclude_loggers
 
@@ -127,6 +130,7 @@ module Raven
     ].freeze
 
     DEFAULT_PROCESSORS = [
+      Raven::Processor::Truncator,
       Raven::Processor::RemoveCircularReferences,
       Raven::Processor::UTF8Conversion,
       Raven::Processor::SanitizeData,
@@ -153,6 +157,7 @@ module Raven
       self.transport_failure_callback = false
       self.sanitize_fields = []
       self.sanitize_credit_cards = true
+      self.event_bytesize_limit = 8_000
       self.environments = []
       self.exclude_loggers = []
 
