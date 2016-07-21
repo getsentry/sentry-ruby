@@ -1,3 +1,9 @@
+1.2.1
+-----
+
+* BUGFIX: Context clearing should now work properly in DelayedJob and Sidekiq. Also, we properly clear context if Sentry causes an exception. [nateberkopec, #520]
+* BUGFIX: If Sentry will not send the event (due to environments or no DSN set), it will not attempt to "capture" (construct an event) [nateberkopec, #518]
+
 1.2.0
 -----
 
