@@ -1,6 +1,8 @@
 require 'benchmark/ips'
+require 'benchmark/ipsa'
 require 'raven'
 require 'raven/breadcrumbs/logger'
+require 'raven/transports/dummy'
 require 'rack/test'
 require_relative "../spec/support/test_rails_app/app"
 
@@ -15,6 +17,11 @@ TestApp.configure do |config|
   config.middleware.delete ActionDispatch::ShowExceptions
 end
 
+Raven.configure do |config|
+  config.logger = false
+  config.dsn = "dummy://woopwoop"
+end
+
 TestApp.initialize!
 @app = Rack::MockRequest.new(TestApp)
 RAILS_EXC = begin
@@ -25,14 +32,9 @@ end
 
 DIVIDE_BY_ZERO = build_exception
 
-Raven.configure do |config|
-  config.logger = false
-  config.dsn = "dummy://woopwoop"
-end
-
 LOGGER = Logger.new(nil)
 
-Benchmark.ips do |x|
+Benchmark.ipsa do |x|
   x.config(:time => 5, :warmup => 2)
 
   x.report("simple") { Raven.capture_exception(DIVIDE_BY_ZERO) }
