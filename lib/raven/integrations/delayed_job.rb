@@ -43,8 +43,8 @@ module Delayed
             # Make sure we propagate the failure!
             raise exception
           ensure
-            Context.clear!
-            BreadcrumbBuffer.clear!
+            ::Raven::Context.clear!
+            ::Raven::BreadcrumbBuffer.clear!
           end
         end
       end
