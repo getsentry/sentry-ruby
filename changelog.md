@@ -1,3 +1,8 @@
+1.2.2
+-----
+
+* BUGFIX: NameError in DelayedJob integration. [janraasch, #525]
+
 1.2.1
 -----
 
