@@ -20,6 +20,7 @@ describe Raven::Event do
         },
         :server_name => 'foo.local',
         :release => '721e41770371db95eee98ca2707686226b993eda',
+        :environment => 'production',
       }).to_hash
     end
 
@@ -41,6 +42,10 @@ describe Raven::Event do
 
     it 'has release' do
       expect(hash[:release]).to eq('721e41770371db95eee98ca2707686226b993eda')
+    end
+
+    it 'has environment' do
+      expect(hash[:environment]).to eq('production')
     end
 
     it 'has tag data' do

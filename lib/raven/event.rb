@@ -221,7 +221,7 @@ module Raven
       data[:culprit] = @culprit if @culprit
       data[:server_name] = @server_name if @server_name
       data[:release] = @release if @release
-      data[:environment] = @envirionment if @environment
+      data[:environment] = @environment if @environment
       data[:fingerprint] = @fingerprint if @fingerprint
       data[:modules] = @modules if @modules
       data[:extra] = @extra if @extra
