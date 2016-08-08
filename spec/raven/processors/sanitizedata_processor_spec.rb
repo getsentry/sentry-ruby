@@ -4,6 +4,7 @@ describe Raven::Processor::SanitizeData do
   before do
     @client = double("client")
     allow(@client).to receive_message_chain(:configuration, :sanitize_fields) { ['user_field'] }
+    allow(@client).to receive_message_chain(:configuration, :sanitize_whitelist) { ['blessed'] }
     allow(@client).to receive_message_chain(:configuration, :sanitize_credit_cards) { true }
     @processor = Raven::Processor::SanitizeData.new(@client)
   end
@@ -205,7 +206,16 @@ describe Raven::Processor::SanitizeData do
       expect(vars["query_string"]).to eq(encoded_query_string)
     end
 
-    it 'handles url encoded values' do
+    it "can whitelist attributes to avoid sanitizing them" do
+      data = {
+        'blessed' => {
+          'password' => 'notsosecret'
+        }
+      }
+
+      result = @processor.process(data)
+
+      expect(result["blessed"]["password"]).to include("notsosecret")
     end
   end
 end

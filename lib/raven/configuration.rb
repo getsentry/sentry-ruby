@@ -109,6 +109,9 @@ module Raven
     # additional fields to sanitize
     attr_accessor :sanitize_fields
 
+    # keys in this list will not be sanitized
+    attr_accessor :sanitize_whitelist
+
     # Sanitize values that look like credit card numbers
     attr_accessor :sanitize_credit_cards
 
@@ -156,6 +159,7 @@ module Raven
       self.rails_activesupport_breadcrumbs = false
       self.transport_failure_callback = false
       self.sanitize_fields = []
+      self.sanitize_whitelist = []
       self.sanitize_credit_cards = true
       self.event_bytesize_limit = 8_000
       self.environments = []

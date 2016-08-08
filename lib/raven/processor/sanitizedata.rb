@@ -9,12 +9,13 @@ module Raven
     CREDIT_CARD_RE = /^(?:\d[ -]*?){13,16}$/
     REGEX_SPECIAL_CHARACTERS = %w(. $ ^ { [ ( | ) * + ?).freeze
 
-    attr_accessor :sanitize_fields, :sanitize_credit_cards
+    attr_accessor :sanitize_fields, :sanitize_credit_cards, :sanitize_whitelist
 
     def initialize(client)
       super
       self.sanitize_fields = client.configuration.sanitize_fields
       self.sanitize_credit_cards = client.configuration.sanitize_credit_cards
+      self.sanitize_whitelist = client.configuration.sanitize_whitelist
     end
 
     def process(value)
@@ -22,6 +23,8 @@ module Raven
     end
 
     def sanitize(k,v)
+      return v if whitelisted?(k)
+
       if v.is_a?(Hash)
         process(v)
       elsif v.is_a?(Array)
@@ -69,6 +72,16 @@ module Raven
 
     def special_characters?(string)
       REGEX_SPECIAL_CHARACTERS.select { |r| string.include?(r) }.any?
+    end
+
+    def whitelisted?(k)
+      whitelist_re.match(k.to_s)
+    end
+
+    def whitelist_re
+      @whitelist_re ||= /#{sanitize_whitelist.map do |f|
+        use_boundary?(f) ? "\\b#{f}\\b" : f
+      end.join("|")}/i
     end
 
     def parse_json_or_nil(string)
