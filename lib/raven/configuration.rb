@@ -181,7 +181,7 @@ module Raven
 
       @scheme = uri.scheme
       @host = uri.host
-      @port = uri.port if uri.port
+      @port = uri.port ? uri.port : nil
       @path = uri_path.join('/')
 
       # For anyone who wants to read the base server string
