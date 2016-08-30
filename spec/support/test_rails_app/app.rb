@@ -10,6 +10,8 @@ require "action_view/railtie"
 # require "rails/test_unit/railtie"
 require 'raven/integrations/rails'
 
+ActiveSupport::Deprecation.silenced = true
+
 class TestApp < Rails::Application
   config.secret_key_base = "test"
 
@@ -17,9 +19,6 @@ class TestApp < Rails::Application
   config.eager_load = true
   config.cache_classes = true
   config.serve_static_files = false
-
-  config.log_level = :error
-  config.logger = Logger.new(STDOUT)
 
   routes.append do
     get "/exception", :to => "hello#exception"

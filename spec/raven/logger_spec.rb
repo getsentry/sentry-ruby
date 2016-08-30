@@ -6,12 +6,8 @@ describe Raven::Logger do
       allow(Raven.configuration).to receive(:logger) { nil }
     end
 
-    it 'should not error' do
-      subject.fatal 'fatalmsg'
-      subject.error 'errormsg'
-      subject.warn 'warnmsg'
-      subject.info 'infomsg'
-      subject.debug 'debugmsg'
+    it 'logs to stdout' do
+      expect { subject.fatal 'fatalmsg' }.to output.to_stdout_from_any_process
     end
   end
 

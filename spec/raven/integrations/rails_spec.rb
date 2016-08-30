@@ -7,8 +7,9 @@ describe TestApp, :type => :request do
     Raven.configure do |config|
       config.dsn = 'dummy://notaserver'
       config.encoding = 'json'
-      config.logger = nil
+      config.logger = false
     end
+    Rails.logger = Logger.new(nil)
     Rails.env = "production"
     TestApp.initialize!
   end

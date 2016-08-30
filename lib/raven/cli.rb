@@ -1,29 +1,32 @@
 module Raven
   class CLI
-    def self.test(dsn = nil)
-      require 'logger'
+    def self.test(dsn = nil, silent = false)
+      if silent
+        Raven.configuration.logger = ::Logger.new(nil)
+      else
+        logger = ::Logger.new(STDOUT)
+        logger.level = ::Logger::ERROR
+        logger.formatter = proc do |_severity, _datetime, _progname, msg|
+          "-> #{msg}\n"
+        end
 
-      logger = ::Logger.new(STDOUT)
-      logger.level = ::Logger::ERROR
-      logger.formatter = proc do |_severity, _datetime, _progname, msg|
-        "-> #{msg}\n"
+        Raven.configuration.logger = logger
       end
 
-      Raven.configuration.logger = logger
       Raven.configuration.timeout = 5
       Raven.configuration.dsn = dsn if dsn
 
       # wipe out env settings to ensure we send the event
       unless Raven.configuration.capture_in_current_environment?
         env_name = Raven.configuration.environments.pop || 'production'
-        puts "Setting environment to #{env_name}"
+        Raven.logger.debug "Setting environment to #{env_name}"
         Raven.configuration.current_environment = env_name
       end
 
       Raven.configuration.verify!
 
-      puts "Sending a test event:"
-      puts ""
+      Raven.logger.debug "Sending a test event:"
+      Raven.logger.debug ""
 
       begin
         1 / 0
@@ -33,24 +36,24 @@ module Raven
 
       if evt && !(evt.is_a? Thread)
         if evt.is_a? Hash
-          puts "-> event ID: #{evt[:event_id]}"
+          Raven.logger.debug "-> event ID: #{evt[:event_id]}"
         else
-          puts "-> event ID: #{evt.id}"
+          Raven.logger.debug "-> event ID: #{evt.id}"
         end
       elsif evt #async configuration
         if evt.value.is_a? Hash
-          puts "-> event ID: #{evt.value[:event_id]}"
+          Raven.logger.debug "-> event ID: #{evt.value[:event_id]}"
         else
-          puts "-> event ID: #{evt.value.id}"
+          Raven.logger.debug "-> event ID: #{evt.value.id}"
         end
       else
-        puts ""
-        puts "An error occurred while attempting to send the event."
+        Raven.logger.debug ""
+        Raven.logger.debug "An error occurred while attempting to send the event."
         exit 1
       end
 
-      puts ""
-      puts "Done!"
+      Raven.logger.debug ""
+      Raven.logger.debug "Done!"
     end
   end
 end
