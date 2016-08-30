@@ -130,7 +130,6 @@ module Raven
     ].freeze
 
     DEFAULT_PROCESSORS = [
-      Raven::Processor::Truncator,
       Raven::Processor::RemoveCircularReferences,
       Raven::Processor::UTF8Conversion,
       Raven::Processor::SanitizeData,

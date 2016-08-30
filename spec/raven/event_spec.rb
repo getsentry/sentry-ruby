@@ -186,6 +186,22 @@ describe Raven::Event do
     end
   end
 
+  context "rack context, long body" do
+    let(:hash) do
+      Raven.rack_context({
+        'REQUEST_METHOD' => 'GET',
+        'rack.url_scheme' => 'http',
+        'rack.input' => StringIO.new('a' * 16_000),
+      })
+
+      Raven::Event.new.to_hash
+    end
+
+    it "truncates http data" do
+      expect(hash[:request][:data]).to eq("a" * 2048)
+    end
+  end
+
   context 'configuration tags specified' do
     let(:hash) do
       config = Raven::Configuration.new

@@ -99,7 +99,9 @@ module Raven
       end
 
       def from_message(message, options = {})
+        message = message.byteslice(0...10000) # Messages limited to 10kb
         configuration = options[:configuration] || Raven.configuration
+
         new(options) do |evt|
           evt.configuration = configuration
           evt.message = message
