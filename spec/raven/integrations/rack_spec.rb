@@ -17,7 +17,7 @@ describe Raven::Rack do
     app = lambda { |_e| raise exception }
 
     stack = Raven::Rack.new(app)
-    expect { stack.call(env) }.to raise_error
+    expect { stack.call(env) }.to raise_error(ZeroDivisionError)
   end
 
   it 'should capture rack.exception' do
