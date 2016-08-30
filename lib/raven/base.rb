@@ -22,6 +22,7 @@ require 'raven/utils/deep_merge'
 require 'raven/instance'
 
 require 'forwardable'
+require 'English'
 
 module Raven
   AVAILABLE_INTEGRATIONS = %w[delayed_job railties sidekiq rack rake].freeze

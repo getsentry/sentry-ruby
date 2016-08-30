@@ -22,7 +22,7 @@ module Raven
     attr_accessor :project_id
 
     # Project directory root
-    attr_accessor :project_root
+    attr_reader :project_root
 
     # Encoding type for event bodies
     attr_reader :encoding
@@ -85,7 +85,7 @@ module Raven
     attr_reader :async
 
     # Optional Proc, called when the Sentry server cannot be contacted for any reason
-    attr_accessor :transport_failure_callback
+    attr_reader :transport_failure_callback
 
     # Directories to be recognized as part of your app. e.g. if you
     # have an `engines` dir at the root of your project, you may want
@@ -98,7 +98,7 @@ module Raven
     # will report exceptions even when they are rescued by these middlewares.
     attr_accessor :rails_report_rescued_exceptions
     # Deprecated accessor
-    attr_accessor :catch_debugged_exceptions
+    attr_reader :catch_debugged_exceptions
 
     # Turns on ActiveSupport breadcrumbs integration
     attr_accessor :rails_activesupport_breadcrumbs
@@ -174,20 +174,20 @@ module Raven
 
       if uri.user
         # DSN-style string
-        @project_id = uri_path.pop
-        @public_key = uri.user
-        @secret_key = uri.password
+        self.project_id = uri_path.pop
+        self.public_key = uri.user
+        self.secret_key = uri.password
       end
 
-      @scheme = uri.scheme
-      @host = uri.host
-      @port = uri.port if uri.port
-      @path = uri_path.join('/')
+      self.scheme = uri.scheme
+      self.host = uri.host
+      self.port = uri.port if uri.port
+      self.path = uri_path.join('/')
 
       # For anyone who wants to read the base server string
-      @server = "#{@scheme}://#{@host}"
-      @server << ":#{@port}" unless @port == { 'http' => 80, 'https' => 443 }[@scheme]
-      @server << @path
+      @server = "#{scheme}://#{host}"
+      @server << ":#{port}" unless port == { 'http' => 80, 'https' => 443 }[scheme]
+      @server << path
     end
 
     def encoding=(encoding)

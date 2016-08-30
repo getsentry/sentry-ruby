@@ -1,6 +1,3 @@
-require 'raven/base'
-require 'English'
-
 module Raven
   # A copy of Raven's base module class methods, minus some of the integration
   # and global hooks since it's meant to be used explicitly. Useful for
