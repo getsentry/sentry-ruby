@@ -84,8 +84,8 @@ module Raven
     def read_data_from(request)
       if request.form_data?
         request.POST
-      elsif request.body
-        data = request.body.read
+      elsif request.body # JSON requests, etc
+        data = request.body.read(2048) # Sentry server limit
         request.body.rewind
         data
       end
