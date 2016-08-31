@@ -3,10 +3,10 @@ module Raven
     def process(data)
       if data[:request]
         # Remove possibly sensitive cookies
-        data[:request][:cookies] = nil if data[:request][:cookies]
+        data[:request][:cookies] = STRING_MASK if data[:request][:cookies]
 
         if data[:request][:headers] && data[:request][:headers]["Cookie"]
-          data[:request][:headers]["Cookie"] = nil
+          data[:request][:headers]["Cookie"] = STRING_MASK
         end
       end
 

@@ -20,10 +20,10 @@ describe Raven::Processor::PostData do
 
     result = @processor.process(data)
 
-    expect(result[:request][:data]).to eq(nil)
+    expect(result[:request][:data]).to eq("********")
   end
 
-  it 'should remove post data when HTTP method is not POST' do
+  it 'should NOT remove post data when HTTP method is not POST' do
     data = {
       :request => {
         :method => "GET",

@@ -3,11 +3,8 @@ require 'json'
 
 module Raven
   class Processor::SanitizeData < Processor
-    STRING_MASK = '********'.freeze
-    INT_MASK = 0
     DEFAULT_FIELDS = %w(authorization password passwd secret ssn social(.*)?sec).freeze
     CREDIT_CARD_RE = /^(?:\d[ -]*?){13,16}$/
-    REGEX_SPECIAL_CHARACTERS = %w(. $ ^ { [ ( | ) * + ?).freeze
 
     attr_accessor :sanitize_fields, :sanitize_credit_cards
 
