@@ -1,3 +1,10 @@
+1.2.3
+-----
+
+* ENHANCEMENT: Send the current environment to Sentry [@dcramer, #530]
+* BUGFIX: Fix all warnings emitted by Ruby verbose mode [@nateberkopec]
+* BUGFIX: Fix compat with `log4r` [@nateberkopec, #535]
+
 1.2.2
 -----
 
