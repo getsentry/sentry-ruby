@@ -22,8 +22,8 @@ describe Raven::Processor::Cookies do
 
     result = @processor.process(data)
 
-    expect(result[:request][:cookies]).to eq(nil)
-    expect(result[:request][:headers]["Cookie"]).to eq(nil)
+    expect(result[:request][:cookies]).to eq("********")
+    expect(result[:request][:headers]["Cookie"]).to eq("********")
     expect(result[:request][:some_other_data]).to eq("still_here")
     expect(result[:request][:headers]["AnotherHeader"]).to eq("still_here")
   end

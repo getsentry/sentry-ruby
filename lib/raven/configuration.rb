@@ -112,6 +112,9 @@ module Raven
     # Sanitize values that look like credit card numbers
     attr_accessor :sanitize_credit_cards
 
+    # Sanitize additional HTTP headers - only Authorization is removed by default
+    attr_accessor :sanitize_http_headers
+
     # Truncate any strings longer than this bytesize before sending
     attr_accessor :event_bytesize_limit
 
@@ -156,6 +159,7 @@ module Raven
       self.transport_failure_callback = false
       self.sanitize_fields = []
       self.sanitize_credit_cards = true
+      self.sanitize_http_headers = []
       self.event_bytesize_limit = 8_000
       self.environments = []
       self.exclude_loggers = []

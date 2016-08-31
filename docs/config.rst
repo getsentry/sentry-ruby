@@ -95,6 +95,8 @@ Optional settings
 
     If you need to sanitize or pre-process (before its sent to the server) data, you can do so using the Processors implementation. By default, a few processors are installed. The most important is ``Raven::Processor::SanitizeData``, which will attempt to sanitize keys that match various patterns (e.g. password) and values that resemble credit card numbers.
 
+    In your Sentry UI, data which has been sanitized will appear as "********" (or 0, if the value was an Integer).
+    
     To specify your own (or to remove the defaults), simply pass them with your configuration:
 
     .. code-block:: ruby
@@ -108,6 +110,14 @@ Optional settings
     .. code-block:: ruby
 
         config.sanitize_fields = Rails.application.config.filter_parameters.map(&:to_s)
+
+    The client scrubs the HTTP "Authorization" header of requests before sending them to Sentry, to prevent sensitive credentials from being sent. You can specify additional HTTP headers to ignore:
+
+    .. code-block:: ruby
+
+        config.sanitize_http_headers = ["Via", "Referer", "User-Agent", "Server", "From"]
+
+    For more information about HTTP headers which may contain sensitive information in your application, see `RFC 2616 <https://www.w3.org/Protocols/rfc2616/rfc2616-sec15.html>`_.
 
     By default, Sentry sends up a stacktrace with an exception. This stacktrace may contain data which you may consider to be sensitive, including lines of source code, line numbers, module names, and source paths. To wipe the stacktrace from all error reports, require and add the RemoveStacktrace processor:
 
