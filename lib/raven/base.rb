@@ -25,7 +25,7 @@ require 'forwardable'
 require 'English'
 
 module Raven
-  AVAILABLE_INTEGRATIONS = %w[delayed_job railties sidekiq rack rake].freeze
+  AVAILABLE_INTEGRATIONS = %w[delayed_job railties sidekiq rack rack-timeout rake].freeze
 
   class << self
     extend Forwardable
