@@ -38,9 +38,6 @@ module Raven
     # The Faraday adapter to be used. Will default to Net::HTTP when not set.
     attr_accessor :http_adapter
 
-    # DEPRECATED: This option is now ignored as we use our own adapter.
-    attr_accessor :json_adapter
-
     # Logger used by Raven. In Rails, this is the Rails logger, otherwise
     # Raven provides its own Raven::Logger.
     attr_accessor :logger
@@ -81,8 +78,6 @@ module Raven
     # When `rails_report_rescued_exceptions` is true (it is by default), Raven
     # will report exceptions even when they are rescued by these middlewares.
     attr_accessor :rails_report_rescued_exceptions
-    # Deprecated accessor
-    attr_reader :catch_debugged_exceptions
 
     # Release tag to be passed with every event sent to Sentry.
     # We automatically try to set this to a git SHA or Capistrano release.
@@ -262,13 +257,6 @@ module Raven
     def project_root=(root_dir)
       @project_root = root_dir
       Backtrace::Line.instance_variable_set(:@in_app_pattern, nil) # blow away cache
-    end
-
-    def catch_debugged_exceptions=(boolean)
-      Raven.logger.warn "DEPRECATION WARNING: catch_debugged_exceptions has been \
-        renamed to rails_report_rescued_exceptions. catch_debugged_exceptions will \
-        be removed in raven-ruby 0.17.0"
-      self.rails_report_rescued_exceptions = boolean
     end
 
     private
