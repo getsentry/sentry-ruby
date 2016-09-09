@@ -8,98 +8,28 @@ describe Raven::Configuration do
     ENV.delete('RACK_ENV')
   end
 
-  shared_examples 'a complete configuration' do
-    it 'should have a server' do
-      expect(subject[:server]).to eq('http://sentry.localdomain/sentry')
-    end
+  it "should set some attributes when server is set" do
+    subject.server = "http://12345:67890@sentry.localdomain:3000/sentry/42"
 
-    it 'should have a scheme' do
-      expect(subject[:scheme]).to eq('http')
-    end
+    expect(subject.project_id).to eq("42")
+    expect(subject.public_key).to eq("12345")
+    expect(subject.secret_key).to eq("67890")
 
-    it 'should have a public key' do
-      expect(subject[:public_key]).to eq('12345')
-    end
+    expect(subject.scheme).to     eq("http")
+    expect(subject.host).to       eq("sentry.localdomain")
+    expect(subject.port).to       eq(3000)
+    expect(subject.path).to       eq("/sentry")
 
-    it 'should have a secret key' do
-      expect(subject[:secret_key]).to eq('67890')
-    end
-
-    it 'should have a host' do
-      expect(subject[:host]).to eq('sentry.localdomain')
-    end
-
-    it 'should have a port' do
-      expect(subject[:port]).to eq(80)
-    end
-
-    it 'should have a path' do
-      expect(subject[:path]).to eq('/sentry')
-    end
-
-    it 'should have a project ID' do
-      expect(subject[:project_id]).to eq('42')
-    end
-
-    it 'should not be async' do
-      expect(subject[:async]).to eq(false)
-      expect(subject[:async?]).to eq(false)
-    end
-
-    it 'should catch rescued exceptions' do
-      expect(subject[:rails_report_rescued_exceptions]).to eq(true)
-    end
-
-    it 'should not have a failure callback' do
-      expect(subject[:transport_failure_callback]).to eq(false)
-    end
-
-    it 'should have no sanitize fields' do
-      expect(subject[:sanitize_fields]).to eq([])
-    end
+    expect(subject.server).to     eq("http://sentry.localdomain:3000/sentry")
   end
 
-  context 'being initialized without server configuration' do
-    before do
-      subject.environments = %w[test]
-    end
-
-    it 'should not send events' do
-      expect(subject[:server]).to eq(nil)
-      expect(subject.capture_in_current_environment?).to eq(false)
-    end
+  it "doesnt accept invalid encodings" do
+    expect { subject.encoding = "apple" }.to raise_error(Raven::Error, 'Unsupported encoding')
   end
 
-  context 'being initialized with a server string' do
-    before do
-      subject.server = 'http://12345:67890@sentry.localdomain/sentry/42'
-    end
-    it_should_behave_like 'a complete configuration'
-  end
-
-  context 'being initialized with a DSN string' do
-    before do
-      subject.dsn = 'http://12345:67890@sentry.localdomain/sentry/42'
-    end
-    it_should_behave_like 'a complete configuration'
-  end
-
-  context 'being initialized with options' do
-    before do
-      subject.server = 'http://sentry.localdomain/sentry'
-      subject.public_key = '12345'
-      subject.secret_key = '67890'
-      subject.project_id = '42'
-    end
-    it_should_behave_like 'a complete configuration'
-  end
-
-  context 'being initialized with an environment variable' do
-    subject do
-      ENV['SENTRY_DSN'] = 'http://12345:67890@sentry.localdomain/sentry/42'
-      Raven::Configuration.new
-    end
-    it_should_behave_like 'a complete configuration'
+  it "has hashlike attribute accessors" do
+    expect(subject.encoding).to   eq("gzip")
+    expect(subject[:encoding]).to eq("gzip")
   end
 
   context 'configuring for async' do
@@ -115,12 +45,16 @@ describe Raven::Configuration do
     end
   end
 
-  context 'configuring for server error callback' do
-    it 'should raise when setting to anything other than callable or false' do
-      subject.transport_failure_callback = lambda {}
-      subject.transport_failure_callback = false
-      expect { subject.transport_failure_callback = true }.to raise_error(ArgumentError)
-    end
+  it 'should raise when setting transport_failure_callback to anything other than callable or false' do
+    subject.transport_failure_callback = lambda {}
+    subject.transport_failure_callback = false
+    expect { subject.transport_failure_callback = true }.to raise_error(ArgumentError)
+  end
+
+  it 'should raise when setting should_capture to anything other than callable or false' do
+    subject.should_capture = lambda {}
+    subject.should_capture = false
+    expect { subject.should_capture = true }.to raise_error(ArgumentError)
   end
 
   context 'being initialized with a current environment' do
@@ -131,25 +65,32 @@ describe Raven::Configuration do
 
     it 'should send events if test is whitelisted' do
       subject.environments = %w[test]
-      expect(subject.capture_in_current_environment?).to eq(true)
+      expect(subject.capture_allowed?).to eq(true)
     end
 
     it 'should not send events if test is not whitelisted' do
       subject.environments = %w[not_test]
-      expect(subject.capture_in_current_environment?).to eq(false)
+      expect(subject.capture_allowed?).to eq(false)
     end
   end
 
-  context 'configuration for sanitize fields' do
-    it 'should union default sanitize fields with user-defined sanitize fields' do
-      fields = Raven::Processor::SanitizeData::DEFAULT_FIELDS | %w(test monkeybutt foo(.*)?bar)
-
-      subject.sanitize_fields = fields
-      client = Raven::Client.new(subject)
-      processor = Raven::Processor::SanitizeData.new(client)
-      expected_fields_re = /authorization|password|passwd|secret|ssn|social(.*)?sec|\btest\b|\bmonkeybutt\b|foo(.*)?bar/i
-
-      expect(processor.send(:fields_re)).to eq(expected_fields_re)
+  context 'with a should_capture callback configured' do
+    before(:each) do
+      subject.should_capture = lambda { |exc_or_msg| exc_or_msg != "dont send me" }
+      subject.server = 'http://sentry.localdomain/sentry'
     end
+
+    it 'should not send events if should_capture returns false' do
+      expect(subject.capture_allowed?("dont send me")).to eq(false)
+      expect(subject.capture_allowed?("send me")).to eq(true)
+    end
+  end
+
+  it "should verify server configuration, looking for missing keys" do
+    expect{ subject.verify! }.to raise_error(Raven::Error, "No server specified")
+
+    subject.server, subject.public_key, subject.secret_key, subject.project_id = "", "", "", ""
+
+    subject.verify!
   end
 end

@@ -3,94 +3,78 @@ require 'uri'
 
 module Raven
   class Configuration
-    # Simple server string (setter provided below)
-    attr_reader :server
-
-    # Public key for authentication with the Sentry server
-    attr_accessor :public_key
-
-    # Secret key for authentication with the Sentry server
-    attr_accessor :secret_key
-
-    # Accessors for the component parts of the DSN
-    attr_accessor :scheme
-    attr_accessor :host
-    attr_accessor :port
-    attr_accessor :path
-
-    # Project ID number to send to the Sentry server
-    attr_accessor :project_id
-
-    # Project directory root
-    attr_reader :project_root
-
-    # Encoding type for event bodies
-    attr_reader :encoding
-
-    # Logger to use internally
-    attr_accessor :logger
-
-    # Silence ready message
-    attr_accessor :silence_ready
-
-    # Number of lines of code context to capture, or nil for none
-    attr_accessor :context_lines
-
-    # Whitelist of environments that will send notifications to Sentry
-    attr_accessor :environments
-
-    # Include module versions in reports?
-    attr_accessor :send_modules
-
-    # Which exceptions should never be sent
-    attr_accessor :excluded_exceptions
-
-    # Processors to run on data before sending upstream
-    attr_accessor :processors
-
-    # Timeout when waiting for the server to return data in seconds
-    attr_accessor :timeout
-
-    # Timeout waiting for the connection to open in seconds
-    attr_accessor :open_timeout
-
-    # Should the SSL certificate of the server be verified?
-    attr_accessor :ssl_verification
-
-    # The path to the SSL certificate file
-    attr_accessor :ssl_ca_file
-
-    # SSl settings passed direactly to faraday's ssl option
-    attr_accessor :ssl
-
-    # Proxy information to pass to the HTTP adapter
-    attr_accessor :proxy
-
-    attr_reader :current_environment
-
-    # The Faraday adapter to be used. Will default to Net::HTTP when not set.
-    attr_accessor :http_adapter
-
-    attr_accessor :server_name
-
-    attr_accessor :release
-
-    # DEPRECATED: This option is now ignored as we use our own adapter.
-    attr_accessor :json_adapter
-
-    # Default tags for events
-    attr_accessor :tags
-
-    # Optional Proc to be used to send events asynchronously.
-    attr_reader :async
-
-    # Optional Proc, called when the Sentry server cannot be contacted for any reason
-    attr_reader :transport_failure_callback
-
     # Directories to be recognized as part of your app. e.g. if you
     # have an `engines` dir at the root of your project, you may want
     # to set this to something like /(app|config|engines|lib)/
     attr_accessor :app_dirs_pattern
+
+    # Provide an object that responds to `call` to send events asynchronously.
+    # E.g.: lambda { |event| Thread.new { Raven.send_event(event) } }
+    attr_reader :async
+    alias async? async
+
+    # Number of lines of code context to capture, or nil for none
+    attr_accessor :context_lines
+
+    # RACK_ENV by default.
+    attr_reader :current_environment
+
+    # Encoding type for event bodies. Must be :json or :gzip.
+    attr_reader :encoding
+
+    # Whitelist of environments that will send notifications to Sentry. Array of Strings.
+    attr_accessor :environments
+
+    # Logger 'progname's to exclude from breadcrumbs
+    attr_accessor :exclude_loggers
+
+    # Array of exception classes that should never be sent. See IGNORE_DEFAULT.
+    # You should probably append to this rather than overwrite it.
+    attr_accessor :excluded_exceptions
+
+    # DSN component - set automatically if DSN provided
+    attr_accessor :host
+
+    # The Faraday adapter to be used. Will default to Net::HTTP when not set.
+    attr_accessor :http_adapter
+
+    # DEPRECATED: This option is now ignored as we use our own adapter.
+    attr_accessor :json_adapter
+
+    # Logger used by Raven. In Rails, this is the Rails logger, otherwise
+    # Raven provides its own Raven::Logger.
+    attr_accessor :logger
+
+    # Timeout waiting for the Sentry server connection to open in seconds
+    attr_accessor :open_timeout
+
+    # DSN component - set automatically if DSN provided
+    attr_accessor :path
+
+    # DSN component - set automatically if DSN provided
+    attr_accessor :port
+
+    # Processors to run on data before sending upstream. See DEFAULT_PROCESSORS.
+    # You should probably append to this rather than overwrite it.
+    attr_accessor :processors
+
+    # Project ID number to send to the Sentry server
+    # If you provide a DSN, this will be set automatically.
+    attr_accessor :project_id
+
+    # Project directory root for in_app detection. Could be Rails root, etc.
+    # Set automatically for Rails.
+    attr_reader :project_root
+
+    # Proxy information to pass to the HTTP adapter (via Faraday)
+    attr_accessor :proxy
+
+    # Public key for authentication with the Sentry server
+    # If you provide a DSN, this will be set automatically.
+    attr_accessor :public_key
+
+    # Turns on ActiveSupport breadcrumbs integration
+    attr_accessor :rails_activesupport_breadcrumbs
 
     # Rails catches exceptions in the ActionDispatch::ShowExceptions or
     # ActionDispatch::DebugExceptions middlewares, depending on the environment.
@@ -100,26 +84,64 @@ module Raven
     # Deprecated accessor
     attr_reader :catch_debugged_exceptions
 
-    # Turns on ActiveSupport breadcrumbs integration
-    attr_accessor :rails_activesupport_breadcrumbs
+    # Release tag to be passed with every event sent to Sentry.
+    # We automatically try to set this to a git SHA or Capistrano release.
+    attr_accessor :release
 
-    # Provide a configurable callback to determine event capture
-    attr_accessor :should_capture
-
-    # additional fields to sanitize
-    attr_accessor :sanitize_fields
-
-    # Sanitize values that look like credit card numbers
+    # Boolean - sanitize values that look like credit card numbers
     attr_accessor :sanitize_credit_cards
 
-    # Sanitize additional HTTP headers - only Authorization is removed by default
+    # By default, Sentry censors Hash values when their keys match things like
+    # "secret", "password", etc. Provide an array of Strings that, when matched in
+    # a hash key, will be censored and not sent to Sentry.
+    attr_accessor :sanitize_fields
+
+    # Sanitize additional HTTP headers - only Authorization is removed by default.
     attr_accessor :sanitize_http_headers
 
-    # Truncate any strings longer than this bytesize before sending
-    attr_accessor :event_bytesize_limit
+    # DSN component - set automatically if DSN provided.
+    # Otherwise, can be one of "http", "https", or "dummy"
+    attr_accessor :scheme
 
-    # Logger 'progname's to exclude from breadcrumbs
-    attr_accessor :exclude_loggers
+    # Secret key for authentication with the Sentry server
+    # If you provide a DSN, this will be set automatically.
+    attr_accessor :secret_key
+
+    # Include module versions in reports - boolean.
+    attr_accessor :send_modules
+
+    # Simple server string - set this to the DSN found on your Sentry settings.
+    attr_reader :server
+
+    attr_accessor :server_name
+
+    # Provide a configurable callback to determine event capture.
+    # Note that the object passed into the block will be a String (messages) or
+    # an exception.
+    # e.g. lambda { |exc_or_msg| exc_or_msg.some_attr == false }
+    attr_accessor :should_capture
+
+    # Silences ready message when true.
+    attr_accessor :silence_ready
+
+    # SSL settings passed directly to Faraday's ssl option
+    attr_accessor :ssl
+
+    # The path to the SSL certificate file
+    attr_accessor :ssl_ca_file
+
+    # Should the SSL certificate of the server be verified?
+    attr_accessor :ssl_verification
+
+    # Default tags for events. Hash.
+    attr_accessor :tags
+
+    # Timeout when waiting for the server to return data in seconds.
+    attr_accessor :timeout
+
+    # Optional Proc, called when the Sentry server cannot be contacted for any reason
+    # E.g. lambda { |event| Thread.new { MyJobProcessor.send_email(event) } }
+    attr_reader :transport_failure_callback
 
     IGNORE_DEFAULT = [
       'AbstractController::ActionNotFound',
@@ -132,6 +154,8 @@ module Raven
       'Sinatra::NotFound',
     ].freeze
 
+    # Note the order - we have to remove circular references and bad characters
+    # before passing to other processors.
     DEFAULT_PROCESSORS = [
       Raven::Processor::RemoveCircularReferences,
       Raven::Processor::UTF8Conversion,
@@ -141,34 +165,30 @@ module Raven
     ].freeze
 
     def initialize
-      self.server = ENV['SENTRY_DSN'] if ENV['SENTRY_DSN']
-      @context_lines = 3
-      self.current_environment = ENV['RAILS_ENV'] || ENV['RACK_ENV'] || 'default'
-      self.send_modules = true
-      self.excluded_exceptions = IGNORE_DEFAULT.dup
-      self.processors = DEFAULT_PROCESSORS.dup
-      self.ssl_verification = true
-      self.encoding = 'gzip'
-      self.timeout = 2
-      self.open_timeout = 1
-      self.proxy = nil
-      self.tags = {}
       self.async = false
-      self.rails_report_rescued_exceptions = true
-      self.rails_activesupport_breadcrumbs = false
-      self.transport_failure_callback = false
-      self.sanitize_fields = []
-      self.sanitize_credit_cards = true
-      self.sanitize_http_headers = []
-      self.event_bytesize_limit = 8_000
+      self.context_lines = 3
+      self.current_environment = ENV['RAILS_ENV'] || ENV['RACK_ENV'] || 'default'
+      self.encoding = 'gzip'
       self.environments = []
       self.exclude_loggers = []
-
+      self.excluded_exceptions = IGNORE_DEFAULT.dup
+      self.open_timeout = 1
+      self.processors = DEFAULT_PROCESSORS.dup
+      self.proxy = nil
+      self.rails_activesupport_breadcrumbs = false
+      self.rails_report_rescued_exceptions = true
       self.release = detect_release
-
-      # Try to resolve the hostname to an FQDN, but fall back to whatever the load name is
-      self.server_name = Socket.gethostname
-      self.server_name = Socket.gethostbyname(hostname).first rescue server_name
+      self.sanitize_credit_cards = true
+      self.sanitize_fields = []
+      self.sanitize_http_headers = []
+      self.send_modules = true
+      self.server = ENV['SENTRY_DSN'] if ENV['SENTRY_DSN']
+      self.server_name = resolve_hostname
+      self.should_capture = false
+      self.ssl_verification = true
+      self.tags = {}
+      self.timeout = 2
+      self.transport_failure_callback = false
     end
 
     def server=(value)
@@ -192,38 +212,40 @@ module Raven
       @server << ":#{port}" unless port == { 'http' => 80, 'https' => 443 }[scheme]
       @server << path
     end
+    alias dsn= server=
 
     def encoding=(encoding)
       raise Error.new('Unsupported encoding') unless %w(gzip json).include? encoding
       @encoding = encoding
     end
 
-    alias dsn= server=
-
     def async=(value)
       raise ArgumentError.new("async must be callable (or false to disable)") unless value == false || value.respond_to?(:call)
       @async = value
     end
-
-    alias async? async
 
     def transport_failure_callback=(value)
       raise ArgumentError.new("transport_failure_callback must be callable (or false to disable)") unless value == false || value.respond_to?(:call)
       @transport_failure_callback = value
     end
 
+    def should_capture=(value)
+      raise ArgumentError.new("should_capture must be callable (or false to disable)") unless value == false || value.respond_to?(:call)
+      @should_capture = value
+    end
+
     # Allows config options to be read like a hash
     #
     # @param [Symbol] option Key for a given attribute
     def [](option)
-      send(option)
+      public_send(option)
     end
 
     def current_environment=(environment)
       @current_environment = environment.to_s
     end
 
-    def capture_allowed?(message_or_exc)
+    def capture_allowed?(message_or_exc = nil)
       capture_in_current_environment? &&
         capture_allowed_by_callback?(message_or_exc)
     end
@@ -231,26 +253,10 @@ module Raven
     # If we cannot capture, we cannot send.
     alias sending_allowed? capture_allowed?
 
-    def capture_in_current_environment?
-      !!server && (environments.empty? || environments.include?(current_environment))
-    end
-
-    def capture_allowed_by_callback?(message_or_exc)
-      return true unless should_capture
-      should_capture.call(*[message_or_exc])
-    end
-
     def verify!
-      raise Error.new('No server specified') unless server
-      raise Error.new('No public key specified') unless public_key
-      raise Error.new('No secret key specified') unless secret_key
-      raise Error.new('No project ID specified') unless project_id
-    end
-
-    def detect_release
-      detect_release_from_heroku ||
-        detect_release_from_capistrano ||
-        detect_release_from_git
+      %w(server public_key secret_key project_id).each do |key|
+        raise Error.new("No #{key} specified") unless self.public_send key
+      end
     end
 
     def project_root=(root_dir)
@@ -267,6 +273,12 @@ module Raven
 
     private
 
+    def detect_release
+      detect_release_from_heroku ||
+        detect_release_from_capistrano ||
+        detect_release_from_git
+    end
+
     def detect_release_from_heroku
       ENV['HEROKU_SLUG_COMMIT']
     end
@@ -280,6 +292,22 @@ module Raven
 
     def detect_release_from_git
       `git rev-parse --short HEAD`.strip if File.directory?(".git") rescue nil
+    end
+
+    def capture_in_current_environment?
+      !!server && (environments.empty? || environments.include?(current_environment))
+    end
+
+    def capture_allowed_by_callback?(message_or_exc)
+      return true if !should_capture || message_or_exc.nil?
+      should_capture.call(*[message_or_exc])
+    end
+
+    # Try to resolve the hostname to an FQDN, but fall back to whatever
+    # the load name is.
+    def resolve_hostname
+      Socket.gethostname ||
+        Socket.gethostbyname(hostname).first rescue server_name
     end
   end
 end

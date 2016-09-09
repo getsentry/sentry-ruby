@@ -13,3 +13,6 @@ Performance/Casecmp:
 
 Style/ClassAndModuleChildren:
   Enabled: false
+
+Style/ParallelAssignment:
+  Enabled: false

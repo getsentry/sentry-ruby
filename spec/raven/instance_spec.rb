@@ -115,11 +115,9 @@ describe Raven::Instance do
       it 'sends the result of Event.capture_exception according to the result of should_capture' do
         expect(subject).not_to receive(:send_event).with(event)
 
-        prior_should_capture = subject.configuration.should_capture
         subject.configuration.should_capture = proc { false }
         expect(subject.configuration.should_capture).to receive(:call).with(exception)
         expect(subject.capture_type(exception, options)).to be false
-        subject.configuration.should_capture = prior_should_capture
       end
     end
   end
@@ -165,7 +163,7 @@ describe Raven::Instance do
     it 'logs a ready message when configured' do
       subject.configuration.silence_ready = false
       expect(subject.configuration).to(
-        receive(:capture_in_current_environment?).and_return(true)
+        receive(:capture_allowed?).and_return(true)
       )
       expect(subject.logger).to receive(:info).with(ready_message)
       subject.report_status
@@ -174,7 +172,7 @@ describe Raven::Instance do
     it 'logs not ready message if the config does not send in current environment' do
       subject.configuration.silence_ready = false
       expect(subject.configuration).to(
-        receive(:capture_in_current_environment?).and_return(false)
+        receive(:capture_allowed?).and_return(false)
       )
       expect(subject.logger).to receive(:info).with(not_ready_message)
       subject.report_status
