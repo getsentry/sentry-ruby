@@ -8,6 +8,17 @@ describe Raven::Processor::SanitizeData do
     @processor = Raven::Processor::SanitizeData.new(@client)
   end
 
+  context 'configuration for sanitize fields' do
+    it 'should union default sanitize fields with user-defined sanitize fields' do
+      fields = Raven::Processor::SanitizeData::DEFAULT_FIELDS | %w(test monkeybutt foo(.*)?bar)
+
+      @processor.sanitize_fields = fields
+      expected_fields_re = /authorization|password|passwd|secret|ssn|social(.*)?sec|\btest\b|\bmonkeybutt\b|foo(.*)?bar/i
+
+      expect(@processor.send(:fields_re)).to eq(expected_fields_re)
+    end
+  end
+
   it 'should filter http data' do
     data = {
       'sentry.interfaces.Http' => {
