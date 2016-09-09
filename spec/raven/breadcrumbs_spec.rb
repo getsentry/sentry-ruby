@@ -34,7 +34,7 @@ describe Raven::BreadcrumbBuffer do
 
   it "is enumerable" do
     (0..10).each do |i|
-      @breadcrumbs.record(Raven::Breadcrumb.new.tap {|b| b.message = i})
+      @breadcrumbs.record(Raven::Breadcrumb.new.tap { |b| b.message = i })
     end
 
     expect(@breadcrumbs.each).to be_a Enumerator
@@ -42,7 +42,7 @@ describe Raven::BreadcrumbBuffer do
 
   it "evicts when buffer exceeded" do
     (0..10).each do |i|
-      @breadcrumbs.record(Raven::Breadcrumb.new.tap {|b| b.message = i})
+      @breadcrumbs.record(Raven::Breadcrumb.new.tap { |b| b.message = i })
     end
 
     expect(@breadcrumbs.members[0].message).to eq(1)

@@ -34,25 +34,25 @@ describe Raven::Configuration do
 
   context 'configuring for async' do
     it 'should be configurable to send events async' do
-      subject.async = lambda { |_e| :ok }
+      subject.async = ->(_e) { :ok }
       expect(subject.async.call('event')).to eq(:ok)
     end
 
     it 'should raise when setting async to anything other than callable or false' do
-      subject.transport_failure_callback = lambda {}
+      subject.transport_failure_callback = -> {}
       subject.transport_failure_callback = false
       expect { subject.async = true }.to raise_error(ArgumentError)
     end
   end
 
   it 'should raise when setting transport_failure_callback to anything other than callable or false' do
-    subject.transport_failure_callback = lambda {}
+    subject.transport_failure_callback = -> {}
     subject.transport_failure_callback = false
     expect { subject.transport_failure_callback = true }.to raise_error(ArgumentError)
   end
 
   it 'should raise when setting should_capture to anything other than callable or false' do
-    subject.should_capture = lambda {}
+    subject.should_capture = -> {}
     subject.should_capture = false
     expect { subject.should_capture = true }.to raise_error(ArgumentError)
   end
@@ -64,19 +64,19 @@ describe Raven::Configuration do
     end
 
     it 'should send events if test is whitelisted' do
-      subject.environments = %w[test]
+      subject.environments = %w(test)
       expect(subject.capture_allowed?).to eq(true)
     end
 
     it 'should not send events if test is not whitelisted' do
-      subject.environments = %w[not_test]
+      subject.environments = %w(not_test)
       expect(subject.capture_allowed?).to eq(false)
     end
   end
 
   context 'with a should_capture callback configured' do
     before(:each) do
-      subject.should_capture = lambda { |exc_or_msg| exc_or_msg != "dont send me" }
+      subject.should_capture = ->(exc_or_msg) { exc_or_msg != "dont send me" }
       subject.server = 'http://sentry.localdomain/sentry'
     end
 
@@ -87,7 +87,7 @@ describe Raven::Configuration do
   end
 
   it "should verify server configuration, looking for missing keys" do
-    expect{ subject.verify! }.to raise_error(Raven::Error, "No server specified")
+    expect { subject.verify! }.to raise_error(Raven::Error, "No server specified")
 
     subject.server, subject.public_key, subject.secret_key, subject.project_id = "", "", "", ""
 

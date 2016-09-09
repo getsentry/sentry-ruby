@@ -8,7 +8,7 @@ module Raven
       # variable?
       CACHE = {} # rubocop:disable Style/MutableConstant
 
-      def is_valid_file(path)
+      def valid_file?(path)
         lines = getlines(path)
         !lines.nil?
       end

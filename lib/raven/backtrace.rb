@@ -1,16 +1,15 @@
 ## Inspired by Rails' and Airbrake's backtrace parsers.
 
 module Raven
-
   # Front end to parsing the backtrace for each notice
   class Backtrace
     # Handles backtrace parsing line by line
     class Line
       # regexp (optionnally allowing leading X: for windows support)
-      RUBY_INPUT_FORMAT = %r{^((?:[a-zA-Z]:)?[^:]+|<.*>):(\d+)(?::in `([^']+)')?$}
+      RUBY_INPUT_FORMAT = /^((?:[a-zA-Z]:)?[^:]+|<.*>):(\d+)(?::in `([^']+)')?$/
 
       # org.jruby.runtime.callsite.CachingCallSite.call(CachingCallSite.java:170)
-      JAVA_INPUT_FORMAT = %r{^(.+)\.([^\.]+)\(([^\:]+)\:(\d+)\)$}
+      JAVA_INPUT_FORMAT = /^(.+)\.([^\.]+)\(([^\:]+)\:(\d+)\)$/
 
       # The file portion of the line (such as app/models/user.rb)
       attr_reader :file
@@ -47,7 +46,7 @@ module Raven
       end
 
       def in_app
-        if self.file =~ self.class.in_app_pattern
+        if file =~ self.class.in_app_pattern
           true
         else
           false

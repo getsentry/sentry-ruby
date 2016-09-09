@@ -25,7 +25,7 @@ require 'forwardable'
 require 'English'
 
 module Raven
-  AVAILABLE_INTEGRATIONS = %w[delayed_job railties sidekiq rack rack-timeout rake].freeze
+  AVAILABLE_INTEGRATIONS = %w(delayed_job railties sidekiq rack rack-timeout rake).freeze
 
   class << self
     extend Forwardable
@@ -63,7 +63,7 @@ module Raven
       integrations_to_load = Raven::AVAILABLE_INTEGRATIONS & only_integrations
       not_found_integrations = only_integrations - integrations_to_load
       if not_found_integrations.any?
-        self.logger.warn "Integrations do not exist: #{not_found_integrations.join ', '}"
+        logger.warn "Integrations do not exist: #{not_found_integrations.join ', '}"
       end
       integrations_to_load &= Gem.loaded_specs.keys
       # TODO(dcramer): integrations should have some additional checks baked-in
@@ -78,7 +78,7 @@ module Raven
     def load_integration(integration)
       require "raven/integrations/#{integration}"
     rescue Exception => error
-      self.logger.warn "Unable to load raven/integrations/#{integration}: #{error}"
+      logger.warn "Unable to load raven/integrations/#{integration}: #{error}"
     end
 
     def safely_prepend(module_name, opts = {})

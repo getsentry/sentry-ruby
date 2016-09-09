@@ -45,5 +45,5 @@ def build_exception_with_recursive_cause
   allow(exception).to receive(:cause).and_return(exception)
   allow(exception).to receive(:message).and_return("example")
   allow(exception).to receive(:backtrace).and_return(backtrace)
-  return exception
+  exception
 end

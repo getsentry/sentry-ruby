@@ -10,7 +10,7 @@ module Raven
       :error,
       :warn,
       :info,
-      :debug,
+      :debug
     ].each do |level|
       define_method level do |*args, &block|
         logger = Raven.configuration[:logger]

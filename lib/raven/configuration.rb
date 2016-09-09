@@ -146,7 +146,7 @@ module Raven
       'ActiveRecord::RecordNotFound',
       'CGI::Session::CookieStore::TamperedWithCookie',
       'Mongoid::Errors::DocumentNotFound',
-      'Sinatra::NotFound',
+      'Sinatra::NotFound'
     ].freeze
 
     # Note the order - we have to remove circular references and bad characters
@@ -156,7 +156,7 @@ module Raven
       Raven::Processor::UTF8Conversion,
       Raven::Processor::SanitizeData,
       Raven::Processor::Cookies,
-      Raven::Processor::PostData,
+      Raven::Processor::PostData
     ].freeze
 
     def initialize
@@ -210,22 +210,28 @@ module Raven
     alias dsn= server=
 
     def encoding=(encoding)
-      raise Error.new('Unsupported encoding') unless %w(gzip json).include? encoding
+      raise(Error, 'Unsupported encoding') unless %w(gzip json).include? encoding
       @encoding = encoding
     end
 
     def async=(value)
-      raise ArgumentError.new("async must be callable (or false to disable)") unless value == false || value.respond_to?(:call)
+      unless value == false || value.respond_to?(:call)
+        raise(ArgumentError, "async must be callable (or false to disable)")
+      end
       @async = value
     end
 
     def transport_failure_callback=(value)
-      raise ArgumentError.new("transport_failure_callback must be callable (or false to disable)") unless value == false || value.respond_to?(:call)
+      unless value == false || value.respond_to?(:call)
+        raise(ArgumentError, "transport_failure_callback must be callable (or false to disable)")
+      end
       @transport_failure_callback = value
     end
 
     def should_capture=(value)
-      raise ArgumentError.new("should_capture must be callable (or false to disable)") unless value == false || value.respond_to?(:call)
+      unless value == false || value.respond_to?(:call)
+        raise ArgumentError, "should_capture must be callable (or false to disable)"
+      end
       @should_capture = value
     end
 
@@ -250,7 +256,7 @@ module Raven
 
     def verify!
       %w(server public_key secret_key project_id).each do |key|
-        raise Error.new("No #{key} specified") unless self.public_send key
+        raise(Error, "No #{key} specified") unless public_send key
       end
     end
 

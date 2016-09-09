@@ -39,7 +39,7 @@ describe Raven::Processor::UTF8Conversion do
   end
 
   it 'should work recursively on hashes' do
-    data = {'nested' => {}}
+    data = { 'nested' => {} }
     data['nested']['invalid'] = "invalid utf8 string goes here\255".force_encoding('UTF-8')
 
     results = @processor.process(data)
@@ -48,14 +48,14 @@ describe Raven::Processor::UTF8Conversion do
 
   it 'should work recursively on arrays' do
     data = ['good string', 'good string',
-      ['good string', "invalid utf8 string goes here\255".force_encoding('UTF-8')]]
+            ['good string', "invalid utf8 string goes here\255".force_encoding('UTF-8')]]
 
     results = @processor.process(data)
     expect(results[2][1]).to eq("invalid utf8 string goes here")
   end
 
   it 'should not blow up on symbols' do
-    data = {:key => :value}
+    data = { :key => :value }
 
     results = @processor.process(data)
     expect(results[:key]).to eq(:value)
