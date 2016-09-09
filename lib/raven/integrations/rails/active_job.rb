@@ -12,7 +12,7 @@ module Raven
                 :arguments => arguments,
                 :scheduled_at => scheduled_at,
                 :job_id => job_id,
-                :locale => locale,
+                :locale => locale
               }
 
               # Add provider_job_id details if Rails 5

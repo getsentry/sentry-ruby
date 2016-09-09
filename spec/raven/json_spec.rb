@@ -24,7 +24,7 @@ describe JSON do
     end
 
     it "works with a hash of #{obj.val.class}s" do
-      expect(JSON.dump('bar' => {obj.key => obj.val})).to eq "{\"bar\":{#{obj.enc_key}:#{obj.enc_val}}}"
+      expect(JSON.dump('bar' => { obj.key => obj.val })).to eq "{\"bar\":{#{obj.enc_key}:#{obj.enc_val}}}"
     end
   end
 
@@ -42,7 +42,7 @@ describe JSON do
   end
 
   it 'it raises the correct error on strings that look like incomplete objects' do
-    expect{JSON.parse("{")}.to raise_error(JSON::ParserError)
-    expect{JSON.parse("[")}.to raise_error(JSON::ParserError)
+    expect { JSON.parse("{") }.to raise_error(JSON::ParserError)
+    expect { JSON.parse("[") }.to raise_error(JSON::ParserError)
   end
 end

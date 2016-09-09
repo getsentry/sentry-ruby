@@ -30,7 +30,7 @@ describe Raven do
 
     around do |example|
       prior_async = Raven.configuration.async
-      Raven.configuration.async = Proc.new { :ok }
+      Raven.configuration.async = proc { :ok }
       example.run
       Raven.configuration.async = prior_async
     end
@@ -69,7 +69,7 @@ describe Raven do
 
     around do |example|
       prior_async = Raven.configuration.async
-      Raven.configuration.async = Proc.new { :ok }
+      Raven.configuration.async = proc { :ok }
       example.run
       Raven.configuration.async = prior_async
     end
@@ -95,7 +95,7 @@ describe Raven do
       expect(Raven).not_to receive(:send_event).with(event)
 
       prior_should_capture = Raven.configuration.should_capture
-      Raven.configuration.should_capture = Proc.new { false }
+      Raven.configuration.should_capture = proc { false }
       expect(Raven.configuration.should_capture).to receive(:call).with(exception)
       expect(Raven.capture_exception(exception, options)).to be false
       Raven.configuration.should_capture = prior_should_capture
@@ -206,7 +206,7 @@ describe Raven do
 
   describe '.inject_only' do
     before do
-      allow(Gem.loaded_specs).to receive(:keys).and_return(%w[railties rack sidekiq])
+      allow(Gem.loaded_specs).to receive(:keys).and_return(%w(railties rack sidekiq))
     end
 
     it 'loads integrations when they are valid configurations' do

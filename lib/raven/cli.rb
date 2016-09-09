@@ -1,6 +1,6 @@
 module Raven
   class CLI
-    def self.test(dsn = nil, silent = false)
+    def self.test(dsn = nil, silent = false) # rubocop:disable all
       if silent
         Raven.configuration.logger = ::Logger.new(nil)
       else
@@ -40,7 +40,7 @@ module Raven
         else
           Raven.logger.debug "-> event ID: #{evt.id}"
         end
-      elsif evt #async configuration
+      elsif evt # async configuration
         if evt.value.is_a? Hash
           Raven.logger.debug "-> event ID: #{evt.value[:event_id]}"
         else

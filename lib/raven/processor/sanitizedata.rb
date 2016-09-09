@@ -15,23 +15,23 @@ module Raven
     end
 
     def process(value)
-      value.each_with_object(value) { |(k,v), memo| memo[k] = sanitize(k,v) }
+      value.each_with_object(value) { |(k, v), memo| memo[k] = sanitize(k, v) }
     end
 
-    def sanitize(k,v)
+    def sanitize(k, v)
       if v.is_a?(Hash)
         process(v)
       elsif v.is_a?(Array)
-        v.map{|a| sanitize(k, a)}
+        v.map { |a| sanitize(k, a) }
       elsif k.to_s == 'query_string'
         sanitize_query_string(v)
-      elsif v.is_a?(Integer) && matches_regexes?(k,v)
+      elsif v.is_a?(Integer) && matches_regexes?(k, v)
         INT_MASK
       elsif v.is_a?(String)
         if fields_re.match(v.to_s) && (json = parse_json_or_nil(v))
-          #if this string is actually a json obj, convert and sanitize
+          # if this string is actually a json obj, convert and sanitize
           json.is_a?(Hash) ? process(json).to_json : v
-        elsif matches_regexes?(k,v)
+        elsif matches_regexes?(k, v)
           STRING_MASK
         else
           v
@@ -69,11 +69,9 @@ module Raven
     end
 
     def parse_json_or_nil(string)
-      begin
-        JSON.parse(string)
-      rescue JSON::ParserError, NoMethodError
-        nil
-      end
+      JSON.parse(string)
+    rescue JSON::ParserError, NoMethodError
+      nil
     end
   end
 end
