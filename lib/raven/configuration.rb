@@ -265,13 +265,13 @@ module Raven
       Backtrace::Line.instance_variable_set(:@in_app_pattern, nil) # blow away cache
     end
 
-    private
-
     def detect_release
       detect_release_from_heroku ||
         detect_release_from_capistrano ||
         detect_release_from_git
     end
+
+    private
 
     def detect_release_from_heroku
       ENV['HEROKU_SLUG_COMMIT']
