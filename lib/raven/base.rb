@@ -19,6 +19,7 @@ require 'raven/interfaces/single_exception'
 require 'raven/interfaces/stack_trace'
 require 'raven/interfaces/http'
 require 'raven/utils/deep_merge'
+require 'raven/utils/real_ip'
 require 'raven/instance'
 
 require 'forwardable'
