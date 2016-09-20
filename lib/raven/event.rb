@@ -247,6 +247,10 @@ module Raven
       "#{lastframe.filename} in #{lastframe.function} at line #{lastframe.lineno}" if lastframe
     end
 
+    def to_json_compatible
+      JSON.parse(JSON.generate(to_hash))
+    end
+
     # For cross-language compat
     class << self
       alias captureException from_exception
