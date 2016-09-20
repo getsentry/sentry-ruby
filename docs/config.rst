@@ -23,8 +23,10 @@ Optional settings
           Thread.new { Raven.send_event(event) }
         }
 
-    Using a thread to send events will be adequate for truly parallel Ruby platforms such as JRuby, though the benefit on MRI/CRuby will be limited.
+    Using a thread to send events will be adequate for truly parallel Ruby platforms such as JRuby, though the benefit on MRI/CRuby will be limited. Threads also won't report any exceptions raised inside of them, so be careful!
 
+    If the async callback raises an exception, Raven will attempt to send synchronously.
+    
     We recommend creating a background job, using your background job processor, that will send Sentry notifications in the background. Rather than enqueuing an entire Raven::Event object, we recommend providing the Hash representation of an event as a job argument. Here's an example for ActiveJob:
 
     .. code-block:: ruby
@@ -96,7 +98,7 @@ Optional settings
     If you need to sanitize or pre-process (before its sent to the server) data, you can do so using the Processors implementation. By default, a few processors are installed. The most important is ``Raven::Processor::SanitizeData``, which will attempt to sanitize keys that match various patterns (e.g. password) and values that resemble credit card numbers.
 
     In your Sentry UI, data which has been sanitized will appear as "********" (or 0, if the value was an Integer).
-    
+
     To specify your own (or to remove the defaults), simply pass them with your configuration:
 
     .. code-block:: ruby

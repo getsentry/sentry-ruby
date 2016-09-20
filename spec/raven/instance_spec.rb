@@ -88,24 +88,42 @@ describe Raven::Instance do
     describe 'as #capture_exception when async' do
       let(:exception) { build_exception }
 
-      around do |example|
-        prior_async = subject.configuration.async
-        subject.configuration.async = proc { :ok }
-        example.run
-        subject.configuration.async = prior_async
+      context "when correctly configured" do
+        around do |example|
+          prior_async = subject.configuration.async
+          subject.configuration.async = proc { :ok }
+          example.run
+          subject.configuration.async = prior_async
+        end
+
+        it 'sends the result of Event.capture_exception' do
+          expect(Raven::Event).to receive(:from_exception).with(exception, options)
+          expect(subject).not_to receive(:send_event).with(event)
+
+          expect(subject.configuration.async).to receive(:call).with(event)
+          subject.capture_type(exception, options)
+        end
+
+        it 'returns the generated event' do
+          returned = subject.capture_type(exception, options)
+          expect(returned).to eq(event)
+        end
       end
 
-      it 'sends the result of Event.capture_exception' do
-        expect(Raven::Event).to receive(:from_exception).with(exception, options)
-        expect(subject).not_to receive(:send_event).with(event)
+      context "when async raises an exception" do
+        around do |example|
+          prior_async = subject.configuration.async
+          subject.configuration.async = proc { raise TypeError }
+          example.run
+          subject.configuration.async = prior_async
+        end
 
-        expect(subject.configuration.async).to receive(:call).with(event)
-        subject.capture_type(exception, options)
-      end
+        it 'sends the result of Event.capture_exception via fallback' do
+          expect(Raven::Event).to receive(:from_exception).with(exception, options)
 
-      it 'returns the generated event' do
-        returned = subject.capture_type(exception, options)
-        expect(returned).to eq(event)
+          expect(subject).to receive(:send_event).with(event)
+          subject.capture_type(exception, options)
+        end
       end
     end
 

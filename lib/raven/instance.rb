@@ -119,7 +119,12 @@ module Raven
       if (evt = Event.send("from_" + message_or_exc, obj, options))
         yield evt if block_given?
         if configuration.async?
-          configuration.async.call(evt)
+          begin
+            configuration.async.call(evt)
+          rescue => ex
+            Raven.logger.error("async event sending failed: #{ex.message}")
+            send_event(evt)
+          end
         else
           send_event(evt)
         end
