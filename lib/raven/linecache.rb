@@ -1,11 +1,6 @@
-# A much simpler source line cacher because linecache sucks at platform compat
-
 module Raven
   class LineCache
     class << self
-      # TODO: a constant isn't appropriate here, refactor
-      # also would there be threading bugs essentially using this as a class
-      # variable?
       CACHE = {} # rubocop:disable Style/MutableConstant
 
       def valid_file?(path)

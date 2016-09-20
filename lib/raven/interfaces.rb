@@ -1,5 +1,4 @@
 module Raven
-  # TODO: a constant isn't appropriate here, refactor
   INTERFACES = {} # rubocop:disable Style/MutableConstant
 
   class Interface

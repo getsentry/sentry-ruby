@@ -33,7 +33,6 @@ describe TestApp, :type => :request do
   it "should properly set the exception's URL" do
     get "/exception"
 
-    # TODO: dummy transport shouldn't even encode the event
     event = Raven.client.transport.events.first
     event = JSON.parse!(event[1])
 
