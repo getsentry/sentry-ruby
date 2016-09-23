@@ -101,6 +101,8 @@ the library and the client integrations.
    install
    config
    usage
+
+   breadcrumbs
    context
    integrations/index
 
