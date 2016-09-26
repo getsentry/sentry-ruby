@@ -156,7 +156,8 @@ module Raven
       Raven::Processor::UTF8Conversion,
       Raven::Processor::SanitizeData,
       Raven::Processor::Cookies,
-      Raven::Processor::PostData
+      Raven::Processor::PostData,
+      Raven::Processor::HTTPHeaders
     ].freeze
 
     def initialize
