@@ -337,6 +337,24 @@ describe Raven::Event do
     end
   end
 
+  describe '.to_json_compatible' do
+    subject do
+      Raven::Event.new(:extra => {
+                         'my_custom_variable' => 'value',
+                         'date' => Time.utc(0),
+                         'anonymous_module' => Class.new
+                       })
+    end
+
+    it "should coerce non-JSON-compatible types" do
+      json = subject.to_json_compatible
+
+      expect(json["extra"]['my_custom_variable']).to eq('value')
+      expect(json["extra"]['date']).to be_a(String)
+      expect(json["extra"]['anonymous_module']).not_to be_a(Class)
+    end
+  end
+
   describe '.capture_message' do
     let(:message) { 'This is a message' }
     let(:hash) { Raven::Event.capture_message(message).to_hash }

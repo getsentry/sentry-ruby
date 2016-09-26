@@ -1,7 +1,7 @@
 require 'spec_helper'
 
 describe Raven do
-  let(:event) { double("event", :id => "event_id") }
+  let(:event) { Raven::Event.new(:id => "event_id") }
   let(:options) { double("options") }
 
   before do
@@ -39,7 +39,7 @@ describe Raven do
       expect(Raven::Event).to receive(:from_message).with(message, options)
       expect(Raven).not_to receive(:send_event).with(event)
 
-      expect(Raven.configuration.async).to receive(:call).with(event)
+      expect(Raven.configuration.async).to receive(:call).with(event.to_json_compatible)
       Raven.capture_message(message, options)
     end
 
@@ -78,7 +78,7 @@ describe Raven do
       expect(Raven::Event).to receive(:from_exception).with(exception, options)
       expect(Raven).not_to receive(:send_event).with(event)
 
-      expect(Raven.configuration.async).to receive(:call).with(event)
+      expect(Raven.configuration.async).to receive(:call).with(event.to_json_compatible)
       Raven.capture_exception(exception, options)
     end
 

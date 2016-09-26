@@ -2,7 +2,7 @@ require 'spec_helper'
 require 'raven/instance'
 
 describe Raven::Instance do
-  let(:event) { double("event", :id => "event_id") }
+  let(:event) { Raven::Event.new(:id => "event_id") }
   let(:options) { double("options") }
   let(:context) { nil }
 
@@ -60,7 +60,7 @@ describe Raven::Instance do
         expect(Raven::Event).to receive(:from_message).with(message, options)
         expect(subject).not_to receive(:send_event).with(event)
 
-        expect(subject.configuration.async).to receive(:call).with(event)
+        expect(subject.configuration.async).to receive(:call).with(event.to_json_compatible)
         subject.capture_type(message, options)
       end
 
@@ -100,7 +100,7 @@ describe Raven::Instance do
           expect(Raven::Event).to receive(:from_exception).with(exception, options)
           expect(subject).not_to receive(:send_event).with(event)
 
-          expect(subject.configuration.async).to receive(:call).with(event)
+          expect(subject.configuration.async).to receive(:call).with(event.to_json_compatible)
           subject.capture_type(exception, options)
         end
 
@@ -121,7 +121,7 @@ describe Raven::Instance do
         it 'sends the result of Event.capture_exception via fallback' do
           expect(Raven::Event).to receive(:from_exception).with(exception, options)
 
-          expect(subject).to receive(:send_event).with(event)
+          expect(subject.configuration.async).to receive(:call).with(event.to_json_compatible)
           subject.capture_type(exception, options)
         end
       end

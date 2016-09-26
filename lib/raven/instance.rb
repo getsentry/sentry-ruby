@@ -120,7 +120,9 @@ module Raven
         yield evt if block_given?
         if configuration.async?
           begin
-            configuration.async.call(evt)
+            # We have to convert to a JSON-like hash, because background job
+            # processors (esp ActiveJob) may not like weird types in the event hash
+            configuration.async.call(evt.to_json_compatible)
           rescue => ex
             Raven.logger.error("async event sending failed: #{ex.message}")
             send_event(evt)
