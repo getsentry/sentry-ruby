@@ -1,3 +1,28 @@
+2.0.0
+-----
+
+BREAKING CHANGES:
+
+* The object passed to the `async` callback is now a JSON-compatible hash, not a Raven::Event. This fixes many bugs with backend job processors like DelayedJob. [@nateberkopec, #547]
+* Several deprecated accessors have been removed [@nateberkopec, #543]
+* You can no longer pass an object which cannot be called to `should_capture` [@nateberkopec, #542]
+
+ENHANCEMENTS:
+
+* Rack::Timeout exceptions are now fingerprinted by URL, making them more useful [@nateberkopec, #538]
+* Added an HTTP header processor by default. We now scrub `Authorization` headers correctly. You can use `config.sanitize_http_headers` to add a list of HTTP headers you don't want sent to Sentry (e.g. ["Via", "Referer", "User-Agent", "Server", "From"]) [@nateberkopec]
+
+FIXES:
+
+* User/Event IP addresses are now set more accurately. This will fix many issues with local proxy setups (nginx, etc). [@nateberkopec, #546]
+* We now generate a real UUID in the correct format for Event IDs [@nateberkopec, #549]
+* If `async` sending fails, we retry with sync sending. [@nateberkopec, #548]
+* Changed truncation approach - event messages and HTTP bodies now limited to the same amount of characters they're limited to at the Sentry server [@nateberkopec, #536]
+
+OTHER:
+
+* Codebase cleaned up with Rubocop [@nateberkopec, #544]
+
 1.2.3
 -----
 
