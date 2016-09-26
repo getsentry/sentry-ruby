@@ -130,6 +130,8 @@ describe Raven::Event do
                          'HTTP_HOST' => 'localhost',
                          'SERVER_NAME' => 'localhost',
                          'SERVER_PORT' => '80',
+                         'HTTP_X_FORWARDED_FOR' => '1.1.1.1, 2.2.2.2',
+                         'REMOTE_ADDR' => '192.168.1.1',
                          'PATH_INFO' => '/lol',
                          'rack.url_scheme' => 'http',
                          'rack.input' => StringIO.new('foo=bar'))
@@ -147,12 +149,16 @@ describe Raven::Event do
 
     it "adds http data" do
       expect(hash[:request]).to eq(:data => { 'foo' => 'bar' },
-                                   :env => { 'SERVER_NAME' => 'localhost', 'SERVER_PORT' => '80' },
-                                   :headers => { 'Host' => 'localhost' },
+                                   :env => { 'SERVER_NAME' => 'localhost', 'SERVER_PORT' => '80', "REMOTE_ADDR" => "192.168.1.1" },
+                                   :headers => { 'Host' => 'localhost', "X-Forwarded-For" => "1.1.1.1, 2.2.2.2" },
                                    :method => 'POST',
                                    :query_string => 'biz=baz',
                                    :url => 'http://localhost/lol',
                                    :cookies => nil)
+    end
+
+    it "sets user context ip address correctly" do
+      expect(hash[:user][:ip_address]).to eq("1.1.1.1")
     end
   end
 

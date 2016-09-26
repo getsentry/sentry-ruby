@@ -8,7 +8,7 @@ Metrics/ClassLength:
   CountComments: false
 
 Metrics/AbcSize:
-  Max: 50
+  Max: 53
 
 Metrics/CyclomaticComplexity:
   Max: 13
@@ -20,7 +20,7 @@ Metrics/LineLength:
   Max: 155
 
 Metrics/MethodLength:
-  Max: 34
+  Max: 37
 
 Style/SignalException:
   Enabled: false

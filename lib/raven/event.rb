@@ -58,6 +58,10 @@ module Raven
         end
       end
 
+      if @context.rack_env
+        @context.user[:ip_address] = calculate_real_ip_from_rack
+      end
+
       init.each_pair { |key, val| instance_variable_set('@' + key.to_s, val) }
 
       @user = @context.user.merge(@user)
@@ -253,6 +257,19 @@ module Raven
       alias captureMessage from_message
       alias capture_exception from_exception
       alias capture_message from_message
+    end
+
+    private
+
+    # When behind a proxy (or if the user is using a proxy), we can't use
+    # REMOTE_ADDR to determine the Event IP, and must use other headers instead.
+    def calculate_real_ip_from_rack
+      Utils::RealIp.new(
+        :remote_addr => context.rack_env["REMOTE_ADDR"],
+        :client_ip => context.rack_env["HTTP_CLIENT_IP"],
+        :real_ip => context.rack_env["HTTP_X_REAL_IP"],
+        :forwarded_for => context.rack_env["HTTP_X_FORWARDED_FOR"]
+      ).calculate_ip
     end
   end
 end
