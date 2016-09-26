@@ -17,7 +17,7 @@ describe "Integration tests" do
 
     stubs.verify_stubbed_calls
 
-    expect(io.string).to match(/Sending event [0-9a-f|-]+ to Sentry$/)
+    expect(io.string).to match(/Sending event [0-9a-f]+ to Sentry$/)
   end
 
   example "posting an exception to a prefixed DSN" do

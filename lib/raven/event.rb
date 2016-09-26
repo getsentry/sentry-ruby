@@ -32,7 +32,7 @@ module Raven
       @interfaces    = {}
       @breadcrumbs   = Raven.breadcrumbs
       @context       = Raven.context
-      @id            = SecureRandom.uuid
+      @id            = SecureRandom.uuid.delete("-")
       @project       = nil
       @message       = nil
       @timestamp     = Time.now.utc
