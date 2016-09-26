@@ -1,3 +1,8 @@
+2.0.1
+-----
+
+* FIX: UUIDs were being rejected by Sentry as being too long [@nateberkopec]
+
 2.0.0
 -----
 
