@@ -1,3 +1,8 @@
+2.0.2
+-----
+
+* FIX: Don't set up Rack-Timeout middleware. [@janraasch, #558]
+
 2.0.1
 -----
 
