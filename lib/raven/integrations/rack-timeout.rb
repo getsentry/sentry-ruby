@@ -1,6 +1,6 @@
 # rubocop:disable Style/FileName
 # We need to do this because of the way integration loading works
-require 'rack-timeout'
+require "rack/timeout/base"
 
 # This integration is a good example of how to change how exceptions
 # get grouped by Sentry's UI. Simply override #raven_context in
