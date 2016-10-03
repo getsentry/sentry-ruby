@@ -1,9 +1,12 @@
-require 'raven/interfaces'
+require 'raven/interface'
 
 module Raven
   class ExceptionInterface < Interface
-    name 'exception'
     attr_accessor :values
+
+    def self.sentry_alias
+      :exception
+    end
 
     def to_hash(*args)
       data = super(*args)
@@ -11,6 +14,4 @@ module Raven
       data
     end
   end
-
-  register_interface :exception => ExceptionInterface
 end

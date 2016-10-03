@@ -23,11 +23,10 @@ module Raven
     PLATFORM = "ruby".freeze
     SDK = { "name" => "sentry-raven", "version" => Raven::VERSION }.freeze
 
-    attr_reader :id
-    attr_accessor :message, :timestamp, :time_spent, :level, :logger,
+    attr_accessor :id, :timestamp, :time_spent, :level, :logger,
                   :culprit, :server_name, :release, :modules, :extra, :tags,
                   :context, :configuration, :checksum, :fingerprint, :environment,
-                  :os, :runtime, :breadcrumbs
+                  :os, :runtime, :breadcrumbs, :user, :backtrace
 
     def initialize(init = {})
       @configuration = Raven.configuration
@@ -35,7 +34,6 @@ module Raven
       @breadcrumbs   = Raven.breadcrumbs
       @context       = Raven.context
       @id            = SecureRandom.uuid.delete("-")
-      @message       = nil
       @timestamp     = Time.now.utc
       @time_spent    = nil
       @level         = :error
@@ -44,11 +42,11 @@ module Raven
       @server_name   = @configuration.server_name
       @release       = @configuration.release
       @modules       = list_gem_specs if @configuration.send_modules
-      @user          = {}
-      @extra         = {}
-      @os            = {}
-      @runtime       = {}
-      @tags          = {}
+      @user          = {} # TODO: contexts
+      @extra         = {} # TODO: contexts
+      @os            = {} # TODO: contexts
+      @runtime       = {} # TODO: contexts
+      @tags          = {} # TODO: contexts
       @checksum      = nil
       @fingerprint   = nil
       @environment   = @configuration.current_environment
@@ -61,22 +59,34 @@ module Raven
         end
       end
 
-      if @context.rack_env
+      if @context.rack_env # TODO: contexts
         @context.user[:ip_address] = calculate_real_ip_from_rack
       end
 
-      init.each_pair { |key, val| instance_variable_set('@' + key.to_s, val) }
+      init.each_pair { |key, val| public_send(key.to_s + "=", val) }
 
-      @user = @context.user.merge(@user)
-      @extra = @context.extra.merge(@extra)
-      @tags = @configuration.tags.merge(@context.tags).merge(@tags)
-      @os = @context.os
-      @runtime = @context.runtime
+      @user = @context.user.merge(@user) # TODO: contexts
+      @extra = @context.extra.merge(@extra) # TODO: contexts
+      @tags = @configuration.tags.merge(@context.tags).merge(@tags) # TODO: contexts
+      @os = @context.os # TODO: contexts
+      @runtime = @context.runtime # TODO: contexts
 
       # Some type coercion
       @timestamp  = @timestamp.strftime('%Y-%m-%dT%H:%M:%S') if @timestamp.is_a?(Time)
       @time_spent = (@time_spent * 1000).to_i if @time_spent.is_a?(Float)
       @level      = LOG_LEVELS[@level.to_s.downcase] if @level.is_a?(String) || @level.is_a?(Symbol)
+    end
+
+    def message
+      @interfaces[:logentry] && @interfaces[:logentry].unformatted_message
+    end
+
+    def message=(args)
+      message, params = *args
+      interface(:message) do |int|
+        int.message = message
+        int.params = params
+      end
     end
 
     class << self
@@ -112,11 +122,8 @@ module Raven
 
         new(options) do |evt|
           evt.configuration = configuration
-          evt.message = message
           evt.level = options[:level] || :error
-          evt.interface :message do |int|
-            int.message = message
-          end
+          evt.message = message, options[:message_params] || []
           if options[:backtrace]
             evt.interface(:stacktrace) do |int|
               stacktrace_interface_from(int, evt, options[:backtrace])
@@ -201,10 +208,10 @@ module Raven
     end
 
     def interface(name, value = nil, &block)
-      int = Raven.find_interface(name)
+      int = Interface.registered[name]
       raise(Error, "Unknown interface: #{name}") unless int
-      @interfaces[int.name] = int.new(value, &block) if value || block
-      @interfaces[int.name]
+      @interfaces[int.sentry_alias] = int.new(value, &block) if value || block
+      @interfaces[int.sentry_alias]
     end
 
     def [](key)
@@ -218,7 +225,6 @@ module Raven
     def to_hash
       data = {
         :event_id => @id,
-        :message => @message,
         :timestamp => @timestamp,
         :time_spent => @time_spent,
         :level => @level,
@@ -227,6 +233,7 @@ module Raven
         :os => @os,
         :runtime => @runtime
       }
+
       data[:logger] = @logger if @logger
       data[:culprit] = @culprit if @culprit
       data[:server_name] = @server_name if @server_name
@@ -239,9 +246,11 @@ module Raven
       data[:user] = @user if @user
       data[:breadcrumbs] = @breadcrumbs.to_hash unless @breadcrumbs.empty?
       data[:checksum] = @checksum if @checksum
+
       @interfaces.each_pair do |name, int_data|
         data[name.to_sym] = int_data.to_hash
       end
+      data[:message] = message
       data
     end
 

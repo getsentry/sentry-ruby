@@ -1,13 +1,16 @@
-require 'raven/interfaces'
+require 'raven/interface'
 
 module Raven
   class StacktraceInterface < Interface
-    name 'stacktrace'
     attr_accessor :frames
 
     def initialize(*arguments)
       self.frames = []
       super(*arguments)
+    end
+
+    def self.sentry_alias
+      :stacktrace
     end
 
     def to_hash(*args)
@@ -71,6 +74,4 @@ module Raven
       end
     end
   end
-
-  register_interface :stack_trace => StacktraceInterface
 end
