@@ -61,6 +61,14 @@ describe Raven::Event do
     it 'has SDK' do
       expect(hash[:sdk]).to eq("name" => "sentry-raven", "version" => Raven::VERSION)
     end
+
+    it 'has os' do
+      expect(hash[:os]).to eq("name" => RbConfig::CONFIG["host_os"])
+    end
+
+    it 'has runtime' do
+      expect(hash[:runtime]["version"]).to eq(RbConfig::CONFIG["ruby_version"])
+    end
   end
 
   context 'user context specified' do
