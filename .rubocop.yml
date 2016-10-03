@@ -4,7 +4,7 @@ AllCops:
     - 'lib/raven/utils/deep_merge.rb'
 
 Metrics/ClassLength:
-  Max: 230
+  Max: 231
   CountComments: false
 
 Metrics/AbcSize:

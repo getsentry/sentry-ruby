@@ -1,15 +1,8 @@
-require 'raven/interfaces'
+require 'raven/interface'
 
 module Raven
   class HttpInterface < Interface
-    name 'request'
-    attr_accessor :url
-    attr_accessor :method
-    attr_accessor :data
-    attr_accessor :query_string
-    attr_accessor :cookies
-    attr_accessor :headers
-    attr_accessor :env
+    attr_accessor :url, :method, :data, :query_string, :cookies, :headers, :env
 
     def initialize(*arguments)
       self.headers = {}
@@ -17,7 +10,9 @@ module Raven
       self.cookies = nil
       super(*arguments)
     end
-  end
 
-  register_interface :http => HttpInterface
+    def self.sentry_alias
+      :request
+    end
+  end
 end

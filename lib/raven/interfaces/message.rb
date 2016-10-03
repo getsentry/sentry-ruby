@@ -1,16 +1,20 @@
-require 'raven/interfaces'
+require 'raven/interface'
 
 module Raven
   class MessageInterface < Interface
-    name 'sentry.interfaces.Message'
-    attr_accessor :message
-    attr_accessor :params
+    attr_accessor :message, :params
 
     def initialize(*arguments)
       self.params = []
       super(*arguments)
     end
-  end
 
-  register_interface :message => MessageInterface
+    def unformatted_message
+      message % params
+    end
+
+    def self.sentry_alias
+      :logentry
+    end
+  end
 end

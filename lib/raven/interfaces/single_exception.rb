@@ -1,4 +1,4 @@
-require 'raven/interfaces'
+require 'raven/interface'
 
 module Raven
   class SingleExceptionInterface < Interface
