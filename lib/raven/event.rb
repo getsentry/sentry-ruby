@@ -223,7 +223,6 @@ module Raven
         :timestamp => @timestamp,
         :time_spent => @time_spent,
         :level => @level,
-        :project => @project,
         :platform => PLATFORM,
         :sdk => SDK,
         :os => @os,
