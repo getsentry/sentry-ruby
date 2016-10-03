@@ -24,7 +24,7 @@ module Raven
     SDK = { "name" => "sentry-raven", "version" => Raven::VERSION }.freeze
 
     attr_reader :id
-    attr_accessor :project, :message, :timestamp, :time_spent, :level, :logger,
+    attr_accessor :message, :timestamp, :time_spent, :level, :logger,
                   :culprit, :server_name, :release, :modules, :extra, :tags,
                   :context, :configuration, :checksum, :fingerprint, :environment,
                   :os, :runtime, :breadcrumbs
@@ -35,7 +35,6 @@ module Raven
       @breadcrumbs   = Raven.breadcrumbs
       @context       = Raven.context
       @id            = SecureRandom.uuid.delete("-")
-      @project       = nil
       @message       = nil
       @timestamp     = Time.now.utc
       @time_spent    = nil
