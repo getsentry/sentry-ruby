@@ -25,8 +25,9 @@ module Raven
 
     attr_reader :id
     attr_accessor :project, :message, :timestamp, :time_spent, :level, :logger,
-                  :culprit, :server_name, :release, :modules, :extra, :tags, :context, :configuration,
-                  :checksum, :fingerprint, :environment
+                  :culprit, :server_name, :release, :modules, :extra, :tags,
+                  :context, :configuration, :checksum, :fingerprint, :environment,
+                  :os, :runtime, :breadcrumbs
 
     def initialize(init = {})
       @configuration = Raven.configuration
@@ -46,6 +47,8 @@ module Raven
       @modules       = list_gem_specs if @configuration.send_modules
       @user          = {}
       @extra         = {}
+      @os            = {}
+      @runtime       = {}
       @tags          = {}
       @checksum      = nil
       @fingerprint   = nil
@@ -68,6 +71,8 @@ module Raven
       @user = @context.user.merge(@user)
       @extra = @context.extra.merge(@extra)
       @tags = @configuration.tags.merge(@context.tags).merge(@tags)
+      @os = @context.os
+      @runtime = @context.runtime
 
       # Some type coercion
       @timestamp  = @timestamp.strftime('%Y-%m-%dT%H:%M:%S') if @timestamp.is_a?(Time)
@@ -220,7 +225,9 @@ module Raven
         :level => @level,
         :project => @project,
         :platform => PLATFORM,
-        :sdk => SDK
+        :sdk => SDK,
+        :os => @os,
+        :runtime => @runtime
       }
       data[:logger] = @logger if @logger
       data[:culprit] = @culprit if @culprit

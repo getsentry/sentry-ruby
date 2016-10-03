@@ -4,11 +4,11 @@ AllCops:
     - 'lib/raven/utils/deep_merge.rb'
 
 Metrics/ClassLength:
-  Max: 225
+  Max: 230
   CountComments: false
 
 Metrics/AbcSize:
-  Max: 53
+  Max: 57
 
 Metrics/CyclomaticComplexity:
   Max: 13
@@ -20,7 +20,7 @@ Metrics/LineLength:
   Max: 155
 
 Metrics/MethodLength:
-  Max: 37
+  Max: 41
 
 Style/SignalException:
   Enabled: false
