@@ -21,6 +21,7 @@ module Raven
     BACKTRACE_RE = /^(.+?):(\d+)(?::in `(.+?)')?$/
 
     PLATFORM = "ruby".freeze
+    SDK = { "name" => "sentry-raven", "version" => Raven::VERSION }.freeze
 
     attr_reader :id
     attr_accessor :project, :message, :timestamp, :time_spent, :level, :logger,
@@ -218,7 +219,8 @@ module Raven
         :time_spent => @time_spent,
         :level => @level,
         :project => @project,
-        :platform => PLATFORM
+        :platform => PLATFORM,
+        :sdk => SDK
       }
       data[:logger] = @logger if @logger
       data[:culprit] = @culprit if @culprit

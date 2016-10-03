@@ -57,6 +57,10 @@ describe Raven::Event do
     it 'has platform' do
       expect(hash[:platform]).to eq('ruby')
     end
+
+    it 'has SDK' do
+      expect(hash[:sdk]).to eq("name" => "sentry-raven", "version" => Raven::VERSION)
+    end
   end
 
   context 'user context specified' do
