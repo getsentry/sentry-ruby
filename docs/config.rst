@@ -26,7 +26,7 @@ Optional settings
     Using a thread to send events will be adequate for truly parallel Ruby platforms such as JRuby, though the benefit on MRI/CRuby will be limited. Threads also won't report any exceptions raised inside of them, so be careful!
 
     If the async callback raises an exception, Raven will attempt to send synchronously.
-    
+
     We recommend creating a background job, using your background job processor, that will send Sentry notifications in the background. Rather than enqueuing an entire Raven::Event object, we recommend providing the Hash representation of an event as a job argument. Here's an example for ActiveJob:
 
     .. code-block:: ruby
@@ -156,9 +156,9 @@ Optional settings
 
     We guess the release intelligently in the following order of preference:
 
-    * Heroku's HEROKU_SLUG_COMMIT environment variable
-    * Reading from the REVISION file in the app root
     * Commit SHA of the last commit (git)
+    * Reading from the REVISION file in the app root
+    * Heroku's dyno metadata (must have enabled via Heroku Labs)
 
     .. code-block:: ruby
 
