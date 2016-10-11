@@ -4,6 +4,7 @@ gemspec
 
 group :test do
   gem "rack"
+  gem "sidekiq"
 end
 
 group :development do
