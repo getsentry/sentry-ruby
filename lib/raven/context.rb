@@ -38,9 +38,11 @@ module Raven
         }
       end
 
-      def sys_command(linux_command, win_command = nil)
-        `#{linux_command}` rescue nil ||
-          `#{win_command}` rescue nil
+      def sys_command(unix_command, win_command = nil)
+        unix_result = `#{unix_command}` rescue nil
+        return unix_result if unix_result != "" && unix_result
+        win_result = `#{win_command}` rescue nil
+        win_result != "" && win_result
       end
     end
   end
