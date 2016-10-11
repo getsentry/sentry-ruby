@@ -63,7 +63,7 @@ describe Raven::Event do
     end
 
     it 'has os' do
-      expect(hash[:contexts][:os]).to eq("name" => RbConfig::CONFIG["host_os"])
+      expect(hash[:contexts][:os].keys).to eq(%w(name version build kernel_version))
     end
 
     it 'has runtime' do
