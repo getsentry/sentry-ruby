@@ -230,8 +230,10 @@ module Raven
         :level => @level,
         :platform => PLATFORM,
         :sdk => SDK,
-        :os => @os,
-        :runtime => @runtime
+        :contexts => {
+          :os => @os,
+          :runtime => @runtime
+        }
       }
 
       data[:logger] = @logger if @logger

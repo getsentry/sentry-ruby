@@ -63,11 +63,11 @@ describe Raven::Event do
     end
 
     it 'has os' do
-      expect(hash[:os]).to eq("name" => RbConfig::CONFIG["host_os"])
+      expect(hash[:contexts][:os]).to eq("name" => RbConfig::CONFIG["host_os"])
     end
 
     it 'has runtime' do
-      expect(hash[:runtime]["version"]).to eq(RbConfig::CONFIG["ruby_version"])
+      expect(hash[:contexts][:runtime]["version"]).to eq(RbConfig::CONFIG["ruby_version"])
     end
   end
 
