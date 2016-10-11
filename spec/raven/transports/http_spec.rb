@@ -1,3 +1,5 @@
+require 'spec_helper'
+
 describe Raven::Transports::HTTP do
   before do
     Raven.configure do |config|
@@ -16,7 +18,7 @@ describe Raven::Transports::HTTP do
     Raven.configure { |config| config.http_adapter = [:test, stubs] }
 
     event = JSON.generate(Raven::Event.from_message("test").to_hash)
-    expect { Raven.client.send(:transport).send_event("test", event) }.to raise_error(Faraday::ResourceNotFound)
+    expect { Raven.client.send(:transport).send_event("test", event) }.to raise_error(Raven::Error)
 
     stubs.verify_stubbed_calls
   end
@@ -28,7 +30,7 @@ describe Raven::Transports::HTTP do
     Raven.configure { |config| config.http_adapter = [:test, stubs] }
 
     event = JSON.generate(Raven::Event.from_message("test").to_hash)
-    expect { Raven.client.send(:transport).send_event("test", event) }.to raise_error(Faraday::ClientError)
+    expect { Raven.client.send(:transport).send_event("test", event) }.to raise_error(Raven::Error)
 
     stubs.verify_stubbed_calls
   end

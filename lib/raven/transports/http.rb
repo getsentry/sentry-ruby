@@ -23,6 +23,8 @@ module Raven
           req.headers['X-Sentry-Auth'] = auth_header
           req.body = data
         end
+      rescue Faraday::ClientError => ex
+        raise Raven::Error, ex.message
       end
 
       private
