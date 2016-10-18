@@ -67,7 +67,7 @@ describe Raven::Event do
     end
 
     it 'has runtime' do
-      expect(hash[:contexts][:runtime]["version"]).to eq(`ruby -v`)
+      expect(hash[:contexts][:runtime]["version"]).to match(/ruby/)
     end
   end
 
