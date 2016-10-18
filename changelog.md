@@ -1,3 +1,17 @@
+2.1.0
+-----
+
+ENHANCEMENTS:
+
+* Your client version is now included in all Events. [@nateberkopec, #559]
+* OS and Ruby runtime information now included in all Events. [@nateberkopec, #560]
+* Transport errors (like Sentry 4XX errors) now raise Sentry::Error, not Faraday errors. [@nateberkopec, #565]
+* Sidekiq integration is streamlined and improved. Supports Sidekiq 3.x and up. [@nateberkopec, #555]
+
+FIXES:
+
+* Heroku release detection is improved and more accurate. You must `heroku labs:enable runtime-dyno-metadata` for it to work. [@nateberkopec, #566]
+
 2.0.2
 -----
 
