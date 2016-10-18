@@ -24,10 +24,10 @@ module Raven
     class << self
       def os_context
         @os_context ||= {
-          "name" => sys_command("uname -s") || RbConfig::CONFIG["host_os"],
-          "version" => sys_command("uname -v"),
-          "build" => sys_command("uname -r"),
-          "kernel_version" => sys_command("uname -a", "ver")
+          "name" => Raven.sys_command("uname -s") || RbConfig::CONFIG["host_os"],
+          "version" => Raven.sys_command("uname -v"),
+          "build" => Raven.sys_command("uname -r"),
+          "kernel_version" => Raven.sys_command("uname -a", "ver")
         }
       end
 
@@ -36,13 +36,6 @@ module Raven
           "name" => RbConfig::CONFIG["ruby_install_name"],
           "version" => RbConfig::CONFIG["ruby_version"]
         }
-      end
-
-      def sys_command(unix_command, win_command = nil)
-        unix_result = `#{unix_command}` rescue nil
-        return unix_result if unix_result != "" && unix_result
-        win_result = `#{win_command}` rescue nil
-        win_result != "" && win_result
       end
     end
   end
