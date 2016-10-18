@@ -267,15 +267,24 @@ module Raven
     end
 
     def detect_release
-      detect_release_from_heroku ||
+      detect_release_from_git ||
         detect_release_from_capistrano ||
-        detect_release_from_git
+        detect_release_from_heroku
     end
 
     private
 
     def detect_release_from_heroku
-      ENV['HEROKU_SLUG_COMMIT']
+      sys_dyno_info = `cat /etc/heroku/dyno` rescue nil
+      return unless sys_dyno_info && sys_dyno_info != ""
+
+      # being overly cautious, because if we raise an error Raven won't start
+      begin
+        hash = JSON.parse(sys_dyno_info)
+        hash && hash["release"] && hash["release"]["commit"]
+      rescue JSON::JSONError
+        logger.error "Cannot parse Heroku JSON: #{sys_dyno_info}"
+      end
     end
 
     def detect_release_from_capistrano
