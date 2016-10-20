@@ -11,5 +11,5 @@ group :development do
   gem "pry"
   gem "benchmark-ips"
   gem "benchmark-ipsa"
-  gem "yajl-ruby"
+  gem "yajl-ruby", :platforms => :mri
 end
