@@ -5,9 +5,6 @@ gemspec
 group :test do
   gem "rack"
   gem "sidekiq"
-  if RUBY_VERSION > '2.4'
-    gem "json", ">= 2"
-  end
 end
 
 group :development do
@@ -19,5 +16,11 @@ group :development do
     gem "yajl-ruby", git: 'https://github.com/brianmario/yajl-ruby.git', ref: '6f39ff8c3611edbf4edca1d0cc3ddc15aa5e4e92'
   else
     gem "yajl-ruby", :platforms => :mri
+  end
+end
+
+group :test, :development do
+  if RUBY_VERSION > '2.4'
+    gem "json", ">= 2"
   end
 end
