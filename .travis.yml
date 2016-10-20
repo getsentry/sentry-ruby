@@ -27,7 +27,6 @@ matrix:
       gemfile: gemfiles/rails5.gemfile
   allow_failures:
     - rvm: ruby-head
-    - rvm: 2.4.0-preview2
   exclude:
     - rvm: 2.2
       gemfile: gemfiles/rails32.gemfile
