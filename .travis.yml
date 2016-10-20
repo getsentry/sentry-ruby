@@ -20,9 +20,9 @@ matrix:
     - rvm: jruby-1.7.24
       env: JRUBY_OPTS="--2.0"
       gemfile: gemfiles/rails42.gemfile
-    - rvm: jruby-9.0.5.0
+    - rvm: jruby-9.1.5.0
       gemfile: gemfiles/rails42.gemfile
-    - rvm: jruby-9.0.5.0
+    - rvm: jruby-9.1.5.0
       gemfile: gemfiles/rails5.gemfile
   allow_failures:
     - rvm: ruby-head
