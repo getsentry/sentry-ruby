@@ -1,3 +1,8 @@
+2.1.1
+-----
+
+* FIX: Message params should accept nil [@jmalves, #570]
+
 2.1.0
 -----
 
