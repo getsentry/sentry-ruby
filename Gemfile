@@ -9,6 +9,7 @@ end
 
 group :development do
   gem "pry"
+  gem "pry-coolline"
   gem "benchmark-ips"
   gem "benchmark-ipsa"
   gem "yajl-ruby", :platforms => :mri

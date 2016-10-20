@@ -54,6 +54,7 @@ module Raven
 
       Raven.logger.debug ""
       Raven.logger.debug "Done!"
+      true
     end
   end
 end
