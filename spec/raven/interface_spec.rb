@@ -24,3 +24,10 @@ describe Raven::Interface do
     expect(interface.to_hash).to eq(:some_attr => "test")
   end
 end
+
+describe Raven::MessageInterface do
+  it "supports invalid format string message when params is not defined" do
+    interface = Raven::MessageInterface.new(:message => "test '%'")
+    expect(interface.unformatted_message).to eq("test '%'")
+  end
+end
