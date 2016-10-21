@@ -14,6 +14,14 @@ gemfile:
   - gemfiles/rails42.gemfile
   - gemfiles/rails5.gemfile
 
+addons:
+  apt:
+    packages:
+      - haveged
+
+before_install:
+  - service haveged start
+
 matrix:
   include:
     - rvm: jruby-1.7.26
