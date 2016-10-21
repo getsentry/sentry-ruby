@@ -4,9 +4,7 @@ dist: trusty
 
 cache:
   bundler: true
-
-bundler_args: --without test --jobs 3 --retry 3
-
+  
 rvm:
   - 1.9
   - 2.2.5
