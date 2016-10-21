@@ -2,9 +2,6 @@ language: ruby
 sudo: required
 dist: trusty
 
-cache:
-  bundler: true
-  
 rvm:
   - 1.9
   - 2.2.5
@@ -40,4 +37,3 @@ matrix:
       gemfile: gemfiles/rails32.gemfile
     - rvm: 1.9
       gemfile: gemfiles/rails5.gemfile
-  fast_finish: true
