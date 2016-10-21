@@ -1,3 +1,8 @@
+2.1.2
+-----
+
+* FIX: `sys_command` not falling back to Windows commands properly, logging output [@jmalves, @nateberkopec]
+
 2.1.1
 -----
 
