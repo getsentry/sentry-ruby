@@ -27,7 +27,7 @@ module Raven
           "name" => Raven.sys_command("uname -s") || RbConfig::CONFIG["host_os"],
           "version" => Raven.sys_command("uname -v"),
           "build" => Raven.sys_command("uname -r"),
-          "kernel_version" => Raven.sys_command("uname -a", "ver")
+          "kernel_version" => Raven.sys_command("uname -a") || Raven.sys_command("ver") #windows
         }
       end
 

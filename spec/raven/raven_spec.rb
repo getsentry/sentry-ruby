@@ -257,4 +257,14 @@ describe Raven do
       expect { |b| Raven.capture_message(message, options, &b) }.to yield_with_args(event)
     end
   end
+
+  describe "#sys_command" do
+    it "should execute system commands" do
+      expect(Raven.sys_command("echo 'Sentry'")).to eq("Sentry")
+    end
+
+    it "should return nil if a system command doesn't exist" do
+      expect(Raven.sys_command("asdasdasdsa")).to eq(nil)
+    end
+  end
 end

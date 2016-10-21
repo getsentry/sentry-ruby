@@ -91,12 +91,9 @@ module Raven
       end
     end
 
-    def sys_command(unix_command, win_command = nil)
-      unix_result = `#{unix_command} 2>&1` rescue nil # redirect stderr to stdout
-      return unix_result if unix_result != "" && unix_result
-      return if win_command.nil?
-      win_result = `#{win_command}` rescue nil
-      win_result != "" && win_result
+    def sys_command(command)
+      result = `#{command}` rescue nil
+      result.strip if result != "" && result
     end
   end
 end
