@@ -171,36 +171,70 @@ describe Raven do
   end
 
   describe '.report_status' do
-    let(:ready_message) do
-      "Raven #{Raven::VERSION} ready to catch errors"
+    context 'when configured' do
+      let(:message) do
+        "Raven #{Raven::VERSION} ready to catch errors"
+      end
+
+      it 'logs a ready message' do
+        Raven.configuration.silence_ready = false
+        expect(Raven.logger).to receive(:info).with(message)
+        Raven.report_status
+      end
     end
 
-    let(:not_ready_message) do
-      "Raven #{Raven::VERSION} configured not to capture errors."
+    context 'when "silence_ready" configuration is true' do
+      it 'logs nothing' do
+        Raven.configuration.silence_ready = true
+        expect(Raven.logger).not_to receive(:info)
+        Raven.report_status
+      end
     end
 
-    it 'logs a ready message when configured' do
-      Raven.configuration.silence_ready = false
-      expect(Raven.configuration).to(
-        receive(:capture_allowed?).and_return(true)
-      )
-      expect(Raven.logger).to receive(:info).with(ready_message)
-      Raven.report_status
+    context 'when no server configured' do
+      let(:not_ready_message) do
+        "Raven #{Raven::VERSION} configured not to capture errors (no server configured)."
+      end
+
+      it 'logs not ready message' do
+        Raven.configuration.silence_ready = false
+        Raven.configuration.server = ''
+
+        expect(Raven.logger).to receive(:info).with(not_ready_message)
+        Raven.report_status
+      end
     end
 
-    it 'logs not ready message if the config does not send in current environment' do
-      Raven.configuration.silence_ready = false
-      expect(Raven.configuration).to(
-        receive(:capture_allowed?).and_return(false)
-      )
-      expect(Raven.logger).to receive(:info).with(not_ready_message)
-      Raven.report_status
+    context 'when current environment not configured' do
+      let(:not_ready_message) do
+        "Raven #{Raven::VERSION} configured not to capture errors (current environment not listed)."
+      end
+
+      it 'logs not ready message' do
+        Raven.configuration.silence_ready = false
+        Raven.configuration.server = "dummy://woopwoop"
+        Raven.configuration.current_environment = 'test'
+        Raven.configuration.environments = %w(not_test)
+
+        expect(Raven.logger).to receive(:info).with(not_ready_message)
+        Raven.report_status
+      end
     end
 
-    it 'logs nothing if "silence_ready" configuration is true' do
-      Raven.configuration.silence_ready = true
-      expect(Raven.logger).not_to receive(:info)
-      Raven.report_status
+    context 'when neither a server nor the current environment are configured' do
+      let(:not_ready_message) do
+        "Raven #{Raven::VERSION} configured not to capture errors (no server configured, current environment not listed)."
+      end
+
+      it 'logs not ready message' do
+        Raven.configuration.silence_ready = false
+        Raven.configuration.server = ''
+        Raven.configuration.current_environment = 'test'
+        Raven.configuration.environments = %w(not_test)
+
+        expect(Raven.logger).to receive(:info).with(not_ready_message)
+        Raven.report_status
+      end
     end
   end
 
