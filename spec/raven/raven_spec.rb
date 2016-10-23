@@ -5,9 +5,11 @@ describe Raven do
   let(:options) { double("options") }
 
   before do
+    Raven.instance_variable_set(:@instance, nil)
     allow(Raven.instance).to receive(:send_event)
     allow(Raven::Event).to receive(:from_message) { event }
     allow(Raven::Event).to receive(:from_exception) { event }
+    Raven.configuration.server = "dummy://woopwoop"
   end
 
   describe '.capture_message' do
@@ -28,11 +30,8 @@ describe Raven do
   describe '.capture_message when async' do
     let(:message) { "Test message" }
 
-    around do |example|
-      prior_async = Raven.configuration.async
+    before do
       Raven.configuration.async = proc { :ok }
-      example.run
-      Raven.configuration.async = prior_async
     end
 
     it 'sends the result of Event.capture_message' do
@@ -67,11 +66,8 @@ describe Raven do
   describe '.capture_exception when async' do
     let(:exception) { build_exception }
 
-    around do |example|
-      prior_async = Raven.configuration.async
+    before do
       Raven.configuration.async = proc { :ok }
-      example.run
-      Raven.configuration.async = prior_async
     end
 
     it 'sends the result of Event.capture_exception' do
