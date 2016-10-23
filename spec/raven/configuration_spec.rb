@@ -60,7 +60,7 @@ describe Raven::Configuration do
   context 'being initialized with a current environment' do
     before(:each) do
       subject.current_environment = 'test'
-      subject.server = 'http://sentry.localdomain/sentry'
+      subject.server = "http://12345:67890@sentry.localdomain:3000/sentry/42"
     end
 
     it 'should send events if test is whitelisted' do
@@ -77,7 +77,7 @@ describe Raven::Configuration do
   context 'with a should_capture callback configured' do
     before(:each) do
       subject.should_capture = ->(exc_or_msg) { exc_or_msg != "dont send me" }
-      subject.server = 'http://sentry.localdomain/sentry'
+      subject.server = "http://12345:67890@sentry.localdomain:3000/sentry/42"
     end
 
     it 'should not send events if should_capture returns false' do
@@ -89,7 +89,7 @@ describe Raven::Configuration do
   it "should verify server configuration, looking for missing keys" do
     expect { subject.verify! }.to raise_error(Raven::Error, "No server specified")
 
-    subject.server, subject.public_key, subject.secret_key, subject.project_id = "", "", "", ""
+    subject.server, subject.host, subject.path, subject.public_key, subject.secret_key, subject.project_id = "", "", "", "", "", ""
 
     subject.verify!
   end

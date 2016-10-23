@@ -257,7 +257,7 @@ module Raven
     alias sending_allowed? capture_allowed?
 
     def verify!
-      %w(server public_key secret_key project_id).each do |key|
+      %w(server host path public_key secret_key project_id).each do |key|
         raise(Error, "No #{key} specified") unless public_send key
       end
     end
@@ -311,7 +311,10 @@ module Raven
     end
 
     def server_configured?
-      host && path
+      verify!
+      true
+    rescue Error
+      false
     end
 
     def capture_allowed_by_callback?(message_or_exc)

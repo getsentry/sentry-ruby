@@ -9,7 +9,7 @@ describe Raven do
     allow(Raven.instance).to receive(:send_event)
     allow(Raven::Event).to receive(:from_message) { event }
     allow(Raven::Event).to receive(:from_exception) { event }
-    Raven.configuration.server = "dummy://woopwoop"
+    Raven.configuration.server = "http://12345:67890@sentry.localdomain:3000/sentry/42"
   end
 
   describe '.capture_message' do

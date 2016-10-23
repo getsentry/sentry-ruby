@@ -13,7 +13,7 @@ describe Raven::Instance do
     allow(Raven::Event).to receive(:from_message) { event }
     allow(Raven::Event).to receive(:from_exception) { event }
 
-    subject.configuration.dsn = "dummy://woopwoop"
+    subject.configuration.dsn = "http://12345:67890@sentry.localdomain:3000/sentry/42"
   end
 
   describe '#context' do
