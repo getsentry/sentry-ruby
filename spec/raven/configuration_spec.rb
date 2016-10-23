@@ -93,4 +93,34 @@ describe Raven::Configuration do
 
     subject.verify!
   end
+
+  describe '#verify_messages' do
+    context 'when configured to capture events' do
+      it 'should stay empty' do
+        subject.server = "http://12345:67890@sentry.localdomain:3000/sentry/42"
+        subject.environments = %w(test)
+        subject.current_environment = 'test'
+
+        expect(subject.verify_messages).to eq([])
+      end
+    end
+
+    context 'when server is not set' do
+      it 'should say that' do
+        subject.server = ''
+
+        expect(subject.verify_messages).to include('no server configured')
+      end
+    end
+
+    context 'when current environment is not listed' do
+      it 'should say that' do
+        subject.server = "http://12345:67890@sentry.localdomain:3000/sentry/42"
+        subject.environments = %w(not_test)
+        subject.current_environment = 'test'
+
+        expect(subject.verify_messages).to include('current environment not listed')
+      end
+    end
+  end
 end

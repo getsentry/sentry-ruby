@@ -248,7 +248,8 @@ module Raven
     end
 
     def capture_allowed?(message_or_exc = nil)
-      capture_in_current_environment? &&
+      server_configured? &&
+        capture_in_current_environment? &&
         capture_allowed_by_callback?(message_or_exc)
     end
 
@@ -259,6 +260,13 @@ module Raven
       %w(server public_key secret_key project_id).each do |key|
         raise(Error, "No #{key} specified") unless public_send key
       end
+    end
+
+    def verify_messages
+      messages = []
+      messages << 'no server configured' unless server_configured?
+      messages << 'current environment not listed' unless capture_in_current_environment?
+      messages
     end
 
     def project_root=(root_dir)
@@ -299,7 +307,11 @@ module Raven
     end
 
     def capture_in_current_environment?
-      !!server && (environments.empty? || environments.include?(current_environment))
+      environments.empty? || environments.include?(current_environment)
+    end
+
+    def server_configured?
+      host && path
     end
 
     def capture_allowed_by_callback?(message_or_exc)
