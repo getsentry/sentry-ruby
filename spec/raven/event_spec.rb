@@ -461,21 +461,70 @@ describe Raven::Event do
       module Raven::Test
         class BaseExc < RuntimeError; end
         class SubExc < BaseExc; end
+        module ExcTag; end
+      end
+      let(:config) { Raven::Configuration.new }
+
+      context "invalid exclusion type" do
+        it 'returns Raven::Event' do
+          config.excluded_exceptions << nil
+          config.excluded_exceptions << 1
+          config.excluded_exceptions << {}
+          expect(Raven::Event.capture_exception(Raven::Test::BaseExc.new,
+                                                :configuration => config)).to be_a(Raven::Event)
+        end
       end
 
-      it 'returns nil for a string match' do
-        config = Raven::Configuration.new
-        config.excluded_exceptions << 'Raven::Test::BaseExc'
-        expect(Raven::Event.capture_exception(Raven::Test::BaseExc.new,
-                                              :configuration => config)).to be_nil
+      context "defined by string type" do
+        it 'returns nil for a class match' do
+          config.excluded_exceptions << 'Raven::Test::BaseExc'
+          expect(Raven::Event.capture_exception(Raven::Test::BaseExc.new,
+                                                :configuration => config)).to be_nil
+        end
+
+        it 'returns nil for a top class match' do
+          config.excluded_exceptions << '::Raven::Test::BaseExc'
+          expect(Raven::Event.capture_exception(Raven::Test::BaseExc.new,
+                                                :configuration => config)).to be_nil
+        end
+
+        it 'returns nil for a sub class match' do
+          config.excluded_exceptions << 'Raven::Test::BaseExc'
+          expect(Raven::Event.capture_exception(Raven::Test::SubExc.new,
+                                                :configuration => config)).to be_nil
+        end
+
+        it 'returns nil for a tagged class match' do
+          config.excluded_exceptions << 'Raven::Test::ExcTag'
+          expect(Raven::Event.capture_exception(Raven::Test::SubExc.new.tap { |x| x.extend(Raven::Test::ExcTag) },
+                                                :configuration => config)).to be_nil
+        end
+
+        it 'returns Raven::Event for an undefined exception class' do
+          config.excluded_exceptions << 'Raven::Test::NonExistentExc'
+          expect(Raven::Event.capture_exception(Raven::Test::BaseExc.new,
+                                                :configuration => config)).to be_a(Raven::Event)
+        end
       end
 
-      it 'returns nil for a class match' do
-        config = Raven::Configuration.new
-        config.excluded_exceptions << Raven::Test::BaseExc
+      context "defined by class type" do
+        it 'returns nil for a class match' do
+          config.excluded_exceptions << Raven::Test::BaseExc
+          expect(Raven::Event.capture_exception(Raven::Test::BaseExc.new,
+                                                :configuration => config)).to be_nil
+        end
 
-        expect(Raven::Event.capture_exception(Raven::Test::SubExc.new,
-                                              :configuration => config)).to be_nil
+        it 'returns nil for a sub class match' do
+          config.excluded_exceptions << Raven::Test::BaseExc
+          expect(Raven::Event.capture_exception(Raven::Test::SubExc.new,
+                                                :configuration => config)).to be_nil
+        end
+
+        it 'returns nil for a tagged class match' do
+          config.excluded_exceptions << Raven::Test::ExcTag
+          expect(Raven::Event.capture_exception(Raven::Test::SubExc.new.tap { |x| x.extend(Raven::Test::ExcTag) },
+                                                :configuration => config)).to be_nil
+        end
       end
     end
 

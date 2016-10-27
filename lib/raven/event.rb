@@ -100,7 +100,7 @@ module Raven
           Raven.logger.info "Refusing to capture Raven error: #{exc.inspect}"
           return nil
         end
-        if configuration[:excluded_exceptions].any? { |x| (x === exc rescue false) || x == exc.class.name }
+        if configuration[:excluded_exceptions].any? { |x| get_exception_class(x) === exc }
           Raven.logger.info "User excluded error: #{exc.inspect}"
           return nil
         end
@@ -133,6 +133,22 @@ module Raven
       end
 
       private
+
+      def get_exception_class(x)
+        x.is_a?(Module) ? x : qualified_const_get(x)
+      rescue NameError # There's no way to safely ask if a constant exist for an unknown string
+        nil
+      end
+
+      # In Ruby <2.0 const_get can't lookup "SomeModule::SomeClass" in one go
+      def qualified_const_get(x)
+        parts = x.to_s.split("::").delete_if(&:empty?)
+        if parts.size < 2
+          Object.const_get(x.to_s)
+        else
+          parts.inject(Object) { |a, e| a.const_get(e) }
+        end
+      end
 
       def get_exception_context(exc)
         if exc.instance_variable_defined?(:@__raven_context)
