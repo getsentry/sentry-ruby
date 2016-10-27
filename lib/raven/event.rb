@@ -136,8 +136,6 @@ module Raven
 
       def get_exception_class(x)
         x.is_a?(Module) ? x : qualified_const_get(x)
-      rescue NameError # There's no way to safely ask if a constant exist for an unknown string
-        nil
       end
 
       # In Ruby <2.0 const_get can't lookup "SomeModule::SomeClass" in one go
@@ -148,6 +146,8 @@ module Raven
         else
           parts.inject(Object) { |a, e| a.const_get(e) }
         end
+      rescue NameError # There's no way to safely ask if a constant exist for an unknown string
+        nil
       end
 
       def get_exception_context(exc)
