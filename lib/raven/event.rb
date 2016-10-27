@@ -140,9 +140,12 @@ module Raven
 
       # In Ruby <2.0 const_get can't lookup "SomeModule::SomeClass" in one go
       def qualified_const_get(x)
-        parts = x.to_s.split("::").delete_if(&:empty?)
+        x = x.to_s
+        parts = x.split("::")
+        parts.reject!(&:empty?)
+
         if parts.size < 2
-          Object.const_get(x.to_s)
+          Object.const_get(x)
         else
           parts.inject(Object) { |a, e| a.const_get(e) }
         end
