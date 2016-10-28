@@ -1,4 +1,4 @@
-require 'raven'
+require 'sentry-raven-without-integrations'
 
 require File.dirname(__FILE__) + "/support/test_rails_app/app.rb"
 require "rspec/rails"
