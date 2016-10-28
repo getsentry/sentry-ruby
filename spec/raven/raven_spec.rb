@@ -10,105 +10,7 @@ describe Raven do
     allow(Raven::Event).to receive(:from_exception) { event }
   end
 
-  describe '.capture_message' do
-    let(:message) { "Test message" }
-
-    it 'sends the result of Event.capture_message' do
-      expect(Raven::Event).to receive(:from_message).with(message, options)
-      expect(Raven.instance).to receive(:send_event).with(event)
-
-      Raven.capture_message(message, options)
-    end
-
-    it 'yields the event to a passed block' do
-      expect { |b| Raven.capture_message(message, options, &b) }.to yield_with_args(event)
-    end
-  end
-
-  describe '.capture_message when async' do
-    let(:message) { "Test message" }
-
-    around do |example|
-      prior_async = Raven.configuration.async
-      Raven.configuration.async = proc { :ok }
-      example.run
-      Raven.configuration.async = prior_async
-    end
-
-    it 'sends the result of Event.capture_message' do
-      expect(Raven::Event).to receive(:from_message).with(message, options)
-      expect(Raven).not_to receive(:send_event).with(event)
-
-      expect(Raven.configuration.async).to receive(:call).with(event.to_json_compatible)
-      Raven.capture_message(message, options)
-    end
-
-    it 'returns the generated event' do
-      returned = Raven.capture_message(message, options)
-      expect(returned).to eq(event)
-    end
-  end
-
-  describe '.capture_exception' do
-    let(:exception) { build_exception }
-
-    it 'sends the result of Event.capture_exception' do
-      expect(Raven::Event).to receive(:from_exception).with(exception, options)
-      expect(Raven.instance).to receive(:send_event).with(event)
-
-      Raven.capture_exception(exception, options)
-    end
-
-    it 'yields the event to a passed block' do
-      expect { |b| Raven.capture_exception(exception, options, &b) }.to yield_with_args(event)
-    end
-  end
-
-  describe '.capture_exception when async' do
-    let(:exception) { build_exception }
-
-    around do |example|
-      prior_async = Raven.configuration.async
-      Raven.configuration.async = proc { :ok }
-      example.run
-      Raven.configuration.async = prior_async
-    end
-
-    it 'sends the result of Event.capture_exception' do
-      expect(Raven::Event).to receive(:from_exception).with(exception, options)
-      expect(Raven).not_to receive(:send_event).with(event)
-
-      expect(Raven.configuration.async).to receive(:call).with(event.to_json_compatible)
-      Raven.capture_exception(exception, options)
-    end
-
-    it 'returns the generated event' do
-      returned = Raven.capture_exception(exception, options)
-      expect(returned).to eq(event)
-    end
-  end
-
-  describe '.capture_exception with a should_capture callback' do
-    let(:exception) { build_exception }
-
-    it 'sends the result of Event.capture_exception according to the result of should_capture' do
-      expect(Raven).not_to receive(:send_event).with(event)
-
-      prior_should_capture = Raven.configuration.should_capture
-      Raven.configuration.should_capture = proc { false }
-      expect(Raven.configuration.should_capture).to receive(:call).with(exception)
-      expect(Raven.capture_exception(exception, options)).to be false
-      Raven.configuration.should_capture = prior_should_capture
-    end
-  end
-
   describe '.capture' do
-    context 'given a block' do
-      it 'yields to the given block' do
-        expect { |b| described_class.capture(&b) }.to yield_with_no_args
-      end
-    end
-
     context 'not given a block' do
       let(:options) { { :key => 'value' } }
 
@@ -154,56 +56,6 @@ describe Raven do
     end
   end
 
-  describe '.annotate_exception' do
-    let(:exception) { build_exception }
-
-    def ivars(object)
-      object.instance_variables.map(&:to_s)
-    end
-
-    it 'adds an annotation to the exception' do
-      expect(ivars(exception)).not_to include("@__raven_context")
-      Raven.annotate_exception(exception, {})
-      expect(ivars(exception)).to include("@__raven_context")
-      expect(exception.instance_variable_get(:@__raven_context)).to \
-        be_kind_of Hash
-    end
-  end
-
-  describe '.report_status' do
-    let(:ready_message) do
-      "Raven #{Raven::VERSION} ready to catch errors"
-    end
-
-    let(:not_ready_message) do
-      "Raven #{Raven::VERSION} configured not to capture errors."
-    end
-
-    it 'logs a ready message when configured' do
-      Raven.configuration.silence_ready = false
-      expect(Raven.configuration).to(
-        receive(:capture_allowed?).and_return(true)
-      )
-      expect(Raven.logger).to receive(:info).with(ready_message)
-      Raven.report_status
-    end
-
-    it 'logs not ready message if the config does not send in current environment' do
-      Raven.configuration.silence_ready = false
-      expect(Raven.configuration).to(
-        receive(:capture_allowed?).and_return(false)
-      )
-      expect(Raven.logger).to receive(:info).with(not_ready_message)
-      Raven.report_status
-    end
-
-    it 'logs nothing if "silence_ready" configuration is true' do
-      Raven.configuration.silence_ready = true
-      expect(Raven.logger).not_to receive(:info)
-      Raven.report_status
-    end
-  end
-
   describe '.inject_only' do
     before do
       allow(Gem.loaded_specs).to receive(:keys).and_return(%w(railties rack sidekiq))
@@ -239,22 +91,6 @@ describe Raven do
       expect(Raven).to receive(:load_integration).once.with('rake')
 
       Raven.inject_without(:delayed_job, :logger, :railties, :sidekiq, :rack, :"rack-timeout")
-    end
-  end
-
-  describe '.last_event_id' do
-    let(:message) { "Test message" }
-
-    it 'sends the result of Event.capture_message' do
-      expect(Raven.instance).to receive(:send_event).with(event)
-
-      Raven.capture_message("Test message", options)
-
-      expect(Raven.last_event_id).to eq(event.id)
-    end
-
-    it 'yields the event to a passed block' do
-      expect { |b| Raven.capture_message(message, options, &b) }.to yield_with_args(event)
     end
   end
 
