@@ -160,6 +160,8 @@ module Raven
       Raven::Processor::HTTPHeaders
     ].freeze
 
+    REQUIRED_CONFIG_KEYS = %w(server host path public_key secret_key project_id).freeze
+
     def initialize
       self.async = false
       self.context_lines = 3
@@ -257,9 +259,9 @@ module Raven
     alias sending_allowed? capture_allowed?
 
     def verify!
-      %w(server host path public_key secret_key project_id).each do |key|
-        raise(Error, "No #{key} specified") unless public_send key
-      end
+      return true if missing_config_keys.empty?
+
+      raise Error, "No #{missing_config_keys.first} specified"
     end
 
     def verify_messages
@@ -311,10 +313,13 @@ module Raven
     end
 
     def server_configured?
-      verify!
-      true
-    rescue Error
-      false
+      missing_config_keys.empty?
+    end
+
+    def missing_config_keys
+      REQUIRED_CONFIG_KEYS.map do |key|
+        key unless public_send key
+      end.compact
     end
 
     def capture_allowed_by_callback?(message_or_exc)
