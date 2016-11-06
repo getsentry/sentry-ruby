@@ -1,4 +1,4 @@
-require 'raven'
+require 'sentry-raven-without-integrations'
 
 require File.dirname(__FILE__) + "/support/test_rails_app/app.rb"
 require "rspec/rails"
@@ -16,25 +16,25 @@ end
 
 def build_exception_with_cause
   begin
-    1 / 0
-  rescue ZeroDivisionError
-    1 / 0
+    raise "exception a"
+  rescue
+    raise "exception b"
   end
-rescue ZeroDivisionError => exception
+rescue RuntimeError => exception
   return exception
 end
 
 def build_exception_with_two_causes
   begin
     begin
-      1 / 0
-    rescue ZeroDivisionError
-      1 / 0
+      raise "exception a"
+    rescue
+      raise "exception b"
     end
-  rescue ZeroDivisionError
-    1 / 0
+  rescue
+    raise "exception c"
   end
-rescue ZeroDivisionError => exception
+rescue RuntimeError => exception
   return exception
 end
 

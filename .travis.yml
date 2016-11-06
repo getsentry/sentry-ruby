@@ -1,7 +1,8 @@
 language: ruby
+sudo: required
+dist: trusty
 
 rvm:
-  - jruby-19mode
   - 1.9
   - 2.2.5
   - 2.3.1
@@ -13,16 +14,24 @@ gemfile:
   - gemfiles/rails42.gemfile
   - gemfiles/rails5.gemfile
 
-sudo: false
+addons:
+  apt:
+    packages:
+      - haveged
+
+before_install:
+  - service haveged start
 
 matrix:
   include:
-    - rvm: jruby-1.7.24
-      env: JRUBY_OPTS="--2.0"
+    - rvm: jruby-1.7.26
+      env: JRUBY_OPTS="--dev"
       gemfile: gemfiles/rails42.gemfile
-    - rvm: jruby-9.0.5.0
+    - rvm: jruby-9.1.5.0
+      env: JRUBY_OPTS="--dev -J-Djruby.launch.inproc=true -J-Xmx1024M"
       gemfile: gemfiles/rails42.gemfile
-    - rvm: jruby-9.0.5.0
+    - rvm: jruby-9.1.5.0
+      env: JRUBY_OPTS="--dev -J-Djruby.launch.inproc=true -J-Xmx1024M"
       gemfile: gemfiles/rails5.gemfile
   allow_failures:
     - rvm: ruby-head
@@ -35,6 +44,4 @@ matrix:
     - rvm: 2.4.0-preview2
       gemfile: gemfiles/rails32.gemfile
     - rvm: 1.9
-      gemfile: gemfiles/rails5.gemfile
-    - rvm: jruby-19mode
       gemfile: gemfiles/rails5.gemfile

@@ -1,3 +1,13 @@
+2.1.2
+-----
+
+* FIX: `sys_command` not falling back to Windows commands properly, logging output [@jmalves, @nateberkopec]
+
+2.1.1
+-----
+
+* FIX: Message params should accept nil [@jmalves, #570]
+
 2.1.0
 -----
 
