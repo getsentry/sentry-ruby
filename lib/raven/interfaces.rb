@@ -13,8 +13,10 @@ module Raven
       assert_required_properties_set!
     end
 
+    def assert_property_required!(property, value)
+    end
+
     def assert_required_properties_set!
-      super if @check_required
     end
 
     def self.name(value=nil)
