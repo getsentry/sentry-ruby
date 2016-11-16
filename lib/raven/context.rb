@@ -10,11 +10,11 @@ module Raven
       Thread.current[:sentry_context] = nil
     end
 
-    attr_accessor :extra, :os, :rack_env, :runtime, :tags, :user
+    attr_accessor :extra, :server_os, :rack_env, :runtime, :tags, :user
 
     def initialize
       self.extra = {}
-      self.os = self.class.os_context
+      self.server_os = self.class.os_context
       self.rack_env = nil
       self.runtime = self.class.runtime_context
       self.tags = {}

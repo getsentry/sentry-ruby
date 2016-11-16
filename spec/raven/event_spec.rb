@@ -62,8 +62,8 @@ describe Raven::Event do
       expect(hash[:sdk]).to eq("name" => "sentry-raven", "version" => Raven::VERSION)
     end
 
-    it 'has os' do
-      expect(hash[:contexts][:os].keys).to eq(%w(name version build kernel_version))
+    it 'has server os' do
+      expect(hash[:contexts][:server_os].keys).to eq(%w(name version build kernel_version))
     end
 
     it 'has runtime' do

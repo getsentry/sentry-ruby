@@ -26,7 +26,7 @@ module Raven
     attr_accessor :id, :timestamp, :time_spent, :level, :logger,
                   :culprit, :server_name, :release, :modules, :extra, :tags,
                   :context, :configuration, :checksum, :fingerprint, :environment,
-                  :os, :runtime, :breadcrumbs, :user, :backtrace
+                  :server_os, :runtime, :breadcrumbs, :user, :backtrace
 
     def initialize(init = {})
       @configuration = Raven.configuration
@@ -44,7 +44,7 @@ module Raven
       @modules       = list_gem_specs if @configuration.send_modules
       @user          = {} # TODO: contexts
       @extra         = {} # TODO: contexts
-      @os            = {} # TODO: contexts
+      @server_os     = {} # TODO: contexts
       @runtime       = {} # TODO: contexts
       @tags          = {} # TODO: contexts
       @checksum      = nil
@@ -68,7 +68,7 @@ module Raven
       @user = @context.user.merge(@user) # TODO: contexts
       @extra = @context.extra.merge(@extra) # TODO: contexts
       @tags = @configuration.tags.merge(@context.tags).merge(@tags) # TODO: contexts
-      @os = @context.os # TODO: contexts
+      @server_os = @context.server_os # TODO: contexts
       @runtime = @context.runtime # TODO: contexts
 
       # Some type coercion
@@ -250,7 +250,7 @@ module Raven
         :platform => PLATFORM,
         :sdk => SDK,
         :contexts => {
-          :os => @os,
+          :server_os => @server_os,
           :runtime => @runtime
         }
       }
