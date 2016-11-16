@@ -7,7 +7,7 @@ rvm:
   - 2.2.5
   - 2.3.1
   - ruby-head
-  - 2.4.0-preview2
+  - 2.4.0-preview3
 
 gemfile:
   - gemfiles/rails32.gemfile
@@ -35,13 +35,13 @@ matrix:
       gemfile: gemfiles/rails5.gemfile
   allow_failures:
     - rvm: ruby-head
-    - rvm: 2.4.0-preview2
+    - rvm: 2.4.0-preview3
   exclude:
     - rvm: 2.2
       gemfile: gemfiles/rails32.gemfile
     - rvm: ruby-head
       gemfile: gemfiles/rails32.gemfile
-    - rvm: 2.4.0-preview2
+    - rvm: 2.4.0-preview3
       gemfile: gemfiles/rails32.gemfile
     - rvm: 1.9
       gemfile: gemfiles/rails5.gemfile
