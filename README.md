@@ -57,6 +57,89 @@ rescue ZeroDivisionError => exception
 end
 ```
 
+### More configuration
+
+You're all set - but there's a few more settings you may want to know about too!
+
+#### DSN
+
+While we advise that you set your Sentry DSN through the `SENTRY_DSN` environment
+variable, there are two other configuration settings for controlling Raven:
+
+```ruby
+# DSN can be configured as a config setting instead.
+# Place in config/initializers or similar.
+Raven.configure do |config|
+  config.dsn = 'your_dsn'
+end
+```
+
+And, while not necessary if using `SENTRY_DSN`, you can also provide an `environments`
+setting. Raven will only capture events when `RACK_ENV` or `RAILS_ENV` matches
+an environment in the list.
+
+```ruby
+Raven.configure do |config|
+  config.environments = %w[staging production]
+end
+```
+
+#### async
+
+When an error or message occurs, the notification is immediately sent to Sentry. Raven can be configured to send asynchronously:
+
+```ruby
+config.async = lambda { |event|
+  Thread.new { Raven.send_event(event) }
+}
+```
+
+Using a thread to send events will be adequate for truly parallel Ruby platforms such as JRuby, though the benefit on MRI/CRuby will be limited. If the async callback raises an exception, Raven will attempt to send synchronously.
+
+We recommend creating a background job, using your background job processor, that will send Sentry notifications in the background. Rather than enqueuing an entire Raven::Event object, we recommend providing the Hash representation of an event as a job argument. Here’s an example for ActiveJob:
+
+```ruby
+config.async = lambda { |event|
+  SentryJob.perform_later(event.to_hash)
+}
+class SentryJob < ActiveJob::Base
+  queue_as :default
+
+  def perform(event)
+    Raven.send_event(event)
+  end
+end
+```
+
+#### transport_failure_callback
+
+If Raven fails to send an event to Sentry for any reason (either the Sentry server has returned a 4XX or 5XX response), this Proc or lambda will be called.
+
+```ruby
+config.transport_failure_callback = lambda { |event|
+  AdminMailer.email_admins("Oh god, it's on fire!", event).deliver_later
+}
+```
+
+#### Context
+
+Much of the usefulness of Sentry comes from additional context data with the events. Raven makes this very convenient by providing methods to set thread local context data that is then submitted automatically with all events.
+
+There are three primary methods for providing request context:
+
+```ruby
+# bind the logged in user
+Raven.user_context email: 'foo@example.com'
+
+# tag the request with something interesting
+Raven.tags_context interesting: 'yes'
+
+# provide a bit of additional context
+Raven.extra_context happiness: 'very'
+```
+
+For more information, see [Context](https://docs.sentry.io/clients/ruby/context/).
+
 ## More Information
 
 * [Documentation](https://docs.getsentry.com/hosted/clients/ruby/)
