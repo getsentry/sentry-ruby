@@ -1,3 +1,13 @@
+2.1.4
+-----
+
+* FIX: Remove `contexts` key, because it was disabling browser auto-tagging [#587, @nateberkopec]
+
+2.1.3
+-----
+
+* Move `os` context key to `server_os` [@nateberkopec]
+
 2.1.2
 -----
 
