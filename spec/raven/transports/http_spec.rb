@@ -34,4 +34,16 @@ describe Raven::Transports::HTTP do
 
     stubs.verify_stubbed_calls
   end
+
+  it 'should add header info message to the error' do
+    stubs = Faraday::Adapter::Test::Stubs.new do |stub|
+      stub.post('sentry/api/42/store/') { [400, { 'x-sentry-error' => 'error_in_header' }, 'error'] }
+    end
+    Raven.configure { |config| config.http_adapter = [:test, stubs] }
+
+    event = JSON.generate(Raven::Event.from_message("test").to_hash)
+    expect { Raven.client.send(:transport).send_event("test", event) }.to raise_error(Raven::Error, /error_in_header/)
+
+    stubs.verify_stubbed_calls
+  end
 end
