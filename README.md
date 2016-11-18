@@ -3,7 +3,7 @@
 [![Gem Version](https://img.shields.io/gem/v/sentry-raven.svg)](https://rubygems.org/gems/sentry-raven)
 [![Build Status](https://img.shields.io/travis/getsentry/raven-ruby/master.svg)](https://travis-ci.org/getsentry/raven-ruby)
 
-A client and integration layer for the [Sentry](https://github.com/getsentry/sentry) error reporting API.
+Official Ruby client for the [Sentry](https://github.com/getsentry/sentry) error reporting API.
 
 ## Requirements
 
@@ -24,12 +24,6 @@ Raven will capture and send exceptions to the Sentry server whenever its DSN is 
 ```bash
 # Set your SENTRY_DSN environment variable.
 export SENTRY_DSN=http://public:secret@example.com/project-id
-```
-```ruby
-# Or you can configure the client in the code (not recommended - keep your DSN secret!)
-Raven.configure do |config|
-  config.dsn = 'http://public:secret@example.com/project-id'
-end
 ```
 
 ### Raven doesn't report some kinds of data by default.
@@ -56,6 +50,16 @@ rescue ZeroDivisionError => exception
   Raven.capture_exception(exception)
 end
 ```
+
+### More configuration
+
+#### DSN
+
+#### async
+
+#### transport_failure_callback
+
+#### Context
 
 ## More Information
 

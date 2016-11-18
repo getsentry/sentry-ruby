@@ -1,7 +1,15 @@
 source "http://rubygems.org"
 
-gem "rails", "~> 4.2.0"
+# TODO: move this back to a stable version when one is released which allows
+# JSON >= 2.0
+gem "rails", github: "rails/rails", branch: "4-2-stable"
 gem "mime-types", "< 3.0.0"
 gem "sidekiq", "3.2.1"
+
+if RUBY_VERSION.to_f >= 2.0
+  gem "json", ">= 2.0.0"
+else
+  gem "json", "< 2.0.0"
+end
 
 gemspec :path => "../"
