@@ -68,8 +68,6 @@ module Raven
       @user = @context.user.merge(@user) # TODO: contexts
       @extra = @context.extra.merge(@extra) # TODO: contexts
       @tags = @configuration.tags.merge(@context.tags).merge(@tags) # TODO: contexts
-      @server_os = @context.server_os # TODO: contexts
-      @runtime = @context.runtime # TODO: contexts
 
       # Some type coercion
       @timestamp  = @timestamp.strftime('%Y-%m-%dT%H:%M:%S') if @timestamp.is_a?(Time)
@@ -248,11 +246,7 @@ module Raven
         :time_spent => @time_spent,
         :level => @level,
         :platform => PLATFORM,
-        :sdk => SDK,
-        :contexts => {
-          :server_os => @server_os,
-          :runtime => @runtime
-        }
+        :sdk => SDK
       }
 
       data[:logger] = @logger if @logger

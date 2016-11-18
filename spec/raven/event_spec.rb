@@ -51,7 +51,7 @@ describe Raven::Event do
     end
 
     it 'has extra data' do
-      expect(hash[:extra]).to eq('my_custom_variable' => 'value')
+      expect(hash[:extra]["my_custom_variable"]).to eq('value')
     end
 
     it 'has platform' do
@@ -63,11 +63,11 @@ describe Raven::Event do
     end
 
     it 'has server os' do
-      expect(hash[:contexts][:server_os].keys).to eq(%w(name version build kernel_version))
+      expect(hash[:extra][:server][:os].keys).to eq([:name, :version, :build, :kernel_version])
     end
 
     it 'has runtime' do
-      expect(hash[:contexts][:runtime]["version"]).to match(/ruby/)
+      expect(hash[:extra][:server][:runtime][:version]).to match(/ruby/)
     end
   end
 
@@ -128,8 +128,8 @@ describe Raven::Event do
     end
 
     it "merges extra data" do
-      expect(hash[:extra]).to eq('key' => 'value',
-                                 'my_custom_variable' => 'value')
+      expect(hash[:extra]['key']).to eq('value')
+      expect(hash[:extra]['my_custom_variable']).to eq('value')
     end
   end
 
@@ -309,9 +309,9 @@ describe Raven::Event do
     end
 
     it 'prioritizes event context over request context' do
-      expect(hash[:extra]).to eq('context_event_key' => 'event_value',
-                                 'context_key' => 'context_value',
-                                 'event_key' => 'event_value')
+      expect(hash[:extra]['context_event_key']).to eq('event_value')
+      expect(hash[:extra]['context_key']).to eq('context_value')
+      expect(hash[:extra]['event_key']).to eq('event_value')
     end
   end
 
@@ -333,9 +333,9 @@ describe Raven::Event do
     end
 
     it 'prioritizes event context over request context' do
-      expect(hash[:extra]).to eq('context_event_key' => 'event_value',
-                                 'context_key' => 'context_value',
-                                 'event_key' => 'event_value')
+      expect(hash[:extra]['context_event_key']).to eq('event_value')
+      expect(hash[:extra]['context_key']).to eq('context_value')
+      expect(hash[:extra]['event_key']).to eq('event_value')
     end
   end
 
