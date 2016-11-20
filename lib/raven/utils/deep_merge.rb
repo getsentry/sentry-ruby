@@ -1,3 +1,4 @@
+# rubocop:disable all
 module Raven
   module Utils
     # ported from ActiveSupport
@@ -26,3 +27,4 @@ module Raven
     end
   end
 end
+# rubocop:enable all
