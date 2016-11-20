@@ -3,6 +3,9 @@ dist: trusty
 sudo: false
 group: beta
 
+branches:
+  only: [master]
+  
 rvm:
   - 1.9
   - 2.2.5
