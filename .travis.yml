@@ -2,6 +2,7 @@ language: ruby
 dist: trusty
 sudo: false
 group: beta
+cache: bundler
 
 branches:
   only: [master]
