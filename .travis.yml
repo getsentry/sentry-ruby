@@ -1,6 +1,7 @@
 language: ruby
-sudo: required
 dist: trusty
+sudo: false
+group: beta
 
 rvm:
   - 1.9
