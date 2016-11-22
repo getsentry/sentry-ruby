@@ -41,6 +41,13 @@ describe Raven::Instance do
         subject.capture_type(message, options)
       end
 
+      it 'has an alias' do
+        expect(Raven::Event).to receive(:from_message).with(message, options)
+        expect(subject).to receive(:send_event).with(event)
+
+        subject.capture_message(message, options)
+      end
+
       it 'yields the event to a passed block' do
         expect { |b| subject.capture_type(message, options, &b) }.to yield_with_args(event)
       end
@@ -78,6 +85,13 @@ describe Raven::Instance do
         expect(subject).to receive(:send_event).with(event)
 
         subject.capture_type(exception, options)
+      end
+
+      it 'has an alias' do
+        expect(Raven::Event).to receive(:from_exception).with(exception, options)
+        expect(subject).to receive(:send_event).with(event)
+
+        subject.capture_exception(exception, options)
       end
 
       it 'yields the event to a passed block' do
