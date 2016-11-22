@@ -40,12 +40,15 @@ describe "Integration tests" do
       stub.post('sentry/api/42/store/') { [403, {}, 'Creation of this event was blocked'] }
     end
 
+    logger = Logger.new(StringIO.new)
+
     Raven.configure do |config|
       config.server = 'http://12345:67890@sentry.localdomain/sentry/42'
       config.http_adapter = [:test, stubs]
+      config.logger = logger
     end
 
-    expect(Raven.logger).to receive(:error).at_least(10).times
+    expect(logger).to receive(:error).at_least(10).times
     Raven.capture_exception(build_exception)
 
     stubs.verify_stubbed_calls

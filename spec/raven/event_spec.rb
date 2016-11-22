@@ -1,4 +1,5 @@
 require 'spec_helper'
+require 'raven/integrations/rack'
 
 describe Raven::Event do
   before do
@@ -192,6 +193,7 @@ describe Raven::Event do
     let(:hash) do
       config = Raven::Configuration.new
       config.tags = { 'key' => 'value' }
+      config.logger = Logger.new(nil)
 
       Raven::Event.new(
         :level => 'warning',
@@ -213,6 +215,7 @@ describe Raven::Event do
   context 'configuration tags unspecified' do
     it 'should not persist tags between unrelated events' do
       config = Raven::Configuration.new
+      config.logger = Logger.new(nil)
 
       Raven::Event.new(
         :level => 'warning',
@@ -238,6 +241,7 @@ describe Raven::Event do
   context 'tags hierarchy respected' do
     let(:hash) do
       config = Raven::Configuration.new
+      config.logger = Logger.new(nil)
       config.tags = {
         'configuration_context_event_key' => 'configuration_value',
         'configuration_context_key' => 'configuration_value',
@@ -343,6 +347,7 @@ describe Raven::Event do
     it 'should not touch the env object for an ignored environment' do
       Raven.configure do |config|
         config.current_environment = 'test'
+        config.logger = Logger.new(nil)
       end
       Raven.rack_context({})
       Raven::Event.new
@@ -463,7 +468,11 @@ describe Raven::Event do
         class SubExc < BaseExc; end
         module ExcTag; end
       end
-      let(:config) { Raven::Configuration.new }
+      let(:config) do
+        config = Raven::Configuration.new
+        config.logger = Logger.new(nil)
+        config
+      end
 
       context "invalid exclusion type" do
         it 'returns Raven::Event' do

@@ -32,7 +32,7 @@ module Raven
         return
       end
 
-      Raven.logger.debug "Sending event #{event[:event_id]} to Sentry"
+      configuration.logger.debug "Sending event #{event[:event_id]} to Sentry"
 
       content_type, encoded_data = encode(event)
 
@@ -97,12 +97,12 @@ module Raven
     def failed_send(e, event)
       @state.failure
       if e # exception was raised
-        Raven.logger.error "Unable to record event with remote Sentry server (#{e.class} - #{e.message})"
-        e.backtrace[0..10].each { |line| Raven.logger.error(line) }
+        configuration.logger.error "Unable to record event with remote Sentry server (#{e.class} - #{e.message})"
+        e.backtrace[0..10].each { |line| configuration.logger.error(line) }
       else
-        Raven.logger.error "Not sending event due to previous failure(s)."
+        configuration.logger.error "Not sending event due to previous failure(s)."
       end
-      Raven.logger.error("Failed to submit event: #{get_log_message(event)}")
+      configuration.logger.error("Failed to submit event: #{get_log_message(event)}")
       configuration.transport_failure_callback.call(event) if configuration.transport_failure_callback
     end
   end

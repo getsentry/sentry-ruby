@@ -14,6 +14,7 @@ describe Raven::Instance do
     allow(Raven::Event).to receive(:from_exception) { event }
 
     subject.configuration.dsn = "dummy://woopwoop"
+    subject.configuration.logger = Logger.new(nil)
   end
 
   describe '#context' do

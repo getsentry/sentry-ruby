@@ -160,6 +160,8 @@ module Raven
       Raven::Processor::HTTPHeaders
     ].freeze
 
+    LOG_PREFIX = "** [Raven] ".freeze
+
     def initialize
       self.async = false
       self.context_lines = 3
@@ -168,6 +170,7 @@ module Raven
       self.environments = []
       self.exclude_loggers = []
       self.excluded_exceptions = IGNORE_DEFAULT.dup
+      self.logger = ::Raven::Logger.new(STDOUT)
       self.open_timeout = 1
       self.processors = DEFAULT_PROCESSORS.dup
       self.proxy = nil
@@ -283,7 +286,7 @@ module Raven
         hash = JSON.parse(sys_dyno_info)
         hash && hash["release"] && hash["release"]["commit"]
       rescue JSON::JSONError
-        Raven.logger.error "Cannot parse Heroku JSON: #{sys_dyno_info}"
+        logger.error "Cannot parse Heroku JSON: #{sys_dyno_info}"
       end
     end
 

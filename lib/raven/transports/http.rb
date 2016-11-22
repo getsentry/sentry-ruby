@@ -34,7 +34,7 @@ module Raven
       def set_conn
         verify_configuration
 
-        Raven.logger.debug "Raven HTTP Transport connecting to #{configuration.server}"
+        configuration.logger.debug "Raven HTTP Transport connecting to #{configuration.server}"
 
         ssl_configuration = configuration.ssl || {}
         ssl_configuration[:verify] = configuration.ssl_verification
