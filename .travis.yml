@@ -9,8 +9,8 @@ branches:
   
 rvm:
   - 1.9
-  - 2.2.5
-  - 2.3.1
+  - 2.2.6
+  - 2.3.3
   - ruby-head
   - 2.4.0-preview3
 
@@ -32,16 +32,16 @@ matrix:
     - rvm: jruby-1.7.26
       env: JRUBY_OPTS="--dev"
       gemfile: gemfiles/rails42.gemfile
-    - rvm: jruby-9.1.5.0
+    - rvm: jruby-9.1.6.0
       env: JRUBY_OPTS="--dev -J-Djruby.launch.inproc=true -J-Xmx1024M"
       gemfile: gemfiles/rails42.gemfile
-    - rvm: jruby-9.1.5.0
+    - rvm: jruby-9.1.6.0
       env: JRUBY_OPTS="--dev -J-Djruby.launch.inproc=true -J-Xmx1024M"
       gemfile: gemfiles/rails5.gemfile
   allow_failures:
     - rvm: ruby-head
   exclude:
-    - rvm: 2.2
+    - rvm: 2.2.6
       gemfile: gemfiles/rails32.gemfile
     - rvm: ruby-head
       gemfile: gemfiles/rails32.gemfile
