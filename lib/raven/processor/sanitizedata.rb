@@ -15,6 +15,7 @@ module Raven
     end
 
     def process(value)
+      return value if value.frozen?
       value.each_with_object(value) { |(k, v), memo| memo[k] = sanitize(k, v) }
     end
 
