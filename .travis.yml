@@ -6,7 +6,7 @@ cache: bundler
 
 branches:
   only: [master]
-  
+
 rvm:
   - 1.9
   - 2.2.6
@@ -15,7 +15,6 @@ rvm:
   - 2.4.0-preview3
 
 gemfile:
-  - gemfiles/rails32.gemfile
   - gemfiles/rails42.gemfile
   - gemfiles/rails5.gemfile
 
