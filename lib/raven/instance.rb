@@ -135,6 +135,9 @@ module Raven
       end
     end
 
+    alias capture_message capture_type
+    alias capture_exception capture_type
+
     def last_event_id
       Thread.current["sentry_#{object_id}_last_event_id".to_sym]
     end
