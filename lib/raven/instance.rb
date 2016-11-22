@@ -61,7 +61,8 @@ module Raven
       if configuration.capture_allowed?
         logger.info "Raven #{VERSION} ready to catch errors"
       else
-        logger.info "Raven #{VERSION} configured not to capture errors."
+        reasons = configuration.verify_messages.join(', ')
+        logger.info "Raven #{VERSION} configured not to capture errors (#{reasons})."
       end
     end
 

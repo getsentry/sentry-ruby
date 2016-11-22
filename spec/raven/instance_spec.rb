@@ -13,7 +13,7 @@ describe Raven::Instance do
     allow(Raven::Event).to receive(:from_message) { event }
     allow(Raven::Event).to receive(:from_exception) { event }
 
-    subject.configuration.dsn = "dummy://woopwoop"
+    subject.configuration.dsn = "http://12345:67890@sentry.localdomain:3000/sentry/42"
   end
 
   describe '#context' do
@@ -184,36 +184,45 @@ describe Raven::Instance do
   end
 
   describe '#report_status' do
-    let(:ready_message) do
-      "Raven #{Raven::VERSION} ready to catch errors"
+    context 'when configured' do
+      let(:message) do
+        "Raven #{Raven::VERSION} ready to catch errors"
+      end
+
+      it 'logs a ready message' do
+        subject.configuration.silence_ready = false
+        expect(subject.configuration).to(
+          receive(:capture_allowed?).and_return(true)
+        )
+        expect(subject.logger).to receive(:info).with(message)
+        subject.report_status
+      end
     end
 
-    let(:not_ready_message) do
-      "Raven #{Raven::VERSION} configured not to capture errors."
+    context 'when "silence_ready" configuration is true' do
+      it 'logs nothing' do
+        subject.configuration.silence_ready = true
+        expect(subject.logger).not_to receive(:info)
+        subject.report_status
+      end
     end
 
-    it 'logs a ready message when configured' do
-      subject.configuration.silence_ready = false
-      expect(subject.configuration).to(
-        receive(:capture_allowed?).and_return(true)
-      )
-      expect(subject.logger).to receive(:info).with(ready_message)
-      subject.report_status
-    end
+    context 'when config does not send in current environment' do
+      let(:not_ready_message) do
+        "Raven #{Raven::VERSION} configured not to capture errors (current environment not listed)."
+      end
 
-    it 'logs not ready message if the config does not send in current environment' do
-      subject.configuration.silence_ready = false
-      expect(subject.configuration).to(
-        receive(:capture_allowed?).and_return(false)
-      )
-      expect(subject.logger).to receive(:info).with(not_ready_message)
-      subject.report_status
-    end
-
-    it 'logs nothing if "silence_ready" configuration is true' do
-      subject.configuration.silence_ready = true
-      expect(subject.logger).not_to receive(:info)
-      subject.report_status
+      it 'logs not ready message' do
+        subject.configuration.silence_ready = false
+        expect(subject.configuration).to(
+          receive(:capture_allowed?).and_return(false)
+        )
+        expect(subject.configuration).to(
+          receive(:verify_messages).and_return(['current environment not listed'])
+        )
+        expect(subject.logger).to receive(:info).with(not_ready_message)
+        subject.report_status
+      end
     end
   end
 

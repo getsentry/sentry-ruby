@@ -160,6 +160,8 @@ module Raven
       Raven::Processor::HTTPHeaders
     ].freeze
 
+    REQUIRED_CONFIG_KEYS = %w(server host path public_key secret_key project_id).freeze
+
     def initialize
       self.async = false
       self.context_lines = 3
@@ -248,7 +250,8 @@ module Raven
     end
 
     def capture_allowed?(message_or_exc = nil)
-      capture_in_current_environment? &&
+      server_configured? &&
+        capture_in_current_environment? &&
         capture_allowed_by_callback?(message_or_exc)
     end
 
@@ -256,9 +259,16 @@ module Raven
     alias sending_allowed? capture_allowed?
 
     def verify!
-      %w(server public_key secret_key project_id).each do |key|
-        raise(Error, "No #{key} specified") unless public_send key
-      end
+      return true if missing_config_keys.empty?
+
+      raise Error, "No #{missing_config_keys.first} specified"
+    end
+
+    def verify_messages
+      messages = []
+      messages << 'no server configured' unless server_configured?
+      messages << 'current environment not listed' unless capture_in_current_environment?
+      messages
     end
 
     def project_root=(root_dir)
@@ -299,7 +309,17 @@ module Raven
     end
 
     def capture_in_current_environment?
-      !!server && (environments.empty? || environments.include?(current_environment))
+      environments.empty? || environments.include?(current_environment)
+    end
+
+    def server_configured?
+      missing_config_keys.empty?
+    end
+
+    def missing_config_keys
+      REQUIRED_CONFIG_KEYS.map do |key|
+        key unless public_send key
+      end.compact
     end
 
     def capture_allowed_by_callback?(message_or_exc)
