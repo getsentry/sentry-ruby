@@ -40,7 +40,7 @@ module Raven
     end
 
     def logger
-      @logger ||= Logger.new
+      @logger ||= configuration.logger
     end
 
     # The configuration object.
@@ -111,7 +111,7 @@ module Raven
 
     def capture_type(obj, options = {})
       unless configuration.capture_allowed?(obj)
-        Raven.logger.debug("#{obj} excluded from capture due to environment or should_capture callback")
+        logger.debug("#{obj} excluded from capture due to environment or should_capture callback")
         return false
       end
 
@@ -124,7 +124,7 @@ module Raven
             # processors (esp ActiveJob) may not like weird types in the event hash
             configuration.async.call(evt.to_json_compatible)
           rescue => ex
-            Raven.logger.error("async event sending failed: #{ex.message}")
+            logger.error("async event sending failed: #{ex.message}")
             send_event(evt)
           end
         else

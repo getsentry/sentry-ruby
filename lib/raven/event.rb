@@ -95,11 +95,11 @@ module Raven
         configuration = options[:configuration] || Raven.configuration
         if exc.is_a?(Raven::Error)
           # Try to prevent error reporting loops
-          Raven.logger.info "Refusing to capture Raven error: #{exc.inspect}"
+          configuration.logger.info "Refusing to capture Raven error: #{exc.inspect}"
           return nil
         end
         if configuration[:excluded_exceptions].any? { |x| get_exception_class(x) === exc }
-          Raven.logger.info "User excluded error: #{exc.inspect}"
+          configuration.logger.info "User excluded error: #{exc.inspect}"
           return nil
         end
 

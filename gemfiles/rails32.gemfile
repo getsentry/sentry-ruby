@@ -1,6 +1,0 @@
-source "http://rubygems.org"
-
-gem "rails", ["~> 3.2.6", "!= 3.2.22.1"]
-gem "sidekiq", "3.2.1"
-
-gemspec :path => "../"

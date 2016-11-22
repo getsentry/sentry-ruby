@@ -2,25 +2,16 @@
 require 'logger'
 
 module Raven
-  class Logger
+  class Logger < ::Logger
     LOG_PREFIX = "** [Raven] ".freeze
+    PROGNAME   = "sentry".freeze
 
-    [
-      :fatal,
-      :error,
-      :warn,
-      :info,
-      :debug
-    ].each do |level|
-      define_method level do |*args, &block|
-        logger = Raven.configuration[:logger]
-        logger = ::Logger.new(STDOUT) if logger.nil?
-        return unless logger
-
-        msg = args[0] # Block-level default args is a 1.9 feature
-        msg ||= block.call if block
-
-        logger.send(level, "sentry") { "#{LOG_PREFIX}#{msg}" }
+    def initialize(*)
+      super
+      original_formatter = ::Logger::Formatter.new
+      @default_formatter = proc do |severity, datetime, _progname, msg|
+        msg = "#{LOG_PREFIX}#{msg}"
+        original_formatter.call(severity, datetime, PROGNAME, msg)
       end
     end
   end
