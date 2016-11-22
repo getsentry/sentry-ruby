@@ -103,7 +103,7 @@ Optional settings
 
     .. code-block:: ruby
 
-        config.processors = [Raven::Processor::SanitizeData]
+        config.processors = [MyOwnProcessor]
 
     Check out ``Raven::Processor::SanitizeData`` to see how a Processor is implemented.
 
