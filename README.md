@@ -7,7 +7,7 @@ A client and integration layer for the [Sentry](https://github.com/getsentry/sen
 
 ## Requirements
 
-We test on Ruby 1.9, 2.2 and 2.3 at the latest patchlevel/teeny version. Our Rails integration works with Rails 4.2+. JRuby support is experimental - check TravisCI to see if the build is passing or failing.
+We test on Ruby 1.9, 2.2 and 2.3 at the latest patchlevel/teeny version. We also support JRuby 1.7 and 9.0. Our Rails integration works with Rails 4.2+.
 
 ## Getting Started
 
