@@ -92,8 +92,9 @@ module Raven
     end
 
     def sys_command(command)
-      result = `#{command}` rescue nil
-      result.strip if result != "" && result
+      result = `#{command} 2>&1` rescue nil
+      return if result.nil? || result.empty? || $CHILD_STATUS.exitstatus != 0
+      result.strip
     end
   end
 end
