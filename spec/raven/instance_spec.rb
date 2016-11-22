@@ -3,7 +3,7 @@ require 'raven/instance'
 
 describe Raven::Instance do
   let(:event) { Raven::Event.new(:id => "event_id") }
-  let(:options) { double("options") }
+  let(:options) { { :key => "value" } }
   let(:context) { nil }
 
   subject { described_class.new(context) }
@@ -35,14 +35,20 @@ describe Raven::Instance do
       let(:message) { "Test message" }
 
       it 'sends the result of Event.capture_message' do
-        expect(Raven::Event).to receive(:from_message).with(message, options)
+        expect(Raven::Event).to receive(:from_message).with(message,
+                                                            :context => subject.context,
+                                                            :configuration => subject.configuration,
+                                                            :key => "value")
         expect(subject).to receive(:send_event).with(event)
 
         subject.capture_type(message, options)
       end
 
       it 'has an alias' do
-        expect(Raven::Event).to receive(:from_message).with(message, options)
+        expect(Raven::Event).to receive(:from_message).with(message,
+                                                            :context => subject.context,
+                                                            :configuration => subject.configuration,
+                                                            :key => "value")
         expect(subject).to receive(:send_event).with(event)
 
         subject.capture_message(message, options)
@@ -64,7 +70,10 @@ describe Raven::Instance do
       end
 
       it 'sends the result of Event.capture_type' do
-        expect(Raven::Event).to receive(:from_message).with(message, options)
+        expect(Raven::Event).to receive(:from_message).with(message,
+                                                            :context => subject.context,
+                                                            :configuration => subject.configuration,
+                                                            :key => "value")
         expect(subject).not_to receive(:send_event).with(event)
 
         expect(subject.configuration.async).to receive(:call).with(event.to_json_compatible)
@@ -81,14 +90,20 @@ describe Raven::Instance do
       let(:exception) { build_exception }
 
       it 'sends the result of Event.capture_exception' do
-        expect(Raven::Event).to receive(:from_exception).with(exception, options)
+        expect(Raven::Event).to receive(:from_exception).with(exception,
+                                                              :context => subject.context,
+                                                              :configuration => subject.configuration,
+                                                              :key => "value")
         expect(subject).to receive(:send_event).with(event)
 
         subject.capture_type(exception, options)
       end
 
       it 'has an alias' do
-        expect(Raven::Event).to receive(:from_exception).with(exception, options)
+        expect(Raven::Event).to receive(:from_exception).with(exception,
+                                                              :context => subject.context,
+                                                              :configuration => subject.configuration,
+                                                              :key => "value")
         expect(subject).to receive(:send_event).with(event)
 
         subject.capture_exception(exception, options)
@@ -111,7 +126,10 @@ describe Raven::Instance do
         end
 
         it 'sends the result of Event.capture_exception' do
-          expect(Raven::Event).to receive(:from_exception).with(exception, options)
+          expect(Raven::Event).to receive(:from_exception).with(exception,
+                                                                :context => subject.context,
+                                                                :configuration => subject.configuration,
+                                                                :key => "value")
           expect(subject).not_to receive(:send_event).with(event)
 
           expect(subject.configuration.async).to receive(:call).with(event.to_json_compatible)
@@ -133,7 +151,10 @@ describe Raven::Instance do
         end
 
         it 'sends the result of Event.capture_exception via fallback' do
-          expect(Raven::Event).to receive(:from_exception).with(exception, options)
+          expect(Raven::Event).to receive(:from_exception).with(exception,
+                                                                :context => subject.context,
+                                                                :configuration => subject.configuration,
+                                                                :key => "value")
 
           expect(subject.configuration.async).to receive(:call).with(event.to_json_compatible)
           subject.capture_type(exception, options)

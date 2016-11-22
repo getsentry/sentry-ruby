@@ -116,7 +116,7 @@ module Raven
       end
 
       message_or_exc = obj.is_a?(String) ? "message" : "exception"
-      if (evt = Event.send("from_" + message_or_exc, obj, options))
+      if (evt = Event.send("from_" + message_or_exc, obj, { :context => context, :configuration => configuration }.merge(options)))
         yield evt if block_given?
         if configuration.async?
           begin
