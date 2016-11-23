@@ -28,8 +28,8 @@ module Raven
                   :context, :configuration, :checksum, :fingerprint, :environment,
                   :server_os, :runtime, :breadcrumbs, :user, :backtrace
 
-    def initialize(init = {})
-      @configuration = Raven.configuration
+    def initialize(init = {}, configuration = Raven.configuration)
+      @configuration = configuration
       @interfaces    = {}
       @breadcrumbs   = Raven.breadcrumbs
       @context       = Raven.context
@@ -51,6 +51,7 @@ module Raven
       @fingerprint   = nil
       @environment   = @configuration.current_environment
 
+      init.each_pair { |key, val| public_send(key.to_s + "=", val) }
       yield self if block_given?
 
       if !self[:http] && @context.rack_env
@@ -62,8 +63,6 @@ module Raven
       if @context.rack_env # TODO: contexts
         @context.user[:ip_address] = calculate_real_ip_from_rack
       end
-
-      init.each_pair { |key, val| public_send(key.to_s + "=", val) }
 
       @user = @context.user.merge(@user) # TODO: contexts
       @extra = @context.extra.merge(@extra) # TODO: contexts
@@ -103,8 +102,7 @@ module Raven
           return nil
         end
 
-        new(options) do |evt|
-          evt.configuration = configuration
+        new(options, configuration) do |evt|
           evt.message = "#{exc.class}: #{exc.message}"
           evt.level = options[:level] || :error
 
@@ -118,8 +116,7 @@ module Raven
         message = message.byteslice(0...10_000) # Messages limited to 10kb
         configuration = options[:configuration] || Raven.configuration
 
-        new(options) do |evt|
-          evt.configuration = configuration
+        new(options, configuration) do |evt|
           evt.level = options[:level] || :error
           evt.message = message, options[:message_params] || []
           if options[:backtrace]
