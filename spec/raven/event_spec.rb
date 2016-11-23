@@ -193,7 +193,8 @@ describe Raven::Event do
     let(:hash) do
       config = Raven::Configuration.new
       config.tags = { 'key' => 'value' }
-      config.logger = Logger.new(nil)
+      config.release = "custom"
+      config.current_environment = "custom"
 
       Raven::Event.new(
         :level => 'warning',
@@ -209,6 +210,8 @@ describe Raven::Event do
     it 'merges tags data' do
       expect(hash[:tags]).to eq('key' => 'value',
                                 'foo' => 'bar')
+      expect(hash[:release]).to eq("custom")
+      expect(hash[:environment]).to eq("custom")
     end
   end
 
