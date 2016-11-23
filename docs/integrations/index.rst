@@ -11,6 +11,7 @@ features if you want.
 
    rails
    rack
+   puma
 
 The following integrations are available:
 
