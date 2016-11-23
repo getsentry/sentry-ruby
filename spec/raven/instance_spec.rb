@@ -3,18 +3,21 @@ require 'raven/instance'
 
 describe Raven::Instance do
   let(:event) { Raven::Event.new(:id => "event_id") }
-  let(:options) { double("options") }
+  let(:options) { { :key => "value" } }
   let(:context) { nil }
+  let(:configuration) do
+    config = Raven::Configuration.new
+    config.dsn = "dummy://woopwoop"
+    config.logger = Logger.new(nil)
+    config
+  end
 
-  subject { described_class.new(context) }
+  subject { described_class.new(context, configuration) }
 
   before do
     allow(subject).to receive(:send_event)
     allow(Raven::Event).to receive(:from_message) { event }
     allow(Raven::Event).to receive(:from_exception) { event }
-
-    subject.configuration.dsn = "dummy://woopwoop"
-    subject.configuration.logger = Logger.new(nil)
   end
 
   describe '#context' do

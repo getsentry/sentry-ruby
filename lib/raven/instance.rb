@@ -19,16 +19,15 @@ module Raven
   #     end
   #   end
   class Instance
-    # The client object is responsible for delivering formatted data to the
-    # Sentry server. Must respond to #send. See Raven::Client.
+    # See Raven::Client.
     attr_writer :client
 
-    # A Raven configuration object. Must act like a hash and return sensible
-    # values for all Raven configuration options. See Raven::Configuration.
-    attr_writer :configuration
+    # See Raven::Configuration.
+    attr_accessor :configuration
 
-    def initialize(context = nil)
+    def initialize(context = nil, config = nil)
       @context = @explicit_context = context
+      self.configuration = config || Configuration.new
     end
 
     def context
@@ -40,13 +39,7 @@ module Raven
     end
 
     def logger
-      @logger ||= configuration.logger
-    end
-
-    # The configuration object.
-    # @see Raven.configure
-    def configuration
-      @configuration ||= Configuration.new
+      configuration.logger
     end
 
     # The client object is responsible for delivering formatted data to the
@@ -116,6 +109,8 @@ module Raven
       end
 
       message_or_exc = obj.is_a?(String) ? "message" : "exception"
+      options[:configuration] = configuration
+      options[:context] = context
       if (evt = Event.send("from_" + message_or_exc, obj, options))
         yield evt if block_given?
         if configuration.async?

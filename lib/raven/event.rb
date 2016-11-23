@@ -29,10 +29,10 @@ module Raven
                   :server_os, :runtime, :breadcrumbs, :user, :backtrace
 
     def initialize(init = {})
-      @configuration = Raven.configuration
+      @configuration = init[:configuration] || Raven.configuration
       @interfaces    = {}
-      @breadcrumbs   = Raven.breadcrumbs
-      @context       = Raven.context
+      @breadcrumbs   = init[:breadcrumbs] || Raven.breadcrumbs
+      @context       = init[:context] || Raven.context
       @id            = SecureRandom.uuid.delete("-")
       @timestamp     = Time.now.utc
       @time_spent    = nil
