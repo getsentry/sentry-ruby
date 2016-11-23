@@ -60,37 +60,44 @@ describe Raven::Configuration do
   context 'being initialized with a current environment' do
     before(:each) do
       subject.current_environment = 'test'
-      subject.server = 'http://sentry.localdomain/sentry'
+      subject.server = 'http://12345:67890@sentry.localdomain:3000/sentry/42'
     end
 
     it 'should send events if test is whitelisted' do
       subject.environments = %w(test)
+      subject.capture_allowed?
+      puts subject.errors
       expect(subject.capture_allowed?).to eq(true)
     end
 
     it 'should not send events if test is not whitelisted' do
       subject.environments = %w(not_test)
       expect(subject.capture_allowed?).to eq(false)
+      expect(subject.errors).to eq(["Not configured to send/capture in environment 'test'"])
     end
   end
 
   context 'with a should_capture callback configured' do
     before(:each) do
       subject.should_capture = ->(exc_or_msg) { exc_or_msg != "dont send me" }
-      subject.server = 'http://sentry.localdomain/sentry'
+      subject.server = 'http://12345:67890@sentry.localdomain:3000/sentry/42'
     end
 
     it 'should not send events if should_capture returns false' do
       expect(subject.capture_allowed?("dont send me")).to eq(false)
+      expect(subject.errors).to eq(["should_capture returned false"])
       expect(subject.capture_allowed?("send me")).to eq(true)
     end
   end
 
-  it "should verify server configuration, looking for missing keys" do
-    expect { subject.verify! }.to raise_error(Raven::Error, "No server specified")
+  context "with an invalid server" do
+    before(:each) do
+      subject.server = 'dummy://trololo'
+    end
 
-    subject.server, subject.public_key, subject.secret_key, subject.project_id = "", "", "", ""
-
-    subject.verify!
+    it 'captured_allowed returns false' do
+      expect(subject.capture_allowed?).to eq(false)
+      expect(subject.errors).to eq(["No public_key specified", "No secret_key specified", "No project_id specified"])
+    end
   end
 end

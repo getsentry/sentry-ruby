@@ -12,12 +12,6 @@ module Raven
       def send_event # (auth_header, data, options = {})
         raise NotImplementedError, 'Abstract method not implemented'
       end
-
-      protected
-
-      def verify_configuration
-        configuration.verify!
-      end
     end
   end
 end

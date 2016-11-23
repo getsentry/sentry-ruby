@@ -15,6 +15,10 @@ module Raven
       end
 
       def send_event(auth_header, data, options = {})
+        unless configuration.sending_allowed?
+          logger.debug("Event not sent: #{configuration.error_messages}")
+        end
+
         project_id = configuration[:project_id]
         path = configuration[:path] + "/"
 
@@ -32,8 +36,6 @@ module Raven
       private
 
       def set_conn
-        verify_configuration
-
         configuration.logger.debug "Raven HTTP Transport connecting to #{configuration.server}"
 
         ssl_configuration = configuration.ssl || {}

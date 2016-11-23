@@ -138,6 +138,9 @@ module Raven
     # E.g. lambda { |event| Thread.new { MyJobProcessor.send_email(event) } }
     attr_reader :transport_failure_callback
 
+    # Errors object - an Array that contains error messages. See #
+    attr_reader :errors
+
     IGNORE_DEFAULT = [
       'AbstractController::ActionNotFound',
       'ActionController::InvalidAuthenticityToken',
@@ -251,17 +254,21 @@ module Raven
     end
 
     def capture_allowed?(message_or_exc = nil)
-      capture_in_current_environment? &&
-        capture_allowed_by_callback?(message_or_exc)
+      @errors = []
+      @errors = valid? +
+                capture_in_current_environment? +
+                capture_allowed_by_callback?(message_or_exc)
+      if @errors.any?
+        false
+      else
+        true
+      end
     end
-
     # If we cannot capture, we cannot send.
     alias sending_allowed? capture_allowed?
 
-    def verify!
-      %w(server public_key secret_key project_id).each do |key|
-        raise(Error, "No #{key} specified") unless public_send key
-      end
+    def error_messages
+      errors.join(", ")
     end
 
     def project_root=(root_dir)
@@ -302,12 +309,23 @@ module Raven
     end
 
     def capture_in_current_environment?
-      !!server && (environments.empty? || environments.include?(current_environment))
+      if environments.any? && !environments.include?(current_environment)
+        ["Not configured to send/capture in environment '#{current_environment}'"]
+      else
+        []
+      end
     end
 
     def capture_allowed_by_callback?(message_or_exc)
-      return true if !should_capture || message_or_exc.nil?
-      should_capture.call(*[message_or_exc])
+      return [] if !should_capture || message_or_exc.nil? || should_capture.call(*[message_or_exc])
+      ["should_capture returned false"]
+    end
+
+    def valid?
+      err = %w(server host path public_key secret_key project_id).map do |key|
+        "No #{key} specified" unless public_send(key)
+      end
+      err.compact
     end
 
     # Try to resolve the hostname to an FQDN, but fall back to whatever

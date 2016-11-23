@@ -7,7 +7,7 @@ describe Raven::Instance do
   let(:context) { nil }
   let(:configuration) do
     config = Raven::Configuration.new
-    config.dsn = "dummy://woopwoop"
+    config.dsn = "dummy://12345:67890@sentry.localdomain:3000/sentry/42"
     config.logger = Logger.new(nil)
     config
   end
@@ -198,19 +198,17 @@ describe Raven::Instance do
 
     it 'logs a ready message when configured' do
       subject.configuration.silence_ready = false
-      expect(subject.configuration).to(
-        receive(:capture_allowed?).and_return(true)
-      )
+
       expect(subject.logger).to receive(:info).with(ready_message)
       subject.report_status
     end
 
     it 'logs not ready message if the config does not send in current environment' do
       subject.configuration.silence_ready = false
-      expect(subject.configuration).to(
-        receive(:capture_allowed?).and_return(false)
+      subject.configuration.environments = ["production"]
+      expect(subject.logger).to receive(:info).with(
+        "Raven 2.1.4 configured not to capture errors: Not configured to send/capture in environment 'default'"
       )
-      expect(subject.logger).to receive(:info).with(not_ready_message)
       subject.report_status
     end
 
