@@ -5,7 +5,28 @@ In Rails, all uncaught exceptions will be automatically reported.
 
 We support Rails 3 and newer.
 
-You'll still want to ensure you've disabled anything that would prevent
+Installation
+------------
+
+Install the SDK via Rubygems by adding it to your ``Gemfile``:
+
+.. sourcecode:: ruby
+
+    gem "sentry-raven"
+
+Configuration
+-------------
+
+Open up ``config/application.rb`` and configure the DSN, and any other :doc:`settings <../../config>`
+you need:
+
+.. sourcecode:: ruby
+
+    Raven.configure do |config|
+      config.dsn = '___DSN___'
+    end
+
+You'll also to ensure you've disabled anything that would prevent
 errors from being propagated to the ``Raven::Rack`` middleware, ``like
 ActionDispatch::ShowExceptions``:
 
