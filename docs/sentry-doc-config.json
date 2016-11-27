@@ -25,7 +25,6 @@
       "type": "framework",
       "doc_link": "integrations/rails/",
       "wizard": [
-        "index#installation",
         "integrations/rails#ruby-on-rails"
       ]
     }

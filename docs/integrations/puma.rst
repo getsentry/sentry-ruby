@@ -1,9 +1,22 @@
 Puma
-===================
+====
+
+Installation
+------------
+
+Install the SDK via Rubygems by adding it to your ``Gemfile``:
+
+.. sourcecode:: ruby
+
+    gem "sentry-raven"
+
+Configuration
+-------------
 
 Puma provides a config option for handling low level errors.
 
 .. sourcecode:: ruby
+
     # in your puma.rb config
     lowlevel_error_handler do |ex, env|
       Raven.capture_exception(
