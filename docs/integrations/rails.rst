@@ -17,7 +17,7 @@ Install the SDK via Rubygems by adding it to your ``Gemfile``:
 Configuration
 -------------
 
-Open up ``config/application.rb`` and configure the DSN, and any other :doc:`settings <../../config>`
+Open up ``config/application.rb`` and configure the DSN, and any other :doc:`settings <../config>`
 you need:
 
 .. sourcecode:: ruby
