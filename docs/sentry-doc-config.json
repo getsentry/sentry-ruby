@@ -16,7 +16,6 @@
       "type": "framework",
       "doc_link": "integrations/rack/",
       "wizard": [
-        "index#installation",
         "integrations/rack#rack-sinatra-etc"
       ]
     },
