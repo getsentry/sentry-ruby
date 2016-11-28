@@ -26,13 +26,14 @@ module Raven
     attr_accessor :id, :timestamp, :time_spent, :level, :logger,
                   :culprit, :server_name, :release, :modules, :extra, :tags,
                   :context, :configuration, :checksum, :fingerprint, :environment,
-                  :server_os, :runtime, :breadcrumbs, :user, :backtrace
+                  :server_os, :runtime, :breadcrumbs, :user, :backtrace, :linecache
 
     def initialize(init = {})
       @configuration = init[:configuration] || Raven.configuration
       @interfaces    = {}
       @breadcrumbs   = init[:breadcrumbs] || Raven.breadcrumbs
       @context       = init[:context] || Raven.context
+      @linecache     = @configuration.linecache
       @id            = SecureRandom.uuid.delete("-")
       @timestamp     = Time.now.utc
       @time_spent    = nil
@@ -213,10 +214,6 @@ module Raven
 
         evt.culprit = evt.get_culprit(int.frames)
       end
-
-      # Because linecache can go to hell
-      def _source_lines(_path, _from, _to)
-      end
     end
 
     def list_gem_specs
@@ -270,11 +267,7 @@ module Raven
     end
 
     def get_file_context(filename, lineno, context)
-      return nil, nil, nil unless Raven::LineCache.valid_file?(filename)
-      lines = Array.new(2 * context + 1) do |i|
-        Raven::LineCache.getline(filename, lineno - context + i)
-      end
-      [lines[0..(context - 1)], lines[context], lines[(context + 1)..-1]]
+      linecache.get_file_context(filename, lineno, context)
     end
 
     def get_culprit(frames)

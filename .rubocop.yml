@@ -10,7 +10,7 @@ Metrics/ClassLength:
   CountComments: false
 
 Metrics/AbcSize:
-  Max: 57
+  Max: 58
 
 Metrics/CyclomaticComplexity:
   Max: 13
