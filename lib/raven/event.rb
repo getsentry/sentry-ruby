@@ -29,27 +29,27 @@ module Raven
                   :server_os, :sources, :runtime, :breadcrumbs, :user, :backtrace
 
     def initialize(init = {})
-      @configuration = init[:configuration] || Raven.configuration
-      @interfaces    = {}
-      @breadcrumbs   = init[:breadcrumbs] || Raven.breadcrumbs
-      @context       = init[:context] || Raven.context
-      @id            = SecureRandom.uuid.delete("-")
-      @timestamp     = Time.now.utc
-      @time_spent    = nil
-      @level         = :error
-      @logger        = ''
-      @culprit       = nil
+      @interfaces = {}
+
+      {
+        :configuration => Raven.configuration,
+        :breadcrumbs   => Raven.breadcrumbs,
+        :context       => Raven.context,
+        :id            => SecureRandom.uuid.delete("-"),
+        :timestamp     => Time.now.utc,
+        :level         => :error,
+        :logger        => '',
+        :user          => {}, # TODO: contexts
+        :extra         => {}, # TODO: contexts
+        :server_os     => {}, # TODO: contexts
+        :sources       => {},
+        :runtime       => {}, # TODO: contexts
+        :tags          => {}, # TODO: contexts
+      }.merge(init).each_pair { |key, val| public_send(key.to_s + "=", val) }
+
       @server_name   = @configuration.server_name
       @release       = @configuration.release
       @modules       = list_gem_specs if @configuration.send_modules
-      @user          = {} # TODO: contexts
-      @extra         = {} # TODO: contexts
-      @server_os     = {} # TODO: contexts
-      @sources       = init[:sources] || {}
-      @runtime       = {} # TODO: contexts
-      @tags          = {} # TODO: contexts
-      @checksum      = nil
-      @fingerprint   = nil
       @environment   = @configuration.current_environment
 
       yield self if block_given?
