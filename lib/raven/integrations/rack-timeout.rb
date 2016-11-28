@@ -1,4 +1,3 @@
-# rubocop:disable Style/FileName
 # We need to do this because of the way integration loading works
 require "rack/timeout/base"
 

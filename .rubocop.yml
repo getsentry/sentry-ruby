@@ -1,3 +1,10 @@
+AllCops:
+   Include:
+     - 'lib/**/*.rb'
+     - 'spec/**/*.rb'
+   Exclude:
+     - 'examples/**/*'
+
 Metrics/ClassLength:
   Max: 248
   CountComments: false
