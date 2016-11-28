@@ -4,7 +4,7 @@ require 'raven/integrations/sidekiq'
 describe Raven::Sidekiq do
   before(:all) do
     Raven.configure do |config|
-      config.dsn = 'dummy://notaserver'
+      config.dsn = 'dummy://12345:67890@sentry.localdomain:3000/sentry/42'
     end
   end
 

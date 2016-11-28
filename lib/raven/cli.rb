@@ -23,8 +23,6 @@ module Raven
         Raven.configuration.current_environment = env_name
       end
 
-      Raven.configuration.verify!
-
       Raven.logger.debug "Sending a test event:"
       Raven.logger.debug ""
 

@@ -54,7 +54,7 @@ module Raven
       if configuration.capture_allowed?
         logger.info "Raven #{VERSION} ready to catch errors"
       else
-        logger.info "Raven #{VERSION} configured not to capture errors."
+        logger.info "Raven #{VERSION} configured not to capture errors: #{configuration.error_messages}"
       end
     end
 
@@ -104,7 +104,7 @@ module Raven
 
     def capture_type(obj, options = {})
       unless configuration.capture_allowed?(obj)
-        logger.debug("#{obj} excluded from capture due to environment or should_capture callback")
+        logger.debug("#{obj} excluded from capture: #{configuration.error_messages}")
         return false
       end
 

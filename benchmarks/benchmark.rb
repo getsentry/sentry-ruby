@@ -18,8 +18,8 @@ TestApp.configure do |config|
 end
 
 Raven.configure do |config|
-  config.logger = false
-  config.dsn = "dummy://woopwoop"
+  config.logger = Logger.new(nil)
+  config.dsn = "dummy://12345:67890@sentry.localdomain:3000/sentry/42"
 end
 
 TestApp.initialize!
