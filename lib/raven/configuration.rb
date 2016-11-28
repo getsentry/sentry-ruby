@@ -119,6 +119,10 @@ module Raven
     # Silences ready message when true.
     attr_accessor :silence_ready
 
+    # Map of filename to Array of source lines
+    # for sources not easily read off disk
+    attr_accessor :sources
+
     # SSL settings passed directly to Faraday's ssl option
     attr_accessor :ssl
 

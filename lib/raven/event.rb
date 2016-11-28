@@ -26,29 +26,30 @@ module Raven
     attr_accessor :id, :timestamp, :time_spent, :level, :logger,
                   :culprit, :server_name, :release, :modules, :extra, :tags,
                   :context, :configuration, :checksum, :fingerprint, :environment,
-                  :server_os, :runtime, :breadcrumbs, :user, :backtrace
+                  :server_os, :sources, :runtime, :breadcrumbs, :user, :backtrace
 
     def initialize(init = {})
-      @configuration = init[:configuration] || Raven.configuration
-      @interfaces    = {}
-      @breadcrumbs   = init[:breadcrumbs] || Raven.breadcrumbs
-      @context       = init[:context] || Raven.context
-      @id            = SecureRandom.uuid.delete("-")
-      @timestamp     = Time.now.utc
-      @time_spent    = nil
-      @level         = :error
-      @logger        = ''
-      @culprit       = nil
+      @interfaces = {}
+
+      {
+        :configuration => Raven.configuration,
+        :breadcrumbs   => Raven.breadcrumbs,
+        :context       => Raven.context,
+        :id            => SecureRandom.uuid.delete("-"),
+        :timestamp     => Time.now.utc,
+        :level         => :error,
+        :logger        => '',
+        :user          => {}, # TODO: contexts
+        :extra         => {}, # TODO: contexts
+        :server_os     => {}, # TODO: contexts
+        :sources       => {},
+        :runtime       => {}, # TODO: contexts
+        :tags          => {}, # TODO: contexts
+      }.merge(init).each_pair { |key, val| public_send(key.to_s + "=", val) }
+
       @server_name   = @configuration.server_name
       @release       = @configuration.release
       @modules       = list_gem_specs if @configuration.send_modules
-      @user          = {} # TODO: contexts
-      @extra         = {} # TODO: contexts
-      @server_os     = {} # TODO: contexts
-      @runtime       = {} # TODO: contexts
-      @tags          = {} # TODO: contexts
-      @checksum      = nil
-      @fingerprint   = nil
       @environment   = @configuration.current_environment
 
       yield self if block_given?
@@ -270,10 +271,19 @@ module Raven
     end
 
     def get_file_context(filename, lineno, context)
-      return nil, nil, nil unless Raven::LineCache.valid_file?(filename)
+      return nil, nil, nil unless sources[filename] || Raven::LineCache.valid_file?(filename)
+
       lines = Array.new(2 * context + 1) do |i|
-        Raven::LineCache.getline(filename, lineno - context + i)
+        n = lineno - context + i
+        next if n < 1
+
+        if sources[filename]
+          sources[filename][n - 1]
+        else
+          Raven::LineCache.getline(filename, n)
+        end
       end
+
       [lines[0..(context - 1)], lines[context], lines[(context + 1)..-1]]
     end
 
