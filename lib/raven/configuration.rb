@@ -38,6 +38,11 @@ module Raven
     # The Faraday adapter to be used. Will default to Net::HTTP when not set.
     attr_accessor :http_adapter
 
+    # You may provide your own LineCache for matching paths with source files.
+    # This may be useful if you need to get source code from places other than
+    # the disk. See Raven::LineCache for the required interface you must implement.
+    attr_accessor :linecache
+
     # Logger used by Raven. In Rails, this is the Rails logger, otherwise
     # Raven provides its own Raven::Logger.
     attr_accessor :logger
@@ -173,6 +178,7 @@ module Raven
       self.environments = []
       self.exclude_loggers = []
       self.excluded_exceptions = IGNORE_DEFAULT.dup
+      self.linecache = ::Raven::LineCache.new
       self.logger = ::Raven::Logger.new(STDOUT)
       self.open_timeout = 1
       self.processors = DEFAULT_PROCESSORS.dup
