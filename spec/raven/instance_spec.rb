@@ -207,7 +207,7 @@ describe Raven::Instance do
       subject.configuration.silence_ready = false
       subject.configuration.environments = ["production"]
       expect(subject.logger).to receive(:info).with(
-        "Raven 2.1.4 configured not to capture errors: Not configured to send/capture in environment 'default'"
+        "Raven #{Raven::VERSION} configured not to capture errors: Not configured to send/capture in environment 'default'"
       )
       subject.report_status
     end

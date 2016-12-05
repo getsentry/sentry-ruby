@@ -1,3 +1,13 @@
+2.2.0
+-----
+
+* ENHANCEMENT: Sentry server errors now return some information about the response headers. [#585, @rafadc]
+* BUGFIX/ENHANCEMENT: Frozen objects are no longer sanitized. This prevents some bugs, but you can now also freeze objects if you don't want them to be sanitized by the SanitizeData processor. [#594, @nateberkopec]
+* ENHANCEMENT: The ability to use Raven::Instance alone is greatly improved. You can now call #capture_exception directly on an Instance (#595), give it it's own Logger (#599), and set it's own config which will be used when creating Events (#601). Thanks to
+* ENHANCEMENT: You may now provide your own LineCache-like class to Raven. This is useful if you have source code which is not available on disk. [#606, @nateberkopec]
+* BUGFIX: Raven no longer emits anything to STDOUT if a system command fails [#596, @nateberkopec]
+* ENHANCEMENT: Raven now tells you exactly why it will not send an event in the logs [#602, @nateberkopec]
+
 2.1.4
 -----
 
