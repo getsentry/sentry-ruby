@@ -6,17 +6,21 @@ module Raven
     DEFAULT_FIELDS = %w(authorization password passwd secret ssn social(.*)?sec).freeze
     CREDIT_CARD_RE = /^(?:\d[ -]*?){13,16}$/
 
-    attr_accessor :sanitize_fields, :sanitize_credit_cards
+    attr_accessor :sanitize_fields, :sanitize_credit_cards, :excluded_fields
 
     def initialize(client)
       super
       self.sanitize_fields = client.configuration.sanitize_fields
       self.sanitize_credit_cards = client.configuration.sanitize_credit_cards
+      self.excluded_fields = client.configuration.excluded_fields
     end
 
     def process(value)
       return value if value.frozen?
-      value.each_with_object(value) { |(k, v), memo| memo[k] = sanitize(k, v) }
+      value.each_with_object(value) do |(k, v), memo|
+        next if excluded_fields.include?(k.to_s)
+        memo[k] = sanitize(k, v)
+      end
     end
 
     def sanitize(k, v)
