@@ -1,4 +1,3 @@
-require 'logger'
 require 'uri'
 
 module Raven
@@ -274,6 +273,7 @@ module Raven
     alias sending_allowed? capture_allowed?
 
     def error_messages
+      @errors = [errors[0]] + errors[1..-1].map(&:downcase) # fix case of all but first
       errors.join(", ")
     end
 
@@ -328,6 +328,7 @@ module Raven
     end
 
     def valid?
+      return ["DSN not set"] unless server
       err = %w(server host path public_key secret_key project_id).map do |key|
         "No #{key} specified" unless public_send(key)
       end

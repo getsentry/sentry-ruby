@@ -34,8 +34,8 @@ module Raven
 
     config.after_initialize do
       Raven.configure do |config|
-        config.logger ||= ::Rails.logger
         config.project_root ||= ::Rails.root
+        config.logger ||= ::Rails.logger
         config.release ||= config.detect_release # if project_root has changed, need to re-check
       end
 
