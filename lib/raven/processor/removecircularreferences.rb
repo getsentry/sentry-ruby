@@ -1,14 +1,16 @@
 module Raven
   class Processor::RemoveCircularReferences < Processor
-    def process(v, visited = [])
-      return "(...)" if visited.include?(v.__id__)
-      visited += [v.__id__]
-      if v.is_a?(Hash)
-        v.each_with_object({}) { |(k, v_), memo| memo[k] = process(v_, visited) }
-      elsif v.is_a?(Array)
-        v.map { |v_| process(v_, visited) }
+    def process(value, visited = [])
+      return "(...)" if visited.include?(value.__id__)
+      visited << value.__id__ if value.is_a?(Array) || value.is_a?(Hash)
+
+      case value
+      when Hash
+        !value.frozen? ? value.merge!(value) { |_, v| process v, visited } : value.merge(value) { |_, v| process v, visited }
+      when Array
+        !value.frozen? ? value.map! { |v| process v, visited } : value.map { |v| process v, visited }
       else
-        v
+        value
       end
     end
   end

@@ -111,15 +111,6 @@ describe Raven::Processor::SanitizeData do
     expect { JSON.parse(result["data"]["invalid"]) }.to raise_exception(JSON::ParserError)
   end
 
-  it 'should not sanitize frozen objects' do
-    data = {
-      'ccnumba' => '4242424242424242'
-    }.freeze
-
-    result = @processor.process(data)
-    expect(result["ccnumba"]).to eq('4242424242424242')
-  end
-
   it 'should filter credit card values' do
     data = {
       'ccnumba' => '4242424242424242',

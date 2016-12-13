@@ -41,8 +41,31 @@ describe JSON do
     expect(JSON.parse("[123e090000000]")).to eq [+1.0 / 0.0]
   end
 
-  it 'it raises the correct error on strings that look like incomplete objects' do
-    expect { JSON.parse("{") }.to raise_error(JSON::ParserError)
-    expect { JSON.parse("[") }.to raise_error(JSON::ParserError)
+  if RUBY_VERSION.to_f >= 2.0 # 1.9 just hangs on this.
+    it 'it raises the correct error on strings that look like incomplete objects' do
+      expect { JSON.parse("{") }.to raise_error(JSON::ParserError)
+      expect { JSON.parse("[") }.to raise_error(JSON::ParserError)
+    end
+
+    it "raises an error on bad UTF8 input" do
+      expect do
+        JSON.parse("invalid utf8 string goes here\255".force_encoding('UTF-8'))
+      end.to raise_error(JSON::ParserError)
+    end
+
+    it "blows up on circular references" do
+      data = {}
+      data['data'] = data
+      data['ary'] = []
+      data['ary'].push('x' => data['ary'])
+      data['ary2'] = data['ary']
+      data['leave intact'] = { 'not a circular reference' => true }
+
+      if RUBY_PLATFORM == 'java'
+        expect { JSON.dump(data) }.to raise_error
+      else
+        expect { JSON.dump(data) }.to raise_error(SystemStackError)
+      end
+    end
   end
 end

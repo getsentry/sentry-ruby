@@ -12,5 +12,5 @@ group :development do
   gem "pry-coolline"
   gem "benchmark-ips"
   gem "benchmark-ipsa"
-  gem "yajl-ruby", :platforms => :mri
+  gem "ruby-prof"
 end
