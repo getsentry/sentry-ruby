@@ -260,14 +260,10 @@ module Raven
 
     def capture_allowed?(message_or_exc = nil)
       @errors = []
-      @errors = valid? +
-                capture_in_current_environment? +
-                capture_allowed_by_callback?(message_or_exc)
-      if @errors.any?
-        false
-      else
-        true
-      end
+
+      valid? &&
+        capture_in_current_environment? &&
+        capture_allowed_by_callback?(message_or_exc)
     end
     # If we cannot capture, we cannot send.
     alias sending_allowed? capture_allowed?
@@ -315,24 +311,27 @@ module Raven
     end
 
     def capture_in_current_environment?
-      if environments.any? && !environments.include?(current_environment)
-        ["Not configured to send/capture in environment '#{current_environment}'"]
-      else
-        []
-      end
+      return true unless environments.any? && !environments.include?(current_environment)
+      @errors << "Not configured to send/capture in environment '#{current_environment}'"
+      false
     end
 
     def capture_allowed_by_callback?(message_or_exc)
-      return [] if !should_capture || message_or_exc.nil? || should_capture.call(*[message_or_exc])
-      ["should_capture returned false"]
+      return true if !should_capture || message_or_exc.nil? || should_capture.call(*[message_or_exc])
+      @errors << "should_capture returned false"
+      false
     end
 
     def valid?
-      return ["DSN not set"] unless server
-      err = %w(server host path public_key secret_key project_id).map do |key|
-        "No #{key} specified" unless public_send(key)
+      return true if %w(server host path public_key secret_key project_id).all? { |k| public_send(k) }
+      if server
+        %w(server host path public_key secret_key project_id).map do |key|
+          @errors << "No #{key} specified" unless public_send(key)
+        end
+      else
+        @errors << "DSN not set"
       end
-      err.compact
+      false
     end
 
     # Try to resolve the hostname to an FQDN, but fall back to whatever
