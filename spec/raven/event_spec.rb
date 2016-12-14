@@ -630,14 +630,6 @@ describe Raven::Event do
       end
     end
 
-    describe "#get_file_context" do
-      it "delegates to the linecache" do
-        expect(subject.linecache).to receive(:get_file_context)
-
-        subject.get_file_context("this", 2, 10)
-      end
-    end
-
     it 'accepts an options hash' do
       expect(Raven::Event.capture_exception(exception, :logger => 'logger').logger).to eq('logger')
     end

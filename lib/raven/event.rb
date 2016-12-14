@@ -26,14 +26,13 @@ module Raven
     attr_accessor :id, :timestamp, :time_spent, :level, :logger,
                   :culprit, :server_name, :release, :modules, :extra, :tags,
                   :context, :configuration, :checksum, :fingerprint, :environment,
-                  :server_os, :runtime, :breadcrumbs, :user, :backtrace, :linecache
+                  :server_os, :runtime, :breadcrumbs, :user, :backtrace
 
     def initialize(init = {})
       @configuration = init[:configuration] || Raven.configuration
       @interfaces    = {}
       @breadcrumbs   = init[:breadcrumbs] || Raven.breadcrumbs
       @context       = init[:context] || Raven.context
-      @linecache     = @configuration.linecache
       @id            = SecureRandom.uuid.delete("-")
       @timestamp     = Time.now.utc
       @time_spent    = nil
@@ -124,9 +123,10 @@ module Raven
           evt.level = options[:level] || :error
           evt.message = message, options[:message_params] || []
           if options[:backtrace]
-            evt.interface(:stacktrace) do |int|
-              stacktrace_interface_from(int, evt, options[:backtrace])
-            end
+            interfaces = evt.instance_variable_get(:@interfaces)
+            interfaces[:stacktrace] =
+              StacktraceInterface.from_backtrace(options[:backtrace], evt.configuration.linecache, evt.configuration[:context_lines])
+            evt.instance_variable_set(:@interfaces, interfaces)
           end
         end
       end
@@ -180,39 +180,15 @@ module Raven
               int.value = e.to_s
               int.module = e.class.to_s.split('::')[0...-1].join('::')
 
-              int.stacktrace =
-                if e.backtrace && !backtraces.include?(e.backtrace.object_id)
-                  backtraces << e.backtrace.object_id
-                  StacktraceInterface.new do |stacktrace|
-                    stacktrace_interface_from(stacktrace, evt, e.backtrace)
-                  end
-                end
+              if e.backtrace && !backtraces.include?(e.backtrace.object_id)
+                backtraces << e.backtrace.object_id
+                st_interface = StacktraceInterface.from_backtrace(e.backtrace, evt.configuration.linecache, evt.configuration[:context_lines])
+                int.stacktrace = st_interface
+                evt.culprit = evt.get_culprit(st_interface.frames)
+              end
             end
           end
         end
-      end
-
-      def stacktrace_interface_from(int, evt, backtrace)
-        backtrace = Backtrace.parse(backtrace)
-
-        int.frames = []
-        backtrace.lines.reverse_each do |line|
-          frame = StacktraceInterface::Frame.new
-          frame.abs_path = line.file if line.file
-          frame.function = line.method if line.method
-          frame.lineno = line.number
-          frame.in_app = line.in_app
-          frame.module = line.module_name if line.module_name
-
-          if evt.configuration[:context_lines] && frame.abs_path
-            frame.pre_context, frame.context_line, frame.post_context = \
-              evt.get_file_context(frame.abs_path, frame.lineno, evt.configuration[:context_lines])
-          end
-
-          int.frames << frame if frame.filename
-        end
-
-        evt.culprit = evt.get_culprit(int.frames)
       end
     end
 
@@ -264,10 +240,6 @@ module Raven
       end
       data[:message] = message
       data
-    end
-
-    def get_file_context(filename, lineno, context)
-      linecache.get_file_context(filename, lineno, context)
     end
 
     def get_culprit(frames)
