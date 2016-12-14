@@ -274,6 +274,8 @@ module Raven
 
       valid? &&
         capture_in_current_environment? &&
+        !raven_error?(message_or_exc) &&
+        !excluded_exception?(message_or_exc) &&
         capture_allowed_by_callback?(message_or_exc)
     end
     # If we cannot capture, we cannot send.
@@ -343,6 +345,38 @@ module Raven
         @errors << "DSN not set"
       end
       false
+    end
+
+    def raven_error?(message_or_exc)
+      return false unless message_or_exc.is_a?(Raven::Error)
+      @errors << "Refusing to capture Raven error: #{message_or_exc.inspect}"
+      true
+    end
+
+    def excluded_exception?(message_or_exc)
+      return false unless message_or_exc.is_a?(Exception)
+      return false unless excluded_exceptions.any? { |x| get_exception_class(x) === message_or_exc }
+      @errors << "User excluded error: #{message_or_exc.inspect}"
+      false
+    end
+
+    def get_exception_class(x)
+      x.is_a?(Module) ? x : qualified_const_get(x)
+    end
+
+    # In Ruby <2.0 const_get can't lookup "SomeModule::SomeClass" in one go
+    def qualified_const_get(x)
+      x = x.to_s
+      parts = x.split("::")
+      parts.reject!(&:empty?)
+
+      if parts.size < 2
+        Object.const_get(x)
+      else
+        parts.inject(Object) { |a, e| a.const_get(e) }
+      end
+    rescue NameError # There's no way to safely ask if a constant exist for an unknown string
+      nil
     end
 
     # Try to resolve the hostname to an FQDN, but fall back to whatever

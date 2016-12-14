@@ -38,7 +38,7 @@ describe Raven::Instance do
     describe 'as #capture_message' do
       let(:message) { "Test message" }
 
-      it 'sends the result of Event.capture_message' do
+      it 'sends the result of Event.from_message' do
         expect(Raven::Event).to receive(:from_message).with(message, options)
         expect(subject).to receive(:send_event).with(event)
 
@@ -67,7 +67,7 @@ describe Raven::Instance do
         subject.configuration.async = prior_async
       end
 
-      it 'sends the result of Event.capture_type' do
+      it 'sends the result of Event.from_message' do
         expect(Raven::Event).to receive(:from_message).with(message, options)
         expect(subject).not_to receive(:send_event).with(event)
 
@@ -84,7 +84,7 @@ describe Raven::Instance do
     describe 'as #capture_exception' do
       let(:exception) { build_exception }
 
-      it 'sends the result of Event.capture_exception' do
+      it 'sends the result of Event.from_exception' do
         expect(Raven::Event).to receive(:from_exception).with(exception, options)
         expect(subject).to receive(:send_event).with(event)
 
@@ -114,7 +114,7 @@ describe Raven::Instance do
           subject.configuration.async = prior_async
         end
 
-        it 'sends the result of Event.capture_exception' do
+        it 'sends the result of Event.from_exception' do
           expect(Raven::Event).to receive(:from_exception).with(exception, options)
           expect(subject).not_to receive(:send_event).with(event)
 
@@ -136,7 +136,7 @@ describe Raven::Instance do
           subject.configuration.async = prior_async
         end
 
-        it 'sends the result of Event.capture_exception via fallback' do
+        it 'sends the result of Event.from_exception via fallback' do
           expect(Raven::Event).to receive(:from_exception).with(exception, options)
 
           expect(subject.configuration.async).to receive(:call).with(event.to_json_compatible)
@@ -148,7 +148,7 @@ describe Raven::Instance do
     describe 'as #capture_exception with a should_capture callback' do
       let(:exception) { build_exception }
 
-      it 'sends the result of Event.capture_exception according to the result of should_capture' do
+      it 'sends the result of Event.from_exception according to the result of should_capture' do
         expect(subject).not_to receive(:send_event).with(event)
 
         subject.configuration.should_capture = proc { false }
@@ -222,7 +222,7 @@ describe Raven::Instance do
   describe '.last_event_id' do
     let(:message) { "Test message" }
 
-    it 'sends the result of Event.capture_type' do
+    it 'sends the result of Instance.capture_type' do
       expect(subject).to receive(:send_event).with(event)
 
       subject.capture_type("Test message", options)

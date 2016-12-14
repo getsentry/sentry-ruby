@@ -93,15 +93,6 @@ module Raven
         options = Raven::Utils::DeepMergeHash.deep_merge(exception_context, options)
 
         configuration = options[:configuration] || Raven.configuration
-        if exc.is_a?(Raven::Error)
-          # Try to prevent error reporting loops
-          configuration.logger.debug "Refusing to capture Raven error: #{exc.inspect}"
-          return nil
-        end
-        if configuration[:excluded_exceptions].any? { |x| get_exception_class(x) === exc }
-          configuration.logger.debug "User excluded error: #{exc.inspect}"
-          return nil
-        end
 
         new(options) do |evt|
           evt.configuration = configuration
@@ -132,25 +123,6 @@ module Raven
       end
 
       private
-
-      def get_exception_class(x)
-        x.is_a?(Module) ? x : qualified_const_get(x)
-      end
-
-      # In Ruby <2.0 const_get can't lookup "SomeModule::SomeClass" in one go
-      def qualified_const_get(x)
-        x = x.to_s
-        parts = x.split("::")
-        parts.reject!(&:empty?)
-
-        if parts.size < 2
-          Object.const_get(x)
-        else
-          parts.inject(Object) { |a, e| a.const_get(e) }
-        end
-      rescue NameError # There's no way to safely ask if a constant exist for an unknown string
-        nil
-      end
 
       def get_exception_context(exc)
         if exc.instance_variable_defined?(:@__raven_context)
@@ -249,14 +221,6 @@ module Raven
 
     def to_json_compatible
       JSON.parse(JSON.generate(to_hash))
-    end
-
-    # For cross-language compat
-    class << self
-      alias captureException from_exception
-      alias captureMessage from_message
-      alias capture_exception from_exception
-      alias capture_message from_message
     end
 
     private
