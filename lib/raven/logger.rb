@@ -8,6 +8,7 @@ module Raven
 
     def initialize(*)
       super
+      @level = ::Logger::INFO
       original_formatter = ::Logger::Formatter.new
       @default_formatter = proc do |severity, datetime, _progname, msg|
         msg = "#{LOG_PREFIX}#{msg}"
