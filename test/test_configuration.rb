@@ -130,6 +130,10 @@ class ConfigurationTest < Minitest::Spec
     end
 
     it "checks if object is allowed by the should_capture callback" do
+      @valid_config.should_capture = lambda { |e| e == DontCaptureMeBro }
+      refute @valid_config.capture_allowed?(DontCaptureMeBro.new)
+      assert_equal ["should_capture returned false"], @valid_config.errors
+    end
 
     end
   end
