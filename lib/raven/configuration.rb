@@ -212,6 +212,9 @@ module Raven
     end
 
     def server=(value)
+      %w(project_id public_key secret_key scheme host port path server).each do |v|
+        instance_variable_set("@#{v}", nil)
+      end
       uri = URI.parse(value)
       uri_path = uri.path.split('/')
 

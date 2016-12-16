@@ -6,6 +6,7 @@ class SentryExcludedViaSubclass < SentryExcludedException; end
 class ExcludedViaExtend < Exception;
   extend SentryExcludedModule
 end
+class DontCaptureMeBro < Exception; end
 
 class ConfigurationTest < Minitest::Spec
   @@config = Raven::Configuration.new
@@ -90,7 +91,7 @@ class ConfigurationTest < Minitest::Spec
     it "checks if DSN is valid" do
       @valid_config.dsn = "aaa"
       refute @valid_config.capture_allowed?
-      assert_equal ["No host specified"], @valid_config.errors
+      assert_equal ["No host specified", "No public_key specified", "No secret_key specified", "No project_id specified"], @valid_config.errors
     end
 
     it "checks if capture is allowed in environment" do
@@ -135,6 +136,10 @@ class ConfigurationTest < Minitest::Spec
       assert_equal ["should_capture returned false"], @valid_config.errors
     end
 
+    it "sets an error message" do
+      @valid_config.dsn = "http://notavalid.com/dsn"
+      @valid_config.capture_allowed?
+      assert_equal "No public_key specified, no secret_key specified, no project_id specified", @valid_config.error_messages
     end
   end
 end
