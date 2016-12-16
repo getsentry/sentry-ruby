@@ -45,7 +45,7 @@ describe Raven::Processor::RemoveStacktrace do
   end
 
   it 'should remove stacktraces even when keys are strings' do
-    data = Raven::Event.capture_exception(build_exception).to_hash.deep_stringify_keys
+    data = Raven.capture_exception(build_exception).to_hash.deep_stringify_keys
 
     expect(data["exception"]["values"][0]["stacktrace"]).to_not eq(nil)
     result = @processor.process(data)

@@ -32,15 +32,8 @@ module Raven
 
     # Not actually an interface, but I want to use the same style
     class Frame < Interface
-      attr_accessor :abs_path
-      attr_accessor :function
-      attr_accessor :vars
-      attr_accessor :pre_context
-      attr_accessor :post_context
-      attr_accessor :context_line
-      attr_accessor :module
-      attr_accessor :lineno
-      attr_accessor :in_app
+      attr_accessor :abs_path, :function, :vars, :pre_context, :post_context,
+                    :context_line, :module, :lineno, :in_app, :filename
 
       def initialize(*arguments)
         self.vars, self.pre_context, self.post_context = [], [], []
@@ -54,6 +47,7 @@ module Raven
         frame.lineno = line.number
         frame.in_app = line.in_app
         frame.module = line.module_name if line.module_name
+        frame.filename = line.filename
 
         if context_lines && frame.abs_path
           frame.pre_context, frame.context_line, frame.post_context = \
@@ -63,36 +57,8 @@ module Raven
         frame
       end
 
-      def filename
-        return if abs_path.nil?
-
-        prefix =
-          if under_project_root? && in_app
-            project_root
-          elsif under_project_root?
-            longest_load_path || project_root
-          else
-            longest_load_path
-          end
-
-        prefix ? abs_path[prefix.to_s.chomp(File::SEPARATOR).length + 1..-1] : abs_path
-      end
-
-      def under_project_root?
-        project_root && abs_path.start_with?(project_root)
-      end
-
-      def project_root
-        @project_root ||= Raven.configuration.project_root && Raven.configuration.project_root.to_s
-      end
-
-      def longest_load_path
-        @longest_load_path ||= $LOAD_PATH.select { |s| abs_path.start_with?(s) }.max_by(&:length)
-      end
-
       def to_hash(*args)
         data = super(*args)
-        data[:filename] = filename
         data.delete(:vars) unless vars && !vars.empty?
         data.delete(:pre_context) unless pre_context && !pre_context.empty?
         data.delete(:post_context) unless post_context && !post_context.empty?
