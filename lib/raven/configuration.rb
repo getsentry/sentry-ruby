@@ -179,7 +179,7 @@ module Raven
 
     LOG_PREFIX = "** [Raven] ".freeze
 
-    def initialize
+    def initialize(init = {})
       self.async = false
       self.context_lines = 3
       self.current_environment = ENV['RAILS_ENV'] || ENV['RACK_ENV'] || 'default'
@@ -207,6 +207,8 @@ module Raven
       self.timeout = 2
       self.transport_failure_callback = false
       self.sanitize_data_for_request_methods = DEFAULT_REQUEST_METHODS_FOR_DATA_SANITIZATION.dup
+
+      init.each_pair { |key, val| public_send(key.to_s + "=", val) }
     end
 
     def server=(value)
@@ -233,7 +235,7 @@ module Raven
     alias dsn= server=
 
     def encoding=(encoding)
-      raise(Error, 'Unsupported encoding') unless %w(gzip json).include? encoding
+      raise(ArgumentError, 'Unsupported encoding') unless %w(gzip json).include? encoding
       @encoding = encoding
     end
 
@@ -354,10 +356,10 @@ module Raven
     end
 
     def excluded_exception?(message_or_exc)
-      return false unless message_or_exc.is_a?(Exception)
+      return false if message_or_exc.nil? || message_or_exc === String # filter out messages
       return false unless excluded_exceptions.any? { |x| get_exception_class(x) === message_or_exc }
       @errors << "User excluded error: #{message_or_exc.inspect}"
-      false
+      true
     end
 
     def get_exception_class(x)
@@ -379,11 +381,9 @@ module Raven
       nil
     end
 
-    # Try to resolve the hostname to an FQDN, but fall back to whatever
-    # the load name is.
+    # Try to resolve the hostname to an FQDN.
     def resolve_hostname
-      Socket.gethostname ||
-        Socket.gethostbyname(hostname).first rescue server_name
+      Raven.sys_command("hostname -f") || Socket.gethostname
     end
   end
 end

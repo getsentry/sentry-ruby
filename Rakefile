@@ -1,3 +1,5 @@
+require 'rubygems'
+require 'bundler/setup'
 require 'rake'
 require 'raven'
 require 'rubygems/package_task'
@@ -8,7 +10,6 @@ gemspec = Gem::Specification.load(Dir['*.gemspec'].first)
 Gem::PackageTask.new(gemspec).define
 
 begin
-  require 'rubygems'
   require 'rspec/core/rake_task'
 
   require 'rubocop/rake_task'
@@ -26,4 +27,10 @@ rescue LoadError
   end
 end
 
-task :default => [:rubocop, :spec]
+require 'rake/testtask'
+Rake::TestTask.new(:test) do |test|
+  test.warning = true
+  test.pattern = 'test/**/test_*.rb'
+end
+
+task :default => [:rubocop, :test, :spec]
