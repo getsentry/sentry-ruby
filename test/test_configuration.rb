@@ -1,16 +1,14 @@
 require_relative 'helper'
 
 module SentryExcludedModule; end
-class SentryExcludedException < Exception; end
+class SentryExcludedException < RuntimeError; end
 class SentryExcludedViaSubclass < SentryExcludedException; end
-class ExcludedViaExtend < Exception;
+class ExcludedViaExtend < RuntimeError
   extend SentryExcludedModule
 end
-class DontCaptureMeBro < Exception; end
+class DontCaptureMeBro < RuntimeError; end
 
 class ConfigurationTest < Minitest::Spec
-  @@config = Raven::Configuration.new
-
   describe "is initialized with certain values" do
     describe "hostname resolution" do
       it "resolves a hostname via sys_command" do
@@ -35,47 +33,51 @@ class ConfigurationTest < Minitest::Spec
 
   describe "setting the server" do
     it "sets a bunch of attributes" do
-      @@config.server = "http://12345:67890@sentry.localdomain:3000/sentry/42"
+      @config = Raven::Configuration.new
+      @config.server = "http://12345:67890@sentry.localdomain:3000/sentry/42"
 
-      assert_equal "42", @@config.project_id
-      assert_equal "12345", @@config.public_key
-      assert_equal "67890", @@config.secret_key
-      assert_equal "http", @@config.scheme
-      assert_equal "sentry.localdomain", @@config.host
-      assert_equal 3000, @@config.port
-      assert_equal "/sentry", @@config.path
-      assert_equal "http://sentry.localdomain:3000/sentry", @@config.server
+      assert_equal "42", @config.project_id
+      assert_equal "12345", @config.public_key
+      assert_equal "67890", @config.secret_key
+      assert_equal "http", @config.scheme
+      assert_equal "sentry.localdomain", @config.host
+      assert_equal 3000, @config.port
+      assert_equal "/sentry", @config.path
+      assert_equal "http://sentry.localdomain:3000/sentry", @config.server
     end
   end
 
   describe "setting the encoding" do
     it "rejects unsupported options" do
-      assert_raises(ArgumentError) { @@config.encoding = "notarealencoding" }
+      @config = Raven::Configuration.new
+      assert_raises(ArgumentError) { @config.encoding = "notarealencoding" }
     end
   end
 
   describe "setting configs which must be callable" do
     it "rejects uncallable objects" do
+      @config = Raven::Configuration.new
       %w(async transport_failure_callback should_capture).each do |m|
-        assert_raises(ArgumentError) { @@config.public_send("#{m}=", "not_callable") }
+        assert_raises(ArgumentError) { @config.public_send("#{m}=", "not_callable") }
       end
     end
   end
 
   it "allows hash-like access" do
-    assert @@config[:ssl_verification]
-    assert @@config["ssl_verification"]
+    @config = Raven::Configuration.new
+    assert @config[:ssl_verification]
+    assert @config["ssl_verification"]
   end
 
   it "converts current environment into a string" do
-    config = Raven::Configuration.new
-    config.current_environment = :staging
-    assert_equal "staging", config.current_environment
+    @config = Raven::Configuration.new
+    @config.current_environment = :staging
+    assert_equal "staging", @config.current_environment
   end
 
   describe "capture_allowed?" do
     before do
-      @valid_config = Raven::Configuration.new(dsn: "http://12345:67890@sentry.localdomain:3000/sentry/42")
+      @valid_config = Raven::Configuration.new(:dsn => "http://12345:67890@sentry.localdomain:3000/sentry/42")
     end
 
     it "returns true if DSN is set" do
@@ -131,7 +133,7 @@ class ConfigurationTest < Minitest::Spec
     end
 
     it "checks if object is allowed by the should_capture callback" do
-      @valid_config.should_capture = lambda { |e| e == DontCaptureMeBro }
+      @valid_config.should_capture = ->(e) { e == DontCaptureMeBro }
       refute @valid_config.capture_allowed?(DontCaptureMeBro.new)
       assert_equal ["should_capture returned false"], @valid_config.errors
     end

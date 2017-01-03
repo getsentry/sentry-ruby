@@ -20,7 +20,7 @@ class InterfaceTest < Minitest::Spec
   end
 
   it "converts instance variables to a hash" do
-    int = TestInterface.new(foo: :bar)
+    int = TestInterface.new(:foo => :bar)
     assert_equal({ :foo => :bar }, int.to_hash)
   end
 end

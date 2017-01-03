@@ -2,6 +2,7 @@ AllCops:
    Include:
      - 'lib/**/*.rb'
      - 'spec/**/*.rb'
+     - 'test/**/*.rb'
    Exclude:
      - 'examples/**/*'
      - 'vendor/**/*'

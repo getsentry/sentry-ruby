@@ -34,7 +34,7 @@ class StacktraceInterfaceTest < Minitest::Spec
       assert_equal "    1 / 0\n", @frame.context_line
       assert_equal ["  rescue ZeroDivisionError => exception\n"], @frame.post_context
     end
-    
+
     it "converts to hash" do
       assert @frame.to_hash.is_a?(Hash)
     end

@@ -223,6 +223,25 @@ module Raven
       JSON.parse(JSON.generate(to_hash))
     end
 
+    def self.capture_exception(message, opts = {})
+      Raven.logger.warn "DEPRECATION WARNING: Calling #capture_exception \
+        on Raven::Event will be removed in raven-ruby 4.0! Use Raven.capture_exception \
+        instead!"
+      Raven.capture_exception(message, opts)
+    end
+
+    def self.capture_message(message, opts = {})
+      Raven.logger.warn "DEPRECATION WARNING: Calling #capture_message \
+        on Raven::Event will be removed in raven-ruby 4.0! Use Raven.capture_message \
+        instead!"
+      Raven.capture_message(message, opts)
+    end
+
+    class << self
+      alias captureException capture_exception
+      alias captureMessage capture_message
+    end
+
     private
 
     # When behind a proxy (or if the user is using a proxy), we can't use
