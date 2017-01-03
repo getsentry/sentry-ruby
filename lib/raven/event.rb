@@ -106,7 +106,7 @@ module Raven
 
         new(options) do |evt|
           evt.configuration = configuration
-          evt.message = "#{exc.class}: #{exc.message}"
+          evt.message = "#{exc.class}: #{exc.message}".byteslice(0...10_000) # Messages limited to 10kb
           evt.level = options[:level] || :error
 
           add_exception_interface(evt, exc)
