@@ -1,3 +1,9 @@
+2.3.0
+-----
+
+* CHANGE: Log levels of some messages have been changed. Raven logger is INFO level by default. [@nateberkopec]
+* BUGFIX: Exception messages are now limited to 10,000 bytes. [#617, @mattrobenolt]
+
 2.2.0
 -----
 
