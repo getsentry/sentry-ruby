@@ -10,6 +10,7 @@ if RUBY_VERSION.to_f >= 2.0
   gem "json", ">= 2.0.0"
 else
   gem "json", "< 2.0.0"
+  gem "nokogiri", "~> 1.6.0"
 end
 
 gemspec :path => "../"
