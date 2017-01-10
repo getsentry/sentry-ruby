@@ -5,19 +5,12 @@ module Raven
   class Backtrace
     # Handles backtrace parsing line by line
     class Line
-      # regexp (optional leading X: or windows or JRuby9000 class-prefix)
-      RUBY_INPUT_FORMAT = %r{
+      # regexp (optional leading X: on windows, or JRuby9000 class-prefix)
+      RUBY_INPUT_FORMAT = %r/
         ^ \s* (?: [a-zA-Z]: | uri:classloader: )? ([^:]+ | <.*>):
         (\d+)
         (?: :in \s `([^']+)')?$
-      }x
-
-      J9K_INPUT_FORMAT = %r{
-        ^ \s* at \s RUBY.block \s in \s ([^(]+) \( # method name
-        uri:classloader: ?                         # jar prefix
-        (.*):                                      # file
-        (\d)+ \)                                   # line number
-      }x
+      /x
 
       # org.jruby.runtime.callsite.CachingCallSite.call(CachingCallSite.java:170)
       JAVA_INPUT_FORMAT = /^(.+)\.([^\.]+)\(([^\:]+)\:(\d+)\)$/
@@ -38,16 +31,14 @@ module Raven
       # @param [String] unparsed_line The raw line from +caller+ or some backtrace
       # @return [Line] The parsed backtrace line
       def self.parse(unparsed_line)
-        if (ruby_match = unparsed_line.match(RUBY_INPUT_FORMAT))
+        ruby_match = unparsed_line.match(RUBY_INPUT_FORMAT)
+        if ruby_match
           _, file, number, method = ruby_match.to_a
           file.sub!(/\.class$/, ".rb")
           module_name = nil
-        elsif (java_match = unparsed_line.match(JAVA_INPUT_FORMAT))
+        else
+          java_match = unparsed_line.match(JAVA_INPUT_FORMAT)
           _, module_name, method, file, number = java_match.to_a
-        elsif (j9k_match = unparsed_line.match(J9K_INPUT_FORMAT))
-          _, method, file, number = j9k_match.to_a
-          file.sub!(/\.class$/, ".rb")
-          module_name = nil
         end
         new(file, number, method, module_name)
       end
