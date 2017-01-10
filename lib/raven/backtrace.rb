@@ -6,7 +6,7 @@ module Raven
     # Handles backtrace parsing line by line
     class Line
       # regexp (optional leading X: on windows, or JRuby9000 class-prefix)
-      RUBY_INPUT_FORMAT = %r/
+      RUBY_INPUT_FORMAT = /
         ^ \s* (?: [a-zA-Z]: | uri:classloader: )? ([^:]+ | <.*>):
         (\d+)
         (?: :in \s `([^']+)')?$
