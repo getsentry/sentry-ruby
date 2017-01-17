@@ -30,4 +30,8 @@ describe Raven::MessageInterface do
     interface = Raven::MessageInterface.new(:params => nil, :message => "test '%'")
     expect(interface.unformatted_message).to eq("test '%'")
   end
+  it "supports invalid format string message when params is empty" do
+    interface = Raven::MessageInterface.new(:message => "test '%'")
+    expect(interface.unformatted_message).to eq("test '%'")
+  end
 end
