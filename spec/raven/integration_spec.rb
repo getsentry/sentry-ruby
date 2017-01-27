@@ -48,7 +48,8 @@ describe "Integration tests" do
       config.logger = logger
     end
 
-    expect(logger).to receive(:error).at_least(10).times
+    # sentry error and original error
+    expect(logger).not_to receive(:error).twice
     Raven.capture_exception(build_exception)
 
     stubs.verify_stubbed_calls

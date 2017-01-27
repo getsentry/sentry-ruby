@@ -97,8 +97,7 @@ module Raven
     def failed_send(e, event)
       @state.failure
       if e # exception was raised
-        configuration.logger.error "Unable to record event with remote Sentry server (#{e.class} - #{e.message})"
-        e.backtrace[0..10].each { |line| configuration.logger.error(line) }
+        configuration.logger.error "Unable to record event with remote Sentry server (#{e.class} - #{e.message}):\n#{e.backtrace[0..10].join("\n")}"
       else
         configuration.logger.error "Not sending event due to previous failure(s)."
       end
