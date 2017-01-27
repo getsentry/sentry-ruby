@@ -84,6 +84,25 @@ describe Raven::Rack do
     stack.call(env)
   end
 
+  it 'transforms headers to conform with the interface' do
+    env = { "SERVER_PROTOCOL" => "HTTP/1.1", "HTTP_FOO" => "BAR", "HTTP_VERSION" => "HTTP/1.1" }
+
+    interface = Raven::HttpInterface.new
+    interface.from_rack(env)
+
+    expect(interface.headers["Foo"]).to eq("BAR")
+    expect(interface.headers["Version"]).to be_nil
+  end
+
+  it 'does not ignore version headers which do not match SERVER_PROTOCOL' do
+    env = { "SERVER_PROTOCOL" => "HTTP/1.1", "HTTP_VERSION" => "HTTP/2.0" }
+
+    interface = Raven::HttpInterface.new
+    interface.from_rack(env)
+
+    expect(interface.headers["Version"]).to eq("HTTP/2.0")
+  end
+
   it 'should pass rack/lint' do
     env = Rack::MockRequest.env_for("/test")
 
