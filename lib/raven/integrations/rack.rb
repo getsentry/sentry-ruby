@@ -101,7 +101,7 @@ module Raven
         # env['SERVER_PROTOCOL']. But we don't want to ignore a valid header
         # if the request has legitimately sent a Version header themselves.
         # See: https://github.com/rack/rack/blob/028438f/lib/rack/handler/cgi.rb#L29
-        next if key == 'HTTP_VERSION' && value == ENV['SERVER_PROTOCOL']
+        next if key == 'HTTP_VERSION' && value == env_hash['SERVER_PROTOCOL']
 
         next unless key.start_with?('HTTP_') || %w(CONTENT_TYPE CONTENT_LENGTH).include?(key)
         # Rack stores headers as HTTP_WHAT_EVER, we need What-Ever
