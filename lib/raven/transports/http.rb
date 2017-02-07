@@ -29,7 +29,9 @@ module Raven
         end
       rescue Faraday::ClientError => ex
         error_info = ex.message
-        error_info += " Error in headers is: #{ex.response[:headers]['x-sentry-error']}" if ex.response[:headers]['x-sentry-error']
+        unless ex.response.nil?
+          error_info += " Error in headers is: #{ex.response[:headers]['x-sentry-error']}" if ex.response[:headers]['x-sentry-error']
+        end
         raise Raven::Error, error_info
       end
 
