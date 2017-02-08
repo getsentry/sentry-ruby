@@ -27,7 +27,7 @@ module Delayed
             extra[:last_error] = job.last_error[0...100] if job.last_error
             # handlers are YAML objects in strings, we definitely can't
             # report all of that or the event will get truncated randomly
-            extra[:handler] = job.handler[0...100] if job.handler
+            extra[:handler] = job.handler[0...255] if job.handler
 
             if job.respond_to?('payload_object') && job.payload_object.respond_to?('job_data')
               extra[:active_job] = job.payload_object.job_data
