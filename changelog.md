@@ -1,3 +1,15 @@
+2.3.1
+-----
+
+* BUGFIX: Backtrace parser fixed for JRuby 9k [#619, @the-michael-toy]
+* BUGFIX: Rake tasks should show the correct task name [#621, @Bugagazavr]
+* BUGFIX: Formatted messages work if params are `nil` [#625, @miyachik]
+* BUGFIX: Backtrace logger on failed event send works with custom formatters [#627, @chulkilee]
+* BUGFIX: Fix typo that caused Version headers to not be corrected [#628, @nateberkopec]
+* BUGFIX: Faraday errors are more descriptive when no server response [#629, @drewish]
+* BUGFIX: DelayedJob handler no longer truncates unneccessarily short [#633, @darrennix]
+* BUGFIX: Fix several processors not working correctly w/async jobs stored in backends like Redis [#634, @nateberkopec]
+
 2.3.0
 -----
 
