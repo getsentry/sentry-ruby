@@ -38,4 +38,20 @@ describe Raven::Processor::HTTPHeaders do
     expect(result[:request][:headers]["User-Defined-Header"]).to eq("********")
     expect(result[:request][:headers]["AnotherHeader"]).to eq("still_here")
   end
+
+  it "should remove headers even if the keys are strings" do
+    data = {
+      "request" => {
+        "headers" => {
+          "Authorization" => "dontseeme",
+          "AnotherHeader" => "still_here"
+        }
+      }
+    }
+
+    result = @processor.process(data)
+
+    expect(result["request"]["headers"]["Authorization"]).to eq("********")
+    expect(result["request"]["headers"]["AnotherHeader"]).to eq("still_here")
+  end
 end

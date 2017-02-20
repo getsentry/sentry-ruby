@@ -37,4 +37,19 @@ describe Raven::Processor::PostData do
 
     expect(result[:request][:data]).to eq("sensitive_stuff" => "TOP_SECRET-GAMMA")
   end
+
+  it 'should remove post data when HTTP method is POST and keys are strings' do
+    data = {
+      "request" => {
+        "method" => "POST",
+        "data" => {
+          "sensitive_stuff" => "TOP_SECRET-GAMMA"
+        }
+      }
+    }
+
+    result = @processor.process(data)
+
+    expect(result["request"]["data"]).to eq("********")
+  end
 end

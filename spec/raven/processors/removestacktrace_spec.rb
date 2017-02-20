@@ -1,5 +1,6 @@
 require 'spec_helper'
 require 'raven/processor/removestacktrace'
+require 'active_support/core_ext/hash/keys'
 
 describe Raven::Processor::RemoveStacktrace do
   before do
@@ -41,5 +42,14 @@ describe Raven::Processor::RemoveStacktrace do
       expect(result[:exception][:values][1][:stacktrace]).to eq(nil)
       expect(result[:exception][:values][2][:stacktrace]).to eq(nil)
     end
+  end
+
+  it 'should remove stacktraces even when keys are strings' do
+    data = Raven::Event.capture_exception(build_exception).to_hash.deep_stringify_keys
+
+    expect(data["exception"]["values"][0]["stacktrace"]).to_not eq(nil)
+    result = @processor.process(data)
+
+    expect(result["exception"]["values"][0]["stacktrace"]).to eq(nil)
   end
 end
