@@ -10,16 +10,29 @@ module Raven
     end
 
     def process(data)
-      if data[:request] && data[:request][:headers]
-        data[:request][:headers].keys.select { |k| fields_re.match(k.to_s) }.each do |k|
-          data[:request][:headers][k] = STRING_MASK
-        end
-      end
+      process_if_symbol_keys(data) if data[:request]
+      process_if_string_keys(data) if data["request"]
 
       data
     end
 
     private
+
+    def process_if_symbol_keys(data)
+      return unless data[:request][:headers]
+
+      data[:request][:headers].keys.select { |k| fields_re.match(k.to_s) }.each do |k|
+        data[:request][:headers][k] = STRING_MASK
+      end
+    end
+
+    def process_if_string_keys(data)
+      return unless data["request"]["headers"]
+
+      data["request"]["headers"].keys.select { |k| fields_re.match(k) }.each do |k|
+        data["request"]["headers"][k] = STRING_MASK
+      end
+    end
 
     def matches_regexes?(k)
       fields_re.match(k.to_s)
