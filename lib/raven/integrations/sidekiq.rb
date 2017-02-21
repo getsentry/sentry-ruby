@@ -2,7 +2,16 @@ require 'time'
 require 'sidekiq'
 
 module Raven
-  class Sidekiq
+  class SidekiqCleanupMiddleware
+    def call(_worker, _job, _queue)
+      yield
+    ensure
+      Context.clear!
+      BreadcrumbBuffer.clear!
+    end
+  end
+
+  class SidekiqErrorHandler
     ACTIVEJOB_RESERVED_PREFIX = "_aj_".freeze
 
     def call(ex, context)
@@ -13,9 +22,6 @@ module Raven
         :extra => { :sidekiq => context },
         :culprit => culprit_from_context(context)
       )
-    ensure
-      Context.clear!
-      BreadcrumbBuffer.clear!
     end
 
     private
@@ -59,6 +65,9 @@ end
 
 if Sidekiq::VERSION > '3'
   Sidekiq.configure_server do |config|
-    config.error_handlers << Raven::Sidekiq.new
+    config.error_handlers << Raven::SidekiqErrorHandler.new
+    config.server_middleware do |chain|
+      chain.add Raven::SidekiqCleanupMiddleware
+    end
   end
 end

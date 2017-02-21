@@ -1,7 +1,7 @@
 require 'spec_helper'
 require 'raven/integrations/sidekiq'
 
-describe Raven::Sidekiq do
+describe Raven::SidekiqErrorHandler do
   before(:all) do
     Raven.configure do |config|
       config.dsn = 'dummy://12345:67890@sentry.localdomain:3000/sentry/42'
