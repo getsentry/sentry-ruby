@@ -37,6 +37,10 @@ module Raven
     # The Faraday adapter to be used. Will default to Net::HTTP when not set.
     attr_accessor :http_adapter
 
+    # A Proc yeilding the faraday builder allowing for further configuration
+    # of the faraday adapter
+    attr_accessor :faraday_builder
+
     # You may provide your own LineCache for matching paths with source files.
     # This may be useful if you need to get source code from places other than
     # the disk. See Raven::LineCache for the required interface you must implement.
