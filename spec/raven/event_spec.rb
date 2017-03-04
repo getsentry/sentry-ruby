@@ -60,7 +60,7 @@ describe Raven::Event do
     end
 
     it 'has SDK' do
-      expect(hash[:sdk]).to eq("name" => "sentry-raven", "version" => Raven::VERSION)
+      expect(hash[:sdk]).to eq("name" => "raven-ruby", "version" => Raven::VERSION)
     end
 
     it 'has server os' do

@@ -21,7 +21,7 @@ module Raven
     BACKTRACE_RE = /^(.+?):(\d+)(?::in `(.+?)')?$/
 
     PLATFORM = "ruby".freeze
-    SDK = { "name" => "sentry-raven", "version" => Raven::VERSION }.freeze
+    SDK = { "name" => "raven-ruby", "version" => Raven::VERSION }.freeze
 
     attr_accessor :id, :timestamp, :time_spent, :level, :logger,
                   :culprit, :server_name, :release, :modules, :extra, :tags,
