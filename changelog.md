@@ -1,3 +1,12 @@
+2.4.0
+-----
+
+* FEATURE: Allow customization of the Faraday adapter [#639, @StupidCodeFactory]
+
+* BUGFIX: Report the SDK name as "raven-ruby", not "sentry-raven" [#641, @bretthoerner]
+* BUGFIX: Sidekiq jobs now clear context/breadcrumbs properly between jobs [#637, @drewish]
+* BUGFIX: Overriding the logger in Rails wasn't working [#638, @eugeneius]
+
 2.3.1
 -----
 
