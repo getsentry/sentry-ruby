@@ -46,4 +46,17 @@ describe Raven::Transports::HTTP do
 
     stubs.verify_stubbed_calls
   end
+
+  it 'allows to customise faraday' do
+    builder = spy('faraday_builder')
+    expect(Faraday).to receive(:new).and_yield(builder)
+
+    Raven.configure do |config|
+      config.faraday_builder = proc { |b| b.request :instrumentation }
+    end
+
+    Raven.client.send(:transport)
+
+    expect(builder).to have_received(:request).with(:instrumentation)
+  end
 end

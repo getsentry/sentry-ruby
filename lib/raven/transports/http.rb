@@ -48,6 +48,7 @@ module Raven
           :url => configuration[:server],
           :ssl => ssl_configuration
         ) do |builder|
+          configuration.faraday_builder.call(builder) if configuration.faraday_builder
           builder.response :raise_error
           builder.adapter(*adapter)
         end
