@@ -5,6 +5,7 @@ describe Raven::Processor::SanitizeData do
     @client = double("client")
     allow(@client).to receive_message_chain(:configuration, :sanitize_fields) { ['user_field'] }
     allow(@client).to receive_message_chain(:configuration, :sanitize_credit_cards) { true }
+    allow(@client).to receive_message_chain(:configuration, :excluded_fields) { ['safe_authorization_field'] }
     @processor = Raven::Processor::SanitizeData.new(@client)
   end
 
@@ -32,7 +33,8 @@ describe Raven::Processor::SanitizeData do
           :ssn => '123-45-6789', # test symbol handling
           'social_security_number' => 123456789,
           'user_field' => 'user',
-          'user_field_foo' => 'hello'
+          'user_field_foo' => 'hello',
+          'safe_authorization_field' => 'safe_data'
         }
       }
     }
@@ -50,6 +52,7 @@ describe Raven::Processor::SanitizeData do
     expect(vars["social_security_number"]).to eq(Raven::Processor::SanitizeData::INT_MASK)
     expect(vars["user_field"]).to eq(Raven::Processor::SanitizeData::STRING_MASK)
     expect(vars["user_field_foo"]).to eq('hello')
+    expect(vars["safe_authorization_field"]).to eq('safe_data')
   end
 
   it 'should filter json data' do
