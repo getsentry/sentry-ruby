@@ -37,7 +37,7 @@ module Raven
       end
 
       def filename
-        return nil if abs_path.nil?
+        return if abs_path.nil?
 
         prefix =
           if under_project_root? && in_app
@@ -60,7 +60,7 @@ module Raven
       end
 
       def longest_load_path
-        $LOAD_PATH.select { |s| abs_path.start_with?(s.to_s) }.sort_by { |s| s.to_s.length }.last
+        @longest_load_path ||= $LOAD_PATH.select { |s| abs_path.start_with?(s) }.max_by(&:length)
       end
 
       def to_hash(*args)

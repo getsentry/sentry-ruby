@@ -14,31 +14,27 @@ module Raven
       self.sanitize_credit_cards = client.configuration.sanitize_credit_cards
     end
 
-    def process(value)
-      return value if value.frozen?
-      value.each_with_object(value) { |(k, v), memo| memo[k] = sanitize(k, v) }
-    end
-
-    def sanitize(k, v)
-      if v.is_a?(Hash)
-        process(v)
-      elsif v.is_a?(Array)
-        v.map { |a| sanitize(k, a) }
-      elsif k.to_s == 'query_string'
-        sanitize_query_string(v)
-      elsif v.is_a?(Integer) && matches_regexes?(k, v)
-        INT_MASK
-      elsif v.is_a?(String)
-        if fields_re.match(v.to_s) && (json = parse_json_or_nil(v))
+    def process(value, key = nil)
+      case value
+      when Hash
+        !value.frozen? ? value.merge!(value) { |k, v| process v, k } : value.merge(value) { |k, v| process v, k }
+      when Array
+        !value.frozen? ? value.map! { |v| process v, key } : value.map { |v| process v, key }
+      when Integer
+        matches_regexes?(key, value.to_s) ? INT_MASK : value
+      when String
+        if value =~ fields_re && (json = parse_json_or_nil(value))
           # if this string is actually a json obj, convert and sanitize
-          json.is_a?(Hash) ? process(json).to_json : v
-        elsif matches_regexes?(k, v)
+          process(json).to_json
+        elsif matches_regexes?(key, value)
           STRING_MASK
+        elsif key == 'query_string' || key == :query_string
+          sanitize_query_string(value)
         else
-          v
+          value
         end
       else
-        v
+        value
       end
     end
 
@@ -51,8 +47,8 @@ module Raven
     end
 
     def matches_regexes?(k, v)
-      (sanitize_credit_cards && CREDIT_CARD_RE.match(v.to_s)) ||
-        fields_re.match(k.to_s)
+      (sanitize_credit_cards && v =~ CREDIT_CARD_RE) ||
+        k =~ fields_re
     end
 
     def fields_re
@@ -70,6 +66,7 @@ module Raven
     end
 
     def parse_json_or_nil(string)
+      return unless string.start_with?("[", "{")
       JSON.parse(string)
     rescue JSON::ParserError, NoMethodError
       nil
