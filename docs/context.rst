@@ -7,13 +7,13 @@ the issue or who the error happened for.
 
 .. sourcecode:: ruby
 
-    Raven.capture_message "My event",
+    Raven.capture_message 'My Event!',
       logger: 'logger',
       extra: {
         my_custom_variable: 'value'
       },
       tags: {
-        environment: 'production'
+        foo: 'bar'
       }
 
 The following attributes are available:
