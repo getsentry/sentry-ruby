@@ -51,7 +51,7 @@ module Raven
     # this will change in the future:
     # https://github.com/mperham/sidekiq/pull/3161
     def culprit_from_context(context)
-      classname = (context["class"] || (context["job"] && context["job"]["class"]))
+      classname = (context["class"] || (context[:job] && (context[:job]["wrapped"] || context[:job]["class"])))
       if classname
         "Sidekiq/#{classname}"
       elsif context["event"]
