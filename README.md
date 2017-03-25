@@ -143,7 +143,7 @@ For more information, see [Context](https://docs.sentry.io/clients/ruby/context/
 ## More Information
 
 * [Documentation](https://docs.getsentry.com/hosted/clients/ruby/)
-* [Bug Tracker](https://github.com/getsentry/raven-ruby/issues>)
-* [Code](https://github.com/getsentry/raven-ruby>)
-* [Mailing List](https://groups.google.com/group/getsentry>)
+* [Bug Tracker](https://github.com/getsentry/raven-ruby/issues)
+* [Code](https://github.com/getsentry/raven-ruby)
+* [Mailing List](https://groups.google.com/group/getsentry)
 * [IRC](irc://irc.freenode.net/sentry>)  (irc.freenode.net, #sentry)
