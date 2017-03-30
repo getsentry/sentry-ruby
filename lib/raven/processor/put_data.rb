@@ -1,9 +1,9 @@
 module Raven
-  class Processor::PostData < Processor
+  class Processor::PutData < Processor
     include RequestDataHelper
 
     def process(data)
-      sanitize_request_data(data, "POST")
+      sanitize_request_data(data, "PUT")
 
       data
     end

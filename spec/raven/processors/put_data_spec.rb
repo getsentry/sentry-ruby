@@ -2,16 +2,16 @@
 
 require 'spec_helper'
 
-describe Raven::Processor::PostData do
+describe Raven::Processor::PutData do
   before do
     @client = double("client")
     @processor = described_class.new(@client)
   end
 
-  it 'should remove post data when HTTP method is POST' do
+  it 'should remove put data when HTTP method is PUT' do
     data = {
       :request => {
-        :method => "POST",
+        :method => "PUT",
         :data => {
           "sensitive_stuff" => "TOP_SECRET-GAMMA"
         }
@@ -23,7 +23,7 @@ describe Raven::Processor::PostData do
     expect(result[:request][:data]).to eq("********")
   end
 
-  it 'should NOT remove post data when HTTP method is not POST' do
+  it 'should NOT remove post data when HTTP method is not PUT' do
     data = {
       :request => {
         :method => "GET",
@@ -38,10 +38,10 @@ describe Raven::Processor::PostData do
     expect(result[:request][:data]).to eq("sensitive_stuff" => "TOP_SECRET-GAMMA")
   end
 
-  it 'should remove post data when HTTP method is POST and keys are strings' do
+  it 'should remove post data when HTTP method is PUT and keys are strings' do
     data = {
       "request" => {
-        "method" => "POST",
+        "method" => "PUT",
         "data" => {
           "sensitive_stuff" => "TOP_SECRET-GAMMA"
         }
