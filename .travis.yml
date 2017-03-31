@@ -9,10 +9,10 @@ branches:
 
 rvm:
   - 1.9
-  - 2.2.6
-  - 2.3.3
+  - 2.2.7
+  - 2.3.4
   - ruby-head
-  - 2.4.0
+  - 2.4.1
 
 gemfile:
   - gemfiles/rails42.gemfile
@@ -40,11 +40,11 @@ matrix:
   allow_failures:
     - rvm: ruby-head
   exclude:
-    - rvm: 2.2.6
+    - rvm: 2.2.7
       gemfile: gemfiles/rails32.gemfile
     - rvm: ruby-head
       gemfile: gemfiles/rails32.gemfile
-    - rvm: 2.4.0
+    - rvm: 2.4.1
       gemfile: gemfiles/rails32.gemfile
     - rvm: 1.9
       gemfile: gemfiles/rails5.gemfile
