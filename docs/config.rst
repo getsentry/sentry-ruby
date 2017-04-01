@@ -131,12 +131,12 @@ Optional settings
           config.processors << Raven::Processor::RemoveStacktrace
         end
 
-    By default, Sentry does not send POST data or cookies if present. To re-enable, remove the respective processor from the chain:
+    By default, Sentry does not send POST, PUT, PATCH data or cookies if present. To re-enable, remove the respective processor from the chain:
 
     .. code-block:: ruby
 
         Raven.configure do |config|
-          config.processors -= [Raven::Processor::PostData] # Do this to send POST data
+          config.sanitize_data_for_request_methods -= ["POST", "PUT", "PATCH"] # Do this to send POST, PUT PATCH data
           config.processors -= [Raven::Processor::Cookies] # Do this to send cookies by default
         end
 

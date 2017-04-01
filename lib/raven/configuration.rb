@@ -149,6 +149,10 @@ module Raven
     # Errors object - an Array that contains error messages. See #
     attr_reader :errors
 
+    # Sanitize data for request methods.
+    # E.g. ["POST", "PUT", "PATCH"]
+    attr_accessor :sanitize_data_for_request_methods
+
     IGNORE_DEFAULT = [
       'AbstractController::ActionNotFound',
       'ActionController::InvalidAuthenticityToken',
@@ -167,8 +171,14 @@ module Raven
       Raven::Processor::UTF8Conversion,
       Raven::Processor::SanitizeData,
       Raven::Processor::Cookies,
-      Raven::Processor::PostData,
+      Raven::Processor::RequestMethodData,
       Raven::Processor::HTTPHeaders
+    ].freeze
+
+    DEFAULT_REQUEST_METHODS_FOR_DATA_SANITIZATION = [
+      "PATCH",
+      "POST",
+      "PUT",
     ].freeze
 
     LOG_PREFIX = "** [Raven] ".freeze
@@ -200,6 +210,7 @@ module Raven
       self.tags = {}
       self.timeout = 2
       self.transport_failure_callback = false
+      self.sanitize_data_for_request_methods = DEFAULT_REQUEST_METHODS_FOR_DATA_SANITIZATION.dup
     end
 
     def server=(value)
