@@ -171,7 +171,16 @@ module Raven
     # @example
     #   Raven.user_context('id' => 1, 'email' => 'foo@example.com')
     def user_context(options = nil)
-      context.user = options || {}
+      context.user = if options.respond_to?(:has_key?)
+                       context.user = options
+                     else
+                       logger.warn(
+                         "You're passing `options` - #{options.inspect}" \
+                         ' that are not a Hash. Your `options` will be replaced with' \
+                         ' an empty Hash to ensure that an event will be sent to Sentry.io'
+                       )
+                       {}
+                     end
     end
 
     # Bind tags context. Merges with existing context (if any).

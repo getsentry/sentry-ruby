@@ -219,6 +219,43 @@ describe Raven::Instance do
     end
   end
 
+  describe '.user_context' do
+    context 'with `options` that is a hash' do
+      let(:options) { { 'email' => 'foobar@example.com' } }
+
+      it(:aggregate_failures) do
+        expect(subject.logger).not_to receive(:warn)
+
+        subject.user_context(options)
+
+        expect(
+          subject.context.user
+        ).to eq(options)
+      end
+    end
+
+    context 'with `options` that is not a hash' do
+      let(:options) { ['email', 'foobar@example.com'] }
+
+      it(:aggregate_failures) do
+        expect(subject.logger).to receive(:warn)
+          .once
+          .with(
+            "You're passing `options` - #{options.inspect}" \
+            ' that are not a Hash. Your `options` will be replaced with' \
+            ' an empty Hash to ensure that an event will be sent to Sentry.io'
+          )
+          .and_call_original
+
+        subject.user_context(options)
+
+        expect(
+          subject.context.user
+        ).to eq({})
+      end
+    end
+  end
+
   describe '.last_event_id' do
     let(:message) { "Test message" }
 

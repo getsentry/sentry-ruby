@@ -347,6 +347,7 @@ describe Raven::Event do
   end
 
   describe '.initialize' do
+    # NOTE: This test is completely pointless.
     it 'should not touch the env object for an ignored environment' do
       Raven.configure do |config|
         config.current_environment = 'test'
