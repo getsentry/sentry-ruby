@@ -175,11 +175,7 @@ module Raven
       Raven::Processor::HTTPHeaders
     ].freeze
 
-    DEFAULT_REQUEST_METHODS_FOR_DATA_SANITIZATION = [
-      "PATCH",
-      "POST",
-      "PUT",
-    ].freeze
+    DEFAULT_REQUEST_METHODS_FOR_DATA_SANITIZATION = %w(PATCH POST PUT).freeze
 
     LOG_PREFIX = "** [Raven] ".freeze
 

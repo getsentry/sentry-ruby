@@ -3,28 +3,23 @@
 require 'spec_helper'
 
 describe Raven::Processor::RequestMethodData do
-  TESTED_METHODS = [
-    "GET",
-    "PATCH",
-    "POST",
-    "PUT",
-  ].freeze
+  TESTED_METHODS = %w(GET PATCH POST PUT).freeze
   TESTED_CONFIGURATIONS = [
-    ["POST", "PUT", "PATCH"],
-    ["POST"],
-    ["PUT"],
-    ["PATCH"],
-    ["POST", "PUT"],
-    ["PUT", "PATCH"],
-    ["POST", "PATCH"],
-    [],
+    %w(POST PUT PATCH),
+    %w(POST),
+    %w(PUT),
+    %w(PATCH),
+    %w(POST PUT),
+    %w(PUT PATCH),
+    %w(POST PATCH),
+    []
   ].freeze
 
   let(:configuration) do
-    double("configuration", sanitize_data_for_request_methods: configured_methods)
+    double("configuration", :sanitize_data_for_request_methods => configured_methods)
   end
   let(:result) { processor.process(data) }
-  let(:client) { double("client", configuration: configuration) }
+  let(:client) { double("client", :configuration => configuration) }
   let(:processor) { described_class.new(client) }
   let(:data) do
     {
@@ -57,7 +52,7 @@ describe Raven::Processor::RequestMethodData do
           let(:method) { unsanitized_method }
 
           it "did not sanitize the data for #{unsanitized_method}" do
-            expect(result[:request][:data]).to eq({"sensitive_stuff" => "TOP_SECRET-GAMMA"})
+            expect(result[:request][:data]).to eq("sensitive_stuff" => "TOP_SECRET-GAMMA")
           end
         end
       end
