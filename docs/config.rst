@@ -137,7 +137,7 @@ Optional settings
 
         Raven.configure do |config|
           config.sanitize_data_for_request_methods = %w(PATCH) # Only send data for PATCH request method
-          # config.sanitize_data_for_request_methods = [] # Do this to always send request data
+          # config.sanitize_data_for_request_methods -= [Raven::Processor::RequestMethodData] # Do this to always send request data
           config.processors -= [Raven::Processor::Cookies] # Do this to send cookies by default
         end
 
