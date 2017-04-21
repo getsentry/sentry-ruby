@@ -141,6 +141,14 @@ Optional settings
           config.processors -= [Raven::Processor::Cookies] # Do this to send cookies by default
         end
 
+.. describe:: proxy
+
+  A string with the URL of the HTTP proxy to be used.
+
+  .. code-block:: ruby
+
+      config.proxy = 'http://path.to.my.proxy.com'
+
 .. describe:: rails_report_rescued_exceptions
 
     Rails catches exceptions in the ActionDispatch::ShowExceptions or ActionDispatch::DebugExceptions middlewares, depending on the environment. When `rails_report_rescued_exceptions` is true (it is by default), Raven will report exceptions even when they are rescued by these middlewares.
