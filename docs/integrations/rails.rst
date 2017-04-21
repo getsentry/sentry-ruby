@@ -26,14 +26,6 @@ you need:
       config.dsn = '___DSN___'
     end
 
-You'll also to ensure you've disabled anything that would prevent
-errors from being propagated to the ``Raven::Rack`` middleware, ``like
-ActionDispatch::ShowExceptions``:
-
-.. sourcecode:: ruby
-
-    config.action_dispatch.show_exceptions = false # this is the default setting in production
-
 If you have added items to `Rails' log filtering
 <http://guides.rubyonrails.org/action_controller_overview.html#parameters-filtering>`_,
 you can also make sure that those items are not sent to Sentry:
@@ -46,16 +38,6 @@ you can also make sure that those items are not sent to Sentry:
     # in an initializer, like sentry.rb
     Raven.configure do |config|
       config.sanitize_fields = Rails.application.config.filter_parameters.map(&:to_s)
-    end
-
-If you only want to send events to Sentry in certain environments, you
-should set ``config.environments`` too:
-
-.. sourcecode:: ruby
-
-    Raven.configure do |config|
-      config.dsn = '___DSN___'
-      config.environments = ['staging', 'production']
     end
 
 Params and sessions
