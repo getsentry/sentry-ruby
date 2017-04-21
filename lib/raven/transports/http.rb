@@ -27,7 +27,7 @@ module Raven
           req.headers['X-Sentry-Auth'] = auth_header
           req.body = data
         end
-      rescue Faraday::ClientError => ex
+      rescue Faraday::Error => ex
         error_info = ex.message
         if ex.response && ex.response[:headers]['x-sentry-error']
           error_info += " Error in headers is: #{ex.response[:headers]['x-sentry-error']}"
