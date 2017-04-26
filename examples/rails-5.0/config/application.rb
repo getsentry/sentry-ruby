@@ -10,6 +10,8 @@ module Rails50
   class Application < Rails::Application
     config.consider_all_requests_local = false
 
+    config.rails_activesupport_breadcrumbs = true
+
     # https://github.com/getsentry/raven-ruby/issues/494
     config.exceptions_app = self.routes
 
