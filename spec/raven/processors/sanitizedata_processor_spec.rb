@@ -151,6 +151,17 @@ describe Raven::Processor::SanitizeData do
     expect(result["array"][0]['password']).to eq(Raven::Processor::SanitizeData::STRING_MASK)
   end
 
+  it 'sanitizes nested hash' do
+    data = {
+        "empty_array" => [],
+        "array" => { 'password' => 'secret' }
+    }
+
+    result = @processor.process(data)
+
+    expect(result["array"]['password']).to eq(Raven::Processor::SanitizeData::STRING_MASK)
+  end
+
   context "query strings" do
     it 'sanitizes' do
       data = {
