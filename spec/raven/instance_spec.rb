@@ -234,4 +234,16 @@ describe Raven::Instance do
       expect { |b| subject.capture_type(message, options, &b) }.to yield_with_args(event)
     end
   end
+
+  describe "#rack_context" do
+    it "doesn't set anything if the context is empty" do
+      subject.rack_context({})
+      expect(subject.context.rack_env).to be_nil
+    end
+
+    it "sets arbitrary rack context" do
+      subject.rack_context({ :foo => :bar })
+      expect(subject.context.rack_env[:foo]).to eq(:bar)
+    end
+  end
 end

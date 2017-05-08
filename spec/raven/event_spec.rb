@@ -346,17 +346,6 @@ describe Raven::Event do
     end
   end
 
-  describe '.initialize' do
-    it 'should not touch the env object for an ignored environment' do
-      Raven.configure do |config|
-        config.current_environment = 'test'
-        config.logger = Logger.new(nil)
-      end
-      Raven.rack_context({})
-      Raven::Event.new
-    end
-  end
-
   describe '.to_json_compatible' do
     subject do
       Raven::Event.new(:extra => {
