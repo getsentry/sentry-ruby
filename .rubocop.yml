@@ -4,6 +4,7 @@ AllCops:
      - 'spec/**/*.rb'
    Exclude:
      - 'examples/**/*'
+     - 'vendor/**/*'
 
 Metrics/ClassLength:
   Max: 248

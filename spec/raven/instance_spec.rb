@@ -242,7 +242,7 @@ describe Raven::Instance do
     end
 
     it "sets arbitrary rack context" do
-      subject.rack_context({ :foo => :bar })
+      subject.rack_context(:foo => :bar)
       expect(subject.context.rack_env[:foo]).to eq(:bar)
     end
   end
