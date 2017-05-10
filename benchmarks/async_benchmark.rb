@@ -20,7 +20,7 @@ end
 Raven.configure do |config|
   config.logger = Logger.new(nil)
   config.dsn = "dummy://12345:67890@sentry.localdomain:3000/sentry/42"
-  config.async = lambda { |event| event.to_hash } # Simulate throwing this into a Sidekiq job, etc
+  config.async = ->(event) { event.to_hash } # Simulate throwing this into a Sidekiq job, etc
 end
 
 TestApp.initialize!
