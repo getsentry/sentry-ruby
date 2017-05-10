@@ -113,4 +113,15 @@ describe Raven::Rack do
     stack = Raven::Rack.new(Rack::Lint.new(app))
     expect { stack.call(env) }.to_not raise_error
   end
+
+  it 'should pass event id to env' do
+    env = {}
+    exception = build_exception
+    app = lambda { |_e| raise exception }
+
+    stack = Raven::Rack.new(app)
+
+    expect { stack.call(env) }.to raise_error
+    expect(env).to include('sentry-event-id')
+  end
 end

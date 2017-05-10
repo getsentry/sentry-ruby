@@ -25,11 +25,13 @@ module Raven
       if env['raven.requested_at']
         options[:time_spent] = Time.now - env['raven.requested_at']
       end
-      Raven.capture_type(exception, options) do |evt|
+      event = Raven.capture_type(exception, options) do |evt|
         evt.interface :http do |int|
           int.from_rack(env)
         end
       end
+
+      env['sentry-event-id'] = event.id
     end
     class << self
       alias capture_message capture_type
