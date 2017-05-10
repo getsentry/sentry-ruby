@@ -78,9 +78,36 @@ module Raven
         end
       end
 
+      def filename
+        return nil if file.nil?
+
+        prefix =
+          if under_project_root? && in_app
+            project_root
+          elsif under_project_root?
+            longest_load_path || project_root
+          else
+            longest_load_path
+          end
+
+        prefix ? file[prefix.to_s.chomp(File::SEPARATOR).length + 1..-1] : file
+      end
+
       private
 
       attr_writer :file, :number, :method, :module_name
+
+      def under_project_root?
+        project_root && file.start_with?(project_root)
+      end
+
+      def project_root
+        @project_root ||= Raven.configuration.project_root && Raven.configuration.project_root.to_s
+      end
+
+      def longest_load_path
+        $LOAD_PATH.select { |s| file.start_with?(s.to_s) }.sort_by { |s| s.to_s.length }.last
+      end
     end
 
     APP_DIRS_PATTERN = /(bin|exe|app|config|lib|test)/

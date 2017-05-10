@@ -26,14 +26,13 @@ module Raven
     attr_accessor :id, :timestamp, :time_spent, :level, :logger,
                   :culprit, :server_name, :release, :modules, :extra, :tags,
                   :context, :configuration, :checksum, :fingerprint, :environment,
-                  :server_os, :runtime, :breadcrumbs, :user, :backtrace, :linecache
+                  :server_os, :runtime, :breadcrumbs, :user, :backtrace
 
     def initialize(init = {})
       @configuration = init[:configuration] || Raven.configuration
       @interfaces    = {}
       @breadcrumbs   = init[:breadcrumbs] || Raven.breadcrumbs
       @context       = init[:context] || Raven.context
-      @linecache     = @configuration.linecache
       @id            = SecureRandom.uuid.delete("-")
       @timestamp     = Time.now.utc
       @time_spent    = nil
@@ -94,15 +93,6 @@ module Raven
         options = Raven::Utils::DeepMergeHash.deep_merge(exception_context, options)
 
         configuration = options[:configuration] || Raven.configuration
-        if exc.is_a?(Raven::Error)
-          # Try to prevent error reporting loops
-          configuration.logger.debug "Refusing to capture Raven error: #{exc.inspect}"
-          return nil
-        end
-        if configuration[:excluded_exceptions].any? { |x| get_exception_class(x) === exc }
-          configuration.logger.debug "User excluded error: #{exc.inspect}"
-          return nil
-        end
 
         new(options) do |evt|
           evt.configuration = configuration
@@ -124,33 +114,15 @@ module Raven
           evt.level = options[:level] || :error
           evt.message = message, options[:message_params] || []
           if options[:backtrace]
-            evt.interface(:stacktrace) do |int|
-              stacktrace_interface_from(int, evt, options[:backtrace])
-            end
+            interfaces = evt.instance_variable_get(:@interfaces)
+            interfaces[:stacktrace] =
+              StacktraceInterface.from_backtrace(options[:backtrace], evt.configuration.linecache, evt.configuration[:context_lines])
+            evt.instance_variable_set(:@interfaces, interfaces)
           end
         end
       end
 
       private
-
-      def get_exception_class(x)
-        x.is_a?(Module) ? x : qualified_const_get(x)
-      end
-
-      # In Ruby <2.0 const_get can't lookup "SomeModule::SomeClass" in one go
-      def qualified_const_get(x)
-        x = x.to_s
-        parts = x.split("::")
-        parts.reject!(&:empty?)
-
-        if parts.size < 2
-          Object.const_get(x)
-        else
-          parts.inject(Object) { |a, e| a.const_get(e) }
-        end
-      rescue NameError # There's no way to safely ask if a constant exist for an unknown string
-        nil
-      end
 
       def get_exception_context(exc)
         if exc.instance_variable_defined?(:@__raven_context)
@@ -180,39 +152,15 @@ module Raven
               int.value = e.to_s
               int.module = e.class.to_s.split('::')[0...-1].join('::')
 
-              int.stacktrace =
-                if e.backtrace && !backtraces.include?(e.backtrace.object_id)
-                  backtraces << e.backtrace.object_id
-                  StacktraceInterface.new do |stacktrace|
-                    stacktrace_interface_from(stacktrace, evt, e.backtrace)
-                  end
-                end
+              if e.backtrace && !backtraces.include?(e.backtrace.object_id)
+                backtraces << e.backtrace.object_id
+                st_interface = StacktraceInterface.from_backtrace(e.backtrace, evt.configuration.linecache, evt.configuration[:context_lines])
+                int.stacktrace = st_interface
+                evt.culprit = evt.get_culprit(st_interface.frames)
+              end
             end
           end
         end
-      end
-
-      def stacktrace_interface_from(int, evt, backtrace)
-        backtrace = Backtrace.parse(backtrace)
-
-        int.frames = []
-        backtrace.lines.reverse_each do |line|
-          frame = StacktraceInterface::Frame.new
-          frame.abs_path = line.file if line.file
-          frame.function = line.method if line.method
-          frame.lineno = line.number
-          frame.in_app = line.in_app
-          frame.module = line.module_name if line.module_name
-
-          if evt.configuration[:context_lines] && frame.abs_path
-            frame.pre_context, frame.context_line, frame.post_context = \
-              evt.get_file_context(frame.abs_path, frame.lineno, evt.configuration[:context_lines])
-          end
-
-          int.frames << frame if frame.filename
-        end
-
-        evt.culprit = evt.get_culprit(int.frames)
       end
     end
 
@@ -266,10 +214,6 @@ module Raven
       data
     end
 
-    def get_file_context(filename, lineno, context)
-      linecache.get_file_context(filename, lineno, context)
-    end
-
     def get_culprit(frames)
       lastframe = frames.reverse.find(&:in_app) || frames.last
       "#{lastframe.filename} in #{lastframe.function} at line #{lastframe.lineno}" if lastframe
@@ -279,12 +223,23 @@ module Raven
       JSON.parse(JSON.generate(to_hash))
     end
 
-    # For cross-language compat
+    def self.capture_exception(message, opts = {})
+      Raven.logger.warn "DEPRECATION WARNING: Calling #capture_exception \
+        on Raven::Event will be removed in raven-ruby 4.0! Use Raven.capture_exception \
+        instead!"
+      Raven.capture_exception(message, opts)
+    end
+
+    def self.capture_message(message, opts = {})
+      Raven.logger.warn "DEPRECATION WARNING: Calling #capture_message \
+        on Raven::Event will be removed in raven-ruby 4.0! Use Raven.capture_message \
+        instead!"
+      Raven.capture_message(message, opts)
+    end
+
     class << self
-      alias captureException from_exception
-      alias captureMessage from_message
-      alias capture_exception from_exception
-      alias capture_message from_message
+      alias captureException capture_exception
+      alias captureMessage capture_message
     end
 
     private

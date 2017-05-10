@@ -1,9 +1,7 @@
 module Raven
   class Interface
-    def initialize(attributes = nil)
-      attributes.each do |attr, value|
-        public_send "#{attr}=", value
-      end if attributes
+    def initialize(init = {})
+      (init || {}).each_pair { |key, val| public_send(key.to_s + "=", val) }
 
       yield self if block_given?
     end

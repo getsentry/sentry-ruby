@@ -179,7 +179,7 @@ module Raven
 
     LOG_PREFIX = "** [Raven] ".freeze
 
-    def initialize
+    def initialize(init = {})
       self.async = false
       self.context_lines = 3
       self.current_environment = ENV['RAILS_ENV'] || ENV['RACK_ENV'] || 'default'
@@ -207,9 +207,14 @@ module Raven
       self.timeout = 2
       self.transport_failure_callback = false
       self.sanitize_data_for_request_methods = DEFAULT_REQUEST_METHODS_FOR_DATA_SANITIZATION.dup
+
+      init.each_pair { |key, val| public_send(key.to_s + "=", val) }
     end
 
     def server=(value)
+      %w(project_id public_key secret_key scheme host port path server).each do |v|
+        instance_variable_set("@#{v}", nil)
+      end
       uri = URI.parse(value)
       uri_path = uri.path.split('/')
 
@@ -233,7 +238,7 @@ module Raven
     alias dsn= server=
 
     def encoding=(encoding)
-      raise(Error, 'Unsupported encoding') unless %w(gzip json).include? encoding
+      raise(ArgumentError, 'Unsupported encoding') unless %w(gzip json).include? encoding
       @encoding = encoding
     end
 
@@ -274,6 +279,8 @@ module Raven
 
       valid? &&
         capture_in_current_environment? &&
+        !raven_error?(message_or_exc) &&
+        !excluded_exception?(message_or_exc) &&
         capture_allowed_by_callback?(message_or_exc)
     end
     # If we cannot capture, we cannot send.
@@ -345,11 +352,41 @@ module Raven
       false
     end
 
-    # Try to resolve the hostname to an FQDN, but fall back to whatever
-    # the load name is.
+    def raven_error?(message_or_exc)
+      return false unless message_or_exc.is_a?(Raven::Error)
+      @errors << "Refusing to capture Raven error: #{message_or_exc.inspect}"
+      true
+    end
+
+    def excluded_exception?(message_or_exc)
+      return false if message_or_exc.nil? || message_or_exc === String # filter out messages
+      return false unless excluded_exceptions.any? { |x| get_exception_class(x) === message_or_exc }
+      @errors << "User excluded error: #{message_or_exc.inspect}"
+      true
+    end
+
+    def get_exception_class(x)
+      x.is_a?(Module) ? x : qualified_const_get(x)
+    end
+
+    # In Ruby <2.0 const_get can't lookup "SomeModule::SomeClass" in one go
+    def qualified_const_get(x)
+      x = x.to_s
+      parts = x.split("::")
+      parts.reject!(&:empty?)
+
+      if parts.size < 2
+        Object.const_get(x)
+      else
+        parts.inject(Object) { |a, e| a.const_get(e) }
+      end
+    rescue NameError # There's no way to safely ask if a constant exist for an unknown string
+      nil
+    end
+
+    # Try to resolve the hostname to an FQDN.
     def resolve_hostname
-      Socket.gethostname ||
-        Socket.gethostbyname(hostname).first rescue server_name
+      Raven.sys_command("hostname -f") || Socket.gethostname
     end
   end
 end

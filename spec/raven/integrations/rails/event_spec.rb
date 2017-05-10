@@ -22,7 +22,7 @@ describe Raven::Event do
         e
       end
 
-      let(:hash) { Raven::Event.capture_exception(exception).to_hash }
+      let(:hash) { Raven::Event.from_exception(exception).to_hash }
 
       it 'marks in_app correctly' do
         frames = hash[:exception][:values][0][:stacktrace][:frames]
