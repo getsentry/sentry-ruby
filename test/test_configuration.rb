@@ -20,6 +20,7 @@ class ConfigurationTest < Minitest::Spec
       end
 
       it "falls back to Socket.gethostname if syscommand not available" do
+        skip "stubs not threadsafe"
         Raven.stub(:sys_command, nil) do
           Socket.stub(:gethostname, "gethostname") do
             @stubbed_config = Raven::Configuration.new
