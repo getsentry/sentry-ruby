@@ -60,7 +60,7 @@ module Raven
       end
 
       def longest_load_path
-        @longest_load_path ||= $LOAD_PATH.select { |s| abs_path.start_with?(s) }.max_by(&:length)
+        $LOAD_PATH.select { |s| abs_path.start_with?(s) }.max_by(&:length)
       end
 
       def to_hash(*args)
