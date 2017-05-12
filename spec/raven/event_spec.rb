@@ -187,6 +187,20 @@ describe Raven::Event do
     it "truncates http data" do
       expect(hash[:request][:data]).to eq("a" * 2048)
     end
+
+    context "with truncation disabled" do
+      before(:each) do
+        Raven.configuration.truncate_http_body = false
+      end
+
+      after(:each) do
+        Raven.configuration.truncate_http_body = true
+      end
+
+      it "does not truncate http data" do
+        expect(hash[:request][:data]).to eq("a" * 16_000)
+      end
+    end
   end
 
   context 'configuration tags specified' do
