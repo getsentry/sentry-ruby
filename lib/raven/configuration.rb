@@ -149,7 +149,7 @@ module Raven
     # Errors object - an Array that contains error messages. See #
     attr_reader :errors
 
-    # Sanitize data for request methods.
+    # HTTP methods in this list will have their request bodies removed before sending to Sentry
     # E.g. ["POST", "PUT", "PATCH"]
     attr_accessor :sanitize_data_for_request_methods
 
