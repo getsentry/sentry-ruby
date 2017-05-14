@@ -136,7 +136,7 @@ Optional settings
     .. code-block:: ruby
 
         Raven.configure do |config|
-          config.sanitize_data_for_request_methods = %w(PATCH) # Only send data for PATCH request method
+          config.sanitize_data_for_request_methods = %w(POST) # Only POST will have its data removed from Sentry events
           # config.processors -= [Raven::Processor::RequestMethodData] # Do this to always send request data
           config.processors -= [Raven::Processor::Cookies] # Do this to send cookies by default
         end
