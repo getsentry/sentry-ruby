@@ -84,7 +84,9 @@ module Raven
       if request.form_data?
         request.POST
       elsif request.body # JSON requests, etc
-        data = request.body.read(2048) # Sentry server limit
+        length = 2048 if Raven.configuration.truncate_http_body
+
+        data = request.body.read(length)
         request.body.rewind
         data
       end

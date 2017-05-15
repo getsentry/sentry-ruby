@@ -221,6 +221,14 @@ Optional settings
           AdminMailer.email_admins("Oh god, it's on fire!").deliver_later
         }
 
+.. describe:: truncate_http_body
+
+    By default the HTTP body of a request is truncated to 2048 characters. It can be disabled.
+
+    .. code-block:: ruby
+
+        config.truncate_http_body = false
+
 Environment Variables
 ---------------------
 

@@ -146,6 +146,9 @@ module Raven
     # E.g. lambda { |event| Thread.new { MyJobProcessor.send_email(event) } }
     attr_reader :transport_failure_callback
 
+    # Enables HTTP body truncation when true (default).
+    attr_accessor :truncate_http_body
+
     # Errors object - an Array that contains error messages. See #
     attr_reader :errors
 
@@ -206,6 +209,7 @@ module Raven
       self.tags = {}
       self.timeout = 2
       self.transport_failure_callback = false
+      self.truncate_http_body = true
       self.sanitize_data_for_request_methods = DEFAULT_REQUEST_METHODS_FOR_DATA_SANITIZATION.dup
     end
 
