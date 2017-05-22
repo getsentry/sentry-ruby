@@ -1,3 +1,12 @@
+2.5.0
+-----
+
+* FEATURE: Greatly improved performance (2-3x faster capture) [@nateberkopec]
+* FEATURE: Frozen objects are now sanitized [@nateberkopec]
+
+* BUGFIX: Grabbing Sidekiq context from "wrapped" classes works [@nateberkopec]
+* BUGFIX: Relaxed Faraday dependency [@nateberkopec]
+
 2.4.0
 -----
 
