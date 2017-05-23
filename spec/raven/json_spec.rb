@@ -47,10 +47,10 @@ describe JSON do
       expect { JSON.parse("[") }.to raise_error(JSON::ParserError)
     end
 
-    it "raises an error on bad UTF8 input" do
+    it "does not raise an error on bad UTF8 input" do
       expect do
-        JSON.parse("invalid utf8 string goes here\255".force_encoding('UTF-8'))
-      end.to raise_error(JSON::ParserError)
+        JSON.parse(%("invalid utf8 string goes here\255"))
+      end.not_to raise_error(JSON::ParserError)
     end
 
     it "blows up on circular references" do

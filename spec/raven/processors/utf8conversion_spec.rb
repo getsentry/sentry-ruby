@@ -6,25 +6,24 @@ describe Raven::Processor::UTF8Conversion do
   before do
     @client = double("client")
     @processor = Raven::Processor::UTF8Conversion.new(@client)
+    @bad_utf8_string = "invalid utf8 string goes here\255".force_encoding('UTF-8')
   end
 
-  it 'should not fail because of invalid byte sequence in UTF-8' do
-    data = {}
-    data['invalid'] = "invalid utf8 string goes here\255".force_encoding('UTF-8')
-
-    @processor.process(data)
+  it "has a utf8 fixture which is not valid utf-8" do
+    expect(@bad_utf8_string.valid_encoding?).to eq(false)
+    expect { @bad_utf8_string.match("") }.to raise_error(ArgumentError)
   end
 
   it 'should cleanup invalid UTF-8 bytes' do
     data = {}
-    data['invalid'] = "invalid utf8 string goes here\255".force_encoding('UTF-8')
+    data['invalid'] = @bad_utf8_string
 
     results = @processor.process(data)
     expect(results['invalid']).to eq("invalid utf8 string goes here")
   end
 
   it "should cleanup invalid UTF-8 bytes in Exception messages" do
-    data = Exception.new("invalid utf8 string goes here\255".force_encoding('UTF-8'))
+    data = Exception.new(@bad_utf8_string)
 
     results = @processor.process(data)
     expect(results.message).to eq("invalid utf8 string goes here")
@@ -40,7 +39,7 @@ describe Raven::Processor::UTF8Conversion do
 
   it 'should work recursively on hashes' do
     data = { 'nested' => {} }
-    data['nested']['invalid'] = "invalid utf8 string goes here\255".force_encoding('UTF-8')
+    data['nested']['invalid'] = @bad_utf8_string
 
     results = @processor.process(data)
     expect(results['nested']['invalid']).to eq("invalid utf8 string goes here")
@@ -48,7 +47,7 @@ describe Raven::Processor::UTF8Conversion do
 
   it 'should work recursively on arrays' do
     data = ['good string', 'good string',
-            ['good string', "invalid utf8 string goes here\255".force_encoding('UTF-8')]]
+            ['good string', @bad_utf8_string]]
 
     results = @processor.process(data)
     expect(results[2][1]).to eq("invalid utf8 string goes here")

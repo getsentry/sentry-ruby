@@ -1,7 +1,9 @@
 module Raven
   class Processor::UTF8Conversion < Processor
-    UTF8 = "UTF-8".freeze
-    ASCII = "US-ASCII".freeze
+    # Slightly misnamed - actually just removes any bytes with invalid encoding
+    # Previously, our JSON backend required UTF-8. Since we now use the built-in
+    # JSON, we can use any encoding, but it must be valid anyway so we can do
+    # things like call #match and #slice on strings
     REPLACE = "".freeze
 
     def process(value)
@@ -11,12 +13,12 @@ module Raven
       when Array
         !value.frozen? ? value.map! { |v| process v } : value.map { |v| process v }
       when Exception
-        return value if utf8_or_subset(value.message) && value.message.valid_encoding?
+        return value if value.message.valid_encoding?
         clean_exc = value.class.new(remove_invalid_bytes(value.message))
         clean_exc.set_backtrace(value.backtrace)
         clean_exc
       when String
-        return value if utf8_or_subset(value) && value.valid_encoding?
+        return value if value.valid_encoding?
         remove_invalid_bytes(value)
       else
         value
@@ -24,10 +26,6 @@ module Raven
     end
 
     private
-
-    def utf8_or_subset(value)
-      [UTF8, ASCII].include?(value.encoding.name)
-    end
 
     # Stolen from RSpec
     # https://github.com/rspec/rspec-support/blob/f0af3fd74a94ff7bb700f6ba06dbdc67bba17fbf/lib/rspec/support/encoded_string.rb#L120-L139
