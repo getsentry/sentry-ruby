@@ -2,8 +2,7 @@ module Raven
   class Processor::UTF8Conversion < Processor
     UTF8 = "UTF-8".freeze
     ASCII = "US-ASCII".freeze
-    UTF16 = "UTF-16".freeze
-    REPLACE_CHAR = "".freeze
+    REPLACE = "".freeze
 
     def process(value)
       case value
@@ -13,12 +12,12 @@ module Raven
         !value.frozen? ? value.map! { |v| process v } : value.map { |v| process v }
       when Exception
         return value if utf8_or_subset(value.message) && value.message.valid_encoding?
-        clean_exc = value.class.new(clean_invalid_utf8_bytes(value.message))
+        clean_exc = value.class.new(remove_invalid_bytes(value.message))
         clean_exc.set_backtrace(value.backtrace)
         clean_exc
       when String
         return value if utf8_or_subset(value) && value.valid_encoding?
-        clean_invalid_utf8_bytes(value)
+        remove_invalid_bytes(value)
       else
         value
       end
@@ -30,8 +29,18 @@ module Raven
       [UTF8, ASCII].include?(value.encoding.name)
     end
 
-    def clean_invalid_utf8_bytes(obj)
-      obj.force_encoding(UTF8).encode!(UTF16, :invalid => :replace, :undef => :replace, :replace => REPLACE_CHAR).encode!(UTF8)
+    # Stolen from RSpec
+    # https://github.com/rspec/rspec-support/blob/f0af3fd74a94ff7bb700f6ba06dbdc67bba17fbf/lib/rspec/support/encoded_string.rb#L120-L139
+    if String.method_defined?(:scrub) # 2.1+
+      def remove_invalid_bytes(string)
+        string.scrub!(REPLACE)
+      end
+    else
+      def remove_invalid_bytes(string)
+        string.chars.map do |char|
+          char.valid_encoding? ? char : REPLACE
+        end.join
+      end
     end
   end
 end
