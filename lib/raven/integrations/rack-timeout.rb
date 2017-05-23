@@ -1,5 +1,5 @@
 # We need to do this because of the way integration loading works
-require "rack/timeout/base"
+require "rack/timeout/base" unless defined?(Rack::Timeout)
 
 # This integration is a good example of how to change how exceptions
 # get grouped by Sentry's UI. Simply override #raven_context in
