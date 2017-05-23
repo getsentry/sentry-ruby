@@ -53,7 +53,11 @@ describe JSON do
       end.not_to raise_error
 
       expect do
-        JSON.parse(%({"example": "سلام"}).encode("utf-16"))
+        JSON.parse(%({"example": "this is a utf8 or ASCII string"}).encode("utf-16"))
+      end.not_to raise_error
+
+      expect do
+        JSON.parse(%({"example": "this is a utf8 or ASCII string"}).encode("US-ASCII"))
       end.not_to raise_error
     end
 
