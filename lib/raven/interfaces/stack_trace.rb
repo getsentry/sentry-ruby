@@ -38,6 +38,7 @@ module Raven
 
       def filename
         return if abs_path.nil?
+        return @filename if @filename
 
         prefix =
           if under_project_root? && in_app
@@ -48,8 +49,20 @@ module Raven
             longest_load_path
           end
 
-        prefix ? abs_path[prefix.to_s.chomp(File::SEPARATOR).length + 1..-1] : abs_path
+        @filename = prefix ? abs_path[prefix.to_s.chomp(File::SEPARATOR).length + 1..-1] : abs_path
       end
+
+      def to_hash(*args)
+        data = super(*args)
+        data[:filename] = filename
+        data.delete(:vars) unless vars && !vars.empty?
+        data.delete(:pre_context) unless pre_context && !pre_context.empty?
+        data.delete(:post_context) unless post_context && !post_context.empty?
+        data.delete(:context_line) unless context_line && !context_line.empty?
+        data
+      end
+
+      private
 
       def under_project_root?
         project_root && abs_path.start_with?(project_root)
@@ -61,16 +74,6 @@ module Raven
 
       def longest_load_path
         $LOAD_PATH.select { |s| abs_path.start_with?(s) }.max_by(&:length)
-      end
-
-      def to_hash(*args)
-        data = super(*args)
-        data[:filename] = filename
-        data.delete(:vars) unless vars && !vars.empty?
-        data.delete(:pre_context) unless pre_context && !pre_context.empty?
-        data.delete(:post_context) unless post_context && !post_context.empty?
-        data.delete(:context_line) unless context_line && !context_line.empty?
-        data
       end
     end
   end

@@ -32,7 +32,8 @@ describe Raven::Processor::SanitizeData do
           :ssn => '123-45-6789', # test symbol handling
           'social_security_number' => 123456789,
           'user_field' => 'user',
-          'user_field_foo' => 'hello'
+          'user_field_foo' => 'hello',
+          'query_string' => 'foo=bar%E9' # test utf8 handling
         }
       }
     }
@@ -50,6 +51,7 @@ describe Raven::Processor::SanitizeData do
     expect(vars["social_security_number"]).to eq(Raven::Processor::SanitizeData::INT_MASK)
     expect(vars["user_field"]).to eq(Raven::Processor::SanitizeData::STRING_MASK)
     expect(vars["user_field_foo"]).to eq('hello')
+    expect(vars["query_string"]).to eq('foo=bar')
   end
 
   it 'should filter json data' do

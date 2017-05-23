@@ -40,9 +40,16 @@ module Raven
 
     private
 
+    # CGI.parse takes our nice UTF-8 strings and converts them back to ASCII,
+    # so we have to convert them back, again.
+    def utf8_processor
+      @utf8_processor ||= Processor::UTF8Conversion.new
+    end
+
     def sanitize_query_string(query_string)
       query_hash = CGI.parse(query_string)
-      processed_query_hash = process(query_hash)
+      sanitized = utf8_processor.process(query_hash)
+      processed_query_hash = process(sanitized)
       URI.encode_www_form(processed_query_hash)
     end
 
