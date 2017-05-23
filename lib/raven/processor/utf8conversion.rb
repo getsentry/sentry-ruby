@@ -7,10 +7,10 @@ module Raven
 
     def process(value)
       case value
-      when Array
-        value.each { |v| process v }
       when Hash
-        value.each { |_, v| process v }
+        !value.frozen? ? value.merge!(value) { |_, v| process v } : value.merge(value) { |_, v| process v }
+      when Array
+        !value.frozen? ? value.map! { |v| process v } : value.map { |v| process v }
       when Exception
         return value if utf8_or_subset(value.message) && value.message.valid_encoding?
         clean_exc = value.class.new(clean_invalid_utf8_bytes(value.message))
