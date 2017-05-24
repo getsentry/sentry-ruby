@@ -1,3 +1,12 @@
+2.5.1
+-----
+
+* BUGFIX: Fix case where Pathname objects are on the load path [@nateberkopec]
+* BUGFIX: Fix bad UTF-8 characters in the URL querystring [@nateberkopec]
+* BUGFIX: Fix case where rack-timeout could be required twice [@nateberkopec]
+
+* REFACTOR: Slightly cleaner character encoding fixing [@nateberkopec, @bf4]
+
 2.5.0
 -----
 
