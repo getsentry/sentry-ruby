@@ -51,7 +51,7 @@ describe Raven::Processor::SanitizeData do
     expect(vars["social_security_number"]).to eq(Raven::Processor::SanitizeData::INT_MASK)
     expect(vars["user_field"]).to eq(Raven::Processor::SanitizeData::STRING_MASK)
     expect(vars["user_field_foo"]).to eq('hello')
-    expect(vars["query_string"]).to eq('foo=bar')
+    expect(vars["query_string"]).to match('foo=bar')
   end
 
   it 'should filter json data' do
