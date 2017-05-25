@@ -12,14 +12,6 @@ parser = OptionParser.new do |opt|
   opt.separator  ""
   opt.separator  "Options"
 
-  # opt.on("-e","--environment ENVIRONMENT","which environment you want server run") do |environment|
-  #   options[:environment] = environment
-  # end
-
-  # opt.on("-d","--daemon","runing on daemon mode?") do
-  #   options[:daemon] = true
-  # end
-
   opt.on("-h", "--help", "help") do
     puts parser
   end
