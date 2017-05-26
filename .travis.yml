@@ -28,13 +28,13 @@ before_install:
 
 matrix:
   include:
-    - rvm: jruby-1.7.26
+    - rvm: jruby-1.7.27
       env: JRUBY_OPTS="--dev"
       gemfile: gemfiles/rails42.gemfile
-    - rvm: jruby-9.1.8.0
+    - rvm: jruby-9.1.10.0
       env: JRUBY_OPTS="--dev -J-Djruby.launch.inproc=true -J-Xmx1024M"
       gemfile: gemfiles/rails42.gemfile
-    - rvm: jruby-9.1.8.0
+    - rvm: jruby-9.1.10.0
       env: JRUBY_OPTS="--dev -J-Djruby.launch.inproc=true -J-Xmx1024M"
       gemfile: gemfiles/rails5.gemfile
   allow_failures:
