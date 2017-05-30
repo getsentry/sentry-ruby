@@ -110,7 +110,7 @@ module Raven
     end
 
     def inspect
-      "<Backtrace: " + lines.map(&inspect).join(", ") + ">"
+      "<Backtrace: " + lines.map(&:inspect).join(", ") + ">"
     end
 
     def to_s
