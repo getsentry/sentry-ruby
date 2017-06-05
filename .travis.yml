@@ -2,7 +2,10 @@ language: ruby
 dist: trusty
 sudo: false
 group: beta
-cache: bundler
+cache:
+  directories:
+    - /home/travis/.rvm
+    - /home/travis/build/getsentry/raven-ruby/gemfiles/vendor/bundle
 
 branches:
   only: [master]
