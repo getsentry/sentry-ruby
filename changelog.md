@@ -1,3 +1,11 @@
+2.5.2
+-----
+
+* BUGFIX: raven test executable should be available [#691, @nateberkopec]
+* BUGFIX: Fix stack overflow when calling Backtrace#inspect [#690, @nateberkopec]
+
+* KNOWN ISSUE: Character encoding errors [#689]
+
 2.5.1
 -----
 
