@@ -8,15 +8,14 @@ branches:
   only: [master]
 
 rvm:
-  - 1.9
   - 2.2.7
   - 2.3.4
-  - ruby-head
   - 2.4.1
 
-gemfile:
-  - gemfiles/rails42.gemfile
-  - gemfiles/rails5.gemfile
+env:
+  - RAILS_VERSION=4
+  - RAILS_VERSION=5
+  - RAILS_VERSION=0
 
 addons:
   apt:
@@ -28,23 +27,15 @@ before_install:
 
 matrix:
   include:
+    - rvm: 1.9
+      env: RAILS_VERSION=4
     - rvm: jruby-1.7.27
-      env: JRUBY_OPTS="--dev"
-      gemfile: gemfiles/rails42.gemfile
+      env: JRUBY_OPTS="--dev" RAILS_VERSION=4
     - rvm: jruby-9.1.10.0
-      env: JRUBY_OPTS="--dev -J-Djruby.launch.inproc=true -J-Xmx1024M"
-      gemfile: gemfiles/rails42.gemfile
+      env: JRUBY_OPTS="--dev -J-Djruby.launch.inproc=true -J-Xmx1024M" RAILS_VERSION=4
     - rvm: jruby-9.1.10.0
-      env: JRUBY_OPTS="--dev -J-Djruby.launch.inproc=true -J-Xmx1024M"
-      gemfile: gemfiles/rails5.gemfile
+      env: JRUBY_OPTS="--dev -J-Djruby.launch.inproc=true -J-Xmx1024M" RAILS_VERSION=5
+    - rvm: ruby-head
+      env: RAILS_VERSION=0
   allow_failures:
     - rvm: ruby-head
-  exclude:
-    - rvm: 2.2.7
-      gemfile: gemfiles/rails32.gemfile
-    - rvm: ruby-head
-      gemfile: gemfiles/rails32.gemfile
-    - rvm: 2.4.1
-      gemfile: gemfiles/rails32.gemfile
-    - rvm: 1.9
-      gemfile: gemfiles/rails5.gemfile
