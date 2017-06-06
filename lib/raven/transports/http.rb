@@ -56,6 +56,7 @@ module Raven
         conn.headers[:user_agent] = "sentry-ruby/#{Raven::VERSION}"
 
         conn.options[:proxy] = configuration.proxy if configuration.proxy
+        conn.options[:proxy] = nil if configuration.proxy == false #false disables the proxy
         conn.options[:timeout] = configuration.timeout if configuration.timeout
         conn.options[:open_timeout] = configuration.open_timeout if configuration.open_timeout
 
