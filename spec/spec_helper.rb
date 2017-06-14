@@ -2,6 +2,7 @@ require 'sentry-raven-without-integrations'
 
 require File.dirname(__FILE__) + "/support/test_rails_app/app.rb"
 require "rspec/rails"
+require 'raven/transports/dummy'
 
 RSpec.configure do |config|
   config.mock_with(:rspec) { |mocks| mocks.verify_partial_doubles = true }

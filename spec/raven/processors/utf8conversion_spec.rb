@@ -59,4 +59,15 @@ describe Raven::Processor::UTF8Conversion do
     results = @processor.process(data)
     expect(results[:key]).to eq(:value)
   end
+
+  it "deals with unicode hidden in ASCII_8BIT" do
+    data = ["\xE2\x9C\x89 Hello".force_encoding(Encoding::ASCII_8BIT)]
+
+    results = @processor.process(data)
+
+    # Calling JSON.generate here to simulate this value eventually being fed
+    # to JSON generator in the client for transport, we're looking to see
+    # if encoding errors are raised
+    expect(JSON.generate(results)).to eq("[\"✉ Hello\"]")
+  end
 end
