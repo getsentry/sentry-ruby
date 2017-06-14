@@ -1,3 +1,8 @@
+2.5.3
+-----
+
+* BUGFIX: Deal properly with ASCII_8BIT/BINARY encodings [#689, #696, @nateberkopec]
+
 2.5.2
 -----
 
