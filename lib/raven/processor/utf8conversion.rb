@@ -18,6 +18,13 @@ module Raven
         clean_exc.set_backtrace(value.backtrace)
         clean_exc
       when String
+        # Encoding::BINARY / Encoding::ASCII_8BIT is a special binary encoding.
+        # valid_encoding? will always return true because it contains all codepoints,
+        # so instead we check if it only contains actual ASCII codepoints, and if
+        # not we assume it's actually just UTF8 and scrub accordingly.
+        if value.encoding == Encoding::BINARY && !value.ascii_only?
+          value.force_encoding(Encoding::UTF_8)
+        end
         return value if value.valid_encoding?
         remove_invalid_bytes(value)
       else
