@@ -2,7 +2,7 @@ require 'spec_helper'
 require 'raven/cli'
 
 describe "CLI tests" do
-  example "posting an exception" do
+  it "posting an exception" do
     stubs = Faraday::Adapter::Test::Stubs.new do |stub|
       stub.post('sentry/api/42/store/') { [200, {}, 'ok'] }
     end
@@ -20,7 +20,7 @@ describe "CLI tests" do
     stubs.verify_stubbed_calls
   end
 
-  example "posting an exception to a prefixed DSN" do
+  it "posting an exception to a prefixed DSN" do
     stubs = Faraday::Adapter::Test::Stubs.new do |stub|
       stub.post('/prefix/sentry/api/42/store/') { [200, {}, 'ok'] }
     end
