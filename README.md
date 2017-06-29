@@ -1,7 +1,10 @@
-# Raven-Ruby
+![](https://sentry.io/_static/getsentry/images/branding/png/sentry-horizontal-black.png)
+
+# Raven-Ruby, the Ruby Client for Sentry
 
 [![Gem Version](https://img.shields.io/gem/v/sentry-raven.svg)](https://rubygems.org/gems/sentry-raven)
 [![Build Status](https://img.shields.io/travis/getsentry/raven-ruby/master.svg)](https://travis-ci.org/getsentry/raven-ruby)
+[![Gem](https://img.shields.io/gem/dt/sentry-raven.svg)](https://rubygems.org/gems/sentry-raven/)
 
 A client and integration layer for the [Sentry](https://github.com/getsentry/sentry) error reporting API.
 
@@ -61,29 +64,6 @@ end
 
 You're all set - but there's a few more settings you may want to know about too!
 
-#### DSN
-
-While we advise that you set your Sentry DSN through the `SENTRY_DSN` environment
-variable, there are two other configuration settings for controlling Raven:
-
-```ruby
-# DSN can be configured as a config setting instead.
-# Place in config/initializers or similar.
-Raven.configure do |config|
-  config.dsn = 'your_dsn'
-end
-```
-
-And, while not necessary if using `SENTRY_DSN`, you can also provide an `environments`
-setting. Raven will only capture events when `RACK_ENV` or `RAILS_ENV` matches
-an environment in the list.
-
-```ruby
-Raven.configure do |config|
-  config.environments = %w[staging production]
-end
-```
-
 #### async
 
 When an error or message occurs, the notification is immediately sent to Sentry. Raven can be configured to send asynchronously:
@@ -96,7 +76,7 @@ config.async = lambda { |event|
 
 Using a thread to send events will be adequate for truly parallel Ruby platforms such as JRuby, though the benefit on MRI/CRuby will be limited. If the async callback raises an exception, Raven will attempt to send synchronously.
 
-We recommend creating a background job, using your background job processor, that will send Sentry notifications in the background. Rather than enqueuing an entire Raven::Event object, we recommend providing the Hash representation of an event as a job argument. Here’s an example for ActiveJob:
+We recommend creating a background job, using your background job processor, that will send Sentry notifications in the background.
 
 ```ruby
 config.async = lambda { |event| SentryJob.perform_later(event) }
