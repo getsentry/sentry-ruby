@@ -38,7 +38,7 @@ module Raven
       @timestamp     = Time.now.utc
       @time_spent    = nil
       @level         = :error
-      @logger        = ''
+      @logger        = 'ruby'
       @culprit       = nil
       @server_name   = @configuration.server_name
       @release       = @configuration.release
