@@ -82,9 +82,9 @@ Optional settings
 
     .. code-block:: ruby
 
-        config.excluded_exceptions = ['ActionController::RoutingError', 'ActiveRecord::RecordNotFound']
+        config.excluded_exceptions += ['ActionController::RoutingError', 'ActiveRecord::RecordNotFound']
 
-    You can find the list of exceptions that are excluded by default in ``Raven::Configuration::IGNORE_DEFAULT``. Remember you'll be overriding those defaults by setting this configuration.
+    You can find the list of exceptions that are excluded by default in ``Raven::Configuration::IGNORE_DEFAULT``. It is suggested that you append to these defaults rather than overwrite them with ``=``.
 
 .. describe:: logger
 
