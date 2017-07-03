@@ -88,7 +88,7 @@ Optional settings
 
 .. describe:: logger
 
-    The name of the logger used by Sentry. Default is an instance of Raven::Logger.
+    The logger used by Sentry. Default is an instance of Raven::Logger.
 
     .. code-block:: ruby
 
