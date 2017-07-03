@@ -12,6 +12,7 @@ features if you want.
    rails
    rack
    puma
+   heroku
 
 The following integrations are available:
 
@@ -30,7 +31,7 @@ the default integration behavior doesn't suit your projects' needs.
 
 To explicitly include integrations:
 
-::
+.. sourcecode:: ruby
 
    require 'sentry-raven-without-integrations'
    Raven.inject_only(:railties, :rack, :rake)
@@ -38,7 +39,7 @@ To explicitly include integrations:
 
 To blacklist integrations:
 
-::
+.. sourcecode:: ruby
 
    require 'sentry-raven-without-integrations'
    Raven.inject_without(:sidekiq, :delayed_job)
@@ -46,13 +47,13 @@ To blacklist integrations:
 
 If you're using bundler, then in your gemfile:
 
-::
+.. sourcecode:: ruby
 
    gem 'sentry-raven', require: 'sentry-raven-without-integrations'
 
 
 And in some sort of initializer:
 
-::
+.. sourcecode:: ruby
 
    Raven.inject_without(:sidekiq)
