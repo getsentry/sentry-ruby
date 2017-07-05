@@ -35,15 +35,15 @@ Raven.configure do |config|
 end
 ```
 
-### Raven doesn't report some kinds of data by default.
+### Raven doesn't report some kinds of data by default
 
-Raven ignores some exceptions by default - most of these are related to 404s or controller actions not being found. [For a complete list, see the `IGNORE_DEFAULT` constant](https://github.com/getsentry/raven-ruby/blob/master/lib/raven/configuration.rb).
+**Raven ignores some exceptions by default** - most of these are related to 404s or controller actions not being found. [For a complete list, see the `IGNORE_DEFAULT` constant](https://github.com/getsentry/raven-ruby/blob/master/lib/raven/configuration.rb).
 
 Raven doesn't report POST data or cookies by default. In addition, it will attempt to remove any obviously sensitive data, such as credit card or Social Security numbers. For more information about how Sentry processes your data, [check out the documentation on the `processors` config setting.](https://docs.getsentry.com/hosted/clients/ruby/config/)
 
-### Call
+### Usage
 
-If you use Rails, you're already done - no more configuration required! Check [Integrations](https://docs.getsentry.com/hosted/clients/ruby/integrations/) for more details on other gems Sentry integrates with automatically.
+**If you use Rails, you're already done - no more configuration required!** Check [Integrations](https://docs.getsentry.com/hosted/clients/ruby/integrations/) for more details on other gems Sentry integrates with automatically.
 
 Otherwise, Raven supports two methods of capturing exceptions:
 
@@ -76,7 +76,7 @@ config.async = lambda { |event|
 
 Using a thread to send events will be adequate for truly parallel Ruby platforms such as JRuby, though the benefit on MRI/CRuby will be limited. If the async callback raises an exception, Raven will attempt to send synchronously.
 
-We recommend creating a background job, using your background job processor, that will send Sentry notifications in the background.
+Note that the naive example implementation has a major drawback - it can create an infinite number of threads. We recommend creating a background job, using your background job processor, that will send Sentry notifications in the background.
 
 ```ruby
 config.async = lambda { |event| SentryJob.perform_later(event) }
@@ -84,7 +84,7 @@ config.async = lambda { |event| SentryJob.perform_later(event) }
 class SentryJob < ActiveJob::Base
   queue_as :default
   
-  # Important! Otherwise, we can get caught in an infinite loop.
+  # Important for ActiveJob! Otherwise, we can get caught in an infinite loop.
   rescue_from(ActiveJob::DeserializationError) { |e| Rails.logger.error e }
 
   def perform(event)
