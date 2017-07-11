@@ -12,7 +12,7 @@ module Raven
           this_value = hash[current_key]
 
           hash[current_key] = if this_value.is_a?(Hash) && other_value.is_a?(Hash)
-            this_value.deep_merge(other_value, &block)
+            deep_merge(this_value, other_value, &block)
           else
             if block_given? && key?(current_key)
               block.call(current_key, this_value, other_value)
