@@ -4,7 +4,9 @@ gemspec
 
 if ENV["RAILS_VERSION"] && (ENV["RAILS_VERSION"].to_i == 4)
   gem "rails", "< 5"
-elsif ENV["RAILS_VERSION"] && (ENV["RAILS_VERSION"].to_i == 5)
+elsif ENV["RAILS_VERSION"] && (ENV["RAILS_VERSION"].to_i == 0)
+  # no-op. No Rails.
+else
   gem "rails", "< 6"
 end
 
