@@ -63,6 +63,12 @@ module Raven
       end
     end
 
+    initializer 'raven.active_job' do
+      ActiveSupport.on_load :active_job do
+        require 'raven/integrations/rails/active_job'
+      end
+    end
+
     rake_tasks do
       require 'raven/integrations/tasks'
     end

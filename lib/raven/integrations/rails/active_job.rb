@@ -1,31 +1,53 @@
 module Raven
   class Rails
-    module ActiveJob
+    module ActiveJobExtensions
+      ALREADY_SUPPORTED_SENTRY_ADAPTERS = %w(
+        ActiveJob::QueueAdapters::SidekiqAdapter
+        ActiveJob::QueueAdapters::DelayedJobAdapter
+      ).freeze
+
       def self.included(base)
         base.class_eval do
-          rescue_from(Exception) do |exception|
-            # Do not capture exceptions when using Sidekiq so we don't capture
-            # The same exception twice.
-            unless self.class.queue_adapter.to_s == 'ActiveJob::QueueAdapters::SidekiqAdapter'
-              active_job_details = {
-                :active_job => self.class.name,
-                :arguments => arguments,
-                :scheduled_at => scheduled_at,
-                :job_id => job_id,
-                :locale => locale
-              }
-
-              # Add provider_job_id details if Rails 5
-              if defined?(provider_job_id)
-                active_job_details[:provider_job_id] = provider_job_id
-              end
-
-              Raven.capture_exception(exception, :extra => active_job_details)
-              raise exception
-            end
+          around_perform do |job, block|
+            capture_and_reraise_with_sentry(job, block)
           end
         end
       end
+
+      def capture_and_reraise_with_sentry(job, block)
+        block.call
+      rescue Exception => exception # rubocop:disable Lint/RescueException
+        return if already_supported_by_specific_integration?(job)
+        Raven.capture_exception(exception, :extra => raven_context(job))
+        raise exception
+      ensure
+        Context.clear!
+        BreadcrumbBuffer.clear!
+      end
+
+      def already_supported_by_specific_integration?(job)
+        ALREADY_SUPPORTED_SENTRY_ADAPTERS.include?(job.class.queue_adapter.to_s)
+      end
+
+      def raven_context(job)
+        ctx = {
+          :active_job => job.class.name,
+          :arguments => job.arguments,
+          :scheduled_at => job.scheduled_at,
+          :job_id => job.job_id,
+          :locale => job.locale
+        }
+        # Add provider_job_id details if Rails 5
+        if job.respond_to?(:provider_job_id)
+          ctx[:provider_job_id] = job.provider_job_id
+        end
+
+        ctx
+      end
     end
   end
+end
+
+class ActiveJob::Base
+  include Raven::Rails::ActiveJobExtensions
 end
