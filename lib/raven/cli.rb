@@ -1,57 +1,58 @@
 module Raven
   class CLI
-    def self.test(dsn = nil, silent = false) # rubocop:disable all
-      if silent
-        Raven.configuration.logger = ::Logger.new(nil)
-      else
-        logger = ::Logger.new(STDOUT)
-        logger.level = ::Logger::ERROR
-        logger.formatter = proc do |_severity, _datetime, _progname, msg|
-          "-> #{msg}\n"
-        end
+    def self.test(dsn = nil, silent = false, config = nil) # rubocop:disable all
+      config ||= Raven.configuration
 
-        Raven.configuration.logger = logger
-      end
+      config.logger = if silent
+                        ::Logger.new(nil)
+                      else
+                        logger = ::Logger.new(STDOUT)
+                        logger.formatter = proc do |_severity, _datetime, _progname, msg|
+                          "-> #{msg}\n"
+                        end
+                        logger
+                      end
 
-      Raven.configuration.timeout = 5
-      Raven.configuration.dsn = dsn if dsn
+      config.timeout = 5
+      config.dsn = dsn if dsn
 
       # wipe out env settings to ensure we send the event
-      unless Raven.configuration.capture_allowed?
-        env_name = Raven.configuration.environments.pop || 'production'
-        Raven.logger.debug "Setting environment to #{env_name}"
-        Raven.configuration.current_environment = env_name
+      unless config.capture_allowed?
+        env_name = config.environments.pop || 'production'
+        config.current_environment = env_name
       end
 
-      Raven.logger.debug "Sending a test event:"
-      Raven.logger.debug ""
+      instance = Raven::Instance.new(nil, config)
+
+      instance.logger.debug "Sending a test event:"
+      instance.logger.debug ""
 
       begin
         1 / 0
       rescue ZeroDivisionError => exception
-        evt = Raven.capture_exception(exception)
+        evt = instance.capture_exception(exception)
       end
 
       if evt && !(evt.is_a? Thread)
         if evt.is_a? Hash
-          Raven.logger.debug "-> event ID: #{evt[:event_id]}"
+          instance.logger.debug "-> event ID: #{evt[:event_id]}"
         else
-          Raven.logger.debug "-> event ID: #{evt.id}"
+          instance.logger.debug "-> event ID: #{evt.id}"
         end
       elsif evt # async configuration
         if evt.value.is_a? Hash
-          Raven.logger.debug "-> event ID: #{evt.value[:event_id]}"
+          instance.logger.debug "-> event ID: #{evt.value[:event_id]}"
         else
-          Raven.logger.debug "-> event ID: #{evt.value.id}"
+          instance.logger.debug "-> event ID: #{evt.value.id}"
         end
       else
-        Raven.logger.debug ""
-        Raven.logger.debug "An error occurred while attempting to send the event."
+        instance.logger.debug ""
+        instance.logger.debug "An error occurred while attempting to send the event."
         exit 1
       end
 
-      Raven.logger.debug ""
-      Raven.logger.debug "Done!"
+      instance.logger.debug ""
+      instance.logger.debug "Done!"
       true
     end
   end

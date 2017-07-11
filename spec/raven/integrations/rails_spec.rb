@@ -6,20 +6,9 @@ require "raven/integrations/rails"
 
 describe TestApp, :type => :request do
   before(:all) do
-    @original_configuration = Raven.configuration
-
-    Raven.configuration = Raven::Configuration.new.tap do |config|
-      config.dsn = 'dummy://12345:67890@sentry.localdomain:3000/sentry/42'
-      config.encoding = 'json'
-    end
-
     Rails.logger = Logger.new(nil)
     Rails.env = "production"
     TestApp.initialize!
-  end
-
-  after(:all) do
-    Raven.configuration = @original_configuration
   end
 
   after(:each) do

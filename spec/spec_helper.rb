@@ -1,5 +1,12 @@
 require 'sentry-raven-without-integrations'
 
+Raven.configure do |config|
+  config.dsn = "dummy://12345:67890@sentry.localdomain/sentry/42"
+  config.encoding = "json"
+  config.silence_ready = true
+  config.logger = Logger.new(nil)
+end
+
 require File.dirname(__FILE__) + "/support/test_rails_app/app.rb"
 require "rspec/rails"
 require 'raven/transports/dummy'
