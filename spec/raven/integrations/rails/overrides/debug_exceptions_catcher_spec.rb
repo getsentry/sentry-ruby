@@ -1,7 +1,10 @@
 require 'spec_helper'
-require 'raven/integrations/rails/overrides/debug_exceptions_catcher'
 
-describe Raven::Rails::Overrides::DebugExceptionsCatcher do
+describe "Raven::Rails::Overrides::DebugExceptionsCatcher", :rails => true do
+  before(:all) do
+    require 'raven/integrations/rails/overrides/debug_exceptions_catcher'
+  end
+
   let(:middleware) do
     Class.new do
       def initialize(app)
@@ -26,7 +29,7 @@ describe Raven::Rails::Overrides::DebugExceptionsCatcher do
 
   let(:env) { {} }
 
-  if Rails.version < "5.1.0"
+  if defined?(Rails) && Rails.version < "5.1.0"
     context "using include" do
       before do
         middleware.send(:include, Raven::Rails::Overrides::OldDebugExceptionsCatcher)

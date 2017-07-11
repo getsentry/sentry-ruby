@@ -1,9 +1,11 @@
 require 'spec_helper'
-require 'raven'
-require 'raven/integrations/rails/controller_methods'
 
-describe Raven::Rails::ControllerMethods do
-  include described_class
+describe "Raven::Rails::ControllerMethods", :rails => true do
+  include Raven::Rails::ControllerMethods if defined?(Rails)
+
+  before(:all) do
+    require 'raven/integrations/rails/controller_methods'
+  end
 
   let(:env) { { "foo" => "bar" } }
   let(:request) { double('request', :env => env) }

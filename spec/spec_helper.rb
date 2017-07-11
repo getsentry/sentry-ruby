@@ -1,4 +1,5 @@
 require 'sentry-raven-without-integrations'
+require 'raven/transports/dummy'
 
 Raven.configure do |config|
   config.dsn = "dummy://12345:67890@sentry.localdomain/sentry/42"
@@ -7,9 +8,14 @@ Raven.configure do |config|
   config.logger = Logger.new(nil)
 end
 
-require File.dirname(__FILE__) + "/support/test_rails_app/app.rb"
-require "rspec/rails"
-require 'raven/transports/dummy'
+if ENV["RAILS_VERSION"] && (ENV["RAILS_VERSION"].to_i == 0)
+  RSpec.configure do |config|
+    config.filter_run_excluding :rails => true
+  end
+else
+  require File.dirname(__FILE__) + "/support/test_rails_app/app.rb"
+  require "rspec/rails"
+end
 
 RSpec.configure do |config|
   config.mock_with(:rspec) { |mocks| mocks.verify_partial_doubles = true }
