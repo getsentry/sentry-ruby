@@ -1,11 +1,11 @@
 require "spec_helper"
-require "rspec/rails"
-require "raven/transports/dummy"
-require "raven/integrations/rack"
-require "raven/integrations/rails"
 
-describe TestApp, :type => :request do
+describe "Rails Integration", :type => :request, :rails => true do
   before(:all) do
+    require "rspec/rails"
+    require "raven/integrations/rack"
+    require "raven/integrations/rails"
+
     Rails.logger = Logger.new(nil)
     Rails.env = "production"
     TestApp.initialize!

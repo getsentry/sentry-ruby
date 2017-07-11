@@ -4,10 +4,12 @@ gemspec
 
 if ENV["RAILS_VERSION"] && (ENV["RAILS_VERSION"].to_i == 4)
   gem "rails", "< 5"
+  gem "rspec-rails"
 elsif ENV["RAILS_VERSION"] && (ENV["RAILS_VERSION"].to_i == 0)
   # no-op. No Rails.
 else
   gem "rails", "< 6"
+  gem "rspec-rails"
 end
 
 if RUBY_VERSION < '2.0'
@@ -27,6 +29,5 @@ gem "ruby-prof", platform: :mri
 gem "rake"
 gem "rubocop", "~> 0.41.1"
 gem "rspec"
-gem "rspec-rails"
 gem "timecop"
 gem "test-unit", platform: :mri if RUBY_VERSION > '2.2'

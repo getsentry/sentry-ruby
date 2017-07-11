@@ -1,22 +1,26 @@
 require "spec_helper"
-require "rspec/rails"
-require "raven/transports/dummy"
-require "raven/integrations/rails"
-require 'raven/integrations/rails/active_job'
 
-class MyActiveJob < ActiveJob::Base
-  self.queue_adapter = :inline
-  self.logger = nil
+if defined? ActiveJob
+  class MyActiveJob < ActiveJob::Base
+    self.queue_adapter = :inline
+    self.logger = nil
 
-  class TestError < RuntimeError
-  end
+    class TestError < RuntimeError
+    end
 
-  def perform
-    raise TestError, "Boom!"
+    def perform
+      raise TestError, "Boom!"
+    end
   end
 end
 
-describe MyActiveJob do
+describe "ActiveJob integration", :rails => true do
+  before(:all) do
+    require "rspec/rails"
+    require "raven/integrations/rails"
+    require "raven/integrations/rails/active_job"
+  end
+
   before(:each) do
     Raven.client.transport.events = []
   end

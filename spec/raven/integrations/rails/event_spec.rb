@@ -1,6 +1,6 @@
 require 'spec_helper'
 
-describe Raven::Event do
+describe Raven::Event, :rails => true do
   context 'in a rails environment' do
     before do
       Raven.configure do |config|
