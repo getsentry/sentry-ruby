@@ -24,6 +24,7 @@ The following attributes are available:
 * ``server_name``: the hostname of the server
 * ``tags``: a mapping of tags describing this event
 * ``extra``: a mapping of arbitrary context
+* ``user``: a mapping of user context
 
 Providing Request Context
 -------------------------
