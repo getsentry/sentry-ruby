@@ -5,9 +5,17 @@ module Raven
   class SidekiqCleanupMiddleware
     def call(_worker, _job, _queue)
       yield
+    rescue Exception
+      exception_raised = true
+      raise
     ensure
-      Context.clear!
-      BreadcrumbBuffer.clear!
+      # If an exception was raised cleanup must
+      # happen after the exception is reported
+      # in SidekiqErrorHandler#call
+      unless exception_raised
+        Context.clear!
+        BreadcrumbBuffer.clear!
+      end
     end
   end
 
@@ -22,6 +30,9 @@ module Raven
         :extra => { :sidekiq => context },
         :culprit => culprit_from_context(context)
       )
+    ensure
+      Context.clear!
+      BreadcrumbBuffer.clear!
     end
 
     private
