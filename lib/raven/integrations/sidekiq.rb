@@ -5,7 +5,6 @@ module Raven
   class SidekiqCleanupMiddleware
     def call(_worker, _job, _queue)
       yield
-    ensure
       Context.clear!
       BreadcrumbBuffer.clear!
     end
@@ -22,6 +21,8 @@ module Raven
         :extra => { :sidekiq => context },
         :culprit => culprit_from_context(context)
       )
+      Context.clear!
+      BreadcrumbBuffer.clear!
     end
 
     private
