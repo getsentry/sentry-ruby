@@ -2,7 +2,7 @@ require 'spec_helper'
 
 describe Raven::Processor::SanitizeData do
   before do
-    config = Struct.new(:sanitize_fields, :sanitize_credit_cards, :sanitize_fields_excluded).new([],[],[])
+    config = Struct.new(:sanitize_fields, :sanitize_credit_cards, :sanitize_fields_excluded).new([], true, [])
     client = Struct.new(:configuration).new(config)
     @processor = Raven::Processor::SanitizeData.new(client)
   end

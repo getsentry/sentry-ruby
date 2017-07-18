@@ -60,9 +60,10 @@ module Raven
     end
 
     def fields_re
+      return @fields_re if @fields_re
       fields = DEFAULT_FIELDS | sanitize_fields
       fields -= sanitize_fields_excluded
-      @fields_re ||= /#{fields.map do |f|
+      @fields_re = /#{fields.map do |f|
         use_boundary?(f) ? "\\b#{f}\\b" : f
       end.join("|")}/i
     end
