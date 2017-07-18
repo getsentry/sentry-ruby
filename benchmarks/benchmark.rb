@@ -35,14 +35,10 @@ DIVIDE_BY_ZERO = build_exception
 LOGGER = Logger.new(nil)
 
 Benchmark.ipsa do |x|
-  x.config(:time => 5, :warmup => 2)
+  x.config(:time => 10, :warmup => 2)
 
   x.report("simple") { Raven.capture_exception(DIVIDE_BY_ZERO) }
   x.report("rails") { Raven.capture_exception(RAILS_EXC) }
-  x.report("lots o logs") do
-    100.times { LOGGER.debug(rand(100_000).to_s) }
-    Raven.capture_exception(DIVIDE_BY_ZERO)
-  end
 
   x.compare!
 end

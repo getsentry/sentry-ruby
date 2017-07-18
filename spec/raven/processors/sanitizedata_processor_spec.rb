@@ -2,10 +2,9 @@ require 'spec_helper'
 
 describe Raven::Processor::SanitizeData do
   before do
-    @client = double("client")
-    allow(@client).to receive_message_chain(:configuration, :sanitize_fields) { ['user_field'] }
-    allow(@client).to receive_message_chain(:configuration, :sanitize_credit_cards) { true }
-    @processor = Raven::Processor::SanitizeData.new(@client)
+    config = Struct.new(:sanitize_fields, :sanitize_credit_cards, :sanitize_fields_excluded).new([], true, [])
+    client = Struct.new(:configuration).new(config)
+    @processor = Raven::Processor::SanitizeData.new(client)
   end
 
   context 'configuration for sanitize fields' do
@@ -17,9 +16,19 @@ describe Raven::Processor::SanitizeData do
 
       expect(@processor.send(:fields_re)).to eq(expected_fields_re)
     end
+
+    it 'should remove default fields if specified by sanitize_fields_excluded' do
+      @processor.sanitize_fields_excluded = %w(authorization)
+
+      expected_fields_re = /password|passwd|secret|ssn|social(.*)?sec/i
+
+      expect(@processor.send(:fields_re)).to eq(expected_fields_re)
+    end
   end
 
   it 'should filter http data' do
+    @processor.sanitize_fields = ['user_field']
+
     data = {
       'sentry.interfaces.Http' => {
         'data' => {
@@ -55,6 +64,8 @@ describe Raven::Processor::SanitizeData do
   end
 
   it 'should filter json data' do
+    @processor.sanitize_fields = ['user_field']
+
     data_with_json = {
       'json' => {
         'foo' => 'bar',
@@ -216,9 +227,6 @@ describe Raven::Processor::SanitizeData do
 
       vars = result["sentry.interfaces.Http"]["data"]
       expect(vars["query_string"]).to eq(encoded_query_string)
-    end
-
-    it 'handles url encoded values' do
     end
   end
 end

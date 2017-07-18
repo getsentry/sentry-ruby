@@ -5,13 +5,16 @@ module Raven
   class Processor::SanitizeData < Processor
     DEFAULT_FIELDS = %w(authorization password passwd secret ssn social(.*)?sec).freeze
     CREDIT_CARD_RE = /^(?:\d[ -]*?){13,16}$/
+    QUERY_STRING = ['query_string', :query_string].freeze
+    JSON_STARTS_WITH = ["[", "{"].freeze
 
-    attr_accessor :sanitize_fields, :sanitize_credit_cards
+    attr_accessor :sanitize_fields, :sanitize_credit_cards, :sanitize_fields_excluded
 
     def initialize(client)
       super
       self.sanitize_fields = client.configuration.sanitize_fields
       self.sanitize_credit_cards = client.configuration.sanitize_credit_cards
+      self.sanitize_fields_excluded = client.configuration.sanitize_fields_excluded
     end
 
     def process(value, key = nil)
@@ -28,7 +31,7 @@ module Raven
           process(json).to_json
         elsif matches_regexes?(key, value)
           STRING_MASK
-        elsif key == 'query_string' || key == :query_string
+        elsif QUERY_STRING.include?(key)
           sanitize_query_string(value)
         else
           value
@@ -59,7 +62,10 @@ module Raven
     end
 
     def fields_re
-      @fields_re ||= /#{(DEFAULT_FIELDS | sanitize_fields).map do |f|
+      return @fields_re if @fields_re
+      fields = DEFAULT_FIELDS | sanitize_fields
+      fields -= sanitize_fields_excluded
+      @fields_re = /#{fields.map do |f|
         use_boundary?(f) ? "\\b#{f}\\b" : f
       end.join("|")}/i
     end
@@ -73,7 +79,7 @@ module Raven
     end
 
     def parse_json_or_nil(string)
-      return unless string.start_with?("[", "{")
+      return unless string.start_with?(*JSON_STARTS_WITH)
       JSON.parse(string)
     rescue JSON::ParserError, NoMethodError
       nil
