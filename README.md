@@ -1,4 +1,6 @@
-![](https://sentry.io/_static/getsentry/images/branding/png/sentry-horizontal-black.png)
+<p align="center">
+  <img src="https://cdn.rawgit.com/getsentry/raven-python/1e525422/docs/_static/logo.png">
+</p>
 
 # Raven-Ruby, the Ruby Client for Sentry
 
@@ -6,7 +8,10 @@
 [![Build Status](https://img.shields.io/travis/getsentry/raven-ruby/master.svg)](https://travis-ci.org/getsentry/raven-ruby)
 [![Gem](https://img.shields.io/gem/dt/sentry-raven.svg)](https://rubygems.org/gems/sentry-raven/)
 
-A client and integration layer for the [Sentry](https://github.com/getsentry/sentry) error reporting API.
+
+[Documentation](https://docs.getsentry.com/hosted/clients/ruby/) | [Bug Tracker](https://github.com/getsentry/raven-ruby/issues) | [Forum](https://forum.sentry.io/) | IRC: irc.freenode.net, #sentry
+
+The official Ruby-language client and integration layer for the [Sentry](https://github.com/getsentry/sentry) error reporting API.
 
 ## Requirements
 
@@ -83,7 +88,7 @@ config.async = lambda { |event| SentryJob.perform_later(event) }
 
 class SentryJob < ActiveJob::Base
   queue_as :default
-  
+
   # Important for ActiveJob! Otherwise, we can get caught in an infinite loop.
   rescue_from(ActiveJob::DeserializationError) { |e| Rails.logger.error e }
 
@@ -126,6 +131,5 @@ For more information, see [Context](https://docs.sentry.io/clients/ruby/context/
 
 * [Documentation](https://docs.getsentry.com/hosted/clients/ruby/)
 * [Bug Tracker](https://github.com/getsentry/raven-ruby/issues)
-* [Code](https://github.com/getsentry/raven-ruby)
-* [Mailing List](https://groups.google.com/group/getsentry)
+* [Forum](https://forum.sentry.io/)
 * [IRC](irc://irc.freenode.net/sentry>)  (irc.freenode.net, #sentry)
