@@ -99,6 +99,10 @@ module Raven
     # a hash key, will be censored and not sent to Sentry.
     attr_accessor :sanitize_fields
 
+    # If you're sure you want to override the default sanitization values, you can
+    # add to them to an array of Strings here, e.g. %w(authorization password)
+    attr_accessor :sanitize_fields_excluded
+
     # Sanitize additional HTTP headers - only Authorization is removed by default.
     attr_accessor :sanitize_http_headers
 
@@ -191,6 +195,7 @@ module Raven
       self.release = detect_release
       self.sanitize_credit_cards = true
       self.sanitize_fields = []
+      self.sanitize_fields_excluded = []
       self.sanitize_http_headers = []
       self.send_modules = true
       self.server = ENV['SENTRY_DSN'] if ENV['SENTRY_DSN']

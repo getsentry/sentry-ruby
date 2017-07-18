@@ -3,8 +3,11 @@ require 'spec_helper'
 describe Raven::Processor::SanitizeData do
   before do
     @client = double("client")
-    allow(@client).to receive_message_chain(:configuration, :sanitize_fields) { ['user_field'] }
-    allow(@client).to receive_message_chain(:configuration, :sanitize_credit_cards) { true }
+    config = Raven::Configuration.new.tap do |c|
+      c.sanitize_fields = ['user_field']
+      c.sanitize_credit_cards = true
+    end
+    allow(@client).to receive(:configuration) { config }
     @processor = Raven::Processor::SanitizeData.new(@client)
   end
 
@@ -14,6 +17,14 @@ describe Raven::Processor::SanitizeData do
 
       @processor.sanitize_fields = fields
       expected_fields_re = /authorization|password|passwd|secret|ssn|social(.*)?sec|\btest\b|\bmonkeybutt\b|foo(.*)?bar/i
+
+      expect(@processor.send(:fields_re)).to eq(expected_fields_re)
+    end
+
+    it 'should remove default fields if specified by sanitize_fields_excluded' do
+      @processor.sanitize_fields_excluded = %w(authorization)
+
+      expected_fields_re = /password|passwd|secret|ssn|social(.*)?sec|\buser_field\b/i
 
       expect(@processor.send(:fields_re)).to eq(expected_fields_re)
     end
