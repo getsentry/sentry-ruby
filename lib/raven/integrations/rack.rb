@@ -80,11 +80,13 @@ module Raven
 
     private
 
+    # See Sentry server default limits at
+    # https://github.com/getsentry/sentry/blob/master/src/sentry/conf/server.py
     def read_data_from(request)
       if request.form_data?
         request.POST
       elsif request.body # JSON requests, etc
-        data = request.body.read(2048) # Sentry server limit
+        data = request.body.read(4096 * 4) # Sentry server limit
         request.body.rewind
         data
       end
