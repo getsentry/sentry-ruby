@@ -28,6 +28,8 @@ module Raven
   class BreadcrumbBuffer
     include Enumerable
 
+    attr_accessor :buffer
+
     def self.current
       Thread.current[:sentry_breadcrumbs] ||= new
     end
