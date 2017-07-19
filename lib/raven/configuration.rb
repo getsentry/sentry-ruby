@@ -189,6 +189,7 @@ module Raven
       self.logger = ::Raven::Logger.new(STDOUT)
       self.open_timeout = 1
       self.processors = DEFAULT_PROCESSORS.dup
+      self.project_root = detect_project_root
       self.proxy = nil
       self.rails_activesupport_breadcrumbs = false
       self.rails_report_rescued_exceptions = true
@@ -293,6 +294,14 @@ module Raven
         detect_release_from_heroku
     rescue => ex
       logger.error "Error detecting release: #{ex.message}"
+    end
+
+    def detect_project_root
+      if defined? Rails.root # we are in a Rails application
+        Rails.root.to_s
+      else
+        Dir.pwd
+      end
     end
 
     private

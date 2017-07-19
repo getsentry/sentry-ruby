@@ -39,7 +39,7 @@ describe "Rails Integration", :type => :request, :rails => true do
   end
 
   it "sets Raven.configuration.project_root correctly" do
-    expect(Raven.configuration.project_root).to eq(Rails.root)
+    expect(Raven.configuration.project_root).to eq(Rails.root.to_s)
   end
 
   it "doesn't clobber a manually configured release" do
