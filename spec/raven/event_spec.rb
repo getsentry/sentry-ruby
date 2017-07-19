@@ -179,13 +179,13 @@ describe Raven::Event do
     let(:hash) do
       Raven.rack_context('REQUEST_METHOD' => 'GET',
                          'rack.url_scheme' => 'http',
-                         'rack.input' => StringIO.new('a' * 16_000))
+                         'rack.input' => StringIO.new('a' * 4096 * 5))
 
       Raven::Event.new.to_hash
     end
 
     it "truncates http data" do
-      expect(hash[:request][:data]).to eq("a" * 2048)
+      expect(hash[:request][:data]).to eq("a" * 4096 * 4)
     end
   end
 

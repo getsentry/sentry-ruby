@@ -19,6 +19,9 @@ module Raven
     }.freeze
 
     BACKTRACE_RE = /^(.+?):(\d+)(?::in `(.+?)')?$/
+    # See Sentry server default limits at
+    # https://github.com/getsentry/sentry/blob/master/src/sentry/conf/server.py
+    MAX_MESSAGE_SIZE_IN_BYTES = 1024 * 8
 
     PLATFORM = "ruby".freeze
     SDK = { "name" => "raven-ruby", "version" => Raven::VERSION }.freeze
@@ -106,7 +109,7 @@ module Raven
 
         new(options) do |evt|
           evt.configuration = configuration
-          evt.message = "#{exc.class}: #{exc.message}".byteslice(0...10_000) # Messages limited to 10kb
+          evt.message = "#{exc.class}: #{exc.message}".byteslice(0...MAX_MESSAGE_SIZE_IN_BYTES) # Messages limited to 10kb
           evt.level = options[:level] || :error
 
           add_exception_interface(evt, exc)
@@ -116,7 +119,7 @@ module Raven
       end
 
       def from_message(message, options = {})
-        message = message.byteslice(0...10_000) # Messages limited to 10kb
+        message = message.byteslice(0...MAX_MESSAGE_SIZE_IN_BYTES)
         configuration = options[:configuration] || Raven.configuration
 
         new(options) do |evt|
