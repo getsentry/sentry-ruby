@@ -1,3 +1,16 @@
+2.6.0
+-----
+
+* FEATURE: raven-ruby now marks itself as the "ruby" logger by default, to match raven-js behavior [@nateberkopec]
+* FEATURE: You may now override the default sanitization parameters [#712, @nateberkopec]
+* FEATURE: Breadcrumb buffers are now publicly accessible [#686, @nateberkopec]
+* FEATURE: We yell at you now if you're using Heroku but don't have runtime-dyno-metadata enabled [#715, @nateberkopec]
+* FEATURE: project_root will always be set, regardless of framework [#716, @nateberkopec]
+
+* BUGFIX: Request body and message limits now match Sentry server defaults [#714, @nateberkopec]
+* BUGFIX: Sidekiq context now works as expected [#713, @nateberkopec]
+* BUGFIX: Capture exceptions in ActiveJob when not using Sidekiq adapter [#709, #671, @nateberkopec]
+
 2.5.3
 -----
 
