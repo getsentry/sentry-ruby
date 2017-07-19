@@ -37,11 +37,6 @@ module Raven
     end
 
     config.after_initialize do
-      Raven.configure do |config|
-        config.project_root ||= ::Rails.root
-        config.release ||= config.detect_release # if project_root has changed, need to re-check
-      end
-
       if Raven.configuration.rails_activesupport_breadcrumbs
         require 'raven/breadcrumbs/activesupport'
         Raven::ActiveSupportBreadcrumbs.inject
