@@ -291,28 +291,37 @@ module Raven
       detect_release_from_git ||
         detect_release_from_capistrano ||
         detect_release_from_heroku
+    rescue => ex
+      logger.error "Error detecting release: #{ex.message}"
     end
 
     private
 
     def detect_release_from_heroku
-      sys_dyno_info = File.read("/etc/heroku/dyno").strip if File.directory?("/etc/heroku") rescue nil
-      return unless sys_dyno_info
+      return unless running_on_heroku?
+      logger.warn(heroku_dyno_metadata_message) && return unless ENV['HEROKU_SLUG_COMMIT']
 
-      # being overly cautious, because if we raise an error Raven won't start
-      begin
-        hash = JSON.parse(sys_dyno_info)
-        hash && hash["release"] && hash["release"]["commit"]
-      rescue JSON::JSONError
-        logger.error "Cannot parse Heroku JSON: #{sys_dyno_info}"
-      end
+      ENV['HEROKU_SLUG_COMMIT']
+    end
+
+    def running_on_heroku?
+      File.directory?("/etc/heroku")
+    end
+
+    def heroku_dyno_metadata_message
+      "You are running on Heroku but haven't enabled Dyno Metadata. For Sentry's"\
+      "release detection to work correctly, please run `heroku labs:enable runtime-dyno-metadata`"
     end
 
     def detect_release_from_capistrano
-      version = File.read(File.join(project_root, 'REVISION')).strip rescue nil
+      revision_file = File.join(project_root, 'REVISION')
+      revision_log = File.join(project_root, '..', 'revisions.log')
 
-      # Capistrano 3.0 - 3.1.x
-      version || File.open(File.join(project_root, '..', 'revisions.log')).to_a.last.strip.sub(/.*as release ([0-9]+).*/, '\1') rescue nil
+      if File.exist?(revision_file)
+        File.read(revision_file).strip
+      elsif File.exist?(revision_log)
+        File.open(revision_log).to_a.last.strip.sub(/.*as release ([0-9]+).*/, '\1')
+      end
     end
 
     def detect_release_from_git
