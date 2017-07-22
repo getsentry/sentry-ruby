@@ -12,6 +12,12 @@ if defined? ActiveJob
       raise TestError, "Boom!"
     end
   end
+
+  class RescuedActiveJob < MyActiveJob
+    rescue_from TestError do
+      # do nothing
+    end
+  end
 end
 
 describe "ActiveJob integration", :rails => true do
@@ -47,5 +53,15 @@ describe "ActiveJob integration", :rails => true do
     event = JSON.parse!(Raven.client.transport.events.first[1])
 
     expect(event["extra"]["foo"]).to eq(nil)
+  end
+
+  context 'using rescue_from' do
+    it 'does not trigger Sentry' do
+      job = RescuedActiveJob.new
+
+      expect { job.perform_now }.not_to raise_error
+
+      expect(Raven.client.transport.events.size).to eq(0)
+    end
   end
 end
