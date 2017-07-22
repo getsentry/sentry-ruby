@@ -14,8 +14,9 @@ if defined? ActiveJob
   end
 
   class RescuedActiveJob < MyActiveJob
-    rescue_from TestError do
-      # do nothing
+    rescue_from TestError, with: :rescue_callback
+
+    def rescue_callback(error)
     end
   end
 end
@@ -58,10 +59,12 @@ describe "ActiveJob integration", :rails => true do
   context 'using rescue_from' do
     it 'does not trigger Sentry' do
       job = RescuedActiveJob.new
+      allow(job).to receive(:rescue_callback)
 
       expect { job.perform_now }.not_to raise_error
 
       expect(Raven.client.transport.events.size).to eq(0)
+      expect(job).to have_received(:rescue_callback).once
     end
   end
 end
