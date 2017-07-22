@@ -14,7 +14,7 @@ if defined? ActiveJob
   end
 
   class RescuedActiveJob < MyActiveJob
-    rescue_from TestError, with: :rescue_callback
+    rescue_from TestError, :with => :rescue_callback
 
     def rescue_callback(error)
     end
