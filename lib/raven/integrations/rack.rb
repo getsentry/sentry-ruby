@@ -94,22 +94,30 @@ module Raven
 
     def format_headers_for_sentry(env_hash)
       env_hash.each_with_object({}) do |(key, value), memo|
-        key = key.to_s # rack env can contain symbols
-        value = value.to_s
-        next unless key.upcase == key # Non-upper case stuff isn't either
+        begin
+          key = key.to_s # rack env can contain symbols
+          value = value.to_s
+          next unless key.upcase == key # Non-upper case stuff isn't either
 
-        # Rack adds in an incorrect HTTP_VERSION key, which causes downstream
-        # to think this is a Version header. Instead, this is mapped to
-        # env['SERVER_PROTOCOL']. But we don't want to ignore a valid header
-        # if the request has legitimately sent a Version header themselves.
-        # See: https://github.com/rack/rack/blob/028438f/lib/rack/handler/cgi.rb#L29
-        next if key == 'HTTP_VERSION' && value == env_hash['SERVER_PROTOCOL']
+          # Rack adds in an incorrect HTTP_VERSION key, which causes downstream
+          # to think this is a Version header. Instead, this is mapped to
+          # env['SERVER_PROTOCOL']. But we don't want to ignore a valid header
+          # if the request has legitimately sent a Version header themselves.
+          # See: https://github.com/rack/rack/blob/028438f/lib/rack/handler/cgi.rb#L29
+          next if key == 'HTTP_VERSION' && value == env_hash['SERVER_PROTOCOL']
 
-        next unless key.start_with?('HTTP_') || %w(CONTENT_TYPE CONTENT_LENGTH).include?(key)
-        # Rack stores headers as HTTP_WHAT_EVER, we need What-Ever
-        key = key.gsub("HTTP_", "")
-        key = key.split('_').map(&:capitalize).join('-')
-        memo[key] = value
+          next unless key.start_with?('HTTP_') || %w(CONTENT_TYPE CONTENT_LENGTH).include?(key)
+          # Rack stores headers as HTTP_WHAT_EVER, we need What-Ever
+          key = key.gsub("HTTP_", "")
+          key = key.split('_').map(&:capitalize).join('-')
+          memo[key] = value
+        rescue StandardError => e
+          # Rails adds objects to the Rack env that can sometimes raise exceptions
+          # when `to_s` is called.
+          # See: https://github.com/rails/rails/blob/master/actionpack/lib/action_dispatch/middleware/remote_ip.rb#L134
+          Raven.logger.warn("Error raised while formatting headers: #{e.message}")
+          next
+        end
       end
     end
 

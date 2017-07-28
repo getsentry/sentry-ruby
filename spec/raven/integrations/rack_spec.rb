@@ -97,6 +97,19 @@ describe Raven::Rack do
     expect(interface.headers["Version"]).to eq("HTTP/2.0")
   end
 
+  it 'does not fail if an object in the env cannot be cast to string' do
+    obj = Class.new do
+      def to_s
+        raise 'Could not stringify object!'
+      end
+    end.new
+
+    env = { "HTTP_FOO" => "BAR", "rails_object" => obj }
+    interface = Raven::HttpInterface.new
+
+    expect { interface.from_rack(env) }.to_not raise_error
+  end
+
   it 'should pass rack/lint' do
     env = Rack::MockRequest.env_for("/test")
 
