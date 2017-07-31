@@ -1,3 +1,9 @@
+2.6.1
+-----
+
+* BUGFIX: Fix cases where ActionDispatch::RemoteIP would blow up during event creation [@cmoylan, #722]
+* BUGFIX: In ActiveJob, don't report exceptions which can be rescued by rescue_from handlers [@bensheldon, #719]
+
 2.6.0
 -----
 
