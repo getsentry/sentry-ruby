@@ -18,8 +18,9 @@ module Raven
         block.call
       rescue Exception => exception # rubocop:disable Lint/RescueException
         return if rescue_with_handler(exception)
-        return if already_supported_by_specific_integration?(job)
-        Raven.capture_exception(exception, :extra => raven_context(job))
+        unless already_supported_by_specific_integration?(job)
+          Raven.capture_exception(exception, :extra => raven_context(job))
+        end
         raise exception
       ensure
         Context.clear!

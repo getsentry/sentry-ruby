@@ -67,4 +67,17 @@ describe "ActiveJob integration", :rails => true do
       expect(job).to have_received(:rescue_callback).once
     end
   end
+
+  context "when we are using an adapter which has a specific integration" do
+    it "does not trigger sentry and re-raises" do
+      job = MyActiveJob.new
+      def job.already_supported_by_specific_integration?(*)
+        true
+      end
+
+      expect { job.perform_now }.to raise_error(MyActiveJob::TestError)
+
+      expect(Raven.client.transport.events.size).to eq(0)
+    end
+  end
 end
