@@ -1,3 +1,11 @@
+2.6.2
+-----
+
+* BUGFIX: If using the Sidekiq or DelayedJob adapters with ActiveJob, ActiveJob wouldn't re-raise upon capturing an exception. [@nateberkopec, 5b02ad4ff2]
+
+* KNOWN ISSUE: When using `async`, Rack integration is not thread-safe [#721]
+* KNOWN ISSUE: When using `async`, encoding errors may be raised [#725]
+
 2.6.1
 -----
 
