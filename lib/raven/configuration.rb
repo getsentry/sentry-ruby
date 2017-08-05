@@ -318,7 +318,7 @@ module Raven
     end
 
     def heroku_dyno_metadata_message
-      "You are running on Heroku but haven't enabled Dyno Metadata. For Sentry's"\
+      "You are running on Heroku but haven't enabled Dyno Metadata. For Sentry's "\
       "release detection to work correctly, please run `heroku labs:enable runtime-dyno-metadata`"
     end
 
