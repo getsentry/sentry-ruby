@@ -279,7 +279,8 @@ module Raven
     end
 
     def to_json_compatible
-      JSON.parse(JSON.generate(to_hash))
+      cleaned_hash = async_json_processors.reduce(to_hash) { |a, e| e.process(a) }
+      JSON.parse(JSON.generate(cleaned_hash))
     end
 
     # For cross-language compat
@@ -301,6 +302,13 @@ module Raven
         :real_ip => context.rack_env["HTTP_X_REAL_IP"],
         :forwarded_for => context.rack_env["HTTP_X_FORWARDED_FOR"]
       ).calculate_ip
+    end
+
+    def async_json_processors
+      [
+        Raven::Processor::RemoveCircularReferences,
+        Raven::Processor::UTF8Conversion
+      ].map { |v| v.new(self) }
     end
   end
 end

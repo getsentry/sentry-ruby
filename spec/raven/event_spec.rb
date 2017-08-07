@@ -362,6 +362,33 @@ describe Raven::Event do
       expect(json["extra"]['date']).to be_a(String)
       expect(json["extra"]['anonymous_module']).not_to be_a(Class)
     end
+
+    context "with bad data" do
+      subject do
+        data = {}
+        data['data'] = data
+        data['ary'] = []
+        data['ary'].push('x' => data['ary'])
+        data['ary2'] = data['ary']
+
+        Raven::Event.new(:extra => {
+                           :invalid => "invalid\255".force_encoding('UTF-8'),
+                           :circular => data
+                         })
+      end
+
+      it "should remove bad UTF-8" do
+        json = subject.to_json_compatible
+
+        expect(json["extra"]["invalid"]).to eq("invalid")
+      end
+
+      it "should remove circular references" do
+        json = subject.to_json_compatible
+
+        expect(json["extra"]["circular"]["ary2"]).to eq("(...)")
+      end
+    end
   end
 
   describe '.capture_message' do
