@@ -39,7 +39,7 @@ Optional settings
 
         class SentryJob < ActiveJob::Base
           queue_as :default
-          
+
           # Important! Otherwise, we can get caught in an infinite loop.
           rescue_from(ActiveJob::DeserializationError) { |e| Rails.logger.error e }
 
@@ -117,6 +117,14 @@ Optional settings
         config.sanitize_fields = Rails.application.config.filter_parameters.map(&:to_s)
 
     The client scrubs the HTTP "Authorization" header of requests before sending them to Sentry, to prevent sensitive credentials from being sent. You can specify additional HTTP headers to ignore:
+
+    You can also provide regex-like strings to the sanitizer:
+
+    .. code-block:: ruby
+
+        config.sanitize_fields = ["my_field", "foo(.*)?bar]
+
+    It's also possible to remove HTTP header values which match a list:
 
     .. code-block:: ruby
 
