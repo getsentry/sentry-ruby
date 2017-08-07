@@ -161,7 +161,8 @@ module Raven
       'ActiveRecord::RecordNotFound',
       'CGI::Session::CookieStore::TamperedWithCookie',
       'Mongoid::Errors::DocumentNotFound',
-      'Sinatra::NotFound'
+      'Sinatra::NotFound',
+      'ActiveJob::DeserializationError'
     ].freeze
 
     # Note the order - we have to remove circular references and bad characters
@@ -360,7 +361,7 @@ module Raven
       end
       false
     end
-    
+
     def heroku_dyno_name
       return unless running_on_heroku?
       ENV['DYNO']

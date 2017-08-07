@@ -40,9 +40,6 @@ Optional settings
         class SentryJob < ActiveJob::Base
           queue_as :default
 
-          # Important! Otherwise, we can get caught in an infinite loop.
-          rescue_from(ActiveJob::DeserializationError) { |e| Rails.logger.error e }
-
           def perform(event)
             Raven.send_event(event)
           end
