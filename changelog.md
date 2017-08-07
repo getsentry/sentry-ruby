@@ -1,3 +1,10 @@
+2.6.3
+-----
+
+* BUGFIX: Fixed typo in the Heroku warning [@greysteil, #728]
+* BUGFIX: Swallow IOErrors when reading the Rack request body [@nateberkopec]
+* BUGFIX: Fix invalid UTF-8/circular references when using async [@nateberkopec, #730]
+
 2.6.2
 -----
 
