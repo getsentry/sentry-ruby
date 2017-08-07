@@ -97,7 +97,8 @@ module Raven
     # By default, Sentry censors Hash values when their keys match things like
     # "secret", "password", etc. Provide an array of Strings that, when matched in
     # a hash key, will be censored and not sent to Sentry.
-    attr_accessor :sanitize_fields
+    # Also takes a Proc, but .call on that Proc must return an array of Strings.
+    attr_reader :sanitize_fields
 
     # If you're sure you want to override the default sanitization values, you can
     # add to them to an array of Strings here, e.g. %w(authorization password)
@@ -302,6 +303,15 @@ module Raven
       else
         Dir.pwd
       end
+    end
+
+    def sanitize_fields=(ary_or_proc)
+      @sanitize_fields = if ary_or_proc.respond_to?(:call)
+                           ary_or_proc.call
+                         else
+                           ary_or_proc
+                         end
+      raise Error, "sanitize_fields must be an Array" unless @sanitize_fields.is_a?(Array)
     end
 
     private
