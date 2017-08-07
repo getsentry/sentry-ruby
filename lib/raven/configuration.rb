@@ -200,7 +200,7 @@ module Raven
       self.sanitize_http_headers = []
       self.send_modules = true
       self.server = ENV['SENTRY_DSN'] if ENV['SENTRY_DSN']
-      self.server_name = resolve_hostname
+      self.server_name = heroku_dyno_name || resolve_hostname
       self.should_capture = false
       self.ssl_verification = true
       self.tags = {}
@@ -359,6 +359,11 @@ module Raven
         @errors << "DSN not set"
       end
       false
+    end
+    
+    def heroku_dyno_name
+      return unless running_on_heroku?
+      ENV['DYNO']
     end
 
     # Try to resolve the hostname to an FQDN, but fall back to whatever
