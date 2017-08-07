@@ -180,6 +180,16 @@ Optional settings
 
         config.release = '721e41770371db95eee98ca2707686226b993eda'
 
+.. describe:: sample_rate
+
+    The sampling factor to apply to events. A value of 0.00 will deny sending
+    any events, and a value of 1.00 will send 100% of events.
+
+    .. code-block:: ruby
+
+        # send 50% of events
+        config.sample_rate = 0.5
+
 .. describe:: should_capture
 
     By providing a proc or lambda, you can control what events are captured. Events are passed to the Proc or lambda you provide - returning false will stop the event from sending to Sentry:
