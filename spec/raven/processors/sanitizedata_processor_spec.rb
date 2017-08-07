@@ -9,10 +9,10 @@ describe Raven::Processor::SanitizeData do
 
   context 'configuration for sanitize fields' do
     it 'should union default sanitize fields with user-defined sanitize fields' do
-      fields = Raven::Processor::SanitizeData::DEFAULT_FIELDS | %w(test monkeybutt foo(.*)?bar)
+      fields = Raven::Processor::SanitizeData::DEFAULT_FIELDS | %w(test monkeybutt)
 
       @processor.sanitize_fields = fields
-      expected_fields_re = /authorization|password|passwd|secret|ssn|social(.*)?sec|\btest\b|\bmonkeybutt\b|foo(.*)?bar/i
+      expected_fields_re = /authorization|password|passwd|secret|ssn|social(.*)?sec|\btest\b|\bmonkeybutt\b/i
 
       expect(@processor.send(:fields_re)).to eq(expected_fields_re)
     end
@@ -21,6 +21,14 @@ describe Raven::Processor::SanitizeData do
       @processor.sanitize_fields_excluded = %w(authorization)
 
       expected_fields_re = /password|passwd|secret|ssn|social(.*)?sec/i
+
+      expect(@processor.send(:fields_re)).to eq(expected_fields_re)
+    end
+
+    it 'accepts regex-like strings' do
+      @processor.sanitize_fields = ["foo(.*)?bar"]
+
+      expected_fields_re = /authorization|password|passwd|secret|ssn|social(.*)?sec|foo(.*)?bar/i
 
       expect(@processor.send(:fields_re)).to eq(expected_fields_re)
     end
