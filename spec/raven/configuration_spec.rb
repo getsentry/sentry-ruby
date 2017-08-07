@@ -100,4 +100,14 @@ describe Raven::Configuration do
       expect(subject.errors).to eq(["No public_key specified", "No secret_key specified", "No project_id specified"])
     end
   end
+
+  it "converts sanitize_fields Procs into arrays of strings" do
+    subject.sanitize_fields = proc { ["test"] }
+
+    expect(subject.sanitize_fields).to eq(["test"])
+  end
+
+  it "raises if sanitize_fields.call does not return an array" do
+    expect { subject.sanitize_fields = proc { "test" } }.to raise_error(Raven::Error)
+  end
 end
