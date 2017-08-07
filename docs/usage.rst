@@ -158,3 +158,19 @@ can be supplied:
                 'email' => 'clever-girl'
             }
         }
+
+Many Instances
+--------------
+
+It is possible to have many different instances and configurations of the Raven
+client running at once. See the delegation pattern in ``base.rb`` for more
+information about how the ``Raven`` module delegates calls to the "main" instance.
+
+.. code-block:: ruby
+
+    Raven.capture # capture, sent to the main instance
+
+    # You can create as many instances as you like. Provide a context and config.
+    instance = Raven::Instance.new(Raven::Context.new, Raven::Configuration.new)
+
+Currently, all integrations use the "main" instance.
