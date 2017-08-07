@@ -90,6 +90,8 @@ module Raven
         request.body.rewind
         data
       end
+    rescue IOError => ex
+      ex.message
     end
 
     def format_headers_for_sentry(env_hash)
