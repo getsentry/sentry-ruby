@@ -91,6 +91,10 @@ module Raven
     # We automatically try to set this to a git SHA or Capistrano release.
     attr_accessor :release
 
+    # The sampling factor to apply to events. A value of 0.0 will not send
+    # any events, and a value of 1.0 will send 100% of events.
+    attr_accessor :sample_rate
+
     # Boolean - sanitize values that look like credit card numbers
     attr_accessor :sanitize_credit_cards
 
@@ -195,6 +199,7 @@ module Raven
       self.rails_activesupport_breadcrumbs = false
       self.rails_report_rescued_exceptions = true
       self.release = detect_release
+      self.sample_rate = 1.0
       self.sanitize_credit_cards = true
       self.sanitize_fields = []
       self.sanitize_fields_excluded = []
@@ -274,7 +279,8 @@ module Raven
 
       valid? &&
         capture_in_current_environment? &&
-        capture_allowed_by_callback?(message_or_exc)
+        capture_allowed_by_callback?(message_or_exc) &&
+        sample_allowed?
     end
     # If we cannot capture, we cannot send.
     alias sending_allowed? capture_allowed?
@@ -365,6 +371,16 @@ module Raven
     def heroku_dyno_name
       return unless running_on_heroku?
       ENV['DYNO']
+    end
+
+    def sample_allowed?
+      return true if sample_rate == 1.0
+      if Random::DEFAULT.rand >= sample_rate
+        @errors << "Excluded by random sample"
+        false
+      else
+        true
+      end
     end
 
     # Try to resolve the hostname to an FQDN, but fall back to whatever
