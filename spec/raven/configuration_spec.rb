@@ -4,6 +4,7 @@ describe Raven::Configuration do
   before do
     # Make sure we reset the env in case something leaks in
     ENV.delete('SENTRY_DSN')
+    ENV.delete('SENTRY_CURRENT_ENV')
     ENV.delete('RAILS_ENV')
     ENV.delete('RACK_ENV')
   end
@@ -74,6 +75,36 @@ describe Raven::Configuration do
       subject.environments = %w(not_test)
       expect(subject.capture_allowed?).to eq(false)
       expect(subject.errors).to eq(["Not configured to send/capture in environment 'test'"])
+    end
+  end
+
+  context 'being initialized without a current environment' do
+    it 'defaults to "default"' do
+      expect(subject.current_environment).to eq('default')
+    end
+
+    it 'uses `SENTRY_CURRENT_ENV` env variable' do
+      ENV['SENTRY_CURRENT_ENV'] = 'set-with-sentry-current-env'
+      ENV['RAILS_ENV'] = 'set-with-rails-env'
+      ENV['RACK_ENV'] = 'set-with-rack-env'
+
+      expect(subject.current_environment).to eq('set-with-sentry-current-env')
+    end
+
+    it 'uses `RAILS_ENV` env variable' do
+      ENV['SENTRY_CURRENT_ENV'] = nil
+      ENV['RAILS_ENV'] = 'set-with-rails-env'
+      ENV['RACK_ENV'] = 'set-with-rack-env'
+
+      expect(subject.current_environment).to eq('set-with-rails-env')
+    end
+
+    it 'uses `RACK_ENV` env variable' do
+      ENV['SENTRY_CURRENT_ENV'] = nil
+      ENV['RAILS_ENV'] = nil
+      ENV['RACK_ENV'] = 'set-with-rack-env'
+
+      expect(subject.current_environment).to eq('set-with-rack-env')
     end
   end
 

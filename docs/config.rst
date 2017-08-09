@@ -65,7 +65,7 @@ Optional settings
 
         config.environments = %w[ production ]
 
-    Sentry automatically sets the current environment to RAILS_ENV, or if it is not present, RACK_ENV. If you are using Sentry outside of Rack or Rails, or wish to override environment detection, you'll need to set the current environment yourself:
+    Sentry automatically sets the current environment to RAILS_ENV, or if it is not present, RACK_ENV. If you are using Sentry outside of Rack or Rails, or wish to override environment detection, you'll need to set the current environment by setting SENTRY_CURRENT_ENV or configuring the client yourself:
 
     .. code-block:: ruby
 
