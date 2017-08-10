@@ -185,7 +185,7 @@ module Raven
     def initialize
       self.async = false
       self.context_lines = 3
-      self.current_environment = ENV['RAILS_ENV'] || ENV['RACK_ENV'] || 'default'
+      self.current_environment = ENV['SENTRY_CURRENT_ENV'] || ENV['RAILS_ENV'] || ENV['RACK_ENV'] || 'default'
       self.encoding = 'gzip'
       self.environments = []
       self.exclude_loggers = []
