@@ -16,8 +16,6 @@ class TestApp < Rails::Application
 
   # Usually set for us in production.rb
   config.eager_load = true
-  config.cache_classes = true
-  config.serve_static_files = false
 
   routes.append do
     get "/exception", :to => "hello#exception"
@@ -40,5 +38,3 @@ class HelloController < ActionController::Base
     render :text => "Hello World!"
   end
 end
-
-Rails.env = "production"
