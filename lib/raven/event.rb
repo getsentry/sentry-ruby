@@ -178,10 +178,6 @@ module Raven
       data
     end
 
-    def get_file_context(filename, lineno, context)
-      linecache.get_file_context(filename, lineno, context)
-    end
-
     def to_json_compatible
       cleaned_hash = async_json_processors.reduce(to_hash) { |a, e| e.process(a) }
       JSON.parse(JSON.generate(cleaned_hash))
@@ -224,7 +220,7 @@ module Raven
 
         if configuration[:context_lines] && frame.abs_path
           frame.pre_context, frame.context_line, frame.post_context = \
-            get_file_context(frame.abs_path, frame.lineno, configuration[:context_lines])
+            linecache.get_file_context(frame.abs_path, frame.lineno, configuration[:context_lines])
         end
 
         memo << frame if frame.filename
