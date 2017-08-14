@@ -181,6 +181,7 @@ module Raven
     ].freeze
 
     LOG_PREFIX = "** [Raven] ".freeze
+    MODULE_SEPARATOR = "::".freeze
 
     def initialize
       self.async = false
@@ -337,10 +338,10 @@ module Raven
     # In Ruby <2.0 const_get can't lookup "SomeModule::SomeClass" in one go
     def qualified_const_get(x)
       x = x.to_s
-      if !x.match("::")
+      if !x.match(/::/)
         Object.const_get(x)
       else
-        x.split("::").reject(&:empty?).inject(Object) { |a, e| a.const_get(e) }
+        x.split(MODULE_SEPARATOR).reject(&:empty?).inject(Object) { |a, e| a.const_get(e) }
       end
     rescue NameError # There's no way to safely ask if a constant exist for an unknown string
       nil

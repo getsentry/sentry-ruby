@@ -5,7 +5,6 @@ module Raven
     attr_accessor :frames
 
     def initialize(*arguments)
-      self.frames = []
       super(*arguments)
     end
 
@@ -32,7 +31,6 @@ module Raven
       attr_accessor :in_app
 
       def initialize(*arguments)
-        self.vars, self.pre_context, self.post_context = [], [], []
         super(*arguments)
       end
 
