@@ -94,7 +94,7 @@ module Raven
 
       new(options) do |evt|
         evt.configuration = configuration
-        evt.message = "#{exc.class}: #{exc.message}".byteslice(0...MAX_MESSAGE_SIZE_IN_BYTES) # Messages limited to 10kb
+        evt.message = "#{exc.class}: #{exc.message}"
         evt.level = options[:level] || :error
 
         evt.add_exception_interface(exc)
@@ -104,11 +104,8 @@ module Raven
     end
 
     def self.from_message(message, options = {})
-      message = message.byteslice(0...MAX_MESSAGE_SIZE_IN_BYTES)
-      configuration = options[:configuration] || Raven.configuration
-
       new(options) do |evt|
-        evt.configuration = configuration
+        evt.configuration = options[:configuration] || Raven.configuration
         evt.level = options[:level] || :error
         evt.message = message, options[:message_params] || []
         if options[:backtrace]
@@ -126,7 +123,7 @@ module Raven
     def message=(args)
       message, params = *args
       interface(:message) do |int|
-        int.message = message
+        int.message = message.byteslice(0...MAX_MESSAGE_SIZE_IN_BYTES) # Messages limited to 10kb
         int.params = params
       end
     end
