@@ -110,7 +110,7 @@ module Raven
         evt.message = message, options[:message_params] || []
         if options[:backtrace]
           evt.interface(:stacktrace) do |int|
-            evt.stacktrace_interface_from(int, options[:backtrace])
+            int.frames = evt.stacktrace_interface_from(options[:backtrace])
           end
         end
       end
@@ -211,19 +211,20 @@ module Raven
               if e.backtrace && !backtraces.include?(e.backtrace.object_id)
                 backtraces << e.backtrace.object_id
                 StacktraceInterface.new do |stacktrace|
-                  stacktrace_interface_from(stacktrace, e.backtrace)
+                  stacktrace.frames = stacktrace_interface_from(e.backtrace)
                 end
               end
           end
         end
+
+        if exc_int.values.select { |int| int.stacktrace }.any?
+          self.culprit = get_culprit(exc_int.values.last.stacktrace.frames)
+        end
       end
     end
 
-    def stacktrace_interface_from(int, backtrace)
-      backtrace = Backtrace.parse(backtrace)
-
-      int.frames = []
-      backtrace.lines.reverse_each do |line|
+    def stacktrace_interface_from(backtrace)
+      Backtrace.parse(backtrace).lines.reverse.reduce([]) do |memo, line|
         frame = StacktraceInterface::Frame.new
         frame.abs_path = line.file if line.file
         frame.function = line.method if line.method
@@ -236,10 +237,9 @@ module Raven
             get_file_context(frame.abs_path, frame.lineno, configuration[:context_lines])
         end
 
-        int.frames << frame if frame.filename
+        memo << frame if frame.filename
+        memo
       end
-
-      self.culprit = get_culprit(int.frames)
     end
 
     # For cross-language compat
