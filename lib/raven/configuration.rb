@@ -181,6 +181,7 @@ module Raven
     ].freeze
 
     LOG_PREFIX = "** [Raven] ".freeze
+    MODULE_SEPARATOR = "::".freeze
 
     def initialize
       self.async = false
@@ -311,7 +312,40 @@ module Raven
       end
     end
 
+    def exception_class_allowed?(exc)
+      if exc.is_a?(Raven::Error)
+        # Try to prevent error reporting loops
+        logger.debug "Refusing to capture Raven error: #{exc.inspect}"
+        false
+      elsif excluded_exception?(exc)
+        logger.debug "User excluded error: #{exc.inspect}"
+        false
+      else
+        true
+      end
+    end
+
     private
+
+    def excluded_exception?(exc)
+      excluded_exceptions.any? { |x| get_exception_class(x) === exc }
+    end
+
+    def get_exception_class(x)
+      x.is_a?(Module) ? x : qualified_const_get(x)
+    end
+
+    # In Ruby <2.0 const_get can't lookup "SomeModule::SomeClass" in one go
+    def qualified_const_get(x)
+      x = x.to_s
+      if !x.match(/::/)
+        Object.const_get(x)
+      else
+        x.split(MODULE_SEPARATOR).reject(&:empty?).inject(Object) { |a, e| a.const_get(e) }
+      end
+    rescue NameError # There's no way to safely ask if a constant exist for an unknown string
+      nil
+    end
 
     def detect_release_from_heroku
       return unless running_on_heroku?

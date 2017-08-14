@@ -5,6 +5,7 @@ module Raven
   class Backtrace
     # Handles backtrace parsing line by line
     class Line
+      RB_EXTENSION = ".rb".freeze
       # regexp (optional leading X: on windows, or JRuby9000 class-prefix)
       RUBY_INPUT_FORMAT = /
         ^ \s* (?: [a-zA-Z]: | uri:classloader: )? ([^:]+ | <.*>):
@@ -34,7 +35,7 @@ module Raven
         ruby_match = unparsed_line.match(RUBY_INPUT_FORMAT)
         if ruby_match
           _, file, number, method = ruby_match.to_a
-          file.sub!(/\.class$/, ".rb")
+          file.sub!(/\.class$/, RB_EXTENSION)
           module_name = nil
         else
           java_match = unparsed_line.match(JAVA_INPUT_FORMAT)

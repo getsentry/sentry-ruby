@@ -23,6 +23,8 @@ rescue => exc
   exc
 end
 
+Raven.capture_exception(RAILS_EXC) # fire it once to get one-time stuff out of rpt
+
 report = MemoryProfiler.report do
   Raven.capture_exception(RAILS_EXC)
 end
