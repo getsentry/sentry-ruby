@@ -189,18 +189,8 @@ module Raven
 
     def add_exception_interface(exc)
       interface(:exception) do |exc_int|
-        exceptions = [exc]
-        context = Set.new [exc.object_id]
+        exceptions = exception_chain_to_array(exc)
         backtraces = Set.new
-
-        while exc.respond_to?(:cause) && exc.cause
-          exc = exc.cause
-          break if context.include?(exc.object_id)
-          exceptions << exc
-          context.add(exc.object_id)
-        end
-        exceptions.reverse!
-
         exc_int.values = exceptions.map do |e|
           SingleExceptionInterface.new do |int|
             int.type = e.class.to_s
@@ -273,6 +263,20 @@ module Raven
     def get_culprit(frames)
       lastframe = frames.reverse.find(&:in_app) || frames.last
       "#{lastframe.filename} in #{lastframe.function} at line #{lastframe.lineno}" if lastframe
+    end
+
+    def exception_chain_to_array(exc)
+      if exc.respond_to?(:cause) && exc.cause
+        exceptions = [exc]
+        while exc.cause
+          exc = exc.cause
+          break if exceptions.any? { |e| e.object_id == exc.object_id }
+          exceptions << exc
+        end
+        exceptions.reverse!
+      else
+        [exc]
+      end
     end
   end
 end
