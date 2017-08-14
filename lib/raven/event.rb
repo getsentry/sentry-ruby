@@ -5,7 +5,6 @@ require 'securerandom'
 require 'digest/md5'
 
 require 'raven/error'
-require 'raven/linecache'
 
 module Raven
   class Event
@@ -29,14 +28,13 @@ module Raven
     attr_accessor :id, :timestamp, :time_spent, :level, :logger,
                   :culprit, :server_name, :release, :modules, :extra, :tags,
                   :context, :configuration, :checksum, :fingerprint, :environment,
-                  :server_os, :runtime, :breadcrumbs, :user, :backtrace, :linecache
+                  :server_os, :runtime, :breadcrumbs, :user, :backtrace
 
     def initialize(init = {})
       @configuration = init[:configuration] || Raven.configuration
       @interfaces    = {}
       @breadcrumbs   = init[:breadcrumbs] || Raven.breadcrumbs
       @context       = init[:context] || Raven.context
-      @linecache     = @configuration.linecache
       @id            = SecureRandom.uuid.delete("-")
       @timestamp     = Time.now.utc
       @time_spent    = nil
@@ -215,7 +213,7 @@ module Raven
 
         if configuration[:context_lines] && frame.abs_path
           frame.pre_context, frame.context_line, frame.post_context = \
-            linecache.get_file_context(frame.abs_path, frame.lineno, configuration[:context_lines])
+            configuration.linecache.get_file_context(frame.abs_path, frame.lineno, configuration[:context_lines])
         end
 
         memo << frame if frame.filename
