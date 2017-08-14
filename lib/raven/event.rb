@@ -17,7 +17,6 @@ module Raven
       "fatal" => 50
     }.freeze
 
-    BACKTRACE_RE = /^(.+?):(\d+)(?::in `(.+?)')?$/
     # See Sentry server default limits at
     # https://github.com/getsentry/sentry/blob/master/src/sentry/conf/server.py
     MAX_MESSAGE_SIZE_IN_BYTES = 1024 * 8
