@@ -36,20 +36,14 @@ describe Raven::Instance do
 
   describe '#capture_type' do
     describe 'as #capture_message' do
+      before do
+        expect(Raven::Event).to receive(:from_message).with(message, options)
+        expect(subject).to receive(:send_event).with(event)
+      end
       let(:message) { "Test message" }
 
       it 'sends the result of Event.capture_message' do
-        expect(Raven::Event).to receive(:from_message).with(message, options)
-        expect(subject).to receive(:send_event).with(event)
-
         subject.capture_type(message, options)
-      end
-
-      it 'has an alias' do
-        expect(Raven::Event).to receive(:from_message).with(message, options)
-        expect(subject).to receive(:send_event).with(event)
-
-        subject.capture_message(message, options)
       end
 
       it 'yields the event to a passed block' do
@@ -72,11 +66,11 @@ describe Raven::Instance do
         expect(subject).not_to receive(:send_event).with(event)
 
         expect(subject.configuration.async).to receive(:call).with(event.to_json_compatible)
-        subject.capture_type(message, options)
+        subject.capture_message(message, options)
       end
 
       it 'returns the generated event' do
-        returned = subject.capture_type(message, options)
+        returned = subject.capture_message(message, options)
         expect(returned).to eq(event)
       end
     end
@@ -88,7 +82,7 @@ describe Raven::Instance do
         expect(Raven::Event).to receive(:from_exception).with(exception, options)
         expect(subject).to receive(:send_event).with(event)
 
-        subject.capture_type(exception, options)
+        subject.capture_exception(exception, options)
       end
 
       it 'has an alias' do
@@ -97,16 +91,12 @@ describe Raven::Instance do
 
         subject.capture_exception(exception, options)
       end
-
-      it 'yields the event to a passed block' do
-        expect { |b| subject.capture_type(exception, options, &b) }.to yield_with_args(event)
-      end
     end
 
     describe 'as #capture_exception when async' do
       let(:exception) { build_exception }
 
-      context "when correctly configured" do
+      context "when async" do
         around do |example|
           prior_async = subject.configuration.async
           subject.configuration.async = proc { :ok }
@@ -119,11 +109,11 @@ describe Raven::Instance do
           expect(subject).not_to receive(:send_event).with(event)
 
           expect(subject.configuration.async).to receive(:call).with(event.to_json_compatible)
-          subject.capture_type(exception, options)
+          subject.capture_exception(exception, options)
         end
 
         it 'returns the generated event' do
-          returned = subject.capture_type(exception, options)
+          returned = subject.capture_exception(exception, options)
           expect(returned).to eq(event)
         end
       end
@@ -140,7 +130,7 @@ describe Raven::Instance do
           expect(Raven::Event).to receive(:from_exception).with(exception, options)
 
           expect(subject.configuration.async).to receive(:call).with(event.to_json_compatible)
-          subject.capture_type(exception, options)
+          subject.capture_exception(exception, options)
         end
       end
     end
@@ -153,7 +143,7 @@ describe Raven::Instance do
 
         subject.configuration.should_capture = proc { false }
         expect(subject.configuration.should_capture).to receive(:call).with(exception)
-        expect(subject.capture_type(exception, options)).to be false
+        expect(subject.capture_exception(exception, options)).to be false
       end
     end
   end
@@ -228,10 +218,6 @@ describe Raven::Instance do
       subject.capture_type("Test message", options)
 
       expect(subject.last_event_id).to eq(event.id)
-    end
-
-    it 'yields the event to a passed block' do
-      expect { |b| subject.capture_type(message, options, &b) }.to yield_with_args(event)
     end
   end
 

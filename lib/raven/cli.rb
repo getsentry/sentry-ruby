@@ -53,7 +53,7 @@ module Raven
 
       instance.logger.debug ""
       instance.logger.debug "Done!"
-      true
+      evt
     end
   end
 end
