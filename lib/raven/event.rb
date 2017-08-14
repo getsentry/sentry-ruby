@@ -128,11 +128,6 @@ module Raven
       end
     end
 
-    def list_gem_specs
-      # Older versions of Rubygems don't support iterating over all specs
-      Hash[Gem::Specification.map { |spec| [spec.name, spec.version.to_s] }] if Gem::Specification.respond_to?(:map)
-    end
-
     def interface(name, value = nil, &block)
       int = Interface.registered[name]
       raise(Error, "Unknown interface: #{name}") unless int
@@ -273,6 +268,11 @@ module Raven
       else
         [exc]
       end
+    end
+
+    def list_gem_specs
+      # Older versions of Rubygems don't support iterating over all specs
+      Hash[Gem::Specification.map { |spec| [spec.name, spec.version.to_s] }] if Gem::Specification.respond_to?(:map)
     end
   end
 end
