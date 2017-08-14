@@ -195,14 +195,14 @@ module Raven
           end
         end
 
-        if exc_int.values.select { |int| int.stacktrace }.any?
+        if exc_int.values.select(&:stacktrace).any?
           self.culprit = get_culprit(exc_int.values.last.stacktrace.frames)
         end
       end
     end
 
     def stacktrace_interface_from(backtrace)
-      Backtrace.parse(backtrace).lines.reverse.reduce([]) do |memo, line|
+      Backtrace.parse(backtrace).lines.reverse.each_with_object([]) do |line, memo|
         frame = StacktraceInterface::Frame.new
         frame.abs_path = line.file if line.file
         frame.function = line.method if line.method
@@ -216,7 +216,6 @@ module Raven
         end
 
         memo << frame if frame.filename
-        memo
       end
     end
 
