@@ -20,6 +20,10 @@ end
 RSpec.configure do |config|
   config.mock_with(:rspec) { |mocks| mocks.verify_partial_doubles = true }
   config.raise_errors_for_deprecations!
+  config.order = :random
+  # config.disable_monkey_patching!
+  # config.warnings = true
+  Kernel.srand config.seed
 end
 
 def build_exception
