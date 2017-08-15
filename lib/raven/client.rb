@@ -14,6 +14,7 @@ module Raven
     CONTENT_TYPE = 'application/json'.freeze
 
     attr_accessor :configuration
+    attr_reader :state
 
     def initialize(configuration)
       @configuration = configuration
@@ -96,12 +97,16 @@ module Raven
 
     def failed_send(e, event)
       @state.failure
-      if e # exception was raised
-        configuration.logger.error "Unable to record event with remote Sentry server (#{e.class} - #{e.message}):\n#{e.backtrace[0..10].join("\n")}"
-      else
-        configuration.logger.error "Not sending event due to previous failure(s)."
+
+      unless configuration.silence_send_event_failure
+        if e # exception was raised
+          configuration.logger.error "Unable to record event with remote Sentry server (#{e.class} - #{e.message}):\n#{e.backtrace[0..10].join("\n")}"
+        else
+          configuration.logger.error "Not sending event due to previous failure(s)."
+        end
+        configuration.logger.error("Failed to submit event: #{get_log_message(event)}")
       end
-      configuration.logger.error("Failed to submit event: #{get_log_message(event)}")
+
       configuration.transport_failure_callback.call(event) if configuration.transport_failure_callback
     end
   end

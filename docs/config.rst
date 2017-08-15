@@ -212,6 +212,21 @@ Optional settings
 
         config.silence_ready = true
 
+.. describe:: silence_send_event_failure
+
+    When raven client fails to send the error event, Raven will write an error log to the log file, similar to following:
+
+    ``
+    ** E, [2017-08-14T23:05:41.239074 #4906] ERROR -- sentry: ** [Raven] Failed to submit event: Exception:
+    ** E, [2017-08-14T23:05:42.709556 #4318] ERROR -- sentry: ** [Raven] Unable to record event with remote Sentry server (Faraday::ClientError - the server responded with status 429)
+    ``
+
+    You can turn off this message:
+
+    .. code-block:: ruby
+
+        config.silence_send_event_failure = true
+
 .. describe:: ssl_verification
 
     By default SSL certificate verification is enabled in the client. It can be disabled.
