@@ -28,6 +28,15 @@ describe "Rails Integration", :type => :request, :rails => true do
     expect(event['request']['url']).to eq("http://www.example.com/exception")
   end
 
+  it "sets transaction to ControllerName#method" do
+    get "/exception"
+
+    event = Raven.client.transport.events.first
+    event = JSON.parse!(event[1])
+
+    expect(event['transaction']).to eq("HelloController#exception")
+  end
+
   it "sets Raven.configuration.logger correctly" do
     expect(Raven.configuration.logger).to eq(Rails.logger)
   end

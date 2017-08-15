@@ -3,7 +3,9 @@ require 'sidekiq'
 
 module Raven
   class SidekiqCleanupMiddleware
-    def call(_worker, _job, _queue)
+    def call(_worker, job, queue)
+      Raven.context.transaction.push "Sidekiq/#{job['class']}"
+      Raven.extra_context(:sidekiq => job.merge("queue" => queue))
       yield
       Context.clear!
       BreadcrumbBuffer.clear!
@@ -15,11 +17,11 @@ module Raven
 
     def call(ex, context)
       context = filter_context(context)
+      Raven.context.transaction.push transaction_from_context(context)
       Raven.capture_exception(
         ex,
         :message => ex.message,
-        :extra => { :sidekiq => context },
-        :culprit => culprit_from_context(context)
+        :extra => { :sidekiq => context }
       )
       Context.clear!
       BreadcrumbBuffer.clear!
@@ -51,14 +53,14 @@ module Raven
 
     # this will change in the future:
     # https://github.com/mperham/sidekiq/pull/3161
-    def culprit_from_context(context)
+    def transaction_from_context(context)
       classname = (context["wrapped"] || context["class"] ||
-                    (context["job"] && (context["job"]["wrapped"] || context["job"]["class"]))
+                    (context[:job] && (context[:job]["wrapped"] || context[:job]["class"]))
                   )
       if classname
         "Sidekiq/#{classname}"
-      elsif context["event"]
-        "Sidekiq/#{context['event']}"
+      elsif context[:event]
+        "Sidekiq/#{context[:event]}"
       else
         "Sidekiq"
       end

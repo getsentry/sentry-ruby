@@ -2,64 +2,66 @@ require 'spec_helper'
 require 'raven/integrations/rack'
 
 describe Raven::Rack do
-  it 'should capture exceptions' do
-    exception = build_exception
-    env = {}
+  let(:exception) { build_exception }
+  let(:env) { Rack::MockRequest.env_for("/test") }
 
-    expect(Raven::Rack).to receive(:capture_exception).with(exception, env)
-
-    app = ->(_e) { raise exception }
-
-    stack = Raven::Rack.new(app)
-    expect { stack.call(env) }.to raise_error(ZeroDivisionError)
-  end
-
-  it 'should capture rack.exception' do
-    exception = build_exception
-    env = {}
-
-    expect(Raven::Rack).to receive(:capture_exception).with(exception, env)
-
-    app = lambda do |e|
-      e['rack.exception'] = exception
-      [200, {}, ['okay']]
+  context "when we expect to capture an exception" do
+    before do
+      expect(Raven::Rack).to receive(:capture_exception).with(exception, env)
     end
 
-    stack = Raven::Rack.new(app)
+    it 'should capture exceptions' do
+      app = ->(_e) { raise exception }
+      stack = Raven::Rack.new(app)
 
-    stack.call(env)
-  end
-
-  it 'should capture sinatra errors' do
-    exception = build_exception
-    env = {}
-
-    expect(Raven::Rack).to receive(:capture_exception).with(exception, env)
-
-    app = lambda do |e|
-      e['sinatra.error'] = exception
-      [200, {}, ['okay']]
+      expect { stack.call(env) }.to raise_error(ZeroDivisionError)
     end
 
-    stack = Raven::Rack.new(app)
+    it 'should capture rack.exception' do
+      app = lambda do |e|
+        e['rack.exception'] = exception
+        [200, {}, ['okay']]
+      end
+      stack = Raven::Rack.new(app)
 
-    stack.call(env)
+      stack.call(env)
+    end
+
+    it 'should capture sinatra errors' do
+      app = lambda do |e|
+        e['sinatra.error'] = exception
+        [200, {}, ['okay']]
+      end
+      stack = Raven::Rack.new(app)
+
+      stack.call(env)
+    end
   end
 
-  it 'should clear context after app is called' do
+  it 'should capture context and clear after app is called' do
     Raven::Context.current.tags[:environment] = :test
 
-    app = ->(env) { ['response', {}, env] }
+    app = ->(_e) { :ok }
     stack = Raven::Rack.new(app)
 
-    stack.call({})
+    stack.call(env)
 
     expect(Raven::Context.current.tags).to eq({})
   end
 
+  it 'sets transaction' do
+    app = lambda do |_e|
+      expect(Raven.context.transaction.last).to eq "/test"
+    end
+    stack = Raven::Rack.new(app)
+
+    stack.call(env)
+
+    expect(Raven.context.transaction.last).to be_nil
+  end
+
   it 'should allow empty rack env in rspec tests' do
-    env = {} # the rack env is empty when running rails/rspec tests
-    Raven.rack_context(env)
+    Raven.rack_context({}) # the rack env is empty when running rails/rspec tests
     Raven.capture_exception(build_exception)
   end
 
@@ -73,26 +75,23 @@ describe Raven::Rack do
     end
     stack = Raven::Rack.new(app)
 
-    env = { :foo => :bar }
-
-    stack.call(env)
+    stack.call({})
   end
 
   it 'transforms headers to conform with the interface' do
-    env = { "SERVER_PROTOCOL" => "HTTP/1.1", "HTTP_FOO" => "BAR", "HTTP_VERSION" => "HTTP/1.1" }
-
     interface = Raven::HttpInterface.new
-    interface.from_rack(env)
+    new_env = env.merge("HTTP_VERSION" => "HTTP/1.1")
+    interface.from_rack(new_env)
 
-    expect(interface.headers["Foo"]).to eq("BAR")
-    expect(interface.headers["Version"]).to be_nil
+    expect(interface.headers["Content-Length"]).to eq("0")
+    expect(interface.headers["Version"]).to eq("HTTP/1.1")
   end
 
   it 'does not ignore version headers which do not match SERVER_PROTOCOL' do
-    env = { "SERVER_PROTOCOL" => "HTTP/1.1", "HTTP_VERSION" => "HTTP/2.0" }
+    new_env = env.merge("SERVER_PROTOCOL" => "HTTP/1.1", "HTTP_VERSION" => "HTTP/2.0")
 
     interface = Raven::HttpInterface.new
-    interface.from_rack(env)
+    interface.from_rack(new_env)
 
     expect(interface.headers["Version"]).to eq("HTTP/2.0")
   end
@@ -104,15 +103,13 @@ describe Raven::Rack do
       end
     end.new
 
-    env = { "HTTP_FOO" => "BAR", "rails_object" => obj }
+    new_env = env.merge("HTTP_FOO" => "BAR", "rails_object" => obj)
     interface = Raven::HttpInterface.new
 
-    expect { interface.from_rack(env) }.to_not raise_error
+    expect { interface.from_rack(new_env) }.to_not raise_error
   end
 
   it 'should pass rack/lint' do
-    env = Rack::MockRequest.env_for("/test")
-
     app = proc do
       [200, { 'Content-Type' => 'text/plain' }, ['OK']]
     end

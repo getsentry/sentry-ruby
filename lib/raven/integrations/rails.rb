@@ -4,6 +4,7 @@ module Raven
   class Rails < ::Rails::Railtie
     require 'raven/integrations/rails/overrides/streaming_reporter'
     require 'raven/integrations/rails/controller_methods'
+    require 'raven/integrations/rails/controller_transaction'
 
     initializer "raven.use_rack_middleware" do |app|
       app.config.middleware.insert 0, Raven::Rack
@@ -12,6 +13,7 @@ module Raven
     initializer 'raven.action_controller' do
       ActiveSupport.on_load :action_controller do
         include Raven::Rails::ControllerMethods
+        include Raven::Rails::ControllerTransaction
         if ::Rails::VERSION::STRING >= "4.0.0"
           Raven.safely_prepend(
             "StreamingReporter",
