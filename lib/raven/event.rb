@@ -30,19 +30,15 @@ module Raven
                   :server_os, :runtime, :breadcrumbs, :user, :backtrace
 
     def initialize(init = {})
-      @configuration = init[:configuration] || Raven.configuration
+      @configuration = Raven.configuration
       @interfaces    = {}
-      @breadcrumbs   = init[:breadcrumbs] || Raven.breadcrumbs
-      @context       = init[:context] || Raven.context
+      @breadcrumbs   = Raven.breadcrumbs
+      @context       = Raven.context
       @id            = SecureRandom.uuid.delete("-")
       @timestamp     = Time.now.utc
       @time_spent    = nil
       @level         = :error
       @logger        = PLATFORM
-      @transaction   = @context.transaction.last
-      @server_name   = @configuration.server_name
-      @release       = @configuration.release
-      @modules       = list_gem_specs if @configuration.send_modules
       @user          = {} # TODO: contexts
       @extra         = {} # TODO: contexts
       @server_os     = {} # TODO: contexts
@@ -50,7 +46,6 @@ module Raven
       @tags          = {} # TODO: contexts
       @checksum      = nil
       @fingerprint   = nil
-      @environment   = @configuration.current_environment
 
       yield self if block_given?
 
@@ -65,6 +60,12 @@ module Raven
       end
 
       init.each_pair { |key, val| public_send(key.to_s + "=", val) }
+
+      @transaction ||= @context.transaction.last
+      @server_name ||= @configuration.server_name
+      @release     ||= @configuration.release
+      @modules       = list_gem_specs if @configuration.send_modules
+      @environment ||= @configuration.current_environment
 
       @user = @context.user.merge(@user) # TODO: contexts
       @extra = @context.extra.merge(@extra) # TODO: contexts
@@ -90,9 +91,7 @@ module Raven
       return unless configuration.exception_class_allowed?(exc)
 
       new(options) do |evt|
-        evt.configuration = configuration
         evt.message = "#{exc.class}: #{exc.message}"
-        evt.level = options[:level] || :error
 
         evt.add_exception_interface(exc)
 
@@ -102,8 +101,6 @@ module Raven
 
     def self.from_message(message, options = {})
       new(options) do |evt|
-        evt.configuration = options[:configuration] || Raven.configuration
-        evt.level = options[:level] || :error
         evt.message = message, options[:message_params] || []
         if options[:backtrace]
           evt.interface(:stacktrace) do |int|
