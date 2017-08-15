@@ -27,23 +27,28 @@ module Raven
 
     def initialize(init = {})
       @configuration = Raven.configuration
-      @interfaces    = {}
       @breadcrumbs   = Raven.breadcrumbs
       @context       = Raven.context
       @id            = SecureRandom.uuid.delete("-")
       @timestamp     = Time.now.utc
-      @time_spent    = nil
       @level         = :error
       @logger        = PLATFORM
+      @interfaces    = {}
       @user          = {} # TODO: contexts
       @extra         = {} # TODO: contexts
       @server_os     = {} # TODO: contexts
       @runtime       = {} # TODO: contexts
       @tags          = {} # TODO: contexts
-      @checksum      = nil
-      @fingerprint   = nil
 
       yield self if block_given?
+
+      init.each_pair { |key, val| public_send(key.to_s + "=", val) }
+
+      @transaction ||= @context.transaction.last
+      @server_name ||= @configuration.server_name
+      @release     ||= @configuration.release
+      @modules       = list_gem_specs if @configuration.send_modules
+      @environment ||= @configuration.current_environment
 
       if !self[:http] && @context.rack_env
         interface :http do |int|
@@ -54,14 +59,6 @@ module Raven
       if @context.rack_env # TODO: contexts
         @context.user[:ip_address] = calculate_real_ip_from_rack
       end
-
-      init.each_pair { |key, val| public_send(key.to_s + "=", val) }
-
-      @transaction ||= @context.transaction.last
-      @server_name ||= @configuration.server_name
-      @release     ||= @configuration.release
-      @modules       = list_gem_specs if @configuration.send_modules
-      @environment ||= @configuration.current_environment
 
       @user = @context.user.merge(@user) # TODO: contexts
       @extra = @context.extra.merge(@extra) # TODO: contexts
