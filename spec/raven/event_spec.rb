@@ -10,7 +10,7 @@ describe Raven::Event do
   context 'a fully implemented event' do
     let(:hash) do
       Raven::Event.new(:message => 'test',
-                       :level => 'warning',
+                       :level => 'warn',
                        :logger => 'foo',
                        :tags => {
                          'foo' => 'bar'
@@ -28,7 +28,7 @@ describe Raven::Event do
     end
 
     it 'has level' do
-      expect(hash[:level]).to eq(30)
+      expect(hash[:level]).to eq(:warning)
     end
 
     it 'has logger' do
@@ -405,7 +405,7 @@ describe Raven::Event do
       end
 
       it 'has level ERROR' do
-        expect(hash[:level]).to eq(40)
+        expect(hash[:level]).to eq(:error)
       end
 
       it 'accepts an options hash' do
@@ -445,9 +445,8 @@ describe Raven::Event do
         expect(hash[:message]).to eq("Exception: #{message}")
       end
 
-      # sentry uses python's logging values; 40 is the value of logging.ERROR
       it 'has level ERROR' do
-        expect(hash[:level]).to eq(40)
+        expect(hash[:level]).to eq(:error)
       end
 
       it 'uses the exception class name as the exception type' do

@@ -4,20 +4,10 @@ require 'securerandom'
 
 module Raven
   class Event
-    LOG_LEVELS = {
-      "debug" => 10,
-      "info" => 20,
-      "warn" => 30,
-      "warning" => 30,
-      "error" => 40,
-      "fatal" => 50
-    }.freeze
-
     # See Sentry server default limits at
     # https://github.com/getsentry/sentry/blob/master/src/sentry/conf/server.py
     MAX_MESSAGE_SIZE_IN_BYTES = 1024 * 8
 
-    PLATFORM = "ruby".freeze
     SDK = { "name" => "raven-ruby", "version" => Raven::VERSION }.freeze
 
     attr_accessor :id, :timestamp, :time_spent, :level, :logger,
@@ -67,7 +57,7 @@ module Raven
       # Some type coercion
       @timestamp  = @timestamp.strftime('%Y-%m-%dT%H:%M:%S') if @timestamp.is_a?(Time)
       @time_spent = (@time_spent * 1000).to_i if @time_spent.is_a?(Float)
-      @level      = LOG_LEVELS[@level.to_s.downcase] if @level.is_a?(String) || @level.is_a?(Symbol)
+      @level      = convert_level_to_sentry_level(@level)
     end
 
     def self.from_exception(exc, options = {}, &block)
@@ -250,6 +240,12 @@ module Raven
     def list_gem_specs
       # Older versions of Rubygems don't support iterating over all specs
       Hash[Gem::Specification.map { |spec| [spec.name, spec.version.to_s] }] if Gem::Specification.respond_to?(:map)
+    end
+
+    # Sentry doesn't like "WARN"
+    def convert_level_to_sentry_level(level)
+      return :warning if level == "warn" || level == :warn
+      level
     end
   end
 end
