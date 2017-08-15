@@ -44,20 +44,32 @@ describe Raven::Event, :rails => true do
       end
 
       context 'when an in_app path under project_root is on the load path' do
+        before do
+          $LOAD_PATH.push "#{Rails.root}/app/models"
+        end
+
+        after do
+          $LOAD_PATH.pop
+        end
+
         it 'normalizes the filename using project_root' do
-          $LOAD_PATH << "#{Rails.root}/app/models"
           frames = hash[:exception][:values][0][:stacktrace][:frames]
           expect(frames[3][:filename]).to eq("app/models/user.rb")
-          $LOAD_PATH.delete("#{Rails.root}/app/models")
         end
       end
 
       context 'when a non-in_app path under project_root is on the load path' do
-        it 'normalizes the filename using the load path' do
+        before do
           $LOAD_PATH.push "#{Rails.root}/vendor/bundle"
+        end
+
+        after do
+          $LOAD_PATH.pop
+        end
+
+        it 'normalizes the filename using the load path' do
           frames = hash[:exception][:values][0][:stacktrace][:frames]
           expect(frames[5][:filename]).to eq("cache/other_gem.rb")
-          $LOAD_PATH.pop
         end
       end
 
