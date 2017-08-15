@@ -56,7 +56,7 @@ describe Raven::Event do
     end
 
     it 'has platform' do
-      expect(hash[:platform]).to eq('ruby')
+      expect(hash[:platform]).to eq(:ruby)
     end
 
     it 'has SDK' do

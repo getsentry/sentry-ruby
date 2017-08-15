@@ -22,7 +22,7 @@ module Raven
       @id            = SecureRandom.uuid.delete("-")
       @timestamp     = Time.now.utc
       @level         = :error
-      @logger        = PLATFORM
+      @logger        = :ruby
       @interfaces    = {}
       @user          = {} # TODO: contexts
       @extra         = {} # TODO: contexts
@@ -32,7 +32,7 @@ module Raven
 
       yield self if block_given?
 
-      init.each_pair { |key, val| public_send(key.to_s + "=", val) }
+      init.each_pair { |key, val| public_send("#{key}=", val) }
 
       @transaction ||= @context.transaction.last
       @server_name ||= @configuration.server_name
@@ -44,9 +44,7 @@ module Raven
         interface :http do |int|
           int.from_rack(@context.rack_env)
         end
-      end
 
-      if @context.rack_env # TODO: contexts
         @context.user[:ip_address] = calculate_real_ip_from_rack
       end
 
@@ -126,7 +124,7 @@ module Raven
         :timestamp => @timestamp,
         :time_spent => @time_spent,
         :level => @level,
-        :platform => PLATFORM,
+        :platform => :ruby,
         :sdk => SDK
       }
 
