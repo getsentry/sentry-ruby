@@ -2,11 +2,14 @@ require 'spec_helper'
 
 describe Raven::Event, :rails => true do
   context 'in a rails environment' do
-    before do
-      Raven.configure do |config|
-        config.project_root ||= ::Rails.root
-      end
+    let(:configuration) do
+      config = Raven::Configuration.new
+      config.dsn = "dummy://12345:67890@sentry.localdomain:3000/sentry/42"
+      config.logger = Logger.new(nil)
+      config
     end
+
+    let(:instance) { Raven::Instance.new(nil, configuration) }
 
     context 'with an application stacktrace' do
       let(:exception) do
@@ -22,7 +25,7 @@ describe Raven::Event, :rails => true do
         e
       end
 
-      let(:hash) { Raven::Event.capture_exception(exception).to_hash }
+      let(:hash) { instance.capture_exception(exception).to_hash }
 
       it 'marks in_app correctly' do
         frames = hash[:exception][:values][0][:stacktrace][:frames]
@@ -41,32 +44,20 @@ describe Raven::Event, :rails => true do
       end
 
       context 'when an in_app path under project_root is on the load path' do
-        before do
-          $LOAD_PATH << "#{Rails.root}/app/models"
-        end
-
-        after do
-          $LOAD_PATH.delete("#{Rails.root}/app/models")
-        end
-
         it 'normalizes the filename using project_root' do
+          $LOAD_PATH << "#{Rails.root}/app/models"
           frames = hash[:exception][:values][0][:stacktrace][:frames]
           expect(frames[3][:filename]).to eq("app/models/user.rb")
+          $LOAD_PATH.delete("#{Rails.root}/app/models")
         end
       end
 
       context 'when a non-in_app path under project_root is on the load path' do
-        before do
-          $LOAD_PATH << "#{Rails.root}/vendor/bundle"
-        end
-
-        after do
-          $LOAD_PATH.delete("#{Rails.root}/vendor/bundle")
-        end
-
         it 'normalizes the filename using the load path' do
+          $LOAD_PATH.push "#{Rails.root}/vendor/bundle"
           frames = hash[:exception][:values][0][:stacktrace][:frames]
           expect(frames[5][:filename]).to eq("cache/other_gem.rb")
+          $LOAD_PATH.pop
         end
       end
 
