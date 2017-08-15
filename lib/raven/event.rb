@@ -25,7 +25,7 @@ module Raven
     SDK = { "name" => "raven-ruby", "version" => Raven::VERSION }.freeze
 
     attr_accessor :id, :timestamp, :time_spent, :level, :logger,
-                  :culprit, :server_name, :release, :modules, :extra, :tags,
+                  :transaction, :server_name, :release, :modules, :extra, :tags,
                   :context, :configuration, :checksum, :fingerprint, :environment,
                   :server_os, :runtime, :breadcrumbs, :user, :backtrace
 
@@ -39,7 +39,7 @@ module Raven
       @time_spent    = nil
       @level         = :error
       @logger        = PLATFORM
-      @culprit       = nil
+      @transaction   = @context.transaction.last
       @server_name   = @configuration.server_name
       @release       = @configuration.release
       @modules       = list_gem_specs if @configuration.send_modules
@@ -151,7 +151,7 @@ module Raven
       }
 
       data[:logger] = @logger if @logger
-      data[:culprit] = @culprit if @culprit
+      data[:transaction] = @transaction if @transaction
       data[:server_name] = @server_name if @server_name
       data[:release] = @release if @release
       data[:environment] = @environment if @environment
@@ -193,10 +193,6 @@ module Raven
                 end
               end
           end
-        end
-
-        if exc_int.values.select(&:stacktrace).any?
-          self.culprit = get_culprit(exc_int.values.last.stacktrace.frames)
         end
       end
     end
@@ -245,11 +241,6 @@ module Raven
         Raven::Processor::RemoveCircularReferences,
         Raven::Processor::UTF8Conversion
       ].map { |v| v.new(self) }
-    end
-
-    def get_culprit(frames)
-      lastframe = frames.reverse.find(&:in_app) || frames.last
-      "#{lastframe.filename} in #{lastframe.function} at line #{lastframe.lineno}" if lastframe
     end
 
     def exception_chain_to_array(exc)

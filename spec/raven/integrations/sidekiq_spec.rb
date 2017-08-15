@@ -25,8 +25,7 @@ if RUBY_VERSION > '2.0'
       exception = build_exception
       expected_options = {
         :message => exception.message,
-        :extra => { :sidekiq => context },
-        :culprit => "Sidekiq/HardWorker"
+        :extra => { :sidekiq => context }
       }
 
       expect(Raven).to receive(:capture_exception).with(exception, expected_options)
@@ -43,8 +42,7 @@ if RUBY_VERSION > '2.0'
       expected_context["_globalid"] = "oh noes"
       expected_options = {
         :message => exception.message,
-        :extra => { :sidekiq => expected_context },
-        :culprit => "Sidekiq/HardWorker"
+        :extra => { :sidekiq => expected_context }
       }
 
       expect(Raven).to receive(:capture_exception).with(exception, expected_options)
@@ -90,6 +88,14 @@ if RUBY_VERSION > '2.0'
     end
   end
 
+  class ReportingWorker
+    include Sidekiq::Worker
+
+    def perform
+      Raven.capture_message("I have something to say!")
+    end
+  end
+
   describe "Sidekiq full-stack integration" do
     before(:all) do
       Sidekiq.error_handlers << Raven::SidekiqErrorHandler.new
@@ -126,6 +132,7 @@ if RUBY_VERSION > '2.0'
       event = JSON.parse(Raven.client.transport.events.last[1])
 
       expect(event["tags"]).to eq("mood" => "sad")
+      expect(event["transaction"]).to eq("Sidekiq/SadWorker")
       expect(event["breadcrumbs"]["values"][0]["message"]).to eq("I'm sad!")
     end
 
@@ -137,6 +144,25 @@ if RUBY_VERSION > '2.0'
 
       expect(event["tags"]).to eq("mood" => "very sad")
       expect(event["breadcrumbs"]["values"][0]["message"]).to eq("I'm very sad!")
+    end
+
+    it "captures exceptions raised during events" do
+      Sidekiq.options[:lifecycle_events][:startup] = [proc { raise "Uhoh!" }]
+      @processor.fire_event(:startup)
+
+      event = JSON.parse(Raven.client.transport.events.last[1])
+
+      expect(event["message"]).to eq "Uhoh!"
+      expect(event["transaction"]).to eq "Sidekiq/startup"
+    end
+
+    it "has some context when capturing, even if no exception raised" do
+      process_job("ReportingWorker")
+
+      event = JSON.parse(Raven.client.transport.events.last[1])
+
+      expect(event["message"]).to eq "I have something to say!"
+      expect(event["extra"]["sidekiq"]).to eq("class" => "ReportingWorker", "queue" => "default")
     end
   end
 end

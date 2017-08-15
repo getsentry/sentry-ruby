@@ -45,6 +45,7 @@ module Raven
       # callers
       env['raven.requested_at'] = Time.now
       Raven.rack_context(env)
+      Raven.context.transaction.push(env["PATH_INFO"]) if env["PATH_INFO"]
 
       begin
         response = @app.call(env)

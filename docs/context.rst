@@ -25,6 +25,7 @@ The following attributes are available:
 * ``tags``: a mapping of tags describing this event
 * ``extra``: a mapping of arbitrary context
 * ``user``: a mapping of user context
+* ``transaction``: An array of strings. The final element in the array represents the current transaction, e.g. "HelloController#hello_world" for a Rails controller.
 
 Providing Request Context
 -------------------------
@@ -116,3 +117,25 @@ for you, otherwise you'll need to ensure you perform it manually:
 
 Note: the rack and user context will perform a set operation, whereas tags
 and extra context will merge with any existing request context.
+
+Transactions
+~~~~~~~~~~~~
+
+The "transaction" is intended to represent the action the event occurred during.
+In Rack, this will be the request URL. In Rails, it's the controller name and
+action ("HelloController#hello_world").
+
+Transactions are modeled as a stack. The top item in the stack (i.e. the last
+element of the array) will be used as the ``transaction`` for any events:
+
+.. sourcecode:: ruby
+
+    Raven.context.transactions.push "User Import"
+    # import some users
+    Raven.context.transactions.pop
+
+Transactions may also be overridden/set explicitly during event creation:
+
+.. sourcecode:: ruby
+
+    Raven.capture_exception(exception, transaction: "User Import")

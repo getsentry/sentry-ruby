@@ -637,10 +637,6 @@ describe Raven::Event do
         end
       end
 
-      it "sets the culprit" do
-        expect(hash[:culprit]).to eq("/path/to/some/file in function_name at line 22")
-      end
-
       context 'when a path in the stack trace is on the load path' do
         before do
           $LOAD_PATH << '/some'
