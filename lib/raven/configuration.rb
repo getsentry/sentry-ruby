@@ -135,6 +135,9 @@ module Raven
     # Silences ready message when true.
     attr_accessor :silence_ready
 
+    # Silences send event failures when true.
+    attr_accessor :silence_send_event_failure
+
     # SSL settings passed directly to Faraday's ssl option
     attr_accessor :ssl
 
