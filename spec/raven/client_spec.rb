@@ -1,7 +1,7 @@
 require 'spec_helper'
 
 describe Raven::Client do
-  let(:callback) { double(call: nil) }
+  let(:callback) { double('call' => nil) }
   let(:configuration) do
     config                            = Raven::Configuration.new
     config.dsn                        = "dummy://12345:67890@sentry.localdomain:3000/sentry/42"
@@ -17,8 +17,8 @@ describe Raven::Client do
     end
 
     it 'should call transport_failure_callback if it is configured' do
-      expect(callback).to receive(:call).with({message: 'dummy event'})
-      client.send :failed_send, nil, {message: 'dummy event'}
+      expect(callback).to receive(:call).with('message' => 'dummy event')
+      client.send :failed_send, nil, 'message' => 'dummy event'
     end
 
     context 'when send event failures are silenced' do

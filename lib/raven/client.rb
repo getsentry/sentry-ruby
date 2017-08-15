@@ -39,7 +39,7 @@ module Raven
 
       begin
         transport.send_event(generate_auth_header, encoded_data,
-          :content_type => content_type)
+                             :content_type => content_type)
         successful_send
       rescue => e
         failed_send(e, event)
