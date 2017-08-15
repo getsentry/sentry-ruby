@@ -1,10 +1,6 @@
 # frozen_string_literal: true
-require 'rubygems'
 require 'socket'
 require 'securerandom'
-require 'digest/md5'
-
-require 'raven/error'
 
 module Raven
   class Event

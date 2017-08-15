@@ -1,5 +1,3 @@
-require 'raven/interface'
-
 module Raven
   class ExceptionInterface < Interface
     attr_accessor :values
