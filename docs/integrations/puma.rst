@@ -23,7 +23,7 @@ Puma provides a config option for handling low level errors.
         ex,
         :message => ex.message,
         :extra => { :puma => env },
-        :culprit => "Puma"
+        :transaction => "Puma"
       )
       # note the below is just a Rack response
       [500, {}, ["An error has occurred, and engineers have been informed. Please reload the page. If you continue to have problems, contact support@example.com\n"]]
