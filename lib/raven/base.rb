@@ -19,6 +19,8 @@ require 'raven/interfaces/exception'
 require 'raven/interfaces/single_exception'
 require 'raven/interfaces/stack_trace'
 require 'raven/interfaces/http'
+require 'raven/transports'
+require 'raven/transports/http'
 require 'raven/utils/deep_merge'
 require 'raven/utils/real_ip'
 require 'raven/instance'
@@ -28,6 +30,9 @@ require 'English'
 
 module Raven
   AVAILABLE_INTEGRATIONS = %w(delayed_job railties sidekiq rack rack-timeout rake).freeze
+
+  class Error < StandardError
+  end
 
   class << self
     extend Forwardable

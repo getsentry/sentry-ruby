@@ -1,5 +1,3 @@
-require 'raven/interface'
-
 module Raven
   class SingleExceptionInterface < Interface
     attr_accessor :type

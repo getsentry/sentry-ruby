@@ -1,79 +1,60 @@
 # frozen_string_literal: true
-require 'rubygems'
 require 'socket'
 require 'securerandom'
-require 'digest/md5'
-
-require 'raven/error'
 
 module Raven
   class Event
-    LOG_LEVELS = {
-      "debug" => 10,
-      "info" => 20,
-      "warn" => 30,
-      "warning" => 30,
-      "error" => 40,
-      "fatal" => 50
-    }.freeze
-
     # See Sentry server default limits at
     # https://github.com/getsentry/sentry/blob/master/src/sentry/conf/server.py
     MAX_MESSAGE_SIZE_IN_BYTES = 1024 * 8
 
-    PLATFORM = "ruby".freeze
     SDK = { "name" => "raven-ruby", "version" => Raven::VERSION }.freeze
 
     attr_accessor :id, :timestamp, :time_spent, :level, :logger,
                   :transaction, :server_name, :release, :modules, :extra, :tags,
                   :context, :configuration, :checksum, :fingerprint, :environment,
-                  :server_os, :runtime, :breadcrumbs, :user, :backtrace
+                  :server_os, :runtime, :breadcrumbs, :user, :backtrace, :platform,
+                  :sdk
+    alias event_id id
 
     def initialize(init = {})
-      @configuration = init[:configuration] || Raven.configuration
-      @interfaces    = {}
-      @breadcrumbs   = init[:breadcrumbs] || Raven.breadcrumbs
-      @context       = init[:context] || Raven.context
-      @id            = SecureRandom.uuid.delete("-")
-      @timestamp     = Time.now.utc
-      @time_spent    = nil
-      @level         = :error
-      @logger        = PLATFORM
-      @transaction   = @context.transaction.last
-      @server_name   = @configuration.server_name
-      @release       = @configuration.release
-      @modules       = list_gem_specs if @configuration.send_modules
-      @user          = {} # TODO: contexts
-      @extra         = {} # TODO: contexts
-      @server_os     = {} # TODO: contexts
-      @runtime       = {} # TODO: contexts
-      @tags          = {} # TODO: contexts
-      @checksum      = nil
-      @fingerprint   = nil
-      @environment   = @configuration.current_environment
+      self.configuration = Raven.configuration
+      self.breadcrumbs   = Raven.breadcrumbs
+      self.context       = Raven.context
+      self.id            = SecureRandom.uuid.delete("-")
+      self.timestamp     = Time.now.utc
+      self.level         = :error
+      self.logger        = :ruby
+      self.platform      = :ruby
+      self.sdk           = SDK
+      @interfaces        = {}
+      self.user          = {} # TODO: contexts
+      self.extra         = {} # TODO: contexts
+      self.server_os     = {} # TODO: contexts
+      self.runtime       = {} # TODO: contexts
+      self.tags          = {} # TODO: contexts
 
       yield self if block_given?
 
-      if !self[:http] && @context.rack_env
+      init.each_pair { |key, val| public_send("#{key}=", val) }
+
+      self.transaction ||= context.transaction.last
+      self.server_name ||= configuration.server_name
+      self.release     ||= configuration.release
+      self.modules       = list_gem_specs if configuration.send_modules
+      self.environment ||= configuration.current_environment
+
+      if !self[:http] && context.rack_env
         interface :http do |int|
-          int.from_rack(@context.rack_env)
+          int.from_rack(context.rack_env)
         end
+
+        context.user[:ip_address] = calculate_real_ip_from_rack
       end
 
-      if @context.rack_env # TODO: contexts
-        @context.user[:ip_address] = calculate_real_ip_from_rack
-      end
-
-      init.each_pair { |key, val| public_send(key.to_s + "=", val) }
-
-      @user = @context.user.merge(@user) # TODO: contexts
-      @extra = @context.extra.merge(@extra) # TODO: contexts
-      @tags = @configuration.tags.merge(@context.tags).merge(@tags) # TODO: contexts
-
-      # Some type coercion
-      @timestamp  = @timestamp.strftime('%Y-%m-%dT%H:%M:%S') if @timestamp.is_a?(Time)
-      @time_spent = (@time_spent * 1000).to_i if @time_spent.is_a?(Float)
-      @level      = LOG_LEVELS[@level.to_s.downcase] if @level.is_a?(String) || @level.is_a?(Symbol)
+      self.user = context.user.merge(user) # TODO: contexts
+      self.extra = context.extra.merge(extra) # TODO: contexts
+      self.tags = configuration.tags.merge(context.tags).merge(tags) # TODO: contexts
     end
 
     def self.from_exception(exc, options = {}, &block)
@@ -90,9 +71,7 @@ module Raven
       return unless configuration.exception_class_allowed?(exc)
 
       new(options) do |evt|
-        evt.configuration = configuration
         evt.message = "#{exc.class}: #{exc.message}"
-        evt.level = options[:level] || :error
 
         evt.add_exception_interface(exc)
 
@@ -102,8 +81,6 @@ module Raven
 
     def self.from_message(message, options = {})
       new(options) do |evt|
-        evt.configuration = options[:configuration] || Raven.configuration
-        evt.level = options[:level] || :error
         evt.message = message, options[:message_params] || []
         if options[:backtrace]
           evt.interface(:stacktrace) do |int|
@@ -125,6 +102,18 @@ module Raven
       end
     end
 
+    def timestamp=(time)
+      @timestamp = time.is_a?(Time) ? time.strftime('%Y-%m-%dT%H:%M:%S') : time
+    end
+
+    def time_spent=(time)
+      @time_spent = time.is_a?(Float) ? (time * 1000).to_i : time
+    end
+
+    def level=(new_level) # needed to meet the Sentry spec
+      @level = new_level == "warn" || new_level == :warn ? :warning : new_level
+    end
+
     def interface(name, value = nil, &block)
       int = Interface.registered[name]
       raise(Error, "Unknown interface: #{name}") unless int
@@ -141,32 +130,17 @@ module Raven
     end
 
     def to_hash
-      data = {
-        :event_id => @id,
-        :timestamp => @timestamp,
-        :time_spent => @time_spent,
-        :level => @level,
-        :platform => PLATFORM,
-        :sdk => SDK
-      }
+      data = %i(platform sdk event_id logger transaction server_name timestamp
+                time_spent level release environment fingerprint modules extra
+                tags user checksum message).each_with_object({}) do |att, memo|
+        memo[att] = public_send(att) if public_send(att)
+      end
 
-      data[:logger] = @logger if @logger
-      data[:transaction] = @transaction if @transaction
-      data[:server_name] = @server_name if @server_name
-      data[:release] = @release if @release
-      data[:environment] = @environment if @environment
-      data[:fingerprint] = @fingerprint if @fingerprint
-      data[:modules] = @modules if @modules
-      data[:extra] = @extra if @extra
-      data[:tags] = @tags if @tags
-      data[:user] = @user if @user
       data[:breadcrumbs] = @breadcrumbs.to_hash unless @breadcrumbs.empty?
-      data[:checksum] = @checksum if @checksum
 
       @interfaces.each_pair do |name, int_data|
         data[name.to_sym] = int_data.to_hash
       end
-      data[:message] = message
       data
     end
 

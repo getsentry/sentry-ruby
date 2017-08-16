@@ -1,5 +1,3 @@
-require 'raven/error'
-
 module Raven
   module Transports
     class Transport
