@@ -27,37 +27,53 @@ describe Raven::Event, :rails => true do
 
       let(:hash) { instance.capture_exception(exception).to_hash }
 
-      it 'marks in_app correctly' do
-        frames = hash[:exception][:values][0][:stacktrace][:frames]
-        expect(frames[0][:filename]).to eq("test/some/other/path")
-        expect(frames[0][:in_app]).to eq(true)
-        expect(frames[1][:filename]).to eq("/app/some/other/path")
-        expect(frames[1][:in_app]).to eq(false)
-        expect(frames[2][:filename]).to eq("/gem/lib/path")
-        expect(frames[2][:in_app]).to eq(false)
-        expect(frames[3][:filename]).to eq("app/models/user.rb")
-        expect(frames[3][:in_app]).to eq(true)
-        expect(frames[4][:filename]).to eq("vendor/bundle/some_gem.rb")
-        expect(frames[4][:in_app]).to eq(false)
-        expect(frames[5][:filename]).to eq("vendor/bundle/cache/other_gem.rb")
-        expect(frames[5][:in_app]).to eq(false)
+      context "normal" do
+        it 'marks in_app correctly' do
+          frames = hash[:exception][:values][0][:stacktrace][:frames]
+          expect(frames[0][:filename]).to eq("test/some/other/path")
+          expect(frames[0][:in_app]).to eq(true)
+          expect(frames[1][:filename]).to eq("/app/some/other/path")
+          expect(frames[1][:in_app]).to eq(false)
+          expect(frames[2][:filename]).to eq("/gem/lib/path")
+          expect(frames[2][:in_app]).to eq(false)
+          expect(frames[3][:filename]).to eq("app/models/user.rb")
+          expect(frames[3][:in_app]).to eq(true)
+          expect(frames[4][:filename]).to eq("vendor/bundle/some_gem.rb")
+          expect(frames[4][:in_app]).to eq(false)
+          expect(frames[5][:filename]).to eq("vendor/bundle/cache/other_gem.rb")
+          expect(frames[5][:in_app]).to eq(false)
+        end
       end
 
       context 'when an in_app path under project_root is on the load path' do
+        around(:each) do |example|
+          begin
+            $LOAD_PATH << "#{Rails.root}/app/models"
+            example.run
+          ensure
+            $LOAD_PATH.delete "#{Rails.root}/vendor/bundle"
+          end
+        end
+
         it 'normalizes the filename using project_root' do
-          $LOAD_PATH << "#{Rails.root}/app/models"
           frames = hash[:exception][:values][0][:stacktrace][:frames]
           expect(frames[3][:filename]).to eq("app/models/user.rb")
-          $LOAD_PATH.delete("#{Rails.root}/app/models")
         end
       end
 
       context 'when a non-in_app path under project_root is on the load path' do
+        around(:each) do |example|
+          begin
+            $LOAD_PATH << "#{Rails.root}/vendor/bundle"
+            example.run
+          ensure
+            $LOAD_PATH.delete "#{Rails.root}/vendor/bundle"
+          end
+        end
+
         it 'normalizes the filename using the load path' do
-          $LOAD_PATH.push "#{Rails.root}/vendor/bundle"
           frames = hash[:exception][:values][0][:stacktrace][:frames]
           expect(frames[5][:filename]).to eq("cache/other_gem.rb")
-          $LOAD_PATH.pop
         end
       end
 
