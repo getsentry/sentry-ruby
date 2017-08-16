@@ -1,7 +1,7 @@
 require 'spec_helper'
 require 'timecop'
 
-describe Raven::ClientState do
+RSpec.describe Raven::ClientState do
   let(:state) { Raven::ClientState.new }
 
   it 'should try when online' do

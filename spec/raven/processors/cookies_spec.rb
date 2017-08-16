@@ -2,7 +2,7 @@
 
 require 'spec_helper'
 
-describe Raven::Processor::Cookies do
+RSpec.describe Raven::Processor::Cookies do
   before do
     @client = double("client")
     @processor = Raven::Processor::Cookies.new(@client)

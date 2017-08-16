@@ -2,7 +2,7 @@
 
 require 'spec_helper'
 
-describe Raven::Processor::RemoveCircularReferences do
+RSpec.describe Raven::Processor::RemoveCircularReferences do
   before do
     @client = double("client")
     @processor = Raven::Processor::RemoveCircularReferences.new(@client)

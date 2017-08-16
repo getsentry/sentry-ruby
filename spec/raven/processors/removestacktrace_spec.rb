@@ -1,7 +1,7 @@
 require 'spec_helper'
 require 'raven/processor/removestacktrace'
 
-describe Raven::Processor::RemoveStacktrace do
+RSpec.describe Raven::Processor::RemoveStacktrace do
   before do
     @client = double("client")
     @processor = Raven::Processor::RemoveStacktrace.new(@client)

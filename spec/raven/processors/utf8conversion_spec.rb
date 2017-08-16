@@ -2,7 +2,7 @@
 
 require 'spec_helper'
 
-describe Raven::Processor::UTF8Conversion do
+RSpec.describe Raven::Processor::UTF8Conversion do
   before do
     @client = double("client")
     @processor = Raven::Processor::UTF8Conversion.new(@client)

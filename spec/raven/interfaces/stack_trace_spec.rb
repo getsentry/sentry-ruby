@@ -1,6 +1,6 @@
 require 'spec_helper'
 
-describe Raven::StacktraceInterface::Frame do
+RSpec.describe Raven::StacktraceInterface::Frame do
   it "should convert pathnames to strings" do
     frame = Raven::StacktraceInterface::Frame.new
     $LOAD_PATH.unshift Pathname.pwd # Oh no, a Pathname in the $LOAD_PATH!

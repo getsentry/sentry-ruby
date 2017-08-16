@@ -1,7 +1,7 @@
 require 'spec_helper'
 require 'raven/instance'
 
-describe Raven::Instance do
+RSpec.describe Raven::Instance do
   let(:event) { Raven::Event.new(:id => "event_id") }
   let(:options) { { :key => "value" } }
   let(:context) { nil }

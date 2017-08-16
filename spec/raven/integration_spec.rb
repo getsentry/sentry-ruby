@@ -1,6 +1,6 @@
 require 'spec_helper'
 
-describe "Integration tests" do
+RSpec.describe "Integration tests" do
   before(:each) do
     @io = StringIO.new
     @logger = Logger.new(@io)

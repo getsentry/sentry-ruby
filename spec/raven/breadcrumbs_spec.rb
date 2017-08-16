@@ -1,6 +1,6 @@
 require 'spec_helper'
 
-describe Raven::BreadcrumbBuffer do
+RSpec.describe Raven::BreadcrumbBuffer do
   before(:each) do
     @breadcrumbs = Raven::BreadcrumbBuffer.new(10)
   end

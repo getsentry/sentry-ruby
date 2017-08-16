@@ -4,7 +4,7 @@ class TestInterface < Raven::Interface
   attr_accessor :some_attr
 end
 
-describe Raven::Interface do
+RSpec.describe Raven::Interface do
   it "should register an interface when a new class is defined" do
     expect(Raven::Interface.registered[:test]).to eq(TestInterface)
   end
@@ -25,7 +25,7 @@ describe Raven::Interface do
   end
 end
 
-describe Raven::MessageInterface do
+RSpec.describe Raven::MessageInterface do
   it "supports invalid format string message when params is not defined" do
     interface = Raven::MessageInterface.new(:params => nil, :message => "test '%'")
     expect(interface.unformatted_message).to eq("test '%'")

@@ -1,7 +1,7 @@
 require 'spec_helper'
 require 'raven/integrations/rack'
 
-describe Raven::Rack do
+RSpec.describe Raven::Rack do
   let(:exception) { build_exception }
   let(:env) { Rack::MockRequest.env_for("/test") }
 

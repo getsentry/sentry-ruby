@@ -1,6 +1,6 @@
 require 'spec_helper'
 
-describe "Raven::Rails::ControllerMethods", :rails => true do
+RSpec.describe "Raven::Rails::ControllerMethods", :rails => true do
   include Raven::Rails::ControllerMethods if defined?(Rails)
 
   before(:all) do

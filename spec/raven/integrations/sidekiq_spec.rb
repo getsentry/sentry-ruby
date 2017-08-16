@@ -4,7 +4,7 @@ if RUBY_VERSION > '2.0'
   require 'raven/integrations/sidekiq'
   require 'sidekiq/processor'
 
-  describe "Raven::SidekiqErrorHandler" do
+  RSpec.describe "Raven::SidekiqErrorHandler" do
     let(:context) do
       {
         "args" => [true, true],
@@ -96,7 +96,7 @@ if RUBY_VERSION > '2.0'
     end
   end
 
-  describe "Sidekiq full-stack integration" do
+  RSpec.describe "Sidekiq full-stack integration" do
     before(:all) do
       Sidekiq.error_handlers << Raven::SidekiqErrorHandler.new
       Sidekiq.server_middleware do |chain|

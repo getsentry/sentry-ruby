@@ -1,6 +1,6 @@
 require 'spec_helper'
 # rubocop:disable Style/WordArray
-describe Raven::LineCache do
+RSpec.describe Raven::LineCache do
   describe "#get_file_context" do
     it "returns an array of nils if the path is not valid" do
       expect(subject.get_file_context("/nonexist", 1, 10)).to eq([nil, nil, nil])

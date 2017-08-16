@@ -1,7 +1,7 @@
 require 'spec_helper'
 require 'raven/integrations/rack'
 
-describe Raven::Event do
+RSpec.describe Raven::Event do
   before do
     Raven::Context.clear!
     Raven::BreadcrumbBuffer.clear!

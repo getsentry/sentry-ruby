@@ -1,6 +1,6 @@
 require 'spec_helper'
 
-describe "Raven::Rails::Overrides::DebugExceptionsCatcher", :rails => true do
+RSpec.describe "Raven::Rails::Overrides::DebugExceptionsCatcher", :rails => true do
   before(:all) do
     require 'raven/integrations/rails/overrides/debug_exceptions_catcher'
   end

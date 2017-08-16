@@ -1,6 +1,6 @@
 require "spec_helper"
 
-describe "Rails Integration", :type => :request, :rails => true do
+RSpec.describe "Rails Integration", :type => :request, :rails => true do
   before(:all) do
     TestApp.initialize!
   end

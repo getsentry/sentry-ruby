@@ -1,6 +1,6 @@
 require 'spec_helper'
 
-describe Raven::Logger do
+RSpec.describe Raven::Logger do
   it "should log to a given IO" do
     stringio = StringIO.new
     log = Raven::Logger.new(stringio)

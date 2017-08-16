@@ -1,6 +1,6 @@
 require 'spec_helper'
 
-describe Raven::Configuration do
+RSpec.describe Raven::Configuration do
   before do
     # Make sure we reset the env in case something leaks in
     ENV.delete('SENTRY_DSN')

@@ -1,6 +1,6 @@
 require 'spec_helper'
 
-describe Raven::Utils::RealIp do
+RSpec.describe Raven::Utils::RealIp do
   context "when no ip addresses are provided other than REMOTE_ADDR" do
     subject { Raven::Utils::RealIp.new(:remote_addr => "1.1.1.1") }
 

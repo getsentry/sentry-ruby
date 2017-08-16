@@ -1,6 +1,6 @@
 require 'spec_helper'
 
-describe Raven do
+RSpec.describe Raven do
   let(:event) { Raven::Event.new(:id => "event_id") }
   let(:options) { double("options") }
 

@@ -3,7 +3,7 @@
 
 require 'spec_helper'
 
-describe JSON do
+RSpec.describe JSON do
   data = [
     OpenStruct.new(:key => 'foo', :val => 'bar', :enc_key => '"foo"', :enc_val => '"bar"'),
     OpenStruct.new(:key => :foo, :val => :bar, :enc_key => '"foo"', :enc_val => '"bar"'),

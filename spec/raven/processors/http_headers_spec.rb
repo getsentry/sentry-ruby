@@ -1,6 +1,6 @@
 require 'spec_helper'
 
-describe Raven::Processor::HTTPHeaders do
+RSpec.describe Raven::Processor::HTTPHeaders do
   before do
     @client = double("client")
     allow(@client).to receive_message_chain(:configuration, :sanitize_http_headers) { ['User-Defined-Header'] }

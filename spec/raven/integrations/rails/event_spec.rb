@@ -1,6 +1,6 @@
 require 'spec_helper'
 
-describe Raven::Event, :rails => true do
+RSpec.describe Raven::Event, :rails => true do
   context 'in a rails environment' do
     let(:configuration) do
       config = Raven::Configuration.new

@@ -21,7 +21,7 @@ if defined? ActiveJob
   end
 end
 
-describe "ActiveJob integration", :rails => true do
+RSpec.describe "ActiveJob integration", :rails => true do
   before(:all) do
     require "rspec/rails"
     require "raven/integrations/rails"

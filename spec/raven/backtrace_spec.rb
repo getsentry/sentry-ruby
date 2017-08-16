@@ -1,6 +1,6 @@
 require 'spec_helper'
 
-describe Raven::Backtrace do
+RSpec.describe Raven::Backtrace do
   before(:each) do
     @backtrace = Raven::Backtrace.parse(Thread.current.backtrace)
   end

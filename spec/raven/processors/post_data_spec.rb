@@ -2,7 +2,7 @@
 
 require 'spec_helper'
 
-describe Raven::Processor::PostData do
+RSpec.describe Raven::Processor::PostData do
   before do
     @client = double("client")
     @processor = Raven::Processor::PostData.new(@client)
