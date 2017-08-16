@@ -130,9 +130,9 @@ module Raven
     end
 
     def to_hash
-      data = %i(platform sdk event_id logger transaction server_name timestamp
-                time_spent level release environment fingerprint modules extra
-                tags user checksum message).each_with_object({}) do |att, memo|
+      data = [:checksum, :environment, :event_id, :extra, :fingerprint, :level,
+              :logger, :message, :modules, :platform, :release, :sdk, :server_name,
+              :tags, :time_spent, :timestamp, :transaction, :user].each_with_object({}) do |att, memo|
         memo[att] = public_send(att) if public_send(att)
       end
 
