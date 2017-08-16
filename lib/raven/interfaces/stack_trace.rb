@@ -20,15 +20,8 @@ module Raven
 
     # Not actually an interface, but I want to use the same style
     class Frame < Interface
-      attr_accessor :abs_path
-      attr_accessor :function
-      attr_accessor :vars
-      attr_accessor :pre_context
-      attr_accessor :post_context
-      attr_accessor :context_line
-      attr_accessor :module
-      attr_accessor :lineno
-      attr_accessor :in_app
+      attr_accessor :abs_path, :context_line, :function, :in_app,
+                    :lineno, :module, :pre_context, :post_context, :vars
 
       def initialize(*arguments)
         super(*arguments)
@@ -36,7 +29,7 @@ module Raven
 
       def filename
         return if abs_path.nil?
-        return @filename if @filename
+        return @filename if instance_variable_defined?(:@filename)
 
         prefix =
           if under_project_root? && in_app

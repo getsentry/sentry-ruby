@@ -20,8 +20,7 @@ end
 RSpec.configure do |config|
   config.mock_with(:rspec) { |mocks| mocks.verify_partial_doubles = true }
   config.raise_errors_for_deprecations!
-  # config.disable_monkey_patching!
-  # config.warnings = true
+  #config.disable_monkey_patching!
   Kernel.srand config.seed
 end
 
