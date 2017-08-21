@@ -54,4 +54,12 @@ RSpec.describe "Integration tests" do
     @instance.capture_exception(build_exception)
     expect(@io.string).to match(/OK!$/)
   end
+
+  it "before sending calls the before send hook" do
+    @instance.configuration.before_send_event = proc { |_e| @io.puts "OK!" }
+
+    @instance.capture_exception(build_exception)
+
+    expect(@io.string).to match(/OK!$/)
+  end
 end
