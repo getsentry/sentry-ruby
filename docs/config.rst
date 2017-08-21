@@ -238,6 +238,16 @@ Optional settings
           AdminMailer.email_admins("Oh god, it's on fire!").deliver_later
         }
 
+.. describe:: after_send_event
+
+    After the event is sent to Sentry successfully, this Proc or lambda will be called.
+
+    .. code-block:: ruby
+
+        config.after_send_event = lambda { |event|
+          Redis.current.incr('errors_reported')
+        }
+
 Environment Variables
 ---------------------
 

@@ -54,4 +54,14 @@ RSpec.describe "Integration tests" do
     @instance.capture_exception(build_exception)
     expect(@io.string).to match(/OK!$/)
   end
+
+  it "successfull sending should call after_send_event" do
+    @stubs.post('/prefix/sentry/api/42/store/') { [200, {}, 'ok'] }
+    @instance.configuration.server = 'http://12345:67890@sentry.localdomain/prefix/sentry/42'
+    @instance.configuration.after_send_event = proc { |_e| @io.puts "OK!" }
+
+    @instance.capture_exception(build_exception)
+
+    expect(@io.string).to match(/OK!$/)
+  end
 end

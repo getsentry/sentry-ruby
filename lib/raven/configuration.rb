@@ -154,6 +154,10 @@ module Raven
     # E.g. lambda { |event| Thread.new { MyJobProcessor.send_email(event) } }
     attr_reader :transport_failure_callback
 
+    # Optional Proc, called when after an event is successfully sent to Sentry
+    # E.g. lambda { |event| Redis.current.incr('errors_reported') }
+    attr_reader :after_send_event
+
     # Errors object - an Array that contains error messages. See #
     attr_reader :errors
 
@@ -213,6 +217,7 @@ module Raven
       self.tags = {}
       self.timeout = 2
       self.transport_failure_callback = false
+      self.after_send_event = false
     end
 
     def server=(value)
@@ -255,6 +260,13 @@ module Raven
         raise(ArgumentError, "transport_failure_callback must be callable (or false to disable)")
       end
       @transport_failure_callback = value
+    end
+
+    def after_send_event=(value)
+      unless value == false || value.respond_to?(:call)
+        raise(ArgumentError, "after_send_event must be callable (or false to disable)")
+      end
+      @after_send_event = value
     end
 
     def should_capture=(value)

@@ -7,7 +7,7 @@ AllCops:
      - 'vendor/**/*'
 
 Metrics/ClassLength:
-  Max: 262
+  Max: 270
   CountComments: false
 
 Metrics/AbcSize:
