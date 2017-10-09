@@ -23,6 +23,7 @@ module Raven
         # so instead we check if it only contains actual ASCII codepoints, and if
         # not we assume it's actually just UTF8 and scrub accordingly.
         if value.encoding == Encoding::BINARY && !value.ascii_only?
+          value = value.dup
           value.force_encoding(Encoding::UTF_8)
         end
         return value if value.valid_encoding?

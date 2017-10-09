@@ -70,4 +70,12 @@ RSpec.describe Raven::Processor::UTF8Conversion do
     # if encoding errors are raised
     expect(JSON.generate(results)).to eq("[\"✉ Hello\"]")
   end
+
+  it "deals with unicode hidden in ASCII_8BIT when the string is frozen" do
+    data = ["\xE2\x9C\x89 Hello".force_encoding(Encoding::ASCII_8BIT).freeze]
+
+    results = @processor.process(data)
+    
+    expect(JSON.generate(results)).to eq("[\"✉ Hello\"]")
+  end
 end
