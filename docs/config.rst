@@ -23,7 +23,12 @@ Optional settings
           Thread.new { Raven.send_event(event) }
         }
 
-    Using a thread to send events will be adequate for truly parallel Ruby platforms such as JRuby, though the benefit on MRI/CRuby will be limited. Threads also won't report any exceptions raised inside of them, so be careful!
+    Using a thread to send events will be adequate for truly parallel Ruby platforms such as JRuby, though the benefit on MRI/CRuby will be limited.
+
+    The example above is extremely basic. For example, exceptions in Rake tasks
+    will not be reported because the Rake task will probably exit before the thread
+    can completely send the event to Sentry. Threads also won't report any
+    exceptions raised inside of them, so be careful!
 
     If the async callback raises an exception, Raven will attempt to send synchronously.
 
