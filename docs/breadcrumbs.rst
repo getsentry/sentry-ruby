@@ -1,3 +1,5 @@
+.. versionadded:: 1.2
+
 Breadcrumbs
 ===========
 
@@ -38,3 +40,12 @@ Appropriate places to inject Breadcrumbs may be places like your HTTP library:
         end
       end
     end
+
+.. versionadded:: 2.6
+
+The breadcrumb buffer is publicly accessible if you wish to manipulate it beyond
+what is possible with the ``record`` method.
+
+.. sourcecode:: ruby
+
+  Raven.breadcrumbs.buffer # Array of breadcrumbs
