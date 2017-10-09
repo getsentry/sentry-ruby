@@ -1,4 +1,3 @@
-# rubocop:disable all
 module Raven
   module Utils
     # ported from ActiveSupport
@@ -8,23 +7,16 @@ module Raven
       end
 
       def self.deep_merge!(hash, other_hash, &block)
-        other_hash.each_pair do |current_key, other_value|
-          this_value = hash[current_key]
-
-          hash[current_key] = if this_value.is_a?(Hash) && other_value.is_a?(Hash)
-            deep_merge(this_value, other_value, &block)
+        hash.merge!(other_hash) do |key, this_val, other_val|
+          if this_val.is_a?(Hash) && other_val.is_a?(Hash)
+            deep_merge(this_val, other_val, &block)
+          elsif block_given?
+            block.call(key, this_val, other_val)
           else
-            if block_given? && key?(current_key)
-              block.call(current_key, this_value, other_value)
-            else
-              other_value
-            end
+            other_val
           end
         end
-
-        hash
       end
     end
   end
 end
-# rubocop:enable all
