@@ -75,7 +75,7 @@ RSpec.describe Raven::Processor::UTF8Conversion do
     data = ["\xE2\x9C\x89 Hello".force_encoding(Encoding::ASCII_8BIT).freeze]
 
     results = @processor.process(data)
-    
+
     expect(JSON.generate(results)).to eq("[\"✉ Hello\"]")
   end
 end
