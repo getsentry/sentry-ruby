@@ -104,6 +104,7 @@ the library and the client integrations.
 
    breadcrumbs
    context
+   processors
    integrations/index
 
 Resources:
