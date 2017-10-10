@@ -135,14 +135,11 @@ RSpec.describe Raven::Processor::SanitizeData do
   it 'should filter credit card values' do
     data = {
       'ccnumba' => '4242424242424242',
-      'ccnumba_13' => '4242424242424',
-      'ccnumba-dash' => '4242-4242-4242-4242',
       'ccnumba_int' => 4242424242424242
     }
 
     result = @processor.process(data)
     expect(result["ccnumba"]).to eq(Raven::Processor::SanitizeData::STRING_MASK)
-    expect(result["ccnumba_13"]).to eq(Raven::Processor::SanitizeData::STRING_MASK)
     expect(result["ccnumba_int"]).to eq(Raven::Processor::SanitizeData::INT_MASK)
   end
 
@@ -150,14 +147,11 @@ RSpec.describe Raven::Processor::SanitizeData do
     @processor.sanitize_credit_cards = false
     data = {
       'ccnumba' => '4242424242424242',
-      'ccnumba_13' => '4242424242424',
-      'ccnumba-dash' => '4242-4242-4242-4242',
       'ccnumba_int' => 4242424242424242
     }
 
     result = @processor.process(data)
     expect(result["ccnumba"]).to eq('4242424242424242')
-    expect(result["ccnumba_13"]).to eq('4242424242424')
     expect(result["ccnumba_int"]).to eq(4242424242424242)
   end
 
@@ -235,6 +229,14 @@ RSpec.describe Raven::Processor::SanitizeData do
 
       vars = result["sentry.interfaces.Http"]["data"]
       expect(vars["query_string"]).to eq(encoded_query_string)
+    end
+
+    # Sometimes this sort of thing can show up in request headers, e.g.
+    # X-REQUEST-START on Heroku
+    it 'does not censor milliseconds since the epoch' do
+      result = @processor.process(:millis_since_epoch => 1507671610403.to_s)
+
+      expect(result).to eq(:millis_since_epoch => 1507671610403.to_s)
     end
   end
 end
