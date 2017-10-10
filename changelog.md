@@ -1,3 +1,19 @@
+2.7.0
+-----
+
+* FEATURE: Add random sampling. [@nateberkopec, #704]
+* FEATURE: Transactions. See Context docs for usage. [@nateberkopec, #743]
+* FEATURE: You can set the current environment for Sentry via `SENTRY_CURRENT_ENV` env variable. Useful if your staging environment's RACK_ENV is "production", for example. [@tijmenb, #736]
+
+* BUGFIX: Fix wrapped classnames in old versions of Sidekiq and ActiveJob [@nateberkopec, #702]
+* BUGFIX: Server names on Heroku were pretty useless before - now they follow the dyno name ("worker.1", "web.2") [@nateberkopec, #703]
+* BUGFIX: ActiveJob::DeserializationError is now ignored by default. Not doing so can cause infinite loops if you are using an ActiveJob async callback. [@nateberkopec, #701]
+* BUGFIX: Binary conversion to UTF-8 when binary is frozen is fixed [@nateberkopec, #757]
+
+* REFACTOR: We now use an updated port of Rails' deep_merge which should be 5-10% faster [@nateberkopec, #770]
+* REFACTOR: Tests have been cleaned up, and now run in random order. [@nateberkopec]
+* REFACTOR: Raven::Event has been refactored a bit [@nateberkopec]
+
 2.6.3
 -----
 
