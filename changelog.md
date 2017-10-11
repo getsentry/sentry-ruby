@@ -1,7 +1,7 @@
 2.7.0
 -----
 
-* FEATURE: Add random sampling. [@nateberkopec, #704]
+* FEATURE: Add random sampling. [@nateberkopec, #734]
 * FEATURE: Transactions. See Context docs for usage. [@nateberkopec, #743]
 * FEATURE: You can set the current environment for Sentry via `SENTRY_CURRENT_ENV` env variable. Useful if your staging environment's RACK_ENV is "production", for example. [@tijmenb, #736]
 
