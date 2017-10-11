@@ -9,6 +9,7 @@
 * BUGFIX: Server names on Heroku were pretty useless before - now they follow the dyno name ("worker.1", "web.2") [@nateberkopec, #703]
 * BUGFIX: ActiveJob::DeserializationError is now ignored by default. Not doing so can cause infinite loops if you are using an ActiveJob async callback. [@nateberkopec, #701]
 * BUGFIX: Binary conversion to UTF-8 when binary is frozen is fixed [@nateberkopec, #757]
+* BUGFIX: Our credit-card regex now matches Sentry's server behavior, which means it does not censor milliseconds since the epoch [@nateberkopec, #771]
 
 * REFACTOR: We now use an updated port of Rails' deep_merge which should be 5-10% faster [@nateberkopec, #770]
 * REFACTOR: Tests have been cleaned up, and now run in random order. [@nateberkopec]
