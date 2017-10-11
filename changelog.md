@@ -1,3 +1,8 @@
+2.7.1
+-----
+
+* BUGFIX: Fixed LocalJumpError in Rails controllers [@nateberkopec w/@frodsan, #774]
+
 2.7.0
 -----
 
