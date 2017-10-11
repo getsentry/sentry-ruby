@@ -35,6 +35,6 @@ class HelloController < ActionController::Base
   end
 
   def world
-    render :text => "Hello World!"
+    render :plain => "Hello World!"
   end
 end

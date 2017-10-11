@@ -13,6 +13,13 @@ RSpec.describe "Rails Integration", :type => :request, :rails => true do
     expect(TestApp.middleware).to include(Raven::Rack)
   end
 
+  it "doesn't do anything on a normal route" do
+    get "/"
+
+    expect(response.status).to eq(200)
+    expect(Raven.client.transport.events.size).to eq(0)
+  end
+
   it "should capture exceptions in production" do
     get "/exception"
     expect(response.status).to eq(500)
@@ -25,6 +32,7 @@ RSpec.describe "Rails Integration", :type => :request, :rails => true do
     event = Raven.client.transport.events.first
     event = JSON.parse!(event[1])
 
+    expect(event["logentry"]["message"]).to eq("RuntimeError: An unhandled exception!")
     expect(event['request']['url']).to eq("http://www.example.com/exception")
   end
 
