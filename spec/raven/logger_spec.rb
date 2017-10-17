@@ -3,7 +3,7 @@ require 'spec_helper'
 RSpec.describe Raven::Logger do
   it "should log to a given IO" do
     stringio = StringIO.new
-    log = Raven::Logger.new(stringio)
+    log = Raven::Logger.new(::Logger.new(stringio))
 
     log.fatal("Oh noes!")
 
@@ -12,7 +12,7 @@ RSpec.describe Raven::Logger do
 
   it "should allow exceptions to be logged" do
     stringio = StringIO.new
-    log = Raven::Logger.new(stringio)
+    log = Raven::Logger.new(::Logger.new(stringio))
 
     log.fatal(Exception.new("Oh exceptions"))
 

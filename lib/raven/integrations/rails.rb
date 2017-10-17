@@ -35,7 +35,7 @@ module Raven
     end
 
     config.before_initialize do
-      Raven.configuration.logger = ::Rails.logger
+      Raven.configuration.logger = Raven::Logger.new(::Rails.logger)
     end
 
     config.after_initialize do
