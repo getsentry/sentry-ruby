@@ -206,7 +206,7 @@ module Raven
       self.exclude_loggers = []
       self.excluded_exceptions = IGNORE_DEFAULT.dup
       self.linecache = ::Raven::LineCache.new
-      self.logger = ::Raven::Logger.new(STDOUT)
+      self.logger = Raven::Logger.new(::Logger.new(STDOUT))
       self.open_timeout = 1
       self.processors = DEFAULT_PROCESSORS.dup
       self.project_root = detect_project_root

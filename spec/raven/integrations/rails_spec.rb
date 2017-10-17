@@ -42,8 +42,14 @@ RSpec.describe "Rails Integration", :type => :request, :rails => true do
     expect(event['transaction']).to eq("HelloController#exception")
   end
 
+  it "logs with the correct formatting" do
+    expect(Raven.logger).to receive(:info).with(/Sending event [abcdef0-9]+ to Sentry/)
+
+    get "/exception"
+  end
+
   it "sets Raven.configuration.logger correctly" do
-    expect(Raven.configuration.logger).to eq(Rails.logger)
+    expect(Raven.configuration.logger.class).to eq(ActiveSupport::Logger)
   end
 
   it "sets Raven.configuration.project_root correctly" do
