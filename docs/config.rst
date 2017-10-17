@@ -90,11 +90,11 @@ Optional settings
 
 .. describe:: logger
 
-    The logger used by Sentry. Default is an instance of Raven::Logger.
+    The logger used by Sentry.
 
     .. code-block:: ruby
 
-        config.logger = Raven::Logger.new(STDOUT)
+        config.logger = Logger.new(STDOUT)
 
     Raven respects logger levels.
 
