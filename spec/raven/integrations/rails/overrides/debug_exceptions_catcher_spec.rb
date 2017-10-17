@@ -1,6 +1,6 @@
 require 'spec_helper'
 
-RSpec.shared_examples "exception catching middleware" do |parameter|
+RSpec.shared_examples "exception catching middleware" do
   let(:middleware) do
     Class.new do
       def initialize(app)

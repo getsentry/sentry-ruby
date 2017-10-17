@@ -22,26 +22,23 @@ RSpec.describe "Rails Integration", :type => :request, :rails => true do
 
   it "should capture exceptions in production" do
     get "/exception"
+
     expect(response.status).to eq(500)
-    expect(Raven.client.transport.events.size).to eq(1)
+    event = JSON.parse!(Raven.client.transport.events.first[1])
+    expect(event["logentry"]["message"]).to eq("RuntimeError: An unhandled exception!")
   end
 
   it "should properly set the exception's URL" do
     get "/exception"
 
-    event = Raven.client.transport.events.first
-    event = JSON.parse!(event[1])
-
-    expect(event["logentry"]["message"]).to eq("RuntimeError: An unhandled exception!")
+    event = JSON.parse!(Raven.client.transport.events.first[1])
     expect(event['request']['url']).to eq("http://www.example.com/exception")
   end
 
   it "sets transaction to ControllerName#method" do
     get "/exception"
 
-    event = Raven.client.transport.events.first
-    event = JSON.parse!(event[1])
-
+    event = JSON.parse!(Raven.client.transport.events.first[1])
     expect(event['transaction']).to eq("HelloController#exception")
   end
 

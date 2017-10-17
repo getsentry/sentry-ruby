@@ -123,6 +123,9 @@ if RUBY_VERSION > '2.0'
 
     it "actually captures an exception" do
       expect { process_job("SadWorker") }.to change { Raven.client.transport.events.size }.by(1)
+
+      event = JSON.parse(Raven.client.transport.events.last[1])
+      expect(event["logentry"]["message"]).to eq("I'm sad!")
     end
 
     it "clears context from other workers and captures its own" do
@@ -152,7 +155,7 @@ if RUBY_VERSION > '2.0'
 
       event = JSON.parse(Raven.client.transport.events.last[1])
 
-      expect(event["message"]).to eq "Uhoh!"
+      expect(event["logentry"]["message"]).to eq "Uhoh!"
       expect(event["transaction"]).to eq "Sidekiq/startup"
     end
 
@@ -161,7 +164,7 @@ if RUBY_VERSION > '2.0'
 
       event = JSON.parse(Raven.client.transport.events.last[1])
 
-      expect(event["message"]).to eq "I have something to say!"
+      expect(event["logentry"]["message"]).to eq "I have something to say!"
       expect(event["extra"]["sidekiq"]).to eq("class" => "ReportingWorker", "queue" => "default")
     end
   end

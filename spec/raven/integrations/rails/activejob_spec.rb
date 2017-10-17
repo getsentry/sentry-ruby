@@ -32,12 +32,10 @@ RSpec.describe "ActiveJob integration", :rails => true do
     Raven.client.transport.events = []
   end
 
-  it "captures exceptions" do
-    job = MyActiveJob.new
-
-    expect { job.perform_now }.to raise_error(MyActiveJob::TestError)
-
-    expect(Raven.client.transport.events.size).to eq(1)
+  it_should_behave_like "Raven default capture behavior" do
+    let(:block) { MyActiveJob.new.perform_now }
+    let(:captured_class) { MyActiveJob::TestError }
+    let(:captured_message) { "Boom!" }
   end
 
   it "clears context" do

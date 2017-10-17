@@ -24,6 +24,17 @@ RSpec.configure do |config|
   Kernel.srand config.seed
 end
 
+RSpec.shared_examples "Raven default capture behavior" do
+  it "captures exceptions" do
+    expect { block }.to raise_error(captured_class)
+
+    expect(Raven.client.transport.events.size).to eq(1)
+
+    event = JSON.parse!(Raven.client.transport.events.first[1])
+    expect(event["logentry"]["message"]).to eq("#{captured_class.name}: #{captured_message}")
+  end
+end
+
 def build_exception
   1 / 0
 rescue ZeroDivisionError => exception

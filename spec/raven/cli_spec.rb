@@ -3,6 +3,8 @@ require 'raven/cli'
 
 RSpec.describe "CLI tests" do
   it "posting an exception" do
-    expect(Raven::CLI.test(Raven.configuration.server, true, Raven.configuration)).to be_a(Raven::Event)
+    event = Raven::CLI.test(Raven.configuration.server, true, Raven.configuration)
+    expect(event).to be_a(Raven::Event)
+    expect(event.message).to eq("ZeroDivisionError: divided by 0")
   end
 end

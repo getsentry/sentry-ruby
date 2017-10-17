@@ -4,6 +4,9 @@ sudo: false
 group: beta
 cache: bundler
 
+services:
+  - redis-server
+
 branches:
   only: [master]
 
