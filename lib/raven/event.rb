@@ -10,12 +10,13 @@ module Raven
 
     SDK = { "name" => "raven-ruby", "version" => Raven::VERSION }.freeze
 
-    attr_accessor :id, :timestamp, :time_spent, :level, :logger,
-                  :transaction, :server_name, :release, :modules, :extra, :tags,
-                  :context, :configuration, :checksum, :fingerprint, :environment,
-                  :server_os, :runtime, :breadcrumbs, :user, :backtrace, :platform,
-                  :sdk
+    attr_accessor :id, :logger, :transaction, :server_name, :release, :modules,
+                  :extra, :tags, :context, :configuration, :checksum,
+                  :fingerprint, :environment, :server_os, :runtime,
+                  :breadcrumbs, :user, :backtrace, :platform, :sdk
     alias event_id id
+
+    attr_reader :level, :timestamp, :time_spent
 
     def initialize(init = {})
       # Set some simple default values
@@ -203,18 +204,19 @@ module Raven
       self.transaction ||= context.transaction.last
 
       # If this is a Rack event, merge Rack context
-      if !self[:http] && context.rack_env
-        interface :http do |int|
-          int.from_rack(context.rack_env)
-        end
-
-        context.user[:ip_address] = calculate_real_ip_from_rack
-      end
+      add_rack_context if !self[:http] && context.rack_env
 
       # Merge contexts
       self.user = context.user.merge(user) # TODO: contexts
       self.extra = context.extra.merge(extra) # TODO: contexts
-      self.tags = configuration.tags.merge(context.tags).merge(tags) # TODO: contexts
+      self.tags = configuration.tags.merge(context.tags).merge!(tags) # TODO: contexts
+    end
+
+    def add_rack_context
+      interface :http do |int|
+        int.from_rack(context.rack_env)
+      end
+      context.user[:ip_address] = calculate_real_ip_from_rack
     end
 
     # When behind a proxy (or if the user is using a proxy), we can't use

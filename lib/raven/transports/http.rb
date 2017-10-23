@@ -39,26 +39,27 @@ module Raven
       def set_conn
         configuration.logger.debug "Raven HTTP Transport connecting to #{configuration.server}"
 
-        ssl_configuration = configuration.ssl || {}
-        ssl_configuration[:verify] = configuration.ssl_verification
-        ssl_configuration[:ca_file] = configuration.ssl_ca_file
-
-        conn = Faraday.new(
-          :url => configuration[:server],
-          :ssl => ssl_configuration
-        ) do |builder|
+        Faraday.new(configuration.server, :ssl => ssl_configuration) do |builder|
           configuration.faraday_builder.call(builder) if configuration.faraday_builder
           builder.response :raise_error
+          builder.options.merge! faraday_opts
+          builder.headers[:user_agent] = "sentry-ruby/#{Raven::VERSION}"
           builder.adapter(*adapter)
         end
+      end
 
-        conn.headers[:user_agent] = "sentry-ruby/#{Raven::VERSION}"
+      # TODO: deprecate and replace where possible w/Faraday Builder
+      def faraday_opts
+        [:proxy, :timeout, :open_timeout].each_with_object({}) do |opt, memo|
+          memo[opt] = configuration.public_send(opt) if configuration.public_send(opt)
+        end
+      end
 
-        conn.options[:proxy] = configuration.proxy if configuration.proxy
-        conn.options[:timeout] = configuration.timeout if configuration.timeout
-        conn.options[:open_timeout] = configuration.open_timeout if configuration.open_timeout
-
-        conn
+      def ssl_configuration
+        (configuration.ssl.dup || {}).merge!(
+          :verify => configuration.ssl_verification,
+          :ca_file => configuration.ssl_ca_file
+        )
       end
     end
   end

@@ -130,7 +130,7 @@ module Raven
     # Note that the object passed into the block will be a String (messages) or
     # an exception.
     # e.g. lambda { |exc_or_msg| exc_or_msg.some_attr == false }
-    attr_accessor :should_capture
+    attr_reader :should_capture
 
     # Silences ready message when true.
     attr_accessor :silence_ready
@@ -186,7 +186,7 @@ module Raven
     def initialize
       self.async = false
       self.context_lines = 3
-      self.current_environment = ENV['SENTRY_CURRENT_ENV'] || ENV['RAILS_ENV'] || ENV['RACK_ENV'] || 'default'
+      self.current_environment = current_environment_from_env
       self.encoding = 'gzip'
       self.environments = []
       self.exclude_loggers = []
@@ -196,7 +196,6 @@ module Raven
       self.open_timeout = 1
       self.processors = DEFAULT_PROCESSORS.dup
       self.project_root = detect_project_root
-      self.proxy = nil
       self.rails_activesupport_breadcrumbs = false
       self.rails_report_rescued_exceptions = true
       self.release = detect_release
@@ -206,8 +205,8 @@ module Raven
       self.sanitize_fields_excluded = []
       self.sanitize_http_headers = []
       self.send_modules = true
-      self.server = ENV['SENTRY_DSN'] if ENV['SENTRY_DSN']
-      self.server_name = heroku_dyno_name || resolve_hostname
+      self.server = ENV['SENTRY_DSN']
+      self.server_name = server_name_from_env
       self.should_capture = false
       self.ssl_verification = true
       self.tags = {}
@@ -216,6 +215,7 @@ module Raven
     end
 
     def server=(value)
+      return if value.nil?
       uri = URI.parse(value)
       uri_path = uri.path.split('/')
 
@@ -402,11 +402,6 @@ module Raven
       false
     end
 
-    def heroku_dyno_name
-      return unless running_on_heroku?
-      ENV['DYNO']
-    end
-
     def sample_allowed?
       return true if sample_rate == 1.0
       if Random::DEFAULT.rand >= sample_rate
@@ -422,6 +417,18 @@ module Raven
     def resolve_hostname
       Socket.gethostname ||
         Socket.gethostbyname(hostname).first rescue server_name
+    end
+
+    def current_environment_from_env
+      ENV['SENTRY_CURRENT_ENV'] || ENV['RAILS_ENV'] || ENV['RACK_ENV'] || 'default'
+    end
+
+    def server_name_from_env
+      if running_on_heroku?
+        ENV['DYNO']
+      else
+        resolve_hostname
+      end
     end
   end
 end
