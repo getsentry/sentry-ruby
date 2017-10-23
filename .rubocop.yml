@@ -11,19 +11,19 @@ Metrics/ClassLength:
   CountComments: false
 
 Metrics/AbcSize:
-  Max: 58
+  Max: 40
 
 Metrics/CyclomaticComplexity:
-  Max: 13
+  Max: 12
 
 Metrics/PerceivedComplexity:
-  Max: 13
+  Max: 11
 
 Metrics/LineLength:
   Max: 155
 
 Metrics/MethodLength:
-  Max: 41
+  Max: 30
 
 Style/SignalException:
   Enabled: false

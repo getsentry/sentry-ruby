@@ -18,15 +18,15 @@ module Raven
     alias event_id id
 
     def initialize(init = {})
-      self.configuration = Raven.configuration
-      self.breadcrumbs   = Raven.breadcrumbs
-      self.context       = Raven.context
+      # Set some simple default values
       self.id            = SecureRandom.uuid.delete("-")
       self.timestamp     = Time.now.utc
       self.level         = :error
       self.logger        = :ruby
       self.platform      = :ruby
       self.sdk           = SDK
+
+      # Set some attributes with empty hashes to allow merging
       @interfaces        = {}
       self.user          = {} # TODO: contexts
       self.extra         = {} # TODO: contexts
@@ -34,27 +34,14 @@ module Raven
       self.runtime       = {} # TODO: contexts
       self.tags          = {} # TODO: contexts
 
-      yield self if block_given?
+      copy_initial_state
 
+      # Allow attributes to be set on the event at initialization
+      yield self if block_given?
       init.each_pair { |key, val| public_send("#{key}=", val) }
 
-      self.transaction ||= context.transaction.last
-      self.server_name ||= configuration.server_name
-      self.release     ||= configuration.release
-      self.modules       = list_gem_specs if configuration.send_modules
-      self.environment ||= configuration.current_environment
-
-      if !self[:http] && context.rack_env
-        interface :http do |int|
-          int.from_rack(context.rack_env)
-        end
-
-        context.user[:ip_address] = calculate_real_ip_from_rack
-      end
-
-      self.user = context.user.merge(user) # TODO: contexts
-      self.extra = context.extra.merge(extra) # TODO: contexts
-      self.tags = configuration.tags.merge(context.tags).merge(tags) # TODO: contexts
+      set_core_attributes_from_configuration
+      set_core_attributes_from_context
     end
 
     def self.from_exception(exc, options = {}, &block)
@@ -198,6 +185,37 @@ module Raven
     end
 
     private
+
+    def copy_initial_state
+      self.configuration = Raven.configuration
+      self.breadcrumbs   = Raven.breadcrumbs
+      self.context       = Raven.context
+    end
+
+    def set_core_attributes_from_configuration
+      self.server_name ||= configuration.server_name
+      self.release     ||= configuration.release
+      self.modules       = list_gem_specs if configuration.send_modules
+      self.environment ||= configuration.current_environment
+    end
+
+    def set_core_attributes_from_context
+      self.transaction ||= context.transaction.last
+
+      # If this is a Rack event, merge Rack context
+      if !self[:http] && context.rack_env
+        interface :http do |int|
+          int.from_rack(context.rack_env)
+        end
+
+        context.user[:ip_address] = calculate_real_ip_from_rack
+      end
+
+      # Merge contexts
+      self.user = context.user.merge(user) # TODO: contexts
+      self.extra = context.extra.merge(extra) # TODO: contexts
+      self.tags = configuration.tags.merge(context.tags).merge(tags) # TODO: contexts
+    end
 
     # When behind a proxy (or if the user is using a proxy), we can't use
     # REMOTE_ADDR to determine the Event IP, and must use other headers instead.
