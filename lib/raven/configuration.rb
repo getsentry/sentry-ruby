@@ -296,22 +296,6 @@ module Raven
       Backtrace::Line.instance_variable_set(:@in_app_pattern, nil) # blow away cache
     end
 
-    def detect_release
-      detect_release_from_git ||
-        detect_release_from_capistrano ||
-        detect_release_from_heroku
-    rescue => ex
-      logger.error "Error detecting release: #{ex.message}"
-    end
-
-    def detect_project_root
-      if defined? Rails.root # we are in a Rails application
-        Rails.root.to_s
-      else
-        Dir.pwd
-      end
-    end
-
     def exception_class_allowed?(exc)
       if exc.is_a?(Raven::Error)
         # Try to prevent error reporting loops
@@ -326,6 +310,22 @@ module Raven
     end
 
     private
+
+    def detect_project_root
+      if defined? Rails.root # we are in a Rails application
+        Rails.root.to_s
+      else
+        Dir.pwd
+      end
+    end
+
+    def detect_release
+      detect_release_from_git ||
+        detect_release_from_capistrano ||
+        detect_release_from_heroku
+    rescue => ex
+      logger.error "Error detecting release: #{ex.message}"
+    end
 
     def excluded_exception?(exc)
       excluded_exceptions.any? { |x| get_exception_class(x) === exc }
