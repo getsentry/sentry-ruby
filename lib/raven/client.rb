@@ -36,7 +36,7 @@ module Raven
       begin
         transport.send_event(generate_auth_header, encoded_data,
                              :content_type => content_type)
-        successful_send
+        successful_send(event)
       rescue => e
         failed_send(e, event)
         return
@@ -87,8 +87,9 @@ module Raven
       'Sentry ' + fields.map { |key, value| "#{key}=#{value}" }.join(', ')
     end
 
-    def successful_send
+    def successful_send(event)
       @state.success
+      configuration.after_send_event.call(event) if configuration.after_send_event
     end
 
     def failed_send(e, event)
