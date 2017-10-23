@@ -158,7 +158,7 @@ module Raven
     #   end
     def annotate_exception(exc, options = {})
       notes = (exc.instance_variable_defined?(:@__raven_context) && exc.instance_variable_get(:@__raven_context)) || {}
-      notes.merge!(options)
+      Raven::Utils::DeepMergeHash.deep_merge!(notes, options)
       exc.instance_variable_set(:@__raven_context, notes)
       exc
     end

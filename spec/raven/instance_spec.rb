@@ -175,6 +175,16 @@ RSpec.describe Raven::Instance do
       expect(exception.instance_variable_get(:@__raven_context)).to \
         be_kind_of Hash
     end
+
+    context 'when the exception already has context' do
+      it 'does a deep merge of options' do
+        subject.annotate_exception(exception, :extra => { :language => "ruby" })
+        subject.annotate_exception(exception, :extra => { :job_title => "engineer" })
+        expected_hash = { :extra => { :language => "ruby", :job_title => "engineer" } }
+        expect(exception.instance_variable_get(:@__raven_context)).to \
+          eq expected_hash
+      end
+    end
   end
 
   describe '#report_status' do
