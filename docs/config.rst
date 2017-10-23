@@ -233,6 +233,16 @@ Optional settings
 
         config.tags = { foo: :bar }
 
+.. describe:: before_send_event
+
+    Before an event is sent to Sentry, this Proc or lambda will be called.
+
+    .. code-block:: ruby
+
+        config.before_send_event = lambda { |event|
+          Redis.current.incr('errors_reported')
+        }
+
 .. describe:: transport_failure_callback
 
     If the transport fails to send an event to Sentry for any reason (either the Sentry server has returned a 4XX or 5XX response), this Proc or lambda will be called.

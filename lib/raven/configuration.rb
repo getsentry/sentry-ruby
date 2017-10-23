@@ -150,6 +150,10 @@ module Raven
     # Timeout when waiting for the server to return data in seconds.
     attr_accessor :timeout
 
+    # Optional Proc, called before the error is sent to Sentry
+    # E.g. lambda { |event| $statsd.incr('errors_reported') }
+    attr_reader :before_send_event
+
     # Optional Proc, called when the Sentry server cannot be contacted for any reason
     # E.g. lambda { |event| Thread.new { MyJobProcessor.send_email(event) } }
     attr_reader :transport_failure_callback
@@ -212,6 +216,7 @@ module Raven
       self.ssl_verification = true
       self.tags = {}
       self.timeout = 2
+      self.before_send_event = false
       self.transport_failure_callback = false
     end
 
@@ -248,6 +253,13 @@ module Raven
         raise(ArgumentError, "async must be callable (or false to disable)")
       end
       @async = value
+    end
+
+    def before_send_event=(value)
+      unless value == false || value.respond_to?(:call)
+        raise(ArgumentError, "before_send_event must be callable (or false to disable)")
+      end
+      @before_send_event = value
     end
 
     def transport_failure_callback=(value)

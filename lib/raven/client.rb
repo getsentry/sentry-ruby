@@ -31,6 +31,8 @@ module Raven
 
       configuration.logger.info "Sending event #{event[:event_id]} to Sentry"
 
+      configuration.before_send_event.call(event) if configuration.before_send_event
+
       content_type, encoded_data = encode(event)
 
       begin
