@@ -56,7 +56,7 @@ module Raven
       end
 
       def ssl_configuration
-        (configuration.ssl.dup || {}).merge!(
+        (configuration.ssl || {}).merge(
           :verify => configuration.ssl_verification,
           :ca_file => configuration.ssl_ca_file
         )
