@@ -3,6 +3,7 @@ if RUBY_VERSION > '2.0'
 
   require 'raven/integrations/sidekiq'
   require 'sidekiq/processor'
+  require 'sidekiq/job_retry'
 
   RSpec.describe "Raven::SidekiqErrorHandler" do
     let(:context) do
@@ -66,6 +67,42 @@ if RUBY_VERSION > '2.0'
       expect(Raven).to receive(:capture_exception).with(exception, expected_options)
 
       Raven::SidekiqErrorHandler.new.call(exception, aj_context)
+    end
+
+    context "with a retryable exception" do
+      class RetryableError < StandardError; end
+
+      let(:configuration) do
+        Raven::Configuration.new.tap do |c|
+          c.retryable_exceptions << RetryableError
+        end
+      end
+
+      [
+        { "retry" => false, "retry_count" => 0 },
+        { "retry" => true,  "retry_count" => Sidekiq::JobRetry::DEFAULT_MAX_RETRY_ATTEMPTS },
+        { "retry" => 2,     "retry_count" => 2 }
+      ].each do |retry_context|
+        it "captures an exception when retries are exhausted" do
+          exception = RetryableError.new
+
+          expect(Raven).to receive(:capture_exception).with(exception, anything)
+          Raven::SidekiqErrorHandler.new.call(exception, retry_context, :configuration => configuration)
+        end
+      end
+
+      [
+        { "retry" => true, "retry_count" => 0 },
+        { "retry" => 2,    "retry_count" => 0 },
+        { "retry" => 2,    "retry_count" => 1 }
+      ].each do |retry_context|
+        it "does not capture an exception when retries are remaining" do
+          exception = RetryableError.new
+
+          expect(Raven).not_to receive(:capture_exception)
+          Raven::SidekiqErrorHandler.new.call(exception, retry_context, :configuration => configuration)
+        end
+      end
     end
   end
 

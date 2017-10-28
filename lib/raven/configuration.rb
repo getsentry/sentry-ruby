@@ -91,6 +91,10 @@ module Raven
     # We automatically try to set this to a git SHA or Capistrano release.
     attr_accessor :release
 
+    # Array of exception classes that should not be reported until all retries
+    # are exhausted for a Sidekiq job.
+    attr_accessor :retryable_exceptions
+
     # The sampling factor to apply to events. A value of 0.0 will not send
     # any events, and a value of 1.0 will send 100% of events.
     attr_accessor :sample_rate
@@ -198,6 +202,7 @@ module Raven
       self.project_root = detect_project_root
       self.rails_activesupport_breadcrumbs = false
       self.rails_report_rescued_exceptions = true
+      self.retryable_exceptions = []
       self.release = detect_release
       self.sample_rate = 1.0
       self.sanitize_credit_cards = true
@@ -307,6 +312,10 @@ module Raven
       else
         true
       end
+    end
+
+    def retryable_exception?(exc)
+      retryable_exceptions.any? { |x| get_exception_class(x) === exc }
     end
 
     private

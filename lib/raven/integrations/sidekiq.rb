@@ -1,5 +1,10 @@
 require 'time'
 require 'sidekiq'
+begin
+  # Sidekiq 5 introduces JobRetry and stores the default max retry attempts there.
+  require 'sidekiq/job_retry'
+rescue LoadError # rubocop:disable Lint/HandleExceptions
+end
 
 module Raven
   class SidekiqCleanupMiddleware
@@ -15,7 +20,10 @@ module Raven
   class SidekiqErrorHandler
     ACTIVEJOB_RESERVED_PREFIX = "_aj_".freeze
 
-    def call(ex, context)
+    def call(ex, context, options = {})
+      configuration = options[:configuration] || Raven.configuration
+      return if configuration.retryable_exception?(ex) && remaining_retries?(context)
+
       context = filter_context(context)
       Raven.context.transaction.push transaction_from_context(context)
       Raven.capture_exception(
@@ -49,6 +57,27 @@ module Raven
     def filter_context_hash(key, value)
       (key = key[3..-1]) if key [0..3] == ACTIVEJOB_RESERVED_PREFIX
       [key, filter_context(value)]
+    end
+
+    def remaining_retries?(context)
+      job = context[:job] || context # Sidekiq < 4 does not have job key.
+      return false unless job && job["retry"]
+      job["retry_count"] < retry_attempts_from(job["retry"])
+    end
+
+    def retry_attempts_from(retries)
+      if retries.is_a?(Integer)
+        retries
+      else
+        default_max_attempts =
+          if defined?(Sidekiq::JobRetry)
+            Sidekiq::JobRetry::DEFAULT_MAX_RETRY_ATTEMPTS # Sidekiq 5
+          else
+            Sidekiq::Middleware::Server::RetryJobs::DEFAULT_MAX_RETRY_ATTEMPTS # Sidekiq < 5
+          end
+
+        Sidekiq.options.fetch(:max_retries, default_max_attempts)
+      end
     end
 
     # this will change in the future:
