@@ -2,7 +2,7 @@ require "test_helper"
 
 # Raven sometimes has to deal with some weird JSON. This makes sure whatever
 # JSON implementation we use handles it in the way that we expect.
-class TestJSON < Minitest::Spec
+class JSONTest < Minitest::Spec
   # Strings
 
   it "works with string keys and values" do
