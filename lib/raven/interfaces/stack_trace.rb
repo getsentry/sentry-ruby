@@ -19,7 +19,8 @@ module Raven
     # Not actually an interface, but I want to use the same style
     class Frame < Interface
       attr_accessor :abs_path, :context_line, :function, :in_app,
-                    :lineno, :module, :pre_context, :post_context, :vars
+                    :lineno, :module, :pre_context, :post_context, :vars,
+                    :project_root
 
       def initialize(*arguments)
         super(*arguments)
@@ -28,15 +29,6 @@ module Raven
       def filename
         return if abs_path.nil?
         return @filename if instance_variable_defined?(:@filename)
-
-        prefix =
-          if under_project_root? && in_app
-            project_root
-          elsif under_project_root?
-            longest_load_path || project_root
-          else
-            longest_load_path
-          end
 
         @filename = prefix ? abs_path[prefix.to_s.chomp(File::SEPARATOR).length + 1..-1] : abs_path
       end
@@ -57,12 +49,18 @@ module Raven
         project_root && abs_path.start_with?(project_root)
       end
 
-      def project_root
-        @project_root ||= Raven.configuration.project_root && Raven.configuration.project_root.to_s
-      end
-
       def longest_load_path
         $LOAD_PATH.select { |path| abs_path.start_with?(path.to_s) }.max_by(&:size)
+      end
+
+      def prefix
+        if under_project_root? && in_app
+          project_root
+        elsif under_project_root?
+          longest_load_path || project_root
+        else
+          longest_load_path
+        end
       end
     end
   end
