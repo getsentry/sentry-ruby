@@ -4,7 +4,7 @@ class TestInterface < Raven::Interface
   attr_accessor :some_attr
 end
 
-class RavenInterfaceTest < Minitest::Spec
+class RavenInterfaceTest < Raven::Test
   it "should register an interface when a new class is defined" do
     assert_equal TestInterface, Raven::Interface.registered[:test]
   end

@@ -1,6 +1,6 @@
 require 'test_helper'
 
-class RavenLoggerTest < Minitest::Spec
+class RavenLoggerTest < Raven::Test
   it "should log to a given IO" do
     stringio = StringIO.new
     log = Raven::Logger.new(stringio)
