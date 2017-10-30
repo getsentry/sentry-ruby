@@ -1,23 +1,29 @@
-require 'rake'
-require 'raven'
-require 'rubygems/package_task'
-require 'bundler/gem_tasks'
+require "rake"
+require "raven"
+require "rubygems/package_task"
+require "bundler/gem_tasks"
+require "rake/testtask"
 
-gemspec = Gem::Specification.load(Dir['*.gemspec'].first)
+gemspec = Gem::Specification.load(Dir["*.gemspec"].first)
 
 Gem::PackageTask.new(gemspec).define
 
-begin
-  require 'rubygems'
-  require 'rspec/core/rake_task'
+Rake::TestTask.new do |t|
+  t.libs << "test"
+  t.test_files = FileList["test/**/test_*.rb"]
+end
 
-  require 'rubocop/rake_task'
+begin
+  require "rubygems"
+  require "rspec/core/rake_task"
+
+  require "rubocop/rake_task"
   RuboCop::RakeTask.new(:rubocop) do |task|
-    task.patterns = ['lib/**/*.rb','spec/**/*.rb',]
+    task.patterns = ["lib/**/*.rb","spec/**/*.rb",]
   end
 
   RSpec::Core::RakeTask.new(:spec) do |spec|
-    spec.pattern = 'spec/**/*_spec.rb'
+    spec.pattern = "spec/**/*_spec.rb"
   end
 
 rescue LoadError
@@ -26,4 +32,4 @@ rescue LoadError
   end
 end
 
-task :default => [:rubocop, :spec]
+task :default => [:rubocop, :spec, :test]
