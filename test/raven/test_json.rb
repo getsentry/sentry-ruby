@@ -56,10 +56,6 @@ class JSONTest < Minitest::Spec
     assert_equal "[\"symbol\",Infinity,NaN]", JSON.dump(data)
   end
 
-  it "resolves large numbers to Infinity" do
-    assert_equal [+1.0 / 0.0], JSON.parse("[123e090000000]")
-  end
-
   if RUBY_VERSION.to_f >= 2.0 # 1.9 just hangs on this.
     it "raises the correct error on strings that look like incomplete objects" do
       assert_raises JSON::ParserError do JSON.parse("{") end
