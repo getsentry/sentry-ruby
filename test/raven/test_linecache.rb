@@ -1,6 +1,6 @@
 require 'test_helper'
 
-class RavenLinecacheTest < Minitest::Spec
+class RavenLinecacheTest < Raven::Test
   def setup
     @linecache = Raven::LineCache.new
   end
