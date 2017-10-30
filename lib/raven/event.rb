@@ -161,14 +161,17 @@ module Raven
 
     def stacktrace_interface_from(backtrace)
       Backtrace.parse(backtrace).lines.reverse.each_with_object([]) do |line, memo|
+        next unless line.file
+
         frame = StacktraceInterface::Frame.new
-        frame.abs_path = line.file if line.file
-        frame.function = line.method if line.method
+        frame.abs_path = line.file
+        frame.project_root = configuration.project_root && configuration.project_root.to_s
+        frame.function = line.method
         frame.lineno = line.number
         frame.in_app = line.in_app
-        frame.module = line.module_name if line.module_name
+        frame.module = line.module_name
 
-        if configuration[:context_lines] && frame.abs_path
+        if configuration.context_lines
           frame.pre_context, frame.context_line, frame.post_context = \
             configuration.linecache.get_file_context(frame.abs_path, frame.lineno, configuration[:context_lines])
         end
