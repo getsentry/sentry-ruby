@@ -166,8 +166,7 @@ RSpec.describe Raven::Event do
                                    :headers => { 'Host' => 'localhost', "X-Forwarded-For" => "1.1.1.1, 2.2.2.2" },
                                    :method => 'POST',
                                    :query_string => 'biz=baz',
-                                   :url => 'http://localhost/lol',
-                                   :cookies => nil)
+                                   :url => 'http://localhost/lol')
     end
 
     it "sets user context ip address correctly" do
