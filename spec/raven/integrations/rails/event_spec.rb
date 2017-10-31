@@ -15,8 +15,8 @@ RSpec.describe Raven::Event, :rails => true do
       let(:exception) do
         e = Exception.new("Oh no!")
         allow(e).to receive(:backtrace).and_return [
-          "#{Rails.root}/vendor/bundle/cache/other_gem.rb:10:in `public_method'",
-          "vendor/bundle/some_gem.rb:10:in `a_method'",
+          "#{Rails.root}/vendor/bundle/cache/ruby/gems/mygem/other_gem.rb:10:in `public_method'",
+          "vendor/bundle/ruby/gems/mygem/some_gem.rb:10:in `a_method'",
           "#{Rails.root}/app/models/user.rb:132:in `new_function'",
           "/gem/lib/path:87:in `a_function'",
           "/app/some/other/path:1412:in `other_function'",
@@ -37,9 +37,9 @@ RSpec.describe Raven::Event, :rails => true do
         expect(frames[2][:in_app]).to eq(false)
         expect(frames[3][:filename]).to eq("app/models/user.rb")
         expect(frames[3][:in_app]).to eq(true)
-        expect(frames[4][:filename]).to eq("vendor/bundle/some_gem.rb")
+        expect(frames[4][:filename]).to eq("mygem/some_gem.rb")
         expect(frames[4][:in_app]).to eq(false)
-        expect(frames[5][:filename]).to eq("vendor/bundle/cache/other_gem.rb")
+        expect(frames[5][:filename]).to eq("mygem/other_gem.rb")
         expect(frames[5][:in_app]).to eq(false)
       end
 
@@ -56,7 +56,7 @@ RSpec.describe Raven::Event, :rails => true do
         it 'normalizes the filename using the load path' do
           $LOAD_PATH.push "#{Rails.root}/vendor/bundle"
           frames = hash[:exception][:values][0][:stacktrace][:frames]
-          expect(frames[5][:filename]).to eq("cache/other_gem.rb")
+          expect(frames[5][:filename]).to eq("mygem/other_gem.rb")
           $LOAD_PATH.pop
         end
       end
@@ -64,7 +64,7 @@ RSpec.describe Raven::Event, :rails => true do
       context "when a non-in_app path under project_root isn't on the load path" do
         it 'normalizes the filename using project_root' do
           frames = hash[:exception][:values][0][:stacktrace][:frames]
-          expect(frames[5][:filename]).to eq("vendor/bundle/cache/other_gem.rb")
+          expect(frames[5][:filename]).to eq("mygem/other_gem.rb")
         end
       end
     end
