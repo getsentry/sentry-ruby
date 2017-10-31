@@ -305,11 +305,6 @@ module Raven
       errors.join(", ")
     end
 
-    def project_root=(root_dir)
-      @project_root = root_dir
-      Backtrace::Line.instance_variable_set(:@in_app_pattern, nil) # blow away cache
-    end
-
     def exception_class_allowed?(exc)
       if exc.is_a?(Raven::Error)
         # Try to prevent error reporting loops
@@ -323,11 +318,15 @@ module Raven
       end
     end
 
+    def project_root=(root)
+      @project_root = root.to_s
+    end
+
     private
 
     def detect_project_root
       if defined? Rails.root # we are in a Rails application
-        Rails.root.to_s
+        Rails.root
       else
         Dir.pwd
       end
