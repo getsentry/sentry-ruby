@@ -42,7 +42,7 @@ class JSONTest < Raven::Test
   end
 
   it "works with a nested hash of strings" do
-    assert_equal "{\"1\":{\"1\":2}}", JSON.dump( 1 => { 1 => 2 })
+    assert_equal "{\"1\":{\"1\":2}}", JSON.dump(1 => { 1 => 2 })
   end
 
   # Other
@@ -58,8 +58,12 @@ class JSONTest < Raven::Test
 
   if RUBY_VERSION.to_f >= 2.0 # 1.9 just hangs on this.
     it "raises the correct error on strings that look like incomplete objects" do
-      assert_raises JSON::ParserError do JSON.parse("{") end
-      assert_raises JSON::ParserError do JSON.parse("[") end
+      assert_raises JSON::ParserError do
+        JSON.parse("{")
+      end
+      assert_raises JSON::ParserError do
+        JSON.parse("[")
+      end
     end
 
     it "accepts any encoding which is internally valid" do
@@ -79,9 +83,13 @@ class JSONTest < Raven::Test
       data["leave intact"] = { "not a circular reference" => true }
 
       if RUBY_PLATFORM == "java"
-        assert_raises JSON.dump(data)
+        assert_raises do
+          JSON.dump(data)
+        end
       else
-        assert_raises SystemStackError do JSON.dump(data) end
+        assert_raises SystemStackError do
+          JSON.dump(data)
+        end
       end
     end
   end
