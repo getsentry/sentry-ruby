@@ -5,6 +5,13 @@ require "minitest/parallel"
 require "sentry-raven-without-integrations"
 require "raven/transports/dummy"
 
+Raven.configure do |config|
+  config.dsn = "dummy://12345:67890@sentry.localdomain/sentry/42"
+  config.encoding = "json"
+  config.silence_ready = true
+  config.logger = Logger.new(nil)
+end
+
 class Raven::ThreadUnsafeTest < Minitest::Test
   class << self
     def it desc = "anonymous", &block
