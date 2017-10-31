@@ -1,5 +1,5 @@
 require 'test_helper'
-
+# rubocop:disable Style/WordArray
 class RavenLinecacheTest < Raven::Test
   def setup
     @linecache = Raven::LineCache.new
@@ -37,3 +37,4 @@ class RavenLinecacheTest < Raven::Test
     assert_equal expected, @linecache.get_file_context("./spec/support/linecache.txt", 4, 2)
   end
 end
+# rubocop:enable Style/WordArray

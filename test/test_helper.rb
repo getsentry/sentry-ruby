@@ -14,13 +14,14 @@ end
 
 class Raven::ThreadUnsafeTest < Minitest::Test
   class << self
-    def it desc = "anonymous", &block
+    # Ripped from Minitest::Spec
+    def it(desc = "anonymous", &block)
       block ||= proc { skip "(no tests defined)" }
 
       @specs ||= 0
       @specs += 1
 
-      name = "test_%04d_%s" % [ @specs, desc ]
+      name = format("test_%04d_%s", @specs, desc)
 
       define_method name, &block
 

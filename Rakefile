@@ -19,7 +19,7 @@ begin
 
   require "rubocop/rake_task"
   RuboCop::RakeTask.new(:rubocop) do |task|
-    task.patterns = ["lib/**/*.rb","spec/**/*.rb",]
+    task.patterns = ["lib/**/*.rb","spec/**/*.rb","test/**/*.rb"]
   end
 
   RSpec::Core::RakeTask.new(:spec) do |spec|
