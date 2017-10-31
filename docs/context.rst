@@ -130,9 +130,9 @@ element of the array) will be used as the ``transaction`` for any events:
 
 .. sourcecode:: ruby
 
-    Raven.context.transactions.push "User Import"
+    Raven.context.transaction.push "User Import"
     # import some users
-    Raven.context.transactions.pop
+    Raven.context.transaction.pop
 
 Transactions may also be overridden/set explicitly during event creation:
 
