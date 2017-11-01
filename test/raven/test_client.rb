@@ -62,7 +62,6 @@ class TestClient < Raven::Test
   it "sets transport based on config scheme" do
     @client.configuration = Raven::Configuration.new.tap { |c| c.dsn = "https://" }
     assert_instance_of Raven::Transports::HTTP, @client.transport
-
   end
 
   it "sets dummy based on dsn" do
@@ -127,7 +126,10 @@ class TestClient < Raven::Test
     exception = nil
     transport = @client.transport
     def transport.send_event(*); raise Raven::Error, "Boom!"; end
-    @client.configuration.transport_failure_callback = Proc.new { |e, exc| event = e; exception = exc }
+    @client.configuration.transport_failure_callback = proc do |e, exc|
+      event = e
+      exception = exc
+    end
 
     refute @client.send_event(@event)
 
