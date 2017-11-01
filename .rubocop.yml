@@ -28,6 +28,9 @@ Metrics/MethodLength:
 Style/SignalException:
   Enabled: false
 
+Style/SingleLineMethods:
+  Enabled: false
+
 Performance/Casecmp:
   Enabled: false
 

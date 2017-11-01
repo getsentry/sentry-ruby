@@ -62,7 +62,7 @@ module Raven
         when 'dummy'
           Transports::Dummy.new(configuration)
         else
-          fail "Unknown transport scheme '#{configuration.scheme}'"
+          raise Raven::Error, "Unknown transport scheme '#{configuration.scheme}'"
         end
     end
 
@@ -93,7 +93,7 @@ module Raven
     end
 
     def get_log_message(event)
-      (event && event[:message]) || (event && event['message']) || get_message_from_exception(event) || '<no message value>'
+      (event && event[:logentry] && event[:logentry][:message]) || (event && event[:message]) || (event && event['message']) || get_message_from_exception(event) || '<no message value>'
     end
 
     def generate_auth_header
@@ -119,8 +119,8 @@ module Raven
       else
         configuration.logger.warn "Not sending event due to previous failure(s)."
       end
-      configuration.logger.warn("Failed to submit event: #{get_log_message(event)}")
-      configuration.transport_failure_callback.call(event) if configuration.transport_failure_callback
+      configuration.logger.error("Failed to submit event: #{get_log_message(event)}")
+      configuration.transport_failure_callback.call(event, e) if configuration.transport_failure_callback
     end
   end
 
