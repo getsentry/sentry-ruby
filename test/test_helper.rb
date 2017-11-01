@@ -8,8 +8,9 @@ require "raven/transports/dummy"
 Raven.configure do |config|
   config.dsn = "dummy://12345:67890@sentry.localdomain/sentry/42"
   config.encoding = "json"
-  config.silence_ready = true
-  config.logger = Logger.new(nil)
+  logger = Logger.new(STDOUT)
+  logger.level = Logger::FATAL
+  config.logger = logger
 end
 
 class Raven::ThreadUnsafeTest < Minitest::Test
