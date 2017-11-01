@@ -25,12 +25,7 @@ RSpec.describe Raven::Configuration do
   end
 
   it "doesnt accept invalid encodings" do
-    expect { subject.encoding = "apple" }.to raise_error(Raven::Error, 'Unsupported encoding')
-  end
-
-  it "has hashlike attribute accessors" do
-    expect(subject.encoding).to   eq("gzip")
-    expect(subject[:encoding]).to eq("gzip")
+    expect { subject.encoding = "apple" }.to raise_error(ArgumentError, 'Unsupported encoding')
   end
 
   context 'configuring for async' do

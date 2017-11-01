@@ -239,7 +239,7 @@ module Raven
     alias dsn= server=
 
     def encoding=(encoding)
-      raise(Error, 'Unsupported encoding') unless %w(gzip json).include? encoding
+      raise(ArgumentError, 'Unsupported encoding') unless %w(gzip json).include? encoding
       @encoding = encoding
     end
 
@@ -264,15 +264,12 @@ module Raven
       @should_capture = value
     end
 
-    # Allows config options to be read like a hash
-    #
-    # @param [Symbol] option Key for a given attribute
-    def [](option)
-      public_send(option)
-    end
-
     def current_environment=(environment)
       @current_environment = environment.to_s
+    end
+
+    def project_root=(root)
+      @project_root = root.to_s
     end
 
     def capture_allowed?(message_or_exc = nil)
@@ -302,10 +299,6 @@ module Raven
       else
         true
       end
-    end
-
-    def project_root=(root)
-      @project_root = root.to_s
     end
 
     private
@@ -374,7 +367,7 @@ module Raven
     end
 
     def detect_release_from_git
-      `git rev-parse --short HEAD`.strip if File.directory?(".git") rescue nil
+      Raven.sys_command("git rev-parse --short HEAD") if File.directory?(".git")
     end
 
     def capture_in_current_environment?
