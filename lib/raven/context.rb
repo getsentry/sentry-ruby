@@ -34,7 +34,7 @@ module Raven
 
       # TODO: reduce to uname -svra
       def os_context
-        @os_context ||= {
+        {
           :name => sys.command("uname -s") || RbConfig::CONFIG["host_os"],
           :version => sys.command("uname -v"),
           :build => sys.command("uname -r"),
@@ -43,7 +43,7 @@ module Raven
       end
 
       def runtime_context
-        @runtime_context ||= {
+        {
           :name => Kernel.const_defined?(:RUBY_ENGINE) ? RUBY_ENGINE : RbConfig::CONFIG["ruby_install_name"],
           :version => Kernel.const_defined?(:RUBY_DESCRIPTION) ? RUBY_DESCRIPTION : sys.command("ruby -v")
         }
