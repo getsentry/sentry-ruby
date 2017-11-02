@@ -19,6 +19,7 @@ require 'raven/interfaces/exception'
 require 'raven/interfaces/single_exception'
 require 'raven/interfaces/stack_trace'
 require 'raven/interfaces/http'
+require 'raven/system'
 require 'raven/transports'
 require 'raven/transports/http'
 require 'raven/utils/deep_merge'
@@ -95,12 +96,6 @@ module Raven
       else
         opts[:to].send(:include, opts[:from].const_get("Old" + module_name))
       end
-    end
-
-    def sys_command(command)
-      result = `#{command} 2>&1` rescue nil
-      return if result.nil? || result.empty? || $CHILD_STATUS.exitstatus != 0
-      result.strip
     end
   end
 end

@@ -62,14 +62,13 @@ RSpec.describe Raven::Configuration do
     it 'should send events if test is whitelisted' do
       subject.environments = %w(test)
       subject.capture_allowed?
-      puts subject.errors
       expect(subject.capture_allowed?).to eq(true)
     end
 
     it 'should not send events if test is not whitelisted' do
       subject.environments = %w(not_test)
       expect(subject.capture_allowed?).to eq(false)
-      expect(subject.errors).to eq(["Not configured to send/capture in environment 'test'"])
+      expect(subject.error_messages).to eq("Not configured to send/capture in environment 'test'")
     end
   end
 
@@ -123,7 +122,7 @@ RSpec.describe Raven::Configuration do
 
     it 'should not send events if should_capture returns false' do
       expect(subject.capture_allowed?("dont send me")).to eq(false)
-      expect(subject.errors).to eq(["should_capture returned false"])
+      expect(subject.error_messages).to eq("should_capture returned false")
       expect(subject.capture_allowed?("send me")).to eq(true)
     end
   end
@@ -135,7 +134,7 @@ RSpec.describe Raven::Configuration do
 
     it 'captured_allowed returns false' do
       expect(subject.capture_allowed?).to eq(false)
-      expect(subject.errors).to eq(["No public_key specified", "No secret_key specified", "No project_id specified"])
+      expect(subject.error_messages).to eq("No path specified, no public_key specified, no secret_key specified, no project_id specified")
     end
   end
 
@@ -148,7 +147,7 @@ RSpec.describe Raven::Configuration do
     it 'captured_allowed false when sampled' do
       allow(Random::DEFAULT).to receive(:rand).and_return(0.76)
       expect(subject.capture_allowed?).to eq(false)
-      expect(subject.errors).to eq(["Excluded by random sample"])
+      expect(subject.error_messages).to eq("Excluded by random sample")
     end
 
     it 'captured_allowed true when not sampled' do

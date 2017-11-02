@@ -154,8 +154,7 @@ module Raven
     # E.g. lambda { |event| Thread.new { MyJobProcessor.send_email(event) } }
     attr_reader :transport_failure_callback
 
-    # Errors object - an Array that contains error messages. See #
-    attr_reader :errors
+    attr_reader :sys
 
     # Most of these errors generate 4XX responses. In general, Sentry clients
     # only automatically report 5xx responses.
@@ -198,9 +197,11 @@ module Raven
     MODULE_SEPARATOR = "::".freeze
 
     def initialize
+      @sys = Raven::System.new
+
       self.async = false
       self.context_lines = 3
-      self.current_environment = current_environment_from_env
+      self.current_environment = @sys.current_environment
       self.encoding = 'gzip'
       self.environments = []
       self.exclude_loggers = []
@@ -220,7 +221,7 @@ module Raven
       self.sanitize_http_headers = []
       self.send_modules = true
       self.server = ENV['SENTRY_DSN']
-      self.server_name = server_name_from_env
+      self.server_name = @sys.server_name
       self.should_capture = false
       self.ssl_verification = true
       self.tags = {}
@@ -292,23 +293,29 @@ module Raven
       valid? &&
         capture_in_current_environment? &&
         capture_allowed_by_callback?(message_or_exc) &&
-        sample_allowed?
+        sample_allowed? &&
+        exception_class_allowed?(message_or_exc)
     end
     # If we cannot capture, we cannot send.
     alias sending_allowed? capture_allowed?
 
     def error_messages
-      @errors = [errors[0]] + errors[1..-1].map(&:downcase) # fix case of all but first
-      errors.join(", ")
+      @errors ||= []
+      if @errors.size <= 1
+        @errors[0].to_s
+      else
+        ([@errors[0]] + @errors[1..-1].map(&:downcase)).join(", ") # fix case of all but first
+      end
     end
 
     def exception_class_allowed?(exc)
       if exc.is_a?(Raven::Error)
         # Try to prevent error reporting loops
-        logger.debug "Refusing to capture Raven error: #{exc.inspect}"
+        @errors << "This is an internal Raven error"
+        logger.fatal "Raven has had an internal error!"
         false
-      elsif excluded_exception?(exc)
-        logger.debug "User excluded error: #{exc.inspect}"
+      elsif exc && excluded_exception?(exc)
+        @errors << "#{exc.class} excluded from capture"
         false
       else
         true
@@ -354,14 +361,10 @@ module Raven
     end
 
     def detect_release_from_heroku
-      return unless running_on_heroku?
+      return unless @sys.running_on_heroku?
       logger.warn(heroku_dyno_metadata_message) && return unless ENV['HEROKU_SLUG_COMMIT']
 
       ENV['HEROKU_SLUG_COMMIT']
-    end
-
-    def running_on_heroku?
-      File.directory?("/etc/heroku")
     end
 
     def heroku_dyno_metadata_message
@@ -374,14 +377,14 @@ module Raven
       revision_log = File.join(project_root, '..', 'revisions.log')
 
       if File.exist?(revision_file)
-        File.read(revision_file).strip
+        @sys.cap_revision(revision_file)
       elsif File.exist?(revision_log)
-        File.open(revision_log).to_a.last.strip.sub(/.*as release ([0-9]+).*/, '\1')
+        @sys.cap_revision(revision_log)
       end
     end
 
     def detect_release_from_git
-      Raven.sys_command("git rev-parse --short HEAD") if File.directory?(".git")
+      @sys.command("git rev-parse --short HEAD") if @sys.git_available?
     end
 
     def capture_in_current_environment?
@@ -397,15 +400,14 @@ module Raven
     end
 
     def valid?
-      return true if %w(server host path public_key secret_key project_id).all? { |k| public_send(k) }
       if server
         %w(server host path public_key secret_key project_id).map do |key|
-          @errors << "No #{key} specified" unless public_send(key)
+          @errors << "No #{key} specified" unless public_send(key) && !public_send(key).empty?
         end
       else
         @errors << "DSN not set"
       end
-      false
+      !@errors.any?
     end
 
     def sample_allowed?
@@ -415,25 +417,6 @@ module Raven
         false
       else
         true
-      end
-    end
-
-    # Try to resolve the hostname to an FQDN, but fall back to whatever
-    # the load name is.
-    def resolve_hostname
-      Socket.gethostname ||
-        Socket.gethostbyname(hostname).first rescue server_name
-    end
-
-    def current_environment_from_env
-      ENV['SENTRY_CURRENT_ENV'] || ENV['RAILS_ENV'] || ENV['RACK_ENV'] || 'default'
-    end
-
-    def server_name_from_env
-      if running_on_heroku?
-        ENV['DYNO']
-      else
-        resolve_hostname
       end
     end
   end
