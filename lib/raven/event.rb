@@ -55,9 +55,6 @@ module Raven
                           end
       options = Raven::Utils::DeepMergeHash.deep_merge(exception_context, options)
 
-      configuration = options[:configuration] || Raven.configuration
-      return unless configuration.exception_class_allowed?(exc)
-
       new(options) do |evt|
         evt.message = "#{exc.class}: #{exc.message}"
 
