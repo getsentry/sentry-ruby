@@ -51,7 +51,7 @@ if RUBY_VERSION > '2.0'
       end
     end
 
-    it "filters out ActiveJob keys", :rails => true do
+    it "filters out ActiveJob keys" do
       exception = build_exception
       aj_context = context
       aj_context["_aj_globalid"] = GlobalID.new('gid://app/model/id')

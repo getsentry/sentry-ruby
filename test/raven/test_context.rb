@@ -4,10 +4,10 @@ class RavenContextTest < Raven::Test
   it "manages thread context" do
     thread_ctx = Raven::Context.current
     assert_instance_of Raven::Context, thread_ctx
-    assert_equal thread_ctx.object_id, Raven::Context.current.object_id
+    assert_equal thread_ctx, Raven::Context.current
 
     Raven::Context.clear!
-    refute_equal thread_ctx.object_id, Raven::Context.current.object_id
+    refute_equal thread_ctx, Raven::Context.current
   end
 
   it "has a new context for each thread" do
@@ -15,7 +15,7 @@ class RavenContextTest < Raven::Test
     t = Thread.new { Thread.current[:context] = Raven::Context.current }
     t.join
 
-    refute_equal thread_ctx.object_id, t[:context].object_id
+    refute_equal thread_ctx, t[:context]
   end
 
   it "merges extra context with server" do
