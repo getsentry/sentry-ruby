@@ -1,7 +1,7 @@
 require 'spec_helper'
 
 RSpec.describe Raven::Instance do
-  let(:event) { Raven::Event.new(:id => "event_id") }
+  let(:event) { Raven::Event.new(:event_id => "event_id") }
   let(:options) { { :key => "value" } }
   let(:context) { nil }
   let(:configuration) do
@@ -200,7 +200,7 @@ RSpec.describe Raven::Instance do
 
       subject.capture_type("Test message", options)
 
-      expect(subject.last_event_id).to eq(event.id)
+      expect(subject.last_event_id).to eq(event.event_id)
     end
   end
 

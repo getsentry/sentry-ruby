@@ -10,17 +10,16 @@ module Raven
 
     SDK = { "name" => "raven-ruby", "version" => Raven::VERSION }.freeze
 
-    attr_accessor :id, :logger, :transaction, :server_name, :release, :modules,
+    attr_accessor :event_id, :logger, :transaction, :server_name, :release, :modules,
                   :extra, :tags, :context, :configuration, :checksum,
-                  :fingerprint, :environment, :server_os, :runtime,
+                  :fingerprint, :environment,
                   :breadcrumbs, :user, :backtrace, :platform, :sdk
-    alias event_id id
 
     attr_reader :level, :timestamp, :time_spent
 
     def initialize(init = {})
       # Set some simple default values
-      self.id            = SecureRandom.uuid.delete("-")
+      self.event_id      = SecureRandom.uuid.delete("-")
       self.timestamp     = Time.now.utc
       self.level         = :error
       self.logger        = :ruby
@@ -31,8 +30,6 @@ module Raven
       @interfaces        = {}
       self.user          = {} # TODO: contexts
       self.extra         = {} # TODO: contexts
-      self.server_os     = {} # TODO: contexts
-      self.runtime       = {} # TODO: contexts
       self.tags          = {} # TODO: contexts
 
       copy_initial_state
