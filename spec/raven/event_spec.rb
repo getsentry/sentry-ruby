@@ -1,5 +1,4 @@
 require 'spec_helper'
-require 'raven/integrations/rack'
 
 RSpec.describe Raven::Event do
   before do
@@ -194,6 +193,7 @@ RSpec.describe Raven::Event do
       config.tags = { 'key' => 'value' }
       config.release = "custom"
       config.current_environment = "custom"
+      instance = Raven::Instance.new(nil, config)
 
       Raven::Event.new(
         :level => 'warning',
@@ -202,7 +202,7 @@ RSpec.describe Raven::Event do
           'foo' => 'bar'
         },
         :server_name => 'foo.local',
-        :configuration => config
+        :instance => instance
       ).to_hash
     end
 
@@ -216,24 +216,19 @@ RSpec.describe Raven::Event do
 
   context 'configuration tags unspecified' do
     it 'should not persist tags between unrelated events' do
-      config = Raven::Configuration.new
-      config.logger = Logger.new(nil)
-
       Raven::Event.new(
         :level => 'warning',
         :logger => 'foo',
         :tags => {
           'foo' => 'bar'
         },
-        :server_name => 'foo.local',
-        :configuration => config
+        :server_name => 'foo.local'
       )
 
       hash = Raven::Event.new(
         :level => 'warning',
         :logger => 'foo',
-        :server_name => 'foo.local',
-        :configuration => config
+        :server_name => 'foo.local'
       ).to_hash
 
       expect(hash[:tags]).to eq({})
@@ -250,11 +245,12 @@ RSpec.describe Raven::Event do
         'configuration_event_key' => 'configuration_value',
         'configuration_key' => 'configuration_value'
       }
-
-      Raven.tags_context('configuration_context_event_key' => 'context_value',
-                         'configuration_context_key' => 'context_value',
-                         'context_event_key' => 'context_value',
-                         'context_key' => 'context_value')
+      context = Raven::Context.new
+      context.tags = { 'configuration_context_event_key' => 'context_value',
+                       'configuration_context_key' => 'context_value',
+                       'context_event_key' => 'context_value',
+                       'context_key' => 'context_value' }
+      instance = Raven::Instance.new(context, config)
 
       Raven::Event.new(
         :level => 'warning',
@@ -266,7 +262,7 @@ RSpec.describe Raven::Event do
           'event_key' => 'event_value'
         },
         :server_name => 'foo.local',
-        :configuration => config
+        :instance => instance
       ).to_hash
     end
 
