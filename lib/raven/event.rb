@@ -172,14 +172,6 @@ module Raven
       end
     end
 
-    # For cross-language compat
-    class << self
-      alias captureException from_exception
-      alias captureMessage from_message
-      alias capture_exception from_exception
-      alias capture_message from_message
-    end
-
     private
 
     def copy_initial_state
@@ -199,7 +191,7 @@ module Raven
       self.transaction ||= context.transaction.last
 
       # If this is a Rack event, merge Rack context
-      add_rack_context if !self[:http] && context.rack_env
+      add_rack_context if !self[:http] && !context.rack_env.empty?
 
       # Merge contexts
       self.user = context.user.merge(user) # TODO: contexts
