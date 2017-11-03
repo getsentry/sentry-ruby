@@ -1,5 +1,4 @@
 require 'spec_helper'
-require 'raven/instance'
 
 RSpec.describe Raven::Instance do
   let(:event) { Raven::Event.new(:id => "event_id") }
@@ -42,7 +41,7 @@ RSpec.describe Raven::Instance do
       end
       let(:message) { "Test message" }
 
-      it 'sends the result of Event.capture_message' do
+      it 'sends the result of Event.from_message' do
         subject.capture_type(message, options)
       end
 
@@ -78,7 +77,7 @@ RSpec.describe Raven::Instance do
     describe 'as #capture_exception' do
       let(:exception) { build_exception }
 
-      it 'sends the result of Event.capture_exception' do
+      it 'sends the result of Event.from_exception' do
         expect(Raven::Event).to receive(:from_exception).with(exception, options)
         expect(subject).to receive(:send_event).with(event)
 
@@ -104,7 +103,7 @@ RSpec.describe Raven::Instance do
           subject.configuration.async = prior_async
         end
 
-        it 'sends the result of Event.capture_exception' do
+        it 'sends the result of Event.from_exception' do
           expect(Raven::Event).to receive(:from_exception).with(exception, options)
           expect(subject).not_to receive(:send_event).with(event)
 
@@ -126,7 +125,7 @@ RSpec.describe Raven::Instance do
           subject.configuration.async = prior_async
         end
 
-        it 'sends the result of Event.capture_exception via fallback' do
+        it 'sends the result of Event.from_exception via fallback' do
           expect(Raven::Event).to receive(:from_exception).with(exception, options)
 
           expect(subject.configuration.async).to receive(:call).with(event.to_json_compatible)
@@ -138,7 +137,7 @@ RSpec.describe Raven::Instance do
     describe 'as #capture_exception with a should_capture callback' do
       let(:exception) { build_exception }
 
-      it 'sends the result of Event.capture_exception according to the result of should_capture' do
+      it 'sends the result of Event.from_exception according to the result of should_capture' do
         expect(subject).not_to receive(:send_event).with(event)
 
         subject.configuration.should_capture = proc { false }
@@ -158,32 +157,6 @@ RSpec.describe Raven::Instance do
     it 'does not install an at_exit hook' do
       expect(Kernel).not_to receive(:at_exit)
       subject.capture {}
-    end
-  end
-
-  describe '#annotate_exception' do
-    let(:exception) { build_exception }
-
-    def ivars(object)
-      object.instance_variables.map(&:to_s)
-    end
-
-    it 'adds an annotation to the exception' do
-      expect(ivars(exception)).not_to include("@__raven_context")
-      subject.annotate_exception(exception, {})
-      expect(ivars(exception)).to include("@__raven_context")
-      expect(exception.instance_variable_get(:@__raven_context)).to \
-        be_kind_of Hash
-    end
-
-    context 'when the exception already has context' do
-      it 'does a deep merge of options' do
-        subject.annotate_exception(exception, :extra => { :language => "ruby" })
-        subject.annotate_exception(exception, :extra => { :job_title => "engineer" })
-        expected_hash = { :extra => { :language => "ruby", :job_title => "engineer" } }
-        expect(exception.instance_variable_get(:@__raven_context)).to \
-          eq expected_hash
-      end
     end
   end
 
@@ -234,7 +207,7 @@ RSpec.describe Raven::Instance do
   describe "#rack_context" do
     it "doesn't set anything if the context is empty" do
       subject.rack_context({})
-      expect(subject.context.rack_env).to be_nil
+      expect(subject.context.rack_env).to eq({})
     end
 
     it "sets arbitrary rack context" do

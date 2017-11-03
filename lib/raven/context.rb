@@ -13,7 +13,7 @@ module Raven
     attr_accessor :transaction, :extra, :rack_env, :tags, :user
 
     def initialize
-      self.rack_env = nil
+      self.rack_env = {}
       self.tags = {}
       self.user = {}
       self.transaction = []

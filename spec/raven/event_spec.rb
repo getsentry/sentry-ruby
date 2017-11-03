@@ -392,11 +392,11 @@ RSpec.describe Raven::Event do
 
   describe '.capture_message' do
     let(:message) { 'This is a message' }
-    let(:hash) { Raven::Event.capture_message(message).to_hash }
+    let(:hash) { Raven::Event.from_message(message).to_hash }
 
     context 'for a Message' do
       it 'returns an event' do
-        expect(Raven::Event.capture_message(message)).to be_a(Raven::Event)
+        expect(Raven::Event.from_message(message)).to be_a(Raven::Event)
       end
 
       it "sets the message to the value passed" do
@@ -408,13 +408,13 @@ RSpec.describe Raven::Event do
       end
 
       it 'accepts an options hash' do
-        expect(Raven::Event.capture_message(message, :logger => 'logger').logger).to eq('logger')
+        expect(Raven::Event.from_message(message, :logger => 'logger').logger).to eq('logger')
       end
 
       it 'accepts a stacktrace' do
         backtrace = ["/path/to/some/file:22:in `function_name'",
                      "/some/other/path:1412:in `other_function'"]
-        evt = Raven::Event.capture_message(message, :backtrace => backtrace)
+        evt = Raven::Event.from_message(message, :backtrace => backtrace)
         expect(evt[:stacktrace]).to be_a(Raven::StacktraceInterface)
 
         frames = evt[:stacktrace].to_hash[:frames]
@@ -433,11 +433,11 @@ RSpec.describe Raven::Event do
   describe '.capture_exception' do
     let(:message) { 'This is a message' }
     let(:exception) { Exception.new(message) }
-    let(:hash) { Raven::Event.capture_exception(exception).to_hash }
+    let(:hash) { Raven::Event.from_exception(exception).to_hash }
 
     context 'for an Exception' do
       it 'returns an event' do
-        expect(Raven::Event.capture_exception(exception)).to be_a(Raven::Event)
+        expect(Raven::Event.from_exception(exception)).to be_a(Raven::Event)
       end
 
       it "sets the message to the exception's message and type" do
@@ -570,28 +570,23 @@ RSpec.describe Raven::Event do
     end
 
     it 'accepts an options hash' do
-      expect(Raven::Event.capture_exception(exception, :logger => 'logger').logger).to eq('logger')
-    end
-
-    it 'uses an annotation if one exists' do
-      Raven.annotate_exception(exception, :logger => 'logger')
-      expect(Raven::Event.capture_exception(exception).logger).to eq('logger')
+      expect(Raven::Event.from_exception(exception, :logger => 'logger').logger).to eq('logger')
     end
 
     it 'accepts a checksum' do
-      expect(Raven::Event.capture_exception(exception, :checksum => 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa').checksum).to eq('aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa')
+      expect(Raven::Event.from_exception(exception, :checksum => 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa').checksum).to eq('aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa')
     end
 
     it 'accepts a release' do
-      expect(Raven::Event.capture_exception(exception, :release => '1.0').release).to eq('1.0')
+      expect(Raven::Event.from_exception(exception, :release => '1.0').release).to eq('1.0')
     end
 
     it 'accepts a fingerprint' do
-      expect(Raven::Event.capture_exception(exception, :fingerprint => ['{{ default }}', 'foo']).fingerprint).to eq(['{{ default }}', 'foo'])
+      expect(Raven::Event.from_exception(exception, :fingerprint => ['{{ default }}', 'foo']).fingerprint).to eq(['{{ default }}', 'foo'])
     end
 
     it 'accepts a logger' do
-      expect(Raven::Event.capture_exception(exception, :logger => 'root').logger).to eq('root')
+      expect(Raven::Event.from_exception(exception, :logger => 'root').logger).to eq('root')
     end
   end
 end

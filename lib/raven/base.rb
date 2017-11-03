@@ -42,19 +42,15 @@ module Raven
       @instance ||= Raven::Instance.new
     end
 
-    def_delegators :instance, :client=, :configuration=, :context, :logger, :configuration,
-                   :client, :report_status, :configure, :send_event, :capture, :capture_type,
-                   :last_event_id, :annotate_exception, :user_context,
-                   :tags_context, :extra_context, :rack_context, :breadcrumbs
+    def_delegators :instance, :client=, :configuration=, :context, :logger,
+                   :configuration, :client, :report_status, :configure,
+                   :send_event, :capture, :capture_type, :last_event_id,
+                   :user_context, :tags_context, :extra_context, :rack_context,
+                   :breadcrumbs
 
     def_delegator :instance, :report_status, :report_ready
     def_delegator :instance, :capture_type, :capture_message
     def_delegator :instance, :capture_type, :capture_exception
-    # For cross-language compatibility
-    def_delegator :instance, :capture_type, :captureException
-    def_delegator :instance, :capture_type, :captureMessage
-    def_delegator :instance, :annotate_exception, :annotateException
-    def_delegator :instance, :annotate_exception, :annotate
 
     # Injects various integrations. Default behavior: inject all available integrations
     def inject
