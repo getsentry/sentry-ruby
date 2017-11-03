@@ -127,7 +127,7 @@ class TestInstance < Raven::Test
 
     evt = @instance.capture_type("Message")
 
-    assert_equal evt.id, @instance.last_event_id
+    assert_equal evt.event_id, @instance.last_event_id
   end
 
   it "can capture with access to the event via block" do
@@ -179,87 +179,3 @@ class TestInstance < Raven::Test
     assert_equal "qux", @instance.context.extra["baz"]
   end
 end
-
-#
-#   describe '#annotate_exception' do
-#     let(:exception) { build_exception }
-#
-#     def ivars(object)
-#       object.instance_variables.map(&:to_s)
-#     end
-#
-#     it 'adds an annotation to the exception' do
-#       expect(ivars(exception)).not_to include("@__raven_context")
-#       subject.annotate_exception(exception, {})
-#       expect(ivars(exception)).to include("@__raven_context")
-#       expect(exception.instance_variable_get(:@__raven_context)).to \
-#         be_kind_of Hash
-#     end
-#
-#     context 'when the exception already has context' do
-#       it 'does a deep merge of options' do
-#         subject.annotate_exception(exception, :extra => { :language => "ruby" })
-#         subject.annotate_exception(exception, :extra => { :job_title => "engineer" })
-#         expected_hash = { :extra => { :language => "ruby", :job_title => "engineer" } }
-#         expect(exception.instance_variable_get(:@__raven_context)).to \
-#           eq expected_hash
-#       end
-#     end
-#   end
-#
-#   describe '#report_status' do
-#     let(:ready_message) do
-#       "Raven #{Raven::VERSION} ready to catch errors"
-#     end
-#
-#     let(:not_ready_message) do
-#       "Raven #{Raven::VERSION} configured not to capture errors."
-#     end
-#
-#     it 'logs a ready message when configured' do
-#       subject.configuration.silence_ready = false
-#
-#       expect(subject.logger).to receive(:info).with(ready_message)
-#       subject.report_status
-#     end
-#
-#     it 'logs not ready message if the config does not send in current environment' do
-#       subject.configuration.silence_ready = false
-#       subject.configuration.environments = ["production"]
-#       expect(subject.logger).to receive(:info).with(
-#         "Raven #{Raven::VERSION} configured not to capture errors: Not configured to send/capture in environment 'default'"
-#       )
-#       subject.report_status
-#     end
-#
-#     it 'logs nothing if "silence_ready" configuration is true' do
-#       subject.configuration.silence_ready = true
-#       expect(subject.logger).not_to receive(:info)
-#       subject.report_status
-#     end
-#   end
-#
-#   describe '.last_event_id' do
-#     let(:message) { "Test message" }
-#
-#     it 'sends the result of Event.capture_type' do
-#       expect(subject).to receive(:send_event).with(event)
-#
-#       subject.capture_type("Test message", options)
-#
-#       expect(subject.last_event_id).to eq(event.id)
-#     end
-#   end
-#
-#   describe "#rack_context" do
-#     it "doesn't set anything if the context is empty" do
-#       subject.rack_context({})
-#       expect(subject.context.rack_env).to be_nil
-#     end
-#
-#     it "sets arbitrary rack context" do
-#       subject.rack_context(:foo => :bar)
-#       expect(subject.context.rack_env[:foo]).to eq(:bar)
-#     end
-#   end
-# end
