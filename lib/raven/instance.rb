@@ -124,7 +124,7 @@ module Raven
         else
           send_event(evt)
         end
-        Thread.current["sentry_#{object_id}_last_event_id"] = evt.id
+        Thread.current["sentry_#{object_id}_last_event_id"] = evt.event_id
         evt
       end
     end
