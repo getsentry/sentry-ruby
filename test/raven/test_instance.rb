@@ -120,6 +120,8 @@ class TestInstance < Raven::Test
     assert_equal 1, @instance.client.transport.events.size
   end
 
+  # TODO: Show how it can do the things annotate_exception used to do
+
   it "sets the last event id for the thread" do
     @instance = Raven::Instance.new
     @instance.configuration.logger = Logger.new(nil)
@@ -164,7 +166,7 @@ class TestInstance < Raven::Test
   end
 
   it "can merge various types of context" do
-    @instance = Raven::Instance.new
+    @instance = Raven::Instance.new(Raven::Context.new)
     @instance.context.extra = { "baz" => "qux" }
     @instance.context.tags = { "sentry" => "is great" }
     @instance.context.user = { "id" => 1 }

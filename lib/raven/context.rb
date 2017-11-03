@@ -10,7 +10,8 @@ module Raven
       Thread.current[:sentry_context] = nil
     end
 
-    attr_accessor :transaction, :extra, :rack_env, :tags, :user
+    attr_accessor :transaction, :rack_env, :tags, :user
+    attr_writer :extra
 
     def initialize
       self.rack_env = {}
