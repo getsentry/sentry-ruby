@@ -27,6 +27,7 @@ gem "benchmark-ips"
 gem "benchmark-ipsa" if RUBY_VERSION > '2.0'
 gem "ruby-prof", platform: :mri
 gem "rake"
+gem "minitest-proveit"
 gem "rubocop", "~> 0.41.1"
 gem "rspec"
 gem "capybara" # rspec system tests

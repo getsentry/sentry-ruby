@@ -7,20 +7,23 @@ module Raven
     # See Sentry server default limits at
     # https://github.com/getsentry/sentry/blob/master/src/sentry/conf/server.py
     MAX_MESSAGE_SIZE_IN_BYTES = 1024 * 8
-
+    TIME_FORMAT = '%Y-%m-%dT%H:%M:%S'.freeze
     SDK = { "name" => "raven-ruby", "version" => Raven::VERSION }.freeze
 
-    attr_accessor :id, :logger, :transaction, :server_name, :release, :modules,
-                  :extra, :tags, :context, :configuration, :checksum,
-                  :fingerprint, :environment, :server_os, :runtime,
-                  :breadcrumbs, :user, :backtrace, :platform, :sdk
-    alias event_id id
+    attr_accessor :event_id, :logger, :transaction, :server_name, :release, :modules,
+                  :extra, :tags, :checksum,
+                  :fingerprint, :environment,
+                  :user, :backtrace, :platform, :sdk, :instance
+
+    extend Forwardable
+    def_delegators :instance, :configuration, :breadcrumbs, :context
 
     attr_reader :level, :timestamp, :time_spent
 
     def initialize(init = {})
       # Set some simple default values
-      self.id            = SecureRandom.uuid.delete("-")
+      self.instance      = init[:instance] || Raven.instance
+      self.event_id      = SecureRandom.uuid.delete("-")
       self.timestamp     = Time.now.utc
       self.level         = :error
       self.logger        = :ruby
@@ -31,11 +34,7 @@ module Raven
       @interfaces        = {}
       self.user          = {} # TODO: contexts
       self.extra         = {} # TODO: contexts
-      self.server_os     = {} # TODO: contexts
-      self.runtime       = {} # TODO: contexts
       self.tags          = {} # TODO: contexts
-
-      copy_initial_state
 
       # Allow attributes to be set on the event at initialization
       yield self if block_given?
@@ -54,9 +53,6 @@ module Raven
                             {}
                           end
       options = Raven::Utils::DeepMergeHash.deep_merge(exception_context, options)
-
-      configuration = options[:configuration] || Raven.configuration
-      return unless configuration.exception_class_allowed?(exc)
 
       new(options) do |evt|
         evt.message = "#{exc.class}: #{exc.message}"
@@ -91,7 +87,7 @@ module Raven
     end
 
     def timestamp=(time)
-      @timestamp = time.is_a?(Time) ? time.strftime('%Y-%m-%dT%H:%M:%S') : time
+      @timestamp = time.is_a?(Time) ? time.utc.strftime(TIME_FORMAT) : time
     end
 
     def time_spent=(time)
@@ -99,7 +95,7 @@ module Raven
     end
 
     def level=(new_level) # needed to meet the Sentry spec
-      @level = new_level == "warn" || new_level == :warn ? :warning : new_level
+      @level = (new_level.to_sym == :warn) ? :warning : new_level
     end
 
     def interface(name, value = nil, &block)
@@ -124,7 +120,7 @@ module Raven
         memo[att] = public_send(att) if public_send(att)
       end
 
-      data[:breadcrumbs] = @breadcrumbs.to_hash unless @breadcrumbs.empty?
+      data[:breadcrumbs] = breadcrumbs.to_hash unless breadcrumbs.empty?
 
       @interfaces.each_pair do |name, int_data|
         data[name.to_sym] = int_data.to_hash
@@ -160,39 +156,27 @@ module Raven
     end
 
     def stacktrace_interface_from(backtrace)
-      Backtrace.parse(backtrace).lines.reverse.each_with_object([]) do |line, memo|
-        frame = StacktraceInterface::Frame.new
-        frame.abs_path = line.file if line.file
-        frame.function = line.method if line.method
-        frame.lineno = line.number
-        frame.in_app = line.in_app
-        frame.module = line.module_name if line.module_name
+      Backtrace.parse(backtrace).lines.select(&:file).map do |line|
+        StacktraceInterface::Frame.new do |frame|
+          frame.abs_path = line.file
+          frame.longest_load_path = $LOAD_PATH.select { |path| line.file.start_with?(path.to_s) }.max_by(&:size)
+          frame.project_root = configuration.project_root
+          frame.app_dirs_pattern = configuration.app_dirs_pattern
+          frame.function = line.method
+          frame.lineno = line.number
+          frame.module = line.module_name
 
-        if configuration[:context_lines] && frame.abs_path
-          frame.pre_context, frame.context_line, frame.post_context = \
-            configuration.linecache.get_file_context(frame.abs_path, frame.lineno, configuration[:context_lines])
+          if configuration.context_lines
+            frame.pre_context, frame.context_line, frame.post_context = \
+              configuration.linecache.get_file_context(frame.abs_path, frame.lineno, configuration.context_lines)
+          end
         end
-
-        memo << frame if frame.filename
       end
-    end
-
-    # For cross-language compat
-    class << self
-      alias captureException from_exception
-      alias captureMessage from_message
-      alias capture_exception from_exception
-      alias capture_message from_message
     end
 
     private
 
-    def copy_initial_state
-      self.configuration = Raven.configuration
-      self.breadcrumbs   = Raven.breadcrumbs
-      self.context       = Raven.context
-    end
-
+    # TODO: delegate
     def set_core_attributes_from_configuration
       self.server_name ||= configuration.server_name
       self.release     ||= configuration.release
@@ -200,11 +184,12 @@ module Raven
       self.environment ||= configuration.current_environment
     end
 
+    # TODO: dup context and delegate
     def set_core_attributes_from_context
       self.transaction ||= context.transaction.last
 
       # If this is a Rack event, merge Rack context
-      add_rack_context if !self[:http] && context.rack_env
+      add_rack_context if !self[:http] && !context.rack_env.empty?
 
       # Merge contexts
       self.user = context.user.merge(user) # TODO: contexts
@@ -251,6 +236,7 @@ module Raven
       end
     end
 
+    # TODO: memoize and move to configuration
     def list_gem_specs
       # Older versions of Rubygems don't support iterating over all specs
       Hash[Gem::Specification.map { |spec| [spec.name, spec.version.to_s] }] if Gem::Specification.respond_to?(:map)

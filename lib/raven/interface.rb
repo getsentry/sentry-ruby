@@ -19,7 +19,10 @@ module Raven
     end
 
     def to_hash
-      Hash[instance_variables.map { |name| [name[1..-1].to_sym, instance_variable_get(name)] }]
+      instance_variables.each_with_object({}) do |name, memo|
+        value = instance_variable_get(name)
+        memo[name[1..-1].to_sym] = value if value
+      end
     end
   end
 end

@@ -1,5 +1,4 @@
 require 'spec_helper'
-require 'raven/integrations/rack'
 
 RSpec.describe Raven::Event do
   before do
@@ -166,8 +165,7 @@ RSpec.describe Raven::Event do
                                    :headers => { 'Host' => 'localhost', "X-Forwarded-For" => "1.1.1.1, 2.2.2.2" },
                                    :method => 'POST',
                                    :query_string => 'biz=baz',
-                                   :url => 'http://localhost/lol',
-                                   :cookies => nil)
+                                   :url => 'http://localhost/lol')
     end
 
     it "sets user context ip address correctly" do
@@ -195,6 +193,7 @@ RSpec.describe Raven::Event do
       config.tags = { 'key' => 'value' }
       config.release = "custom"
       config.current_environment = "custom"
+      instance = Raven::Instance.new(nil, config)
 
       Raven::Event.new(
         :level => 'warning',
@@ -203,7 +202,7 @@ RSpec.describe Raven::Event do
           'foo' => 'bar'
         },
         :server_name => 'foo.local',
-        :configuration => config
+        :instance => instance
       ).to_hash
     end
 
@@ -217,24 +216,19 @@ RSpec.describe Raven::Event do
 
   context 'configuration tags unspecified' do
     it 'should not persist tags between unrelated events' do
-      config = Raven::Configuration.new
-      config.logger = Logger.new(nil)
-
       Raven::Event.new(
         :level => 'warning',
         :logger => 'foo',
         :tags => {
           'foo' => 'bar'
         },
-        :server_name => 'foo.local',
-        :configuration => config
+        :server_name => 'foo.local'
       )
 
       hash = Raven::Event.new(
         :level => 'warning',
         :logger => 'foo',
-        :server_name => 'foo.local',
-        :configuration => config
+        :server_name => 'foo.local'
       ).to_hash
 
       expect(hash[:tags]).to eq({})
@@ -251,11 +245,12 @@ RSpec.describe Raven::Event do
         'configuration_event_key' => 'configuration_value',
         'configuration_key' => 'configuration_value'
       }
-
-      Raven.tags_context('configuration_context_event_key' => 'context_value',
-                         'configuration_context_key' => 'context_value',
-                         'context_event_key' => 'context_value',
-                         'context_key' => 'context_value')
+      context = Raven::Context.new
+      context.tags = { 'configuration_context_event_key' => 'context_value',
+                       'configuration_context_key' => 'context_value',
+                       'context_event_key' => 'context_value',
+                       'context_key' => 'context_value' }
+      instance = Raven::Instance.new(context, config)
 
       Raven::Event.new(
         :level => 'warning',
@@ -267,7 +262,7 @@ RSpec.describe Raven::Event do
           'event_key' => 'event_value'
         },
         :server_name => 'foo.local',
-        :configuration => config
+        :instance => instance
       ).to_hash
     end
 
@@ -393,11 +388,11 @@ RSpec.describe Raven::Event do
 
   describe '.capture_message' do
     let(:message) { 'This is a message' }
-    let(:hash) { Raven::Event.capture_message(message).to_hash }
+    let(:hash) { Raven::Event.from_message(message).to_hash }
 
     context 'for a Message' do
       it 'returns an event' do
-        expect(Raven::Event.capture_message(message)).to be_a(Raven::Event)
+        expect(Raven::Event.from_message(message)).to be_a(Raven::Event)
       end
 
       it "sets the message to the value passed" do
@@ -409,13 +404,13 @@ RSpec.describe Raven::Event do
       end
 
       it 'accepts an options hash' do
-        expect(Raven::Event.capture_message(message, :logger => 'logger').logger).to eq('logger')
+        expect(Raven::Event.from_message(message, :logger => 'logger').logger).to eq('logger')
       end
 
       it 'accepts a stacktrace' do
         backtrace = ["/path/to/some/file:22:in `function_name'",
                      "/some/other/path:1412:in `other_function'"]
-        evt = Raven::Event.capture_message(message, :backtrace => backtrace)
+        evt = Raven::Event.from_message(message, :backtrace => backtrace)
         expect(evt[:stacktrace]).to be_a(Raven::StacktraceInterface)
 
         frames = evt[:stacktrace].to_hash[:frames]
@@ -434,11 +429,11 @@ RSpec.describe Raven::Event do
   describe '.capture_exception' do
     let(:message) { 'This is a message' }
     let(:exception) { Exception.new(message) }
-    let(:hash) { Raven::Event.capture_exception(exception).to_hash }
+    let(:hash) { Raven::Event.from_exception(exception).to_hash }
 
     context 'for an Exception' do
       it 'returns an event' do
-        expect(Raven::Event.capture_exception(exception)).to be_a(Raven::Event)
+        expect(Raven::Event.from_exception(exception)).to be_a(Raven::Event)
       end
 
       it "sets the message to the exception's message and type" do
@@ -470,88 +465,6 @@ RSpec.describe Raven::Event do
 
       it 'sends the module name as part of the exception info' do
         expect(hash[:exception][:values][0][:module]).to eq('Raven::Test')
-      end
-    end
-
-    context 'for a Raven::Error' do
-      let(:exception) { Raven::Error.new }
-      it 'does not create an event' do
-        expect(Raven::Event.capture_exception(exception)).to be_nil
-      end
-    end
-
-    context 'for an excluded exception type' do
-      module Raven::Test
-        class BaseExc < RuntimeError; end
-        class SubExc < BaseExc; end
-        module ExcTag; end
-      end
-      let(:config) do
-        config = Raven::Configuration.new
-        config.logger = Logger.new(nil)
-        config
-      end
-
-      context "invalid exclusion type" do
-        it 'returns Raven::Event' do
-          config.excluded_exceptions << nil
-          config.excluded_exceptions << 1
-          config.excluded_exceptions << {}
-          expect(Raven::Event.capture_exception(Raven::Test::BaseExc.new,
-                                                :configuration => config)).to be_a(Raven::Event)
-        end
-      end
-
-      context "defined by string type" do
-        it 'returns nil for a class match' do
-          config.excluded_exceptions << 'Raven::Test::BaseExc'
-          expect(Raven::Event.capture_exception(Raven::Test::BaseExc.new,
-                                                :configuration => config)).to be_nil
-        end
-
-        it 'returns nil for a top class match' do
-          config.excluded_exceptions << '::Raven::Test::BaseExc'
-          expect(Raven::Event.capture_exception(Raven::Test::BaseExc.new,
-                                                :configuration => config)).to be_nil
-        end
-
-        it 'returns nil for a sub class match' do
-          config.excluded_exceptions << 'Raven::Test::BaseExc'
-          expect(Raven::Event.capture_exception(Raven::Test::SubExc.new,
-                                                :configuration => config)).to be_nil
-        end
-
-        it 'returns nil for a tagged class match' do
-          config.excluded_exceptions << 'Raven::Test::ExcTag'
-          expect(Raven::Event.capture_exception(Raven::Test::SubExc.new.tap { |x| x.extend(Raven::Test::ExcTag) },
-                                                :configuration => config)).to be_nil
-        end
-
-        it 'returns Raven::Event for an undefined exception class' do
-          config.excluded_exceptions << 'Raven::Test::NonExistentExc'
-          expect(Raven::Event.capture_exception(Raven::Test::BaseExc.new,
-                                                :configuration => config)).to be_a(Raven::Event)
-        end
-      end
-
-      context "defined by class type" do
-        it 'returns nil for a class match' do
-          config.excluded_exceptions << Raven::Test::BaseExc
-          expect(Raven::Event.capture_exception(Raven::Test::BaseExc.new,
-                                                :configuration => config)).to be_nil
-        end
-
-        it 'returns nil for a sub class match' do
-          config.excluded_exceptions << Raven::Test::BaseExc
-          expect(Raven::Event.capture_exception(Raven::Test::SubExc.new,
-                                                :configuration => config)).to be_nil
-        end
-
-        it 'returns nil for a tagged class match' do
-          config.excluded_exceptions << Raven::Test::ExcTag
-          expect(Raven::Event.capture_exception(Raven::Test::SubExc.new.tap { |x| x.extend(Raven::Test::ExcTag) },
-                                                :configuration => config)).to be_nil
-        end
       end
     end
 
@@ -653,28 +566,23 @@ RSpec.describe Raven::Event do
     end
 
     it 'accepts an options hash' do
-      expect(Raven::Event.capture_exception(exception, :logger => 'logger').logger).to eq('logger')
-    end
-
-    it 'uses an annotation if one exists' do
-      Raven.annotate_exception(exception, :logger => 'logger')
-      expect(Raven::Event.capture_exception(exception).logger).to eq('logger')
+      expect(Raven::Event.from_exception(exception, :logger => 'logger').logger).to eq('logger')
     end
 
     it 'accepts a checksum' do
-      expect(Raven::Event.capture_exception(exception, :checksum => 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa').checksum).to eq('aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa')
+      expect(Raven::Event.from_exception(exception, :checksum => 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa').checksum).to eq('aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa')
     end
 
     it 'accepts a release' do
-      expect(Raven::Event.capture_exception(exception, :release => '1.0').release).to eq('1.0')
+      expect(Raven::Event.from_exception(exception, :release => '1.0').release).to eq('1.0')
     end
 
     it 'accepts a fingerprint' do
-      expect(Raven::Event.capture_exception(exception, :fingerprint => ['{{ default }}', 'foo']).fingerprint).to eq(['{{ default }}', 'foo'])
+      expect(Raven::Event.from_exception(exception, :fingerprint => ['{{ default }}', 'foo']).fingerprint).to eq(['{{ default }}', 'foo'])
     end
 
     it 'accepts a logger' do
-      expect(Raven::Event.capture_exception(exception, :logger => 'root').logger).to eq('root')
+      expect(Raven::Event.from_exception(exception, :logger => 'root').logger).to eq('root')
     end
   end
 end
