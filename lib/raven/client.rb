@@ -99,7 +99,7 @@ module Raven
         configuration.logger.error "Not sending event due to previous failure(s)."
       end
       configuration.logger.error("Failed to submit event: #{get_log_message(event)}")
-      configuration.transport_failure_callback.call(event) if configuration.transport_failure_callback
+      configuration.transport_failure_callback.call(e, event) if configuration.transport_failure_callback
     end
   end
 
