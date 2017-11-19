@@ -100,7 +100,7 @@ end
 If Raven fails to send an event to Sentry for any reason (either the Sentry server has returned a 4XX or 5XX response), this Proc or lambda will be called.
 
 ```ruby
-config.transport_failure_callback = lambda { |error, event|
+config.transport_failure_callback = lambda { |event, error|
   AdminMailer.email_admins("Oh god, it's on fire because #{error.message}!", event).deliver_later
 }
 ```
