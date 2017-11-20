@@ -162,7 +162,6 @@ module Raven
       'AbstractController::ActionNotFound',
       'ActionController::BadRequest',
       'ActionController::InvalidAuthenticityToken',
-      'ActionController::InvalidAuthenticityToken',
       'ActionController::InvalidCrossOriginRequest',
       'ActionController::MethodNotAllowed',
       'ActionController::NotImplemented',
