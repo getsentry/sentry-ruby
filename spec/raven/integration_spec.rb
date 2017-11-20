@@ -48,10 +48,10 @@ RSpec.describe "Integration tests" do
   end
 
   it "transport failure should call transport_failure_callback" do
-    @instance.configuration.transport_failure_callback = proc { |_e| @io.puts "OK!" }
+    @instance.configuration.transport_failure_callback = proc { |event, error| @io.puts "OK! - #{error.message}" }
 
     expect(@instance.client.transport).to receive(:send_event).exactly(1).times.and_raise(Faraday::Error::ConnectionFailed, "conn failed")
     @instance.capture_exception(build_exception)
-    expect(@io.string).to match(/OK!$/)
+    expect(@io.string).to match(/OK! - conn failed$/)
   end
 end
