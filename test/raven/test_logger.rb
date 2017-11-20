@@ -3,7 +3,7 @@ require 'test_helper'
 class RavenLoggerTest < Raven::Test
   it "should log to a given IO" do
     stringio = StringIO.new
-    log = Raven::Logger.new(stringio)
+    log = Raven::Logger.new(Logger.new(stringio))
 
     log.fatal("Oh noes!")
 
