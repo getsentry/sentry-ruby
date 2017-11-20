@@ -29,7 +29,7 @@ class TestClient < Raven::Test
 
   it "logs while sending" do
     stringio = StringIO.new
-    log = Raven::Logger.new(stringio)
+    log = Raven::Logger.new(Logger.new(stringio))
     @client.configuration.logger = log
 
     @client.send_event(@event)
@@ -60,7 +60,7 @@ class TestClient < Raven::Test
   end
 
   it "sets transport based on config scheme" do
-    @client.configuration = Raven::Configuration.new.tap { |c| c.dsn = "https://" }
+    @client.configuration = Raven::Configuration.new.tap { |c| c.dsn = "https://"; c.logger = Logger.new(nil) }
     assert_instance_of Raven::Transports::HTTP, @client.transport
   end
 
@@ -140,7 +140,7 @@ class TestClient < Raven::Test
   it "logs some stuff on a failed send" do
     @event.message = "Test message"
     stringio = StringIO.new
-    log = Raven::Logger.new(stringio)
+    log = Raven::Logger.new(Logger.new(stringio))
     @client.configuration.logger = log
     transport = @client.transport
     def transport.send_event(*); raise Raven::Error, "Boom!"; end
@@ -153,7 +153,7 @@ class TestClient < Raven::Test
 
   it "logs differently if we're not trying due to previous failure" do
     stringio = StringIO.new
-    log = Raven::Logger.new(stringio)
+    log = Raven::Logger.new(Logger.new(stringio))
     @client.configuration.logger = log
     @mock = Minitest::Mock.new
     @mock.expect :should_try?, false
