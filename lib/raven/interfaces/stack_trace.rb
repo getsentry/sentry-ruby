@@ -48,6 +48,25 @@ module Raven
         !!(abs_path =~ in_app_pattern)
       end
 
+      def self.from_backtrace(backtrace, configuration)
+        Backtrace.parse(backtrace).lines.select(&:file).map do |line|
+          new do |frame|
+            frame.abs_path = line.file
+            frame.longest_load_path = $LOAD_PATH.select { |path| line.file.start_with?(path.to_s) }.max_by(&:size)
+            frame.project_root = configuration.project_root
+            frame.app_dirs_pattern = configuration.app_dirs_pattern
+            frame.function = line.method
+            frame.lineno = line.number
+            frame.module = line.module_name
+
+            if configuration.context_lines
+              frame.pre_context, frame.context_line, frame.post_context = \
+                configuration.linecache.get_file_context(frame.abs_path, frame.lineno, configuration.context_lines)
+            end
+          end
+        end
+      end
+
       private
 
       def under_project_root?

@@ -311,6 +311,7 @@ module Raven
     def current_environment=(environment)
       @current_environment = environment.to_s
     end
+    alias environment current_environment
 
     def project_root=(root)
       @project_root = root.to_s
@@ -347,6 +348,14 @@ module Raven
         false
       else
         true
+      end
+    end
+
+    def modules
+      # Older versions of Rubygems don't support iterating over all specs
+      return unless send_modules && Gem::Specification.respond_to?(:map)
+      Gem::Specification.latest_specs.each_with_object({}) do |spec, memo|
+        memo[spec.name] = spec.version.to_s
       end
     end
 

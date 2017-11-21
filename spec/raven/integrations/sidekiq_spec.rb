@@ -36,7 +36,7 @@ if RUBY_VERSION > '2.0'
     context "when the captured exception is already annotated" do
       it "does a deep merge of options" do
         exception = build_exception
-        Raven.annotate_exception(exception, :extra => { :job_title => "engineer" })
+        def exception.raven_context; { :extra => { :job_title => "engineer" } }; end
         expected_options = {
           :message => exception.message,
           :extra => {
@@ -151,7 +151,7 @@ if RUBY_VERSION > '2.0'
       expect { process_job("SadWorker") }.to change { Raven.client.transport.events.size }.by(1)
 
       event = JSON.parse(Raven.client.transport.events.last[1])
-      expect(event["logentry"]["message"]).to eq("I'm sad!")
+      expect(event["logentry"]["message"]).to eq("RuntimeError: I'm sad!")
     end
 
     it "clears context from other workers and captures its own" do
@@ -181,7 +181,7 @@ if RUBY_VERSION > '2.0'
 
       event = JSON.parse(Raven.client.transport.events.last[1])
 
-      expect(event["logentry"]["message"]).to eq "Uhoh!"
+      expect(event["logentry"]["message"]).to eq "RuntimeError: Uhoh!"
       expect(event["transaction"]).to eq "Sidekiq/startup"
     end
 
