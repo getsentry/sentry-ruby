@@ -41,6 +41,8 @@ module Raven
         context.map { |arg| filter_context(arg) }
       when Hash
         Hash[context.map { |key, value| filter_context_hash(key, value) }]
+      when GlobalID
+        context.to_s
       else
         context
       end
