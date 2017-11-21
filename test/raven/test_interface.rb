@@ -5,10 +5,6 @@ class TestInterface < Raven::Interface
 end
 
 class RavenInterfaceTest < Raven::Test
-  it "should register an interface when a new class is defined" do
-    assert_equal TestInterface, Raven::Interface.registered[:test]
-  end
-
   it "can be initialized with some attributes" do
     interface = TestInterface.new(:some_attr => "test")
     assert_equal "test", interface.some_attr

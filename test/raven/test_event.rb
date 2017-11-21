@@ -58,20 +58,6 @@ class TestEvent < Raven::Test
     assert_equal :warning, @event.level
   end
 
-  it "rejects bad interface names" do
-    @event = Raven::Event.new
-
-    assert_raises(Raven::Error) { @event.interface(:nonexistent) }
-  end
-
-  it "adds interfaces" do
-    @event = Raven::Event.new
-
-    @event.interface(:message) { |i| i.message = "Hi!" }
-
-    assert_equal "Hi!", @event[:message].message
-  end
-
   it "converts to a hash" do
     @event = Raven::Event.new(:message => "Hi!")
 

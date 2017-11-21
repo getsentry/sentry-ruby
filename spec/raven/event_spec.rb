@@ -412,9 +412,9 @@ RSpec.describe Raven::Event do
         backtrace = ["/path/to/some/file:22:in `function_name'",
                      "/some/other/path:1412:in `other_function'"]
         evt = Raven::Event.from_message(message, :backtrace => backtrace)
-        expect(evt[:stacktrace]).to be_a(Raven::StacktraceInterface)
+        expect(evt.stacktrace).to be_a(Raven::StacktraceInterface)
 
-        frames = evt[:stacktrace].to_hash[:frames]
+        frames = evt.stacktrace.to_hash[:frames]
         expect(frames.length).to eq(2)
         expect(frames[0][:lineno]).to eq(1412)
         expect(frames[0][:function]).to eq('other_function')
