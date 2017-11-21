@@ -1,4 +1,5 @@
 require "spec_helper"
+require "raven/integrations/rack"
 
 RSpec.describe "Rails Integration", :type => :request, :rails => true do
   before(:all) do

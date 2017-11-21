@@ -50,7 +50,7 @@ module Raven
 
       def self.from_backtrace(backtrace, configuration)
         Backtrace.parse(backtrace).lines.select(&:file).map do |line|
-          new do |frame|
+          Frame.new do |frame|
             frame.abs_path = line.file
             frame.longest_load_path = $LOAD_PATH.select { |path| line.file.start_with?(path.to_s) }.max_by(&:size)
             frame.project_root = configuration.project_root
