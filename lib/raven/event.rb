@@ -1,5 +1,4 @@
 # frozen_string_literal: true
-require 'socket'
 require 'securerandom'
 
 module Raven
@@ -11,19 +10,16 @@ module Raven
     SDK = { "name" => "raven-ruby", "version" => Raven::VERSION }.freeze
 
     attr_accessor :event_id, :logger, :transaction, :server_name, :release, :modules,
-                  :extra, :tags, :checksum,
-                  :fingerprint, :environment,
-                  :user, :backtrace, :platform, :sdk, :instance
+                  :extra, :tags, :checksum, :fingerprint, :environment, :user,
+                  :backtrace, :platform, :sdk, :instance
+    attr_reader   :level, :timestamp, :time_spent
 
     extend Forwardable
     def_delegators :instance, :configuration, :breadcrumbs, :context
 
-    attr_reader :level, :timestamp, :time_spent
-
     def initialize(init = {})
-      # Set some simple default values
-      self.instance      = init[:instance] || Raven.instance
-      self.event_id      = SecureRandom.uuid.delete("-")
+      self.instance      = Raven.instance
+      self.event_id      = SecureRandom.uuid.delete!("-")
       self.timestamp     = Time.now.utc
       self.level         = :error
       self.logger        = :ruby
@@ -36,30 +32,34 @@ module Raven
       self.extra         = {} # TODO: contexts
       self.tags          = {} # TODO: contexts
 
-      # Allow attributes to be set on the event at initialization
-      yield self if block_given?
       init.each_pair { |key, val| public_send("#{key}=", val) }
+      yield self if block_given?
 
       set_core_attributes_from_configuration
       set_core_attributes_from_context
     end
 
     def self.from_exception(exc, options = {}, &block)
-      exception_context = if exc.instance_variable_defined?(:@__raven_context)
-                            exc.instance_variable_get(:@__raven_context)
-                          elsif exc.respond_to?(:raven_context)
-                            exc.raven_context
-                          else
-                            {}
-                          end
-      options = Raven::Utils::DeepMergeHash.deep_merge(exception_context, options)
+      options = Raven::Utils::DeepMergeHash.deep_merge(exception_context(exc), options)
 
       new(options) do |evt|
         evt.message = "#{exc.class}: #{exc.message}"
 
-        evt.add_exception_interface(exc)
-
         yield evt if block
+
+        evt.interface(:exception) do |exc_int|
+          exc_int.values = ExceptionInterface.from_exception(exc, evt.configuration)
+        end
+      end
+    end
+
+    def self.exception_context(exc)
+      if exc.instance_variable_defined?(:@__raven_context)
+        exc.instance_variable_get(:@__raven_context)
+      elsif exc.respond_to?(:raven_context)
+        exc.raven_context
+      else
+        {}
       end
     end
 
@@ -68,7 +68,7 @@ module Raven
         evt.message = message, options[:message_params] || []
         if options[:backtrace]
           evt.interface(:stacktrace) do |int|
-            int.frames = evt.stacktrace_interface_from(options[:backtrace])
+            int.frames = StacktraceInterface::Frame.from_backtrace(options[:backtrace], evt.configuration)
           end
         end
       end
@@ -117,7 +117,8 @@ module Raven
       data = [:checksum, :environment, :event_id, :extra, :fingerprint, :level,
               :logger, :message, :modules, :platform, :release, :sdk, :server_name,
               :tags, :time_spent, :timestamp, :transaction, :user].each_with_object({}) do |att, memo|
-        memo[att] = public_send(att) if public_send(att)
+        val = public_send(att)
+        memo[att] = val unless val.nil?
       end
 
       data[:breadcrumbs] = breadcrumbs.to_hash unless breadcrumbs.empty?
@@ -133,58 +134,16 @@ module Raven
       JSON.parse(JSON.generate(cleaned_hash))
     end
 
-    def add_exception_interface(exc)
-      interface(:exception) do |exc_int|
-        exceptions = exception_chain_to_array(exc)
-        backtraces = Set.new
-        exc_int.values = exceptions.map do |e|
-          SingleExceptionInterface.new do |int|
-            int.type = e.class.to_s
-            int.value = e.to_s
-            int.module = e.class.to_s.split('::')[0...-1].join('::')
-
-            int.stacktrace =
-              if e.backtrace && !backtraces.include?(e.backtrace.object_id)
-                backtraces << e.backtrace.object_id
-                StacktraceInterface.new do |stacktrace|
-                  stacktrace.frames = stacktrace_interface_from(e.backtrace)
-                end
-              end
-          end
-        end
-      end
-    end
-
-    def stacktrace_interface_from(backtrace)
-      Backtrace.parse(backtrace).lines.select(&:file).map do |line|
-        StacktraceInterface::Frame.new do |frame|
-          frame.abs_path = line.file
-          frame.longest_load_path = $LOAD_PATH.select { |path| line.file.start_with?(path.to_s) }.max_by(&:size)
-          frame.project_root = configuration.project_root
-          frame.app_dirs_pattern = configuration.app_dirs_pattern
-          frame.function = line.method
-          frame.lineno = line.number
-          frame.module = line.module_name
-
-          if configuration.context_lines
-            frame.pre_context, frame.context_line, frame.post_context = \
-              configuration.linecache.get_file_context(frame.abs_path, frame.lineno, configuration.context_lines)
-          end
-        end
-      end
-    end
-
     private
 
-    # TODO: delegate
     def set_core_attributes_from_configuration
       self.server_name ||= configuration.server_name
       self.release     ||= configuration.release
-      self.modules       = list_gem_specs if configuration.send_modules
+      self.modules     ||= configuration.modules
       self.environment ||= configuration.current_environment
     end
 
-    # TODO: dup context and delegate
+    # TODO: dup context and modify/delegate
     def set_core_attributes_from_context
       self.transaction ||= context.transaction.last
 
@@ -192,54 +151,21 @@ module Raven
       add_rack_context if !self[:http] && !context.rack_env.empty?
 
       # Merge contexts
-      self.user = context.user.merge(user) # TODO: contexts
+      self.user  = context.user.merge(user) # TODO: contexts
       self.extra = context.extra.merge(extra) # TODO: contexts
-      self.tags = configuration.tags.merge(context.tags).merge!(tags) # TODO: contexts
+      self.tags  = configuration.tags.merge(context.tags).merge!(tags) # TODO: contexts
     end
 
     def add_rack_context
-      interface :http do |int|
-        int.from_rack(context.rack_env)
-      end
-      context.user[:ip_address] = calculate_real_ip_from_rack
-    end
+      interface(:http) { |int| int.from_rack(context.rack_env) }
 
-    # When behind a proxy (or if the user is using a proxy), we can't use
-    # REMOTE_ADDR to determine the Event IP, and must use other headers instead.
-    def calculate_real_ip_from_rack
-      Utils::RealIp.new(
-        :remote_addr => context.rack_env["REMOTE_ADDR"],
-        :client_ip => context.rack_env["HTTP_CLIENT_IP"],
-        :real_ip => context.rack_env["HTTP_X_REAL_IP"],
-        :forwarded_for => context.rack_env["HTTP_X_FORWARDED_FOR"]
-      ).calculate_ip
+      # When behind a proxy (or if the user is using a proxy), we can't use
+      # REMOTE_ADDR to determine the Event IP, and must use other headers instead.
+      context.user[:ip_address] = Utils::RealIp.new(context.rack_env).calculate_ip
     end
 
     def async_json_processors
-      [
-        Raven::Processor::RemoveCircularReferences,
-        Raven::Processor::UTF8Conversion
-      ].map { |v| v.new(self) }
-    end
-
-    def exception_chain_to_array(exc)
-      if exc.respond_to?(:cause) && exc.cause
-        exceptions = [exc]
-        while exc.cause
-          exc = exc.cause
-          break if exceptions.any? { |e| e.object_id == exc.object_id }
-          exceptions << exc
-        end
-        exceptions.reverse!
-      else
-        [exc]
-      end
-    end
-
-    # TODO: memoize and move to configuration
-    def list_gem_specs
-      # Older versions of Rubygems don't support iterating over all specs
-      Hash[Gem::Specification.map { |spec| [spec.name, spec.version.to_s] }] if Gem::Specification.respond_to?(:map)
+      [Raven::Processor::RemoveCircularReferences, Raven::Processor::UTF8Conversion].map { |v| v.new(nil) }
     end
   end
 end

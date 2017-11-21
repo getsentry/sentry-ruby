@@ -73,19 +73,21 @@ class TestEvent < Raven::Test
   end
 
   it "converts to a hash" do
+    @event = Raven::Event.new(:message => "Hi!")
+
+    hash = @event.to_hash
+
+    assert_instance_of Hash, hash
+    assert_equal :ruby, hash[:logger]
+    assert_equal "Hi!", hash[:logentry][:message]
   end
 
   it "can convert to a guaranteed json compatible hash" do
-  end
+    @event = Raven::Event.new(:message => "Hi!", :extra => { :not_json => StringIO.new("Foo") })
 
-  # TODO: move to exc interface
-  it "converts an exception into an exception interface" do
-  end
+    json = @event.to_json_compatible
 
-  # TODO: move to stacktrace interface
-  it "converts a backtrace into a stacktrace interface" do
+    assert_equal "Hi!", json["logentry"]["message"]
+    assert_match "#<StringIO:", json["extra"]["not_json"]
   end
-
-  # rack related tests
-  # exc chain tests
 end

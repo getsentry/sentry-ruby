@@ -60,7 +60,10 @@ class TestClient < Raven::Test
   end
 
   it "sets transport based on config scheme" do
-    @client.configuration = Raven::Configuration.new.tap { |c| c.dsn = "https://"; c.logger = Logger.new(nil) }
+    @client.configuration = Raven::Configuration.new.tap do |c|
+      c.dsn = "https://"
+      c.logger = Logger.new(nil)
+    end
     assert_instance_of Raven::Transports::HTTP, @client.transport
   end
 
