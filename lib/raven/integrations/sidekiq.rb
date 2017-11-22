@@ -14,6 +14,7 @@ module Raven
 
   class SidekiqErrorHandler
     ACTIVEJOB_RESERVED_PREFIX = "_aj_".freeze
+    HAS_GLOBALID = const_defined?('GlobalID')
 
     def call(ex, context)
       context = filter_context(context)
@@ -42,7 +43,7 @@ module Raven
       when Hash
         Hash[context.map { |key, value| filter_context_hash(key, value) }]
       else
-        context
+        format_globalid(context)
       end
     end
 
@@ -63,6 +64,14 @@ module Raven
         "Sidekiq/#{context[:event]}"
       else
         "Sidekiq"
+      end
+    end
+
+    def format_globalid(context)
+      if HAS_GLOBALID && context.is_a?(GlobalID)
+        context.to_s
+      else
+        context
       end
     end
   end
