@@ -192,6 +192,8 @@ module Raven
       Raven::Processor::HTTPHeaders
     ].freeze
 
+    APP_DIRS_PATTERN = /(bin|exe|app|config|lib|test)/
+
     LOG_PREFIX = "** [Raven] ".freeze
     MODULE_SEPARATOR = "::".freeze
 
@@ -328,6 +330,11 @@ module Raven
       Gem::Specification.latest_specs.each_with_object({}) do |spec, memo|
         memo[spec.name] = spec.version.to_s
       end
+    end
+
+    def in_app?(path)
+      @in_app_regex ||= Regexp.new("^(#{project_root}/)?#{app_dirs_pattern || APP_DIRS_PATTERN}")
+      !!(path =~ @in_app_regex)
     end
 
     private
