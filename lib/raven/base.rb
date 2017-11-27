@@ -1,3 +1,6 @@
+require 'forwardable'
+require 'English'
+
 require 'raven/version'
 require 'raven/breadcrumbs'
 require 'raven/processor'
@@ -24,9 +27,6 @@ require 'raven/utils/deep_merge'
 require 'raven/utils/real_ip'
 require 'raven/utils/exception_cause_chain'
 require 'raven/instance'
-
-require 'forwardable'
-require 'English'
 
 module Raven
   AVAILABLE_INTEGRATIONS = %w(delayed_job railties sidekiq rack rack-timeout rake).freeze
