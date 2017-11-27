@@ -15,7 +15,7 @@ The official Ruby-language client and integration layer for the [Sentry](https:/
 
 ## Requirements
 
-We test on Ruby 1.9, 2.2, 2.3, and 2.4 at the latest patchlevel/teeny version. We also support JRuby 1.7 and 9.0. Our Rails integration works with Rails 4.2+ (including Rails 5).
+We test on Ruby 2.2, 2.3, and 2.4 at the latest patchlevel/teeny version. We also support JRuby 1.7 and 9.0. Our Rails integration works with Rails 4.2+ (including Rails 5). If you are using older versions of Ruby or Rails, check through the release notes for an older version of the gem that supports what you need - it should still work.
 
 ## Getting Started
 

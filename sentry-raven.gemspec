@@ -17,6 +17,7 @@ Gem::Specification.new do |gem|
   gem.files = `git ls-files | grep -Ev '^(spec|benchmarks|examples)'`.split("\n")
   gem.bindir = "exe"
   gem.executables = "raven"
+  gem.required_ruby_version = '>= 2.0'
 
   gem.add_dependency "faraday", ">= 0.7.6", "< 1.0"
 end

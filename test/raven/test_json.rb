@@ -56,40 +56,38 @@ class JSONTest < Raven::Test
     assert_equal "[\"symbol\",Infinity,NaN]", JSON.dump(data)
   end
 
-  if RUBY_VERSION.to_f >= 2.0 # 1.9 just hangs on this.
-    it "raises the correct error on strings that look like incomplete objects" do
-      assert_raises JSON::ParserError do
-        JSON.parse("{")
-      end
-      assert_raises JSON::ParserError do
-        JSON.parse("[")
-      end
+  it "raises the correct error on strings that look like incomplete objects" do
+    assert_raises JSON::ParserError do
+      JSON.parse("{")
     end
-
-    it "accepts any encoding which is internally valid" do
-      test_json = %({"example": "test"})
-      test_hash = { "example" => "test" }
-      assert_equal test_hash, JSON.parse(test_json)
-      assert_equal test_hash, JSON.parse(test_json.encode("utf-16"))
-      assert_equal test_hash, JSON.parse(test_json.encode("US-ASCII"))
+    assert_raises JSON::ParserError do
+      JSON.parse("[")
     end
+  end
 
-    it "blows up on circular references" do
-      data = {}
-      data["data"] = data
-      data["ary"] = []
-      data["ary"].push("x" => data["ary"])
-      data["ary2"] = data["ary"]
-      data["leave intact"] = { "not a circular reference" => true }
+  it "accepts any encoding which is internally valid" do
+    test_json = %({"example": "test"})
+    test_hash = { "example" => "test" }
+    assert_equal test_hash, JSON.parse(test_json)
+    assert_equal test_hash, JSON.parse(test_json.encode("utf-16"))
+    assert_equal test_hash, JSON.parse(test_json.encode("US-ASCII"))
+  end
 
-      if RUBY_PLATFORM == "java"
-        assert_raises do
-          JSON.dump(data)
-        end
-      else
-        assert_raises SystemStackError do
-          JSON.dump(data)
-        end
+  it "blows up on circular references" do
+    data = {}
+    data["data"] = data
+    data["ary"] = []
+    data["ary"].push("x" => data["ary"])
+    data["ary2"] = data["ary"]
+    data["leave intact"] = { "not a circular reference" => true }
+
+    if RUBY_PLATFORM == "java"
+      assert_raises do
+        JSON.dump(data)
+      end
+    else
+      assert_raises SystemStackError do
+        JSON.dump(data)
       end
     end
   end
