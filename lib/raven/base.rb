@@ -1,5 +1,4 @@
 require 'raven/version'
-require 'raven/backtrace'
 require 'raven/breadcrumbs'
 require 'raven/processor'
 require 'raven/processor/sanitizedata'

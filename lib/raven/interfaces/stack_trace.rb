@@ -16,76 +16,38 @@ module Raven
       data
     end
 
-    # Not actually an interface, but I want to use the same style
+    # Not actually an interface, but want to use the same style
     class Frame < Interface
-      APP_DIRS_PATTERN = /(bin|exe|app|config|lib|test)/
-
-      attr_accessor :abs_path, :context_line, :function,
-                    :lineno, :module, :pre_context, :post_context, :vars,
-                    :project_root, :app_dirs_pattern, :longest_load_path
+      attr_accessor :context_line, :function, :module, :pre_context, :post_context,
+                    :vars, :filename, :abs_path, :lineno, :line, :in_app
 
       def initialize(*arguments)
         super(*arguments)
-      end
-
-      def filename
-        return if abs_path.nil?
-        return @filename if instance_variable_defined?(:@filename)
-
-        @filename = prefix ? abs_path[prefix.to_s.chomp(File::SEPARATOR).length + 1..-1] : abs_path
+        self.abs_path = line.absolute_path
+        self.lineno = line.lineno
+        self.filename = line.path
+        self.function = line.to_s.match(/`(.*)'/).captures[0]
       end
 
       def to_hash(*args)
         data = super(*args)
-        data[:filename] = filename
-        data[:in_app]   = in_app
-        [:project_root, :app_dirs_pattern, :longest_load_path].each { |k| data.delete(k) }
+        data[:line] = nil # Remove the line object
+
         data
       end
 
-      def in_app
-        in_app_pattern = Regexp.new("^(#{project_root}/)?#{app_dirs_pattern || APP_DIRS_PATTERN}")
-        !!(abs_path =~ in_app_pattern)
-      end
-
+      # Note that backtrace is Exception#backtrace_locations
       def self.from_backtrace(backtrace, configuration)
-        Backtrace.parse(backtrace).lines.select(&:file).map do |line|
+        backtrace.select(&:path).reverse!.map do |line|
           Frame.new do |frame|
-            frame.abs_path = line.file
-            frame.longest_load_path = $LOAD_PATH.select { |path| line.file.start_with?(path.to_s) }.max_by(&:size)
-            frame.project_root = configuration.project_root
-            frame.app_dirs_pattern = configuration.app_dirs_pattern
-            frame.function = line.method
-            frame.lineno = line.number
-            frame.module = line.module_name
+            frame.line = line
+            frame.in_app = configuration.in_app?(frame.abs_path)
 
             if configuration.context_lines
               frame.pre_context, frame.context_line, frame.post_context = \
                 configuration.linecache.get_file_context(frame.abs_path, frame.lineno, configuration.context_lines)
             end
           end
-        end
-      end
-
-      private
-
-      def under_project_root?
-        project_root && abs_path.start_with?(project_root)
-      end
-
-      def vendored_gem?
-        abs_path.match("vendor/bundle")
-      end
-
-      def prefix
-        if vendored_gem?
-          abs_path.match(%r{.*/gems/})
-        elsif under_project_root? && in_app
-          project_root
-        elsif under_project_root?
-          longest_load_path || project_root
-        else
-          longest_load_path
         end
       end
     end

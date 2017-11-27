@@ -23,12 +23,11 @@ module Raven
           int.type = klass
           int.value = e.to_s
           int.module = klass.split('::')[0...-1].join('::')
-
           int.stacktrace =
-            if e.backtrace && !backtraces.include?(e.backtrace.object_id)
+            if e.backtrace_locations && !backtraces.include?(e.backtrace_locations.object_id)
               backtraces << e.backtrace.object_id
               StacktraceInterface.new do |stacktrace|
-                stacktrace.frames = StacktraceInterface::Frame.from_backtrace(e.backtrace, configuration)
+                stacktrace.frames = StacktraceInterface::Frame.from_backtrace(e.backtrace_locations, configuration)
               end
             end
         end

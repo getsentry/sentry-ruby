@@ -443,8 +443,10 @@ RSpec.describe Raven::Event do
       end
 
       it 'accepts a stacktrace' do
-        backtrace = ["/path/to/some/file:22:in `function_name'",
-                     "/some/other/path:1412:in `other_function'"]
+        backtrace = [
+          OpenStruct.new(:lineno => 22, :to_s => "/path/to/some/file:22:in `function_name'", :path => "/path/to/some/file"),
+          OpenStruct.new(:lineno => 1412, :to_s => "/some/other/path:1412:in `other_function'", :path => "/some/other/path")
+        ]
         evt = Raven::Event.from_message(message, :backtrace => backtrace)
         expect(evt.stacktrace).to be_a(Raven::StacktraceInterface)
 
@@ -551,10 +553,12 @@ RSpec.describe Raven::Event do
     context 'when the exception has a backtrace' do
       let(:exception) do
         e = Exception.new(message)
-        allow(e).to receive(:backtrace).and_return [
-          "/path/to/some/file:22:in `function_name'",
-          "/some/other/path:1412:in `other_function'"
-        ]
+        allow(e).to receive(:backtrace_locations).and_return(
+          [
+            OpenStruct.new(:lineno => 22, :to_s => "/path/to/some/file:22:in `function_name'", :path => "/path/to/some/file"),
+            OpenStruct.new(:lineno => 1412, :to_s => "/some/other/path:1412:in `other_function'", :path => "/some/other/path")
+          ]
+        )
         e
       end
 
@@ -573,7 +577,11 @@ RSpec.describe Raven::Event do
       context 'with internal backtrace' do
         let(:exception) do
           e = Exception.new(message)
-          allow(e).to receive(:backtrace).and_return(["<internal:prelude>:10:in `synchronize'"])
+          allow(e).to receive(:backtrace_locations).and_return(
+            [
+              OpenStruct.new(:lineno => 10, :to_s => "<internal:prelude>:10:in `synchronize'", :path => "<internal:prelude>")
+            ]
+          )
           e
         end
 
@@ -582,21 +590,6 @@ RSpec.describe Raven::Event do
           expect(frames[0][:lineno]).to eq(10)
           expect(frames[0][:function]).to eq("synchronize")
           expect(frames[0][:filename]).to eq("<internal:prelude>")
-        end
-      end
-
-      context 'when a path in the stack trace is on the load path' do
-        before do
-          $LOAD_PATH << '/some'
-        end
-
-        after do
-          $LOAD_PATH.delete('/some')
-        end
-
-        it 'strips prefixes in the load path from frame filenames' do
-          frames = hash[:exception][:values][0][:stacktrace][:frames]
-          expect(frames[0][:filename]).to eq('other/path')
         end
       end
     end
