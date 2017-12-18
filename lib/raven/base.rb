@@ -23,6 +23,7 @@ require 'raven/transports'
 require 'raven/transports/http'
 require 'raven/utils/deep_merge'
 require 'raven/utils/real_ip'
+require 'raven/utils/release'
 require 'raven/instance'
 
 require 'forwardable'
