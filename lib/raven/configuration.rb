@@ -319,14 +319,6 @@ module Raven
       end
     end
 
-    def detect_release
-      detect_release_from_git ||
-        detect_release_from_capistrano ||
-        detect_release_from_heroku
-    rescue => ex
-      logger.error "Error detecting release: #{ex.message}"
-    end
-
     def excluded_exception?(exc)
       excluded_exceptions.any? { |x| get_exception_class(x) === exc }
     end
@@ -345,37 +337,6 @@ module Raven
       end
     rescue NameError # There's no way to safely ask if a constant exist for an unknown string
       nil
-    end
-
-    def detect_release_from_heroku
-      return unless running_on_heroku?
-      logger.warn(heroku_dyno_metadata_message) && return unless ENV['HEROKU_SLUG_COMMIT']
-
-      ENV['HEROKU_SLUG_COMMIT']
-    end
-
-    def running_on_heroku?
-      File.directory?("/etc/heroku")
-    end
-
-    def heroku_dyno_metadata_message
-      "You are running on Heroku but haven't enabled Dyno Metadata. For Sentry's "\
-      "release detection to work correctly, please run `heroku labs:enable runtime-dyno-metadata`"
-    end
-
-    def detect_release_from_capistrano
-      revision_file = File.join(project_root, 'REVISION')
-      revision_log = File.join(project_root, '..', 'revisions.log')
-
-      if File.exist?(revision_file)
-        File.read(revision_file).strip
-      elsif File.exist?(revision_log)
-        File.open(revision_log).to_a.last.strip.sub(/.*as release ([0-9]+).*/, '\1')
-      end
-    end
-
-    def detect_release_from_git
-      `git rev-parse --short HEAD`.strip if File.directory?(".git") rescue nil
     end
 
     def capture_in_current_environment?
@@ -429,6 +390,14 @@ module Raven
       else
         resolve_hostname
       end
+    end
+
+    def running_on_heroku?
+      File.directory?("/etc/heroku")
+    end
+
+    def detect_release
+      Utils::Release.new(logger).detect_release
     end
   end
 end
