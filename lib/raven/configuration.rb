@@ -377,7 +377,8 @@ module Raven
     def detect_release_from_git
       release = `git rev-parse --short HEAD 2>/dev/null`.strip if File.directory?('.git')
       return nil if release == ''
-    rescue
+      release
+    rescue StandardError
       nil
     end
 
