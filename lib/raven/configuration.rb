@@ -198,7 +198,7 @@ module Raven
       self.project_root = detect_project_root
       self.rails_activesupport_breadcrumbs = false
       self.rails_report_rescued_exceptions = true
-      self.release = Utils::Release.detect_release
+      self.release = Utils::Release.new(logger).detect_release
       self.sample_rate = 1.0
       self.sanitize_credit_cards = true
       self.sanitize_fields = []
