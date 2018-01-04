@@ -457,7 +457,7 @@ module Raven
     def valid?
       return true if %w(server host path public_key project_id).all? { |k| public_send(k) }
       if server
-        %w(server host public_key project_id).map do |key|
+        %w(path server host public_key project_id).map do |key|
           @errors << "No #{key} specified" unless public_send(key) && !public_send(key).empty?
         end
       else
