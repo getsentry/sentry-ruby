@@ -36,7 +36,7 @@ if RUBY_VERSION > '2.0'
     context "when the captured exception is already annotated" do
       it "does a deep merge of options" do
         exception = build_exception
-        Raven.annotate_exception(exception, :extra => { :job_title => "engineer" })
+        def exception.raven_context; { :extra => { :job_title => "engineer" } }; end
         expected_options = {
           :message => exception.message,
           :extra => {
