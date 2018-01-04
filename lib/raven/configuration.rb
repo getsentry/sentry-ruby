@@ -375,7 +375,7 @@ module Raven
     end
 
     def detect_release_from_git
-      `git rev-parse --short HEAD`.strip if File.directory?(".git") rescue nil
+      Raven.sys_command("git rev-parse --short HEAD") if File.directory?(".git")
     end
 
     def capture_in_current_environment?
