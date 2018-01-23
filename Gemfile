@@ -31,5 +31,6 @@ gem "rubocop", "~> 0.41.1"
 gem "rspec"
 gem "capybara" # rspec system tests
 gem "puma" # rspec system tests
+gem "rack-timeout"
 gem "timecop"
 gem "test-unit", platform: :mri if RUBY_VERSION > '2.2'

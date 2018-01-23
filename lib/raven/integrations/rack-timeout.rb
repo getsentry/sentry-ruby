@@ -7,7 +7,10 @@ require "rack/timeout/base" unless defined?(Rack::Timeout)
 # that will distinguish exceptions in the way you desire.
 module RackTimeoutExtensions
   def raven_context
-    { :fingerprint => ["{{ default }}", env["REQUEST_URI"]] }
+    # Only rack-timeout 0.3.0+ provides the request environment, but we can't
+    # gate this based on a gem version constant because rack-timeout does
+    # not provide one. 
+    { :fingerprint => ["{{ default }}", env["REQUEST_URI"]] } if defined?(env)
   end
 end
 
