@@ -139,6 +139,7 @@ if RUBY_VERSION > '2.0'
     end
 
     it "actually captures an exception" do
+      skip("No Redis server online") unless Sidekiq.redis { |r| r.connected? }
       expect { process_job("SadWorker") }.to change { Raven.client.transport.events.size }.by(1)
 
       event = JSON.parse(Raven.client.transport.events.last[1])
