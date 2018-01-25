@@ -17,9 +17,11 @@ if RUBY_VERSION < '2.0'
   gem "nokogiri", "~> 1.6.8"
   gem "rack", "~> 1.6.8"
   gem "sidekiq", "< 3.2"
+  gem "rack-timeout", "0.3.0"
 else
   gem "rack"
   gem "sidekiq"
+  gem "rack-timeout"
 end
 gem "pry"
 gem "pry-coolline"
@@ -31,6 +33,6 @@ gem "rubocop", "~> 0.41.1"
 gem "rspec"
 gem "capybara" # rspec system tests
 gem "puma" # rspec system tests
-gem "rack-timeout"
+
 gem "timecop"
 gem "test-unit", platform: :mri if RUBY_VERSION > '2.2'

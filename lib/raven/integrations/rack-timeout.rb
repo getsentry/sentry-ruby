@@ -14,5 +14,6 @@ module RackTimeoutExtensions
   end
 end
 
-Rack::Timeout::Error.include RackTimeoutExtensions
-Rack::Timeout::RequestTimeoutException.include RackTimeoutExtensions
+# Include is private in Ruby 1.9
+Rack::Timeout::Error.__send__(:include, RackTimeoutExtensions)
+Rack::Timeout::RequestTimeoutException.__send__(:include, RackTimeoutExtensions)

@@ -28,7 +28,8 @@ addons:
 
 before_install:
   - service haveged start
-  - gem install bundler
+  # Pin bundler version due to https://github.com/rubygems/rubygems/issues/2055
+  - gem install bundler -v 1.16.0
 
 matrix:
   include:
