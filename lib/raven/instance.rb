@@ -19,11 +19,8 @@ module Raven
   #     end
   #   end
   class Instance
-    # See Raven::Client.
     attr_writer :client
-
-    # See Raven::Configuration.
-    attr_accessor :configuration
+    attr_accessor :configuration, :last_event_id
 
     def initialize(context = nil, config = nil)
       @context = @explicit_context = context
@@ -125,17 +122,13 @@ module Raven
         else
           send_event(evt)
         end
-        Thread.current["sentry_#{object_id}_last_event_id".to_sym] = evt.id
+        @last_event_id = evt.id
         evt
       end
     end
 
     alias capture_message capture_type
     alias capture_exception capture_type
-
-    def last_event_id
-      Thread.current["sentry_#{object_id}_last_event_id".to_sym]
-    end
 
     # Provides extra context to the exception prior to it being handled by
     # Raven. An exception can have multiple annotations, which are merged
