@@ -74,9 +74,10 @@ module Raven
       self.method = req.request_method
       self.query_string = req.query_string
       self.data = read_data_from(req)
+      self.cookies = req.cookies
 
       self.headers = format_headers_for_sentry(env_hash)
-      self.env = format_env_for_sentry(env_hash)
+      self.env     = format_env_for_sentry(env_hash)
     end
 
     private
@@ -108,6 +109,7 @@ module Raven
           # if the request has legitimately sent a Version header themselves.
           # See: https://github.com/rack/rack/blob/028438f/lib/rack/handler/cgi.rb#L29
           next if key == 'HTTP_VERSION' && value == env_hash['SERVER_PROTOCOL']
+          next if key == 'HTTP_COOKIE' # Cookies don't go here, they go somewhere else
 
           next unless key.start_with?('HTTP_') || %w(CONTENT_TYPE CONTENT_LENGTH).include?(key)
           # Rack stores headers as HTTP_WHAT_EVER, we need What-Ever

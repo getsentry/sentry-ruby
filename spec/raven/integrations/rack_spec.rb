@@ -80,11 +80,18 @@ RSpec.describe Raven::Rack do
 
   it 'transforms headers to conform with the interface' do
     interface = Raven::HttpInterface.new
-    new_env = env.merge("HTTP_VERSION" => "HTTP/1.1")
+    new_env = env.merge("HTTP_VERSION" => "HTTP/1.1", "HTTP_COOKIE" => "test")
     interface.from_rack(new_env)
 
-    expect(interface.headers["Content-Length"]).to eq("0")
-    expect(interface.headers["Version"]).to eq("HTTP/1.1")
+    expect(interface.headers).to eq("Content-Length" => "0", "Version" => "HTTP/1.1")
+  end
+
+  it 'puts cookies into the cookies attribute' do
+    interface = Raven::HttpInterface.new
+    new_env = env.merge("HTTP_COOKIE" => "test")
+    interface.from_rack(new_env)
+
+    expect(interface.cookies).to eq("test" => nil)
   end
 
   it 'does not ignore version headers which do not match SERVER_PROTOCOL' do
