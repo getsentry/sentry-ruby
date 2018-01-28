@@ -167,7 +167,7 @@ RSpec.describe Raven::Event do
                                    :method => 'POST',
                                    :query_string => 'biz=baz',
                                    :url => 'http://localhost/lol',
-                                   :cookies => nil)
+                                   :cookies => {})
     end
 
     it "sets user context ip address correctly" do
