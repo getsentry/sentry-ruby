@@ -3,7 +3,7 @@ Ruby on Rails
 
 In Rails, all uncaught exceptions will be automatically reported.
 
-We support Rails 3 and newer.
+We support Rails 4 and newer.
 
 Installation
 ------------
