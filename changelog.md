@@ -1,3 +1,12 @@
+2.7.2
+-----
+
+* BUGFIX: GlobalIDs are now displayed correctly in Sidekiq contexts [@louim, #798]
+* BUGFIX: If git is not installed, fail silently during release detection [@nateberkopec]
+* BUGFIX: We do not support rack-timeout <= 0.2, fix errors when incompat version present [@nateberkopec]
+* BUGFIX: Put cookies in the correct spot of event [@nateberkopec, #812]
+* BUGFIX: Exception context is deep_merged [@janklimo, #782]
+
 2.7.1
 -----
 
