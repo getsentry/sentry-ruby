@@ -2,7 +2,6 @@ require "spec_helper"
 
 if defined? ActiveJob
   class MyActiveJob < ActiveJob::Base
-    self.queue_adapter = :inline
     self.logger = nil
 
     class TestError < RuntimeError
@@ -30,6 +29,7 @@ RSpec.describe "ActiveJob integration", :rails => true do
 
   before(:each) do
     Raven.client.transport.events = []
+    MyActiveJob.queue_adapter = :inline
   end
 
   it_should_behave_like "Raven default capture behavior" do
@@ -68,10 +68,8 @@ RSpec.describe "ActiveJob integration", :rails => true do
 
   context "when we are using an adapter which has a specific integration" do
     it "does not trigger sentry and re-raises" do
+      MyActiveJob.queue_adapter = :sidekiq
       job = MyActiveJob.new
-      def job.already_supported_by_specific_integration?(*)
-        true
-      end
 
       expect { job.perform_now }.to raise_error(MyActiveJob::TestError)
 
