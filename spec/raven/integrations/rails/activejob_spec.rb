@@ -8,6 +8,9 @@ if defined? ActiveJob
     class TestError < RuntimeError
     end
 
+    class AnotherError < RuntimeError
+    end
+
     def perform
       raise TestError, "Boom!"
     end
@@ -17,6 +20,14 @@ if defined? ActiveJob
     rescue_from TestError, :with => :rescue_callback
 
     def rescue_callback(error)
+    end
+  end
+
+  class RescuedActiveJobWithAnotherError < MyActiveJob
+    rescue_from TestError, :with => :rescue_callback
+
+    def rescue_callback(error)
+      raise AnotherError
     end
   end
 end
@@ -63,6 +74,16 @@ RSpec.describe "ActiveJob integration", :rails => true do
 
       expect(Raven.client.transport.events.size).to eq(0)
       expect(job).to have_received(:rescue_callback).once
+    end
+
+    it 'does not call rescue_callback more than once' do
+      job = RescuedActiveJobWithAnotherError.new
+      allow(job).to receive(:rescue_callback).and_call_original
+
+      expect{job.perform_now}.to raise_error(MyActiveJob::AnotherError)
+
+      expect(job).to have_received(:rescue_callback).once
+      expect(Raven.client.transport.events.size).to eq(1)
     end
   end
 
