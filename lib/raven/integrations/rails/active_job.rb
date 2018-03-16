@@ -17,7 +17,10 @@ module Raven
       def capture_and_reraise_with_sentry(job, block)
         block.call
       rescue Exception => exception # rubocop:disable Lint/RescueException
-        return if rescue_with_handler(exception)
+        if handler_for_rescue(exception)
+          raise
+        end
+
         unless already_supported_by_specific_integration?(job)
           Raven.capture_exception(exception, :extra => raven_context(job))
         end
