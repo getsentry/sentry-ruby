@@ -28,7 +28,11 @@ module Raven
       end
 
       def already_supported_by_specific_integration?(job)
-        ALREADY_SUPPORTED_SENTRY_ADAPTERS.include?(job.class.queue_adapter.to_s)
+        if ::Rails.version.to_f < 5.0
+          ALREADY_SUPPORTED_SENTRY_ADAPTERS.include?(job.class.queue_adapter.to_s)
+        else
+          ALREADY_SUPPORTED_SENTRY_ADAPTERS.include?(job.class.queue_adapter.class.to_s)
+        end
       end
 
       def raven_context(job)
