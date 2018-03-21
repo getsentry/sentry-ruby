@@ -1,5 +1,4 @@
 require 'test_helper'
-require "rack/timeout/base"
 require "raven/integrations/rack-timeout"
 
 class RavenRackTimeoutTest < Raven::Test
