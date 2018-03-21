@@ -17,13 +17,31 @@ module Raven
       def capture_and_reraise_with_sentry(job, block)
         block.call
       rescue Exception => exception # rubocop:disable Lint/RescueException
-        if handler_for_rescue(exception)
-          raise
+        begin
+          return if rescue_with_handler(exception)
+
+          unless already_supported_by_specific_integration?(job)
+            Raven.capture_exception(exception, :extra => raven_context(job))
+          end
+        rescue Exception => secondary_exception
+          # it's possible for rescue_with_handler to (re)raise the error or error on its own.
+
+          # in this corner case...
+          unless already_supported_by_specific_integration?(job)
+            # we first log the original exception which blew up
+            Raven.capture_exception(exception, :extra => raven_context(job))
+
+            # then we log the exception which was raised trying to handle the original
+            unless exception == secondary_exception
+              # we only should log the second exception if its different than the first
+              Raven.capture_exception(secondary_exception, :extra => raven_context(job))
+            end
+          end
+
+          # finally, raise the secondary exception, because that's what /should/ bubble up
+          raise secondary_exception
         end
 
-        unless already_supported_by_specific_integration?(job)
-          Raven.capture_exception(exception, :extra => raven_context(job))
-        end
         raise exception
       ensure
         Context.clear!

@@ -85,6 +85,7 @@ RSpec.describe "ActiveJob integration", :rails => true do
       expect(job).to have_received(:rescue_callback).once
       expect(Raven.client.transport.events.size).to eq(1)
     end
+
   end
 
   context "when we are using an adapter which has a specific integration" do
