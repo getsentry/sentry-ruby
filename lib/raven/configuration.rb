@@ -353,6 +353,7 @@ module Raven
         detect_release_from_heroku
     rescue => ex
       logger.error "Error detecting release: #{ex.message}"
+      nil
     end
 
     def excluded_exception?(exc)
@@ -390,7 +391,6 @@ module Raven
     def detect_release_from_capistrano
       revision_file = File.join(project_root, 'REVISION')
       revision_log = File.join(project_root, '..', 'revisions.log')
-
       if File.exist?(revision_file)
         @sys.cap_revision(revision_file)
       elsif File.exist?(revision_log)
