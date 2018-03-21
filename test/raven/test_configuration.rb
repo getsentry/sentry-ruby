@@ -178,18 +178,93 @@ class TestConfiguration < Raven::Test
   end
 end
 
-# These all require mocks or stubs
-class TestSystemConfiguration < Raven::ThreadUnsafeTest
-  # it "detects release from git" do
-  #   sys = Minitest::Mock.new
-  #   sys.expect()
-  # end
-  #
-  # it "detects release from Capistrano" do
-  #
-  # end
-  #
-  # it "detects release from Heroku" do
-  #
-  # end
+class TestSystemConfiguration < Raven::Test
+  def setup
+    @configuration = Raven::Configuration.new
+    @sysmock = Minitest::Mock.new
+    @configuration.instance_variable_set(:@sys, @sysmock)
+  end
+
+  it "returns nil if it cannot detect release" do
+    @sysmock.expect(:git_available?, false)
+    @sysmock.expect(:running_on_heroku?, false)
+    refute @configuration.send(:detect_release)
+  end
+
+  it "detects release from git" do
+    @sysmock.expect(:git_available?, true)
+    @sysmock.expect(:command, "0057adf", ["git rev-parse --short HEAD"])
+
+    assert_equal "0057adf", @configuration.send(:detect_release)
+  end
+
+  it "detects release from Capistrano (oldstyle)" do
+    @sysmock.expect(:git_available?, false)
+    @sysmock.expect(:cap_revision, "8b42a3e", [String])
+    @configuration.project_root = Dir.pwd + "/test/support/capistrano"
+
+    assert_equal "8b42a3e", @configuration.send(:detect_release)
+  end
+
+  it "detects release from Capistrano (newstyle)" do
+    @sysmock.expect(:git_available?, false)
+    @sysmock.expect(:cap_revision, "8b42a3e", [String])
+    @configuration.project_root = Dir.pwd + "/test/support/capistrano/root"
+
+    assert_equal "8b42a3e", @configuration.send(:detect_release)
+  end
+end
+
+# All depend on certain things in ENV
+class TestHerokuConfiguration < Raven::ThreadUnsafeTest
+  def setup
+    @configuration = Raven::Configuration.new
+    @sysmock = Minitest::Mock.new
+    @configuration.instance_variable_set(:@sys, @sysmock)
+  end
+
+  it "detects release from Heroku" do
+    ENV['HEROKU_SLUG_COMMIT'] = "aaaaaa"
+    @sysmock.expect(:git_available?, true) # Git is available on Heroku, but fails
+    @sysmock.expect(:command, nil, ["git rev-parse --short HEAD"])
+    @sysmock.expect(:running_on_heroku?, true)
+
+    assert_equal "aaaaaa", @configuration.send(:detect_release)
+
+    ENV['HEROKU_SLUG_COMMIT'] = nil
+  end
+end
+
+class TestENVConfiguration < Raven::ThreadUnsafeTest
+  def setup
+    ENV['SENTRY_CURRENT_ENV'] = 'set-with-sentry-current-env'
+    ENV['RAILS_ENV'] = 'set-with-rails-env'
+    ENV['RACK_ENV'] = 'set-with-rack-env'
+  end
+
+  def teardown
+    ENV['SENTRY_CURRENT_ENV'] = nil
+    ENV['RAILS_ENV'] = nil
+    ENV['RACK_ENV'] = nil
+  end
+
+  it "uses SENTRY_CURRENT_ENV to set the current environment" do
+    configuration = Raven::Configuration.new
+    assert_equal 'set-with-sentry-current-env', configuration.current_environment
+  end
+
+  it "uses RAILS_ENV to set the current environment" do
+    ENV['SENTRY_CURRENT_ENV'] = nil
+
+    configuration = Raven::Configuration.new
+    assert_equal 'set-with-rails-env', configuration.current_environment
+  end
+
+  it "uses RACK_ENV to set the current environment" do
+    ENV['SENTRY_CURRENT_ENV'] = nil
+    ENV['RAILS_ENV'] = nil
+
+    configuration = Raven::Configuration.new
+    assert_equal 'set-with-rack-env', configuration.current_environment
+  end
 end
