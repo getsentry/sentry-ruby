@@ -39,7 +39,9 @@ module Raven
       def set_conn
         configuration.logger.debug "Raven HTTP Transport connecting to #{configuration.server}"
 
-        Faraday.new(configuration.server, :ssl => ssl_configuration) do |builder|
+        proxy = configuration.public_send(:proxy)
+
+        Faraday.new(configuration.server, :ssl => ssl_configuration, :proxy => proxy) do |builder|
           configuration.faraday_builder.call(builder) if configuration.faraday_builder
           builder.response :raise_error
           builder.options.merge! faraday_opts
@@ -50,7 +52,7 @@ module Raven
 
       # TODO: deprecate and replace where possible w/Faraday Builder
       def faraday_opts
-        [:proxy, :timeout, :open_timeout].each_with_object({}) do |opt, memo|
+        [:timeout, :open_timeout].each_with_object({}) do |opt, memo|
           memo[opt] = configuration.public_send(opt) if configuration.public_send(opt)
         end
       end
