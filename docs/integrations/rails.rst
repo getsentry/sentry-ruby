@@ -1,7 +1,7 @@
 Ruby on Rails
 =============
 
-In Rails, all uncaught exceptions will be automatically reported.
+In Rails, all uncaught exceptions will be automatically reported. 
 
 We support Rails 4 and newer.
 
@@ -56,29 +56,7 @@ Params and sessions
     end
   end
 
-Authlogic
----------
+Caveats
+-------
 
-When using Authlogic for authentication, you can provide user context by
-binding to session ``after_persisting`` and ``after_destroy`` events in
-``user_session.rb``:
-
-.. sourcecode:: ruby
-
-    class UserSession < Authlogic::Session::Base
-      # events binding
-      after_persisting :raven_set_user_context
-      after_destroy :raven_clear_user_context
-
-      def raven_set_user_context
-        Raven.user_context({
-          'id' => self.user.id,
-          'email' => self.user.email,
-          'username' => self.user.username
-        })
-      end
-
-      def raven_clear_user_context
-        Raven.user_context({})
-      end
-    end
+Currently, custom exception applications (`config.exceptions_app`) are not supported. If you are using a custom exception app, you must manually integrate Raven yourself.
