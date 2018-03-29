@@ -5,6 +5,8 @@ require "minitest/parallel"
 require "sentry-raven-without-integrations"
 require "raven/transports/dummy"
 
+Thread.report_on_exception = false
+
 Raven.configure do |config|
   config.dsn = "dummy://12345:67890@sentry.localdomain/sentry/42"
   config.encoding = "json"
