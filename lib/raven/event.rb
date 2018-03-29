@@ -48,13 +48,7 @@ module Raven
     end
 
     def self.exception_context(exc)
-      if exc.instance_variable_defined?(:@__raven_context)
-        exc.instance_variable_get(:@__raven_context)
-      elsif exc.respond_to?(:raven_context)
-        exc.raven_context
-      else
-        {}
-      end
+      exc.respond_to?(:raven_context) ? exc.raven_context : {}
     end
 
     def self.from_message(message, options = {})
@@ -89,7 +83,8 @@ module Raven
     end
 
     def level=(new_level) # needed to meet the Sentry spec
-      @level = (new_level.to_sym == :warn) ? :warning : new_level
+      new_level = new_level.downcase.to_sym
+      @level = (new_level == :warn) ? :warning : new_level
     end
 
     def to_hash
