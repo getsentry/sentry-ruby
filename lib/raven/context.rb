@@ -10,33 +10,45 @@ module Raven
       Thread.current[:sentry_context] = nil
     end
 
-    attr_accessor :transaction, :extra, :server_os, :rack_env, :runtime, :tags, :user
+    attr_accessor :transaction
 
-    def initialize
-      self.server_os = self.class.os_context
-      self.runtime = self.class.runtime_context
-      self.extra = { :server => { :os => server_os, :runtime => runtime } }
-      self.rack_env = nil
-      self.tags = {}
-      self.user = {}
-      self.transaction = []
+    %w(extra user tags rack).each do |ctx_type|
+      define_method(ctx_type) { @context[ctx_type.to_sym] }
+      define_method(ctx_type + "=") { |hash| @context[ctx_type.to_sym].merge!(hash || {}) }
+      alias_method (ctx_type + "_context").to_sym, (ctx_type + "=").to_sym
     end
 
-    class << self
-      def os_context
-        @os_context ||= {
-          :name => Raven.sys_command("uname -s") || RbConfig::CONFIG["host_os"],
-          :version => Raven.sys_command("uname -v"),
-          :build => Raven.sys_command("uname -r"),
-          :kernel_version => Raven.sys_command("uname -a") || Raven.sys_command("ver") # windows
-        }
-      end
+    def initialize
+      @context = { :user => {}, :tags => {}, :rack => {}, :extra => {} }
+      self.transaction = []
+    end
+  end
 
-      def runtime_context
-        @runtime_context ||= {
-          :name => RbConfig::CONFIG["ruby_install_name"],
-          :version => Raven.sys_command("ruby -v")
-        }
+  class ContextCollector
+    def initialize(event, instance, config)
+      raise ArgumentError unless [event, instance, config].all? { |ctx| ctx.is_a?(Raven::Context) }
+      @event = event
+      @instance = instance
+      @config = config
+    end
+
+    def user
+      @config.user.merge(@instance.user).merge(@event.user)
+    end
+
+    def tags
+      @config.tags.merge(@instance.tags).merge(@event.tags)
+    end
+
+    def extra
+      @config.extra.merge(@instance.extra).merge(@event.extra)
+    end
+
+    def transaction
+      if @event.transaction.empty?
+        @instance.transaction.last
+      else
+        @event.transaction.last
       end
     end
   end

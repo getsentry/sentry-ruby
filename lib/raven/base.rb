@@ -1,5 +1,7 @@
+require 'forwardable'
+require 'English'
+
 require 'raven/version'
-require 'raven/backtrace'
 require 'raven/breadcrumbs'
 require 'raven/processor'
 require 'raven/processor/sanitizedata'
@@ -16,17 +18,14 @@ require 'raven/linecache'
 require 'raven/logger'
 require 'raven/interfaces/message'
 require 'raven/interfaces/exception'
-require 'raven/interfaces/single_exception'
 require 'raven/interfaces/stack_trace'
 require 'raven/interfaces/http'
+require 'raven/system'
 require 'raven/transports'
 require 'raven/transports/http'
 require 'raven/utils/deep_merge'
 require 'raven/utils/real_ip'
 require 'raven/instance'
-
-require 'forwardable'
-require 'English'
 
 module Raven
   AVAILABLE_INTEGRATIONS = %w(delayed_job railties sidekiq rack rack-timeout rake).freeze
@@ -41,19 +40,15 @@ module Raven
       @instance ||= Raven::Instance.new
     end
 
-    def_delegators :instance, :client=, :configuration=, :context, :logger, :configuration,
-                   :client, :report_status, :configure, :send_event, :capture, :capture_type,
-                   :last_event_id, :annotate_exception, :user_context,
-                   :tags_context, :extra_context, :rack_context, :breadcrumbs
+    def_delegators :instance, :client=, :configuration=, :context, :logger,
+                   :configuration, :client, :report_status, :configure,
+                   :send_event, :capture, :capture_type, :last_event_id,
+                   :user_context, :tags_context, :extra_context, :rack_context,
+                   :breadcrumbs
 
     def_delegator :instance, :report_status, :report_ready
     def_delegator :instance, :capture_type, :capture_message
     def_delegator :instance, :capture_type, :capture_exception
-    # For cross-language compatibility
-    def_delegator :instance, :capture_type, :captureException
-    def_delegator :instance, :capture_type, :captureMessage
-    def_delegator :instance, :annotate_exception, :annotateException
-    def_delegator :instance, :annotate_exception, :annotate
 
     # Injects various integrations. Default behavior: inject all available integrations
     def inject
@@ -95,12 +90,6 @@ module Raven
       else
         opts[:to].send(:include, opts[:from].const_get("Old" + module_name))
       end
-    end
-
-    def sys_command(command)
-      result = `#{command} 2>&1` rescue nil
-      return if result.nil? || result.empty? || $CHILD_STATUS.exitstatus != 0
-      result.strip
     end
   end
 end

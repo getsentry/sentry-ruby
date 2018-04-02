@@ -5,10 +5,6 @@ class TestInterface < Raven::Interface
 end
 
 RSpec.describe Raven::Interface do
-  it "should register an interface when a new class is defined" do
-    expect(Raven::Interface.registered[:test]).to eq(TestInterface)
-  end
-
   it "can be initialized with some attributes" do
     interface = TestInterface.new(:some_attr => "test")
     expect(interface.some_attr).to eq("test")

@@ -15,11 +15,11 @@ module Raven
 
       def send_event(auth_header, data, options = {})
         unless configuration.sending_allowed?
-          logger.debug("Event not sent: #{configuration.error_messages}")
+          configuration.logger.debug("Event not sent: #{configuration.error_messages}")
         end
 
-        project_id = configuration[:project_id]
-        path = configuration[:path] + "/"
+        project_id = configuration.project_id
+        path = configuration.path + "/"
 
         conn.post "#{path}api/#{project_id}/store/" do |req|
           req.headers['Content-Type'] = options[:content_type]

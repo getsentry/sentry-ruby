@@ -25,11 +25,8 @@ module Raven
       if env['raven.requested_at']
         options[:time_spent] = Time.now - env['raven.requested_at']
       end
-      Raven.capture_type(exception, options) do |evt|
-        evt.interface :http do |int|
-          int.from_rack(env)
-        end
-      end
+      Raven.context.rack = env
+      Raven.capture_type(exception, options)
     end
     class << self
       alias capture_message capture_type
@@ -49,10 +46,8 @@ module Raven
 
       begin
         response = @app.call(env)
-      rescue Error
-        raise # Don't capture Raven errors
       rescue Exception => e
-        Raven::Rack.capture_exception(e, env)
+        Raven::Rack.capture_exception(e, env) unless e.is_a?(Raven::Error)
         raise
       end
 
@@ -77,7 +72,9 @@ module Raven
       self.cookies = req.cookies
 
       self.headers = format_headers_for_sentry(env_hash)
-      self.env     = format_env_for_sentry(env_hash)
+      self.env = format_env_for_sentry(env_hash)
+
+      self
     end
 
     private

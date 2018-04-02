@@ -2,7 +2,7 @@ require 'spec_helper'
 
 RSpec.describe Raven::Utils::RealIp do
   context "when no ip addresses are provided other than REMOTE_ADDR" do
-    subject { Raven::Utils::RealIp.new(:remote_addr => "1.1.1.1") }
+    subject { Raven::Utils::RealIp.new("REMOTE_ADDR" => "1.1.1.1") }
 
     it "should return the remote_addr" do
       expect(subject.calculate_ip).to eq("1.1.1.1")
@@ -12,8 +12,8 @@ RSpec.describe Raven::Utils::RealIp do
   context "when a list of x-forwarded-for ips is provided" do
     subject do
       Raven::Utils::RealIp.new(
-        :forwarded_for => "192.168.0.2, 2.2.2.2, 3.3.3.3, 4.4.4.4",
-        :remote_addr => "192.168.0.1"
+        "HTTP_X_FORWARDED_FOR" => "192.168.0.2, 2.2.2.2, 3.3.3.3, 4.4.4.4",
+        "REMOTE_ADDR" => "192.168.0.1"
       )
     end
 
@@ -25,10 +25,10 @@ RSpec.describe Raven::Utils::RealIp do
   context "when client/real ips are provided" do
     subject do
       Raven::Utils::RealIp.new(
-        :forwarded_for => "2.2.2.2",
-        :real_ip => "4.4.4.4",
-        :client_ip => "3.3.3.3",
-        :remote_addr => "192.168.0.1"
+        "HTTP_X_FORWARDED_FOR" => "2.2.2.2",
+        "HTTP_X_REAL_IP" => "4.4.4.4",
+        "HTTP_CLIENT_IP" => "3.3.3.3",
+        "REMOTE_ADDR" => "192.168.0.1"
       )
     end
 
@@ -40,8 +40,8 @@ RSpec.describe Raven::Utils::RealIp do
   context "all provided ip addresses are actually local addresses" do
     subject do
       Raven::Utils::RealIp.new(
-        :forwarded_for => "127.0.0.1, ::1, 10.0.0.0",
-        :remote_addr => "192.168.0.1"
+        "HTTP_X_FORWARDED_FOR" => "127.0.0.1, ::1, 10.0.0.0",
+        "REMOTE_ADDR" => "192.168.0.1"
       )
     end
 
@@ -53,8 +53,8 @@ RSpec.describe Raven::Utils::RealIp do
   context "when an invalid IP is provided" do
     subject do
       Raven::Utils::RealIp.new(
-        :forwarded_for => "4.4.4.4.4, 2.2.2.2",
-        :remote_addr => "192.168.0.1"
+        "HTTP_X_FORWARDED_FOR" => "4.4.4.4.4, 2.2.2.2",
+        "REMOTE_ADDR" => "192.168.0.1"
       )
     end
 
@@ -66,8 +66,8 @@ RSpec.describe Raven::Utils::RealIp do
   context "with IPv6 ips" do
     subject do
       Raven::Utils::RealIp.new(
-        :forwarded_for => "2001:db8:a0b:12f0::1",
-        :remote_addr => "192.168.0.1"
+        "HTTP_X_FORWARDED_FOR" => "2001:db8:a0b:12f0::1",
+        "REMOTE_ADDR" => "192.168.0.1"
       )
     end
 

@@ -1,5 +1,4 @@
 # frozen_string_literal: true
-require 'socket'
 require 'securerandom'
 
 module Raven
@@ -7,91 +6,76 @@ module Raven
     # See Sentry server default limits at
     # https://github.com/getsentry/sentry/blob/master/src/sentry/conf/server.py
     MAX_MESSAGE_SIZE_IN_BYTES = 1024 * 8
-
+    TIME_FORMAT = '%Y-%m-%dT%H:%M:%S'.freeze
     SDK = { "name" => "raven-ruby", "version" => Raven::VERSION }.freeze
 
-    attr_accessor :id, :logger, :transaction, :server_name, :release, :modules,
-                  :extra, :tags, :context, :configuration, :checksum,
-                  :fingerprint, :environment, :server_os, :runtime,
-                  :breadcrumbs, :user, :backtrace, :platform, :sdk
-    alias event_id id
+    attr_accessor :event_id, :logger, :transaction, :server_name, :release, :modules,
+                  :checksum, :fingerprint, :environment,
+                  :backtrace, :platform, :sdk, :instance, :request, :exception,
+                  :stacktrace, :context
+    attr_reader   :level, :timestamp, :time_spent, :logentry
 
-    attr_reader :level, :timestamp, :time_spent
+    extend Forwardable
+    def_delegators :instance, :configuration, :breadcrumbs
+    def_delegators :context, :tags, :user, :extra, :tags=, :user=, :extra=
 
     def initialize(init = {})
-      # Set some simple default values
-      self.id            = SecureRandom.uuid.delete("-")
+      self.instance      = Raven.instance
+      self.event_id      = SecureRandom.uuid.delete!("-")
       self.timestamp     = Time.now.utc
       self.level         = :error
       self.logger        = :ruby
       self.platform      = :ruby
       self.sdk           = SDK
 
-      # Set some attributes with empty hashes to allow merging
-      @interfaces        = {}
-      self.user          = {} # TODO: contexts
-      self.extra         = {} # TODO: contexts
-      self.server_os     = {} # TODO: contexts
-      self.runtime       = {} # TODO: contexts
-      self.tags          = {} # TODO: contexts
+      self.context = Context.new
 
-      copy_initial_state
-
-      # Allow attributes to be set on the event at initialization
-      yield self if block_given?
       init.each_pair { |key, val| public_send("#{key}=", val) }
+      yield self if block_given?
 
       set_core_attributes_from_configuration
       set_core_attributes_from_context
     end
 
-    def self.from_exception(exc, options = {}, &block)
-      exception_context = if exc.instance_variable_defined?(:@__raven_context)
-                            exc.instance_variable_get(:@__raven_context)
-                          elsif exc.respond_to?(:raven_context)
-                            exc.raven_context
-                          else
-                            {}
-                          end
-      options = Raven::Utils::DeepMergeHash.deep_merge(exception_context, options)
-
-      configuration = options[:configuration] || Raven.configuration
-      return unless configuration.exception_class_allowed?(exc)
+    def self.from_exception(exc, options = {})
+      options = Raven::Utils::DeepMergeHash.deep_merge(exception_context(exc), options)
 
       new(options) do |evt|
         evt.message = "#{exc.class}: #{exc.message}"
-
-        evt.add_exception_interface(exc)
-
-        yield evt if block
+        yield evt if block_given?
+        evt.exception = ExceptionInterface.from_exception(exc, evt.configuration)
       end
+    end
+
+    def self.exception_context(exc)
+      exc.respond_to?(:raven_context) ? exc.raven_context : {}
     end
 
     def self.from_message(message, options = {})
       new(options) do |evt|
         evt.message = message, options[:message_params] || []
-        if options[:backtrace]
-          evt.interface(:stacktrace) do |int|
-            int.frames = evt.stacktrace_interface_from(options[:backtrace])
-          end
-        end
+
+        yield evt if block_given?
+
+        evt.stacktrace = StacktraceInterface.new do |int|
+          int.frames = StacktraceInterface::Frame.from_backtrace(options[:backtrace], evt.configuration)
+        end if options[:backtrace]
       end
     end
 
     def message
-      @interfaces[:logentry] && @interfaces[:logentry].unformatted_message
+      logentry && logentry.unformatted_message
     end
 
     def message=(args)
       message, params = *args
-      interface(:message) do |int|
-        int.message = message.byteslice(0...MAX_MESSAGE_SIZE_IN_BYTES) # Messages limited to 10kb
-        int.params = params
-      end
+      @logentry = MessageInterface.new
+      @logentry.message = message.byteslice(0...MAX_MESSAGE_SIZE_IN_BYTES) # Messages limited to 10kb
+      @logentry.params = params
     end
 
     def timestamp=(time)
-      @timestamp = time.is_a?(Time) ? time.strftime('%Y-%m-%dT%H:%M:%S') : time
+      @timestamp = time.is_a?(Time) ? time.utc.strftime(TIME_FORMAT) : time
     end
 
     def time_spent=(time)
@@ -99,36 +83,29 @@ module Raven
     end
 
     def level=(new_level) # needed to meet the Sentry spec
-      @level = new_level == "warn" || new_level == :warn ? :warning : new_level
-    end
-
-    def interface(name, value = nil, &block)
-      int = Interface.registered[name]
-      raise(Error, "Unknown interface: #{name}") unless int
-      @interfaces[int.sentry_alias] = int.new(value, &block) if value || block
-      @interfaces[int.sentry_alias]
-    end
-
-    def [](key)
-      interface(key)
-    end
-
-    def []=(key, value)
-      interface(key, value)
+      new_level = new_level.downcase.to_sym
+      @level = (new_level == :warn) ? :warning : new_level
     end
 
     def to_hash
-      data = [:checksum, :environment, :event_id, :extra, :fingerprint, :level,
+      data = [:checksum, :environment, :event_id, :fingerprint, :level,
               :logger, :message, :modules, :platform, :release, :sdk, :server_name,
-              :tags, :time_spent, :timestamp, :transaction, :user].each_with_object({}) do |att, memo|
-        memo[att] = public_send(att) if public_send(att)
+              :time_spent, :timestamp].each_with_object({}) do |att, memo|
+        val = public_send(att)
+        memo[att] = val unless val.nil?
       end
 
-      data[:breadcrumbs] = @breadcrumbs.to_hash unless @breadcrumbs.empty?
-
-      @interfaces.each_pair do |name, int_data|
-        data[name.to_sym] = int_data.to_hash
+      collector = ContextCollector.new(context, instance.context, configuration.context)
+      [:user, :tags, :extra, :transaction].each do |ctx|
+        val = collector.public_send(ctx)
+        data[ctx] = val
       end
+
+      [:logentry, :breadcrumbs, :exception, :stacktrace, :request].each do |int|
+        val = public_send(int)
+        data[int] = val.to_hash if val
+      end
+
       data
     end
 
@@ -137,123 +114,30 @@ module Raven
       JSON.parse(JSON.generate(cleaned_hash))
     end
 
-    def add_exception_interface(exc)
-      interface(:exception) do |exc_int|
-        exceptions = exception_chain_to_array(exc)
-        backtraces = Set.new
-        exc_int.values = exceptions.map do |e|
-          SingleExceptionInterface.new do |int|
-            int.type = e.class.to_s
-            int.value = e.to_s
-            int.module = e.class.to_s.split('::')[0...-1].join('::')
-
-            int.stacktrace =
-              if e.backtrace && !backtraces.include?(e.backtrace.object_id)
-                backtraces << e.backtrace.object_id
-                StacktraceInterface.new do |stacktrace|
-                  stacktrace.frames = stacktrace_interface_from(e.backtrace)
-                end
-              end
-          end
-        end
-      end
-    end
-
-    def stacktrace_interface_from(backtrace)
-      Backtrace.parse(backtrace).lines.reverse.each_with_object([]) do |line, memo|
-        frame = StacktraceInterface::Frame.new
-        frame.abs_path = line.file if line.file
-        frame.function = line.method if line.method
-        frame.lineno = line.number
-        frame.in_app = line.in_app
-        frame.module = line.module_name if line.module_name
-
-        if configuration[:context_lines] && frame.abs_path
-          frame.pre_context, frame.context_line, frame.post_context = \
-            configuration.linecache.get_file_context(frame.abs_path, frame.lineno, configuration[:context_lines])
-        end
-
-        memo << frame if frame.filename
-      end
-    end
-
-    # For cross-language compat
-    class << self
-      alias captureException from_exception
-      alias captureMessage from_message
-      alias capture_exception from_exception
-      alias capture_message from_message
-    end
-
     private
-
-    def copy_initial_state
-      self.configuration = Raven.configuration
-      self.breadcrumbs   = Raven.breadcrumbs
-      self.context       = Raven.context
-    end
 
     def set_core_attributes_from_configuration
       self.server_name ||= configuration.server_name
       self.release     ||= configuration.release
-      self.modules       = list_gem_specs if configuration.send_modules
+      self.modules     ||= configuration.modules
       self.environment ||= configuration.current_environment
     end
 
     def set_core_attributes_from_context
-      self.transaction ||= context.transaction.last
-
       # If this is a Rack event, merge Rack context
-      add_rack_context if !self[:http] && context.rack_env
-
-      # Merge contexts
-      self.user = context.user.merge(user) # TODO: contexts
-      self.extra = context.extra.merge(extra) # TODO: contexts
-      self.tags = configuration.tags.merge(context.tags).merge!(tags) # TODO: contexts
+      add_rack_context if !request && !instance.context.rack.empty?
     end
 
     def add_rack_context
-      interface :http do |int|
-        int.from_rack(context.rack_env)
-      end
-      context.user[:ip_address] = calculate_real_ip_from_rack
-    end
+      self.request = HttpInterface.new.from_rack(instance.context.rack)
 
-    # When behind a proxy (or if the user is using a proxy), we can't use
-    # REMOTE_ADDR to determine the Event IP, and must use other headers instead.
-    def calculate_real_ip_from_rack
-      Utils::RealIp.new(
-        :remote_addr => context.rack_env["REMOTE_ADDR"],
-        :client_ip => context.rack_env["HTTP_CLIENT_IP"],
-        :real_ip => context.rack_env["HTTP_X_REAL_IP"],
-        :forwarded_for => context.rack_env["HTTP_X_FORWARDED_FOR"]
-      ).calculate_ip
+      # When behind a proxy (or if the user is using a proxy), we can't use
+      # REMOTE_ADDR to determine the Event IP, and must use other headers instead.
+      user[:ip_address] = Utils::RealIp.new(instance.context.rack).calculate_ip
     end
 
     def async_json_processors
-      [
-        Raven::Processor::RemoveCircularReferences,
-        Raven::Processor::UTF8Conversion
-      ].map { |v| v.new(self) }
-    end
-
-    def exception_chain_to_array(exc)
-      if exc.respond_to?(:cause) && exc.cause
-        exceptions = [exc]
-        while exc.cause
-          exc = exc.cause
-          break if exceptions.any? { |e| e.object_id == exc.object_id }
-          exceptions << exc
-        end
-        exceptions.reverse!
-      else
-        [exc]
-      end
-    end
-
-    def list_gem_specs
-      # Older versions of Rubygems don't support iterating over all specs
-      Hash[Gem::Specification.map { |spec| [spec.name, spec.version.to_s] }] if Gem::Specification.respond_to?(:map)
+      [Raven::Processor::RemoveCircularReferences, Raven::Processor::UTF8Conversion].map { |v| v.new(nil) }
     end
   end
 end

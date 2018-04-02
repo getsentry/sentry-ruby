@@ -37,13 +37,13 @@ module Raven
         if evt.is_a? Hash
           instance.logger.debug "-> event ID: #{evt[:event_id]}"
         else
-          instance.logger.debug "-> event ID: #{evt.id}"
+          instance.logger.debug "-> event ID: #{evt.event_id}"
         end
       elsif evt # async configuration
         if evt.value.is_a? Hash
           instance.logger.debug "-> event ID: #{evt.value[:event_id]}"
         else
-          instance.logger.debug "-> event ID: #{evt.value.id}"
+          instance.logger.debug "-> event ID: #{evt.value.event_id}"
         end
       else
         instance.logger.debug ""

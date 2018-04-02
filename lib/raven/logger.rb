@@ -2,18 +2,23 @@
 require 'logger'
 
 module Raven
-  class Logger < ::Logger
+  module Logger
     LOG_PREFIX = "** [Raven] ".freeze
     PROGNAME   = "sentry".freeze
 
-    def initialize(*)
-      super
-      @level = ::Logger::INFO
-      original_formatter = ::Logger::Formatter.new
-      @default_formatter = proc do |severity, datetime, _progname, msg|
-        msg = "#{LOG_PREFIX}#{msg}"
-        original_formatter.call(severity, datetime, PROGNAME, msg)
+    module Formatter
+      def call(severity, timestamp, _progname, msg)
+        super(severity, timestamp, PROGNAME, "#{LOG_PREFIX}#{msg}")
       end
+    end
+
+    def self.new(logger)
+      logger = logger.dup
+      original_formatter = logger.formatter || ::Logger::Formatter.new
+      logger.formatter = proc { |severity, datetime, _progname, msg|
+        original_formatter.call(severity, datetime, PROGNAME, "#{LOG_PREFIX}#{msg}")
+      }
+      logger
     end
   end
 end

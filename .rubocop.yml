@@ -7,11 +7,11 @@ AllCops:
      - 'vendor/**/*'
 
 Metrics/ClassLength:
-  Max: 268
+  Max: 305
   CountComments: false
 
 Metrics/AbcSize:
-  Max: 30
+  Max: 32
 
 Metrics/CyclomaticComplexity:
   Max: 12
@@ -26,6 +26,9 @@ Metrics/MethodLength:
   Max: 30
 
 Style/SignalException:
+  Enabled: false
+
+Style/SingleLineMethods:
   Enabled: false
 
 Performance/Casecmp:

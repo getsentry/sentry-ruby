@@ -11,10 +11,10 @@ branches:
   only: [master]
 
 rvm:
-  - 2.2.9
-  - 2.3.6
-  - 2.4.3
-  - 2.5.0
+  - 2.2.10
+  - 2.3.7
+  - 2.4.4
+  - 2.5.1
 
 env:
   - RAILS_VERSION=4
@@ -30,16 +30,16 @@ before_install:
   - service haveged start
   # Pin bundler version due to https://github.com/rubygems/rubygems/issues/2055
   - gem install bundler -v 1.16.0
+  # https://github.com/travis-ci/travis-ci/issues/8978
+  - gem update --system
 
 matrix:
   include:
-    - rvm: 1.9
-      env: RAILS_VERSION=4
     - rvm: jruby-1.7.27
-      env: JRUBY_OPTS="--dev" RAILS_VERSION=4
-    - rvm: jruby-9.1.15.0
+      env: JRUBY_OPTS="--dev --2.0" RAILS_VERSION=4
+    - rvm: jruby-9.1.16.0
       env: JRUBY_OPTS="--dev -J-Djruby.launch.inproc=true -J-Xmx1024M" RAILS_VERSION=4
-    - rvm: jruby-9.1.15.0
+    - rvm: jruby-9.1.16.0
       env: JRUBY_OPTS="--dev -J-Djruby.launch.inproc=true -J-Xmx1024M" RAILS_VERSION=5
     - rvm: ruby-head
       env: RAILS_VERSION=0

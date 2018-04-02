@@ -93,23 +93,4 @@ RSpec.describe Raven do
       Raven.inject_without(:delayed_job, :logger, :railties, :sidekiq, :rack, :"rack-timeout")
     end
   end
-
-  describe "#sys_command" do
-    it "should execute system commands" do
-      expect(Raven.sys_command("echo 'Sentry'")).to eq("Sentry")
-    end
-
-    it "should return nil if a system command doesn't exist" do
-      expect(Raven.sys_command("asdasdasdsa")).to eq(nil)
-    end
-
-    it "should return nil if the process exits with a non-zero exit status" do
-      expect(Raven.sys_command("uname -c")).to eq(nil) # non-existent uname option
-    end
-
-    it "should not output to stdout on failure" do
-      expect { Raven.sys_command("asdasdasdsa") }.to_not output.to_stdout
-      expect { Raven.sys_command("uname -c") }.to_not output.to_stdout
-    end
-  end
 end

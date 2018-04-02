@@ -16,25 +16,28 @@ module Raven
         "192.168.0.0/16", # private IPv4 range 192.168.x.x
       ].map { |proxy| IPAddr.new(proxy) }
 
-      attr_accessor :ip, :ip_addresses
+      attr_accessor :remote_addr, :client_ip, :real_ip, :forwarded_for
 
-      def initialize(ip_addresses)
-        self.ip_addresses = ip_addresses
+      def initialize(context)
+        self.remote_addr = context["REMOTE_ADDR"]
+        self.client_ip = context["HTTP_CLIENT_IP"]
+        self.real_ip = context["HTTP_X_REAL_IP"]
+        self.forwarded_for = context["HTTP_X_FORWARDED_FOR"]
       end
 
       def calculate_ip
         # CGI environment variable set by Rack
-        remote_addr = ips_from(ip_addresses[:remote_addr]).last
+        self.remote_addr = ips_from(remote_addr).last
 
         # Could be a CSV list and/or repeated headers that were concatenated.
-        client_ips    = ips_from(ip_addresses[:client_ip])
-        real_ips      = ips_from(ip_addresses[:real_ip])
-        forwarded_ips = ips_from(ip_addresses[:forwarded_for])
+        client_ips    = ips_from(client_ip)
+        real_ips      = ips_from(real_ip)
+        forwarded_ips = ips_from(forwarded_for)
 
         ips = [client_ips, real_ips, forwarded_ips, remote_addr].flatten.compact
 
         # If every single IP option is in the trusted list, just return REMOTE_ADDR
-        self.ip = filter_local_addresses(ips).first || remote_addr
+        filter_local_addresses(ips).first || remote_addr
       end
 
       protected

@@ -16,53 +16,39 @@ module Raven
       data
     end
 
-    # Not actually an interface, but I want to use the same style
+    # Not actually an interface, but want to use the same style
     class Frame < Interface
-      attr_accessor :abs_path, :context_line, :function, :in_app,
-                    :lineno, :module, :pre_context, :post_context, :vars
+      attr_accessor :context_line, :function, :module, :pre_context, :post_context,
+                    :vars, :filename, :abs_path, :lineno, :line, :in_app
 
       def initialize(*arguments)
         super(*arguments)
-      end
-
-      def filename
-        return if abs_path.nil?
-        return @filename if instance_variable_defined?(:@filename)
-
-        prefix =
-          if under_project_root? && in_app
-            project_root
-          elsif under_project_root?
-            longest_load_path || project_root
-          else
-            longest_load_path
-          end
-
-        @filename = prefix ? abs_path[prefix.to_s.chomp(File::SEPARATOR).length + 1..-1] : abs_path
+        self.abs_path = line.absolute_path
+        self.lineno = line.lineno
+        self.filename = line.path
+        self.function = line.to_s.match(/`(.*)'/).captures[0]
       end
 
       def to_hash(*args)
         data = super(*args)
-        data[:filename] = filename
-        data.delete(:vars) unless vars && !vars.empty?
-        data.delete(:pre_context) unless pre_context && !pre_context.empty?
-        data.delete(:post_context) unless post_context && !post_context.empty?
-        data.delete(:context_line) unless context_line && !context_line.empty?
+        data[:line] = nil # Remove the line object
+
         data
       end
 
-      private
+      # Note that backtrace is Exception#backtrace_locations
+      def self.from_backtrace(backtrace, configuration)
+        backtrace.select(&:path).reverse!.map do |line|
+          Frame.new do |frame|
+            frame.line = line
+            frame.in_app = configuration.in_app?(frame.abs_path)
 
-      def under_project_root?
-        project_root && abs_path.start_with?(project_root)
-      end
-
-      def project_root
-        @project_root ||= Raven.configuration.project_root && Raven.configuration.project_root.to_s
-      end
-
-      def longest_load_path
-        $LOAD_PATH.select { |path| abs_path.start_with?(path.to_s) }.max_by(&:size)
+            if configuration.context_lines
+              frame.pre_context, frame.context_line, frame.post_context = \
+                configuration.linecache.get_file_context(frame.abs_path, frame.lineno, configuration.context_lines)
+            end
+          end
+        end
       end
     end
   end

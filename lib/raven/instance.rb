@@ -19,16 +19,25 @@ module Raven
   #     end
   #   end
   class Instance
-    # See Raven::Client.
     attr_writer :client
-
-    # See Raven::Configuration.
     attr_accessor :configuration
 
     def initialize(context = nil, config = nil)
       @context = @explicit_context = context
       self.configuration = config || Configuration.new
+      # TODO: allow instances to have their own breadcrumb buffers
+      # self.breadcrumbs = breadcrumbs || BreadcrumbBuffer.current
     end
+
+    def breadcrumbs
+      BreadcrumbBuffer.current
+    end
+
+    extend Forwardable
+
+    def_delegators :context, :user_context, :tags_context, :extra_context,
+                   :rack_context, :user_context=, :tags_context=, :extra_context=,
+                   :rack_context=, :transaction, :transaction=
 
     def context
       if @explicit_context
@@ -66,10 +75,8 @@ module Raven
     #   end
     def configure
       yield(configuration) if block_given?
-
-      self.client = Client.new(configuration)
       report_status
-      client
+      self
     end
 
     # Send an event to the configured Sentry server
@@ -91,8 +98,6 @@ module Raven
       if block_given?
         begin
           yield
-        rescue Error
-          raise # Don't capture Raven errors
         rescue Exception => e
           capture_type(e, options)
           raise
@@ -109,8 +114,7 @@ module Raven
       end
 
       message_or_exc = obj.is_a?(String) ? "message" : "exception"
-      options[:configuration] = configuration
-      options[:context] = context
+      options[:instance] = self
       if (evt = Event.send("from_" + message_or_exc, obj, options))
         yield evt if block_given?
         if configuration.async?
@@ -125,7 +129,7 @@ module Raven
         else
           send_event(evt)
         end
-        Thread.current["sentry_#{object_id}_last_event_id".to_sym] = evt.id
+        Thread.current["sentry_#{object_id}_last_event_id"] = evt.event_id
         evt
       end
     end
@@ -134,76 +138,7 @@ module Raven
     alias capture_exception capture_type
 
     def last_event_id
-      Thread.current["sentry_#{object_id}_last_event_id".to_sym]
-    end
-
-    # Provides extra context to the exception prior to it being handled by
-    # Raven. An exception can have multiple annotations, which are merged
-    # together.
-    #
-    # The options (annotation) is treated the same as the ``options``
-    # parameter to ``capture_exception`` or ``Event.from_exception``, and
-    # can contain the same ``:user``, ``:tags``, etc. options as these
-    # methods.
-    #
-    # These will be merged with the ``options`` parameter to
-    # ``Event.from_exception`` at the top of execution.
-    #
-    # @example
-    #   begin
-    #     raise "Hello"
-    #   rescue => exc
-    #     Raven.annotate_exception(exc, :user => { 'id' => 1,
-    #                              'email' => 'foo@example.com' })
-    #   end
-    def annotate_exception(exc, options = {})
-      notes = (exc.instance_variable_defined?(:@__raven_context) && exc.instance_variable_get(:@__raven_context)) || {}
-      Raven::Utils::DeepMergeHash.deep_merge!(notes, options)
-      exc.instance_variable_set(:@__raven_context, notes)
-      exc
-    end
-
-    # Bind user context. Merges with existing context (if any).
-    #
-    # It is recommending that you send at least the ``id`` and ``email``
-    # values. All other values are arbitrary.
-    #
-    # @example
-    #   Raven.user_context('id' => 1, 'email' => 'foo@example.com')
-    def user_context(options = nil)
-      context.user = options || {}
-    end
-
-    # Bind tags context. Merges with existing context (if any).
-    #
-    # Tags are key / value pairs which generally represent things like
-    # application version, environment, role, and server names.
-    #
-    # @example
-    #   Raven.tags_context('my_custom_tag' => 'tag_value')
-    def tags_context(options = nil)
-      context.tags.merge!(options || {})
-    end
-
-    # Bind extra context. Merges with existing context (if any).
-    #
-    # Extra context shows up as Additional Data within Sentry, and is
-    # completely arbitrary.
-    #
-    # @example
-    #   Raven.extra_context('my_custom_data' => 'value')
-    def extra_context(options = nil)
-      context.extra.merge!(options || {})
-    end
-
-    def rack_context(env)
-      env = nil if env.empty?
-
-      context.rack_env = env
-    end
-
-    def breadcrumbs
-      BreadcrumbBuffer.current
+      Thread.current["sentry_#{object_id}_last_event_id"]
     end
 
     private

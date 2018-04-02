@@ -144,8 +144,10 @@ module Raven
     # Should the SSL certificate of the server be verified?
     attr_accessor :ssl_verification
 
-    # Default tags for events. Hash.
-    attr_accessor :tags
+    # Configurations have their own context. These values will only be applied
+    # if they are not overridden by the instance or event context.
+    extend Forwardable
+    def_delegators :context, :tags, :user, :extra, :tags=, :user=, :extra=
 
     # Timeout when waiting for the server to return data in seconds.
     attr_accessor :timeout
@@ -154,19 +156,31 @@ module Raven
     # E.g. lambda { |event| Thread.new { MyJobProcessor.send_email(event) } }
     attr_reader :transport_failure_callback
 
-    # Errors object - an Array that contains error messages. See #
-    attr_reader :errors
+    attr_reader :sys
 
+    # Most of these errors generate 4XX responses. In general, Sentry clients
+    # only automatically report 5xx responses.
     IGNORE_DEFAULT = [
       'AbstractController::ActionNotFound',
+      'ActionController::BadRequest',
       'ActionController::InvalidAuthenticityToken',
+      'ActionController::InvalidCrossOriginRequest',
+      'ActionController::MethodNotAllowed',
+      'ActionController::NotImplemented',
+      'ActionController::ParameterMissing',
       'ActionController::RoutingError',
       'ActionController::UnknownAction',
+      'ActionController::UnknownFormat',
+      'ActionController::UnknownHttpMethod',
+      'ActionDispatch::Http::Parameters::ParseError',
+      'ActionView::MissingTemplate',
+      'ActiveJob::DeserializationError', # Can cause infinite loops
       'ActiveRecord::RecordNotFound',
       'CGI::Session::CookieStore::TamperedWithCookie',
       'Mongoid::Errors::DocumentNotFound',
-      'Sinatra::NotFound',
-      'ActiveJob::DeserializationError'
+      'Rack::QueryParser::InvalidParameterError',
+      'Rack::QueryParser::ParameterTypeError',
+      'Sinatra::NotFound'
     ].freeze
 
     # Note the order - we have to remove circular references and bad characters
@@ -180,19 +194,23 @@ module Raven
       Raven::Processor::HTTPHeaders
     ].freeze
 
+    APP_DIRS_PATTERN = /(bin|exe|app|config|lib|test)/
+
     LOG_PREFIX = "** [Raven] ".freeze
     MODULE_SEPARATOR = "::".freeze
 
     def initialize
+      @sys = Raven::System.new
+
       self.async = false
       self.context_lines = 3
-      self.current_environment = current_environment_from_env
+      self.current_environment = @sys.current_environment
       self.encoding = 'gzip'
       self.environments = []
       self.exclude_loggers = []
       self.excluded_exceptions = IGNORE_DEFAULT.dup
       self.linecache = ::Raven::LineCache.new
-      self.logger = ::Raven::Logger.new(STDOUT)
+      self.logger = Raven::Logger.new(::Logger.new(STDOUT))
       self.open_timeout = 1
       self.processors = DEFAULT_PROCESSORS.dup
       self.project_root = detect_project_root
@@ -206,10 +224,9 @@ module Raven
       self.sanitize_http_headers = []
       self.send_modules = true
       self.server = ENV['SENTRY_DSN']
-      self.server_name = server_name_from_env
+      self.server_name = @sys.server_name
       self.should_capture = false
       self.ssl_verification = true
-      self.tags = {}
       self.timeout = 2
       self.transport_failure_callback = false
     end
@@ -239,7 +256,7 @@ module Raven
     alias dsn= server=
 
     def encoding=(encoding)
-      raise(Error, 'Unsupported encoding') unless %w(gzip json).include? encoding
+      raise(ArgumentError, 'Unsupported encoding') unless %w(gzip json).include? encoding
       @encoding = encoding
     end
 
@@ -264,15 +281,13 @@ module Raven
       @should_capture = value
     end
 
-    # Allows config options to be read like a hash
-    #
-    # @param [Symbol] option Key for a given attribute
-    def [](option)
-      public_send(option)
-    end
-
     def current_environment=(environment)
       @current_environment = environment.to_s
+    end
+    alias environment current_environment
+
+    def project_root=(root)
+      @project_root = root.to_s
     end
 
     def capture_allowed?(message_or_exc = nil)
@@ -281,31 +296,54 @@ module Raven
       valid? &&
         capture_in_current_environment? &&
         capture_allowed_by_callback?(message_or_exc) &&
-        sample_allowed?
+        sample_allowed? &&
+        exception_class_allowed?(message_or_exc)
     end
     # If we cannot capture, we cannot send.
     alias sending_allowed? capture_allowed?
 
     def error_messages
-      @errors = [errors[0]] + errors[1..-1].map(&:downcase) # fix case of all but first
-      errors.join(", ")
-    end
-
-    def project_root=(root_dir)
-      @project_root = root_dir
-      Backtrace::Line.instance_variable_set(:@in_app_pattern, nil) # blow away cache
+      @errors ||= []
+      if @errors.size <= 1
+        @errors[0].to_s
+      else
+        ([@errors[0]] + @errors[1..-1].map(&:downcase)).join(", ") # fix case of all but first
+      end
     end
 
     def exception_class_allowed?(exc)
       if exc.is_a?(Raven::Error)
         # Try to prevent error reporting loops
-        logger.debug "Refusing to capture Raven error: #{exc.inspect}"
+        @errors << "This is an internal Raven error"
+        logger.fatal "Raven has had an internal error!"
         false
-      elsif excluded_exception?(exc)
-        logger.debug "User excluded error: #{exc.inspect}"
+      elsif exc && excluded_exception?(exc)
+        @errors << "#{exc.class} excluded from capture"
         false
       else
         true
+      end
+    end
+
+    def modules
+      # Older versions of Rubygems don't support iterating over all specs
+      return unless send_modules && Gem::Specification.respond_to?(:map)
+      Gem::Specification.latest_specs.each_with_object({}) do |spec, memo|
+        memo[spec.name] = spec.version.to_s
+      end
+    end
+
+    def in_app?(path)
+      @in_app_regex ||= Regexp.new("^(#{project_root}/)?#{app_dirs_pattern || APP_DIRS_PATTERN}")
+      !!(path =~ @in_app_regex)
+    end
+
+    def context
+      return @context if defined? @context
+      @context = begin
+        ctx = Context.new
+        ctx.extra = system_context
+        ctx
       end
     end
 
@@ -313,7 +351,7 @@ module Raven
 
     def detect_project_root
       if defined? Rails.root # we are in a Rails application
-        Rails.root.to_s
+        Rails.root
       else
         Dir.pwd
       end
@@ -325,6 +363,7 @@ module Raven
         detect_release_from_heroku
     rescue => ex
       logger.error "Error detecting release: #{ex.message}"
+      nil
     end
 
     def excluded_exception?(exc)
@@ -348,14 +387,10 @@ module Raven
     end
 
     def detect_release_from_heroku
-      return unless running_on_heroku?
+      return unless @sys.running_on_heroku?
       logger.warn(heroku_dyno_metadata_message) && return unless ENV['HEROKU_SLUG_COMMIT']
 
       ENV['HEROKU_SLUG_COMMIT']
-    end
-
-    def running_on_heroku?
-      File.directory?("/etc/heroku")
     end
 
     def heroku_dyno_metadata_message
@@ -366,16 +401,15 @@ module Raven
     def detect_release_from_capistrano
       revision_file = File.join(project_root, 'REVISION')
       revision_log = File.join(project_root, '..', 'revisions.log')
-
       if File.exist?(revision_file)
-        File.read(revision_file).strip
+        @sys.cap_revision(revision_file)
       elsif File.exist?(revision_log)
-        File.open(revision_log).to_a.last.strip.sub(/.*as release ([0-9]+).*/, '\1')
+        @sys.cap_revision(revision_log)
       end
     end
 
     def detect_release_from_git
-      Raven.sys_command("git rev-parse --short HEAD") if File.directory?(".git")
+      @sys.command("git rev-parse --short HEAD") if @sys.git_available?
     end
 
     def capture_in_current_environment?
@@ -391,15 +425,14 @@ module Raven
     end
 
     def valid?
-      return true if %w(server host path public_key secret_key project_id).all? { |k| public_send(k) }
       if server
-        %w(server host path public_key secret_key project_id).map do |key|
-          @errors << "No #{key} specified" unless public_send(key)
+        %w(path server host public_key secret_key project_id).map do |key|
+          @errors << "No #{key} specified" unless public_send(key) && !public_send(key).empty?
         end
       else
         @errors << "DSN not set"
       end
-      false
+      !@errors.any?
     end
 
     def sample_allowed?
@@ -412,23 +445,25 @@ module Raven
       end
     end
 
-    # Try to resolve the hostname to an FQDN, but fall back to whatever
-    # the load name is.
-    def resolve_hostname
-      Socket.gethostname ||
-        Socket.gethostbyname(hostname).first rescue server_name
+    def system_context
+      @system_context = { :server => { :os => os_context, :runtime => runtime_context } }
     end
 
-    def current_environment_from_env
-      ENV['SENTRY_CURRENT_ENV'] || ENV['RAILS_ENV'] || ENV['RACK_ENV'] || 'default'
+    # TODO: reduce to uname -svra
+    def os_context
+      {
+        :name => @sys.command("uname -s") || RbConfig::CONFIG["host_os"],
+        :version => @sys.command("uname -v"),
+        :build => @sys.command("uname -r"),
+        :kernel_version => @sys.command("uname -a") || @sys.command("ver") # windows
+      }
     end
 
-    def server_name_from_env
-      if running_on_heroku?
-        ENV['DYNO']
-      else
-        resolve_hostname
-      end
+    def runtime_context
+      {
+        :name => Kernel.const_defined?(:RUBY_ENGINE) ? RUBY_ENGINE : RbConfig::CONFIG["ruby_install_name"],
+        :version => Kernel.const_defined?(:RUBY_DESCRIPTION) ? RUBY_DESCRIPTION : @sys.command("ruby -v")
+      }
     end
   end
 end
