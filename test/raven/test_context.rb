@@ -1,9 +1,7 @@
 require 'test_helper'
 
 class RavenContextTest < Raven::Test
-  # user, tags extra and rack work in the clear case
-
-  it "also has accessors specific to the context type" do
+  it "has writers specific to the context type" do
     context = Raven::Context.new
 
     context.user = { :foo => :bar }
@@ -15,7 +13,7 @@ class RavenContextTest < Raven::Test
     assert_equal :bar, context.tags[:foo]
   end
 
-  it "has accessors which are non-destructive (merge!)" do
+  it "has writers which are non-destructive (merge!)" do
     context = Raven::Context.new
 
     context.user = { :baz => :qux }
@@ -40,15 +38,75 @@ class RavenContextTest < Raven::Test
 
     refute_equal thread_context, t[:context]
   end
-
-  # rack - sets ip ip_address
-
-  # rack truncates data
-
-  # configuration context
-  # events override it
-
-  # Raven._context methods
 end
 
-# Context Collector
+class RavenContextCollectorTest < Raven::Test
+  def setup
+    @evt = Raven::Context.new
+    @instance = Raven::Context.new
+    @config = Raven::Context.new
+
+    @collector = Raven::ContextCollector.new(@evt, @instance, @config)
+  end
+
+  it "has a transaction, prefers the event" do
+    @instance.transaction.push "MyInstanceTransaction"
+
+    assert_equal "MyInstanceTransaction", @collector.transaction
+  end
+
+  it "prefers instance transaction" do
+    @evt.transaction.push "MyEventTransaction"
+    @instance.transaction.push "MyInstanceTransaction"
+
+    assert_equal "MyEventTransaction", @collector.transaction
+  end
+
+  it "prefers instance to config" do
+    @instance.user   = { :foo => :bar }
+    @config.user     = { :foo => :baz }
+
+    assert_equal :bar, @collector.user[:foo]
+  end
+
+  it "prefers event to instance" do
+    @evt.user      = { :foo => :bar }
+    @instance.user = { :foo => :baz }
+
+    assert_equal :bar, @collector.user[:foo]
+  end
+
+  it "full-stack test" do
+    @config.tags = {
+      'configuration_context_event_key' => 'configuration_value',
+      'configuration_context_key' => 'configuration_value',
+      'configuration_event_key' => 'configuration_value',
+      'configuration_key' => 'configuration_value'
+    }
+
+    @instance.tags = {
+      'configuration_context_event_key' => 'context_value',
+      'configuration_context_key' => 'context_value',
+      'context_event_key' => 'context_value',
+      'context_key' => 'context_value'
+    }
+
+    @evt.tags = {
+      'configuration_context_event_key' => 'event_value',
+      'configuration_event_key' => 'event_value',
+      'context_event_key' => 'event_value',
+      'event_key' => 'event_value'
+    }
+
+    result = {
+      'configuration_context_event_key' => 'event_value',
+      'configuration_context_key' => 'context_value',
+      'configuration_event_key' => 'event_value',
+      'context_event_key' => 'event_value',
+      'configuration_key' => 'configuration_value',
+      'context_key' => 'context_value',
+      'event_key' => 'event_value'
+    }
+    assert_equal result, @collector.tags
+  end
+end

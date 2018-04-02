@@ -165,7 +165,7 @@ class TestInstance < Raven::Test
     assert_equal 1, @instance.client.transport.events.size
   end
 
-  it "can merge various types of context" do
+  it "has various context accessors" do
     @instance = Raven::Instance.new(Raven::Context.new)
     @instance.context.extra = { "baz" => "qux" }
     @instance.context.tags = { "sentry" => "is great" }
