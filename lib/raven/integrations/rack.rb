@@ -25,7 +25,7 @@ module Raven
       if env['raven.requested_at']
         options[:time_spent] = Time.now - env['raven.requested_at']
       end
-      Raven.context.rack_env = env
+      Raven.context.rack = env
       Raven.capture_type(exception, options)
     end
     class << self

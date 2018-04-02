@@ -66,10 +66,10 @@ RSpec.describe Raven::Rack do
   end
 
   it 'should bind request context' do
-    Raven::Context.current.rack_env = {}
+    Raven::Context.current.rack = {}
 
     app = lambda do |env|
-      expect(Raven::Context.current.rack_env).to eq(env)
+      expect(Raven::Context.current.rack).to eq(env)
 
       ['response', {}, env]
     end

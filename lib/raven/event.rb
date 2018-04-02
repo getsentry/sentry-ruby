@@ -122,7 +122,7 @@ module Raven
       self.transaction ||= context.transaction.last
 
       # If this is a Rack event, merge Rack context
-      add_rack_context if !request && !context.rack_env.empty?
+      add_rack_context if !request && !context.rack.empty?
 
       # Merge contexts
       self.user  = context.user.merge(user) # TODO: contexts
@@ -131,11 +131,11 @@ module Raven
     end
 
     def add_rack_context
-      self.request = HttpInterface.new.from_rack(context.rack_env)
+      self.request = HttpInterface.new.from_rack(context.rack)
 
       # When behind a proxy (or if the user is using a proxy), we can't use
       # REMOTE_ADDR to determine the Event IP, and must use other headers instead.
-      context.user[:ip_address] = Utils::RealIp.new(context.rack_env).calculate_ip
+      context.user[:ip_address] = Utils::RealIp.new(context.rack).calculate_ip
     end
 
     def async_json_processors

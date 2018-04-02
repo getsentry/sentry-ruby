@@ -33,6 +33,12 @@ module Raven
       BreadcrumbBuffer.current
     end
 
+    extend Forwardable
+
+    def_delegators :context, :user_context, :tags_context, :extra_context,
+                   :rack_context, :user_context=, :tags_context=, :extra_context=,
+                   :rack_context=, :transaction, :transaction=
+
     def context
       if @explicit_context
         @context ||= Context.new
@@ -133,44 +139,6 @@ module Raven
 
     def last_event_id
       Thread.current["sentry_#{object_id}_last_event_id"]
-    end
-
-    # Bind user context. Merges with existing context (if any).
-    #
-    # It is recommending that you send at least the ``id`` and ``email``
-    # values. All other values are arbitrary.
-    #
-    # @example
-    #   Raven.user_context('id' => 1, 'email' => 'foo@example.com')
-    def user_context(options = nil)
-      context.user.merge!(options || {})
-    end
-
-    # Bind tags context. Merges with existing context (if any).
-    #
-    # Tags are key / value pairs which generally represent things like
-    # application version, environment, role, and server names.
-    #
-    # @example
-    #   Raven.tags_context('my_custom_tag' => 'tag_value')
-    def tags_context(options = nil)
-      context.tags.merge!(options || {})
-    end
-
-    # Bind extra context. Merges with existing context (if any).
-    #
-    # Extra context shows up as Additional Data within Sentry, and is
-    # completely arbitrary.
-    #
-    # @example
-    #   Raven.extra_context('my_custom_data' => 'value')
-    def extra_context(options = nil)
-      context.extra.merge!(options || {})
-    end
-
-    # TODO: does this need to be accessible?
-    def rack_context(options = nil)
-      context.rack_env.merge!(options || {})
     end
 
     private

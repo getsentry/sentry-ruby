@@ -207,12 +207,12 @@ RSpec.describe Raven::Instance do
   describe "#rack_context" do
     it "doesn't set anything if the context is empty" do
       subject.rack_context({})
-      expect(subject.context.rack_env).to eq({})
+      expect(subject.context.rack).to eq({})
     end
 
     it "sets arbitrary rack context" do
       subject.rack_context(:foo => :bar)
-      expect(subject.context.rack_env[:foo]).to eq(:bar)
+      expect(subject.context.rack[:foo]).to eq(:bar)
     end
   end
 end
