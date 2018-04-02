@@ -13,7 +13,7 @@ else
 end
 
 gem "rack"
-gem "sidekiq"
+gem "sidekiq", github: "mperham/sidekiq"
 gem "rack-timeout"
 gem "pry"
 gem "pry-coolline"
