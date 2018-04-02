@@ -15,43 +15,41 @@ module Raven
     %w(extra user tags rack).each do |ctx_type|
       define_method(ctx_type) { @context[ctx_type.to_sym] }
       define_method(ctx_type + "=") { |hash| @context[ctx_type.to_sym].merge!(hash || {}) }
-
       alias_method (ctx_type + "_context").to_sym, (ctx_type + "=").to_sym
     end
 
-    def initialize(opts = {})
-      @context = {
-        :user => {},
-        :tags => {},
-        :rack => {},
-        :extra => { :server => { :os => os_context, :runtime => runtime_context } }
-      }
-      @configuration = opts[:configuration]
-      @event = opts[:event]
+    def initialize
+      @context = { :user => {}, :tags => {}, :rack => {}, :extra => {} }
       self.transaction = []
     end
+  end
 
-    private
-
-    def sys
-      @sys = Raven::System.new
+  class ContextCollector
+    def initialize(event, instance, config)
+      raise ArgumentError unless [event, instance, config].all? { |ctx| ctx.is_a?(Raven::Context) }
+      @event = event
+      @instance = instance
+      @config = config
     end
 
-    # TODO: reduce to uname -svra
-    def os_context
-      {
-        :name => sys.command("uname -s") || RbConfig::CONFIG["host_os"],
-        :version => sys.command("uname -v"),
-        :build => sys.command("uname -r"),
-        :kernel_version => sys.command("uname -a") || sys.command("ver") # windows
-      }
+    def user
+      @instance.user.merge(@event.user)
     end
 
-    def runtime_context
-      {
-        :name => Kernel.const_defined?(:RUBY_ENGINE) ? RUBY_ENGINE : RbConfig::CONFIG["ruby_install_name"],
-        :version => Kernel.const_defined?(:RUBY_DESCRIPTION) ? RUBY_DESCRIPTION : sys.command("ruby -v")
-      }
+    def tags
+      @config.tags.merge(@instance.tags).merge(@event.tags)
+    end
+
+    def extra
+      @config.extra.merge(@instance.extra).merge(@event.extra)
+    end
+
+    def transaction
+      if @event.transaction.empty?
+        @instance.transaction.last
+      else
+        @event.transaction.last
+      end
     end
   end
 end

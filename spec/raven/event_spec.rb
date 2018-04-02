@@ -1,4 +1,5 @@
 require 'spec_helper'
+require 'raven/integrations/rack'
 
 RSpec.describe Raven::Event do
   before do
@@ -237,7 +238,7 @@ RSpec.describe Raven::Event do
   end
 
   context 'tags hierarchy respected' do
-    let(:hash) do
+    let(:config) do
       config = Raven::Configuration.new
       config.logger = Logger.new(nil)
       config.tags = {
@@ -246,35 +247,42 @@ RSpec.describe Raven::Event do
         'configuration_event_key' => 'configuration_value',
         'configuration_key' => 'configuration_value'
       }
-      context = Raven::Context.new
-      context.tags = { 'configuration_context_event_key' => 'context_value',
-                       'configuration_context_key' => 'context_value',
-                       'context_event_key' => 'context_value',
-                       'context_key' => 'context_value' }
-      instance = Raven::Instance.new(context, config)
+      config
+    end
 
+    let(:ctx) do
+      ctx = Raven::Context.new
+      ctx.tags = {
+        'configuration_context_event_key' => 'context_value',
+        'configuration_context_key' => 'context_value',
+        'context_event_key' => 'context_value',
+        'context_key' => 'context_value'
+      }
+      ctx
+    end
+
+    let(:evt) do
       Raven::Event.new(
-        :level => 'warning',
-        :logger => 'foo',
         :tags => {
           'configuration_context_event_key' => 'event_value',
           'configuration_event_key' => 'event_value',
           'context_event_key' => 'event_value',
           'event_key' => 'event_value'
         },
-        :server_name => 'foo.local',
-        :instance => instance
-      ).to_hash
+        :instance => Raven::Instance.new(ctx, config)
+      )
     end
 
     it 'merges tags data' do
-      expect(hash[:tags]).to eq('configuration_context_event_key' => 'event_value',
-                                'configuration_context_key' => 'context_value',
-                                'configuration_event_key' => 'event_value',
-                                'context_event_key' => 'event_value',
-                                'configuration_key' => 'configuration_value',
-                                'context_key' => 'context_value',
-                                'event_key' => 'event_value')
+      expect(evt.to_hash[:tags]).to eq(
+        'configuration_context_event_key' => 'event_value',
+        'configuration_context_key' => 'context_value',
+        'configuration_event_key' => 'event_value',
+        'context_event_key' => 'event_value',
+        'configuration_key' => 'configuration_value',
+        'context_key' => 'context_value',
+        'event_key' => 'event_value'
+      )
     end
   end
 

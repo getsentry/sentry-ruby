@@ -337,6 +337,16 @@ module Raven
       !!(path =~ @in_app_regex)
     end
 
+    def context
+      return @context if defined? @context
+      @context = begin
+        ctx = Context.new
+        ctx.tags = tags
+        ctx.extra = { :server => { :os => os_context, :runtime => runtime_context } }
+        ctx
+      end
+    end
+
     private
 
     def detect_project_root
@@ -433,6 +443,23 @@ module Raven
       else
         true
       end
+    end
+
+    # TODO: reduce to uname -svra
+    def os_context
+      {
+        :name => @sys.command("uname -s") || RbConfig::CONFIG["host_os"],
+        :version => @sys.command("uname -v"),
+        :build => @sys.command("uname -r"),
+        :kernel_version => @sys.command("uname -a") || @sys.command("ver") # windows
+      }
+    end
+
+    def runtime_context
+      {
+        :name => Kernel.const_defined?(:RUBY_ENGINE) ? RUBY_ENGINE : RbConfig::CONFIG["ruby_install_name"],
+        :version => Kernel.const_defined?(:RUBY_DESCRIPTION) ? RUBY_DESCRIPTION : @sys.command("ruby -v")
+      }
     end
   end
 end

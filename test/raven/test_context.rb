@@ -41,24 +41,6 @@ class RavenContextTest < Raven::Test
     refute_equal thread_context, t[:context]
   end
 
-  it "merges extra context with server" do
-    context = Raven::Context.new
-
-    assert context.extra.keys.include?(:server)
-
-    context.extra[:my_key] = :my_val
-
-    assert_equal :my_val, context.extra[:my_key]
-    assert context.extra.keys.include?(:server)
-  end
-
-  it "has runtime context" do
-    context = Raven::Context.new
-
-    assert_equal RUBY_ENGINE, context.extra[:server][:runtime][:name]
-    assert_equal RUBY_DESCRIPTION, context.extra[:server][:runtime][:version]
-  end
-
   # rack - sets ip ip_address
 
   # rack truncates data
@@ -69,18 +51,4 @@ class RavenContextTest < Raven::Test
   # Raven._context methods
 end
 
-class RavenOSContextTest < Raven::ThreadUnsafeTest
-  it "has os context" do
-    sys = Minitest::Mock.new
-    sys.expect :command, "foo", ["uname -s"]
-    sys.expect :command, "foo", ["uname -v"]
-    sys.expect :command, "foo", ["uname -r"]
-    sys.expect :command, "foo", ["uname -a"]
-
-    Raven::System.stub(:new, sys) do
-      Raven::Context.new
-    end
-
-    sys.verify
-  end
-end
+# Context Collector

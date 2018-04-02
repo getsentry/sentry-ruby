@@ -10,12 +10,14 @@ module Raven
     SDK = { "name" => "raven-ruby", "version" => Raven::VERSION }.freeze
 
     attr_accessor :event_id, :logger, :transaction, :server_name, :release, :modules,
-                  :extra, :tags, :checksum, :fingerprint, :environment, :user,
-                  :backtrace, :platform, :sdk, :instance, :request, :exception, :stacktrace
+                  :checksum, :fingerprint, :environment,
+                  :backtrace, :platform, :sdk, :instance, :request, :exception,
+                  :stacktrace, :context
     attr_reader   :level, :timestamp, :time_spent, :logentry
 
     extend Forwardable
-    def_delegators :instance, :configuration, :breadcrumbs, :context
+    def_delegators :instance, :configuration, :breadcrumbs
+    def_delegators :context, :tags, :user, :extra, :tags=, :user=, :extra=
 
     def initialize(init = {})
       self.instance      = Raven.instance
@@ -26,9 +28,7 @@ module Raven
       self.platform      = :ruby
       self.sdk           = SDK
 
-      self.user          = {} # TODO: contexts
-      self.extra         = {} # TODO: contexts
-      self.tags          = {} # TODO: contexts
+      self.context = Context.new
 
       init.each_pair { |key, val| public_send("#{key}=", val) }
       yield self if block_given?
@@ -88,11 +88,17 @@ module Raven
     end
 
     def to_hash
-      data = [:checksum, :environment, :event_id, :extra, :fingerprint, :level,
+      data = [:checksum, :environment, :event_id, :fingerprint, :level,
               :logger, :message, :modules, :platform, :release, :sdk, :server_name,
-              :tags, :time_spent, :timestamp, :transaction, :user].each_with_object({}) do |att, memo|
+              :time_spent, :timestamp].each_with_object({}) do |att, memo|
         val = public_send(att)
         memo[att] = val unless val.nil?
+      end
+
+      collector = ContextCollector.new(context, instance.context, configuration.context)
+      [:user, :tags, :extra, :transaction].each do |ctx|
+        val = collector.public_send(ctx)
+        data[ctx] = val
       end
 
       [:logentry, :breadcrumbs, :exception, :stacktrace, :request].each do |int|
@@ -117,25 +123,17 @@ module Raven
       self.environment ||= configuration.current_environment
     end
 
-    # TODO: dup context and modify/delegate
     def set_core_attributes_from_context
-      self.transaction ||= context.transaction.last
-
       # If this is a Rack event, merge Rack context
-      add_rack_context if !request && !context.rack.empty?
-
-      # Merge contexts
-      self.user  = context.user.merge(user) # TODO: contexts
-      self.extra = context.extra.merge(extra) # TODO: contexts
-      self.tags  = configuration.tags.merge(context.tags).merge!(tags) # TODO: contexts
+      add_rack_context if !request && !instance.context.rack.empty?
     end
 
     def add_rack_context
-      self.request = HttpInterface.new.from_rack(context.rack)
+      self.request = HttpInterface.new.from_rack(instance.context.rack)
 
       # When behind a proxy (or if the user is using a proxy), we can't use
       # REMOTE_ADDR to determine the Event IP, and must use other headers instead.
-      context.user[:ip_address] = Utils::RealIp.new(context.rack).calculate_ip
+      user[:ip_address] = Utils::RealIp.new(instance.context.rack).calculate_ip
     end
 
     def async_json_processors

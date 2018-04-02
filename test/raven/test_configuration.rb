@@ -268,3 +268,19 @@ class TestENVConfiguration < Raven::ThreadUnsafeTest
     assert_equal 'set-with-rack-env', configuration.current_environment
   end
 end
+
+# class RavenOSContextTest < Raven::ThreadUnsafeTest
+#   it "has os context" do
+#     sys = Minitest::Mock.new
+#     sys.expect :command, "foo", ["uname -s"]
+#     sys.expect :command, "foo", ["uname -v"]
+#     sys.expect :command, "foo", ["uname -r"]
+#     sys.expect :command, "foo", ["uname -a"]
+#
+#     Raven::System.stub(:new, sys) do
+#       Raven::Context.new
+#     end
+#
+#     sys.verify
+#   end
+# end
