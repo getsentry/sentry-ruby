@@ -12,21 +12,13 @@ else
   gem "rspec-rails"
 end
 
-if RUBY_VERSION < '2.0'
-  gem "mime-types", "< 3.0.0"
-  gem "nokogiri", "~> 1.6.8"
-  gem "rack", "~> 1.6.8"
-  gem "sidekiq", "< 3.2"
-  gem "rack-timeout", "0.3.0"
-else
-  gem "rack"
-  gem "sidekiq"
-  gem "rack-timeout"
-end
+gem "rack"
+gem "sidekiq"
+gem "rack-timeout"
 gem "pry"
 gem "pry-coolline"
 gem "benchmark-ips"
-gem "benchmark-ipsa" if RUBY_VERSION > '2.0'
+gem "benchmark-ipsa"
 gem "ruby-prof", platform: :mri
 gem "rake"
 gem "minitest-proveit"
