@@ -12,26 +12,20 @@ else
   gem "rspec-rails", "> 3"
 end
 
-if RUBY_VERSION < '2.0'
-  gem "mime-types", "< 3.0.0"
-  gem "nokogiri", "~> 1.6.8"
-  gem "rack", "~> 1.6.8"
-  gem "sidekiq", "< 3.2"
-  gem "rack-timeout", "0.3.0"
-else
-  gem "rack"
-  gem "rack-timeout"
 
-  if ENV["SIDEKIQ_VERSION"].to_i >= 6 && RUBY_VERSION > '2.5'
-    gem "sidekiq", ">= 6"
-  else
-    gem "sidekiq", "< 6"
-  end
+gem "rack"
+gem "rack-timeout"
+
+if ENV["SIDEKIQ_VERSION"].to_i >= 6 && RUBY_VERSION > '2.5'
+  gem "sidekiq", ">= 6"
+else
+  gem "sidekiq", "< 6"
 end
+
 gem "pry"
 gem "pry-coolline"
 gem "benchmark-ips"
-gem "benchmark-ipsa" if RUBY_VERSION > '2.0'
+gem "benchmark-ipsa"
 gem "ruby-prof", platform: :mri
 gem "rake", "> 12"
 gem "minitest-proveit"
