@@ -30,6 +30,8 @@ before_install:
   - service haveged start
   # Pin bundler version due to https://github.com/rubygems/rubygems/issues/2055
   - gem install bundler -v 1.16.0
+  # https://github.com/travis-ci/travis-ci/issues/8978
+  - gem update --system
 
 matrix:
   include:
