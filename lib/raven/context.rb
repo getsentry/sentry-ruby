@@ -33,7 +33,7 @@ module Raven
     end
 
     def user
-      @instance.user.merge(@event.user)
+      @config.user.merge(@instance.user).merge(@event.user)
     end
 
     def tags

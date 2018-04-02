@@ -144,8 +144,10 @@ module Raven
     # Should the SSL certificate of the server be verified?
     attr_accessor :ssl_verification
 
-    # Default tags for events. Hash.
-    attr_accessor :tags
+    # Configurations have their own context. These values will only be applied
+    # if they are not overridden by the instance or event context.
+    extend Forwardable
+    def_delegators :context, :tags, :user, :extra, :tags=, :user=, :extra=
 
     # Timeout when waiting for the server to return data in seconds.
     attr_accessor :timeout
@@ -225,7 +227,6 @@ module Raven
       self.server_name = @sys.server_name
       self.should_capture = false
       self.ssl_verification = true
-      self.tags = {}
       self.timeout = 2
       self.transport_failure_callback = false
     end
@@ -341,8 +342,7 @@ module Raven
       return @context if defined? @context
       @context = begin
         ctx = Context.new
-        ctx.tags = tags
-        ctx.extra = { :server => { :os => os_context, :runtime => runtime_context } }
+        ctx.extra = system_context
         ctx
       end
     end
@@ -443,6 +443,10 @@ module Raven
       else
         true
       end
+    end
+
+    def system_context
+      @system_context = { :server => { :os => os_context, :runtime => runtime_context } }
     end
 
     # TODO: reduce to uname -svra
