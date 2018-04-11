@@ -46,6 +46,9 @@ module Raven
     # the disk. See Raven::LineCache for the required interface you must implement.
     attr_accessor :linecache
 
+    # Log user's IP address? Default: true.
+    attr_accessor :log_ip_address
+
     # Logger used by Raven. In Rails, this is the Rails logger, otherwise
     # Raven provides its own Raven::Logger.
     attr_accessor :logger
@@ -192,6 +195,7 @@ module Raven
       self.exclude_loggers = []
       self.excluded_exceptions = IGNORE_DEFAULT.dup
       self.linecache = ::Raven::LineCache.new
+      self.log_ip_address = true
       self.logger = ::Raven::Logger.new(STDOUT)
       self.open_timeout = 1
       self.processors = DEFAULT_PROCESSORS.dup

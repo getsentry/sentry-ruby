@@ -175,6 +175,19 @@ RSpec.describe Raven::Event do
     end
   end
 
+  context "ip address logging is disabled" do
+    let(:hash) do
+      Raven.rack_context('HTTP_X_FORWARDED_FOR' => '1.1.1.1')
+      config = Raven::Configuration.new
+      config.log_ip_address = false
+      Raven::Event.new(configuration: config).to_hash
+    end
+
+    it "does not set ip address" do
+      expect(hash[:user][:ip_address]).to be_nil
+    end
+  end
+
   context "rack context, long body" do
     let(:hash) do
       Raven.rack_context('REQUEST_METHOD' => 'GET',
