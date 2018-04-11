@@ -216,7 +216,9 @@ module Raven
       interface :http do |int|
         int.from_rack(context.rack_env)
       end
-      context.user[:ip_address] = calculate_real_ip_from_rack
+      if configuration[:log_ip_address]
+        context.user[:ip_address] = calculate_real_ip_from_rack
+      end
     end
 
     # When behind a proxy (or if the user is using a proxy), we can't use
