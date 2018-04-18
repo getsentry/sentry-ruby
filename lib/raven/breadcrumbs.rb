@@ -40,6 +40,7 @@ module Raven
 
     def initialize(size = 100)
       @buffer = Array.new(size)
+      @last = 0
     end
 
     def record(crumb = nil)
@@ -47,12 +48,13 @@ module Raven
         crumb = Breadcrumb.new if crumb.nil?
         yield(crumb)
       end
-      @buffer.slice!(0)
-      @buffer << crumb
+      @buffer[@last] = crumb
+      @last += 1
+      @last = 0 if @last == @buffer.size
     end
 
     def members
-      @buffer.compact
+      @buffer.last(@buffer.size - @last).compact + @buffer.first(@last)
     end
 
     def peek
