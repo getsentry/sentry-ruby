@@ -1,3 +1,9 @@
+2.7.3
+-----
+
+* BUGFIX: Fix proxy settings for Faraday [@Strnadj, #820]
+* BUGFIX: Fix duplicated events in ActiveJob w/DelayedJob and Sidekiq [@BrentWheeldon, #815]
+
 2.7.2
 -----
 
