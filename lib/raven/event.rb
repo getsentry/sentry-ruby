@@ -39,7 +39,7 @@ module Raven
 
       # Allow attributes to be set on the event at initialization
       yield self if block_given?
-      init.each_pair { |key, val| public_send("#{key}=", val) }
+      init.each_pair { |key, val| public_send("#{key}=", val) unless val.nil? }
 
       set_core_attributes_from_configuration
       set_core_attributes_from_context
