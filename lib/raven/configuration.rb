@@ -349,6 +349,7 @@ module Raven
 
     def detect_release_from_heroku
       return unless running_on_heroku?
+      return if ENV['CI']
       logger.warn(heroku_dyno_metadata_message) && return unless ENV['HEROKU_SLUG_COMMIT']
 
       ENV['HEROKU_SLUG_COMMIT']
