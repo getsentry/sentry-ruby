@@ -7,6 +7,5 @@ RSpec.describe Raven::Transports::Stdout do
   it 'should write to stdout' do
     event = JSON.generate(Raven::Event.from_message("this is an STDOUT transport test").to_hash)
     expect { client.send(:transport).send_event("stdout test", event) }.to output(/\"message\":\"this is an STDOUT transport test\"/).to_stdout
-
   end
 end
