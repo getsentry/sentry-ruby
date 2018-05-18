@@ -155,11 +155,11 @@ RSpec.describe Raven::Instance do
       end
 
       it 'raises exception with no :silent option' do
-        expect { subject.capture{ raise RuntimeError } }.to raise_error RuntimeError
+        expect { subject.capture { raise RuntimeError } }.to raise_error RuntimeError
       end
 
       it 'not raises exception with :silent option' do
-        expect { subject.capture(silent: true) { raise RuntimeError } }.not_to raise_error RuntimeError
+        expect { subject.capture(silent => true) { raise RuntimeError } }.not_to raise_error RuntimeError
       end
     end
 
