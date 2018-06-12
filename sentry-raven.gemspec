@@ -12,7 +12,6 @@ Gem::Specification.new do |gem|
   gem.version = Raven::VERSION
   gem.platform = Gem::Platform::RUBY
   gem.required_ruby_version = '>= 1.9.0'
-  gem.has_rdoc = true
   gem.extra_rdoc_files = ["README.md", "LICENSE"]
   gem.files = `git ls-files | grep -Ev '^(spec|benchmarks|examples)'`.split("\n")
   gem.bindir = "exe"
