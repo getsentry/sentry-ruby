@@ -7,11 +7,11 @@ AllCops:
      - 'vendor/**/*'
 
 Metrics/ClassLength:
-  Max: 268
+  Max: 269
   CountComments: false
 
 Metrics/AbcSize:
-  Max: 30
+  Max: 40
 
 Metrics/CyclomaticComplexity:
   Max: 12

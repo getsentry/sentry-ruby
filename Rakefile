@@ -14,6 +14,7 @@ begin
   require 'rubocop/rake_task'
   RuboCop::RakeTask.new(:rubocop) do |task|
     task.patterns = ['lib/**/*.rb','spec/**/*.rb',]
+    task.options << '--display-cop-names'
   end
 
   RSpec::Core::RakeTask.new(:spec) do |spec|
