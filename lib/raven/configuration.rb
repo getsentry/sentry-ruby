@@ -225,11 +225,7 @@ module Raven
         # DSN-style string
         self.project_id = uri_path.pop
         self.public_key = uri.user
-        if uri.password.nil? || uri.password.empty?
-          self.secret_key = nil
-        else
-          self.secret_key = uri.password
-        end
+        self.secret_key = !(uri.password.nil? || uri.password.empty?) ? uri.password : nil
       end
 
       self.scheme = uri.scheme
