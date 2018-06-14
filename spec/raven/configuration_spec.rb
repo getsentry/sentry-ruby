@@ -140,7 +140,7 @@ RSpec.describe Raven::Configuration do
 
     it 'captured_allowed returns false' do
       expect(subject.capture_allowed?).to eq(false)
-      expect(subject.errors).to eq(["No public_key specified", "No secret_key specified", "No project_id specified"])
+      expect(subject.errors).to eq(["No public_key specified", "No project_id specified"])
     end
   end
 
