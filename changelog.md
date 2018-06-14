@@ -1,3 +1,10 @@
+2.7.4
+-----
+
+* BUGFIX: Correctly handle public only DSNs [@mitsuhiko, #847]
+* BUGFIX: context attributes with nil raised error [@joker-777, 824]
+* BUGFIX: Suppress warning about enabling dyno metadata in Heroku CI [@meganemura, #833]
+
 2.7.3
 -----
 
