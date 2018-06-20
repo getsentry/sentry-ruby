@@ -50,6 +50,8 @@ module Raven
         case configuration.scheme
         when 'http', 'https'
           Transports::HTTP.new(configuration)
+        when 'stdout'
+          Transports::Stdout.new(configuration)
         when 'dummy'
           Transports::Dummy.new(configuration)
         else
