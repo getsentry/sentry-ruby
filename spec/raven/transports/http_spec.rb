@@ -1,7 +1,7 @@
 require 'spec_helper'
 
 RSpec.describe Raven::Transports::HTTP do
-  let(:config) { Raven::Configuration.new.tap { |c| c.dsn = 'http://12345:67890@sentry.localdomain/sentry/42' } }
+  let(:config) { Raven::Configuration.new.tap { |c| c.dsn = 'http://12345@sentry.localdomain/sentry/42' } }
   let(:client) { Raven::Client.new(config) }
 
   it 'should set a custom User-Agent' do

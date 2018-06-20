@@ -7,6 +7,7 @@
 [![Gem Version](https://img.shields.io/gem/v/sentry-raven.svg)](https://rubygems.org/gems/sentry-raven)
 [![Build Status](https://img.shields.io/travis/getsentry/raven-ruby/master.svg)](https://travis-ci.org/getsentry/raven-ruby)
 [![Gem](https://img.shields.io/gem/dt/sentry-raven.svg)](https://rubygems.org/gems/sentry-raven/)
+[![SemVer](https://api.dependabot.com/badges/compatibility_score?dependency-name=sentry-raven&package-manager=bundler&version-scheme=semver)](https://dependabot.com/compatibility-score.html?dependency-name=sentry-raven&package-manager=bundler&version-scheme=semver)
 
 
 [Documentation](https://docs.getsentry.com/hosted/clients/ruby/) | [Bug Tracker](https://github.com/getsentry/raven-ruby/issues) | [Forum](https://forum.sentry.io/) | IRC: irc.freenode.net, #sentry

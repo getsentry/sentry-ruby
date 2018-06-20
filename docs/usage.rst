@@ -26,7 +26,7 @@ Reporting Failures
 ------------------
 
 If you use Rails, Rake, Rack etc, you're already done - no more
-configuration required! Check :doc:`integrations/index` for more details on
+configuration required! Check `doc <integrations/index.rst>`_ for more details on
 other gems Sentry integrates with automatically.
 
 Otherwise, Raven supports two methods of capturing exceptions:

@@ -116,6 +116,8 @@ module Raven
 
     # Secret key for authentication with the Sentry server
     # If you provide a DSN, this will be set automatically.
+    #
+    # This is deprecated and not necessary for newer Sentry installations any more.
     attr_accessor :secret_key
 
     # Include module versions in reports - boolean.
@@ -223,7 +225,7 @@ module Raven
         # DSN-style string
         self.project_id = uri_path.pop
         self.public_key = uri.user
-        self.secret_key = uri.password
+        self.secret_key = !(uri.password.nil? || uri.password.empty?) ? uri.password : nil
       end
 
       self.scheme = uri.scheme
@@ -349,6 +351,7 @@ module Raven
 
     def detect_release_from_heroku
       return unless running_on_heroku?
+      return if ENV['CI']
       logger.warn(heroku_dyno_metadata_message) && return unless ENV['HEROKU_SLUG_COMMIT']
 
       ENV['HEROKU_SLUG_COMMIT']
@@ -391,9 +394,9 @@ module Raven
     end
 
     def valid?
-      return true if %w(server host path public_key secret_key project_id).all? { |k| public_send(k) }
+      return true if %w(server host path public_key project_id).all? { |k| public_send(k) }
       if server
-        %w(server host path public_key secret_key project_id).map do |key|
+        %w(server host path public_key project_id).map do |key|
           @errors << "No #{key} specified" unless public_send(key)
         end
       else

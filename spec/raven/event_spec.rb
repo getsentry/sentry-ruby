@@ -72,6 +72,26 @@ RSpec.describe Raven::Event do
     end
   end
 
+  context 'parameter entries are nil' do
+    let(:hash) do
+      Raven::Event.new(:message => 'test',
+                       :level => 'warn',
+                       :logger => 'foo',
+                       :tags => nil,
+                       :extra => nil,
+                       :user => nil,
+                       :server_name => 'foo.local',
+                       :release => '721e41770371db95eee98ca2707686226b993eda',
+                       :environment => 'production').to_hash
+    end
+
+    it "skips nil values" do
+      expect(hash[:extra]).to eq(Raven.context.extra)
+      expect(hash[:user]).to eq(Raven.context.user)
+      expect(hash[:tags]).to eq(Raven.configuration.tags)
+    end
+  end
+
   context 'user context specified' do
     let(:hash) do
       Raven.user_context('id' => 'hello')

@@ -197,7 +197,7 @@ Optional settings
 
 .. describe:: should_capture
 
-    By providing a proc or lambda, you can control what events are captured. Events are passed to the Proc or lambda you provide - returning false will stop the event from sending to Sentry:
+    By providing a proc or lambda, you can control what events are captured. A String (if you've captured a message) or the Exception (if you've captured an exception) will be passed to the Proc or lambda you provide - returning false will stop the event from sending to Sentry:
 
     .. code-block:: ruby
 

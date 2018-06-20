@@ -1,3 +1,16 @@
+2.7.4
+-----
+
+* BUGFIX: Correctly handle public only DSNs [@mitsuhiko, #847]
+* BUGFIX: context attributes with nil raised error [@joker-777, 824]
+* BUGFIX: Suppress warning about enabling dyno metadata in Heroku CI [@meganemura, #833]
+
+2.7.3
+-----
+
+* BUGFIX: Fix proxy settings for Faraday [@Strnadj, #820]
+* BUGFIX: Fix duplicated events in ActiveJob w/DelayedJob and Sidekiq [@BrentWheeldon, #815]
+
 2.7.2
 -----
 

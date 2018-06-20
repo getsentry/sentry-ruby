@@ -37,9 +37,9 @@ matrix:
       env: RAILS_VERSION=4
     - rvm: jruby-1.7.27
       env: JRUBY_OPTS="--dev" RAILS_VERSION=4
-    - rvm: jruby-9.1.15.0
+    - rvm: jruby-9.2.0.0
       env: JRUBY_OPTS="--dev -J-Djruby.launch.inproc=true -J-Xmx1024M" RAILS_VERSION=4
-    - rvm: jruby-9.1.15.0
+    - rvm: jruby-9.2.0.0
       env: JRUBY_OPTS="--dev -J-Djruby.launch.inproc=true -J-Xmx1024M" RAILS_VERSION=5
     - rvm: ruby-head
       env: RAILS_VERSION=0
