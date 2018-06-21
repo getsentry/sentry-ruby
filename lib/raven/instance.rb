@@ -87,6 +87,10 @@ module Raven
     #   Raven.capture do
     #     MyApp.run
     #   end
+    #
+    #   Raven.capture(silent: true) do
+    #     raise "Boom"      # does not raises exception but sends it to Sentry server
+    #   end
     def capture(options = {})
       if block_given?
         begin
@@ -95,7 +99,7 @@ module Raven
           raise # Don't capture Raven errors
         rescue Exception => e
           capture_type(e, options)
-          raise
+          raise unless options[:silent]
         end
       else
         install_at_exit_hook(options)
