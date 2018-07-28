@@ -7,7 +7,7 @@ module Raven
     require 'raven/integrations/rails/controller_transaction'
 
     initializer "raven.use_rack_middleware" do |app|
-      app.config.middleware.insert 0, Raven::Rack
+      app.middleware.insert 0, Raven::Rack
     end
 
     initializer 'raven.action_controller' do
