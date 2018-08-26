@@ -203,6 +203,8 @@ Optional settings
 
         config.should_capture = Proc.new { |e| true unless e.contains_sensitive_info? }
 
+    This option does not replace or modify ``excluded_exceptions``.
+
 .. describe:: silence_ready
 
     Upon start, Raven will write the following message to the log at the INFO level:
