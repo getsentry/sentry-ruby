@@ -130,7 +130,7 @@ For more information, see [Context](https://docs.sentry.io/clients/ruby/context/
 
 ## More Information
 
-* [Documentation](https://docs.getsentry.com/hosted/clients/ruby/)
+* [Documentation](https://docs.sentry.io/clients/ruby/)
 * [Bug Tracker](https://github.com/getsentry/raven-ruby/issues)
 * [Forum](https://forum.sentry.io/)
 * [IRC](irc://irc.freenode.net/sentry>)  (irc.freenode.net, #sentry)
