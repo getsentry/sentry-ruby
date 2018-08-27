@@ -1,5 +1,8 @@
 <p align="center">
-  <img src="https://cdn.rawgit.com/getsentry/raven-python/1e525422/docs/_static/logo.png">
+  <a href="https://sentry.io" target="_blank" align="center">
+    <img src="https://sentry-brand.storage.googleapis.com/sentry-logo-black.png" width="280">
+  </a>
+  <br>
 </p>
 
 # Raven-Ruby, the Ruby Client for Sentry
