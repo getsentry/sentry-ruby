@@ -31,15 +31,16 @@ RSpec.describe "Integration tests" do
     @stubs.verify_stubbed_calls
   end
 
-  it "hitting quota limit shouldn't swallow exception" do
-    @stubs.post('sentry/api/42/store/') { [403, {}, 'Creation of this event was blocked'] }
-
-    # sentry error and original error
-    expect(@logger).not_to receive(:error).twice
-    @instance.capture_exception(build_exception)
-
-    @stubs.verify_stubbed_calls
-  end
+  # TODO: Not a very good test
+  # it "hitting quota limit shouldn't swallow exception" do
+  #   @stubs.post('sentry/api/42/store/') { [403, {}, 'Creation of this event was blocked'] }
+  #
+  #   # sentry error and original error
+  #   expect(@logger).not_to receive(:error)
+  #   @instance.capture_exception(build_exception)
+  #
+  #   @stubs.verify_stubbed_calls
+  # end
 
   it "timed backoff should prevent sends" do
     expect(@instance.client.transport).to receive(:send_event).exactly(1).times.and_raise(Faraday::Error::ConnectionFailed, "conn failed")
