@@ -29,7 +29,7 @@ gem "benchmark-ips"
 gem "benchmark-ipsa" if RUBY_VERSION > '2.0'
 gem "ruby-prof", platform: :mri
 gem "rake"
-gem "rubocop", "~> 0.41.1"
+gem "rubocop", "~> 0.41.1" # Last version that supported 1.9, upgrade to 0.50 after we drop 1.9
 gem "rspec"
 gem "capybara" # rspec system tests
 gem "puma" # rspec system tests
