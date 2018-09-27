@@ -144,6 +144,24 @@ RSpec.describe Raven::Configuration do
     end
   end
 
+  context "with the new Sentry 9 DSN format" do
+    # Basically the same as before, without a secret
+    before(:each) do
+      subject.server = "https://66260460f09b5940498e24bb7ce093a0@sentry.io/42"
+    end
+
+    it 'captured_allowed is true' do
+      expect(subject.capture_allowed?).to eq(true)
+    end
+
+    it "sets the DSN in the way we expect" do
+      expect(subject.server).to eq("https://sentry.io")
+      expect(subject.project_id).to eq("42")
+      expect(subject.public_key).to eq("66260460f09b5940498e24bb7ce093a0")
+      expect(subject.secret_key).to be_nil
+    end
+  end
+
   context "with a sample rate" do
     before(:each) do
       subject.server = 'http://12345:67890@sentry.localdomain:3000/sentry/42'
