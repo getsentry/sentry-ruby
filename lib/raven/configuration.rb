@@ -182,6 +182,9 @@ module Raven
       Raven::Processor::HTTPHeaders
     ].freeze
 
+    HEROKU_DYNO_METADATA_MESSAGE = "You are running on Heroku but haven't enabled Dyno Metadata. For Sentry's "\
+    "release detection to work correctly, please run `heroku labs:enable runtime-dyno-metadata`".freeze
+
     LOG_PREFIX = "** [Raven] ".freeze
     MODULE_SEPARATOR = "::".freeze
 
@@ -352,18 +355,13 @@ module Raven
     def detect_release_from_heroku
       return unless running_on_heroku?
       return if ENV['CI']
-      logger.warn(heroku_dyno_metadata_message) && return unless ENV['HEROKU_SLUG_COMMIT']
+      logger.warn(HEROKU_DYNO_METADATA_MESSAGE) && return unless ENV['HEROKU_SLUG_COMMIT']
 
       ENV['HEROKU_SLUG_COMMIT']
     end
 
     def running_on_heroku?
       File.directory?("/etc/heroku")
-    end
-
-    def heroku_dyno_metadata_message
-      "You are running on Heroku but haven't enabled Dyno Metadata. For Sentry's "\
-      "release detection to work correctly, please run `heroku labs:enable runtime-dyno-metadata`"
     end
 
     def detect_release_from_capistrano
