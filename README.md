@@ -35,12 +35,12 @@ Raven will capture and send exceptions to the Sentry server whenever its DSN is 
 
 ```bash
 # Set your SENTRY_DSN environment variable.
-export SENTRY_DSN=http://public:secret@example.com/project-id
+export SENTRY_DSN=http://public@example.com/project-id
 ```
 ```ruby
 # Or you can configure the client in the code (not recommended - keep your DSN secret!)
 Raven.configure do |config|
-  config.dsn = 'http://public:secret@example.com/project-id'
+  config.dsn = 'http://public@example.com/project-id'
 end
 ```
 
