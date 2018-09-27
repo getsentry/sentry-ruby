@@ -15,7 +15,7 @@ RSpec.describe Raven::Client do
 
   it "generates an auth header" do
     expect(client.send(:generate_auth_header)).to eq(
-      "Sentry sentry_version=5, sentry_client=raven-ruby/#{Raven::VERSION}, sentry_timestamp=#{@fake_time.to_i}, " +
+      "Sentry sentry_version=5, sentry_client=raven-ruby/#{Raven::VERSION}, sentry_timestamp=#{@fake_time.to_i}, " \
       "sentry_key=12345, sentry_secret=67890"
     )
   end
@@ -24,7 +24,7 @@ RSpec.describe Raven::Client do
     client.configuration.server = "https://66260460f09b5940498e24bb7ce093a0@sentry.io/42"
 
     expect(client.send(:generate_auth_header)).to eq(
-      "Sentry sentry_version=5, sentry_client=raven-ruby/#{Raven::VERSION}, sentry_timestamp=#{@fake_time.to_i}, " +
+      "Sentry sentry_version=5, sentry_client=raven-ruby/#{Raven::VERSION}, sentry_timestamp=#{@fake_time.to_i}, " \
       "sentry_key=66260460f09b5940498e24bb7ce093a0"
     )
   end
