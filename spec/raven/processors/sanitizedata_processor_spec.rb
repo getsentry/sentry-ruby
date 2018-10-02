@@ -143,6 +143,13 @@ RSpec.describe Raven::Processor::SanitizeData do
     expect(result["ccnumba_int"]).to eq(Raven::Processor::SanitizeData::INT_MASK)
   end
 
+  it 'should filter credit card values with whitespace' do
+    data = { 'ccnumba' => ' 4242 4242 4242 4242 ' }
+
+    result = @processor.process(data)
+    expect(result["ccnumba"]).to eq(Raven::Processor::SanitizeData::STRING_MASK)
+  end
+
   it 'should pass through credit card values if configured' do
     @processor.sanitize_credit_cards = false
     data = {

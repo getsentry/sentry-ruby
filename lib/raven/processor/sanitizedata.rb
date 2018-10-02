@@ -57,7 +57,7 @@ module Raven
     end
 
     def matches_regexes?(k, v)
-      (sanitize_credit_cards && v =~ CREDIT_CARD_RE) ||
+      (sanitize_credit_cards && strip_whitespace(v) =~ CREDIT_CARD_RE) ||
         k =~ fields_re
     end
 
@@ -83,6 +83,10 @@ module Raven
       JSON.parse(string)
     rescue JSON::ParserError, NoMethodError
       nil
+    end
+
+    def strip_whitespace(value)
+      value.gsub(/\s/, '')
     end
   end
 end
