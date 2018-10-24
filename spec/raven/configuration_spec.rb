@@ -210,13 +210,24 @@ RSpec.describe Raven::Configuration do
           end
         end
 
+        # Only check causes when they're supported by the ruby version
         context 'when inspect_exception_causes_for_exclusion is true' do
           before do
             subject.inspect_exception_causes_for_exclusion = true
           end
 
-          it 'returns false' do
-            expect(subject.exception_class_allowed?(incoming_exception)).to eq false
+          if Exception.new.respond_to? :cause
+            context 'when the language version supports exception causes' do
+              it 'returns false' do
+                expect(subject.exception_class_allowed?(incoming_exception)).to eq false
+              end
+            end
+          else
+            context 'when the language version does not support exception causes' do
+              it 'returns true' do
+                expect(subject.exception_class_allowed?(incoming_exception)).to eq true
+              end
+            end
           end
         end
       end
