@@ -179,4 +179,55 @@ RSpec.describe Raven::Configuration do
       expect(subject.capture_allowed?).to eq(true)
     end
   end
+
+  describe '#exception_class_allowed?' do
+    class MyTestException < RuntimeError; end
+
+    context 'with custom excluded_exceptions' do
+      before do
+        subject.excluded_exceptions = ['MyTestException']
+      end
+
+      context 'when the raised exception is a Raven::Error' do
+        let(:incoming_exception) { Raven::Error.new }
+        it 'returns false' do
+          expect(subject.exception_class_allowed?(incoming_exception)).to eq false
+        end
+      end
+
+      context 'when the raised exception is not in excluded_exceptions' do
+        let(:incoming_exception) { RuntimeError.new }
+        it 'returns true' do
+          expect(subject.exception_class_allowed?(incoming_exception)).to eq true
+        end
+      end
+
+      context 'when the raised exception has a cause that is in excluded_exceptions' do
+        let(:incoming_exception) { build_exception_with_cause(MyTestException.new) }
+        context 'when inspect_exception_causes_for_exclusion is false' do
+          it 'returns true' do
+            expect(subject.exception_class_allowed?(incoming_exception)).to eq true
+          end
+        end
+
+        context 'when inspect_exception_causes_for_exclusion is true' do
+          before do
+            subject.inspect_exception_causes_for_exclusion = true
+          end
+
+          it 'returns false' do
+            expect(subject.exception_class_allowed?(incoming_exception)).to eq false
+          end
+        end
+      end
+
+      context 'when the raised exception is in excluded_exceptions' do
+        let(:incoming_exception) { MyTestException.new }
+
+        it 'returns false' do
+          expect(subject.exception_class_allowed?(incoming_exception)).to eq false
+        end
+      end
+    end
+  end
 end

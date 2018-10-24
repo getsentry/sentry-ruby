@@ -139,7 +139,7 @@ module Raven
 
     def add_exception_interface(exc)
       interface(:exception) do |exc_int|
-        exceptions = exception_chain_to_array(exc)
+        exceptions = Raven::Utils::ExceptionCauseChain.exception_to_array(exc).reverse
         backtraces = Set.new
         exc_int.values = exceptions.map do |e|
           SingleExceptionInterface.new do |int|
@@ -235,20 +235,6 @@ module Raven
         Raven::Processor::RemoveCircularReferences,
         Raven::Processor::UTF8Conversion
       ].map { |v| v.new(self) }
-    end
-
-    def exception_chain_to_array(exc)
-      if exc.respond_to?(:cause) && exc.cause
-        exceptions = [exc]
-        while exc.cause
-          exc = exc.cause
-          break if exceptions.any? { |e| e.object_id == exc.object_id }
-          exceptions << exc
-        end
-        exceptions.reverse!
-      else
-        [exc]
-      end
     end
 
     def list_gem_specs

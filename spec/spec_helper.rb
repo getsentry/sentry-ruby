@@ -42,9 +42,9 @@ rescue ZeroDivisionError => exception
   return exception
 end
 
-def build_exception_with_cause
+def build_exception_with_cause(cause = "exception a")
   begin
-    raise "exception a"
+    raise cause
   rescue
     raise "exception b"
   end
