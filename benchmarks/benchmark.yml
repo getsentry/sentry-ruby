@@ -1,0 +1,43 @@
+# Usage:
+#   benchmark-driver benchmarks/benchmark.yml
+prelude: |
+  require 'bundler/setup'
+  require 'raven'
+  require 'raven/breadcrumbs/logger'
+  require 'raven/transports/dummy'
+  require 'rack/test'
+  require "./spec/support/test_rails_app/app"
+
+  def build_exception
+    1 / 0
+  rescue ZeroDivisionError => exception
+    exception
+  end
+
+  TestApp.configure do |config|
+    config.middleware.delete ActionDispatch::DebugExceptions
+    config.middleware.delete ActionDispatch::ShowExceptions
+  end
+
+  Raven.configure do |config|
+    config.logger = Logger.new(nil)
+    config.dsn = "dummy://12345:67890@sentry.localdomain:3000/sentry/42"
+  end
+
+  TestApp.initialize!
+  @app = Rack::MockRequest.new(TestApp)
+  RAILS_EXC = begin
+    @app.get("/exception")
+  rescue => exc
+    exc
+  end
+
+  DIVIDE_BY_ZERO = build_exception
+
+benchmark:
+  - name: simple
+    script: Raven.capture_exception(DIVIDE_BY_ZERO)
+    loop_count: 250
+  - name: rails
+    script: Raven.capture_exception(RAILS_EXC)
+    loop_count: 100
