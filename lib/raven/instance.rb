@@ -77,8 +77,8 @@ module Raven
     # @example
     #   evt = Raven::Event.new(:message => "An error")
     #   Raven.send_event(evt)
-    def send_event(event)
-      client.send_event(event)
+    def send_event(event, hint = nil)
+      client.send_event(event, hint)
     end
 
     # Capture and process any exceptions from the given block.
@@ -120,10 +120,10 @@ module Raven
             configuration.async.call(evt.to_json_compatible)
           rescue => ex
             logger.error("async event sending failed: #{ex.message}")
-            send_event(evt)
+            send_event(evt, make_hint(obj))
           end
         else
-          send_event(evt)
+          send_event(evt, make_hint(obj))
         end
         Thread.current["sentry_#{object_id}_last_event_id".to_sym] = evt.id
         evt
@@ -216,6 +216,10 @@ module Raven
           capture_type(exception, options)
         end
       end
+    end
+
+    def make_hint(obj)
+      obj.is_a?(String) ? { :exception => nil, :message => obj } : { :exception => obj, :message => nil }
     end
   end
 end

@@ -58,6 +58,12 @@ RSpec.describe Raven::Configuration do
     expect { subject.should_capture = true }.to raise_error(ArgumentError)
   end
 
+  it 'should raise when setting before_send to anything other than callable or false' do
+    subject.before_send = -> {}
+    subject.before_send = false
+    expect { subject.before_send = true }.to raise_error(ArgumentError)
+  end
+
   context 'being initialized with a current environment' do
     before(:each) do
       subject.current_environment = 'test'

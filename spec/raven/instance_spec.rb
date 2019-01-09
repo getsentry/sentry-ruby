@@ -38,7 +38,7 @@ RSpec.describe Raven::Instance do
     describe 'as #capture_message' do
       before do
         expect(Raven::Event).to receive(:from_message).with(message, options)
-        expect(subject).to receive(:send_event).with(event)
+        expect(subject).to receive(:send_event).with(event, :exception => nil, :message => message)
       end
       let(:message) { "Test message" }
 
@@ -80,14 +80,14 @@ RSpec.describe Raven::Instance do
 
       it 'sends the result of Event.capture_exception' do
         expect(Raven::Event).to receive(:from_exception).with(exception, options)
-        expect(subject).to receive(:send_event).with(event)
+        expect(subject).to receive(:send_event).with(event, :exception => exception, :message => nil)
 
         subject.capture_exception(exception, options)
       end
 
       it 'has an alias' do
         expect(Raven::Event).to receive(:from_exception).with(exception, options)
-        expect(subject).to receive(:send_event).with(event)
+        expect(subject).to receive(:send_event).with(event, :exception => exception, :message => nil)
 
         subject.capture_exception(exception, options)
       end
@@ -223,7 +223,7 @@ RSpec.describe Raven::Instance do
     let(:message) { "Test message" }
 
     it 'sends the result of Event.capture_type' do
-      expect(subject).to receive(:send_event).with(event)
+      expect(subject).to receive(:send_event).with(event, :exception => nil, :message => message)
 
       subject.capture_type("Test message", options)
 

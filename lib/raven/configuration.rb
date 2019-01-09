@@ -156,6 +156,15 @@ module Raven
     # E.g. lambda { |event| Thread.new { MyJobProcessor.send_email(event) } }
     attr_reader :transport_failure_callback
 
+    # Optional Proc, called before sending an event to the server/
+    # E.g.: lambda { |event, hint| event }
+    # E.g.: lambda { |event, hint| nil }
+    # E.g.: lambda { |event, hint|
+    #   event[:message] = 'a'
+    #   event
+    # }
+    attr_reader :before_send
+
     # Errors object - an Array that contains error messages. See #
     attr_reader :errors
 
@@ -217,6 +226,7 @@ module Raven
       self.tags = {}
       self.timeout = 2
       self.transport_failure_callback = false
+      self.before_send = false
     end
 
     def server=(value)
@@ -267,6 +277,13 @@ module Raven
         raise ArgumentError, "should_capture must be callable (or false to disable)"
       end
       @should_capture = value
+    end
+
+    def before_send=(value)
+      unless value == false || value.respond_to?(:call)
+        raise ArgumentError, "before_send must be callable (or false to disable)"
+      end
+      @before_send = value
     end
 
     # Allows config options to be read like a hash

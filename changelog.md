@@ -1,3 +1,8 @@
+2.8.0
+-----
+
+* FEATURE: Added `config.before_send`. Provide a lambda or proc to this config setting, which will be `call`ed when before sending an event to Sentry. Receives `event` and `hint` as parameter. `hint` is a has {:exception => ex | nil, :message => message | nil}. [@hazat, #847]
+
 2.7.4
 -----
 
