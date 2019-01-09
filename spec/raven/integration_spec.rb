@@ -55,4 +55,18 @@ RSpec.describe "Integration tests" do
     @instance.capture_exception(build_exception)
     expect(@io.string).to match(/OK!$/)
   end
+
+  it "define before_send and change event before sending" do
+    @stubs.post('/prefix/sentry/api/42/store/') { [200, {}, 'ok'] }
+
+    @instance.configuration.server = 'http://12345:67890@sentry.localdomain/prefix/sentry/42'
+    @instance.configuration.before_send = lambda { |event, hint|
+      event[:environment] = 'test'
+      event
+    }
+
+    @instance.capture_exception(build_exception)
+
+    @stubs.verify_stubbed_calls
+  end
 end

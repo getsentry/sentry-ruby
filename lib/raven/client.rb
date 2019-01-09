@@ -18,7 +18,7 @@ module Raven
       @state = ClientState.new
     end
 
-    def send_event(event)
+    def send_event(event, hint = nil)
       return false unless configuration.sending_allowed?(event)
 
       # Convert to hash
@@ -32,6 +32,9 @@ module Raven
       configuration.logger.info "Sending event #{event[:event_id]} to Sentry"
 
       content_type, encoded_data = encode(event)
+
+      event = configuration.before_send.call(event, hint) if configuration.before_send
+      return false unless !event.nil?
 
       begin
         transport.send_event(generate_auth_header, encoded_data,
