@@ -4,12 +4,12 @@ gemspec
 
 if ENV["RAILS_VERSION"] && (ENV["RAILS_VERSION"].to_i == 4)
   gem "rails", "< 5"
-  gem "rspec-rails"
+  gem "rspec-rails", "> 3"
 elsif ENV["RAILS_VERSION"] && (ENV["RAILS_VERSION"].to_i == 0)
   # no-op. No Rails.
 else
   gem "rails", "< 6"
-  gem "rspec-rails"
+  gem "rspec-rails", "> 3"
 end
 
 if RUBY_VERSION < '2.0'
@@ -28,9 +28,9 @@ gem "pry-coolline"
 gem "benchmark-ips"
 gem "benchmark-ipsa" if RUBY_VERSION > '2.0'
 gem "ruby-prof", platform: :mri
-gem "rake"
+gem "rake", "> 12"
 gem "rubocop", "~> 0.41.1" # Last version that supported 1.9, upgrade to 0.50 after we drop 1.9
-gem "rspec"
+gem "rspec", "> 3"
 gem "capybara" # rspec system tests
 gem "puma" # rspec system tests
 
