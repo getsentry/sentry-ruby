@@ -60,7 +60,7 @@ RSpec.describe "Integration tests" do
     @stubs.post('/prefix/sentry/api/42/store/') { [200, {}, 'ok'] }
 
     @instance.configuration.server = 'http://12345:67890@sentry.localdomain/prefix/sentry/42'
-    @instance.configuration.before_send = lambda { |event, hint|
+    @instance.configuration.before_send = lambda { |event, _hint|
       event[:environment] = 'test'
       event
     }

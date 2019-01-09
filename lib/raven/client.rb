@@ -34,7 +34,7 @@ module Raven
       content_type, encoded_data = encode(event)
 
       event = configuration.before_send.call(event, hint) if configuration.before_send
-      return false unless !event.nil?
+      return false if event.nil?
 
       begin
         transport.send_event(generate_auth_header, encoded_data,
