@@ -1,3 +1,9 @@
+2.9.0
+-----
+
+* FEATURE: Added `config.inspect_exception_causes_for_exclusion`. Determines if the exception cause should be inspected for `config.excluded_exceptions` option. [@effron, #872]
+
+
 2.8.0
 -----
 
