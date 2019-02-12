@@ -11,11 +11,11 @@ branches:
   only: [master]
 
 rvm:
-  - 2.2.9
-  - 2.3.6
-  - 2.4.3
-  - 2.5.0
-  - 2.6.0
+  - 2.2.10
+  - 2.3.8
+  - 2.4.5
+  - 2.5.3
+  - 2.6.1
 
 env:
   - RAILS_VERSION=4
@@ -38,9 +38,9 @@ matrix:
       env: RAILS_VERSION=4
     - rvm: jruby-1.7.27
       env: JRUBY_OPTS="--dev" RAILS_VERSION=4
-    - rvm: jruby-9.2.5.0
+    - rvm: jruby-9.2.6.0
       env: JRUBY_OPTS="--dev -J-Djruby.launch.inproc=true -J-Xmx1024M" RAILS_VERSION=4
-    - rvm: jruby-9.2.5.0
+    - rvm: jruby-9.2.6.0
       env: JRUBY_OPTS="--dev -J-Djruby.launch.inproc=true -J-Xmx1024M" RAILS_VERSION=5
     - rvm: ruby-head
       env: RAILS_VERSION=0
