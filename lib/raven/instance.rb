@@ -171,7 +171,7 @@ module Raven
     # @example
     #   Raven.user_context('id' => 1, 'email' => 'foo@example.com')
     def user_context(options = nil)
-      context.user = options || {}
+      context.user.merge!(options || {})
     end
 
     # Bind tags context. Merges with existing context (if any).
