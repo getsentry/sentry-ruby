@@ -1,7 +1,7 @@
 require 'uri'
 
 module Raven
-  class Configuration # rubocop:disable Metrics/ClassLength
+  class Configuration
     # Directories to be recognized as part of your app. e.g. if you
     # have an `engines` dir at the root of your project, you may want
     # to set this to something like /(app|config|engines|lib)/
