@@ -10,14 +10,14 @@ module Raven
     private
 
     def process_if_symbol_keys(data)
-      data[:request][:cookies] = STRING_MASK if data[:request][:cookies]
+      data[:request][:cookies] = data[:request][:cookies].merge(data[:request][:cookies]){|key, val| STRING_MASK} if data[:request][:cookies]
 
       return unless data[:request][:headers] && data[:request][:headers]["Cookie"]
       data[:request][:headers]["Cookie"] = STRING_MASK
     end
 
     def process_if_string_keys(data)
-      data["request"]["cookies"] = STRING_MASK if data["request"]["cookies"]
+      data["request"]["cookies"] = data["request"]["cookies"].merge(data["request"]["cookies"]){|key, val| STRING_MASK} if data["request"]["cookies"]
 
       return unless data["request"]["headers"] && data["request"]["headers"]["Cookie"]
       data["request"]["headers"]["Cookie"] = STRING_MASK
