@@ -347,7 +347,8 @@ module Raven
     end
 
     def detect_release
-      detect_release_from_git ||
+      detect_release_from_env ||
+        detect_release_from_git ||
         detect_release_from_capistrano ||
         detect_release_from_heroku
     rescue => ex
@@ -409,6 +410,10 @@ module Raven
 
     def detect_release_from_git
       Raven.sys_command("git rev-parse --short HEAD") if File.directory?(".git")
+    end
+
+    def detect_release_from_env
+      ENV['SENTRY_RELEASE']
     end
 
     def capture_in_current_environment?
