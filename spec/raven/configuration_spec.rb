@@ -5,6 +5,7 @@ RSpec.describe Raven::Configuration do
     # Make sure we reset the env in case something leaks in
     ENV.delete('SENTRY_DSN')
     ENV.delete('SENTRY_CURRENT_ENV')
+    ENV.delete('SENTRY_ENVIRONMENT')
     ENV.delete('SENTRY_RELEASE')
     ENV.delete('RAILS_ENV')
     ENV.delete('RACK_ENV')
@@ -86,20 +87,32 @@ RSpec.describe Raven::Configuration do
   end
 
   context 'being initialized without a current environment' do
+    after do
+      ENV.delete('SENTRY_CURRENT_ENV')
+      ENV.delete('SENTRY_ENVIRONMENT')
+      ENV.delete('RAILS_ENV')
+      ENV.delete('RACK_ENV')
+    end
+
     it 'defaults to "default"' do
       expect(subject.current_environment).to eq('default')
     end
 
     it 'uses `SENTRY_CURRENT_ENV` env variable' do
       ENV['SENTRY_CURRENT_ENV'] = 'set-with-sentry-current-env'
+      ENV['SENTRY_ENVIRONMENT'] = 'set-with-sentry-environment'
       ENV['RAILS_ENV'] = 'set-with-rails-env'
       ENV['RACK_ENV'] = 'set-with-rack-env'
 
       expect(subject.current_environment).to eq('set-with-sentry-current-env')
+    end
 
-      ENV.delete('SENTRY_CURRENT_ENV')
-      ENV.delete('RAILS_ENV')
-      ENV.delete('RACK_ENV')
+    it 'uses `SENTRY_ENVIRONMENT` env variable' do
+      ENV['SENTRY_ENVIRONMENT'] = 'set-with-sentry-environment'
+      ENV['RAILS_ENV'] = 'set-with-rails-env'
+      ENV['RACK_ENV'] = 'set-with-rack-env'
+
+      expect(subject.current_environment).to eq('set-with-sentry-environment')
     end
 
     it 'uses `RAILS_ENV` env variable' do
@@ -108,10 +121,6 @@ RSpec.describe Raven::Configuration do
       ENV['RACK_ENV'] = 'set-with-rack-env'
 
       expect(subject.current_environment).to eq('set-with-rails-env')
-
-      ENV.delete('SENTRY_CURRENT_ENV')
-      ENV.delete('RAILS_ENV')
-      ENV.delete('RACK_ENV')
     end
 
     it 'uses `RACK_ENV` env variable' do
@@ -120,10 +129,6 @@ RSpec.describe Raven::Configuration do
       ENV['RACK_ENV'] = 'set-with-rack-env'
 
       expect(subject.current_environment).to eq('set-with-rack-env')
-
-      ENV.delete('SENTRY_CURRENT_ENV')
-      ENV.delete('RAILS_ENV')
-      ENV.delete('RACK_ENV')
     end
   end
 
