@@ -6,6 +6,7 @@ RSpec.describe Raven::Configuration do
     ENV.delete('SENTRY_DSN')
     ENV.delete('SENTRY_CURRENT_ENV')
     ENV.delete('SENTRY_ENVIRONMENT')
+    ENV.delete('SENTRY_RELEASE')
     ENV.delete('RAILS_ENV')
     ENV.delete('RACK_ENV')
   end
@@ -128,6 +129,25 @@ RSpec.describe Raven::Configuration do
       ENV['RACK_ENV'] = 'set-with-rack-env'
 
       expect(subject.current_environment).to eq('set-with-rack-env')
+    end
+  end
+
+  context 'being initialized without a release' do
+    before do
+      allow(File).to receive(:directory?).with(".git").and_return(false)
+      allow(File).to receive(:directory?).with("/etc/heroku").and_return(false)
+    end
+
+    it 'defaults to nil' do
+      expect(subject.release).to eq(nil)
+    end
+
+    it 'uses `SENTRY_RELEASE` env variable' do
+      ENV['SENTRY_RELEASE'] = 'v1'
+
+      expect(subject.release).to eq('v1')
+
+      ENV.delete('SENTRY_CURRENT_ENV')
     end
   end
 
