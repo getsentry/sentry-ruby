@@ -5,7 +5,7 @@ Gem::Specification.new do |gem|
   gem.name = "sentry-raven"
   gem.authors = ["Sentry Team"]
   gem.description = gem.summary = "A gem that provides a client interface for the Sentry error logger"
-  gem.email = "getsentry@googlegroups.com"
+  gem.email = "accounts@sentry.io"
   gem.license = 'Apache-2.0'
   gem.homepage = "https://github.com/getsentry/raven-ruby"
 
