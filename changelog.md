@@ -1,9 +1,13 @@
+2.11.0
+----
+
+* FEATURE: Prepend the transaction around_action so libraries with controllers can alter the value. [@drcapulet, #887]
+
 2.10.0
 -----
 
 * FEATURE: Added support for `SENTRY_ENVIRONMENT` [@mtsmfm, #910]
 * FEATURE: Added support for `SENTRY_RELEASE` [@coorasse, #911]
-
 
 2.9.0
 -----
