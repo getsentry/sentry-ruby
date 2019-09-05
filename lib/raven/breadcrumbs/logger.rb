@@ -36,7 +36,7 @@ module Raven
 
       # some loggers will add leading/trailing space as they (incorrectly, mind you)
       # think of logging as a shortcut to std{out,err}
-      message = message.strip
+      message = message.to_s.strip
 
       last_crumb = Raven.breadcrumbs.peek
       # try to avoid dupes from logger broadcasts
