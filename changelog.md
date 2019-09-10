@@ -1,3 +1,8 @@
+2.11.1
+
+* FIX: Call `to_s` on breadcrumb message [@halkeye , #914]
+----
+
 2.11.0
 ----
 
