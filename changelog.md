@@ -1,7 +1,12 @@
-2.11.1
-
-* FIX: Call `to_s` on breadcrumb message [@halkeye , #914]
+2.11.2
 ----
+
+* REF: Warn on 4xx error [@iloveitaly, #862]
+
+2.11.1
+----
+
+* FIX: Call `to_s` on breadcrumb message [@halkeye, #914]
 
 2.11.0
 ----
