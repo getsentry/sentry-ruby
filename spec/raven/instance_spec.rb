@@ -231,6 +231,62 @@ RSpec.describe Raven::Instance do
     end
   end
 
+  describe "#tags_context" do
+    let(:default) { { :foo => :bar } }
+    let(:additional) { { :baz => :qux } }
+
+    before do
+      subject.context.tags = default
+    end
+
+    it "doesn't set anything if the tags is empty" do
+      subject.tags_context({})
+      expect(subject.context.tags).to eq default
+    end
+
+    it "adds tags" do
+      subject.tags_context(additional)
+      expect(subject.context.tags).to eq default.merge(additional)
+    end
+
+    context 'when block given' do
+      it "adds tags only in the block" do
+        subject.tags_context(additional) do
+          expect(subject.context.tags).to eq default.merge(additional)
+        end
+        expect(subject.context.tags).to eq default
+      end
+    end
+  end
+
+  describe "#extra_context" do
+    let(:default) { { :foo => :bar } }
+    let(:additional) { { :baz => :qux } }
+
+    before do
+      subject.context.extra = default
+    end
+
+    it "doesn't set anything if the extra is empty" do
+      subject.extra_context({})
+      expect(subject.context.extra).to eq default
+    end
+
+    it "adds extra" do
+      subject.extra_context(additional)
+      expect(subject.context.extra).to eq default.merge(additional)
+    end
+
+    context 'when block given' do
+      it "adds extra only in the block" do
+        subject.extra_context(additional) do
+          expect(subject.context.extra).to eq default.merge(additional)
+        end
+        expect(subject.context.extra).to eq default
+      end
+    end
+  end
+
   describe "#rack_context" do
     it "doesn't set anything if the context is empty" do
       subject.rack_context({})
