@@ -1,3 +1,8 @@
+2.11.3
+----
+
+* FIX: infinite backoff under pressure [@Bonias, #886]
+
 2.11.2
 ----
 
