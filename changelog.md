@@ -1,3 +1,10 @@
+2.12.0
+----
+
+* FIX: Remove duplicate message when exception is emitted
+* FIX: Frozen string bug in utf8conversation
+* FEATURE: Allow block on tags_context and extra_context
+
 2.11.3
 ----
 
