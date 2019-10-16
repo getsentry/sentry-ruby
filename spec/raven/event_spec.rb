@@ -461,8 +461,9 @@ RSpec.describe Raven::Event do
         expect(Raven::Event.capture_exception(exception)).to be_a(Raven::Event)
       end
 
-      it "sets the message to the exception's message and type" do
-        expect(hash[:message]).to eq("Exception: #{message}")
+      it "sets the message to the exception's value and type" do
+        expect(hash[:exception][:values][0][:type]).to eq("Exception")
+        expect(hash[:exception][:values][0][:value]).to eq(message)
       end
 
       it 'has level ERROR' do
