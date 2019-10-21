@@ -184,6 +184,7 @@ module Raven
     def tags_context(options = nil)
       context.tags.merge!(options || {})
       yield if block_given?
+      context.tags
     ensure
       context.tags.delete_if { |k, _| options.keys.include? k } if block_given?
     end
@@ -198,6 +199,7 @@ module Raven
     def extra_context(options = nil)
       context.extra.merge!(options || {})
       yield if block_given?
+      context.extra
     ensure
       context.extra.delete_if { |k, _| options.keys.include? k } if block_given?
     end

@@ -239,6 +239,14 @@ RSpec.describe Raven::Instance do
       subject.context.tags = default
     end
 
+    it "returns the tags" do
+      expect(subject.tags_context).to eq default
+    end
+
+    it "returns the tags" do
+      expect(subject.tags_context(additional)).to eq default.merge(additional)
+    end
+
     it "doesn't set anything if the tags is empty" do
       subject.tags_context({})
       expect(subject.context.tags).to eq default
@@ -250,6 +258,13 @@ RSpec.describe Raven::Instance do
     end
 
     context 'when block given' do
+      it "returns the tags" do
+        tags = subject.tags_context(additional) do
+          # do nothing
+        end
+        expect(tags).to eq default
+      end
+
       it "adds tags only in the block" do
         subject.tags_context(additional) do
           expect(subject.context.tags).to eq default.merge(additional)
@@ -267,6 +282,14 @@ RSpec.describe Raven::Instance do
       subject.context.extra = default
     end
 
+    it "returns the extra" do
+      expect(subject.extra_context).to eq default
+    end
+
+    it "returns the extra" do
+      expect(subject.extra_context(additional)).to eq default.merge(additional)
+    end
+
     it "doesn't set anything if the extra is empty" do
       subject.extra_context({})
       expect(subject.context.extra).to eq default
@@ -278,6 +301,13 @@ RSpec.describe Raven::Instance do
     end
 
     context 'when block given' do
+      it "returns the extra" do
+        extra = subject.extra_context(additional) do
+          # do nothing
+        end
+        expect(extra).to eq default
+      end
+
       it "adds extra only in the block" do
         subject.extra_context(additional) do
           expect(subject.context.extra).to eq default.merge(additional)
