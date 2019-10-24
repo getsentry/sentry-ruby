@@ -1,3 +1,8 @@
+2.12.2
+----
+
+* FIX: return tags/extra for [@rivayama, #931]
+
 2.12.1
 ----
 
