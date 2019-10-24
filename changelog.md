@@ -1,3 +1,8 @@
+2.12.1
+----
+
+* FIX: undefined method `[]' for nil:NilClass [@HazAT, #932]
+
 2.12.0
 ----
 
