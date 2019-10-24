@@ -87,8 +87,8 @@ module Raven
         event[:exception][:values][0] &&
         event[:exception][:values][0][:type] &&
         event[:exception][:values][0][:value] &&
-      "#{event[:exception][:values][0][:type]}: #{event[:exception][:values][0][:value]}"
-    )
+        "#{event[:exception][:values][0][:type]}: #{event[:exception][:values][0][:value]}"
+      )
     end
 
     def get_log_message(event)

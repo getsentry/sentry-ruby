@@ -20,6 +20,16 @@ RSpec.describe Raven::Client do
     )
   end
 
+  it "generates a message with exception" do
+    event = Raven::CLI.test(Raven.configuration.server, true, Raven.configuration).to_hash
+    expect(client.send(:get_message_from_exception, event)).to eq("ZeroDivisionError: divided by 0")
+  end
+
+  it "generates a message without exception" do
+    event = Raven::Event.from_message("this is an STDOUT transport test").to_hash
+    expect(client.send(:get_message_from_exception, event)).to eq(nil)
+  end
+
   it "generates an auth header without a secret (Sentry 9)" do
     client.configuration.server = "https://66260460f09b5940498e24bb7ce093a0@sentry.io/42"
 
