@@ -1,7 +1,7 @@
 require 'uri'
 
 module Raven
-  class Configuration # rubocop:disable Metrics/ClassLength
+  class Configuration
     # Directories to be recognized as part of your app. e.g. if you
     # have an `engines` dir at the root of your project, you may want
     # to set this to something like /(app|config|engines|lib)/
@@ -347,7 +347,8 @@ module Raven
     end
 
     def detect_release
-      detect_release_from_git ||
+      detect_release_from_env ||
+        detect_release_from_git ||
         detect_release_from_capistrano ||
         detect_release_from_heroku
     rescue => ex
@@ -411,6 +412,10 @@ module Raven
       Raven.sys_command("git rev-parse --short HEAD") if File.directory?(".git")
     end
 
+    def detect_release_from_env
+      ENV['SENTRY_RELEASE']
+    end
+
     def capture_in_current_environment?
       return true unless environments.any? && !environments.include?(current_environment)
       @errors << "Not configured to send/capture in environment '#{current_environment}'"
@@ -453,7 +458,7 @@ module Raven
     end
 
     def current_environment_from_env
-      ENV['SENTRY_CURRENT_ENV'] || ENV['RAILS_ENV'] || ENV['RACK_ENV'] || 'default'
+      ENV['SENTRY_CURRENT_ENV'] || ENV['SENTRY_ENVIRONMENT'] || ENV['RAILS_ENV'] || ENV['RACK_ENV'] || 'default'
     end
 
     def server_name_from_env

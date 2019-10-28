@@ -39,7 +39,7 @@ module Raven
     # https://github.com/rspec/rspec-support/blob/f0af3fd74a94ff7bb700f6ba06dbdc67bba17fbf/lib/rspec/support/encoded_string.rb#L120-L139
     if String.method_defined?(:scrub) # 2.1+
       def remove_invalid_bytes(string)
-        string.scrub!(REPLACE)
+        string.scrub(REPLACE)
       end
     else
       def remove_invalid_bytes(string)

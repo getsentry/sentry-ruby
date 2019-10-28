@@ -79,8 +79,20 @@ module Raven
       end
     end
 
+    def get_message_from_exception(event)
+      (
+        event &&
+        event[:exception] &&
+        event[:exception][:values] &&
+        event[:exception][:values][0] &&
+        event[:exception][:values][0][:type] &&
+        event[:exception][:values][0][:value] &&
+        "#{event[:exception][:values][0][:type]}: #{event[:exception][:values][0][:value]}"
+      )
+    end
+
     def get_log_message(event)
-      (event && event[:message]) || '<no message value>'
+      (event && event[:message]) || get_message_from_exception(event) || '<no message value>'
     end
 
     def generate_auth_header
@@ -100,13 +112,13 @@ module Raven
     end
 
     def failed_send(e, event)
-      @state.failure
       if e # exception was raised
-        configuration.logger.error "Unable to record event with remote Sentry server (#{e.class} - #{e.message}):\n#{e.backtrace[0..10].join("\n")}"
+        @state.failure
+        configuration.logger.warn "Unable to record event with remote Sentry server (#{e.class} - #{e.message}):\n#{e.backtrace[0..10].join("\n")}"
       else
-        configuration.logger.error "Not sending event due to previous failure(s)."
+        configuration.logger.warn "Not sending event due to previous failure(s)."
       end
-      configuration.logger.error("Failed to submit event: #{get_log_message(event)}")
+      configuration.logger.warn("Failed to submit event: #{get_log_message(event)}")
       configuration.transport_failure_callback.call(event) if configuration.transport_failure_callback
     end
   end

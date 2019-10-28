@@ -32,7 +32,8 @@ RSpec.shared_examples "Raven default capture behavior" do
     expect(Raven.client.transport.events.size).to eq(1)
 
     event = JSON.parse!(Raven.client.transport.events.first[1])
-    expect(event["logentry"]["message"]).to eq("#{captured_class.name}: #{captured_message}")
+    expect(event["exception"]["values"][0]["type"]).to eq(captured_class.name)
+    expect(event["exception"]["values"][0]["value"]).to eq(captured_message)
   end
 end
 

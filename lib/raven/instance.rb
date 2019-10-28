@@ -183,6 +183,10 @@ module Raven
     #   Raven.tags_context('my_custom_tag' => 'tag_value')
     def tags_context(options = nil)
       context.tags.merge!(options || {})
+      yield if block_given?
+      context.tags
+    ensure
+      context.tags.delete_if { |k, _| options.keys.include? k } if block_given?
     end
 
     # Bind extra context. Merges with existing context (if any).
@@ -194,6 +198,10 @@ module Raven
     #   Raven.extra_context('my_custom_data' => 'value')
     def extra_context(options = nil)
       context.extra.merge!(options || {})
+      yield if block_given?
+      context.extra
+    ensure
+      context.extra.delete_if { |k, _| options.keys.include? k } if block_given?
     end
 
     def rack_context(env)

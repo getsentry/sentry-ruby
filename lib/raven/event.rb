@@ -59,10 +59,7 @@ module Raven
       return unless configuration.exception_class_allowed?(exc)
 
       new(options) do |evt|
-        evt.message = "#{exc.class}: #{exc.message}"
-
         evt.add_exception_interface(exc)
-
         yield evt if block
       end
     end
