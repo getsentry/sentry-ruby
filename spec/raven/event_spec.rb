@@ -417,7 +417,7 @@ RSpec.describe Raven::Event do
                          })
       end
 
-      it "should saniztize password" do
+      it "should sanitize password" do
         json = subject.to_json_compatible
 
         expect(json["extra"]["password"]).to eq(Raven::Processor::SanitizeData::STRING_MASK)
