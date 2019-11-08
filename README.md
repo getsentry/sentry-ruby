@@ -133,4 +133,4 @@ For more information, see [Context](https://docs.sentry.io/clients/ruby/context/
 * [Documentation](https://docs.sentry.io/clients/ruby/)
 * [Bug Tracker](https://github.com/getsentry/raven-ruby/issues)
 * [Forum](https://forum.sentry.io/)
-* [IRC](irc://irc.freenode.net/sentry>)  (irc.freenode.net, #sentry)
+- [Discord](https://discord.gg/ez5KZN7)
