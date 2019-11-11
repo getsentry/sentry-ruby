@@ -113,7 +113,7 @@ RSpec.describe Raven do
     end
 
     it "should tolerate a missing $CHILD_STATUS" do
-      trap('CLD', 'IGNORE')
+      Signal.trap('CLD', 'DEFAULT')
       expect(Raven.sys_command("echo 'Sentry'")).to eq("Sentry")
     end
   end
