@@ -1,3 +1,8 @@
+2.12.3
+----
+
+*FIX: crash when Process.wait is used [@asBrettisay, #895]
+
 2.12.2
 ----
 
