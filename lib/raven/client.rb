@@ -35,7 +35,8 @@ module Raven
         return
       end
 
-      configuration.logger.info "Sending event #{event[:event_id]} to Sentry"
+      event_id = event[:event_id] || event['event_id']
+      configuration.logger.info "Sending event #{event_id} to Sentry"
 
       content_type, encoded_data = encode(event)
 
