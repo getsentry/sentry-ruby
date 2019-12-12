@@ -93,7 +93,7 @@ module Raven
     end
 
     def get_log_message(event)
-      (event && event[:message]) || get_message_from_exception(event) || '<no message value>'
+      (event && event[:message]) || (event && event['message']) || get_message_from_exception(event) || '<no message value>'
     end
 
     def generate_auth_header
