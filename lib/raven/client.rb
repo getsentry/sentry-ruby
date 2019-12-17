@@ -35,7 +35,8 @@ module Raven
         return
       end
 
-      configuration.logger.info "Sending event #{event[:event_id]} to Sentry"
+      event_id = event[:event_id] || event['event_id']
+      configuration.logger.info "Sending event #{event_id} to Sentry"
 
       content_type, encoded_data = encode(event)
 
@@ -92,7 +93,7 @@ module Raven
     end
 
     def get_log_message(event)
-      (event && event[:message]) || get_message_from_exception(event) || '<no message value>'
+      (event && event[:message]) || (event && event['message']) || get_message_from_exception(event) || '<no message value>'
     end
 
     def generate_auth_header
