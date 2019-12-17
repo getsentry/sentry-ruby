@@ -13,7 +13,7 @@ module Delayed
             # Log error to Sentry
             extra = {
               :delayed_job => {
-                :id          => job.id,
+                :id          => job.id.to_s,
                 :priority    => job.priority,
                 :attempts    => job.attempts,
                 :run_at      => job.run_at,
@@ -36,7 +36,7 @@ module Delayed
                                       :logger  => 'delayed_job',
                                       :tags    => {
                                         :delayed_job_queue => job.queue,
-                                        :delayed_job_id => job.id
+                                        :delayed_job_id => job.id.to_s
                                       },
                                       :extra => extra)
 
