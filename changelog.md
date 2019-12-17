@@ -1,3 +1,11 @@
+2.13.0
+----
+
+* FIX: Sanitize event data before they are sent to async job. [@edariedl, #895]
+* FIX: Serialization MongoDB ObjectId to JSON problem with gem delayed_job_mongoid conjunction. [@eagleas, #935]
+* FEAT: Skip ActiveJob integration if there is a better one [@fsateler, #909]
+* FIX: Bugs with send_event in asynchronous mode (#940) [@cstyles, #940]
+
 2.12.3
 ----
 
