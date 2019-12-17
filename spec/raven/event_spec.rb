@@ -409,6 +409,20 @@ RSpec.describe Raven::Event do
         expect(json["extra"]["circular"]["ary2"]).to eq("(...)")
       end
     end
+
+    context "with sensitive data" do
+      subject do
+        Raven::Event.new(:extra => {
+                           'password' => 'secretpassword'
+                         })
+      end
+
+      it "should sanitize password" do
+        json = subject.to_json_compatible
+
+        expect(json["extra"]["password"]).to eq(Raven::Processor::SanitizeData::STRING_MASK)
+      end
+    end
   end
 
   describe '.capture_message' do

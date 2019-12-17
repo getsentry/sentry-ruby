@@ -228,10 +228,7 @@ module Raven
     end
 
     def async_json_processors
-      [
-        Raven::Processor::RemoveCircularReferences,
-        Raven::Processor::UTF8Conversion
-      ].map { |v| v.new(self) }
+      configuration.processors.map { |v| v.new(self) }
     end
 
     def list_gem_specs
