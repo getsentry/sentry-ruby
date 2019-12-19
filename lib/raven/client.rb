@@ -66,6 +66,18 @@ module Raven
         end
     end
 
+    def get_message_from_exception(event)
+      (
+        event &&
+        event[:exception] &&
+        event[:exception][:values] &&
+        event[:exception][:values][0] &&
+        event[:exception][:values][0][:type] &&
+        event[:exception][:values][0][:value] &&
+        "#{event[:exception][:values][0][:type]}: #{event[:exception][:values][0][:value]}"
+      )
+    end
+
     private
 
     def encode(event)
@@ -78,18 +90,6 @@ module Raven
       else
         ['application/json', encoded]
       end
-    end
-
-    def get_message_from_exception(event)
-      (
-        event &&
-        event[:exception] &&
-        event[:exception][:values] &&
-        event[:exception][:values][0] &&
-        event[:exception][:values][0][:type] &&
-        event[:exception][:values][0][:value] &&
-        "#{event[:exception][:values][0][:type]}: #{event[:exception][:values][0][:value]}"
-      )
     end
 
     def get_log_message(event)
