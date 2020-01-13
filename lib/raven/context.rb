@@ -35,7 +35,7 @@ module Raven
       def runtime_context
         @runtime_context ||= {
           :name => RbConfig::CONFIG["ruby_install_name"],
-          :version => Raven.sys_command("ruby -v")
+          :version => RUBY_DESCRIPTION || Raven.sys_command("ruby -v")
         }
       end
     end
