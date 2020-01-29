@@ -10,7 +10,6 @@ branches:
   only: [master]
 
 rvm:
-  - 2.2.10
   - 2.3.8
   - 2.4.9
   - 2.5.7
@@ -33,10 +32,6 @@ before_install:
 
 matrix:
   include:
-    - rvm: 1.9
-      env: RAILS_VERSION=4
-    - rvm: jruby-1.7.27
-      env: JRUBY_OPTS="--dev" RAILS_VERSION=4
     - rvm: jruby-9.2.9.0
       env: JRUBY_OPTS="--dev -J-Djruby.launch.inproc=true -J-Xmx1024M" RAILS_VERSION=4
     - rvm: jruby-9.2.9.0

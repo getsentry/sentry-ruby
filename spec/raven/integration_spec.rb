@@ -43,7 +43,7 @@ RSpec.describe "Integration tests" do
   # end
 
   it "timed backoff should prevent sends" do
-    expect(@instance.client.transport).to receive(:send_event).exactly(1).times.and_raise(Faraday::Error::ConnectionFailed, "conn failed")
+    expect(@instance.client.transport).to receive(:send_event).exactly(1).times.and_raise(Faraday::ConnectionFailed, "conn failed")
     2.times { @instance.capture_exception(build_exception) }
     expect(@io.string).to match(/Failed to submit event: ZeroDivisionError: divided by 0$/)
   end
@@ -51,7 +51,7 @@ RSpec.describe "Integration tests" do
   it "transport failure should call transport_failure_callback" do
     @instance.configuration.transport_failure_callback = proc { |_e| @io.puts "OK!" }
 
-    expect(@instance.client.transport).to receive(:send_event).exactly(1).times.and_raise(Faraday::Error::ConnectionFailed, "conn failed")
+    expect(@instance.client.transport).to receive(:send_event).exactly(1).times.and_raise(Faraday::ConnectionFailed, "conn failed")
     @instance.capture_exception(build_exception)
     expect(@io.string).to match(/OK!$/)
   end
