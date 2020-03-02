@@ -60,20 +60,5 @@ RSpec.describe JSON do
         JSON.parse(%({"example": "this is a utf8 or ASCII string"}).encode("US-ASCII"))
       end.not_to raise_error
     end
-
-    it "blows up on circular references" do
-      data = {}
-      data['data'] = data
-      data['ary'] = []
-      data['ary'].push('x' => data['ary'])
-      data['ary2'] = data['ary']
-      data['leave intact'] = { 'not a circular reference' => true }
-
-      if RUBY_PLATFORM == 'java'
-        expect { JSON.dump(data) }.to raise_error
-      else
-        expect { JSON.dump(data) }.to raise_error(SystemStackError)
-      end
-    end
   end
 end
