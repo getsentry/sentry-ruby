@@ -103,6 +103,14 @@ RSpec.describe Raven::Rack do
     expect(interface.headers["Version"]).to eq("HTTP/2.0")
   end
 
+  it 'retains any literal "HTTP-" in the actual header name' do
+    interface = Raven::HttpInterface.new
+    new_env = env.merge("HTTP_HTTP_CUSTOM_HTTP_HEADER" => "test")
+    interface.from_rack(new_env)
+
+    expect(interface.headers).to include("Http-Custom-Http-Header" => "test")
+  end
+
   it 'does not fail if an object in the env cannot be cast to string' do
     obj = Class.new do
       def to_s
