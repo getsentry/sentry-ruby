@@ -1,3 +1,11 @@
+3.0.0
+----
+
+* SDK now requires Ruby >= 2.3
+* REF: Retain any literal "HTTP-" in header names [@elliterate, #950]
+* REF: Delete JSON spec for recursive hashes [@ksylvest, #952]
+* FEAT: Bump faraday version to latest [@ksylvest, #946] 
+
 2.13.0
 ----
 
