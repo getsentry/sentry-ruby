@@ -33,9 +33,9 @@ before_install:
 
 matrix:
   include:
-    - rvm: jruby-9.2.9.0
+    - rvm: jruby-9.2.11.1
       env: JRUBY_OPTS="--dev -J-Djruby.launch.inproc=true -J-Xmx1024M" RAILS_VERSION=4
-    - rvm: jruby-9.2.9.0
+    - rvm: jruby-9.2.11.1
       env: JRUBY_OPTS="--dev -J-Djruby.launch.inproc=true -J-Xmx1024M" RAILS_VERSION=5
     - rvm: ruby-head
       env: RAILS_VERSION=0
