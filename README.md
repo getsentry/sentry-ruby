@@ -78,16 +78,6 @@ You're all set - but there's a few more settings you may want to know about too!
 When an error or message occurs, the notification is immediately sent to Sentry. Raven can be configured to send asynchronously:
 
 ```ruby
-config.async = lambda { |event|
-  Thread.new { Raven.send_event(event) }
-}
-```
-
-Using a thread to send events will be adequate for truly parallel Ruby platforms such as JRuby, though the benefit on MRI/CRuby will be limited. If the async callback raises an exception, Raven will attempt to send synchronously.
-
-Note that the naive example implementation has a major drawback - it can create an infinite number of threads. We recommend creating a background job, using your background job processor, that will send Sentry notifications in the background.
-
-```ruby
 config.async = lambda { |event| SentryJob.perform_later(event) }
 
 class SentryJob < ActiveJob::Base
