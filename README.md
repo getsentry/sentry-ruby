@@ -29,7 +29,7 @@ We test on Ruby 2.3, 2.4, 2.5, 2.6 and 2.7 at the latest patchlevel/teeny versio
 gem "sentry-raven"
 ```
 
-### Raven only runs when SENTRY_DSN is set
+### Raven only runs when Sentry DSN is set
 
 Raven will capture and send exceptions to the Sentry server whenever its DSN is set. This makes environment-based configuration easy - if you don't want to send errors in a certain environment, just don't set the DSN in that environment!
 
