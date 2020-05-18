@@ -40,7 +40,7 @@ module Raven
       def raven_context(job)
         ctx = {
           :active_job => job.class.name,
-          :arguments => job.arguments,
+          :arguments => ActiveJob::Arguments.serialize(job.arguments),
           :scheduled_at => job.scheduled_at,
           :job_id => job.job_id,
           :locale => job.locale

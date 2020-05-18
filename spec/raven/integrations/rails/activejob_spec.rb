@@ -7,7 +7,15 @@ if defined? ActiveJob
     class TestError < RuntimeError
     end
 
-    def perform
+    class Argument
+      include GlobalID::Identification
+
+      def id
+        'an_instance'
+      end
+    end
+
+    def perform(_param = nil)
       raise TestError, "Boom!"
     end
   end
@@ -25,6 +33,7 @@ RSpec.describe "ActiveJob integration", :rails => true do
     require "rspec/rails"
     require "raven/integrations/rails"
     require "raven/integrations/rails/active_job"
+    GlobalID.app = "raven-ruby-specs"
   end
 
   before(:each) do
@@ -36,6 +45,23 @@ RSpec.describe "ActiveJob integration", :rails => true do
     let(:block) { MyActiveJob.new.perform_now }
     let(:captured_class) { MyActiveJob::TestError }
     let(:captured_message) { "Boom!" }
+  end
+
+  it 'captures arguments' do
+    expect { MyActiveJob.perform_now('an argument') }.to raise_error(MyActiveJob::TestError)
+    event = JSON.parse!(Raven.client.transport.events.first[1])
+
+    expect(event['extra']['arguments']).to include('an argument')
+  end
+
+  it 'serializes arguments' do
+    arg = MyActiveJob::Argument.new
+    expect { MyActiveJob.perform_now(arg) }.to raise_error(MyActiveJob::TestError)
+    event = JSON.parse!(Raven.client.transport.events.first[1])
+
+    captured_argument = event['extra']['arguments'].first
+    expect(captured_argument).to be_a Hash
+    expect(captured_argument.values).to include(/#{arg.id}/)
   end
 
   it "clears context" do
