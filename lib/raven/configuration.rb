@@ -169,6 +169,10 @@ module Raven
     # }
     attr_reader :before_send
 
+    # Set this option to true if you want Sentry to only capture the last job
+    # retry if it fails.
+    attr_accessor :report_after_job_retries
+
     # Errors object - an Array that contains error messages. See #
     attr_reader :errors
 
@@ -195,6 +199,33 @@ module Raven
       Raven::Processor::HTTPHeaders
     ].freeze
 
+    DEFAULT_CONFIGURATION_VALUES = {
+      :async => false,
+      :before_send => false,
+      :context_lines => 3,
+      :encoding => 'gzip',
+      :environments => [],
+      :exclude_loggers => [],
+      :excluded_exceptions => IGNORE_DEFAULT.dup,
+      :inspect_exception_causes_for_exclusion => false,
+      :open_timeout => 1,
+      :processors => DEFAULT_PROCESSORS.dup,
+      :rails_activesupport_breadcrumbs => false,
+      :rails_report_rescued_exceptions => true,
+      :report_after_job_retries => false,
+      :sample_rate => 1.0,
+      :sanitize_credit_cards => true,
+      :sanitize_fields => [],
+      :sanitize_fields_excluded => [],
+      :sanitize_http_headers => [],
+      :send_modules => true,
+      :should_capture => false,
+      :ssl_verification => true,
+      :tags => {},
+      :timeout => 2,
+      :transport_failure_callback => false
+    }
+
     HEROKU_DYNO_METADATA_MESSAGE = "You are running on Heroku but haven't enabled Dyno Metadata. For Sentry's "\
     "release detection to work correctly, please run `heroku labs:enable runtime-dyno-metadata`".freeze
 
@@ -202,36 +233,17 @@ module Raven
     MODULE_SEPARATOR = "::".freeze
 
     def initialize
-      self.async = false
-      self.context_lines = 3
+      DEFAULT_CONFIGURATION_VALUES.each do |attribute, default_value|
+        send("#{attribute}=", default_value)
+      end
+
       self.current_environment = current_environment_from_env
-      self.encoding = 'gzip'
-      self.environments = []
-      self.exclude_loggers = []
-      self.excluded_exceptions = IGNORE_DEFAULT.dup
-      self.inspect_exception_causes_for_exclusion = false
       self.linecache = ::Raven::LineCache.new
       self.logger = ::Raven::Logger.new(STDOUT)
-      self.open_timeout = 1
-      self.processors = DEFAULT_PROCESSORS.dup
       self.project_root = detect_project_root
-      self.rails_activesupport_breadcrumbs = false
-      self.rails_report_rescued_exceptions = true
       self.release = detect_release
-      self.sample_rate = 1.0
-      self.sanitize_credit_cards = true
-      self.sanitize_fields = []
-      self.sanitize_fields_excluded = []
-      self.sanitize_http_headers = []
-      self.send_modules = true
       self.server = ENV['SENTRY_DSN']
       self.server_name = server_name_from_env
-      self.should_capture = false
-      self.ssl_verification = true
-      self.tags = {}
-      self.timeout = 2
-      self.transport_failure_callback = false
-      self.before_send = false
     end
 
     def server=(value)
