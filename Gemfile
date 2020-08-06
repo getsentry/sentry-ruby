@@ -20,8 +20,13 @@ if RUBY_VERSION < '2.0'
   gem "rack-timeout", "0.3.0"
 else
   gem "rack"
-  gem "sidekiq"
   gem "rack-timeout"
+
+  if ENV["SIDEKIQ_VERSION"].to_i >= 6 && RUBY_VERSION > '2.5'
+    gem "sidekiq", ">= 6"
+  else
+    gem "sidekiq", "< 6"
+  end
 end
 gem "pry"
 gem "pry-coolline"

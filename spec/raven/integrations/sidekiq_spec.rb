@@ -123,9 +123,15 @@ if RUBY_VERSION > '2.0'
     end
 
     before do
-      @mgr = double('manager')
+      @mgr = double('manager', :options => {})
       allow(@mgr).to receive(:options).and_return(:queues => ['default'])
-      @processor = ::Sidekiq::Processor.new(@mgr)
+
+      @processor =
+        if Sidekiq::VERSION.to_i >= 6
+          ::Sidekiq::Processor.new(@mgr, @mgr.options)
+        else
+          ::Sidekiq::Processor.new(@mgr)
+        end
     end
 
     def process_job(klass)
