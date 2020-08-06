@@ -154,7 +154,8 @@ RSpec.describe Raven::Configuration do
 
     context "when git is available" do
       before do
-        allow(File).to receive(:directory?).and_return(true)
+        allow(File).to receive(:directory?).and_return(false)
+        allow(File).to receive(:directory?).with(".git").and_return(true)
       end
       it 'gets release from git' do
         allow(Raven).to receive(:`).with("git rev-parse --short HEAD 2>&1").and_return("COMMIT_SHA")
@@ -164,10 +165,10 @@ RSpec.describe Raven::Configuration do
     end
 
     context "when Capistrano is available" do
-      let(:release) { "2019010101000" }
+      let(:revision) { "2019010101000" }
 
       before do
-        Dir.mkdir(fake_root) unless Dir.exists?(fake_root)
+        Dir.mkdir(fake_root) unless Dir.exist?(fake_root)
         File.write(filename, file_content)
       end
 
@@ -180,23 +181,74 @@ RSpec.describe Raven::Configuration do
         let(:filename) do
           File.join(fake_root, "REVISION")
         end
-        let(:file_content) { release }
+        let(:file_content) { revision }
 
         it "gets release from the REVISION file" do
-          expect(subject.release).to eq(release)
+          expect(subject.release).to eq(revision)
         end
       end
 
-      context "when the revision.log file is present" do
+      context "when the revisions.log file is present" do
         let(:filename) do
           File.join(fake_root, "..", "revisions.log")
         end
         let(:file_content) do
-          "Branch master (at COMMIT_SHA) deployed as release #{release} by alice"
+          "Branch master (at COMMIT_SHA) deployed as release #{revision} by alice"
         end
 
         it "gets release from the REVISION file" do
-          expect(subject.release).to eq(release)
+          expect(subject.release).to eq(revision)
+        end
+      end
+    end
+
+    context "when running on heroku" do
+      before do
+        allow(File).to receive(:directory?).and_return(false)
+        allow(File).to receive(:directory?).with("/etc/heroku").and_return(true)
+      end
+
+      context "when it's on heroku ci" do
+        it "returns nil" do
+          begin
+            original_ci_val = ENV["CI"]
+            ENV["CI"] = "true"
+
+            expect(subject.release).to eq(nil)
+          ensure
+            ENV["CI"] = original_ci_val
+          end
+        end
+      end
+
+      context "when it's not on heroku ci" do
+        around do |example|
+          begin
+            original_ci_val = ENV["CI"]
+            ENV["CI"] = nil
+
+            example.run
+          ensure
+            ENV["CI"] = original_ci_val
+          end
+        end
+
+        it "returns nil + logs an warning if HEROKU_SLUG_COMMIT is not set" do
+          logger = double("logger")
+          expect(::Raven::Logger).to receive(:new).and_return(logger)
+          expect(logger).to receive(:warn).with(described_class::HEROKU_DYNO_METADATA_MESSAGE)
+
+          expect(described_class.new.release).to eq(nil)
+        end
+
+        it "returns HEROKU_SLUG_COMMIT" do
+          begin
+            ENV["HEROKU_SLUG_COMMIT"] = "REVISION"
+
+            expect(subject.release).to eq("REVISION")
+          ensure
+            ENV["HEROKU_SLUG_COMMIT"] = nil
+          end
         end
       end
     end
