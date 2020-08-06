@@ -133,9 +133,11 @@ RSpec.describe Raven::Configuration do
   end
 
   context 'being initialized without a release' do
+    let(:fake_root) { "/tmp/sentry/" }
+
     before do
-      allow(File).to receive(:directory?).with(".git").and_return(false)
-      allow(File).to receive(:directory?).with("/etc/heroku").and_return(false)
+      allow(File).to receive(:directory?).and_return(false)
+      allow_any_instance_of(described_class).to receive(:project_root).and_return(fake_root)
     end
 
     it 'defaults to nil' do
@@ -148,6 +150,55 @@ RSpec.describe Raven::Configuration do
       expect(subject.release).to eq('v1')
 
       ENV.delete('SENTRY_CURRENT_ENV')
+    end
+
+    context "when git is available" do
+      before do
+        allow(File).to receive(:directory?).and_return(true)
+      end
+      it 'gets release from git' do
+        allow(Raven).to receive(:`).with("git rev-parse --short HEAD 2>&1").and_return("COMMIT_SHA")
+
+        expect(subject.release).to eq('COMMIT_SHA')
+      end
+    end
+
+    context "when Capistrano is available" do
+      let(:release) { "2019010101000" }
+
+      before do
+        Dir.mkdir(fake_root) unless Dir.exists?(fake_root)
+        File.write(filename, file_content)
+      end
+
+      after do
+        File.delete(filename)
+        Dir.delete(fake_root)
+      end
+
+      context "when the REVISION file is present" do
+        let(:filename) do
+          File.join(fake_root, "REVISION")
+        end
+        let(:file_content) { release }
+
+        it "gets release from the REVISION file" do
+          expect(subject.release).to eq(release)
+        end
+      end
+
+      context "when the revision.log file is present" do
+        let(:filename) do
+          File.join(fake_root, "..", "revisions.log")
+        end
+        let(:file_content) do
+          "Branch master (at COMMIT_SHA) deployed as release #{release} by alice"
+        end
+
+        it "gets release from the REVISION file" do
+          expect(subject.release).to eq(release)
+        end
+      end
     end
   end
 
