@@ -29,7 +29,6 @@ else
   end
 end
 gem "pry"
-gem "pry-coolline"
 gem "benchmark-ips"
 gem "benchmark-ipsa" if RUBY_VERSION > '2.0'
 gem "ruby-prof", platform: :mri
