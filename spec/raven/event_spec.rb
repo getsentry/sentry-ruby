@@ -621,9 +621,9 @@ RSpec.describe Raven::Event do
       context 'when running under jRuby' do
         let(:exception) do
           
-            raise java.lang.OutOfMemoryError, "A Java error"
-          rescue Exception => e
-            return e
+          raise java.lang.OutOfMemoryError, "A Java error"
+      rescue Exception => e
+        return e
           
         end
 

@@ -45,11 +45,11 @@ module Raven
         ips.select do |ip|
           
             # Only return IPs that are valid according to the IPAddr#new method
-            range = IPAddr.new(ip).to_range
-            # we want to make sure nobody is sneaking a netmask in
-            range.begin == range.end
-          rescue ArgumentError
-            nil
+          range = IPAddr.new(ip).to_range
+          # we want to make sure nobody is sneaking a netmask in
+          range.begin == range.end
+      rescue ArgumentError
+        nil
           
         end
       end

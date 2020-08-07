@@ -211,12 +211,12 @@ RSpec.describe Raven::Configuration do
       context "when it's on heroku ci" do
         it "returns nil" do
           
-            original_ci_val = ENV["CI"]
-            ENV["CI"] = "true"
+          original_ci_val = ENV["CI"]
+          ENV["CI"] = "true"
 
-            expect(subject.release).to eq(nil)
-          ensure
-            ENV["CI"] = original_ci_val
+          expect(subject.release).to eq(nil)
+      ensure
+        ENV["CI"] = original_ci_val
           
         end
       end
@@ -224,12 +224,12 @@ RSpec.describe Raven::Configuration do
       context "when it's not on heroku ci" do
         around do |example|
           
-            original_ci_val = ENV["CI"]
-            ENV["CI"] = nil
+          original_ci_val = ENV["CI"]
+          ENV["CI"] = nil
 
-            example.run
-          ensure
-            ENV["CI"] = original_ci_val
+          example.run
+      ensure
+        ENV["CI"] = original_ci_val
           
         end
 
@@ -243,11 +243,11 @@ RSpec.describe Raven::Configuration do
 
         it "returns HEROKU_SLUG_COMMIT" do
           
-            ENV["HEROKU_SLUG_COMMIT"] = "REVISION"
+          ENV["HEROKU_SLUG_COMMIT"] = "REVISION"
 
-            expect(subject.release).to eq("REVISION")
-          ensure
-            ENV["HEROKU_SLUG_COMMIT"] = nil
+          expect(subject.release).to eq("REVISION")
+      ensure
+        ENV["HEROKU_SLUG_COMMIT"] = nil
           
         end
       end
