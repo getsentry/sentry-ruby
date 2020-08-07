@@ -1,0 +1,20 @@
+source "https://rubygems.org/"
+
+gemspec path: ".."
+
+gem "rack"
+gem "rack-timeout"
+
+gem "sidekiq"
+
+gem "rake", "> 12"
+gem "rubocop", "~> 0.41.1" # Last version that supported 1.9, upgrade to 0.50 after we drop 1.9
+gem "rspec", "> 3"
+gem "capybara" # rspec system tests
+gem "puma" # rspec system tests
+
+gem "pry"
+gem "timecop"
+gem "test-unit"
+gem "simplecov"
+gem "codecov"
