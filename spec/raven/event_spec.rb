@@ -620,9 +620,11 @@ RSpec.describe Raven::Event do
     if RUBY_PLATFORM == "java"
       context 'when running under jRuby' do
         let(:exception) do
-          raise java.lang.OutOfMemoryError, "A Java error"
-        rescue Exception => e
-          return e
+          begin
+            raise java.lang.OutOfMemoryError, "A Java error"
+          rescue Exception => e
+            return e
+          end
         end
 
         it 'should have a backtrace' do
