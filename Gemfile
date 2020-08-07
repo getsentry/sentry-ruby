@@ -2,15 +2,8 @@ source "https://rubygems.org/"
 
 gemspec
 
-if ENV["RAILS_VERSION"] && (ENV["RAILS_VERSION"].to_i == 4)
-  gem "rails", "< 5"
-  gem "rspec-rails", "> 3"
-elsif ENV["RAILS_VERSION"] && (ENV["RAILS_VERSION"].to_i == 0)
-  # no-op. No Rails.
-else
-  gem "rails", "< 6"
-  gem "rspec-rails", "> 3"
-end
+gem "rails", "< 6"
+gem "rspec-rails", "> 3"
 
 gem "rack"
 gem "rack-timeout"
