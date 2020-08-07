@@ -118,8 +118,8 @@ module Raven
             # We have to convert to a JSON-like hash, because background job
             # processors (esp ActiveJob) may not like weird types in the event hash
             configuration.async.call(evt.to_json_compatible)
-          rescue => ex
-            logger.error("async event sending failed: #{ex.message}")
+          rescue => e
+            logger.error("async event sending failed: #{e.message}")
             send_event(evt, make_hint(obj))
           end
         else

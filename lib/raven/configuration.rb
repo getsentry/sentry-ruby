@@ -351,8 +351,8 @@ module Raven
         detect_release_from_git ||
         detect_release_from_capistrano ||
         detect_release_from_heroku
-    rescue => ex
-      logger.error "Error detecting release: #{ex.message}"
+    rescue => e
+      logger.error "Error detecting release: #{e.message}"
     end
 
     def excluded_exception?(incoming_exception)

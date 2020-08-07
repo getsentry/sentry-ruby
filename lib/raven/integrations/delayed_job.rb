@@ -9,7 +9,7 @@ module Delayed
             # Forward the call to the next callback in the callback chain
             block.call(job, *args)
 
-          rescue Exception => exception
+          rescue Exception => e
             # Log error to Sentry
             extra = {
               :delayed_job => {
@@ -32,7 +32,7 @@ module Delayed
             if job.respond_to?('payload_object') && job.payload_object.respond_to?('job_data')
               extra[:active_job] = job.payload_object.job_data
             end
-            ::Raven.capture_exception(exception,
+            ::Raven.capture_exception(e,
                                       :logger  => 'delayed_job',
                                       :tags    => {
                                         :delayed_job_queue => job.queue,
@@ -41,7 +41,7 @@ module Delayed
                                       :extra => extra)
 
             # Make sure we propagate the failure!
-            raise exception
+            raise e
           ensure
             ::Raven::Context.clear!
             ::Raven::BreadcrumbBuffer.clear!

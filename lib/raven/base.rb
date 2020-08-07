@@ -85,8 +85,8 @@ module Raven
 
     def load_integration(integration)
       require "raven/integrations/#{integration}"
-    rescue Exception => error
-      logger.warn "Unable to load raven/integrations/#{integration}: #{error}"
+    rescue Exception => e
+      logger.warn "Unable to load raven/integrations/#{integration}: #{e}"
     end
 
     def safely_prepend(module_name, opts = {})
