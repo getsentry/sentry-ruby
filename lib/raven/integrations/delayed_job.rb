@@ -5,7 +5,6 @@ module Delayed
     class Raven < ::Delayed::Plugin
       callbacks do |lifecycle|
         lifecycle.around(:invoke_job) do |job, *args, &block|
-
             # Forward the call to the next callback in the callback chain
           block.call(job, *args)
 
@@ -45,7 +44,6 @@ module Delayed
       ensure
         ::Raven::Context.clear!
           ::Raven::BreadcrumbBuffer.clear!
-
         end
       end
     end
