@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 require 'socket'
 require 'securerandom'
 
@@ -96,7 +97,7 @@ module Raven
     end
 
     def level=(new_level) # needed to meet the Sentry spec
-      @level = new_level == "warn" || new_level == :warn ? :warning : new_level
+      @level = new_level.to_s == "warn" ? :warning : new_level
     end
 
     def interface(name, value = nil, &block)

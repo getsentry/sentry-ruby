@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 require 'base64'
 require 'json'
 require 'zlib'
@@ -120,7 +121,9 @@ module Raven
         configuration.logger.warn "Not sending event due to previous failure(s)."
       end
       configuration.logger.warn("Failed to submit event: #{get_log_message(event)}")
-      configuration.transport_failure_callback.call(event) if configuration.transport_failure_callback
+
+      # configuration.transport_failure_callback can be false & nil
+      configuration.transport_failure_callback.call(event) if configuration.transport_failure_callback # rubocop:disable Style/SafeNavigation
     end
   end
 

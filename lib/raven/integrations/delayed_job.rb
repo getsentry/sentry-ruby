@@ -5,7 +5,7 @@ module Delayed
     class Raven < ::Delayed::Plugin
       callbacks do |lifecycle|
         lifecycle.around(:invoke_job) do |job, *args, &block|
-            # Forward the call to the next callback in the callback chain
+          # Forward the call to the next callback in the callback chain
           block.call(job, *args)
 
         rescue Exception => e

@@ -42,7 +42,7 @@ module Raven
         proxy = configuration.public_send(:proxy)
 
         Faraday.new(configuration.server, :ssl => ssl_configuration, :proxy => proxy) do |builder|
-          configuration.faraday_builder.call(builder) if configuration.faraday_builder
+          configuration.faraday_builder&.call(builder)
           builder.response :raise_error
           builder.options.merge! faraday_opts
           builder.headers[:user_agent] = "sentry-ruby/#{Raven::VERSION}"
