@@ -99,6 +99,7 @@ Naming/FileName:
   Exclude:
     - 'lib/sentry-raven-without-integrations.rb'
     - 'lib/sentry-raven.rb'
+    - 'lib/raven/integrations/rack-timeout.rb'
 
 Naming/MethodParameterName:
   Enabled: false
