@@ -49,7 +49,7 @@ end
 def build_exception
   1 / 0
 rescue ZeroDivisionError => e
-  return e
+  e
 end
 
 def build_exception_with_cause(cause = "exception a")
@@ -59,7 +59,7 @@ def build_exception_with_cause(cause = "exception a")
     raise "exception b"
   end
 rescue RuntimeError => e
-  return e
+  e
 end
 
 def build_exception_with_two_causes
@@ -73,7 +73,7 @@ def build_exception_with_two_causes
     raise "exception c"
   end
 rescue RuntimeError => e
-  return e
+  e
 end
 
 def build_exception_with_recursive_cause
