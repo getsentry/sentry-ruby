@@ -214,8 +214,8 @@ RSpec.describe Raven::Configuration do
           ENV["CI"] = "true"
 
           expect(subject.release).to eq(nil)
-      ensure
-        ENV["CI"] = original_ci_val
+        ensure
+          ENV["CI"] = original_ci_val
         end
       end
 
@@ -225,8 +225,8 @@ RSpec.describe Raven::Configuration do
           ENV["CI"] = nil
 
           example.run
-      ensure
-        ENV["CI"] = original_ci_val
+        ensure
+          ENV["CI"] = original_ci_val
         end
 
         it "returns nil + logs an warning if HEROKU_SLUG_COMMIT is not set" do
@@ -241,8 +241,8 @@ RSpec.describe Raven::Configuration do
           ENV["HEROKU_SLUG_COMMIT"] = "REVISION"
 
           expect(subject.release).to eq("REVISION")
-      ensure
-        ENV["HEROKU_SLUG_COMMIT"] = nil
+        ensure
+          ENV["HEROKU_SLUG_COMMIT"] = nil
         end
       end
     end

@@ -116,11 +116,11 @@ module Raven
         key = key.sub(/^HTTP_/, "")
         key = key.split('_').map(&:capitalize).join('-')
         memo[key] = value
-    rescue StandardError => e
+      rescue StandardError => e
         # Rails adds objects to the Rack env that can sometimes raise exceptions
         # when `to_s` is called.
         # See: https://github.com/rails/rails/blob/master/actionpack/lib/action_dispatch/middleware/remote_ip.rb#L134
-      Raven.logger.warn("Error raised while formatting headers: #{e.message}")
+        Raven.logger.warn("Error raised while formatting headers: #{e.message}")
         next
       end
     end

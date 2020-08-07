@@ -8,20 +8,20 @@ module Delayed
             # Forward the call to the next callback in the callback chain
           block.call(job, *args)
 
-      rescue Exception => e
+        rescue Exception => e
           # Log error to Sentry
-        extra = {
-          :delayed_job => {
-            :id          => job.id.to_s,
-            :priority    => job.priority,
-            :attempts    => job.attempts,
-            :run_at      => job.run_at,
-            :locked_at   => job.locked_at,
-            :locked_by   => job.locked_by,
-            :queue       => job.queue,
-            :created_at  => job.created_at
+          extra = {
+            :delayed_job => {
+              :id          => job.id.to_s,
+              :priority    => job.priority,
+              :attempts    => job.attempts,
+              :run_at      => job.run_at,
+              :locked_at   => job.locked_at,
+              :locked_by   => job.locked_by,
+              :queue       => job.queue,
+              :created_at  => job.created_at
+            }
           }
-        }
           # last_error can be nil
           extra[:last_error] = job.last_error[0...1000] if job.last_error
           # handlers are YAML objects in strings, we definitely can't
@@ -41,8 +41,8 @@ module Delayed
 
           # Make sure we propagate the failure!
           raise e
-      ensure
-        ::Raven::Context.clear!
+        ensure
+          ::Raven::Context.clear!
           ::Raven::BreadcrumbBuffer.clear!
         end
       end

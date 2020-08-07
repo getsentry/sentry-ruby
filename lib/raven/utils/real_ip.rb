@@ -47,8 +47,8 @@ module Raven
           range = IPAddr.new(ip).to_range
           # we want to make sure nobody is sneaking a netmask in
           range.begin == range.end
-      rescue ArgumentError
-        nil
+        rescue ArgumentError
+          nil
         end
       end
 
