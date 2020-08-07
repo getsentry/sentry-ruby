@@ -6,9 +6,9 @@ require 'zlib'
 module Raven
   # Encodes events and sends them to the Sentry server.
   class Client
-    PROTOCOL_VERSION = '5'.freeze
-    USER_AGENT = "raven-ruby/#{Raven::VERSION}".freeze
-    CONTENT_TYPE = 'application/json'.freeze
+    PROTOCOL_VERSION = '5'
+    USER_AGENT = "raven-ruby/#{Raven::VERSION}"
+    CONTENT_TYPE = 'application/json'
 
     attr_accessor :configuration
 

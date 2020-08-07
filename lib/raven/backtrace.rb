@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 ## Inspired by Rails' and Airbrake's backtrace parsers.
 
 module Raven
@@ -5,16 +7,16 @@ module Raven
   class Backtrace
     # Handles backtrace parsing line by line
     class Line
-      RB_EXTENSION = ".rb".freeze
+      RB_EXTENSION = ".rb"
       # regexp (optional leading X: on windows, or JRuby9000 class-prefix)
       RUBY_INPUT_FORMAT = /
         ^ \s* (?: [a-zA-Z]: | uri:classloader: )? ([^:]+ | <.*>):
         (\d+)
         (?: :in \s `([^']+)')?$
-      /x
+      /x.freeze
 
       # org.jruby.runtime.callsite.CachingCallSite.call(CachingCallSite.java:170)
-      JAVA_INPUT_FORMAT = /^(.+)\.([^\.]+)\(([^\:]+)\:(\d+)\)$/
+      JAVA_INPUT_FORMAT = /^(.+)\.([^\.]+)\(([^\:]+)\:(\d+)\)$/.freeze
 
       # The file portion of the line (such as app/models/user.rb)
       attr_reader :file
@@ -84,7 +86,7 @@ module Raven
       attr_writer :file, :number, :method, :module_name
     end
 
-    APP_DIRS_PATTERN = /(bin|exe|app|config|lib|test)/
+    APP_DIRS_PATTERN = /(bin|exe|app|config|lib|test)/.freeze
 
     # holder for an Array of Backtrace::Line instances
     attr_reader :lines
