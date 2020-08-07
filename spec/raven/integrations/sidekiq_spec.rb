@@ -133,7 +133,7 @@ RSpec.describe "Sidekiq full-stack integration" do
     @processor.instance_variable_set(:'@job', job)
 
     @processor.send(:process, job)
-  rescue # rubocop:disable Lint/HandleExceptions
+  rescue StandardError
     # do nothing
   end
 
