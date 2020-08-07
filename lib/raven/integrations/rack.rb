@@ -98,7 +98,7 @@ module Raven
 
     def format_headers_for_sentry(env_hash)
       env_hash.each_with_object({}) do |(key, value), memo|
-        
+
         key = key.to_s # rack env can contain symbols
         value = value.to_s
         next unless key.upcase == key # Non-upper case stuff isn't either
@@ -122,7 +122,7 @@ module Raven
         # See: https://github.com/rails/rails/blob/master/actionpack/lib/action_dispatch/middleware/remote_ip.rb#L134
       Raven.logger.warn("Error raised while formatting headers: #{e.message}")
         next
-        
+
       end
     end
 
