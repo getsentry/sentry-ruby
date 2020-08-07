@@ -6,6 +6,11 @@ require 'pry'
 require 'simplecov'
 SimpleCov.start
 
+if ENV["CI"]
+  require 'codecov'
+  SimpleCov.formatter = SimpleCov::Formatter::Codecov
+end
+
 Raven.configure do |config|
   config.dsn = "dummy://12345:67890@sentry.localdomain/sentry/42"
   config.encoding = "json"
