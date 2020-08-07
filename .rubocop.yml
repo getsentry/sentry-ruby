@@ -19,16 +19,10 @@ Metrics/CyclomaticComplexity:
 Metrics/PerceivedComplexity:
   Max: 11
 
-Metrics/LineLength:
-  Max: 155
-
 Metrics/MethodLength:
   Max: 30
 
 Style/SignalException:
-  Enabled: false
-
-Performance/Casecmp:
   Enabled: false
 
 Style/ClassAndModuleChildren:
@@ -52,11 +46,6 @@ Style/CaseEquality:
 Style/DoubleNegation:
   Enabled: false
 
-Style/FileName:
-  Exclude:
-    - 'lib/sentry-raven-without-integrations.rb'
-    - 'lib/sentry-raven.rb'
-
 Style/NumericLiterals:
   Exclude:
     - 'spec/raven/processors/sanitizedata_processor_spec.rb'
@@ -72,3 +61,14 @@ Lint/RescueException:
     - 'lib/raven/integrations/rack.rb'
     - 'lib/raven/integrations/sidekiq.rb'
     - 'spec/raven/event_spec.rb'
+
+
+Layout/LineLength:
+  Max: 155
+
+Naming/FileName:
+  Exclude:
+    - 'lib/sentry-raven-without-integrations.rb'
+    - 'lib/sentry-raven.rb'
+
+
