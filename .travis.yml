@@ -16,10 +16,9 @@ rvm:
   - 2.6
   - 2.7
 
-env:
-  - RAILS_VERSION=4
-  - RAILS_VERSION=5
-  - RAILS_VERSION=0
+gemfile:
+  - gemfiles/Gemfile.rails-4
+  - gemfiles/Gemfile.rails-5
 
 addons:
   apt:
@@ -33,10 +32,22 @@ before_install:
 
 matrix:
   include:
+
     - rvm: jruby-9.2.11.1
-      env: JRUBY_OPTS="--dev -J-Djruby.launch.inproc=true -J-Xmx1024M" RAILS_VERSION=4
+      env: JRUBY_OPTS="--dev -J-Djruby.launch.inproc=true -J-Xmx1024M"
+      gemfile: gemfiles/Gemfile.rails-4
     - rvm: jruby-9.2.11.1
-      env: JRUBY_OPTS="--dev -J-Djruby.launch.inproc=true -J-Xmx1024M" RAILS_VERSION=5
+      env: JRUBY_OPTS="--dev -J-Djruby.launch.inproc=true -J-Xmx1024M"
+      gemfile: gemfiles/Gemfile.rails-5
+    - rvm: jruby-9.2.11.1
+      env: JRUBY_OPTS="--dev -J-Djruby.launch.inproc=true -J-Xmx1024M"
+      gemfile: gemfiles/Gemfile.no_rails
+
+    - gemfile: gemfiles/Gemfile.no_rails
+      env: RAILS_VERSION=0 SIDEKIQ_VERSION=5
+    - gemfile: gemfiles/Gemfile.no_rails
+      env: RAILS_VERSION=0 SIDEKIQ_VERSION=6
+
     - rvm: 2.7
       env: RUBYOPT="--enable-frozen-string-literal --debug=frozen-string-literal"
     - rvm: ruby-head
