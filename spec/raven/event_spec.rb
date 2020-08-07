@@ -392,7 +392,7 @@ RSpec.describe Raven::Event do
         data['ary2'] = data['ary']
 
         Raven::Event.new(:extra => {
-                           :invalid => "invalid\255".force_encoding('UTF-8'),
+                           :invalid => "invalid\255".dup.force_encoding('UTF-8'),
                            :circular => data
                          })
       end
