@@ -76,7 +76,7 @@ module Raven
     end
 
     def message
-      @interfaces[:logentry] && @interfaces[:logentry].unformatted_message
+      @interfaces[:logentry]&.unformatted_message
     end
 
     def message=(args)

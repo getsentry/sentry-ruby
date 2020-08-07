@@ -430,7 +430,7 @@ module Raven
     end
 
     def capture_allowed_by_callback?(message_or_exc)
-      return true if !should_capture || message_or_exc.nil? || should_capture.call(*[message_or_exc])
+      return true if !should_capture || message_or_exc.nil? || should_capture.call(message_or_exc)
 
       @errors << "should_capture returned false"
       false

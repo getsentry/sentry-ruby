@@ -76,7 +76,7 @@ module Raven
 
       def self.in_app_pattern
         @in_app_pattern ||= begin
-          project_root = Raven.configuration.project_root && Raven.configuration.project_root.to_s
+          project_root = Raven.configuration.project_root&.to_s
           Regexp.new("^(#{project_root}/)?#{Raven.configuration.app_dirs_pattern || APP_DIRS_PATTERN}")
         end
       end
