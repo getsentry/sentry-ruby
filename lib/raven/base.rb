@@ -91,6 +91,7 @@ module Raven
 
     def safely_prepend(module_name, opts = {})
       return if opts[:to].nil? || opts[:from].nil?
+
       if opts[:to].respond_to?(:prepend, true)
         opts[:to].send(:prepend, opts[:from].const_get(module_name))
       else
@@ -101,6 +102,7 @@ module Raven
     def sys_command(command)
       result = `#{command} 2>&1` rescue nil
       return if result.nil? || result.empty? || ($CHILD_STATUS && $CHILD_STATUS.exitstatus != 0)
+
       result.strip
     end
   end

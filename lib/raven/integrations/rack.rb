@@ -111,6 +111,7 @@ module Raven
         next if key == 'HTTP_COOKIE' # Cookies don't go here, they go somewhere else
 
         next unless key.start_with?('HTTP_') || %w(CONTENT_TYPE CONTENT_LENGTH).include?(key)
+
         # Rack stores headers as HTTP_WHAT_EVER, we need What-Ever
         key = key.sub(/^HTTP_/, "")
         key = key.split('_').map(&:capitalize).join('-')

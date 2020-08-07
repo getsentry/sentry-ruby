@@ -63,6 +63,7 @@ module Raven
 
     def fields_re
       return @fields_re if instance_variable_defined?(:@fields_re)
+
       fields = DEFAULT_FIELDS | sanitize_fields
       fields -= sanitize_fields_excluded
       @fields_re = /#{fields.map do |f|
@@ -80,6 +81,7 @@ module Raven
 
     def parse_json_or_nil(string)
       return unless string.start_with?(*JSON_STARTS_WITH)
+
       JSON.parse(string)
     rescue JSON::ParserError, NoMethodError
       nil

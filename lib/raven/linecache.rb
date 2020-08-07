@@ -10,6 +10,7 @@ module Raven
     # line should be the line requested by lineno. See specs for more information.
     def get_file_context(filename, lineno, context)
       return nil, nil, nil unless valid_path?(filename)
+
       lines = Array.new(2 * context + 1) do |i|
         getline(filename, lineno - context + i)
       end
@@ -33,8 +34,10 @@ module Raven
 
     def getline(path, n)
       return nil if n < 1
+
       lines = getlines(path)
       return nil if lines.nil?
+
       lines[n - 1]
     end
   end

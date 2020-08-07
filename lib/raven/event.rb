@@ -102,6 +102,7 @@ module Raven
     def interface(name, value = nil, &block)
       int = Interface.registered[name]
       raise(Error, "Unknown interface: #{name}") unless int
+
       @interfaces[int.sentry_alias] = int.new(value, &block) if value || block
       @interfaces[int.sentry_alias]
     end

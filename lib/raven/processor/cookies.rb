@@ -13,6 +13,7 @@ module Raven
       data[:request][:cookies] = STRING_MASK if data[:request][:cookies]
 
       return unless data[:request][:headers] && data[:request][:headers]["Cookie"]
+
       data[:request][:headers]["Cookie"] = STRING_MASK
     end
 
@@ -20,6 +21,7 @@ module Raven
       data["request"]["cookies"] = STRING_MASK if data["request"]["cookies"]
 
       return unless data["request"]["headers"] && data["request"]["headers"]["Cookie"]
+
       data["request"]["headers"]["Cookie"] = STRING_MASK
     end
   end

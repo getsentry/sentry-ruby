@@ -51,6 +51,7 @@ module Raven
     # Tell the log that the client is good to go
     def report_status
       return if configuration.silence_ready
+
       if configuration.capture_allowed?
         logger.info "Raven #{VERSION} ready to catch errors"
       else

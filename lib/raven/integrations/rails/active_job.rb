@@ -22,6 +22,7 @@ module Raven
         block.call
       rescue Exception => e # rubocop:disable Lint/RescueException
         return if rescue_with_handler(e)
+
         Raven.capture_exception(e, :extra => raven_context(job))
         raise e
       ensure
