@@ -13,6 +13,9 @@ Metrics/ClassLength:
 Metrics/AbcSize:
   Max: 40
 
+Metrics/BlockLength:
+  Enabled: false
+
 Metrics/CyclomaticComplexity:
   Max: 12
 
@@ -22,16 +25,31 @@ Metrics/PerceivedComplexity:
 Metrics/MethodLength:
   Max: 30
 
+Style/SymbolArray:
+  Enabled: false
+
+Style/PercentLiteralDelimiters:
+  Enabled: false
+
+Style/FrozenStringLiteralComment:
+  Enabled: false
+
 Style/SignalException:
   Enabled: false
 
 Style/ClassAndModuleChildren:
   Enabled: false
 
+Style/RescueStandardError:
+  Enabled: false
+
 Style/ParallelAssignment:
   Enabled: false
 
 Style/Documentation:
+  Enabled: false
+
+Style/CommentedKeyword:
   Enabled: false
 
 Style/RescueModifier:
@@ -46,12 +64,18 @@ Style/CaseEquality:
 Style/DoubleNegation:
   Enabled: false
 
+Style/GuardClause:
+  Enabled: false
+
 Style/NumericLiterals:
   Exclude:
     - 'spec/raven/processors/sanitizedata_processor_spec.rb'
 
 Style/HashSyntax:
   EnforcedStyle: hash_rockets
+
+Style/IfUnlessModifier:
+  Enabled: false
 
 Lint/RescueException:
   Exclude:
@@ -62,6 +86,11 @@ Lint/RescueException:
     - 'lib/raven/integrations/sidekiq.rb'
     - 'spec/raven/event_spec.rb'
 
+Lint/SuppressedException:
+  Enabled: false
+
+Lint/AssignmentInCondition:
+  Enabled: false
 
 Layout/LineLength:
   Max: 155
@@ -71,4 +100,6 @@ Naming/FileName:
     - 'lib/sentry-raven-without-integrations.rb'
     - 'lib/sentry-raven.rb'
 
+Naming/MethodParameterName:
+  Enabled: false
 
