@@ -1,7 +1,7 @@
 require 'spec_helper'
 
 require 'raven/integrations/sidekiq'
-require 'sidekiq/processor'
+require 'sidekiq/manager'
 
 RSpec.describe "Raven::SidekiqErrorHandler" do
   let(:context) do
@@ -122,15 +122,9 @@ RSpec.describe "Sidekiq full-stack integration" do
   end
 
   before do
-    @mgr = double('manager', :options => {})
-    allow(@mgr).to receive(:options).and_return(:queues => ['default'])
-
-    @processor =
-      if Sidekiq::VERSION.to_i >= 6
-        ::Sidekiq::Processor.new(@mgr, @mgr.options)
-      else
-        ::Sidekiq::Processor.new(@mgr)
-      end
+    opts = { :queues => ['default'] }
+    manager = Sidekiq::Manager.new(opts)
+    @processor = manager.workers.first
   end
 
   def process_job(klass)
