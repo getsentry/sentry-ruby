@@ -17,10 +17,8 @@ rvm:
   - 2.7
 
 env:
-  - RAILS_VERSION=4 SIDEKIQ_VERSION=5
-  - RAILS_VERSION=4 SIDEKIQ_VERSION=6
-  - RAILS_VERSION=5 SIDEKIQ_VERSION=5
-  - RAILS_VERSION=5 SIDEKIQ_VERSION=6
+  - RAILS_VERSION=4
+  - RAILS_VERSION=5
   - RAILS_VERSION=0
 
 addons:
@@ -43,16 +41,6 @@ matrix:
       env: RUBYOPT="--enable-frozen-string-literal --debug=frozen-string-literal"
     - rvm: ruby-head
       env: RAILS_VERSION=0
-  exclude:
-    # sidekiq 6 requires Ruby 2.5
-    - rvm: 2.3
-      env: RAILS_VERSION=4 SIDEKIQ_VERSION=6
-    - rvm: 2.3
-      env: RAILS_VERSION=5 SIDEKIQ_VERSION=6
-    - rvm: 2.4
-      env: RAILS_VERSION=4 SIDEKIQ_VERSION=6
-    - rvm: 2.4
-      env: RAILS_VERSION=5 SIDEKIQ_VERSION=6
 
   allow_failures:
     - rvm: ruby-head

@@ -15,11 +15,7 @@ end
 gem "rack"
 gem "rack-timeout"
 
-if ENV["SIDEKIQ_VERSION"].to_i >= 6 && RUBY_VERSION > '2.5'
-  gem "sidekiq", ">= 6"
-else
-  gem "sidekiq", "< 6"
-end
+gem "sidekiq"
 
 gem "pry"
 gem "benchmark-ips"
