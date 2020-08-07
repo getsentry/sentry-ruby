@@ -253,8 +253,8 @@ module Raven
 
       # For anyone who wants to read the base server string
       @server = "#{scheme}://#{host}"
-      @server << ":#{port}" unless port == { 'http' => 80, 'https' => 443 }[scheme]
-      @server << path
+      @server += ":#{port}" unless port == { 'http' => 80, 'https' => 443 }[scheme]
+      @server += path
     end
     alias dsn= server=
 
