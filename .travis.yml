@@ -41,6 +41,9 @@ matrix:
       env: RUBYOPT="--enable-frozen-string-literal --debug=frozen-string-literal"
     - rvm: ruby-head
       env: RAILS_VERSION=0
+  exclude:
+    - rvm: 2.7
+      env: RAILS_VERSION=4
 
   allow_failures:
     - rvm: ruby-head
