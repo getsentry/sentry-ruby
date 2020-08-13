@@ -17,8 +17,9 @@ rvm:
   - 2.7
 
 env:
-  - RAILS_VERSION=4
-  - RAILS_VERSION=5
+  - RAILS_VERSION=4.2
+  - RAILS_VERSION=5.2
+  - RAILS_VERSION=6.0
   - RAILS_VERSION=0
 
 addons:
@@ -36,16 +37,22 @@ before_install:
 matrix:
   include:
     - rvm: jruby-9.2.11.1
-      env: JRUBY_OPTS="--dev -J-Djruby.launch.inproc=true -J-Xmx1024M" RAILS_VERSION=4
+      env: JRUBY_OPTS="--dev -J-Djruby.launch.inproc=true -J-Xmx1024M" RAILS_VERSION=4.2
     - rvm: jruby-9.2.11.1
-      env: JRUBY_OPTS="--dev -J-Djruby.launch.inproc=true -J-Xmx1024M" RAILS_VERSION=5
+      env: JRUBY_OPTS="--dev -J-Djruby.launch.inproc=true -J-Xmx1024M" RAILS_VERSION=5.2
+    - rvm: jruby-9.2.11.1
+      env: JRUBY_OPTS="--dev -J-Djruby.launch.inproc=true -J-Xmx1024M" RAILS_VERSION=6.0
     - rvm: 2.7
-      env: RUBYOPT="--enable-frozen-string-literal --debug=frozen-string-literal"
+      env: RAILS_VERSION=6.0 RUBYOPT="--enable-frozen-string-literal --debug=frozen-string-literal"
     - rvm: ruby-head
       env: RAILS_VERSION=0
   exclude:
+    - rvm: 2.3
+      env: RAILS_VERSION=6.0
+    - rvm: 2.4
+      env: RAILS_VERSION=6.0
     - rvm: 2.7
-      env: RAILS_VERSION=4
+      env: RAILS_VERSION=4.2
 
   allow_failures:
     - rvm: ruby-head

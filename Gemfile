@@ -2,13 +2,10 @@ source "https://rubygems.org/"
 
 gemspec
 
-if ENV["RAILS_VERSION"] && (ENV["RAILS_VERSION"].to_i == 4)
-  gem "rails", "~> 4.2"
-  gem "rspec-rails", "~> 4.0"
-elsif ENV["RAILS_VERSION"] && (ENV["RAILS_VERSION"].to_i == 0)
-  # no-op. No Rails.
-else
-  gem "rails", "~> 5.2"
+rails_version = ENV["RAILS_VERSION"].to_f
+
+if rails_version != 0
+  gem "rails", "~> #{rails_version}"
   gem "rspec-rails", "~> 4.0"
 end
 
