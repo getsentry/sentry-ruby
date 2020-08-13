@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 require 'base64'
 require 'json'
 require 'zlib'
@@ -6,9 +7,9 @@ require 'zlib'
 module Raven
   # Encodes events and sends them to the Sentry server.
   class Client
-    PROTOCOL_VERSION = '5'.freeze
-    USER_AGENT = "raven-ruby/#{Raven::VERSION}".freeze
-    CONTENT_TYPE = 'application/json'.freeze
+    PROTOCOL_VERSION = '5'
+    USER_AGENT = "raven-ruby/#{Raven::VERSION}"
+    CONTENT_TYPE = 'application/json'
 
     attr_accessor :configuration
 
@@ -120,7 +121,9 @@ module Raven
         configuration.logger.warn "Not sending event due to previous failure(s)."
       end
       configuration.logger.warn("Failed to submit event: #{get_log_message(event)}")
-      configuration.transport_failure_callback.call(event) if configuration.transport_failure_callback
+
+      # configuration.transport_failure_callback can be false & nil
+      configuration.transport_failure_callback.call(event) if configuration.transport_failure_callback # rubocop:disable Style/SafeNavigation
     end
   end
 

@@ -51,6 +51,7 @@ module Raven
     # Tell the log that the client is good to go
     def report_status
       return if configuration.silence_ready
+
       if configuration.capture_allowed?
         logger.info "Raven #{VERSION} ready to catch errors"
       else
@@ -111,15 +112,15 @@ module Raven
       message_or_exc = obj.is_a?(String) ? "message" : "exception"
       options[:configuration] = configuration
       options[:context] = context
-      if (evt = Event.send("from_" + message_or_exc, obj, options))
+      if evt = Event.send("from_" + message_or_exc, obj, options)
         yield evt if block_given?
         if configuration.async?
           begin
             # We have to convert to a JSON-like hash, because background job
             # processors (esp ActiveJob) may not like weird types in the event hash
             configuration.async.call(evt.to_json_compatible)
-          rescue => ex
-            logger.error("async event sending failed: #{ex.message}")
+          rescue => e
+            logger.error("async event sending failed: #{e.message}")
             send_event(evt, make_hint(obj))
           end
         else

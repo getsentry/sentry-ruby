@@ -14,6 +14,7 @@ module Raven
         !value.frozen? ? value.map! { |v| process v } : value.map { |v| process v }
       when Exception
         return value if value.message.valid_encoding?
+
         clean_exc = value.class.new(remove_invalid_bytes(value.message))
         clean_exc.set_backtrace(value.backtrace)
         clean_exc
@@ -27,6 +28,7 @@ module Raven
           value.force_encoding(Encoding::UTF_8)
         end
         return value if value.valid_encoding?
+
         remove_invalid_bytes(value)
       else
         value

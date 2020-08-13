@@ -29,8 +29,8 @@ module Raven
 
       begin
         1 / 0
-      rescue ZeroDivisionError => exception
-        evt = instance.capture_exception(exception)
+      rescue ZeroDivisionError => e
+        evt = instance.capture_exception(e)
       end
 
       if evt && !(evt.is_a? Thread)

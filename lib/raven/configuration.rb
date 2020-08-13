@@ -236,6 +236,7 @@ module Raven
 
     def server=(value)
       return if value.nil?
+
       uri = URI.parse(value)
       uri_path = uri.path.split('/')
 
@@ -260,6 +261,7 @@ module Raven
 
     def encoding=(encoding)
       raise(Error, 'Unsupported encoding') unless %w(gzip json).include? encoding
+
       @encoding = encoding
     end
 
@@ -267,6 +269,7 @@ module Raven
       unless value == false || value.respond_to?(:call)
         raise(ArgumentError, "async must be callable (or false to disable)")
       end
+
       @async = value
     end
 
@@ -274,6 +277,7 @@ module Raven
       unless value == false || value.respond_to?(:call)
         raise(ArgumentError, "transport_failure_callback must be callable (or false to disable)")
       end
+
       @transport_failure_callback = value
     end
 
@@ -281,6 +285,7 @@ module Raven
       unless value == false || value.respond_to?(:call)
         raise ArgumentError, "should_capture must be callable (or false to disable)"
       end
+
       @should_capture = value
     end
 
@@ -288,6 +293,7 @@ module Raven
       unless value == false || value.respond_to?(:call)
         raise ArgumentError, "before_send must be callable (or false to disable)"
       end
+
       @before_send = value
     end
 
@@ -351,8 +357,8 @@ module Raven
         detect_release_from_git ||
         detect_release_from_capistrano ||
         detect_release_from_heroku
-    rescue => ex
-      logger.error "Error detecting release: #{ex.message}"
+    rescue => e
+      logger.error "Error detecting release: #{e.message}"
     end
 
     def excluded_exception?(incoming_exception)
@@ -418,18 +424,21 @@ module Raven
 
     def capture_in_current_environment?
       return true unless environments.any? && !environments.include?(current_environment)
+
       @errors << "Not configured to send/capture in environment '#{current_environment}'"
       false
     end
 
     def capture_allowed_by_callback?(message_or_exc)
-      return true if !should_capture || message_or_exc.nil? || should_capture.call(*[message_or_exc])
+      return true if !should_capture || message_or_exc.nil? || should_capture.call(message_or_exc)
+
       @errors << "should_capture returned false"
       false
     end
 
     def valid?
       return true if %w(server host path public_key project_id).all? { |k| public_send(k) }
+
       if server
         %w(server host path public_key project_id).map do |key|
           @errors << "No #{key} specified" unless public_send(key)
@@ -442,6 +451,7 @@ module Raven
 
     def sample_allowed?
       return true if sample_rate == 1.0
+
       if Random::DEFAULT.rand >= sample_rate
         @errors << "Excluded by random sample"
         false

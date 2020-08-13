@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 require 'socket'
 require 'securerandom'
 
@@ -76,7 +77,7 @@ module Raven
     end
 
     def message
-      @interfaces[:logentry] && @interfaces[:logentry].unformatted_message
+      @interfaces[:logentry]&.unformatted_message
     end
 
     def message=(args)
@@ -96,12 +97,13 @@ module Raven
     end
 
     def level=(new_level) # needed to meet the Sentry spec
-      @level = new_level == "warn" || new_level == :warn ? :warning : new_level
+      @level = new_level.to_s == "warn" ? :warning : new_level
     end
 
     def interface(name, value = nil, &block)
       int = Interface.registered[name]
       raise(Error, "Unknown interface: #{name}") unless int
+
       @interfaces[int.sentry_alias] = int.new(value, &block) if value || block
       @interfaces[int.sentry_alias]
     end

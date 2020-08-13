@@ -1,10 +1,11 @@
 # frozen_string_literal: true
+
 require 'json'
 
 module Raven
   class Processor::SanitizeData < Processor
     DEFAULT_FIELDS = %w(authorization password passwd secret ssn social(.*)?sec).freeze
-    CREDIT_CARD_RE = /\b(?:3[47]\d|(?:4\d|5[1-5]|65)\d{2}|6011)\d{12}\b/
+    CREDIT_CARD_RE = /\b(?:3[47]\d|(?:4\d|5[1-5]|65)\d{2}|6011)\d{12}\b/.freeze
     QUERY_STRING = ['query_string', :query_string].freeze
     JSON_STARTS_WITH = ["[", "{"].freeze
 
@@ -63,6 +64,7 @@ module Raven
 
     def fields_re
       return @fields_re if instance_variable_defined?(:@fields_re)
+
       fields = DEFAULT_FIELDS | sanitize_fields
       fields -= sanitize_fields_excluded
       @fields_re = /#{fields.map do |f|
@@ -80,6 +82,7 @@ module Raven
 
     def parse_json_or_nil(string)
       return unless string.start_with?(*JSON_STARTS_WITH)
+
       JSON.parse(string)
     rescue JSON::ParserError, NoMethodError
       nil
