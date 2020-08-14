@@ -21,32 +21,13 @@ module Raven
     def process(value, key = nil)
       case value
       when Hash
-        if key&.match?(fields_re)
-          STRING_MASK
-        else
-          if value.frozen?
-            value.merge(value) { |k, v| process v, k }
-          else
-            value.merge!(value) { |k, v| process v, k }
-          end
-        end
+        sanitize_hash_value(key, value)
       when Array
-        !value.frozen? ? value.map! { |v| process v, key } : value.map { |v| process v, key }
+        sanitize_array_value(key, value)
       when Integer
         matches_regexes?(key, value.to_s) ? INT_MASK : value
       when String
-        if value =~ fields_re && (json = parse_json_or_nil(value))
-          # if this string is actually a json obj, convert and sanitize
-          process(json).to_json
-        elsif matches_regexes?(key, value)
-          STRING_MASK
-        elsif QUERY_STRING.include?(key)
-          sanitize_query_string(value)
-        elsif value =~ fields_re
-          sanitize_sensitive_string_content(value)
-        else
-          value
-        end
+        sanitize_string_value(key, value)
       else
         value
       end
@@ -58,6 +39,39 @@ module Raven
     # so we have to convert them back, again.
     def utf8_processor
       @utf8_processor ||= Processor::UTF8Conversion.new
+    end
+
+    def sanitize_hash_value(key, value)
+      if key&.match?(fields_re)
+        STRING_MASK
+      elsif value.frozen?
+        value.merge(value) { |k, v| process v, k }
+      else
+        value.merge!(value) { |k, v| process v, k }
+      end
+    end
+
+    def sanitize_array_value(key, value)
+      if value.frozen?
+        value.map { |v| process v, key }
+      else
+        value.map! { |v| process v, key }
+      end
+    end
+
+    def sanitize_string_value(key, value)
+      if value =~ fields_re && (json = parse_json_or_nil(value))
+        # if this string is actually a json obj, convert and sanitize
+        process(json).to_json
+      elsif matches_regexes?(key, value)
+        STRING_MASK
+      elsif QUERY_STRING.include?(key)
+        sanitize_query_string(value)
+      elsif value =~ fields_re
+        sanitize_sensitive_string_content(value)
+      else
+        value
+      end
     end
 
     def sanitize_query_string(query_string)
