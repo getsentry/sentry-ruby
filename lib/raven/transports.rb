@@ -13,3 +13,7 @@ module Raven
     end
   end
 end
+
+require "raven/transports/dummy"
+require "raven/transports/http"
+require "raven/transports/stdout"

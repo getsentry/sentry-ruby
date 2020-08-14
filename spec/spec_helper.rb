@@ -1,6 +1,4 @@
 require 'sentry-raven-without-integrations'
-require 'raven/transports/dummy'
-require 'raven/transports/stdout'
 require 'pry'
 
 require 'simplecov'
