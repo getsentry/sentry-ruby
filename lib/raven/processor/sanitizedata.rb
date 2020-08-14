@@ -42,7 +42,7 @@ module Raven
     end
 
     def sanitize_hash_value(key, value)
-      if key&.match?(sensitive_fields)
+      if key =~ sensitive_fields
         STRING_MASK
       elsif value.frozen?
         value.merge(value) { |k, v| process v, k }
