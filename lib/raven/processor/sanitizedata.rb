@@ -21,7 +21,15 @@ module Raven
     def process(value, key = nil)
       case value
       when Hash
-        !value.frozen? ? value.merge!(value) { |k, v| process v, k } : value.merge(value) { |k, v| process v, k }
+        if key&.match?(fields_re)
+          STRING_MASK
+        else
+          if value.frozen?
+            value.merge(value) { |k, v| process v, k }
+          else
+            value.merge!(value) { |k, v| process v, k }
+          end
+        end
       when Array
         !value.frozen? ? value.map! { |v| process v, key } : value.map { |v| process v, key }
       when Integer

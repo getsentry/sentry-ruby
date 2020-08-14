@@ -71,6 +71,27 @@ RSpec.describe Raven::Processor::SanitizeData do
     expect(vars["query_string"]).to match('foo=bar')
   end
 
+  it "filters out hash paird under sensitive keys" do
+    data = {
+      'sentry.interfaces.Http' => {
+        'data' => {
+          'foo' => 'bar',
+          :password => {
+            'new' => 'test'
+          },
+          "passwd" => {
+            'new' => 'test'
+          }
+        }
+      }
+    }
+
+    result = @processor.process(data)
+    vars = result["sentry.interfaces.Http"]["data"]
+    expect(vars[:password]).to eq(Raven::Processor::SanitizeData::STRING_MASK)
+    expect(vars["passwd"]).to eq(Raven::Processor::SanitizeData::STRING_MASK)
+  end
+
   it 'should filter json data' do
     @processor.sanitize_fields = ['user_field']
 
