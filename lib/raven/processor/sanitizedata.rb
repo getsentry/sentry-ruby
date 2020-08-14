@@ -34,6 +34,8 @@ module Raven
           STRING_MASK
         elsif QUERY_STRING.include?(key)
           sanitize_query_string(value)
+        elsif value =~ fields_re
+          sanitize_sensitive_string_content(value)
         else
           value
         end
@@ -55,6 +57,27 @@ module Raven
       sanitized = utf8_processor.process(query_hash)
       processed_query_hash = process(sanitized)
       URI.encode_www_form(processed_query_hash)
+    end
+
+    # this scrubs some sensitive info from the string content. for example:
+    #
+    # ```
+    # unexpected token at '{
+    # "role": "admin","password": "Abc@123","foo": "bar"
+    # }'
+    # ```
+    #
+    # will become
+    #
+    # ```
+    # unexpected token at '{
+    # "role": "admin","password": *******,"foo": "bar"
+    # }'
+    # ```
+    #
+    # it's particularly useful in hash or param-parsing related errors
+    def sanitize_sensitive_string_content(value)
+      value.gsub(/(#{fields_re}['":]\s?(:|=>)?\s?)(".*?"|'.*?')/, '\1' + STRING_MASK)
     end
 
     def matches_regexes?(k, v)

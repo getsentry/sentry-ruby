@@ -166,6 +166,41 @@ RSpec.describe Raven::Processor::SanitizeData do
     expect(result["array"][0]['password']).to eq(Raven::Processor::SanitizeData::STRING_MASK)
   end
 
+  context "unparseable plain text" do
+    it "still sanitizes sensitive fields in string data" do
+      text = <<~ERR
+        unexpected token at '{
+        "role": "admin","password": "Abc@123","foo": "bar"
+        }'
+      ERR
+      result = @processor.process(text)
+
+      expect(result).to eq(
+        <<~ERR
+          unexpected token at '{
+          "role": "admin","password": #{Raven::Processor::SanitizeData::STRING_MASK},"foo": "bar"
+          }'
+        ERR
+      )
+    end
+    it "sanitizes different types of key/value format" do
+      texts = [
+        "\"password\" => 'Abc@123'",
+        "\"password\" =>\"Abc@123\"",
+        "\"password\"=> \"Abc@123\"",
+        "'password'=> \"Abc@123\"",
+        "password: \"Abc@123\"",
+        "password: 'Abc@123'",
+        "password:'Abc@123'"
+      ]
+
+      texts.each do |text|
+        result = @processor.process(text)
+        expect(result).not_to match(/Abc@123/)
+      end
+    end
+  end
+
   context "query strings" do
     it 'sanitizes' do
       data = {
