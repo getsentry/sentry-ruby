@@ -4,6 +4,8 @@ require 'base64'
 require 'json'
 require 'zlib'
 
+require "raven/transports"
+
 module Raven
   # Encodes events and sends them to the Sentry server.
   class Client
