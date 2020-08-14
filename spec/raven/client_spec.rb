@@ -21,7 +21,7 @@ RSpec.describe Raven::Client do
   end
 
   it "generates a message with exception" do
-    event = Raven::CLI.test(Raven.configuration.server, true, Raven.configuration).to_hash
+    event = Raven::Event.capture_exception(ZeroDivisionError.new("divided by 0")).to_hash
     expect(client.send(:get_message_from_exception, event)).to eq("ZeroDivisionError: divided by 0")
   end
 
