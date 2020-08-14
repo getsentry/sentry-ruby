@@ -12,25 +12,25 @@ RSpec.describe Raven::Processor::SanitizeData do
       fields = Raven::Processor::SanitizeData::DEFAULT_FIELDS | %w(test monkeybutt)
 
       @processor.sanitize_fields = fields
-      expected_fields_re = /authorization|password|passwd|secret|ssn|social(.*)?sec|\btest\b|\bmonkeybutt\b/i
+      expected_sensitive_fields = /authorization|password|passwd|secret|ssn|social(.*)?sec|\btest\b|\bmonkeybutt\b/i
 
-      expect(@processor.send(:fields_re)).to eq(expected_fields_re)
+      expect(@processor.send(:sensitive_fields)).to eq(expected_sensitive_fields)
     end
 
     it 'should remove default fields if specified by sanitize_fields_excluded' do
       @processor.sanitize_fields_excluded = %w(authorization)
 
-      expected_fields_re = /password|passwd|secret|ssn|social(.*)?sec/i
+      expected_sensitive_fields = /password|passwd|secret|ssn|social(.*)?sec/i
 
-      expect(@processor.send(:fields_re)).to eq(expected_fields_re)
+      expect(@processor.send(:sensitive_fields)).to eq(expected_sensitive_fields)
     end
 
     it 'accepts regex-like strings' do
       @processor.sanitize_fields = ["foo(.*)?bar"]
 
-      expected_fields_re = /authorization|password|passwd|secret|ssn|social(.*)?sec|foo(.*)?bar/i
+      expected_sensitive_fields = /authorization|password|passwd|secret|ssn|social(.*)?sec|foo(.*)?bar/i
 
-      expect(@processor.send(:fields_re)).to eq(expected_fields_re)
+      expect(@processor.send(:sensitive_fields)).to eq(expected_sensitive_fields)
     end
   end
 

@@ -42,7 +42,7 @@ module Raven
     end
 
     def sanitize_hash_value(key, value)
-      if key&.match?(fields_re)
+      if key&.match?(sensitive_fields)
         STRING_MASK
       elsif value.frozen?
         value.merge(value) { |k, v| process v, k }
@@ -60,14 +60,14 @@ module Raven
     end
 
     def sanitize_string_value(key, value)
-      if value =~ fields_re && (json = parse_json_or_nil(value))
+      if value =~ sensitive_fields && (json = parse_json_or_nil(value))
         # if this string is actually a json obj, convert and sanitize
         process(json).to_json
       elsif matches_regexes?(key, value)
         STRING_MASK
       elsif QUERY_STRING.include?(key)
         sanitize_query_string(value)
-      elsif value =~ fields_re
+      elsif value =~ sensitive_fields
         sanitize_sensitive_string_content(value)
       else
         value
@@ -99,20 +99,20 @@ module Raven
     #
     # it's particularly useful in hash or param-parsing related errors
     def sanitize_sensitive_string_content(value)
-      value.gsub(/(#{fields_re}['":]\s?(:|=>)?\s?)(".*?"|'.*?')/, '\1' + STRING_MASK)
+      value.gsub(/(#{sensitive_fields}['":]\s?(:|=>)?\s?)(".*?"|'.*?')/, '\1' + STRING_MASK)
     end
 
     def matches_regexes?(k, v)
       (sanitize_credit_cards && v =~ CREDIT_CARD_RE) ||
-        k =~ fields_re
+        k =~ sensitive_fields
     end
 
-    def fields_re
-      return @fields_re if instance_variable_defined?(:@fields_re)
+    def sensitive_fields
+      return @sensitive_fields if instance_variable_defined?(:@sensitive_fields)
 
       fields = DEFAULT_FIELDS | sanitize_fields
       fields -= sanitize_fields_excluded
-      @fields_re = /#{fields.map do |f|
+      @sensitive_fields = /#{fields.map do |f|
         use_boundary?(f) ? "\\b#{f}\\b" : f
       end.join("|")}/i
     end
