@@ -38,12 +38,9 @@ jobs:
     - name: Set up Ruby ${{ matrix.ruby_version }}
       uses: ruby/setup-ruby@v1
       with:
+        bundler: 1
         ruby-version: ${{ matrix.ruby_version }}
 
-    - name: Cleanup default bundler
-      run: ./cleanup_bundler
-
-    - run: gem install bundler -v 1.17.3
     - name: Build with Rails ${{ matrix.rails_version }}
       env:
         RAILS_VERSION: ${{ matrix.rails_version }}
