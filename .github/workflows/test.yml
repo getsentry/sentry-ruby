@@ -1,0 +1,58 @@
+name: Test
+
+on: [pull_request]
+
+jobs:
+  test:
+    name: Test on ruby ${{ matrix.ruby_version }} and rails ${{ matrix.rails_version }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        rails_version: [0, 4.2, 5.2, 6.0]
+        ruby_version: [2.3, 2.4, 2.5, 2.6, 2.7]
+        os: [ubuntu-latest]
+        # include:
+        #   - ruby_version: jruby-9.2.11.1
+        #     rails_version: 4.2
+        #     env: JRUBY_OPTS="--dev -J-Djruby.launch.inproc=true -J-Xmx1024M"
+        #   - ruby_version: jruby-9.2.11.1
+        #     rails_version: 5.2
+        #     env: JRUBY_OPTS="--dev -J-Djruby.launch.inproc=true -J-Xmx1024M"
+        #   - ruby_version: jruby-9.2.11.1
+        #     rails_version: 6.0
+        #     env: JRUBY_OPTS="--dev -J-Djruby.launch.inproc=true -J-Xmx1024M"
+        #   - ruby_version: 2.7
+        #     rails_version: 6.0
+        #     env: RUBYOPT="--enable-frozen-string-literal --debug=frozen-string-literal"
+        #   - ruby_version: ruby-head
+        #     rails_version: 0
+        exclude:
+          - ruby_version: 2.3
+            rails_version: 6.0
+          - ruby_version: 2.4
+            rails_version: 6.0
+          - ruby_version: 2.7
+            rails_version: 4.2
+
+    steps:
+    - uses: actions/checkout@v1
+
+    - name: Set up Ruby ${{ matrix.ruby_version }}
+      uses: ruby/setup-ruby@v1
+      with:
+        ruby-version: ${{ matrix.ruby_version }}
+
+    - name: Cleanup default bundler
+      run: ./cleanup_bundler
+
+    - run: gem install bundler -v 1.17.3
+    - name: Build with Rails ${{ matrix.rails_version }}
+      env:
+        RAILS_VERSION: ${{ matrix.rails_version }}
+      run: bundle install --jobs 4 --retry 3
+
+    - name: Run test with Rails ${{ matrix.rails_version }}
+      env:
+        RAILS_VERSION: ${{ matrix.rails_version }}
+      run: bundle exec rake
