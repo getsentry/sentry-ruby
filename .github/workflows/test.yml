@@ -1,13 +1,15 @@
 name: Test
 
-on: [pull_request]
-
+on: 
+  push:
+    branches:
+      - master
+  pull_request:
 jobs:
   test:
     name: Test on ruby ${{ matrix.ruby_version }} and rails ${{ matrix.rails_version }}
     runs-on: ${{ matrix.os }}
     strategy:
-      fail-fast: false
       matrix:
         rails_version: [0, 4.2, 5.2, 6.0]
         ruby_version: [2.3, 2.4, 2.5, 2.6, 2.7, jruby, head]
@@ -44,9 +46,6 @@ jobs:
     - name: Build with Rails ${{ matrix.rails_version }}
       env:
         RAILS_VERSION: ${{ matrix.rails_version }}
-      run: bundle install --jobs 4 --retry 3
-
-    - name: Run test with Rails ${{ matrix.rails_version }}
-      env:
-        RAILS_VERSION: ${{ matrix.rails_version }}
-      run: bundle exec rake
+      run: | 
+        bundle install --jobs 4 --retry 3
+        bundle exec rake
