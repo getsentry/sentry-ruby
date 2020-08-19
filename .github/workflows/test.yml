@@ -10,23 +10,8 @@ jobs:
       fail-fast: false
       matrix:
         rails_version: [0, 4.2, 5.2, 6.0]
-        ruby_version: [2.3, 2.4, 2.5, 2.6, 2.7]
+        ruby_version: [2.3, 2.4, 2.5, 2.6, 2.7, jruby]
         os: [ubuntu-latest]
-        # include:
-        #   - ruby_version: jruby-9.2.11.1
-        #     rails_version: 4.2
-        #     env: JRUBY_OPTS="--dev -J-Djruby.launch.inproc=true -J-Xmx1024M"
-        #   - ruby_version: jruby-9.2.11.1
-        #     rails_version: 5.2
-        #     env: JRUBY_OPTS="--dev -J-Djruby.launch.inproc=true -J-Xmx1024M"
-        #   - ruby_version: jruby-9.2.11.1
-        #     rails_version: 6.0
-        #     env: JRUBY_OPTS="--dev -J-Djruby.launch.inproc=true -J-Xmx1024M"
-        #   - ruby_version: 2.7
-        #     rails_version: 6.0
-        #     env: RUBYOPT="--enable-frozen-string-literal --debug=frozen-string-literal"
-        #   - ruby_version: ruby-head
-        #     rails_version: 0
         exclude:
           - ruby_version: 2.3
             rails_version: 6.0
