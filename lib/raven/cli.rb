@@ -18,7 +18,7 @@ module Raven
 
       # wipe out env settings to ensure we send the event
       unless config.capture_allowed?
-        env_name = config.environments.pop || 'production'
+        env_name = config.environments.last || 'production'
         config.current_environment = env_name
       end
 

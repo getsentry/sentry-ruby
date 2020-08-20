@@ -51,4 +51,19 @@ RSpec.describe Raven::CLI do
       expect(logger).not_to have_received(:debug).with("Done!")
     end
   end
+
+  context "when with custom environments config" do
+    let(:config) { Raven.configuration.dup }
+
+    before do
+      config.environments = %w(production test)
+    end
+
+    it "still sends the test event" do
+      event = Raven::CLI.test(config.server, true, config)
+
+      expect(event).to be_a(Raven::Event)
+      expect(config.errors).to be_empty
+    end
+  end
 end
