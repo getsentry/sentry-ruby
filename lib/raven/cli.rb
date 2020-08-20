@@ -34,20 +34,7 @@ module Raven
       end
 
       if evt
-        if !(evt.is_a? Thread)
-          if evt.is_a? Hash
-            instance.logger.debug "-> event ID: #{evt[:event_id]}"
-          else
-            instance.logger.debug "-> event ID: #{evt.id}"
-          end
-        else # async configuration
-          if evt.value.is_a? Hash
-            instance.logger.debug "-> event ID: #{evt.value[:event_id]}"
-          else
-            instance.logger.debug "-> event ID: #{evt.value.id}"
-          end
-        end
-
+        instance.logger.debug "-> event ID: #{evt.id}"
         instance.logger.debug ""
         instance.logger.debug "Done!"
         evt
