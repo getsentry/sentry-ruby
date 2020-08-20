@@ -33,26 +33,29 @@ module Raven
         evt = instance.capture_exception(e)
       end
 
-      if evt && !(evt.is_a? Thread)
-        if evt.is_a? Hash
-          instance.logger.debug "-> event ID: #{evt[:event_id]}"
-        else
-          instance.logger.debug "-> event ID: #{evt.id}"
+      if evt
+        if !(evt.is_a? Thread)
+          if evt.is_a? Hash
+            instance.logger.debug "-> event ID: #{evt[:event_id]}"
+          else
+            instance.logger.debug "-> event ID: #{evt.id}"
+          end
+        else # async configuration
+          if evt.value.is_a? Hash
+            instance.logger.debug "-> event ID: #{evt.value[:event_id]}"
+          else
+            instance.logger.debug "-> event ID: #{evt.value.id}"
+          end
         end
-      elsif evt # async configuration
-        if evt.value.is_a? Hash
-          instance.logger.debug "-> event ID: #{evt.value[:event_id]}"
-        else
-          instance.logger.debug "-> event ID: #{evt.value.id}"
-        end
+
+        instance.logger.debug ""
+        instance.logger.debug "Done!"
+        evt
       else
         instance.logger.debug ""
         instance.logger.debug "An error occurred while attempting to send the event."
+        false
       end
-
-      instance.logger.debug ""
-      instance.logger.debug "Done!"
-      evt
     end
   end
 end
