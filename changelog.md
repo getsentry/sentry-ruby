@@ -2,7 +2,7 @@
 
 ## Unreleased
 
-## 3.1.0
+## 3.0.1
 
 * fix: Improve SanitizeData processor (#984)
 * fix: Masking cookies as key/pair instead of a single string (#983)
