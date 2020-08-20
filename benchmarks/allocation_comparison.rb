@@ -28,6 +28,6 @@ Benchmark.memory do |x|
   x.report("branch") { Raven.capture_exception(RAILS_EXC) }
 
   x.compare!
-  x.hold!("allocation_comparison.json")
+  x.hold!("/tmp/allocation_comparison.json")
 end
 
