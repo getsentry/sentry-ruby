@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+## 3.0.2
+
+* fix: Add gem target for craft
+
 ## 3.0.1
 
 * fix: Improve SanitizeData processor (#984)
