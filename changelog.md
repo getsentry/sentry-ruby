@@ -1,3 +1,15 @@
+# Changelog
+
+## Unreleased
+
+## 3.1.0
+
+* fix: Improve SanitizeData processor (#984)
+* fix: Masking cookies as key/pair instead of a single string (#983)
+* fix: Transports classes' requiring issue (#986)
+* fix: Frozen string issues (#977)
+* feat: Officially support Rails 6 (#982)
+
 3.0.0
 ----
 
