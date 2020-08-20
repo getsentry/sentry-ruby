@@ -1,0 +1,32 @@
+name: Zeus Upload
+
+on:
+  push:
+    branches:
+      - release/**
+
+jobs:
+  zeus_upload:
+    name: Zeus
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/setup-node@v1
+      - name: Set up Ruby
+        uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: 2.6 # Not needed with a .ruby-version file
+      - run: bundle install
+      - name: Install Zeus
+        run: |
+          yarn global add @zeus-ci/cli
+          echo "::add-path::$(yarn global bin)"
+      - name: Upload to Zeus
+        env:
+          ZEUS_API_TOKEN: ${{ secrets.ZEUS_API_TOKEN }}
+          ZEUS_HOOK_BASE: ${{ secrets.ZEUS_HOOK_BASE }}
+        run: |
+          zeus job update -b $GITHUB_RUN_ID -j $GITHUB_RUN_NUMBER -r $GITHUB_SHA
+          gem build sentry-raven.gemspec
+          zeus upload -b $GITHUB_RUN_ID -j $GITHUB_RUN_NUMBER -t "application/tar+gem" ./*.gem
+          zeus job update --status=passed -b $GITHUB_RUN_ID -j $GITHUB_RUN_NUMBER -r $GITHUB_SHA
