@@ -17,6 +17,7 @@ gem "rack-timeout"
 gem "pry"
 gem "benchmark-ips"
 gem "benchmark-ipsa"
+gem "benchmark-memory"
 gem "ruby-prof", platform: :mri
 gem "rake", "> 12"
 gem "rubocop", "~> 0.81.0"
