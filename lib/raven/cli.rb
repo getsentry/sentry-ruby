@@ -48,7 +48,6 @@ module Raven
       else
         instance.logger.debug ""
         instance.logger.debug "An error occurred while attempting to send the event."
-        exit 1
       end
 
       instance.logger.debug ""
