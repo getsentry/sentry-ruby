@@ -3,9 +3,9 @@ github:
     owner: getsentry
     repo: raven-ruby
 changelogPolicy: simple
+preReleaseCommand: bash .scripts/bump-version.sh
 statusProvider: 
     name: github
-preReleaseCommand: ""
 targets:
     - name: github
     - name: registry
