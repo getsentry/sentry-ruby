@@ -18,7 +18,7 @@ module Raven
 
       # wipe out env settings to ensure we send the event
       unless config.capture_allowed?
-        env_name = config.environments.pop || 'production'
+        env_name = config.environments.last || 'production'
         config.current_environment = env_name
       end
 
@@ -33,27 +33,16 @@ module Raven
         evt = instance.capture_exception(e)
       end
 
-      if evt && !(evt.is_a? Thread)
-        if evt.is_a? Hash
-          instance.logger.debug "-> event ID: #{evt[:event_id]}"
-        else
-          instance.logger.debug "-> event ID: #{evt.id}"
-        end
-      elsif evt # async configuration
-        if evt.value.is_a? Hash
-          instance.logger.debug "-> event ID: #{evt.value[:event_id]}"
-        else
-          instance.logger.debug "-> event ID: #{evt.value.id}"
-        end
+      if evt
+        instance.logger.debug "-> event ID: #{evt.id}"
+        instance.logger.debug ""
+        instance.logger.debug "Done!"
+        evt
       else
         instance.logger.debug ""
         instance.logger.debug "An error occurred while attempting to send the event."
-        exit 1
+        false
       end
-
-      instance.logger.debug ""
-      instance.logger.debug "Done!"
-      evt
     end
   end
 end
