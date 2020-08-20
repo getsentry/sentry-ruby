@@ -54,6 +54,9 @@ jobs:
   compare_allocation:
     name: Compare memory allocation with ${{ matrix.ruby_version }} and rails ${{ matrix.rails_version }}
     runs-on: ${{ matrix.os }}
+    needs: test
+    env:
+      RAILS_VERSION: ${{ matrix.rails_version }}
     strategy:
       matrix:
         rails_version: [5.2, 6.0]
@@ -71,19 +74,17 @@ jobs:
         ref: master
 
     - name: Build and run allocation report on master
-      env:
-        RAILS_VERSION: ${{ matrix.rails_version }}
       run: |
         bundle install --jobs 4 --retry 3
         bundle exec ruby benchmarks/allocation_comparison.rb
 
     - uses: actions/checkout@v1
 
-    - name: Build and run allocation report on the branch 
-      env:
-        RAILS_VERSION: ${{ matrix.rails_version }}
+    - name: Rebuild on the branch
       run: |
         bundle install --jobs 4 --retry 3
+    - name: Run allocation report on the branch 
+      run: |
         bundle exec ruby benchmarks/allocation_comparison.rb
 
   job_zeus:
