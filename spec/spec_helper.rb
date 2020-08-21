@@ -1,6 +1,13 @@
 require 'sentry-raven-without-integrations'
-require 'raven/transports/dummy'
-require 'raven/transports/stdout'
+require 'pry'
+
+require 'simplecov'
+SimpleCov.start
+
+if ENV["CI"]
+  require 'codecov'
+  SimpleCov.formatter = SimpleCov::Formatter::Codecov
+end
 
 Raven.configure do |config|
   config.dsn = "dummy://12345:67890@sentry.localdomain/sentry/42"
@@ -32,24 +39,25 @@ RSpec.shared_examples "Raven default capture behavior" do
     expect(Raven.client.transport.events.size).to eq(1)
 
     event = JSON.parse!(Raven.client.transport.events.first[1])
-    expect(event["logentry"]["message"]).to eq("#{captured_class.name}: #{captured_message}")
+    expect(event["exception"]["values"][0]["type"]).to eq(captured_class.name)
+    expect(event["exception"]["values"][0]["value"]).to eq(captured_message)
   end
 end
 
 def build_exception
   1 / 0
-rescue ZeroDivisionError => exception
-  return exception
+rescue ZeroDivisionError => e
+  e
 end
 
-def build_exception_with_cause
+def build_exception_with_cause(cause = "exception a")
   begin
-    raise "exception a"
+    raise cause
   rescue
     raise "exception b"
   end
-rescue RuntimeError => exception
-  return exception
+rescue RuntimeError => e
+  e
 end
 
 def build_exception_with_two_causes
@@ -62,8 +70,8 @@ def build_exception_with_two_causes
   rescue
     raise "exception c"
   end
-rescue RuntimeError => exception
-  return exception
+rescue RuntimeError => e
+  e
 end
 
 def build_exception_with_recursive_cause

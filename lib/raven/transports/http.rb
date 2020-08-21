@@ -26,10 +26,10 @@ module Raven
           req.headers['X-Sentry-Auth'] = auth_header
           req.body = data
         end
-      rescue Faraday::Error => ex
-        error_info = ex.message
-        if ex.response && ex.response[:headers]['x-sentry-error']
-          error_info += " Error in headers is: #{ex.response[:headers]['x-sentry-error']}"
+      rescue Faraday::Error => e
+        error_info = e.message
+        if e.response && e.response[:headers]['x-sentry-error']
+          error_info += " Error in headers is: #{e.response[:headers]['x-sentry-error']}"
         end
         raise Raven::Error, error_info
       end
@@ -42,7 +42,7 @@ module Raven
         proxy = configuration.public_send(:proxy)
 
         Faraday.new(configuration.server, :ssl => ssl_configuration, :proxy => proxy) do |builder|
-          configuration.faraday_builder.call(builder) if configuration.faraday_builder
+          configuration.faraday_builder&.call(builder)
           builder.response :raise_error
           builder.options.merge! faraday_opts
           builder.headers[:user_agent] = "sentry-ruby/#{Raven::VERSION}"

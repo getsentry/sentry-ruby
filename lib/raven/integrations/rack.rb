@@ -92,8 +92,8 @@ module Raven
         request.body.rewind
         data
       end
-    rescue IOError => ex
-      ex.message
+    rescue IOError => e
+      e.message
     end
 
     def format_headers_for_sentry(env_hash)
@@ -112,8 +112,9 @@ module Raven
           next if key == 'HTTP_COOKIE' # Cookies don't go here, they go somewhere else
 
           next unless key.start_with?('HTTP_') || %w(CONTENT_TYPE CONTENT_LENGTH).include?(key)
+
           # Rack stores headers as HTTP_WHAT_EVER, we need What-Ever
-          key = key.gsub("HTTP_", "")
+          key = key.sub(/^HTTP_/, "")
           key = key.split('_').map(&:capitalize).join('-')
           memo[key] = value
         rescue StandardError => e

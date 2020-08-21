@@ -1,0 +1,15 @@
+minVersion: '0.11.0'
+github:
+    owner: getsentry
+    repo: raven-ruby
+changelogPolicy: simple
+preReleaseCommand: ruby .scripts/bump-version.sh
+statusProvider: 
+    name: github
+targets:
+    - name: gem
+    - name: github
+    - name: registry
+      type: sdk
+      config:
+          canonical: 'gem:sentry-raven'

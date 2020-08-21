@@ -1,10 +1,11 @@
 # frozen_string_literal: true
+
 require 'logger'
 
 module Raven
   class Logger < ::Logger
-    LOG_PREFIX = "** [Raven] ".freeze
-    PROGNAME   = "sentry".freeze
+    LOG_PREFIX = "** [Raven] "
+    PROGNAME   = "sentry"
 
     def initialize(*)
       super

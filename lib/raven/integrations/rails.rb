@@ -5,6 +5,7 @@ module Raven
     require 'raven/integrations/rails/overrides/streaming_reporter'
     require 'raven/integrations/rails/controller_methods'
     require 'raven/integrations/rails/controller_transaction'
+    require 'raven/integrations/rack'
 
     initializer "raven.use_rack_middleware" do |app|
       app.config.middleware.insert 0, Raven::Rack

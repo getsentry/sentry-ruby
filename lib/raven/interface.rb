@@ -1,9 +1,9 @@
 module Raven
   class Interface
     def initialize(attributes = nil)
-      attributes.each do |attr, value|
+      attributes&.each do |attr, value|
         public_send "#{attr}=", value
-      end if attributes
+      end
 
       yield self if block_given?
     end
