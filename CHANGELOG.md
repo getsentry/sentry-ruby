@@ -499,7 +499,7 @@ OTHER CHANGES:
 0.12.0
 ------
 
-- You can now give additional fields to the SanitizeData processor. Values matched are replaced by the string mask (*********). Full documentation (and how to use with Rails config.filter_parameters) [here](https://docs.getsentry.com/hosted/clients/ruby/config/). [jamescway, #232]
+- You can now give additional fields to the SanitizeData processor. Values matched are replaced by the string mask (*********). Full documentation (and how to use with Rails config.filter_parameters) [here](https://docs.sentry.io/platforms/ruby/config/). [jamescway, #232]
 - An additional processor has been added, though it isn't turned on by default: RemoveStacktrace. Use it to remove stacktraces from exception reports. [nateberkopec, #233]
 - Dependency on `uuidtools` has been removed. [nateberkopec, #231]
 
