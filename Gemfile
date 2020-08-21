@@ -16,6 +16,7 @@ gem "rack-timeout"
 
 gem "pry"
 gem "benchmark-ips"
+gem "benchmark_driver"
 gem "benchmark-ipsa"
 gem "benchmark-memory"
 gem "ruby-prof", platform: :mri
