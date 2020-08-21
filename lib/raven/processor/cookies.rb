@@ -30,7 +30,7 @@ module Raven
     end
 
     def generate_masked_cookies(cookies)
-      cookies.merge(cookies) { STRING_MASK }
+      cookies.merge(cookies) { STRING_MASK } if cookies.respond_to?(:merge)
     end
   end
 end

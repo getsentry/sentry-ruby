@@ -45,4 +45,19 @@ RSpec.describe Raven::Processor::Cookies do
     expect(result["request"]["some_other_data"]).to eq("still_here")
     expect(result["request"]["headers"]["AnotherHeader"]).to eq("still_here")
   end
+
+  it 'does not fail if it runs after Processor::RemoveCircularReferences' do
+    test_data = {
+      :request => {
+        :headers => {
+          "Cookie" => Raven::Processor::RemoveCircularReferences::ELISION_STRING,
+          "AnotherHeader" => "still_here"
+        },
+        :cookies => Raven::Processor::RemoveCircularReferences::ELISION_STRING,
+        :some_other_data => "still_here"
+      }
+    }
+
+    @processor.process(test_data)
+  end
 end
