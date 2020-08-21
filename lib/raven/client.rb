@@ -104,7 +104,7 @@ module Raven
         configuration.logger.warn "Not sending event due to previous failure(s)."
       end
 
-      event_message = event&.get_log_message || '<no message value>'
+      event_message = event&.log_message || '<no message value>'
       configuration.logger.warn("Failed to submit event: #{event_message}")
 
       # configuration.transport_failure_callback can be false & nil

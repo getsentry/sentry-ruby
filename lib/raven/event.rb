@@ -136,7 +136,7 @@ module Raven
       JSON.parse(JSON.generate(cleaned_hash))
     end
 
-    def get_message_from_exception
+    def message_from_exception
       exception = @interfaces[:exception]
 
       return unless exception
@@ -151,8 +151,8 @@ module Raven
       end
     end
 
-    def get_log_message
-      message || get_message_from_exception
+    def log_message
+      message || message_from_exception
     end
 
     def add_exception_interface(exc)
