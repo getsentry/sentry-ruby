@@ -4,6 +4,7 @@ require 'raven/instance'
 RSpec.describe Raven::Instance do
   let(:event) { Raven::Event.new(:id => "event_id") }
   let(:options) { { :key => "value" } }
+  let(:event_options) { options.merge(:context => subject.context, :configuration => configuration) }
   let(:context) { nil }
   let(:configuration) do
     config = Raven::Configuration.new
@@ -37,7 +38,7 @@ RSpec.describe Raven::Instance do
   describe '#capture_type' do
     describe 'as #capture_message' do
       before do
-        expect(Raven::Event).to receive(:from_message).with(message, options)
+        expect(Raven::Event).to receive(:from_message).with(message, event_options)
         expect(subject).to receive(:send_event).with(event, :exception => nil, :message => message)
       end
       let(:message) { "Test message" }
@@ -62,7 +63,7 @@ RSpec.describe Raven::Instance do
       end
 
       it 'sends the result of Event.capture_type' do
-        expect(Raven::Event).to receive(:from_message).with(message, options)
+        expect(Raven::Event).to receive(:from_message).with(message, event_options)
         expect(subject).not_to receive(:send_event).with(event)
 
         expect(subject.configuration.async).to receive(:call).with(event.to_json_compatible)
@@ -79,14 +80,14 @@ RSpec.describe Raven::Instance do
       let(:exception) { build_exception }
 
       it 'sends the result of Event.capture_exception' do
-        expect(Raven::Event).to receive(:from_exception).with(exception, options)
+        expect(Raven::Event).to receive(:from_exception).with(exception, event_options)
         expect(subject).to receive(:send_event).with(event, :exception => exception, :message => nil)
 
         subject.capture_exception(exception, options)
       end
 
       it 'has an alias' do
-        expect(Raven::Event).to receive(:from_exception).with(exception, options)
+        expect(Raven::Event).to receive(:from_exception).with(exception, event_options)
         expect(subject).to receive(:send_event).with(event, :exception => exception, :message => nil)
 
         subject.capture_exception(exception, options)
@@ -105,7 +106,7 @@ RSpec.describe Raven::Instance do
         end
 
         it 'sends the result of Event.capture_exception' do
-          expect(Raven::Event).to receive(:from_exception).with(exception, options)
+          expect(Raven::Event).to receive(:from_exception).with(exception, event_options)
           expect(subject).not_to receive(:send_event).with(event)
 
           expect(subject.configuration.async).to receive(:call).with(event.to_json_compatible)
@@ -127,7 +128,7 @@ RSpec.describe Raven::Instance do
         end
 
         it 'sends the result of Event.capture_exception via fallback' do
-          expect(Raven::Event).to receive(:from_exception).with(exception, options)
+          expect(Raven::Event).to receive(:from_exception).with(exception, event_options)
 
           expect(subject.configuration.async).to receive(:call).with(event.to_json_compatible)
           subject.capture_exception(exception, options)
