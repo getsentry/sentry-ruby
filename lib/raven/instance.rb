@@ -110,6 +110,7 @@ module Raven
       end
 
       message_or_exc = obj.is_a?(String) ? "message" : "exception"
+      options = options.deep_dup
       options[:configuration] = configuration
       options[:context] = context
       if evt = Event.send("from_" + message_or_exc, obj, options)

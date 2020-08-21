@@ -434,6 +434,14 @@ RSpec.describe Raven::Event do
         expect(Raven::Event.capture_message(message)).to be_a(Raven::Event)
       end
 
+      it "doesn't change the option hash" do
+        h_int = { :abc => :abc }
+        h = { :k1 => h_int, :k2 => h_int }
+        Raven.capture_message "Test extra", :extra => { :h1 => h, :h2 => h_int }
+
+        expect(h).to eq({ :k1 => h_int, :k2 => h_int })
+      end
+
       it "sets the message to the value passed" do
         expect(hash[:message]).to eq(message)
       end
