@@ -48,12 +48,18 @@ RSpec.describe "Integration tests" do
     expect(@io.string).to match(/Failed to submit event: ZeroDivisionError: divided by 0$/)
   end
 
-  it "transport failure should call transport_failure_callback" do
-    @instance.configuration.transport_failure_callback = proc { |_e| @io.puts "OK!" }
+  it "transport failure should call transport_failure_callback and yield even hash" do
+    event = nil
+    @instance.configuration.transport_failure_callback = proc do |e|
+      event = e
+      @io.puts "OK!"
+    end
 
     expect(@instance.client.transport).to receive(:send_event).exactly(1).times.and_raise(Faraday::ConnectionFailed, "conn failed")
     @instance.capture_exception(build_exception)
+
     expect(@io.string).to match(/OK!$/)
+    expect(event).to be_a(Hash)
   end
 
   describe '#before_send' do

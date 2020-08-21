@@ -30,18 +30,15 @@ module Raven
         return
       end
 
-      # Convert to hash
-      event = event.to_hash
-
       unless @state.should_try?
         failed_send(nil, event)
         return
       end
 
-      event_id = event[:event_id] || event['event_id']
-      configuration.logger.info "Sending event #{event_id} to Sentry"
+      configuration.logger.info "Sending event #{event.event_id} to Sentry"
 
-      content_type, encoded_data = encode(event)
+      event_hash = event.to_hash
+      content_type, encoded_data = encode(event_hash)
 
       begin
         transport.send_event(generate_auth_header, encoded_data,
@@ -52,7 +49,7 @@ module Raven
         return
       end
 
-      event
+      event_hash
     end
 
     def transport
@@ -71,8 +68,8 @@ module Raven
 
     private
 
-    def encode(event)
-      hash = @processors.reduce(event.to_hash) { |a, e| e.process(a) }
+    def encode(event_hash)
+      hash = @processors.reduce(event_hash) { |a, e| e.process(a) }
       encoded = JSON.fast_generate(hash)
 
       case configuration.encoding
@@ -116,6 +113,7 @@ module Raven
     end
 
     def failed_send(e, event)
+      event = event.to_hash
       if e # exception was raised
         @state.failure
         configuration.logger.warn "Unable to record event with remote Sentry server (#{e.class} - #{e.message}):\n#{e.backtrace[0..10].join("\n")}"
