@@ -2,9 +2,10 @@ source "https://rubygems.org/"
 
 gemspec
 
-rails_version = ENV["RAILS_VERSION"].to_f
+rails_version = ENV["RAILS_VERSION"]
+rails_version = "5.2" if rails_version.nil?
 
-if rails_version != 0
+if rails_version.to_f != 0
   gem "rails", "~> #{rails_version}"
   gem "rspec-rails", "~> 4.0"
 end
