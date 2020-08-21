@@ -80,22 +80,6 @@ module Raven
       end
     end
 
-    def get_message_from_exception(event)
-      (
-        event &&
-        event[:exception] &&
-        event[:exception][:values] &&
-        event[:exception][:values][0] &&
-        event[:exception][:values][0][:type] &&
-        event[:exception][:values][0][:value] &&
-        "#{event[:exception][:values][0][:type]}: #{event[:exception][:values][0][:value]}"
-      )
-    end
-
-    def get_log_message(event)
-      (event && event[:message]) || (event && event['message']) || get_message_from_exception(event) || '<no message value>'
-    end
-
     def generate_auth_header
       now = Time.now.to_i.to_s
       fields = {
@@ -113,17 +97,18 @@ module Raven
     end
 
     def failed_send(e, event)
-      event = event.to_hash
       if e # exception was raised
         @state.failure
         configuration.logger.warn "Unable to record event with remote Sentry server (#{e.class} - #{e.message}):\n#{e.backtrace[0..10].join("\n")}"
       else
         configuration.logger.warn "Not sending event due to previous failure(s)."
       end
-      configuration.logger.warn("Failed to submit event: #{get_log_message(event)}")
+
+      event_message = event&.get_log_message || '<no message value>'
+      configuration.logger.warn("Failed to submit event: #{event_message}")
 
       # configuration.transport_failure_callback can be false & nil
-      configuration.transport_failure_callback.call(event) if configuration.transport_failure_callback # rubocop:disable Style/SafeNavigation
+      configuration.transport_failure_callback.call(event.to_hash) if configuration.transport_failure_callback # rubocop:disable Style/SafeNavigation
     end
   end
 
