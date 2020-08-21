@@ -111,5 +111,10 @@ RSpec.describe Raven do
       expect { Raven.sys_command("asdasdasdsa") }.to_not output.to_stdout
       expect { Raven.sys_command("uname -c") }.to_not output.to_stdout
     end
+
+    it "should tolerate a missing $CHILD_STATUS" do
+      Signal.trap('CLD', 'DEFAULT')
+      expect(Raven.sys_command("echo 'Sentry'")).to eq("Sentry")
+    end
   end
 end

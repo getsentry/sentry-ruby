@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 require 'socket'
 require 'securerandom'
 
@@ -59,10 +60,7 @@ module Raven
       return unless configuration.exception_class_allowed?(exc)
 
       new(options) do |evt|
-        evt.message = "#{exc.class}: #{exc.message}"
-
         evt.add_exception_interface(exc)
-
         yield evt if block
       end
     end
@@ -79,7 +77,7 @@ module Raven
     end
 
     def message
-      @interfaces[:logentry] && @interfaces[:logentry].unformatted_message
+      @interfaces[:logentry]&.unformatted_message
     end
 
     def message=(args)
@@ -99,12 +97,13 @@ module Raven
     end
 
     def level=(new_level) # needed to meet the Sentry spec
-      @level = new_level == "warn" || new_level == :warn ? :warning : new_level
+      @level = new_level.to_s == "warn" ? :warning : new_level
     end
 
     def interface(name, value = nil, &block)
       int = Interface.registered[name]
       raise(Error, "Unknown interface: #{name}") unless int
+
       @interfaces[int.sentry_alias] = int.new(value, &block) if value || block
       @interfaces[int.sentry_alias]
     end
@@ -137,9 +136,28 @@ module Raven
       JSON.parse(JSON.generate(cleaned_hash))
     end
 
+    def message_from_exception
+      exception = @interfaces[:exception]
+
+      return unless exception
+
+      exception = exception.to_hash
+
+      type = exception.dig(:values, 0, :type)
+      value = exception.dig(:values, 0, :value)
+
+      if type && value
+        "#{type}: #{value}"
+      end
+    end
+
+    def log_message
+      message || message_from_exception
+    end
+
     def add_exception_interface(exc)
       interface(:exception) do |exc_int|
-        exceptions = exception_chain_to_array(exc)
+        exceptions = Raven::Utils::ExceptionCauseChain.exception_to_array(exc).reverse
         backtraces = Set.new
         exc_int.values = exceptions.map do |e|
           SingleExceptionInterface.new do |int|
@@ -231,24 +249,7 @@ module Raven
     end
 
     def async_json_processors
-      [
-        Raven::Processor::RemoveCircularReferences,
-        Raven::Processor::UTF8Conversion
-      ].map { |v| v.new(self) }
-    end
-
-    def exception_chain_to_array(exc)
-      if exc.respond_to?(:cause) && exc.cause
-        exceptions = [exc]
-        while exc.cause
-          exc = exc.cause
-          break if exceptions.any? { |e| e.object_id == exc.object_id }
-          exceptions << exc
-        end
-        exceptions.reverse!
-      else
-        [exc]
-      end
+      configuration.processors.map { |v| v.new(self) }
     end
 
     def list_gem_specs

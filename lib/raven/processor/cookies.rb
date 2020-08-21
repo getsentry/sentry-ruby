@@ -10,17 +10,27 @@ module Raven
     private
 
     def process_if_symbol_keys(data)
-      data[:request][:cookies] = STRING_MASK if data[:request][:cookies]
+      if cookies = data.dig(:request, :cookies)
+        data[:request][:cookies] = generate_masked_cookies(cookies)
+      end
 
-      return unless data[:request][:headers] && data[:request][:headers]["Cookie"]
-      data[:request][:headers]["Cookie"] = STRING_MASK
+      if cookies_header = data[:request][:headers]["Cookie"]
+        data[:request][:headers]["Cookie"] = generate_masked_cookies(cookies_header)
+      end
     end
 
     def process_if_string_keys(data)
-      data["request"]["cookies"] = STRING_MASK if data["request"]["cookies"]
+      if cookies = data.dig("request", "cookies")
+        data["request"]["cookies"] = generate_masked_cookies(cookies)
+      end
 
-      return unless data["request"]["headers"] && data["request"]["headers"]["Cookie"]
-      data["request"]["headers"]["Cookie"] = STRING_MASK
+      if cookies_header = data.dig("request", "headers", "Cookie")
+        data["request"]["headers"]["Cookie"] = generate_masked_cookies(cookies_header)
+      end
+    end
+
+    def generate_masked_cookies(cookies)
+      cookies.merge(cookies) { STRING_MASK }
     end
   end
 end

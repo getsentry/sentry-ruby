@@ -392,7 +392,7 @@ RSpec.describe Raven::Event do
         data['ary2'] = data['ary']
 
         Raven::Event.new(:extra => {
-                           :invalid => "invalid\255".force_encoding('UTF-8'),
+                           :invalid => "invalid\255".dup.force_encoding('UTF-8'),
                            :circular => data
                          })
       end
@@ -407,6 +407,20 @@ RSpec.describe Raven::Event do
         json = subject.to_json_compatible
 
         expect(json["extra"]["circular"]["ary2"]).to eq("(...)")
+      end
+    end
+
+    context "with sensitive data" do
+      subject do
+        Raven::Event.new(:extra => {
+                           'password' => 'secretpassword'
+                         })
+      end
+
+      it "should sanitize password" do
+        json = subject.to_json_compatible
+
+        expect(json["extra"]["password"]).to eq(Raven::Processor::SanitizeData::STRING_MASK)
       end
     end
   end
@@ -461,8 +475,9 @@ RSpec.describe Raven::Event do
         expect(Raven::Event.capture_exception(exception)).to be_a(Raven::Event)
       end
 
-      it "sets the message to the exception's message and type" do
-        expect(hash[:message]).to eq("Exception: #{message}")
+      it "sets the message to the exception's value and type" do
+        expect(hash[:exception][:values][0][:type]).to eq("Exception")
+        expect(hash[:exception][:values][0][:value]).to eq(message)
       end
 
       it 'has level ERROR' do
@@ -695,6 +710,18 @@ RSpec.describe Raven::Event do
 
     it 'accepts a logger' do
       expect(Raven::Event.capture_exception(exception, :logger => 'root').logger).to eq('root')
+    end
+  end
+
+  describe "#message_from_exception" do
+    it "generates a message with exception" do
+      event = Raven::Event.capture_exception(ZeroDivisionError.new("divided by 0"))
+      expect(event.message_from_exception).to eq("ZeroDivisionError: divided by 0")
+    end
+
+    it "generates a message without exception" do
+      event = Raven::Event.from_message("this is an STDOUT transport test")
+      expect(event.message_from_exception).to eq(nil)
     end
   end
 end

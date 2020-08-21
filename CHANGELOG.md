@@ -1,3 +1,94 @@
+# Changelog
+
+## Unreleased
+
+## 3.0.2
+
+- fix: Add gem target for craft
+
+## 3.0.1
+
+- fix: Improve SanitizeData processor (#984)
+- fix: Masking cookies as key/pair instead of a single string (#983)
+- fix: Transports classes' requiring issue (#986)
+- fix: Frozen string issues (#977)
+- feat: Officially support Rails 6 (#982)
+
+3.0.0
+----
+
+* SDK now requires Ruby >= 2.3
+* REF: Retain any literal "HTTP-" in header names [@elliterate, #950]
+* REF: Delete JSON spec for recursive hashes [@ksylvest, #952]
+* FEAT: Bump faraday version to latest [@ksylvest, #946] 
+
+2.13.0
+----
+
+* FIX: Sanitize event data before they are sent to async job. [@edariedl, #895]
+* FIX: Serialization MongoDB ObjectId to JSON problem with gem delayed_job_mongoid conjunction. [@eagleas, #935]
+* FEAT: Skip ActiveJob integration if there is a better one [@fsateler, #909]
+* FIX: Bugs with send_event in asynchronous mode (#940) [@cstyles, #940]
+
+2.12.3
+----
+
+* FIX: crash when Process.wait is used [@asBrettisay, #895]
+
+2.12.2
+----
+
+* FIX: return tags/extra for [@rivayama, #931]
+
+2.12.1
+----
+
+* FIX: undefined method `[]' for nil:NilClass [@HazAT, #932]
+
+2.12.0
+----
+
+* FIX: Remove duplicate message when exception is emitted
+* FIX: Frozen string bug in utf8conversation
+* FEATURE: Allow block on tags_context and extra_context
+
+2.11.3
+----
+
+* FIX: infinite backoff under pressure [@Bonias, #886]
+
+2.11.2
+----
+
+* REF: Warn on 4xx error [@iloveitaly, #862]
+
+2.11.1
+----
+
+* FIX: Call `to_s` on breadcrumb message [@halkeye, #914]
+
+2.11.0
+----
+
+* FEATURE: Prepend the transaction around_action so libraries with controllers can alter the value. [@drcapulet, #887]
+
+2.10.0
+-----
+
+* FEATURE: Added support for `SENTRY_ENVIRONMENT` [@mtsmfm, #910]
+* FEATURE: Added support for `SENTRY_RELEASE` [@coorasse, #911]
+
+2.9.0
+-----
+
+* FEATURE: Added `config.inspect_exception_causes_for_exclusion`. Determines if the exception cause should be inspected for `config.excluded_exceptions` option. [@effron, #872]
+
+
+2.8.0
+-----
+
+* FEATURE: Added `config.before_send`. Provide a lambda or proc to this config setting, which will be `call`ed before sending an event to Sentry. Receives `event` and `hint` as parameters. `hint` is a hash `{:exception => ex | nil, :message => message | nil}`. [@hazat, #882]
+
 2.7.4
 -----
 
@@ -408,7 +499,7 @@ OTHER CHANGES:
 0.12.0
 ------
 
-- You can now give additional fields to the SanitizeData processor. Values matched are replaced by the string mask (*********). Full documentation (and how to use with Rails config.filter_parameters) [here](https://docs.getsentry.com/hosted/clients/ruby/config/). [jamescway, #232]
+- You can now give additional fields to the SanitizeData processor. Values matched are replaced by the string mask (*********). Full documentation (and how to use with Rails config.filter_parameters) [here](https://docs.sentry.io/platforms/ruby/config/). [jamescway, #232]
 - An additional processor has been added, though it isn't turned on by default: RemoveStacktrace. Use it to remove stacktraces from exception reports. [nateberkopec, #233]
 - Dependency on `uuidtools` has been removed. [nateberkopec, #231]
 

@@ -1,14 +1,17 @@
 # frozen_string_literal: true
+
 require 'base64'
 require 'json'
 require 'zlib'
 
+require "raven/transports"
+
 module Raven
   # Encodes events and sends them to the Sentry server.
   class Client
-    PROTOCOL_VERSION = '5'.freeze
-    USER_AGENT = "raven-ruby/#{Raven::VERSION}".freeze
-    CONTENT_TYPE = 'application/json'.freeze
+    PROTOCOL_VERSION = '5'
+    USER_AGENT = "raven-ruby/#{Raven::VERSION}"
+    CONTENT_TYPE = 'application/json'
 
     attr_accessor :configuration
 
@@ -18,20 +21,24 @@ module Raven
       @state = ClientState.new
     end
 
-    def send_event(event)
+    def send_event(event, hint = nil)
       return false unless configuration.sending_allowed?(event)
 
-      # Convert to hash
-      event = event.to_hash
+      event = configuration.before_send.call(event, hint) if configuration.before_send
+      if event.nil?
+        configuration.logger.info "Discarded event because before_send returned nil"
+        return
+      end
 
       unless @state.should_try?
         failed_send(nil, event)
         return
       end
 
-      configuration.logger.info "Sending event #{event[:event_id]} to Sentry"
+      configuration.logger.info "Sending event #{event.event_id} to Sentry"
 
-      content_type, encoded_data = encode(event)
+      event_hash = event.to_hash
+      content_type, encoded_data = encode(event_hash)
 
       begin
         transport.send_event(generate_auth_header, encoded_data,
@@ -42,7 +49,7 @@ module Raven
         return
       end
 
-      event
+      event_hash
     end
 
     def transport
@@ -61,8 +68,8 @@ module Raven
 
     private
 
-    def encode(event)
-      hash = @processors.reduce(event.to_hash) { |a, e| e.process(a) }
+    def encode(event_hash)
+      hash = @processors.reduce(event_hash) { |a, e| e.process(a) }
       encoded = JSON.fast_generate(hash)
 
       case configuration.encoding
@@ -71,10 +78,6 @@ module Raven
       else
         ['application/json', encoded]
       end
-    end
-
-    def get_log_message(event)
-      (event && event[:message]) || '<no message value>'
     end
 
     def generate_auth_header
@@ -94,14 +97,18 @@ module Raven
     end
 
     def failed_send(e, event)
-      @state.failure
       if e # exception was raised
-        configuration.logger.error "Unable to record event with remote Sentry server (#{e.class} - #{e.message}):\n#{e.backtrace[0..10].join("\n")}"
+        @state.failure
+        configuration.logger.warn "Unable to record event with remote Sentry server (#{e.class} - #{e.message}):\n#{e.backtrace[0..10].join("\n")}"
       else
-        configuration.logger.error "Not sending event due to previous failure(s)."
+        configuration.logger.warn "Not sending event due to previous failure(s)."
       end
-      configuration.logger.error("Failed to submit event: #{get_log_message(event)}")
-      configuration.transport_failure_callback.call(event) if configuration.transport_failure_callback
+
+      event_message = event&.log_message || '<no message value>'
+      configuration.logger.warn("Failed to submit event: #{event_message}")
+
+      # configuration.transport_failure_callback can be false & nil
+      configuration.transport_failure_callback.call(event.to_hash) if configuration.transport_failure_callback # rubocop:disable Style/SafeNavigation
     end
   end
 

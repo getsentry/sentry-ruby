@@ -12,25 +12,25 @@ RSpec.describe Raven::Processor::SanitizeData do
       fields = Raven::Processor::SanitizeData::DEFAULT_FIELDS | %w(test monkeybutt)
 
       @processor.sanitize_fields = fields
-      expected_fields_re = /authorization|password|passwd|secret|ssn|social(.*)?sec|\btest\b|\bmonkeybutt\b/i
+      expected_sensitive_fields = /authorization|password|passwd|secret|ssn|social(.*)?sec|\btest\b|\bmonkeybutt\b/i
 
-      expect(@processor.send(:fields_re)).to eq(expected_fields_re)
+      expect(@processor.send(:sensitive_fields)).to eq(expected_sensitive_fields)
     end
 
     it 'should remove default fields if specified by sanitize_fields_excluded' do
       @processor.sanitize_fields_excluded = %w(authorization)
 
-      expected_fields_re = /password|passwd|secret|ssn|social(.*)?sec/i
+      expected_sensitive_fields = /password|passwd|secret|ssn|social(.*)?sec/i
 
-      expect(@processor.send(:fields_re)).to eq(expected_fields_re)
+      expect(@processor.send(:sensitive_fields)).to eq(expected_sensitive_fields)
     end
 
     it 'accepts regex-like strings' do
       @processor.sanitize_fields = ["foo(.*)?bar"]
 
-      expected_fields_re = /authorization|password|passwd|secret|ssn|social(.*)?sec|foo(.*)?bar/i
+      expected_sensitive_fields = /authorization|password|passwd|secret|ssn|social(.*)?sec|foo(.*)?bar/i
 
-      expect(@processor.send(:fields_re)).to eq(expected_fields_re)
+      expect(@processor.send(:sensitive_fields)).to eq(expected_sensitive_fields)
     end
   end
 
@@ -69,6 +69,27 @@ RSpec.describe Raven::Processor::SanitizeData do
     expect(vars["user_field"]).to eq(Raven::Processor::SanitizeData::STRING_MASK)
     expect(vars["user_field_foo"]).to eq('hello')
     expect(vars["query_string"]).to match('foo=bar')
+  end
+
+  it "filters out hash paird under sensitive keys" do
+    data = {
+      'sentry.interfaces.Http' => {
+        'data' => {
+          'foo' => 'bar',
+          :password => {
+            'new' => 'test'
+          },
+          "passwd" => {
+            'new' => 'test'
+          }
+        }
+      }
+    }
+
+    result = @processor.process(data)
+    vars = result["sentry.interfaces.Http"]["data"]
+    expect(vars[:password]).to eq(Raven::Processor::SanitizeData::STRING_MASK)
+    expect(vars["passwd"]).to eq(Raven::Processor::SanitizeData::STRING_MASK)
   end
 
   it 'should filter json data' do
@@ -164,6 +185,41 @@ RSpec.describe Raven::Processor::SanitizeData do
     result = @processor.process(data)
 
     expect(result["array"][0]['password']).to eq(Raven::Processor::SanitizeData::STRING_MASK)
+  end
+
+  context "unparseable plain text" do
+    it "still sanitizes sensitive fields in string data" do
+      text = <<~ERR
+        unexpected token at '{
+        "role": "admin","password": "Abc@123","foo": "bar"
+        }'
+      ERR
+      result = @processor.process(text)
+
+      expect(result).to eq(
+        <<~ERR
+          unexpected token at '{
+          "role": "admin","password": #{Raven::Processor::SanitizeData::STRING_MASK},"foo": "bar"
+          }'
+        ERR
+      )
+    end
+    it "sanitizes different types of key/value format" do
+      texts = [
+        "\"password\" => 'Abc@123'",
+        "\"password\" =>\"Abc@123\"",
+        "\"password\"=> \"Abc@123\"",
+        "'password'=> \"Abc@123\"",
+        "password: \"Abc@123\"",
+        "password: 'Abc@123'",
+        "password:'Abc@123'"
+      ]
+
+      texts.each do |text|
+        result = @processor.process(text)
+        expect(result).not_to match(/Abc@123/)
+      end
+    end
   end
 
   context "query strings" do

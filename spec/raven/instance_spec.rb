@@ -38,7 +38,7 @@ RSpec.describe Raven::Instance do
     describe 'as #capture_message' do
       before do
         expect(Raven::Event).to receive(:from_message).with(message, options)
-        expect(subject).to receive(:send_event).with(event)
+        expect(subject).to receive(:send_event).with(event, :exception => nil, :message => message)
       end
       let(:message) { "Test message" }
 
@@ -80,14 +80,14 @@ RSpec.describe Raven::Instance do
 
       it 'sends the result of Event.capture_exception' do
         expect(Raven::Event).to receive(:from_exception).with(exception, options)
-        expect(subject).to receive(:send_event).with(event)
+        expect(subject).to receive(:send_event).with(event, :exception => exception, :message => nil)
 
         subject.capture_exception(exception, options)
       end
 
       it 'has an alias' do
         expect(Raven::Event).to receive(:from_exception).with(exception, options)
-        expect(subject).to receive(:send_event).with(event)
+        expect(subject).to receive(:send_event).with(event, :exception => exception, :message => nil)
 
         subject.capture_exception(exception, options)
       end
@@ -223,11 +223,97 @@ RSpec.describe Raven::Instance do
     let(:message) { "Test message" }
 
     it 'sends the result of Event.capture_type' do
-      expect(subject).to receive(:send_event).with(event)
+      expect(subject).to receive(:send_event).with(event, :exception => nil, :message => message)
 
       subject.capture_type("Test message", options)
 
       expect(subject.last_event_id).to eq(event.id)
+    end
+  end
+
+  describe "#tags_context" do
+    let(:default) { { :foo => :bar } }
+    let(:additional) { { :baz => :qux } }
+
+    before do
+      subject.context.tags = default
+    end
+
+    it "returns the tags" do
+      expect(subject.tags_context).to eq default
+    end
+
+    it "returns the tags" do
+      expect(subject.tags_context(additional)).to eq default.merge(additional)
+    end
+
+    it "doesn't set anything if the tags is empty" do
+      subject.tags_context({})
+      expect(subject.context.tags).to eq default
+    end
+
+    it "adds tags" do
+      subject.tags_context(additional)
+      expect(subject.context.tags).to eq default.merge(additional)
+    end
+
+    context 'when block given' do
+      it "returns the tags" do
+        tags = subject.tags_context(additional) do
+          # do nothing
+        end
+        expect(tags).to eq default
+      end
+
+      it "adds tags only in the block" do
+        subject.tags_context(additional) do
+          expect(subject.context.tags).to eq default.merge(additional)
+        end
+        expect(subject.context.tags).to eq default
+      end
+    end
+  end
+
+  describe "#extra_context" do
+    let(:default) { { :foo => :bar } }
+    let(:additional) { { :baz => :qux } }
+
+    before do
+      subject.context.extra = default
+    end
+
+    it "returns the extra" do
+      expect(subject.extra_context).to eq default
+    end
+
+    it "returns the extra" do
+      expect(subject.extra_context(additional)).to eq default.merge(additional)
+    end
+
+    it "doesn't set anything if the extra is empty" do
+      subject.extra_context({})
+      expect(subject.context.extra).to eq default
+    end
+
+    it "adds extra" do
+      subject.extra_context(additional)
+      expect(subject.context.extra).to eq default.merge(additional)
+    end
+
+    context 'when block given' do
+      it "returns the extra" do
+        extra = subject.extra_context(additional) do
+          # do nothing
+        end
+        expect(extra).to eq default
+      end
+
+      it "adds extra only in the block" do
+        subject.extra_context(additional) do
+          expect(subject.context.extra).to eq default.merge(additional)
+        end
+        expect(subject.context.extra).to eq default
+      end
     end
   end
 
