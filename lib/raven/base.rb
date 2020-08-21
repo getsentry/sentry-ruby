@@ -1,4 +1,5 @@
 require 'raven/version'
+require 'raven/core_ext/object/deep_dup'
 require 'raven/backtrace'
 require 'raven/breadcrumbs'
 require 'raven/processor'
