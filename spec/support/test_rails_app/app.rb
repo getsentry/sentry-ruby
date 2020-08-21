@@ -17,6 +17,8 @@ class TestApp < Rails::Application
   # Usually set for us in production.rb
   config.eager_load = true
 
+  config.hosts = nil
+
   routes.append do
     get "/exception", :to => "hello#exception"
     root :to => "hello#world"

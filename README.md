@@ -8,18 +8,19 @@
 # Raven-Ruby, the Ruby Client for Sentry
 
 [![Gem Version](https://img.shields.io/gem/v/sentry-raven.svg)](https://rubygems.org/gems/sentry-raven)
-[![Build Status](https://img.shields.io/travis/getsentry/raven-ruby/master.svg)](https://travis-ci.org/getsentry/raven-ruby)
+![Build Status](https://github.com/getsentry/raven-ruby/workflows/Test/badge.svg)
+[![Coverage Status](https://img.shields.io/codecov/c/github/getsentry/raven-ruby/master?logo=codecov)](https://codecov.io/gh/getsentry/raven-ruby/branch/master)
 [![Gem](https://img.shields.io/gem/dt/sentry-raven.svg)](https://rubygems.org/gems/sentry-raven/)
 [![SemVer](https://api.dependabot.com/badges/compatibility_score?dependency-name=sentry-raven&package-manager=bundler&version-scheme=semver)](https://dependabot.com/compatibility-score.html?dependency-name=sentry-raven&package-manager=bundler&version-scheme=semver)
 
 
-[Documentation](https://docs.getsentry.com/hosted/clients/ruby/) | [Bug Tracker](https://github.com/getsentry/raven-ruby/issues) | [Forum](https://forum.sentry.io/) | IRC: irc.freenode.net, #sentry
+[Documentation](https://docs.sentry.io/clients/ruby/) | [Bug Tracker](https://github.com/getsentry/raven-ruby/issues) | [Forum](https://forum.sentry.io/) | IRC: irc.freenode.net, #sentry
 
 The official Ruby-language client and integration layer for the [Sentry](https://github.com/getsentry/sentry) error reporting API.
 
 ## Requirements
 
-We test on Ruby 1.9, 2.2, 2.3, and 2.4 at the latest patchlevel/teeny version. We also support JRuby 1.7 and 9.0. Our Rails integration works with Rails 4.2+ (including Rails 5).
+We test on Ruby 2.3, 2.4, 2.5, 2.6 and 2.7 at the latest patchlevel/teeny version. We also support JRuby 9.0. Our Rails integration works with Rails 4.2+, including Rails 5 and Rails 6.
 
 ## Getting Started
 
@@ -48,11 +49,11 @@ end
 
 **Raven ignores some exceptions by default** - most of these are related to 404s or controller actions not being found. [For a complete list, see the `IGNORE_DEFAULT` constant](https://github.com/getsentry/raven-ruby/blob/master/lib/raven/configuration.rb).
 
-Raven doesn't report POST data or cookies by default. In addition, it will attempt to remove any obviously sensitive data, such as credit card or Social Security numbers. For more information about how Sentry processes your data, [check out the documentation on the `processors` config setting.](https://docs.getsentry.com/hosted/clients/ruby/config/)
+Raven doesn't report POST data or cookies by default. In addition, it will attempt to remove any obviously sensitive data, such as credit card or Social Security numbers. For more information about how Sentry processes your data, [check out the documentation on the `processors` config setting.](https://docs.sentry.io/platforms/ruby/config/)
 
 ### Usage
 
-**If you use Rails, you're already done - no more configuration required!** Check [Integrations](https://docs.getsentry.com/hosted/clients/ruby/integrations/) for more details on other gems Sentry integrates with automatically.
+**If you use Rails, you're already done - no more configuration required!** Check [Integrations](https://docs.sentry.io/platforms/ruby/integrations/) for more details on other gems Sentry integrates with automatically.
 
 Otherwise, Raven supports two methods of capturing exceptions:
 
@@ -133,4 +134,4 @@ For more information, see [Context](https://docs.sentry.io/clients/ruby/context/
 * [Documentation](https://docs.sentry.io/clients/ruby/)
 * [Bug Tracker](https://github.com/getsentry/raven-ruby/issues)
 * [Forum](https://forum.sentry.io/)
-* [IRC](irc://irc.freenode.net/sentry>)  (irc.freenode.net, #sentry)
+- [Discord](https://discord.gg/ez5KZN7)

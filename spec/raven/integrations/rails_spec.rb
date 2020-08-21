@@ -25,7 +25,8 @@ RSpec.describe "Rails Integration", :type => :request, :rails => true do
 
     expect(response.status).to eq(500)
     event = JSON.parse!(Raven.client.transport.events.first[1])
-    expect(event["logentry"]["message"]).to eq("RuntimeError: An unhandled exception!")
+    expect(event["exception"]["values"][0]["type"]).to eq("RuntimeError")
+    expect(event["exception"]["values"][0]["value"]).to eq("An unhandled exception!")
   end
 
   it "should properly set the exception's URL" do

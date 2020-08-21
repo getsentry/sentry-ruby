@@ -11,3 +11,5 @@ Gemfile.lock
 .ruby-gemset
 .idea
 *.rdb
+
+examples/**/node_modules

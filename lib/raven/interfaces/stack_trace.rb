@@ -58,7 +58,7 @@ module Raven
       end
 
       def project_root
-        @project_root ||= Raven.configuration.project_root && Raven.configuration.project_root.to_s
+        @project_root ||= Raven.configuration.project_root&.to_s
       end
 
       def longest_load_path

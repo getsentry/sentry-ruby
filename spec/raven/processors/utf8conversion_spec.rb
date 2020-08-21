@@ -1,12 +1,10 @@
-# Encoding: utf-8
-
 require 'spec_helper'
 
 RSpec.describe Raven::Processor::UTF8Conversion do
   before do
     @client = double("client")
     @processor = Raven::Processor::UTF8Conversion.new(@client)
-    @bad_utf8_string = "invalid utf8 string goes here\255".force_encoding('UTF-8')
+    @bad_utf8_string = "invalid utf8 string goes here\255".dup.force_encoding('UTF-8')
   end
 
   it "has a utf8 fixture which is not valid utf-8" do
@@ -31,7 +29,7 @@ RSpec.describe Raven::Processor::UTF8Conversion do
 
   it 'should keep valid UTF-8 bytes after cleaning' do
     data = {}
-    data['invalid'] = "한국, 中國, 日本(にっぽん)\255".force_encoding('UTF-8')
+    data['invalid'] = "한국, 中國, 日本(にっぽん)\255".dup.force_encoding('UTF-8')
 
     results = @processor.process(data)
     expect(results['invalid']).to eq("한국, 中國, 日本(にっぽん)")
@@ -61,7 +59,7 @@ RSpec.describe Raven::Processor::UTF8Conversion do
   end
 
   it "deals with unicode hidden in ASCII_8BIT" do
-    data = ["\xE2\x9C\x89 Hello".force_encoding(Encoding::ASCII_8BIT)]
+    data = ["\xE2\x9C\x89 Hello".dup.force_encoding(Encoding::ASCII_8BIT)]
 
     results = @processor.process(data)
 
@@ -72,7 +70,7 @@ RSpec.describe Raven::Processor::UTF8Conversion do
   end
 
   it "deals with unicode hidden in ASCII_8BIT when the string is frozen" do
-    data = ["\xE2\x9C\x89 Hello".force_encoding(Encoding::ASCII_8BIT).freeze]
+    data = ["\xE2\x9C\x89 Hello".dup.force_encoding(Encoding::ASCII_8BIT).freeze]
 
     results = @processor.process(data)
 

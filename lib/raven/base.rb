@@ -23,6 +23,7 @@ require 'raven/transports'
 require 'raven/transports/http'
 require 'raven/utils/deep_merge'
 require 'raven/utils/real_ip'
+require 'raven/utils/exception_cause_chain'
 require 'raven/instance'
 
 require 'forwardable'
@@ -84,12 +85,13 @@ module Raven
 
     def load_integration(integration)
       require "raven/integrations/#{integration}"
-    rescue Exception => error
-      logger.warn "Unable to load raven/integrations/#{integration}: #{error}"
+    rescue Exception => e
+      logger.warn "Unable to load raven/integrations/#{integration}: #{e}"
     end
 
     def safely_prepend(module_name, opts = {})
       return if opts[:to].nil? || opts[:from].nil?
+
       if opts[:to].respond_to?(:prepend, true)
         opts[:to].send(:prepend, opts[:from].const_get(module_name))
       else
@@ -99,7 +101,8 @@ module Raven
 
     def sys_command(command)
       result = `#{command} 2>&1` rescue nil
-      return if result.nil? || result.empty? || $CHILD_STATUS.exitstatus != 0
+      return if result.nil? || result.empty? || ($CHILD_STATUS && $CHILD_STATUS.exitstatus != 0)
+
       result.strip
     end
   end

@@ -1,14 +1,17 @@
 # frozen_string_literal: true
+
 require 'base64'
 require 'json'
 require 'zlib'
 
+require "raven/transports"
+
 module Raven
   # Encodes events and sends them to the Sentry server.
   class Client
-    PROTOCOL_VERSION = '5'.freeze
-    USER_AGENT = "raven-ruby/#{Raven::VERSION}".freeze
-    CONTENT_TYPE = 'application/json'.freeze
+    PROTOCOL_VERSION = '5'
+    USER_AGENT = "raven-ruby/#{Raven::VERSION}"
+    CONTENT_TYPE = 'application/json'
 
     attr_accessor :configuration
 
@@ -18,8 +21,14 @@ module Raven
       @state = ClientState.new
     end
 
-    def send_event(event)
+    def send_event(event, hint = nil)
       return false unless configuration.sending_allowed?(event)
+
+      event = configuration.before_send.call(event, hint) if configuration.before_send
+      if event.nil?
+        configuration.logger.info "Discarded event because before_send returned nil"
+        return
+      end
 
       # Convert to hash
       event = event.to_hash
@@ -29,7 +38,8 @@ module Raven
         return
       end
 
-      configuration.logger.info "Sending event #{event[:event_id]} to Sentry"
+      event_id = event[:event_id] || event['event_id']
+      configuration.logger.info "Sending event #{event_id} to Sentry"
 
       content_type, encoded_data = encode(event)
 
@@ -73,8 +83,20 @@ module Raven
       end
     end
 
+    def get_message_from_exception(event)
+      (
+        event &&
+        event[:exception] &&
+        event[:exception][:values] &&
+        event[:exception][:values][0] &&
+        event[:exception][:values][0][:type] &&
+        event[:exception][:values][0][:value] &&
+        "#{event[:exception][:values][0][:type]}: #{event[:exception][:values][0][:value]}"
+      )
+    end
+
     def get_log_message(event)
-      (event && event[:message]) || '<no message value>'
+      (event && event[:message]) || (event && event['message']) || get_message_from_exception(event) || '<no message value>'
     end
 
     def generate_auth_header
@@ -94,14 +116,16 @@ module Raven
     end
 
     def failed_send(e, event)
-      @state.failure
       if e # exception was raised
-        configuration.logger.error "Unable to record event with remote Sentry server (#{e.class} - #{e.message}):\n#{e.backtrace[0..10].join("\n")}"
+        @state.failure
+        configuration.logger.warn "Unable to record event with remote Sentry server (#{e.class} - #{e.message}):\n#{e.backtrace[0..10].join("\n")}"
       else
-        configuration.logger.error "Not sending event due to previous failure(s)."
+        configuration.logger.warn "Not sending event due to previous failure(s)."
       end
-      configuration.logger.error("Failed to submit event: #{get_log_message(event)}")
-      configuration.transport_failure_callback.call(event) if configuration.transport_failure_callback
+      configuration.logger.warn("Failed to submit event: #{get_log_message(event)}")
+
+      # configuration.transport_failure_callback can be false & nil
+      configuration.transport_failure_callback.call(event) if configuration.transport_failure_callback # rubocop:disable Style/SafeNavigation
     end
   end
 

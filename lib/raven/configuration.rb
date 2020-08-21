@@ -31,6 +31,10 @@ module Raven
     # You should probably append to this rather than overwrite it.
     attr_accessor :excluded_exceptions
 
+    # Boolean to check nested exceptions when deciding if to exclude. Defaults to false
+    attr_accessor :inspect_exception_causes_for_exclusion
+    alias inspect_exception_causes_for_exclusion? inspect_exception_causes_for_exclusion
+
     # DSN component - set automatically if DSN provided
     attr_accessor :host
 
@@ -156,6 +160,15 @@ module Raven
     # E.g. lambda { |event| Thread.new { MyJobProcessor.send_email(event) } }
     attr_reader :transport_failure_callback
 
+    # Optional Proc, called before sending an event to the server/
+    # E.g.: lambda { |event, hint| event }
+    # E.g.: lambda { |event, hint| nil }
+    # E.g.: lambda { |event, hint|
+    #   event[:message] = 'a'
+    #   event
+    # }
+    attr_reader :before_send
+
     # Errors object - an Array that contains error messages. See #
     attr_reader :errors
 
@@ -196,6 +209,7 @@ module Raven
       self.environments = []
       self.exclude_loggers = []
       self.excluded_exceptions = IGNORE_DEFAULT.dup
+      self.inspect_exception_causes_for_exclusion = false
       self.linecache = ::Raven::LineCache.new
       self.logger = ::Raven::Logger.new(STDOUT)
       self.open_timeout = 1
@@ -217,10 +231,12 @@ module Raven
       self.tags = {}
       self.timeout = 2
       self.transport_failure_callback = false
+      self.before_send = false
     end
 
     def server=(value)
       return if value.nil?
+
       uri = URI.parse(value)
       uri_path = uri.path.split('/')
 
@@ -238,13 +254,14 @@ module Raven
 
       # For anyone who wants to read the base server string
       @server = "#{scheme}://#{host}"
-      @server << ":#{port}" unless port == { 'http' => 80, 'https' => 443 }[scheme]
-      @server << path
+      @server += ":#{port}" unless port == { 'http' => 80, 'https' => 443 }[scheme]
+      @server += path
     end
     alias dsn= server=
 
     def encoding=(encoding)
       raise(Error, 'Unsupported encoding') unless %w(gzip json).include? encoding
+
       @encoding = encoding
     end
 
@@ -252,6 +269,7 @@ module Raven
       unless value == false || value.respond_to?(:call)
         raise(ArgumentError, "async must be callable (or false to disable)")
       end
+
       @async = value
     end
 
@@ -259,6 +277,7 @@ module Raven
       unless value == false || value.respond_to?(:call)
         raise(ArgumentError, "transport_failure_callback must be callable (or false to disable)")
       end
+
       @transport_failure_callback = value
     end
 
@@ -266,7 +285,16 @@ module Raven
       unless value == false || value.respond_to?(:call)
         raise ArgumentError, "should_capture must be callable (or false to disable)"
       end
+
       @should_capture = value
+    end
+
+    def before_send=(value)
+      unless value == false || value.respond_to?(:call)
+        raise ArgumentError, "before_send must be callable (or false to disable)"
+      end
+
+      @before_send = value
     end
 
     # Allows config options to be read like a hash
@@ -325,19 +353,30 @@ module Raven
     end
 
     def detect_release
-      detect_release_from_git ||
+      detect_release_from_env ||
+        detect_release_from_git ||
         detect_release_from_capistrano ||
         detect_release_from_heroku
-    rescue => ex
-      logger.error "Error detecting release: #{ex.message}"
+    rescue => e
+      logger.error "Error detecting release: #{e.message}"
     end
 
-    def excluded_exception?(exc)
-      excluded_exceptions.any? { |x| get_exception_class(x) === exc }
+    def excluded_exception?(incoming_exception)
+      excluded_exceptions.any? do |excluded_exception|
+        matches_exception?(get_exception_class(excluded_exception), incoming_exception)
+      end
     end
 
     def get_exception_class(x)
       x.is_a?(Module) ? x : qualified_const_get(x)
+    end
+
+    def matches_exception?(excluded_exception_class, incoming_exception)
+      if inspect_exception_causes_for_exclusion?
+        Raven::Utils::ExceptionCauseChain.exception_to_array(incoming_exception).any? { |cause| excluded_exception_class === cause }
+      else
+        excluded_exception_class === incoming_exception
+      end
     end
 
     # In Ruby <2.0 const_get can't lookup "SomeModule::SomeClass" in one go
@@ -379,20 +418,27 @@ module Raven
       Raven.sys_command("git rev-parse --short HEAD") if File.directory?(".git")
     end
 
+    def detect_release_from_env
+      ENV['SENTRY_RELEASE']
+    end
+
     def capture_in_current_environment?
       return true unless environments.any? && !environments.include?(current_environment)
+
       @errors << "Not configured to send/capture in environment '#{current_environment}'"
       false
     end
 
     def capture_allowed_by_callback?(message_or_exc)
-      return true if !should_capture || message_or_exc.nil? || should_capture.call(*[message_or_exc])
+      return true if !should_capture || message_or_exc.nil? || should_capture.call(message_or_exc)
+
       @errors << "should_capture returned false"
       false
     end
 
     def valid?
       return true if %w(server host path public_key project_id).all? { |k| public_send(k) }
+
       if server
         %w(server host path public_key project_id).map do |key|
           @errors << "No #{key} specified" unless public_send(key)
@@ -405,6 +451,7 @@ module Raven
 
     def sample_allowed?
       return true if sample_rate == 1.0
+
       if Random::DEFAULT.rand >= sample_rate
         @errors << "Excluded by random sample"
         false
@@ -421,7 +468,7 @@ module Raven
     end
 
     def current_environment_from_env
-      ENV['SENTRY_CURRENT_ENV'] || ENV['RAILS_ENV'] || ENV['RACK_ENV'] || 'default'
+      ENV['SENTRY_CURRENT_ENV'] || ENV['SENTRY_ENVIRONMENT'] || ENV['RAILS_ENV'] || ENV['RACK_ENV'] || 'default'
     end
 
     def server_name_from_env

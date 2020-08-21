@@ -4,13 +4,13 @@ module Raven
   module BreadcrumbLogger
     LEVELS = {
       ::Logger::DEBUG => 'debug',
-      ::Logger::INFO  => 'info',
-      ::Logger::WARN  => 'warn',
+      ::Logger::INFO => 'info',
+      ::Logger::WARN => 'warn',
       ::Logger::ERROR => 'error',
       ::Logger::FATAL => 'fatal'
     }.freeze
 
-    EXC_FORMAT = /^([a-zA-Z0-9]+)\:\s(.*)$/
+    EXC_FORMAT = /^([a-zA-Z0-9]+)\:\s(.*)$/.freeze
 
     def self.parse_exception(message)
       lines = message.split(/\n\s*/)
@@ -36,7 +36,7 @@ module Raven
 
       # some loggers will add leading/trailing space as they (incorrectly, mind you)
       # think of logging as a shortcut to std{out,err}
-      message = message.strip
+      message = message.to_s.strip
 
       last_crumb = Raven.breadcrumbs.peek
       # try to avoid dupes from logger broadcasts

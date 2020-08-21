@@ -14,6 +14,7 @@ module Raven
         !value.frozen? ? value.map! { |v| process v } : value.map { |v| process v }
       when Exception
         return value if value.message.valid_encoding?
+
         clean_exc = value.class.new(remove_invalid_bytes(value.message))
         clean_exc.set_backtrace(value.backtrace)
         clean_exc
@@ -27,6 +28,7 @@ module Raven
           value.force_encoding(Encoding::UTF_8)
         end
         return value if value.valid_encoding?
+
         remove_invalid_bytes(value)
       else
         value
@@ -39,7 +41,7 @@ module Raven
     # https://github.com/rspec/rspec-support/blob/f0af3fd74a94ff7bb700f6ba06dbdc67bba17fbf/lib/rspec/support/encoded_string.rb#L120-L139
     if String.method_defined?(:scrub) # 2.1+
       def remove_invalid_bytes(string)
-        string.scrub!(REPLACE)
+        string.scrub(REPLACE)
       end
     else
       def remove_invalid_bytes(string)
