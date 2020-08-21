@@ -136,6 +136,25 @@ module Raven
       JSON.parse(JSON.generate(cleaned_hash))
     end
 
+    def message_from_exception
+      exception = @interfaces[:exception]
+
+      return unless exception
+
+      exception = exception.to_hash
+
+      type = exception.dig(:values, 0, :type)
+      value = exception.dig(:values, 0, :value)
+
+      if type && value
+        "#{type}: #{value}"
+      end
+    end
+
+    def log_message
+      message || message_from_exception
+    end
+
     def add_exception_interface(exc)
       interface(:exception) do |exc_int|
         exceptions = Raven::Utils::ExceptionCauseChain.exception_to_array(exc).reverse

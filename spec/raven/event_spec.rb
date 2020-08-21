@@ -712,4 +712,16 @@ RSpec.describe Raven::Event do
       expect(Raven::Event.capture_exception(exception, :logger => 'root').logger).to eq('root')
     end
   end
+
+  describe "#message_from_exception" do
+    it "generates a message with exception" do
+      event = Raven::Event.capture_exception(ZeroDivisionError.new("divided by 0"))
+      expect(event.message_from_exception).to eq("ZeroDivisionError: divided by 0")
+    end
+
+    it "generates a message without exception" do
+      event = Raven::Event.from_message("this is an STDOUT transport test")
+      expect(event.message_from_exception).to eq(nil)
+    end
+  end
 end
