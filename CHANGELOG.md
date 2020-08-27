@@ -2,6 +2,14 @@
 
 ## Unreleased
 
+## 3.0.3
+
+- fix: Ensure Processor::Cookie can run after Processor::RemoveCircularReferences (#996)
+- fix: Avoid mutating user passed in options (#994)
+- fix: Fix/Refactor Raven::Cli (#989)
+- ref: Refactor Raven::Client class (#995)
+  - It adds `Event#message_from_exception` and `Event#log_message` interfaces
+
 ## 3.0.2
 
 - fix: Add gem target for craft
