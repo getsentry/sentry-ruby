@@ -194,29 +194,42 @@ RSpec.describe Raven::Instance do
     end
 
     let(:not_ready_message) do
-      "Raven #{Raven::VERSION} configured not to capture errors."
+      "Raven #{Raven::VERSION} configured not to capture errors: DSN not set"
     end
 
-    it 'logs a ready message when configured' do
-      subject.configuration.silence_ready = false
+    context "when current environment is included in environments" do
+      before do
+        subject.configuration.silence_ready = false
+        subject.configuration.environments = ["default"]
+      end
 
-      expect(subject.logger).to receive(:info).with(ready_message)
-      subject.report_status
+      it 'logs a ready message when configured' do
+        expect(subject.logger).to receive(:info).with(ready_message)
+        subject.report_status
+      end
+
+      it 'logs a warning message when not properly configured' do
+        # dsn not set
+        subject.configuration = Raven::Configuration.new
+
+        expect(subject.logger).to receive(:info).with(not_ready_message)
+        subject.report_status
+      end
+
+      it 'logs nothing if "silence_ready" configuration is true' do
+        subject.configuration.silence_ready = true
+        expect(subject.logger).not_to receive(:info)
+        subject.report_status
+      end
     end
 
-    it 'logs not ready message if the config does not send in current environment' do
-      subject.configuration.silence_ready = false
-      subject.configuration.environments = ["production"]
-      expect(subject.logger).to receive(:info).with(
-        "Raven #{Raven::VERSION} configured not to capture errors: Not configured to send/capture in environment 'default'"
-      )
-      subject.report_status
-    end
-
-    it 'logs nothing if "silence_ready" configuration is true' do
-      subject.configuration.silence_ready = true
-      expect(subject.logger).not_to receive(:info)
-      subject.report_status
+    context "when current environment is not included in environments" do
+      it "doesn't log any message" do
+        subject.configuration.silence_ready = false
+        subject.configuration.environments = ["production"]
+        expect(subject.logger).not_to receive(:info)
+        subject.report_status
+      end
     end
   end
 
