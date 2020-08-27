@@ -342,6 +342,10 @@ module Raven
       end
     end
 
+    def enabled_in_current_env?
+      environments.empty? || environments.include?(current_environment)
+    end
+
     private
 
     def detect_project_root
@@ -423,7 +427,7 @@ module Raven
     end
 
     def capture_in_current_environment?
-      return true unless environments.any? && !environments.include?(current_environment)
+      return true if enabled_in_current_env?
 
       @errors << "Not configured to send/capture in environment '#{current_environment}'"
       false
