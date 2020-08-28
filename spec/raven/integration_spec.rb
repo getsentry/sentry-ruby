@@ -13,6 +13,14 @@ RSpec.describe "Integration tests" do
     end
   end
 
+  it "prints deprecation warning when requiring 'sentry-raven-without-integrations'" do
+    expect do
+      require "sentry-raven-without-integrations"
+    end.to output(
+      "[Deprecation Warning] Dasherized filename \"sentry-raven-without-integrations\" is deprecated and will be removed in 4.0; use \"sentry_raven_without_integrations\" instead\n" # rubocop:disable Style/LineLength
+    ).to_stderr
+  end
+
   it "posting an exception" do
     @stubs.post('sentry/api/42/store/') { [200, {}, 'ok'] }
 
