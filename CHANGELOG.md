@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+## 3.0.4
+
+- fix: Don't log warning messages when it doesn't need to (#1000)
+- fix: Revert "Refactor Raven::Client class" (#1002)
+
 ## 3.0.3
 
 - fix: Ensure Processor::Cookie can run after Processor::RemoveCircularReferences (#996)
