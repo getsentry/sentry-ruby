@@ -112,19 +112,28 @@ config.transport_failure_callback = lambda { |event|
 
 #### Context
 
-Much of the usefulness of Sentry comes from additional context data with the events. Raven makes this very convenient by providing methods to set thread local context data that is then submitted automatically with all events.
-
-There are three primary methods for providing request context:
+Much of the usefulness of Sentry comes from additional context data with the events. Raven makes this very convenient by providing methods to set thread local context data that is then submitted automatically with all events:
 
 ```ruby
-# bind the logged in user
 Raven.user_context email: 'foo@example.com'
 
-# tag the request with something interesting
-Raven.tags_context interesting: 'yes'
+Raven.tags.merge!(interesting: 'yes')
 
-# provide a bit of additional context
-Raven.extra_context happiness: 'very'
+Raven.extra.merge!(additional_info: 'foo')
+```
+
+You can also use `tags_context` and `extra_context` to provide scoped information:
+
+```ruby
+Raven.tags_context(interesting: 'yes') do
+  # the `interesting: 'yes'` tag will only present in the requests sent inside the block
+  Raven.capture_exception(exception)
+end
+
+Raven.extra_context(additional_info: 'foo') do
+  # same as above, the `additional_info` will only present in this request
+  Raven.capture_exception(exception)
+end
 ```
 
 For more information, see [Context](https://docs.sentry.io/clients/ruby/context/).
