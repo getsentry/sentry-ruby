@@ -366,6 +366,25 @@ RSpec.describe Raven::Event do
     end
   end
 
+  describe ".from_exception" do
+    it "proceses string message correctly" do
+      event = Raven::Event.from_exception(ExceptionWithContext.new, message: "MSG")
+      expect(event.message).to eq("MSG")
+    end
+
+    it "slices long string message" do
+      event = Raven::Event.from_exception(ExceptionWithContext.new, message: "MSG" * 3000)
+      expect(event.message.length).to eq(8192)
+    end
+
+    it "converts non-string message into string" do
+      expect(Raven.configuration.logger).to receive(:debug).with("You're passing a non-string message")
+
+      event = Raven::Event.from_exception(ExceptionWithContext.new, message: { foo: "bar" })
+      expect(event.message).to eq("{:foo=>\"bar\"}")
+    end
+  end
+
   describe '.to_json_compatible' do
     subject do
       Raven::Event.new(:extra => {

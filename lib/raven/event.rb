@@ -81,7 +81,17 @@ module Raven
     end
 
     def message=(args)
-      message, params = *args
+      if args.is_a?(Array)
+        message, params = args[0], args[0..-1]
+      else
+        message = args
+      end
+
+      unless message.is_a?(String)
+        Raven.configuration.logger.debug("You're passing a non-string message")
+        message = message.to_s
+      end
+
       interface(:message) do |int|
         int.message = message.byteslice(0...MAX_MESSAGE_SIZE_IN_BYTES) # Messages limited to 10kb
         int.params = params
