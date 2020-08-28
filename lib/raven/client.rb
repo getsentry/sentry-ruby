@@ -30,15 +30,18 @@ module Raven
         return
       end
 
+      # Convert to hash
+      event = event.to_hash
+
       unless @state.should_try?
         failed_send(nil, event)
         return
       end
 
-      configuration.logger.info "Sending event #{event.event_id} to Sentry"
+      event_id = event[:event_id] || event['event_id']
+      configuration.logger.info "Sending event #{event_id} to Sentry"
 
-      event_hash = event.to_hash
-      content_type, encoded_data = encode(event_hash)
+      content_type, encoded_data = encode(event)
 
       begin
         transport.send_event(generate_auth_header, encoded_data,
@@ -49,7 +52,7 @@ module Raven
         return
       end
 
-      event_hash
+      event
     end
 
     def transport
@@ -68,8 +71,8 @@ module Raven
 
     private
 
-    def encode(event_hash)
-      hash = @processors.reduce(event_hash) { |a, e| e.process(a) }
+    def encode(event)
+      hash = @processors.reduce(event.to_hash) { |a, e| e.process(a) }
       encoded = JSON.fast_generate(hash)
 
       case configuration.encoding
@@ -78,6 +81,22 @@ module Raven
       else
         ['application/json', encoded]
       end
+    end
+
+    def get_message_from_exception(event)
+      (
+        event &&
+        event[:exception] &&
+        event[:exception][:values] &&
+        event[:exception][:values][0] &&
+        event[:exception][:values][0][:type] &&
+        event[:exception][:values][0][:value] &&
+        "#{event[:exception][:values][0][:type]}: #{event[:exception][:values][0][:value]}"
+      )
+    end
+
+    def get_log_message(event)
+      (event && event[:message]) || (event && event['message']) || get_message_from_exception(event) || '<no message value>'
     end
 
     def generate_auth_header
@@ -103,12 +122,10 @@ module Raven
       else
         configuration.logger.warn "Not sending event due to previous failure(s)."
       end
-
-      event_message = event&.log_message || '<no message value>'
-      configuration.logger.warn("Failed to submit event: #{event_message}")
+      configuration.logger.warn("Failed to submit event: #{get_log_message(event)}")
 
       # configuration.transport_failure_callback can be false & nil
-      configuration.transport_failure_callback.call(event.to_hash) if configuration.transport_failure_callback # rubocop:disable Style/SafeNavigation
+      configuration.transport_failure_callback.call(event) if configuration.transport_failure_callback # rubocop:disable Style/SafeNavigation
     end
   end
 
