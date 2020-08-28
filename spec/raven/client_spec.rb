@@ -39,6 +39,47 @@ RSpec.describe Raven::Client do
     )
   end
 
+  describe "#send_event" do
+    let(:event) { Raven.capture_exception(ZeroDivisionError.new("divided by 0")) }
+
+    context "when success" do
+      before do
+        allow(client.transport).to receive(:send_event)
+      end
+
+      it "sends Event object" do
+        expect(client).not_to receive(:failed_send)
+
+        expect(client.send_event(event)).to eq(event.to_hash)
+      end
+
+      it "sends Event hash" do
+        expect(client).not_to receive(:failed_send)
+
+        expect(client.send_event(event.to_json_compatible)).to eq(event.to_json_compatible)
+      end
+    end
+
+    context "when failed" do
+      let(:logger) { spy }
+
+      before do
+        client.configuration.logger = logger
+        allow(client.transport).to receive(:send_event).and_raise(StandardError)
+
+        expect(logger).to receive(:warn).exactly(2)
+      end
+
+      it "sends Event object" do
+        expect(client.send_event(event)).to eq(nil)
+      end
+
+      it "sends Event hash" do
+        expect(client.send_event(event.to_json_compatible)).to eq(nil)
+      end
+    end
+  end
+
   describe "#transport" do
     context "when scheme is not set" do
       it "returns HTTP transport object" do
