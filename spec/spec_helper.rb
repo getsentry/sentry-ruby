@@ -1,4 +1,4 @@
-require 'sentry-raven-without-integrations'
+require 'sentry_raven_without_integrations'
 require 'pry'
 
 require 'simplecov'

@@ -1,6 +1,6 @@
 require "spec_helper"
 require "rack/timeout/base"
-require "raven/integrations/rack-timeout"
+require "raven/integrations/rack_timeout"
 
 RSpec.describe "Rack timeout" do
   it "should have a raven_context method defined" do
