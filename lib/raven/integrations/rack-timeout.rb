@@ -10,7 +10,11 @@ module RackTimeoutExtensions
     # Only rack-timeout 0.3.0+ provides the request environment, but we can't
     # gate this based on a gem version constant because rack-timeout does
     # not provide one.
-    { :fingerprint => ["{{ default }}", env["REQUEST_URI"]] } if defined?(env)
+    if defined?(env)
+      { :fingerprint => ["{{ default }}", env["REQUEST_URI"]] }
+    else
+      {}
+    end
   end
 end
 
