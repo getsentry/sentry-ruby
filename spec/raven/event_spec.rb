@@ -7,20 +7,47 @@ RSpec.describe Raven::Event do
     Raven::BreadcrumbBuffer.clear!
   end
 
+  let(:essential_options) do
+    {
+      configuration: Raven.configuration,
+      context: Raven.context,
+      breadcrumbs: Raven.breadcrumbs
+    }
+  end
+
+  describe "#initialize" do
+    it "initializes a Event when all required keys are provided" do
+      expect(described_class.new(essential_options)).to be_a(described_class)
+    end
+
+    described_class::REQUIRED_OPTION_KEYS.each do |required_key|
+      it "raises error if #{required_key} is not given" do
+        essential_options.delete(required_key)
+
+        expect do
+          described_class.new(essential_options)
+        end.to raise_error("you much provide configuration, context, and breadcrumbs when initializing a Raven::Event")
+      end
+    end
+  end
+
   context 'a fully implemented event' do
     let(:hash) do
-      Raven::Event.new(message: 'test',
-                       level: 'warn',
-                       logger: 'foo',
-                       tags: {
-                         'foo' => 'bar'
-                       },
-                       extra: {
-                         'my_custom_variable' => 'value'
-                       },
-                       server_name: 'foo.local',
-                       release: '721e41770371db95eee98ca2707686226b993eda',
-                       environment: 'production').to_hash
+      Raven::Event.new(
+        message: 'test',
+        level: 'warn',
+        logger: 'foo',
+        tags: {
+          'foo' => 'bar'
+        },
+        extra: {
+          'my_custom_variable' => 'value'
+        },
+        server_name: 'foo.local',
+        release: '721e41770371db95eee98ca2707686226b993eda',
+        environment: 'production',
+        **essential_options
+      ).to_hash
     end
 
     it 'has message' do
@@ -74,15 +101,18 @@ RSpec.describe Raven::Event do
 
   context 'parameter entries are nil' do
     let(:hash) do
-      Raven::Event.new(message: 'test',
-                       level: 'warn',
-                       logger: 'foo',
-                       tags: nil,
-                       extra: nil,
-                       user: nil,
-                       server_name: 'foo.local',
-                       release: '721e41770371db95eee98ca2707686226b993eda',
-                       environment: 'production').to_hash
+      Raven::Event.new(
+        message: 'test',
+        level: 'warn',
+        logger: 'foo',
+        tags: nil,
+        extra: nil,
+        user: nil,
+        server_name: 'foo.local',
+        release: '721e41770371db95eee98ca2707686226b993eda',
+        environment: 'production',
+        **essential_options
+      ).to_hash
     end
 
     it "skips nil values" do
@@ -96,15 +126,18 @@ RSpec.describe Raven::Event do
     let(:hash) do
       Raven.user_context('id' => 'hello')
 
-      Raven::Event.new(level: 'warning',
-                       logger: 'foo',
-                       tags: {
-                         'foo' => 'bar'
-                       },
-                       extra: {
-                         'my_custom_variable' => 'value'
-                       },
-                       server_name: 'foo.local').to_hash
+      Raven::Event.new(
+        level: 'warning',
+        logger: 'foo',
+        tags: {
+          'foo' => 'bar'
+        },
+        extra: {
+          'my_custom_variable' => 'value'
+        },
+        server_name: 'foo.local',
+        **essential_options
+      ).to_hash
     end
 
     it "adds user data" do
@@ -124,7 +157,8 @@ RSpec.describe Raven::Event do
                        extra: {
                          'my_custom_variable' => 'value'
                        },
-                       server_name: 'foo.local').to_hash
+                       server_name: 'foo.local',
+                       **essential_options).to_hash
     end
 
     it "merges tags data" do
@@ -145,7 +179,8 @@ RSpec.describe Raven::Event do
                        extra: {
                          'my_custom_variable' => 'value'
                        },
-                       server_name: 'foo.local').to_hash
+                       server_name: 'foo.local',
+                       **essential_options).to_hash
     end
 
     it "merges extra data" do
@@ -177,7 +212,8 @@ RSpec.describe Raven::Event do
                        extra: {
                          'my_custom_variable' => 'value'
                        },
-                       server_name: 'foo.local').to_hash
+                       server_name: 'foo.local',
+                       **essential_options).to_hash
     end
 
     it "adds http data" do
@@ -201,7 +237,7 @@ RSpec.describe Raven::Event do
                          'rack.url_scheme' => 'http',
                          'rack.input' => StringIO.new('a' * 4096 * 5))
 
-      Raven::Event.new.to_hash
+      Raven::Event.new(essential_options).to_hash
     end
 
     it "truncates http data" do
@@ -223,7 +259,9 @@ RSpec.describe Raven::Event do
           'foo' => 'bar'
         },
         server_name: 'foo.local',
-        configuration: config
+        configuration: config,
+        context: Raven.context,
+        breadcrumbs: Raven.breadcrumbs
       ).to_hash
     end
 
@@ -247,14 +285,18 @@ RSpec.describe Raven::Event do
           'foo' => 'bar'
         },
         server_name: 'foo.local',
-        configuration: config
+        configuration: config,
+        context: Raven.context,
+        breadcrumbs: Raven.breadcrumbs
       )
 
       hash = Raven::Event.new(
         level: 'warning',
         logger: 'foo',
         server_name: 'foo.local',
-        configuration: config
+        configuration: config,
+        context: Raven.context,
+        breadcrumbs: Raven.breadcrumbs
       ).to_hash
 
       expect(hash[:tags]).to eq({})
@@ -287,7 +329,9 @@ RSpec.describe Raven::Event do
           'event_key' => 'event_value'
         },
         server_name: 'foo.local',
-        configuration: config
+        configuration: config,
+        context: Raven.context,
+        breadcrumbs: Raven.breadcrumbs
       ).to_hash
     end
 
@@ -312,7 +356,10 @@ RSpec.describe Raven::Event do
       Raven::Event.new(user: {
                          'context_event_key' => 'event_value',
                          'event_key' => 'event_value'
-                       }).to_hash
+                       },
+                       configuration: Raven.configuration,
+                       context: Raven.context,
+                       breadcrumbs: Raven.breadcrumbs).to_hash
     end
 
     it 'prioritizes event context over request context' do
@@ -332,7 +379,10 @@ RSpec.describe Raven::Event do
       Raven::Event.new(extra: {
                          'context_event_key' => 'event_value',
                          'event_key' => 'event_value'
-                       }).to_hash
+                       },
+                       configuration: Raven.configuration,
+                       context: Raven.context,
+                       breadcrumbs: Raven.breadcrumbs).to_hash
     end
 
     it 'prioritizes event context over request context' do
@@ -353,10 +403,14 @@ RSpec.describe Raven::Event do
     end
 
     let(:hash) do
-      Raven::Event.from_exception(ExceptionWithContext.new, extra: {
-                                    'context_event_key' => 'event_value',
-                                    'event_key' => 'event_value'
-                                  }).to_hash
+      Raven::Event.from_exception(
+        ExceptionWithContext.new,
+        extra: {
+          'context_event_key' => 'event_value',
+          'event_key' => 'event_value'
+        },
+        **essential_options
+      ).to_hash
     end
 
     it 'prioritizes event context over request context' do
@@ -368,19 +422,19 @@ RSpec.describe Raven::Event do
 
   describe ".from_exception" do
     it "proceses string message correctly" do
-      event = Raven::Event.from_exception(ExceptionWithContext.new, message: "MSG")
+      event = Raven::Event.from_exception(ExceptionWithContext.new, message: "MSG", **essential_options)
       expect(event.message).to eq("MSG")
     end
 
     it "slices long string message" do
-      event = Raven::Event.from_exception(ExceptionWithContext.new, message: "MSG" * 3000)
+      event = Raven::Event.from_exception(ExceptionWithContext.new, message: "MSG" * 3000, **essential_options)
       expect(event.message.length).to eq(8192)
     end
 
     it "converts non-string message into string" do
       expect(Raven.configuration.logger).to receive(:debug).with("You're passing a non-string message")
 
-      event = Raven::Event.from_exception(ExceptionWithContext.new, message: { foo: "bar" })
+      event = Raven::Event.from_exception(ExceptionWithContext.new, message: { foo: "bar" }, **essential_options)
       expect(event.message).to eq("{:foo=>\"bar\"}")
     end
   end
@@ -391,7 +445,10 @@ RSpec.describe Raven::Event do
                          'my_custom_variable' => 'value',
                          'date' => Time.utc(0),
                          'anonymous_module' => Class.new
-                       })
+                       },
+                       configuration: Raven.configuration,
+                       context: Raven.context,
+                       breadcrumbs: Raven.breadcrumbs)
     end
 
     it "should coerce non-JSON-compatible types" do
@@ -413,7 +470,10 @@ RSpec.describe Raven::Event do
         Raven::Event.new(extra: {
                            invalid: "invalid\255".dup.force_encoding('UTF-8'),
                            circular: data
-                         })
+                         },
+                         configuration: Raven.configuration,
+                         context: Raven.context,
+                         breadcrumbs: Raven.breadcrumbs)
       end
 
       it "should remove bad UTF-8" do
@@ -433,7 +493,10 @@ RSpec.describe Raven::Event do
       subject do
         Raven::Event.new(extra: {
                            'password' => 'secretpassword'
-                         })
+                         },
+                         configuration: Raven.configuration,
+                         context: Raven.context,
+                         breadcrumbs: Raven.breadcrumbs)
       end
 
       it "should sanitize password" do
@@ -446,17 +509,17 @@ RSpec.describe Raven::Event do
 
   describe '.capture_message' do
     let(:message) { 'This is a message' }
-    let(:hash) { Raven::Event.capture_message(message).to_hash }
+    let(:hash) { Raven::Event.capture_message(message, essential_options).to_hash }
 
     context 'for a Message' do
       it 'returns an event' do
-        expect(Raven::Event.capture_message(message)).to be_a(Raven::Event)
+        expect(Raven::Event.capture_message(message, essential_options)).to be_a(Raven::Event)
       end
 
       it "doesn't change the option hash" do
         h_int = { abc: :abc }
         h = { k1: h_int, k2: h_int }
-        Raven.capture_message "Test extra", extra: { h1: h, h2: h_int }
+        Raven.capture_message "Test extra", extra: { h1: h, h2: h_int }, **essential_options
 
         expect(h).to eq({ k1: h_int, k2: h_int })
       end
@@ -470,13 +533,13 @@ RSpec.describe Raven::Event do
       end
 
       it 'accepts an options hash' do
-        expect(Raven::Event.capture_message(message, logger: 'logger').logger).to eq('logger')
+        expect(Raven::Event.capture_message(message, logger: 'logger', **essential_options).logger).to eq('logger')
       end
 
       it 'accepts a stacktrace' do
         backtrace = ["/path/to/some/file:22:in `function_name'",
                      "/some/other/path:1412:in `other_function'"]
-        evt = Raven::Event.capture_message(message, backtrace: backtrace)
+        evt = Raven::Event.capture_message(message, backtrace: backtrace, **essential_options)
         expect(evt[:stacktrace]).to be_a(Raven::StacktraceInterface)
 
         frames = evt[:stacktrace].to_hash[:frames]
@@ -495,11 +558,11 @@ RSpec.describe Raven::Event do
   describe '.capture_exception' do
     let(:message) { 'This is a message' }
     let(:exception) { Exception.new(message) }
-    let(:hash) { Raven::Event.capture_exception(exception).to_hash }
+    let(:hash) { Raven::Event.capture_exception(exception, **essential_options).to_hash }
 
     context 'for an Exception' do
       it 'returns an event' do
-        expect(Raven::Event.capture_exception(exception)).to be_a(Raven::Event)
+        expect(Raven::Event.capture_exception(exception, **essential_options)).to be_a(Raven::Event)
       end
 
       it "sets the message to the exception's value and type" do
@@ -538,7 +601,7 @@ RSpec.describe Raven::Event do
     context 'for a Raven::Error' do
       let(:exception) { Raven::Error.new }
       it 'does not create an event' do
-        expect(Raven::Event.capture_exception(exception)).to be_nil
+        expect(Raven::Event.capture_exception(exception, **essential_options)).to be_nil
       end
     end
 
@@ -554,65 +617,69 @@ RSpec.describe Raven::Event do
         config
       end
 
+      let(:essential_options) do
+        {
+          configuration: config,
+          context: Raven.context,
+          breadcrumbs: Raven.breadcrumbs
+        }
+      end
+
       context "invalid exclusion type" do
         it 'returns Raven::Event' do
           config.excluded_exceptions << nil
           config.excluded_exceptions << 1
           config.excluded_exceptions << {}
-          expect(Raven::Event.capture_exception(Raven::Test::BaseExc.new,
-                                                configuration: config)).to be_a(Raven::Event)
+          expect(Raven::Event.capture_exception(Raven::Test::BaseExc.new, essential_options)).to be_a(Raven::Event)
         end
       end
 
       context "defined by string type" do
         it 'returns nil for a class match' do
           config.excluded_exceptions << 'Raven::Test::BaseExc'
-          expect(Raven::Event.capture_exception(Raven::Test::BaseExc.new,
-                                                configuration: config)).to be_nil
+          expect(Raven::Event.capture_exception(Raven::Test::BaseExc.new, essential_options)).to be_nil
         end
 
         it 'returns nil for a top class match' do
           config.excluded_exceptions << '::Raven::Test::BaseExc'
-          expect(Raven::Event.capture_exception(Raven::Test::BaseExc.new,
-                                                configuration: config)).to be_nil
+          expect(Raven::Event.capture_exception(Raven::Test::BaseExc.new, essential_options)).to be_nil
         end
 
         it 'returns nil for a sub class match' do
           config.excluded_exceptions << 'Raven::Test::BaseExc'
-          expect(Raven::Event.capture_exception(Raven::Test::SubExc.new,
-                                                configuration: config)).to be_nil
+          expect(Raven::Event.capture_exception(Raven::Test::SubExc.new, essential_options)).to be_nil
         end
 
         it 'returns nil for a tagged class match' do
           config.excluded_exceptions << 'Raven::Test::ExcTag'
-          expect(Raven::Event.capture_exception(Raven::Test::SubExc.new.tap { |x| x.extend(Raven::Test::ExcTag) },
-                                                configuration: config)).to be_nil
+          expect(
+            Raven::Event.capture_exception(
+              Raven::Test::SubExc.new.tap { |x| x.extend(Raven::Test::ExcTag) },
+              essential_options
+            )
+          ).to be_nil
         end
 
         it 'returns Raven::Event for an undefined exception class' do
           config.excluded_exceptions << 'Raven::Test::NonExistentExc'
-          expect(Raven::Event.capture_exception(Raven::Test::BaseExc.new,
-                                                configuration: config)).to be_a(Raven::Event)
+          expect(Raven::Event.capture_exception(Raven::Test::BaseExc.new, essential_options)).to be_a(Raven::Event)
         end
       end
 
       context "defined by class type" do
         it 'returns nil for a class match' do
           config.excluded_exceptions << Raven::Test::BaseExc
-          expect(Raven::Event.capture_exception(Raven::Test::BaseExc.new,
-                                                configuration: config)).to be_nil
+          expect(Raven::Event.capture_exception(Raven::Test::BaseExc.new, essential_options)).to be_nil
         end
 
         it 'returns nil for a sub class match' do
           config.excluded_exceptions << Raven::Test::BaseExc
-          expect(Raven::Event.capture_exception(Raven::Test::SubExc.new,
-                                                configuration: config)).to be_nil
+          expect(Raven::Event.capture_exception(Raven::Test::SubExc.new, essential_options)).to be_nil
         end
 
         it 'returns nil for a tagged class match' do
           config.excluded_exceptions << Raven::Test::ExcTag
-          expect(Raven::Event.capture_exception(Raven::Test::SubExc.new.tap { |x| x.extend(Raven::Test::ExcTag) },
-                                                configuration: config)).to be_nil
+          expect(Raven::Event.capture_exception(Raven::Test::SubExc.new.tap { |x| x.extend(Raven::Test::ExcTag) }, essential_options)).to be_nil
         end
       end
     end
@@ -714,29 +781,27 @@ RSpec.describe Raven::Event do
       end
     end
 
-    it 'accepts an options hash' do
-      expect(Raven::Event.capture_exception(exception, logger: 'logger').logger).to eq('logger')
-    end
-
     it 'uses an annotation if one exists' do
       Raven.annotate_exception(exception, logger: 'logger')
-      expect(Raven::Event.capture_exception(exception).logger).to eq('logger')
+      expect(Raven::Event.capture_exception(exception, **essential_options).logger).to eq('logger')
     end
 
     it 'accepts a checksum' do
-      expect(Raven::Event.capture_exception(exception, checksum: 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa').checksum).to eq('aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa')
+      event = Raven::Event.capture_exception(exception, checksum: 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa', **essential_options)
+      expect(event.checksum).to eq('aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa')
     end
 
     it 'accepts a release' do
-      expect(Raven::Event.capture_exception(exception, release: '1.0').release).to eq('1.0')
+      expect(Raven::Event.capture_exception(exception, release: '1.0', **essential_options).release).to eq('1.0')
     end
 
     it 'accepts a fingerprint' do
-      expect(Raven::Event.capture_exception(exception, fingerprint: ['{{ default }}', 'foo']).fingerprint).to eq(['{{ default }}', 'foo'])
+      event = Raven::Event.capture_exception(exception, fingerprint: ['{{ default }}', 'foo'], **essential_options)
+      expect(event.fingerprint).to eq(['{{ default }}', 'foo'])
     end
 
     it 'accepts a logger' do
-      expect(Raven::Event.capture_exception(exception, logger: 'root').logger).to eq('root')
+      expect(Raven::Event.capture_exception(exception, logger: 'root', **essential_options).logger).to eq('root')
     end
   end
 end
