@@ -118,6 +118,19 @@ module Raven
     # Otherwise, can be one of "http", "https", or "dummy"
     attr_accessor :scheme
 
+    # a proc/lambda that takes an array of stack traces
+    # it'll be used to silence (reduce) backtrace of the exception
+    #
+    # for example:
+    #
+    # ```ruby
+    # Raven.configuration.backtrace_cleanup_callback = lambda do |backtrace|
+    #   Rails.backtrace_cleaner.clean(backtrace)
+    # end
+    # ```
+    #
+    attr_accessor :backtrace_cleanup_callback
+
     # Secret key for authentication with the Sentry server
     # If you provide a DSN, this will be set automatically.
     #

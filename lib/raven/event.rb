@@ -175,7 +175,7 @@ module Raven
     end
 
     def stacktrace_interface_from(backtrace)
-      Backtrace.parse(backtrace).lines.reverse.each_with_object([]) do |line, memo|
+      Backtrace.parse(backtrace, { configuration: configuration }).lines.reverse.each_with_object([]) do |line, memo|
         frame = StacktraceInterface::Frame.new
         frame.abs_path = line.file if line.file
         frame.function = line.method if line.method

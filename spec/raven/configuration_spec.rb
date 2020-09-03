@@ -254,6 +254,18 @@ RSpec.describe Raven::Configuration do
     end
   end
 
+  describe "config: backtrace_cleanup_callback" do
+    it "defaults to nil" do
+      expect(subject.backtrace_cleanup_callback).to eq(nil)
+    end
+
+    it "takes a proc and store it" do
+      subject.backtrace_cleanup_callback = proc {}
+
+      expect(subject.backtrace_cleanup_callback).to be_a(Proc)
+    end
+  end
+
   context 'with a should_capture callback configured' do
     before(:each) do
       subject.should_capture = ->(exc_or_msg) { exc_or_msg != "dont send me" }
