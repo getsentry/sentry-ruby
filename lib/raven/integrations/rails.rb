@@ -5,6 +5,7 @@ module Raven
     require 'raven/integrations/rails/overrides/streaming_reporter'
     require 'raven/integrations/rails/controller_methods'
     require 'raven/integrations/rails/controller_transaction'
+    require 'raven/integrations/rails/backtrace_cleaner'
     require 'raven/integrations/rack'
 
     initializer "raven.use_rack_middleware" do |app|
@@ -37,6 +38,12 @@ module Raven
 
     config.before_initialize do
       Raven.configuration.logger = ::Rails.logger
+
+      backtrace_cleaner = Raven::Rails::BacktraceCleaner.new
+
+      Raven.configuration.backtrace_cleanup_callback = lambda do |backtrace|
+        backtrace_cleaner.clean(backtrace)
+      end
     end
 
     config.after_initialize do
