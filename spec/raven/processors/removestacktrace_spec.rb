@@ -8,7 +8,7 @@ RSpec.describe Raven::Processor::RemoveStacktrace do
   end
 
   it 'should remove stacktraces' do
-    data = Raven::Event.capture_exception(build_exception).to_hash
+    data = Raven.capture_exception(build_exception).to_hash
 
     expect(data[:exception][:values][0][:stacktrace]).to_not eq(nil)
     result = @processor.process(data)
@@ -19,7 +19,7 @@ RSpec.describe Raven::Processor::RemoveStacktrace do
   # Only check causes when they're supported
   if Exception.new.respond_to? :cause
     it 'should remove stacktraces from causes' do
-      data = Raven::Event.capture_exception(build_exception_with_cause).to_hash
+      data = Raven.capture_exception(build_exception_with_cause).to_hash
 
       expect(data[:exception][:values][0][:stacktrace]).to_not eq(nil)
       expect(data[:exception][:values][1][:stacktrace]).to_not eq(nil)
@@ -30,7 +30,7 @@ RSpec.describe Raven::Processor::RemoveStacktrace do
     end
 
     it 'should remove stacktraces from nested causes' do
-      data = Raven::Event.capture_exception(build_exception_with_two_causes).to_hash
+      data = Raven.capture_exception(build_exception_with_two_causes).to_hash
 
       expect(data[:exception][:values][0][:stacktrace]).to_not eq(nil)
       expect(data[:exception][:values][1][:stacktrace]).to_not eq(nil)
@@ -45,7 +45,7 @@ RSpec.describe Raven::Processor::RemoveStacktrace do
 
   if defined?(Rails) # depends on activesupport
     it 'should remove stacktraces even when keys are strings' do
-      data = Raven::Event.capture_exception(build_exception).to_hash.deep_stringify_keys
+      data = Raven.capture_exception(build_exception).to_hash.deep_stringify_keys
 
       expect(data["exception"]["values"][0]["stacktrace"]).to_not eq(nil)
       result = @processor.process(data)

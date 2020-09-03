@@ -14,7 +14,7 @@ RSpec.describe Raven::Transports::HTTP do
     end
     client.configuration.http_adapter = [:test, stubs]
 
-    event = JSON.generate(Raven::Event.from_message("test").to_hash)
+    event = JSON.generate(Raven.capture_message("test").to_hash)
     expect { client.send(:transport).send_event("test", event) }.to raise_error(Raven::Error, /the server responded with status 404/)
 
     stubs.verify_stubbed_calls
@@ -26,7 +26,7 @@ RSpec.describe Raven::Transports::HTTP do
     end
     client.configuration.http_adapter = [:test, stubs]
 
-    event = JSON.generate(Raven::Event.from_message("test").to_hash)
+    event = JSON.generate(Raven.capture_message("test").to_hash)
     expect { client.send(:transport).send_event("test", event) }.to raise_error(Raven::Error, /the server responded with status 500/)
 
     stubs.verify_stubbed_calls
@@ -38,7 +38,7 @@ RSpec.describe Raven::Transports::HTTP do
     end
     client.configuration.http_adapter = [:test, stubs]
 
-    event = JSON.generate(Raven::Event.from_message("test").to_hash)
+    event = JSON.generate(Raven.capture_message("test").to_hash)
     expect { client.send(:transport).send_event("test", event) }.to raise_error(Raven::Error, /error_in_header/)
 
     stubs.verify_stubbed_calls
