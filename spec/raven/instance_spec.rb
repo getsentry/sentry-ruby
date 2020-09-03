@@ -2,9 +2,9 @@ require 'spec_helper'
 require 'raven/instance'
 
 RSpec.describe Raven::Instance do
-  let(:event) { Raven::Event.new(:id => "event_id") }
+  let(:event) { Raven::Event.new(id: "event_id", configuration: configuration, context: Raven.context, breadcrumbs: Raven.breadcrumbs) }
   let(:options) { { :key => "value" } }
-  let(:event_options) { options.merge(:context => subject.context, :configuration => configuration) }
+  let(:event_options) { options.merge(:context => subject.context, :configuration => configuration, breadcrumbs: Raven.breadcrumbs) }
   let(:context) { nil }
   let(:configuration) do
     config = Raven::Configuration.new

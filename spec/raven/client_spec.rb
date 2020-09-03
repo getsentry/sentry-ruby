@@ -21,12 +21,12 @@ RSpec.describe Raven::Client do
   end
 
   it "generates a message with exception" do
-    event = Raven::Event.capture_exception(ZeroDivisionError.new("divided by 0")).to_hash
+    event = Raven.capture_exception(ZeroDivisionError.new("divided by 0")).to_hash
     expect(client.send(:get_message_from_exception, event)).to eq("ZeroDivisionError: divided by 0")
   end
 
   it "generates a message without exception" do
-    event = Raven::Event.from_message("this is an STDOUT transport test").to_hash
+    event = Raven.capture_message("this is an STDOUT transport test").to_hash
     expect(client.send(:get_message_from_exception, event)).to eq(nil)
   end
 

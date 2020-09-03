@@ -8,6 +8,7 @@ module Raven
     # See Sentry server default limits at
     # https://github.com/getsentry/sentry/blob/master/src/sentry/conf/server.py
     MAX_MESSAGE_SIZE_IN_BYTES = 1024 * 8
+    REQUIRED_OPTION_KEYS = [:configuration, :context, :breadcrumbs].freeze
 
     SDK = { "name" => "raven-ruby", "version" => Raven::VERSION }.freeze
 
@@ -19,7 +20,7 @@ module Raven
 
     attr_reader :level, :timestamp, :time_spent
 
-    def initialize(init = {})
+    def initialize(options)
       # Set some simple default values
       self.id            = SecureRandom.uuid.delete("-")
       self.timestamp     = Time.now.utc
@@ -36,11 +37,17 @@ module Raven
       self.runtime       = {} # TODO: contexts
       self.tags          = {} # TODO: contexts
 
-      copy_initial_state
+      unless REQUIRED_OPTION_KEYS.all? { |key| options.key?(key) }
+        raise "you much provide configuration, context, and breadcrumbs when initializing a Raven::Event"
+      end
+
+      self.configuration = options[:configuration]
+      self.context       = options[:context]
+      self.breadcrumbs   = options[:breadcrumbs]
 
       # Allow attributes to be set on the event at initialization
       yield self if block_given?
-      init.each_pair { |key, val| public_send("#{key}=", val) unless val.nil? }
+      options.each_pair { |key, val| public_send("#{key}=", val) unless val.nil? }
 
       set_core_attributes_from_configuration
       set_core_attributes_from_context
@@ -56,8 +63,7 @@ module Raven
                           end
       options = Raven::Utils::DeepMergeHash.deep_merge(exception_context, options)
 
-      configuration = options[:configuration] || Raven.configuration
-      return unless configuration.exception_class_allowed?(exc)
+      return unless options[:configuration].exception_class_allowed?(exc)
 
       new(options) do |evt|
         evt.add_exception_interface(exc)
@@ -88,7 +94,7 @@ module Raven
       end
 
       unless message.is_a?(String)
-        Raven.configuration.logger.debug("You're passing a non-string message")
+        configuration.logger.debug("You're passing a non-string message")
         message = message.to_s
       end
 
@@ -195,12 +201,6 @@ module Raven
     end
 
     private
-
-    def copy_initial_state
-      self.configuration = Raven.configuration
-      self.breadcrumbs   = Raven.breadcrumbs
-      self.context       = Raven.context
-    end
 
     def set_core_attributes_from_configuration
       self.server_name ||= configuration.server_name

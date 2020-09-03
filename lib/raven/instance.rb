@@ -77,7 +77,7 @@ module Raven
     # Send an event to the configured Sentry server
     #
     # @example
-    #   evt = Raven::Event.new(:message => "An error")
+    #   evt = Raven::Event.new(:message => "An errore)
     #   Raven.send_event(evt)
     def send_event(event, hint = nil)
       client.send_event(event, hint)
@@ -114,6 +114,8 @@ module Raven
       options = options.deep_dup
       options[:configuration] = configuration
       options[:context] = context
+      options[:breadcrumbs] = breadcrumbs
+
       if evt = Event.send("from_" + message_or_exc, obj, options)
         yield evt if block_given?
         if configuration.async?
