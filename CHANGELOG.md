@@ -2,6 +2,14 @@
 
 ## Unreleased
 
+- FEATURE: Exclude all 4xx Rails errors (https://github.com/getsentry/raven-ruby/pull/1004)
+- FEATURE: Add some error context in transport_failure_callback (https://github.com/getsentry/raven-ruby/pull/1003)
+- FEATURE: Support cleaning up exception backtrace with customized backtrace_cleaner (https://github.com/getsentry/raven-ruby/pull/1011)
+- FEATURE: Make dsn value accessable from config (https://github.com/getsentry/raven-ruby/pull/1012)
+- REFACTOR: Deprecate dasherized filenames (https://github.com/getsentry/raven-ruby/pull/1006)
+- REFACTOR: Accept non-string message in Event.from_exception (https://github.com/getsentry/raven-ruby/pull/1005)
+- REFACTOR: Refactor event initialization (https://github.com/getsentry/raven-ruby/pull/1010)
+
 ## 3.0.4
 
 - fix: Don't log warning messages when it doesn't need to (#1000)
