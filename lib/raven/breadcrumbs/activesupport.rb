@@ -10,9 +10,13 @@ module Raven
       end
 
       def inject
-        ActiveSupport::Notifications.subscribe(/.*/) do |name, started, finished, unique_id, data|
+        @subscriber = ActiveSupport::Notifications.subscribe(/.*/) do |name, started, finished, unique_id, data|
           add(name, started, finished, unique_id, data)
         end
+      end
+
+      def detach
+        ActiveSupport::Notifications.unsubscribe(@subscriber)
       end
     end
   end
