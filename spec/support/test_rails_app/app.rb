@@ -21,6 +21,7 @@ class TestApp < Rails::Application
 
   routes.append do
     get "/exception", :to => "hello#exception"
+    get "/view_exception", :to => "hello#view_exception"
     root :to => "hello#world"
   end
 
@@ -34,6 +35,10 @@ end
 class HelloController < ActionController::Base
   def exception
     raise "An unhandled exception!"
+  end
+
+  def view_exception
+    render inline: "<%= foo %>"
   end
 
   def world

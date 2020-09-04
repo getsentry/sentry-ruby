@@ -29,11 +29,35 @@ RSpec.describe "Rails Integration", :type => :request, :rails => true do
     expect(event["exception"]["values"][0]["value"]).to eq("An unhandled exception!")
   end
 
-  it "should properly set the exception's URL" do
+  it "should capture exceptions in production" do
     get "/exception"
 
+    expect(response.status).to eq(500)
     event = JSON.parse!(Raven.client.transport.events.first[1])
-    expect(event['request']['url']).to eq("http://www.example.com/exception")
+    expect(event["exception"]["values"][0]["type"]).to eq("RuntimeError")
+    expect(event["exception"]["values"][0]["value"]).to eq("An unhandled exception!")
+  end
+
+  it "filters exception backtrace with with custom BacktraceCleaner" do
+    get "/view_exception"
+
+    event = JSON.parse!(Raven.client.transport.events.first[1])
+    traces = event.dig("exception", "values", 0, "stacktrace", "frames")
+    expect(traces.dig(-1, "filename")).to eq("inline template")
+
+    # we want to avoid something like "_inline_template__3014794444104730113_10960"
+    expect(traces.dig(-1, "function")).to be_nil
+  end
+
+  it "doesn't filters exception backtrace if backtrace_cleanup_callback is overridden" do
+    Raven.configuration.backtrace_cleanup_callback = nil
+
+    get "/view_exception"
+
+    event = JSON.parse!(Raven.client.transport.events.first[1])
+    traces = event.dig("exception", "values", 0, "stacktrace", "frames")
+    expect(traces.dig(-1, "filename")).to eq("inline template")
+    expect(traces.dig(-1, "function")).not_to be_nil
   end
 
   it "sets transaction to ControllerName#method" do

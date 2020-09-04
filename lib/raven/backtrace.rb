@@ -94,6 +94,8 @@ module Raven
     def self.parse(backtrace, opts = {})
       ruby_lines = backtrace.is_a?(Array) ? backtrace : backtrace.split(/\n\s*/)
 
+      ruby_lines = opts[:configuration].backtrace_cleanup_callback.call(ruby_lines) if opts[:configuration]&.backtrace_cleanup_callback
+
       filters = opts[:filters] || []
       filtered_lines = ruby_lines.to_a.map do |line|
         filters.reduce(line) do |nested_line, proc|

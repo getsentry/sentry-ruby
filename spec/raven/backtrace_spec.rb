@@ -5,6 +5,19 @@ RSpec.describe Raven::Backtrace do
     @backtrace = Raven::Backtrace.parse(Thread.current.backtrace)
   end
 
+  it "calls backtrace_cleanup_callback if it's present in the configuration" do
+    called = false
+    callback = proc do |backtrace|
+      called = true
+      backtrace
+    end
+    config = Raven.configuration
+    config.backtrace_cleanup_callback = callback
+    Raven::Backtrace.parse(Thread.current.backtrace, configuration: config)
+
+    expect(called).to eq(true)
+  end
+
   it "#lines" do
     expect(@backtrace.lines.first).to be_a(Raven::Backtrace::Line)
   end
