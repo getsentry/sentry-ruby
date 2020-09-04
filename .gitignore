@@ -1,5 +1,6 @@
 coverage
 pkg
+tmp
 ruby/
 log/
 .bundle

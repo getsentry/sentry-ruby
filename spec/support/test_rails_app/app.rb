@@ -12,24 +12,6 @@ require 'raven/integrations/rails'
 ActiveSupport::Deprecation.silenced = true
 
 class TestApp < Rails::Application
-  config.secret_key_base = "test"
-
-  # Usually set for us in production.rb
-  config.eager_load = true
-
-  config.hosts = nil
-
-  routes.append do
-    get "/exception", :to => "hello#exception"
-    get "/view_exception", :to => "hello#view_exception"
-    root :to => "hello#world"
-  end
-
-  initializer :configure_release do
-    Raven.configure do |config|
-      config.release = 'beta'
-    end
-  end
 end
 
 class HelloController < ActionController::Base
@@ -44,4 +26,34 @@ class HelloController < ActionController::Base
   def world
     render :plain => "Hello World!"
   end
+end
+
+def make_basic_app
+  app = Class.new(TestApp) do
+    def self.name
+      "RailsTestApp"
+    end
+  end
+
+  app.config.hosts = nil
+  app.config.secret_key_base = "test"
+
+  # Usually set for us in production.rb
+  app.config.eager_load = true
+  app.routes.append do
+    get "/exception", :to => "hello#exception"
+    get "/view_exception", :to => "hello#view_exception"
+    root :to => "hello#world"
+  end
+
+  app.initializer :configure_release do
+    Raven.configure do |config|
+      config.release = 'beta'
+    end
+  end
+
+  app.initialize!
+
+  Rails.application = app
+  app
 end
