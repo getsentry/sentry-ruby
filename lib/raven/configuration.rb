@@ -185,6 +185,9 @@ module Raven
     # Errors object - an Array that contains error messages. See #
     attr_reader :errors
 
+    # the dsn value, whether it's set via `config.dsn=` or `ENV["SENTRY_DSN"]`
+    attr_reader :dsn
+
     # Most of these errors generate 4XX responses. In general, Sentry clients
     # only automatically report 5xx responses.
     IGNORE_DEFAULT = [
@@ -262,6 +265,8 @@ module Raven
 
     def server=(value)
       return if value.nil?
+
+      @dsn = value
 
       uri = URI.parse(value)
       uri_path = uri.path.split('/')
