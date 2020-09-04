@@ -2,13 +2,13 @@
 
 ## Unreleased
 
-- FEATURE: Exclude all 4xx Rails errors (https://github.com/getsentry/raven-ruby/pull/1004)
-- FEATURE: Add some error context in transport_failure_callback (https://github.com/getsentry/raven-ruby/pull/1003)
-- FEATURE: Support cleaning up exception backtrace with customized backtrace_cleaner (https://github.com/getsentry/raven-ruby/pull/1011)
-- FEATURE: Make dsn value accessable from config (https://github.com/getsentry/raven-ruby/pull/1012)
-- REFACTOR: Deprecate dasherized filenames (https://github.com/getsentry/raven-ruby/pull/1006)
-- REFACTOR: Accept non-string message in Event.from_exception (https://github.com/getsentry/raven-ruby/pull/1005)
-- REFACTOR: Refactor event initialization (https://github.com/getsentry/raven-ruby/pull/1010)
+- FEATURE: Exclude all 4xx Rails errors ([#1004](https://github.com/getsentry/raven-ruby/pull/1004))
+- FEATURE: Add some error context in transport_failure_callback ([#1003](https://github.com/getsentry/raven-ruby/pull/1003))
+- FEATURE: Support cleaning up exception backtrace with customized backtrace_cleaner ([#1011](https://github.com/getsentry/raven-ruby/pull/1011))
+- FEATURE: Make dsn value accessable from config ([#1012](https://github.com/getsentry/raven-ruby/pull/1012))
+- REFACTOR: Deprecate dasherized filenames ([#1006](https://github.com/getsentry/raven-ruby/pull/1006))
+- REFACTOR: Accept non-string message in Event.from_exception ([#1005](https://github.com/getsentry/raven-ruby/pull/1005))
+- REFACTOR: Refactor event initialization ([#1010](https://github.com/getsentry/raven-ruby/pull/1010))
 
 ## 3.0.4
 
