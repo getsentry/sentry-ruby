@@ -15,8 +15,7 @@ Raven.configure do |config|
   config.dsn = "dummy://12345:67890@sentry.localdomain:3000/sentry/42"
 end
 
-TestApp.initialize!
-@app = Rack::MockRequest.new(TestApp)
+@app = make_basic_app
 RAILS_EXC = begin
   @app.get("/exception")
 rescue => exc

@@ -2,7 +2,7 @@ require "spec_helper"
 
 RSpec.describe "Rails Integration", :type => :request, :rails => true do
   before(:all) do
-    TestApp.initialize!
+    make_basic_app
   end
 
   after(:each) do
@@ -10,7 +10,7 @@ RSpec.describe "Rails Integration", :type => :request, :rails => true do
   end
 
   it "inserts middleware" do
-    expect(TestApp.middleware).to include(Raven::Rack)
+    expect(Rails.application.middleware).to include(Raven::Rack)
   end
 
   it "doesn't do anything on a normal route" do

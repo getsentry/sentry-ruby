@@ -23,8 +23,7 @@ Raven.configure do |config|
   config.async = ->(event) { event.to_hash } # Simulate throwing this into a Sidekiq job, etc
 end
 
-TestApp.initialize!
-@app = Rack::MockRequest.new(TestApp)
+@app = make_basic_app
 RAILS_EXC = begin
   @app.get("/exception")
 rescue => exc
