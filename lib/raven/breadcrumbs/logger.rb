@@ -10,20 +10,6 @@ module Raven
       ::Logger::FATAL => 'fatal'
     }.freeze
 
-    EXC_FORMAT = /^([a-zA-Z0-9]+)\:\s(.*)$/.freeze
-
-    def self.parse_exception(message)
-      lines = message.split(/\n\s*/)
-      # TODO: wat
-      return nil unless lines.length > 2
-
-      match = lines[0].match(EXC_FORMAT)
-      return nil unless match
-
-      _, type, value = match.to_a
-      [type, value]
-    end
-
     def add(*args)
       add_breadcrumb(*args)
       super
@@ -41,24 +27,16 @@ module Raven
       last_crumb = Raven.breadcrumbs.peek
       # try to avoid dupes from logger broadcasts
       if last_crumb.nil? || last_crumb.message != message
-        error = Raven::BreadcrumbLogger.parse_exception(message)
-        # TODO(dcramer): we need to filter out the "currently captured error"
-        if error
-          Raven.breadcrumbs.record do |crumb|
-            crumb.level = Raven::BreadcrumbLogger::LEVELS.fetch(severity, nil)
-            crumb.category = progname || 'error'
-            crumb.type = 'error'
-            crumb.data = {
-              :type => error[0],
-              :value => error[1]
-            }
-          end
-        else
-          Raven.breadcrumbs.record do |crumb|
-            crumb.level = Raven::BreadcrumbLogger::LEVELS.fetch(severity, nil)
-            crumb.category = progname || 'logger'
-            crumb.message = message
-          end
+        Raven.breadcrumbs.record do |crumb|
+          crumb.level = Raven::BreadcrumbLogger::LEVELS.fetch(severity, nil)
+          crumb.category = progname || 'logger'
+          crumb.message = message
+          crumb.type =
+            if severity >= 3
+              "error"
+            else
+              crumb.level
+            end
         end
       end
     end

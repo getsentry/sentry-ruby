@@ -29,7 +29,7 @@ RSpec.describe "Raven::BreadcrumbLogger", :type => :request, :rails => true do
         "level" => "info",
         "message" => "Processing by HelloController#exception as HTML",
         "timestamp" => anything,
-        "type" => nil
+        "type" => "info"
       }
     )
   end
