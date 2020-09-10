@@ -1,4 +1,5 @@
 require 'rbconfig'
+require 'etc'
 
 module Raven
   class Context
@@ -24,18 +25,22 @@ module Raven
 
     class << self
       def os_context
-        @os_context ||= {
-          :name => Raven.sys_command("uname -s") || RbConfig::CONFIG["host_os"],
-          :version => Raven.sys_command("uname -v"),
-          :build => Raven.sys_command("uname -r"),
-          :kernel_version => Raven.sys_command("uname -a") || Raven.sys_command("ver") # windows
-        }
+        @os_context ||=
+          begin
+            uname = Etc.uname
+            {
+              name: uname[:sysname] || RbConfig::CONFIG["host_os"],
+              version: uname[:version],
+              build: uname[:release],
+              kernel_version: uname[:version]
+            }
+          end
       end
 
       def runtime_context
         @runtime_context ||= {
-          :name => RbConfig::CONFIG["ruby_install_name"],
-          :version => Raven.sys_command("ruby -v")
+          name: RbConfig::CONFIG["ruby_install_name"],
+          version: RUBY_DESCRIPTION || Raven.sys_command("ruby -v")
         }
       end
     end
