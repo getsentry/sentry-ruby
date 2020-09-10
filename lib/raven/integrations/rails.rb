@@ -48,8 +48,8 @@ module Raven
 
     config.after_initialize do
       if Raven.configuration.rails_activesupport_breadcrumbs
-        require 'raven/breadcrumbs/activesupport'
-        Raven::ActiveSupportBreadcrumbs.inject
+        require 'raven/breadcrumbs/active_support_logger'
+        Raven::Breadcrumbs::ActiveSupportLogger.inject
       end
 
       if Raven.configuration.rails_report_rescued_exceptions

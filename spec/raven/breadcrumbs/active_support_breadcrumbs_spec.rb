@@ -1,6 +1,6 @@
 require "spec_helper"
 
-RSpec.describe "Raven::ActiveSupportBreadcrumbs", :type => :request, :rails => true do
+RSpec.describe "Raven::Breadcrumbs::ActiveSupportLogger", :type => :request, :rails => true do
   before(:all) do
     Raven.configuration.rails_activesupport_breadcrumbs = true
     Rails.application = make_basic_app
@@ -8,9 +8,9 @@ RSpec.describe "Raven::ActiveSupportBreadcrumbs", :type => :request, :rails => t
 
   after(:all) do
     Raven.configuration.rails_activesupport_breadcrumbs = false
-    Raven::ActiveSupportBreadcrumbs.detach
+    Raven::Breadcrumbs::ActiveSupportLogger.detach
     # even though we cleanup breadcrumbs in the rack middleware
-    # ActiveSupportBreadcrumbs subscribes to "every" instrumentation
+    # Breadcrumbs::ActiveSupportLogger subscribes to "every" instrumentation
     # so it'll create other instrumentations "after" the request is finished
     # and we should clear those as well
     Raven::BreadcrumbBuffer.clear!
