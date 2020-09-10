@@ -1,6 +1,6 @@
 module Raven
   class CLI
-    def self.test(dsn = nil, silent = false, config = nil) # rubocop:disable all
+    def self.test(dsn = nil, silent = false, config = nil)
       config ||= Raven.configuration
 
       config.logger = if silent
