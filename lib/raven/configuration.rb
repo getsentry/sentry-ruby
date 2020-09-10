@@ -12,6 +12,11 @@ module Raven
     attr_reader :async
     alias async? async
 
+    # An array of breadcrumbs loggers to be used. Available options are:
+    # - :sentry_logger
+    # - :active_support_logger
+    attr_reader :breadcrumbs_logger
+
     # Number of lines of code context to capture, or nil for none
     attr_accessor :context_lines
 
@@ -83,7 +88,7 @@ module Raven
     attr_accessor :public_key
 
     # Turns on ActiveSupport breadcrumbs integration
-    attr_accessor :rails_activesupport_breadcrumbs
+    attr_reader :rails_activesupport_breadcrumbs
 
     # Rails catches exceptions in the ActionDispatch::ShowExceptions or
     # ActionDispatch::DebugExceptions middlewares, depending on the environment.
@@ -230,8 +235,11 @@ module Raven
     LOG_PREFIX = "** [Raven] ".freeze
     MODULE_SEPARATOR = "::".freeze
 
+    AVAILABLE_BREADCRUMBS_LOGGERS = [:sentry_logger, :active_support_logger].freeze
+
     def initialize
       self.async = false
+      self.breadcrumbs_logger = []
       self.context_lines = 3
       self.current_environment = current_environment_from_env
       self.encoding = 'gzip'
@@ -244,7 +252,8 @@ module Raven
       self.open_timeout = 1
       self.processors = DEFAULT_PROCESSORS.dup
       self.project_root = detect_project_root
-      self.rails_activesupport_breadcrumbs = false
+      @rails_activesupport_breadcrumbs = false
+
       self.rails_report_rescued_exceptions = true
       self.release = detect_release
       self.sample_rate = 1.0
@@ -304,6 +313,23 @@ module Raven
       @async = value
     end
 
+    def breadcrumbs_logger=(logger)
+      loggers =
+        if logger.is_a?(Array)
+          logger
+        else
+          unless AVAILABLE_BREADCRUMBS_LOGGERS.include?(logger)
+            raise Raven::Error, "Unsupported breadcrumbs logger. Supported loggers: #{AVAILABLE_BREADCRUMBS_LOGGERS}"
+          end
+
+          Array(logger)
+        end
+
+      require "raven/breadcrumbs/sentry_logger" if loggers.include?(:sentry_logger)
+
+      @breadcrumbs_logger = logger
+    end
+
     def transport_failure_callback=(value)
       unless value == false || value.respond_to?(:call)
         raise(ArgumentError, "transport_failure_callback must be callable (or false to disable)")
@@ -358,6 +384,11 @@ module Raven
     def project_root=(root_dir)
       @project_root = root_dir
       Backtrace::Line.instance_variable_set(:@in_app_pattern, nil) # blow away cache
+    end
+
+    def rails_activesupport_breadcrumbs=(val)
+      DeprecationHelper.deprecate_old_breadcrumbs_configuration(:active_support_logger)
+      @rails_activesupport_breadcrumbs = val
     end
 
     def exception_class_allowed?(exc)

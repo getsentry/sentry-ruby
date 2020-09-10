@@ -20,11 +20,8 @@ module Rails60
     # https://github.com/getsentry/raven-ruby/issues/494
     config.exceptions_app = self.routes
 
-    # Inject Sentry logger breadcrumbs
-    require 'raven/breadcrumbs/logger'
-
     Raven.configure do |config|
-      config.rails_activesupport_breadcrumbs = true
+      config.breadcrumbs_logger = [:sentry_logger, :active_support_logger]
       config.dsn = 'https://6bca098db7ef423ab983e26e27255fe8:650b2fcf94f942fe9093f656b809a94e@app.getsentry.com/3825'
     end
   end

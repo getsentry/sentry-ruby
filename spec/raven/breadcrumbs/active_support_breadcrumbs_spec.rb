@@ -2,12 +2,12 @@ require "spec_helper"
 
 RSpec.describe "Raven::Breadcrumbs::ActiveSupportLogger", :type => :request, :rails => true do
   before(:all) do
-    Raven.configuration.rails_activesupport_breadcrumbs = true
+    Raven.configuration.breadcrumbs_logger = [:active_support_logger]
     Rails.application = make_basic_app
   end
 
   after(:all) do
-    Raven.configuration.rails_activesupport_breadcrumbs = false
+    Raven.configuration.breadcrumbs_logger = []
     Raven::Breadcrumbs::ActiveSupportLogger.detach
     # even though we cleanup breadcrumbs in the rack middleware
     # Breadcrumbs::ActiveSupportLogger subscribes to "every" instrumentation

@@ -1,4 +1,5 @@
 require 'raven/version'
+require "raven/helpers/deprecation_helper"
 require 'raven/core_ext/object/deep_dup'
 require 'raven/backtrace'
 require 'raven/breadcrumbs'

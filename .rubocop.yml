@@ -23,7 +23,7 @@ Metrics/PerceivedComplexity:
   Max: 11
 
 Metrics/MethodLength:
-  Max: 30
+  Max: 40
 
 Style/SymbolArray:
   Enabled: false
