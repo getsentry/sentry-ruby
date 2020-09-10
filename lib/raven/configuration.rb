@@ -12,6 +12,11 @@ module Raven
     attr_reader :async
     alias async? async
 
+    # An array of breadcrumbs loggers to be used. Available options are:
+    # - :sentry_logger
+    # - :active_support_logger
+    attr_reader :breadcrumbs_logger
+
     # Number of lines of code context to capture, or nil for none
     attr_accessor :context_lines
 
@@ -230,8 +235,11 @@ module Raven
     LOG_PREFIX = "** [Raven] ".freeze
     MODULE_SEPARATOR = "::".freeze
 
+    AVAILABLE_BREADCRUMBS_LOGGERS = [:sentry_logger, :active_support_logger].freeze
+
     def initialize
       self.async = false
+      self.breadcrumbs_logger = []
       self.context_lines = 3
       self.current_environment = current_environment_from_env
       self.encoding = 'gzip'
@@ -302,6 +310,23 @@ module Raven
       end
 
       @async = value
+    end
+
+    def breadcrumbs_logger=(logger)
+      loggers =
+        if logger.is_a?(Array)
+          logger
+        else
+          unless AVAILABLE_BREADCRUMBS_LOGGERS.include?(logger)
+            raise Raven::Error, "Unsupported breadcrumbs logger. Supported loggers: #{AVAILABLE_BREADCRUMBS_LOGGERS}"
+          end
+
+          Array(logger)
+        end
+
+      require "raven/breadcrumbs/sentry_logger" if loggers.include?(:sentry_logger)
+
+      @breadcrumbs_logger = logger
     end
 
     def transport_failure_callback=(value)

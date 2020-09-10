@@ -26,6 +26,15 @@ RSpec.describe Raven::Configuration do
     expect(subject.server).to     eq("http://sentry.localdomain:3000/sentry")
   end
 
+  describe "#breadcrumbs_logger=" do
+    it "raises error when given an invalid option" do
+      expect { subject.breadcrumbs_logger = :foo }.to raise_error(
+        Raven::Error,
+        'Unsupported breadcrumbs logger. Supported loggers: [:sentry_logger, :active_support_logger]'
+      )
+    end
+  end
+
   it "doesnt accept invalid encodings" do
     expect { subject.encoding = "apple" }.to raise_error(Raven::Error, 'Unsupported encoding')
   end

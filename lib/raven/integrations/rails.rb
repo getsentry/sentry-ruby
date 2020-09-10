@@ -47,7 +47,9 @@ module Raven
     end
 
     config.after_initialize do
-      if Raven.configuration.rails_activesupport_breadcrumbs
+      if Raven.configuration.breadcrumbs_logger.include?(:active_support_logger) ||
+         Raven.configuration.rails_activesupport_breadcrumbs
+
         require 'raven/breadcrumbs/active_support_logger'
         Raven::Breadcrumbs::ActiveSupportLogger.inject
       end
