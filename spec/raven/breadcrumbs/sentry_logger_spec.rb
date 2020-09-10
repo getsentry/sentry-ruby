@@ -1,14 +1,14 @@
 require "spec_helper"
 
-RSpec.describe "Raven::BreadcrumbLogger", :type => :request, :rails => true do
+RSpec.describe "Raven::Breadcrumbs::SentryLogger", :type => :request, :rails => true do
   before(:all) do
-    require "raven/breadcrumbs/logger"
+    require "raven/breadcrumbs/sentry_logger"
     Rails.application = make_basic_app
   end
 
   after(:all) do
     # revert the injected methods to keep other specs clean
-    Raven::BreadcrumbLogger.module_eval do
+    Raven::Breadcrumbs::SentryLogger.module_eval do
       def add(*args)
         super
       end
