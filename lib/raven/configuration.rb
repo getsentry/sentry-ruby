@@ -88,7 +88,7 @@ module Raven
     attr_accessor :public_key
 
     # Turns on ActiveSupport breadcrumbs integration
-    attr_accessor :rails_activesupport_breadcrumbs
+    attr_reader :rails_activesupport_breadcrumbs
 
     # Rails catches exceptions in the ActionDispatch::ShowExceptions or
     # ActionDispatch::DebugExceptions middlewares, depending on the environment.
@@ -252,7 +252,8 @@ module Raven
       self.open_timeout = 1
       self.processors = DEFAULT_PROCESSORS.dup
       self.project_root = detect_project_root
-      self.rails_activesupport_breadcrumbs = false
+      @rails_activesupport_breadcrumbs = false
+
       self.rails_report_rescued_exceptions = true
       self.release = detect_release
       self.sample_rate = 1.0
@@ -383,6 +384,11 @@ module Raven
     def project_root=(root_dir)
       @project_root = root_dir
       Backtrace::Line.instance_variable_set(:@in_app_pattern, nil) # blow away cache
+    end
+
+    def rails_activesupport_breadcrumbs=(val)
+      DeprecationHelper.deprecate_old_breadcrumbs_configuration(:active_support_logger)
+      @rails_activesupport_breadcrumbs = val
     end
 
     def exception_class_allowed?(exc)
