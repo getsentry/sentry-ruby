@@ -63,6 +63,12 @@ RSpec.describe "Sidekiq full-stack integration" do
     @processor = manager.workers.first
   end
 
+  after do
+    # those test jobs will go into the real Redis and be visiable to other sidekiq processes
+    # this can affect local testing and development, so we should clear them after each test
+    Sidekiq::RetrySet.new.clear
+  end
+
   def process_job(klass)
     msg = Sidekiq.dump_json("class" => klass)
     job = Sidekiq::BasicFetch::UnitOfWork.new('queue:default', msg)
