@@ -247,14 +247,34 @@ RSpec.describe Raven::Instance do
 
   describe "#user_context" do
     context "without a block" do
-      it "empties the context when called" do
+      it "empties the user context when called" do
         subject.context.user = { id: 1 }
         expect(subject.user_context).to eq({})
       end
 
-      it "returns the context when set" do
+      it "returns the user context when set" do
         expected = { id: 1 }
         expect(subject.user_context(expected)).to eq(expected)
+      end
+    end
+
+    context "with a block" do
+      it "returns the user context when set" do
+        expected = { id: 1 }
+        user_context = subject.user_context(expected) do
+          # do nothing
+        end
+        expect(user_context).to eq expected
+      end
+
+      it "sets user context only in the block" do
+        subject.context.user = previous_user_context = { id: 9999 }
+        new_user_context = { id: 1 }
+
+        subject.user_context(new_user_context) do
+          expect(subject.context.user).to eq new_user_context
+        end
+        expect(subject.context.user).to eq previous_user_context
       end
     end
   end
