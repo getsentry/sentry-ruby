@@ -4,7 +4,6 @@ require 'spec_helper'
 # so we need to load the CLI class to achieve full integration in test environment
 require 'sidekiq/cli'
 require 'sidekiq/manager'
-
 require 'raven/integrations/sidekiq'
 
 class HappyWorker
@@ -29,6 +28,10 @@ class SadWorker
 
     raise "I'm sad!"
   end
+end
+
+class SadWorkerWithoutRetry < SadWorker
+  sidekiq_options retry: 0
 end
 
 class VerySadWorker
@@ -62,10 +65,42 @@ rescue StandardError
   # do nothing
 end
 
-RSpec.describe "Sidekiq full-stack integration", :sidekiq do
+RSpec.describe "Sidekiq full-stack integration (sidekiq_report_type: :death)", :sidekiq do
   let(:processor) do
     manager = Sidekiq::Manager.new({ :queues => ['default'] })
     manager.workers.first
+  end
+
+  before :all do
+    Sidekiq.options[:error_handlers].clear
+    Sidekiq.options[:death_handlers].clear
+    Raven.configuration.sidekiq_report_type = :death
+    Raven::Sidekiq.inject
+  end
+
+  it "doesn't report jobs that still have retry" do
+    expect { process_job("SadWorker") }.to change { Raven.client.transport.events.size }.by(0)
+  end
+
+  it "reports jobs that have no retry" do
+    expect { process_job("SadWorkerWithoutRetry") }.to change { Raven.client.transport.events.size }.by(1)
+
+    event = JSON.parse(Raven.client.transport.events.last[1])
+    expect(event["logentry"]["message"]).to eq("I'm sad!")
+  end
+end
+
+RSpec.describe "Sidekiq full-stack integration (sidekiq_report_type: :error)" do
+  let(:processor) do
+    manager = Sidekiq::Manager.new({ :queues => ['default'] })
+    manager.workers.first
+  end
+
+  before :all do
+    Sidekiq.options[:error_handlers].clear
+    Sidekiq.options[:death_handlers].clear
+    Raven.configuration.sidekiq_report_type = :error
+    Raven::Sidekiq.inject
   end
 
   it "actually captures an exception" do

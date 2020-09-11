@@ -31,6 +31,10 @@ RSpec.configure do |config|
   config.disable_monkey_patching!
   Kernel.srand config.seed
 
+  config.after(:each) do
+    Raven.client.transport.events.clear
+  end
+
   config.before(:all, :sidekiq) do
     Sidekiq.logger = Logger.new(nil)
   end

@@ -156,6 +156,8 @@ module Raven
     # e.g. lambda { |exc_or_msg| exc_or_msg.some_attr == false }
     attr_reader :should_capture
 
+    attr_accessor :sidekiq_report_type
+
     # Silences ready message when true.
     attr_accessor :silence_ready
 
@@ -274,6 +276,7 @@ module Raven
       self.server = ENV['SENTRY_DSN']
       self.server_name = server_name_from_env
       self.should_capture = false
+      self.sidekiq_report_type = :error
       self.ssl_verification = true
       self.tags = {}
       self.timeout = 2
