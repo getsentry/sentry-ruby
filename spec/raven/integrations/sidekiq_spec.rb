@@ -57,13 +57,7 @@ RSpec.describe "Sidekiq full-stack integration" do
     Sidekiq.logger = Logger.new(nil)
   end
 
-  before do
-    opts = { :queues => ['default'] }
-    manager = Sidekiq::Manager.new(opts)
-    @processor = manager.workers.first
-  end
-
-  after do
+  after(:all) do
     # those test jobs will go into the real Redis and be visiable to other sidekiq processes
     # this can affect local testing and development, so we should clear them after each test
     Sidekiq::RetrySet.new.clear
@@ -77,6 +71,12 @@ RSpec.describe "Sidekiq full-stack integration" do
     @processor.send(:process, job)
   rescue StandardError
     # do nothing
+  end
+
+  before do
+    opts = { :queues => ['default'] }
+    manager = Sidekiq::Manager.new(opts)
+    @processor = manager.workers.first
   end
 
   it "actually captures an exception" do
