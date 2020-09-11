@@ -245,6 +245,20 @@ RSpec.describe Raven::Instance do
     end
   end
 
+  describe "#user_context" do
+    context "without a block" do
+      it "empties the context when called" do
+        subject.context.user = { id: 1 }
+        expect(subject.user_context).to eq({})
+      end
+
+      it "returns the context when set" do
+        expected = { id: 1 }
+        expect(subject.user_context(expected)).to eq(expected)
+      end
+    end
+  end
+
   describe "#tags_context" do
     let(:default) { { :foo => :bar } }
     let(:additional) { { :baz => :qux } }
