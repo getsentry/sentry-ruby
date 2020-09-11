@@ -80,9 +80,6 @@ RSpec.describe "Sidekiq full-stack integration" do
   end
 
   it "actually captures an exception" do
-    redis_on = Sidekiq.redis(&:info) rescue nil
-    skip("No Redis server online") unless redis_on
-
     expect { process_job("SadWorker") }.to change { Raven.client.transport.events.size }.by(1)
 
     event = JSON.parse(Raven.client.transport.events.last[1])
