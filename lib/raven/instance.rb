@@ -181,7 +181,7 @@ module Raven
       yield if block_given?
       context.user
     ensure
-      context.user = original_user_context
+      context.user = original_user_context if block_given?
     end
 
     # Bind tags context. Merges with existing context (if any).
