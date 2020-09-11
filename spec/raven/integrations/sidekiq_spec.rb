@@ -1,71 +1,11 @@
 require 'spec_helper'
 
-require 'raven/integrations/sidekiq'
+# sidekiq only enables server config when the CLI class is loaded
+# so we need to load the CLI class to achieve full integration in test environment
+require 'sidekiq/cli'
 require 'sidekiq/manager'
 
-RSpec.describe "Raven::SidekiqErrorHandler" do
-  let(:context) do
-    {
-      "args" => [true, true],
-      "class" => "HardWorker",
-      "created_at" => 1_474_922_824.910579,
-      "enqueued_at" => 1_474_922_824.910665,
-      "error_class" => "RuntimeError",
-      "error_message" => "a wild exception appeared",
-      "failed_at" => 1_474_922_825.158953,
-      "jid" => "701ed9cfa51c84a763d56bc4",
-      "queue" => "default",
-      "retry" => true,
-      "retry_count" => 0
-    }
-  end
-
-  it "should capture exceptions based on Sidekiq context" do
-    exception = build_exception
-    expected_options = {
-      :message => exception.message,
-      :extra => { :sidekiq => context }
-    }
-
-    expect(Raven).to receive(:capture_exception).with(exception, expected_options)
-
-    Raven::SidekiqErrorHandler.new.call(exception, context)
-  end
-
-  context "when the captured exception is already annotated" do
-    it "does a deep merge of options" do
-      exception = build_exception
-      Raven.annotate_exception(exception, :extra => { :job_title => "engineer" })
-      expected_options = {
-        :message => exception.message,
-        :extra => {
-          :sidekiq => context,
-          :job_title => "engineer"
-        }
-      }
-
-      expect(Raven::Event).to receive(:new).with(hash_including(expected_options))
-
-      Raven::SidekiqErrorHandler.new.call(exception, context)
-    end
-  end
-
-  it "filters out ActiveJob keys", :rails => true do
-    exception = build_exception
-    aj_context = context
-    aj_context["_aj_globalid"] = GlobalID.new('gid://app/model/id')
-    expected_context = aj_context.dup
-    expected_context.delete("_aj_globalid")
-    expected_context["_globalid"] = "gid://app/model/id"
-    expected_options = {
-      :message => exception.message,
-      :extra => { :sidekiq => expected_context }
-    }
-    expect(Raven).to receive(:capture_exception).with(exception, expected_options)
-
-    Raven::SidekiqErrorHandler.new.call(exception, aj_context)
-  end
-end
+require 'raven/integrations/sidekiq'
 
 class HappyWorker
   include Sidekiq::Worker
@@ -113,11 +53,7 @@ class ReportingWorker
 end
 
 RSpec.describe "Sidekiq full-stack integration" do
-  before(:all) do
-    Sidekiq.error_handlers << Raven::SidekiqErrorHandler.new
-    Sidekiq.server_middleware do |chain|
-      chain.add Raven::SidekiqCleanupMiddleware
-    end
+  before :all do
     Sidekiq.logger = Logger.new(nil)
   end
 
