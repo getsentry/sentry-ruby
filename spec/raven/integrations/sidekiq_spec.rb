@@ -52,31 +52,20 @@ class ReportingWorker
   end
 end
 
-RSpec.describe "Sidekiq full-stack integration" do
-  before :all do
-    Sidekiq.logger = Logger.new(nil)
-  end
+def process_job(klass)
+  msg = Sidekiq.dump_json("class" => klass)
+  job = Sidekiq::BasicFetch::UnitOfWork.new('queue:default', msg)
+  processor.instance_variable_set(:'@job', job)
 
-  after(:all) do
-    # those test jobs will go into the real Redis and be visiable to other sidekiq processes
-    # this can affect local testing and development, so we should clear them after each test
-    Sidekiq::RetrySet.new.clear
-  end
+  processor.send(:process, job)
+rescue StandardError
+  # do nothing
+end
 
-  def process_job(klass)
-    msg = Sidekiq.dump_json("class" => klass)
-    job = Sidekiq::BasicFetch::UnitOfWork.new('queue:default', msg)
-    @processor.instance_variable_set(:'@job', job)
-
-    @processor.send(:process, job)
-  rescue StandardError
-    # do nothing
-  end
-
-  before do
-    opts = { :queues => ['default'] }
-    manager = Sidekiq::Manager.new(opts)
-    @processor = manager.workers.first
+RSpec.describe "Sidekiq full-stack integration", :sidekiq do
+  let(:processor) do
+    manager = Sidekiq::Manager.new({ :queues => ['default'] })
+    manager.workers.first
   end
 
   it "actually captures an exception" do
@@ -109,7 +98,7 @@ RSpec.describe "Sidekiq full-stack integration" do
 
   it "captures exceptions raised during events" do
     Sidekiq.options[:lifecycle_events][:startup] = [proc { raise "Uhoh!" }]
-    @processor.fire_event(:startup)
+    processor.fire_event(:startup)
 
     event = JSON.parse(Raven.client.transport.events.last[1])
 

@@ -30,6 +30,16 @@ RSpec.configure do |config|
   config.raise_errors_for_deprecations!
   config.disable_monkey_patching!
   Kernel.srand config.seed
+
+  config.before(:all, :sidekiq) do
+    Sidekiq.logger = Logger.new(nil)
+  end
+
+  config.after(:all, :sidekiq) do
+    # those test jobs will go into the real Redis and be visiable to other sidekiq processes
+    # this can affect local testing and development, so we should clear them after each test
+    Sidekiq::RetrySet.new.clear
+  end
 end
 
 RSpec.shared_examples "Raven default capture behavior" do
