@@ -168,6 +168,9 @@ module Raven
     # Should the SSL certificate of the server be verified?
     attr_accessor :ssl_verification
 
+    # Default logger for events. String.
+    attr_accessor :default_logger
+
     # Default tags for events. Hash.
     attr_accessor :tags
 
@@ -270,6 +273,7 @@ module Raven
       self.timeout = 2
       self.transport_failure_callback = false
       self.before_send = false
+      self.default_logger = :ruby
     end
 
     def server=(value)

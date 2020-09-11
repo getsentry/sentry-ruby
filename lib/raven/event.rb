@@ -25,7 +25,6 @@ module Raven
       self.id            = SecureRandom.uuid.delete("-")
       self.timestamp     = Time.now.utc
       self.level         = :error
-      self.logger        = :ruby
       self.platform      = :ruby
       self.sdk           = SDK
 
@@ -207,6 +206,7 @@ module Raven
       self.release     ||= configuration.release
       self.modules       = list_gem_specs if configuration.send_modules
       self.environment ||= configuration.current_environment
+      self.logger      ||= configuration.default_logger
     end
 
     def set_core_attributes_from_context

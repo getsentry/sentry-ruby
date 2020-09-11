@@ -11,6 +11,7 @@
 - REFACTOR: Refactor event initialization ([#1010](https://github.com/getsentry/raven-ruby/pull/1010))
 - REFACTOR: Unify breadcrumb loggers activation ([#1016](https://github.com/getsentry/raven-ruby/pull/1016))
 - FIX: Fix merge error from rack-timeout raven_context on old releases ([#1007](https://github.com/getsentry/raven-ruby/pull/1007))
+- FEATURE: allow changing the default logger in events
 
 ## 3.0.4
 
