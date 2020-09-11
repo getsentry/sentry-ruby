@@ -3,7 +3,7 @@ require 'spec_helper'
 require 'raven/integrations/sidekiq'
 require 'sidekiq/manager'
 
-RSpec.describe "Raven::SidekiqErrorHandler" do
+RSpec.describe "Raven::Sidekiq::ErrorHandler" do
   let(:context) do
     {
       "args" => [true, true],
@@ -29,7 +29,7 @@ RSpec.describe "Raven::SidekiqErrorHandler" do
 
     expect(Raven).to receive(:capture_exception).with(exception, expected_options)
 
-    Raven::SidekiqErrorHandler.new.call(exception, context)
+    Raven::Sidekiq::ErrorHandler.new.call(exception, context)
   end
 
   context "when the captured exception is already annotated" do
@@ -46,7 +46,7 @@ RSpec.describe "Raven::SidekiqErrorHandler" do
 
       expect(Raven::Event).to receive(:new).with(hash_including(expected_options))
 
-      Raven::SidekiqErrorHandler.new.call(exception, context)
+      Raven::Sidekiq::ErrorHandler.new.call(exception, context)
     end
   end
 
@@ -63,7 +63,7 @@ RSpec.describe "Raven::SidekiqErrorHandler" do
     }
     expect(Raven).to receive(:capture_exception).with(exception, expected_options)
 
-    Raven::SidekiqErrorHandler.new.call(exception, aj_context)
+    Raven::Sidekiq::ErrorHandler.new.call(exception, aj_context)
   end
 end
 
@@ -114,9 +114,9 @@ end
 
 RSpec.describe "Sidekiq full-stack integration" do
   before(:all) do
-    Sidekiq.error_handlers << Raven::SidekiqErrorHandler.new
+    Sidekiq.error_handlers << Raven::Sidekiq::ErrorHandler.new
     Sidekiq.server_middleware do |chain|
-      chain.add Raven::SidekiqCleanupMiddleware
+      chain.add Raven::Sidekiq::CleanupMiddleware
     end
     Sidekiq.logger = Logger.new(nil)
   end
