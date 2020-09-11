@@ -1,24 +1,23 @@
-# README
+# Rails 6 Example For Sentry's Ruby SDK
 
-This README would normally document whatever steps are necessary to get the
-application up and running.
+## Setup
 
-Things you may want to cover:
+1. `bundle install`
+2. Set your own Sentry DSN in `config/application.rb`
 
-* Ruby version
+## Send Some Events To Sentry
 
-* System dependencies
+### Normal Rails Exception
 
-* Configuration
+1. Start the Rails server - `bundle exec rails s`
+2. Visit `localhost:3000/`
 
-* Database creation
+### Rails View Exception
 
-* Database initialization
+1. Start the Rails server - `bundle exec rails s`
+2. Visit `localhost:3000/view_error`
 
-* How to run the test suite
+### Sidekiq Worker Exception
 
-* Services (job queues, cache servers, search engines, etc.)
-
-* Deployment instructions
-
-* ...
+1. Start `sidekiq` server - `bundle exec sidekiq`
+2. Run the job with Rails runner - `bundle exec rails runner "ErrorWorker.perform_async"`
