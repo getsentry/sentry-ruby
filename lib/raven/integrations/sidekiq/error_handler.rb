@@ -3,6 +3,8 @@ require 'raven/integrations/sidekiq/context_filter'
 module Raven
   module Sidekiq
     class ErrorHandler
+      SIDEKIQ_NAME = "Sidekiq".freeze
+
       def call(ex, context)
         context = ContextFilter.filter_context(context)
         Raven.context.transaction.push transaction_from_context(context)
@@ -24,11 +26,11 @@ module Raven
                       (context[:job] && (context[:job]["wrapped"] || context[:job]["class"]))
                     )
         if classname
-          "Sidekiq/#{classname}"
+          "#{SIDEKIQ_NAME}/#{classname}"
         elsif context[:event]
-          "Sidekiq/#{context[:event]}"
+          "#{SIDEKIQ_NAME}/#{context[:event]}"
         else
-          "Sidekiq"
+          SIDEKIQ_NAME
         end
       end
     end
