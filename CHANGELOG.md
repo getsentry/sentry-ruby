@@ -1,9 +1,8 @@
 # Changelog
 
-## Unreleased
+## 3.1.0
 
-
-### Feature
+**Feature**
 
 - Exclude all 4xx Rails errors ([#1004](https://github.com/getsentry/raven-ruby/pull/1004))
 
@@ -68,7 +67,7 @@
 
     You can now access the dsn value via `Raven.configuration.dsn`
     
-### Deprecation
+**Deprecation**
 
 - Deprecate dasherized filenames ([#1006](https://github.com/getsentry/raven-ruby/pull/1006))
 
@@ -108,13 +107,13 @@
 
     Please migrate to the new activation apporach, otherwise you'll see depraction warnings. And old ones will be dropped in version 4.0.
     
-### Refactor
+**Refactor**
 
 - Accept non-string message in Event.from_exception ([#1005](https://github.com/getsentry/raven-ruby/pull/1005))
 - Refactor event initialization ([#1010](https://github.com/getsentry/raven-ruby/pull/1010))
 - Refactor sidekiq integration ([#1019](https://github.com/getsentry/raven-ruby/pull/1019))
 
-### Fix
+**Fix**
 
 - Replace sys_command usages in context.rb ([#1017](https://github.com/getsentry/raven-ruby/pull/1017))
 - Fix merge error from rack-timeout raven_context on old releases ([#1007](https://github.com/getsentry/raven-ruby/pull/1007))
