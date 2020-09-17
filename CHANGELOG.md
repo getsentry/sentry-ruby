@@ -68,7 +68,7 @@
 
     You can now access the dsn value via `Raven.configuration.dsn`
     
-### Refactor
+### Deprecation
 
 - Deprecate dasherized filenames ([#1006](https://github.com/getsentry/raven-ruby/pull/1006))
 
@@ -87,10 +87,7 @@
     # or 
     require "sentry_raven_without_integrations"
     ```
-
-- Accept non-string message in Event.from_exception ([#1005](https://github.com/getsentry/raven-ruby/pull/1005))
-- Refactor event initialization ([#1010](https://github.com/getsentry/raven-ruby/pull/1010))
-- Refactor sidekiq integration ([#1019](https://github.com/getsentry/raven-ruby/pull/1019))
+    
 - Unify breadcrumb loggers activation ([#1016](https://github.com/getsentry/raven-ruby/pull/1016))
 
     Currently, we activate our breadcrumb loggers differently:
@@ -110,10 +107,18 @@
     ```
 
     Please migrate to the new activation apporach, otherwise you'll see depraction warnings. And old ones will be dropped in version 4.0.
+    
+### Refactor
 
-- FIX: Replace sys_command usages in context.rb ([#1017](https://github.com/getsentry/raven-ruby/pull/1017))
-- FIX: Fix merge error from rack-timeout raven_context on old releases ([#1007](https://github.com/getsentry/raven-ruby/pull/1007))
-- FIX: Return value of `rescue_with_handler` when intercepting ActiveJob exceptions ([#1027](https://github.com/getsentry/raven-ruby/pull/1027))
+- Accept non-string message in Event.from_exception ([#1005](https://github.com/getsentry/raven-ruby/pull/1005))
+- Refactor event initialization ([#1010](https://github.com/getsentry/raven-ruby/pull/1010))
+- Refactor sidekiq integration ([#1019](https://github.com/getsentry/raven-ruby/pull/1019))
+
+### Fix
+
+- Replace sys_command usages in context.rb ([#1017](https://github.com/getsentry/raven-ruby/pull/1017))
+- Fix merge error from rack-timeout raven_context on old releases ([#1007](https://github.com/getsentry/raven-ruby/pull/1007))
+- Return value of `rescue_with_handler` when intercepting ActiveJob exceptions ([#1027](https://github.com/getsentry/raven-ruby/pull/1027))
 
 ## 3.0.4
 
