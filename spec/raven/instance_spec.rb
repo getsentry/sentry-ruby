@@ -251,12 +251,12 @@ RSpec.describe Raven::Instance do
         subject.context.user = { id: 1 }
         expect(subject.user_context).to eq({})
       end
-      
+
       it "empties the user context when called with nil" do
         subject.context.user = { id: 1 }
         expect(subject.user_context(nil)).to eq({})
       end
-      
+
       it "empties the user context when called with {}" do
         subject.context.user = { id: 1 }
         expect(subject.user_context({})).to eq({})
