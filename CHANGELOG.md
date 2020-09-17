@@ -2,18 +2,123 @@
 
 ## Unreleased
 
-- FEATURE: Exclude all 4xx Rails errors ([#1004](https://github.com/getsentry/raven-ruby/pull/1004))
-- FEATURE: Add some error context in transport_failure_callback ([#1003](https://github.com/getsentry/raven-ruby/pull/1003))
-- FEATURE: Support cleaning up exception backtrace with customized backtrace_cleaner ([#1011](https://github.com/getsentry/raven-ruby/pull/1011))
-- FEATURE: Make dsn value accessable from config ([#1012](https://github.com/getsentry/raven-ruby/pull/1012))
-- REFACTOR: Deprecate dasherized filenames ([#1006](https://github.com/getsentry/raven-ruby/pull/1006))
-- REFACTOR: Accept non-string message in Event.from_exception ([#1005](https://github.com/getsentry/raven-ruby/pull/1005))
-- REFACTOR: Refactor event initialization ([#1010](https://github.com/getsentry/raven-ruby/pull/1010))
-- REFACTOR: Refactor sidekiq integration ([#1019](https://github.com/getsentry/raven-ruby/pull/1019))
-- REFACTOR: Unify breadcrumb loggers activation ([#1016](https://github.com/getsentry/raven-ruby/pull/1016))
-- FIX: Replace sys_command usages in context.rb ([#1017](https://github.com/getsentry/raven-ruby/pull/1017))
-- FIX: Fix merge error from rack-timeout raven_context on old releases ([#1007](https://github.com/getsentry/raven-ruby/pull/1007))
-- FIX: Return value of `rescue_with_handler` when intercepting ActiveJob exceptions ([#1027](https://github.com/getsentry/raven-ruby/pull/1027))
+
+### Feature
+
+- Exclude all 4xx Rails errors ([#1004](https://github.com/getsentry/raven-ruby/pull/1004))
+
+    See the full list [here](https://github.com/getsentry/raven-ruby/blob/master/lib/raven/configuration.rb#L198-L219)
+
+- Add some error context in `transport_failure_callback` ([#1003](https://github.com/getsentry/raven-ruby/pull/1003))
+
+    Before:
+
+    ```ruby
+    config.transport_failure_callback = lambda { |event|
+      AdminMailer.email_admins("Oh god, it's on fire!", event).deliver_later
+    }
+    ```
+
+    After:
+
+    ```ruby
+    config.transport_failure_callback = lambda { |event, error|
+      AdminMailer.email_admins("Oh god, it's on fire because #{error.message}!", event).deliver_later
+    }
+    ```
+
+- Support cleaning up exception backtrace with customized backtrace_cleaner ([#1011](https://github.com/getsentry/raven-ruby/pull/1011))
+
+    The new config `backtrace_cleanup_callback` takes a lambda/proc object (default is `nil`) and will be called with exception's backtrace
+
+    ```ruby
+    Raven.configure do |config|
+      config.backtrace_cleanup_callback = lambda do |backtrace|
+        Rails.backtrace_cleaner.clean(backtrace)
+      end
+    end
+    ```
+
+    And with the Rails integration, it'll automatically use a customized `Raven::Rails::BacktraceCleaner` to clean up exception's backtrace. It's basically Rails 6's [backtrace cleaner](https://github.com/rails/rails/blob/master/railties/lib/rails/backtrace_cleaner.rb) but without silencers. 
+    
+    The main reason to add this cleaner is to remove template methods from the trace, e.g.
+
+    ```
+    app/views/welcome/view_error.html.erb in _app_views_welcome_view_error_html_erb__2807287320172182514_65600 at line 1
+    ```
+
+    will become
+
+    ```
+    app/views/welcome/view_error.html.erb at line 1
+    ```
+
+    This can help Sentry group issues more accurately. See [#957](https://github.com/getsentry/raven-ruby/issues/957) for more information about this.
+    
+    If you don't want this change, you can disable it with:
+
+    ```ruby
+    Raven.configure do |config|
+      config.backtrace_cleanup_callback = nil
+    end
+    ```
+
+
+- Make dsn value accessable from config ([#1012](https://github.com/getsentry/raven-ruby/pull/1012))
+
+    You can now access the dsn value via `Raven.configuration.dsn`
+    
+### Deprecation
+
+- Deprecate dasherized filenames ([#1006](https://github.com/getsentry/raven-ruby/pull/1006))
+
+    If you're using 
+    
+    ```ruby
+    gem 'sentry-raven', require: 'sentry-raven-without-integrations'
+    # or 
+    require "sentry-raven-without-integrations"
+    ```
+    
+    you will start seeing deprecation warnings. Please change them into
+    
+    ```ruby
+    gem 'sentry-raven', require: 'sentry_raven_without_integrations'
+    # or 
+    require "sentry_raven_without_integrations"
+    ```
+    
+- Unify breadcrumb loggers activation ([#1016](https://github.com/getsentry/raven-ruby/pull/1016))
+
+    Currently, we activate our breadcrumb loggers differently:
+
+    ```ruby
+    require "raven/breadcrumbs/sentry_logger"
+    Raven.configuration.rails_activesupport_breadcrumbs = true
+    ```
+
+    It's not a nice user interface, so this PR adds a new configuration
+    option `breadcrumbs_logger` to improve this:
+
+    ```ruby
+    Raven.configuration.breadcrumbs_logger = :sentry_logger
+    Raven.configuration.breadcrumbs_logger = :active_support_logger
+    Raven.configuration.breadcrumbs_logger = [:sentry_logger, :active_support_logger]
+    ```
+
+    Please migrate to the new activation apporach, otherwise you'll see depraction warnings. And old ones will be dropped in version 4.0.
+    
+### Refactor
+
+- Accept non-string message in Event.from_exception ([#1005](https://github.com/getsentry/raven-ruby/pull/1005))
+- Refactor event initialization ([#1010](https://github.com/getsentry/raven-ruby/pull/1010))
+- Refactor sidekiq integration ([#1019](https://github.com/getsentry/raven-ruby/pull/1019))
+
+### Fix
+
+- Replace sys_command usages in context.rb ([#1017](https://github.com/getsentry/raven-ruby/pull/1017))
+- Fix merge error from rack-timeout raven_context on old releases ([#1007](https://github.com/getsentry/raven-ruby/pull/1007))
+- Return value of `rescue_with_handler` when intercepting ActiveJob exceptions ([#1027](https://github.com/getsentry/raven-ruby/pull/1027))
 
 ## 3.0.4
 
