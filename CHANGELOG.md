@@ -9,8 +9,11 @@
 - REFACTOR: Deprecate dasherized filenames ([#1006](https://github.com/getsentry/raven-ruby/pull/1006))
 - REFACTOR: Accept non-string message in Event.from_exception ([#1005](https://github.com/getsentry/raven-ruby/pull/1005))
 - REFACTOR: Refactor event initialization ([#1010](https://github.com/getsentry/raven-ruby/pull/1010))
+- REFACTOR: Refactor sidekiq integration ([#1019](https://github.com/getsentry/raven-ruby/pull/1019))
 - REFACTOR: Unify breadcrumb loggers activation ([#1016](https://github.com/getsentry/raven-ruby/pull/1016))
+- FIX: Replace sys_command usages in context.rb ([#1017](https://github.com/getsentry/raven-ruby/pull/1017))
 - FIX: Fix merge error from rack-timeout raven_context on old releases ([#1007](https://github.com/getsentry/raven-ruby/pull/1007))
+- FIX: Return value of `rescue_with_handler` when intercepting ActiveJob exceptions ([#1027](https://github.com/getsentry/raven-ruby/pull/1027))
 
 ## 3.0.4
 
