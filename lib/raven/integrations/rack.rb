@@ -128,8 +128,10 @@ module Raven
     end
 
     def format_env_for_sentry(env_hash)
+      return env_hash if Raven.configuration.rack_env_whitelist.empty?
+
       env_hash.select do |k, _v|
-        %w(REMOTE_ADDR SERVER_NAME SERVER_PORT).include? k.to_s
+        Raven.configuration.rack_env_whitelist.include? k.to_s
       end
     end
   end

@@ -193,6 +193,9 @@ module Raven
     # the dsn value, whether it's set via `config.dsn=` or `ENV["SENTRY_DSN"]`
     attr_reader :dsn
 
+    # Array of rack env parameters to be included in the event sent to sentry.
+    attr_accessor :rack_env_whitelist
+
     # Most of these errors generate 4XX responses. In general, Sentry clients
     # only automatically report 5xx responses.
     IGNORE_DEFAULT = [
@@ -232,6 +235,12 @@ module Raven
     HEROKU_DYNO_METADATA_MESSAGE = "You are running on Heroku but haven't enabled Dyno Metadata. For Sentry's "\
     "release detection to work correctly, please run `heroku labs:enable runtime-dyno-metadata`".freeze
 
+    RACK_ENV_WHITELIST_DEFAULT = %w(
+      REMOTE_ADDR
+      SERVER_NAME
+      SERVER_PORT
+    ).freeze
+
     LOG_PREFIX = "** [Raven] ".freeze
     MODULE_SEPARATOR = "::".freeze
 
@@ -270,6 +279,7 @@ module Raven
       self.timeout = 2
       self.transport_failure_callback = false
       self.before_send = false
+      self.rack_env_whitelist = RACK_ENV_WHITELIST_DEFAULT
     end
 
     def server=(value)

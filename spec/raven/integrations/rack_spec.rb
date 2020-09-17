@@ -78,6 +78,33 @@ RSpec.describe Raven::Rack do
     stack.call({})
   end
 
+  it 'excludes non whitelisted params from rack env' do
+    interface = Raven::HttpInterface.new
+    additional_env = { "random_param" => "text", "query_string" => "test" }
+    new_env = env.merge(additional_env)
+    interface.from_rack(new_env)
+
+    expect(interface.env).to_not include(additional_env)
+  end
+
+  it 'formats rack env according to the provided whitelist' do
+    Raven.configuration.rack_env_whitelist = %w(random_param query_string)
+    interface = Raven::HttpInterface.new
+    additional_env = { "random_param" => "text", "query_string" => "test" }
+    new_env = env.merge(additional_env)
+    interface.from_rack(new_env)
+
+    expect(interface.env).to eq(additional_env)
+  end
+
+  it 'keeps the original env intact when an empty whitelist is provided' do
+    Raven.configuration.rack_env_whitelist = []
+    interface = Raven::HttpInterface.new
+    interface.from_rack(env)
+
+    expect(interface.env).to eq(env)
+  end
+
   it 'transforms headers to conform with the interface' do
     interface = Raven::HttpInterface.new
     new_env = env.merge("HTTP_VERSION" => "HTTP/1.1", "HTTP_COOKIE" => "test")
