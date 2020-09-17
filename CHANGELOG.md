@@ -67,12 +67,50 @@
 - Make dsn value accessable from config ([#1012](https://github.com/getsentry/raven-ruby/pull/1012))
 
     You can now access the dsn value via `Raven.configuration.dsn`
+    
+### Refactor
 
-- REFACTOR: Deprecate dasherized filenames ([#1006](https://github.com/getsentry/raven-ruby/pull/1006))
-- REFACTOR: Accept non-string message in Event.from_exception ([#1005](https://github.com/getsentry/raven-ruby/pull/1005))
-- REFACTOR: Refactor event initialization ([#1010](https://github.com/getsentry/raven-ruby/pull/1010))
-- REFACTOR: Refactor sidekiq integration ([#1019](https://github.com/getsentry/raven-ruby/pull/1019))
-- REFACTOR: Unify breadcrumb loggers activation ([#1016](https://github.com/getsentry/raven-ruby/pull/1016))
+- Deprecate dasherized filenames ([#1006](https://github.com/getsentry/raven-ruby/pull/1006))
+
+    If you're using 
+    
+    ```ruby
+    gem 'sentry-raven', require: 'sentry-raven-without-integrations'
+    # or 
+    require "sentry-raven-without-integrations"
+    ```
+    
+    you will start seeing deprecation warnings. Please change them into
+    
+    ```ruby
+    gem 'sentry-raven', require: 'sentry_raven_without_integrations'
+    # or 
+    require "sentry_raven_without_integrations"
+    ```
+
+- Accept non-string message in Event.from_exception ([#1005](https://github.com/getsentry/raven-ruby/pull/1005))
+- Refactor event initialization ([#1010](https://github.com/getsentry/raven-ruby/pull/1010))
+- Refactor sidekiq integration ([#1019](https://github.com/getsentry/raven-ruby/pull/1019))
+- Unify breadcrumb loggers activation ([#1016](https://github.com/getsentry/raven-ruby/pull/1016))
+
+    Currently, we activate our breadcrumb loggers differently:
+
+    ```ruby
+    require "raven/breadcrumbs/sentry_logger"
+    Raven.configuration.rails_activesupport_breadcrumbs = true
+    ```
+
+    It's not a nice user interface, so this PR adds a new configuration
+    option `breadcrumbs_logger` to improve this:
+
+    ```ruby
+    Raven.configuration.breadcrumbs_logger = :sentry_logger
+    Raven.configuration.breadcrumbs_logger = :active_support_logger
+    Raven.configuration.breadcrumbs_logger = [:sentry_logger, :active_support_logger]
+    ```
+
+    Please migrate to the new activation apporach, otherwise you'll see depraction warnings. And old ones will be dropped in version 4.0.
+
 - FIX: Replace sys_command usages in context.rb ([#1017](https://github.com/getsentry/raven-ruby/pull/1017))
 - FIX: Fix merge error from rack-timeout raven_context on old releases ([#1007](https://github.com/getsentry/raven-ruby/pull/1007))
 - FIX: Return value of `rescue_with_handler` when intercepting ActiveJob exceptions ([#1027](https://github.com/getsentry/raven-ruby/pull/1027))
