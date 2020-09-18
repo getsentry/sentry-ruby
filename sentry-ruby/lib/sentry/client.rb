@@ -46,8 +46,18 @@ module Sentry
 
       Event.new(**options) do |evt|
         evt.add_exception_interface(exception)
-        yield evt if block_given?
       end
+    end
+
+    def event_from_message(message, extra: {}, backtrace: [], level: :error)
+      options = {
+        message: message,
+        extra: extra,
+        backtrace: backtrace,
+        configuration: configuration,
+        level: level
+      }
+      Event.new(**options)
     end
 
     def generate_auth_header

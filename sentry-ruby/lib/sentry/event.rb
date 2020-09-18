@@ -23,14 +23,14 @@ module Sentry
 
     attr_reader :level, :timestamp, :time_spent
 
-    def initialize(configuration:, message: nil, extra: {}, backtrace: [])
+    def initialize(configuration:, message: nil, extra: {}, backtrace: [], level: :error)
       # this needs to go first because some setters rely on configuration
       self.configuration = configuration
 
       # Set some simple default values
       self.id            = SecureRandom.uuid.delete("-")
       self.timestamp     = Time.now.utc
-      self.level         = :error
+      self.level         = level
       self.logger        = :ruby
       self.platform      = :ruby
       self.sdk           = SDK

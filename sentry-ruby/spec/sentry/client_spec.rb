@@ -47,7 +47,7 @@ RSpec.describe Sentry::Client do
   # end
 
   # it "generates a message without exception" do
-  #   event = Sentry.capture_message("this is an STDOUT transport test").to_hash
+  #   event = Sentry.event_from_message("this is an STDOUT transport test").to_hash
   #   expect(client.send(:get_message_from_exception, event)).to eq(nil)
   # end
 
@@ -140,9 +140,56 @@ RSpec.describe Sentry::Client do
     end
   end
 
+  describe '#event_from_message' do
+    let(:message) { 'This is a message' }
+
+    it 'returns an event' do
+      event = subject.event_from_message(message)
+      hash = event.to_hash
+
+      expect(event).to be_a(Sentry::Event)
+      expect(hash[:message]).to eq(message)
+      expect(hash[:level]).to eq(:error)
+    end
+
+    it "doesn't change the option hash" do
+      h_int = { abc: :abc }
+      h = { k1: h_int, k2: h_int }
+      subject.event_from_message "Test extra", extra: { h1: h, h2: h_int }
+
+      expect(h).to eq({ k1: h_int, k2: h_int })
+    end
+
+    describe "backtrace" do
+      let(:backtrace) do
+        ["/path/to/some/file:22:in `function_name'", "/some/other/path:1412:in `other_function'"]
+      end
+
+      it "contains given backtrace" do
+        event = subject.event_from_message(message, backtrace: backtrace)
+
+        expect(event[:stacktrace]).to be_a(Sentry::StacktraceInterface)
+
+        frames = event[:stacktrace].to_hash[:frames]
+        expect(frames.length).to eq(2)
+        expect(frames[0][:lineno]).to eq(1412)
+        expect(frames[0][:function]).to eq('other_function')
+        expect(frames[0][:filename]).to eq('/some/other/path')
+
+        expect(frames[1][:lineno]).to eq(22)
+        expect(frames[1][:function]).to eq('function_name')
+        expect(frames[1][:filename]).to eq('/path/to/some/file')
+      end
+    end
+  end
+
   describe "#event_from_exception" do
     before do
       configuration.scheme = "dummy"
+    end
+
+    it 'returns an event' do
+      expect(subject.event_from_exception(ExceptionWithContext.new)).to be_a(Sentry::Event)
     end
 
     describe "message" do
