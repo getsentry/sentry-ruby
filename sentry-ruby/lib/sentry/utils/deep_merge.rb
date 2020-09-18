@@ -1,4 +1,4 @@
-module Raven
+module Sentry
   module Utils
     # ported from ActiveSupport
     module DeepMergeHash

@@ -1,4 +1,5 @@
 require "sentry/transports"
+require 'sentry/utils/deep_merge'
 
 module Sentry
   class Client
@@ -20,6 +21,32 @@ module Sentry
         else
           fail "Unknown transport scheme '#{configuration.scheme}'"
         end
+    end
+
+    def event_from_exception(exception, message: nil, extra: {})
+      options = {
+        message: message,
+        extra: extra,
+        configuration: configuration
+      }
+
+      exception_context =
+        if exception.instance_variable_defined?(:@__sentry_context)
+          exception.instance_variable_get(:@__sentry_context)
+        elsif exception.respond_to?(:sentry_context)
+          exception.sentry_context
+        else
+          {}
+        end
+
+      options = Utils::DeepMergeHash.deep_merge(exception_context, options)
+
+      return unless @configuration.exception_class_allowed?(exception)
+
+      Event.new(**options) do |evt|
+        evt.add_exception_interface(exception)
+        yield evt if block_given?
+      end
     end
 
     def generate_auth_header

@@ -384,53 +384,6 @@ RSpec.describe Sentry::Event do
     end
   end
 
-  context 'merging exception context' do
-    class ExceptionWithContext < StandardError
-      def sentry_context
-        { extra: {
-          'context_event_key' => 'context_value',
-          'context_key' => 'context_value'
-        } }
-      end
-    end
-
-    let(:hash) do
-      Sentry::Event.from_exception(
-        ExceptionWithContext.new,
-        extra: {
-          'context_event_key' => 'event_value',
-          'event_key' => 'event_value'
-        },
-        **essential_options
-      ).to_hash
-    end
-
-    it 'prioritizes event context over request context' do
-      expect(hash[:extra]['context_event_key']).to eq('event_value')
-      expect(hash[:extra]['context_key']).to eq('context_value')
-      expect(hash[:extra]['event_key']).to eq('event_value')
-    end
-  end
-
-  describe ".from_exception" do
-    it "proceses string message correctly" do
-      event = Sentry::Event.from_exception(ExceptionWithContext.new, message: "MSG", **essential_options)
-      expect(event.message).to eq("MSG")
-    end
-
-    it "slices long string message" do
-      event = Sentry::Event.from_exception(ExceptionWithContext.new, message: "MSG" * 3000, **essential_options)
-      expect(event.message.length).to eq(8192)
-    end
-
-    it "converts non-string message into string" do
-      expect(Sentry.configuration.logger).to receive(:debug).with("You're passing a non-string message")
-
-      event = Sentry::Event.from_exception(ExceptionWithContext.new, message: { foo: "bar" }, **essential_options)
-      expect(event.message).to eq("{:foo=>\"bar\"}")
-    end
-  end
-
   describe '.to_json_compatible' do
     subject do
       Sentry::Event.new(extra: {

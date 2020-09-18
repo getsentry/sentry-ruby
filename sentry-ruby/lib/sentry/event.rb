@@ -22,7 +22,10 @@ module Sentry
 
     attr_reader :level, :timestamp, :time_spent
 
-    def initialize(options)
+    def initialize(message: nil, extra: {}, configuration:)
+      # this needs to go first because some setters rely on configuration
+      self.configuration = configuration
+
       # Set some simple default values
       self.id            = SecureRandom.uuid.delete("-")
       self.timestamp     = Time.now.utc
@@ -34,20 +37,15 @@ module Sentry
       # Set some attributes with empty hashes to allow merging
       @interfaces        = {}
       self.user          = {} # TODO: contexts
-      self.extra         = {} # TODO: contexts
+      self.extra         = extra
+      self.message       = message
       self.server_os     = {} # TODO: contexts
       self.runtime       = {} # TODO: contexts
       self.tags          = {} # TODO: contexts
 
-      unless REQUIRED_OPTION_KEYS.all? { |key| options.key?(key) }
-        raise "you much provide configuration when initializing a Sentry::Event"
-      end
-
-      self.configuration = options[:configuration]
-
       # Allow attributes to be set on the event at initialization
       yield self if block_given?
-      options.each_pair { |key, val| public_send("#{key}=", val) unless val.nil? }
+      # options.each_pair { |key, val| public_send("#{key}=", val) unless val.nil? }
 
       set_core_attributes_from_configuration
     end
@@ -138,7 +136,8 @@ module Sentry
         memo[att] = public_send(att) if public_send(att)
       end
 
-      data[:breadcrumbs] = @breadcrumbs.to_hash unless @breadcrumbs.empty?
+      # TODO-v4: Fix this
+      # data[:breadcrumbs] = @breadcrumbs.to_hash unless @breadcrumbs.empty?
 
       @interfaces.each_pair do |name, int_data|
         data[name.to_sym] = int_data.to_hash
