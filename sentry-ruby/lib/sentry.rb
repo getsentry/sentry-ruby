@@ -1,0 +1,2 @@
+module Sentry
+end
