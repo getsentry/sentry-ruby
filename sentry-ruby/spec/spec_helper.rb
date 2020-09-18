@@ -1,5 +1,5 @@
 require "bundler/setup"
-require "sentry/ruby"
+require "sentry"
 
 RSpec.configure do |config|
   # Enable flags like --only-failures and --next-failure
@@ -12,3 +12,29 @@ RSpec.configure do |config|
     c.syntax = :expect
   end
 end
+
+def build_exception_with_cause(cause = "exception a")
+  begin
+    raise cause
+  rescue
+    raise "exception b"
+  end
+rescue RuntimeError => e
+  e
+end
+
+def build_exception_with_two_causes
+  begin
+    begin
+      raise "exception a"
+    rescue
+      raise "exception b"
+    end
+  rescue
+    raise "exception c"
+  end
+rescue RuntimeError => e
+  e
+end
+
+
