@@ -19,7 +19,7 @@ module Sentry
     # Not actually an interface, but I want to use the same style
     class Frame < Interface
       attr_accessor :abs_path, :context_line, :function, :in_app,
-                    :lineno, :module, :pre_context, :post_context, :vars
+                    :lineno, :module, :pre_context, :post_context, :vars, :configuration
 
       def initialize(*arguments)
         super(*arguments)
@@ -58,7 +58,7 @@ module Sentry
       end
 
       def project_root
-        @project_root ||= Sentry.configuration.project_root&.to_s
+        @project_root ||= configuration.project_root&.to_s
       end
 
       def longest_load_path

@@ -145,21 +145,46 @@ RSpec.describe Sentry::Client do
       configuration.scheme = "dummy"
     end
 
-    it "proceses string message correctly" do
-      event = subject.event_from_exception(ExceptionWithContext.new, message: "MSG")
-      expect(event.message).to eq("MSG")
+    describe "message" do
+      it "proceses string message correctly" do
+        event = subject.event_from_exception(ExceptionWithContext.new, message: "MSG")
+        expect(event.message).to eq("MSG")
+      end
+
+      it "slices long string message" do
+        event = subject.event_from_exception(ExceptionWithContext.new, message: "MSG" * 3000)
+        expect(event.message.length).to eq(8192)
+      end
+
+      it "converts non-string message into string" do
+        expect(configuration.logger).to receive(:debug).with("You're passing a non-string message")
+
+        event = subject.event_from_exception(ExceptionWithContext.new, message: { foo: "bar" })
+        expect(event.message).to eq("{:foo=>\"bar\"}")
+      end
     end
 
-    it "slices long string message" do
-      event = subject.event_from_exception(ExceptionWithContext.new, message: "MSG" * 3000)
-      expect(event.message.length).to eq(8192)
-    end
+    describe "backtrace" do
+      let(:backtrace) do
+        ["/path/to/some/file:22:in `function_name'", "/some/other/path:1412:in `other_function'"]
+      end
 
-    it "converts non-string message into string" do
-      expect(configuration.logger).to receive(:debug).with("You're passing a non-string message")
+      it "contains given backtrace" do
+        event = subject.event_from_exception(ExceptionWithContext.new, backtrace: backtrace)
 
-      event = subject.event_from_exception(ExceptionWithContext.new, message: { foo: "bar" })
-      expect(event.message).to eq("{:foo=>\"bar\"}")
+        expect(event[:stacktrace]).to be_a(Sentry::StacktraceInterface)
+
+        frames = event[:stacktrace].to_hash[:frames]
+        expect(frames.length).to eq(2)
+        expect(frames[0][:lineno]).to eq(1412)
+        expect(frames[0][:function]).to eq('other_function')
+        expect(frames[0][:filename]).to eq('/some/other/path')
+
+        expect(frames[1][:lineno]).to eq(22)
+        expect(frames[1][:function]).to eq('function_name')
+        expect(frames[1][:filename]).to eq('/path/to/some/file')
+      end
+
     end
 
     context 'merging exception context' do

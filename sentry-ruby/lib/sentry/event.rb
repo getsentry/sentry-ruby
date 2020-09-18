@@ -3,6 +3,7 @@
 require 'socket'
 require 'securerandom'
 require 'sentry/interface'
+require 'sentry/backtrace'
 require 'sentry/utils/deep_merge'
 
 module Sentry
@@ -22,7 +23,7 @@ module Sentry
 
     attr_reader :level, :timestamp, :time_spent
 
-    def initialize(message: nil, extra: {}, configuration:)
+    def initialize(configuration:, message: nil, extra: {}, backtrace: [])
       # this needs to go first because some setters rely on configuration
       self.configuration = configuration
 
@@ -46,6 +47,12 @@ module Sentry
       # Allow attributes to be set on the event at initialization
       yield self if block_given?
       # options.each_pair { |key, val| public_send("#{key}=", val) unless val.nil? }
+
+      if !backtrace.empty?
+        interface(:stacktrace) do |int|
+          int.frames = stacktrace_interface_from(backtrace)
+        end
+      end
 
       set_core_attributes_from_configuration
     end
@@ -173,8 +180,8 @@ module Sentry
     end
 
     def stacktrace_interface_from(backtrace)
-      Backtrace.parse(backtrace, { configuration: configuration }).lines.reverse.each_with_object([]) do |line, memo|
-        frame = StacktraceInterface::Frame.new
+      Backtrace.parse(backtrace, configuration: configuration).lines.reverse.each_with_object([]) do |line, memo|
+        frame = StacktraceInterface::Frame.new(configuration: configuration)
         frame.abs_path = line.file if line.file
         frame.function = line.method if line.method
         frame.lineno = line.number

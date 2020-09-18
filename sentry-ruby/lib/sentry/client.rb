@@ -23,10 +23,11 @@ module Sentry
         end
     end
 
-    def event_from_exception(exception, message: nil, extra: {})
+    def event_from_exception(exception, message: nil, extra: {}, backtrace: [])
       options = {
         message: message,
         extra: extra,
+        backtrace: backtrace,
         configuration: configuration
       }
 
