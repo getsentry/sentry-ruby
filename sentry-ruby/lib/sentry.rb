@@ -1,5 +1,6 @@
 require "sentry/configuration"
 require "sentry/logger"
+require "sentry/client"
 
 module Sentry
   class Error < StandardError
