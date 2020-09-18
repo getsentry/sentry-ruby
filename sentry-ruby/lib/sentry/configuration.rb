@@ -1,4 +1,5 @@
-require 'uri'
+require "uri"
+require "sentry/utils/exception_cause_chain"
 
 module Sentry
   class Configuration

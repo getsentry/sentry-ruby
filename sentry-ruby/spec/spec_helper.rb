@@ -12,3 +12,29 @@ RSpec.configure do |config|
     c.syntax = :expect
   end
 end
+
+def build_exception_with_cause(cause = "exception a")
+  begin
+    raise cause
+  rescue
+    raise "exception b"
+  end
+rescue RuntimeError => e
+  e
+end
+
+def build_exception_with_two_causes
+  begin
+    begin
+      raise "exception a"
+    rescue
+      raise "exception b"
+    end
+  rescue
+    raise "exception c"
+  end
+rescue RuntimeError => e
+  e
+end
+
+
