@@ -1,5 +1,6 @@
 require "uri"
 require "sentry/utils/exception_cause_chain"
+require "sentry/linecache"
 
 module Sentry
   class Configuration
@@ -50,6 +51,11 @@ module Sentry
     # A Proc yeilding the faraday builder allowing for further configuration
     # of the faraday adapter
     attr_accessor :faraday_builder
+
+    # You may provide your own LineCache for matching paths with source files.
+    # This may be useful if you need to get source code from places other than
+    # the disk. See Sentry::LineCache for the required interface you must implement.
+    attr_accessor :linecache
 
     # Logger used by Sentry. In Rails, this is the Rails logger, otherwise
     # Sentry provides its own Sentry::Logger.
@@ -228,6 +234,7 @@ module Sentry
       self.exclude_loggers = []
       self.excluded_exceptions = IGNORE_DEFAULT.dup
       self.inspect_exception_causes_for_exclusion = false
+      self.linecache = ::Sentry::LineCache.new
       self.logger = ::Sentry::Logger.new(STDOUT)
       self.open_timeout = 1
       self.project_root = detect_project_root
