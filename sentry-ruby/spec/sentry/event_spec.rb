@@ -1,9 +1,10 @@
 require 'spec_helper'
 
 RSpec.describe Sentry::Event do
+  let(:configuration) { Sentry::Configuration.new }
   let(:essential_options) do
     {
-      configuration: Sentry::Configuration.new
+      configuration: configuration
     }
   end
 
@@ -26,9 +27,9 @@ RSpec.describe Sentry::Event do
   context 'a fully implemented event' do
     let(:hash) do
       Sentry::Event.new(
+        configuration: configuration,
         message: 'test',
         level: 'warn',
-        logger: 'foo',
         tags: {
           'foo' => 'bar'
         },
@@ -37,8 +38,7 @@ RSpec.describe Sentry::Event do
         },
         server_name: 'foo.local',
         release: '721e41770371db95eee98ca2707686226b993eda',
-        environment: 'production',
-        **essential_options
+        environment: 'production'
       ).to_hash
     end
 
@@ -48,10 +48,6 @@ RSpec.describe Sentry::Event do
 
     it 'has level' do
       expect(hash[:level]).to eq(:warning)
-    end
-
-    it 'has logger' do
-      expect(hash[:logger]).to eq('foo')
     end
 
     it 'has server name' do

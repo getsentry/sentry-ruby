@@ -27,12 +27,15 @@ module Sentry
         end
     end
 
-    def event_from_exception(exception, message: nil, extra: {}, backtrace: [])
+    def event_from_exception(exception, message: nil, extra: {}, backtrace: [], checksum: nil, release: nil, fingerprint: [])
       options = {
         message: message,
         extra: extra,
         backtrace: backtrace,
-        configuration: configuration
+        checksum: checksum,
+        fingerprint: fingerprint,
+        configuration: configuration,
+        release: release
       }
 
       exception_context =
