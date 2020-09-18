@@ -1,4 +1,7 @@
+require "json"
+require "base64"
 require "sentry/transports"
+require "sentry/client/state"
 require 'sentry/utils/deep_merge'
 
 module Sentry
@@ -11,6 +14,7 @@ module Sentry
 
     def initialize(configuration)
       @configuration = configuration
+      @state = State.new
       @transport = case configuration.scheme
         when 'http', 'https'
           Transports::HTTP.new(configuration)
@@ -70,6 +74,74 @@ module Sentry
       }
       fields['sentry_secret'] = configuration.secret_key unless configuration.secret_key.nil?
       'Sentry ' + fields.map { |key, value| "#{key}=#{value}" }.join(', ')
+    end
+
+    def send_event(event, hint = nil)
+      return false unless configuration.sending_allowed?(event)
+
+      event = configuration.before_send.call(event, hint) if configuration.before_send
+      if event.nil?
+        configuration.logger.info "Discarded event because before_send returned nil"
+        return
+      end
+
+      # Convert to hash
+      event = event.to_hash
+
+      unless @state.should_try?
+        failed_send(nil, event)
+        return
+      end
+
+      event_id = event[:event_id] || event['event_id']
+      configuration.logger.info "Sending event #{event_id} to Sentry"
+
+      content_type, encoded_data = encode(event)
+
+      begin
+        transport.send_event(generate_auth_header, encoded_data,
+                             :content_type => content_type)
+        successful_send
+      rescue => e
+        failed_send(e, event)
+        return
+      end
+
+      event
+    end
+
+    private
+
+    def encode(event)
+      encoded = JSON.fast_generate(event.to_hash)
+
+      case configuration.encoding
+      when 'gzip'
+        ['application/octet-stream', Base64.strict_encode64(Zlib::Deflate.deflate(encoded))]
+      else
+        ['application/json', encoded]
+      end
+    end
+
+    def successful_send
+      @state.success
+    end
+
+    def failed_send(e, event)
+      if e # exception was raised
+        @state.failure
+        configuration.logger.warn "Unable to record event with remote Sentry server (#{e.class} - #{e.message}):\n#{e.backtrace[0..10].join("\n")}"
+      else
+        configuration.logger.warn "Not sending event due to previous failure(s)."
+      end
+      configuration.logger.warn("Failed to submit event: #{get_log_message(event)}")
+
+      # configuration.transport_failure_callback can be false & nil
+      configuration.transport_failure_callback.call(event, e) if configuration.transport_failure_callback # rubocop:disable Style/SafeNavigation
+    end
+
+    def get_log_message(event)
+      (event && event[:message]) || (event && event['message']) || get_message_from_exception(event) || '<no message value>'
     end
   end
 end

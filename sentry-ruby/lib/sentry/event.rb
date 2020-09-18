@@ -153,8 +153,7 @@ module Sentry
     end
 
     def to_json_compatible
-      cleaned_hash = async_json_processors.reduce(to_hash) { |a, e| e.process(a) }
-      JSON.parse(JSON.generate(cleaned_hash))
+      JSON.parse(JSON.generate(to_hash))
     end
 
     def add_exception_interface(exc)

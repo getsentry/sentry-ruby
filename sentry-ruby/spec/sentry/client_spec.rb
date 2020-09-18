@@ -51,46 +51,46 @@ RSpec.describe Sentry::Client do
   #   expect(client.send(:get_message_from_exception, event)).to eq(nil)
   # end
 
-  # describe "#send_event" do
-  #   let(:event) { subject.event_from_exception(ZeroDivisionError.new("divided by 0")) }
+  describe "#send_event" do
+    let(:event) { subject.event_from_exception(ZeroDivisionError.new("divided by 0")) }
 
-  #   context "when success" do
-  #     before do
-  #       allow(client.transport).to receive(:send_event)
-  #     end
+    context "when success" do
+      before do
+        allow(client.transport).to receive(:send_event)
+      end
 
-  #     it "sends Event object" do
-  #       expect(client).not_to receive(:failed_send)
+      it "sends Event object" do
+        expect(client).not_to receive(:failed_send)
 
-  #       expect(client.send_event(event)).to eq(event.to_hash)
-  #     end
+        expect(client.send_event(event)).to eq(event.to_hash)
+      end
 
-  #     it "sends Event hash" do
-  #       expect(client).not_to receive(:failed_send)
+      it "sends Event hash" do
+        expect(client).not_to receive(:failed_send)
 
-  #       expect(client.send_event(event.to_json_compatible)).to eq(event.to_json_compatible)
-  #     end
-  #   end
+        expect(client.send_event(event.to_json_compatible)).to eq(event.to_json_compatible)
+      end
+    end
 
-  #   context "when failed" do
-  #     let(:logger) { spy }
+    context "when failed" do
+      let(:logger) { spy }
 
-  #     before do
-  #       configuration.logger = logger
-  #       allow(client.transport).to receive(:send_event).and_raise(StandardError)
+      before do
+        configuration.logger = logger
+        allow(client.transport).to receive(:send_event).and_raise(StandardError)
 
-  #       expect(logger).to receive(:warn).exactly(2)
-  #     end
+        expect(logger).to receive(:warn).exactly(2)
+      end
 
-  #     it "sends Event object" do
-  #       expect(client.send_event(event)).to eq(nil)
-  #     end
+      it "sends Event object" do
+        expect(client.send_event(event)).to eq(nil)
+      end
 
-  #     it "sends Event hash" do
-  #       expect(client.send_event(event.to_json_compatible)).to eq(nil)
-  #     end
-  #   end
-  # end
+      it "sends Event hash" do
+        expect(client.send_event(event.to_json_compatible)).to eq(nil)
+      end
+    end
+  end
 
   describe "#transport" do
     context "when scheme is not set" do
