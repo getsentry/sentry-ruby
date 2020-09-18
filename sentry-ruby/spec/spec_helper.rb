@@ -1,5 +1,5 @@
 require "bundler/setup"
-require "sentry/ruby"
+require "sentry"
 
 RSpec.configure do |config|
   # Enable flags like --only-failures and --next-failure
