@@ -3,7 +3,8 @@ require 'raven/integrations/rack'
 
 RSpec.describe Raven::Rack do
   let(:exception) { build_exception }
-  let(:env) { Rack::MockRequest.env_for("/test") }
+  let(:additional_headers) { {} }
+  let(:env) { Rack::MockRequest.env_for("/test", additional_headers) }
 
   context "when we expect to capture an exception" do
     before do
@@ -105,12 +106,26 @@ RSpec.describe Raven::Rack do
     expect(interface.env).to eq(env)
   end
 
-  it 'transforms headers to conform with the interface' do
-    interface = Raven::HttpInterface.new
-    new_env = env.merge("HTTP_VERSION" => "HTTP/1.1", "HTTP_COOKIE" => "test")
-    interface.from_rack(new_env)
+  describe 'format headers' do
+    let(:additional_headers) { { "HTTP_VERSION" => "HTTP/1.1", "HTTP_COOKIE" => "test", "HTTP_X_REQUEST_ID" => "12345678" } }
 
-    expect(interface.headers).to eq("Content-Length" => "0", "Version" => "HTTP/1.1")
+    it 'transforms headers to conform with the interface' do
+      interface = Raven::HttpInterface.new
+      interface.from_rack(env)
+
+      expect(interface.headers).to eq("Content-Length" => "0", "Version" => "HTTP/1.1", "X-Request-Id" => "12345678")
+    end
+
+    context 'from Rails middleware' do
+      let(:additional_headers) { { "action_dispatch.request_id" => "12345678" } }
+
+      it 'transforms headers to conform with the interface' do
+        interface = Raven::HttpInterface.new
+        interface.from_rack(env)
+
+        expect(interface.headers).to eq("Content-Length" => "0", "X-Request-Id" => "12345678")
+      end
+    end
   end
 
   it 'puts cookies into the cookies attribute' do
