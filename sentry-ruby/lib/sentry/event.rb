@@ -25,7 +25,9 @@ module Sentry
 
     def initialize(
       configuration:,
-      message: nil, extra: {}, tags: {}, backtrace: [], level: :error, checksum: nil, fingerprint: [],
+      message: nil,
+      user: {}, extra: {}, tags: {},
+      backtrace: [], level: :error, checksum: nil, fingerprint: [],
       server_name: nil, release: nil, environment: nil
     )
       # this needs to go first because some setters rely on configuration
@@ -40,9 +42,11 @@ module Sentry
 
       # Set some attributes with empty hashes to allow merging
       @interfaces        = {}
-      self.user          = {} # TODO: contexts
-      self.extra         = extra
-      self.tags          = tags
+
+      self.user          = user || {}
+      self.extra         = extra || {}
+      self.tags          = configuration.tags.merge(tags || {})
+
       self.message       = message
       self.server_os     = {} # TODO: contexts
       self.runtime       = {} # TODO: contexts
