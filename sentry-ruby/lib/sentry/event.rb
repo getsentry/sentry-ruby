@@ -3,6 +3,7 @@
 require 'socket'
 require 'securerandom'
 require 'sentry/interface'
+require 'sentry/backtrace'
 require 'sentry/utils/deep_merge'
 
 module Sentry
@@ -22,76 +23,59 @@ module Sentry
 
     attr_reader :level, :timestamp, :time_spent
 
-    def initialize(options)
+    def initialize(
+      configuration:,
+      message: nil,
+      user: {}, extra: {}, tags: {},
+      backtrace: [], level: :error, checksum: nil, fingerprint: [],
+      server_name: nil, release: nil, environment: nil
+    )
+      # this needs to go first because some setters rely on configuration
+      self.configuration = configuration
+
       # Set some simple default values
       self.id            = SecureRandom.uuid.delete("-")
       self.timestamp     = Time.now.utc
-      self.level         = :error
-      self.logger        = :ruby
+      self.level         = level
       self.platform      = :ruby
       self.sdk           = SDK
 
       # Set some attributes with empty hashes to allow merging
       @interfaces        = {}
-      self.user          = {} # TODO: contexts
-      self.extra         = {} # TODO: contexts
+
+      self.user          = user || {}
+      self.extra         = extra || {}
+      self.tags          = configuration.tags.merge(tags || {})
+
+      self.message       = message
       self.server_os     = {} # TODO: contexts
       self.runtime       = {} # TODO: contexts
-      self.tags          = {} # TODO: contexts
 
-      unless REQUIRED_OPTION_KEYS.all? { |key| options.key?(key) }
-        raise "you much provide configuration when initializing a Sentry::Event"
-      end
+      self.checksum = checksum
+      self.fingerprint = fingerprint
 
-      self.configuration = options[:configuration]
+      self.server_name = server_name
+      self.environment = environment
+      self.release = release
 
       # Allow attributes to be set on the event at initialization
       yield self if block_given?
-      options.each_pair { |key, val| public_send("#{key}=", val) unless val.nil? }
+      # options.each_pair { |key, val| public_send("#{key}=", val) unless val.nil? }
 
-      set_core_attributes_from_configuration
-    end
-
-    def self.from_exception(exc, options = {}, &block)
-      exception_context = if exc.instance_variable_defined?(:@__sentry_context)
-                            exc.instance_variable_get(:@__sentry_context)
-                          elsif exc.respond_to?(:sentry_context)
-                            exc.sentry_context
-                          else
-                            {}
-                          end
-      options = Sentry::Utils::DeepMergeHash.deep_merge(exception_context, options)
-
-      return unless options[:configuration].exception_class_allowed?(exc)
-
-      new(options) do |evt|
-        evt.add_exception_interface(exc)
-        yield evt if block
-      end
-    end
-
-    def self.from_message(message, options = {})
-      new(options) do |evt|
-        evt.message = message, options[:message_params] || []
-        if options[:backtrace]
-          evt.interface(:stacktrace) do |int|
-            int.frames = evt.stacktrace_interface_from(options[:backtrace])
-          end
+      if !backtrace.empty?
+        interface(:stacktrace) do |int|
+          int.frames = stacktrace_interface_from(backtrace)
         end
       end
+
+      set_core_attributes_from_configuration
     end
 
     def message
       @interfaces[:logentry]&.unformatted_message
     end
 
-    def message=(args)
-      if args.is_a?(Array)
-        message, params = args[0], args[0..-1]
-      else
-        message = args
-      end
-
+    def message=(message)
       unless message.is_a?(String)
         configuration.logger.debug("You're passing a non-string message")
         message = message.to_s
@@ -99,7 +83,6 @@ module Sentry
 
       interface(:message) do |int|
         int.message = message.byteslice(0...MAX_MESSAGE_SIZE_IN_BYTES) # Messages limited to 10kb
-        int.params = params
       end
     end
 
@@ -138,7 +121,8 @@ module Sentry
         memo[att] = public_send(att) if public_send(att)
       end
 
-      data[:breadcrumbs] = @breadcrumbs.to_hash unless @breadcrumbs.empty?
+      # TODO-v4: Fix this
+      # data[:breadcrumbs] = @breadcrumbs.to_hash unless @breadcrumbs.empty?
 
       @interfaces.each_pair do |name, int_data|
         data[name.to_sym] = int_data.to_hash
@@ -147,8 +131,7 @@ module Sentry
     end
 
     def to_json_compatible
-      cleaned_hash = async_json_processors.reduce(to_hash) { |a, e| e.process(a) }
-      JSON.parse(JSON.generate(cleaned_hash))
+      JSON.parse(JSON.generate(to_hash))
     end
 
     def add_exception_interface(exc)
@@ -174,8 +157,8 @@ module Sentry
     end
 
     def stacktrace_interface_from(backtrace)
-      Backtrace.parse(backtrace, { configuration: configuration }).lines.reverse.each_with_object([]) do |line, memo|
-        frame = StacktraceInterface::Frame.new
+      Backtrace.parse(backtrace, configuration: configuration).lines.reverse.each_with_object([]) do |line, memo|
+        frame = StacktraceInterface::Frame.new(configuration: configuration)
         frame.abs_path = line.file if line.file
         frame.function = line.method if line.method
         frame.lineno = line.number
@@ -191,14 +174,6 @@ module Sentry
       end
     end
 
-    # For cross-language compat
-    class << self
-      alias captureException from_exception
-      alias captureMessage from_message
-      alias capture_exception from_exception
-      alias capture_message from_message
-    end
-
     private
 
     def set_core_attributes_from_configuration
@@ -206,18 +181,6 @@ module Sentry
       self.release     ||= configuration.release
       self.modules       = list_gem_specs if configuration.send_modules
       self.environment ||= configuration.current_environment
-    end
-
-    def set_core_attributes_from_context
-      self.transaction ||= context.transaction.last
-
-      # If this is a Rack event, merge Rack context
-      add_rack_context if !self[:http] && context.rack_env
-
-      # Merge contexts
-      self.user = context.user.merge(user) # TODO: contexts
-      self.extra = context.extra.merge(extra) # TODO: contexts
-      self.tags = configuration.tags.merge(context.tags).merge!(tags) # TODO: contexts
     end
 
     def add_rack_context
@@ -236,10 +199,6 @@ module Sentry
         :real_ip => context.rack_env["HTTP_X_REAL_IP"],
         :forwarded_for => context.rack_env["HTTP_X_FORWARDED_FOR"]
       ).calculate_ip
-    end
-
-    def async_json_processors
-      configuration.processors.map { |v| v.new(self) }
     end
 
     def list_gem_specs
