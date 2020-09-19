@@ -11,7 +11,10 @@
 
 ### The master version may not work. If you want the latest stable version, use [v3-1-stable](https://github.com/getsentry/raven-ruby/tree/v3-1-stable) instead.
 
-<br>
+### If you want to contribute to the SDK, please make sure your PR is based on [v3-1-stable](https://github.com/getsentry/raven-ruby/tree/v3-1-stable).
+
+---
+
 
 [![Gem Version](https://img.shields.io/gem/v/sentry-raven.svg)](https://rubygems.org/gems/sentry-raven)
 ![Build Status](https://github.com/getsentry/raven-ruby/workflows/Test/badge.svg)
