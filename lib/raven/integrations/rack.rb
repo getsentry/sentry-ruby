@@ -67,6 +67,8 @@ module Raven
   end
 
   module RackInterface
+    REQUEST_ID_HEADERS = %w(action_dispatch.request_id HTTP_X_REQUEST_ID).freeze
+
     def from_rack(env_hash)
       req = ::Rack::Request.new(env_hash)
 
@@ -81,6 +83,15 @@ module Raven
     end
 
     private
+
+    # Request ID based on ActionDispatch::RequestId
+    def read_request_id_from(env_hash)
+      REQUEST_ID_HEADERS.each do |key|
+        request_id = env_hash[key]
+        return request_id if request_id
+      end
+      nil
+    end
 
     # See Sentry server default limits at
     # https://github.com/getsentry/sentry/blob/master/src/sentry/conf/server.py
@@ -101,6 +112,7 @@ module Raven
         begin
           key = key.to_s # rack env can contain symbols
           value = value.to_s
+          next memo['X-Request-Id'] ||= read_request_id_from(env_hash) if REQUEST_ID_HEADERS.include?(key)
           next unless key.upcase == key # Non-upper case stuff isn't either
 
           # Rack adds in an incorrect HTTP_VERSION key, which causes downstream
@@ -110,7 +122,6 @@ module Raven
           # See: https://github.com/rack/rack/blob/028438f/lib/rack/handler/cgi.rb#L29
           next if key == 'HTTP_VERSION' && value == env_hash['SERVER_PROTOCOL']
           next if key == 'HTTP_COOKIE' # Cookies don't go here, they go somewhere else
-
           next unless key.start_with?('HTTP_') || %w(CONTENT_TYPE CONTENT_LENGTH).include?(key)
 
           # Rack stores headers as HTTP_WHAT_EVER, we need What-Ever
