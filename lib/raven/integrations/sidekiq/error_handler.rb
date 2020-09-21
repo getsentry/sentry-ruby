@@ -1,4 +1,4 @@
-require 'raven/integrations/sidekiq/context_filter'
+require 'raven/utils/context_filter'
 
 module Raven
   module Sidekiq
@@ -6,7 +6,7 @@ module Raven
       SIDEKIQ_NAME = "Sidekiq".freeze
 
       def call(ex, context)
-        context = ContextFilter.filter_context(context)
+        context = Utils::ContextFilter.filter_context(context)
         Raven.context.transaction.push transaction_from_context(context)
         Raven.capture_exception(
           ex,
