@@ -1,7 +1,5 @@
 require 'faraday'
 
-require 'raven/transports'
-
 module Raven
   module Transports
     class HTTP < Transport
