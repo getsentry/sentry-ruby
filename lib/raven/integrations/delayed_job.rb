@@ -1,4 +1,5 @@
 require 'delayed_job'
+require 'raven/utils/context_filter'
 
 module Delayed
   module Plugins
@@ -29,7 +30,7 @@ module Delayed
             extra[:handler] = job.handler[0...1000] if job.handler
 
             if job.respond_to?('payload_object') && job.payload_object.respond_to?('job_data')
-              extra[:active_job] = job.payload_object.job_data
+              extra[:active_job] = Utils::ContextFilter.filter_context(job.payload_object.job_data)
             end
             ::Raven.capture_exception(e,
                                       :logger => 'delayed_job',

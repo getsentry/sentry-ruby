@@ -55,7 +55,7 @@ RSpec.describe "Raven::Sidekiq::ErrorHandler" do
     aj_context["_aj_globalid"] = GlobalID.new('gid://app/model/id')
     expected_context = aj_context.dup
     expected_context.delete("_aj_globalid")
-    expected_context["_globalid"] = "gid://app/model/id"
+    expected_context["globalid"] = "gid://app/model/id"
     expected_options = {
       :message => exception.message,
       :extra => { :sidekiq => expected_context }
