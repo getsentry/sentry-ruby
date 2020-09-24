@@ -1,5 +1,21 @@
 # Changelog
 
+## 3.1.1
+
+**Feature**
+
+- Add request id to headers if exists ([#1033](https://github.com/getsentry/sentry-ruby/pull/1033))
+
+- Allow blocks on user_context ([#1023](https://github.com/getsentry/sentry-ruby/pull/1023))
+
+- Enable configurable rack environment recorded parameters ([#860](https://github.com/getsentry/sentry-ruby/pull/860))
+
+- Remove ActiveJob keys for both Sidekiq and DelayedJob ([#898](https://github.com/getsentry/sentry-ruby/pull/898))
+
+**Fix**
+
+- Remove circular dependency in transport/http.rb ([#1035](https://github.com/getsentry/sentry-ruby/pull/1035))
+
 ## 3.1.0
 
 **Feature**
