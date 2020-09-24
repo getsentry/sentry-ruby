@@ -1,4 +1,4 @@
-name: Zeus Upload
+name: sentry-raven Zeus Upload
 
 on:
   push:

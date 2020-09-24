@@ -7,15 +7,6 @@
 
 # Raven-Ruby, the Ruby Client for Sentry
 
-### 🚧 We're restructuring this SDK for the [version 4.0](https://github.com/getsentry/raven-ruby/issues/1029) 🚧 
-
-### The master version may not work. If you want the latest stable version, use [v3-1-stable](https://github.com/getsentry/raven-ruby/tree/v3-1-stable) instead.
-
-### If you want to contribute to the SDK, please make sure your PR is based on [v3-1-stable](https://github.com/getsentry/raven-ruby/tree/v3-1-stable).
-
----
-
-
 [![Gem Version](https://img.shields.io/gem/v/sentry-raven.svg)](https://rubygems.org/gems/sentry-raven)
 ![Build Status](https://github.com/getsentry/raven-ruby/workflows/Test/badge.svg)
 [![Coverage Status](https://img.shields.io/codecov/c/github/getsentry/raven-ruby/master?logo=codecov)](https://codecov.io/gh/getsentry/raven-ruby/branch/master)
