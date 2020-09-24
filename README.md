@@ -7,6 +7,6 @@
 
 # Ruby Client for Sentry
 
-- `sentry-raven` is the current (old) client. It will stay at the 3.1.x series without major enhancements in the future (but we still welcome PRs!).
-- `sentry-ruby` will be the new client and is under 🚧 active development 🚧. This issue contains the [plan](https://github.com/getsentry/raven-ruby/issues/1029) for it.
+- [`sentry-raven`](https://github.com/getsentry/sentry-ruby/tree/master/sentry-raven) contains the current (old) client. It will stay at the 3.1.x series without major enhancements in the future (but we still welcome PRs!).
+- [`sentry-ruby`](https://github.com/getsentry/sentry-ruby/tree/master/sentry-ruby) will be the new client and is under 🚧 active development 🚧. This issue contains the [plan](https://github.com/getsentry/raven-ruby/issues/1029) for it.
 
