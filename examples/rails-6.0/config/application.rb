@@ -22,7 +22,7 @@ module Rails60
 
     Raven.configure do |config|
       config.breadcrumbs_logger = [:sentry_logger, :active_support_logger]
-      config.dsn = 'https://6bca098db7ef423ab983e26e27255fe8:650b2fcf94f942fe9093f656b809a94e@app.getsentry.com/3825'
+      config.dsn = 'https://2fb45f003d054a7ea47feb45898f7649@o447951.ingest.sentry.io/5434472'
     end
   end
 end
