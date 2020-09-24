@@ -1,4 +1,4 @@
-name: sentry-raven test
+name: Test
 
 on:
   push:
