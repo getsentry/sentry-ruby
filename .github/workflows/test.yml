@@ -9,9 +9,6 @@ jobs:
   test:
     name: Test on ruby ${{ matrix.ruby_version }} and rails ${{ matrix.rails_version }}
     runs-on: ${{ matrix.os }}
-    defaults:
-      run:
-        working-directory: sentry-raven
     strategy:
       matrix:
         rails_version: [0, 4.2, 5.2, 6.0]
@@ -59,12 +56,9 @@ jobs:
         bundle exec rake
 
   compare_allocation:
-    needs: test
     name: Compare memory allocation with ${{ matrix.ruby_version }} and rails ${{ matrix.rails_version }}
     runs-on: ${{ matrix.os }}
-    defaults:
-      run:
-        working-directory: sentry-raven
+    needs: test
     env:
       RAILS_VERSION: ${{ matrix.rails_version }}
     strategy:
