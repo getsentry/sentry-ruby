@@ -14,6 +14,15 @@ module Sentry
       self.transactions = []
     end
 
+    def apply_to_event(event)
+      event.tags = tags.merge(event.tags)
+      event.user = user.merge(event.user)
+      event.extra = extra.merge(event.extra)
+      event.level ||= level
+      event.transaction = transactions.last
+      event.breadcrumbs = breadcrumbs
+    end
+
     class << self
       def os_context
         @os_context ||=
