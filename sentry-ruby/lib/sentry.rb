@@ -1,4 +1,5 @@
 require "sentry/configuration"
+require "sentry/scope"
 require "sentry/logger"
 require "sentry/event"
 require "sentry/client"
