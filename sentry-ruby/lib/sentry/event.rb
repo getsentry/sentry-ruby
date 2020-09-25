@@ -190,19 +190,19 @@ module Sentry
       interface :http do |int|
         int.from_rack(context.rack_env)
       end
-      context.user[:ip_address] = calculate_real_ip_from_rack
+      # context.user[:ip_address] = calculate_real_ip_from_rack
     end
 
     # When behind a proxy (or if the user is using a proxy), we can't use
     # REMOTE_ADDR to determine the Event IP, and must use other headers instead.
-    def calculate_real_ip_from_rack
-      Utils::RealIp.new(
-        :remote_addr => context.rack_env["REMOTE_ADDR"],
-        :client_ip => context.rack_env["HTTP_CLIENT_IP"],
-        :real_ip => context.rack_env["HTTP_X_REAL_IP"],
-        :forwarded_for => context.rack_env["HTTP_X_FORWARDED_FOR"]
-      ).calculate_ip
-    end
+    # def calculate_real_ip_from_rack
+    #   Utils::RealIp.new(
+    #     :remote_addr => context.rack_env["REMOTE_ADDR"],
+    #     :client_ip => context.rack_env["HTTP_CLIENT_IP"],
+    #     :real_ip => context.rack_env["HTTP_X_REAL_IP"],
+    #     :forwarded_for => context.rack_env["HTTP_X_FORWARDED_FOR"]
+    #   ).calculate_ip
+    # end
 
     def list_gem_specs
       # Older versions of Rubygems don't support iterating over all specs
