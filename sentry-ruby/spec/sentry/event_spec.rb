@@ -67,14 +67,6 @@ RSpec.describe Sentry::Event do
     it 'has SDK' do
       expect(hash[:sdk]).to eq("name" => "sentry-ruby", "version" => Sentry::VERSION)
     end
-
-    it 'has server os' do
-      expect(hash[:extra][:server][:os].keys).to eq([:name, :version, :build, :kernel_version])
-    end
-
-    it 'has runtime' do
-      expect(hash[:extra][:server][:runtime][:version]).to match(/ruby/)
-    end
   end
 
   context 'parameter entries are nil' do
