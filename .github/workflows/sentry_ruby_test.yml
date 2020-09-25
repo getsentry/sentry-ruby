@@ -1,0 +1,44 @@
+name: sentry-ruby Test
+
+on:
+  push:
+    branches:
+      - master
+  pull_request:
+    paths:
+      - 'sentry-ruby/**'
+jobs:
+  test:
+    defaults:
+      run:
+        working-directory: sentry-ruby
+    name: Test on ruby ${{ matrix.ruby_version }} and rails ${{ matrix.rails_version }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        rails_version: [0, 5.2, 6.0]
+        ruby_version: [2.4, 2.5, 2.6, 2.7, jruby]
+        os: [ubuntu-latest]
+        include:
+          - ruby_version: 2.7
+            rails_version: 6.0
+            env: RUBYOPT="--enable-frozen-string-literal --debug=frozen-string-literal"
+        exclude:
+          - ruby_version: 2.4
+            rails_version: 6.0
+
+    steps:
+    - uses: actions/checkout@v1
+
+    - name: Set up Ruby ${{ matrix.ruby_version }}
+      uses: ruby/setup-ruby@v1
+      with:
+        bundler: 1
+        ruby-version: ${{ matrix.ruby_version }}
+
+    - name: Build with Rails ${{ matrix.rails_version }}
+      env:
+        RAILS_VERSION: ${{ matrix.rails_version }}
+      run: |
+        bundle install --jobs 4 --retry 3
+        bundle exec rake
