@@ -1,57 +1,77 @@
 require 'spec_helper'
 
 RSpec.describe Sentry::Transports::HTTP do
-  let(:config) { Sentry::Configuration.new.tap { |c| c.dsn = 'http://12345@sentry.localdomain/sentry/42' } }
+  let(:config) do
+    Sentry::Configuration.new.tap do |c|
+      c.dsn = 'http://12345@sentry.localdomain/sentry/42'
+      c.http_adapter = [:test, stubs]
+    end
+  end
+
   let(:client) { Sentry::Client.new(config) }
+  let(:event) { client.event_from_message("test") }
 
-  it 'should set a custom User-Agent' do
-    expect(client.send(:transport).conn.headers[:user_agent]).to eq("sentry-ruby/#{Sentry::VERSION}")
-  end
-
-  it 'should raise an error on 4xx responses' do
-    stubs = Faraday::Adapter::Test::Stubs.new do |stub|
-      stub.post('sentry/api/42/store/') { [404, {}, 'not found'] }
+  describe "customizations" do
+    let(:config) do
+      Sentry::Configuration.new.tap do |c|
+        c.dsn = 'http://12345@sentry.localdomain/sentry/42'
+      end
     end
-    client.configuration.http_adapter = [:test, stubs]
 
-    event = JSON.generate(Sentry.capture_message("test").to_hash)
-    expect { client.send(:transport).send_event("test", event) }.to raise_error(Sentry::Error, /the server responded with status 404/)
-
-    stubs.verify_stubbed_calls
-  end
-
-  it 'should raise an error on 5xx responses' do
-    stubs = Faraday::Adapter::Test::Stubs.new do |stub|
-      stub.post('sentry/api/42/store/') { [500, {}, 'error'] }
+    it 'sets a custom User-Agent' do
+      expect(client.transport.conn.headers[:user_agent]).to eq("sentry-ruby/#{Sentry::VERSION}")
     end
-    client.configuration.http_adapter = [:test, stubs]
 
-    event = JSON.generate(Sentry.capture_message("test").to_hash)
-    expect { client.send(:transport).send_event("test", event) }.to raise_error(Sentry::Error, /the server responded with status 500/)
+    it 'allows to customise faraday' do
+      builder = spy('faraday_builder')
+      expect(Faraday).to receive(:new).and_yield(builder)
+      config.faraday_builder = proc { |b| b.request :instrumentation }
 
-    stubs.verify_stubbed_calls
-  end
+      client.transport
 
-  it 'should add header info message to the error' do
-    stubs = Faraday::Adapter::Test::Stubs.new do |stub|
-      stub.post('sentry/api/42/store/') { [400, { 'x-sentry-error' => 'error_in_header' }, 'error'] }
+      expect(builder).to have_received(:request).with(:instrumentation)
     end
-    client.configuration.http_adapter = [:test, stubs]
-
-    event = JSON.generate(Sentry.capture_message("test").to_hash)
-    expect { client.send(:transport).send_event("test", event) }.to raise_error(Sentry::Error, /error_in_header/)
-
-    stubs.verify_stubbed_calls
   end
 
-  it 'allows to customise faraday' do
-    builder = spy('faraday_builder')
-    expect(Faraday).to receive(:new).and_yield(builder)
+  context "receive 4xx responses" do
+    let(:stubs) do
+      Faraday::Adapter::Test::Stubs.new do |stub|
+        stub.post('sentry/api/42/store/') { [404, {}, 'not found'] }
+      end
+    end
 
-    client.configuration.faraday_builder = proc { |b| b.request :instrumentation }
+    it 'raises an error' do
+      expect { client.transport.send_event("fake auth", event) }.to raise_error(Sentry::Error, /the server responded with status 404/)
 
-    client.send(:transport)
+      stubs.verify_stubbed_calls
+    end
+  end
 
-    expect(builder).to have_received(:request).with(:instrumentation)
+  context "receive 5xx responses" do
+    let(:stubs) do
+      Faraday::Adapter::Test::Stubs.new do |stub|
+        stub.post('sentry/api/42/store/') { [500, {}, 'error'] }
+      end
+    end
+
+    it 'raises an error' do
+      expect { client.transport.send_event("fake auth", event) }.to raise_error(Sentry::Error, /the server responded with status 500/)
+
+      stubs.verify_stubbed_calls
+    end
+  end
+
+  context "receive error responses with headers" do
+    let(:stubs) do
+      Faraday::Adapter::Test::Stubs.new do |stub|
+        stub.post('sentry/api/42/store/') { [400, { 'x-sentry-error' => 'error_in_header' }, 'error'] }
+      end
+    end
+
+    it 'raises an error with header' do
+      expect { client.transport.send_event("fake auth", event) }.to raise_error(Sentry::Error, /error_in_header/)
+
+      stubs.verify_stubbed_calls
+    end
   end
 end
