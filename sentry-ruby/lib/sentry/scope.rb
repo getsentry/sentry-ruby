@@ -2,7 +2,7 @@ require "sentry/breadcrumb_buffer"
 
 module Sentry
   class Scope
-    attr_accessor :transactions, :extra, :rack_env, :tags, :user, :level, :breadcrumbs
+    attr_accessor :transactions, :extra, :rack_env, :tags, :user, :level, :breadcrumbs, :fingerprint
 
     def initialize
       self.breadcrumbs = BreadcrumbBuffer.new
@@ -11,6 +11,7 @@ module Sentry
       self.tags = {}
       self.user = {}
       self.level = :error
+      self.fingerprint = []
       self.transactions = []
     end
 
@@ -18,6 +19,7 @@ module Sentry
       event.tags = tags.merge(event.tags)
       event.user = user.merge(event.user)
       event.extra = extra.merge(event.extra)
+      event.fingerprint = fingerprint
       event.level ||= level
       event.transaction = transactions.last
       event.breadcrumbs = breadcrumbs

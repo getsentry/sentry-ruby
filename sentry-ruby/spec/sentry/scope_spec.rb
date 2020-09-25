@@ -8,6 +8,7 @@ RSpec.describe Sentry::Scope do
       expect(subject.extra.dig(:server, :runtime, :version)).to match(/ruby/)
       expect(subject.tags).to eq({})
       expect(subject.user).to eq({})
+      expect(subject.fingerprint).to eq([])
       expect(subject.transactions).to eq([])
     end
   end
@@ -18,6 +19,7 @@ RSpec.describe Sentry::Scope do
       scope.tags = {foo: "bar"}
       scope.user = {id: 1}
       scope.transactions = ["WelcomeController#index"]
+      scope.fingerprint = ["foo"]
       scope
     end
     let(:client) do
@@ -33,6 +35,7 @@ RSpec.describe Sentry::Scope do
       expect(event.user).to eq({id: 1})
       expect(event.transaction).to eq("WelcomeController#index")
       expect(event.breadcrumbs).to be_a(Sentry::BreadcrumbBuffer)
+      expect(event.fingerprint).to eq(["foo"])
       expect(event.extra.dig(:server, :os).keys).to match_array([:name, :version, :build, :kernel_version])
       expect(event.extra.dig(:server, :runtime, :version)).to match(/ruby/)
     end
