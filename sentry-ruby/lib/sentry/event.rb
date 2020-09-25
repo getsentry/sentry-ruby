@@ -42,9 +42,9 @@ module Sentry
       # Set some attributes with empty hashes to allow merging
       @interfaces        = {}
 
-      @user          = user || {}
-      @extra         = extra || {}
-      @tags          = configuration.tags.merge(tags || {})
+      @user          = user
+      @extra         = extra
+      @tags          = configuration.tags.merge(tags)
 
       @server_os     = {} # TODO: contexts
       @runtime       = {} # TODO: contexts
@@ -58,7 +58,7 @@ module Sentry
 
       # these 2 needs custom setter methods
       self.level         = level
-      self.message       = message
+      self.message       = message if message
 
       # Allow attributes to be set on the event at initialization
       yield self if block_given?
@@ -74,15 +74,10 @@ module Sentry
     end
 
     def message
-      @interfaces[:logentry]&.unformatted_message
+      @interfaces[:logentry]&.unformatted_message.to_s
     end
 
     def message=(message)
-      unless message.is_a?(String)
-        configuration.logger.debug("You're passing a non-string message")
-        message = message.to_s
-      end
-
       interface(:message) do |int|
         int.message = message.byteslice(0...MAX_MESSAGE_SIZE_IN_BYTES) # Messages limited to 10kb
       end
