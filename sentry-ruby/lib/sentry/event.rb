@@ -3,6 +3,7 @@
 
 require 'socket'
 require 'securerandom'
+require 'sentry/event/options'
 require 'sentry/interface'
 require 'sentry/backtrace'
 require 'sentry/utils/deep_merge'
@@ -26,28 +27,10 @@ module Sentry
     attr_reader :level, :timestamp, :time_spent
 
     sig {
-      params(
-        configuration: Configuration,
-        message: T.nilable(String),
-        user: T::Hash[Symbol, T.untyped],
-        extra: T::Hash[Symbol, T.untyped],
-        tags: T::Hash[Symbol, T.untyped],
-        backtrace: T::Array[String],
-        level: T.any(Symbol, String),
-        checksum: T.nilable(String),
-        fingerprint: T::Array[String],
-        server_name: T.nilable(String),
-        release: T.nilable(String),
-        environment: T.nilable(String)
-      ).void
+      params(options: Options, configuration: Configuration).void
     }
-    def initialize(
-      configuration:,
-      message: nil,
-      user: {}, extra: {}, tags: {},
-      backtrace: [], level: :error, checksum: nil, fingerprint: [],
-      server_name: nil, release: nil, environment: nil
-    )
+
+    def initialize(options:, configuration:)
       # this needs to go first because some setters rely on configuration
       @configuration = configuration
 
@@ -60,31 +43,31 @@ module Sentry
       # Set some attributes with empty hashes to allow merging
       @interfaces        = {}
 
-      @user          = user
-      @extra         = extra
-      @tags          = configuration.tags.merge(tags)
+      @user          = options.user
+      @extra         = options.extra
+      @tags          = configuration.tags.merge(options.tags)
 
       @server_os     = {} # TODO: contexts
       @runtime       = {} # TODO: contexts
 
-      @checksum = checksum
-      @fingerprint = fingerprint
+      @checksum = options.checksum
+      @fingerprint = options.fingerprint
 
-      @server_name = server_name
-      @environment = environment
-      @release = release
+      @server_name = options.server_name
+      @environment = options.environment
+      @release = options.release
 
       # these 2 needs custom setter methods
-      self.level         = level
-      self.message       = message if message
+      self.level         = options.level
+      self.message       = options.message if options.message
 
       # Allow attributes to be set on the event at initialization
       yield self if block_given?
       # options.each_pair { |key, val| public_send("#{key}=", val) unless val.nil? }
 
-      if !backtrace.empty?
+      if !options.backtrace.empty?
         interface(:stacktrace) do |int|
-          int.frames = stacktrace_interface_from(backtrace)
+          int.frames = stacktrace_interface_from(options.backtrace)
         end
       end
 
