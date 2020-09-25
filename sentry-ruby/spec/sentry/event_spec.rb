@@ -70,28 +70,6 @@ RSpec.describe Sentry::Event do
     end
   end
 
-  context 'parameter entries are nil' do
-    let(:hash) do
-      Sentry::Event.new(
-        message: 'test',
-        level: 'warn',
-        tags: nil,
-        extra: nil,
-        user: nil,
-        server_name: 'foo.local',
-        release: '721e41770371db95eee98ca2707686226b993eda',
-        environment: 'production',
-        configuration: configuration
-      ).to_hash
-    end
-
-    it "skips nil values" do
-      expect(hash[:extra]).to eq({})
-      expect(hash[:user]).to eq({})
-      expect(hash[:tags]).to eq({})
-    end
-  end
-
   context 'configuration tags specified' do
     let(:hash) do
       config = Sentry::Configuration.new

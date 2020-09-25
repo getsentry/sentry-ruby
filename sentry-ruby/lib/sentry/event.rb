@@ -9,6 +9,7 @@ require 'sentry/utils/deep_merge'
 
 module Sentry
   class Event
+    extend T::Sig
     # See Sentry server default limits at
     # https://github.com/getsentry/sentry/blob/master/src/sentry/conf/server.py
     MAX_MESSAGE_SIZE_IN_BYTES = 1024 * 8
@@ -24,6 +25,22 @@ module Sentry
 
     attr_reader :level, :timestamp, :time_spent
 
+    sig {
+      params(
+        configuration: Configuration,
+        message: T.nilable(String),
+        user: T::Hash[Symbol, T.untyped],
+        extra: T::Hash[Symbol, T.untyped],
+        tags: T::Hash[Symbol, T.untyped],
+        backtrace: T::Array[String],
+        level: T.any(Symbol, String),
+        checksum: T.nilable(String),
+        fingerprint: T::Array[String],
+        server_name: T.nilable(String),
+        release: T.nilable(String),
+        environment: T.nilable(String)
+      ).void
+    }
     def initialize(
       configuration:,
       message: nil,
@@ -43,9 +60,9 @@ module Sentry
       # Set some attributes with empty hashes to allow merging
       @interfaces        = {}
 
-      @user          = user || {}
-      @extra         = extra || {}
-      @tags          = configuration.tags.merge(tags || {})
+      @user          = user
+      @extra         = extra
+      @tags          = configuration.tags.merge(tags)
 
       @server_os     = {} # TODO: contexts
       @runtime       = {} # TODO: contexts
@@ -59,7 +76,7 @@ module Sentry
 
       # these 2 needs custom setter methods
       self.level         = level
-      self.message       = message
+      self.message       = message if message
 
       # Allow attributes to be set on the event at initialization
       yield self if block_given?
@@ -74,29 +91,29 @@ module Sentry
       set_core_attributes_from_configuration
     end
 
+    sig {returns(String)}
     def message
-      @interfaces[:logentry]&.unformatted_message
+      @interfaces[:logentry]&.unformatted_message.to_s
     end
 
+    sig {params(message: String).void}
     def message=(message)
-      unless message.is_a?(String)
-        configuration.logger.debug("You're passing a non-string message")
-        message = message.to_s
-      end
-
       interface(:message) do |int|
         int.message = message.byteslice(0...MAX_MESSAGE_SIZE_IN_BYTES) # Messages limited to 10kb
       end
     end
 
+    sig {params(time: T.any(Time, String)).void}
     def timestamp=(time)
       @timestamp = time.is_a?(Time) ? time.strftime('%Y-%m-%dT%H:%M:%S') : time
     end
 
+    sig {params(time: T.any(Float, Integer)).void}
     def time_spent=(time)
       @time_spent = time.is_a?(Float) ? (time * 1000).to_i : time
     end
 
+    sig {params(new_level: T.any(String, Symbol)).void}
     def level=(new_level) # needed to meet the Sentry spec
       @level = new_level.to_s == "warn" ? :warning : new_level
     end
@@ -117,6 +134,7 @@ module Sentry
       interface(key, value)
     end
 
+    sig {returns(T::Hash[Symbol, T.untyped])}
     def to_hash
       data = [:checksum, :environment, :event_id, :extra, :fingerprint, :level,
               :logger, :message, :modules, :platform, :release, :sdk, :server_name,
@@ -133,6 +151,7 @@ module Sentry
       data
     end
 
+    sig {returns(T::Hash[String, T.untyped])}
     def to_json_compatible
       JSON.parse(JSON.generate(to_hash))
     end

@@ -230,13 +230,6 @@ RSpec.describe Sentry::Client do
         event = subject.event_from_exception(ExceptionWithContext.new, message: "MSG" * 3000)
         expect(event.message.length).to eq(8192)
       end
-
-      it "converts non-string message into string" do
-        expect(configuration.logger).to receive(:debug).with("You're passing a non-string message")
-
-        event = subject.event_from_exception(ExceptionWithContext.new, message: { foo: "bar" })
-        expect(event.message).to eq("{:foo=>\"bar\"}")
-      end
     end
 
     context 'for a nested exception type' do
