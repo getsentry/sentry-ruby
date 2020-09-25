@@ -1,3 +1,4 @@
+# typed: false
 module Sentry
   class ExceptionInterface < Interface
     attr_accessor :values

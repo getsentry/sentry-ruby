@@ -1,3 +1,4 @@
+# typed: false
 module Sentry
   module Transports
     class Stdout < Transport

@@ -1,3 +1,4 @@
+# typed: true
 module Sentry
   module Utils
     # ported from ActiveSupport

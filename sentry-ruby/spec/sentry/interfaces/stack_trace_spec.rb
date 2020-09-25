@@ -1,3 +1,4 @@
+# typed: false
 require 'spec_helper'
 
 RSpec.describe Sentry::StacktraceInterface::Frame do

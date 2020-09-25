@@ -1,3 +1,5 @@
+# typed: true
+require "sorbet-runtime"
 require "sentry/configuration"
 require "sentry/scope"
 require "sentry/logger"

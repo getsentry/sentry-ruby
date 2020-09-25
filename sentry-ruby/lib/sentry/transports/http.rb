@@ -1,3 +1,4 @@
+# typed: false
 require 'faraday'
 
 module Sentry

@@ -1,3 +1,4 @@
+# typed: true
 module Sentry
   class Interface
     def initialize(attributes = nil)

@@ -1,3 +1,4 @@
+# typed: true
 require "sentry/breadcrumb"
 
 module Sentry

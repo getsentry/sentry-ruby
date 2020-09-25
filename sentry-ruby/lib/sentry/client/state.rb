@@ -1,3 +1,4 @@
+# typed: true
 module Sentry
   class Client
     class State

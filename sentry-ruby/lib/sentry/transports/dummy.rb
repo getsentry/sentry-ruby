@@ -1,3 +1,4 @@
+# typed: true
 module Sentry
   module Transports
     class Dummy < Transport

@@ -1,3 +1,4 @@
+# typed: false
 require 'spec_helper'
 # rubocop:disable Style/WordArray
 RSpec.describe Sentry::LineCache do

@@ -1,3 +1,4 @@
+# typed: false
 require "uri"
 require "sentry/utils/exception_cause_chain"
 require "sentry/linecache"

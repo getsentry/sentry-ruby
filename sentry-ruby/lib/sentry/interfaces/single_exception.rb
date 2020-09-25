@@ -1,3 +1,4 @@
+# typed: false
 module Sentry
   class SingleExceptionInterface < Interface
     attr_accessor :type

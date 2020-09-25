@@ -1,3 +1,4 @@
+# typed: true
 module Sentry
   class LineCache
     def initialize

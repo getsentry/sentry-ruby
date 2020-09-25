@@ -1,3 +1,4 @@
+# typed: false
 module Sentry
   class MessageInterface < Interface
     attr_accessor :message, :params

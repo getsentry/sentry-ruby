@@ -1,3 +1,4 @@
+# typed: false
 module Sentry
   class HttpInterface < Interface
     attr_accessor :url, :method, :data, :query_string, :cookies, :headers, :env

@@ -1,3 +1,4 @@
+# typed: false
 module Sentry
   class StacktraceInterface < Interface
     attr_accessor :frames

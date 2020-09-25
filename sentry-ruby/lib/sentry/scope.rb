@@ -1,3 +1,4 @@
+# typed: false
 require "sentry/breadcrumb_buffer"
 
 module Sentry

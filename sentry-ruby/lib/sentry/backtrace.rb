@@ -1,3 +1,4 @@
+# typed: true
 # frozen_string_literal: true
 
 ## Inspired by Rails' and Airbrake's backtrace parsers.

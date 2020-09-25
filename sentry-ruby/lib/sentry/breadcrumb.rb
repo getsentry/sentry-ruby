@@ -1,3 +1,4 @@
+# typed: true
 module Sentry
   class Breadcrumb
     attr_accessor :category, :data, :message, :level, :timestamp, :type
