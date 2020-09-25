@@ -31,32 +31,34 @@ module Sentry
       server_name: nil, release: nil, environment: nil
     )
       # this needs to go first because some setters rely on configuration
-      self.configuration = configuration
+      @configuration = configuration
 
       # Set some simple default values
-      self.id            = SecureRandom.uuid.delete("-")
-      self.timestamp     = Time.now.utc
-      self.level         = level
-      self.platform      = :ruby
-      self.sdk           = SDK
+      @id            = SecureRandom.uuid.delete("-")
+      @timestamp     = Time.now.utc
+      @platform      = :ruby
+      @sdk           = SDK
 
       # Set some attributes with empty hashes to allow merging
       @interfaces        = {}
 
-      self.user          = user || {}
-      self.extra         = extra || {}
-      self.tags          = configuration.tags.merge(tags || {})
+      @user          = user || {}
+      @extra         = extra || {}
+      @tags          = configuration.tags.merge(tags || {})
 
+      @server_os     = {} # TODO: contexts
+      @runtime       = {} # TODO: contexts
+
+      @checksum = checksum
+      @fingerprint = fingerprint
+
+      @server_name = server_name
+      @environment = environment
+      @release = release
+
+      # these 2 needs custom setter methods
+      self.level         = level
       self.message       = message
-      self.server_os     = {} # TODO: contexts
-      self.runtime       = {} # TODO: contexts
-
-      self.checksum = checksum
-      self.fingerprint = fingerprint
-
-      self.server_name = server_name
-      self.environment = environment
-      self.release = release
 
       # Allow attributes to be set on the event at initialization
       yield self if block_given?
@@ -177,10 +179,10 @@ module Sentry
     private
 
     def set_core_attributes_from_configuration
-      self.server_name ||= configuration.server_name
-      self.release     ||= configuration.release
-      self.modules       = list_gem_specs if configuration.send_modules
-      self.environment ||= configuration.current_environment
+      @server_name ||= configuration.server_name
+      @release     ||= configuration.release
+      @modules       = list_gem_specs if configuration.send_modules
+      @environment ||= configuration.current_environment
     end
 
     def add_rack_context
