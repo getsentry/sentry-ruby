@@ -1,8 +1,10 @@
-# typed: false
+# typed: true
 require "sentry/breadcrumb_buffer"
 
 module Sentry
   class Scope
+    extend T::Sig
+
     attr_accessor :transactions, :extra, :rack_env, :tags, :user, :level, :breadcrumbs, :fingerprint
 
     def initialize
@@ -16,6 +18,7 @@ module Sentry
       self.transactions = []
     end
 
+    sig {params(event: Event).void}
     def apply_to_event(event)
       event.tags = tags.merge(event.tags)
       event.user = user.merge(event.user)
@@ -27,6 +30,9 @@ module Sentry
     end
 
     class << self
+      extend T::Sig
+
+      sig {returns(T::Hash[Symbol, String])}
       def os_context
         @os_context ||=
           begin
@@ -40,10 +46,11 @@ module Sentry
           end
       end
 
+      sig {returns(T::Hash[Symbol, String])}
       def runtime_context
         @runtime_context ||= {
           name: RbConfig::CONFIG["ruby_install_name"],
-          version: RUBY_DESCRIPTION || Sentry.sys_command("ruby -v")
+          version: RUBY_DESCRIPTION
         }
       end
     end
