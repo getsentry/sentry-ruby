@@ -41,4 +41,5 @@ jobs:
         RAILS_VERSION: ${{ matrix.rails_version }}
       run: |
         bundle install --jobs 4 --retry 3
+        bundle exec srb
         bundle exec rake
