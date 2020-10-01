@@ -27,16 +27,7 @@ module Sentry
         end
     end
 
-    def event_from_exception(exception, message: '', extra: {}, backtrace: [], checksum: nil, release: nil, fingerprint: [])
-      options = {
-        message: message,
-        extra: extra,
-        backtrace: backtrace,
-        checksum: checksum,
-        fingerprint: fingerprint,
-        release: release
-      }
-
+    def event_from_exception(exception, **options)
       exception_context =
         if exception.instance_variable_defined?(:@__sentry_context)
           exception.instance_variable_get(:@__sentry_context)
@@ -57,13 +48,9 @@ module Sentry
       end
     end
 
-    def event_from_message(message, extra: {}, backtrace: [], level: :error)
-      options = Event::Options.new(
-        message: message,
-        extra: extra,
-        backtrace: backtrace,
-        level: level
-      )
+    def event_from_message(message, **options)
+      options.merge!(message: message)
+      options = Event::Options.new(options)
       Event.new(configuration: configuration, options: options)
     end
 
