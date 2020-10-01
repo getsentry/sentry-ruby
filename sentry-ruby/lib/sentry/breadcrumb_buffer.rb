@@ -48,5 +48,11 @@ module Sentry
         :values => members.map(&:to_hash)
       }
     end
+
+    def dup
+      copy = super
+      copy.buffer = buffer.deep_dup
+      copy
+    end
   end
 end
