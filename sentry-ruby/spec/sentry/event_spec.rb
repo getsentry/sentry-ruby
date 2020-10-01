@@ -2,22 +2,17 @@ require 'spec_helper'
 
 RSpec.describe Sentry::Event do
   let(:configuration) { Sentry::Configuration.new }
-  let(:essential_options) do
-    {
-      configuration: configuration
-    }
-  end
 
   describe "#initialize" do
     it "initializes a Event when all required keys are provided" do
-      expect(described_class.new(essential_options)).to be_a(described_class)
+      options = Sentry::Event::Options.new
+      expect(described_class.new(configuration: configuration, options: options)).to be_a(described_class)
     end
   end
 
   context 'a fully implemented event' do
-    let(:hash) do
-      Sentry::Event.new(
-        configuration: configuration,
+    let(:options) do
+      Sentry::Event::Options.new(
         message: 'test',
         level: 'warn',
         tags: {
@@ -29,6 +24,12 @@ RSpec.describe Sentry::Event do
         server_name: 'foo.local',
         release: '721e41770371db95eee98ca2707686226b993eda',
         environment: 'production'
+      )
+    end
+    let(:hash) do
+      Sentry::Event.new(
+        configuration: configuration,
+        options: options
       ).to_hash
     end
 
@@ -69,29 +70,16 @@ RSpec.describe Sentry::Event do
     end
   end
 
-  context 'parameter entries are nil' do
-    let(:hash) do
-      Sentry::Event.new(
-        message: 'test',
-        level: 'warn',
-        tags: nil,
-        extra: nil,
-        user: nil,
-        server_name: 'foo.local',
-        release: '721e41770371db95eee98ca2707686226b993eda',
-        environment: 'production',
-        configuration: configuration
-      ).to_hash
-    end
-
-    it "skips nil values" do
-      expect(hash[:extra]).to eq({})
-      expect(hash[:user]).to eq({})
-      expect(hash[:tags]).to eq({})
-    end
-  end
-
   context 'configuration tags specified' do
+    let(:options) do
+      Sentry::Event::Options.new(
+        level: 'warning',
+        tags: {
+          'foo' => 'bar'
+        },
+        server_name: 'foo.local',
+      )
+    end
     let(:hash) do
       config = Sentry::Configuration.new
       config.tags = { 'key' => 'value' }
@@ -99,12 +87,8 @@ RSpec.describe Sentry::Event do
       config.current_environment = "custom"
 
       Sentry::Event.new(
-        level: 'warning',
-        tags: {
-          'foo' => 'bar'
-        },
-        server_name: 'foo.local',
         configuration: config,
+        options: options
       ).to_hash
     end
 
@@ -118,19 +102,24 @@ RSpec.describe Sentry::Event do
     it 'does not persist tags between unrelated events' do
       config = Sentry::Configuration.new
       config.logger = Logger.new(nil)
-
-      Sentry::Event.new(
+      options = Sentry::Event::Options.new(
         level: 'warning',
         tags: {
           'foo' => 'bar'
         },
         server_name: 'foo.local',
-        configuration: config
+      )
+
+      Sentry::Event.new(
+        configuration: config,
+        options: options
       )
 
       hash = Sentry::Event.new(
-        level: 'warning',
-        server_name: 'foo.local',
+        options: Sentry::Event::Options.new(
+          level: 'warning',
+          server_name: 'foo.local',
+        ),
         configuration: config
       ).to_hash
 
@@ -181,12 +170,15 @@ RSpec.describe Sentry::Event do
 
   describe '#to_json_compatible' do
     subject do
-      Sentry::Event.new(
+      options = Sentry::Event::Options.new(
         extra: {
           'my_custom_variable' => 'value',
           'date' => Time.utc(0),
           'anonymous_module' => Class.new
         },
+      )
+      Sentry::Event.new(
+        options: options,
         configuration: configuration
       )
     end

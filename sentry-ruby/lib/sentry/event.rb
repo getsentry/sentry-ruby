@@ -2,6 +2,7 @@
 
 require 'socket'
 require 'securerandom'
+require 'sentry/event/options'
 require 'sentry/interface'
 require 'sentry/backtrace'
 require 'sentry/utils/deep_merge'
@@ -23,48 +24,44 @@ module Sentry
 
     attr_reader :level, :timestamp, :time_spent
 
-    def initialize(
-      configuration:,
-      message: nil,
-      user: {}, extra: {}, tags: {},
-      backtrace: [], level: :error, checksum: nil, fingerprint: [],
-      server_name: nil, release: nil, environment: nil
-    )
+    def initialize(options:, configuration:)
       # this needs to go first because some setters rely on configuration
-      self.configuration = configuration
+      @configuration = configuration
 
       # Set some simple default values
-      self.id            = SecureRandom.uuid.delete("-")
-      self.timestamp     = Time.now.utc
-      self.level         = level
-      self.platform      = :ruby
-      self.sdk           = SDK
+      @id            = SecureRandom.uuid.delete("-")
+      @timestamp     = Time.now.utc
+      @platform      = :ruby
+      @sdk           = SDK
 
       # Set some attributes with empty hashes to allow merging
       @interfaces        = {}
 
-      self.user          = user || {}
-      self.extra         = extra || {}
-      self.tags          = configuration.tags.merge(tags || {})
+      @user          = options.user
+      @extra         = options.extra
+      @tags          = configuration.tags.merge(options.tags)
 
-      self.message       = message
-      self.server_os     = {} # TODO: contexts
-      self.runtime       = {} # TODO: contexts
+      @server_os     = {} # TODO: contexts
+      @runtime       = {} # TODO: contexts
 
-      self.checksum = checksum
-      self.fingerprint = fingerprint
+      @checksum = options.checksum
+      @fingerprint = options.fingerprint
 
-      self.server_name = server_name
-      self.environment = environment
-      self.release = release
+      @server_name = options.server_name
+      @environment = options.environment
+      @release = options.release
+
+      # these 2 needs custom setter methods
+      self.level         = options.level
+      self.message       = options.message if options.message
 
       # Allow attributes to be set on the event at initialization
       yield self if block_given?
       # options.each_pair { |key, val| public_send("#{key}=", val) unless val.nil? }
 
-      if !backtrace.empty?
+      if !options.backtrace.empty?
         interface(:stacktrace) do |int|
-          int.frames = stacktrace_interface_from(backtrace)
+          int.frames = stacktrace_interface_from(options.backtrace)
         end
       end
 
@@ -72,15 +69,10 @@ module Sentry
     end
 
     def message
-      @interfaces[:logentry]&.unformatted_message
+      @interfaces[:logentry]&.unformatted_message.to_s
     end
 
     def message=(message)
-      unless message.is_a?(String)
-        configuration.logger.debug("You're passing a non-string message")
-        message = message.to_s
-      end
-
       interface(:message) do |int|
         int.message = message.byteslice(0...MAX_MESSAGE_SIZE_IN_BYTES) # Messages limited to 10kb
       end
@@ -177,29 +169,29 @@ module Sentry
     private
 
     def set_core_attributes_from_configuration
-      self.server_name ||= configuration.server_name
-      self.release     ||= configuration.release
-      self.modules       = list_gem_specs if configuration.send_modules
-      self.environment ||= configuration.current_environment
+      @server_name ||= configuration.server_name
+      @release     ||= configuration.release
+      @modules       = list_gem_specs if configuration.send_modules
+      @environment ||= configuration.current_environment
     end
 
     def add_rack_context
       interface :http do |int|
         int.from_rack(context.rack_env)
       end
-      context.user[:ip_address] = calculate_real_ip_from_rack
+      # context.user[:ip_address] = calculate_real_ip_from_rack
     end
 
     # When behind a proxy (or if the user is using a proxy), we can't use
     # REMOTE_ADDR to determine the Event IP, and must use other headers instead.
-    def calculate_real_ip_from_rack
-      Utils::RealIp.new(
-        :remote_addr => context.rack_env["REMOTE_ADDR"],
-        :client_ip => context.rack_env["HTTP_CLIENT_IP"],
-        :real_ip => context.rack_env["HTTP_X_REAL_IP"],
-        :forwarded_for => context.rack_env["HTTP_X_FORWARDED_FOR"]
-      ).calculate_ip
-    end
+    # def calculate_real_ip_from_rack
+    #   Utils::RealIp.new(
+    #     :remote_addr => context.rack_env["REMOTE_ADDR"],
+    #     :client_ip => context.rack_env["HTTP_CLIENT_IP"],
+    #     :real_ip => context.rack_env["HTTP_X_REAL_IP"],
+    #     :forwarded_for => context.rack_env["HTTP_X_FORWARDED_FOR"]
+    #   ).calculate_ip
+    # end
 
     def list_gem_specs
       # Older versions of Rubygems don't support iterating over all specs

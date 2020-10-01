@@ -27,14 +27,13 @@ module Sentry
         end
     end
 
-    def event_from_exception(exception, message: nil, extra: {}, backtrace: [], checksum: nil, release: nil, fingerprint: [])
+    def event_from_exception(exception, message: '', extra: {}, backtrace: [], checksum: nil, release: nil, fingerprint: [])
       options = {
         message: message,
         extra: extra,
         backtrace: backtrace,
         checksum: checksum,
         fingerprint: fingerprint,
-        configuration: configuration,
         release: release
       }
 
@@ -51,20 +50,21 @@ module Sentry
 
       return unless @configuration.exception_class_allowed?(exception)
 
-      Event.new(**options) do |evt|
+      options = Event::Options.new(**options)
+
+      Event.new(configuration: configuration, options: options) do |evt|
         evt.add_exception_interface(exception)
       end
     end
 
     def event_from_message(message, extra: {}, backtrace: [], level: :error)
-      options = {
+      options = Event::Options.new(
         message: message,
         extra: extra,
         backtrace: backtrace,
-        configuration: configuration,
         level: level
-      }
-      Event.new(**options)
+      )
+      Event.new(configuration: configuration, options: options)
     end
 
     def generate_auth_header
