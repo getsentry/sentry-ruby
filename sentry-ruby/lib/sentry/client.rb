@@ -76,24 +76,35 @@ module Sentry
       end
 
       # Convert to hash
-      event = event.to_hash
+      event_hash = event.to_hash
 
       unless @state.should_try?
-        failed_send(nil, event)
+        failed_send(nil, event_hash)
         return
       end
 
-      event_id = event[:event_id] || event['event_id']
+      event_id = event_hash[:event_id] || event_hash['event_id']
       configuration.logger.info "Sending event #{event_id} to Sentry"
 
-      content_type, encoded_data = encode(event)
+      content_type, encoded_data = encode(event_hash)
 
       begin
-        transport.send_event(generate_auth_header, encoded_data,
-                             :content_type => content_type)
+        if configuration.async?
+          begin
+            # We have to convert to a JSON-like hash, because background job
+            # processors (esp ActiveJob) may not like weird types in the event hash
+            configuration.async.call(event.to_json_compatible)
+          rescue => e
+            configuration.logger.error("async event sending failed: #{e.message}")
+            transport.send_event(generate_auth_header, encoded_data, content_type: content_type)
+          end
+        else
+          transport.send_event(generate_auth_header, encoded_data, content_type: content_type)
+        end
+
         successful_send
       rescue => e
-        failed_send(e, event)
+        failed_send(e, event_hash)
         return
       end
 
