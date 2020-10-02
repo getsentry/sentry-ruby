@@ -2,7 +2,9 @@ require "sentry/breadcrumb_buffer"
 
 module Sentry
   class Scope
-    attr_accessor :transactions, :contexts, :extra, :tags, :user, :level, :breadcrumbs, :fingerprint
+    ATTRIBUTES = [:transactions, :contexts, :extra, :tags, :user, :level, :breadcrumbs, :fingerprint]
+
+    attr_reader(*ATTRIBUTES)
 
     def initialize
       @breadcrumbs = BreadcrumbBuffer.new
@@ -95,6 +97,11 @@ module Sentry
 
       @fingerprint = fingerprint
     end
+
+    protected
+
+    # for duplicating scopes internally
+    attr_writer(*ATTRIBUTES)
 
     private
 

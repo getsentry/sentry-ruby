@@ -21,7 +21,7 @@ RSpec.describe Sentry::Scope do
     end
 
     it "unsets user when given empty data" do
-      subject.user = {id: 1, name: "Jack"}
+      subject.set_user({id: 1, name: "Jack"})
 
       subject.set_user({})
 
@@ -37,17 +37,17 @@ RSpec.describe Sentry::Scope do
     end
 
     it "replaces the extra hash" do
-      subject.extra = {bar: "baz"}
+      subject.set_extras({bar: "baz"})
+      expect(subject.extra).to eq({bar: "baz"})
 
       subject.set_extras({foo: "bar"})
-
       expect(subject.extra).to eq({foo: "bar"})
     end
   end
 
   describe "#set_extra" do
     it "merges the key value with existing extra" do
-      subject.extra = {bar: "baz"}
+      subject.set_extras({bar: "baz"})
 
       subject.set_extra(:foo, "bar")
 
@@ -63,17 +63,17 @@ RSpec.describe Sentry::Scope do
     end
 
     it "replaces the context hash" do
-      subject.contexts = {bar: "baz"}
+      subject.set_contexts({foo: "baz"})
+      expect(subject.contexts).to eq({foo: "baz"})
 
       subject.set_contexts({foo: "bar"})
-
       expect(subject.contexts).to eq({foo: "bar"})
     end
   end
 
   describe "#set_context" do
     it "merges the key value with existing context" do
-      subject.contexts = {bar: "baz"}
+      subject.set_contexts({bar: "baz"})
 
       subject.set_context(:foo, "bar")
 
@@ -89,17 +89,17 @@ RSpec.describe Sentry::Scope do
     end
 
     it "replaces the tag hash" do
-      subject.tags = {bar: "baz"}
+      subject.set_tags({foo: "baz"})
+      expect(subject.tags).to eq({foo: "baz"})
 
       subject.set_tags({foo: "bar"})
-
       expect(subject.tags).to eq({foo: "bar"})
     end
   end
 
   describe "#set_tag" do
     it "merges the key value with existing tag" do
-      subject.tags = {bar: "baz"}
+      subject.set_tags({bar: "baz"})
 
       subject.set_tag(:foo, "bar")
 

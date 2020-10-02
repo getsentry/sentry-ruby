@@ -50,10 +50,10 @@ RSpec.describe Sentry::Hub do
   describe "#with_scope" do
     it "builds a temporary scope" do
       inner_event = nil
-      scope.tags = { level: 1 }
+      scope.set_tags({ level: 1 })
 
       subject.with_scope do |scope|
-        scope.tags = { level: 2 }
+        scope.set_tags({ level: 2 })
         inner_event = subject.capture_message("Inner event")
       end
 
@@ -65,7 +65,7 @@ RSpec.describe Sentry::Hub do
 
     it "doesn't leak data mutation" do
       inner_event = nil
-      scope.tags = { level: 1 }
+      scope.set_tags({ level: 1 })
 
       subject.with_scope do |scope|
         scope.tags[:level] = 2
@@ -136,7 +136,7 @@ RSpec.describe Sentry::Hub do
     end
 
     it "clones the new scope from the current scope" do
-      scope.tags = { foo: "bar" }
+      scope.set_tags({ foo: "bar" })
 
       expect(subject.current_scope).to eq(scope)
 
@@ -152,7 +152,7 @@ RSpec.describe Sentry::Hub do
         expect(subject.current_scope).to eq(nil)
       end
       it "creates a new scope" do
-        scope.tags = { foo: "bar" }
+        scope.set_tags({ foo: "bar" })
 
         subject.push_scope
 
