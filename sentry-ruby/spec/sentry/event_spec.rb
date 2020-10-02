@@ -21,6 +21,9 @@ RSpec.describe Sentry::Event do
         extra: {
           'my_custom_variable' => 'value'
         },
+        contexts: {
+          os: { name: "mac" }
+        },
         server_name: 'foo.local',
         release: '721e41770371db95eee98ca2707686226b993eda',
         environment: 'production'
@@ -55,6 +58,10 @@ RSpec.describe Sentry::Event do
 
     it 'has tag data' do
       expect(hash[:tags]).to eq('foo' => 'bar')
+    end
+
+    it 'has contexts' do
+      expect(hash[:contexts]).to eq({ os: { name: "mac" } })
     end
 
     it 'has extra data' do

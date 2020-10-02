@@ -16,13 +16,18 @@ module Sentry
 
     SDK = { "name" => "sentry-ruby", "version" => Sentry::VERSION }.freeze
 
-    attr_accessor :id, :logger, :transaction, :server_name, :release, :modules,
-                  :extra, :tags, :context, :configuration, :checksum,
-                  :fingerprint, :environment, :server_os, :runtime,
-                  :breadcrumbs, :user, :backtrace, :platform, :sdk
-    alias event_id id
+    ATTRIBUTES = %i(
+      event_id logger level time_spent timestamp
+      checksum release environment server_name modules
+      message user tags contexts extra
+      fingerprint breadcrumbs backtrace transaction
+      platform sdk
+    )
 
-    attr_reader :level, :timestamp, :time_spent
+    attr_accessor(*ATTRIBUTES)
+    attr_reader :id, :configuration
+
+    alias event_id id
 
     def initialize(options:, configuration:)
       # this needs to go first because some setters rely on configuration
@@ -39,12 +44,11 @@ module Sentry
 
       @user          = options.user
       @extra         = options.extra
+      @contexts      = options.contexts
       @tags          = configuration.tags.merge(options.tags)
 
-      @server_os     = {} # TODO: contexts
-      @runtime       = {} # TODO: contexts
-
       @checksum = options.checksum
+
       @fingerprint = options.fingerprint
 
       @server_name = options.server_name
@@ -107,14 +111,11 @@ module Sentry
     end
 
     def to_hash
-      data = [:checksum, :environment, :event_id, :extra, :fingerprint, :level,
-              :logger, :message, :modules, :platform, :release, :sdk, :server_name,
-              :tags, :time_spent, :timestamp, :transaction, :user].each_with_object({}) do |att, memo|
+      data = ATTRIBUTES.each_with_object({}) do |att, memo|
         memo[att] = public_send(att) if public_send(att)
       end
 
-      # TODO-v4: Fix this
-      # data[:breadcrumbs] = @breadcrumbs.to_hash unless @breadcrumbs.empty?
+      data[:breadcrumbs] = breadcrumbs.to_hash if breadcrumbs
 
       @interfaces.each_pair do |name, int_data|
         data[name.to_sym] = int_data.to_hash

@@ -60,6 +60,12 @@ RSpec.describe Sentry::Client do
 
         expect(subject.send_event(event.to_json_compatible)).to eq(event.to_json_compatible)
       end
+
+      it "logs correct message" do
+        expect(subject.configuration.logger).to receive(:info).with("Sending event #{event.id} to Sentry")
+
+        expect(subject.send_event(event)).to eq(event)
+      end
     end
 
     context "when failed" do

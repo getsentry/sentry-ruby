@@ -1,5 +1,4 @@
-$LOAD_PATH.unshift File.expand_path('../lib', __FILE__)
-require 'sentry'
+require_relative "lib/sentry/version"
 
 Gem::Specification.new do |spec|
   spec.name          = "sentry-ruby"
