@@ -63,6 +63,10 @@ module Sentry
       event
     end
 
+    def add_breadcrumb(breadcrumb)
+      current_scope.add_breadcrumb(breadcrumb)
+    end
+
     def current_scope
       @scopes.last
     end
