@@ -1,3 +1,4 @@
+require "sentry/version"
 require "sentry/core_ext/object/deep_dup"
 require "sentry/configuration"
 require "sentry/logger"
