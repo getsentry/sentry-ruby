@@ -6,7 +6,7 @@ module Sentry
 
     def initialize
       self.breadcrumbs = BreadcrumbBuffer.new
-      self.contexts = { :server => { :os => self.class.os_context, :runtime => self.class.runtime_context } }
+      self.contexts = { :os => self.class.os_context, :runtime => self.class.runtime_context }
       self.extra = {}
       self.rack_env = nil
       self.tags = {}

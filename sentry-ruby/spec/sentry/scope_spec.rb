@@ -10,8 +10,8 @@ RSpec.describe Sentry::Scope do
   describe "#initialize" do
     it "contains correct defaults" do
       expect(subject.breadcrumbs).to be_a(Sentry::BreadcrumbBuffer)
-      expect(subject.contexts.dig(:server, :os).keys).to match_array([:name, :version, :build, :kernel_version])
-      expect(subject.contexts.dig(:server, :runtime, :version)).to match(/ruby/)
+      expect(subject.contexts[:os].keys).to match_array([:name, :version, :build, :kernel_version])
+      expect(subject.contexts.dig(:runtime, :version)).to match(/ruby/)
       expect(subject.extra).to eq({})
       expect(subject.tags).to eq({})
       expect(subject.user).to eq({})
@@ -25,7 +25,7 @@ RSpec.describe Sentry::Scope do
       copy = subject.dup
 
       copy.breadcrumbs.record(new_breadcrumb)
-      copy.contexts.merge!(server: {os: {}})
+      copy.contexts.merge!(os: {})
       copy.extra.merge!(foo: "bar")
       copy.tags.merge!(foo: "bar")
       copy.user.merge!(foo: "bar")
@@ -33,8 +33,8 @@ RSpec.describe Sentry::Scope do
       copy.fingerprint << "bar"
 
       expect(subject.breadcrumbs.to_hash).to eq({ values: [] })
-      expect(subject.contexts.dig(:server, :os).keys).to match_array([:name, :version, :build, :kernel_version])
-      expect(subject.contexts.dig(:server, :runtime, :version)).to match(/ruby/)
+      expect(subject.contexts[:os].keys).to match_array([:name, :version, :build, :kernel_version])
+      expect(subject.contexts.dig(:runtime, :version)).to match(/ruby/)
       expect(subject.extra).to eq({})
       expect(subject.tags).to eq({})
       expect(subject.user).to eq({})
@@ -92,21 +92,21 @@ RSpec.describe Sentry::Scope do
       expect(event.transaction).to eq("WelcomeController#index")
       expect(event.breadcrumbs).to be_a(Sentry::BreadcrumbBuffer)
       expect(event.fingerprint).to eq(["foo"])
-      expect(event.contexts.dig(:server, :os).keys).to match_array([:name, :version, :build, :kernel_version])
-      expect(event.contexts.dig(:server, :runtime, :version)).to match(/ruby/)
+      expect(event.contexts[:os].keys).to match_array([:name, :version, :build, :kernel_version])
+      expect(event.contexts.dig(:runtime, :version)).to match(/ruby/)
     end
 
     it "doesn't override event's pre-existing data" do
       event.tags = {foo: "baz"}
       event.user = {id: 2}
       event.extra = {additional_info: "nothing"}
-      event.contexts = {server: nil}
+      event.contexts = {os: nil}
 
       subject.apply_to_event(event)
       expect(event.tags).to eq({foo: "baz"})
       expect(event.user).to eq({id: 2})
       expect(event.extra[:additional_info]).to eq("nothing")
-      expect(event.contexts[:server]).to eq(nil)
+      expect(event.contexts[:os]).to eq(nil)
     end
   end
 end
