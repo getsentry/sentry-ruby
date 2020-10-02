@@ -44,6 +44,7 @@ module Sentry
 
       @user          = options.user
       @extra         = options.extra
+      @contexts      = options.contexts
       @tags          = configuration.tags.merge(options.tags)
 
       @checksum = options.checksum
