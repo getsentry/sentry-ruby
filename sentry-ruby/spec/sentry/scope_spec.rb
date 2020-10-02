@@ -13,6 +13,29 @@ RSpec.describe Sentry::Scope do
     end
   end
 
+  describe "#dup" do
+    it "copies the values instead of just references to values" do
+      copy = subject.dup
+
+      new_breadcrumb = Sentry::Breadcrumb.new
+      new_breadcrumb.message = "foo"
+      copy.breadcrumbs.record(new_breadcrumb)
+      copy.extra.merge!(server: {os: {}})
+      copy.tags.merge!(foo: "bar")
+      copy.user.merge!(foo: "bar")
+      copy.transactions << "foo"
+      copy.fingerprint << "bar"
+
+      expect(subject.breadcrumbs.to_hash).to eq({ values: [] })
+      expect(subject.extra.dig(:server, :os).keys).to match_array([:name, :version, :build, :kernel_version])
+      expect(subject.extra.dig(:server, :runtime, :version)).to match(/ruby/)
+      expect(subject.tags).to eq({})
+      expect(subject.user).to eq({})
+      expect(subject.fingerprint).to eq([])
+      expect(subject.transactions).to eq([])
+    end
+  end
+
   describe "#apply_to_event" do
     subject do
       scope = described_class.new

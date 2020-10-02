@@ -1,8 +1,8 @@
+require "sentry/core_ext/object/deep_dup"
 require "sentry/configuration"
-require "sentry/scope"
 require "sentry/logger"
 require "sentry/event"
-require "sentry/client"
+require "sentry/hub"
 
 module Sentry
   class Error < StandardError

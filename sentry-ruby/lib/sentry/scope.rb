@@ -25,6 +25,17 @@ module Sentry
       event.breadcrumbs = breadcrumbs
     end
 
+    def dup
+      copy = super
+      copy.breadcrumbs = breadcrumbs.dup
+      copy.extra = extra.deep_dup
+      copy.tags = tags.deep_dup
+      copy.user = user.deep_dup
+      copy.transactions = transactions.deep_dup
+      copy.fingerprint = fingerprint.deep_dup
+      copy
+    end
+
     class << self
       def os_context
         @os_context ||=

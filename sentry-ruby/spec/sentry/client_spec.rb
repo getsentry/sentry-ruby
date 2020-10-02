@@ -52,7 +52,7 @@ RSpec.describe Sentry::Client do
       it "sends Event object" do
         expect(subject).not_to receive(:failed_send)
 
-        expect(subject.send_event(event)).to eq(event.to_hash)
+        expect(subject.send_event(event)).to eq(event)
       end
 
       it "sends Event hash" do
@@ -78,6 +78,45 @@ RSpec.describe Sentry::Client do
 
       it "sends Event hash" do
         expect(subject.send_event(event.to_json_compatible)).to eq(nil)
+      end
+    end
+
+    describe 'async' do
+      let(:message) { "Test message" }
+
+      around do |example|
+        prior_async = configuration.async
+        configuration.async = proc { :ok }
+        example.run
+        configuration.async = prior_async
+      end
+
+      before do
+        allow(subject.transport).to receive(:send_event)
+      end
+
+      it "doesn't send the event right away" do
+        expect(configuration.async).to receive(:call)
+
+        returned = subject.send_event(event)
+
+        expect(returned).to be_a(Sentry::Event)
+      end
+
+      context "when async raises an exception" do
+        around do |example|
+          prior_async = configuration.async
+          configuration.async = proc { raise TypeError }
+          example.run
+          configuration.async = prior_async
+        end
+
+        it 'sends the result of Event.capture_exception via fallback' do
+          expect(configuration.async).to receive(:call).and_call_original
+          expect(subject.transport).to receive(:send_event)
+
+          subject.send_event(event)
+        end
       end
     end
   end
