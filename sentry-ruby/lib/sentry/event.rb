@@ -17,7 +17,7 @@ module Sentry
     SDK = { "name" => "sentry-ruby", "version" => Sentry::VERSION }.freeze
 
     ATTRIBUTES = %i(
-      logger level time_spent timestamp
+      event_id logger level time_spent timestamp
       checksum release environment server_name modules
       message user tags contexts extra
       fingerprint breadcrumbs backtrace transaction
@@ -48,6 +48,7 @@ module Sentry
       @tags          = configuration.tags.merge(options.tags)
 
       @checksum = options.checksum
+
       @fingerprint = options.fingerprint
 
       @server_name = options.server_name
@@ -114,8 +115,7 @@ module Sentry
         memo[att] = public_send(att) if public_send(att)
       end
 
-      # TODO-v4: Fix this
-      # data[:breadcrumbs] = @breadcrumbs.to_hash unless @breadcrumbs.empty?
+      data[:breadcrumbs] = breadcrumbs.to_hash if breadcrumbs
 
       @interfaces.each_pair do |name, int_data|
         data[name.to_sym] = int_data.to_hash
