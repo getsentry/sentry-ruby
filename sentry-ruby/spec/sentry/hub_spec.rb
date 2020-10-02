@@ -95,6 +95,30 @@ RSpec.describe Sentry::Hub do
     end
   end
 
+  describe "#bind_client & #unbind_client" do
+    let(:new_client) { Sentry::Client.new(configuration) }
+
+    describe "#bind_client" do
+      it "binds the new client with the hub" do
+        subject.bind_client(new_client)
+
+        expect(subject.client).to eq(new_client)
+      end
+    end
+
+    describe "#unbind_client" do
+      it "unbinds (pop) the current client" do
+        old_client = subject.client
+        subject.bind_client(new_client)
+        expect(subject.client).to eq(new_client)
+
+        subject.unbind_client
+
+        expect(subject.client).to eq(old_client)
+      end
+    end
+  end
+
   describe "#pop_scope" do
     it "pops the current scope" do
       expect(subject.current_scope).to eq(scope)

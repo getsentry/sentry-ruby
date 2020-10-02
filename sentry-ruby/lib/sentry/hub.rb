@@ -3,12 +3,24 @@ require "sentry/client"
 
 module Sentry
   class Hub
-    attr_reader :client, :scopes, :last_event_id
+    attr_reader :last_event_id
 
     def initialize(client, scope)
-      @client = client
+      @clients = [client]
       @scopes = [scope]
       @last_event_id = nil
+    end
+
+    def client
+      @clients.last
+    end
+
+    def bind_client(client)
+      @clients << client
+    end
+
+    def unbind_client
+      @clients.pop
     end
 
     def configure_scope(&block)
@@ -38,7 +50,7 @@ module Sentry
     end
 
     def capture_exception(error, **options, &block)
-      event = @client.event_from_exception(error, **options)
+      event = client.event_from_exception(error, **options)
 
       return unless current_scope
 
@@ -48,7 +60,7 @@ module Sentry
     end
 
     def capture_message(message, **options, &block)
-      event = @client.event_from_message(message, **options)
+      event = client.event_from_message(message, **options)
 
       return unless current_scope
 
@@ -58,7 +70,7 @@ module Sentry
     end
 
     def capture_event(event)
-      @client.send_event(event)
+      client.send_event(event)
       @last_event_id = event.id
       event
     end
