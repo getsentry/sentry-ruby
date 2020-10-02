@@ -70,11 +70,11 @@ RSpec.describe Sentry::Scope do
   describe "#apply_to_event" do
     subject do
       scope = described_class.new
-      scope.tags = {foo: "bar"}
-      scope.extra = {additional_info: "hello"}
-      scope.user = {id: 1}
-      scope.transactions = ["WelcomeController#index"]
-      scope.fingerprint = ["foo"]
+      scope.set_tags({foo: "bar"})
+      scope.set_extras({additional_info: "hello"})
+      scope.set_user({id: 1})
+      scope.set_transaction("WelcomeController#index")
+      scope.set_fingerprint(["foo"])
       scope
     end
     let(:client) do

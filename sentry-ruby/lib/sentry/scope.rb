@@ -2,18 +2,19 @@ require "sentry/breadcrumb_buffer"
 
 module Sentry
   class Scope
-    attr_accessor :transactions, :contexts, :extra, :rack_env, :tags, :user, :level, :breadcrumbs, :fingerprint
+    ATTRIBUTES = [:transactions, :contexts, :extra, :tags, :user, :level, :breadcrumbs, :fingerprint]
+
+    attr_reader(*ATTRIBUTES)
 
     def initialize
-      self.breadcrumbs = BreadcrumbBuffer.new
-      self.contexts = { :os => self.class.os_context, :runtime => self.class.runtime_context }
-      self.extra = {}
-      self.rack_env = nil
-      self.tags = {}
-      self.user = {}
-      self.level = :error
-      self.fingerprint = []
-      self.transactions = []
+      @breadcrumbs = BreadcrumbBuffer.new
+      @contexts = { :os => self.class.os_context, :runtime => self.class.runtime_context }
+      @extra = {}
+      @tags = {}
+      @user = {}
+      @level = :error
+      @fingerprint = []
+      @transactions = []
     end
 
     def apply_to_event(event)
@@ -32,7 +33,7 @@ module Sentry
     end
 
     def clear_breadcrumbs
-      self.breadcrumbs = BreadcrumbBuffer.new
+      @breadcrumbs = BreadcrumbBuffer.new
     end
 
     def dup
@@ -45,6 +46,69 @@ module Sentry
       copy.transactions = transactions.deep_dup
       copy.fingerprint = fingerprint.deep_dup
       copy
+    end
+
+    def set_user(user_hash)
+      check_argument_type!(user_hash, Hash)
+      @user = user_hash
+    end
+
+    def set_extras(extras_hash)
+      check_argument_type!(extras_hash, Hash)
+      @extra = extras_hash
+    end
+
+    def set_extra(key, value)
+      @extra.merge!(key => value)
+    end
+
+    def set_tags(tags_hash)
+      check_argument_type!(tags_hash, Hash)
+      @tags = tags_hash
+    end
+
+    def set_tag(key, value)
+      @tags.merge!(key => value)
+    end
+
+    def set_contexts(contexts_hash)
+      check_argument_type!(contexts_hash, Hash)
+      @contexts = contexts_hash
+    end
+
+    def set_context(key, value)
+      @contexts.merge!(key => value)
+    end
+
+    def set_level(level)
+      @level = level
+    end
+
+    def set_transaction(transaction)
+      @transactions << transaction
+    end
+
+    def transaction
+      @transactions.last
+    end
+
+    def set_fingerprint(fingerprint)
+      check_argument_type!(fingerprint, Array)
+
+      @fingerprint = fingerprint
+    end
+
+    protected
+
+    # for duplicating scopes internally
+    attr_writer(*ATTRIBUTES)
+
+    private
+
+    def check_argument_type!(argument, expected_type)
+      unless argument.is_a?(expected_type)
+        raise ArgumentError, "expect the argument to be a #{expected_type}, got #{argument.class} (#{argument})"
+      end
     end
 
     class << self
