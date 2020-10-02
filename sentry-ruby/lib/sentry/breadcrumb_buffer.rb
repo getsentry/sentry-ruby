@@ -6,14 +6,6 @@ module Sentry
 
     attr_accessor :buffer
 
-    def self.current
-      Thread.current[:sentry_breadcrumbs] ||= new
-    end
-
-    def self.clear!
-      Thread.current[:sentry_breadcrumbs] = nil
-    end
-
     def initialize(size = 100)
       @buffer = Array.new(size)
     end
