@@ -4,6 +4,9 @@ class WelcomeController < ApplicationController
   def index
     Rails.logger.info("zomg division")
     1 / 0
+  rescue => e
+    Sentry.capture_exception(e)
+    raise e
   end
 
   def view_error
