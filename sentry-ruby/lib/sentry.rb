@@ -8,10 +8,44 @@ module Sentry
   class Error < StandardError
   end
 
-  def self.sys_command(command)
-    result = `#{command} 2>&1` rescue nil
-    return if result.nil? || result.empty? || ($CHILD_STATUS && $CHILD_STATUS.exitstatus != 0)
+  class << self
+    def init(&block)
+      config = Configuration.new
+      yield(config)
+      client = Client.new(config)
+      scope = Scope.new
+      @current_hub = Hub.new(client, scope)
+    end
 
-    result.strip
+    def get_current_hub
+      @current_hub
+    end
+
+    def configure_scope(&block)
+      get_current_hub.configure_scope(&block)
+    end
+
+    def capture_event(event)
+      get_current_hub.capture_event(event)
+    end
+
+    def capture_exception(exception, **options, &block)
+      get_current_hub.capture_exception(exception, **options, &block)
+    end
+
+    def capture_message(message, **options, &block)
+      get_current_hub.capture_message(message, **options, &block)
+    end
+
+    def last_event_id
+      get_current_hub.last_event_id
+    end
+
+    def sys_command(command)
+      result = `#{command} 2>&1` rescue nil
+      return if result.nil? || result.empty? || ($CHILD_STATUS && $CHILD_STATUS.exitstatus != 0)
+
+      result.strip
+    end
   end
 end
