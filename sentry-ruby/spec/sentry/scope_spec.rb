@@ -1,6 +1,12 @@
 require "spec_helper"
 
 RSpec.describe Sentry::Scope do
+  let(:new_breadcrumb) do
+    new_breadcrumb = Sentry::Breadcrumb.new
+    new_breadcrumb.message = "foo"
+    new_breadcrumb
+  end
+
   describe "#initialize" do
     it "contains correct defaults" do
       expect(subject.breadcrumbs).to be_a(Sentry::BreadcrumbBuffer)
@@ -17,8 +23,6 @@ RSpec.describe Sentry::Scope do
     it "copies the values instead of just references to values" do
       copy = subject.dup
 
-      new_breadcrumb = Sentry::Breadcrumb.new
-      new_breadcrumb.message = "foo"
       copy.breadcrumbs.record(new_breadcrumb)
       copy.extra.merge!(server: {os: {}})
       copy.tags.merge!(foo: "bar")
@@ -33,6 +37,30 @@ RSpec.describe Sentry::Scope do
       expect(subject.user).to eq({})
       expect(subject.fingerprint).to eq([])
       expect(subject.transactions).to eq([])
+    end
+  end
+
+  describe "#add_breadcrumb" do
+    it "adds the breadcrumb to the buffer" do
+      expect(subject.breadcrumbs.empty?).to eq(true)
+
+      subject.add_breadcrumb(new_breadcrumb)
+
+      expect(subject.breadcrumbs.peek).to eq(new_breadcrumb)
+    end
+  end
+
+  describe "#clear_breadcrumbs" do
+    before do
+      subject.add_breadcrumb(new_breadcrumb)
+
+      expect(subject.breadcrumbs.peek).to eq(new_breadcrumb)
+    end
+
+    it "clears all breadcrumbs by replacing the buffer object" do
+      subject.clear_breadcrumbs
+
+      expect(subject.breadcrumbs.empty?).to eq(true)
     end
   end
 

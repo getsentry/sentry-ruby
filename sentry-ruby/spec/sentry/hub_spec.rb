@@ -79,6 +79,22 @@ RSpec.describe Sentry::Hub do
     end
   end
 
+  describe "#add_breadcrumb" do
+    let(:new_breadcrumb) do
+      new_breadcrumb = Sentry::Breadcrumb.new
+      new_breadcrumb.message = "foo"
+      new_breadcrumb
+    end
+
+    it "adds the breadcrumb to the buffer" do
+      expect(subject.current_scope.breadcrumbs.empty?).to eq(true)
+
+      subject.add_breadcrumb(new_breadcrumb)
+
+      expect(subject.current_scope.breadcrumbs.peek).to eq(new_breadcrumb)
+    end
+  end
+
   describe "#pop_scope" do
     it "pops the current scope" do
       expect(subject.current_scope).to eq(scope)

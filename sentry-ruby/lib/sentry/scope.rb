@@ -25,6 +25,14 @@ module Sentry
       event.breadcrumbs = breadcrumbs
     end
 
+    def add_breadcrumb(breadcrumb)
+      breadcrumbs.record(breadcrumb)
+    end
+
+    def clear_breadcrumbs
+      self.breadcrumbs = BreadcrumbBuffer.new
+    end
+
     def dup
       copy = super
       copy.breadcrumbs = breadcrumbs.dup
