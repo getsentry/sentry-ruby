@@ -2,11 +2,12 @@ require "sentry/breadcrumb_buffer"
 
 module Sentry
   class Scope
-    attr_accessor :transactions, :extra, :rack_env, :tags, :user, :level, :breadcrumbs, :fingerprint
+    attr_accessor :transactions, :contexts, :extra, :rack_env, :tags, :user, :level, :breadcrumbs, :fingerprint
 
     def initialize
       self.breadcrumbs = BreadcrumbBuffer.new
-      self.extra = { :server => { :os => self.class.os_context, :runtime => self.class.runtime_context } }
+      self.contexts = { :server => { :os => self.class.os_context, :runtime => self.class.runtime_context } }
+      self.extra = {}
       self.rack_env = nil
       self.tags = {}
       self.user = {}
@@ -19,6 +20,7 @@ module Sentry
       event.tags = tags.merge(event.tags)
       event.user = user.merge(event.user)
       event.extra = extra.merge(event.extra)
+      event.contexts = contexts.merge(event.contexts)
       event.fingerprint = fingerprint
       event.level ||= level
       event.transaction = transactions.last
@@ -36,6 +38,7 @@ module Sentry
     def dup
       copy = super
       copy.breadcrumbs = breadcrumbs.dup
+      copy.contexts = contexts.deep_dup
       copy.extra = extra.deep_dup
       copy.tags = tags.deep_dup
       copy.user = user.deep_dup
