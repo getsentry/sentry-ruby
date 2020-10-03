@@ -1,5 +1,5 @@
 class WelcomeController < ApplicationController
-  before_action :set_raven_context
+  before_action :set_sentry_context
 
   def index
     Rails.logger.info("zomg division")
@@ -19,8 +19,11 @@ class WelcomeController < ApplicationController
 
   private
 
-  def set_raven_context
-    # Raven.user_context(id: "fake-user-id") # or anything else in session
-    # Raven.extra_context(params: params.to_unsafe_h, url: request.url, info: "extra info")
+  def set_sentry_context
+    Sentry.configure_scope do |scope|
+      scope.set_user({id: 1, name: "Stan"})
+      scope.set_transaction(request.env["PATH_INFO"])
+      scope.set_tags({new_sdk: true, foo: "bar"})
+    end
   end
 end
