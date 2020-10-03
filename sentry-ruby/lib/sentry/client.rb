@@ -1,5 +1,6 @@
 require "json"
 require "base64"
+require 'zlib'
 require "sentry/transports"
 require "sentry/client/state"
 require 'sentry/utils/deep_merge'

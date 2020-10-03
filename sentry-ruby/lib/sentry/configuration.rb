@@ -85,6 +85,9 @@ module Sentry
     # If you provide a DSN, this will be set automatically.
     attr_accessor :public_key
 
+    # Array of rack env parameters to be included in the event sent to sentry.
+    attr_accessor :rack_env_whitelist
+
     # Turns on ActiveSupport breadcrumbs integration
     attr_reader :rails_activesupport_breadcrumbs
 
@@ -216,6 +219,12 @@ module Sentry
       'Sinatra::NotFound'
     ].freeze
 
+    RACK_ENV_WHITELIST_DEFAULT = %w(
+      REMOTE_ADDR
+      SERVER_NAME
+      SERVER_PORT
+    ).freeze
+
     HEROKU_DYNO_METADATA_MESSAGE = "You are running on Heroku but haven't enabled Dyno Metadata. For Sentry's "\
     "release detection to work correctly, please run `heroku labs:enable runtime-dyno-metadata`".freeze
 
@@ -256,6 +265,7 @@ module Sentry
       self.timeout = 2
       self.transport_failure_callback = false
       self.before_send = false
+      self.rack_env_whitelist = RACK_ENV_WHITELIST_DEFAULT
     end
 
     def server=(value)

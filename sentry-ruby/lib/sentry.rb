@@ -4,6 +4,7 @@ require "sentry/configuration"
 require "sentry/logger"
 require "sentry/event"
 require "sentry/hub"
+require "sentry/rack"
 
 module Sentry
   class Error < StandardError
@@ -18,8 +19,28 @@ module Sentry
       @current_hub = Hub.new(client, scope)
     end
 
+    def logger
+      configuration.logger
+    end
+
+    def configuration
+      get_current_client.configuration
+    end
+
+    def get_current_client
+      get_current_hub.client
+    end
+
     def get_current_hub
       @current_hub
+    end
+
+    def get_current_scope
+      get_current_hub.current_scope
+    end
+
+    def with_scope(&block)
+      get_current_hub.with_scope(&block)
     end
 
     def configure_scope(&block)
