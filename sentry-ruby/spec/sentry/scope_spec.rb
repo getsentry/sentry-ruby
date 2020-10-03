@@ -77,6 +77,34 @@ RSpec.describe Sentry::Scope do
     end
   end
 
+  describe "#clear" do
+    subject do
+      scope = described_class.new
+      scope.set_tags({foo: "bar"})
+      scope.set_extras({additional_info: "hello"})
+      scope.set_user({id: 1})
+      scope.set_transaction("WelcomeController#index")
+      scope.set_fingerprint(["foo"])
+      scope
+    end
+
+    it "resets the scope's data" do
+      scope_id = subject.object_id
+
+      subject.clear
+
+      expect(subject.object_id).to eq(scope_id)
+      expect(subject.breadcrumbs).to be_a(Sentry::BreadcrumbBuffer)
+      expect(subject.contexts[:os].keys).to match_array([:name, :version, :build, :kernel_version])
+      expect(subject.contexts.dig(:runtime, :version)).to match(/ruby/)
+      expect(subject.extra).to eq({})
+      expect(subject.tags).to eq({})
+      expect(subject.user).to eq({})
+      expect(subject.fingerprint).to eq([])
+      expect(subject.transactions).to eq([])
+    end
+  end
+
   describe "#apply_to_event" do
     subject do
       scope = described_class.new

@@ -7,15 +7,11 @@ module Sentry
     attr_reader(*ATTRIBUTES)
 
     def initialize
-      @breadcrumbs = BreadcrumbBuffer.new
-      @contexts = { :os => self.class.os_context, :runtime => self.class.runtime_context }
-      @extra = {}
-      @tags = {}
-      @user = {}
-      @level = :error
-      @fingerprint = []
-      @transactions = []
-      @event_processors = []
+      set_default_value
+    end
+
+    def clear
+      set_default_value
     end
 
     def apply_to_event(event)
@@ -122,6 +118,18 @@ module Sentry
       unless argument.is_a?(expected_type)
         raise ArgumentError, "expect the argument to be a #{expected_type}, got #{argument.class} (#{argument})"
       end
+    end
+
+    def set_default_value
+      @breadcrumbs = BreadcrumbBuffer.new
+      @contexts = { :os => self.class.os_context, :runtime => self.class.runtime_context }
+      @extra = {}
+      @tags = {}
+      @user = {}
+      @level = :error
+      @fingerprint = []
+      @transactions = []
+      @event_processors = []
     end
 
     class << self
