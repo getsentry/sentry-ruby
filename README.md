@@ -123,9 +123,9 @@ Much of the usefulness of Sentry comes from additional context data with the eve
 ```ruby
 Raven.user_context email: 'foo@example.com'
 
-Raven.tags.merge!(interesting: 'yes')
+Raven.tags_context interesting: 'yes'
 
-Raven.extra.merge!(additional_info: 'foo')
+Raven.extra_context additional_info: 'foo'
 ```
 
 You can also use `tags_context` and `extra_context` to provide scoped information:
