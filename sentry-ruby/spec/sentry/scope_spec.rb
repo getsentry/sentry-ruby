@@ -67,6 +67,16 @@ RSpec.describe Sentry::Scope do
     end
   end
 
+  describe "#add_event_processor" do
+    it "adds the processor to the scope" do
+      expect(subject.event_processors.count).to eq(0)
+
+      expect do
+        subject.add_event_processor { |e| e }
+      end.to change { subject.event_processors.count }.by(1)
+    end
+  end
+
   describe "#apply_to_event" do
     subject do
       scope = described_class.new
@@ -107,6 +117,17 @@ RSpec.describe Sentry::Scope do
       expect(event.user).to eq({id: 2})
       expect(event.extra[:additional_info]).to eq("nothing")
       expect(event.contexts[:os]).to eq(nil)
+    end
+
+    it "applies event processors to the event" do
+      subject.add_event_processor do |event|
+        event.tags = { processed: true }
+        event
+      end
+
+      subject.apply_to_event(event)
+
+      expect(event.tags).to eq({ processed: true })
     end
   end
 end

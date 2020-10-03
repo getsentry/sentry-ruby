@@ -2,7 +2,7 @@ require "sentry/breadcrumb_buffer"
 
 module Sentry
   class Scope
-    ATTRIBUTES = [:transactions, :contexts, :extra, :tags, :user, :level, :breadcrumbs, :fingerprint]
+    ATTRIBUTES = [:transactions, :contexts, :extra, :tags, :user, :level, :breadcrumbs, :fingerprint, :event_processors]
 
     attr_reader(*ATTRIBUTES)
 
@@ -15,6 +15,7 @@ module Sentry
       @level = :error
       @fingerprint = []
       @transactions = []
+      @event_processors = []
     end
 
     def apply_to_event(event)
@@ -26,6 +27,14 @@ module Sentry
       event.level ||= level
       event.transaction = transactions.last
       event.breadcrumbs = breadcrumbs
+
+      unless @event_processors.empty?
+        @event_processors.each do |processor_block|
+          event = processor_block.call(event)
+        end
+      end
+
+      event
     end
 
     def add_breadcrumb(breadcrumb)
@@ -96,6 +105,10 @@ module Sentry
       check_argument_type!(fingerprint, Array)
 
       @fingerprint = fingerprint
+    end
+
+    def add_event_processor(&block)
+      @event_processors << block
     end
 
     protected
