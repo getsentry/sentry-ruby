@@ -73,7 +73,7 @@ RSpec.describe Sentry::Event do
     end
 
     it 'has SDK' do
-      expect(hash[:sdk]).to eq("name" => "sentry-ruby", "version" => Sentry::VERSION)
+      expect(hash[:sdk]).to eq("name" => "sentry.ruby", "version" => Sentry::VERSION)
     end
   end
 
