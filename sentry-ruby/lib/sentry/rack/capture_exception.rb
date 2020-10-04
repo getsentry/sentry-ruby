@@ -6,12 +6,12 @@ module Sentry
       end
 
       def call(env)
-        Sentry.with_scope do
-          # store the current environment in our local context for arbitrary
-          # callers
+        Sentry.with_scope do |scope|
           env['sentry.requested_at'] = Time.now
-          # Sentry.rack_context(env)
-          Sentry.get_current_scope.set_transaction(env["PATH_INFO"]) if env["PATH_INFO"]
+          env['sentry.client'] = Sentry.get_current_client
+
+          scope.set_transaction(env["PATH_INFO"]) if env["PATH_INFO"]
+          scope.set_rack_env(env)
 
           begin
             response = @app.call(env)

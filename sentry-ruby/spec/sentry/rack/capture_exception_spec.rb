@@ -41,7 +41,7 @@ RSpec.describe Sentry::Rack::CaptureException do
     stack.call(env)
   end
 
-  it 'sets the transaction' do
+  it 'sets the transaction and rack env' do
     app = lambda do |e|
       e['rack.exception'] = exception
       [200, {}, ['okay']]
@@ -53,7 +53,9 @@ RSpec.describe Sentry::Rack::CaptureException do
     stack.call(env)
 
     expect(event.transaction).to eq("/test")
+    expect(event.to_hash.dig(:request, :url)).to eq("http://example.org/test")
     expect(Sentry.get_current_scope.transactions).to be_empty
+    expect(Sentry.get_current_scope.rack_env).to eq({})
   end
 
   it 'passes rack/lint' do
