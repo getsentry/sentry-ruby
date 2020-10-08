@@ -157,10 +157,6 @@ module Sentry
     # Timeout when waiting for the server to return data in seconds.
     attr_accessor :timeout
 
-    # Optional Proc, called when the Sentry server cannot be contacted for any reason
-    # E.g. lambda { |event| Thread.new { MyJobProcessor.send_email(event) } }
-    attr_reader :transport_failure_callback
-
     # Optional Proc, called before sending an event to the server/
     # E.g.: lambda { |event, hint| event }
     # E.g.: lambda { |event, hint| nil }
@@ -235,7 +231,6 @@ module Sentry
       self.ssl_verification = true
       self.tags = {}
       self.timeout = 2
-      self.transport_failure_callback = false
       self.before_send = false
     end
 
@@ -295,14 +290,6 @@ module Sentry
       require "raven/breadcrumbs/sentry_logger" if loggers.include?(:sentry_logger)
 
       @breadcrumbs_logger = logger
-    end
-
-    def transport_failure_callback=(value)
-      unless value == false || value.respond_to?(:call)
-        raise(ArgumentError, "transport_failure_callback must be callable (or false to disable)")
-      end
-
-      @transport_failure_callback = value
     end
 
     def should_capture=(value)

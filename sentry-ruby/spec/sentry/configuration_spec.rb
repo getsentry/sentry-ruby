@@ -49,18 +49,6 @@ RSpec.describe Sentry::Configuration do
       subject.async = ->(_e) { :ok }
       expect(subject.async.call('event')).to eq(:ok)
     end
-
-    it 'should raise when setting async to anything other than callable or false' do
-      subject.transport_failure_callback = -> {}
-      subject.transport_failure_callback = false
-      expect { subject.async = true }.to raise_error(ArgumentError)
-    end
-  end
-
-  it 'should raise when setting transport_failure_callback to anything other than callable or false' do
-    subject.transport_failure_callback = -> {}
-    subject.transport_failure_callback = false
-    expect { subject.transport_failure_callback = true }.to raise_error(ArgumentError)
   end
 
   it 'should raise when setting should_capture to anything other than callable or false' do

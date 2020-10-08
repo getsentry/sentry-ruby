@@ -154,9 +154,6 @@ module Sentry
         configuration.logger.warn "Not sending event due to previous failure(s)."
       end
       configuration.logger.warn("Failed to submit event: #{get_log_message(event)}")
-
-      # configuration.transport_failure_callback can be false & nil
-      configuration.transport_failure_callback.call(event, e) if configuration.transport_failure_callback # rubocop:disable Style/SafeNavigation
     end
 
     def get_log_message(event)
