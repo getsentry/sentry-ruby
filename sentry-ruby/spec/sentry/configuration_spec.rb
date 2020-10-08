@@ -11,21 +11,6 @@ RSpec.describe Sentry::Configuration do
     ENV.delete('RACK_ENV')
   end
 
-  it "should set some attributes when server is set" do
-    subject.server = "http://12345:67890@sentry.localdomain:3000/sentry/42"
-
-    expect(subject.project_id).to eq("42")
-    expect(subject.public_key).to eq("12345")
-    expect(subject.secret_key).to eq("67890")
-
-    expect(subject.scheme).to     eq("http")
-    expect(subject.host).to       eq("sentry.localdomain")
-    expect(subject.port).to       eq(3000)
-    expect(subject.path).to       eq("/sentry")
-
-    expect(subject.server).to     eq("http://sentry.localdomain:3000/sentry")
-  end
-
   describe "#breadcrumbs_logger=" do
     it "raises error when given an invalid option" do
       expect { subject.breadcrumbs_logger = :foo }.to raise_error(
@@ -66,7 +51,7 @@ RSpec.describe Sentry::Configuration do
   context 'being initialized with a current environment' do
     before(:each) do
       subject.current_environment = 'test'
-      subject.server = 'http://12345:67890@sentry.localdomain:3000/sentry/42'
+      subject.dsn = 'http://12345:67890@sentry.localdomain:3000/sentry/42'
     end
 
     it 'should send events if test is whitelisted' do
@@ -266,7 +251,7 @@ RSpec.describe Sentry::Configuration do
   context 'with a should_capture callback configured' do
     before(:each) do
       subject.should_capture = ->(exc_or_msg) { exc_or_msg != "dont send me" }
-      subject.server = 'http://12345:67890@sentry.localdomain:3000/sentry/42'
+      subject.dsn = 'http://12345:67890@sentry.localdomain:3000/sentry/42'
     end
 
     it 'should not send events if should_capture returns false' do
@@ -278,37 +263,29 @@ RSpec.describe Sentry::Configuration do
 
   context "with an invalid server" do
     before(:each) do
-      subject.server = 'dummy://trololo'
+      subject.dsn = 'dummy://trololo'
     end
 
     it 'captured_allowed returns false' do
       expect(subject.capture_allowed?).to eq(false)
-      expect(subject.errors).to eq(["No public_key specified", "No project_id specified"])
+      expect(subject.errors).to eq(["DSN not set or not valid"])
     end
   end
 
   context "with the new Sentry 9 DSN format" do
     # Basically the same as before, without a secret
     before(:each) do
-      subject.server = "https://66260460f09b5940498e24bb7ce093a0@sentry.io/42"
+      subject.dsn = "https://66260460f09b5940498e24bb7ce093a0@sentry.io/42"
     end
 
     it 'captured_allowed is true' do
       expect(subject.capture_allowed?).to eq(true)
     end
-
-    it "sets the DSN in the way we expect" do
-      expect(subject.dsn).to eq("https://66260460f09b5940498e24bb7ce093a0@sentry.io/42")
-      expect(subject.server).to eq("https://sentry.io")
-      expect(subject.project_id).to eq("42")
-      expect(subject.public_key).to eq("66260460f09b5940498e24bb7ce093a0")
-      expect(subject.secret_key).to be_nil
-    end
   end
 
   context "with a sample rate" do
     before(:each) do
-      subject.server = 'http://12345:67890@sentry.localdomain:3000/sentry/42'
+      subject.dsn = 'http://12345:67890@sentry.localdomain:3000/sentry/42'
       subject.sample_rate = 0.75
     end
 
