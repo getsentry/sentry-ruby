@@ -2,7 +2,7 @@ require "sentry/breadcrumb_buffer"
 
 module Sentry
   class Scope
-    ATTRIBUTES = [:transactions, :contexts, :extra, :tags, :user, :level, :breadcrumbs, :fingerprint, :event_processors, :rack_env]
+    ATTRIBUTES = [:transaction_names, :contexts, :extra, :tags, :user, :level, :breadcrumbs, :fingerprint, :event_processors, :rack_env]
 
     attr_reader(*ATTRIBUTES)
 
@@ -21,7 +21,7 @@ module Sentry
       event.contexts = contexts.merge(event.contexts)
       event.fingerprint = fingerprint
       event.level ||= level
-      event.transaction = transactions.last
+      event.transaction = transaction_names.last
       event.breadcrumbs = breadcrumbs
       event.rack_env = rack_env
 
@@ -49,7 +49,7 @@ module Sentry
       copy.extra = extra.deep_dup
       copy.tags = tags.deep_dup
       copy.user = user.deep_dup
-      copy.transactions = transactions.deep_dup
+      copy.transaction_names = transaction_names.deep_dup
       copy.fingerprint = fingerprint.deep_dup
       copy
     end
@@ -95,12 +95,12 @@ module Sentry
       @level = level
     end
 
-    def set_transaction(transaction)
-      @transactions << transaction
+    def set_transaction_name(transaction_name)
+      @transaction_names << transaction_name
     end
 
-    def transaction
-      @transactions.last
+    def transaction_name
+      @transaction_names.last
     end
 
     def set_fingerprint(fingerprint)
@@ -134,7 +134,7 @@ module Sentry
       @user = {}
       @level = :error
       @fingerprint = []
-      @transactions = []
+      @transaction_names = []
       @event_processors = []
       @rack_env = {}
     end

@@ -28,7 +28,7 @@ module Sentry
     end
 
     def get_current_client
-      get_current_hub.client
+      get_current_hub.current_client
     end
 
     def get_current_hub

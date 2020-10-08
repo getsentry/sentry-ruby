@@ -1,5 +1,5 @@
-require "uri"
 require "sentry/utils/exception_cause_chain"
+require "sentry/dsn"
 require "sentry/linecache"
 
 module Sentry
@@ -42,9 +42,6 @@ module Sentry
     attr_accessor :inspect_exception_causes_for_exclusion
     alias inspect_exception_causes_for_exclusion? inspect_exception_causes_for_exclusion
 
-    # DSN component - set automatically if DSN provided
-    attr_accessor :host
-
     # The Faraday adapter to be used. Will default to Net::HTTP when not set.
     attr_accessor :http_adapter
 
@@ -64,26 +61,12 @@ module Sentry
     # Timeout waiting for the Sentry server connection to open in seconds
     attr_accessor :open_timeout
 
-    # DSN component - set automatically if DSN provided
-    attr_accessor :path
-
-    # DSN component - set automatically if DSN provided
-    attr_accessor :port
-
-    # Project ID number to send to the Sentry server
-    # If you provide a DSN, this will be set automatically.
-    attr_accessor :project_id
-
     # Project directory root for in_app detection. Could be Rails root, etc.
     # Set automatically for Rails.
     attr_reader :project_root
 
     # Proxy information to pass to the HTTP adapter (via Faraday)
     attr_accessor :proxy
-
-    # Public key for authentication with the Sentry server
-    # If you provide a DSN, this will be set automatically.
-    attr_accessor :public_key
 
     # Array of rack env parameters to be included in the event sent to sentry.
     attr_accessor :rack_env_whitelist
@@ -105,21 +88,6 @@ module Sentry
     # any events, and a value of 1.0 will send 100% of events.
     attr_accessor :sample_rate
 
-    # Boolean - sanitize values that look like credit card numbers
-    attr_accessor :sanitize_credit_cards
-
-    # By default, Sentry censors Hash values when their keys match things like
-    # "secret", "password", etc. Provide an array of Strings that, when matched in
-    # a hash key, will be censored and not sent to Sentry.
-    attr_accessor :sanitize_fields
-
-    # If you're sure you want to override the default sanitization values, you can
-    # add to them to an array of Strings here, e.g. %w(authorization password)
-    attr_accessor :sanitize_fields_excluded
-
-    # Sanitize additional HTTP headers - only Authorization is removed by default.
-    attr_accessor :sanitize_http_headers
-
     # DSN component - set automatically if DSN provided.
     # Otherwise, can be one of "http", "https", or "dummy"
     attr_accessor :scheme
@@ -137,17 +105,8 @@ module Sentry
     #
     attr_accessor :backtrace_cleanup_callback
 
-    # Secret key for authentication with the Sentry server
-    # If you provide a DSN, this will be set automatically.
-    #
-    # This is deprecated and not necessary for newer Sentry installations any more.
-    attr_accessor :secret_key
-
     # Include module versions in reports - boolean.
     attr_accessor :send_modules
-
-    # Simple server string - set this to the DSN found on your Sentry settings.
-    attr_reader :server
 
     attr_accessor :server_name
 
@@ -174,10 +133,6 @@ module Sentry
 
     # Timeout when waiting for the server to return data in seconds.
     attr_accessor :timeout
-
-    # Optional Proc, called when the Sentry server cannot be contacted for any reason
-    # E.g. lambda { |event| Thread.new { MyJobProcessor.send_email(event) } }
-    attr_reader :transport_failure_callback
 
     # Optional Proc, called before sending an event to the server/
     # E.g.: lambda { |event, hint| event }
@@ -252,48 +207,24 @@ module Sentry
       self.rails_report_rescued_exceptions = true
       self.release = detect_release
       self.sample_rate = 1.0
-      self.sanitize_credit_cards = true
-      self.sanitize_fields = []
-      self.sanitize_fields_excluded = []
-      self.sanitize_http_headers = []
       self.send_modules = true
-      self.server = ENV['SENTRY_DSN']
+      self.dsn = ENV['SENTRY_DSN']
       self.server_name = server_name_from_env
       self.should_capture = false
       self.ssl_verification = true
       self.tags = {}
       self.timeout = 2
-      self.transport_failure_callback = false
       self.before_send = false
       self.rack_env_whitelist = RACK_ENV_WHITELIST_DEFAULT
     end
 
-    def server=(value)
-      return if value.nil?
+    def dsn=(value)
+      return if value.nil? || value.empty?
 
-      @dsn = value
-
-      uri = URI.parse(value)
-      uri_path = uri.path.split('/')
-
-      if uri.user
-        # DSN-style string
-        self.project_id = uri_path.pop
-        self.public_key = uri.user
-        self.secret_key = !(uri.password.nil? || uri.password.empty?) ? uri.password : nil
-      end
-
-      self.scheme = uri.scheme
-      self.host = uri.host
-      self.port = uri.port if uri.port
-      self.path = uri_path.join('/')
-
-      # For anyone who wants to read the base server string
-      @server = "#{scheme}://#{host}"
-      @server += ":#{port}" unless port == { 'http' => 80, 'https' => 443 }[scheme]
-      @server += path
+      @dsn = DSN.new(value)
     end
-    alias dsn= server=
+
+    alias server= dsn=
 
     def encoding=(encoding)
       raise(Error, 'Unsupported encoding') unless %w(gzip json).include? encoding
@@ -324,14 +255,6 @@ module Sentry
       require "raven/breadcrumbs/sentry_logger" if loggers.include?(:sentry_logger)
 
       @breadcrumbs_logger = logger
-    end
-
-    def transport_failure_callback=(value)
-      unless value == false || value.respond_to?(:call)
-        raise(ArgumentError, "transport_failure_callback must be callable (or false to disable)")
-      end
-
-      @transport_failure_callback = value
     end
 
     def should_capture=(value)
@@ -498,16 +421,12 @@ module Sentry
     end
 
     def valid?
-      return true if %w(server host path public_key project_id).all? { |k| public_send(k) }
-
-      if server
-        %w(server host path public_key project_id).map do |key|
-          @errors << "No #{key} specified" unless public_send(key)
-        end
+      if @dsn.valid?
+        true
       else
-        @errors << "DSN not set"
+        @errors << "DSN not set or not valid"
+        false
       end
-      false
     end
 
     def sample_allowed?

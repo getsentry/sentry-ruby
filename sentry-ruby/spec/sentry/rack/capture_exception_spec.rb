@@ -54,7 +54,7 @@ RSpec.describe Sentry::Rack::CaptureException do
 
     expect(event.transaction).to eq("/test")
     expect(event.to_hash.dig(:request, :url)).to eq("http://example.org/test")
-    expect(Sentry.get_current_scope.transactions).to be_empty
+    expect(Sentry.get_current_scope.transaction_names).to be_empty
     expect(Sentry.get_current_scope.rack_env).to eq({})
   end
 

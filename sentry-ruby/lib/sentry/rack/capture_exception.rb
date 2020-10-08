@@ -10,7 +10,7 @@ module Sentry
           env['sentry.requested_at'] = Time.now
           env['sentry.client'] = Sentry.get_current_client
 
-          scope.set_transaction(env["PATH_INFO"]) if env["PATH_INFO"]
+          scope.set_transaction_name(env["PATH_INFO"]) if env["PATH_INFO"]
           scope.set_rack_env(env)
 
           begin

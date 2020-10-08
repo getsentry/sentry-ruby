@@ -1,5 +1,5 @@
 module Sentry
-  class Client
+  module Transports
     class State
       def initialize
         reset

@@ -16,7 +16,7 @@ RSpec.describe Sentry::Scope do
       expect(subject.tags).to eq({})
       expect(subject.user).to eq({})
       expect(subject.fingerprint).to eq([])
-      expect(subject.transactions).to eq([])
+      expect(subject.transaction_names).to eq([])
     end
   end
 
@@ -29,7 +29,7 @@ RSpec.describe Sentry::Scope do
       copy.extra.merge!(foo: "bar")
       copy.tags.merge!(foo: "bar")
       copy.user.merge!(foo: "bar")
-      copy.transactions << "foo"
+      copy.transaction_names << "foo"
       copy.fingerprint << "bar"
 
       expect(subject.breadcrumbs.to_hash).to eq({ values: [] })
@@ -39,7 +39,7 @@ RSpec.describe Sentry::Scope do
       expect(subject.tags).to eq({})
       expect(subject.user).to eq({})
       expect(subject.fingerprint).to eq([])
-      expect(subject.transactions).to eq([])
+      expect(subject.transaction_names).to eq([])
     end
   end
 
@@ -83,7 +83,7 @@ RSpec.describe Sentry::Scope do
       scope.set_tags({foo: "bar"})
       scope.set_extras({additional_info: "hello"})
       scope.set_user({id: 1})
-      scope.set_transaction("WelcomeController#index")
+      scope.set_transaction_name("WelcomeController#index")
       scope.set_fingerprint(["foo"])
       scope
     end
@@ -101,7 +101,7 @@ RSpec.describe Sentry::Scope do
       expect(subject.tags).to eq({})
       expect(subject.user).to eq({})
       expect(subject.fingerprint).to eq([])
-      expect(subject.transactions).to eq([])
+      expect(subject.transaction_names).to eq([])
     end
   end
 
@@ -125,7 +125,7 @@ RSpec.describe Sentry::Scope do
       scope.set_tags({foo: "bar"})
       scope.set_extras({additional_info: "hello"})
       scope.set_user({id: 1})
-      scope.set_transaction("WelcomeController#index")
+      scope.set_transaction_name("WelcomeController#index")
       scope.set_fingerprint(["foo"])
       scope.set_rack_env(env)
       scope
