@@ -20,7 +20,7 @@ RSpec.describe Sentry do
       current_hub = described_class.get_current_hub
       expect(current_hub).to be_a(Sentry::Hub)
       expect(current_hub.current_scope).to be_a(Sentry::Scope)
-      expect(current_hub.client.configuration.tags).to eq({ foo: "bar" })
+      expect(current_hub.current_client.configuration.tags).to eq({ foo: "bar" })
     end
   end
 
