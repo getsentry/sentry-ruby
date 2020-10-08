@@ -6,21 +6,26 @@ module Sentry
     attr_reader :last_event_id
 
     def initialize(client, scope)
-      @clients = [client]
-      @scopes = [scope]
+      first_layer = Layer.new(client, scope)
+      @stack = [first_layer]
       @last_event_id = nil
     end
 
-    def client
-      @clients.last
+    def current_client
+      current_layer&.client
+    end
+
+    def current_scope
+      current_layer&.scope
     end
 
     def bind_client(client)
-      @clients << client
+      layer = Layer.new(client, current_scope)
+      @stack << layer
     end
 
     def unbind_client
-      @clients.pop
+      @stack.pop
     end
 
     def configure_scope(&block)
@@ -42,15 +47,15 @@ module Sentry
           Scope.new
         end
 
-      @scopes.push(new_scope)
+      @stack << Layer.new(current_client, new_scope)
     end
 
     def pop_scope
-      @scopes.pop
+      @stack.pop
     end
 
     def capture_exception(error, **options, &block)
-      event = client.event_from_exception(error, **options)
+      event = current_client.event_from_exception(error, **options)
 
       return unless current_scope
 
@@ -60,7 +65,7 @@ module Sentry
     end
 
     def capture_message(message, **options, &block)
-      event = client.event_from_message(message, **options)
+      event = current_client.event_from_message(message, **options)
 
       return unless current_scope
 
@@ -70,7 +75,7 @@ module Sentry
     end
 
     def capture_event(event)
-      client.send_event(event)
+      current_client.send_event(event)
       @last_event_id = event.id
       event
     end
@@ -79,8 +84,21 @@ module Sentry
       current_scope.add_breadcrumb(breadcrumb)
     end
 
-    def current_scope
-      @scopes.last
+    private
+
+    def current_layer
+      @stack.last
     end
+
+    class Layer
+      attr_reader :client, :scope
+
+      def initialize(client, scope)
+        @client = client
+        @scope = scope
+      end
+    end
+
+
   end
 end
