@@ -54,27 +54,18 @@ module Sentry
     end
 
     def capture_exception(error, **options, &block)
-      event = current_client.event_from_exception(error, **options)
+      return unless current_scope && current_client
 
-      return unless current_scope
+      event = current_client.capture_exception(error, **options, scope: current_scope, &block)
 
-      current_scope.apply_to_event(event)
-      yield(event) if block_given?
-      capture_event(event)
+      @last_event_id = event.id
     end
 
     def capture_message(message, **options, &block)
-      event = current_client.event_from_message(message, **options)
+      return unless current_scope && current_client
 
-      return unless current_scope
+      event = current_client.capture_message(message, **options, scope: current_scope, &block)
 
-      current_scope.apply_to_event(event)
-      yield(event) if block_given?
-      capture_event(event)
-    end
-
-    def capture_event(event)
-      current_client.send_event(event)
       @last_event_id = event.id
       event
     end
