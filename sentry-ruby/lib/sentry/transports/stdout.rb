@@ -7,7 +7,7 @@ module Sentry
         super
       end
 
-      def send_event(_auth_header, data, _options = {})
+      def send_data(data, _options = {})
         unless configuration.sending_allowed?
           logger.debug("Event not sent: #{configuration.error_messages}")
         end

@@ -10,6 +10,7 @@ RSpec.describe Sentry::Transports::HTTP do
 
   let(:client) { Sentry::Client.new(config) }
   let(:event) { client.event_from_message("test") }
+  subject { described_class.new(config) }
 
   describe "customizations" do
     let(:config) do
@@ -19,7 +20,7 @@ RSpec.describe Sentry::Transports::HTTP do
     end
 
     it 'sets a custom User-Agent' do
-      expect(client.transport.conn.headers[:user_agent]).to eq("sentry-ruby/#{Sentry::VERSION}")
+      expect(subject.conn.headers[:user_agent]).to eq("sentry-ruby/#{Sentry::VERSION}")
     end
 
     it 'allows to customise faraday' do
@@ -27,7 +28,7 @@ RSpec.describe Sentry::Transports::HTTP do
       expect(Faraday).to receive(:new).and_yield(builder)
       config.faraday_builder = proc { |b| b.request :instrumentation }
 
-      client.transport
+      subject
 
       expect(builder).to have_received(:request).with(:instrumentation)
     end
@@ -41,7 +42,7 @@ RSpec.describe Sentry::Transports::HTTP do
     end
 
     it 'raises an error' do
-      expect { client.transport.send_event("fake auth", event) }.to raise_error(Sentry::Error, /the server responded with status 404/)
+      expect { subject.send_data(event.to_hash) }.to raise_error(Sentry::Error, /the server responded with status 404/)
 
       stubs.verify_stubbed_calls
     end
@@ -55,7 +56,7 @@ RSpec.describe Sentry::Transports::HTTP do
     end
 
     it 'raises an error' do
-      expect { client.transport.send_event("fake auth", event) }.to raise_error(Sentry::Error, /the server responded with status 500/)
+      expect { subject.send_data(event.to_hash) }.to raise_error(Sentry::Error, /the server responded with status 500/)
 
       stubs.verify_stubbed_calls
     end
@@ -69,7 +70,7 @@ RSpec.describe Sentry::Transports::HTTP do
     end
 
     it 'raises an error with header' do
-      expect { client.transport.send_event("fake auth", event) }.to raise_error(Sentry::Error, /error_in_header/)
+      expect { subject.send_data(event.to_hash) }.to raise_error(Sentry::Error, /error_in_header/)
 
       stubs.verify_stubbed_calls
     end

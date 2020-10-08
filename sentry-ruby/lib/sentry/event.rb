@@ -72,6 +72,25 @@ module Sentry
       set_core_attributes_from_configuration
     end
 
+    class << self
+      def get_log_message(event_hash)
+        message = event_hash[:message] || event_hash['message']
+        message = get_message_from_exception(event_hash) if message.empty?
+        message = '<no message value>' if message.empty?
+        message
+      end
+
+      def get_message_from_exception(event_hash)
+        (
+          event_hash &&
+          event_hash[:exception] &&
+          event_hash[:exception][:values] &&
+          event_hash[:exception][:values][0] &&
+          "#{event_hash[:exception][:values][0][:type]}: #{event_hash[:exception][:values][0][:value]}"
+        )
+      end
+    end
+
     def message
       @interfaces[:logentry]&.unformatted_message.to_s
     end
