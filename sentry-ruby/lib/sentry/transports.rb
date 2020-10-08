@@ -23,6 +23,8 @@ module Sentry
       def send_event(event)
         content_type, encoded_data = prepare_encoded_event(event)
 
+        return nil unless encoded_data
+
         begin
           if configuration.async?
             begin
@@ -37,9 +39,9 @@ module Sentry
             send_data(encoded_data, content_type: content_type)
           end
 
-          successful_send
+          state.success
         rescue => e
-          failed_send(e, event)
+          failed_for_exception(e, event)
           return
         end
 
@@ -65,17 +67,13 @@ module Sentry
         event_hash = event.to_hash
 
         unless @state.should_try?
-          failed_send(nil, event_hash)
+          failed_for_previous_failure(event_hash)
           return
         end
 
         event_id = event_hash[:event_id] || event_hash['event_id']
         configuration.logger.info "Sending event #{event_id} to Sentry"
         encode(event_hash)
-      end
-
-      def successful_send
-        @state.success
       end
 
       def encode(event)
@@ -89,13 +87,18 @@ module Sentry
         end
       end
 
-      def failed_send(e, event)
-        if e # exception was raised
-          @state.failure
-          configuration.logger.warn "Unable to record event with remote Sentry server (#{e.class} - #{e.message}):\n#{e.backtrace[0..10].join("\n")}"
-        else
-          configuration.logger.warn "Not sending event due to previous failure(s)."
-        end
+      def failed_for_exception(e, event)
+        @state.failure
+        configuration.logger.warn "Unable to record event with remote Sentry server (#{e.class} - #{e.message}):\n#{e.backtrace[0..10].join("\n")}"
+        log_not_sending(event)
+      end
+
+      def failed_for_previous_failure(event)
+        configuration.logger.warn "Not sending event due to previous failure(s)."
+        log_not_sending(event)
+      end
+
+      def log_not_sending(event)
         configuration.logger.warn("Failed to submit event: #{Event.get_log_message(event.to_hash)}")
       end
     end

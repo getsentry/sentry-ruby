@@ -1,9 +1,11 @@
 require 'spec_helper'
 
 RSpec.describe Sentry::Transports::Transport do
+  let(:logger) { Logger.new(nil) }
   let(:configuration) do
     Sentry::Configuration.new.tap do |config|
       config.server = 'http://12345:67890@sentry.localdomain/sentry/42'
+      config.logger = logger
     end
   end
   let(:fake_time) { Time.now }
@@ -32,12 +34,14 @@ RSpec.describe Sentry::Transports::Transport do
       end
 
       it "logs correct message" do
-        expect(subject.configuration.logger).to receive(:info).with("Sending event #{event.id} to Sentry")
+        expect(logger).to receive(:info).with("Sending event #{event.id} to Sentry")
 
         expect(subject.send_event(event)).to eq(event)
       end
 
-      it "doesn't have failed status" do
+      it "sets the correct state" do
+        expect(subject.state).to receive(:success)
+
         subject.send_event(event)
 
         expect(subject.state).not_to be_failed
@@ -45,23 +49,36 @@ RSpec.describe Sentry::Transports::Transport do
     end
 
     context "when failed" do
-      let(:logger) { spy }
-
       before do
-        configuration.logger = logger
         allow(subject).to receive(:send_data).and_raise(StandardError)
 
-        expect(logger).to receive(:warn).exactly(2)
+        expect(logger).to receive(:warn).exactly(2).and_call_original
       end
 
       it "returns nil" do
         expect(subject.send_event(event)).to eq(nil)
       end
 
-      it "changes the state to fail" do
+      it "changes the statreturns nile to fail" do
+        expect(subject.state).to receive(:failure).and_call_original
+
         subject.send_event(event)
 
         expect(subject.state).to be_failed
+      end
+    end
+
+    context "should_try? is false" do
+      before do
+        allow(subject.state).to receive(:should_try?).and_return(false)
+      end
+
+      it "doesn't change the state" do
+        expect(logger).to receive(:warn).with("Not sending event due to previous failure(s).").ordered
+        expect(logger).to receive(:warn).with("Failed to submit event: ZeroDivisionError: divided by 0").ordered
+        expect(subject.state).not_to receive(:failure)
+
+        expect(subject.send_event(event)).to eq(nil)
       end
     end
 
@@ -96,6 +113,7 @@ RSpec.describe Sentry::Transports::Transport do
         end
 
         it 'sends the result of Event.capture_exception via fallback' do
+          expect(logger).to receive(:error).with("async event sending failed: TypeError")
           expect(configuration.async).to receive(:call).and_call_original
           expect(subject).to receive(:send_data)
 
