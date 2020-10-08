@@ -102,21 +102,6 @@ module Sentry
     # any events, and a value of 1.0 will send 100% of events.
     attr_accessor :sample_rate
 
-    # Boolean - sanitize values that look like credit card numbers
-    attr_accessor :sanitize_credit_cards
-
-    # By default, Sentry censors Hash values when their keys match things like
-    # "secret", "password", etc. Provide an array of Strings that, when matched in
-    # a hash key, will be censored and not sent to Sentry.
-    attr_accessor :sanitize_fields
-
-    # If you're sure you want to override the default sanitization values, you can
-    # add to them to an array of Strings here, e.g. %w(authorization password)
-    attr_accessor :sanitize_fields_excluded
-
-    # Sanitize additional HTTP headers - only Authorization is removed by default.
-    attr_accessor :sanitize_http_headers
-
     # DSN component - set automatically if DSN provided.
     # Otherwise, can be one of "http", "https", or "dummy"
     attr_accessor :scheme
@@ -243,10 +228,6 @@ module Sentry
       self.rails_report_rescued_exceptions = true
       self.release = detect_release
       self.sample_rate = 1.0
-      self.sanitize_credit_cards = true
-      self.sanitize_fields = []
-      self.sanitize_fields_excluded = []
-      self.sanitize_http_headers = []
       self.send_modules = true
       self.server = ENV['SENTRY_DSN']
       self.server_name = server_name_from_env
