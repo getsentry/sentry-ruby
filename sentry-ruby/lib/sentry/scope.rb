@@ -21,7 +21,7 @@ module Sentry
       event.contexts = contexts.merge(event.contexts)
       event.fingerprint = fingerprint
       event.level ||= level
-      event.transaction_name = transaction_names.last
+      event.transaction = transaction_names.last
       event.breadcrumbs = breadcrumbs
 
       unless @event_processors.empty?

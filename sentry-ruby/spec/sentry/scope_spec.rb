@@ -127,7 +127,7 @@ RSpec.describe Sentry::Scope do
       expect(event.tags).to eq({foo: "bar"})
       expect(event.user).to eq({id: 1})
       expect(event.extra).to eq({additional_info: "hello"})
-      expect(event.transaction_name).to eq("WelcomeController#index")
+      expect(event.transaction).to eq("WelcomeController#index")
       expect(event.breadcrumbs).to be_a(Sentry::BreadcrumbBuffer)
       expect(event.fingerprint).to eq(["foo"])
       expect(event.contexts[:os].keys).to match_array([:name, :version, :build, :kernel_version])

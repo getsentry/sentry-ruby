@@ -20,7 +20,7 @@ module Sentry
       event_id logger level time_spent timestamp
       checksum release environment server_name modules
       message user tags contexts extra
-      fingerprint breadcrumbs backtrace transaction_name
+      fingerprint breadcrumbs backtrace transaction
       platform sdk
     )
 
