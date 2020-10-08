@@ -15,115 +15,36 @@ RSpec.describe Sentry::Client do
       config.server = 'http://12345:67890@sentry.localdomain/sentry/42'
     end
   end
-  let(:fake_time) { Time.now }
-
   subject { Sentry::Client.new(configuration) }
+
+  let(:fake_time) { Time.now }
 
   before do
     allow(Time).to receive(:now).and_return fake_time
   end
 
-  describe "#generate_auth_header" do
-    it "generates an auth header" do
-      expect(subject.send(:generate_auth_header)).to eq(
-        "Sentry sentry_version=5, sentry_client=sentry-ruby/#{Sentry::VERSION}, sentry_timestamp=#{fake_time.to_i}, " \
-        "sentry_key=12345, sentry_secret=67890"
-      )
-    end
-
-    it "generates an auth header without a secret (Sentry 9)" do
-      configuration.server = "https://66260460f09b5940498e24bb7ce093a0@sentry.io/42"
-
-      expect(subject.send(:generate_auth_header)).to eq(
-        "Sentry sentry_version=5, sentry_client=sentry-ruby/#{Sentry::VERSION}, sentry_timestamp=#{fake_time.to_i}, " \
-        "sentry_key=66260460f09b5940498e24bb7ce093a0"
-      )
-    end
-  end
-
   describe "#send_event" do
     let(:event) { subject.event_from_exception(ZeroDivisionError.new("divided by 0")) }
 
-    context "when success" do
-      before do
-        allow(subject.transport).to receive(:send_event)
-      end
-
-      it "sends Event object" do
-        expect(subject).not_to receive(:failed_send)
-
-        expect(subject.send_event(event)).to eq(event)
-      end
-
-      it "sends Event hash" do
-        expect(subject).not_to receive(:failed_send)
-
-        expect(subject.send_event(event.to_json_compatible)).to eq(event.to_json_compatible)
-      end
-
-      it "logs correct message" do
-        expect(subject.configuration.logger).to receive(:info).with("Sending event #{event.id} to Sentry")
-
-        expect(subject.send_event(event)).to eq(event)
-      end
+    before do
+      allow(subject.transport).to receive(:send_data)
     end
 
-    context "when failed" do
-      let(:logger) { spy }
+    it "sends data through the transport" do
+      expect(subject.transport).to receive(:send_event).with(event)
 
-      before do
-        configuration.logger = logger
-        allow(subject.transport).to receive(:send_event).and_raise(StandardError)
-
-        expect(logger).to receive(:warn).exactly(2)
-      end
-
-      it "sends Event object" do
-        expect(subject.send_event(event)).to eq(nil)
-      end
-
-      it "sends Event hash" do
-        expect(subject.send_event(event.to_json_compatible)).to eq(nil)
-      end
+      subject.send_event(event)
     end
 
-    describe 'async' do
-      let(:message) { "Test message" }
-
-      around do |example|
-        prior_async = configuration.async
-        configuration.async = proc { :ok }
-        example.run
-        configuration.async = prior_async
+    it "applies before_send callback before sending the event" do
+      configuration.before_send = lambda do |event, _hint|
+        event.tags[:called] = true
+        event
       end
 
-      before do
-        allow(subject.transport).to receive(:send_event)
-      end
+      e = subject.send_event(event)
 
-      it "doesn't send the event right away" do
-        expect(configuration.async).to receive(:call)
-
-        returned = subject.send_event(event)
-
-        expect(returned).to be_a(Sentry::Event)
-      end
-
-      context "when async raises an exception" do
-        around do |example|
-          prior_async = configuration.async
-          configuration.async = proc { raise TypeError }
-          example.run
-          configuration.async = prior_async
-        end
-
-        it 'sends the result of Event.capture_exception via fallback' do
-          expect(configuration.async).to receive(:call).and_call_original
-          expect(subject.transport).to receive(:send_event)
-
-          subject.send_event(event)
-        end
-      end
+      expect(e.tags[:called]).to eq(true)
     end
   end
 
@@ -259,7 +180,7 @@ RSpec.describe Sentry::Client do
     it 'returns an event' do
       event = subject.event_from_exception(ZeroDivisionError.new("divided by 0"))
       expect(event).to be_a(Sentry::Event)
-      expect(subject.send(:get_message_from_exception, event.to_hash)).to eq("ZeroDivisionError: divided by 0")
+      expect(Sentry::Event.get_message_from_exception(event.to_hash)).to eq("ZeroDivisionError: divided by 0")
     end
 
     it_behaves_like "options"

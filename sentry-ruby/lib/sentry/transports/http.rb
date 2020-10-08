@@ -11,7 +11,7 @@ module Sentry
         self.conn = set_conn
       end
 
-      def send_event(auth_header, data, options = {})
+      def send_data(data, options = {})
         unless configuration.sending_allowed?
           logger.debug("Event not sent: #{configuration.error_messages}")
         end
@@ -21,7 +21,7 @@ module Sentry
 
         conn.post "#{path}api/#{project_id}/store/" do |req|
           req.headers['Content-Type'] = options[:content_type]
-          req.headers['X-Sentry-Auth'] = auth_header
+          req.headers['X-Sentry-Auth'] = generate_auth_header
           req.body = data
         end
       rescue Faraday::Error => e
