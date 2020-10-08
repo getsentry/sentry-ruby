@@ -54,9 +54,9 @@ module Sentry
           'sentry_version' => PROTOCOL_VERSION,
           'sentry_client' => USER_AGENT,
           'sentry_timestamp' => now,
-          'sentry_key' => configuration.public_key
+          'sentry_key' => configuration.dsn.public_key
         }
-        fields['sentry_secret'] = configuration.secret_key unless configuration.secret_key.nil?
+        fields['sentry_secret'] = configuration.dsn.secret_key if configuration.dsn.secret_key
         'Sentry ' + fields.map { |key, value| "#{key}=#{value}" }.join(', ')
       end
 

@@ -16,8 +16,8 @@ module Sentry
           logger.debug("Event not sent: #{configuration.error_messages}")
         end
 
-        project_id = configuration[:project_id]
-        path = configuration[:path] + "/"
+        project_id = configuration.dsn.project_id
+        path = configuration.dsn.path + "/"
 
         conn.post "#{path}api/#{project_id}/store/" do |req|
           req.headers['Content-Type'] = options[:content_type]
@@ -35,11 +35,13 @@ module Sentry
       private
 
       def set_conn
-        configuration.logger.debug "Sentry HTTP Transport connecting to #{configuration.server}"
+        server = configuration.dsn.server
+
+        configuration.logger.debug "Sentry HTTP Transport connecting to #{server}"
 
         proxy = configuration.public_send(:proxy)
 
-        Faraday.new(configuration.server, :ssl => ssl_configuration, :proxy => proxy) do |builder|
+        Faraday.new(server, :ssl => ssl_configuration, :proxy => proxy) do |builder|
           configuration.faraday_builder&.call(builder)
           builder.response :raise_error
           builder.options.merge! faraday_opts
