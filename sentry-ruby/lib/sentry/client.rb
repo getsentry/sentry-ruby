@@ -7,7 +7,9 @@ module Sentry
 
     def initialize(configuration)
       @configuration = configuration
-      @transport = case configuration.scheme
+      scheme = configuration.scheme || configuration.dsn.scheme
+
+      @transport = case scheme
         when 'http', 'https'
           Transports::HTTP.new(configuration)
         when 'stdout'

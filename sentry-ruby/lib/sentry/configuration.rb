@@ -214,6 +214,8 @@ module Sentry
       @dsn = DSN.new(value)
     end
 
+    alias server= dsn=
+
     def encoding=(encoding)
       raise(Error, 'Unsupported encoding') unless %w(gzip json).include? encoding
 
