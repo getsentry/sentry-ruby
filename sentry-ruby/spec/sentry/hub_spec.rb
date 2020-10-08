@@ -104,17 +104,13 @@ RSpec.describe Sentry::Hub do
 
         expect(subject.current_client).to eq(new_client)
       end
-    end
 
-    describe "#unbind_client" do
-      it "unbinds (pop) the current client" do
-        old_client = subject.current_client
+      it "doesn't change the scope" do
+        old_scope = subject.current_scope
+
         subject.bind_client(new_client)
-        expect(subject.current_client).to eq(new_client)
 
-        subject.unbind_client
-
-        expect(subject.current_client).to eq(old_client)
+        expect(subject.current_scope).to eq(old_scope)
       end
     end
   end

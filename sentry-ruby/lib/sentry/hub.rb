@@ -20,12 +20,11 @@ module Sentry
     end
 
     def bind_client(client)
-      layer = Layer.new(client, current_scope)
-      @stack << layer
-    end
+      layer = current_layer
 
-    def unbind_client
-      @stack.pop
+      if layer
+        layer.client = client
+      end
     end
 
     def configure_scope(&block)
@@ -91,14 +90,13 @@ module Sentry
     end
 
     class Layer
-      attr_reader :client, :scope
+      attr_accessor :client
+      attr_reader :scope
 
       def initialize(client, scope)
         @client = client
         @scope = scope
       end
     end
-
-
   end
 end
