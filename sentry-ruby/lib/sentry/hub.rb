@@ -11,6 +11,10 @@ module Sentry
       @last_event_id = nil
     end
 
+    def new_from_top
+      Hub.new(current_client, current_scope)
+    end
+
     def current_client
       current_layer&.client
     end

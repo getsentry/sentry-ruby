@@ -95,6 +95,16 @@ RSpec.describe Sentry::Hub do
     end
   end
 
+  describe "#new_from_top" do
+    it "initializes a different hub with current hub's top layer" do
+      new_hub = subject.new_from_top
+
+      expect(new_hub).not_to eq(subject)
+      expect(new_hub.current_client).to eq(subject.current_client)
+      expect(new_hub.current_scope).to eq(subject.current_scope)
+    end
+  end
+
   describe "#bind_client & #unbind_client" do
     let(:new_client) { Sentry::Client.new(configuration) }
 
