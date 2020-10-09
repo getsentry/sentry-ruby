@@ -15,11 +15,17 @@ module Sentry
       yield(config)
       client = Client.new(config)
       scope = Scope.new
-      @current_hub = Hub.new(client, scope)
+      hub = Hub.new(client, scope)
+      Thread.current[:sentry_hub] = hub
+      @main_hub = hub
+    end
+
+    def get_main_hub
+      @main_hub
     end
 
     def get_current_hub
-      @current_hub
+      Thread.current[:sentry_hub]
     end
 
     def configure_scope(&block)

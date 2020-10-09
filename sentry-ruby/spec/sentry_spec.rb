@@ -11,7 +11,7 @@ RSpec.describe Sentry do
   end
 
   describe ".init" do
-    it "initializes the current hub" do
+    it "initializes the current hub and main hub" do
       described_class.init do |config|
         config.scheme = "dummy"
         config.tags = { foo: "bar" }
@@ -21,6 +21,7 @@ RSpec.describe Sentry do
       expect(current_hub).to be_a(Sentry::Hub)
       expect(current_hub.current_scope).to be_a(Sentry::Scope)
       expect(current_hub.current_client.configuration.tags).to eq({ foo: "bar" })
+      expect(subject.get_main_hub).to eq(current_hub)
     end
   end
 
