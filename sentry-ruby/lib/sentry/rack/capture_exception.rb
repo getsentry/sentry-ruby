@@ -6,6 +6,9 @@ module Sentry
       end
 
       def call(env)
+        # this call clones the main (global) hub
+        # and assigns it to the current thread's Sentry#get_current_hub
+        Sentry.clone_hub_to_current_thread
         Sentry.with_scope do |scope|
           env['sentry.requested_at'] = Time.now
           env['sentry.client'] = Sentry.get_current_client
