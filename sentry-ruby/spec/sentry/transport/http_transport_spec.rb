@@ -1,6 +1,6 @@
 require 'spec_helper'
 
-RSpec.describe Sentry::Transports::HTTP do
+RSpec.describe Sentry::HTTPTransport do
   let(:config) do
     Sentry::Configuration.new.tap do |c|
       c.dsn = 'http://12345@sentry.localdomain/sentry/42'

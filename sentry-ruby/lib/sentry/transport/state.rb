@@ -1,5 +1,5 @@
 module Sentry
-  module Transports
+  class Transport
     class State
       def initialize
         reset

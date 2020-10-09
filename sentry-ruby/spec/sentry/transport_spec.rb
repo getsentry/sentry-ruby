@@ -1,6 +1,6 @@
 require 'spec_helper'
 
-RSpec.describe Sentry::Transports::Transport do
+RSpec.describe Sentry::Transport do
   let(:logger) { Logger.new(nil) }
   let(:configuration) do
     Sentry::Configuration.new.tap do |config|

@@ -1,6 +1,6 @@
 require 'spec_helper'
 
-RSpec.describe Sentry::Transports::Stdout do
+RSpec.describe Sentry::StdoutTransport do
   let(:config) { Sentry::Configuration.new.tap { |c| c.dsn = 'stdout://12345:67890@sentry.localdomain/sentry/42' } }
   let(:client) { Sentry::Client.new(config) }
   subject { described_class.new(config) }

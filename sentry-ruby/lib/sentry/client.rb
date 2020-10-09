@@ -1,4 +1,4 @@
-require "sentry/transports"
+require "sentry/transport"
 require 'sentry/utils/deep_merge'
 
 module Sentry
@@ -11,11 +11,11 @@ module Sentry
 
       @transport = case scheme
         when 'http', 'https'
-          Transports::HTTP.new(configuration)
+          HTTPTransport.new(configuration)
         when 'stdout'
-          Transports::Stdout.new(configuration)
+          StdoutTransport.new(configuration)
         when 'dummy'
-          Transports::Dummy.new(configuration)
+          DummyTransport.new(configuration)
         else
           fail "Unknown transport scheme '#{configuration.scheme}'"
         end
