@@ -51,7 +51,7 @@ RSpec.describe Sentry::Client do
   describe "#transport" do
     context "when scheme is not set" do
       it "returns HTTP transport object" do
-        expect(subject.transport).to be_a(Sentry::Transports::HTTP)
+        expect(subject.transport).to be_a(Sentry::HTTPTransport)
       end
     end
 
@@ -61,7 +61,7 @@ RSpec.describe Sentry::Client do
       end
 
       it "returns HTTP transport object" do
-        expect(subject.transport).to be_a(Sentry::Transports::HTTP)
+        expect(subject.transport).to be_a(Sentry::HTTPTransport)
       end
     end
 
@@ -71,7 +71,7 @@ RSpec.describe Sentry::Client do
       end
 
       it "returns HTTP transport object" do
-        expect(subject.transport).to be_a(Sentry::Transports::HTTP)
+        expect(subject.transport).to be_a(Sentry::HTTPTransport)
       end
     end
 
@@ -81,7 +81,7 @@ RSpec.describe Sentry::Client do
       end
 
       it "returns Dummy transport object" do
-        expect(subject.transport).to be_a(Sentry::Transports::Dummy)
+        expect(subject.transport).to be_a(Sentry::DummyTransport)
       end
     end
 
@@ -91,7 +91,7 @@ RSpec.describe Sentry::Client do
       end
 
       it "returns Stdout transport object" do
-        expect(subject.transport).to be_a(Sentry::Transports::Stdout)
+        expect(subject.transport).to be_a(Sentry::StdoutTransport)
       end
     end
   end
