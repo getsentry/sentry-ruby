@@ -8,7 +8,10 @@ module Sentry
       def call(env)
         # this call clones the main (global) hub
         # and assigns it to the current thread's Sentry#get_current_hub
-        Sentry.clone_hub_to_current_thread
+        # it's essential for multi-thread servers (e.g. puma)
+        Sentry.clone_hub_to_current_thread unless Sentry.get_current_hub
+        # this call creates an isolated scope for every request
+        # it's essential for multi-process servers (e.g. unicorn)
         Sentry.with_scope do |scope|
           env['sentry.requested_at'] = Time.now
           env['sentry.client'] = Sentry.get_current_client
