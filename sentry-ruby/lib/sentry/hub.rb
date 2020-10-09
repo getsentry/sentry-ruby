@@ -23,6 +23,16 @@ module Sentry
       current_layer&.scope
     end
 
+    def clone
+      layer = current_layer
+
+      if layer
+        scope = layer.scope&.dup
+
+        Hub.new(layer.client, scope)
+      end
+    end
+
     def bind_client(client)
       layer = current_layer
 

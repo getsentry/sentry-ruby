@@ -105,6 +105,17 @@ RSpec.describe Sentry::Hub do
     end
   end
 
+  describe "#clone" do
+    it "creates a new hub with the current hub's top layer" do
+      new_hub = subject.clone
+
+      expect(new_hub).not_to eq(subject)
+      expect(new_hub.current_client).to eq(subject.current_client)
+      expect(new_hub.current_scope).to be_a(Sentry::Scope)
+      expect(new_hub.current_scope).not_to eq(subject.current_scope)
+    end
+  end
+
   describe "#bind_client & #unbind_client" do
     let(:new_client) { Sentry::Client.new(configuration) }
 
