@@ -9,6 +9,8 @@ module Sentry
   class Error < StandardError
   end
 
+  THREAD_LOCAL = :sentry_hub
+
   class << self
     def init(&block)
       config = Configuration.new
@@ -16,7 +18,7 @@ module Sentry
       client = Client.new(config)
       scope = Scope.new
       hub = Hub.new(client, scope)
-      Thread.current[:sentry_hub] = hub
+      Thread.current[THREAD_LOCAL] = hub
       @main_hub = hub
     end
 
@@ -25,7 +27,11 @@ module Sentry
     end
 
     def get_current_hub
-      Thread.current[:sentry_hub]
+      Thread.current[THREAD_LOCAL]
+    end
+
+    def clone_hub_to_current_thread
+      Thread.current[THREAD_LOCAL] = get_main_hub.clone
     end
 
     def configure_scope(&block)

@@ -25,6 +25,26 @@ RSpec.describe Sentry do
     end
   end
 
+  describe "#clone_hub_to_current_thread" do
+    it "clones a new hub to the current thread" do
+      setup_current_hub
+
+      main_hub = described_class.get_main_hub
+
+      new_thread = Thread.new do
+        described_class.clone_hub_to_current_thread
+        thread_hub = described_class.get_current_hub
+
+        expect(thread_hub).to be_a(Sentry::Hub)
+        expect(thread_hub).not_to eq(main_hub)
+        expect(thread_hub.current_client).to eq(main_hub.current_client)
+        expect(described_class.get_main_hub).to eq(main_hub)
+      end
+
+      new_thread.join
+    end
+  end
+
   describe ".configure_scope" do
     before do
       setup_current_hub
