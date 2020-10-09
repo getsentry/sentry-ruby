@@ -21,9 +21,9 @@ class WelcomeController < ApplicationController
 
   def set_sentry_context
     Sentry.configure_scope do |scope|
-      scope.set_user({id: 1, name: "Stan"})
       scope.set_transaction_name(request.env["PATH_INFO"])
-      scope.set_tags({new_sdk: true, foo: "bar"})
+      counter = (scope.tags[:counter] || 0) + 1
+      scope.set_tag(:counter, counter)
     end
   end
 end
