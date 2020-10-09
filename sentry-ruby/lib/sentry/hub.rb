@@ -11,12 +11,26 @@ module Sentry
       @last_event_id = nil
     end
 
+    def new_from_top
+      Hub.new(current_client, current_scope)
+    end
+
     def current_client
       current_layer&.client
     end
 
     def current_scope
       current_layer&.scope
+    end
+
+    def clone
+      layer = current_layer
+
+      if layer
+        scope = layer.scope&.dup
+
+        Hub.new(layer.client, scope)
+      end
     end
 
     def bind_client(client)
