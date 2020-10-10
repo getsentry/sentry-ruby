@@ -14,7 +14,7 @@
 
 [![Gem Version](https://img.shields.io/gem/v/sentry-raven.svg)](https://rubygems.org/gems/sentry-raven)
 ![Build Status](https://github.com/getsentry/raven-ruby/workflows/Test/badge.svg)
-[![Coverage Status](https://img.shields.io/codecov/c/github/getsentry/raven-ruby/master?logo=codecov)](https://codecov.io/gh/getsentry/raven-ruby/branch/master)
+[![Coverage Status](https://img.shields.io/codecov/c/github/getsentry/sentry-ruby/master?logo=codecov)](https://codecov.io/gh/getsentry/sentry-ruby/branch/master)
 [![Gem](https://img.shields.io/gem/dt/sentry-raven.svg)](https://rubygems.org/gems/sentry-raven/)
 [![SemVer](https://api.dependabot.com/badges/compatibility_score?dependency-name=sentry-raven&package-manager=bundler&version-scheme=semver)](https://dependabot.com/compatibility-score.html?dependency-name=sentry-raven&package-manager=bundler&version-scheme=semver)
 
