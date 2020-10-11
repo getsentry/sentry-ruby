@@ -7,6 +7,22 @@ RSpec.describe Sentry::Scope do
     new_breadcrumb
   end
 
+  describe "#set_rack_env" do
+    let(:env) do
+      Rack::MockRequest.env_for("/test", {})
+    end
+    it "sets the rack env" do
+      subject.set_rack_env(env)
+
+      expect(subject.rack_env).to eq(env)
+    end
+    it "sets empty hash when the env is nil" do
+      subject.set_rack_env({})
+
+      expect(subject.rack_env).to eq({})
+    end
+  end
+
   describe "#set_user" do
     it "raises error when passed non-hash argument" do
       expect do

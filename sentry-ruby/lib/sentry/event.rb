@@ -6,6 +6,7 @@ require 'sentry/event/options'
 require 'sentry/interface'
 require 'sentry/backtrace'
 require 'sentry/utils/deep_merge'
+require 'sentry/utils/real_ip'
 
 module Sentry
   class Event
@@ -22,6 +23,7 @@ module Sentry
       message user tags contexts extra
       fingerprint breadcrumbs backtrace transaction
       platform sdk
+      rack_env
     )
 
     attr_accessor(*ATTRIBUTES)
@@ -113,6 +115,18 @@ module Sentry
       @level = new_level.to_s == "warn" ? :warning : new_level
     end
 
+    def rack_env=(env)
+      unless self[:http] || env.empty?
+        interface :http do |int|
+          int.from_rack(env)
+        end
+
+        if ip = calculate_real_ip_from_rack(env.dup)
+          user[:ip_address] = ip
+        end
+      end
+    end
+
     def interface(name, value = nil, &block)
       int = Interface.registered[name]
       raise(Error, "Unknown interface: #{name}") unless int
@@ -195,23 +209,16 @@ module Sentry
       @environment ||= configuration.current_environment
     end
 
-    def add_rack_context
-      interface :http do |int|
-        int.from_rack(context.rack_env)
-      end
-      # context.user[:ip_address] = calculate_real_ip_from_rack
-    end
-
     # When behind a proxy (or if the user is using a proxy), we can't use
     # REMOTE_ADDR to determine the Event IP, and must use other headers instead.
-    # def calculate_real_ip_from_rack
-    #   Utils::RealIp.new(
-    #     :remote_addr => context.rack_env["REMOTE_ADDR"],
-    #     :client_ip => context.rack_env["HTTP_CLIENT_IP"],
-    #     :real_ip => context.rack_env["HTTP_X_REAL_IP"],
-    #     :forwarded_for => context.rack_env["HTTP_X_FORWARDED_FOR"]
-    #   ).calculate_ip
-    # end
+    def calculate_real_ip_from_rack(env)
+      Utils::RealIp.new(
+        :remote_addr => env["REMOTE_ADDR"],
+        :client_ip => env["HTTP_CLIENT_IP"],
+        :real_ip => env["HTTP_X_REAL_IP"],
+        :forwarded_for => env["HTTP_X_FORWARDED_FOR"]
+      ).calculate_ip
+    end
 
     def list_gem_specs
       # Older versions of Rubygems don't support iterating over all specs
