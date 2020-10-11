@@ -14,6 +14,16 @@ RSpec.configure do |config|
   config.expect_with :rspec do |c|
     c.syntax = :expect
   end
+
+  config.before :each do
+    # Make sure we reset the env in case something leaks in
+    ENV.delete('SENTRY_DSN')
+    ENV.delete('SENTRY_CURRENT_ENV')
+    ENV.delete('SENTRY_ENVIRONMENT')
+    ENV.delete('SENTRY_RELEASE')
+    ENV.delete('RAILS_ENV')
+    ENV.delete('RACK_ENV')
+  end
 end
 
 def build_exception_with_cause(cause = "exception a")

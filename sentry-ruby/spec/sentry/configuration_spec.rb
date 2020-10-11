@@ -1,16 +1,6 @@
 require 'spec_helper'
 
 RSpec.describe Sentry::Configuration do
-  before do
-    # Make sure we reset the env in case something leaks in
-    ENV.delete('SENTRY_DSN')
-    ENV.delete('SENTRY_CURRENT_ENV')
-    ENV.delete('SENTRY_ENVIRONMENT')
-    ENV.delete('SENTRY_RELEASE')
-    ENV.delete('RAILS_ENV')
-    ENV.delete('RACK_ENV')
-  end
-
   describe "#breadcrumbs_logger=" do
     it "raises error when given an invalid option" do
       expect { subject.breadcrumbs_logger = :foo }.to raise_error(

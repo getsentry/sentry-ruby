@@ -12,7 +12,7 @@ end
 RSpec.describe Sentry::Client do
   let(:configuration) do
     Sentry::Configuration.new.tap do |config|
-      config.server = 'http://12345:67890@sentry.localdomain/sentry/42'
+      config.dsn = DUMMY_DSN
     end
   end
   subject { Sentry::Client.new(configuration) }
@@ -49,39 +49,21 @@ RSpec.describe Sentry::Client do
   end
 
   describe "#transport" do
-    context "when scheme is not set" do
-      it "returns HTTP transport object" do
-        expect(subject.transport).to be_a(Sentry::HTTPTransport)
-      end
-    end
+    context "when dsn is not set" do
+      subject { described_class.new(Sentry::Configuration.new) }
 
-    context "when scheme is http" do
-      before do
-        configuration.scheme = "http"
-      end
-
-      it "returns HTTP transport object" do
-        expect(subject.transport).to be_a(Sentry::HTTPTransport)
-      end
-    end
-
-    context "when scheme is https" do
-      before do
-        configuration.scheme = "https"
-      end
-
-      it "returns HTTP transport object" do
-        expect(subject.transport).to be_a(Sentry::HTTPTransport)
-      end
-    end
-
-    context "when scheme is dummy" do
-      before do
-        configuration.scheme = "dummy"
-      end
-
-      it "returns Dummy transport object" do
+      it "returns dummy transport object" do
         expect(subject.transport).to be_a(Sentry::DummyTransport)
+      end
+    end
+
+    context "when dsn is set" do
+      before do
+        configuration.dsn = DUMMY_DSN
+      end
+
+      it "returns HTTP transport object" do
+        expect(subject.transport).to be_a(Sentry::HTTPTransport)
       end
     end
   end
