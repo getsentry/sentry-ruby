@@ -107,4 +107,3 @@ end
 
 require "sentry/transport/dummy_transport"
 require "sentry/transport/http_transport"
-require "sentry/transport/stdout_transport"

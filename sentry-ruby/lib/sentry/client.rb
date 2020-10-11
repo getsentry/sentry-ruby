@@ -12,8 +12,6 @@ module Sentry
       @transport = case scheme
         when 'http', 'https'
           HTTPTransport.new(configuration)
-        when 'stdout'
-          StdoutTransport.new(configuration)
         when 'dummy'
           DummyTransport.new(configuration)
         else

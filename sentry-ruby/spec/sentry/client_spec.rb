@@ -84,16 +84,6 @@ RSpec.describe Sentry::Client do
         expect(subject.transport).to be_a(Sentry::DummyTransport)
       end
     end
-
-    context "when scheme is stdout" do
-      before do
-        configuration.scheme = "stdout"
-      end
-
-      it "returns Stdout transport object" do
-        expect(subject.transport).to be_a(Sentry::StdoutTransport)
-      end
-    end
   end
 
   shared_examples "options" do
