@@ -70,10 +70,6 @@ module Sentry
     # any events, and a value of 1.0 will send 100% of events.
     attr_accessor :sample_rate
 
-    # DSN component - set automatically if DSN provided.
-    # Otherwise, can be one of "http", "https", or "dummy"
-    attr_accessor :scheme
-
     # a proc/lambda that takes an array of stack traces
     # it'll be used to silence (reduce) backtrace of the exception
     #

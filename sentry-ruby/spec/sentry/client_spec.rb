@@ -132,10 +132,6 @@ RSpec.describe Sentry::Client do
     let(:event) { subject.event_from_exception(exception) }
     let(:hash) { event.to_hash }
 
-    before do
-      configuration.scheme = "dummy"
-    end
-
     it "sets the message to the exception's value and type" do
       expect(hash[:exception][:values][0][:type]).to eq("Exception")
       expect(hash[:exception][:values][0][:value]).to eq(message)
