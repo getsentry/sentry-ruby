@@ -116,7 +116,7 @@ RSpec.describe Sentry::Scope do
       scope
     end
     let(:client) do
-      Sentry::Client.new(Sentry::Configuration.new.tap { |c| c.scheme = "dummy" } )
+      Sentry::Client.new(Sentry::Configuration.new.tap { |c| c.dsn = DUMMY_DSN } )
     end
     let(:event) do
       client.event_from_message("test message")
