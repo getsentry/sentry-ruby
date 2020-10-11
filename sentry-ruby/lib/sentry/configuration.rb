@@ -1,5 +1,6 @@
 require "sentry/utils/exception_cause_chain"
 require "sentry/dsn"
+require "sentry/transport/configuration"
 require "sentry/linecache"
 
 module Sentry
@@ -25,9 +26,6 @@ module Sentry
     # RACK_ENV by default.
     attr_reader :current_environment
 
-    # Encoding type for event bodies. Must be :json or :gzip.
-    attr_reader :encoding
-
     # Whitelist of environments that will send notifications to Sentry. Array of Strings.
     attr_accessor :environments
 
@@ -42,13 +40,6 @@ module Sentry
     attr_accessor :inspect_exception_causes_for_exclusion
     alias inspect_exception_causes_for_exclusion? inspect_exception_causes_for_exclusion
 
-    # The Faraday adapter to be used. Will default to Net::HTTP when not set.
-    attr_accessor :http_adapter
-
-    # A Proc yeilding the faraday builder allowing for further configuration
-    # of the faraday adapter
-    attr_accessor :faraday_builder
-
     # You may provide your own LineCache for matching paths with source files.
     # This may be useful if you need to get source code from places other than
     # the disk. See Sentry::LineCache for the required interface you must implement.
@@ -58,15 +49,9 @@ module Sentry
     # Sentry provides its own Sentry::Logger.
     attr_accessor :logger
 
-    # Timeout waiting for the Sentry server connection to open in seconds
-    attr_accessor :open_timeout
-
     # Project directory root for in_app detection. Could be Rails root, etc.
     # Set automatically for Rails.
     attr_reader :project_root
-
-    # Proxy information to pass to the HTTP adapter (via Faraday)
-    attr_accessor :proxy
 
     # Turns on ActiveSupport breadcrumbs integration
     attr_reader :rails_activesupport_breadcrumbs
@@ -116,20 +101,10 @@ module Sentry
     # Silences ready message when true.
     attr_accessor :silence_ready
 
-    # SSL settings passed directly to Faraday's ssl option
-    attr_accessor :ssl
-
-    # The path to the SSL certificate file
-    attr_accessor :ssl_ca_file
-
-    # Should the SSL certificate of the server be verified?
-    attr_accessor :ssl_verification
-
     # Default tags for events. Hash.
     attr_accessor :tags
 
-    # Timeout when waiting for the server to return data in seconds.
-    attr_accessor :timeout
+    attr_reader :transport
 
     # Optional Proc, called before sending an event to the server/
     # E.g.: lambda { |event, hint| event }
@@ -184,14 +159,12 @@ module Sentry
       self.breadcrumbs_logger = []
       self.context_lines = 3
       self.current_environment = current_environment_from_env
-      self.encoding = 'gzip'
       self.environments = []
       self.exclude_loggers = []
       self.excluded_exceptions = IGNORE_DEFAULT.dup
       self.inspect_exception_causes_for_exclusion = false
       self.linecache = ::Sentry::LineCache.new
       self.logger = ::Sentry::Logger.new(STDOUT)
-      self.open_timeout = 1
       self.project_root = detect_project_root
       @rails_activesupport_breadcrumbs = false
 
@@ -202,9 +175,8 @@ module Sentry
       self.dsn = ENV['SENTRY_DSN']
       self.server_name = server_name_from_env
       self.should_capture = false
-      self.ssl_verification = true
       self.tags = {}
-      self.timeout = 2
+      @transport = Transport::Configuration.new
       self.before_send = false
     end
 
@@ -216,11 +188,6 @@ module Sentry
 
     alias server= dsn=
 
-    def encoding=(encoding)
-      raise(Error, 'Unsupported encoding') unless %w(gzip json).include? encoding
-
-      @encoding = encoding
-    end
 
     def async=(value)
       unless value == false || value.respond_to?(:call)

@@ -4,7 +4,7 @@ RSpec.describe Sentry::HTTPTransport do
   let(:config) do
     Sentry::Configuration.new.tap do |c|
       c.dsn = 'http://12345@sentry.localdomain/sentry/42'
-      c.http_adapter = [:test, stubs]
+      c.transport.http_adapter = [:test, stubs]
     end
   end
 
@@ -26,7 +26,7 @@ RSpec.describe Sentry::HTTPTransport do
     it 'allows to customise faraday' do
       builder = spy('faraday_builder')
       expect(Faraday).to receive(:new).and_yield(builder)
-      config.faraday_builder = proc { |b| b.request :instrumentation }
+      config.transport.faraday_builder = proc { |b| b.request :instrumentation }
 
       subject
 
