@@ -3,7 +3,7 @@ require 'spec_helper'
 RSpec.describe Sentry::Hub do
   let(:configuration) do
     config = Sentry::Configuration.new
-    config.scheme = "dummy"
+    config.dsn = DUMMY_DSN
     config
   end
   let(:client) { Sentry::Client.new(configuration) }

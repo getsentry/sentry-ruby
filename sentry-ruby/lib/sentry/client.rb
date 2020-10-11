@@ -7,17 +7,12 @@ module Sentry
 
     def initialize(configuration)
       @configuration = configuration
-      scheme = configuration.scheme || configuration.dsn.scheme
-
-      @transport = case scheme
+      @transport =
+        case configuration.dsn&.scheme
         when 'http', 'https'
           HTTPTransport.new(configuration)
-        when 'stdout'
-          StdoutTransport.new(configuration)
-        when 'dummy'
-          DummyTransport.new(configuration)
         else
-          fail "Unknown transport scheme '#{configuration.scheme}'"
+          DummyTransport.new(configuration)
         end
     end
 
