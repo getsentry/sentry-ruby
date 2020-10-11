@@ -112,7 +112,7 @@ RSpec.describe Sentry::Scope do
 
     before do
       Sentry.init do |config|
-        config.dsn = 'dummy://12345:67890@sentry.localdomain/sentry/42'
+        config.dsn = DUMMY_DSN
       end
     end
 
@@ -130,6 +130,7 @@ RSpec.describe Sentry::Scope do
       scope.set_rack_env(env)
       scope
     end
+
     let(:event) do
       client.event_from_message("test message")
     end

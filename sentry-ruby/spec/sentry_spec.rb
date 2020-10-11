@@ -1,7 +1,7 @@
 RSpec.describe Sentry do
   def setup_current_hub
     Sentry.init do |config|
-      config.scheme = "dummy"
+      config.dsn = DUMMY_DSN
       config.tags = { foo: "bar" }
     end
   end
@@ -13,7 +13,7 @@ RSpec.describe Sentry do
   describe ".init" do
     it "initializes the current hub and main hub" do
       described_class.init do |config|
-        config.scheme = "dummy"
+        config.dsn = DUMMY_DSN
         config.tags = { foo: "bar" }
       end
 

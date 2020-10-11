@@ -10,6 +10,7 @@ if rails_version.to_f != 0
   gem "rspec-rails", "~> 4.0"
 end
 
+gem "delayed_job"
 gem "sidekiq"
 
 gem "rack"

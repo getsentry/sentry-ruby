@@ -1,16 +1,6 @@
 require 'spec_helper'
 
 RSpec.describe Sentry::Configuration do
-  before do
-    # Make sure we reset the env in case something leaks in
-    ENV.delete('SENTRY_DSN')
-    ENV.delete('SENTRY_CURRENT_ENV')
-    ENV.delete('SENTRY_ENVIRONMENT')
-    ENV.delete('SENTRY_RELEASE')
-    ENV.delete('RAILS_ENV')
-    ENV.delete('RACK_ENV')
-  end
-
   describe "#breadcrumbs_logger=" do
     it "raises error when given an invalid option" do
       expect { subject.breadcrumbs_logger = :foo }.to raise_error(
@@ -20,13 +10,14 @@ RSpec.describe Sentry::Configuration do
     end
   end
 
-  it "doesnt accept invalid encodings" do
-    expect { subject.encoding = "apple" }.to raise_error(Sentry::Error, 'Unsupported encoding')
-  end
-
-  it "has hashlike attribute accessors" do
-    expect(subject.encoding).to   eq("gzip")
-    expect(subject[:encoding]).to eq("gzip")
+  describe "#transport" do
+    it "returns an initialized Transport::Configuration object" do
+      transport_config = subject.transport
+      expect(transport_config.encoding).to eq("gzip")
+      expect(transport_config.timeout).to eq(2)
+      expect(transport_config.open_timeout).to eq(1)
+      expect(transport_config.ssl_verification).to eq(true)
+    end
   end
 
   context 'configuring for async' do

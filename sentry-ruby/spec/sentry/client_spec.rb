@@ -12,7 +12,7 @@ end
 RSpec.describe Sentry::Client do
   let(:configuration) do
     Sentry::Configuration.new.tap do |config|
-      config.server = 'http://12345:67890@sentry.localdomain/sentry/42'
+      config.dsn = DUMMY_DSN
     end
   end
   subject { Sentry::Client.new(configuration) }
@@ -49,49 +49,21 @@ RSpec.describe Sentry::Client do
   end
 
   describe "#transport" do
-    context "when scheme is not set" do
-      it "returns HTTP transport object" do
-        expect(subject.transport).to be_a(Sentry::HTTPTransport)
-      end
-    end
+    context "when dsn is not set" do
+      subject { described_class.new(Sentry::Configuration.new) }
 
-    context "when scheme is http" do
-      before do
-        configuration.scheme = "http"
-      end
-
-      it "returns HTTP transport object" do
-        expect(subject.transport).to be_a(Sentry::HTTPTransport)
-      end
-    end
-
-    context "when scheme is https" do
-      before do
-        configuration.scheme = "https"
-      end
-
-      it "returns HTTP transport object" do
-        expect(subject.transport).to be_a(Sentry::HTTPTransport)
-      end
-    end
-
-    context "when scheme is dummy" do
-      before do
-        configuration.scheme = "dummy"
-      end
-
-      it "returns Dummy transport object" do
+      it "returns dummy transport object" do
         expect(subject.transport).to be_a(Sentry::DummyTransport)
       end
     end
 
-    context "when scheme is stdout" do
+    context "when dsn is set" do
       before do
-        configuration.scheme = "stdout"
+        configuration.dsn = DUMMY_DSN
       end
 
-      it "returns Stdout transport object" do
-        expect(subject.transport).to be_a(Sentry::StdoutTransport)
+      it "returns HTTP transport object" do
+        expect(subject.transport).to be_a(Sentry::HTTPTransport)
       end
     end
   end
@@ -159,10 +131,6 @@ RSpec.describe Sentry::Client do
     let(:exception) { Exception.new(message) }
     let(:event) { subject.event_from_exception(exception) }
     let(:hash) { event.to_hash }
-
-    before do
-      configuration.scheme = "dummy"
-    end
 
     it "sets the message to the exception's value and type" do
       expect(hash[:exception][:values][0][:type]).to eq("Exception")
