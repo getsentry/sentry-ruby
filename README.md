@@ -142,7 +142,7 @@ Raven.extra_context(additional_info: 'foo') do
 end
 ```
 
-For more information, see [Context](https://docs.sentry.io/clients/ruby/context/).
+For more information, see [Context](https://docs.sentry.io/platforms/ruby/enriching-events/context/).
 
 ## More Information
 
