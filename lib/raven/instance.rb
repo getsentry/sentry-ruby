@@ -177,7 +177,13 @@ module Raven
     #   Raven.user_context('id' => 1, 'email' => 'foo@example.com')
     def user_context(options = nil)
       original_user_context = context.user
-      context.user = options || {}
+
+      if options
+        context.user.merge!(options)
+      else
+        context.user = {}
+      end
+
       yield if block_given?
       context.user
     ensure
