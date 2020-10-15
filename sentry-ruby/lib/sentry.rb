@@ -33,6 +33,10 @@ module Sentry
       configuration.logger
     end
 
+    def breadcrumbs
+      get_current_scope.breadcrumbs
+    end
+
     def configuration
       get_current_client.configuration
     end
