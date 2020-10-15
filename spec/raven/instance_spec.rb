@@ -247,6 +247,12 @@ RSpec.describe Raven::Instance do
 
   describe "#user_context" do
     context "without a block" do
+      it "doesn't override previous data" do
+        subject.user_context(id: 1)
+        subject.user_context(email: "test@example.com")
+
+        expect(subject.context.user).to eq({ id: 1, email: "test@example.com" })
+      end
       it "empties the user context when called without options" do
         subject.context.user = { id: 1 }
         expect(subject.user_context).to eq({})
@@ -257,9 +263,9 @@ RSpec.describe Raven::Instance do
         expect(subject.user_context(nil)).to eq({})
       end
 
-      it "empties the user context when called with {}" do
+      it "doesn't empty the user context when called with {}" do
         subject.context.user = { id: 1 }
-        expect(subject.user_context({})).to eq({})
+        expect(subject.user_context({})).to eq({ id: 1 })
       end
 
       it "returns the user context when set" do
