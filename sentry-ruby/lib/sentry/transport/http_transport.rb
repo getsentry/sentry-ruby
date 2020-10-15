@@ -12,7 +12,7 @@ module Sentry
 
     def send_data(data, options = {})
       unless configuration.sending_allowed?
-        logger.debug("Event not sent: #{configuration.error_messages}")
+        logger.debug(LOGGER_PROGNAME) { "Event not sent: #{configuration.error_messages}" }
       end
 
       project_id = @dsn.project_id
@@ -36,7 +36,7 @@ module Sentry
     def set_conn
       server = @dsn.server
 
-      configuration.logger.debug "Sentry HTTP Transport connecting to #{server}"
+      configuration.logger.debug(LOGGER_PROGNAME) { "Sentry HTTP Transport connecting to #{server}" }
 
       Faraday.new(server, :ssl => ssl_configuration, :proxy => @transport_configuration.proxy) do |builder|
         @transport_configuration.faraday_builder&.call(builder)

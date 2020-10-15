@@ -33,7 +33,7 @@ module Sentry
             # processors (esp ActiveJob) may not like weird types in the event hash
             configuration.async.call(event.to_json_compatible)
           rescue => e
-            configuration.logger.error("async event sending failed: #{e.message}")
+            configuration.logger.error(LOGGER_PROGNAME) { "async event sending failed: #{e.message}" }
             send_data(encoded_data, content_type: content_type)
           end
         else
@@ -73,7 +73,7 @@ module Sentry
       end
 
       event_id = event_hash[:event_id] || event_hash['event_id']
-      configuration.logger.info "Sending event #{event_id} to Sentry"
+      configuration.logger.info(LOGGER_PROGNAME) { "Sending event #{event_id} to Sentry" }
       encode(event_hash)
     end
 
@@ -90,17 +90,17 @@ module Sentry
 
     def failed_for_exception(e, event)
       @state.failure
-      configuration.logger.warn "Unable to record event with remote Sentry server (#{e.class} - #{e.message}):\n#{e.backtrace[0..10].join("\n")}"
+      configuration.logger.warn(LOGGER_PROGNAME) { "Unable to record event with remote Sentry server (#{e.class} - #{e.message}):\n#{e.backtrace[0..10].join("\n")}" }
       log_not_sending(event)
     end
 
     def failed_for_previous_failure(event)
-      configuration.logger.warn "Not sending event due to previous failure(s)."
+      configuration.logger.warn(LOGGER_PROGNAME) { "Not sending event due to previous failure(s)." }
       log_not_sending(event)
     end
 
     def log_not_sending(event)
-      configuration.logger.warn("Failed to submit event: #{Event.get_log_message(event.to_hash)}")
+      configuration.logger.warn(LOGGER_PROGNAME) { "Failed to submit event: #{Event.get_log_message(event.to_hash)}" }
     end
   end
 end

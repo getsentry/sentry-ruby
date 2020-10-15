@@ -209,7 +209,7 @@ RSpec.describe Sentry::Configuration do
         it "returns nil + logs an warning if HEROKU_SLUG_COMMIT is not set" do
           logger = double("logger")
           expect(::Sentry::Logger).to receive(:new).and_return(logger)
-          expect(logger).to receive(:warn).with(described_class::HEROKU_DYNO_METADATA_MESSAGE)
+          expect(logger).to receive(:warn).with(Sentry::LOGGER_PROGNAME) { described_class::HEROKU_DYNO_METADATA_MESSAGE }
 
           expect(described_class.new.release).to eq(nil)
         end

@@ -215,7 +215,7 @@ module Sentry
           Array(logger)
         end
 
-      require "raven/breadcrumbs/sentry_logger" if loggers.include?(:sentry_logger)
+      require "sentry/breadcrumb/sentry_logger" if loggers.include?(:sentry_logger)
 
       @breadcrumbs_logger = logger
     end
@@ -275,10 +275,10 @@ module Sentry
     def exception_class_allowed?(exc)
       if exc.is_a?(Sentry::Error)
         # Try to prevent error reporting loops
-        logger.debug "Refusing to capture Sentry error: #{exc.inspect}"
+        logger.debug(LOGGER_PROGNAME) { "Refusing to capture Sentry error: #{exc.inspect}" }
         false
       elsif excluded_exception?(exc)
-        logger.debug "User excluded error: #{exc.inspect}"
+        logger.debug(LOGGER_PROGNAME) { "User excluded error: #{exc.inspect}" }
         false
       else
         true
@@ -305,7 +305,7 @@ module Sentry
         detect_release_from_capistrano ||
         detect_release_from_heroku
     rescue => e
-      logger.error "Error detecting release: #{e.message}"
+      logger.error(LOGGER_PROGNAME) { "Error detecting release: #{e.message}" }
     end
 
     def excluded_exception?(incoming_exception)
@@ -341,7 +341,7 @@ module Sentry
     def detect_release_from_heroku
       return unless running_on_heroku?
       return if ENV['CI']
-      logger.warn(HEROKU_DYNO_METADATA_MESSAGE) && return unless ENV['HEROKU_SLUG_COMMIT']
+      logger.warn(LOGGER_PROGNAME) { HEROKU_DYNO_METADATA_MESSAGE } && return unless ENV['HEROKU_SLUG_COMMIT']
 
       ENV['HEROKU_SLUG_COMMIT']
     end
