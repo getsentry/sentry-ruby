@@ -66,7 +66,7 @@ module Sentry
 
       event = configuration.before_send.call(event, hint) if configuration.before_send
       if event.nil?
-        configuration.logger.info "Discarded event because before_send returned nil"
+        configuration.logger.info(LOGGER_PROGNAME) { "Discarded event because before_send returned nil" }
         return
       end
 

@@ -13,6 +13,9 @@ module Sentry
         # this call creates an isolated scope for every request
         # it's essential for multi-process servers (e.g. unicorn)
         Sentry.with_scope do |scope|
+          # there could be some breadcrumbs already stored in the top-level scope
+          # and for request information, we don't need those breadcrumbs
+          scope.clear_breadcrumbs
           env['sentry.requested_at'] = Time.now
           env['sentry.client'] = Sentry.get_current_client
 

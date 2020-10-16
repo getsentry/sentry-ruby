@@ -34,7 +34,7 @@ RSpec.describe Sentry::Transport do
       end
 
       it "logs correct message" do
-        expect(logger).to receive(:info).with("Sending event #{event.id} to Sentry")
+        expect(logger).to receive(:info).with(Sentry::LOGGER_PROGNAME) { "Sending event #{event.id} to Sentry" }
 
         expect(subject.send_event(event)).to eq(event)
       end
@@ -74,8 +74,8 @@ RSpec.describe Sentry::Transport do
       end
 
       it "doesn't change the state" do
-        expect(logger).to receive(:warn).with("Not sending event due to previous failure(s).").ordered
-        expect(logger).to receive(:warn).with("Failed to submit event: ZeroDivisionError: divided by 0").ordered
+        expect(logger).to receive(:warn).with(Sentry::LOGGER_PROGNAME) { "Not sending event due to previous failure(s)." }.ordered
+        expect(logger).to receive(:warn).with(Sentry::LOGGER_PROGNAME) { "Failed to submit event: ZeroDivisionError: divided by 0" }.ordered
         expect(subject.state).not_to receive(:failure)
 
         expect(subject.send_event(event)).to eq(nil)
@@ -113,7 +113,7 @@ RSpec.describe Sentry::Transport do
         end
 
         it 'sends the result of Event.capture_exception via fallback' do
-          expect(logger).to receive(:error).with("async event sending failed: TypeError")
+          expect(logger).to receive(:error).with(Sentry::LOGGER_PROGNAME) { "async event sending failed: TypeError" }
           expect(configuration.async).to receive(:call).and_call_original
           expect(subject).to receive(:send_data)
 

@@ -10,6 +10,8 @@ module Sentry
   class Error < StandardError
   end
 
+  LOGGER_PROGNAME = "sentry".freeze
+
   THREAD_LOCAL = :sentry_hub
 
   class << self
@@ -29,6 +31,10 @@ module Sentry
 
     def logger
       configuration.logger
+    end
+
+    def breadcrumbs
+      get_current_scope.breadcrumbs
     end
 
     def configuration

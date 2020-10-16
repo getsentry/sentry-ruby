@@ -7,6 +7,7 @@ RSpec.describe Sentry::Rack::CaptureException do
 
   before do
     Sentry.init do |config|
+      config.breadcrumbs_logger = [:sentry_logger]
       config.dsn = 'dummy://12345:67890@sentry.localdomain/sentry/42'
     end
   end
@@ -72,6 +73,25 @@ RSpec.describe Sentry::Rack::CaptureException do
       Sentry.configure_scope { |s| s.set_tags(tag_1: "don't change me") }
     end
 
+    it "only contains the breadcrumbs of the request" do
+      logger = ::Logger.new(nil)
+
+      logger.info("old breadcrumb")
+
+      request_1 = lambda do |e|
+        logger.info("request breadcrumb")
+        Sentry.capture_message("test")
+      end
+
+      app_1 = described_class.new(request_1)
+      event_1 = nil
+      allow(Sentry.get_current_client).to receive(:send_event) { |event| event_1 = event }
+
+      app_1.call(env)
+
+      expect(event_1.breadcrumbs.count).to eq(1)
+      expect(event_1.breadcrumbs.peek.message).to eq("request breadcrumb")
+    end
     it "doesn't pollute the top-level scope" do
       request_1 = lambda do |e|
         Sentry.configure_scope { |s| s.set_tags({tag_1: "foo"}) }
