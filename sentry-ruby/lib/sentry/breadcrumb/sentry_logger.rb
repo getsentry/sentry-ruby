@@ -23,6 +23,23 @@ module Sentry
 
         category = "logger"
 
+        # this is because the nature of Ruby Logger class:
+        #
+        # when given 1 argument, the argument will become both message and progname
+        #
+        # ```
+        # logger.info("foo")
+        # # message == progname == "foo"
+        # ```
+        #
+        # and to specify progname with a different message,
+        # we need to pass the progname as the argument and pass the message as a proc
+        #
+        # ```
+        # logger.info("progname") { "the message" }
+        # ```
+        #
+        # so the condition below is to replicate the similar behavior
         if message.nil?
           if block_given?
             message = yield
@@ -31,7 +48,6 @@ module Sentry
             message = progname
           end
         end
-        # see Logger#add's source code for above implementation
 
         return if ignored_logger?(progname) || message.empty?
 
