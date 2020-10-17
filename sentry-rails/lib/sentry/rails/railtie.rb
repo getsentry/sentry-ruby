@@ -1,9 +1,10 @@
 require "rails"
+require "sentry/rails/capture_exception"
 
 module Sentry
   class Railtie < ::Rails::Railtie
     initializer "sentry.use_rack_middleware" do |app|
-      app.config.middleware.insert 0, Sentry::Rack::CaptureException
+      app.config.middleware.insert 0, Sentry::Rails::CaptureException
     end
 
     # initializer 'sentry.action_controller' do

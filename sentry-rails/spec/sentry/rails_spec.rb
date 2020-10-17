@@ -5,43 +5,38 @@ RSpec.describe Sentry::Rails, type: :request do
     make_basic_app
   end
 
+  let(:transport) do
+    Sentry.get_current_client.transport
+  end
+
   it "has version set" do
     expect(described_class::VERSION).to be_a(String)
   end
 
   it "inserts middleware" do
-    expect(Rails.application.middleware).to include(Sentry::Rack::CaptureException)
+    expect(Rails.application.middleware).to include(Sentry::Rails::CaptureException)
   end
 
   it "doesn't do anything on a normal route" do
     get "/"
 
     expect(response.status).to eq(200)
-    expect(Sentry.get_current_client.transport.events.size).to eq(0)
+    expect(transport.events.size).to eq(0)
   end
 
-  # it "should capture exceptions in production" do
-  #   get "/exception"
+  it "captures exceptions" do
+    get "/exception"
 
-  #   expect(response.status).to eq(500)
-  #   event = JSON.parse!(Sentry.client.transport.events.first[1])
-  #   expect(event["exception"]["values"][0]["type"]).to eq("RuntimeError")
-  #   expect(event["exception"]["values"][0]["value"]).to eq("An unhandled exception!")
-  # end
-
-  # it "should capture exceptions in production" do
-  #   get "/exception"
-
-  #   expect(response.status).to eq(500)
-  #   event = JSON.parse!(Sentry.client.transport.events.first[1])
-  #   expect(event["exception"]["values"][0]["type"]).to eq("RuntimeError")
-  #   expect(event["exception"]["values"][0]["value"]).to eq("An unhandled exception!")
-  # end
+    expect(response.status).to eq(500)
+    event = JSON.parse!(transport.events.first)
+    expect(event["exception"]["values"][0]["type"]).to eq("RuntimeError")
+    expect(event["exception"]["values"][0]["value"]).to eq("An unhandled exception!")
+  end
 
   # it "filters exception backtrace with with custom BacktraceCleaner" do
   #   get "/view_exception"
 
-  #   event = JSON.parse!(Sentry.client.transport.events.first[1])
+  #   event = JSON.parse!(transport.events.first[1])
   #   traces = event.dig("exception", "values", 0, "stacktrace", "frames")
   #   expect(traces.dig(-1, "filename")).to eq("inline template")
 
@@ -54,7 +49,7 @@ RSpec.describe Sentry::Rails, type: :request do
 
   #   get "/view_exception"
 
-  #   event = JSON.parse!(Sentry.client.transport.events.first[1])
+  #   event = JSON.parse!(transport.events.first[1])
   #   traces = event.dig("exception", "values", 0, "stacktrace", "frames")
   #   expect(traces.dig(-1, "filename")).to eq("inline template")
   #   expect(traces.dig(-1, "function")).not_to be_nil
@@ -63,7 +58,7 @@ RSpec.describe Sentry::Rails, type: :request do
   # it "sets transaction to ControllerName#method" do
   #   get "/exception"
 
-  #   event = JSON.parse!(Sentry.client.transport.events.first[1])
+  #   event = JSON.parse!(transport.events.first[1])
   #   expect(event['transaction']).to eq("HelloController#exception")
   # end
 
