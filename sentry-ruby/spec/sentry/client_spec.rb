@@ -49,21 +49,34 @@ RSpec.describe Sentry::Client do
   end
 
   describe "#transport" do
-    context "when dsn is not set" do
-      subject { described_class.new(Sentry::Configuration.new) }
+    context "when transport.transport_class is provided" do
+      before do
+        configuration.dsn = DUMMY_DSN
+        configuration.transport.transport_class = Sentry::DummyTransport
+      end
 
-      it "returns dummy transport object" do
+      it "uses that class regardless if dsn is set" do
         expect(subject.transport).to be_a(Sentry::DummyTransport)
       end
     end
 
-    context "when dsn is set" do
-      before do
-        configuration.dsn = DUMMY_DSN
+    context "when transport.transport_class is not provided" do
+      context "when dsn is not set" do
+        subject { described_class.new(Sentry::Configuration.new) }
+
+        it "returns dummy transport object" do
+          expect(subject.transport).to be_a(Sentry::DummyTransport)
+        end
       end
 
-      it "returns HTTP transport object" do
-        expect(subject.transport).to be_a(Sentry::HTTPTransport)
+      context "when dsn is set" do
+        before do
+          configuration.dsn = DUMMY_DSN
+        end
+
+        it "returns HTTP transport object" do
+          expect(subject.transport).to be_a(Sentry::HTTPTransport)
+        end
       end
     end
   end

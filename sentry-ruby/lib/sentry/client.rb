@@ -7,13 +7,18 @@ module Sentry
 
     def initialize(configuration)
       @configuration = configuration
-      @transport =
-        case configuration.dsn&.scheme
-        when 'http', 'https'
-          HTTPTransport.new(configuration)
-        else
-          DummyTransport.new(configuration)
-        end
+
+      if transport_class = configuration.transport.transport_class
+        @transport = transport_class.new(configuration)
+      else
+        @transport =
+          case configuration.dsn&.scheme
+          when 'http', 'https'
+            HTTPTransport.new(configuration)
+          else
+            DummyTransport.new(configuration)
+          end
+      end
     end
 
     def capture_exception(exception, scope:, **options, &block)

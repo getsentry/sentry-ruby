@@ -1,7 +1,7 @@
 module Sentry
   class Transport
     class Configuration
-      attr_accessor :timeout, :open_timeout, :proxy, :ssl, :ssl_ca_file, :ssl_verification, :encoding, :http_adapter, :faraday_builder
+      attr_accessor :timeout, :open_timeout, :proxy, :ssl, :ssl_ca_file, :ssl_verification, :encoding, :http_adapter, :faraday_builder, :transport_class
 
       def initialize
         @ssl_verification = true
@@ -14,6 +14,14 @@ module Sentry
         raise(Error, 'Unsupported encoding') unless %w(gzip json).include? encoding
 
         @encoding = encoding
+      end
+
+      def transport_class=(klass)
+        unless klass.is_a?(Class)
+          raise Sentry::Error.new("config.transport.transport_class must a class. got: #{klass.class}")
+        end
+
+        @transport_class = klass
       end
     end
   end
