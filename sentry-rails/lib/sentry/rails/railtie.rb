@@ -19,15 +19,11 @@ module Sentry
       end
     end
 
-    # initializer 'sentry.action_view' do
-    #   ActiveSupport.on_load :action_view do
-    #     Sentry.safely_prepend(
-    #       "StreamingReporter",
-    #       :from => Sentry::Rails::Overrides,
-    #       :to => ActionView::StreamingTemplateRenderer::Body
-    #     )
-    #   end
-    # end
+    initializer 'sentry.action_view' do
+      ActiveSupport.on_load :action_view do
+        ActionView::StreamingTemplateRenderer::Body.send(:prepend, Sentry::Rails::Overrides::StreamingReporter)
+      end
+    end
 
     config.after_initialize do
       Sentry.configuration.logger = ::Rails.logger
