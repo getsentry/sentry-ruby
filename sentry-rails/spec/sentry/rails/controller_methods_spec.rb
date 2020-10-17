@@ -1,11 +1,7 @@
 require 'spec_helper'
 
-RSpec.describe "Raven::Rails::ControllerMethods", :rails => true do
-  include Raven::Rails::ControllerMethods if defined?(Rails)
-
-  before(:all) do
-    require 'raven/integrations/rails/controller_methods'
-  end
+RSpec.describe Sentry::Rails::ControllerMethods do
+  include described_class
 
   let(:env) { { "foo" => "bar" } }
   let(:request) { double('request', :env => env) }
@@ -15,7 +11,7 @@ RSpec.describe "Raven::Rails::ControllerMethods", :rails => true do
     let(:message) { double('message') }
 
     it "captures a message with the request environment" do
-      expect(Raven::Rack).to receive(:capture_message).with(message, env, options)
+      expect(Sentry::Rack).to receive(:capture_message).with(message, env, options)
       capture_message(message, options)
     end
   end
@@ -24,7 +20,7 @@ RSpec.describe "Raven::Rails::ControllerMethods", :rails => true do
     let(:exception) { double('exception') }
 
     it "captures a exception with the request environment" do
-      expect(Raven::Rack).to receive(:capture_exception).with(exception, env, options)
+      expect(Sentry::Rack).to receive(:capture_exception).with(exception, env, options)
       capture_exception(exception, options)
     end
   end
