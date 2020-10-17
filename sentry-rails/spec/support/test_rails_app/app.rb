@@ -51,6 +51,8 @@ def make_basic_app
 
     Sentry.init do |config|
       config.release = 'beta'
+      config.dsn = DUMMY_DSN
+      config.transport.transport_class = Sentry::DummyTransport
     end
   end
 

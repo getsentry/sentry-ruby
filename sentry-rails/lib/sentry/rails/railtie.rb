@@ -1,5 +1,9 @@
 require "rails"
 require "sentry/rails/capture_exception"
+require "sentry/rails/backtrace_cleaner"
+require "sentry/rails/controller_methods"
+require "sentry/rails/controller_transaction"
+require "sentry/rails/overrides/streaming_reporter"
 
 module Sentry
   class Railtie < ::Rails::Railtie
@@ -7,19 +11,13 @@ module Sentry
       app.config.middleware.insert 0, Sentry::Rails::CaptureException
     end
 
-    # initializer 'sentry.action_controller' do
-    #   ActiveSupport.on_load :action_controller do
-    #     include Sentry::Rails::ControllerMethods
-    #     include Sentry::Rails::ControllerTransaction
-    #     if ::Rails::VERSION::STRING >= "4.0.0"
-    #       Sentry.safely_prepend(
-    #         "StreamingReporter",
-    #         :from => Sentry::Rails::Overrides,
-    #         :to => ActionController::Live
-    #       )
-    #     end
-    #   end
-    # end
+    initializer 'sentry.action_controller' do
+      ActiveSupport.on_load :action_controller do
+        include Sentry::Rails::ControllerMethods
+        include Sentry::Rails::ControllerTransaction
+        ActionController::Live.send(:prepend, Sentry::Rails::Overrides::StreamingReporter)
+      end
+    end
 
     # initializer 'sentry.action_view' do
     #   ActiveSupport.on_load :action_view do
@@ -31,15 +29,15 @@ module Sentry
     #   end
     # end
 
-    # config.before_initialize do
-    #   Sentry.configuration.logger = ::Rails.logger
+    config.after_initialize do
+      Sentry.configuration.logger = ::Rails.logger
 
-    #   backtrace_cleaner = Sentry::Rails::BacktraceCleaner.new
+      backtrace_cleaner = Sentry::Rails::BacktraceCleaner.new
 
-    #   Sentry.configuration.backtrace_cleanup_callback = lambda do |backtrace|
-    #     backtrace_cleaner.clean(backtrace)
-    #   end
-    # end
+      Sentry.configuration.backtrace_cleanup_callback = lambda do |backtrace|
+        backtrace_cleaner.clean(backtrace)
+      end
+    end
 
     # config.after_initialize do
     #   if Sentry.configuration.breadcrumbs_logger.include?(:active_support_logger) ||
