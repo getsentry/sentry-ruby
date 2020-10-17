@@ -1,56 +1,54 @@
 require "spec_helper"
 
-if defined? ActiveJob
-  class MyActiveJob < ActiveJob::Base
-    self.logger = nil
+class MyActiveJob < ActiveJob::Base
+  self.logger = nil
 
-    class TestError < RuntimeError
-    end
-
-    def perform
-      raise TestError, "Boom!"
-    end
+  class TestError < RuntimeError
   end
 
-  class RescuedActiveJob < MyActiveJob
-    rescue_from TestError, :with => :rescue_callback
-
-    def rescue_callback(error); end
+  def perform
+    Sentry.get_current_scope.set_extras(foo: :bar)
+    raise TestError, "Boom!"
   end
 end
 
-RSpec.describe "ActiveJob integration", :rails => true do
+class RescuedActiveJob < MyActiveJob
+  rescue_from TestError, :with => :rescue_callback
+
+  def rescue_callback(error); end
+end
+
+RSpec.describe "ActiveJob integration" do
   before(:all) do
-    require "rspec/rails"
-    require "raven/integrations/rails"
-    require "raven/integrations/rails/active_job"
+    perform_basic_setup
+  end
+
+  let(:event) do
+    transport.events.last.to_json_compatible
+  end
+
+  let(:transport) do
+    Sentry.get_current_client.transport
+  end
+
+  after do
+    transport.events = []
   end
 
   before(:each) do
-    Raven.client.transport.events = []
     MyActiveJob.queue_adapter = :inline
   end
 
-  it_should_behave_like "Raven default capture behavior" do
-    let(:block) { MyActiveJob.new.perform_now }
-    let(:captured_class) { MyActiveJob::TestError }
-    let(:captured_message) { "Boom!" }
-  end
-
   it "clears context" do
-    Raven.extra_context(:foo => :bar)
     job = MyActiveJob.new
 
     expect { job.perform_now }.to raise_error(MyActiveJob::TestError)
-    event = JSON.parse!(Raven.client.transport.events.first[1])
+
+    event = transport.events.last.to_json_compatible
 
     expect(event["extra"]["foo"]).to eq("bar")
 
-    Raven.client.transport.events = []
-    expect { job.perform_now }.to raise_error(MyActiveJob::TestError)
-    event = JSON.parse!(Raven.client.transport.events.first[1])
-
-    expect(event["extra"]["foo"]).to eq(nil)
+    expect(Sentry.get_current_scope.extra).to eq({})
   end
 
   context 'using rescue_from' do
@@ -60,7 +58,7 @@ RSpec.describe "ActiveJob integration", :rails => true do
 
       expect { job.perform_now }.not_to raise_error
 
-      expect(Raven.client.transport.events.size).to eq(0)
+      expect(transport.events.size).to eq(0)
       expect(job).to have_received(:rescue_callback).once
     end
   end
@@ -72,7 +70,7 @@ RSpec.describe "ActiveJob integration", :rails => true do
 
       expect { job.perform_now }.to raise_error(MyActiveJob::TestError)
 
-      expect(Raven.client.transport.events.size).to eq(0)
+      expect(transport.events.size).to eq(0)
     end
   end
 end

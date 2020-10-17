@@ -3,6 +3,7 @@ require "sentry/rails/capture_exception"
 require "sentry/rails/backtrace_cleaner"
 require "sentry/rails/controller_methods"
 require "sentry/rails/controller_transaction"
+require "sentry/rails/active_job"
 require "sentry/rails/overrides/streaming_reporter"
 
 module Sentry
@@ -59,11 +60,11 @@ module Sentry
     #   end
     # end
 
-    # initializer 'sentry.active_job' do
-    #   ActiveSupport.on_load :active_job do
-    #     require 'sentry/integrations/rails/active_job'
-    #   end
-    # end
+    initializer 'sentry.active_job' do
+      ActiveSupport.on_load :active_job do
+        require 'sentry/rails/active_job'
+      end
+    end
 
     # rake_tasks do
     #   require 'sentry/integrations/tasks'

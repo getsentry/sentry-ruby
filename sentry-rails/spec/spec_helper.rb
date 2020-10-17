@@ -61,3 +61,11 @@ def build_exception_with_recursive_cause
   allow(exception).to receive(:backtrace).and_return(backtrace)
   exception
 end
+
+def perform_basic_setup
+  Sentry.init do |config|
+    config.dsn = DUMMY_DSN
+    config.logger = ::Logger.new(nil)
+    config.transport.transport_class = Sentry::DummyTransport
+  end
+end
