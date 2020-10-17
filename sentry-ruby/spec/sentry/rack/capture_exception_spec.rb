@@ -15,7 +15,7 @@ RSpec.describe Sentry::Rack::CaptureException do
   it 'captures the exception from direct raise' do
     app = ->(_e) { raise exception }
     stack = described_class.new(app)
-    expect(stack).to receive(:capture_exception).with(exception, env).and_call_original
+    expect(Sentry::Rack).to receive(:capture_exception).with(exception, env).and_call_original
 
     expect { stack.call(env) }.to raise_error(ZeroDivisionError)
   end
@@ -26,7 +26,7 @@ RSpec.describe Sentry::Rack::CaptureException do
       [200, {}, ['okay']]
     end
     stack = described_class.new(app)
-    expect(stack).to receive(:capture_exception).with(exception, env).and_call_original
+    expect(Sentry::Rack).to receive(:capture_exception).with(exception, env).and_call_original
 
     stack.call(env)
   end
@@ -37,7 +37,7 @@ RSpec.describe Sentry::Rack::CaptureException do
       [200, {}, ['okay']]
     end
     stack = described_class.new(app)
-    expect(stack).to receive(:capture_exception).with(exception, env).and_call_original
+    expect(Sentry::Rack).to receive(:capture_exception).with(exception, env).and_call_original
 
     stack.call(env)
   end
