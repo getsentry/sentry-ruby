@@ -1,4 +1,5 @@
 require 'spec_helper'
+require 'sentry/rails/overrides/debug_exceptions_catcher'
 
 RSpec.shared_examples "exception catching middleware" do
   let(:middleware) do
@@ -30,27 +31,23 @@ RSpec.shared_examples "exception catching middleware" do
   end
 
   it "captures the exception" do
-    expect(Raven::Rack).to receive(:capture_exception)
+    expect(Sentry::Rack).to receive(:capture_exception)
     middleware.new(app).call(env)
   end
 
   context "when an error is raised" do
     it "shows the original exception" do
-      allow(Raven::Rack).to receive(:capture_exception).and_raise("raven error")
+      allow(Sentry::Rack).to receive(:capture_exception).and_raise("raven error")
       expect(middleware.new(app).call(env)).to eq([500, "app error", {}])
     end
   end
 end
 
-RSpec.describe "Raven::Rails::Overrides::DebugExceptionsCatcher", :rails => true do
-  before(:all) do
-    require 'raven/integrations/rails/overrides/debug_exceptions_catcher'
-  end
-
+RSpec.describe "Sentry::Rails::Overrides::DebugExceptionsCatcher" do
   if Class.respond_to?(:alias_method_chain)
     context "using include" do
       before do
-        middleware.send(:include, Raven::Rails::Overrides::OldDebugExceptionsCatcher)
+        middleware.send(:include, Sentry::Rails::Overrides::OldDebugExceptionsCatcher)
       end
 
       include_examples "exception catching middleware"
@@ -60,7 +57,7 @@ RSpec.describe "Raven::Rails::Overrides::DebugExceptionsCatcher", :rails => true
   if Class.respond_to?(:prepend)
     context "using prepend" do
       before do
-        middleware.send(:prepend, Raven::Rails::Overrides::DebugExceptionsCatcher)
+        middleware.send(:prepend, Sentry::Rails::Overrides::DebugExceptionsCatcher)
       end
 
       include_examples "exception catching middleware"

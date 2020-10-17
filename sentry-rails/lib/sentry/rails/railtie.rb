@@ -34,31 +34,25 @@ module Sentry
       Sentry.configuration.backtrace_cleanup_callback = lambda do |backtrace|
         backtrace_cleaner.clean(backtrace)
       end
+
+      # if Sentry.configuration.breadcrumbs_logger.include?(:active_support_logger) ||
+      #    Sentry.configuration.rails_activesupport_breadcrumbs
+
+      #   require 'sentry/breadcrumbs/active_support_logger'
+      #   Sentry::Breadcrumbs::ActiveSupportLogger.inject
+      # end
+
+      if Sentry.configuration.rails_report_rescued_exceptions
+        require 'sentry/rails/overrides/debug_exceptions_catcher'
+        if defined?(::ActionDispatch::DebugExceptions)
+          exceptions_class = ::ActionDispatch::DebugExceptions
+        elsif defined?(::ActionDispatch::ShowExceptions)
+          exceptions_class = ::ActionDispatch::ShowExceptions
+        end
+
+        exceptions_class.send(:prepend, Sentry::Rails::Overrides::DebugExceptionsCatcher)
+      end
     end
-
-    # config.after_initialize do
-    #   if Sentry.configuration.breadcrumbs_logger.include?(:active_support_logger) ||
-    #      Sentry.configuration.rails_activesupport_breadcrumbs
-
-    #     require 'sentry/breadcrumbs/active_support_logger'
-    #     Sentry::Breadcrumbs::ActiveSupportLogger.inject
-    #   end
-
-    #   if Sentry.configuration.rails_report_rescued_exceptions
-    #     require 'sentry/integrations/rails/overrides/debug_exceptions_catcher'
-    #     if defined?(::ActionDispatch::DebugExceptions)
-    #       exceptions_class = ::ActionDispatch::DebugExceptions
-    #     elsif defined?(::ActionDispatch::ShowExceptions)
-    #       exceptions_class = ::ActionDispatch::ShowExceptions
-    #     end
-
-    #     Sentry.safely_prepend(
-    #       "DebugExceptionsCatcher",
-    #       :from => Sentry::Rails::Overrides,
-    #       :to => exceptions_class
-    #     )
-    #   end
-    # end
 
     initializer 'sentry.active_job' do
       ActiveSupport.on_load :active_job do

@@ -1,11 +1,11 @@
-module Raven
-  class Rails
+module Sentry
+  module Rails
     module Overrides
       module DebugExceptionsCatcher
         def render_exception(env_or_request, exception)
           begin
             env = env_or_request.respond_to?(:env) ? env_or_request.env : env_or_request
-            Raven::Rack.capture_exception(exception, env)
+            Sentry::Rack.capture_exception(exception, env)
           rescue
           end
           super
@@ -20,7 +20,7 @@ module Raven
         def render_exception_with_raven(env_or_request, exception)
           begin
             env = env_or_request.respond_to?(:env) ? env_or_request.env : env_or_request
-            Raven::Rack.capture_exception(exception, env)
+            Sentry::Rack.capture_exception(exception, env)
           rescue
           end
           render_exception_without_raven(env_or_request, exception)
