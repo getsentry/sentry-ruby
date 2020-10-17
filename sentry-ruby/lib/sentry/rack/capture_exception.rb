@@ -31,11 +31,15 @@ module Sentry
             raise
           end
 
-          error = env['rack.exception'] || env['sinatra.error']
+          error = collect_exception(env)
           capture_exception(error, env) if error
 
           response
         end
+      end
+
+      def collect_exception(env)
+        env['rack.exception'] || env['sinatra.error']
       end
 
       def capture_exception(exception, env, **options)
