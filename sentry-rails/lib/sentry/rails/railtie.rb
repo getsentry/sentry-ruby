@@ -35,12 +35,10 @@ module Sentry
         backtrace_cleaner.clean(backtrace)
       end
 
-      # if Sentry.configuration.breadcrumbs_logger.include?(:active_support_logger) ||
-      #    Sentry.configuration.rails_activesupport_breadcrumbs
-
-      #   require 'sentry/breadcrumbs/active_support_logger'
-      #   Sentry::Breadcrumbs::ActiveSupportLogger.inject
-      # end
+      if Sentry.configuration.breadcrumbs_logger.include?(:active_support_logger)
+        require 'sentry/rails/breadcrumb/active_support_logger'
+        Sentry::Rails::Breadcrumb::ActiveSupportLogger.inject
+      end
 
       if Sentry.configuration.rails_report_rescued_exceptions
         require 'sentry/rails/overrides/debug_exceptions_catcher'

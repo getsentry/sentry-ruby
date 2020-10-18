@@ -1,53 +1,40 @@
 require "spec_helper"
 
-RSpec.describe "Raven::Breadcrumbs::ActiveSupportLogger", :type => :request, :rails => true do
+RSpec.describe "Sentry::Breadcrumbs::ActiveSupportLogger", type: :request do
   before(:all) do
-    Raven.configuration.breadcrumbs_logger = [:active_support_logger]
-    Rails.application = make_basic_app
+    make_basic_app do |sentry_config|
+      sentry_config.breadcrumbs_logger = [:active_support_logger]
+    end
   end
 
   after(:all) do
-    Raven.configuration.breadcrumbs_logger = []
-    Raven::Breadcrumbs::ActiveSupportLogger.detach
+    require 'sentry/rails/breadcrumb/active_support_logger'
+    Sentry::Rails::Breadcrumb::ActiveSupportLogger.detach
     # even though we cleanup breadcrumbs in the rack middleware
     # Breadcrumbs::ActiveSupportLogger subscribes to "every" instrumentation
     # so it'll create other instrumentations "after" the request is finished
     # and we should clear those as well
-    Raven::BreadcrumbBuffer.clear!
+    Sentry.get_current_scope.clear_breadcrumbs
   end
 
   it "captures correct data" do
     get "/exception"
 
     expect(response.status).to eq(500)
-    event = JSON.parse!(Raven.client.transport.events.first[1])
+    event = Sentry.get_current_client.transport.events.first.to_json_compatible
     breadcrumbs = event.dig("breadcrumbs", "values")
     expect(breadcrumbs.count).to eq(2)
 
-    if Rails.version.to_i >= 5
-      expect(breadcrumbs.first["data"]).to match(
-        {
-          "controller" => "HelloController",
-          "action" => "exception",
-          "params" => { "controller" => "hello", "action" => "exception" },
-          "headers" => anything,
-          "format" => "html",
-          "method" => "GET",
-          "path" => "/exception"
-        }
-      )
-    else
-      expect(breadcrumbs.first["data"]).to match(
-        {
-          "controller" => "HelloController",
-          "action" => "exception",
-          "params" => { "controller" => "hello", "action" => "exception" },
-          "format" => "html",
-          "method" => "GET",
-          "path" => "/exception"
-        }
-      )
-
-    end
+    expect(breadcrumbs.first["data"]).to match(
+      {
+        "controller" => "HelloController",
+        "action" => "exception",
+        "params" => { "controller" => "hello", "action" => "exception" },
+        "headers" => anything,
+        "format" => "html",
+        "method" => "GET",
+        "path" => "/exception"
+      }
+    )
   end
 end
