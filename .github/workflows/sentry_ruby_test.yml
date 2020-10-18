@@ -12,7 +12,7 @@ jobs:
     defaults:
       run:
         working-directory: sentry-ruby
-    name: Test on ruby ${{ matrix.ruby_version }} and rails ${{ matrix.rails_version }}
+    name: Test on ruby ${{ matrix.ruby_version }}
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
@@ -30,9 +30,7 @@ jobs:
         bundler: 1
         ruby-version: ${{ matrix.ruby_version }}
 
-    - name: Build with Rails ${{ matrix.rails_version }}
-      env:
-        RAILS_VERSION: ${{ matrix.rails_version }}
+    - name: Run specs
       run: |
         bundle install --jobs 4 --retry 3
         bundle exec rake
