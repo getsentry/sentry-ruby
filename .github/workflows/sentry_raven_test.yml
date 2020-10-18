@@ -7,6 +7,7 @@ on:
   pull_request:
     paths-ignore:
       - 'sentry-ruby/**'
+      - 'sentry-rails/**'
 jobs:
   test:
     name: Test on ruby ${{ matrix.ruby_version }} and rails ${{ matrix.rails_version }}
