@@ -1,5 +1,5 @@
 require 'rails'
-require "active_record"
+# require "active_record/railtie"
 require "action_view/railtie"
 require "action_controller/railtie"
 # require "action_mailer/railtie"
@@ -10,7 +10,6 @@ require "active_job/railtie"
 require 'sentry/rails'
 
 ActiveSupport::Deprecation.silenced = true
-ActiveRecord::Base.establish_connection(adapter: "sqlite3", database: ":memory:")
 
 class TestApp < Rails::Application
 end
@@ -29,7 +28,7 @@ class HelloController < ActionController::Base
   end
 
   def not_found
-    raise ActiveRecord::RecordNotFound
+    raise ActionController::BadRequest
   end
 end
 

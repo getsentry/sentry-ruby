@@ -114,21 +114,6 @@ module Sentry
     # Most of these errors generate 4XX responses. In general, Sentry clients
     # only automatically report 5xx responses.
     IGNORE_DEFAULT = [
-      'AbstractController::ActionNotFound',
-      'ActionController::BadRequest',
-      'ActionController::InvalidAuthenticityToken',
-      'ActionController::InvalidCrossOriginRequest',
-      'ActionController::MethodNotAllowed',
-      'ActionController::NotImplemented',
-      'ActionController::ParameterMissing',
-      'ActionController::RoutingError',
-      'ActionController::UnknownAction',
-      'ActionController::UnknownFormat',
-      'ActionController::UnknownHttpMethod',
-      'ActionDispatch::Http::Parameters::ParseError',
-      'ActionView::MissingTemplate',
-      'ActiveJob::DeserializationError', # Can cause infinite loops
-      'ActiveRecord::RecordNotFound',
       'CGI::Session::CookieStore::TamperedWithCookie',
       'Mongoid::Errors::DocumentNotFound',
       'Rack::QueryParser::InvalidParameterError',

@@ -35,7 +35,7 @@ RSpec.describe Sentry::Rails, type: :request do
   it "excludes commonly seen exceptions (like RecordNotFound)" do
     get "/not_found"
 
-    expect(response.status).to eq(500)
+    expect(response.status).to eq(400)
     expect(transport.events).to be_empty
   end
 

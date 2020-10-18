@@ -4,10 +4,28 @@ module Sentry
 
     def post_initialization_callback
       @rails = Sentry::Rails::Configuration.new
+      @excluded_exceptions = @excluded_exceptions.concat(Sentry::Rails::IGNORE_DEFAULT)
     end
   end
 
   module Rails
+    IGNORE_DEFAULT = [
+      'AbstractController::ActionNotFound',
+      'ActionController::BadRequest',
+      'ActionController::InvalidAuthenticityToken',
+      'ActionController::InvalidCrossOriginRequest',
+      'ActionController::MethodNotAllowed',
+      'ActionController::NotImplemented',
+      'ActionController::ParameterMissing',
+      'ActionController::RoutingError',
+      'ActionController::UnknownAction',
+      'ActionController::UnknownFormat',
+      'ActionController::UnknownHttpMethod',
+      'ActionDispatch::Http::Parameters::ParseError',
+      'ActionView::MissingTemplate',
+      'ActiveJob::DeserializationError', # Can cause infinite loops
+      'ActiveRecord::RecordNotFound'
+    ].freeze
     class Configuration
       # Rails catches exceptions in the ActionDispatch::ShowExceptions or
       # ActionDispatch::DebugExceptions middlewares, depending on the environment.

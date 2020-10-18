@@ -7,6 +7,12 @@ RSpec.describe Sentry::Rails::Configuration do
     expect(config.rails).to be_a(described_class)
   end
 
+  it "concats Rails-specific ignore exceptions" do
+    config = Sentry::Configuration.new
+
+    expect(config.excluded_exceptions).to include("ActiveRecord::RecordNotFound")
+  end
+
   describe "#report_rescued_exceptions" do
     it "has correct default value" do
       expect(subject.report_rescued_exceptions).to eq(true)
