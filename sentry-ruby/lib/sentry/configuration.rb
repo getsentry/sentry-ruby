@@ -180,6 +180,7 @@ module Sentry
       @transport = Transport::Configuration.new
       self.before_send = false
       self.rack_env_whitelist = RACK_ENV_WHITELIST_DEFAULT
+      post_initialization_callback
     end
 
     def dsn=(value)
@@ -412,5 +413,8 @@ module Sentry
         resolve_hostname
       end
     end
+
+    # allow extensions to extend the Configuration class
+    def post_initialization_callback; end
   end
 end
