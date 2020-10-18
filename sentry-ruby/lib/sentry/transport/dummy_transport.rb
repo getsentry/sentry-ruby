@@ -7,8 +7,8 @@ module Sentry
       @events = []
     end
 
-    def send_event(data, options = {})
-      @events << [generate_auth_header, data, options]
+    def send_event(event)
+      @events << event
     end
   end
 end

@@ -73,6 +73,7 @@ module Sentry
       event = current_client.capture_exception(error, **options, scope: current_scope, &block)
 
       @last_event_id = event.id
+      event
     end
 
     def capture_message(message, **options, &block)

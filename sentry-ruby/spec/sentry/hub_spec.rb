@@ -19,6 +19,10 @@ RSpec.describe Sentry::Hub do
     let(:message) { "Test message" }
     let(:options) { { tags: { foo: "bar" }, server_name: "foo.local" } }
 
+    it "returns an Event instance" do
+      expect(subject.capture_message(message, options)).to be_a(Sentry::Event)
+    end
+
     it 'initializes an Event, and sends it via the Client' do
       expect(client).to receive(:send_event)
 
@@ -39,6 +43,10 @@ RSpec.describe Sentry::Hub do
   describe '#capture_exception' do
     let(:exception) { ZeroDivisionError.new("divided by 0") }
     let(:options) { { tags: { foo: "bar" }, server_name: "foo.local" } }
+
+    it "returns an Event instance" do
+      expect(subject.capture_exception(exception, options)).to be_a(Sentry::Event)
+    end
 
     it 'initializes an Event, and sends it via the Client' do
       expect(client).to receive(:send_event)

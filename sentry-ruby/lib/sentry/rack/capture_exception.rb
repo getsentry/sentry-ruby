@@ -27,27 +27,19 @@ module Sentry
           rescue Sentry::Error
             raise # Don't capture Sentry errors
           rescue Exception => e
-            capture_exception(e, env)
+            Sentry::Rack::capture_exception(e, env)
             raise
           end
 
-          error = env['rack.exception'] || env['sinatra.error']
-          capture_exception(error, env) if error
+          error = collect_exception(env)
+          Sentry::Rack.capture_exception(error, env) if error
 
           response
         end
       end
 
-      def capture_exception(exception, env, **options)
-        if requested_at = env['sentry.requested_at']
-          options[:time_spent] = Time.now - requested_at
-        end
-
-        Sentry.capture_exception(exception, **options) do |evt|
-          evt.interface :http do |int|
-            int.from_rack(env)
-          end
-        end
+      def collect_exception(env)
+        env['rack.exception'] || env['sinatra.error']
       end
     end
   end
