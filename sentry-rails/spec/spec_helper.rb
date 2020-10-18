@@ -1,8 +1,8 @@
 require "bundler/setup"
 require "pry"
-require "sentry"
 require "support/test_rails_app/app"
 require "rspec/rails"
+require "sentry/rails"
 
 DUMMY_DSN = 'http://12345:67890@sentry.localdomain/sentry/42'
 

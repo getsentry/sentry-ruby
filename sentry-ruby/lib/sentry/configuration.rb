@@ -56,15 +56,6 @@ module Sentry
     # Array of rack env parameters to be included in the event sent to sentry.
     attr_accessor :rack_env_whitelist
 
-    # Turns on ActiveSupport breadcrumbs integration
-    attr_reader :rails_activesupport_breadcrumbs
-
-    # Rails catches exceptions in the ActionDispatch::ShowExceptions or
-    # ActionDispatch::DebugExceptions middlewares, depending on the environment.
-    # When `rails_report_rescued_exceptions` is true (it is by default), Sentry
-    # will report exceptions even when they are rescued by these middlewares.
-    attr_accessor :rails_report_rescued_exceptions
-
     # Release tag to be passed with every event sent to Sentry.
     # We automatically try to set this to a git SHA or Capistrano release.
     attr_accessor :release
@@ -123,21 +114,6 @@ module Sentry
     # Most of these errors generate 4XX responses. In general, Sentry clients
     # only automatically report 5xx responses.
     IGNORE_DEFAULT = [
-      'AbstractController::ActionNotFound',
-      'ActionController::BadRequest',
-      'ActionController::InvalidAuthenticityToken',
-      'ActionController::InvalidCrossOriginRequest',
-      'ActionController::MethodNotAllowed',
-      'ActionController::NotImplemented',
-      'ActionController::ParameterMissing',
-      'ActionController::RoutingError',
-      'ActionController::UnknownAction',
-      'ActionController::UnknownFormat',
-      'ActionController::UnknownHttpMethod',
-      'ActionDispatch::Http::Parameters::ParseError',
-      'ActionView::MissingTemplate',
-      'ActiveJob::DeserializationError', # Can cause infinite loops
-      'ActiveRecord::RecordNotFound',
       'CGI::Session::CookieStore::TamperedWithCookie',
       'Mongoid::Errors::DocumentNotFound',
       'Rack::QueryParser::InvalidParameterError',
@@ -171,9 +147,7 @@ module Sentry
       self.linecache = ::Sentry::LineCache.new
       self.logger = ::Sentry::Logger.new(STDOUT)
       self.project_root = detect_project_root
-      @rails_activesupport_breadcrumbs = false
 
-      self.rails_report_rescued_exceptions = true
       self.release = detect_release
       self.sample_rate = 1.0
       self.send_modules = true
@@ -184,6 +158,7 @@ module Sentry
       @transport = Transport::Configuration.new
       self.before_send = false
       self.rack_env_whitelist = RACK_ENV_WHITELIST_DEFAULT
+      post_initialization_callback
     end
 
     def dsn=(value)
@@ -265,11 +240,6 @@ module Sentry
 
     def project_root=(root_dir)
       @project_root = root_dir
-    end
-
-    def rails_activesupport_breadcrumbs=(val)
-      DeprecationHelper.deprecate_old_breadcrumbs_configuration(:active_support_logger)
-      @rails_activesupport_breadcrumbs = val
     end
 
     def exception_class_allowed?(exc)
@@ -421,5 +391,8 @@ module Sentry
         resolve_hostname
       end
     end
+
+    # allow extensions to extend the Configuration class
+    def post_initialization_callback; end
   end
 end

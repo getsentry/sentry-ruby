@@ -26,6 +26,10 @@ class HelloController < ActionController::Base
   def world
     render :plain => "Hello World!"
   end
+
+  def not_found
+    raise ActionController::BadRequest
+  end
 end
 
 def make_basic_app
@@ -43,6 +47,7 @@ def make_basic_app
   app.routes.append do
     get "/exception", :to => "hello#exception"
     get "/view_exception", :to => "hello#view_exception"
+    get "/not_found", :to => "hello#not_found"
     root :to => "hello#world"
   end
 
@@ -52,7 +57,8 @@ def make_basic_app
     Sentry.init do |config|
       config.release = 'beta'
       config.dsn = DUMMY_DSN
-      config.rails_report_rescued_exceptions = false
+      # for speeding up request specs
+      config.rails.report_rescued_exceptions = false
       config.transport.transport_class = Sentry::DummyTransport
       yield(config) if block_given?
     end

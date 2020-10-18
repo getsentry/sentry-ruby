@@ -40,7 +40,7 @@ module Sentry
         Sentry::Rails::Breadcrumb::ActiveSupportLogger.inject
       end
 
-      if Sentry.configuration.rails_report_rescued_exceptions
+      if Sentry.configuration.rails.report_rescued_exceptions
         require 'sentry/rails/overrides/debug_exceptions_catcher'
         if defined?(::ActionDispatch::DebugExceptions)
           exceptions_class = ::ActionDispatch::DebugExceptions
