@@ -3,9 +3,14 @@ source "https://rubygems.org"
 # Specify your gem's dependencies in sentry-ruby.gemspec
 gemspec
 
+rails_version = ENV["RAILS_VERSION"]
+rails_version = "6.0" if rails_version.nil?
+
+gem "rails", "~> #{rails_version}"
+gem "rspec-rails", "~> 4.0"
+
 gem "rake", "~> 12.0"
 gem "rspec", "~> 3.0"
-gem "rspec-rails"
 
 gem "sidekiq"
 
