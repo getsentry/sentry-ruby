@@ -56,12 +56,6 @@ module Sentry
     # Array of rack env parameters to be included in the event sent to sentry.
     attr_accessor :rack_env_whitelist
 
-    # Rails catches exceptions in the ActionDispatch::ShowExceptions or
-    # ActionDispatch::DebugExceptions middlewares, depending on the environment.
-    # When `rails_report_rescued_exceptions` is true (it is by default), Sentry
-    # will report exceptions even when they are rescued by these middlewares.
-    attr_accessor :rails_report_rescued_exceptions
-
     # Release tag to be passed with every event sent to Sentry.
     # We automatically try to set this to a git SHA or Capistrano release.
     attr_accessor :release
@@ -169,7 +163,6 @@ module Sentry
       self.logger = ::Sentry::Logger.new(STDOUT)
       self.project_root = detect_project_root
 
-      self.rails_report_rescued_exceptions = true
       self.release = detect_release
       self.sample_rate = 1.0
       self.send_modules = true
