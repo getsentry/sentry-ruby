@@ -1,5 +1,5 @@
 require 'rails'
-# require "active_record/railtie"
+require "active_record"
 require "action_view/railtie"
 require "action_controller/railtie"
 # require "action_mailer/railtie"
@@ -10,6 +10,7 @@ require "active_job/railtie"
 require 'sentry/rails'
 
 ActiveSupport::Deprecation.silenced = true
+ActiveRecord::Base.establish_connection(adapter: "sqlite3", database: ":memory:")
 
 class TestApp < Rails::Application
 end
@@ -25,6 +26,10 @@ class HelloController < ActionController::Base
 
   def world
     render :plain => "Hello World!"
+  end
+
+  def not_found
+    raise ActiveRecord::RecordNotFound
   end
 end
 
@@ -43,6 +48,7 @@ def make_basic_app
   app.routes.append do
     get "/exception", :to => "hello#exception"
     get "/view_exception", :to => "hello#view_exception"
+    get "/not_found", :to => "hello#not_found"
     root :to => "hello#world"
   end
 
