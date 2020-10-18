@@ -56,9 +56,6 @@ module Sentry
     # Array of rack env parameters to be included in the event sent to sentry.
     attr_accessor :rack_env_whitelist
 
-    # Turns on ActiveSupport breadcrumbs integration
-    attr_reader :rails_activesupport_breadcrumbs
-
     # Rails catches exceptions in the ActionDispatch::ShowExceptions or
     # ActionDispatch::DebugExceptions middlewares, depending on the environment.
     # When `rails_report_rescued_exceptions` is true (it is by default), Sentry
@@ -171,7 +168,6 @@ module Sentry
       self.linecache = ::Sentry::LineCache.new
       self.logger = ::Sentry::Logger.new(STDOUT)
       self.project_root = detect_project_root
-      @rails_activesupport_breadcrumbs = false
 
       self.rails_report_rescued_exceptions = true
       self.release = detect_release
@@ -265,11 +261,6 @@ module Sentry
 
     def project_root=(root_dir)
       @project_root = root_dir
-    end
-
-    def rails_activesupport_breadcrumbs=(val)
-      DeprecationHelper.deprecate_old_breadcrumbs_configuration(:active_support_logger)
-      @rails_activesupport_breadcrumbs = val
     end
 
     def exception_class_allowed?(exc)
