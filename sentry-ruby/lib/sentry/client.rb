@@ -23,6 +23,8 @@ module Sentry
 
     def capture_exception(exception, scope:, **options, &block)
       event = event_from_exception(exception, **options)
+      return unless event
+
       block.call(event) if block
       capture_event(event, scope)
     end

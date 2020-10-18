@@ -82,6 +82,14 @@ RSpec.describe Sentry do
 
       described_class.capture_exception(exception, tags: { foo: "baz" })
     end
+
+    it "doesn't do anything if the exception is excluded" do
+      Sentry.get_current_client.configuration.excluded_exceptions = ["ZeroDivisionError"]
+
+      result = described_class.capture_exception(exception)
+
+      expect(result).to eq(nil)
+    end
   end
 
   describe ".capture_message" do
