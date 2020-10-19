@@ -4,5 +4,10 @@ require "sentry/rails/railtie"
 
 module Sentry
   module Rails
+    META = { "name" => "sentry.ruby.rails", "version" => Sentry::Rails::VERSION }.freeze
+  end
+
+  def self.sdk_meta
+    Sentry::Rails::META
   end
 end

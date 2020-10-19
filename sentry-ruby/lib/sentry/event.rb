@@ -15,8 +15,6 @@ module Sentry
     MAX_MESSAGE_SIZE_IN_BYTES = 1024 * 8
     REQUIRED_OPTION_KEYS = [:configuration].freeze
 
-    SDK = { "name" => "sentry.ruby", "version" => Sentry::VERSION }.freeze
-
     ATTRIBUTES = %i(
       event_id logger level time_spent timestamp
       checksum release environment server_name modules
@@ -39,7 +37,7 @@ module Sentry
       @id            = SecureRandom.uuid.delete("-")
       @timestamp     = Time.now.utc
       @platform      = :ruby
-      @sdk           = SDK
+      @sdk           = Sentry.sdk_meta
 
       # Set some attributes with empty hashes to allow merging
       @interfaces        = {}

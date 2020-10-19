@@ -1,14 +1,21 @@
 require 'spec_helper'
 
 RSpec.describe Sentry::Event do
-  context 'with an application stacktrace' do
-    before do
-      Sentry.init do |config|
-        config.dsn = DUMMY_DSN
-        config.logger = ::Logger.new(nil)
-      end
+  before do
+    Sentry.init do |config|
+      config.dsn = DUMMY_DSN
+      config.logger = ::Logger.new(nil)
+      config.transport.transport_class = Sentry::DummyTransport
     end
+  end
 
+  it "sets right SDK information" do
+    event_hash = Sentry.capture_message("foo").to_hash
+
+    expect(event_hash[:sdk]).to eq("name" => "sentry.ruby.rails", "version" => Sentry::Rails::VERSION)
+  end
+
+  context 'with an application stacktrace' do
     let(:exception) do
       e = Exception.new("Oh no!")
       allow(e).to receive(:backtrace).and_return [
