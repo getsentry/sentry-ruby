@@ -10,9 +10,15 @@ module Sentry
   class Error < StandardError
   end
 
+  META = { "name" => "sentry.ruby", "version" => Sentry::VERSION }.freeze
+
   LOGGER_PROGNAME = "sentry".freeze
 
   THREAD_LOCAL = :sentry_hub
+
+  def self.sdk_meta
+    META
+  end
 
   class << self
     def init(&block)
