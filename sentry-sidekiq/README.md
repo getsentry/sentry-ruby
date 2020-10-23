@@ -1,28 +1,23 @@
-# Sentry::Ruby
-
-Welcome to your new gem! In this directory, you'll find the files you need to be able to package up your Ruby library into a gem. Put your Ruby code in the file `lib/sentry/ruby`. To experiment with that code, run `bin/console` for an interactive prompt.
-
-TODO: Delete this and the text above, and describe your gem
+# sentry-sidekiq
 
 ## Installation
 
 Add this line to your application's Gemfile:
 
 ```ruby
-gem 'sentry-ruby'
+gem 'sentry-sidekiq'
 ```
 
 And then execute:
 
     $ bundle install
 
-Or install it yourself as:
-
-    $ gem install sentry-ruby
-
 ## Usage
 
-TODO: Write usage instructions here
+See `sentry-ruby` for how to configure the Sentry client.
+
+You can also see the example under the `/example` folder.
+
 
 ## Development
 
