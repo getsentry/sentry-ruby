@@ -4,6 +4,14 @@ require "support/test_rails_app/app"
 require "rspec/rails"
 require "sentry/rails"
 
+require 'simplecov'
+SimpleCov.start
+
+if ENV["CI"]
+  require 'codecov'
+  SimpleCov.formatter = SimpleCov::Formatter::Codecov
+end
+
 DUMMY_DSN = 'http://12345:67890@sentry.localdomain/sentry/42'
 
 RSpec.configure do |config|
