@@ -1,4 +1,5 @@
 require "sentry/breadcrumb_buffer"
+require "etc"
 
 module Sentry
   class Scope
