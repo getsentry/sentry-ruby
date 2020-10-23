@@ -1,0 +1,41 @@
+name: sentry-sidekiq Test
+
+on:
+  push:
+    branches:
+      - master
+  pull_request:
+    paths:
+      - 'sentry-sidekiq/**'
+jobs:
+  test:
+    defaults:
+      run:
+        working-directory: sentry-sidekiq
+    name: Test on ruby ${{ matrix.ruby_version }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        ruby_version: [2.4, 2.5, 2.6, 2.7, jruby]
+        os: [ubuntu-latest]
+        include:
+          - ruby_version: 2.7
+            env: RUBYOPT="--enable-frozen-string-literal --debug=frozen-string-literal"
+    steps:
+    - uses: actions/checkout@v1
+
+    - name: Set up Ruby ${{ matrix.ruby_version }}
+      uses: ruby/setup-ruby@v1
+      with:
+        bundler: 1
+        ruby-version: ${{ matrix.ruby_version }}
+
+    - name: Start Redis
+      uses: supercharge/redis-github-action@1.1.0
+      with:
+        redis-version: 5
+
+    - name: Run specs
+      run: |
+        bundle install --jobs 4 --retry 3
+        bundle exec rake
