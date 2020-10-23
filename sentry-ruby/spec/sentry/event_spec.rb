@@ -77,6 +77,85 @@ RSpec.describe Sentry::Event do
     end
   end
 
+  context 'rack context specified' do
+    require 'stringio'
+
+    before do
+      Sentry.init do |config|
+        config.dsn = DUMMY_DSN
+      end
+
+      Sentry.get_current_scope.set_rack_env(
+        'REQUEST_METHOD' => 'POST',
+        'QUERY_STRING' => 'biz=baz',
+        'HTTP_HOST' => 'localhost',
+        'SERVER_NAME' => 'localhost',
+        'SERVER_PORT' => '80',
+        'HTTP_X_FORWARDED_FOR' => '1.1.1.1, 2.2.2.2',
+        'REMOTE_ADDR' => '192.168.1.1',
+        'PATH_INFO' => '/lol',
+        'rack.url_scheme' => 'http',
+        'rack.input' => StringIO.new('foo=bar')
+      )
+    end
+
+    let(:event) do
+      options = described_class::Options.new(
+        level: 'warning',
+        tags: {
+          'foo' => 'bar'
+        },
+        extra: {
+          'my_custom_variable' => 'value'
+        },
+        server_name: 'foo.local'
+      )
+
+      Sentry::Event.new(
+        options: options,
+        configuration: Sentry.configuration,
+      )
+    end
+
+    context "without config.send_default_pii = true" do
+      it "filters out pii data" do
+        Sentry.get_current_scope.apply_to_event(event)
+
+        expect(event.to_hash[:request]).to eq(
+          env: { 'SERVER_NAME' => 'localhost', 'SERVER_PORT' => '80', "REMOTE_ADDR" => "192.168.1.1" },
+          headers: { 'Host' => 'localhost', "X-Forwarded-For" => "1.1.1.1, 2.2.2.2" },
+          method: 'POST',
+          query_string: 'biz=baz',
+          url: 'http://localhost/lol',
+          cookies: nil
+        )
+        expect(event.to_hash[:user][:ip_address]).to eq(nil)
+      end
+    end
+
+    context "with config.send_default_pii = true" do
+      before do
+        Sentry.configuration.send_default_pii = true
+      end
+
+      it "adds correct data" do
+        Sentry.get_current_scope.apply_to_event(event)
+
+        expect(event.to_hash[:request]).to eq(
+          data: { 'foo' => 'bar' },
+          env: { 'SERVER_NAME' => 'localhost', 'SERVER_PORT' => '80', "REMOTE_ADDR" => "192.168.1.1" },
+          headers: { 'Host' => 'localhost', "X-Forwarded-For" => "1.1.1.1, 2.2.2.2" },
+          method: 'POST',
+          query_string: 'biz=baz',
+          url: 'http://localhost/lol',
+          cookies: {}
+        )
+
+        expect(event.to_hash[:user][:ip_address]).to eq("1.1.1.1")
+      end
+    end
+  end
+
   context 'configuration tags specified' do
     let(:options) do
       Sentry::Event::Options.new(
@@ -197,33 +276,5 @@ RSpec.describe Sentry::Event do
       expect(json["extra"]['date']).to be_a(String)
       expect(json["extra"]['anonymous_module']).not_to be_a(Class)
     end
-
-    # context "with bad data" do
-    #   subject do
-    #     data = {}
-    #     data['data'] = data
-    #     data['ary'] = []
-    #     data['ary'].push('x' => data['ary'])
-    #     data['ary2'] = data['ary']
-
-    #     Sentry::Event.new(extra: {
-    #                        invalid: "invalid\255".dup.force_encoding('UTF-8'),
-    #                        circular: data
-    #                      },
-    #                      configuration: configuration)
-    #   end
-
-    #   it "should remove bad UTF-8" do
-    #     json = subject.to_json_compatible
-
-    #     expect(json["extra"]["invalid"]).to eq("invalid")
-    #   end
-
-    #   it "should remove circular references" do
-    #     json = subject.to_json_compatible
-
-    #     expect(json["extra"]["circular"]["ary2"]).to eq("(...)")
-    #   end
-    # end
   end
 end
