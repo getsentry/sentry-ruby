@@ -8,8 +8,11 @@ module Sentry
       self.url = req.scheme && req.url.split('?').first
       self.method = req.request_method
       self.query_string = req.query_string
-      self.data = read_data_from(req)
-      self.cookies = req.cookies
+
+      if Sentry.configuration.send_default_pii
+        self.data = read_data_from(req)
+        self.cookies = req.cookies
+      end
 
       self.headers = format_headers_for_sentry(env_hash)
       self.env     = format_env_for_sentry(env_hash)
