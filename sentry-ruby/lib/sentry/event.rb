@@ -119,7 +119,7 @@ module Sentry
           int.from_rack(env)
         end
 
-        if ip = calculate_real_ip_from_rack(env.dup)
+        if configuration.send_default_pii && ip = calculate_real_ip_from_rack(env.dup)
           user[:ip_address] = ip
         end
       end

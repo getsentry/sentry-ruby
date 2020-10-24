@@ -80,6 +80,8 @@ module Sentry
     # Include module versions in reports - boolean.
     attr_accessor :send_modules
 
+    attr_accessor :send_default_pii
+
     attr_accessor :server_name
 
     # Provide a configurable callback to determine event capture.
@@ -151,6 +153,7 @@ module Sentry
       self.release = detect_release
       self.sample_rate = 1.0
       self.send_modules = true
+      self.send_default_pii = false
       self.dsn = ENV['SENTRY_DSN']
       self.server_name = server_name_from_env
       self.should_capture = false
