@@ -55,6 +55,23 @@ RSpec.describe Sentry::Hub do
     end
   end
 
+  describe '#capture_event' do
+    let(:exception) { ZeroDivisionError.new("divided by 0") }
+    let(:event) do
+      subject.capture_exception(exception)
+    end
+
+    it "returns an Event instance" do
+      expect(subject.capture_event(event)).to be_a(Sentry::Event)
+    end
+
+    it 'sends the Event via the Client' do
+      expect(client).to receive(:send_event)
+
+      subject.capture_event(event)
+    end
+  end
+
   describe "#with_scope" do
     it "builds a temporary scope" do
       inner_event = nil

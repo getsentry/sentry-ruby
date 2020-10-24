@@ -87,6 +87,15 @@ module Sentry
       event
     end
 
+    def capture_event(event)
+      return unless current_scope && current_client
+
+      event = current_client.capture_event(event, current_scope)
+
+      @last_event_id = event.id
+      event
+    end
+
     def add_breadcrumb(breadcrumb)
       current_scope.add_breadcrumb(breadcrumb)
     end
