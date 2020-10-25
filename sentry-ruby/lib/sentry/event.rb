@@ -154,14 +154,6 @@ module Sentry
       data
     end
 
-    def to_envelope
-      <<~ENVELOPE
-        {"event_id":"#{id}","dsn":"#{configuration.dsn.to_s}","sdk":#{Sentry.sdk_meta.to_json},"sent_at":"#{DateTime.now.rfc3339}"}
-        {"type":"event","content_type":"application/json"}
-        #{to_hash.to_json}
-      ENVELOPE
-    end
-
     def to_json_compatible
       JSON.parse(JSON.generate(to_hash))
     end

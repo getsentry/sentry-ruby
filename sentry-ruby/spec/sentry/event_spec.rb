@@ -81,51 +81,6 @@ RSpec.describe Sentry::Event do
     end
   end
 
-  describe "#to_envelope" do
-    let(:options) do
-      Sentry::Event::Options.new(
-        message: 'test',
-        level: 'warn',
-        tags: {
-          'foo' => 'bar'
-        },
-        extra: {
-          'my_custom_variable' => 'value'
-        },
-        contexts: {
-          os: { name: "mac" }
-        },
-        server_name: 'foo.local',
-        release: '721e41770371db95eee98ca2707686226b993eda',
-        environment: 'production'
-      )
-    end
-    let(:event) do
-      Sentry::Event.new(
-        configuration: configuration,
-        options: options
-      )
-    end
-
-    it "generates correct envelope content" do
-      result = event.to_envelope
-
-      envelope_header, item_header, item = result.split("\n")
-
-      expect(envelope_header).to eq(
-        <<~ENVELOPE_HEADER.chomp
-          {"event_id":"#{event.id}","dsn":"#{DUMMY_DSN}","sdk":#{Sentry.sdk_meta.to_json},"sent_at":"#{DateTime.now.rfc3339}"}
-        ENVELOPE_HEADER
-      )
-
-      expect(item_header).to eq(
-        '{"type":"event","content_type":"application/json"}'
-      )
-
-      expect(item).to eq(event.to_hash.to_json)
-    end
-  end
-
   context 'rack context specified' do
     require 'stringio'
 
