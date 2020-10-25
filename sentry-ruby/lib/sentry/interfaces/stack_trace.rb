@@ -19,10 +19,10 @@ module Sentry
     # Not actually an interface, but I want to use the same style
     class Frame < Interface
       attr_accessor :abs_path, :context_line, :function, :in_app,
-                    :lineno, :module, :pre_context, :post_context, :vars, :configuration
+                    :lineno, :module, :pre_context, :post_context, :vars
 
-      def initialize(*arguments)
-        super(*arguments)
+      def initialize(project_root)
+        @project_root = project_root
       end
 
       def filename
@@ -31,9 +31,9 @@ module Sentry
 
         prefix =
           if under_project_root? && in_app
-            project_root
+            @project_root
           elsif under_project_root?
-            longest_load_path || project_root
+            longest_load_path || @project_root
           else
             longest_load_path
           end
@@ -54,11 +54,7 @@ module Sentry
       private
 
       def under_project_root?
-        project_root && abs_path.start_with?(project_root)
-      end
-
-      def project_root
-        @project_root ||= configuration.project_root&.to_s
+        @project_root && abs_path.start_with?(@project_root)
       end
 
       def longest_load_path

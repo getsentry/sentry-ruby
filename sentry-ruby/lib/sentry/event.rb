@@ -181,8 +181,10 @@ module Sentry
     end
 
     def stacktrace_interface_from(backtrace)
+      project_root = configuration.project_root.to_s
+
       Backtrace.parse(backtrace, configuration: configuration).lines.reverse.each_with_object([]) do |line, memo|
-        frame = StacktraceInterface::Frame.new(configuration: configuration)
+        frame = StacktraceInterface::Frame.new(project_root)
         frame.abs_path = line.file if line.file
         frame.function = line.method if line.method
         frame.lineno = line.number
