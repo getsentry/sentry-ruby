@@ -8,7 +8,7 @@ module Sentry
       super
       @adapter = @transport_configuration.http_adapter || Faraday.default_adapter
       @conn = set_conn
-      @endpoint = @dsn.store_endpoint
+      @endpoint = @dsn.envelope_endpoint
     end
 
     def send_data(data, options = {})

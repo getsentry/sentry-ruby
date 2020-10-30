@@ -61,6 +61,18 @@ module Sentry
       'Sentry ' + fields.map { |key, value| "#{key}=#{value}" }.join(', ')
     end
 
+    def encode(event_hash)
+      event_id = event_hash[:event_id] || event_hash['event_id']
+
+      envelope = <<~ENVELOPE
+        {"event_id":"#{event_id}","dsn":"#{configuration.dsn.to_s}","sdk":#{Sentry.sdk_meta.to_json},"sent_at":"#{DateTime.now.rfc3339}"}
+        {"type":"event","content_type":"application/json"}
+        #{event_hash.to_json}
+      ENVELOPE
+
+      [CONTENT_TYPE, envelope]
+    end
+
     private
 
     def prepare_encoded_event(event)
@@ -75,17 +87,6 @@ module Sentry
       event_id = event_hash[:event_id] || event_hash['event_id']
       configuration.logger.info(LOGGER_PROGNAME) { "Sending event #{event_id} to Sentry" }
       encode(event_hash)
-    end
-
-    def encode(event)
-      encoded = JSON.fast_generate(event.to_hash)
-
-      case @transport_configuration.encoding
-      when 'gzip'
-        ['application/octet-stream', Base64.strict_encode64(Zlib::Deflate.deflate(encoded))]
-      else
-        ['application/json', encoded]
-      end
     end
 
     def failed_for_exception(e, event)
@@ -107,4 +108,3 @@ end
 
 require "sentry/transport/dummy_transport"
 require "sentry/transport/http_transport"
-require "sentry/transport/http_envelope_transport"
