@@ -90,7 +90,7 @@ module Sentry
     end
 
     def rack_env=(env)
-      unless self[:http] || env.empty?
+      unless interface(:http) || env.empty?
         interface :http do |int|
           int.from_rack(env)
         end
@@ -107,14 +107,6 @@ module Sentry
 
       @interfaces[int.sentry_alias] = int.new(value, &block) if value || block
       @interfaces[int.sentry_alias]
-    end
-
-    def [](key)
-      interface(key)
-    end
-
-    def []=(key, value)
-      interface(key, value)
     end
 
     def to_hash
