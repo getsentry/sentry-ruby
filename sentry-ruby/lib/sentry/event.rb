@@ -16,12 +16,11 @@ module Sentry
     REQUIRED_OPTION_KEYS = [:configuration].freeze
 
     ATTRIBUTES = %i(
-      event_id logger level time_spent timestamp
-      checksum release environment server_name modules
+      event_id level timestamp
+      release environment server_name modules
       message user tags contexts extra
       fingerprint breadcrumbs backtrace transaction
       platform sdk
-      rack_env
     )
 
     attr_accessor(*ATTRIBUTES)
@@ -46,8 +45,6 @@ module Sentry
       @extra         = options.extra
       @contexts      = options.contexts
       @tags          = configuration.tags.merge(options.tags)
-
-      @checksum = options.checksum
 
       @fingerprint = options.fingerprint
 

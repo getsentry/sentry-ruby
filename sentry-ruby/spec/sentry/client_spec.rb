@@ -84,7 +84,6 @@ RSpec.describe Sentry::Client do
   shared_examples "options" do
     let(:options) do
       {
-        checksum: 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa',
         release: '1.0',
         fingerprint: ['{{ default }}', 'foo'],
         backtrace: ["/path/to/some/file:22:in `function_name'", "/some/other/path:1412:in `other_function'"]
@@ -96,7 +95,6 @@ RSpec.describe Sentry::Client do
     end
 
     it 'takes and sets all available options' do
-      expect(event.checksum).to eq('aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa')
       expect(event.release).to eq('1.0')
       expect(event.fingerprint).to eq(['{{ default }}', 'foo'])
     end
