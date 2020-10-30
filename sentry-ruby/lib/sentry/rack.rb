@@ -7,10 +7,8 @@ module Sentry
   module Rack
     class << self
       def capture_exception(exception, env, **options)
-        Sentry.capture_exception(exception, **options) do |evt|
-          evt.interface :http do |int|
-            int.from_rack(env)
-          end
+        Sentry.capture_exception(exception, **options) do |event|
+          event.rack_env = env
         end
       end
     end
