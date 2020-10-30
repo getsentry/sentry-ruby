@@ -1,7 +1,11 @@
 require 'spec_helper'
 
 RSpec.describe Sentry::Event do
-  let(:configuration) { Sentry::Configuration.new }
+  let(:configuration) do
+    Sentry::Configuration.new.tap do |config|
+      config.dsn = DUMMY_DSN
+    end
+  end
 
   describe "#initialize" do
     it "initializes a Event when all required keys are provided" do

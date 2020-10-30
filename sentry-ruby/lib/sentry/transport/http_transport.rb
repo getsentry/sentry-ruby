@@ -2,12 +2,13 @@ require 'faraday'
 
 module Sentry
   class HTTPTransport < Transport
-    attr_accessor :conn, :adapter
+    attr_reader :conn, :adapter
 
     def initialize(*args)
       super
-      self.adapter = @transport_configuration.http_adapter || Faraday.default_adapter
-      self.conn = set_conn
+      @adapter = @transport_configuration.http_adapter || Faraday.default_adapter
+      @conn = set_conn
+      @endpoint = @dsn.store_endpoint
     end
 
     def send_data(data, options = {})
@@ -15,10 +16,7 @@ module Sentry
         logger.debug(LOGGER_PROGNAME) { "Event not sent: #{configuration.error_messages}" }
       end
 
-      project_id = @dsn.project_id
-      path = @dsn.path + "/"
-
-      conn.post "#{path}api/#{project_id}/store/" do |req|
+      conn.post @endpoint do |req|
         req.headers['Content-Type'] = options[:content_type]
         req.headers['X-Sentry-Auth'] = generate_auth_header
         req.body = data

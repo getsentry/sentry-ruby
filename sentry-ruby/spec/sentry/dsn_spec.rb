@@ -1,11 +1,13 @@
 require "spec_helper"
 
 RSpec.describe Sentry::DSN do
-  it "initializes with correct attributes set" do
-    subject = described_class.new(
+  subject do
+    described_class.new(
       "http://12345:67890@sentry.localdomain:3000/sentry/42"
     )
+  end
 
+  it "initializes with correct attributes set" do
     expect(subject.project_id).to eq("42")
     expect(subject.public_key).to eq("12345")
     expect(subject.secret_key).to eq("67890")
@@ -16,5 +18,17 @@ RSpec.describe Sentry::DSN do
     expect(subject.path).to       eq("/sentry")
 
     expect(subject.to_s).to     eq("http://12345:67890@sentry.localdomain:3000/sentry/42")
+  end
+
+  describe "#store_endpoint" do
+    it "assembles correct store endpoint" do
+      expect(subject.store_endpoint).to eq("/sentry/api/42/store/")
+    end
+  end
+
+  describe "#envelope_endpoint" do
+    it "assembles correct envelope endpoint" do
+      expect(subject.envelope_endpoint).to eq("/sentry/api/42/envelope/")
+    end
   end
 end
