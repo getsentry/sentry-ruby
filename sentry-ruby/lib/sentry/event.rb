@@ -17,7 +17,7 @@ module Sentry
 
     ATTRIBUTES = %i(
       event_id logger level timestamp
-      checksum release environment server_name modules
+      release environment server_name modules
       message user tags contexts extra
       fingerprint breadcrumbs backtrace transaction
       platform sdk
@@ -46,8 +46,6 @@ module Sentry
       @extra         = options.extra
       @contexts      = options.contexts
       @tags          = configuration.tags.merge(options.tags)
-
-      @checksum = options.checksum
 
       @fingerprint = options.fingerprint
 

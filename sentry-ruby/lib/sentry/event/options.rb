@@ -3,13 +3,13 @@ module Sentry
     class Options
       attr_reader :message,
         :user, :extra, :tags, :contexts,
-        :backtrace, :level, :checksum, :fingerprint,
+        :backtrace, :level, :fingerprint,
         :server_name, :release, :environment
 
       def initialize(
         message: "",
         user: {}, extra: {}, tags: {}, contexts: {},
-        backtrace: [], level: :error, checksum: "", fingerprint: [],
+        backtrace: [], level: :error, fingerprint: [],
         # nilable attributes because we'll fallback to the configuration's values
         server_name: nil, release: nil, environment: nil
       )
@@ -21,7 +21,6 @@ module Sentry
         @backtrace = backtrace || []
         @fingerprint = fingerprint || []
         @level = level || :error
-        @checksum = checksum || ""
         @server_name = server_name
         @environment = environment
         @release = release
