@@ -21,7 +21,6 @@ module Sentry
       message user tags contexts extra
       fingerprint breadcrumbs backtrace transaction
       platform sdk
-      rack_env
     )
 
     attr_accessor(*ATTRIBUTES)
