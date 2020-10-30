@@ -4,60 +4,120 @@ RSpec.describe Sentry::Hub do
   let(:configuration) do
     config = Sentry::Configuration.new
     config.dsn = DUMMY_DSN
+    config.transport.transport_class = Sentry::DummyTransport
     config
   end
   let(:client) { Sentry::Client.new(configuration) }
+  let(:transport) { client.transport }
   let(:scope) { Sentry::Scope.new }
 
   subject { described_class.new(client, scope) }
 
-  before do
-    allow(client).to receive(:send_event)
-  end
+  shared_examples "capture_helper" do
+    context "with custom attributes" do
+      it "updates the event with custom attributes" do
+        subject.send(capture_helper, capture_subject, tags: { foo: "bar" })
 
+        event = transport.events.last
+        expect(event.tags).to eq({ foo: "bar" })
+      end
+
+      it "merges the contexts/tags/extrac with what the scope already has" do
+        scope.set_tags(old_tag: true)
+        scope.set_contexts(old_context: true)
+        scope.set_extras(old_extra: true)
+
+        subject.send(
+          capture_helper,
+          capture_subject,
+          tags: { new_tag: true },
+          contexts: { new_context: true },
+          extra: { new_extra: true }
+        )
+
+        event = transport.events.last
+        expect(event.tags).to eq({ new_tag: true, old_tag: true })
+        expect(event.contexts).to include({ new_context: true, old_context: true })
+        expect(event.extra).to eq({ new_extra: true, old_extra: true })
+
+        expect(scope.tags).to eq(old_tag: true)
+        expect(scope.contexts).to eq(old_context: true)
+        expect(scope.extra).to eq(old_extra: true)
+      end
+    end
+
+    context "with custom scope" do
+      let(:new_scope) do
+        scope = Sentry::Scope.new
+        scope.set_tags({ custom_scope: true })
+        scope
+      end
+
+      it "accepts a custom scope" do
+        subject.send(capture_helper, capture_subject, scope: new_scope)
+
+        event = transport.events.last
+        expect(event.tags).to eq({ custom_scope: true })
+      end
+    end
+
+    context "with a block" do
+      before do
+        scope.set_tags({ original_scope: true })
+      end
+
+      it 'yields the scope to a passed block' do
+        subject.send(capture_helper, capture_subject) do |scope|
+          scope.set_tags({ temporary_scope: true })
+        end
+
+        event = transport.events.last
+        expect(event.tags).to eq({ original_scope: true, temporary_scope: true })
+      end
+    end
+
+  end
   describe '#capture_message' do
     let(:message) { "Test message" }
-    let(:options) { { tags: { foo: "bar" }, server_name: "foo.local" } }
 
     it "returns an Event instance" do
-      expect(subject.capture_message(message, options)).to be_a(Sentry::Event)
+      expect(subject.capture_message(message)).to be_a(Sentry::Event)
     end
 
     it 'initializes an Event, and sends it via the Client' do
-      expect(client).to receive(:send_event)
-
-      subject.capture_message(message, options)
+      expect do
+        subject.capture_message(message)
+      end.to change { transport.events.count }.by(1)
     end
 
-    it 'yields the event to a passed block' do
-      expect(client).to receive(:send_event)
-
-      event = nil
-      subject.capture_message(message, **options) { |e| event = e }
-
-      expect(event.tags).to eq({ foo: "bar" })
-      expect(event.server_name).to eq("foo.local")
+    it_behaves_like "capture_helper" do
+      let(:capture_helper) { :capture_message }
+      let(:capture_subject) { message }
     end
   end
 
   describe '#capture_exception' do
     let(:exception) { ZeroDivisionError.new("divided by 0") }
-    let(:options) { { tags: { foo: "bar" }, server_name: "foo.local" } }
 
     it "returns an Event instance" do
-      expect(subject.capture_exception(exception, options)).to be_a(Sentry::Event)
+      expect(subject.capture_exception(exception)).to be_a(Sentry::Event)
     end
 
     it 'initializes an Event, and sends it via the Client' do
-      expect(client).to receive(:send_event)
+      expect do
+        subject.capture_exception(exception)
+      end.to change { transport.events.count }.by(1)
+    end
 
-      subject.capture_exception(exception, options)
+    it_behaves_like "capture_helper" do
+      let(:capture_helper) { :capture_exception }
+      let(:capture_subject) { exception }
     end
   end
 
   describe '#capture_event' do
     let(:exception) { ZeroDivisionError.new("divided by 0") }
-    let(:event) do
+    let!(:event) do
       subject.capture_exception(exception)
     end
 
@@ -65,10 +125,15 @@ RSpec.describe Sentry::Hub do
       expect(subject.capture_event(event)).to be_a(Sentry::Event)
     end
 
-    it 'sends the Event via the Client' do
-      expect(client).to receive(:send_event)
+    it 'sends the event via client' do
+      expect do
+        subject.capture_event(event)
+      end.to change { transport.events.count }.by(1)
+    end
 
-      subject.capture_event(event)
+    it_behaves_like "capture_helper" do
+      let(:capture_helper) { :capture_event }
+      let(:capture_subject) { event }
     end
   end
 
