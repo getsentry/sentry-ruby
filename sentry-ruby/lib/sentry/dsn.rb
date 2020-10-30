@@ -38,10 +38,6 @@ module Sentry
       server
     end
 
-    def store_endpoint
-      "#{path}/api/#{project_id}/store/"
-    end
-
     def envelope_endpoint
       "#{path}/api/#{project_id}/envelope/"
     end

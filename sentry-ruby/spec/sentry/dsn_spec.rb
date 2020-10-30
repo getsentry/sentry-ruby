@@ -20,12 +20,6 @@ RSpec.describe Sentry::DSN do
     expect(subject.to_s).to     eq("http://12345:67890@sentry.localdomain:3000/sentry/42")
   end
 
-  describe "#store_endpoint" do
-    it "assembles correct store endpoint" do
-      expect(subject.store_endpoint).to eq("/sentry/api/42/store/")
-    end
-  end
-
   describe "#envelope_endpoint" do
     it "assembles correct envelope endpoint" do
       expect(subject.envelope_endpoint).to eq("/sentry/api/42/envelope/")
