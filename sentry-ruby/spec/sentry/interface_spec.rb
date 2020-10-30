@@ -25,14 +25,3 @@ RSpec.describe Sentry::Interface do
     expect(interface.to_hash).to eq(:some_attr => "test")
   end
 end
-
-RSpec.describe Sentry::MessageInterface do
-  it "supports invalid format string message when params is not defined" do
-    interface = Sentry::MessageInterface.new(:params => nil, :message => "test '%'")
-    expect(interface.unformatted_message).to eq("test '%'")
-  end
-  it "supports invalid format string message when params is empty" do
-    interface = Sentry::MessageInterface.new(:message => "test '%'")
-    expect(interface.unformatted_message).to eq("test '%'")
-  end
-end

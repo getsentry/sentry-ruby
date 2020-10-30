@@ -98,7 +98,7 @@ RSpec.describe Sentry::Sidekiq do
     expect { process_job(processor, "SadWorker") }.to change { transport.events.size }.by(1)
 
     event = transport.events.last.to_json_compatible
-    expect(event["logentry"]["message"]).to eq("I'm sad!")
+    expect(event["message"]).to eq("I'm sad!")
   end
 
   it "clears context from other workers and captures its own" do
@@ -128,7 +128,7 @@ RSpec.describe Sentry::Sidekiq do
 
     event = transport.events.last.to_json_compatible
 
-    expect(event["logentry"]["message"]).to eq "Uhoh!"
+    expect(event["message"]).to eq "Uhoh!"
     expect(event["transaction"]).to eq "Sidekiq/startup"
   end
 
@@ -137,7 +137,7 @@ RSpec.describe Sentry::Sidekiq do
 
     event = transport.events.last.to_json_compatible
 
-    expect(event["logentry"]["message"]).to eq "I have something to say!"
+    expect(event["message"]).to eq "I have something to say!"
     expect(event["extra"]["sidekiq"]).to eq("class" => "ReportingWorker", "queue" => "default")
   end
 end

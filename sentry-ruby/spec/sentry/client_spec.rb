@@ -169,11 +169,6 @@ RSpec.describe Sentry::Client do
         event = subject.event_from_exception(ExceptionWithContext.new, message: "MSG")
         expect(event.message).to eq("MSG")
       end
-
-      it "slices long string message" do
-        event = subject.event_from_exception(ExceptionWithContext.new, message: "MSG" * 3000)
-        expect(event.message.length).to eq(8192)
-      end
     end
 
     context 'for a nested exception type' do
