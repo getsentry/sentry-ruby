@@ -88,16 +88,6 @@ module Sentry
       end
     end
 
-    def message
-      @interfaces[:logentry]&.unformatted_message.to_s
-    end
-
-    def message=(message)
-      interface(:message) do |int|
-        int.message = message.byteslice(0...MAX_MESSAGE_SIZE_IN_BYTES) # Messages limited to 10kb
-      end
-    end
-
     def timestamp=(time)
       @timestamp = time.is_a?(Time) ? time.strftime('%Y-%m-%dT%H:%M:%S') : time
     end
