@@ -16,7 +16,6 @@ module Sentry
           # there could be some breadcrumbs already stored in the top-level scope
           # and for request information, we don't need those breadcrumbs
           scope.clear_breadcrumbs
-          env['sentry.requested_at'] = Time.now
           env['sentry.client'] = Sentry.get_current_client
 
           scope.set_transaction_name(env["PATH_INFO"]) if env["PATH_INFO"]
