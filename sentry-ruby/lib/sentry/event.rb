@@ -16,7 +16,7 @@ module Sentry
     REQUIRED_OPTION_KEYS = [:configuration].freeze
 
     ATTRIBUTES = %i(
-      event_id logger level timestamp
+      event_id level timestamp
       release environment server_name modules
       message user tags contexts extra
       fingerprint breadcrumbs backtrace transaction
