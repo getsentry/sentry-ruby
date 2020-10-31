@@ -12,6 +12,24 @@ RSpec.describe Sentry::RequestInterface do
     end
   end
 
+  it "removes ip address headers" do
+    ip = "1.1.1.1"
+
+    env.merge!(
+      "REMOTE_ADDR" => ip,
+      "HTTP_CLIENT_IP" => ip,
+      "HTTP_X_REAL_IP" => ip,
+      "HTTP_X_FORWARDED_FOR" => ip
+    )
+
+    interface.from_rack(env)
+
+    expect(interface.env).to_not include("REMOTE_ADDR")
+    expect(interface.headers.keys).not_to include("Client-Ip")
+    expect(interface.headers.keys).not_to include("X-Real-Ip")
+    expect(interface.headers.keys).not_to include("X-Forwarded-For")
+  end
+
   it 'excludes non whitelisted params from rack env' do
     additional_env = { "random_param" => "text", "query_string" => "test" }
     new_env = env.merge(additional_env)
@@ -148,6 +166,24 @@ RSpec.describe Sentry::RequestInterface do
       interface.from_rack(new_env)
 
       expect(interface.data).to eq("catch me")
+    end
+
+    it "doesn't remove ip address headers" do
+      ip = "1.1.1.1"
+
+      env.merge!(
+        "REMOTE_ADDR" => ip,
+        "HTTP_CLIENT_IP" => ip,
+        "HTTP_X_REAL_IP" => ip,
+        "HTTP_X_FORWARDED_FOR" => ip
+      )
+
+      interface.from_rack(env)
+
+      expect(interface.env).to include("REMOTE_ADDR")
+      expect(interface.headers.keys).to include("Client-Ip")
+      expect(interface.headers.keys).to include("X-Real-Ip")
+      expect(interface.headers.keys).to include("X-Forwarded-For")
     end
   end
 end

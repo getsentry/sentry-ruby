@@ -126,8 +126,8 @@ RSpec.describe Sentry::Event do
         Sentry.get_current_scope.apply_to_event(event)
 
         expect(event.to_hash[:request]).to eq(
-          env: { 'SERVER_NAME' => 'localhost', 'SERVER_PORT' => '80', "REMOTE_ADDR" => "192.168.1.1" },
-          headers: { 'Host' => 'localhost', "X-Forwarded-For" => "1.1.1.1, 2.2.2.2" },
+          env: { 'SERVER_NAME' => 'localhost', 'SERVER_PORT' => '80' },
+          headers: { 'Host' => 'localhost' },
           method: 'POST',
           query_string: 'biz=baz',
           url: 'http://localhost/lol',
