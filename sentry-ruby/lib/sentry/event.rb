@@ -49,9 +49,6 @@ module Sentry
 
       self.level = options.level
 
-      # Allow attributes to be set on the event at initialization
-      yield self if block_given?
-
       if !options.backtrace.empty?
         @stacktrace = Sentry::StacktraceInterface.new do |int|
           int.frames = stacktrace_interface_from(options.backtrace)
