@@ -94,11 +94,11 @@ RSpec.describe Sentry::Sidekiq do
     expect(Sidekiq.server_middleware.entries.first.klass).to eq(described_class::CleanupMiddleware)
   end
 
-  it "captures the exception" do
+  it "captures the exception with the CleanupMiddleware" do
     expect { process_job(processor, "SadWorker") }.to change { transport.events.size }.by(1)
 
-    event = transport.events.last.to_json_compatible
-    expect(event["message"]).to eq("I'm sad!")
+    event = transport.events.last
+    expect(Sentry::Event.get_message_from_exception(event.to_hash)).to eq("RuntimeError: I'm sad!")
   end
 
   it "clears context from other workers and captures its own" do
@@ -122,14 +122,13 @@ RSpec.describe Sentry::Sidekiq do
     expect(event["breadcrumbs"]["values"][0]["message"]).to eq("I'm very sad!")
   end
 
-  it "captures exceptions raised during events" do
+  it "captures exceptions raised during events with the ErrorHandler" do
     Sidekiq.options[:lifecycle_events][:startup] = [proc { raise "Uhoh!" }]
     processor.fire_event(:startup)
 
-    event = transport.events.last.to_json_compatible
-
-    expect(event["message"]).to eq "Uhoh!"
-    expect(event["transaction"]).to eq "Sidekiq/startup"
+    event = transport.events.last.to_hash
+    expect(Sentry::Event.get_message_from_exception(event)).to eq("RuntimeError: Uhoh!")
+    expect(event[:transaction]).to eq "Sidekiq/startup"
   end
 
   it "has some context when capturing, even if no exception raised" do
