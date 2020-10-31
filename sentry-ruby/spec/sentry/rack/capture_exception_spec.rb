@@ -20,9 +20,11 @@ RSpec.describe Sentry::Rack::CaptureException do
   it 'captures the exception from direct raise' do
     app = ->(_e) { raise exception }
     stack = described_class.new(app)
-    expect(Sentry::Rack).to receive(:capture_exception).with(exception, env).and_call_original
 
     expect { stack.call(env) }.to raise_error(ZeroDivisionError)
+
+    event = transport.events.last
+    expect(event.to_hash.dig(:request, :url)).to eq("http://example.org/test")
   end
 
   it 'captures the exception from rack.exception' do
@@ -31,9 +33,13 @@ RSpec.describe Sentry::Rack::CaptureException do
       [200, {}, ['okay']]
     end
     stack = described_class.new(app)
-    expect(Sentry::Rack).to receive(:capture_exception).with(exception, env).and_call_original
 
-    stack.call(env)
+    expect do
+      stack.call(env)
+    end.to change { transport.events.count }.by(1)
+
+    event = transport.events.last
+    expect(event.to_hash.dig(:request, :url)).to eq("http://example.org/test")
   end
 
   it 'captures the exception from sinatra.error' do
@@ -42,9 +48,15 @@ RSpec.describe Sentry::Rack::CaptureException do
       [200, {}, ['okay']]
     end
     stack = described_class.new(app)
-    expect(Sentry::Rack).to receive(:capture_exception).with(exception, env).and_call_original
 
     stack.call(env)
+
+    expect do
+      stack.call(env)
+    end.to change { transport.events.count }.by(1)
+
+    event = transport.events.last
+    expect(event.to_hash.dig(:request, :url)).to eq("http://example.org/test")
   end
 
   it 'sets the transaction and rack env' do

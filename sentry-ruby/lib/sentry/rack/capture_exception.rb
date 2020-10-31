@@ -26,12 +26,12 @@ module Sentry
           rescue Sentry::Error
             raise # Don't capture Sentry errors
           rescue Exception => e
-            Sentry::Rack::capture_exception(e, env)
+            Sentry.capture_exception(e)
             raise
           end
 
-          error = collect_exception(env)
-          Sentry::Rack.capture_exception(error, env) if error
+          exception = collect_exception(env)
+          Sentry.capture_exception(exception) if exception
 
           response
         end
