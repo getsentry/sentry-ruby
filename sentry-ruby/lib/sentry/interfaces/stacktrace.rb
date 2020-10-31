@@ -2,10 +2,6 @@ module Sentry
   class StacktraceInterface < Interface
     attr_accessor :frames
 
-    def initialize(*arguments)
-      super(*arguments)
-    end
-
     def to_hash
       data = super
       data[:frames] = data[:frames].map(&:to_hash)

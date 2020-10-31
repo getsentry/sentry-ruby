@@ -50,7 +50,7 @@ module Sentry
       self.level = options.level
 
       if !options.backtrace.empty?
-        @stacktrace = Sentry::StacktraceInterface.new do |int|
+        @stacktrace = Sentry::StacktraceInterface.new.tap do |int|
           int.frames = stacktrace_interface_from(options.backtrace)
         end
       end
@@ -85,7 +85,7 @@ module Sentry
 
     def rack_env=(env)
       unless @request || env.empty?
-        @request = Sentry::RequestInterface.new do |int|
+        @request = Sentry::RequestInterface.new.tap do |int|
           int.from_rack(env)
         end
 
@@ -113,11 +113,11 @@ module Sentry
     end
 
     def add_exception_interface(exc)
-      @exception = Sentry::ExceptionInterface.new do |exc_int|
+      @exception = Sentry::ExceptionInterface.new.tap do |exc_int|
         exceptions = Sentry::Utils::ExceptionCauseChain.exception_to_array(exc).reverse
         backtraces = Set.new
         exc_int.values = exceptions.map do |e|
-          SingleExceptionInterface.new do |int|
+          SingleExceptionInterface.new.tap do |int|
             int.type = e.class.to_s
             int.value = e.to_s
             int.module = e.class.to_s.split('::')[0...-1].join('::')
@@ -125,7 +125,7 @@ module Sentry
             int.stacktrace =
               if e.backtrace && !backtraces.include?(e.backtrace.object_id)
                 backtraces << e.backtrace.object_id
-                StacktraceInterface.new do |stacktrace|
+                StacktraceInterface.new.tap do |stacktrace|
                   stacktrace.frames = stacktrace_interface_from(e.backtrace)
                 end
               end
