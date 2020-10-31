@@ -83,7 +83,7 @@ module Sentry
     end
   end
 
-  class HttpInterface
+  class RequestInterface
     include RackInterface
   end
 end

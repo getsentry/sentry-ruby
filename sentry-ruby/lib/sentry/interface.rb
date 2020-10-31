@@ -1,13 +1,5 @@
 module Sentry
   class Interface
-    def initialize(attributes = nil)
-      attributes&.each do |attr, value|
-        public_send "#{attr}=", value
-      end
-
-      yield self if block_given?
-    end
-
     def self.inherited(klass)
       name = klass.name.split("::").last.downcase.gsub("interface", "")
       registered[name.to_sym] = klass
@@ -25,6 +17,6 @@ module Sentry
 end
 
 require "sentry/interfaces/exception"
-require "sentry/interfaces/http"
+require "sentry/interfaces/request"
 require "sentry/interfaces/single_exception"
-require "sentry/interfaces/stack_trace"
+require "sentry/interfaces/stacktrace"
