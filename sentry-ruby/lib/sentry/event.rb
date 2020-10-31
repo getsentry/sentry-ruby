@@ -85,7 +85,7 @@ module Sentry
 
     def rack_env=(env)
       unless @request || env.empty?
-        @request = Sentry::HttpInterface.new do |int|
+        @request = Sentry::RequestInterface.new do |int|
           int.from_rack(env)
         end
 

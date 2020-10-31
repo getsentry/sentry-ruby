@@ -6,10 +6,6 @@ module Sentry
       super(*arguments)
     end
 
-    def self.sentry_alias
-      :stacktrace
-    end
-
     def to_hash(*args)
       data = super(*args)
       data[:frames] = data[:frames].map(&:to_hash)

@@ -25,6 +25,6 @@ module Sentry
 end
 
 require "sentry/interfaces/exception"
-require "sentry/interfaces/http"
+require "sentry/interfaces/request"
 require "sentry/interfaces/single_exception"
-require "sentry/interfaces/stack_trace"
+require "sentry/interfaces/stacktrace"

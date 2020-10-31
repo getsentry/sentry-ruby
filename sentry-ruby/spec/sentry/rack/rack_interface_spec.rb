@@ -4,7 +4,7 @@ RSpec.describe Sentry::RackInterface do
   let(:exception) { ZeroDivisionError.new("divided by 0") }
   let(:additional_headers) { {} }
   let(:env) { Rack::MockRequest.env_for("/test", additional_headers) }
-  let(:interface) { Sentry::HttpInterface.new }
+  let(:interface) { Sentry::RequestInterface.new }
 
   before do
     Sentry.init do |config|
