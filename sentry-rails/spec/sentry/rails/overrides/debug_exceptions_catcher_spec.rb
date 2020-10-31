@@ -20,47 +20,41 @@ RSpec.shared_examples "exception catching middleware" do
     end
   end
 
+  before do
+    Sentry.init do |config|
+      config.logger = ::Logger.new(nil)
+      config.dsn = DUMMY_DSN
+      config.transport.transport_class = Sentry::DummyTransport
+    end
+  end
+
+  after do
+    expect(Sentry.get_current_scope.rack_env).to eq({})
+  end
+
+  let(:transport) do
+    Sentry.get_current_client.transport
+  end
+
   let(:app) do
     lambda { |_| raise "app error" } # rubocop:disable Style/Lambda
   end
 
   let(:env) { {} }
 
-  it "shows the exception" do
-    expect(middleware.new(app).call(env)).to eq([500, "app error", {}])
-  end
-
-  it "captures the exception" do
-    expect(Sentry::Rack).to receive(:capture_exception)
-    middleware.new(app).call(env)
-  end
-
-  context "when an error is raised" do
-    it "shows the original exception" do
-      allow(Sentry::Rack).to receive(:capture_exception).and_raise("raven error")
+  it "shows and captures the exception" do
+    expect do
       expect(middleware.new(app).call(env)).to eq([500, "app error", {}])
-    end
+    end.to change { transport.events.count }.by(1)
   end
 end
 
 RSpec.describe "Sentry::Rails::Overrides::DebugExceptionsCatcher" do
-  if Class.respond_to?(:alias_method_chain)
-    context "using include" do
-      before do
-        middleware.send(:include, Sentry::Rails::Overrides::OldDebugExceptionsCatcher)
-      end
-
-      include_examples "exception catching middleware"
+  context "using prepend" do
+    before do
+      middleware.send(:prepend, Sentry::Rails::Overrides::DebugExceptionsCatcher)
     end
-  end
 
-  if Class.respond_to?(:prepend)
-    context "using prepend" do
-      before do
-        middleware.send(:prepend, Sentry::Rails::Overrides::DebugExceptionsCatcher)
-      end
-
-      include_examples "exception catching middleware"
-    end
+    include_examples "exception catching middleware"
   end
 end
