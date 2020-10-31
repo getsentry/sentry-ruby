@@ -10,11 +10,6 @@ require 'sentry/utils/real_ip'
 
 module Sentry
   class Event
-    # See Sentry server default limits at
-    # https://github.com/getsentry/sentry/blob/master/src/sentry/conf/server.py
-    MAX_MESSAGE_SIZE_IN_BYTES = 1024 * 8
-    REQUIRED_OPTION_KEYS = [:configuration].freeze
-
     ATTRIBUTES = %i(
       event_id level timestamp
       release environment server_name modules
@@ -48,25 +43,23 @@ module Sentry
 
       @fingerprint = options.fingerprint
 
-      @server_name = options.server_name
-      @environment = options.environment
-      @release = options.release
+      @server_name = options.server_name || configuration.server_name
+      @environment = options.environment || configuration.current_environment
+      @release = options.release || configuration.release
+      @modules = list_gem_specs if configuration.send_modules
 
-      # these 2 needs custom setter methods
-      self.level         = options.level
-      self.message       = options.message if options.message
+      @message = options.message if options.message
+
+      self.level = options.level
 
       # Allow attributes to be set on the event at initialization
       yield self if block_given?
-      # options.each_pair { |key, val| public_send("#{key}=", val) unless val.nil? }
 
       if !options.backtrace.empty?
         interface(:stacktrace) do |int|
           int.frames = stacktrace_interface_from(options.backtrace)
         end
       end
-
-      set_core_attributes_from_configuration
     end
 
     class << self
@@ -90,10 +83,6 @@ module Sentry
 
     def timestamp=(time)
       @timestamp = time.is_a?(Time) ? time.strftime('%Y-%m-%dT%H:%M:%S') : time
-    end
-
-    def time_spent=(time)
-      @time_spent = time.is_a?(Float) ? (time * 1000).to_i : time
     end
 
     def level=(new_level) # needed to meet the Sentry spec
@@ -188,13 +177,6 @@ module Sentry
     end
 
     private
-
-    def set_core_attributes_from_configuration
-      @server_name ||= configuration.server_name
-      @release     ||= configuration.release
-      @modules       = list_gem_specs if configuration.send_modules
-      @environment ||= configuration.current_environment
-    end
 
     # When behind a proxy (or if the user is using a proxy), we can't use
     # REMOTE_ADDR to determine the Event IP, and must use other headers instead.
