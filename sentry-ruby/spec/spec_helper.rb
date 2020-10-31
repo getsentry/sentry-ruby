@@ -1,7 +1,5 @@
 require "bundler/setup"
 require "pry"
-require "sentry"
-
 require 'simplecov'
 SimpleCov.start
 
@@ -9,6 +7,8 @@ if ENV["CI"]
   require 'codecov'
   SimpleCov.formatter = SimpleCov::Formatter::Codecov
 end
+
+require "sentry"
 
 DUMMY_DSN = 'http://12345:67890@sentry.localdomain/sentry/42'
 

@@ -2,7 +2,6 @@ require "bundler/setup"
 require "pry"
 require "support/test_rails_app/app"
 require "rspec/rails"
-require "sentry/rails"
 
 require 'simplecov'
 SimpleCov.start
@@ -11,6 +10,8 @@ if ENV["CI"]
   require 'codecov'
   SimpleCov.formatter = SimpleCov::Formatter::Codecov
 end
+
+require "sentry/rails"
 
 DUMMY_DSN = 'http://12345:67890@sentry.localdomain/sentry/42'
 

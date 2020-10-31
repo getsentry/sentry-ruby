@@ -4,7 +4,6 @@ require "pry"
 # this enables sidekiq's server mode
 require "sidekiq/cli"
 # require "support/test_sidekiq_app/app"
-require "sentry/sidekiq"
 
 require 'simplecov'
 SimpleCov.start
@@ -13,6 +12,8 @@ if ENV["CI"]
   require 'codecov'
   SimpleCov.formatter = SimpleCov::Formatter::Codecov
 end
+
+require "sentry/sidekiq"
 
 DUMMY_DSN = 'http://12345:67890@sentry.localdomain/sentry/42'
 
