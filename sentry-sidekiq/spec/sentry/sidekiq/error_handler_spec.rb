@@ -23,7 +23,6 @@ RSpec.describe Sentry::Sidekiq::ErrorHandler do
   it "should capture exceptions based on Sidekiq context" do
     exception = build_exception
     expected_options = {
-      :message => exception.message,
       :extra => { :sidekiq => context }
     }
 
@@ -41,7 +40,6 @@ RSpec.describe Sentry::Sidekiq::ErrorHandler do
     expected_context.delete("_aj_globalid")
     expected_context["globalid"] = "gid://app/model/id"
     expected_options = {
-      :message => exception.message,
       :extra => { :sidekiq => expected_context }
     }
     expect(Sentry).to receive(:capture_exception).with(exception, expected_options)

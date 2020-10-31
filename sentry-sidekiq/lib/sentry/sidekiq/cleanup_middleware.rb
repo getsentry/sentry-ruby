@@ -10,7 +10,7 @@ module Sentry
           begin
             yield
           rescue => ex
-            Sentry.capture_exception(ex, message: ex.message)
+            Sentry.capture_exception(ex)
           end
         end
       end
