@@ -1,6 +1,6 @@
 require 'spec_helper'
 
-RSpec.describe Sentry::RackInterface do
+RSpec.describe Sentry::RequestInterface do
   let(:exception) { ZeroDivisionError.new("divided by 0") }
   let(:additional_headers) { {} }
   let(:env) { Rack::MockRequest.env_for("/test", additional_headers) }
@@ -8,7 +8,7 @@ RSpec.describe Sentry::RackInterface do
 
   before do
     Sentry.init do |config|
-      config.dsn = 'dummy://12345:67890@sentry.localdomain/sentry/42'
+      config.dsn = DUMMY_DSN
     end
   end
 
