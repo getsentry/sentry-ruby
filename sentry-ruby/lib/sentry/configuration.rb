@@ -357,7 +357,7 @@ module Sentry
     end
 
     def valid?
-      if @dsn.valid?
+      if @dsn&.valid?
         true
       else
         @errors << "DSN not set or not valid"

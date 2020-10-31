@@ -57,8 +57,8 @@ module Sentry
 
       options = Event::Options.new(**options)
 
-      Event.new(configuration: configuration, options: options) do |evt|
-        evt.add_exception_interface(exception)
+      Event.new(configuration: configuration, options: options).tap do |event|
+        event.add_exception_interface(exception)
       end
     end
 

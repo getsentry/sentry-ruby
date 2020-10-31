@@ -91,17 +91,15 @@ RSpec.describe Sentry::Client do
     end
 
     let(:event) do
-      subject.event_from_exception(Exception.new, **options)
+      subject.event_from_exception(Exception.new, **options).to_hash
     end
 
     it 'takes and sets all available options' do
-      expect(event.release).to eq('1.0')
-      expect(event.fingerprint).to eq(['{{ default }}', 'foo'])
+      expect(event[:release]).to eq('1.0')
+      expect(event[:fingerprint]).to eq(['{{ default }}', 'foo'])
     end
 
     it "contains given backtrace" do
-      expect(event[:stacktrace]).to be_a(Sentry::StacktraceInterface)
-
       frames = event[:stacktrace].to_hash[:frames]
       expect(frames.length).to eq(2)
       expect(frames[0][:lineno]).to eq(1412)

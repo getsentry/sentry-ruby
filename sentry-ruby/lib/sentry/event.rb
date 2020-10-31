@@ -33,9 +33,6 @@ module Sentry
       @platform      = :ruby
       @sdk           = Sentry.sdk_meta
 
-      # Set some attributes with empty hashes to allow merging
-      @interfaces        = {}
-
       @user          = options.user
       @extra         = options.extra
       @contexts      = options.contexts
@@ -52,11 +49,8 @@ module Sentry
 
       self.level = options.level
 
-      # Allow attributes to be set on the event at initialization
-      yield self if block_given?
-
       if !options.backtrace.empty?
-        interface(:stacktrace) do |int|
+        @stacktrace = Sentry::StacktraceInterface.new do |int|
           int.frames = stacktrace_interface_from(options.backtrace)
         end
       end
@@ -90,8 +84,8 @@ module Sentry
     end
 
     def rack_env=(env)
-      unless self[:http] || env.empty?
-        interface :http do |int|
+      unless @request || env.empty?
+        @request = Sentry::HttpInterface.new do |int|
           int.from_rack(env)
         end
 
@@ -101,32 +95,16 @@ module Sentry
       end
     end
 
-    def interface(name, value = nil, &block)
-      int = Interface.registered[name]
-      raise(Error, "Unknown interface: #{name}") unless int
-
-      @interfaces[int.sentry_alias] = int.new(value, &block) if value || block
-      @interfaces[int.sentry_alias]
-    end
-
-    def [](key)
-      interface(key)
-    end
-
-    def []=(key, value)
-      interface(key, value)
-    end
-
     def to_hash
       data = ATTRIBUTES.each_with_object({}) do |att, memo|
         memo[att] = public_send(att) if public_send(att)
       end
 
       data[:breadcrumbs] = breadcrumbs.to_hash if breadcrumbs
+      data[:stacktrace] = @stacktrace.to_hash if @stacktrace
+      data[:request] = @request.to_hash if @request
+      data[:exception] = @exception.to_hash if @exception
 
-      @interfaces.each_pair do |name, int_data|
-        data[name.to_sym] = int_data.to_hash
-      end
       data
     end
 
@@ -135,7 +113,7 @@ module Sentry
     end
 
     def add_exception_interface(exc)
-      interface(:exception) do |exc_int|
+      @exception = Sentry::ExceptionInterface.new do |exc_int|
         exceptions = Sentry::Utils::ExceptionCauseChain.exception_to_array(exc).reverse
         backtraces = Set.new
         exc_int.values = exceptions.map do |e|
