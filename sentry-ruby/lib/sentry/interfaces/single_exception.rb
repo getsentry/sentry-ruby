@@ -5,8 +5,8 @@ module Sentry
     attr_accessor :module
     attr_accessor :stacktrace
 
-    def to_hash(*args)
-      data = super(*args)
+    def to_hash
+      data = super
       data[:stacktrace] = data[:stacktrace].to_hash if data[:stacktrace]
       data
     end

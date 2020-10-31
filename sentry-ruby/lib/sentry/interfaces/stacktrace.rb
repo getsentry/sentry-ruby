@@ -6,8 +6,8 @@ module Sentry
       super(*arguments)
     end
 
-    def to_hash(*args)
-      data = super(*args)
+    def to_hash
+      data = super
       data[:frames] = data[:frames].map(&:to_hash)
       data
     end
