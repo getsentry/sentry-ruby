@@ -4,7 +4,12 @@ require "support/test_rails_app/app"
 require "rspec/rails"
 
 require 'simplecov'
-SimpleCov.start
+
+SimpleCov.start do
+  project_name "sentry-rails"
+  root File.join(__FILE__, "../../../")
+  coverage_dir File.join(__FILE__, "../../coverage")
+end
 
 if ENV["CI"]
   require 'codecov'

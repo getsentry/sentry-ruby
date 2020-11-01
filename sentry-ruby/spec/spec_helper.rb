@@ -1,7 +1,14 @@
 require "bundler/setup"
 require "pry"
 require 'simplecov'
-SimpleCov.start
+
+SimpleCov.start do
+  project_name "sentry-ruby"
+  root File.join(__FILE__, "../../../")
+  coverage_dir File.join(__FILE__, "../../coverage")
+end
+
+binding.pry
 
 if ENV["CI"]
   require 'codecov'
