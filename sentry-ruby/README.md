@@ -72,15 +72,21 @@ end
 
 ### Usage
 
-**If you use Rails, you're already done - no more configuration required!** Check [Integrations](https://docs.sentry.io/platforms/ruby/configuration/integrations/) for more details on other gems Sentry integrates with automatically.
+`sentry-ruby` has a default integration with `Rack`, so you only need to use the middleware in your application like:
 
-Otherwise, Sentry supports two methods of capturing exceptions:
+```
+require 'rack'
+require 'sentry'
+
+use Sentry::Rack::CaptureException
+
+run theapp
+```
+
+Otherwise, Sentry you can always use the capture helpers manually
 
 ```ruby
-Sentry.capture do
-  # capture any exceptions which happen during execution of this block
-  1 / 0
-end
+Sentry.capture_message("hello world!")
 
 begin
   1 / 0
@@ -88,6 +94,11 @@ rescue ZeroDivisionError => exception
   Sentry.capture_exception(exception)
 end
 ```
+
+We also provide integrations with popular frameworks/libraries with the related extensions:
+
+- [sentry-rails](https://github.com/getsentry/sentry-ruby/tree/master/sentry-rails)
+- [sentry-sidekiq](https://github.com/getsentry/sentry-ruby/tree/master/sentry-sidekiq)
 
 ### More configuration
 
