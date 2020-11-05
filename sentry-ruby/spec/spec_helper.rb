@@ -8,8 +8,6 @@ SimpleCov.start do
   coverage_dir File.join(__FILE__, "../../coverage")
 end
 
-binding.pry
-
 if ENV["CI"]
   require 'codecov'
   SimpleCov.formatter = SimpleCov::Formatter::Codecov
