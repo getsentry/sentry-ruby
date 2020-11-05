@@ -211,7 +211,6 @@ module Raven
       'ActionController::UnknownFormat',
       'ActionController::UnknownHttpMethod',
       'ActionDispatch::Http::Parameters::ParseError',
-      'ActionView::MissingTemplate',
       'ActiveJob::DeserializationError', # Can cause infinite loops
       'ActiveRecord::RecordNotFound',
       'CGI::Session::CookieStore::TamperedWithCookie',

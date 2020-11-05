@@ -22,7 +22,6 @@ module Sentry
       'ActionController::UnknownFormat',
       'ActionController::UnknownHttpMethod',
       'ActionDispatch::Http::Parameters::ParseError',
-      'ActionView::MissingTemplate',
       'ActiveJob::DeserializationError', # Can cause infinite loops
       'ActiveRecord::RecordNotFound'
     ].freeze
