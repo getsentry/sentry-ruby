@@ -14,4 +14,4 @@ targets:
     - name: registry
       type: sdk
       config:
-          canonical: 'gem:sentry-raven'
+          canonical: 'gem:sentry-ruby'
