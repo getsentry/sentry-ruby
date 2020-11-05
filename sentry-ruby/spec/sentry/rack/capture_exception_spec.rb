@@ -140,7 +140,7 @@ RSpec.describe Sentry::Rack::CaptureException do
       app_2.call(env)
 
       event = transport.events.last
-      expect(event.tags).to eq(tag_2: "bar")
+      expect(event.tags).to eq(tag_2: "bar", tag_1: "don't change me")
       expect(Sentry.get_current_scope.tags).to eq(tag_1: "don't change me")
     end
   end

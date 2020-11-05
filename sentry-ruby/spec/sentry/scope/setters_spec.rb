@@ -52,12 +52,12 @@ RSpec.describe Sentry::Scope do
       end.to raise_error(ArgumentError)
     end
 
-    it "replaces the extra hash" do
+    it "merges the extras" do
       subject.set_extras({bar: "baz"})
       expect(subject.extra).to eq({bar: "baz"})
 
       subject.set_extras({foo: "bar"})
-      expect(subject.extra).to eq({foo: "bar"})
+      expect(subject.extra).to eq({bar: "baz", foo: "bar"})
     end
   end
 
@@ -104,12 +104,12 @@ RSpec.describe Sentry::Scope do
       end.to raise_error(ArgumentError)
     end
 
-    it "replaces the tag hash" do
-      subject.set_tags({foo: "baz"})
-      expect(subject.tags).to eq({foo: "baz"})
+    it "merges tags" do
+      subject.set_tags({bar: "baz"})
+      expect(subject.tags).to eq({bar: "baz"})
 
       subject.set_tags({foo: "bar"})
-      expect(subject.tags).to eq({foo: "bar"})
+      expect(subject.tags).to eq({bar: "baz", foo: "bar"})
     end
   end
 

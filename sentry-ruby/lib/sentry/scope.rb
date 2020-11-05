@@ -67,7 +67,7 @@ module Sentry
 
     def set_extras(extras_hash)
       check_argument_type!(extras_hash, Hash)
-      @extra = extras_hash
+      @extra.merge!(extras_hash)
     end
 
     def set_extra(key, value)
@@ -76,7 +76,7 @@ module Sentry
 
     def set_tags(tags_hash)
       check_argument_type!(tags_hash, Hash)
-      @tags = tags_hash
+      @tags.merge!(tags_hash)
     end
 
     def set_tag(key, value)
