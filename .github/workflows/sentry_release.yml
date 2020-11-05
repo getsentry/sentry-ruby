@@ -1,0 +1,35 @@
+name: sentry release
+
+on:
+  push:
+    branches:
+      - release-*/**
+jobs:
+  build:
+    name: Build
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2
+    - uses: actions/setup-node@v1
+    - name: Set up Ruby
+      uses: ruby/setup-ruby@v1
+      with:
+        ruby-version: 2.6 # Not needed with a .ruby-version file
+    - name: Capture sdk name
+      uses: actions-ecosystem/action-regex-match@v2
+      id: regex-match
+      with:
+        text: ${{ github.ref }}
+        regex: 'refs\/heads\/release-(sentry-\w+)\/.*'
+    - name: Set sdk-directory path
+      run: echo ${{format('sdk-directory={0}', steps.regex-match.outputs.group1)}} >> $GITHUB_ENV
+    - name: Build gem source
+      working-directory: ${{env.sdk-directory}}
+      run: |
+        bundle install
+        gem build *.gemspec
+    - name: Archive Artifacts
+      uses: actions/upload-artifact@v2
+      with:
+        name: ${{ github.sha }}
+        path: ${{env.sdk-directory}}/*.gemspec
