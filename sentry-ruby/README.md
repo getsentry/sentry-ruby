@@ -34,6 +34,14 @@ We test on Ruby 2.3, 2.4, 2.5, 2.6 and 2.7 at the latest patchlevel/teeny versio
 gem "sentry-ruby"
 ```
 
+and depends on the integrations you want to have, you might also want to install these:
+
+```ruby
+gem "sentry-rails"
+gem "sentry-sidekiq"
+# and mores to come in the future!
+```
+
 ### Sentry only runs when Sentry DSN is set
 
 Sentry will capture and send exceptions to the Sentry server whenever its DSN is set. This makes environment-based configuration easy - if you don't want to send errors in a certain environment, just don't set the DSN in that environment!
@@ -44,7 +52,7 @@ export SENTRY_DSN=http://public@example.com/project-id
 ```
 ```ruby
 # Or you can configure the client in the code.
-Sentry.configure do |config|
+Sentry.init do |config|
   config.dsn = 'http://public@example.com/project-id'
 end
 ```
