@@ -6,7 +6,12 @@ require "sidekiq/cli"
 # require "support/test_sidekiq_app/app"
 
 require 'simplecov'
-SimpleCov.start
+
+SimpleCov.start do
+  project_name "sentry-sidekiq"
+  root File.join(__FILE__, "../../../")
+  coverage_dir File.join(__FILE__, "../../coverage")
+end
 
 if ENV["CI"]
   require 'codecov'

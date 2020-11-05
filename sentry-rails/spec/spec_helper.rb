@@ -1,17 +1,25 @@
 require "bundler/setup"
 require "pry"
-require "support/test_rails_app/app"
-require "rspec/rails"
+
+require "sentry"
 
 require 'simplecov'
-SimpleCov.start
+
+SimpleCov.start do
+  project_name "sentry-rails"
+  root File.join(__FILE__, "../../../")
+  coverage_dir File.join(__FILE__, "../../coverage")
+end
 
 if ENV["CI"]
   require 'codecov'
   SimpleCov.formatter = SimpleCov::Formatter::Codecov
 end
 
-require "sentry/rails"
+# this already requires the sdk
+require "support/test_rails_app/app"
+# need to be required after rails is loaded from the above
+require "rspec/rails"
 
 DUMMY_DSN = 'http://12345:67890@sentry.localdomain/sentry/42'
 
