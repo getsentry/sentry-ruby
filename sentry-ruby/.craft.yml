@@ -7,6 +7,8 @@ preReleaseCommand: ruby ../.scripts/bump-version.rb
 releaseBranchPrefix: release-sentry-ruby
 statusProvider:
   name: github
+artifactProvider:
+  name: github
 targets:
     - name: gem
     - name: github
