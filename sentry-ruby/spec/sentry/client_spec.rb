@@ -23,6 +23,51 @@ RSpec.describe Sentry::Client do
     allow(Time).to receive(:now).and_return fake_time
   end
 
+  describe "#capture_event" do
+    context 'async' do
+      let(:message) { "Test message" }
+      let(:scope) { Sentry::Scope.new }
+      let(:event) { subject.event_from_message(message) }
+
+      around do |example|
+        prior_async = configuration.async
+        configuration.async = proc { :ok }
+        example.run
+        configuration.async = prior_async
+      end
+
+      before do
+        allow(subject).to receive(:send_data)
+      end
+
+      it "doesn't send the event right away" do
+        expect(configuration.async).to receive(:call)
+
+        returned = subject.capture_event(event, scope)
+
+        expect(returned).to be_a(Sentry::Event)
+      end
+
+      context "when async raises an exception" do
+        around do |example|
+          prior_async = configuration.async
+          configuration.async = proc { raise TypeError }
+          example.run
+          configuration.async = prior_async
+        end
+
+        it 'sends the result of Event.capture_exception via fallback' do
+          expect(configuration.logger).to receive(:error).with(Sentry::LOGGER_PROGNAME) { "async event sending failed: TypeError" }
+          expect(configuration.async).to receive(:call).and_call_original
+          expect(subject).to receive(:send_event)
+
+          subject.capture_event(event, scope)
+        end
+      end
+    end
+
+  end
+
   describe "#send_event" do
     let(:event) { subject.event_from_exception(ZeroDivisionError.new("divided by 0")) }
 

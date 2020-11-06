@@ -82,45 +82,6 @@ RSpec.describe Sentry::Transport do
       end
     end
 
-    describe 'async' do
-      let(:message) { "Test message" }
-
-      around do |example|
-        prior_async = configuration.async
-        configuration.async = proc { :ok }
-        example.run
-        configuration.async = prior_async
-      end
-
-      before do
-        allow(subject).to receive(:send_data)
-      end
-
-      it "doesn't send the event right away" do
-        expect(configuration.async).to receive(:call)
-
-        returned = subject.send_event(event)
-
-        expect(returned).to be_a(Sentry::Event)
-      end
-
-      context "when async raises an exception" do
-        around do |example|
-          prior_async = configuration.async
-          configuration.async = proc { raise TypeError }
-          example.run
-          configuration.async = prior_async
-        end
-
-        it 'sends the result of Event.capture_exception via fallback' do
-          expect(logger).to receive(:error).with(Sentry::LOGGER_PROGNAME) { "async event sending failed: TypeError" }
-          expect(configuration.async).to receive(:call).and_call_original
-          expect(subject).to receive(:send_data)
-
-          subject.send_event(event)
-        end
-      end
-    end
   end
 
   describe "#generate_auth_header" do
