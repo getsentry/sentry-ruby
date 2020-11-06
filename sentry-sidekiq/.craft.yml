@@ -4,7 +4,7 @@ github:
     repo: sentry-ruby
 changelogPolicy: simple
 preReleaseCommand: ruby ../.scripts/bump-version.rb
-releaseBranchPrefix: release-sentry-ruby
+releaseBranchPrefix: release-sentry-sidekiq
 statusProvider:
   name: github
 artifactProvider:
@@ -12,8 +12,8 @@ artifactProvider:
 targets:
     - name: gem
     - name: github
-      tagPrefix: sentry-ruby
+      tagPrefix: sentry-sidekiq
     - name: registry
       type: sdk
       config:
-          canonical: 'gem:sentry-ruby'
+          canonical: 'gem:sentry-sidekiq'
