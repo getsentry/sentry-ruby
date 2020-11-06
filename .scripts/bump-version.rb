@@ -8,7 +8,7 @@ file_name =
       "lib/sentry/version.rb"
     else
       integration_name = sdk_name.sub("sentry-", "")
-      "#{sdk_name}/lib/sentry/#{integration_name}/version.rb"
+      "lib/sentry/#{integration_name}/version.rb"
     end
   else
     # old SDK
