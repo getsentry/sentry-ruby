@@ -11,7 +11,7 @@ Gem::Specification.new do |spec|
 
   spec.platform = Gem::Platform::RUBY
   spec.required_ruby_version = '>= 2.4'
-  spec.extra_rdoc_files = ["README.md", "LICENSE"]
+  spec.extra_rdoc_files = ["README.md", "LICENSE.txt"]
   spec.files = `git ls-files | grep -Ev '^(spec|benchmarks|examples)'`.split("\n")
 
   spec.metadata["homepage_uri"] = spec.homepage
