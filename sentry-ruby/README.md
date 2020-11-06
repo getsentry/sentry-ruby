@@ -130,16 +130,6 @@ class SentryJob < ActiveJob::Base
 end
 ```
 
-#### transport_failure_callback
-
-If Sentry fails to send an event to Sentry for any reason (either the Sentry server has returned a 4XX or 5XX response), this Proc or lambda will be called.
-
-```ruby
-config.transport_failure_callback = lambda { |event, error|
-  AdminMailer.email_admins("Oh god, it's on fire because #{error.message}!", event).deliver_later
-}
-```
-
 #### Context
 
 Much of the usefulness of Sentry comes from additional context data with the events. Sentry makes this very convenient by providing methods to set thread local context data that is then submitted automatically with all events:
