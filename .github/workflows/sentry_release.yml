@@ -32,4 +32,4 @@ jobs:
       uses: actions/upload-artifact@v2
       with:
         name: ${{ github.sha }}
-        path: ${{env.sdk-directory}}/*.gemspec
+        path: ${{env.sdk-directory}}/*.gem
