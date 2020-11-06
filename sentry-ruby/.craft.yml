@@ -12,7 +12,7 @@ artifactProvider:
 targets:
     - name: gem
     - name: github
-      tagPrefix: sentry-ruby
+      tagPrefix: sentry-ruby-v
     - name: registry
       type: sdk
       config:

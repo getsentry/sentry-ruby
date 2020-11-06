@@ -12,7 +12,7 @@ artifactProvider:
 targets:
     - name: gem
     - name: github
-      tagPrefix: sentry-sidekiq
+      tagPrefix: sentry-sidekiq-v
     - name: registry
       type: sdk
       config:
