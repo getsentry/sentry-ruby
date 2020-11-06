@@ -55,6 +55,32 @@ module Sentry
       copy
     end
 
+    def update_from_scope(scope)
+      self.breadcrumbs = scope.breadcrumbs
+      self.contexts = scope.contexts
+      self.extra = scope.extra
+      self.tags = scope.tags
+      self.user = scope.user
+      self.transaction_names = scope.transaction_names
+      self.fingerprint = scope.fingerprint
+    end
+
+    def update_from_options(
+      contexts: nil,
+      extra: nil,
+      tags: nil,
+      user: nil,
+      level: nil,
+      fingerprint: nil
+    )
+      self.contexts.merge!(contexts) if contexts
+      self.extra.merge!(extra) if extra
+      self.tags.merge!(tags) if tags
+      self.user = user if user
+      self.level = level if level
+      self.fingerprint = fingerprint if fingerprint
+    end
+
     def set_rack_env(env)
       env = env || {}
       @rack_env = env

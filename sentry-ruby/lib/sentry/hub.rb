@@ -67,30 +67,37 @@ module Sentry
       @stack.pop
     end
 
-    def capture_exception(error, **options, &block)
-      return unless current_scope && current_client
+    def capture_exception(exception, **options, &block)
+      return unless current_client
 
-      event = current_client.capture_exception(error, **options, scope: current_scope, &block)
+      event = current_client.event_from_exception(exception)
 
       return unless event
 
-      @last_event_id = event.id
-      event
+      capture_event(event, **options, &block)
     end
 
     def capture_message(message, **options, &block)
-      return unless current_scope && current_client
+      return unless current_client
 
-      event = current_client.capture_message(message, **options, scope: current_scope, &block)
-
-      @last_event_id = event.id
-      event
+      event = current_client.event_from_message(message)
+      capture_event(event, **options, &block)
     end
 
-    def capture_event(event)
-      return unless current_scope && current_client
+    def capture_event(event, **options, &block)
+      return unless current_client
 
-      event = current_client.capture_event(event, current_scope)
+      scope = current_scope.dup
+
+      if block
+        block.call(scope)
+      elsif custom_scope = options[:scope]
+        scope.update_from_scope(custom_scope)
+      elsif !options.empty?
+        scope.update_from_options(**options)
+      end
+
+      event = current_client.capture_event(event, scope)
 
       @last_event_id = event.id
       event
