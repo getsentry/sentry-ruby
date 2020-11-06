@@ -130,33 +130,45 @@ class SentryJob < ActiveJob::Base
 end
 ```
 
-#### Context
+#### Contexts
 
-Much of the usefulness of Sentry comes from additional context data with the events. Sentry makes this very convenient by providing methods to set thread local context data that is then submitted automatically with all events:
-
-```ruby
-Sentry.user_context email: 'foo@example.com'
-
-Sentry.tags_context interesting: 'yes'
-
-Sentry.extra_context additional_info: 'foo'
-```
-
-You can also use `tags_context` and `extra_context` to provide scoped information:
+In sentry-ruby, every event will inherit their contextual data from the current scope. So you can enrich the event's data by configuring the current scope like:
 
 ```ruby
-Sentry.tags_context(interesting: 'yes') do
-  # the `interesting: 'yes'` tag will only present in the requests sent inside the block
-  Sentry.capture_exception(exception)
+Sentry.configure_scope do |scope|
+  scope.set_user(id: 1, email: "test@example.com")
+
+  scope.set_tag(:tag, "foo")
+  scope.set_tags(tag_1: "foo", tag_2: "bar")
+
+  scope.set_extra(:order_number, 1234)
+  scope.set_extras(order_number: 1234, tickets_count: 4)
 end
 
-Sentry.extra_context(additional_info: 'foo') do
-  # same as above, the `additional_info` will only present in this request
-  Sentry.capture_exception(exception)
-end
+Sentry.capture_exception(exception) # the event will carry all those information now
 ```
 
-For more information, see [Context](https://docs.sentry.io/platforms/ruby/enriching-events/context/).
+Or build up a temporary scope for local information:
+
+```ruby
+Sentry.configure_scope do |scope|
+  scope.set_tags(tag_1: "foo")
+end
+
+Sentry.with_scope do |scope|
+  scope.set_tags(tag_1: "bar", tag_2: "baz")
+
+  Sentry.capture_message("message") # this event will have 2 tags: tag_1 => "bar" and tag_2 => "baz"
+end
+
+Sentry.capture_message("another message") # this event will have 1 tag: tag_1 => "foo"
+```
+
+Of course, you can always assign the information on a per-event basis:
+
+```ruby
+Sentry.capture_exception(exception, tags: {foo: "bar"})
+```
 
 ## More Information
 
