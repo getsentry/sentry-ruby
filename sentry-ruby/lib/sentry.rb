@@ -52,7 +52,12 @@ module Sentry
     end
 
     def get_current_hub
-      Thread.current[THREAD_LOCAL]
+      # we need to assign a hub to the current thread if it doesn't have one yet
+      #
+      # ideally, we should do this proactively whenever a new thread is created
+      # but it's impossible for the SDK to keep track every new thread
+      # so we need to use this rather passive way to make sure the app doesn't crash
+      Thread.current[THREAD_LOCAL] || clone_hub_to_current_thread
     end
 
     def clone_hub_to_current_thread
@@ -69,6 +74,10 @@ module Sentry
 
     def configure_scope(&block)
       get_current_hub.configure_scope(&block)
+    end
+
+    def send_event(event)
+      get_current_client.send_event(event)
     end
 
     def capture_event(event)
