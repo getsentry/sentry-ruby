@@ -2,7 +2,6 @@
 
 require 'socket'
 require 'securerandom'
-require 'sentry/event/options'
 require 'sentry/interface'
 require 'sentry/backtrace'
 require 'sentry/utils/deep_merge'
@@ -23,7 +22,7 @@ module Sentry
 
     alias event_id id
 
-    def initialize(options:, configuration:)
+    def initialize(configuration:, message: nil)
       # this needs to go first because some setters rely on configuration
       @configuration = configuration
 
@@ -33,27 +32,21 @@ module Sentry
       @platform      = :ruby
       @sdk           = Sentry.sdk_meta
 
-      @user          = options.user
-      @extra         = options.extra
-      @contexts      = options.contexts
-      @tags          = options.tags
+      @user          = {}
+      @extra         = {}
+      @contexts      = {}
+      @tags          = {}
 
-      @fingerprint = options.fingerprint
+      @fingerprint = []
 
-      @server_name = options.server_name || configuration.server_name
-      @environment = options.environment || configuration.current_environment
-      @release = options.release || configuration.release
+      @server_name = configuration.server_name
+      @environment = configuration.current_environment
+      @release = configuration.release
       @modules = list_gem_specs if configuration.send_modules
 
-      @message = options.message if options.message
+      @message = message || ""
 
-      self.level = options.level
-
-      if !options.backtrace.empty?
-        @stacktrace = Sentry::StacktraceInterface.new.tap do |int|
-          int.frames = stacktrace_interface_from(options.backtrace)
-        end
-      end
+      self.level = :error
     end
 
     class << self
@@ -113,6 +106,10 @@ module Sentry
     end
 
     def add_exception_interface(exc)
+      if exc.respond_to?(:sentry_context)
+        @extra.merge!(exc.sentry_context)
+      end
+
       @exception = Sentry::ExceptionInterface.new.tap do |exc_int|
         exceptions = Sentry::Utils::ExceptionCauseChain.exception_to_array(exc).reverse
         backtraces = Set.new

@@ -2,10 +2,9 @@ require 'spec_helper'
 
 class ExceptionWithContext < StandardError
   def sentry_context
-    { extra: {
-      'context_event_key' => 'context_value',
-      'context_key' => 'context_value'
-    } }
+    {
+      foo: "bar"
+    }
   end
 end
 
@@ -126,37 +125,6 @@ RSpec.describe Sentry::Client do
     end
   end
 
-  shared_examples "options" do
-    let(:options) do
-      {
-        release: '1.0',
-        fingerprint: ['{{ default }}', 'foo'],
-        backtrace: ["/path/to/some/file:22:in `function_name'", "/some/other/path:1412:in `other_function'"]
-      }
-    end
-
-    let(:event) do
-      subject.event_from_exception(Exception.new, **options).to_hash
-    end
-
-    it 'takes and sets all available options' do
-      expect(event[:release]).to eq('1.0')
-      expect(event[:fingerprint]).to eq(['{{ default }}', 'foo'])
-    end
-
-    it "contains given backtrace" do
-      frames = event[:stacktrace].to_hash[:frames]
-      expect(frames.length).to eq(2)
-      expect(frames[0][:lineno]).to eq(1412)
-      expect(frames[0][:function]).to eq('other_function')
-      expect(frames[0][:filename]).to eq('/some/other/path')
-
-      expect(frames[1][:lineno]).to eq(22)
-      expect(frames[1][:function]).to eq('function_name')
-      expect(frames[1][:filename]).to eq('/path/to/some/file')
-    end
-  end
-
   describe '#event_from_message' do
     let(:message) { 'This is a message' }
 
@@ -168,16 +136,6 @@ RSpec.describe Sentry::Client do
       expect(hash[:message]).to eq(message)
       expect(hash[:level]).to eq(:error)
     end
-
-    it "doesn't change the option hash" do
-      h_int = { abc: :abc }
-      h = { k1: h_int, k2: h_int }
-      subject.event_from_message "Test extra", extra: { h1: h, h2: h_int }
-
-      expect(h).to eq({ k1: h_int, k2: h_int })
-    end
-
-    it_behaves_like "options"
   end
 
   describe "#event_from_exception" do
@@ -203,15 +161,6 @@ RSpec.describe Sentry::Client do
       event = subject.event_from_exception(ZeroDivisionError.new("divided by 0"))
       expect(event).to be_a(Sentry::Event)
       expect(Sentry::Event.get_message_from_exception(event.to_hash)).to eq("ZeroDivisionError: divided by 0")
-    end
-
-    it_behaves_like "options"
-
-    describe "options - message" do
-      it "proceses string message correctly" do
-        event = subject.event_from_exception(ExceptionWithContext.new, message: "MSG")
-        expect(event.message).to eq("MSG")
-      end
     end
 
     context 'for a nested exception type' do
@@ -395,23 +344,14 @@ RSpec.describe Sentry::Client do
         end
       end
 
-      context 'merging exception context' do
+      context 'when the exception responds to sentry_context' do
         let(:hash) do
-          event = subject.event_from_exception(
-            ExceptionWithContext.new,
-            message: "MSG",
-            extra: {
-              'context_event_key' => 'event_value',
-              'event_key' => 'event_value'
-            }
-          )
+          event = subject.event_from_exception(ExceptionWithContext.new)
           event.to_hash
         end
 
-        it 'prioritizes event context over request context' do
-          expect(hash[:extra]['context_event_key']).to eq('event_value')
-          expect(hash[:extra]['context_key']).to eq('context_value')
-          expect(hash[:extra]['event_key']).to eq('event_value')
+        it "merges the context into event's extra" do
+          expect(hash[:extra][:foo]).to eq('bar')
         end
       end
     end

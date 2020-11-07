@@ -6,7 +6,7 @@ RSpec.describe Sentry do
   end
 
   let(:event) do
-    Sentry::Event.new(configuration: Sentry::Configuration.new, options: Sentry::Event::Options.new)
+    Sentry::Event.new(configuration: Sentry::Configuration.new)
   end
 
   describe ".init" do
