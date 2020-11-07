@@ -81,7 +81,6 @@ RSpec.describe Sentry::Transport do
         expect(subject.send_event(event)).to eq(nil)
       end
     end
-
   end
 
   describe "#generate_auth_header" do

@@ -1,8 +1,7 @@
 RSpec.describe Sentry do
-  def setup_current_hub
+  before do
     Sentry.init do |config|
       config.dsn = DUMMY_DSN
-      config.tags = { foo: "bar" }
     end
   end
 
@@ -27,8 +26,6 @@ RSpec.describe Sentry do
 
   describe "#clone_hub_to_current_thread" do
     it "clones a new hub to the current thread" do
-      setup_current_hub
-
       main_hub = described_class.get_main_hub
 
       new_thread = Thread.new do
@@ -46,10 +43,6 @@ RSpec.describe Sentry do
   end
 
   describe ".configure_scope" do
-    before do
-      setup_current_hub
-    end
-
     it "yields the current hub's scope" do
       scope = nil
       described_class.configure_scope { |s| scope = s }
@@ -59,10 +52,6 @@ RSpec.describe Sentry do
   end
 
   describe ".capture_event" do
-    before do
-      setup_current_hub
-    end
-
     it "sends the event via current hub" do
       expect(described_class.get_current_hub).to receive(:capture_event).with(event)
 
@@ -72,10 +61,6 @@ RSpec.describe Sentry do
 
   describe ".capture_exception" do
     let(:exception) { ZeroDivisionError.new("divided by 0") }
-
-    before do
-      setup_current_hub
-    end
 
     it "sends the message via current hub" do
       expect(described_class.get_current_hub).to receive(:capture_exception).with(exception, tags: { foo: "baz" })
@@ -93,10 +78,6 @@ RSpec.describe Sentry do
   end
 
   describe ".capture_message" do
-    before do
-      setup_current_hub
-    end
-
     it "sends the message via current hub" do
       expect(described_class.get_current_hub).to receive(:capture_message).with("Test", tags: { foo: "baz" })
 
@@ -105,10 +86,6 @@ RSpec.describe Sentry do
   end
 
   describe ".last_event_id" do
-    before do
-      setup_current_hub
-    end
-
     it "gets the last_event_id from current_hub" do
       expect(described_class.get_current_hub).to receive(:last_event_id)
 
