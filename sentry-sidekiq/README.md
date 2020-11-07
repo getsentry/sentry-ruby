@@ -1,39 +1,33 @@
-# sentry-sidekiq
+<p align="center">
+  <a href="https://sentry.io" target="_blank" align="center">
+    <img src="https://sentry-brand.storage.googleapis.com/sentry-logo-black.png" width="280">
+  </a>
+  <br>
+</p>
 
-## Installation
+# sentry-sidekiq, the Sidekiq integration for Sentry's Ruby client
 
-Add this line to your application's Gemfile:
+---
+
+
+[![Gem Version](https://img.shields.io/gem/v/sentry-sidekiq.svg)](https://rubygems.org/gems/sentry-sidekiq)
+![Build Status](https://github.com/getsentry/sentry-ruby/workflows/sentry-sidekiq%20Test/badge.svg)
+[![Coverage Status](https://img.shields.io/codecov/c/github/getsentry/sentry-ruby/master?logo=codecov)](https://codecov.io/gh/getsentry/sentry-ruby/branch/master)
+[![Gem](https://img.shields.io/gem/dt/sentry-sidekiq.svg)](https://rubygems.org/gems/sentry-sidekiq/)
+[![SemVer](https://api.dependabot.com/badges/compatibility_score?dependency-name=sentry-sidekiq&package-manager=bundler&version-scheme=semver)](https://dependabot.com/compatibility-score.html?dependency-name=sentry-sidekiq&package-manager=bundler&version-scheme=semver)
+
+
+[Documentation](https://docs.sentry.io/clients/ruby/) | [Bug Tracker](https://github.com/getsentry/sentry-ruby/issues) | [Forum](https://forum.sentry.io/) | IRC: irc.freenode.net, #sentry
+
+The official Ruby-language client and integration layer for the [Sentry](https://github.com/getsentry/sentry) error reporting API.
+
+
+## Getting Started
+
+### Install
 
 ```ruby
-gem 'sentry-sidekiq'
+gem "sentry-sidekiq"
 ```
 
-And then execute:
-
-    $ bundle install
-
-## Usage
-
-See `sentry-ruby` for how to configure the Sentry client.
-
-You can also see the example under the `/example` folder.
-
-
-## Development
-
-After checking out the repo, run `bin/setup` to install dependencies. Then, run `rake spec` to run the tests. You can also run `bin/console` for an interactive prompt that will allow you to experiment.
-
-To install this gem onto your local machine, run `bundle exec rake install`. To release a new version, update the version number in `version.rb`, and then run `bundle exec rake release`, which will create a git tag for the version, push git commits and tags, and push the `.gem` file to [rubygems.org](https://rubygems.org).
-
-## Contributing
-
-Bug reports and pull requests are welcome on GitHub at https://github.com/[USERNAME]/sentry-ruby. This project is intended to be a safe, welcoming space for collaboration, and contributors are expected to adhere to the [code of conduct](https://github.com/[USERNAME]/sentry-ruby/blob/master/CODE_OF_CONDUCT.md).
-
-
-## License
-
-The gem is available as open source under the terms of the [MIT License](https://opensource.org/licenses/MIT).
-
-## Code of Conduct
-
-Everyone interacting in the Sentry::Ruby project's codebases, issue trackers, chat rooms and mailing lists is expected to follow the [code of conduct](https://github.com/[USERNAME]/sentry-ruby/blob/master/CODE_OF_CONDUCT.md).
+Then you're all set! `sentry-sidekiq` will automatically insert a custom middleware and error handler to capture exceptions from your workers!
