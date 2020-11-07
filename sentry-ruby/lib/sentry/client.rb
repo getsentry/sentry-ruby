@@ -21,20 +21,6 @@ module Sentry
       end
     end
 
-    def capture_exception(exception, scope:, **options, &block)
-      event = event_from_exception(exception, **options)
-      return unless event
-
-      block.call(event) if block
-      capture_event(event, scope)
-    end
-
-    def capture_message(message, scope:, **options, &block)
-      event = event_from_message(message, **options)
-      block.call(event) if block
-      capture_event(event, scope)
-    end
-
     def capture_event(event, scope)
       scope.apply_to_event(event)
 
