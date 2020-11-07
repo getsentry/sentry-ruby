@@ -1,5 +1,4 @@
 require "sentry/transport"
-require 'sentry/utils/deep_merge'
 
 module Sentry
   class Client
@@ -21,20 +20,6 @@ module Sentry
       end
     end
 
-    def capture_exception(exception, scope:, **options, &block)
-      event = event_from_exception(exception, **options)
-      return unless event
-
-      block.call(event) if block
-      capture_event(event, scope)
-    end
-
-    def capture_message(message, scope:, **options, &block)
-      event = event_from_message(message, **options)
-      block.call(event) if block
-      capture_event(event, scope)
-    end
-
     def capture_event(event, scope)
       scope.apply_to_event(event)
 
@@ -54,31 +39,16 @@ module Sentry
       event
     end
 
-    def event_from_exception(exception, **options)
-      exception_context =
-        if exception.instance_variable_defined?(:@__sentry_context)
-          exception.instance_variable_get(:@__sentry_context)
-        elsif exception.respond_to?(:sentry_context)
-          exception.sentry_context
-        else
-          {}
-        end
-
-      options = Utils::DeepMergeHash.deep_merge(exception_context, options)
-
+    def event_from_exception(exception)
       return unless @configuration.exception_class_allowed?(exception)
 
-      options = Event::Options.new(**options)
-
-      Event.new(configuration: configuration, options: options).tap do |event|
+      Event.new(configuration: configuration).tap do |event|
         event.add_exception_interface(exception)
       end
     end
 
-    def event_from_message(message, **options)
-      options.merge!(message: message)
-      options = Event::Options.new(options)
-      Event.new(configuration: configuration, options: options)
+    def event_from_message(message)
+      Event.new(configuration: configuration, message: message)
     end
 
     def send_event(event, hint = nil)

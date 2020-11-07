@@ -9,75 +9,27 @@ RSpec.describe Sentry::Event do
 
   describe "#initialize" do
     it "initializes a Event when all required keys are provided" do
-      options = Sentry::Event::Options.new
-      expect(described_class.new(configuration: configuration, options: options)).to be_a(described_class)
-    end
-  end
-
-  context 'a fully implemented event' do
-    let(:options) do
-      Sentry::Event::Options.new(
-        message: 'test',
-        level: 'warn',
-        tags: {
-          'foo' => 'bar'
-        },
-        extra: {
-          'my_custom_variable' => 'value'
-        },
-        contexts: {
-          os: { name: "mac" }
-        },
-        server_name: 'foo.local',
-        release: '721e41770371db95eee98ca2707686226b993eda',
-        environment: 'production'
-      )
-    end
-    let(:hash) do
-      Sentry::Event.new(
-        configuration: configuration,
-        options: options
-      ).to_hash
+      expect(described_class.new(configuration: configuration)).to be_a(described_class)
     end
 
-    it 'has message' do
-      expect(hash[:message]).to eq('test')
-    end
+    it "initializes a Event with correct default values" do
+      configuration.server_name = "foo.local"
+      configuration.current_environment = "test"
+      configuration.release = "721e41770371db95eee98ca2707686226b993eda"
 
-    it 'has level' do
-      expect(hash[:level]).to eq(:warning)
-    end
+      event = described_class.new(configuration: configuration)
 
-    it 'has server name' do
-      expect(hash[:server_name]).to eq('foo.local')
-    end
-
-    it 'has release' do
-      expect(hash[:release]).to eq('721e41770371db95eee98ca2707686226b993eda')
-    end
-
-    it 'has environment' do
-      expect(hash[:environment]).to eq('production')
-    end
-
-    it 'has tag data' do
-      expect(hash[:tags]).to eq('foo' => 'bar')
-    end
-
-    it 'has contexts' do
-      expect(hash[:contexts]).to eq({ os: { name: "mac" } })
-    end
-
-    it 'has extra data' do
-      expect(hash[:extra]["my_custom_variable"]).to eq('value')
-    end
-
-    it 'has platform' do
-      expect(hash[:platform]).to eq(:ruby)
-    end
-
-    it 'has SDK' do
-      expect(hash[:sdk]).to eq("name" => "sentry.ruby", "version" => Sentry::VERSION)
+      expect(event.timestamp).to be_a(Time)
+      expect(event.user).to eq({})
+      expect(event.extra).to eq({})
+      expect(event.contexts).to eq({})
+      expect(event.tags).to eq({})
+      expect(event.fingerprint).to eq([])
+      expect(event.platform).to eq(:ruby)
+      expect(event.server_name).to eq("foo.local")
+      expect(event.environment).to eq("test")
+      expect(event.release).to eq("721e41770371db95eee98ca2707686226b993eda")
+      expect(event.sdk).to eq("name" => "sentry.ruby", "version" => Sentry::VERSION)
     end
   end
 
@@ -104,21 +56,7 @@ RSpec.describe Sentry::Event do
     end
 
     let(:event) do
-      options = described_class::Options.new(
-        level: 'warning',
-        tags: {
-          'foo' => 'bar'
-        },
-        extra: {
-          'my_custom_variable' => 'value'
-        },
-        server_name: 'foo.local'
-      )
-
-      Sentry::Event.new(
-        options: options,
-        configuration: Sentry.configuration,
-      )
+      Sentry::Event.new(configuration: Sentry.configuration)
     end
 
     context "without config.send_default_pii = true" do
@@ -160,70 +98,15 @@ RSpec.describe Sentry::Event do
     end
   end
 
-  context 'configuration tags specified' do
-    let(:options) do
-      Sentry::Event::Options.new(
-        level: 'warning',
-        server_name: 'foo.local',
-      )
-    end
-    let(:hash) do
-      config = Sentry::Configuration.new
-      config.release = "custom"
-      config.current_environment = "custom"
-
-      Sentry::Event.new(
-        configuration: config,
-        options: options
-      ).to_hash
-    end
-
-    it 'merges data from the configuration' do
-      expect(hash[:release]).to eq("custom")
-      expect(hash[:environment]).to eq("custom")
-    end
-
-    it 'does not persist tags between unrelated events' do
-      config = Sentry::Configuration.new
-      config.logger = Logger.new(nil)
-      options = Sentry::Event::Options.new(
-        level: 'warning',
-        tags: {
-          'foo' => 'bar'
-        },
-        server_name: 'foo.local',
-      )
-
-      Sentry::Event.new(
-        configuration: config,
-        options: options
-      )
-
-      hash = Sentry::Event.new(
-        options: Sentry::Event::Options.new(
-          level: 'warning',
-          server_name: 'foo.local',
-        ),
-        configuration: config
-      ).to_hash
-
-      expect(hash[:tags]).to eq({})
-    end
-  end
-
   describe '#to_json_compatible' do
     subject do
-      options = Sentry::Event::Options.new(
-        extra: {
+      Sentry::Event.new(configuration: configuration).tap do |event|
+        event.extra = {
           'my_custom_variable' => 'value',
           'date' => Time.utc(0),
           'anonymous_module' => Class.new
-        },
-      )
-      Sentry::Event.new(
-        options: options,
-        configuration: configuration
-      )
+        }
+      end
     end
 
     it "should coerce non-JSON-compatible types" do
