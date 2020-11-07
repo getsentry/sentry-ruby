@@ -36,7 +36,7 @@ module Sentry
       @user          = options.user
       @extra         = options.extra
       @contexts      = options.contexts
-      @tags          = configuration.tags.merge(options.tags)
+      @tags          = options.tags
 
       @fingerprint = options.fingerprint
 

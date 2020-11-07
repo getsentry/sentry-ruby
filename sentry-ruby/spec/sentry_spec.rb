@@ -13,13 +13,11 @@ RSpec.describe Sentry do
     it "initializes the current hub and main hub" do
       described_class.init do |config|
         config.dsn = DUMMY_DSN
-        config.tags = { foo: "bar" }
       end
 
       current_hub = described_class.get_current_hub
       expect(current_hub).to be_a(Sentry::Hub)
       expect(current_hub.current_scope).to be_a(Sentry::Scope)
-      expect(current_hub.current_client.configuration.tags).to eq({ foo: "bar" })
       expect(subject.get_main_hub).to eq(current_hub)
     end
   end

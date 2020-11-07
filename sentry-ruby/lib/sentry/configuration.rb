@@ -93,9 +93,6 @@ module Sentry
     # Silences ready message when true.
     attr_accessor :silence_ready
 
-    # Default tags for events. Hash.
-    attr_accessor :tags
-
     attr_reader :transport
 
     # Optional Proc, called before sending an event to the server/
@@ -157,7 +154,7 @@ module Sentry
       self.dsn = ENV['SENTRY_DSN']
       self.server_name = server_name_from_env
       self.should_capture = false
-      self.tags = {}
+
       @transport = Transport::Configuration.new
       self.before_send = false
       self.rack_env_whitelist = RACK_ENV_WHITELIST_DEFAULT

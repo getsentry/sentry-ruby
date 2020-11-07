@@ -164,15 +164,11 @@ RSpec.describe Sentry::Event do
     let(:options) do
       Sentry::Event::Options.new(
         level: 'warning',
-        tags: {
-          'foo' => 'bar'
-        },
         server_name: 'foo.local',
       )
     end
     let(:hash) do
       config = Sentry::Configuration.new
-      config.tags = { 'key' => 'value' }
       config.release = "custom"
       config.current_environment = "custom"
 
@@ -182,9 +178,7 @@ RSpec.describe Sentry::Event do
       ).to_hash
     end
 
-    it 'merges tags data' do
-      expect(hash[:tags]).to eq('key' => 'value',
-                                'foo' => 'bar')
+    it 'merges data from the configuration' do
       expect(hash[:release]).to eq("custom")
       expect(hash[:environment]).to eq("custom")
     end
@@ -216,47 +210,6 @@ RSpec.describe Sentry::Event do
       expect(hash[:tags]).to eq({})
     end
   end
-
-  # context 'tags hierarchy respected' do
-  #   let(:hash) do
-  #     config = Sentry::Configuration.new
-  #     config.logger = Logger.new(nil)
-  #     config.tags = {
-  #       'configuration_context_event_key' => 'configuration_value',
-  #       'configuration_context_key' => 'configuration_value',
-  #       'configuration_event_key' => 'configuration_value',
-  #       'configuration_key' => 'configuration_value'
-  #     }
-
-  #     Sentry.tags_context('configuration_context_event_key' => 'context_value',
-  #                        'configuration_context_key' => 'context_value',
-  #                        'context_event_key' => 'context_value',
-  #                        'context_key' => 'context_value')
-
-  #     Sentry::Event.new(
-  #       level: 'warning',
-  #       logger: 'foo',
-  #       tags: {
-  #         'configuration_context_event_key' => 'event_value',
-  #         'configuration_event_key' => 'event_value',
-  #         'context_event_key' => 'event_value',
-  #         'event_key' => 'event_value'
-  #       },
-  #       server_name: 'foo.local',
-  #       configuration: config
-  #     ).to_hash
-  #   end
-
-  #   it 'merges tags data' do
-  #     expect(hash[:tags]).to eq('configuration_context_event_key' => 'event_value',
-  #                               'configuration_context_key' => 'context_value',
-  #                               'configuration_event_key' => 'event_value',
-  #                               'context_event_key' => 'event_value',
-  #                               'configuration_key' => 'configuration_value',
-  #                               'context_key' => 'context_value',
-  #                               'event_key' => 'event_value')
-  #   end
-  # end
 
   describe '#to_json_compatible' do
     subject do
