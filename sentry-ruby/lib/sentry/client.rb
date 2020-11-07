@@ -1,5 +1,4 @@
 require "sentry/transport"
-require 'sentry/utils/deep_merge'
 
 module Sentry
   class Client

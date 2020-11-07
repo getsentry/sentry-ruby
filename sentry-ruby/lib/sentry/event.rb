@@ -4,7 +4,6 @@ require 'socket'
 require 'securerandom'
 require 'sentry/interface'
 require 'sentry/backtrace'
-require 'sentry/utils/deep_merge'
 require 'sentry/utils/real_ip'
 
 module Sentry
