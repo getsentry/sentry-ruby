@@ -96,9 +96,9 @@ module Sentry
     attr_reader :transport
 
     # Optional Proc, called before sending an event to the server/
-    # E.g.: lambda { |event, hint| event }
-    # E.g.: lambda { |event, hint| nil }
-    # E.g.: lambda { |event, hint|
+    # E.g.: lambda { |event| event }
+    # E.g.: lambda { |event| nil }
+    # E.g.: lambda { |event|
     #   event[:message] = 'a'
     #   event
     # }

@@ -81,7 +81,7 @@ RSpec.describe Sentry::Client do
     end
 
     it "applies before_send callback before sending the event" do
-      configuration.before_send = lambda do |event, _hint|
+      configuration.before_send = lambda do |event|
         event.tags[:called] = true
         event
       end

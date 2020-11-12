@@ -51,10 +51,10 @@ module Sentry
       Event.new(configuration: configuration, message: message)
     end
 
-    def send_event(event, hint = nil)
+    def send_event(event)
       return false unless configuration.sending_allowed?(event)
 
-      event = configuration.before_send.call(event, hint) if configuration.before_send
+      event = configuration.before_send.call(event) if configuration.before_send
       if event.nil?
         configuration.logger.info(LOGGER_PROGNAME) { "Discarded event because before_send returned nil" }
         return
