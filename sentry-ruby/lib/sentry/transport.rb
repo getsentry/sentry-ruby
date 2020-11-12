@@ -49,10 +49,11 @@ module Sentry
 
     def encode(event_hash)
       event_id = event_hash[:event_id] || event_hash['event_id']
+      event_type = event_hash[:type] || event_hash['type']
 
       envelope = <<~ENVELOPE
         {"event_id":"#{event_id}","dsn":"#{configuration.dsn.to_s}","sdk":#{Sentry.sdk_meta.to_json},"sent_at":"#{DateTime.now.rfc3339}"}
-        {"type":"event","content_type":"application/json"}
+        {"type":"#{event_type}","content_type":"application/json"}
         #{JSON.generate(event_hash)}
       ENVELOPE
 

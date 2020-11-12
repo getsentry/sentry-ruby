@@ -3,6 +3,9 @@ require "sentry/core_ext/object/deep_dup"
 require "sentry/configuration"
 require "sentry/logger"
 require "sentry/event"
+require "sentry/transaction_event"
+require "sentry/span"
+require "sentry/transaction"
 require "sentry/hub"
 require "sentry/rack"
 
@@ -60,6 +63,10 @@ module Sentry
       Thread.current[THREAD_LOCAL] || clone_hub_to_current_thread
     end
 
+    def get_transaction
+      get_current_hub.get_transaction
+    end
+
     def clone_hub_to_current_thread
       Thread.current[THREAD_LOCAL] = get_main_hub.clone
     end
@@ -90,6 +97,14 @@ module Sentry
 
     def capture_message(message, **options, &block)
       get_current_hub.capture_message(message, **options, &block)
+    end
+
+    def start_span(**options)
+      get_current_hub.start_span(**options)
+    end
+
+    def start_transaction(**options)
+      get_current_hub.start_transaction(**options)
     end
 
     def last_event_id

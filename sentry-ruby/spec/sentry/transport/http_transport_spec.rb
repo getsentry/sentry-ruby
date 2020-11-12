@@ -5,32 +5,6 @@ RSpec.describe Sentry::HTTPTransport do
   let(:event) { client.event_from_message("test") }
   subject { described_class.new(Sentry.configuration) }
 
-  describe "#encode" do
-    before do
-      Sentry.init do |config|
-        config.dsn = DUMMY_DSN
-      end
-    end
-
-    it "generates correct envelope content" do
-      _, result = subject.encode(event.to_hash)
-
-      envelope_header, item_header, item = result.split("\n")
-
-      expect(envelope_header).to eq(
-        <<~ENVELOPE_HEADER.chomp
-          {"event_id":"#{event.id}","dsn":"#{DUMMY_DSN}","sdk":#{Sentry.sdk_meta.to_json},"sent_at":"#{DateTime.now.rfc3339}"}
-        ENVELOPE_HEADER
-      )
-
-      expect(item_header).to eq(
-        '{"type":"event","content_type":"application/json"}'
-      )
-
-      expect(item).to eq(event.to_hash.to_json)
-    end
-  end
-
   describe "customizations" do
     before do
       Sentry.init do |c|

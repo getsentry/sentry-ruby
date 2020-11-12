@@ -23,6 +23,22 @@ RSpec.describe Sentry::Scope do
     end
   end
 
+  describe "#set_span" do
+    let(:span) { Sentry::Span.new(op: "foo") }
+
+    it "sets the Span" do
+      subject.set_span(span)
+
+      expect(subject.span).to eq(span)
+    end
+
+    it "raises error when passed non-Span argument" do
+      expect do
+        subject.set_span(1)
+      end.to raise_error(ArgumentError)
+    end
+  end
+
   describe "#set_user" do
     it "raises error when passed non-hash argument" do
       expect do

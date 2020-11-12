@@ -171,5 +171,15 @@ RSpec.describe Sentry::Scope do
 
       expect(event.tags).to eq({ processed: true })
     end
+
+    it "sets trace context if there's a span" do
+      span = Sentry::Span.new(op: "foo")
+      subject.set_span(span)
+
+      subject.apply_to_event(event)
+
+      expect(event.contexts[:trace]).to eq(span.get_trace_context)
+      expect(event.contexts.dig(:trace, :op)).to eq("foo")
+    end
   end
 end

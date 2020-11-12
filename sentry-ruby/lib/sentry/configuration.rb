@@ -95,6 +95,8 @@ module Sentry
 
     attr_reader :transport
 
+    attr_accessor :traces_sample_rate
+
     # Optional Proc, called before sending an event to the server/
     # E.g.: lambda { |event| event }
     # E.g.: lambda { |event| nil }

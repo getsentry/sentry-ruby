@@ -3,7 +3,7 @@ require "etc"
 
 module Sentry
   class Scope
-    ATTRIBUTES = [:transaction_names, :contexts, :extra, :tags, :user, :level, :breadcrumbs, :fingerprint, :event_processors, :rack_env]
+    ATTRIBUTES = [:transaction_names, :contexts, :extra, :tags, :user, :level, :breadcrumbs, :fingerprint, :event_processors, :rack_env, :span]
 
     attr_reader(*ATTRIBUTES)
 
@@ -20,6 +20,11 @@ module Sentry
       event.user = user.merge(event.user)
       event.extra = extra.merge(event.extra)
       event.contexts = contexts.merge(event.contexts)
+
+      if span
+        event.contexts[:trace] = span.get_trace_context
+      end
+
       event.fingerprint = fingerprint
       event.level ||= level
       event.transaction = transaction_names.last
@@ -52,6 +57,7 @@ module Sentry
       copy.user = user.deep_dup
       copy.transaction_names = transaction_names.deep_dup
       copy.fingerprint = fingerprint.deep_dup
+      copy.span = span
       copy
     end
 
@@ -63,6 +69,7 @@ module Sentry
       self.user = scope.user
       self.transaction_names = scope.transaction_names
       self.fingerprint = scope.fingerprint
+      self.span = scope.span
     end
 
     def update_from_options(
@@ -84,6 +91,15 @@ module Sentry
     def set_rack_env(env)
       env = env || {}
       @rack_env = env
+    end
+
+    def set_span(span)
+      check_argument_type!(span, Span)
+      @span = span
+    end
+
+    def get_span
+      @span
     end
 
     def set_user(user_hash)
