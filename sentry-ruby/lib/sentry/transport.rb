@@ -86,7 +86,7 @@ module Sentry
     end
 
     def log_not_sending(event)
-      configuration.logger.warn(LOGGER_PROGNAME) { "Failed to submit event: #{Event.get_log_message(event.to_hash)}" }
+      configuration.logger.warn(LOGGER_PROGNAME) { "Failed to submit event. Unreported Event: #{Event.get_log_message(event.to_hash)}" }
     end
   end
 end
