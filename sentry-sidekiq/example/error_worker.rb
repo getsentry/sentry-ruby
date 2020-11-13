@@ -1,5 +1,5 @@
 require "sidekiq"
-require "sentry/sidekiq"
+require "sentry-sidekiq"
 
 Sentry.init do |config|
   config.breadcrumbs_logger = [:sentry_logger]
