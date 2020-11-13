@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.1.3
+
+Fix require reference
+
 ## 0.1.2
 
 - Fix: Fix async callback [1098](https://github.com/getsentry/sentry-ruby/pull/1098)
