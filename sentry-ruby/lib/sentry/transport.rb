@@ -52,7 +52,7 @@ module Sentry
       envelope = <<~ENVELOPE
         {"event_id":"#{event_id}","dsn":"#{configuration.dsn.to_s}","sdk":#{Sentry.sdk_meta.to_json},"sent_at":"#{DateTime.now.rfc3339}"}
         {"type":"event","content_type":"application/json"}
-        #{event_hash.to_json}
+        #{JSON.generate(event_hash)}
       ENVELOPE
 
       [CONTENT_TYPE, envelope]
