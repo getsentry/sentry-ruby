@@ -1,5 +1,4 @@
 require "spec_helper"
-require "sentry/sidekiq"
 require 'sidekiq/manager'
 
 class HappyWorker

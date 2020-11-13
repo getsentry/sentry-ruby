@@ -13,7 +13,7 @@ if ENV["CI"]
   SimpleCov.formatter = SimpleCov::Formatter::Codecov
 end
 
-require "sentry"
+require "sentry-ruby"
 
 DUMMY_DSN = 'http://12345:67890@sentry.localdomain/sentry/42'
 

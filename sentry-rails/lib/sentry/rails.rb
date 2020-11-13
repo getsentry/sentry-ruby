@@ -1,4 +1,4 @@
-require "sentry"
+require "sentry-ruby"
 require "sentry/rails/configuration"
 require "sentry/rails/railtie"
 

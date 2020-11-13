@@ -1,7 +1,7 @@
 require "bundler/setup"
 require "pry"
 
-require "sentry"
+require "sentry-ruby"
 
 require 'simplecov'
 
