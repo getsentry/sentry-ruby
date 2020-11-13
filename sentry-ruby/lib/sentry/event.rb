@@ -27,7 +27,7 @@ module Sentry
 
       # Set some simple default values
       @id            = SecureRandom.uuid.delete("-")
-      @timestamp     = Time.now.utc
+      @timestamp     = Time.now.utc.iso8601
       @platform      = :ruby
       @sdk           = Sentry.sdk_meta
 

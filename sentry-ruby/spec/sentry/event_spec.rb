@@ -19,7 +19,7 @@ RSpec.describe Sentry::Event do
 
       event = described_class.new(configuration: configuration)
 
-      expect(event.timestamp).to be_a(Time)
+      expect(event.timestamp).to be_a(String)
       expect(event.user).to eq({})
       expect(event.extra).to eq({})
       expect(event.contexts).to eq({})
