@@ -7,7 +7,24 @@
 
 # Raven-Ruby, the Ruby Client for Sentry
 
-### 🚧 We're restructuring this SDK for the [version 4.0](https://github.com/getsentry/raven-ruby/issues/1029) 🚧 
+### 🚧 Migrating To The New SDK 🚧
+
+We're beta-testing our new Ruby SDK, [sentry-ruby](https://github.com/getsentry/sentry-ruby/tree/master/sentry-ruby). Here are the benefits of migrating to it:
+
+#### Unified Interfaces With Other SDKs
+
+The design of `sentry-raven` is outdated compare with other Sentry SDKs. If you also use other sentry SDKs, like `sentry-javascript` for your frontend application, you'll notice that their interfaces are quite different from `sentry-raven`'s. So one of the purposes of the new `sentry-ruby` SDK is to provide a consistent user experience across all different platforms.
+
+#### Future Support
+
+The `sentry-raven` SDK has entered maintenance mode, which means it won't receive any new feature supports (like the upcoming [performance monitoring](https://docs.sentry.io/product/performance/) feature) or aggressive bug fixes.
+
+#### Better Extensibility
+
+Unlike `sentry-raven`, `sentry-ruby` is built with extensibility in mind and will allow the community to build extensions for different integrations/features.
+
+
+If you're interested in the migration, please also read our [migration guide](https://github.com/getsentry/sentry-ruby/blob/master/MIGRATION.md) for more information.
 
 ---
 
