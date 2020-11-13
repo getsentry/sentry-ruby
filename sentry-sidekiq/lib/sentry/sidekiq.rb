@@ -1,5 +1,5 @@
 require "sidekiq"
-require "sentry"
+require "sentry-ruby"
 require "sentry/sidekiq/error_handler"
 require "sentry/sidekiq/cleanup_middleware"
 # require "sentry/sidekiq/configuration"

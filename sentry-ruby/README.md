@@ -76,7 +76,7 @@ end
 
 ```
 require 'rack'
-require 'sentry'
+require 'sentry-ruby'
 
 use Sentry::Rack::CaptureException
 
