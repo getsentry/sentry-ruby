@@ -13,7 +13,6 @@ RSpec.describe Sentry::Configuration do
   describe "#transport" do
     it "returns an initialized Transport::Configuration object" do
       transport_config = subject.transport
-      expect(transport_config.encoding).to eq("gzip")
       expect(transport_config.timeout).to eq(2)
       expect(transport_config.open_timeout).to eq(1)
       expect(transport_config.ssl_verification).to eq(true)
