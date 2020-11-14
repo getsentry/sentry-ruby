@@ -1,7 +1,8 @@
 require 'spec_helper'
 
 RSpec.describe Sentry::Transport do
-  let(:logger) { Logger.new(nil) }
+  let(:io) { StringIO.new }
+  let(:logger) { Logger.new(io) }
   let(:configuration) do
     Sentry::Configuration.new.tap do |config|
       config.server = 'http://12345:67890@sentry.localdomain/sentry/42'
@@ -34,9 +35,11 @@ RSpec.describe Sentry::Transport do
       end
 
       it "logs correct message" do
-        expect(logger).to receive(:info).with(Sentry::LOGGER_PROGNAME) { "Sending event #{event.id} to Sentry" }
-
         expect(subject.send_event(event)).to eq(event)
+
+        expect(io.string).to match(
+          /INFO -- sentry: Sending event #{event.id} to Sentry/
+        )
       end
 
       it "sets the correct state" do
@@ -51,20 +54,30 @@ RSpec.describe Sentry::Transport do
     context "when failed" do
       before do
         allow(subject).to receive(:send_data).and_raise(StandardError)
-
-        expect(logger).to receive(:warn).exactly(2).and_call_original
       end
 
       it "returns nil" do
         expect(subject.send_event(event)).to eq(nil)
       end
 
-      it "changes the statreturns nile to fail" do
+      it "changes the state" do
         expect(subject.state).to receive(:failure).and_call_original
 
         subject.send_event(event)
 
         expect(subject.state).to be_failed
+      end
+
+      it "logs correct message" do
+        subject.send_event(event)
+
+        log = io.string
+        expect(log).to match(
+          /WARN -- sentry: Unable to record event with remote Sentry server \(StandardError - StandardError\):/
+        )
+        expect(log).to match(
+          /WARN -- sentry: Failed to submit event. Unreported Event: ZeroDivisionError: divided by 0/
+        )
       end
     end
 

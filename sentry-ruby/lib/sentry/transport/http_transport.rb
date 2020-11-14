@@ -23,9 +23,12 @@ module Sentry
       end
     rescue Faraday::Error => e
       error_info = e.message
-      if e.response && e.response[:headers]['x-sentry-error']
-        error_info += " Error in headers is: #{e.response[:headers]['x-sentry-error']}"
+
+      if e.response
+        error_info += "\nbody: #{e.response[:body]}"
+        error_info += " Error in headers is: #{e.response[:headers]['x-sentry-error']}" if e.response[:headers]['x-sentry-error']
       end
+
       raise Sentry::Error, error_info
     end
 
