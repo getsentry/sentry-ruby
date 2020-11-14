@@ -1,7 +1,7 @@
 require "spec_helper"
 
 RSpec.describe Sentry::Rails, type: :request do
-  before(:all) do
+  before do
     make_basic_app
   end
 
@@ -21,8 +21,9 @@ RSpec.describe Sentry::Rails, type: :request do
     expect(described_class::VERSION).to be_a(String)
   end
 
-  it "inserts middleware" do
-    expect(Rails.application.middleware).to include(Sentry::Rails::CaptureException)
+  it "inserts middleware to a correct position" do
+    expect(Rails.application.middleware.find_index(Sentry::Rack::Tracing)).to eq(0)
+    expect(Rails.application.middleware.find_index(Sentry::Rails::CaptureException)).to eq(1)
   end
 
   it "doesn't do anything on a normal route" do
