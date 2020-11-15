@@ -32,6 +32,7 @@ module Sentry
       event
     rescue => e
       failed_for_exception(e, event)
+      nil
     end
 
     def generate_auth_header
