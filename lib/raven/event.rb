@@ -38,7 +38,7 @@ module Raven
       self.tags          = {} # TODO: contexts
 
       unless REQUIRED_OPTION_KEYS.all? { |key| options.key?(key) }
-        raise "you much provide configuration, context, and breadcrumbs when initializing a Raven::Event"
+        raise "you must provide configuration, context, and breadcrumbs when initializing a Raven::Event"
       end
 
       self.configuration = options[:configuration]
