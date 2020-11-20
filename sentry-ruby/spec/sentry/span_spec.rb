@@ -41,22 +41,22 @@ RSpec.describe Sentry::Span do
     end
   end
 
-  describe "#to_traceparent" do
+  describe "#to_sentry_trace" do
     it "returns correctly-formatted value" do
-      traceparent = subject.to_traceparent
+      sentry_trace = subject.to_sentry_trace
 
-      expect(traceparent).to eq("#{subject.trace_id}-#{subject.span_id}-1")
-      expect(traceparent).to match(Sentry::Span::TRACEPARENT_REGEXP)
+      expect(sentry_trace).to eq("#{subject.trace_id}-#{subject.span_id}-1")
+      expect(sentry_trace).to match(Sentry::Transaction::SENTRY_TRACE_REGEXP)
     end
 
     context "without sampled value" do
       subject { described_class.new }
 
       it "doesn't contain the sampled flag" do
-        traceparent = subject.to_traceparent
+        sentry_trace = subject.to_sentry_trace
 
-        expect(traceparent).to eq("#{subject.trace_id}-#{subject.span_id}-")
-        expect(traceparent).to match(Sentry::Span::TRACEPARENT_REGEXP)
+        expect(sentry_trace).to eq("#{subject.trace_id}-#{subject.span_id}-")
+        expect(sentry_trace).to match(Sentry::Transaction::SENTRY_TRACE_REGEXP)
       end
     end
   end

@@ -12,6 +12,19 @@ RSpec.describe Sentry::Transaction do
     )
   end
 
+  describe ".from_sentry_trace" do
+    let(:sentry_trace) { subject.to_sentry_trace }
+
+    it "returns correctly-formatted value" do
+      child_transaction = described_class.from_sentry_trace(sentry_trace, op: "child")
+
+      expect(child_transaction.trace_id).to eq(subject.trace_id)
+      expect(child_transaction.parent_span_id).to eq(subject.span_id)
+      expect(child_transaction.parent_sampled).to eq(true)
+      expect(child_transaction.op).to eq("child")
+    end
+  end
+
   describe "#to_hash" do
     it "returns correct data" do
       hash = subject.to_hash

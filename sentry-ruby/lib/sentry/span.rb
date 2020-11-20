@@ -3,13 +3,6 @@ require "securerandom"
 
 module Sentry
   class Span
-    TRACEPARENT_REGEXP = Regexp.new(
-      "^[ \t]*" +  # whitespace
-      "([0-9a-f]{32})?" +  # trace_id
-      "-?([0-9a-f]{16})?" +  # span_id
-      "-?([01])?" +  # sampled
-      "[ \t]*$"  # whitespace
-    )
     STATUS_MAP = {
       400 => "invalid_argument",
       401 => "unauthenticated",
@@ -51,7 +44,7 @@ module Sentry
       @timestamp = Time.now.utc.to_f
     end
 
-    def to_traceparent
+    def to_sentry_trace
       sampled_flag = ""
       sampled_flag = @sampled ? 1 : 0 unless @sampled.nil?
 
