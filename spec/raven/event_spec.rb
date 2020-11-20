@@ -26,7 +26,7 @@ RSpec.describe Raven::Event do
 
         expect do
           described_class.new(essential_options)
-        end.to raise_error("you much provide configuration, context, and breadcrumbs when initializing a Raven::Event")
+        end.to raise_error("you must provide configuration, context, and breadcrumbs when initializing a Raven::Event")
       end
     end
   end
