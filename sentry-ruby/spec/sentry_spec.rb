@@ -81,20 +81,6 @@ RSpec.describe Sentry do
     end
   end
 
-  describe ".get_transaction" do
-    let(:transaction) { described_class.start_transaction }
-
-    before do
-      described_class.configure_scope do |scope|
-        scope.set_span(transaction)
-      end
-    end
-
-    it "gets the current transaction" do
-      expect(described_class.get_transaction).to eq(transaction)
-    end
-  end
-
   describe ".capture_message" do
     it "sends the message via current hub" do
       expect(described_class.get_current_hub).to receive(:capture_message).with("Test", tags: { foo: "baz" })

@@ -67,18 +67,6 @@ module Sentry
       @stack.pop
     end
 
-    def get_transaction
-      current_scope.span
-    end
-
-    def start_span(**options)
-      if span = current_scope.span
-        span.start_child(**options)
-      else
-        Span.new(**options)
-      end
-    end
-
     def start_transaction(transaction: nil, **options)
       transaction ||= Transaction.new(**options, sampled: true)
       # TODO: Add sampling logic

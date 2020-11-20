@@ -84,6 +84,7 @@ RSpec.describe Sentry::Scope do
       scope.set_extras({additional_info: "hello"})
       scope.set_user({id: 1})
       scope.set_transaction_name("WelcomeController#index")
+      scope.set_span(Sentry::Span.new)
       scope.set_fingerprint(["foo"])
       scope
     end
@@ -102,6 +103,41 @@ RSpec.describe Sentry::Scope do
       expect(subject.user).to eq({})
       expect(subject.fingerprint).to eq([])
       expect(subject.transaction_names).to eq([])
+      expect(subject.span).to eq(nil)
+    end
+  end
+
+  describe "#get_transaction & #get_span" do
+    let(:transaction) do
+      Sentry::Transaction.new(op: "parent")
+    end
+
+    context "with span in the scope" do
+      let(:span) do
+        transaction.start_child(op: "child")
+      end
+
+      before do
+        subject.set_span(span)
+      end
+
+      it "gets the span from the scope" do
+        expect(subject.get_span).to eq(span)
+      end
+
+      it "gets the transaction from the span recorder" do
+        expect(subject.get_transaction).to eq(transaction)
+      end
+    end
+
+    context "without span in the scope" do
+      it "returns nil" do
+        expect(subject.get_transaction).to eq(nil)
+      end
+
+      it "returns nil" do
+        expect(subject.get_span).to eq(nil)
+      end
     end
   end
 

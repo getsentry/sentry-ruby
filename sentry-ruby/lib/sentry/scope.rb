@@ -98,10 +98,6 @@ module Sentry
       @span = span
     end
 
-    def get_span
-      @span
-    end
-
     def set_user(user_hash)
       check_argument_type!(user_hash, Hash)
       @user = user_hash
@@ -146,6 +142,15 @@ module Sentry
       @transaction_names.last
     end
 
+    def get_transaction
+      # transaction will always be the first in the span_recorder
+      span.span_recorder.spans.first if span
+    end
+
+    def get_span
+      span
+    end
+
     def set_fingerprint(fingerprint)
       check_argument_type!(fingerprint, Array)
 
@@ -180,6 +185,7 @@ module Sentry
       @transaction_names = []
       @event_processors = []
       @rack_env = {}
+      @span = nil
     end
 
     class << self
