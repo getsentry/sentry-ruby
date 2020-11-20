@@ -3,24 +3,30 @@ module Sentry
     module Tracing
       class AbstractSubscriber
 
-        def self.subscribe!
-          raise NotImplementedError
-        end
+        class << self
+          def subscribe!
+            raise NotImplementedError
+          end
 
-        def self.subscribe_to_event(event_name)
-          if ::Rails.version.to_i == 5
-            ActiveSupport::Notifications.subscribe(event_name) do |_, start, finish, _, payload|
-              next unless Sentry.get_transaction
+          def subscribe_to_event(event_name)
+            if ::Rails.version.to_i == 5
+              ActiveSupport::Notifications.subscribe(event_name) do |_, start, finish, _, payload|
+                next unless get_current_transaction
 
-              duration = finish.to_f - start.to_f
-              yield(event_name, duration, payload)
+                duration = finish.to_f - start.to_f
+                yield(event_name, duration, payload)
+              end
+            else
+              ActiveSupport::Notifications.subscribe(event_name) do |event|
+                next unless get_current_transaction
+
+                yield(event_name, event.duration, event.payload)
+              end
             end
-          else
-            ActiveSupport::Notifications.subscribe(event_name) do |event|
-              next unless Sentry.get_transaction
+          end
 
-              yield(event_name, event.duration, event.payload)
-            end
+          def get_current_transaction
+            Sentry.get_current_scope.get_transaction
           end
         end
       end
