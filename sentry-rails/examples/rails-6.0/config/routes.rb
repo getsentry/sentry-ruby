@@ -1,4 +1,5 @@
 Rails.application.routes.draw do
+  resources :posts
   get '500', :to => 'welcome#report_demo'
   root to: "welcome#index"
 
