@@ -1,5 +1,5 @@
 require 'rails'
-# require "active_record/railtie"
+require "active_record"
 require "action_view/railtie"
 require "action_controller/railtie"
 # require "action_mailer/railtie"
@@ -11,7 +11,34 @@ require 'sentry/rails'
 
 ActiveSupport::Deprecation.silenced = true
 
+ActiveRecord::Base.establish_connection(adapter: "sqlite3", database: ":memory:")
+ActiveRecord::Base.logger = Logger.new(nil)
+
+ActiveRecord::Schema.define do
+  create_table :posts, force: true do |t|
+  end
+
+  create_table :comments, force: true do |t|
+    t.integer :post_id
+  end
+end
+
+class Post < ActiveRecord::Base
+  has_many :comments
+end
+
+class Comment < ActiveRecord::Base
+  belongs_to :post
+end
+
 class TestApp < Rails::Application
+end
+
+class PostsController < ActionController::Base
+  def index
+    Post.all.to_a
+    raise "foo"
+  end
 end
 
 class HelloController < ActionController::Base
@@ -48,6 +75,7 @@ def make_basic_app
     get "/exception", :to => "hello#exception"
     get "/view_exception", :to => "hello#view_exception"
     get "/not_found", :to => "hello#not_found"
+    resources :posts, only: [:index]
     root :to => "hello#world"
   end
 

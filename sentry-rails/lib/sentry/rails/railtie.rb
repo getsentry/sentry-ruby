@@ -10,6 +10,7 @@ module Sentry
   class Railtie < ::Rails::Railtie
     initializer "sentry.use_rack_middleware" do |app|
       app.config.middleware.insert 0, Sentry::Rails::CaptureException
+      app.config.middleware.insert 0, Sentry::Rack::Tracing
     end
 
     initializer 'sentry.action_controller' do
@@ -49,6 +50,10 @@ module Sentry
         end
 
         exceptions_class.send(:prepend, Sentry::Rails::Overrides::DebugExceptionsCatcher)
+      end
+
+      if Sentry.configuration.traces_sample_rate.to_f > 0.0
+        Sentry::Rails::Tracing.subscribe_tracing_events
       end
     end
 

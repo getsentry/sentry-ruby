@@ -287,7 +287,7 @@ RSpec.describe Sentry::Hub do
 
       event = subject.capture_message("Test message")
 
-      expect(subject.last_event_id).to eq(event.id)
+      expect(subject.last_event_id).to eq(event.event_id)
     end
   end
 end

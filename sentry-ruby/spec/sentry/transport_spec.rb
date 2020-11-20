@@ -13,6 +13,64 @@ RSpec.describe Sentry::Transport do
 
   subject { described_class.new(configuration) }
 
+  describe "#encode" do
+    let(:client) { Sentry::Client.new(configuration) }
+
+    before do
+      Sentry.init do |config|
+        config.dsn = DUMMY_DSN
+      end
+    end
+
+    context "normal event" do
+      let(:event) { client.event_from_exception(ZeroDivisionError.new("divided by 0")) }
+      it "generates correct envelope content" do
+        _, result = subject.encode(event.to_hash)
+
+        envelope_header, item_header, item = result.split("\n")
+
+        expect(envelope_header).to eq(
+          <<~ENVELOPE_HEADER.chomp
+            {"event_id":"#{event.event_id}","dsn":"#{DUMMY_DSN}","sdk":#{Sentry.sdk_meta.to_json},"sent_at":"#{DateTime.now.rfc3339}"}
+          ENVELOPE_HEADER
+        )
+
+        expect(item_header).to eq(
+          '{"type":"event","content_type":"application/json"}'
+        )
+
+        expect(item).to eq(event.to_hash.to_json)
+      end
+    end
+
+    context "transaction event" do
+      let(:transaction) do
+        Sentry::Transaction.new(name: "test transaction", op: "rack.request")
+      end
+      let(:event) do
+        client.event_from_transaction(transaction)
+      end
+
+      it "generates correct envelope content" do
+        _, result = subject.encode(event.to_hash)
+
+        envelope_header, item_header, item = result.split("\n")
+
+        expect(envelope_header).to eq(
+          <<~ENVELOPE_HEADER.chomp
+            {"event_id":"#{event.event_id}","dsn":"#{DUMMY_DSN}","sdk":#{Sentry.sdk_meta.to_json},"sent_at":"#{DateTime.now.rfc3339}"}
+          ENVELOPE_HEADER
+        )
+
+        expect(item_header).to eq(
+          '{"type":"transaction","content_type":"application/json"}'
+        )
+
+        expect(item).to eq(event.to_hash.to_json)
+      end
+    end
+  end
+
   describe "#send_event" do
     let(:client) { Sentry::Client.new(configuration) }
     let(:event) { client.event_from_exception(ZeroDivisionError.new("divided by 0")) }
@@ -38,7 +96,7 @@ RSpec.describe Sentry::Transport do
         expect(subject.send_event(event)).to eq(event)
 
         expect(io.string).to match(
-          /INFO -- sentry: Sending event #{event.id} to Sentry/
+          /INFO -- sentry: Sending event #{event.event_id} to Sentry/
         )
       end
 

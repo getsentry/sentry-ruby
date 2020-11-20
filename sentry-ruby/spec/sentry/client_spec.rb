@@ -138,6 +138,32 @@ RSpec.describe Sentry::Client do
     end
   end
 
+  describe "#event_from_transaction" do
+    let(:hub) do
+      Sentry::Hub.new(subject, Sentry::Scope.new)
+    end
+    let(:transaction) do
+      Sentry::Transaction.new(name: "test transaction", sampled: true)
+    end
+
+    before do
+      transaction.start_child(op: "unfinished child")
+      transaction.start_child(op: "finished child", timestamp: Time.now.utc.iso8601)
+    end
+
+    it "initializes a correct event for the transaction" do
+      event = subject.event_from_transaction(transaction).to_hash
+
+      expect(event[:type]).to eq("transaction")
+      expect(event[:contexts][:trace]).to eq(transaction.get_trace_context)
+      expect(event[:timestamp]).to eq(transaction.timestamp)
+      expect(event[:start_timestamp]).to eq(transaction.start_timestamp)
+      expect(event[:transaction]).to eq("test transaction")
+      expect(event[:spans].count).to eq(1)
+      expect(event[:spans][0][:op]).to eq("finished child")
+    end
+  end
+
   describe "#event_from_exception" do
     let(:message) { 'This is a message' }
     let(:exception) { Exception.new(message) }

@@ -6,6 +6,10 @@ gemspec
 rails_version = ENV["RAILS_VERSION"]
 rails_version = "6.0" if rails_version.nil?
 
+gem 'activerecord-jdbcmysql-adapter', platform: :jruby
+gem "jdbc-sqlite3", platform: :jruby
+gem "sqlite3", platform: :ruby
+
 gem "rails", "~> #{rails_version}"
 gem "rspec-rails", "~> 4.0"
 gem "codecov"

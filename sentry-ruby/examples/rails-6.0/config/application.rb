@@ -21,6 +21,7 @@ module Rails60
     config.exceptions_app = self.routes
 
     config.middleware.insert_after ActionDispatch::DebugExceptions, Sentry::Rack::CaptureException
+    config.middleware.insert 0, Sentry::Rack::Tracing
 
     Sentry.init do |config|
       config.breadcrumbs_logger = [:sentry_logger]

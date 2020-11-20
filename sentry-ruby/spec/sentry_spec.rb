@@ -75,6 +75,12 @@ RSpec.describe Sentry do
     end
   end
 
+  describe ".start_transaction" do
+    it "starts a new transaction" do
+      expect(described_class.start_transaction).to be_a(Sentry::Transaction)
+    end
+  end
+
   describe ".capture_message" do
     it "sends the message via current hub" do
       expect(described_class.get_current_hub).to receive(:capture_message).with("Test", tags: { foo: "baz" })

@@ -13,20 +13,18 @@ module Sentry
       release environment server_name modules
       message user tags contexts extra
       fingerprint breadcrumbs backtrace transaction
-      platform sdk
+      platform sdk type
     )
 
     attr_accessor(*ATTRIBUTES)
-    attr_reader :id, :configuration
-
-    alias event_id id
+    attr_reader :configuration
 
     def initialize(configuration:, message: nil)
       # this needs to go first because some setters rely on configuration
       @configuration = configuration
 
       # Set some simple default values
-      @id            = SecureRandom.uuid.delete("-")
+      @event_id      = SecureRandom.uuid.delete("-")
       @timestamp     = Time.now.utc.iso8601
       @platform      = :ruby
       @sdk           = Sentry.sdk_meta
@@ -51,8 +49,8 @@ module Sentry
     class << self
       def get_log_message(event_hash)
         message = event_hash[:message] || event_hash['message']
-        message = get_message_from_exception(event_hash) if message.empty?
-        message = '<no message value>' if message.empty?
+        message = get_message_from_exception(event_hash) if message.nil? || message.empty?
+        message = '<no message value>' if message.nil? || message.empty?
         message
       end
 
@@ -87,11 +85,12 @@ module Sentry
       end
     end
 
-    def to_hash
-      data = ATTRIBUTES.each_with_object({}) do |att, memo|
-        memo[att] = public_send(att) if public_send(att)
-      end
+    def type
+      "event"
+    end
 
+    def to_hash
+      data = serialize_attributes
       data[:breadcrumbs] = breadcrumbs.to_hash if breadcrumbs
       data[:stacktrace] = @stacktrace.to_hash if @stacktrace
       data[:request] = @request.to_hash if @request
@@ -151,6 +150,14 @@ module Sentry
     end
 
     private
+
+    def serialize_attributes
+      self.class::ATTRIBUTES.each_with_object({}) do |att, memo|
+        if value = public_send(att)
+          memo[att] = value
+        end
+      end
+    end
 
     # When behind a proxy (or if the user is using a proxy), we can't use
     # REMOTE_ADDR to determine the Event IP, and must use other headers instead.

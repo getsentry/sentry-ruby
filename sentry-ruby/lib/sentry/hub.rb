@@ -67,6 +67,11 @@ module Sentry
       @stack.pop
     end
 
+    def start_transaction(transaction: nil, **options)
+      transaction ||= Transaction.new(**options, sampled: true)
+      # TODO: Add sampling logic
+    end
+
     def capture_exception(exception, **options, &block)
       return unless current_client
 
@@ -99,7 +104,7 @@ module Sentry
 
       event = current_client.capture_event(event, scope)
 
-      @last_event_id = event.id
+      @last_event_id = event.event_id
       event
     end
 

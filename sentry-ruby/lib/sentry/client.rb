@@ -51,6 +51,18 @@ module Sentry
       Event.new(configuration: configuration, message: message)
     end
 
+    def event_from_transaction(transaction)
+      TransactionEvent.new(configuration: configuration).tap do |event|
+        event.transaction = transaction.name
+        event.contexts.merge!(trace: transaction.get_trace_context)
+        event.timestamp = transaction.timestamp
+        event.start_timestamp = transaction.start_timestamp
+
+        finished_spans = transaction.span_recorder.spans.select { |span| span.timestamp }.map(&:to_hash)
+        event.spans = finished_spans
+      end
+    end
+
     def send_event(event)
       return false unless configuration.sending_allowed?(event)
 
