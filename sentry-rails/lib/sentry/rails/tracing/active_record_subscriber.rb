@@ -7,13 +7,11 @@ module Sentry
 
         def self.subscribe!
           subscribe_to_event(EVENT_NAME) do |event_name, duration, payload|
-            if !EXCLUDED_EVENTS.include? payload[:name]
-              timestamp = Time.now.utc.to_f
-              start_timestamp = timestamp - duration.to_f
+            next if EXCLUDED_EVENTS.include? payload[:name]
 
-              new_span = get_current_transaction.start_child(op: event_name, description: payload[:sql], start_timestamp: start_timestamp, timestamp: timestamp)
-              new_span.set_data(:name, payload[:name])
-              new_span.set_data(:connection_id, payload[:connection_id])
+            record_on_current_span(op: event_name, start_timestamp: payload[:start_timestamp], duration: duration) do |span|
+              span.set_description(payload[:sql])
+              span.set_data(:connection_id, payload[:connection_id])
             end
           end
         end
