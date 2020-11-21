@@ -96,6 +96,10 @@ module Sentry
       @status = status
     end
 
+    def set_timestamp(timestamp)
+      @timestamp = timestamp
+    end
+
     def set_http_status(status_code)
       status_code = status_code.to_i
       set_data("status_code", status_code)

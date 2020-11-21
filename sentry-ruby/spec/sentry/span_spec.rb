@@ -95,6 +95,31 @@ RSpec.describe Sentry::Span do
     end
   end
 
+  describe "#set_op" do
+    it "sets op" do
+      subject.set_op("foo")
+
+      expect(subject.op).to eq("foo")
+    end
+  end
+
+  describe "#set_description" do
+    it "sets description" do
+      subject.set_description("bar")
+
+      expect(subject.description).to eq("bar")
+    end
+  end
+
+  describe "#set_timestamp" do
+    it "sets timestamp" do
+      time = Time.now.to_f
+      subject.set_timestamp(time)
+
+      expect(subject.timestamp).to eq(time)
+    end
+  end
+
   describe "#set_http_status" do
     {
       200 => "ok",
