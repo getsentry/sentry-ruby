@@ -34,28 +34,24 @@ RSpec.describe Sentry::Rails::Tracing, type: :request do
       expect(event.dig(:contexts, :trace, :trace_id)).to eq(transaction.dig(:contexts, :trace, :trace_id))
 
       expect(transaction[:type]).to eq("transaction")
-      expect(transaction[:spans].count).to eq(3)
+      parent_span_id = transaction.dig(:contexts, :trace, :span_id)
+      expect(transaction[:spans].count).to eq(2)
 
       first_span = transaction[:spans][0]
-      expect(first_span[:op]).to eq("rack.request")
-      expect(first_span[:status]).to eq("internal_error")
-      expect(first_span[:data]).to eq({ "status_code" => 500 })
-
-      second_span = transaction[:spans][1]
-      expect(second_span[:op]).to eq("sql.active_record")
-      expect(second_span[:description]).to eq("SELECT \"posts\".* FROM \"posts\"")
-      expect(second_span[:parent_span_id]).to eq(first_span[:span_id])
+      expect(first_span[:op]).to eq("sql.active_record")
+      expect(first_span[:description]).to eq("SELECT \"posts\".* FROM \"posts\"")
+      expect(first_span[:parent_span_id]).to eq(parent_span_id)
 
       # this is to make sure we calculate the timestamp in the correct scale (second instead of millisecond)
-      expect(second_span[:timestamp] - second_span[:start_timestamp]).to be <= 1
+      expect(first_span[:timestamp] - first_span[:start_timestamp]).to be <= 1
 
-      third_span = transaction[:spans][2]
-      expect(third_span[:op]).to eq("process_action.action_controller")
-      expect(third_span[:description]).to eq("PostsController#index")
-      expect(third_span[:parent_span_id]).to eq(first_span[:span_id])
+      second_span = transaction[:spans][1]
+      expect(second_span[:op]).to eq("process_action.action_controller")
+      expect(second_span[:description]).to eq("PostsController#index")
+      expect(second_span[:parent_span_id]).to eq(parent_span_id)
 
-      # expect(third_span[:timestamp]).to be > first_span[:timestamp]
-      # expect(third_span[:start_timestamp]).to be < first_span[:start_timestamp]
+      # expect(second_span[:timestamp]).to be > first_span[:timestamp]
+      # expect(second_span[:start_timestamp]).to be < first_span[:start_timestamp]
     end
   end
 

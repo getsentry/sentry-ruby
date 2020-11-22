@@ -58,8 +58,8 @@ module Sentry
         event.timestamp = transaction.timestamp
         event.start_timestamp = transaction.start_timestamp
 
-        finished_spans = transaction.span_recorder.spans.select { |span| span.timestamp }.map(&:to_hash)
-        event.spans = finished_spans
+        finished_spans = transaction.span_recorder.spans.select { |span| span.timestamp && span != transaction }
+        event.spans = finished_spans.map(&:to_hash)
       end
     end
 
