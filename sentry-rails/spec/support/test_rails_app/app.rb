@@ -42,12 +42,18 @@ class PostsController < ActionController::Base
 end
 
 class HelloController < ActionController::Base
+  prepend_view_path "spec/support/test_rails_app"
+
   def exception
     raise "An unhandled exception!"
   end
 
   def view_exception
     render inline: "<%= foo %>"
+  end
+
+  def view
+    render template: "test_template"
   end
 
   def world
@@ -74,6 +80,7 @@ def make_basic_app
   app.routes.append do
     get "/exception", :to => "hello#exception"
     get "/view_exception", :to => "hello#view_exception"
+    get "/view", :to => "hello#view"
     get "/not_found", :to => "hello#not_found"
     get "/world", to: "hello#world"
     resources :posts, only: [:index]

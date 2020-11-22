@@ -1,6 +1,7 @@
 require "sentry/rails/tracing/abstract_subscriber"
 require "sentry/rails/tracing/active_record_subscriber"
 require "sentry/rails/tracing/action_controller_subscriber"
+require "sentry/rails/tracing/action_view_subscriber"
 
 module Sentry
   module Rails
@@ -11,6 +12,7 @@ module Sentry
 
         Tracing::ActiveRecordSubscriber.subscribe!
         Tracing::ActionControllerSubscriber.subscribe!
+        Tracing::ActionViewSubscriber.subscribe!
 
         @subscribed = true
       end
