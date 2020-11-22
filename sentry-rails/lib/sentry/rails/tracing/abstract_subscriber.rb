@@ -29,18 +29,18 @@ module Sentry
             end
           end
 
-          def record_on_current_span(op:, start_timestamp:, duration:)
-            return unless start_timestamp
+          def record_on_current_span(duration:, **options)
+            return unless options[:start_timestamp]
 
             scope = Sentry.get_current_scope
             transaction = scope.get_transaction
             return unless transaction
 
-            span = transaction.start_child(op: op, start_timestamp: start_timestamp)
+            span = transaction.start_child(**options)
             # duration in ActiveSupport is computed in millisecond
             # so we need to covert it as second before calculating the timestamp
             span.set_timestamp(span.start_timestamp + duration / 1000)
-            yield(span)
+            yield(span) if block_given?
           end
         end
       end

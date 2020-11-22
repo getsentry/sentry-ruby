@@ -6,12 +6,15 @@ module Sentry
 
         def self.subscribe!
           subscribe_to_event(EVENT_NAME) do |event_name, duration, payload|
-            record_on_current_span(op: event_name, start_timestamp: payload[:start_timestamp], duration: duration) do |span|
-              controller = payload[:controller]
-              action = payload[:action]
-              description = "#{controller}##{action}"
+            controller = payload[:controller]
+            action = payload[:action]
 
-              span.set_description(description)
+            record_on_current_span(
+              op: event_name,
+              start_timestamp: payload[:start_timestamp],
+              description: "#{controller}##{action}",
+              duration: duration
+            ) do |span|
               span.set_data(:payload, payload)
               span.set_http_status(payload[:status])
             end

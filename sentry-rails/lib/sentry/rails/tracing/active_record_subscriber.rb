@@ -9,8 +9,7 @@ module Sentry
           subscribe_to_event(EVENT_NAME) do |event_name, duration, payload|
             next if EXCLUDED_EVENTS.include? payload[:name]
 
-            record_on_current_span(op: event_name, start_timestamp: payload[:start_timestamp], duration: duration) do |span|
-              span.set_description(payload[:sql])
+            record_on_current_span(op: event_name, start_timestamp: payload[:start_timestamp], description: payload[:sql], duration: duration) do |span|
               span.set_data(:connection_id, payload[:connection_id])
             end
           end
