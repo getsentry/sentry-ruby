@@ -75,6 +75,7 @@ def make_basic_app
     get "/exception", :to => "hello#exception"
     get "/view_exception", :to => "hello#view_exception"
     get "/not_found", :to => "hello#not_found"
+    get "/world", to: "hello#world"
     resources :posts, only: [:index]
     root :to => "hello#world"
   end

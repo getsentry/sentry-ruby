@@ -18,21 +18,23 @@ module Sentry
       # this is necessary because instrumentation events don't record absolute start/finish time
       # so we need to retrieve the correct time this way
       def self.patch_active_support_notifications
-        ::ActiveSupport::Notifications::Instrumenter.class_eval do
-          alias original_instrument instrument
-
-          def instrument(name, payload = {}, &block)
-            is_public_event = name[0] != "!"
-
-            payload[:start_timestamp] = Time.now.utc.to_f if is_public_event
-
-            original_instrument(name, payload, &block)
-          end
+        unless ::ActiveSupport::Notifications::Instrumenter.ancestors.include?(SentryNotificationExtension)
+          ::ActiveSupport::Notifications::Instrumenter.send(:prepend, SentryNotificationExtension)
         end
       end
 
       def self.get_current_transaction
         Sentry.get_current_scope.get_transaction
+      end
+
+      module SentryNotificationExtension
+        def instrument(name, payload = {}, &block)
+          is_public_event = name[0] != "!"
+
+          payload[:start_timestamp] = Time.now.utc.to_f if is_public_event
+
+          super(name, payload, &block)
+        end
       end
     end
   end

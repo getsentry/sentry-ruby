@@ -8,6 +8,10 @@ module Sentry
             raise NotImplementedError
           end
 
+          def unsubscribe!
+            ActiveSupport::Notifications.unsubscribe(self::EVENT_NAME)
+          end
+
           def subscribe_to_event(event_name)
             if ::Rails.version.to_i == 5
               ActiveSupport::Notifications.subscribe(event_name) do |_, start, finish, _, payload|
