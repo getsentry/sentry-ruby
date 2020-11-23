@@ -48,6 +48,7 @@ RSpec.describe Sentry::Event do
         'SERVER_NAME' => 'localhost',
         'SERVER_PORT' => '80',
         'HTTP_X_FORWARDED_FOR' => '1.1.1.1, 2.2.2.2',
+        'HTTP_X_REQUEST_ID' => 'abcd-1234-abcd-1234',
         'REMOTE_ADDR' => '192.168.1.1',
         'PATH_INFO' => '/lol',
         'rack.url_scheme' => 'http',
@@ -65,12 +66,13 @@ RSpec.describe Sentry::Event do
 
         expect(event.to_hash[:request]).to eq(
           env: { 'SERVER_NAME' => 'localhost', 'SERVER_PORT' => '80' },
-          headers: { 'Host' => 'localhost' },
+          headers: { 'Host' => 'localhost', 'X-Request-Id' => 'abcd-1234-abcd-1234' },
           method: 'POST',
           query_string: 'biz=baz',
           url: 'http://localhost/lol',
           cookies: nil
         )
+        expect(event.to_hash[:tags][:request_id]).to eq("abcd-1234-abcd-1234")
         expect(event.to_hash[:user][:ip_address]).to eq(nil)
       end
     end
@@ -86,13 +88,14 @@ RSpec.describe Sentry::Event do
         expect(event.to_hash[:request]).to eq(
           data: { 'foo' => 'bar' },
           env: { 'SERVER_NAME' => 'localhost', 'SERVER_PORT' => '80', "REMOTE_ADDR" => "192.168.1.1" },
-          headers: { 'Host' => 'localhost', "X-Forwarded-For" => "1.1.1.1, 2.2.2.2" },
+          headers: { 'Host' => 'localhost', "X-Forwarded-For" => "1.1.1.1, 2.2.2.2", "X-Request-Id" => "abcd-1234-abcd-1234" },
           method: 'POST',
           query_string: 'biz=baz',
           url: 'http://localhost/lol',
           cookies: {}
         )
 
+        expect(event.to_hash[:tags][:request_id]).to eq("abcd-1234-abcd-1234")
         expect(event.to_hash[:user][:ip_address]).to eq("1.1.1.1")
       end
     end

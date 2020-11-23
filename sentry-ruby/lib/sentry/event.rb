@@ -5,6 +5,7 @@ require 'securerandom'
 require 'sentry/interface'
 require 'sentry/backtrace'
 require 'sentry/utils/real_ip'
+require 'sentry/utils/request_id'
 
 module Sentry
   class Event
@@ -81,6 +82,9 @@ module Sentry
 
         if configuration.send_default_pii && ip = calculate_real_ip_from_rack(env.dup)
           user[:ip_address] = ip
+        end
+        if request_id = Utils::RequestId.read_from(env)
+          tags[:request_id] = request_id
         end
       end
     end
