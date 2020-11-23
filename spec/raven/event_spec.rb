@@ -199,6 +199,7 @@ RSpec.describe Raven::Event do
                          'SERVER_NAME' => 'localhost',
                          'SERVER_PORT' => '80',
                          'HTTP_X_FORWARDED_FOR' => '1.1.1.1, 2.2.2.2',
+                         'HTTP_X_REQUEST_ID' => '98765432',
                          'REMOTE_ADDR' => '192.168.1.1',
                          'PATH_INFO' => '/lol',
                          'rack.url_scheme' => 'http',
@@ -219,7 +220,7 @@ RSpec.describe Raven::Event do
     it "adds http data" do
       expect(hash[:request]).to eq(data: { 'foo' => 'bar' },
                                    env: { 'SERVER_NAME' => 'localhost', 'SERVER_PORT' => '80', "REMOTE_ADDR" => "192.168.1.1" },
-                                   headers: { 'Host' => 'localhost', "X-Forwarded-For" => "1.1.1.1, 2.2.2.2" },
+                                   headers: { 'Host' => 'localhost', "X-Forwarded-For" => "1.1.1.1, 2.2.2.2", 'X-Request-Id' => '98765432' },
                                    method: 'POST',
                                    query_string: 'biz=baz',
                                    url: 'http://localhost/lol',
@@ -228,6 +229,10 @@ RSpec.describe Raven::Event do
 
     it "sets user context ip address correctly" do
       expect(hash[:user][:ip_address]).to eq("1.1.1.1")
+    end
+
+    it "adds request_id to the tags" do
+      expect(hash[:tags][:request_id]).to eq("98765432")
     end
   end
 
