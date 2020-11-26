@@ -6,13 +6,13 @@ require "sentry/rails/tracing/action_view_subscriber"
 module Sentry
   module Rails
     module Tracing
+      AVAILABLE_SUBSCRIBERS = [ActionViewSubscriber, ActiveRecordSubscriber, ActionControllerSubscriber]
+
       def self.subscribe_tracing_events
         # need to avoid duplicated subscription
         return if @subscribed
 
-        Tracing::ActiveRecordSubscriber.subscribe!
-        Tracing::ActionControllerSubscriber.subscribe!
-        Tracing::ActionViewSubscriber.subscribe!
+        AVAILABLE_SUBSCRIBERS.each(&:subscribe!)
 
         @subscribed = true
       end
@@ -20,9 +20,7 @@ module Sentry
       def self.unsubscribe_tracing_events
         return unless @subscribed
 
-        Tracing::ActiveRecordSubscriber.unsubscribe!
-        Tracing::ActionControllerSubscriber.unsubscribe!
-        Tracing::ActionViewSubscriber.unsubscribe!
+        AVAILABLE_SUBSCRIBERS.each(&:unsubscribe!)
 
         @subscribed = false
       end
@@ -59,7 +57,7 @@ module Sentry
         Sentry.get_current_scope.get_transaction
       end
 
-      # it's just a placeholder for the extended method
+      # it's just a container for the extended method
       module SentryNotificationExtension
       end
     end
