@@ -22,6 +22,11 @@ RSpec.describe Sentry::Rails::Tracing, type: :request do
       end
     end
 
+    after do
+      described_class.unsubscribe_tracing_events
+      described_class.remove_active_support_notifications_patch
+    end
+
     it "records transaction" do
       get "/posts"
 

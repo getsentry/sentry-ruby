@@ -9,6 +9,7 @@ RSpec.describe Sentry::Rails::Tracing::ActionViewSubscriber, type: :request do
 
   after do
     described_class.unsubscribe!
+    Sentry::Rails::Tracing.remove_active_support_notifications_patch
   end
 
   let(:transport) do
