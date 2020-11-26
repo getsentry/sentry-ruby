@@ -1,15 +1,8 @@
 require "spec_helper"
 
-RSpec.describe Sentry::Rails::Tracing::ActiveRecordSubscriber do
+RSpec.describe Sentry::Rails::Tracing::ActiveRecordSubscriber, :subscriber do
   before do
     perform_basic_setup
-    Sentry::Rails::Tracing.patch_active_support_notifications
-    described_class.subscribe!
-  end
-
-  after do
-    described_class.unsubscribe!
-    Sentry::Rails::Tracing.remove_active_support_notifications_patch
   end
 
   let(:transport) do

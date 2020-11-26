@@ -34,6 +34,16 @@ RSpec.configure do |config|
     c.syntax = :expect
   end
 
+  config.before :each, :subscriber do
+    Sentry::Rails::Tracing.patch_active_support_notifications
+    described_class.subscribe!
+  end
+
+  config.after :each, :subscriber do
+    described_class.unsubscribe!
+    Sentry::Rails::Tracing.remove_active_support_notifications_patch
+  end
+
   config.before :each do
     # Make sure we reset the env in case something leaks in
     ENV.delete('SENTRY_DSN')
