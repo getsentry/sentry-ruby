@@ -263,6 +263,10 @@ module Sentry
       environments.empty? || environments.include?(current_environment)
     end
 
+    def tracing_enabled?
+      !!((@traces_sample_rate && @traces_sample_rate > 0.0) || @traces_sampler)
+    end
+
     private
 
     def detect_project_root
