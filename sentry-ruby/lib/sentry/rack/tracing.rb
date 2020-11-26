@@ -13,6 +13,7 @@ module Sentry
         end
 
         Sentry.with_scope do |scope|
+          scope.clear_breadcrumbs
           scope.set_transaction_name(env["PATH_INFO"]) if env["PATH_INFO"]
           span = Sentry.start_transaction(name: scope.transaction_name, op: "rack.request")
           scope.set_span(span)
