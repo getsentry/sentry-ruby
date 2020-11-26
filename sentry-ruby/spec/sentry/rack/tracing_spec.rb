@@ -29,11 +29,10 @@ RSpec.describe Sentry::Rack::Tracing do
 
     transaction = transport.events.last
     expect(transaction.type).to eq("transaction")
-    expect(transaction.spans.count).to eq(1)
-    span = transaction.spans.last
-    expect(span[:status]).to eq("ok")
-    expect(span[:data]).to eq({ "status_code" => 200 })
-    expect(span[:timestamp]).not_to be_nil
+    expect(transaction.timestamp).not_to be_nil
+    expect(transaction.contexts.dig(:trace, :status)).to eq("ok")
+    expect(transaction.contexts.dig(:trace, :op)).to eq("rack.request")
+    expect(transaction.spans.count).to eq(0)
   end
 
   context "when there's an exception" do
@@ -55,12 +54,12 @@ RSpec.describe Sentry::Rack::Tracing do
       expect(event.contexts.dig(:trace, :trace_id).length).to eq(32)
       expect(event.contexts.dig(:trace, :trace_id)).to eq(transaction.contexts.dig(:trace, :trace_id))
 
+
       expect(transaction.type).to eq("transaction")
-      expect(transaction.spans.count).to eq(1)
-      span = transaction.spans.last
-      expect(span[:status]).to eq("internal_error")
-      expect(span[:data]).to eq({ "status_code" => 500 })
-      expect(span[:timestamp]).not_to be_nil
+      expect(transaction.timestamp).not_to be_nil
+      expect(transaction.contexts.dig(:trace, :status)).to eq("internal_error")
+      expect(transaction.contexts.dig(:trace, :op)).to eq("rack.request")
+      expect(transaction.spans.count).to eq(0)
     end
   end
 

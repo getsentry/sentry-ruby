@@ -54,6 +54,7 @@ module Sentry
 
       if Sentry.configuration.traces_sample_rate.to_f > 0.0
         Sentry::Rails::Tracing.subscribe_tracing_events
+        Sentry::Rails::Tracing.patch_active_support_notifications
       end
     end
 

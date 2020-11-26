@@ -58,8 +58,8 @@ RSpec.describe Sentry::Transaction do
       expect(events.count).to eq(1)
       event = events.last.to_hash
 
-      expect(event[:spans][0]).to eq(subject.to_hash)
-      expect(event[:spans][0][:timestamp]).to be_a(Float)
+      # don't contain itself
+      expect(event[:spans]).to be_empty
     end
 
     context "if the transaction is not sampled" do
@@ -78,10 +78,7 @@ RSpec.describe Sentry::Transaction do
       it "adds a default name" do
         subject.finish
 
-        expect(events.count).to eq(1)
-        event = events.last.to_hash
-
-        expect(event[:spans][0][:name]).to eq("<unlabeled transaction>")
+        expect(subject.name).to eq("<unlabeled transaction>")
       end
     end
   end

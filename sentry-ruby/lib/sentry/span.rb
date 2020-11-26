@@ -78,14 +78,26 @@ module Sentry
 
     def start_child(**options)
       options = options.dup.merge(trace_id: @trace_id, parent_span_id: @span_id, sampled: @sampled)
-      child_span = self.class.new(options)
+      child_span = Span.new(options)
       child_span.span_recorder = @span_recorder
       @span_recorder.add(child_span)
       child_span
     end
 
+    def set_op(op)
+      @op = op
+    end
+
+    def set_description(description)
+      @description = description
+    end
+
     def set_status(status)
       @status = status
+    end
+
+    def set_timestamp(timestamp)
+      @timestamp = timestamp
     end
 
     def set_http_status(status_code)
