@@ -1,15 +1,8 @@
 require "spec_helper"
 
-RSpec.describe Sentry::Rails::Tracing::ActionViewSubscriber, type: :request do
+RSpec.describe Sentry::Rails::Tracing::ActionViewSubscriber, :subscriber, type: :request do
   before do
     make_basic_app
-    Sentry::Rails::Tracing.patch_active_support_notifications
-    described_class.subscribe!
-  end
-
-  after do
-    described_class.unsubscribe!
-    Sentry::Rails::Tracing.remove_active_support_notifications_patch
   end
 
   let(:transport) do
