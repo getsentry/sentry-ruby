@@ -68,8 +68,9 @@ module Sentry
     end
 
     def start_transaction(transaction: nil, **options)
-      transaction ||= Transaction.new(**options, sampled: true)
-      # TODO: Add sampling logic
+      transaction ||= Transaction.new(**options)
+      transaction.set_initial_sample_desicion
+      transaction
     end
 
     def capture_exception(exception, **options, &block)

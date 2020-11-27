@@ -97,6 +97,8 @@ module Sentry
 
     attr_accessor :traces_sample_rate
 
+    attr_accessor :traces_sampler
+
     # Optional Proc, called before sending an event to the server/
     # E.g.: lambda { |event| event }
     # E.g.: lambda { |event| nil }
@@ -259,6 +261,10 @@ module Sentry
 
     def enabled_in_current_env?
       environments.empty? || environments.include?(current_environment)
+    end
+
+    def tracing_enabled?
+      !!((@traces_sample_rate && @traces_sample_rate > 0.0) || @traces_sampler)
     end
 
     private

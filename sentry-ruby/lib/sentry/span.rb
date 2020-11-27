@@ -33,6 +33,9 @@ module Sentry
       @status = status
       @data = {}
       @tags = {}
+    end
+
+    def set_span_recorder
       @span_recorder = SpanRecorder.new(1000)
       @span_recorder.add(self)
     end
@@ -80,7 +83,11 @@ module Sentry
       options = options.dup.merge(trace_id: @trace_id, parent_span_id: @span_id, sampled: @sampled)
       child_span = Span.new(options)
       child_span.span_recorder = @span_recorder
-      @span_recorder.add(child_span)
+
+      if @span_recorder && @sampled
+        @span_recorder.add(child_span)
+      end
+
       child_span
     end
 

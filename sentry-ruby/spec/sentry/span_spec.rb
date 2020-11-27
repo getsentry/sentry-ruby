@@ -79,11 +79,19 @@ RSpec.describe Sentry::Span do
       expect(new_span.sampled).to eq(true)
     end
 
-    it "records the child span" do
-      new_span = subject.start_child(op: "sql.query", description: "SELECT * FROM orders WHERE orders.user_id = 1", status: "ok")
+    it "records the child span if span_recorder is present" do
+      subject.set_span_recorder
+      new_span = subject.start_child
 
       expect(subject.span_recorder.spans).to include(new_span)
       expect(new_span.span_recorder).to eq(subject.span_recorder)
+    end
+
+    it "doesn't record the child span if span_recorder is not present" do
+      new_span = subject.start_child
+
+      expect(subject.span_recorder).to eq(nil)
+      expect(new_span.span_recorder).to eq(nil)
     end
   end
 

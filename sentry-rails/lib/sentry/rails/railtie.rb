@@ -52,7 +52,7 @@ module Sentry
         exceptions_class.send(:prepend, Sentry::Rails::Overrides::DebugExceptionsCatcher)
       end
 
-      if Sentry.configuration.traces_sample_rate.to_f > 0.0
+      if Sentry.configuration.tracing_enabled?
         Sentry::Rails::Tracing.subscribe_tracing_events
         Sentry::Rails::Tracing.patch_active_support_notifications
       end

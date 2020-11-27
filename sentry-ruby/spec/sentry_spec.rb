@@ -77,7 +77,19 @@ RSpec.describe Sentry do
 
   describe ".start_transaction" do
     it "starts a new transaction" do
-      expect(described_class.start_transaction).to be_a(Sentry::Transaction)
+      transaction = described_class.start_transaction(op: "foo")
+      expect(transaction).to be_a(Sentry::Transaction)
+      expect(transaction.op).to eq("foo")
+    end
+
+    context "when given an transaction object" do
+      it "adds sample decision to it" do
+        transaction = Sentry::Transaction.new
+
+        described_class.start_transaction(transaction: transaction)
+
+        expect(transaction.sampled).to eq(false)
+      end
     end
   end
 

@@ -10,7 +10,7 @@ RSpec.describe Sentry::Rack::Tracing do
       config.breadcrumbs_logger = [:sentry_logger]
       config.dsn = DUMMY_DSN
       config.transport.transport_class = Sentry::DummyTransport
-      config.traces_sample_rate = 1.0
+      config.traces_sample_rate = 0.5
     end
   end
 
@@ -18,24 +18,52 @@ RSpec.describe Sentry::Rack::Tracing do
     Sentry.get_current_client.transport
   end
 
-  it "starts a span and finishes it" do
-    app = ->(_) do
-      [200, {}, ["ok"]]
+  context "when the transaction is sampled" do
+    before do
+      allow(Random).to receive(:rand).and_return(0.4)
     end
 
-    stack = described_class.new(app)
+    it "starts a span and finishes it" do
+      app = ->(_) do
+        [200, {}, ["ok"]]
+      end
 
-    stack.call(env)
+      stack = described_class.new(app)
 
-    transaction = transport.events.last
-    expect(transaction.type).to eq("transaction")
-    expect(transaction.timestamp).not_to be_nil
-    expect(transaction.contexts.dig(:trace, :status)).to eq("ok")
-    expect(transaction.contexts.dig(:trace, :op)).to eq("rack.request")
-    expect(transaction.spans.count).to eq(0)
+      stack.call(env)
+
+      transaction = transport.events.last
+      expect(transaction.type).to eq("transaction")
+      expect(transaction.timestamp).not_to be_nil
+      expect(transaction.contexts.dig(:trace, :status)).to eq("ok")
+      expect(transaction.contexts.dig(:trace, :op)).to eq("rack.request")
+      expect(transaction.spans.count).to eq(0)
+    end
+  end
+
+  context "when the transaction is not sampled" do
+    before do
+      allow(Random).to receive(:rand).and_return(0.6)
+    end
+
+    it "doesn't do anything" do
+      app = ->(_) do
+        [200, {}, ["ok"]]
+      end
+
+      stack = described_class.new(app)
+
+      stack.call(env)
+
+      expect(transport.events.count).to eq(0)
+    end
   end
 
   context "when there's an exception" do
+    before do
+      allow(Random).to receive(:rand).and_return(0.4)
+    end
+
     it "still finishes the transaction" do
       app = ->(_) do
         raise "foo"
