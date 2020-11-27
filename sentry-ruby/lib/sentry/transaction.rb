@@ -17,6 +17,7 @@ module Sentry
 
       @name = name
       @parent_sampled = parent_sampled
+      set_span_recorder
     end
 
     def self.from_sentry_trace(sentry_trace, **options)

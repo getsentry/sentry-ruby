@@ -28,4 +28,16 @@ RSpec.describe Sentry::Rails::Tracing::ActionControllerSubscriber, :subscriber, 
     expect(span[:description]).to eq("HelloController#world")
     expect(span[:trace_id]).to eq(transaction.dig(:contexts, :trace, :trace_id))
   end
+
+  it "doesn't record spans for unsampled transaction" do
+    transaction = Sentry::Transaction.new(sampled: false)
+    Sentry.get_current_scope.set_span(transaction)
+
+    get "/world"
+
+    transaction.finish
+
+    expect(transport.events.count).to eq(0)
+    expect(transaction.span_recorder.spans).to eq([transaction])
+  end
 end

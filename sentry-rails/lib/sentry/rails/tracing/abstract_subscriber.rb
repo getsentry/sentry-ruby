@@ -34,7 +34,7 @@ module Sentry
 
             scope = Sentry.get_current_scope
             transaction = scope.get_transaction
-            return unless transaction
+            return unless transaction && transaction.sampled
 
             span = transaction.start_child(**options)
             # duration in ActiveSupport is computed in millisecond
