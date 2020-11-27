@@ -291,9 +291,13 @@ module Sentry
     end
 
     def excluded_exception?(incoming_exception)
-      excluded_exceptions.any? do |excluded_exception|
-        matches_exception?(get_exception_class(excluded_exception), incoming_exception)
+      excluded_exception_classes.any? do |excluded_exception|
+        matches_exception?(excluded_exception, incoming_exception)
       end
+    end
+
+    def excluded_exception_classes
+      @excluded_exception_classes ||= excluded_exceptions.map { |e| get_exception_class(e) }
     end
 
     def get_exception_class(x)
