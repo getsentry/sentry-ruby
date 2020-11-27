@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.1.3
+
+- Small fixes
+
 ## 0.1.2
 
 Fix require reference
