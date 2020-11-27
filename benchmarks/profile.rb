@@ -1,7 +1,5 @@
 require 'raven'
-require 'raven/breadcrumbs/logger'
-require 'raven/transports/dummy'
-require_relative "../spec/support/test_rails_app/app"
+require_relative 'application'
 
 TestApp.configure do |config|
   config.middleware.delete ActionDispatch::DebugExceptions
@@ -10,14 +8,8 @@ end
 
 Raven.configure do |config|
   config.logger = Logger.new(nil)
+  config.breadcrumbs_logger = [:active_support_logger]
   config.dsn = "dummy://12345:67890@sentry.localdomain:3000/sentry/42"
-end
-
-@app = make_basic_app
-RAILS_EXC = begin
-  @app.get("/exception")
-rescue => exc
-  exc
 end
 
 require 'ruby-prof'
@@ -26,7 +18,7 @@ RubyProf.measure_mode = RubyProf::PROCESS_TIME
 
 # profile the code
 result = RubyProf.profile do
-  100.times { Raven.capture_exception(RAILS_EXC) }
+  100.times { app.get("/exception") }
 end
 
 # print a graph profile to text
