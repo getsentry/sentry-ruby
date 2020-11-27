@@ -84,7 +84,7 @@ jobs:
     - name: Build and run allocation report on master
       run: |
         bundle install --jobs 4 --retry 3
-        bundle exec ruby benchmarks/allocation_comparison.rb
+        bundle exec ruby benchmarks/rails_integration_allocation_comparison.rb
 
     - uses: actions/checkout@v1
 
@@ -93,4 +93,4 @@ jobs:
         bundle install --jobs 4 --retry 3
     - name: Run allocation report on the branch
       run: |
-        bundle exec ruby benchmarks/allocation_comparison.rb
+        bundle exec ruby benchmarks/rails_integration_allocation_comparison.rb
