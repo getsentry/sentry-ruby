@@ -293,7 +293,7 @@ module Sentry
     end
 
     def get_exception_class(x)
-      x.is_a?(Module) ? x : qualified_const_get(x)
+      x.is_a?(Module) ? x : safe_const_get(x)
     end
 
     def matches_exception?(excluded_exception_class, incoming_exception)
@@ -304,14 +304,9 @@ module Sentry
       end
     end
 
-    # In Ruby <2.0 const_get can't lookup "SomeModule::SomeClass" in one go
-    def qualified_const_get(x)
-      x = x.to_s
-      if !x.match(/::/)
-        Object.const_get(x)
-      else
-        x.split(MODULE_SEPARATOR).reject(&:empty?).inject(Object) { |a, e| a.const_get(e) }
-      end
+    def safe_const_get(x)
+      x = x.to_s unless x.is_a?(String)
+      Object.const_get(x)
     rescue NameError # There's no way to safely ask if a constant exist for an unknown string
       nil
     end
