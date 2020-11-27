@@ -35,3 +35,38 @@ jobs:
       run: |
         bundle install --jobs 4 --retry 3
         bundle exec rake
+  compare_allocation:
+    defaults:
+      run:
+        working-directory: sentry-ruby
+    name: Compare memory allocation with ${{ matrix.ruby_version }}
+    runs-on: ${{ matrix.os }}
+    needs: test
+    strategy:
+      matrix:
+        ruby_version: [2.6, 2.7]
+        os: [ubuntu-latest]
+    steps:
+    - name: Set up Ruby ${{ matrix.ruby_version }}
+      uses: ruby/setup-ruby@v1
+      with:
+        bundler: 1
+        ruby-version: ${{ matrix.ruby_version }}
+
+    - uses: actions/checkout@v2
+      with:
+        ref: master
+
+    - name: Build and run allocation report on master
+      run: |
+        bundle install --jobs 4 --retry 3
+        bundle exec ruby benchmarks/allocation_comparison.rb
+
+    - uses: actions/checkout@v1
+
+    - name: Rebuild on the branch
+      run: |
+        bundle install --jobs 4 --retry 3
+    - name: Run allocation report on the branch
+      run: |
+        bundle exec ruby benchmarks/allocation_comparison.rb
