@@ -2,7 +2,10 @@ require "uri"
 
 module Sentry
   class DSN
-    attr_reader :scheme, :project_id, :public_key, :secret_key, :host, :port, :path
+    PORT_MAP = { 'http' => 80, 'https' => 443 }.freeze
+    REQUIRED_ATTRIBUTES = %w(host path public_key project_id).freeze
+
+    attr_reader :scheme, :secret_key, :port, *REQUIRED_ATTRIBUTES
 
     def initialize(dsn_string)
       @raw_value = dsn_string
@@ -24,7 +27,7 @@ module Sentry
     end
 
     def valid?
-      %w(host path public_key project_id).all? { |k| public_send(k) }
+      REQUIRED_ATTRIBUTES.all? { |k| public_send(k) }
     end
 
     def to_s
@@ -33,7 +36,7 @@ module Sentry
 
     def server
       server = "#{scheme}://#{host}"
-      server += ":#{port}" unless port == { 'http' => 80, 'https' => 443 }[scheme]
+      server += ":#{port}" unless port == PORT_MAP[scheme]
       server += path
       server
     end

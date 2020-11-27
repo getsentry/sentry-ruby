@@ -39,7 +39,7 @@ module Sentry
       @server_name = configuration.server_name
       @environment = configuration.current_environment
       @release = configuration.release
-      @modules = list_gem_specs if configuration.send_modules
+      @modules = configuration.gem_specs if configuration.send_modules
 
       @message = message || ""
 
@@ -168,11 +168,6 @@ module Sentry
         :real_ip => env["HTTP_X_REAL_IP"],
         :forwarded_for => env["HTTP_X_FORWARDED_FOR"]
       ).calculate_ip
-    end
-
-    def list_gem_specs
-      # Older versions of Rubygems don't support iterating over all specs
-      Hash[Gem::Specification.map { |spec| [spec.name, spec.version.to_s] }] if Gem::Specification.respond_to?(:map)
     end
   end
 end

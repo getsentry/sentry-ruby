@@ -114,6 +114,8 @@ module Sentry
     # the dsn value, whether it's set via `config.dsn=` or `ENV["SENTRY_DSN"]`
     attr_reader :dsn
 
+    attr_reader :gem_specs
+
     # Most of these errors generate 4XX responses. In general, Sentry clients
     # only automatically report 5xx responses.
     IGNORE_DEFAULT = [
@@ -159,9 +161,11 @@ module Sentry
       self.server_name = server_name_from_env
       self.should_capture = false
 
-      @transport = Transport::Configuration.new
       self.before_send = false
       self.rack_env_whitelist = RACK_ENV_WHITELIST_DEFAULT
+
+      @transport = Transport::Configuration.new
+      @gem_specs = Hash[Gem::Specification.map { |spec| [spec.name, spec.version.to_s] }] if Gem::Specification.respond_to?(:map)
       post_initialization_callback
     end
 
@@ -287,13 +291,17 @@ module Sentry
     end
 
     def excluded_exception?(incoming_exception)
-      excluded_exceptions.any? do |excluded_exception|
-        matches_exception?(get_exception_class(excluded_exception), incoming_exception)
+      excluded_exception_classes.any? do |excluded_exception|
+        matches_exception?(excluded_exception, incoming_exception)
       end
     end
 
+    def excluded_exception_classes
+      @excluded_exception_classes ||= excluded_exceptions.map { |e| get_exception_class(e) }
+    end
+
     def get_exception_class(x)
-      x.is_a?(Module) ? x : qualified_const_get(x)
+      x.is_a?(Module) ? x : safe_const_get(x)
     end
 
     def matches_exception?(excluded_exception_class, incoming_exception)
@@ -304,14 +312,9 @@ module Sentry
       end
     end
 
-    # In Ruby <2.0 const_get can't lookup "SomeModule::SomeClass" in one go
-    def qualified_const_get(x)
-      x = x.to_s
-      if !x.match(/::/)
-        Object.const_get(x)
-      else
-        x.split(MODULE_SEPARATOR).reject(&:empty?).inject(Object) { |a, e| a.const_get(e) }
-      end
+    def safe_const_get(x)
+      x = x.to_s unless x.is_a?(String)
+      Object.const_get(x)
     rescue NameError # There's no way to safely ask if a constant exist for an unknown string
       nil
     end
