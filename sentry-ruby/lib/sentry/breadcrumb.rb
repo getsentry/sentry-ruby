@@ -7,7 +7,7 @@ module Sentry
       @data = {}
       @level = nil
       @message = nil
-      @timestamp = Time.now.to_i
+      @timestamp = Sentry.utc_now.to_i
       @type = nil
     end
 

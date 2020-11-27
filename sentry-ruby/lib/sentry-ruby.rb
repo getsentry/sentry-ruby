@@ -23,6 +23,10 @@ module Sentry
     META
   end
 
+  def self.utc_now
+    Time.now.utc
+  end
+
   class << self
     def init(&block)
       config = Configuration.new

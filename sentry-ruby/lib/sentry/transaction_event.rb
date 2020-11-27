@@ -13,7 +13,7 @@ module Sentry
     attr_accessor :spans
 
     def start_timestamp=(time)
-      @start_timestamp = time.is_a?(Time) ? time.strftime('%Y-%m-%dT%H:%M:%S') : time
+      @start_timestamp = time.is_a?(Time) ? time.to_f : time
     end
 
     def type

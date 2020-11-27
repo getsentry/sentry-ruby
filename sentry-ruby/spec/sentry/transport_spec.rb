@@ -31,7 +31,7 @@ RSpec.describe Sentry::Transport do
 
         expect(envelope_header).to eq(
           <<~ENVELOPE_HEADER.chomp
-            {"event_id":"#{event.event_id}","dsn":"#{DUMMY_DSN}","sdk":#{Sentry.sdk_meta.to_json},"sent_at":"#{DateTime.now.rfc3339}"}
+            {"event_id":"#{event.event_id}","dsn":"#{DUMMY_DSN}","sdk":#{Sentry.sdk_meta.to_json},"sent_at":"#{Time.now.utc.iso8601}"}
           ENVELOPE_HEADER
         )
 
@@ -58,7 +58,7 @@ RSpec.describe Sentry::Transport do
 
         expect(envelope_header).to eq(
           <<~ENVELOPE_HEADER.chomp
-            {"event_id":"#{event.event_id}","dsn":"#{DUMMY_DSN}","sdk":#{Sentry.sdk_meta.to_json},"sent_at":"#{DateTime.now.rfc3339}"}
+            {"event_id":"#{event.event_id}","dsn":"#{DUMMY_DSN}","sdk":#{Sentry.sdk_meta.to_json},"sent_at":"#{Time.now.utc.iso8601}"}
           ENVELOPE_HEADER
         )
 
