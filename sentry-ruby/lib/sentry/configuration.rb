@@ -114,6 +114,8 @@ module Sentry
     # the dsn value, whether it's set via `config.dsn=` or `ENV["SENTRY_DSN"]`
     attr_reader :dsn
 
+    attr_reader :gem_specs
+
     # Most of these errors generate 4XX responses. In general, Sentry clients
     # only automatically report 5xx responses.
     IGNORE_DEFAULT = [
@@ -159,9 +161,11 @@ module Sentry
       self.server_name = server_name_from_env
       self.should_capture = false
 
-      @transport = Transport::Configuration.new
       self.before_send = false
       self.rack_env_whitelist = RACK_ENV_WHITELIST_DEFAULT
+
+      @transport = Transport::Configuration.new
+      @gem_specs = Hash[Gem::Specification.map { |spec| [spec.name, spec.version.to_s] }] if Gem::Specification.respond_to?(:map)
       post_initialization_callback
     end
 
