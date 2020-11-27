@@ -10,7 +10,7 @@ RSpec.describe Sentry::Rails::Tracing::ActiveRecordSubscriber, :subscriber do
   end
 
   it "records database query events" do
-    transaction = Sentry.start_transaction
+    transaction = Sentry::Transaction.new(sampled: true)
     Sentry.get_current_scope.set_span(transaction)
 
     Post.all.to_a

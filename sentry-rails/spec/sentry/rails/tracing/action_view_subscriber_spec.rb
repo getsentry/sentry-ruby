@@ -10,7 +10,7 @@ RSpec.describe Sentry::Rails::Tracing::ActionViewSubscriber, :subscriber, type: 
   end
 
   it "records view rendering event" do
-    transaction = Sentry.start_transaction
+    transaction = Sentry::Transaction.new(sampled: true)
     Sentry.get_current_scope.set_span(transaction)
 
     get "/view"
