@@ -25,7 +25,7 @@ module Sentry
 
       # Set some simple default values
       @event_id      = SecureRandom.uuid.delete("-")
-      @timestamp     = Time.now.utc.iso8601
+      @timestamp     = Sentry.utc_now.iso8601
       @platform      = :ruby
       @sdk           = Sentry.sdk_meta
 
@@ -66,7 +66,7 @@ module Sentry
     end
 
     def timestamp=(time)
-      @timestamp = time.is_a?(Time) ? time.strftime('%Y-%m-%dT%H:%M:%S') : time
+      @timestamp = time.is_a?(Time) ? time.to_f : time
     end
 
     def level=(new_level) # needed to meet the Sentry spec

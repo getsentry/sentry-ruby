@@ -9,7 +9,7 @@ module Sentry
         return true if @status == :online
 
         interval = @retry_after || [@retry_number, 6].min**2
-        return true if Time.now - @last_check >= interval
+        return true if Sentry.utc_now - @last_check >= interval
 
         false
       end
@@ -17,7 +17,7 @@ module Sentry
       def failure(retry_after = nil)
         @status = :error
         @retry_number += 1
-        @last_check = Time.now
+        @last_check = Sentry.utc_now
         @retry_after = retry_after
       end
 

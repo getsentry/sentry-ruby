@@ -36,7 +36,7 @@ module Sentry
     end
 
     def generate_auth_header
-      now = Time.now.to_i.to_s
+      now = Sentry.utc_now.to_i
       fields = {
         'sentry_version' => PROTOCOL_VERSION,
         'sentry_client' => USER_AGENT,
@@ -52,7 +52,7 @@ module Sentry
       event_type = event_hash[:type] || event_hash['type']
 
       envelope = <<~ENVELOPE
-        {"event_id":"#{event_id}","dsn":"#{configuration.dsn.to_s}","sdk":#{Sentry.sdk_meta.to_json},"sent_at":"#{DateTime.now.rfc3339}"}
+        {"event_id":"#{event_id}","dsn":"#{configuration.dsn.to_s}","sdk":#{Sentry.sdk_meta.to_json},"sent_at":"#{Sentry.utc_now.iso8601}"}
         {"type":"#{event_type}","content_type":"application/json"}
         #{JSON.generate(event_hash)}
       ENVELOPE

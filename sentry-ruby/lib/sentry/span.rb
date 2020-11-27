@@ -26,7 +26,7 @@ module Sentry
       @span_id = SecureRandom.hex(8)
       @parent_span_id = parent_span_id
       @sampled = sampled
-      @start_timestamp = start_timestamp || Time.now.utc.to_f
+      @start_timestamp = start_timestamp || Sentry.utc_now.to_f
       @timestamp = timestamp
       @description = description
       @op = op
@@ -44,7 +44,7 @@ module Sentry
       # already finished
       return if @timestamp
 
-      @timestamp = Time.now.utc.to_f
+      @timestamp = Sentry.utc_now.to_f
     end
 
     def to_sentry_trace
