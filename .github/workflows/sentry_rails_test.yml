@@ -1,6 +1,7 @@
 name: sentry-rails Test
 
 on:
+  workflow_dispatch:
   push:
     branches:
       - master
