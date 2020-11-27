@@ -83,20 +83,6 @@ module Sentry
         Sentry.breadcrumbs
       end
     end
-    module OldBreadcrumbsSentryLogger
-      def self.included(base)
-        base.class_eval do
-          include Sentry::Breadcrumbs::SentryLogger
-          alias_method :add_without_sentry, :add
-          alias_method :add, :add_with_sentry
-        end
-      end
-
-      def add_with_sentry(*args)
-        add_breadcrumb(*args)
-        add_without_sentry(*args)
-      end
-    end
   end
 end
 
