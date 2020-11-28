@@ -102,9 +102,6 @@ module Sentry
     # e.g. lambda { |exc_or_msg| exc_or_msg.some_attr == false }
     attr_reader :should_capture
 
-    # Silences ready message when true.
-    attr_accessor :silence_ready
-
     attr_reader :transport
 
     attr_accessor :traces_sample_rate
