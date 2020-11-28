@@ -140,9 +140,9 @@ module Sentry
         frame.in_app = line.in_app
         frame.module = line.module_name if line.module_name
 
-        if configuration[:context_lines] && frame.abs_path
+        if configuration.context_lines && frame.abs_path
           frame.pre_context, frame.context_line, frame.post_context = \
-            configuration.linecache.get_file_context(frame.abs_path, frame.lineno, configuration[:context_lines])
+            configuration.linecache.get_file_context(frame.abs_path, frame.lineno, configuration.context_lines)
         end
 
         memo << frame if frame.filename

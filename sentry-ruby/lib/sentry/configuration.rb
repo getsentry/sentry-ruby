@@ -214,13 +214,6 @@ module Sentry
       @before_send = value
     end
 
-    # Allows config options to be read like a hash
-    #
-    # @param [Symbol] option Key for a given attribute
-    def [](option)
-      public_send(option)
-    end
-
     def current_environment=(environment)
       @current_environment = environment.to_s
     end
