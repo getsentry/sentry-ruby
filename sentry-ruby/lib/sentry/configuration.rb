@@ -15,6 +15,28 @@ module Sentry
     attr_reader :async
     alias async? async
 
+    # a proc/lambda that takes an array of stack traces
+    # it'll be used to silence (reduce) backtrace of the exception
+    #
+    # for example:
+    #
+    # ```ruby
+    # Sentry.configuration.backtrace_cleanup_callback = lambda do |backtrace|
+    #   Rails.backtrace_cleaner.clean(backtrace)
+    # end
+    # ```
+    #
+    attr_accessor :backtrace_cleanup_callback
+
+    # Optional Proc, called before sending an event to the server/
+    # E.g.: lambda { |event| event }
+    # E.g.: lambda { |event| nil }
+    # E.g.: lambda { |event|
+    #   event[:message] = 'a'
+    #   event
+    # }
+    attr_reader :before_send
+
     # An array of breadcrumbs loggers to be used. Available options are:
     # - :sentry_logger
     # - :active_support_logger
@@ -25,6 +47,9 @@ module Sentry
 
     # RACK_ENV by default.
     attr_reader :current_environment
+
+    # the dsn value, whether it's set via `config.dsn=` or `ENV["SENTRY_DSN"]`
+    attr_reader :dsn
 
     # Whitelist of environments that will send notifications to Sentry. Array of Strings.
     attr_accessor :environments
@@ -64,22 +89,14 @@ module Sentry
     # any events, and a value of 1.0 will send 100% of events.
     attr_accessor :sample_rate
 
-    # a proc/lambda that takes an array of stack traces
-    # it'll be used to silence (reduce) backtrace of the exception
-    #
-    # for example:
-    #
-    # ```ruby
-    # Sentry.configuration.backtrace_cleanup_callback = lambda do |backtrace|
-    #   Rails.backtrace_cleaner.clean(backtrace)
-    # end
-    # ```
-    #
-    attr_accessor :backtrace_cleanup_callback
-
     # Include module versions in reports - boolean.
     attr_accessor :send_modules
 
+    # When send_default_pii's value is false (default), sensitive information like
+    # - user ip
+    # - user cookie
+    # - request body
+    # will not be sent to Sentry.
     attr_accessor :send_default_pii
 
     attr_accessor :server_name
@@ -90,31 +107,24 @@ module Sentry
     # e.g. lambda { |exc_or_msg| exc_or_msg.some_attr == false }
     attr_reader :should_capture
 
-    # Silences ready message when true.
-    attr_accessor :silence_ready
-
+    # Return a Transport::Configuration object for transport-related configurations.
     attr_reader :transport
 
+    # Take a float between 0.0 and 1.0 as the sample rate for tracing events (transactions).
     attr_accessor :traces_sample_rate
 
+    # Take a Proc that controls the sample rate for every tracing event, e.g.
+    # ```
+    # lambda do |tracing_context|
+    #   # tracing_context[:transaction_context] contains the information about the transaction
+    #   # tracing_context[:parent_sampled] contains the transaction's parent's sample decision
+    #   true # return value can be a boolean or a float between 0.0 and 1.0
+    # end
+    # ```
     attr_accessor :traces_sampler
 
-    # Optional Proc, called before sending an event to the server/
-    # E.g.: lambda { |event| event }
-    # E.g.: lambda { |event| nil }
-    # E.g.: lambda { |event|
-    #   event[:message] = 'a'
-    #   event
-    # }
-    attr_reader :before_send
-
-    # Errors object - an Array that contains error messages. See #
-    attr_reader :errors
-
-    # the dsn value, whether it's set via `config.dsn=` or `ENV["SENTRY_DSN"]`
-    attr_reader :dsn
-
-    attr_reader :gem_specs
+    # these are not config options
+    attr_reader :errors, :gem_specs
 
     # Most of these errors generate 4XX responses. In general, Sentry clients
     # only automatically report 5xx responses.
@@ -219,13 +229,6 @@ module Sentry
       @before_send = value
     end
 
-    # Allows config options to be read like a hash
-    #
-    # @param [Symbol] option Key for a given attribute
-    def [](option)
-      public_send(option)
-    end
-
     def current_environment=(environment)
       @current_environment = environment.to_s
     end
@@ -242,8 +245,8 @@ module Sentry
     alias sending_allowed? capture_allowed?
 
     def error_messages
-      @errors = [errors[0]] + errors[1..-1].map(&:downcase) # fix case of all but first
-      errors.join(", ")
+      @errors = [@errors[0]] + @errors[1..-1].map(&:downcase) # fix case of all but first
+      @errors.join(", ")
     end
 
     def project_root=(root_dir)
