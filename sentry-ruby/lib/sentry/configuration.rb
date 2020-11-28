@@ -92,6 +92,11 @@ module Sentry
     # Include module versions in reports - boolean.
     attr_accessor :send_modules
 
+    # When send_default_pii's value is false (default), sensitive information like
+    # - user ip
+    # - user cookie
+    # - request body
+    # will not be sent to Sentry.
     attr_accessor :send_default_pii
 
     attr_accessor :server_name
@@ -102,10 +107,20 @@ module Sentry
     # e.g. lambda { |exc_or_msg| exc_or_msg.some_attr == false }
     attr_reader :should_capture
 
+    # Return a Transport::Configuration object for transport-related configurations.
     attr_reader :transport
 
+    # Take a float between 0.0 and 1.0 as the sample rate for tracing events (transactions).
     attr_accessor :traces_sample_rate
 
+    # Take a Proc that controls the sample rate for every tracing event, e.g.
+    # ```
+    # lambda do |tracing_context|
+    #   # tracing_context[:transaction_context] contains the information about the transaction
+    #   # tracing_context[:parent_sampled] contains the transaction's parent's sample decision
+    #   true # return value can be a boolean or a float between 0.0 and 1.0
+    # end
+    # ```
     attr_accessor :traces_sampler
 
     # these are not config options
