@@ -172,7 +172,7 @@ New:
 
 ```ruby
 Sentry.with_scope do |scope|
-  scope.set_uer(id: 1)
+  scope.set_user(id: 1)
   scope.set_tags(foo: "bar")
   scope.set_extra(debug: true)
   # send event
