@@ -233,7 +233,7 @@ module Sentry
       @environment = environment.to_s
     end
 
-    def capture_allowed?(message_or_exc = nil)
+    def sending_allowed?(message_or_exc = nil)
       @errors = []
 
       valid? &&
@@ -241,8 +241,6 @@ module Sentry
         capture_allowed_by_callback?(message_or_exc) &&
         sample_allowed?
     end
-    # If we cannot capture, we cannot send.
-    alias sending_allowed? capture_allowed?
 
     def error_messages
       @errors = [@errors[0]] + @errors[1..-1].map(&:downcase) # fix case of all but first
