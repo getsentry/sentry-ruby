@@ -198,14 +198,16 @@ RSpec.describe Sentry::Scope do
     end
 
     it "applies event processors to the event" do
-      subject.add_event_processor do |event|
+      subject.add_event_processor do |event, hint|
         event.tags = { processed: true }
+        event.extra = hint
         event
       end
 
-      subject.apply_to_event(event)
+      subject.apply_to_event(event, { foo: "bar" })
 
       expect(event.tags).to eq({ processed: true })
+      expect(event.extra).to eq({ foo: "bar" })
     end
 
     it "sets trace context if there's a span" do

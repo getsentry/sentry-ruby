@@ -80,12 +80,16 @@ module Sentry
 
       return unless event
 
+      options[:hint] ||= {}
+      options[:hint] = options[:hint].merge(exception: exception)
       capture_event(event, **options, &block)
     end
 
     def capture_message(message, **options, &block)
       return unless current_client
 
+      options[:hint] ||= {}
+      options[:hint] = options[:hint].merge(message: message)
       event = current_client.event_from_message(message)
       capture_event(event, **options, &block)
     end
@@ -93,6 +97,7 @@ module Sentry
     def capture_event(event, **options, &block)
       return unless current_client
 
+      hint = options.delete(:hint)
       scope = current_scope.dup
 
       if block
@@ -103,7 +108,7 @@ module Sentry
         scope.update_from_options(**options)
       end
 
-      event = current_client.capture_event(event, scope)
+      event = current_client.capture_event(event, scope, hint)
 
       @last_event_id = event.event_id
       event

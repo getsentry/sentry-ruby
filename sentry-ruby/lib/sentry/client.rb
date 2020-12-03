@@ -20,8 +20,8 @@ module Sentry
       end
     end
 
-    def capture_event(event, scope)
-      scope.apply_to_event(event)
+    def capture_event(event, scope, hint = nil)
+      scope.apply_to_event(event, hint)
 
       if configuration.async?
         begin
@@ -30,10 +30,10 @@ module Sentry
           configuration.async.call(event.to_json_compatible)
         rescue => e
           configuration.logger.error(LOGGER_PROGNAME) { "async event sending failed: #{e.message}" }
-          send_event(event)
+          send_event(event, hint)
         end
       else
-        send_event(event)
+        send_event(event, hint)
       end
 
       event
@@ -63,10 +63,10 @@ module Sentry
       end
     end
 
-    def send_event(event)
+    def send_event(event, hint = nil)
       return false unless configuration.sending_allowed?(event)
 
-      event = configuration.before_send.call(event) if configuration.before_send
+      event = configuration.before_send.call(event, hint) if configuration.before_send
       if event.nil?
         configuration.logger.info(LOGGER_PROGNAME) { "Discarded event because before_send returned nil" }
         return
