@@ -5,9 +5,8 @@ class HappyWorker
   include Sidekiq::Worker
 
   def perform
-    Sentry.breadcrumbs.record do |crumb|
-      crumb.message = "I'm happy!"
-    end
+    crumb = Sentry::Breadcrumb.new(message: "I'm happy!")
+    Sentry.add_breadcrumb(crumb)
     Sentry.get_current_scope.set_tags mood: 'happy'
   end
 end
@@ -16,9 +15,8 @@ class SadWorker
   include Sidekiq::Worker
 
   def perform
-    Sentry.breadcrumbs.record do |crumb|
-      crumb.message = "I'm sad!"
-    end
+    crumb = Sentry::Breadcrumb.new(message: "I'm sad!")
+    Sentry.add_breadcrumb(crumb)
     Sentry.get_current_scope.set_tags :mood => 'sad'
 
     raise "I'm sad!"
@@ -29,9 +27,8 @@ class VerySadWorker
   include Sidekiq::Worker
 
   def perform
-    Sentry.breadcrumbs.record do |crumb|
-      crumb.message = "I'm very sad!"
-    end
+    crumb = Sentry::Breadcrumb.new(message: "I'm very sad!")
+    Sentry.add_breadcrumb(crumb)
     Sentry.get_current_scope.set_tags :mood => 'very sad'
 
     raise "I'm very sad!"

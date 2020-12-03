@@ -71,8 +71,7 @@ In `sentry-raven`, we provided helpers like `Raven.user_context` for setting con
 Raven.user_context(id: 1)
 
 # After
-Sentry.configure_scope do |scope|
-  scope.set_user(id: 1)
+Sentry.set_user(id: 1)
 end
 ```
 
@@ -85,7 +84,7 @@ Raven.tag_context(foo: "bar") do
 end
 
 # After
-Sentry.configure_scope do |scope|
+Sentry.with_scope do |scope|
   scope.set_user(id: 1)
   
   Sentry.capture_message("test")
@@ -145,11 +144,9 @@ Raven.context.extra = { debug: true }
 New:
 
 ```ruby
-Sentry.configure_scope do |scope|
-  scope.set_uer(id: 1)
-  scope.set_tags(foo: "bar")
-  scope.set_extras(debug: true)
-end
+Sentry.set_user(id: 1)
+Sentry.set_tags(foo: "bar")
+Sentry.set_extras(debug: true)
 ```
 
 **Set Contextual Data (local)**
@@ -171,12 +168,10 @@ end
 New:
 
 ```ruby
-Sentry.with_scope do |scope|
-  scope.set_user(id: 1)
-  scope.set_tags(foo: "bar")
-  scope.set_extras(debug: true)
-  # send event
-end
+Sentry.set_user(id: 1)
+Sentry.set_tags(foo: "bar")
+Sentry.set_extras(debug: true)
+# send event
 ```
 
 
@@ -210,11 +205,18 @@ config.server
 config.tags
 config.logger
 config.encoding
+
+# please only use config.before_send
+config.should_capture
+config.transport_failure_callback
 ```
 
 Renamed/Relocated:
 
 ```ruby
+config.current_environment #=> config.environment
+config.environments #=> config.enabled_environments
+
 config.rails_report_rescued_exceptions #=> config.rails.report_rescued_exceptions with sentry-rails installed
 
 config.ssl #=> config.transport.ssl

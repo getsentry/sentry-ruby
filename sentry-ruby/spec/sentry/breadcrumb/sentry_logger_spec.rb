@@ -9,7 +9,7 @@ RSpec.describe "Sentry::Breadcrumbs::SentryLogger" do
   end
 
   let(:logger) { ::Logger.new(nil) }
-  let(:breadcrumbs) { Sentry.breadcrumbs }
+  let(:breadcrumbs) { Sentry.get_current_scope.breadcrumbs }
 
   it "records the breadcrumb when logger is called" do
     logger.info("foo")

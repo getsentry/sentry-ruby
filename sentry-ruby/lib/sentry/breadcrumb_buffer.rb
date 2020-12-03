@@ -10,11 +10,8 @@ module Sentry
       @buffer = Array.new(size)
     end
 
-    def record(crumb = nil)
-      if block_given?
-        crumb = Breadcrumb.new if crumb.nil?
-        yield(crumb)
-      end
+    def record(crumb)
+      yield(crumb) if block_given?
       @buffer.slice!(0)
       @buffer << crumb
     end

@@ -46,13 +46,13 @@ module Sentry
     attr_accessor :context_lines
 
     # RACK_ENV by default.
-    attr_reader :current_environment
+    attr_reader :environment
 
     # the dsn value, whether it's set via `config.dsn=` or `ENV["SENTRY_DSN"]`
     attr_reader :dsn
 
-    # Whitelist of environments that will send notifications to Sentry. Array of Strings.
-    attr_accessor :environments
+    # Whitelist of enabled_environments that will send notifications to Sentry. Array of Strings.
+    attr_accessor :enabled_environments
 
     # Logger 'progname's to exclude from breadcrumbs
     attr_accessor :exclude_loggers
@@ -101,12 +101,6 @@ module Sentry
 
     attr_accessor :server_name
 
-    # Provide a configurable callback to determine event capture.
-    # Note that the object passed into the block will be a String (messages) or
-    # an exception.
-    # e.g. lambda { |exc_or_msg| exc_or_msg.some_attr == false }
-    attr_reader :should_capture
-
     # Return a Transport::Configuration object for transport-related configurations.
     attr_reader :transport
 
@@ -154,8 +148,8 @@ module Sentry
       self.async = false
       self.breadcrumbs_logger = []
       self.context_lines = 3
-      self.current_environment = current_environment_from_env
-      self.environments = []
+      self.environment = environment_from_env
+      self.enabled_environments = []
       self.exclude_loggers = []
       self.excluded_exceptions = IGNORE_DEFAULT.dup
       self.inspect_exception_causes_for_exclusion = false
@@ -169,7 +163,6 @@ module Sentry
       self.send_default_pii = false
       self.dsn = ENV['SENTRY_DSN']
       self.server_name = server_name_from_env
-      self.should_capture = false
 
       self.before_send = false
       self.rack_env_whitelist = RACK_ENV_WHITELIST_DEFAULT
@@ -213,14 +206,6 @@ module Sentry
       @breadcrumbs_logger = logger
     end
 
-    def should_capture=(value)
-      unless value == false || value.respond_to?(:call)
-        raise ArgumentError, "should_capture must be callable (or false to disable)"
-      end
-
-      @should_capture = value
-    end
-
     def before_send=(value)
       unless value == false || value.respond_to?(:call)
         raise ArgumentError, "before_send must be callable (or false to disable)"
@@ -229,20 +214,17 @@ module Sentry
       @before_send = value
     end
 
-    def current_environment=(environment)
-      @current_environment = environment.to_s
+    def environment=(environment)
+      @environment = environment.to_s
     end
 
-    def capture_allowed?(message_or_exc = nil)
+    def sending_allowed?
       @errors = []
 
       valid? &&
-        capture_in_current_environment? &&
-        capture_allowed_by_callback?(message_or_exc) &&
+        capture_in_environment? &&
         sample_allowed?
     end
-    # If we cannot capture, we cannot send.
-    alias sending_allowed? capture_allowed?
 
     def error_messages
       @errors = [@errors[0]] + @errors[1..-1].map(&:downcase) # fix case of all but first
@@ -267,7 +249,7 @@ module Sentry
     end
 
     def enabled_in_current_env?
-      environments.empty? || environments.include?(current_environment)
+      enabled_environments.empty? || enabled_environments.include?(environment)
     end
 
     def tracing_enabled?
@@ -353,17 +335,10 @@ module Sentry
       ENV['SENTRY_RELEASE']
     end
 
-    def capture_in_current_environment?
+    def capture_in_environment?
       return true if enabled_in_current_env?
 
-      @errors << "Not configured to send/capture in environment '#{current_environment}'"
-      false
-    end
-
-    def capture_allowed_by_callback?(message_or_exc)
-      return true if !should_capture || message_or_exc.nil? || should_capture.call(message_or_exc)
-
-      @errors << "should_capture returned false"
+      @errors << "Not configured to send/capture in environment '#{environment}'"
       false
     end
 
@@ -394,7 +369,7 @@ module Sentry
         Socket.gethostbyname(hostname).first rescue server_name
     end
 
-    def current_environment_from_env
+    def environment_from_env
       ENV['SENTRY_CURRENT_ENV'] || ENV['SENTRY_ENVIRONMENT'] || ENV['RAILS_ENV'] || ENV['RACK_ENV'] || 'default'
     end
 

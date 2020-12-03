@@ -56,12 +56,6 @@ RSpec.describe Sentry::Configuration do
     end
   end
 
-  it 'should raise when setting should_capture to anything other than callable or false' do
-    subject.should_capture = -> {}
-    subject.should_capture = false
-    expect { subject.should_capture = true }.to raise_error(ArgumentError)
-  end
-
   it 'should raise when setting before_send to anything other than callable or false' do
     subject.before_send = -> {}
     subject.before_send = false
@@ -70,20 +64,20 @@ RSpec.describe Sentry::Configuration do
 
   context 'being initialized with a current environment' do
     before(:each) do
-      subject.current_environment = 'test'
+      subject.environment = 'test'
       subject.dsn = 'http://12345:67890@sentry.localdomain:3000/sentry/42'
     end
 
     it 'should send events if test is whitelisted' do
-      subject.environments = %w(test)
-      subject.capture_allowed?
+      subject.enabled_environments = %w(test)
+      subject.sending_allowed?
       puts subject.errors
-      expect(subject.capture_allowed?).to eq(true)
+      expect(subject.sending_allowed?).to eq(true)
     end
 
     it 'should not send events if test is not whitelisted' do
-      subject.environments = %w(not_test)
-      expect(subject.capture_allowed?).to eq(false)
+      subject.enabled_environments = %w(not_test)
+      expect(subject.sending_allowed?).to eq(false)
       expect(subject.errors).to eq(["Not configured to send/capture in environment 'test'"])
     end
   end
@@ -97,7 +91,7 @@ RSpec.describe Sentry::Configuration do
     end
 
     it 'defaults to "default"' do
-      expect(subject.current_environment).to eq('default')
+      expect(subject.environment).to eq('default')
     end
 
     it 'uses `SENTRY_CURRENT_ENV` env variable' do
@@ -106,7 +100,7 @@ RSpec.describe Sentry::Configuration do
       ENV['RAILS_ENV'] = 'set-with-rails-env'
       ENV['RACK_ENV'] = 'set-with-rack-env'
 
-      expect(subject.current_environment).to eq('set-with-sentry-current-env')
+      expect(subject.environment).to eq('set-with-sentry-current-env')
     end
 
     it 'uses `SENTRY_ENVIRONMENT` env variable' do
@@ -114,7 +108,7 @@ RSpec.describe Sentry::Configuration do
       ENV['RAILS_ENV'] = 'set-with-rails-env'
       ENV['RACK_ENV'] = 'set-with-rack-env'
 
-      expect(subject.current_environment).to eq('set-with-sentry-environment')
+      expect(subject.environment).to eq('set-with-sentry-environment')
     end
 
     it 'uses `RAILS_ENV` env variable' do
@@ -122,7 +116,7 @@ RSpec.describe Sentry::Configuration do
       ENV['RAILS_ENV'] = 'set-with-rails-env'
       ENV['RACK_ENV'] = 'set-with-rack-env'
 
-      expect(subject.current_environment).to eq('set-with-rails-env')
+      expect(subject.environment).to eq('set-with-rails-env')
     end
 
     it 'uses `RACK_ENV` env variable' do
@@ -130,7 +124,7 @@ RSpec.describe Sentry::Configuration do
       ENV['RAILS_ENV'] = nil
       ENV['RACK_ENV'] = 'set-with-rack-env'
 
-      expect(subject.current_environment).to eq('set-with-rack-env')
+      expect(subject.environment).to eq('set-with-rack-env')
     end
   end
 
@@ -268,26 +262,13 @@ RSpec.describe Sentry::Configuration do
     end
   end
 
-  context 'with a should_capture callback configured' do
-    before(:each) do
-      subject.should_capture = ->(exc_or_msg) { exc_or_msg != "dont send me" }
-      subject.dsn = 'http://12345:67890@sentry.localdomain:3000/sentry/42'
-    end
-
-    it 'should not send events if should_capture returns false' do
-      expect(subject.capture_allowed?("dont send me")).to eq(false)
-      expect(subject.errors).to eq(["should_capture returned false"])
-      expect(subject.capture_allowed?("send me")).to eq(true)
-    end
-  end
-
   context "with an invalid server" do
     before(:each) do
       subject.dsn = 'dummy://trololo'
     end
 
     it 'captured_allowed returns false' do
-      expect(subject.capture_allowed?).to eq(false)
+      expect(subject.sending_allowed?).to eq(false)
       expect(subject.errors).to eq(["DSN not set or not valid"])
     end
   end
@@ -299,7 +280,7 @@ RSpec.describe Sentry::Configuration do
     end
 
     it 'captured_allowed is true' do
-      expect(subject.capture_allowed?).to eq(true)
+      expect(subject.sending_allowed?).to eq(true)
     end
   end
 
@@ -311,13 +292,13 @@ RSpec.describe Sentry::Configuration do
 
     it 'captured_allowed false when sampled' do
       allow(Random::DEFAULT).to receive(:rand).and_return(0.76)
-      expect(subject.capture_allowed?).to eq(false)
+      expect(subject.sending_allowed?).to eq(false)
       expect(subject.errors).to eq(["Excluded by random sample"])
     end
 
     it 'captured_allowed true when not sampled' do
       allow(Random::DEFAULT).to receive(:rand).and_return(0.74)
-      expect(subject.capture_allowed?).to eq(true)
+      expect(subject.sending_allowed?).to eq(true)
     end
   end
 
