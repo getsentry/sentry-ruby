@@ -14,7 +14,7 @@ RSpec.describe Sentry::Event do
 
     it "initializes a Event with correct default values" do
       configuration.server_name = "foo.local"
-      configuration.current_environment = "test"
+      configuration.environment = "test"
       configuration.release = "721e41770371db95eee98ca2707686226b993eda"
 
       event = described_class.new(configuration: configuration)

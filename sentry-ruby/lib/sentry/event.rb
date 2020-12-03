@@ -37,7 +37,7 @@ module Sentry
       @fingerprint = []
 
       @server_name = configuration.server_name
-      @environment = configuration.current_environment
+      @environment = configuration.environment
       @release = configuration.release
       @modules = configuration.gem_specs if configuration.send_modules
 

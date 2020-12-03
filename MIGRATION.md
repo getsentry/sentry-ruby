@@ -215,6 +215,8 @@ config.encoding
 Renamed/Relocated:
 
 ```ruby
+config.current_environment #=> config.environment
+
 config.rails_report_rescued_exceptions #=> config.rails.report_rescued_exceptions with sentry-rails installed
 
 config.ssl #=> config.transport.ssl

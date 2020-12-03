@@ -70,7 +70,7 @@ RSpec.describe Sentry::Configuration do
 
   context 'being initialized with a current environment' do
     before(:each) do
-      subject.current_environment = 'test'
+      subject.environment = 'test'
       subject.dsn = 'http://12345:67890@sentry.localdomain:3000/sentry/42'
     end
 
@@ -97,7 +97,7 @@ RSpec.describe Sentry::Configuration do
     end
 
     it 'defaults to "default"' do
-      expect(subject.current_environment).to eq('default')
+      expect(subject.environment).to eq('default')
     end
 
     it 'uses `SENTRY_CURRENT_ENV` env variable' do
@@ -106,7 +106,7 @@ RSpec.describe Sentry::Configuration do
       ENV['RAILS_ENV'] = 'set-with-rails-env'
       ENV['RACK_ENV'] = 'set-with-rack-env'
 
-      expect(subject.current_environment).to eq('set-with-sentry-current-env')
+      expect(subject.environment).to eq('set-with-sentry-current-env')
     end
 
     it 'uses `SENTRY_ENVIRONMENT` env variable' do
@@ -114,7 +114,7 @@ RSpec.describe Sentry::Configuration do
       ENV['RAILS_ENV'] = 'set-with-rails-env'
       ENV['RACK_ENV'] = 'set-with-rack-env'
 
-      expect(subject.current_environment).to eq('set-with-sentry-environment')
+      expect(subject.environment).to eq('set-with-sentry-environment')
     end
 
     it 'uses `RAILS_ENV` env variable' do
@@ -122,7 +122,7 @@ RSpec.describe Sentry::Configuration do
       ENV['RAILS_ENV'] = 'set-with-rails-env'
       ENV['RACK_ENV'] = 'set-with-rack-env'
 
-      expect(subject.current_environment).to eq('set-with-rails-env')
+      expect(subject.environment).to eq('set-with-rails-env')
     end
 
     it 'uses `RACK_ENV` env variable' do
@@ -130,7 +130,7 @@ RSpec.describe Sentry::Configuration do
       ENV['RAILS_ENV'] = nil
       ENV['RACK_ENV'] = 'set-with-rack-env'
 
-      expect(subject.current_environment).to eq('set-with-rack-env')
+      expect(subject.environment).to eq('set-with-rack-env')
     end
   end
 

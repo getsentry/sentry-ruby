@@ -46,7 +46,7 @@ module Sentry
     attr_accessor :context_lines
 
     # RACK_ENV by default.
-    attr_reader :current_environment
+    attr_reader :environment
 
     # the dsn value, whether it's set via `config.dsn=` or `ENV["SENTRY_DSN"]`
     attr_reader :dsn
@@ -154,7 +154,7 @@ module Sentry
       self.async = false
       self.breadcrumbs_logger = []
       self.context_lines = 3
-      self.current_environment = current_environment_from_env
+      self.environment = environment_from_env
       self.environments = []
       self.exclude_loggers = []
       self.excluded_exceptions = IGNORE_DEFAULT.dup
@@ -229,15 +229,15 @@ module Sentry
       @before_send = value
     end
 
-    def current_environment=(environment)
-      @current_environment = environment.to_s
+    def environment=(environment)
+      @environment = environment.to_s
     end
 
     def capture_allowed?(message_or_exc = nil)
       @errors = []
 
       valid? &&
-        capture_in_current_environment? &&
+        capture_in_environment? &&
         capture_allowed_by_callback?(message_or_exc) &&
         sample_allowed?
     end
@@ -267,7 +267,7 @@ module Sentry
     end
 
     def enabled_in_current_env?
-      environments.empty? || environments.include?(current_environment)
+      environments.empty? || environments.include?(environment)
     end
 
     def tracing_enabled?
@@ -353,10 +353,10 @@ module Sentry
       ENV['SENTRY_RELEASE']
     end
 
-    def capture_in_current_environment?
+    def capture_in_environment?
       return true if enabled_in_current_env?
 
-      @errors << "Not configured to send/capture in environment '#{current_environment}'"
+      @errors << "Not configured to send/capture in environment '#{environment}'"
       false
     end
 
@@ -394,7 +394,7 @@ module Sentry
         Socket.gethostbyname(hostname).first rescue server_name
     end
 
-    def current_environment_from_env
+    def environment_from_env
       ENV['SENTRY_CURRENT_ENV'] || ENV['SENTRY_ENVIRONMENT'] || ENV['RAILS_ENV'] || ENV['RACK_ENV'] || 'default'
     end
 
