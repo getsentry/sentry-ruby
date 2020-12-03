@@ -56,12 +56,6 @@ RSpec.describe Sentry::Configuration do
     end
   end
 
-  it 'should raise when setting should_capture to anything other than callable or false' do
-    subject.should_capture = -> {}
-    subject.should_capture = false
-    expect { subject.should_capture = true }.to raise_error(ArgumentError)
-  end
-
   it 'should raise when setting before_send to anything other than callable or false' do
     subject.before_send = -> {}
     subject.before_send = false
@@ -265,19 +259,6 @@ RSpec.describe Sentry::Configuration do
       subject.backtrace_cleanup_callback = proc {}
 
       expect(subject.backtrace_cleanup_callback).to be_a(Proc)
-    end
-  end
-
-  context 'with a should_capture callback configured' do
-    before(:each) do
-      subject.should_capture = ->(exc_or_msg) { exc_or_msg != "dont send me" }
-      subject.dsn = 'http://12345:67890@sentry.localdomain:3000/sentry/42'
-    end
-
-    it 'should not send events if should_capture returns false' do
-      expect(subject.sending_allowed?("dont send me")).to eq(false)
-      expect(subject.errors).to eq(["should_capture returned false"])
-      expect(subject.sending_allowed?("send me")).to eq(true)
     end
   end
 

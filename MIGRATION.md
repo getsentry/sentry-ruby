@@ -205,6 +205,10 @@ config.server
 config.tags
 config.logger
 config.encoding
+
+# please only use config.before_send
+config.should_capture
+config.transport_failure_callback
 ```
 
 Renamed/Relocated:

@@ -101,12 +101,6 @@ module Sentry
 
     attr_accessor :server_name
 
-    # Provide a configurable callback to determine event capture.
-    # Note that the object passed into the block will be a String (messages) or
-    # an exception.
-    # e.g. lambda { |exc_or_msg| exc_or_msg.some_attr == false }
-    attr_reader :should_capture
-
     # Return a Transport::Configuration object for transport-related configurations.
     attr_reader :transport
 
@@ -169,7 +163,6 @@ module Sentry
       self.send_default_pii = false
       self.dsn = ENV['SENTRY_DSN']
       self.server_name = server_name_from_env
-      self.should_capture = false
 
       self.before_send = false
       self.rack_env_whitelist = RACK_ENV_WHITELIST_DEFAULT
@@ -213,14 +206,6 @@ module Sentry
       @breadcrumbs_logger = logger
     end
 
-    def should_capture=(value)
-      unless value == false || value.respond_to?(:call)
-        raise ArgumentError, "should_capture must be callable (or false to disable)"
-      end
-
-      @should_capture = value
-    end
-
     def before_send=(value)
       unless value == false || value.respond_to?(:call)
         raise ArgumentError, "before_send must be callable (or false to disable)"
@@ -233,12 +218,11 @@ module Sentry
       @environment = environment.to_s
     end
 
-    def sending_allowed?(message_or_exc = nil)
+    def sending_allowed?
       @errors = []
 
       valid? &&
         capture_in_environment? &&
-        capture_allowed_by_callback?(message_or_exc) &&
         sample_allowed?
     end
 
@@ -355,13 +339,6 @@ module Sentry
       return true if enabled_in_current_env?
 
       @errors << "Not configured to send/capture in environment '#{environment}'"
-      false
-    end
-
-    def capture_allowed_by_callback?(message_or_exc)
-      return true if !should_capture || message_or_exc.nil? || should_capture.call(message_or_exc)
-
-      @errors << "should_capture returned false"
       false
     end
 
