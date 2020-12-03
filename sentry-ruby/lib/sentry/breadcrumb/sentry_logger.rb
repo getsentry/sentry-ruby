@@ -58,17 +58,15 @@ module Sentry
         last_crumb = current_breadcrumbs.peek
         # try to avoid dupes from logger broadcasts
         if last_crumb.nil? || last_crumb.message != message
-          current_breadcrumbs.record do |crumb|
-            crumb.level = Sentry::Breadcrumb::SentryLogger::LEVELS.fetch(severity, nil)
-            crumb.category = category
-            crumb.message = message
-            crumb.type =
-              if severity >= 3
-                "error"
-              else
-                crumb.level
-              end
-          end
+          level = Sentry::Breadcrumb::SentryLogger::LEVELS.fetch(severity, nil)
+          crumb = Sentry::Breadcrumb.new(
+            level: level,
+            category: category,
+            message: message,
+            type: severity >= 3 ? "error" : level
+          )
+
+          Sentry.add_breadcrumb(crumb)
         end
       end
 
@@ -80,7 +78,7 @@ module Sentry
       end
 
       def current_breadcrumbs
-        Sentry.breadcrumbs
+        Sentry.get_current_scope.breadcrumbs
       end
     end
   end

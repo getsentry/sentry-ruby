@@ -108,4 +108,13 @@ RSpec.describe Sentry do
       described_class.last_event_id
     end
   end
+
+  describe ".add_breadcrumb" do
+    it "adds breadcrumb to the current scope" do
+      crumb = Sentry::Breadcrumb.new(message: "foo")
+      described_class.add_breadcrumb(crumb)
+
+      expect(described_class.get_current_scope.breadcrumbs.peek).to eq(crumb)
+    end
+  end
 end

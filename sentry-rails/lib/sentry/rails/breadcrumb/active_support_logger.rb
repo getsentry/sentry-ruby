@@ -4,11 +4,12 @@ module Sentry
       module ActiveSupportLogger
         class << self
           def add(name, started, _finished, _unique_id, data)
-            Sentry.get_current_scope.breadcrumbs.record do |crumb|
-              crumb.data = data
-              crumb.category = name
-              crumb.timestamp = started.to_i
-            end
+            crumb = Sentry::Breadcrumb.new(
+              data: data,
+              category: name,
+              timestamp: started.to_i
+            )
+            Sentry.add_breadcrumb(crumb)
           end
 
           def inject
