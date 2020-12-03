@@ -148,7 +148,7 @@ New:
 Sentry.configure_scope do |scope|
   scope.set_uer(id: 1)
   scope.set_tags(foo: "bar")
-  scope.set_extra(debug: true)
+  scope.set_extras(debug: true)
 end
 ```
 
@@ -174,7 +174,7 @@ New:
 Sentry.with_scope do |scope|
   scope.set_user(id: 1)
   scope.set_tags(foo: "bar")
-  scope.set_extra(debug: true)
+  scope.set_extras(debug: true)
   # send event
 end
 ```
