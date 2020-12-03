@@ -15,7 +15,7 @@ module Sentry
       set_default_value
     end
 
-    def apply_to_event(event)
+    def apply_to_event(event, hint = nil)
       event.tags = tags.merge(event.tags)
       event.user = user.merge(event.user)
       event.extra = extra.merge(event.extra)
@@ -33,7 +33,7 @@ module Sentry
 
       unless @event_processors.empty?
         @event_processors.each do |processor_block|
-          event = processor_block.call(event)
+          event = processor_block.call(event, hint)
         end
       end
 

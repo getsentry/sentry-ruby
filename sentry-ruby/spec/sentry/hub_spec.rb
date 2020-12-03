@@ -76,6 +76,23 @@ RSpec.describe Sentry::Hub do
       end
     end
 
+    context "with a hint" do
+      it "passes the hint all the way down to Client#send_event" do
+        hint = nil
+        configuration.before_send = ->(event, h) { hint = h }
+
+        subject.send(capture_helper, capture_subject, hint: {foo: "bar"})
+
+        case capture_subject
+        when String
+          expect(hint).to eq({message: capture_subject, foo: "bar"})
+        when Exception
+          expect(hint).to eq({exception: capture_subject, foo: "bar"})
+        else
+          expect(hint).to eq({foo: "bar"})
+        end
+      end
+    end
   end
   describe '#capture_message' do
     let(:message) { "Test message" }
