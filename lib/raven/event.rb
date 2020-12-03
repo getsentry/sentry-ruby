@@ -226,6 +226,10 @@ module Raven
         int.from_rack(context.rack_env)
       end
       context.user[:ip_address] = calculate_real_ip_from_rack
+
+      if request_id = Utils::RequestId.read_from(context.rack_env)
+        context.tags[:request_id] = request_id
+      end
     end
 
     # When behind a proxy (or if the user is using a proxy), we can't use
