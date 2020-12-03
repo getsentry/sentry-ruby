@@ -51,8 +51,8 @@ module Sentry
     # the dsn value, whether it's set via `config.dsn=` or `ENV["SENTRY_DSN"]`
     attr_reader :dsn
 
-    # Whitelist of environments that will send notifications to Sentry. Array of Strings.
-    attr_accessor :environments
+    # Whitelist of enabled_environments that will send notifications to Sentry. Array of Strings.
+    attr_accessor :enabled_environments
 
     # Logger 'progname's to exclude from breadcrumbs
     attr_accessor :exclude_loggers
@@ -155,7 +155,7 @@ module Sentry
       self.breadcrumbs_logger = []
       self.context_lines = 3
       self.environment = environment_from_env
-      self.environments = []
+      self.enabled_environments = []
       self.exclude_loggers = []
       self.excluded_exceptions = IGNORE_DEFAULT.dup
       self.inspect_exception_causes_for_exclusion = false
@@ -267,7 +267,7 @@ module Sentry
     end
 
     def enabled_in_current_env?
-      environments.empty? || environments.include?(environment)
+      enabled_environments.empty? || enabled_environments.include?(environment)
     end
 
     def tracing_enabled?

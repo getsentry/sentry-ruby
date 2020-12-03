@@ -216,6 +216,7 @@ Renamed/Relocated:
 
 ```ruby
 config.current_environment #=> config.environment
+config.environments #=> config.enabled_environments
 
 config.rails_report_rescued_exceptions #=> config.rails.report_rescued_exceptions with sentry-rails installed
 
