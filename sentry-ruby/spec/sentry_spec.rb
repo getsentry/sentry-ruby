@@ -117,4 +117,28 @@ RSpec.describe Sentry do
       expect(described_class.get_current_scope.breadcrumbs.peek).to eq(crumb)
     end
   end
+
+  describe ".set_tags" do
+    it "adds tags to the current scope" do
+      described_class.set_tags(foo: "bar")
+
+      expect(described_class.get_current_scope.tags).to eq(foo: "bar")
+    end
+  end
+
+  describe ".set_extras" do
+    it "adds extras to the current scope" do
+      described_class.set_extras(foo: "bar")
+
+      expect(described_class.get_current_scope.extra).to eq(foo: "bar")
+    end
+  end
+
+  describe ".set_user" do
+    it "adds user to the current scope" do
+      described_class.set_user(id: 1)
+
+      expect(described_class.get_current_scope.user).to eq(id: 1)
+    end
+  end
 end

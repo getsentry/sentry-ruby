@@ -1,3 +1,5 @@
+require "forwardable"
+
 require "sentry/version"
 require "sentry/core_ext/object/deep_dup"
 require "sentry/configuration"
@@ -28,6 +30,10 @@ module Sentry
   end
 
   class << self
+    extend Forwardable
+
+    def_delegators :get_current_scope, :set_tags, :set_extras, :set_user
+
     def init(&block)
       config = Configuration.new
       yield(config)

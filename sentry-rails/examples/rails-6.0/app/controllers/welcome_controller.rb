@@ -16,9 +16,7 @@ class WelcomeController < ApplicationController
   private
 
   def set_sentry_context
-    Sentry.configure_scope do |scope|
-      counter = (scope.tags[:counter] || 0) + 1
-      scope.set_tag(:counter, counter)
-    end
+    counter = (Sentry.get_current_scope.tags[:counter] || 0) + 1
+    Sentry.set_tags(counter: counter)
   end
 end
