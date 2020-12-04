@@ -4,26 +4,29 @@ This is the guide for helping current `sentry-raven` users migrate to the new [`
 
 The `sentry-ruby` gem is still at the beta-testing phase. So if you find any issue when using it, please open an issue, and we'll address the problem ASAP. Also, feel free to join our [discord community](https://discord.gg/ez5KZN7) if you have any questions.
 
-
 ## Benefits
 
-### Unified Interfaces With Other SDKs
+#### Unified Interfaces With Other SDKs
 
 The design of `sentry-raven` is outdated compare with other Sentry SDKs. If you also use other sentry SDKs, like `sentry-javascript` for your frontend application, you'll notice that their interfaces are quite different from `sentry-raven`'s. So one of the purposes of the new `sentry-ruby` SDK is to provide a consistent user experience across all different platforms.
 
-### Future Support
+#### Performance Monitoring
 
-The `sentry-raven` SDK has entered maintenance mode, which means it won't receive any new feature supports (like the upcoming [performance monitoring](https://docs.sentry.io/product/performance/) feature) or aggressive bug fixes.
+The `sentry-ruby` SDK comes with the new [performance monitoring](https://docs.sentry.io/product/performance/) feature ([document](https://docs.sentry.io/platforms/ruby/performance)).
 
-### Better Extensibility
+#### Future Support
+
+The `sentry-raven` SDK has entered maintenance mode, which means it won't receive any new feature supports or aggressive bug fixes.
+
+#### Better Extensibility
 
 Unlike `sentry-raven`, `sentry-ruby` is built with extensibility in mind and will allow the community to build extensions for different integrations/features.
 
 ## Major Changes
 
-### Ruby 2.3 & Rails 4 are not supported anymore
+#### Ruby 2.3 & Rails 4 are not supported anymore
 
-### Integrations were extracted into their own gems
+#### Integrations were extracted into their own gems
 
 `sentry-ruby` still supports integration with `Rack` by providing a built-in middleware. But for integrations with `Rails`, `sidekiq`, and other libraries, you'll need to install gems for them.
 
@@ -35,14 +38,14 @@ We'll also support these in the near future
 - delayed_jobs
 - resque
 
-### Processors were removed
+#### Processors were removed
 
 In `sentry-raven` we have different processor classes for data scrubbing. But in `sentry-ruby` we don't support them anymore (just like other SDKs).
 
 To protect users' sensitive data, `sentry-ruby` added a new config option called `send_default_pii`. When its value is `false` (default), sensitive information like
 
 - user ip
-- user cookie 
+- user cookie
 - request body
 
 will **not** be sent to Sentry.
@@ -55,16 +58,16 @@ config.send_default_pii = true
 
 As for scrubbing sensitive data, please use Sentry's [Advanced Data Scrubbing](https://docs.sentry.io/product/data-management-settings/advanced-datascrubbing/) feature.
 
-### New components & structure
+#### New components & structure
 
 Like other Sentry SDKs, `sentry-ruby` now has a unified structure, which introduced 2 new components: `Hub` and `Scope` ([document](https://docs.sentry.io/platforms/ruby/enriching-events/scopes/)). Most users won't interact with `Hub` directly but will need `Scope` to configure contextual data. See the next paragraph for further information.
 
-### Context interfaces changed
+#### Context interfaces changed
 
 In `sentry-raven`, we provided helpers like `Raven.user_context` for setting contextual data. But in `sentry-ruby`, those helpers were removed, and you'll need to use a different approach for setting those data like:
 
 
-#### Configure data globally
+##### Configure data globally
 
 ```ruby
 # Before
@@ -72,10 +75,9 @@ Raven.user_context(id: 1)
 
 # After
 Sentry.set_user(id: 1)
-end
 ```
 
-#### Configure data in a local scope
+##### Configure data in a local scope
 
 ```ruby
 # Before
@@ -86,7 +88,7 @@ end
 # After
 Sentry.with_scope do |scope|
   scope.set_user(id: 1)
-  
+
   Sentry.capture_message("test")
 end
 ```
@@ -191,7 +193,7 @@ Sentry.capture_message("test", extra: { debug: true })
 
 **Configuration Options**
 
-Removed: 
+Removed:
 ```ruby
 config.sanitize_credit_cards
 config.sanitize_fields
@@ -225,7 +227,7 @@ config.ssl_verification #=> config.transport.ssl_verification
 config.timeout #=> config.transport.timeout
 config.open_timeout #=> config.transport.open_timeout
 config.proxy #=> config.transport.proxy
-config.http_adapter #=> config.transport.http_adapter 
+config.http_adapter #=> config.transport.http_adapter
 config.faraday_builder #=> config.transport.faraday_builder
 ```
 
