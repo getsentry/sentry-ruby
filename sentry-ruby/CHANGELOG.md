@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.3.0
+
+- Major API changes: [1123](https://github.com/getsentry/sentry-ruby/pull/1123)
+- Support event hint: [1122](https://github.com/getsentry/sentry-ruby/pull/1122)
+- Add request-id tag to events: [1120](https://github.com/getsentry/sentry-ruby/pull/1120) (by @tvec)
+
 ## 0.2.0
 
 - Multiple fixes and refactorings
