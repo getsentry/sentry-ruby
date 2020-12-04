@@ -26,7 +26,7 @@ module Sentry
       end
 
       event.fingerprint = fingerprint
-      event.level ||= level
+      event.level = level
       event.transaction = transaction_names.last
       event.breadcrumbs = breadcrumbs
       event.rack_env = rack_env

@@ -22,6 +22,13 @@ RSpec.describe Sentry::Hub do
         expect(event.tags).to eq({ foo: "bar" })
       end
 
+      it "accepts custom level" do
+        subject.send(capture_helper, capture_subject, level: :info)
+
+        event = transport.events.last
+        expect(event.level).to eq(:info)
+      end
+
       it "merges the contexts/tags/extrac with what the scope already has" do
         scope.set_tags(old_tag: true)
         scope.set_contexts(old_context: true)
