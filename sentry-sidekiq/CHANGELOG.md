@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.2.0
+
+- Major API changes: [1123](https://github.com/getsentry/sentry-ruby/pull/1123)
+
 ## 0.1.3
 
 - Small fixes
