@@ -95,6 +95,22 @@ RSpec.describe Sentry::Span do
     end
   end
 
+  describe "#with_child_span" do
+    it "starts a child span and finish it when the block ends" do
+      new_span = subject.with_child_span(op: "sql.query") do |span|
+        span.set_data(:child_span, true)
+      end
+
+      expect(new_span.op).to eq("sql.query")
+      expect(new_span.data).to eq(child_span: true)
+      expect(new_span.trace_id).to eq(subject.trace_id)
+      expect(new_span.span_id).not_to eq(subject.span_id)
+      expect(new_span.parent_span_id).to eq(subject.span_id)
+      expect(new_span.start_timestamp).not_to eq(subject.start_timestamp)
+      expect(new_span.timestamp).not_to be(nil)
+    end
+  end
+
   describe "#set_status" do
     it "sets status" do
       subject.set_status("ok")

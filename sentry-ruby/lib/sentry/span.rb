@@ -45,6 +45,7 @@ module Sentry
       return if @timestamp
 
       @timestamp = Sentry.utc_now.to_f
+      self
     end
 
     def to_sentry_trace
@@ -89,6 +90,14 @@ module Sentry
       end
 
       child_span
+    end
+
+    def with_child_span(**options, &block)
+      child_span = start_child(**options)
+
+      yield(child_span)
+
+      child_span.finish
     end
 
     def set_op(op)
