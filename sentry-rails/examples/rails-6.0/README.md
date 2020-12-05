@@ -17,7 +17,13 @@
 1. Start the Rails server - `bundle exec rails s`
 2. Visit `localhost:3000/view_error`
 
+### Performance Monitoring
+
+1. Start the Rails server - `bundle exec rails s`
+2. Visit `/posts` and do some CRUD actions
+
 ### Sidekiq Worker Exception
 
 1. Start `sidekiq` server - `bundle exec sidekiq`
 2. Run the job with Rails runner - `bundle exec rails runner "ErrorWorker.perform_async"`
+
