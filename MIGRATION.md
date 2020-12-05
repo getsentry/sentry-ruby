@@ -4,6 +4,14 @@ This is the guide for helping current `sentry-raven` users migrate to the new [`
 
 The `sentry-ruby` gem is still at the beta-testing phase. So if you find any issue when using it, please open an issue, and we'll address the problem ASAP. Also, feel free to join our [discord community](https://discord.gg/ez5KZN7) if you have any questions.
 
+## Table of Content
+
+- [Benefits](#benefits)
+- [Major Changes](#major-changes)
+- [Configuration Changes](#configuration-changes)
+- [API Changes](#api-changes)
+- [Example Apps](#example-apps)
+
 ## Benefits
 
 #### Unified Interfaces With Other SDKs
@@ -93,7 +101,55 @@ Sentry.with_scope do |scope|
 end
 ```
 
-## Examples
+## Configuration Changes
+
+#### Removed
+
+```ruby
+config.sanitize_credit_cards
+config.sanitize_fields
+config.sanitize_fields_excluded
+config.sanitize_http_headers
+
+config.scheme
+config.secret_key
+config.server
+
+config.tags
+config.logger
+config.encoding
+
+# please only use config.before_send
+config.should_capture
+config.transport_failure_callback
+```
+
+#### Renamed/Relocated
+
+```ruby
+config.current_environment #=> config.environment
+config.environments #=> config.enabled_environments
+
+config.rails_report_rescued_exceptions #=> config.rails.report_rescued_exceptions with sentry-rails installed
+
+config.ssl #=> config.transport.ssl
+config.ssl_ca_file #=> config.transport.ssl_ca_file
+config.ssl_verification #=> config.transport.ssl_verification
+config.timeout #=> config.transport.timeout
+config.open_timeout #=> config.transport.open_timeout
+config.proxy #=> config.transport.proxy
+config.http_adapter #=> config.transport.http_adapter
+config.faraday_builder #=> config.transport.faraday_builder
+```
+
+#### Added
+
+```ruby
+# this behaves similar to the old config.scheme option
+config.transport.transport_class = MyTransportClass
+```
+
+## API Changes
 
 This section will use code examples to guide you through the changes required for the migration.
 
@@ -191,49 +247,10 @@ New:
 Sentry.capture_message("test", extra: { debug: true })
 ```
 
-**Configuration Options**
+## Example Apps
 
-Removed:
-```ruby
-config.sanitize_credit_cards
-config.sanitize_fields
-config.sanitize_fields_excluded
-config.sanitize_http_headers
-
-config.scheme
-config.secret_key
-config.server
-
-config.tags
-config.logger
-config.encoding
-
-# please only use config.before_send
-config.should_capture
-config.transport_failure_callback
-```
-
-Renamed/Relocated:
-
-```ruby
-config.current_environment #=> config.environment
-config.environments #=> config.enabled_environments
-
-config.rails_report_rescued_exceptions #=> config.rails.report_rescued_exceptions with sentry-rails installed
-
-config.ssl #=> config.transport.ssl
-config.ssl_ca_file #=> config.transport.ssl_ca_file
-config.ssl_verification #=> config.transport.ssl_verification
-config.timeout #=> config.transport.timeout
-config.open_timeout #=> config.transport.open_timeout
-config.proxy #=> config.transport.proxy
-config.http_adapter #=> config.transport.http_adapter
-config.faraday_builder #=> config.transport.faraday_builder
-```
-
-Added:
-
-```ruby
-# this behaves similar to the old config.scheme option
-config.transport.transport_class = MyTransportClass
-```
+- [Rails example](https://github.com/getsentry/sentry-ruby/tree/master/sentry-rails/examples/rails-6.0)
+- [Sinatra example](https://github.com/getsentry/sentry-ruby/tree/master/sentry-ruby/examples/sinatra)
+- Sidekiq examples:
+  - [with Rails](https://github.com/getsentry/sentry-ruby/tree/master/sentry-rails/examples/rails-6.0)
+  - [without Rails](https://github.com/getsentry/sentry-ruby/tree/master/sentry-sidekiq/example)
