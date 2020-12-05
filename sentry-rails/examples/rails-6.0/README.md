@@ -3,7 +3,7 @@
 ## Setup
 
 1. `bundle install`
-2. Set your own Sentry DSN in `config/application.rb`
+2. Set your own Sentry DSN in `config/initializers/sentry.rb`
 
 ## Send Some Events To Sentry
 
