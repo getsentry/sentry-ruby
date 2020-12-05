@@ -24,6 +24,7 @@ gem 'jbuilder', '~> 2.7'
 # gem 'bcrypt', '~> 3.1.7'
 
 gem 'sentry-ruby', path: "../../../sentry-ruby"
+gem 'sentry-sidekiq', path: "../../../sentry-sidekiq"
 gem 'sentry-rails', path: "../../"
 
 # Use Active Storage variant
