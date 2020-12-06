@@ -1,16 +1,18 @@
 name: sentry-raven Test
 
 on:
+  workflow_dispatch:
   push:
     branches:
       - master
   pull_request:
-    paths-ignore:
-      - 'sentry-ruby/**'
-      - 'sentry-sidekiq/**'
-      - 'sentry-rails/**'
+    paths:
+      - 'sentry-raven/**'
 jobs:
   test:
+    defaults:
+      run:
+        working-directory: sentry-raven
     name: Test on ruby ${{ matrix.ruby_version }} and rails ${{ matrix.rails_version }}
     runs-on: ${{ matrix.os }}
     strategy:
@@ -60,6 +62,9 @@ jobs:
         bundle exec rake
 
   compare_allocation:
+    defaults:
+      run:
+        working-directory: sentry-raven
     name: Compare memory allocation with ${{ matrix.ruby_version }} and rails ${{ matrix.rails_version }}
     runs-on: ${{ matrix.os }}
     needs: test
