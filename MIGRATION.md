@@ -32,26 +32,23 @@ Unlike `sentry-raven`, `sentry-ruby` is built with extensibility in mind and wil
 
 ## Major Changes
 
-#### Ruby 2.3 & Rails 4 are not supported anymore
+#### Ruby 2.3 and Rails 4 are no longer supported.
 
-#### Integrations were extracted into their own gems
+#### Integrations Were Extracted
 
-`sentry-ruby` still supports integration with `Rack` by providing a built-in middleware. But for integrations with `Rails`, `sidekiq`, and other libraries, you'll need to install gems for them.
+Sentry's Ruby SDK still supports integration with `Rack` by providing built-in middleware, but you'll need to install gems for integrations with `Rails`, `sidekiq`, and other libraries.
 
 Currently available integrations are:
 - [sentry-rails](https://github.com/getsentry/sentry-ruby/tree/master/sentry-rails)
 - [sentry-sidekiq](https://github.com/getsentry/sentry-ruby/tree/master/sentry-sidekiq)
 
-We'll also support these in the near future
+We'll also support these in the near future:
 - delayed_jobs
 - resque
 
-#### Processors were removed
+#### Processors Were Removed
 
-In `sentry-raven` we have different processor classes for data scrubbing. But in `sentry-ruby` we don't support them anymore (just like other SDKs).
-
-To protect users' sensitive data, `sentry-ruby` added a new config option called `send_default_pii`. When its value is `false` (default), sensitive information like
-
+In `sentry-raven` we have different processor classes for data scrubbing. But updated Sentry Ruby SDK doesn't support these processors. Instead, to protect users' sensitive data, the Ruby SDK adds a new configuration option of `send_default_pii`. When the value is set to `false` (default), sensitive information, such as 
 - user ip
 - user cookie
 - request body
@@ -66,16 +63,16 @@ config.send_default_pii = true
 
 As for scrubbing sensitive data, please use Sentry's [Advanced Data Scrubbing](https://docs.sentry.io/product/data-management-settings/advanced-datascrubbing/) feature.
 
-#### New components & structure
+#### New Components and Structure
 
-Like other Sentry SDKs, `sentry-ruby` now has a unified structure, which introduced 2 new components: `Hub` and `Scope` ([document](https://docs.sentry.io/platforms/ruby/enriching-events/scopes/)). Most users won't interact with `Hub` directly but will need `Scope` to configure contextual data. See the next paragraph for further information.
+Senty's Ruby SDK uses a unified structure, which introduces two new components: `Hub` and `Scope` ([which are both documented here](https://docs.sentry.io/platforms/ruby/enriching-events/scopes/)). Most users won't interact with `Hub` directly, but will need `Scope` to configure contextual data.
 
-#### Context interfaces changed
+#### Context Interfaces Changed
 
 In `sentry-raven`, we provided helpers like `Raven.user_context` for setting contextual data. But in `sentry-ruby`, those helpers were removed, and you'll need to use a different approach for setting those data like:
 
 
-##### Configure data globally
+Configure data globally
 
 ```ruby
 # Before
@@ -85,7 +82,7 @@ Raven.user_context(id: 1)
 Sentry.set_user(id: 1)
 ```
 
-##### Configure data in a local scope
+Configure data in a local scope
 
 ```ruby
 # Before
@@ -151,7 +148,7 @@ config.transport.transport_class = MyTransportClass
 
 ## API Changes
 
-This section will use code examples to guide you through the changes required for the migration.
+In this section, we provide code examples to guide you through the changes required for the migration.
 
 **Installation**
 
