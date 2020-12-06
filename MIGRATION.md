@@ -14,25 +14,17 @@ The `sentry-ruby` gem is still at the beta-testing phase. So if you find any iss
 
 ## Benefits
 
-#### Unified Interfaces With Other SDKs
+- **Unified Interfaces With Other SDKs:** The design of `sentry-raven` is outdated compared with our modern Sentry SDKs. If you also use other Sentry SDKs, such as Sentry's JavaScript SDK for your frontend application, you'll notice that their interfaces are quite different from the one provided for `sentry-raven`. The new `sentry-ruby` SDK provides a more consistent user experience across all different platforms.
 
-The design of `sentry-raven` is outdated compare with other Sentry SDKs. If you also use other sentry SDKs, like `sentry-javascript` for your frontend application, you'll notice that their interfaces are quite different from `sentry-raven`'s. So one of the purposes of the new `sentry-ruby` SDK is to provide a consistent user experience across all different platforms.
+- **Performance Monitoring:** The Sentry Ruby SDK includes [performance monitoring](https://docs.sentry.io/product/performance/), which you can enable if you haven't already as ([discussed here](https://docs.sentry.io/platforms/ruby/performance/)). 
 
-#### Performance Monitoring
+- **Future Support:** `sentry-raven` has entered maintenance mode, which means it won't receive any new feature supports or aggressive bug fixes.
 
-The `sentry-ruby` SDK comes with the new [performance monitoring](https://docs.sentry.io/product/performance/) feature ([document](https://docs.sentry.io/platforms/ruby/performance)).
-
-#### Future Support
-
-The `sentry-raven` SDK has entered maintenance mode, which means it won't receive any new feature supports or aggressive bug fixes.
-
-#### Better Extensibility
-
-Unlike `sentry-raven`, `sentry-ruby` is built with extensibility in mind and will allow the community to build extensions for different integrations/features.
+- **Better Extensibility:** Unlike `sentry-raven`, `sentry-ruby` is built with extensibility in mind and will allow the community to build extensions for different integrations/features.
 
 ## Major Changes
 
-#### Ruby 2.3 and Rails 4 are no longer supported.
+### Ruby 2.3 and Rails 4 are no longer supported.
 
 #### Integrations Were Extracted
 
@@ -48,7 +40,7 @@ We'll also support these in the near future:
 
 #### Processors Were Removed
 
-In `sentry-raven` we have different processor classes for data scrubbing. But updated Sentry Ruby SDK doesn't support these processors. Instead, to protect users' sensitive data, the Ruby SDK adds a new configuration option of `send_default_pii`. When the value is set to `false` (default), sensitive information, such as 
+In `sentry-raven` we have different processor classes for data scrubbing. But updated Sentry Ruby SDK doesn't support these processors. Instead, to protect users' sensitive data, the Ruby SDK adds a new configuration option of `send_default_pii`. When the value is set to `false` (default), sensitive information, such as
 - user ip
 - user cookie
 - request body
@@ -251,3 +243,4 @@ Sentry.capture_message("test", extra: { debug: true })
 - Sidekiq examples:
   - [with Rails](https://github.com/getsentry/sentry-ruby/tree/master/sentry-rails/examples/rails-6.0)
   - [without Rails](https://github.com/getsentry/sentry-ruby/tree/master/sentry-sidekiq/example)
+
