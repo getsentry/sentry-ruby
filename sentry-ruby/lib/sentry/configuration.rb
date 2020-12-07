@@ -109,6 +109,9 @@ module Sentry
     # will not be sent to Sentry.
     attr_accessor :send_default_pii
 
+    # IP ranges for trusted proxies that will be skipped when calculating IP address.
+    attr_accessor :trusted_proxies
+
     attr_accessor :server_name
 
     # Return a Transport::Configuration object for transport-related configurations.
@@ -170,6 +173,7 @@ module Sentry
       self.sample_rate = 1.0
       self.send_modules = true
       self.send_default_pii = false
+      self.trusted_proxies = []
       self.dsn = ENV['SENTRY_DSN']
       self.server_name = server_name_from_env
 

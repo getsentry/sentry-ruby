@@ -13,8 +13,8 @@ module Sentry
         "fc00::/7",       # private IPv6 range fc00::/7
         "10.0.0.0/8",     # private IPv4 range 10.x.x.x
         "172.16.0.0/12",  # private IPv4 range 172.16.0.0 .. 172.31.255.255
-        "192.168.0.0/16" # private IPv4 range 192.168.x.x
-      ].map { |proxy| IPAddr.new(proxy) }
+        "192.168.0.0/16", # private IPv4 range 192.168.x.x
+      ]
 
       attr_reader :ip
 
@@ -22,12 +22,14 @@ module Sentry
         remote_addr: nil,
         client_ip: nil,
         real_ip: nil,
-        forwarded_for: nil
+        forwarded_for: nil,
+        trusted_proxies: []
       )
         @remote_addr = remote_addr
         @client_ip = client_ip
         @real_ip = real_ip
         @forwarded_for = forwarded_for
+        @trusted_proxies = (LOCAL_ADDRESSES + Array(trusted_proxies)).map { |proxy| IPAddr.new(proxy) }
       end
 
       def calculate_ip
@@ -37,7 +39,7 @@ module Sentry
         # Could be a CSV list and/or repeated headers that were concatenated.
         client_ips    = ips_from(@client_ip)
         real_ips      = ips_from(@real_ip)
-        forwarded_ips = ips_from(@forwarded_for)
+        forwarded_ips = ips_from(@forwarded_for).reverse
 
         ips = [client_ips, real_ips, forwarded_ips, remote_addr].flatten.compact
 
@@ -63,7 +65,7 @@ module Sentry
       end
 
       def filter_local_addresses(ips)
-        ips.reject { |ip| LOCAL_ADDRESSES.any? { |proxy| proxy === ip } }
+        ips.reject { |ip| @trusted_proxies.any? { |proxy| proxy === ip } }
       end
     end
   end

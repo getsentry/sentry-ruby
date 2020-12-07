@@ -21,6 +21,7 @@ module Sentry
       next unless Sentry.initialized?
 
       configure_sentry_logger
+      configure_trusted_proxies
       extend_controller_methods
       extend_active_job
       override_streaming_reporter
@@ -31,6 +32,10 @@ module Sentry
 
     def configure_sentry_logger
       Sentry.configuration.logger = ::Rails.logger
+    end
+
+    def configure_trusted_proxies
+      Sentry.configuration.trusted_proxies += Array(::Rails.application.config.action_dispatch.trusted_proxies)
     end
 
     def extend_active_job
