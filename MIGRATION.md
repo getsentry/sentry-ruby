@@ -57,7 +57,7 @@ As for scrubbing sensitive data, please use Sentry's [Advanced Data Scrubbing](h
 
 #### New Components and Structure
 
-Senty's Ruby SDK uses a unified structure, which introduces two new components: `Hub` and `Scope` ([which are both documented here](https://docs.sentry.io/platforms/ruby/enriching-events/scopes/)). Most users won't interact with `Hub` directly, but will need `Scope` to configure contextual data.
+Sentry's Ruby SDK uses a unified structure, which introduces two new components: `Hub` and `Scope` ([which are both documented here](https://docs.sentry.io/platforms/ruby/enriching-events/scopes/)). Most users won't interact with `Hub` directly, but will need `Scope` to configure contextual data.
 
 #### Context Interfaces Changed
 
