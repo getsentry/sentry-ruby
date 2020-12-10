@@ -1,5 +1,9 @@
 # Changelog
 
+## 4.0.0
+
+- Only documents update for the official release and no API/feature changes.
+
 ## 0.2.0
 
 - Major API changes: [1123](https://github.com/getsentry/sentry-ruby/pull/1123)
