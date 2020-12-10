@@ -17,11 +17,19 @@ RSpec.describe "Sentry::Breadcrumbs::ActiveSupportLogger", type: :request do
     Sentry.get_current_scope.clear_breadcrumbs
   end
 
+  let(:transport) do
+    Sentry.get_current_client.transport
+  end
+
+  after do
+    transport.events = []
+  end
+
   it "captures correct data" do
     get "/exception"
 
     expect(response.status).to eq(500)
-    event = Sentry.get_current_client.transport.events.first.to_json_compatible
+    event = transport.events.first.to_json_compatible
     breadcrumbs = event.dig("breadcrumbs", "values")
     expect(breadcrumbs.count).to eq(2)
 
@@ -54,5 +62,13 @@ RSpec.describe "Sentry::Breadcrumbs::ActiveSupportLogger", type: :request do
         }
       )
     end
+  end
+
+  it "ignores events that doesn't have a started timestamp" do
+    expect do
+      ActiveSupport::Notifications.publish "foo", Object.new
+    end.not_to raise_error
+
+    expect(transport.events).to be_empty
   end
 end
