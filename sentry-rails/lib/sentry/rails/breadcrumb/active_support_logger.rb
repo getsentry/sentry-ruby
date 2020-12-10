@@ -14,7 +14,10 @@ module Sentry
 
           def inject
             @subscriber = ::ActiveSupport::Notifications.subscribe(/.*/) do |name, started, finished, unique_id, data|
-              add(name, started, finished, unique_id, data)
+              # we only record events that has a started timestamp
+              if started.is_a?(Time)
+                add(name, started, finished, unique_id, data)
+              end
             end
           end
 
