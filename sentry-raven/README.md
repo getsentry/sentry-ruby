@@ -9,20 +9,15 @@
 
 ### 🚧 Migrating To The New SDK 🚧
 
-We're beta-testing our new Ruby SDK, [sentry-ruby](https://github.com/getsentry/sentry-ruby/tree/master/sentry-ruby). Here are the benefits of migrating to it:
+We've released our new Ruby SDK, [sentry-ruby](https://github.com/getsentry/sentry-ruby/tree/master/sentry-ruby). Here are the benefits of migrating to it:
 
-#### Unified Interfaces With Other SDKs
+- **Unified Interfaces With Other SDKs:** The design of `sentry-raven` is outdated compared with our modern Sentry SDKs. If you also use other Sentry SDKs, such as Sentry's JavaScript SDK for your frontend application, you'll notice that their interfaces are quite different from the one provided for `sentry-raven`. The new `sentry-ruby` SDK provides a more consistent user experience across all different platforms.
 
-The design of `sentry-raven` is outdated compare with other Sentry SDKs. If you also use other sentry SDKs, like `sentry-javascript` for your frontend application, you'll notice that their interfaces are quite different from `sentry-raven`'s. So one of the purposes of the new `sentry-ruby` SDK is to provide a consistent user experience across all different platforms.
+- **Performance Monitoring:** The Sentry Ruby SDK includes [performance monitoring](https://docs.sentry.io/product/performance/), which you can enable if you haven't already as ([discussed here](https://docs.sentry.io/platforms/ruby/performance/)).
 
-#### Future Support
+- **Future Support:** `sentry-raven` has entered maintenance mode, which means it won't receive any new feature supports or aggressive bug fixes.
 
-The `sentry-raven` SDK has entered maintenance mode, which means it won't receive any new feature supports (like the upcoming [performance monitoring](https://docs.sentry.io/product/performance/) feature) or aggressive bug fixes.
-
-#### Better Extensibility
-
-Unlike `sentry-raven`, `sentry-ruby` is built with extensibility in mind and will allow the community to build extensions for different integrations/features.
-
+- **Better Extensibility:** Unlike `sentry-raven`, `sentry-ruby` is built with extensibility in mind and will allow the community to build extensions for different integrations/features.
 
 If you're interested in the migration, please also read our [migration guide](https://github.com/getsentry/sentry-ruby/blob/master/MIGRATION.md) for more information.
 
