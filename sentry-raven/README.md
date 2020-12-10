@@ -19,7 +19,7 @@ We've released our new Ruby SDK, [sentry-ruby](https://github.com/getsentry/sent
 
 - **Better Extensibility:** Unlike `sentry-raven`, `sentry-ruby` is built with extensibility in mind and will allow the community to build extensions for different integrations/features.
 
-If you're interested in the migration, please also read our [migration guide](https://github.com/getsentry/sentry-ruby/blob/master/MIGRATION.md) for more information.
+If you're interested in the migration, please also read our [migration guide](https://docs.sentry.io/platforms/ruby/migration/) for more information.
 
 ---
 
