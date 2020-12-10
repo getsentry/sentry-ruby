@@ -4,7 +4,7 @@ source "https://rubygems.org"
 gemspec
 
 rails_version = ENV["RAILS_VERSION"]
-rails_version = "6.0" if rails_version.nil?
+rails_version = "6.1.0" if rails_version.nil?
 
 gem 'activerecord-jdbcmysql-adapter', platform: :jruby
 gem "jdbc-sqlite3", platform: :jruby
