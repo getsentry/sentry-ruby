@@ -17,7 +17,7 @@
 [![SemVer](https://api.dependabot.com/badges/compatibility_score?dependency-name=sentry-rails&package-manager=bundler&version-scheme=semver)](https://dependabot.com/compatibility-score.html?dependency-name=sentry-rails&package-manager=bundler&version-scheme=semver)
 
 
-[Documentation](https://docs.sentry.io/clients/ruby/) | [Bug Tracker](https://github.com/getsentry/sentry-ruby/issues) | [Forum](https://forum.sentry.io/) | IRC: irc.freenode.net, #sentry
+[Documentation](https://docs.sentry.io/platforms/ruby/guides/rails/) | [Bug Tracker](https://github.com/getsentry/sentry-ruby/issues) | [Forum](https://forum.sentry.io/) | IRC: irc.freenode.net, #sentry
 
 The official Ruby-language client and integration layer for the [Sentry](https://github.com/getsentry/sentry) error reporting API.
 
@@ -49,4 +49,37 @@ Sentry.init do |config|
   config.breadcrumbs_logger = [:active_support_logger]
 end
 ```
+
+### Performance Monitoring
+
+You can activate performance monitoring by enabling traces sampling:
+
+```ruby
+Sentry.init do |config|
+  # set a uniform sample rate between 0.0 and 1.0
+  config.traces_sample_rate = 0.2
+
+  # or control sampling dynamically
+  config.traces_sampler = lambda do |sampling_context|
+    # sampling_context[:transaction_context] contains the information about the transaction
+    # sampling_context[:parent_sampled] contains the transaction's parent's sample decision
+    true # return value can be a boolean or a float between 0.0 and 1.0
+  end
+end
+```
+
+Currently, it tracks the following Rails instrumentation events:
+
+- ActiveRecord
+  - `sql.active_record`
+- ActionController
+  - `process_action.action_controller`
+- ActionView
+  - `render_template.action_view`
+  - `render_partial.action_view`
+  - `render_collection.action_view`
+
+To lean more about performance monitoring, please visit the [official documentation](https://docs.sentry.io/platforms/ruby/guides/rails/performance/).
+
+
 

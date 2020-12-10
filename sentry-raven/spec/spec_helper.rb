@@ -1,13 +1,18 @@
-require 'sentry_raven_without_integrations'
 require 'pry'
 
 require 'simplecov'
-SimpleCov.start
+SimpleCov.start do
+  project_name "sentry-raven"
+  root File.join(__FILE__, "../../../")
+  coverage_dir File.join(__FILE__, "../../coverage")
+end
 
 if ENV["CI"]
   require 'codecov'
   SimpleCov.formatter = SimpleCov::Formatter::Codecov
 end
+
+require 'sentry_raven_without_integrations'
 
 Raven.configure do |config|
   config.dsn = "dummy://12345:67890@sentry.localdomain/sentry/42"
