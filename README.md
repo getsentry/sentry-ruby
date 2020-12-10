@@ -5,57 +5,46 @@
   <br>
 </p>
 
-# Raven-Ruby, the Ruby Client for Sentry
-
-### 🚧 Migrating To The New SDK 🚧
-
-We're beta-testing our new Ruby SDK, [sentry-ruby](https://github.com/getsentry/sentry-ruby/tree/master/sentry-ruby). Here are the benefits of migrating to it:
-
-#### Unified Interfaces With Other SDKs
-
-The design of `sentry-raven` is outdated compare with other Sentry SDKs. If you also use other sentry SDKs, like `sentry-javascript` for your frontend application, you'll notice that their interfaces are quite different from `sentry-raven`'s. So one of the purposes of the new `sentry-ruby` SDK is to provide a consistent user experience across all different platforms.
-
-#### Future Support
-
-The `sentry-raven` SDK has entered maintenance mode, which means it won't receive any new feature supports (like the upcoming [performance monitoring](https://docs.sentry.io/product/performance/) feature) or aggressive bug fixes.
-
-#### Better Extensibility
-
-Unlike `sentry-raven`, `sentry-ruby` is built with extensibility in mind and will allow the community to build extensions for different integrations/features.
-
-
-If you're interested in the migration, please also read our [migration guide](https://github.com/getsentry/sentry-ruby/blob/master/MIGRATION.md) for more information.
+# sentry-ruby, the Ruby Client for Sentry
 
 ---
 
 
-[![Gem Version](https://img.shields.io/gem/v/sentry-raven.svg)](https://rubygems.org/gems/sentry-raven)
-![Build Status](https://github.com/getsentry/raven-ruby/workflows/Test/badge.svg)
+[![Gem Version](https://img.shields.io/gem/v/sentry-ruby.svg)](https://rubygems.org/gems/sentry-ruby)
+![Build Status](https://github.com/getsentry/sentry-ruby/workflows/sentry-ruby%20Test/badge.svg)
 [![Coverage Status](https://img.shields.io/codecov/c/github/getsentry/sentry-ruby/master?logo=codecov)](https://codecov.io/gh/getsentry/sentry-ruby/branch/master)
-[![Gem](https://img.shields.io/gem/dt/sentry-raven.svg)](https://rubygems.org/gems/sentry-raven/)
-[![SemVer](https://api.dependabot.com/badges/compatibility_score?dependency-name=sentry-raven&package-manager=bundler&version-scheme=semver)](https://dependabot.com/compatibility-score.html?dependency-name=sentry-raven&package-manager=bundler&version-scheme=semver)
+[![Gem](https://img.shields.io/gem/dt/sentry-ruby.svg)](https://rubygems.org/gems/sentry-ruby/)
+[![SemVer](https://api.dependabot.com/badges/compatibility_score?dependency-name=sentry-ruby&package-manager=bundler&version-scheme=semver)](https://dependabot.com/compatibility-score.html?dependency-name=sentry-ruby&package-manager=bundler&version-scheme=semver)
 
 
-[Documentation](https://docs.sentry.io/clients/ruby/) | [Bug Tracker](https://github.com/getsentry/raven-ruby/issues) | [Forum](https://forum.sentry.io/) | IRC: irc.freenode.net, #sentry
+[Documentation](https://docs.sentry.io/clients/ruby/) | [Bug Tracker](https://github.com/getsentry/sentry-ruby/issues) | [Forum](https://forum.sentry.io/) | IRC: irc.freenode.net, #sentry
 
 The official Ruby-language client and integration layer for the [Sentry](https://github.com/getsentry/sentry) error reporting API.
 
 
 ## Requirements
 
-We test on Ruby 2.3, 2.4, 2.5, 2.6 and 2.7 at the latest patchlevel/teeny version. We also support JRuby 9.0. Our Rails integration works with Rails 4.2+, including Rails 5 and Rails 6.
+We test on Ruby 2.4, 2.5, 2.6 and 2.7 at the latest patchlevel/teeny version. We also support JRuby 9.0.
 
 ## Getting Started
 
 ### Install
 
 ```ruby
-gem "sentry-raven"
+gem "sentry-ruby"
 ```
 
-### Raven only runs when Sentry DSN is set
+and depends on the integrations you want to have, you might also want to install these:
 
-Raven will capture and send exceptions to the Sentry server whenever its DSN is set. This makes environment-based configuration easy - if you don't want to send errors in a certain environment, just don't set the DSN in that environment!
+```ruby
+gem "sentry-rails"
+gem "sentry-sidekiq"
+# and mores to come in the future!
+```
+
+### Sentry only runs when Sentry DSN is set
+
+Sentry will capture and send exceptions to the Sentry server whenever its DSN is set. This makes environment-based configuration easy - if you don't want to send errors in a certain environment, just don't set the DSN in that environment!
 
 ```bash
 # Set your SENTRY_DSN environment variable.
@@ -63,35 +52,53 @@ export SENTRY_DSN=http://public@example.com/project-id
 ```
 ```ruby
 # Or you can configure the client in the code.
-Raven.configure do |config|
+Sentry.init do |config|
   config.dsn = 'http://public@example.com/project-id'
 end
 ```
 
-### Raven doesn't report some kinds of data by default
+### Sentry doesn't report some kinds of data by default
 
-**Raven ignores some exceptions by default** - most of these are related to 404s or controller actions not being found. [For a complete list, see the `IGNORE_DEFAULT` constant](https://github.com/getsentry/raven-ruby/blob/master/lib/raven/configuration.rb).
+**Sentry ignores some exceptions by default** - most of these are related to 404s parameter parsing errors. [For a complete list, see the `IGNORE_DEFAULT` constant](https://github.com/getsentry/sentry-ruby/blob/master/sentry-ruby/lib/sentry/configuration.rb#L118) and the integration gems' `IGNORE_DEFAULT`, like [`sentry-rails`'s](https://github.com/getsentry/sentry-ruby/blob/update-readme/sentry-rails/lib/sentry/rails/configuration.rb#L12)
 
-Raven doesn't report POST data or cookies by default. In addition, it will attempt to remove any obviously sensitive data, such as credit card or Social Security numbers. For more information about how Sentry processes your data, [check out the documentation on the `processors` config setting.](https://docs.sentry.io/platforms/ruby/configuration/options/)
+Sentry doesn't send personally identifiable information (pii) by default, such as request body, user ip or cookies. If you want those information to be sent, you can use the `send_default_pii` config option:
+
+```ruby
+Sentry.init do |config|
+  # other configs
+  config.send_default_pii = true
+end
+```
 
 ### Usage
 
-**If you use Rails, you're already done - no more configuration required!** Check [Integrations](https://docs.sentry.io/platforms/ruby/configuration/integrations/) for more details on other gems Sentry integrates with automatically.
+`sentry-ruby` has a default integration with `Rack`, so you only need to use the middleware in your application like:
 
-Otherwise, Raven supports two methods of capturing exceptions:
+```
+require 'rack'
+require 'sentry-ruby'
+
+use Sentry::Rack::CaptureException
+
+run theapp
+```
+
+Otherwise, Sentry you can always use the capture helpers manually
 
 ```ruby
-Raven.capture do
-  # capture any exceptions which happen during execution of this block
-  1 / 0
-end
+Sentry.capture_message("hello world!")
 
 begin
   1 / 0
 rescue ZeroDivisionError => exception
-  Raven.capture_exception(exception)
+  Sentry.capture_exception(exception)
 end
 ```
+
+We also provide integrations with popular frameworks/libraries with the related extensions:
+
+- [sentry-rails](https://github.com/getsentry/sentry-ruby/tree/master/sentry-rails)
+- [sentry-sidekiq](https://github.com/getsentry/sentry-ruby/tree/master/sentry-sidekiq)
 
 ### More configuration
 
@@ -99,15 +106,15 @@ You're all set - but there's a few more settings you may want to know about too!
 
 #### async
 
-When an error or message occurs, the notification is immediately sent to Sentry. Raven can be configured to send asynchronously:
+When an error or message occurs, the notification is immediately sent to Sentry. Sentry can be configured to send asynchronously:
 
 ```ruby
 config.async = lambda { |event|
-  Thread.new { Raven.send_event(event) }
+  Thread.new { Sentry.send_event(event) }
 }
 ```
 
-Using a thread to send events will be adequate for truly parallel Ruby platforms such as JRuby, though the benefit on MRI/CRuby will be limited. If the async callback raises an exception, Raven will attempt to send synchronously.
+Using a thread to send events will be adequate for truly parallel Ruby platforms such as JRuby, though the benefit on MRI/CRuby will be limited. If the async callback raises an exception, Sentry will attempt to send synchronously.
 
 Note that the naive example implementation has a major drawback - it can create an infinite number of threads. We recommend creating a background job, using your background job processor, that will send Sentry notifications in the background.
 
@@ -118,52 +125,54 @@ class SentryJob < ActiveJob::Base
   queue_as :default
 
   def perform(event)
-    Raven.send_event(event)
+    Sentry.send_event(event)
   end
 end
 ```
 
-#### transport_failure_callback
+#### Contexts
 
-If Raven fails to send an event to Sentry for any reason (either the Sentry server has returned a 4XX or 5XX response), this Proc or lambda will be called.
-
-```ruby
-config.transport_failure_callback = lambda { |event, error|
-  AdminMailer.email_admins("Oh god, it's on fire because #{error.message}!", event).deliver_later
-}
-```
-
-#### Context
-
-Much of the usefulness of Sentry comes from additional context data with the events. Raven makes this very convenient by providing methods to set thread local context data that is then submitted automatically with all events:
+In sentry-ruby, every event will inherit their contextual data from the current scope. So you can enrich the event's data by configuring the current scope like:
 
 ```ruby
-Raven.user_context email: 'foo@example.com'
+Sentry.configure_scope do |scope|
+  scope.set_user(id: 1, email: "test@example.com")
 
-Raven.tags_context interesting: 'yes'
+  scope.set_tag(:tag, "foo")
+  scope.set_tags(tag_1: "foo", tag_2: "bar")
 
-Raven.extra_context additional_info: 'foo'
-```
-
-You can also use `tags_context` and `extra_context` to provide scoped information:
-
-```ruby
-Raven.tags_context(interesting: 'yes') do
-  # the `interesting: 'yes'` tag will only present in the requests sent inside the block
-  Raven.capture_exception(exception)
+  scope.set_extra(:order_number, 1234)
+  scope.set_extras(order_number: 1234, tickets_count: 4)
 end
 
-Raven.extra_context(additional_info: 'foo') do
-  # same as above, the `additional_info` will only present in this request
-  Raven.capture_exception(exception)
-end
+Sentry.capture_exception(exception) # the event will carry all those information now
 ```
 
-For more information, see [Context](https://docs.sentry.io/platforms/ruby/enriching-events/context/).
+Or build up a temporary scope for local information:
+
+```ruby
+Sentry.configure_scope do |scope|
+  scope.set_tags(tag_1: "foo")
+end
+
+Sentry.with_scope do |scope|
+  scope.set_tags(tag_1: "bar", tag_2: "baz")
+
+  Sentry.capture_message("message") # this event will have 2 tags: tag_1 => "bar" and tag_2 => "baz"
+end
+
+Sentry.capture_message("another message") # this event will have 1 tag: tag_1 => "foo"
+```
+
+Of course, you can always assign the information on a per-event basis:
+
+```ruby
+Sentry.capture_exception(exception, tags: {foo: "bar"})
+```
 
 ## More Information
 
 * [Documentation](https://docs.sentry.io/clients/ruby/)
-* [Bug Tracker](https://github.com/getsentry/raven-ruby/issues)
+* [Bug Tracker](https://github.com/getsentry/sentry-ruby/issues)
 * [Forum](https://forum.sentry.io/)
 - [Discord](https://discord.gg/ez5KZN7)
