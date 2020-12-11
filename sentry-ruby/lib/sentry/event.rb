@@ -18,7 +18,7 @@ module Sentry
     )
 
     attr_accessor(*ATTRIBUTES)
-    attr_reader :configuration
+    attr_reader :configuration, :request, :exception, :stacktrace
 
     def initialize(configuration:, message: nil)
       # this needs to go first because some setters rely on configuration
@@ -75,7 +75,7 @@ module Sentry
     end
 
     def rack_env=(env)
-      unless @request || env.empty?
+      unless request || env.empty?
         @request = Sentry::RequestInterface.new.tap do |int|
           int.from_rack(env)
         end
@@ -96,9 +96,9 @@ module Sentry
     def to_hash
       data = serialize_attributes
       data[:breadcrumbs] = breadcrumbs.to_hash if breadcrumbs
-      data[:stacktrace] = @stacktrace.to_hash if @stacktrace
-      data[:request] = @request.to_hash if @request
-      data[:exception] = @exception.to_hash if @exception
+      data[:stacktrace] = stacktrace.to_hash if stacktrace
+      data[:request] = request.to_hash if request
+      data[:exception] = exception.to_hash if exception
 
       data
     end
