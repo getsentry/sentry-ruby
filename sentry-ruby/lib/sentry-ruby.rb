@@ -9,7 +9,6 @@ require "sentry/transaction_event"
 require "sentry/span"
 require "sentry/transaction"
 require "sentry/hub"
-require "sentry/rack"
 
 def safely_require(lib)
   begin
@@ -19,6 +18,7 @@ def safely_require(lib)
 end
 
 safely_require "sentry/rake"
+safely_require "sentry/rack"
 
 module Sentry
   class Error < StandardError
