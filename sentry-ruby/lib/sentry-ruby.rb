@@ -1,4 +1,5 @@
 require "forwardable"
+require "time"
 
 require "sentry/version"
 require "sentry/core_ext/object/deep_dup"
