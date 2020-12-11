@@ -37,6 +37,10 @@ RSpec.configure do |config|
     ENV.delete('RAILS_ENV')
     ENV.delete('RACK_ENV')
   end
+
+  config.before(:each, rack: true) do
+    skip("skip rack related tests") unless defined?(Rack)
+  end
 end
 
 def build_exception_with_cause(cause = "exception a")

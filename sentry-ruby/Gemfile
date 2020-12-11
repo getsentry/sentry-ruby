@@ -8,7 +8,7 @@ gem "rspec", "~> 3.0"
 gem "codecov"
 
 gem "pry"
-gem "rack"
+gem "rack" unless ENV["WITHOUT_RACK"] == "1"
 
 gem "benchmark-ips"
 gem "benchmark_driver"

@@ -33,7 +33,7 @@ RSpec.describe Sentry::Event do
     end
   end
 
-  context 'rack context specified' do
+  context 'rack context specified', rack: true do
     require 'stringio'
 
     before do
