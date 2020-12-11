@@ -1,5 +1,11 @@
 # Changelog
 
+## 4.0.1
+
+- Add rake integration: [1137](https://github.com/getsentry/sentry-ruby/pull/1137)
+- Make Event's interfaces accessible: [1135](https://github.com/getsentry/sentry-ruby/pull/1135)
+- ActiveSupportLogger should only record events that has a started time: [1132](https://github.com/getsentry/sentry-ruby/pull/1132)
+
 ## 4.0.0
 
 - Only documents update for the official release and no API/feature changes.
