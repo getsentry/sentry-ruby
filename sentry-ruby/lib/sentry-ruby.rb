@@ -11,6 +11,15 @@ require "sentry/transaction"
 require "sentry/hub"
 require "sentry/rack"
 
+def safely_require(lib)
+  begin
+    require lib
+  rescue LoadError
+  end
+end
+
+safely_require "sentry/rake"
+
 module Sentry
   class Error < StandardError
   end
