@@ -13,7 +13,8 @@ module Raven
 
       def send_event(auth_header, data, options = {})
         unless configuration.sending_allowed?
-          logger.debug("Event not sent: #{configuration.error_messages}")
+          configuration.logger.debug("Event not sent: #{configuration.error_messages}")
+          return
         end
 
         project_id = configuration[:project_id]
