@@ -8,6 +8,23 @@ RSpec.describe Raven::Transports::HTTP do
     expect(client.send(:transport).conn.headers[:user_agent]).to eq("sentry-ruby/#{Raven::VERSION}")
   end
 
+  context "when event is not allowed (by sampling)" do
+    let(:event) do
+      JSON.generate(Raven.capture_message("test").to_hash)
+    end
+
+    before do
+      config.sample_rate = 0.5
+      allow(Random::DEFAULT).to receive(:rand).and_return(0.6)
+    end
+
+    it "logs correct message" do
+      expect(config.logger).to receive(:debug).with("Raven HTTP Transport connecting to http://sentry.localdomain/sentry")
+      expect(config.logger).to receive(:debug).with("Event not sent: Excluded by random sample")
+      client.transport.send_event("test_auth", event)
+    end
+  end
+
   it 'should raise an error on 4xx responses' do
     stubs = Faraday::Adapter::Test::Stubs.new do |stub|
       stub.post('sentry/api/42/store/') { [404, {}, 'not found'] }
