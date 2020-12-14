@@ -75,6 +75,25 @@ RSpec.describe Sentry::Transport do
     let(:client) { Sentry::Client.new(configuration) }
     let(:event) { client.event_from_exception(ZeroDivisionError.new("divided by 0")) }
 
+    context "when event is not allowed (by sampling)" do
+      let(:string_io) do
+        StringIO.new
+      end
+
+      before do
+        configuration.logger = Logger.new(string_io)
+        configuration.sample_rate = 0.5
+        allow(Random::DEFAULT).to receive(:rand).and_return(0.6)
+      end
+
+      it "logs correct message" do
+        subject.send_event(event)
+
+        logs = string_io.string
+        expect(logs).to match(/Event not sent: Excluded by random sample/)
+      end
+    end
+
     context "when success" do
       before do
         allow(subject).to receive(:send_data)

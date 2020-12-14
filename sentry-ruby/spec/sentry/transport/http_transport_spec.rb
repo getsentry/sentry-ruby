@@ -5,27 +5,6 @@ RSpec.describe Sentry::HTTPTransport do
   let(:event) { client.event_from_message("test") }
   subject { described_class.new(Sentry.configuration) }
 
-  context "when event is not allowed (by sampling)" do
-    let(:string_io) do
-      StringIO.new
-    end
-    before do
-      Sentry.init do |c|
-        c.dsn = 'http://12345@sentry.localdomain/sentry/42'
-        c.sample_rate = 0.5
-        c.logger = Logger.new(string_io)
-      end
-      allow(Random::DEFAULT).to receive(:rand).and_return(0.6)
-    end
-
-    it "logs correct message" do
-      subject.send_data(event.to_hash)
-
-      logs = string_io.string
-      expect(logs).to match(/Event not sent: Excluded by random sample/)
-    end
-  end
-
   describe "customizations" do
     before do
       Sentry.init do |c|
