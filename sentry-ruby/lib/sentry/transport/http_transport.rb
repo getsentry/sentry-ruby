@@ -13,7 +13,8 @@ module Sentry
 
     def send_data(data, options = {})
       unless configuration.sending_allowed?
-        logger.debug(LOGGER_PROGNAME) { "Event not sent: #{configuration.error_messages}" }
+        configuration.logger.debug(LOGGER_PROGNAME) { "Event not sent: #{configuration.error_messages}" }
+        return
       end
 
       conn.post @endpoint do |req|
