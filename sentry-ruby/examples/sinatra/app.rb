@@ -7,8 +7,7 @@ Sentry.init do |config|
 end
 
 # this needs to be places before the CaptureException middleware
-use Sentry::Rack::Tracing
-use Sentry::Rack::CaptureException
+use Sentry::Rack::CaptureExceptions
 
 get "/exception" do
   1/0

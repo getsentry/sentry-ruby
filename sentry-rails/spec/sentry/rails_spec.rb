@@ -22,8 +22,7 @@ RSpec.describe Sentry::Rails, type: :request do
   end
 
   it "inserts middleware to a correct position" do
-    expect(Rails.application.middleware.find_index(Sentry::Rack::Tracing)).to eq(0)
-    expect(Rails.application.middleware.find_index(Sentry::Rails::CaptureException)).to eq(1)
+    expect(Rails.application.middleware.find_index(Sentry::Rails::CaptureExceptions)).to eq(0)
   end
 
   it "doesn't do anything on a normal route" do
