@@ -36,11 +36,10 @@ RSpec.configure do |config|
 
   config.before :each, :subscriber do
     Sentry::Rails::Tracing.patch_active_support_notifications
-    described_class.subscribe!
   end
 
   config.after :each, :subscriber do
-    described_class.unsubscribe!
+    Sentry::Rails::Tracing.unsubscribe_tracing_events
     Sentry::Rails::Tracing.remove_active_support_notifications_patch
   end
 
