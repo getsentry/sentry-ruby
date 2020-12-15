@@ -22,6 +22,11 @@ module Sentry
     end
 
     def send_event(event)
+      unless configuration.sending_allowed?
+        configuration.logger.debug(LOGGER_PROGNAME) { "Event not sent: #{configuration.error_messages}" }
+        return
+      end
+
       content_type, encoded_data = prepare_encoded_event(event)
 
       return nil unless encoded_data

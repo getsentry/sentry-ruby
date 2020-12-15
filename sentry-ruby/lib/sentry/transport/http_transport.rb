@@ -12,10 +12,6 @@ module Sentry
     end
 
     def send_data(data, options = {})
-      unless configuration.sending_allowed?
-        logger.debug(LOGGER_PROGNAME) { "Event not sent: #{configuration.error_messages}" }
-      end
-
       conn.post @endpoint do |req|
         req.headers['Content-Type'] = options[:content_type]
         req.headers['X-Sentry-Auth'] = generate_auth_header
