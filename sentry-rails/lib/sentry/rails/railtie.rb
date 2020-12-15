@@ -1,5 +1,5 @@
 require "rails"
-require "sentry/rails/capture_exception"
+require "sentry/rails/capture_exceptions"
 require "sentry/rails/backtrace_cleaner"
 require "sentry/rails/controller_methods"
 require "sentry/rails/controller_transaction"
@@ -9,8 +9,7 @@ require "sentry/rails/overrides/streaming_reporter"
 module Sentry
   class Railtie < ::Rails::Railtie
     initializer "sentry.use_rack_middleware" do |app|
-      app.config.middleware.insert 0, Sentry::Rails::CaptureException
-      app.config.middleware.insert 0, Sentry::Rack::Tracing
+      app.config.middleware.insert 0, Sentry::Rails::CaptureExceptions
     end
 
     initializer 'sentry.action_controller' do
