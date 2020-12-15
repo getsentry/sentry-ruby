@@ -22,6 +22,23 @@ RSpec.describe Sentry::Span do
     end
   end
 
+  describe "#deep_dup" do
+    it "copies all the values from the original span" do
+      copy = subject.deep_dup
+
+      subject.set_op("foo")
+      subject.set_description("bar")
+
+      expect(copy.op).to eq("sql.query")
+      expect(copy.description).to eq("SELECT * FROM users;")
+      expect(copy.status).to eq("ok")
+      expect(copy.trace_id).to eq(subject.trace_id)
+      expect(copy.trace_id.length).to eq(32)
+      expect(copy.span_id).to eq(subject.span_id)
+      expect(copy.span_id.length).to eq(16)
+    end
+  end
+
   describe "#to_hash" do
     before do
       subject.set_data("controller", "WelcomeController")

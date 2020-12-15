@@ -57,7 +57,7 @@ module Sentry
       copy.user = user.deep_dup
       copy.transaction_names = transaction_names.deep_dup
       copy.fingerprint = fingerprint.deep_dup
-      copy.span = span
+      copy.span = span.deep_dup
       copy
     end
 

@@ -40,6 +40,17 @@ RSpec.describe Sentry::Scope do
       expect(subject.user).to eq({})
       expect(subject.fingerprint).to eq([])
       expect(subject.transaction_names).to eq([])
+      expect(subject.span).to eq(nil)
+    end
+
+    it "deep-copies span as well" do
+      span = Sentry::Transaction.new(sampled: true)
+      subject.set_span(span)
+      copy = subject.dup
+
+      span.start_child
+
+      expect(copy.span.span_recorder.spans.count).to eq(1)
     end
   end
 
