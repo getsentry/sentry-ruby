@@ -6,6 +6,7 @@ module Sentry
       SIDEKIQ_NAME = "Sidekiq".freeze
 
       def call(ex, context)
+        return unless Sentry.initialized?
         context = Sentry::Sidekiq::ContextFilter.new.filter_context(context)
 
         Sentry.with_scope do |scope|
