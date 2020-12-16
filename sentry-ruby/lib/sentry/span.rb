@@ -100,6 +100,21 @@ module Sentry
       child_span.finish
     end
 
+    def deep_dup
+      copy = self.dup
+
+      if @span_recorder
+        copy.set_span_recorder
+        @span_recorder.spans.each do |span|
+          # span_recorder's first span is the current span, which should not be added to the copy's spans
+          next if span == self
+          copy.span_recorder.add(span.dup)
+        end
+      end
+
+      copy
+    end
+
     def set_op(op)
       @op = op
     end

@@ -25,6 +25,52 @@ RSpec.describe Sentry::Transaction do
     end
   end
 
+  describe "#deep_dup" do
+    before do
+      subject.start_child(op: "first child")
+      subject.start_child(op: "second child")
+    end
+
+    it "copies all the values and spans from the original transaction" do
+      copy = subject.deep_dup
+
+      subject.set_op("foo")
+      subject.set_description("bar")
+
+      # the copy should have the same attributes, including span_id
+      expect(copy.op).to eq("sql.query")
+      expect(copy.description).to eq("SELECT * FROM users;")
+      expect(copy.status).to eq("ok")
+      expect(copy.trace_id).to eq(subject.trace_id)
+      expect(copy.trace_id.length).to eq(32)
+      expect(copy.span_id).to eq(subject.span_id)
+      expect(copy.span_id.length).to eq(16)
+
+      # child spans should also be copied
+      expect(copy.span_recorder.spans.count).to eq(3)
+
+      # but span recorder should have the correct first span (shouldn't be the subject)
+      expect(copy.span_recorder.spans.first).to eq(copy)
+
+      # child spans should have identical attributes
+      expect(subject.span_recorder.spans[1].op).to eq("first child")
+      expect(copy.span_recorder.spans[1].op).to eq("first child")
+      expect(copy.span_recorder.spans[1].span_id).to eq(subject.span_recorder.spans[1].span_id)
+
+      expect(subject.span_recorder.spans[2].op).to eq("second child")
+      expect(copy.span_recorder.spans[2].op).to eq("second child")
+      expect(copy.span_recorder.spans[2].span_id).to eq(subject.span_recorder.spans[2].span_id)
+
+      # but they should not be the same
+      expect(copy.span_recorder.spans[1]).not_to eq(subject.span_recorder.spans[1])
+      expect(copy.span_recorder.spans[2]).not_to eq(subject.span_recorder.spans[2])
+
+      # and mutations shouldn't be shared
+      subject.span_recorder.spans[1].set_op("foo")
+      expect(copy.span_recorder.spans[1].op).to eq("first child")
+    end
+  end
+
   describe "#set_initial_sample_desicion" do
     before do
       Sentry.init do |config|
