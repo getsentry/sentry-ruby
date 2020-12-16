@@ -29,17 +29,28 @@ module Sentry
     config.after_initialize do
       Sentry.configuration.logger = ::Rails.logger
 
+      setup_backtrace_cleanup_callback
+      inject_breadcrumbs_logger
+      override_exceptions_handling
+      activate_tracing
+    end
+
+    def inject_breadcrumbs_logger
+      if Sentry.configuration.breadcrumbs_logger.include?(:active_support_logger)
+        require 'sentry/rails/breadcrumb/active_support_logger'
+        Sentry::Rails::Breadcrumb::ActiveSupportLogger.inject
+      end
+    end
+
+    def setup_backtrace_cleanup_callback
       backtrace_cleaner = Sentry::Rails::BacktraceCleaner.new
 
       Sentry.configuration.backtrace_cleanup_callback = lambda do |backtrace|
         backtrace_cleaner.clean(backtrace)
       end
+    end
 
-      if Sentry.configuration.breadcrumbs_logger.include?(:active_support_logger)
-        require 'sentry/rails/breadcrumb/active_support_logger'
-        Sentry::Rails::Breadcrumb::ActiveSupportLogger.inject
-      end
-
+    def override_exceptions_handling
       if Sentry.configuration.rails.report_rescued_exceptions
         require 'sentry/rails/overrides/debug_exceptions_catcher'
         if defined?(::ActionDispatch::DebugExceptions)
@@ -50,7 +61,9 @@ module Sentry
 
         exceptions_class.send(:prepend, Sentry::Rails::Overrides::DebugExceptionsCatcher)
       end
+    end
 
+    def activate_tracing
       if Sentry.configuration.tracing_enabled?
         Sentry::Rails::Tracing.subscribe_tracing_events
         Sentry::Rails::Tracing.patch_active_support_notifications
@@ -62,9 +75,5 @@ module Sentry
         require 'sentry/rails/active_job'
       end
     end
-
-    # rake_tasks do
-    #   require 'sentry/integrations/tasks'
-    # end
   end
 end
