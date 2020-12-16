@@ -14,6 +14,8 @@ module Sentry
     end
 
     config.after_initialize do
+      next unless Sentry.initialized?
+
       configure_sentry_logger
       extend_controller_methods
       extend_active_job
