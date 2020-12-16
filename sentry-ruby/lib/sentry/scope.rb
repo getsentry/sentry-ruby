@@ -29,7 +29,7 @@ module Sentry
       event.level = level
       event.transaction = transaction_names.last
       event.breadcrumbs = breadcrumbs
-      event.rack_env = rack_env
+      event.rack_env = rack_env if rack_env
 
       unless @event_processors.empty?
         @event_processors.each do |processor_block|

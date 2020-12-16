@@ -1,3 +1,5 @@
+return unless defined?(Rack)
+
 require 'spec_helper'
 
 RSpec.describe Sentry::RequestInterface do

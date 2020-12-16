@@ -1,4 +1,5 @@
 require "forwardable"
+require "time"
 
 require "sentry/version"
 require "sentry/core_ext/object/deep_dup"
@@ -9,7 +10,6 @@ require "sentry/transaction_event"
 require "sentry/span"
 require "sentry/transaction"
 require "sentry/hub"
-require "sentry/rack"
 
 def safely_require(lib)
   begin
@@ -19,6 +19,7 @@ def safely_require(lib)
 end
 
 safely_require "sentry/rake"
+safely_require "sentry/rack"
 
 module Sentry
   class Error < StandardError

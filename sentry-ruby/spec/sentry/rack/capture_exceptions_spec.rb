@@ -1,6 +1,8 @@
+return unless defined?(Rack)
+
 require 'spec_helper'
 
-RSpec.describe Sentry::Rack::CaptureExceptions do
+RSpec.describe Sentry::Rack::CaptureExceptions, rack: true do
   let(:exception) { ZeroDivisionError.new("divided by 0") }
   let(:additional_headers) { {} }
   let(:env) { Rack::MockRequest.env_for("/test", additional_headers) }

@@ -153,10 +153,6 @@ RSpec.describe Sentry::Scope do
   end
 
   describe "#apply_to_event" do
-    let(:env) do
-      Rack::MockRequest.env_for("/test", {})
-    end
-
     before do
       Sentry.init do |config|
         config.dsn = DUMMY_DSN
@@ -174,7 +170,6 @@ RSpec.describe Sentry::Scope do
       scope.set_user({id: 1})
       scope.set_transaction_name("WelcomeController#index")
       scope.set_fingerprint(["foo"])
-      scope.set_rack_env(env)
       scope
     end
 
@@ -192,7 +187,6 @@ RSpec.describe Sentry::Scope do
       expect(event.fingerprint).to eq(["foo"])
       expect(event.contexts[:os].keys).to match_array([:name, :version, :build, :kernel_version])
       expect(event.contexts.dig(:runtime, :version)).to match(/ruby/)
-      expect(event.to_hash.dig(:request, :url)).to eq("http://example.org/test")
     end
 
     it "doesn't override event's pre-existing data" do
@@ -229,6 +223,24 @@ RSpec.describe Sentry::Scope do
 
       expect(event.contexts[:trace]).to eq(span.get_trace_context)
       expect(event.contexts.dig(:trace, :op)).to eq("foo")
+    end
+
+    context "with Rack", rack: true do
+      let(:env) do
+        Rack::MockRequest.env_for("/test", {})
+      end
+
+      subject do
+        scope = described_class.new
+        scope.set_rack_env(env)
+        scope
+      end
+
+      it "sets the request info the Event" do
+        subject.apply_to_event(event)
+
+        expect(event.to_hash.dig(:request, :url)).to eq("http://example.org/test")
+      end
     end
   end
 end
