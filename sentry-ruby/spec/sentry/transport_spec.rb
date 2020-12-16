@@ -118,14 +118,6 @@ RSpec.describe Sentry::Transport do
           /INFO -- sentry: Sending event #{event.event_id} to Sentry/
         )
       end
-
-      it "sets the correct state" do
-        expect(subject.state).to receive(:success)
-
-        subject.send_event(event)
-
-        expect(subject.state).not_to be_failed
-      end
     end
 
     context "when failed" do
@@ -135,14 +127,6 @@ RSpec.describe Sentry::Transport do
 
       it "returns nil" do
         expect(subject.send_event(event)).to eq(nil)
-      end
-
-      it "changes the state" do
-        expect(subject.state).to receive(:failure).and_call_original
-
-        subject.send_event(event)
-
-        expect(subject.state).to be_failed
       end
 
       it "logs correct message" do
@@ -155,20 +139,6 @@ RSpec.describe Sentry::Transport do
         expect(log).to match(
           /WARN -- sentry: Failed to submit event. Unreported Event: ZeroDivisionError: divided by 0/
         )
-      end
-    end
-
-    context "should_try? is false" do
-      before do
-        allow(subject.state).to receive(:should_try?).and_return(false)
-      end
-
-      it "doesn't change the state" do
-        expect(logger).to receive(:warn).with(Sentry::LOGGER_PROGNAME) { "Not sending event due to previous failure(s)." }.ordered
-        expect(logger).to receive(:warn).with(Sentry::LOGGER_PROGNAME) { "Failed to submit event: ZeroDivisionError: divided by 0" }.ordered
-        expect(subject.state).not_to receive(:failure)
-
-        expect(subject.send_event(event)).to eq(nil)
       end
     end
   end

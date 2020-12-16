@@ -1,6 +1,5 @@
 require "json"
 require "base64"
-require "sentry/transport/state"
 
 module Sentry
   class Transport
@@ -8,13 +7,12 @@ module Sentry
     USER_AGENT = "sentry-ruby/#{Sentry::VERSION}"
     CONTENT_TYPE = 'application/json'
 
-    attr_accessor :configuration, :state
+    attr_accessor :configuration
 
     def initialize(configuration)
       @configuration = configuration
       @transport_configuration = configuration.transport
       @dsn = configuration.dsn
-      @state = State.new
     end
 
     def send_data(data, options = {})
@@ -33,7 +31,6 @@ module Sentry
 
       send_data(encoded_data, content_type: content_type)
 
-      state.success
       event
     rescue => e
       failed_for_exception(e, event)
@@ -71,24 +68,13 @@ module Sentry
       # Convert to hash
       event_hash = event.to_hash
 
-      unless @state.should_try?
-        failed_for_previous_failure(event_hash)
-        return
-      end
-
       event_id = event_hash[:event_id] || event_hash['event_id']
       configuration.logger.info(LOGGER_PROGNAME) { "Sending event #{event_id} to Sentry" }
       encode(event_hash)
     end
 
     def failed_for_exception(e, event)
-      @state.failure
       configuration.logger.warn(LOGGER_PROGNAME) { "Unable to record event with remote Sentry server (#{e.class} - #{e.message}):\n#{e.backtrace[0..10].join("\n")}" }
-      log_not_sending(event)
-    end
-
-    def failed_for_previous_failure(event)
-      configuration.logger.warn(LOGGER_PROGNAME) { "Not sending event due to previous failure(s)." }
       log_not_sending(event)
     end
 
