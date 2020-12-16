@@ -25,7 +25,7 @@ RSpec.describe Sentry::Transport do
     context "normal event" do
       let(:event) { client.event_from_exception(ZeroDivisionError.new("divided by 0")) }
       it "generates correct envelope content" do
-        _, result = subject.encode(event.to_hash)
+        result = subject.encode(event.to_hash)
 
         envelope_header, item_header, item = result.split("\n")
 
@@ -52,7 +52,7 @@ RSpec.describe Sentry::Transport do
       end
 
       it "generates correct envelope content" do
-        _, result = subject.encode(event.to_hash)
+        result = subject.encode(event.to_hash)
 
         envelope_header, item_header, item = result.split("\n")
 

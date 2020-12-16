@@ -5,7 +5,6 @@ module Sentry
   class Transport
     PROTOCOL_VERSION = '5'
     USER_AGENT = "sentry-ruby/#{Sentry::VERSION}"
-    CONTENT_TYPE = 'application/json'
 
     attr_accessor :configuration
 
@@ -25,11 +24,11 @@ module Sentry
         return
       end
 
-      content_type, encoded_data = prepare_encoded_event(event)
+      encoded_data = prepare_encoded_event(event)
 
       return nil unless encoded_data
 
-      send_data(encoded_data, content_type: content_type)
+      send_data(encoded_data)
 
       event
     rescue => e
@@ -59,7 +58,7 @@ module Sentry
         #{JSON.generate(event_hash)}
       ENVELOPE
 
-      [CONTENT_TYPE, envelope]
+      envelope
     end
 
     private

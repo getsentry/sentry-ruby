@@ -2,6 +2,7 @@ require 'faraday'
 
 module Sentry
   class HTTPTransport < Transport
+    CONTENT_TYPE = 'application/json'
     attr_reader :conn, :adapter
 
     def initialize(*args)
@@ -11,9 +12,9 @@ module Sentry
       @endpoint = @dsn.envelope_endpoint
     end
 
-    def send_data(data, options = {})
+    def send_data(data)
       conn.post @endpoint do |req|
-        req.headers['Content-Type'] = options[:content_type]
+        req.headers['Content-Type'] = CONTENT_TYPE
         req.headers['X-Sentry-Auth'] = generate_auth_header
         req.body = data
       end
