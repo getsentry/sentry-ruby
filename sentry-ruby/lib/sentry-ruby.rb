@@ -54,6 +54,10 @@ module Sentry
       @main_hub = hub
     end
 
+    def initialized?
+      !!@main_hub
+    end
+
     def get_main_hub
       @main_hub
     end
