@@ -35,11 +35,6 @@ module Sentry
       @tags = {}
     end
 
-    def set_span_recorder
-      @span_recorder = SpanRecorder.new(1000)
-      @span_recorder.add(self)
-    end
-
     def finish
       # already finished
       return if @timestamp
@@ -82,14 +77,7 @@ module Sentry
 
     def start_child(**options)
       options = options.dup.merge(trace_id: @trace_id, parent_span_id: @span_id, sampled: @sampled)
-      child_span = Span.new(options)
-      child_span.span_recorder = @span_recorder
-
-      if @span_recorder && @sampled
-        @span_recorder.add(child_span)
-      end
-
-      child_span
+      Span.new(options)
     end
 
     def with_child_span(**options, &block)
@@ -101,18 +89,7 @@ module Sentry
     end
 
     def deep_dup
-      copy = self.dup
-
-      if @span_recorder
-        copy.set_span_recorder
-        @span_recorder.spans.each do |span|
-          # span_recorder's first span is the current span, which should not be added to the copy's spans
-          next if span == self
-          copy.span_recorder.add(span.dup)
-        end
-      end
-
-      copy
+      dup
     end
 
     def set_op(op)
@@ -150,21 +127,6 @@ module Sentry
 
     def set_tag(key, value)
       @tags[key] = value
-    end
-
-    class SpanRecorder
-      attr_reader :max_length, :spans
-
-      def initialize(max_length)
-        @max_length = max_length
-        @spans = []
-      end
-
-      def add(span)
-        if @spans.count < @max_length
-          @spans << span
-        end
-      end
     end
   end
 end
