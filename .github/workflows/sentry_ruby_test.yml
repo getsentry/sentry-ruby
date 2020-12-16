@@ -24,6 +24,7 @@ jobs:
           - { os: ubuntu-latest, ruby_version: 2.7 }
           - { os: ubuntu-latest, ruby_version: jruby }
           - { os: ubuntu-latest, ruby_version: 2.7, options: { rubyopt: "--enable-frozen-string-literal --debug=frozen-string-literal" } }
+          - { os: ubuntu-latest, ruby_version: 2.7, options: { without_rack: 1 } }
     steps:
     - uses: actions/checkout@v1
 
@@ -36,6 +37,7 @@ jobs:
     - name: Run specs
       env:
         RUBYOPT: ${{ matrix.options.rubyopt }}
+        WITHOUT_RACK: ${{ matrix.options.without_rack }}
       run: |
         bundle install --jobs 4 --retry 3
         bundle exec rake
