@@ -71,6 +71,30 @@ RSpec.describe Sentry::Transaction do
     end
   end
 
+  describe "#start_child" do
+    it "initializes a new child Span" do
+      # create subject span and wait for a sec for making time difference
+      subject
+
+      new_span = subject.start_child(op: "sql.query", description: "SELECT * FROM orders WHERE orders.user_id = 1", status: "ok")
+
+      expect(new_span.op).to eq("sql.query")
+      expect(new_span.description).to eq("SELECT * FROM orders WHERE orders.user_id = 1")
+      expect(new_span.status).to eq("ok")
+      expect(new_span.trace_id).to eq(subject.trace_id)
+      expect(new_span.span_id).not_to eq(subject.span_id)
+      expect(new_span.parent_span_id).to eq(subject.span_id)
+      expect(new_span.sampled).to eq(true)
+    end
+
+    it "records the child span if span_recorder" do
+      new_span = subject.start_child
+
+      expect(subject.span_recorder.spans).to include(new_span)
+      expect(new_span.span_recorder).to eq(subject.span_recorder)
+    end
+  end
+
   describe "#set_initial_sample_desicion" do
     before do
       Sentry.init do |config|

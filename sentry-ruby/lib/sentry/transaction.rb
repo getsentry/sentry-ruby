@@ -20,6 +20,11 @@ module Sentry
       set_span_recorder
     end
 
+    def set_span_recorder
+      @span_recorder = SpanRecorder.new(1000)
+      @span_recorder.add(self)
+    end
+
     def self.from_sentry_trace(sentry_trace, **options)
       return unless sentry_trace
 
@@ -35,6 +40,30 @@ module Sentry
       hash = super
       hash.merge!(name: @name, sampled: @sampled, parent_sampled: @parent_sampled)
       hash
+    end
+
+    def start_child(**options)
+      child_span = super
+      child_span.span_recorder = @span_recorder
+
+      if @sampled
+        @span_recorder.add(child_span)
+      end
+
+      child_span
+    end
+
+    def deep_dup
+      copy = super
+      copy.set_span_recorder
+
+      @span_recorder.spans.each do |span|
+        # span_recorder's first span is the current span, which should not be added to the copy's spans
+        next if span == self
+        copy.span_recorder.add(span.dup)
+      end
+
+      copy
     end
 
     def set_initial_sample_desicion(sampling_context = {})
@@ -108,6 +137,21 @@ module Sentry
       result += "transaction"
       result += " <#{@name}>" if @name
       result
+    end
+
+    class SpanRecorder
+      attr_reader :max_length, :spans
+
+      def initialize(max_length)
+        @max_length = max_length
+        @spans = []
+      end
+
+      def add(span)
+        if @spans.count < @max_length
+          @spans << span
+        end
+      end
     end
   end
 end
