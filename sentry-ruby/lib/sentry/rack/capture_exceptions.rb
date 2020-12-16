@@ -6,6 +6,8 @@ module Sentry
       end
 
       def call(env)
+        return @app.call(env) unless Sentry.initialized?
+
         # make sure the current thread has a clean hub
         Sentry.clone_hub_to_current_thread
 
