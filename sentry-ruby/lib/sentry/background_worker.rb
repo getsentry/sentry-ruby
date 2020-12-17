@@ -1,4 +1,5 @@
 require "concurrent/executor/thread_pool_executor"
+require "concurrent/executor/immediate_executor"
 
 module Sentry
   class BackgroundWorker
@@ -9,7 +10,10 @@ module Sentry
       @number_of_threads = configuration.background_worker_threads
 
       @executor =
-        if @number_of_threads == 0
+        if configuration.async?
+          configuration.logger.debug(LOGGER_PROGNAME) { "config.async is set, BackgroundWorker is disabled" }
+          Concurrent::ImmediateExecutor.new
+        elsif @number_of_threads == 0
           configuration.logger.debug(LOGGER_PROGNAME) { "config.background_worker_threads is set to 0, all events will be sent synchronously" }
           Concurrent::ImmediateExecutor.new
         else
