@@ -13,11 +13,7 @@ RSpec.describe Sentry::Rack::CaptureExceptions, rack: true do
 
   describe "exceptions capturing" do
     before do
-      Sentry.init do |config|
-        config.breadcrumbs_logger = [:sentry_logger]
-        config.dsn = DUMMY_DSN
-        config.transport.transport_class = Sentry::DummyTransport
-      end
+      perform_basic_setup
     end
 
     it 'captures the exception from direct raise' do
@@ -155,10 +151,7 @@ RSpec.describe Sentry::Rack::CaptureExceptions, rack: true do
 
   describe "performance monitoring" do
     before do
-      Sentry.init do |config|
-        config.breadcrumbs_logger = [:sentry_logger]
-        config.dsn = DUMMY_DSN
-        config.transport.transport_class = Sentry::DummyTransport
+      perform_basic_setup do |config|
         config.traces_sample_rate = 0.5
       end
     end

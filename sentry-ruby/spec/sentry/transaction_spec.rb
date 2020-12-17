@@ -97,10 +97,7 @@ RSpec.describe Sentry::Transaction do
 
   describe "#set_initial_sample_desicion" do
     before do
-      Sentry.init do |config|
-        config.dsn = DUMMY_DSN
-        config.transport.transport_class = Sentry::DummyTransport
-      end
+      perform_basic_setup
     end
 
     context "when tracing is not enabled" do
@@ -249,10 +246,7 @@ RSpec.describe Sentry::Transaction do
 
   describe "#finish" do
     before do
-      Sentry.init do |config|
-        config.dsn = DUMMY_DSN
-        config.transport.transport_class = Sentry::DummyTransport
-      end
+      perform_basic_setup
     end
 
     let(:events) do
