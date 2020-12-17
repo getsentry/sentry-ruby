@@ -1,3 +1,5 @@
+require "concurrent/utility/processor_counter"
+
 require "sentry/utils/exception_cause_chain"
 require "sentry/dsn"
 require "sentry/transport/configuration"
@@ -14,6 +16,15 @@ module Sentry
     # E.g.: lambda { |event| Thread.new { Sentry.send_event(event) } }
     attr_reader :async
     alias async? async
+
+    # to send events in a non-blocking way, sentry-ruby has its own background worker
+    # by default, the worker holds a thread pool that has [the number of processors] threads
+    # but you can configure it with this configuration option
+    # E.g.: config.background_worker_threads = 5
+    #
+    # if you want to send events synchronously, set the value to 0
+    # E.g.: config.background_worker_threads = 0
+    attr_accessor :background_worker_threads
 
     # a proc/lambda that takes an array of stack traces
     # it'll be used to silence (reduce) backtrace of the exception
@@ -146,6 +157,7 @@ module Sentry
 
     def initialize
       self.async = false
+      self.background_worker_threads = Concurrent.processor_count
       self.breadcrumbs_logger = []
       self.context_lines = 3
       self.environment = environment_from_env

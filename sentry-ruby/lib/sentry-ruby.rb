@@ -10,6 +10,7 @@ require "sentry/transaction_event"
 require "sentry/span"
 require "sentry/transaction"
 require "sentry/hub"
+require "sentry/background_worker"
 
 def safely_require(lib)
   begin
@@ -44,6 +45,8 @@ module Sentry
 
     def_delegators :get_current_scope, :set_tags, :set_extras, :set_user
 
+    attr_accessor :background_worker
+
     def init(&block)
       config = Configuration.new
       yield(config)
@@ -52,6 +55,7 @@ module Sentry
       hub = Hub.new(client, scope)
       Thread.current[THREAD_LOCAL] = hub
       @main_hub = hub
+      @background_worker = Sentry::BackgroundWorker.new(config)
     end
 
     def initialized?
