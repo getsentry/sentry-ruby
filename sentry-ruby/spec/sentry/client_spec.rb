@@ -47,6 +47,16 @@ RSpec.describe Sentry::Client do
         expect(returned).to be_a(Sentry::Event)
       end
 
+      it "doesn't call the async block if not allow sending events" do
+        allow(configuration).to receive(:sending_allowed?).and_return(false)
+
+        expect(configuration.async).not_to receive(:call)
+
+        returned = subject.capture_event(event, scope)
+
+        expect(returned).to eq(false)
+      end
+
       context "when async raises an exception" do
         around do |example|
           prior_async = configuration.async
