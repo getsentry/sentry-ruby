@@ -22,7 +22,8 @@ module Sentry
           Concurrent::ThreadPoolExecutor.new(
             min_threads: 0,
             max_threads: @number_of_threads,
-            max_queue: @max_queue
+            max_queue: @max_queue,
+            fallback_policy: :discard
           )
         end
     end
