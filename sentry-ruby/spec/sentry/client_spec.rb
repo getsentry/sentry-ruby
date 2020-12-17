@@ -12,6 +12,7 @@ RSpec.describe Sentry::Client do
   let(:configuration) do
     Sentry::Configuration.new.tap do |config|
       config.dsn = DUMMY_DSN
+      config.transport.transport_class = Sentry::DummyTransport
     end
   end
   subject { Sentry::Client.new(configuration) }
@@ -23,11 +24,11 @@ RSpec.describe Sentry::Client do
   end
 
   describe "#capture_event" do
-    context 'async' do
-      let(:message) { "Test message" }
-      let(:scope) { Sentry::Scope.new }
-      let(:event) { subject.event_from_message(message) }
+    let(:message) { "Test message" }
+    let(:scope) { Sentry::Scope.new }
+    let(:event) { subject.event_from_message(message) }
 
+    context 'with config.async set' do
       around do |example|
         prior_async = configuration.async
         configuration.async = proc { :ok }
@@ -75,6 +76,29 @@ RSpec.describe Sentry::Client do
       end
     end
 
+    context "with background_worker enabled (default)" do
+      before do
+        Sentry.background_worker = Sentry::BackgroundWorker.new(configuration)
+        configuration.before_send = lambda do |event, _hint|
+          sleep 0.1
+          event
+        end
+      end
+
+      let(:transport) do
+        subject.transport
+      end
+
+      it "sends events asynchronously" do
+        subject.capture_event(event, scope)
+
+        expect(transport.events.count).to eq(0)
+
+        sleep(0.2)
+
+        expect(transport.events.count).to eq(1)
+      end
+    end
   end
 
   describe "#send_event" do
@@ -103,6 +127,8 @@ RSpec.describe Sentry::Client do
   end
 
   describe "#transport" do
+    let(:configuration) { Sentry::Configuration.new }
+
     context "when transport.transport_class is provided" do
       before do
         configuration.dsn = DUMMY_DSN
