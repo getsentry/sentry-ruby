@@ -21,11 +21,7 @@ RSpec.shared_examples "exception catching middleware" do
   end
 
   before do
-    Sentry.init do |config|
-      config.logger = ::Logger.new(nil)
-      config.dsn = DUMMY_DSN
-      config.transport.transport_class = Sentry::DummyTransport
-    end
+    perform_basic_setup
   end
 
   after do

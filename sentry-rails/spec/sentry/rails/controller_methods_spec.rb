@@ -8,11 +8,7 @@ RSpec.describe Sentry::Rails::ControllerMethods do
   end
 
   before do
-    Sentry.init do |config|
-      config.logger = ::Logger.new(nil)
-      config.dsn = DUMMY_DSN
-      config.transport.transport_class = Sentry::DummyTransport
-    end
+    perform_basic_setup
   end
 
   let(:options) do

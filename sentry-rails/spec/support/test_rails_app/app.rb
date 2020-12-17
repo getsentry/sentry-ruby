@@ -96,6 +96,8 @@ def make_basic_app
       # for speeding up request specs
       config.rails.report_rescued_exceptions = false
       config.transport.transport_class = Sentry::DummyTransport
+      # for sending events synchronously
+      config.background_worker_threads = 0
       yield(config) if block_given?
     end
   end
