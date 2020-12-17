@@ -21,6 +21,8 @@ module Sentry
     end
 
     def capture_event(event, scope, hint = nil)
+      return false unless configuration.sending_allowed?
+
       scope.apply_to_event(event, hint)
 
       if configuration.async?
@@ -64,8 +66,6 @@ module Sentry
     end
 
     def send_event(event, hint = nil)
-      return false unless configuration.sending_allowed?
-
       event = configuration.before_send.call(event, hint) if configuration.before_send
       if event.nil?
         configuration.logger.info(LOGGER_PROGNAME) { "Discarded event because before_send returned nil" }
