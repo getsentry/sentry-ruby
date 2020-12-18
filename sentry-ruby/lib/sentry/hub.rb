@@ -97,7 +97,7 @@ module Sentry
     def capture_event(event, **options, &block)
       return unless current_client
 
-      hint = options.delete(:hint)
+      hint = options.delete(:hint) || {}
       scope = current_scope.dup
 
       if block

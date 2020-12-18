@@ -20,7 +20,7 @@ module Sentry
       end
     end
 
-    def capture_event(event, scope, hint = nil)
+    def capture_event(event, scope, hint = {})
       return false unless configuration.sending_allowed?
 
       scope.apply_to_event(event, hint)
