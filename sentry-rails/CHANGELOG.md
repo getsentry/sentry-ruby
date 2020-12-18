@@ -1,5 +1,9 @@
 # Changelog
 
+## 4.1.1
+
+- Use stricter dependency declaration [#1159](https://github.com/getsentry/sentry-ruby/pull/1159)
+
 ## 4.1.0
 
 - Merge & rename 2 Rack middlewares [#1147](https://github.com/getsentry/sentry-ruby/pull/1147)
