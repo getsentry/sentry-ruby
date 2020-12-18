@@ -4,6 +4,11 @@ RSpec.describe Sentry::Sidekiq::ErrorHandler do
   before do
     perform_basic_setup
   end
+
+  let(:transport) do
+    Sentry.get_current_client.transport
+  end
+
   let(:context) do
     {
       "args" => [true, true],
@@ -22,13 +27,12 @@ RSpec.describe Sentry::Sidekiq::ErrorHandler do
 
   it "should capture exceptions based on Sidekiq context" do
     exception = build_exception
-    expected_options = {
-      :extra => { :sidekiq => context }
-    }
-
-    expect(Sentry).to receive(:capture_exception).with(exception, expected_options)
 
     subject.call(exception, context)
+
+    expect(transport.events.count).to eq(1)
+    event = transport.events.first.to_hash
+    expect(event[:extra][:sidekiq]).to eq(context)
   end
 
   it "filters out ActiveJob keys" do
@@ -39,11 +43,11 @@ RSpec.describe Sentry::Sidekiq::ErrorHandler do
     expected_context = aj_context.dup
     expected_context.delete("_aj_globalid")
     expected_context["globalid"] = "gid://app/model/id"
-    expected_options = {
-      :extra => { :sidekiq => expected_context }
-    }
-    expect(Sentry).to receive(:capture_exception).with(exception, expected_options)
 
     subject.call(exception, aj_context)
+
+    expect(transport.events.count).to eq(1)
+    event = transport.events.first.to_hash
+    expect(event[:extra][:sidekiq]).to eq(expected_context)
   end
 end

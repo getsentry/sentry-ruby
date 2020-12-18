@@ -194,6 +194,12 @@ You can also disable this new non-blocking behaviour by giving a `0` value:
 config.background_worker_threads = 0 # all events will be sent synchronously
 ```
 
+If you want to send a particular event immediately, you can use event hints to do it:
+
+```ruby
+Sentry.capture_message("send me now!", hint: { background: false })
+```
+
 #### Contexts
 
 In sentry-ruby, every event will inherit their contextual data from the current scope. So you can enrich the event's data by configuring the current scope like:

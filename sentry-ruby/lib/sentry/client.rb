@@ -20,7 +20,7 @@ module Sentry
       end
     end
 
-    def capture_event(event, scope, hint = nil)
+    def capture_event(event, scope, hint = {})
       return false unless configuration.sending_allowed?
 
       scope.apply_to_event(event, hint)
@@ -35,7 +35,11 @@ module Sentry
           send_event(event, hint)
         end
       else
-        Sentry.background_worker.perform do
+        if hint.fetch(:background, true)
+          Sentry.background_worker.perform do
+            send_event(event, hint)
+          end
+        else
           send_event(event, hint)
         end
       end

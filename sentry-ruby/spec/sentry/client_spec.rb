@@ -98,6 +98,14 @@ RSpec.describe Sentry::Client do
 
         expect(transport.events.count).to eq(1)
       end
+
+      context "with hint: { background: false }" do
+        it "sends the event immediately" do
+          subject.capture_event(event, scope, { background: false })
+
+          expect(transport.events.count).to eq(1)
+        end
+      end
     end
   end
 
