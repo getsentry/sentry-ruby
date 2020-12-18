@@ -1,5 +1,10 @@
 # Changelog
 
+## 4.1.1
+
+- Fix NoMethodError when sending is not allowed [#1161](https://github.com/getsentry/sentry-ruby/pull/1161)
+- Add notification for users who still use deprecated middlewares [#1160](https://github.com/getsentry/sentry-ruby/pull/1160)
+
 ## 4.1.0
 
 - Separate rack integration [#1138](https://github.com/getsentry/sentry-ruby/pull/1138)
