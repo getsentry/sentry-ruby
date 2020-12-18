@@ -76,3 +76,14 @@ def build_exception_with_recursive_cause
   allow(exception).to receive(:backtrace).and_return(backtrace)
   exception
 end
+
+def perform_basic_setup
+  Sentry.init do |config|
+    config.breadcrumbs_logger = [:sentry_logger]
+    config.dsn = DUMMY_DSN
+    config.transport.transport_class = Sentry::DummyTransport
+    # so the events will be sent synchronously for testing
+    config.background_worker_threads = 0
+    yield(config) if block_given?
+  end
+end

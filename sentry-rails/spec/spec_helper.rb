@@ -93,5 +93,7 @@ def perform_basic_setup
     config.dsn = DUMMY_DSN
     config.logger = ::Logger.new(nil)
     config.transport.transport_class = Sentry::DummyTransport
+    # for sending events synchronously
+    config.background_worker_threads = 0
   end
 end
