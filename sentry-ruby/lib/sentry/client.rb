@@ -35,7 +35,11 @@ module Sentry
           send_event(event, hint)
         end
       else
-        Sentry.background_worker.perform do
+        if hint.fetch(:background, true)
+          Sentry.background_worker.perform do
+            send_event(event, hint)
+          end
+        else
           send_event(event, hint)
         end
       end
