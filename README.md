@@ -115,8 +115,7 @@ Sentry.init do |config|
   end
 end
 
-use Sentry::Rack::Tracing # this needs to be placed first
-use Sentry::Rack::CaptureException
+use Sentry::Rack::CaptureExceptions
 ```
 
 Otherwise, Sentry you can always use the capture helpers manually
