@@ -1,12 +1,14 @@
 RSpec.describe Sentry do
   before do
-    Sentry.init do |config|
-      config.dsn = DUMMY_DSN
-    end
+    perform_basic_setup
   end
 
   let(:event) do
     Sentry::Event.new(configuration: Sentry::Configuration.new)
+  end
+
+  let(:transport) do
+    Sentry.get_current_client.transport
   end
 
   describe ".init" do
@@ -49,21 +51,57 @@ RSpec.describe Sentry do
     end
   end
 
-  describe ".capture_event" do
-    it "sends the event via current hub" do
-      expect(described_class.get_current_hub).to receive(:capture_event).with(event)
+  shared_examples "capture_helper" do
+    context "without any Sentry setup" do
+      before do
+        allow(Sentry).to receive(:get_main_hub)
+        allow(Sentry).to receive(:get_current_hub)
+      end
 
-      described_class.capture_event(event)
+      it "doesn't cause any issue" do
+        described_class.send(capture_helper, capture_subject)
+      end
+    end
+
+    context "with sending_allowed? condition" do
+      before do
+        expect(Sentry.configuration).to receive(:sending_allowed?).and_return(false)
+      end
+
+      it "doesn't send the event nor assign last_event_id" do
+        described_class.send(capture_helper, capture_subject)
+
+        expect(transport.events).to be_empty
+        expect(subject.last_event_id).to eq(nil)
+      end
+    end
+  end
+
+  describe ".capture_event" do
+    it_behaves_like "capture_helper" do
+      let(:capture_helper) { :capture_event }
+      let(:capture_subject) { event }
+    end
+
+    it "sends the event via current hub" do
+      expect do
+        described_class.capture_event(event)
+      end.to change { transport.events.count }.by(1)
     end
   end
 
   describe ".capture_exception" do
     let(:exception) { ZeroDivisionError.new("divided by 0") }
 
-    it "sends the message via current hub" do
-      expect(described_class.get_current_hub).to receive(:capture_exception).with(exception, tags: { foo: "baz" })
+    it_behaves_like "capture_helper" do
+      let(:capture_helper) { :capture_exception }
+      let(:capture_subject) { exception }
+    end
 
-      described_class.capture_exception(exception, tags: { foo: "baz" })
+    it "sends the exception via current hub" do
+      expect do
+        described_class.capture_exception(exception, tags: { foo: "baz" })
+      end.to change { transport.events.count }.by(1)
     end
 
     it "doesn't do anything if the exception is excluded" do
@@ -72,6 +110,21 @@ RSpec.describe Sentry do
       result = described_class.capture_exception(exception)
 
       expect(result).to eq(nil)
+    end
+  end
+
+  describe ".capture_message" do
+    let(:message) { "Test" }
+
+    it_behaves_like "capture_helper" do
+      let(:capture_helper) { :capture_message }
+      let(:capture_subject) { message }
+    end
+
+    it "sends the message via current hub" do
+      expect do
+        described_class.capture_message("Test", tags: { foo: "baz" })
+      end.to change { transport.events.count }.by(1)
     end
   end
 
@@ -90,14 +143,6 @@ RSpec.describe Sentry do
 
         expect(transaction.sampled).to eq(false)
       end
-    end
-  end
-
-  describe ".capture_message" do
-    it "sends the message via current hub" do
-      expect(described_class.get_current_hub).to receive(:capture_message).with("Test", tags: { foo: "baz" })
-
-      described_class.capture_message("Test", tags: { foo: "baz" })
     end
   end
 

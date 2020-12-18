@@ -79,7 +79,7 @@ module Sentry
     end
 
     def get_current_client
-      get_current_hub.current_client
+      get_current_hub&.current_client
     end
 
     def get_current_hub
@@ -96,15 +96,15 @@ module Sentry
     end
 
     def get_current_scope
-      get_current_hub.current_scope
+      get_current_hub&.current_scope
     end
 
     def with_scope(&block)
-      get_current_hub.with_scope(&block)
+      get_current_hub&.with_scope(&block)
     end
 
     def configure_scope(&block)
-      get_current_hub.configure_scope(&block)
+      get_current_hub&.configure_scope(&block)
     end
 
     def send_event(event)
@@ -112,23 +112,23 @@ module Sentry
     end
 
     def capture_event(event)
-      get_current_hub.capture_event(event)
+      get_current_hub&.capture_event(event)
     end
 
     def capture_exception(exception, **options, &block)
-      get_current_hub.capture_exception(exception, **options, &block)
+      get_current_hub&.capture_exception(exception, **options, &block)
     end
 
     def capture_message(message, **options, &block)
-      get_current_hub.capture_message(message, **options, &block)
+      get_current_hub&.capture_message(message, **options, &block)
     end
 
     def start_transaction(**options)
-      get_current_hub.start_transaction(**options)
+      get_current_hub&.start_transaction(**options)
     end
 
     def last_event_id
-      get_current_hub.last_event_id
+      get_current_hub&.last_event_id
     end
 
     def sys_command(command)
