@@ -52,6 +52,17 @@ RSpec.describe Sentry do
   end
 
   shared_examples "capture_helper" do
+    context "without any Sentry setup" do
+      before do
+        allow(Sentry).to receive(:get_main_hub)
+        allow(Sentry).to receive(:get_current_hub)
+      end
+
+      it "doesn't cause any issue" do
+        described_class.send(capture_helper, capture_subject)
+      end
+    end
+
     context "with sending_allowed? condition" do
       before do
         expect(Sentry.configuration).to receive(:sending_allowed?).and_return(false)
