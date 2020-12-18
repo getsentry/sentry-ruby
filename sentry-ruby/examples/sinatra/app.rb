@@ -6,7 +6,6 @@ Sentry.init do |config|
   config.traces_sample_rate = 1.0
 end
 
-# this needs to be places before the CaptureException middleware
 use Sentry::Rack::CaptureExceptions
 
 get "/exception" do
