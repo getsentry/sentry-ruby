@@ -12,7 +12,7 @@ module Sentry
           begin
             yield
           rescue => ex
-            Sentry.capture_exception(ex)
+            Sentry.capture_exception(ex, hint: { background: false })
           end
         end
       end
