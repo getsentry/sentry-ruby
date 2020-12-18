@@ -18,14 +18,19 @@
 
 ### Noticeable Changes
 
-- `Sentry::Rack::Tracing` is now removed and `Sentry::Rack::CaptureException` has been renamed to `Sentry::Rack::CaptureExceptions` to follow other Rails middlewares' naming convention.
-- `sentry-ruby` now sends events asynchronously by default. The functionality works like this: 
+#### Middleware Changes
+
+`Sentry::Rack::Tracing` is now removed. And `Sentry::Rack::CaptureException` has been renamed to `Sentry::Rack::CaptureExceptions`.
+
+#### Events Are Sent Asynchronously
+
+`sentry-ruby` now sends events asynchronously by default. The functionality works like this: 
 
 1. When the SDK is initialized, a `Sentry::BackgroundWorker` will be initialized too.
 2. When an event is passed to `Client#capture_event`, instead of sending it directly with `Client#send_event`, we'll let the worker do it.
 3. The worker will have a number of threads. And the one of the idle threads will pick the job and call `Client#send_event`.
-  - If all the threads are busy, new jobs will be put into a queue, which has a limit of 30.
-  - If the queue size is exceeded, new events will be dropped.
+    - If all the threads are busy, new jobs will be put into a queue, which has a limit of 30.
+    - If the queue size is exceeded, new events will be dropped.
 
 However, if you still prefer to use your own async approach, that's totally fine. If you have `config.async` set, the worker won't initialize a thread pool and won't be used either.
 
