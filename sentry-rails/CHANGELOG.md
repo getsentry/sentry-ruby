@@ -1,5 +1,14 @@
 # Changelog
 
+## 4.1.0
+
+- Merge & rename 2 Rack middlewares [#1147](https://github.com/getsentry/sentry-ruby/pull/1147)
+  - Fixes [#1153](https://github.com/getsentry/sentry-ruby/pull/1153)
+  - Removed `Sentry::Rack::Tracing` middleware and renamed `Sentry::Rack::CaptureException` to `Sentry::Rack::CaptureExceptions`
+- Tidy up rails integration [#1150](https://github.com/getsentry/sentry-ruby/pull/1150)
+- Check SDK initialization before running integrations [#1151](https://github.com/getsentry/sentry-ruby/pull/1151)
+  - Fixes [#1145](https://github.com/getsentry/sentry-ruby/pull/1145)
+
 ## 4.0.0
 
 - Only documents update for the official release and no API/feature changes.

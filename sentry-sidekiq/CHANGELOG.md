@@ -1,5 +1,10 @@
 # Changelog
 
+## 4.1.0
+
+- Check SDK initialization before running integrations [#1151](https://github.com/getsentry/sentry-ruby/pull/1151)
+  - Fixes [#1145](https://github.com/getsentry/sentry-ruby/pull/1145)
+
 ## 4.0.0
 
 - Only documents update for the official release and no API/feature changes.
