@@ -55,7 +55,7 @@ RSpec.describe Sentry::Client do
 
         returned = subject.capture_event(event, scope)
 
-        expect(returned).to eq(false)
+        expect(returned).to eq(nil)
       end
 
       context "when async raises an exception" do

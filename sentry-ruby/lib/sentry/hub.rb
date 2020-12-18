@@ -110,7 +110,7 @@ module Sentry
 
       event = current_client.capture_event(event, scope, hint)
 
-      @last_event_id = event.event_id
+      @last_event_id = event&.event_id
       event
     end
 

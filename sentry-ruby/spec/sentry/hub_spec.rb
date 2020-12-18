@@ -19,6 +19,19 @@ RSpec.describe Sentry::Hub do
   subject { described_class.new(client, scope) }
 
   shared_examples "capture_helper" do
+    context "with sending_allowed? condition" do
+      before do
+        expect(configuration).to receive(:sending_allowed?).and_return(false)
+      end
+
+      it "doesn't send the event nor assign last_event_id" do
+        subject.send(capture_helper, capture_subject)
+
+        expect(transport.events).to be_empty
+        expect(subject.last_event_id).to eq(nil)
+      end
+    end
+
     context "with custom attributes" do
       it "updates the event with custom attributes" do
         subject.send(capture_helper, capture_subject, tags: { foo: "bar" })
@@ -147,7 +160,7 @@ RSpec.describe Sentry::Hub do
   describe '#capture_event' do
     let(:exception) { ZeroDivisionError.new("divided by 0") }
     let!(:event) do
-      subject.capture_exception(exception)
+      client.event_from_exception(exception)
     end
 
     it "returns an Event instance" do
