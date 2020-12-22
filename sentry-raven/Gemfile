@@ -31,4 +31,4 @@ gem "puma" # rspec system tests
 gem "timecop"
 gem "test-unit"
 gem "simplecov"
-gem "codecov"
+gem "codecov", "<= 0.2.12"
