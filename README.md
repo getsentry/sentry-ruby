@@ -94,7 +94,7 @@ Sentry.init do |config|
 end
 ```
 
-To lean more about performance monitoring, please visit the [official documentation](https://docs.sentry.io/platforms/ruby/performance).
+To learn more about performance monitoring, please visit the [official documentation](https://docs.sentry.io/platforms/ruby/performance).
 
 ### Usage
 
