@@ -110,27 +110,62 @@ RSpec.describe Sentry::Client do
   end
 
   describe "#send_event" do
-    let(:event) { subject.event_from_exception(ZeroDivisionError.new("divided by 0")) }
-
     before do
       allow(subject.transport).to receive(:send_data)
     end
 
-    it "sends data through the transport" do
-      expect(subject.transport).to receive(:send_event).with(event)
+    context "Event" do
+      let(:event) { subject.event_from_exception(ZeroDivisionError.new("divided by 0")) }
 
-      subject.send_event(event)
-    end
+      it "sends data through the transport" do
+        expect(subject.transport).to receive(:send_event).with(event)
 
-    it "applies before_send callback before sending the event" do
-      configuration.before_send = lambda do |event, _hint|
-        event.tags[:called] = true
-        event
+        subject.send_event(event)
       end
 
-      e = subject.send_event(event)
+      it "sends data (in hash) through the transport" do
+        expect(subject.transport).to receive(:send_event).with(event.to_json_compatible)
 
-      expect(e.tags[:called]).to eq(true)
+        subject.send_event(event.to_json_compatible)
+      end
+
+      it "applies before_send callback before sending the event" do
+        configuration.before_send = lambda do |event, _hint|
+          event.tags[:called] = true
+          event
+        end
+
+        e = subject.send_event(event)
+
+        expect(e.tags[:called]).to eq(true)
+      end
+    end
+
+    context "TransactionEvent" do
+      let(:event) { subject.event_from_transaction(Sentry::Transaction.new) }
+
+      it "sends data through the transport" do
+        expect(subject.transport).to receive(:send_event).with(event)
+
+        subject.send_event(event)
+      end
+
+      it "sends data (in hash) through the transport" do
+        expect(subject.transport).to receive(:send_event).with(event.to_json_compatible)
+
+        subject.send_event(event.to_json_compatible)
+      end
+
+      it "doesn't apply before_send to TransactionEvent" do
+        configuration.before_send = lambda do |event, _hint|
+          event.tags[:called] = true
+          event
+        end
+
+        e = subject.send_event(event)
+
+        expect(e.tags[:called]).to eq(nil)
+      end
     end
   end
 
