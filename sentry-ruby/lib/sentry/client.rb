@@ -72,7 +72,9 @@ module Sentry
     end
 
     def send_event(event, hint = nil)
-      event = configuration.before_send.call(event, hint) if configuration.before_send
+      event_type = event.is_a?(Event) ? event.type : event["type"]
+      event = configuration.before_send.call(event, hint) if configuration.before_send && event_type == "event"
+
       if event.nil?
         configuration.logger.info(LOGGER_PROGNAME) { "Discarded event because before_send returned nil" }
         return

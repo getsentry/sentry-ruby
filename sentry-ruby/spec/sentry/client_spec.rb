@@ -110,27 +110,71 @@ RSpec.describe Sentry::Client do
   end
 
   describe "#send_event" do
-    let(:event) { subject.event_from_exception(ZeroDivisionError.new("divided by 0")) }
+    let(:event_object) do
+      subject.event_from_exception(ZeroDivisionError.new("divided by 0"))
+    end
+    let(:transaction_event_object) do
+      subject.event_from_transaction(Sentry::Transaction.new)
+    end
 
     before do
-      allow(subject.transport).to receive(:send_data)
-    end
-
-    it "sends data through the transport" do
       expect(subject.transport).to receive(:send_event).with(event)
-
-      subject.send_event(event)
     end
 
-    it "applies before_send callback before sending the event" do
-      configuration.before_send = lambda do |event, _hint|
-        event.tags[:called] = true
-        event
+    shared_examples "Event in send_event" do
+      it "sends data through the transport" do
+        subject.send_event(event)
       end
 
-      e = subject.send_event(event)
+      it "applies before_send callback before sending the event" do
+        configuration.before_send = lambda do |event, _hint|
+          if event.is_a?(Sentry::Event)
+            event.tags[:called] = true
+          else
+            event["tags"]["called"] = true
+          end
 
-      expect(e.tags[:called]).to eq(true)
+          event
+        end
+
+        subject.send_event(event)
+
+        if event.is_a?(Sentry::Event)
+          expect(event.tags[:called]).to eq(true)
+        else
+          expect(event["tags"]["called"]).to eq(true)
+        end
+      end
+    end
+
+    it_behaves_like "Event in send_event" do
+      let(:event) { event_object }
+    end
+
+    it_behaves_like "Event in send_event" do
+      let(:event) { event_object.to_json_compatible }
+    end
+
+    shared_examples "TransactionEvent in send_event" do
+      it "sends data through the transport" do
+        subject.send_event(event)
+      end
+
+      it "doesn't apply before_send to TransactionEvent" do
+        configuration.before_send = lambda do |event, _hint|
+          raise "shouldn't trigger me"
+        end
+
+        subject.send_event(event)
+      end
+    end
+
+    it_behaves_like "TransactionEvent in send_event" do
+      let(:event) { transaction_event_object }
+    end
+
+    it_behaves_like "TransactionEvent in send_event" do
+      let(:event) { transaction_event_object.to_json_compatible }
     end
   end
 
