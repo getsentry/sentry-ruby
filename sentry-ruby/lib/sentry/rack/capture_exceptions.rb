@@ -16,7 +16,7 @@ module Sentry
           scope.set_transaction_name(env["PATH_INFO"]) if env["PATH_INFO"]
           scope.set_rack_env(env)
 
-          span = Sentry.start_transaction(name: scope.transaction_name, op: "rack.request")
+          span = Sentry.start_transaction(name: scope.transaction_name, op: transaction_op)
           scope.set_span(span)
 
           begin
@@ -43,6 +43,10 @@ module Sentry
 
       def collect_exception(env)
         env['rack.exception'] || env['sinatra.error']
+      end
+
+      def transaction_op
+        "rack.request".freeze
       end
 
       def finish_span(span, status_code)
