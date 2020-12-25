@@ -1,5 +1,6 @@
 require "rails"
 require "sentry/rails/capture_exceptions"
+require "sentry/rails/rescued_exception_interceptor"
 require "sentry/rails/backtrace_cleaner"
 require "sentry/rails/controller_methods"
 require "sentry/rails/controller_transaction"
@@ -10,7 +11,10 @@ module Sentry
   class Railtie < ::Rails::Railtie
     # middlewares can't be injected after initialize
     initializer "sentry.use_rack_middleware" do |app|
+      # need to be placed at first to capture as many errors as possible
       app.config.middleware.insert 0, Sentry::Rails::CaptureExceptions
+      # need to be placed at last to smuggle app exceptions via env
+      app.config.middleware.use(Sentry::Rails::RescuedExceptionInterceptor)
     end
 
     config.after_initialize do
@@ -19,7 +23,6 @@ module Sentry
       configure_sentry_logger
       extend_controller_methods
       extend_active_job
-      override_exceptions_handling
       override_streaming_reporter
       setup_backtrace_cleanup_callback
       inject_breadcrumbs_logger
@@ -54,19 +57,6 @@ module Sentry
 
       Sentry.configuration.backtrace_cleanup_callback = lambda do |backtrace|
         backtrace_cleaner.clean(backtrace)
-      end
-    end
-
-    def override_exceptions_handling
-      if Sentry.configuration.rails.report_rescued_exceptions
-        require 'sentry/rails/overrides/debug_exceptions_catcher'
-        if defined?(::ActionDispatch::DebugExceptions)
-          exceptions_class = ::ActionDispatch::DebugExceptions
-        elsif defined?(::ActionDispatch::ShowExceptions)
-          exceptions_class = ::ActionDispatch::ShowExceptions
-        end
-
-        exceptions_class.send(:prepend, Sentry::Rails::Overrides::DebugExceptionsCatcher)
       end
     end
 
