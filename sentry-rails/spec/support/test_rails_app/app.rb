@@ -39,6 +39,10 @@ class PostsController < ActionController::Base
     Post.all.to_a
     raise "foo"
   end
+
+  def show
+    Post.find(params[:id])
+  end
 end
 
 class HelloController < ActionController::Base
@@ -83,7 +87,7 @@ def make_basic_app
     get "/view", :to => "hello#view"
     get "/not_found", :to => "hello#not_found"
     get "/world", to: "hello#world"
-    resources :posts, only: [:index]
+    resources :posts, only: [:index, :show]
     root :to => "hello#world"
   end
 
