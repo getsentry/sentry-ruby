@@ -39,6 +39,7 @@ RSpec.describe Sentry::Rails::Tracing, type: :request do
       expect(event.dig(:contexts, :trace, :trace_id)).to eq(transaction.dig(:contexts, :trace, :trace_id))
 
       expect(transaction[:type]).to eq("transaction")
+      expect(transaction.dig(:contexts, :trace, :op)).to eq("rails.request")
       parent_span_id = transaction.dig(:contexts, :trace, :span_id)
       expect(transaction[:spans].count).to eq(2)
 
@@ -64,6 +65,7 @@ RSpec.describe Sentry::Rails::Tracing, type: :request do
       transaction = transport.events.last.to_hash
 
       expect(transaction[:type]).to eq("transaction")
+      expect(transaction.dig(:contexts, :trace, :op)).to eq("rails.request")
       parent_span_id = transaction.dig(:contexts, :trace, :span_id)
       expect(transaction[:spans].count).to eq(2)
 
