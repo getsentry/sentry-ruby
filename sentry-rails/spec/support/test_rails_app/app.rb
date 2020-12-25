@@ -102,7 +102,7 @@ def make_basic_app
       config.transport.transport_class = Sentry::DummyTransport
       # for sending events synchronously
       config.background_worker_threads = 0
-      yield(config) if block_given?
+      yield(config, app) if block_given?
     end
   end
 
