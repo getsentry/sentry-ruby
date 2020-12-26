@@ -18,10 +18,10 @@ jobs:
     strategy:
       matrix:
         rails_version: [0, 4.2, 5.2, 6.0.0]
-        ruby_version: [2.3, 2.4, 2.5, 2.6, 2.7, jruby, head]
+        ruby_version: [2.3, 2.4, 2.5, 2.6, 2.7, 3.0, jruby]
         os: [ubuntu-latest]
         include:
-          - ruby_version: head
+          - ruby_version: 3.0
             rails_version: 0
           - ruby_version: 2.7
             rails_version: 6.0.0
@@ -33,11 +33,11 @@ jobs:
             rails_version: 6.0.0
           - ruby_version: 2.7
             rails_version: 4.2
-          - ruby_version: head
+          - ruby_version: 3.0
             rails_version: 4.2
-          - ruby_version: head
+          - ruby_version: 3.0
             rails_version: 5.2
-          - ruby_version: head
+          - ruby_version: 3.0
             rails_version: 6.0.0
 
     steps:
