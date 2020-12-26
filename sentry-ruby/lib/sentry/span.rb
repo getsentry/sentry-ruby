@@ -77,7 +77,7 @@ module Sentry
 
     def start_child(**options)
       options = options.dup.merge(trace_id: @trace_id, parent_span_id: @span_id, sampled: @sampled)
-      Span.new(options)
+      Span.new(**options)
     end
 
     def with_child_span(**options, &block)
