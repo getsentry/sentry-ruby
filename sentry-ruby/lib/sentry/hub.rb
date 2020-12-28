@@ -76,12 +76,12 @@ module Sentry
     def capture_exception(exception, **options, &block)
       return unless current_client
 
-      event = current_client.event_from_exception(exception)
+      options[:hint] ||= {}
+      options[:hint][:exception] = exception
+      event = current_client.event_from_exception(exception, options[:hint])
 
       return unless event
 
-      options[:hint] ||= {}
-      options[:hint] = options[:hint].merge(exception: exception)
       capture_event(event, **options, &block)
     end
 
@@ -89,8 +89,8 @@ module Sentry
       return unless current_client
 
       options[:hint] ||= {}
-      options[:hint] = options[:hint].merge(message: message)
-      event = current_client.event_from_message(message)
+      options[:hint][:message] = message
+      event = current_client.event_from_message(message, options[:hint])
       capture_event(event, **options, &block)
     end
 
