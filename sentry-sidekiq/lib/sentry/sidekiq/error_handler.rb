@@ -11,7 +11,7 @@ module Sentry
         scope = Sentry.get_current_scope
         scope.set_transaction_name(transaction_from_context(context)) unless scope.transaction_name
 
-        Sentry.capture_exception(
+        Sentry::Sidekiq.capture_exception(
           ex,
           extra: { sidekiq: context },
           hint: { background: false }
