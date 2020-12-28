@@ -25,13 +25,13 @@ module Sentry
             finish_span(span, 500)
             raise # Don't capture Sentry errors
           rescue Exception => e
-            Sentry.capture_exception(e)
+            capture_exception(e)
             finish_span(span, 500)
             raise
           end
 
           exception = collect_exception(env)
-          Sentry.capture_exception(exception) if exception
+          capture_exception(exception) if exception
 
           finish_span(span, response[0])
 
@@ -47,6 +47,10 @@ module Sentry
 
       def transaction_op
         "rack.request".freeze
+      end
+
+      def capture_exception(exception)
+        Sentry.capture_exception(exception)
       end
 
       def finish_span(span, status_code)
