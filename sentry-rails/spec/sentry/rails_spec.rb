@@ -87,6 +87,7 @@ RSpec.describe Sentry::Rails, type: :request do
 
       expect(event["exception"]["values"][0]["type"]).to eq("RuntimeError")
       expect(event["exception"]["values"][0]["value"]).to eq("An unhandled exception!")
+      expect(event["sdk"]).to eq("name" => "sentry.ruby.rails", "version" => Sentry::Rails::VERSION)
     end
 
     it "filters exception backtrace with custom BacktraceCleaner" do

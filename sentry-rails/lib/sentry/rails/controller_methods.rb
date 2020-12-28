@@ -3,13 +3,13 @@ module Sentry
     module ControllerMethods
       def capture_message(message, options = {})
         with_request_scope do
-          Sentry.capture_message(message, **options)
+          Sentry::Rails.capture_message(message, **options)
         end
       end
 
       def capture_exception(exception, options = {})
         with_request_scope do
-          Sentry.capture_exception(exception, **options)
+          Sentry::Rails.capture_exception(exception, **options)
         end
       end
 
