@@ -42,6 +42,10 @@ RSpec.configure do |config|
     ENV.delete('sidekiq_ENV')
     ENV.delete('RACK_ENV')
   end
+
+  config.before :all do
+    Sidekiq.logger = Logger.new(nil)
+  end
 end
 
 def build_exception
@@ -112,7 +116,7 @@ class VerySadWorker
   def perform
     crumb = Sentry::Breadcrumb.new(message: "I'm very sad!")
     Sentry.add_breadcrumb(crumb)
-    Sentry.get_current_scope.set_tags :mood => 'very sad'
+    Sentry.set_tags :mood => 'very sad'
 
     raise "I'm very sad!"
   end

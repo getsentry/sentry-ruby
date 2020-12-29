@@ -25,6 +25,21 @@ RSpec.describe Sentry::Sidekiq::ErrorHandler do
     }
   end
 
+  let(:processor) do
+    opts = { :queues => ['default'] }
+    manager = Sidekiq::Manager.new(opts)
+    manager.workers.first
+  end
+
+  it "captures exceptions raised during events" do
+    Sidekiq.options[:lifecycle_events][:startup] = [proc { raise "Uhoh!" }]
+    processor.fire_event(:startup)
+
+    event = transport.events.last.to_hash
+    expect(Sentry::Event.get_message_from_exception(event)).to eq("RuntimeError: Uhoh!")
+    expect(event[:transaction]).to eq "Sidekiq/startup"
+  end
+
   it "should capture exceptions based on Sidekiq context" do
     exception = build_exception
 

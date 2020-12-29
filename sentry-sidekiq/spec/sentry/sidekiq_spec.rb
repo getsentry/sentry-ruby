@@ -3,7 +3,6 @@ require 'sidekiq/manager'
 
 RSpec.describe Sentry::Sidekiq do
   before :all do
-    Sidekiq.logger = Logger.new(nil)
     perform_basic_setup
   end
 
@@ -38,41 +37,34 @@ RSpec.describe Sentry::Sidekiq do
     expect(Sidekiq.server_middleware.entries.first.klass).to eq(described_class::SentryContextMiddleware)
   end
 
-  it "captures the exception with the CleanupMiddleware" do
+  it "captues exception raised in the worker" do
     expect { process_job(processor, "SadWorker") }.to change { transport.events.size }.by(1)
 
     event = transport.events.last
     expect(Sentry::Event.get_message_from_exception(event.to_hash)).to eq("RuntimeError: I'm sad!")
   end
 
-  it "clears context from other workers and captures its own" do
-    process_job(processor, "HappyWorker")
-    process_job(processor, "SadWorker")
+  describe "context cleanup" do
+    it "cleans up context from processed jobs" do
+      process_job(processor, "HappyWorker")
+      process_job(processor, "SadWorker")
 
-    event = transport.events.last.to_json_compatible
+      event = transport.events.last.to_json_compatible
 
-    expect(event["tags"]).to eq("mood" => "sad")
-    expect(event["transaction"]).to eq("Sidekiq/SadWorker")
-    expect(event["breadcrumbs"]["values"][0]["message"]).to eq("I'm sad!")
-  end
+      expect(event["tags"]).to eq("mood" => "sad")
+      expect(event["transaction"]).to eq("Sidekiq/SadWorker")
+      expect(event["breadcrumbs"]["values"][0]["message"]).to eq("I'm sad!")
+    end
 
-  it "clears context after raising" do
-    process_job(processor, "SadWorker")
-    process_job(processor, "VerySadWorker")
+    it "cleans up context from failed jobs" do
+      process_job(processor, "SadWorker")
+      process_job(processor, "VerySadWorker")
 
-    event = transport.events.last.to_json_compatible
+      event = transport.events.last.to_json_compatible
 
-    expect(event["tags"]).to eq("mood" => "very sad")
-    expect(event["breadcrumbs"]["values"][0]["message"]).to eq("I'm very sad!")
-  end
-
-  it "captures exceptions raised during events with the ErrorHandler" do
-    Sidekiq.options[:lifecycle_events][:startup] = [proc { raise "Uhoh!" }]
-    processor.fire_event(:startup)
-
-    event = transport.events.last.to_hash
-    expect(Sentry::Event.get_message_from_exception(event)).to eq("RuntimeError: Uhoh!")
-    expect(event[:transaction]).to eq "Sidekiq/startup"
+      expect(event["tags"]).to eq("mood" => "very sad")
+      expect(event["breadcrumbs"]["values"][0]["message"]).to eq("I'm very sad!")
+    end
   end
 
   it "has some context when capturing, even if no exception raised" do
