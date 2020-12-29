@@ -42,6 +42,10 @@ RSpec.configure do |config|
     ENV.delete('sidekiq_ENV')
     ENV.delete('RACK_ENV')
   end
+
+  config.before :all do
+    Sidekiq.logger = Logger.new(nil)
+  end
 end
 
 def build_exception
@@ -82,6 +86,58 @@ def build_exception_with_recursive_cause
   allow(exception).to receive(:message).and_return("example")
   allow(exception).to receive(:backtrace).and_return(backtrace)
   exception
+end
+
+class HappyWorker
+  include Sidekiq::Worker
+
+  def perform
+    crumb = Sentry::Breadcrumb.new(message: "I'm happy!")
+    Sentry.add_breadcrumb(crumb)
+    Sentry.set_tags mood: 'happy'
+  end
+end
+
+class SadWorker
+  include Sidekiq::Worker
+
+  def perform
+    crumb = Sentry::Breadcrumb.new(message: "I'm sad!")
+    Sentry.add_breadcrumb(crumb)
+    Sentry.set_tags :mood => 'sad'
+
+    raise "I'm sad!"
+  end
+end
+
+class VerySadWorker
+  include Sidekiq::Worker
+
+  def perform
+    crumb = Sentry::Breadcrumb.new(message: "I'm very sad!")
+    Sentry.add_breadcrumb(crumb)
+    Sentry.set_tags :mood => 'very sad'
+
+    raise "I'm very sad!"
+  end
+end
+
+class ReportingWorker
+  include Sidekiq::Worker
+
+  def perform
+    Sentry.capture_message("I have something to say!")
+  end
+end
+
+def process_job(processor, klass)
+  msg = Sidekiq.dump_json("class" => klass)
+  job = Sidekiq::BasicFetch::UnitOfWork.new('queue:default', msg)
+  processor.instance_variable_set(:'@job', job)
+
+  processor.send(:process, job)
+rescue StandardError
+  # do nothing
 end
 
 def perform_basic_setup

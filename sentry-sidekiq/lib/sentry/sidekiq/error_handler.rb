@@ -8,15 +8,14 @@ module Sentry
       def call(ex, context)
         return unless Sentry.initialized?
         context = Sentry::Sidekiq::ContextFilter.new.filter_context(context)
+        scope = Sentry.get_current_scope
+        scope.set_transaction_name(transaction_from_context(context)) unless scope.transaction_name
 
-        Sentry.with_scope do |scope|
-          scope.set_transaction_name transaction_from_context(context)
-          Sentry.capture_exception(
-            ex,
-            extra: { sidekiq: context },
-            hint: { background: false }
-          )
-        end
+        Sentry.capture_exception(
+          ex,
+          extra: { sidekiq: context },
+          hint: { background: false }
+        )
       end
 
       private

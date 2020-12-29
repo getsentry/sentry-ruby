@@ -1,65 +1,12 @@
 require "spec_helper"
 require 'sidekiq/manager'
 
-class HappyWorker
-  include Sidekiq::Worker
-
-  def perform
-    crumb = Sentry::Breadcrumb.new(message: "I'm happy!")
-    Sentry.add_breadcrumb(crumb)
-    Sentry.get_current_scope.set_tags mood: 'happy'
-  end
-end
-
-class SadWorker
-  include Sidekiq::Worker
-
-  def perform
-    crumb = Sentry::Breadcrumb.new(message: "I'm sad!")
-    Sentry.add_breadcrumb(crumb)
-    Sentry.get_current_scope.set_tags :mood => 'sad'
-
-    raise "I'm sad!"
-  end
-end
-
-class VerySadWorker
-  include Sidekiq::Worker
-
-  def perform
-    crumb = Sentry::Breadcrumb.new(message: "I'm very sad!")
-    Sentry.add_breadcrumb(crumb)
-    Sentry.get_current_scope.set_tags :mood => 'very sad'
-
-    raise "I'm very sad!"
-  end
-end
-
-class ReportingWorker
-  include Sidekiq::Worker
-
-  def perform
-    Sentry.capture_message("I have something to say!")
-  end
-end
-
-def process_job(processor, klass)
-  msg = Sidekiq.dump_json("class" => klass)
-  job = Sidekiq::BasicFetch::UnitOfWork.new('queue:default', msg)
-  processor.instance_variable_set(:'@job', job)
-
-  processor.send(:process, job)
-rescue StandardError
-  # do nothing
-end
-
 RSpec.describe Sentry::Sidekiq do
   before :all do
-    Sidekiq.logger = Logger.new(nil)
     perform_basic_setup
   end
 
-  after(:all) do
+  after do
     # those test jobs will go into the real Redis and be visiable to other sidekiq processes
     # this can affect local testing and development, so we should clear them after each test
     Sidekiq::RetrySet.new.clear
@@ -87,44 +34,37 @@ RSpec.describe Sentry::Sidekiq do
 
   it "registers error handlers and middlewares" do
     expect(Sidekiq.error_handlers).to include(described_class::ErrorHandler)
-    expect(Sidekiq.server_middleware.entries.first.klass).to eq(described_class::CleanupMiddleware)
+    expect(Sidekiq.server_middleware.entries.first.klass).to eq(described_class::SentryContextMiddleware)
   end
 
-  it "captures the exception with the CleanupMiddleware" do
+  it "captues exception raised in the worker" do
     expect { process_job(processor, "SadWorker") }.to change { transport.events.size }.by(1)
 
     event = transport.events.last
     expect(Sentry::Event.get_message_from_exception(event.to_hash)).to eq("RuntimeError: I'm sad!")
   end
 
-  it "clears context from other workers and captures its own" do
-    process_job(processor, "HappyWorker")
-    process_job(processor, "SadWorker")
+  describe "context cleanup" do
+    it "cleans up context from processed jobs" do
+      process_job(processor, "HappyWorker")
+      process_job(processor, "SadWorker")
 
-    event = transport.events.last.to_json_compatible
+      event = transport.events.last.to_json_compatible
 
-    expect(event["tags"]).to eq("mood" => "sad")
-    expect(event["transaction"]).to eq("Sidekiq/SadWorker")
-    expect(event["breadcrumbs"]["values"][0]["message"]).to eq("I'm sad!")
-  end
+      expect(event["tags"]).to eq("mood" => "sad")
+      expect(event["transaction"]).to eq("Sidekiq/SadWorker")
+      expect(event["breadcrumbs"]["values"][0]["message"]).to eq("I'm sad!")
+    end
 
-  it "clears context after raising" do
-    process_job(processor, "SadWorker")
-    process_job(processor, "VerySadWorker")
+    it "cleans up context from failed jobs" do
+      process_job(processor, "SadWorker")
+      process_job(processor, "VerySadWorker")
 
-    event = transport.events.last.to_json_compatible
+      event = transport.events.last.to_json_compatible
 
-    expect(event["tags"]).to eq("mood" => "very sad")
-    expect(event["breadcrumbs"]["values"][0]["message"]).to eq("I'm very sad!")
-  end
-
-  it "captures exceptions raised during events with the ErrorHandler" do
-    Sidekiq.options[:lifecycle_events][:startup] = [proc { raise "Uhoh!" }]
-    processor.fire_event(:startup)
-
-    event = transport.events.last.to_hash
-    expect(Sentry::Event.get_message_from_exception(event)).to eq("RuntimeError: Uhoh!")
-    expect(event[:transaction]).to eq "Sidekiq/startup"
+      expect(event["tags"]).to eq("mood" => "very sad")
+      expect(event["breadcrumbs"]["values"][0]["message"]).to eq("I'm very sad!")
+    end
   end
 
   it "has some context when capturing, even if no exception raised" do
@@ -134,6 +74,13 @@ RSpec.describe Sentry::Sidekiq do
 
     expect(event["message"]).to eq "I have something to say!"
     expect(event["extra"]["sidekiq"]).to eq("class" => "ReportingWorker", "queue" => "default")
+  end
+
+  it "adds the failed job to the retry queue" do
+    process_job(processor, "SadWorker")
+
+    retries = Sidekiq::RetrySet.new
+    expect(retries.count).to eq(1)
   end
 end
 
