@@ -75,5 +75,12 @@ RSpec.describe Sentry::Sidekiq do
     expect(event["message"]).to eq "I have something to say!"
     expect(event["extra"]["sidekiq"]).to eq("class" => "ReportingWorker", "queue" => "default")
   end
+
+  it "adds the failed job to the retry queue" do
+    process_job(processor, "SadWorker")
+
+    retries = Sidekiq::RetrySet.new
+    expect(retries.count).to eq(1)
+  end
 end
 
