@@ -2,11 +2,13 @@ require 'sentry/sidekiq/context_filter'
 
 module Sentry
   module Sidekiq
-    class ErrorHandler
+    class EventErrorHandler
       SIDEKIQ_NAME = "Sidekiq".freeze
 
       def call(ex, context)
         return unless Sentry.initialized?
+        # let CleanupMiddleware handle job failures
+        return if job_name_from_context(context)
         context = Sentry::Sidekiq::ContextFilter.new.filter_context(context)
 
         Sentry.with_scope do |scope|
@@ -21,15 +23,16 @@ module Sentry
 
       private
 
-      # this will change in the future:
-      # https://github.com/mperham/sidekiq/pull/3161
+      def job_name_from_context(context)
+        # this will change in the future:
+        # https://github.com/mperham/sidekiq/pull/3161
+        (context["wrapped"] || context["class"] ||
+         (context[:job] && (context[:job]["wrapped"] || context[:job]["class"]))
+        )
+      end
+
       def transaction_from_context(context)
-        classname = (context["wrapped"] || context["class"] ||
-                      (context[:job] && (context[:job]["wrapped"] || context[:job]["class"]))
-                    )
-        if classname
-          "#{SIDEKIQ_NAME}/#{classname}"
-        elsif context[:event]
+        if context[:event]
           "#{SIDEKIQ_NAME}/#{context[:event]}"
         else
           SIDEKIQ_NAME

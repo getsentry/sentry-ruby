@@ -1,6 +1,6 @@
 require 'spec_helper'
 
-RSpec.describe Sentry::Sidekiq::ErrorHandler do
+RSpec.describe Sentry::Sidekiq::EventErrorHandler do
   before do
     perform_basic_setup
   end
@@ -25,29 +25,23 @@ RSpec.describe Sentry::Sidekiq::ErrorHandler do
     }
   end
 
-  it "should capture exceptions based on Sidekiq context" do
+  it "ignores jobs in deference to CleanupMiddleware" do
     exception = build_exception
 
     subject.call(exception, context)
 
-    expect(transport.events.count).to eq(1)
-    event = transport.events.first.to_hash
-    expect(event[:extra][:sidekiq]).to eq(context)
+    expect(transport.events.count).to eq(0)
   end
 
-  it "filters out ActiveJob keys" do
-    require "active_job"
+  it "fires for lifecycle events" do
     exception = build_exception
-    aj_context = context
-    aj_context["_aj_globalid"] = GlobalID.new('gid://app/model/id')
-    expected_context = aj_context.dup
-    expected_context.delete("_aj_globalid")
-    expected_context["globalid"] = "gid://app/model/id"
 
-    subject.call(exception, aj_context)
+    subject.call(
+      exception,
+      context: "Exception during Sidekiq lifecycle event.",
+      event: :startup
+    )
 
     expect(transport.events.count).to eq(1)
-    event = transport.events.first.to_hash
-    expect(event[:extra][:sidekiq]).to eq(expected_context)
   end
 end

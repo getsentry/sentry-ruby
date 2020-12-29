@@ -1,7 +1,7 @@
 require "sidekiq"
 require "sentry-ruby"
 require "sentry/sidekiq/version"
-require "sentry/sidekiq/error_handler"
+require "sentry/sidekiq/event_error_handler"
 require "sentry/sidekiq/cleanup_middleware"
 # require "sentry/sidekiq/configuration"
 
@@ -16,7 +16,7 @@ module Sentry
 end
 
 Sidekiq.configure_server do |config|
-  config.error_handlers << Sentry::Sidekiq::ErrorHandler.new
+  config.error_handlers << Sentry::Sidekiq::EventErrorHandler.new
   config.server_middleware do |chain|
     chain.add Sentry::Sidekiq::CleanupMiddleware
   end

@@ -59,7 +59,7 @@ RSpec.describe Sentry::Sidekiq do
     perform_basic_setup
   end
 
-  after(:all) do
+  after(:each) do
     # those test jobs will go into the real Redis and be visiable to other sidekiq processes
     # this can affect local testing and development, so we should clear them after each test
     Sidekiq::RetrySet.new.clear
@@ -86,7 +86,7 @@ RSpec.describe Sentry::Sidekiq do
   end
 
   it "registers error handlers and middlewares" do
-    expect(Sidekiq.error_handlers).to include(described_class::ErrorHandler)
+    expect(Sidekiq.error_handlers).to include(described_class::EventErrorHandler)
     expect(Sidekiq.server_middleware.entries.first.klass).to eq(described_class::CleanupMiddleware)
   end
 
@@ -106,6 +106,13 @@ RSpec.describe Sentry::Sidekiq do
     expect(event["tags"]).to eq("mood" => "sad")
     expect(event["transaction"]).to eq("Sidekiq/SadWorker")
     expect(event["breadcrumbs"]["values"][0]["message"]).to eq("I'm sad!")
+  end
+
+  it "adds the failed job to the retry queue" do
+    process_job(processor, "SadWorker")
+
+    retries = Sidekiq::RetrySet.new
+    expect(retries.count).to eq(1)
   end
 
   it "clears context after raising" do
@@ -136,4 +143,3 @@ RSpec.describe Sentry::Sidekiq do
     expect(event["extra"]["sidekiq"]).to eq("class" => "ReportingWorker", "queue" => "default")
   end
 end
-
