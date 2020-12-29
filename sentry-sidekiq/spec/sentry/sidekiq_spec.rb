@@ -1,65 +1,13 @@
 require "spec_helper"
 require 'sidekiq/manager'
 
-class HappyWorker
-  include Sidekiq::Worker
-
-  def perform
-    crumb = Sentry::Breadcrumb.new(message: "I'm happy!")
-    Sentry.add_breadcrumb(crumb)
-    Sentry.get_current_scope.set_tags mood: 'happy'
-  end
-end
-
-class SadWorker
-  include Sidekiq::Worker
-
-  def perform
-    crumb = Sentry::Breadcrumb.new(message: "I'm sad!")
-    Sentry.add_breadcrumb(crumb)
-    Sentry.get_current_scope.set_tags :mood => 'sad'
-
-    raise "I'm sad!"
-  end
-end
-
-class VerySadWorker
-  include Sidekiq::Worker
-
-  def perform
-    crumb = Sentry::Breadcrumb.new(message: "I'm very sad!")
-    Sentry.add_breadcrumb(crumb)
-    Sentry.get_current_scope.set_tags :mood => 'very sad'
-
-    raise "I'm very sad!"
-  end
-end
-
-class ReportingWorker
-  include Sidekiq::Worker
-
-  def perform
-    Sentry.capture_message("I have something to say!")
-  end
-end
-
-def process_job(processor, klass)
-  msg = Sidekiq.dump_json("class" => klass)
-  job = Sidekiq::BasicFetch::UnitOfWork.new('queue:default', msg)
-  processor.instance_variable_set(:'@job', job)
-
-  processor.send(:process, job)
-rescue StandardError
-  # do nothing
-end
-
 RSpec.describe Sentry::Sidekiq do
   before :all do
     Sidekiq.logger = Logger.new(nil)
     perform_basic_setup
   end
 
-  after(:all) do
+  after do
     # those test jobs will go into the real Redis and be visiable to other sidekiq processes
     # this can affect local testing and development, so we should clear them after each test
     Sidekiq::RetrySet.new.clear
@@ -87,7 +35,7 @@ RSpec.describe Sentry::Sidekiq do
 
   it "registers error handlers and middlewares" do
     expect(Sidekiq.error_handlers).to include(described_class::ErrorHandler)
-    expect(Sidekiq.server_middleware.entries.first.klass).to eq(described_class::CleanupMiddleware)
+    expect(Sidekiq.server_middleware.entries.first.klass).to eq(described_class::SentryContextMiddleware)
   end
 
   it "captures the exception with the CleanupMiddleware" do
