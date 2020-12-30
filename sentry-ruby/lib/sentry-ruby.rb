@@ -41,6 +41,17 @@ module Sentry
   end
 
   class << self
+    def integrations
+      @integrations ||= {}
+    end
+
+    def register_integration(name, version)
+      meta = { name: "sentry.ruby.#{name}", version: version }.freeze
+      integrations[name.to_s] = meta
+    end
+  end
+
+  class << self
     extend Forwardable
 
     def_delegators :get_current_scope, :set_tags, :set_extras, :set_user

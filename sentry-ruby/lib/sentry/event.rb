@@ -20,7 +20,7 @@ module Sentry
     attr_accessor(*ATTRIBUTES)
     attr_reader :configuration, :request, :exception, :stacktrace
 
-    def initialize(configuration:, message: nil)
+    def initialize(configuration:, integration_meta: nil, message: nil)
       # this needs to go first because some setters rely on configuration
       @configuration = configuration
 
@@ -28,7 +28,7 @@ module Sentry
       @event_id      = SecureRandom.uuid.delete("-")
       @timestamp     = Sentry.utc_now.iso8601
       @platform      = :ruby
-      @sdk           = Sentry.sdk_meta
+      @sdk           = integration_meta || Sentry.sdk_meta
 
       @user          = {}
       @extra         = {}

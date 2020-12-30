@@ -26,7 +26,7 @@ module Sentry
         rescue_handler_result = rescue_with_handler(e)
         return rescue_handler_result if rescue_handler_result
 
-        Sentry.capture_exception(e, :extra => sentry_context(job))
+        Sentry::Rails.capture_exception(e, extra: sentry_context(job))
         raise e
       end
 

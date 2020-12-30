@@ -3,7 +3,7 @@ module Sentry
     module Overrides
       module StreamingReporter
         def log_error(exception)
-          Sentry.capture_exception(exception)
+          Sentry::Rails.capture_exception(exception)
           super
         end
       end
@@ -14,7 +14,7 @@ module Sentry
         end
 
         def log_error_with_raven(exception)
-          Sentry.capture_exception(exception)
+          Sentry::Rails.capture_exception(exception)
           log_error_without_raven(exception)
         end
       end

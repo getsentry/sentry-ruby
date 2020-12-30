@@ -47,16 +47,18 @@ module Sentry
       event
     end
 
-    def event_from_exception(exception)
+    def event_from_exception(exception, hint = {})
+      integration_meta = Sentry.integrations[hint[:integration]]
       return unless @configuration.exception_class_allowed?(exception)
 
-      Event.new(configuration: configuration).tap do |event|
+      Event.new(configuration: configuration, integration_meta: integration_meta).tap do |event|
         event.add_exception_interface(exception)
       end
     end
 
-    def event_from_message(message)
-      Event.new(configuration: configuration, message: message)
+    def event_from_message(message, hint = {})
+      integration_meta = Sentry.integrations[hint[:integration]]
+      Event.new(configuration: configuration, integration_meta: integration_meta, message: message)
     end
 
     def event_from_transaction(transaction)

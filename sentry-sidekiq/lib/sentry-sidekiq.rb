@@ -1,5 +1,6 @@
 require "sidekiq"
 require "sentry-ruby"
+require "sentry/integrable"
 require "sentry/sidekiq/version"
 require "sentry/sidekiq/error_handler"
 require "sentry/sidekiq/sentry_context_middleware"
@@ -7,11 +8,9 @@ require "sentry/sidekiq/sentry_context_middleware"
 
 module Sentry
   module Sidekiq
-    META = { "name" => "sentry.ruby.sidekiq", "version" => Sentry::Sidekiq::VERSION }.freeze
-  end
+    extend Sentry::Integrable
 
-  def self.sdk_meta
-    Sentry::Sidekiq::META
+    register_integration name: "sidekiq", version: Sentry::Sidekiq::VERSION
   end
 end
 
