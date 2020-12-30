@@ -1,5 +1,12 @@
 # Changelog
 
+## 4.1.2
+
+- before_send callback shouldn't be applied to transaction events [#1167](https://github.com/getsentry/sentry-ruby/pull/1167)
+- Transaction improvements [#1170](https://github.com/getsentry/sentry-ruby/pull/1170)
+- Support Ruby 3 [#1172](https://github.com/getsentry/sentry-ruby/pull/1172)
+- Add Integrable module [#1177](https://github.com/getsentry/sentry-ruby/pull/1177)
+
 ## 4.1.1
 
 - Fix NoMethodError when sending is not allowed [#1161](https://github.com/getsentry/sentry-ruby/pull/1161)

@@ -1,5 +1,11 @@
 # Changelog
 
+## 4.1.2
+
+- Fix sidekiq middleware [#1175](https://github.com/getsentry/sentry-ruby/pull/1175)
+  - Fixes [#1173](https://github.com/getsentry/sentry-ruby/issues/1173)
+- Adopt Integrable module [#1177](https://github.com/getsentry/sentry-ruby/pull/1177)
+
 ## 4.1.1
 
 - Use stricter dependency declaration [#1159](https://github.com/getsentry/sentry-ruby/pull/1159)

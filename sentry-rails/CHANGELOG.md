@@ -1,5 +1,11 @@
 # Changelog
 
+## 4.1.2
+
+- Use middleware instead of method override to handle rescued exceptions [#1168](https://github.com/getsentry/sentry-ruby/pull/1168)
+  - Fixes [#738](https://github.com/getsentry/sentry-ruby/issues/738)
+- Adopt Integrable module [#1177](https://github.com/getsentry/sentry-ruby/pull/1177)
+
 ## 4.1.1
 
 - Use stricter dependency declaration [#1159](https://github.com/getsentry/sentry-ruby/pull/1159)
