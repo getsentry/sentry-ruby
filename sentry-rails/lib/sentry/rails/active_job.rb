@@ -3,7 +3,6 @@ module Sentry
     module ActiveJobExtensions
       ALREADY_SUPPORTED_SENTRY_ADAPTERS = %w(
         ActiveJob::QueueAdapters::SidekiqAdapter
-        ActiveJob::QueueAdapters::DelayedJobAdapter
       ).freeze
 
       def self.included(base)
