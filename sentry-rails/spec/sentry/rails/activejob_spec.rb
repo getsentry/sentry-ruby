@@ -64,6 +64,17 @@ RSpec.describe "ActiveJob integration" do
       end
     end
 
+    it "reports the root cause to Sentry" do
+      expect do
+        DeserializationErrorJob.perform_now
+      end.to raise_error(ActiveJob::DeserializationError, /divided by 0/)
+
+      expect(transport.events.size).to eq(1)
+
+      event = transport.events.last.to_json_compatible
+      expect(event.dig("exception", "values", 0, "type")).to eq("ZeroDivisionError")
+    end
+
     context "and in SentryJob too" do
       before do
         Sentry.configuration.async = lambda do |event|
