@@ -327,6 +327,10 @@ RSpec.describe Sentry::Configuration do
       context 'when the raised exception has a cause that is in excluded_exceptions' do
         let(:incoming_exception) { build_exception_with_cause(MyTestException.new) }
         context 'when inspect_exception_causes_for_exclusion is false' do
+          before do
+            subject.inspect_exception_causes_for_exclusion = false
+          end
+
           it 'returns true' do
             expect(subject.exception_class_allowed?(incoming_exception)).to eq true
           end
