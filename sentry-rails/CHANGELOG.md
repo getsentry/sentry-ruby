@@ -1,5 +1,9 @@
 # Changelog
 
+## 4.1.3
+
+- Remove DelayedJobAdapter from ignored list [#1179](https://github.com/getsentry/sentry-ruby/pull/1179)
+
 ## 4.1.2
 
 - Use middleware instead of method override to handle rescued exceptions [#1168](https://github.com/getsentry/sentry-ruby/pull/1168)
