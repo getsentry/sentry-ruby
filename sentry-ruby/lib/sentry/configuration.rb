@@ -134,7 +134,6 @@ module Sentry
     # Most of these errors generate 4XX responses. In general, Sentry clients
     # only automatically report 5xx responses.
     IGNORE_DEFAULT = [
-      'CGI::Session::CookieStore::TamperedWithCookie',
       'Mongoid::Errors::DocumentNotFound',
       'Rack::QueryParser::InvalidParameterError',
       'Rack::QueryParser::ParameterTypeError',
