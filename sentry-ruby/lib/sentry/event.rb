@@ -76,11 +76,13 @@ module Sentry
 
     def rack_env=(env)
       unless request || env.empty?
+        env = env.dup
+
         @request = Sentry::RequestInterface.new.tap do |int|
           int.from_rack(env)
         end
 
-        if configuration.send_default_pii && ip = calculate_real_ip_from_rack(env.dup)
+        if configuration.send_default_pii && ip = calculate_real_ip_from_rack(env)
           user[:ip_address] = ip
         end
         if request_id = Utils::RequestId.read_from(env)
