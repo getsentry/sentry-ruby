@@ -34,8 +34,8 @@ module Sentry
       self.method = req.request_method
       self.query_string = req.query_string
 
-      self.headers = format_headers_for_sentry(env_hash)
-      self.env     = format_env_for_sentry(env_hash)
+      self.headers = filter_and_format_headers(env_hash)
+      self.env     = filter_and_format_env(env_hash)
     end
 
     private
@@ -52,7 +52,7 @@ module Sentry
       e.message
     end
 
-    def format_headers_for_sentry(env_hash)
+    def filter_and_format_headers(env_hash)
       env_hash.each_with_object({}) do |(key, value), memo|
         begin
           key = key.to_s # rack env can contain symbols
@@ -91,7 +91,7 @@ module Sentry
       key == 'HTTP_VERSION' && value == protocol_version
     end
 
-    def format_env_for_sentry(env_hash)
+    def filter_and_format_env(env_hash)
       return env_hash if Sentry.configuration.rack_env_whitelist.empty?
 
       env_hash.select do |k, _v|
