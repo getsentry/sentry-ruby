@@ -8,23 +8,40 @@ module Sentry
       "HTTP_X_FORWARDED_FOR"
     ].freeze
 
+    # See Sentry server default limits at
+    # https://github.com/getsentry/sentry/blob/master/src/sentry/conf/server.py
+    MAX_BODY_LIMIT = 4096 * 4
+
     attr_accessor :url, :method, :data, :query_string, :cookies, :headers, :env
 
-    def initialize
-      self.headers = {}
-      self.env = {}
-      self.cookies = nil
+    def self.from_rack(env_hash)
+      req = ::Rack::Request.new(env_hash)
+      self.new(req)
+    end
+
+    def initialize(req)
+      env_hash = req.env
+
+      if Sentry.configuration.send_default_pii
+        self.data = read_data_from(req)
+        self.cookies = req.cookies
+      end
+
+      self.url = req.scheme && req.url.split('?').first
+      self.method = req.request_method
+      self.query_string = req.query_string
+
+      self.headers = format_headers_for_sentry(env_hash)
+      self.env     = format_env_for_sentry(env_hash)
     end
 
     private
 
-    # See Sentry server default limits at
-    # https://github.com/getsentry/sentry/blob/master/src/sentry/conf/server.py
     def read_data_from(request)
       if request.form_data?
         request.POST
       elsif request.body # JSON requests, etc
-        data = request.body.read(4096 * 4) # Sentry server limit
+        data = request.body.read(MAX_BODY_LIMIT)
         request.body.rewind
         data
       end

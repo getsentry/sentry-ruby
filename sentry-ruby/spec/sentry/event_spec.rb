@@ -72,7 +72,6 @@ RSpec.describe Sentry::Event do
           method: 'POST',
           query_string: 'biz=baz',
           url: 'http://localhost/lol',
-          cookies: nil
         )
         expect(event.to_hash[:tags][:request_id]).to eq("abcd-1234-abcd-1234")
         expect(event.to_hash[:user][:ip_address]).to eq(nil)

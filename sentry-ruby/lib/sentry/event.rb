@@ -89,9 +89,7 @@ module Sentry
           end
         end
 
-        @request = Sentry::RequestInterface.new.tap do |int|
-          int.from_rack(env)
-        end
+        add_request_interface(env)
 
         if request_id = Utils::RequestId.read_from(env)
           tags[:request_id] = request_id
@@ -115,6 +113,10 @@ module Sentry
 
     def to_json_compatible
       JSON.parse(JSON.generate(to_hash))
+    end
+
+    def add_request_interface(env)
+      @request = Sentry::RequestInterface.from_rack(env)
     end
 
     def add_exception_interface(exc)

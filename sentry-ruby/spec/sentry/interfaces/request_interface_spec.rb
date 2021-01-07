@@ -6,7 +6,7 @@ RSpec.describe Sentry::RequestInterface do
   let(:exception) { ZeroDivisionError.new("divided by 0") }
   let(:additional_headers) { {} }
   let(:env) { Rack::MockRequest.env_for("/test", additional_headers) }
-  let(:interface) { Sentry::RequestInterface.new }
+  let(:interface) { described_class.from_rack(env) }
 
   before do
     Sentry.init do |config|
@@ -17,7 +17,7 @@ RSpec.describe Sentry::RequestInterface do
   it 'excludes non whitelisted params from rack env' do
     additional_env = { "random_param" => "text", "query_string" => "test" }
     new_env = env.merge(additional_env)
-    interface.from_rack(new_env)
+    interface = described_class.from_rack(new_env)
 
     expect(interface.env).to_not include(additional_env)
   end
@@ -26,14 +26,14 @@ RSpec.describe Sentry::RequestInterface do
     Sentry.configuration.rack_env_whitelist = %w(random_param query_string)
     additional_env = { "random_param" => "text", "query_string" => "test" }
     new_env = env.merge(additional_env)
-    interface.from_rack(new_env)
+    interface = described_class.from_rack(new_env)
 
     expect(interface.env).to eq(additional_env)
   end
 
   it 'keeps the original env intact when an empty whitelist is provided' do
     Sentry.configuration.rack_env_whitelist = []
-    interface.from_rack(env)
+    interface = described_class.from_rack(env)
 
     expect(interface.env).to eq(env)
   end
@@ -42,7 +42,7 @@ RSpec.describe Sentry::RequestInterface do
     let(:additional_headers) { { "HTTP_VERSION" => "HTTP/1.1", "HTTP_COOKIE" => "test", "HTTP_X_REQUEST_ID" => "12345678" } }
 
     it 'transforms headers to conform with the interface' do
-      interface.from_rack(env)
+      interface = described_class.from_rack(env)
 
       expect(interface.headers).to eq("Content-Length" => "0", "Version" => "HTTP/1.1", "X-Request-Id" => "12345678")
     end
@@ -51,7 +51,7 @@ RSpec.describe Sentry::RequestInterface do
       let(:additional_headers) { { "action_dispatch.request_id" => "12345678" } }
 
       it 'transforms headers to conform with the interface' do
-        interface.from_rack(env)
+        interface = described_class.from_rack(env)
 
         expect(interface.headers).to eq("Content-Length" => "0", "X-Request-Id" => "12345678")
       end
@@ -61,14 +61,14 @@ RSpec.describe Sentry::RequestInterface do
   it 'does not ignore version headers which do not match SERVER_PROTOCOL' do
     new_env = env.merge("SERVER_PROTOCOL" => "HTTP/1.1", "HTTP_VERSION" => "HTTP/2.0")
 
-    interface.from_rack(new_env)
+    interface = described_class.from_rack(new_env)
 
     expect(interface.headers["Version"]).to eq("HTTP/2.0")
   end
 
   it 'retains any literal "HTTP-" in the actual header name' do
     new_env = env.merge("HTTP_HTTP_CUSTOM_HTTP_HEADER" => "test")
-    interface.from_rack(new_env)
+    interface = described_class.from_rack(new_env)
 
     expect(interface.headers).to include("Http-Custom-Http-Header" => "test")
   end
@@ -82,7 +82,7 @@ RSpec.describe Sentry::RequestInterface do
 
     new_env = env.merge("HTTP_FOO" => "BAR", "rails_object" => obj)
 
-    expect { interface.from_rack(new_env) }.to_not raise_error
+    expect { interface = described_class.from_rack(new_env) }.to_not raise_error
   end
 
   it "doesn't capture cookies info" do
@@ -90,7 +90,7 @@ RSpec.describe Sentry::RequestInterface do
         ::Rack::RACK_REQUEST_COOKIE_HASH => "cookies!"
       )
 
-      interface.from_rack(new_env)
+      interface = described_class.from_rack(new_env)
 
       expect(interface.cookies).to eq(nil)
   end
@@ -102,7 +102,7 @@ RSpec.describe Sentry::RequestInterface do
         ::Rack::RACK_INPUT => StringIO.new("data=ignore me")
       )
 
-      interface.from_rack(new_env)
+      interface = described_class.from_rack(new_env)
 
       expect(interface.data).to eq(nil)
     end
@@ -112,7 +112,7 @@ RSpec.describe Sentry::RequestInterface do
     it "doesn't store request body by default" do
       new_env = env.merge(::Rack::RACK_INPUT => StringIO.new("ignore me"))
 
-      interface.from_rack(new_env)
+      interface = described_class.from_rack(new_env)
 
       expect(interface.data).to eq(nil)
     end
@@ -128,7 +128,7 @@ RSpec.describe Sentry::RequestInterface do
         ::Rack::RACK_REQUEST_COOKIE_HASH => "cookies!"
       )
 
-      interface.from_rack(new_env)
+      interface = described_class.from_rack(new_env)
 
       expect(interface.cookies).to eq("cookies!")
     end
@@ -139,7 +139,7 @@ RSpec.describe Sentry::RequestInterface do
         ::Rack::RACK_INPUT => StringIO.new("data=catch me")
       )
 
-      interface.from_rack(new_env)
+      interface = described_class.from_rack(new_env)
 
       expect(interface.data).to eq({ "data" => "catch me" })
     end
@@ -147,7 +147,7 @@ RSpec.describe Sentry::RequestInterface do
     it "stores request body" do
       new_env = env.merge(::Rack::RACK_INPUT => StringIO.new("catch me"))
 
-      interface.from_rack(new_env)
+      interface = described_class.from_rack(new_env)
 
       expect(interface.data).to eq("catch me")
     end
@@ -162,7 +162,7 @@ RSpec.describe Sentry::RequestInterface do
         "HTTP_X_FORWARDED_FOR" => ip
       )
 
-      interface.from_rack(env)
+      interface = described_class.from_rack(env)
 
       expect(interface.env).to include("REMOTE_ADDR")
       expect(interface.headers.keys).to include("Client-Ip")
