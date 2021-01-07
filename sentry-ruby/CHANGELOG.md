@@ -1,5 +1,9 @@
 # Changelog
 
+## 4.1.3
+
+- Refactor RequestInterface [#1187](https://github.com/getsentry/sentry-ruby/pull/1187)
+
 ## 4.1.2
 
 - before_send callback shouldn't be applied to transaction events [#1167](https://github.com/getsentry/sentry-ruby/pull/1167)
