@@ -18,8 +18,20 @@ module Sentry
     attr_accessor :url, :method, :data, :query_string, :cookies, :headers, :env
 
     def self.from_rack(env_hash)
+      env_hash = clean_env(env_hash)
       req = ::Rack::Request.new(env_hash)
       self.new(req)
+    end
+
+    def self.clean_env(env)
+      unless Sentry.configuration.send_default_pii
+        # need to completely wipe out ip addresses
+        RequestInterface::IP_HEADERS.each do |header|
+          env.delete(header)
+        end
+      end
+
+      env
     end
 
     def initialize(req)
