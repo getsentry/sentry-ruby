@@ -1,6 +1,9 @@
+# frozen_string_literal: true
+
 module Sentry
   class RequestInterface < Interface
     REQUEST_ID_HEADERS = %w(action_dispatch.request_id HTTP_X_REQUEST_ID).freeze
+    CONTENT_HEADERS = %w(CONTENT_TYPE CONTENT_LENGTH).freeze
     IP_HEADERS = [
       "REMOTE_ADDR",
       "HTTP_CLIENT_IP",
@@ -55,16 +58,8 @@ module Sentry
           key = key.to_s # rack env can contain symbols
           value = value.to_s
           next memo['X-Request-Id'] ||= Utils::RequestId.read_from(env_hash) if Utils::RequestId::REQUEST_ID_HEADERS.include?(key)
-          next unless key.upcase == key # Non-upper case stuff isn't either
-
-          # Rack adds in an incorrect HTTP_VERSION key, which causes downstream
-          # to think this is a Version header. Instead, this is mapped to
-          # env['SERVER_PROTOCOL']. But we don't want to ignore a valid header
-          # if the request has legitimately sent a Version header themselves.
-          # See: https://github.com/rack/rack/blob/028438f/lib/rack/handler/cgi.rb#L29
-          next if key == 'HTTP_VERSION' && value == env_hash['SERVER_PROTOCOL']
-          next if key == 'HTTP_COOKIE' # Cookies don't go here, they go somewhere else
-          next unless key.start_with?('HTTP_') || %w(CONTENT_TYPE CONTENT_LENGTH).include?(key)
+          next if is_server_protocol?(key, value, env_hash["SERVER_PROTOCOL"])
+          next if is_skippable_header?(key)
 
           # Rack stores headers as HTTP_WHAT_EVER, we need What-Ever
           key = key.sub(/^HTTP_/, "")
@@ -78,6 +73,22 @@ module Sentry
           next
         end
       end
+    end
+
+    def is_skippable_header?(key)
+      key.upcase != key || # lower-case envs aren't real http headers
+        key == "HTTP_COOKIE" || # Cookies don't go here, they go somewhere else
+        !(key.start_with?('HTTP_') || CONTENT_HEADERS.include?(key))
+    end
+
+    # Rack adds in an incorrect HTTP_VERSION key, which causes downstream
+    # to think this is a Version header. Instead, this is mapped to
+    # env['SERVER_PROTOCOL']. But we don't want to ignore a valid header
+    # if the request has legitimately sent a Version header themselves.
+    # See: https://github.com/rack/rack/blob/028438f/lib/rack/handler/cgi.rb#L29
+    # NOTE: This will be removed in version 3.0+
+    def is_server_protocol?(key, value, protocol_version)
+      key == 'HTTP_VERSION' && value == protocol_version
     end
 
     def format_env_for_sentry(env_hash)
