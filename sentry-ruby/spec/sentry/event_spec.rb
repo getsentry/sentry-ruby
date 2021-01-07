@@ -60,9 +60,11 @@ RSpec.describe Sentry::Event do
       Sentry::Event.new(configuration: Sentry.configuration)
     end
 
+    let(:scope) { Sentry.get_current_scope }
+
     context "without config.send_default_pii = true" do
       it "filters out pii data" do
-        Sentry.get_current_scope.apply_to_event(event)
+        scope.apply_to_event(event)
 
         expect(event.to_hash[:request]).to eq(
           env: { 'SERVER_NAME' => 'localhost', 'SERVER_PORT' => '80' },
@@ -74,6 +76,17 @@ RSpec.describe Sentry::Event do
         )
         expect(event.to_hash[:tags][:request_id]).to eq("abcd-1234-abcd-1234")
         expect(event.to_hash[:user][:ip_address]).to eq(nil)
+      end
+
+      it "removes ip address headers" do
+        scope.apply_to_event(event)
+
+        # doesn't affect scope's rack_env
+        expect(scope.rack_env).to include("REMOTE_ADDR")
+        expect(event.request.headers.keys).not_to include("REMOTE_ADDR")
+        expect(event.request.headers.keys).not_to include("Client-Ip")
+        expect(event.request.headers.keys).not_to include("X-Real-Ip")
+        expect(event.request.headers.keys).not_to include("X-Forwarded-For")
       end
     end
 

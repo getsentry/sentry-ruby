@@ -6,9 +6,6 @@ module Sentry
       if Sentry.configuration.send_default_pii
         self.data = read_data_from(req)
         self.cookies = req.cookies
-      else
-        # need to completely wipe out ip addresses
-        IP_HEADERS.each { |h| env_hash.delete(h) }
       end
 
       self.url = req.scheme && req.url.split('?').first
