@@ -17,9 +17,9 @@ module Sentry
 
     attr_accessor :url, :method, :data, :query_string, :cookies, :headers, :env
 
-    def self.from_rack(env_hash)
-      env_hash = clean_env(env_hash)
-      req = ::Rack::Request.new(env_hash)
+    def self.from_rack(env)
+      env = clean_env(env)
+      req = ::Rack::Request.new(env)
       self.new(req)
     end
 
@@ -35,7 +35,7 @@ module Sentry
     end
 
     def initialize(req)
-      env_hash = req.env
+      env = req.env
 
       if Sentry.configuration.send_default_pii
         self.data = read_data_from(req)
@@ -46,8 +46,8 @@ module Sentry
       self.method = req.request_method
       self.query_string = req.query_string
 
-      self.headers = filter_and_format_headers(env_hash)
-      self.env     = filter_and_format_env(env_hash)
+      self.headers = filter_and_format_headers(env)
+      self.env     = filter_and_format_env(env)
     end
 
     private
@@ -64,13 +64,13 @@ module Sentry
       e.message
     end
 
-    def filter_and_format_headers(env_hash)
-      env_hash.each_with_object({}) do |(key, value), memo|
+    def filter_and_format_headers(env)
+      env.each_with_object({}) do |(key, value), memo|
         begin
           key = key.to_s # rack env can contain symbols
           value = value.to_s
-          next memo['X-Request-Id'] ||= Utils::RequestId.read_from(env_hash) if Utils::RequestId::REQUEST_ID_HEADERS.include?(key)
-          next if is_server_protocol?(key, value, env_hash["SERVER_PROTOCOL"])
+          next memo['X-Request-Id'] ||= Utils::RequestId.read_from(env) if Utils::RequestId::REQUEST_ID_HEADERS.include?(key)
+          next if is_server_protocol?(key, value, env["SERVER_PROTOCOL"])
           next if is_skippable_header?(key)
 
           # Rack stores headers as HTTP_WHAT_EVER, we need What-Ever
@@ -103,10 +103,10 @@ module Sentry
       key == 'HTTP_VERSION' && value == protocol_version
     end
 
-    def filter_and_format_env(env_hash)
-      return env_hash if Sentry.configuration.rack_env_whitelist.empty?
+    def filter_and_format_env(env)
+      return env if Sentry.configuration.rack_env_whitelist.empty?
 
-      env_hash.select do |k, _v|
+      env.select do |k, _v|
         Sentry.configuration.rack_env_whitelist.include? k.to_s
       end
     end
