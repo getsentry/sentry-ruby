@@ -14,28 +14,30 @@ RSpec.describe Sentry::RequestInterface do
     end
   end
 
-  it 'excludes non whitelisted params from rack env' do
-    additional_env = { "random_param" => "text", "query_string" => "test" }
-    new_env = env.merge(additional_env)
-    interface = described_class.from_rack(new_env)
+  describe "rack_env_whitelist" do
+    it 'excludes non whitelisted params from rack env' do
+      additional_env = { "random_param" => "text", "query_string" => "test" }
+      new_env = env.merge(additional_env)
+      interface = described_class.from_rack(new_env)
 
-    expect(interface.env).to_not include(additional_env)
-  end
+      expect(interface.env).to_not include(additional_env)
+    end
 
-  it 'formats rack env according to the provided whitelist' do
-    Sentry.configuration.rack_env_whitelist = %w(random_param query_string)
-    additional_env = { "random_param" => "text", "query_string" => "test" }
-    new_env = env.merge(additional_env)
-    interface = described_class.from_rack(new_env)
+    it 'formats rack env according to the provided whitelist' do
+      Sentry.configuration.rack_env_whitelist = %w(random_param query_string)
+      additional_env = { "random_param" => "text", "query_string" => "test" }
+      new_env = env.merge(additional_env)
+      interface = described_class.from_rack(new_env)
 
-    expect(interface.env).to eq(additional_env)
-  end
+      expect(interface.env).to eq(additional_env)
+    end
 
-  it 'keeps the original env intact when an empty whitelist is provided' do
-    Sentry.configuration.rack_env_whitelist = []
-    interface = described_class.from_rack(env)
+    it 'keeps the original env intact when an empty whitelist is provided' do
+      Sentry.configuration.rack_env_whitelist = []
+      interface = described_class.from_rack(env)
 
-    expect(interface.env).to eq(env)
+      expect(interface.env).to eq(env)
+    end
   end
 
   describe 'format headers' do
@@ -58,41 +60,70 @@ RSpec.describe Sentry::RequestInterface do
     end
   end
 
-  it 'does not ignore version headers which do not match SERVER_PROTOCOL' do
-    new_env = env.merge("SERVER_PROTOCOL" => "HTTP/1.1", "HTTP_VERSION" => "HTTP/2.0")
-
-    interface = described_class.from_rack(new_env)
-
-    expect(interface.headers["Version"]).to eq("HTTP/2.0")
-  end
-
-  it 'retains any literal "HTTP-" in the actual header name' do
-    new_env = env.merge("HTTP_HTTP_CUSTOM_HTTP_HEADER" => "test")
-    interface = described_class.from_rack(new_env)
-
-    expect(interface.headers).to include("Http-Custom-Http-Header" => "test")
-  end
-
-  it 'does not fail if an object in the env cannot be cast to string' do
-    obj = Class.new do
-      def to_s
-        raise 'Could not stringify object!'
-      end
-    end.new
-
-    new_env = env.merge("HTTP_FOO" => "BAR", "rails_object" => obj)
-
-    expect { interface = described_class.from_rack(new_env) }.to_not raise_error
-  end
-
   it "doesn't capture cookies info" do
+    new_env = env.merge(
+      ::Rack::RACK_REQUEST_COOKIE_HASH => "cookies!"
+    )
+
+    interface = described_class.from_rack(new_env)
+
+    expect(interface.cookies).to eq(nil)
+    expect(interface.env["COOKIE"]).to eq(nil)
+  end
+
+  describe "headers filtering" do
+    it "filters out HTTP_COOKIE header" do
       new_env = env.merge(
-        ::Rack::RACK_REQUEST_COOKIE_HASH => "cookies!"
+        "HTTP_COOKIE" => "cookies!"
       )
 
       interface = described_class.from_rack(new_env)
 
-      expect(interface.cookies).to eq(nil)
+      expect(interface.headers["Cookie"]).to eq(nil)
+    end
+
+    it "filters out non-http headers" do
+      expect(interface.headers["Request-Method"]).to eq(nil)
+    end
+
+    it "doesn't filter out CONTENT_TYPE or CONTENT_LENGTH headers" do
+      new_env = env.merge(
+        "CONTENT_LENGTH" => 10,
+        "CONTENT_TYPE" => "text/html"
+      )
+
+      interface = described_class.from_rack(new_env)
+
+      expect(interface.headers["Content-Length"]).to eq("10")
+      expect(interface.headers["Content-Type"]).to eq("text/html")
+    end
+
+    it 'does not ignore version headers which do not match SERVER_PROTOCOL' do
+      new_env = env.merge("SERVER_PROTOCOL" => "HTTP/1.1", "HTTP_VERSION" => "HTTP/2.0")
+
+      interface = described_class.from_rack(new_env)
+
+      expect(interface.headers["Version"]).to eq("HTTP/2.0")
+    end
+
+    it 'retains any literal "HTTP-" in the actual header name' do
+      new_env = env.merge("HTTP_HTTP_CUSTOM_HTTP_HEADER" => "test")
+      interface = described_class.from_rack(new_env)
+
+      expect(interface.headers).to include("Http-Custom-Http-Header" => "test")
+    end
+
+    it 'does not fail if an object in the env cannot be cast to string' do
+      obj = Class.new do
+        def to_s
+          raise 'Could not stringify object!'
+        end
+      end.new
+
+      new_env = env.merge("HTTP_FOO" => "BAR", "rails_object" => obj)
+
+      expect { interface = described_class.from_rack(new_env) }.to_not raise_error
+    end
   end
 
   context "with form data" do
