@@ -78,19 +78,10 @@ module Sentry
       unless request || env.empty?
         env = env.dup
 
-        if configuration.send_default_pii
-          if ip = calculate_real_ip_from_rack(env)
-            user[:ip_address] = ip
-          end
-        else
-          # need to completely wipe out ip addresses
-          RequestInterface::IP_HEADERS.each do |header|
-            env.delete(header)
-          end
-        end
+        add_request_interface(env)
 
-        @request = Sentry::RequestInterface.new.tap do |int|
-          int.from_rack(env)
+        if configuration.send_default_pii
+          user[:ip_address] = calculate_real_ip_from_rack(env)
         end
 
         if request_id = Utils::RequestId.read_from(env)
@@ -115,6 +106,10 @@ module Sentry
 
     def to_json_compatible
       JSON.parse(JSON.generate(to_hash))
+    end
+
+    def add_request_interface(env)
+      @request = Sentry::RequestInterface.from_rack(env)
     end
 
     def add_exception_interface(exc)
