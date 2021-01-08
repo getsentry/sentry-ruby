@@ -51,6 +51,27 @@ RSpec.describe Sentry::Client do
         expect(subject.transport.events.first).to eq(event.to_json_compatible)
       end
 
+      it "doesn't call the async block if not allow sending events" do
+        allow(configuration).to receive(:sending_allowed?).and_return(false)
+
+        expect(async_block).not_to receive(:call)
+
+        returned = subject.capture_event(event, scope)
+
+        expect(returned).to eq(nil)
+      end
+
+      context "with false as value (the legacy way to disable it)" do
+        let(:async_block) { false }
+
+        it "doesn't cause any issue" do
+          returned = subject.capture_event(event, scope, { background: false })
+
+          expect(returned).to be_a(Sentry::Event)
+          expect(subject.transport.events.first).to eq(event)
+        end
+      end
+
       context "with 2 arity block" do
         let(:async_block) do
           lambda do |event, hint|
@@ -68,16 +89,6 @@ RSpec.describe Sentry::Client do
           event = subject.transport.events.first
           expect(event.dig("tags", "hint")).to eq({ foo: "bar" })
         end
-      end
-
-      it "doesn't call the async block if not allow sending events" do
-        allow(configuration).to receive(:sending_allowed?).and_return(false)
-
-        expect(configuration.async).not_to receive(:call)
-
-        returned = subject.capture_event(event, scope)
-
-        expect(returned).to eq(nil)
       end
 
       context "when async raises an exception" do

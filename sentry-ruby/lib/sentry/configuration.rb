@@ -15,7 +15,6 @@ module Sentry
     # Provide an object that responds to `call` to send events asynchronously.
     # E.g.: lambda { |event| Thread.new { Sentry.send_event(event) } }
     attr_reader :async
-    alias async? async
 
     # to send events in a non-blocking way, sentry-ruby has its own background worker
     # by default, the worker holds a thread pool that has [the number of processors] threads
@@ -155,7 +154,6 @@ module Sentry
     AVAILABLE_BREADCRUMBS_LOGGERS = [:sentry_logger, :active_support_logger].freeze
 
     def initialize
-      self.async = false
       self.background_worker_threads = Concurrent.processor_count
       self.breadcrumbs_logger = []
       self.context_lines = 3
@@ -193,8 +191,8 @@ module Sentry
 
 
     def async=(value)
-      unless value == false || value.respond_to?(:call)
-        raise(ArgumentError, "async must be callable (or false to disable)")
+      if value && !value.respond_to?(:call)
+        raise(ArgumentError, "async must be callable")
       end
 
       @async = value
