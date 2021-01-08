@@ -1,11 +1,31 @@
 module Sentry
-  class StacktraceInterface < Interface
-    attr_accessor :frames
+  class StacktraceInterface
+    attr_reader :frames
+
+    def initialize(backtrace:, project_root:, app_dirs_pattern:, linecache:, context_lines:, backtrace_cleanup_callback: nil)
+      @project_root = project_root
+      @frames = []
+
+      parsed_backtrace_lines = Backtrace.parse(
+        backtrace, project_root, app_dirs_pattern, &backtrace_cleanup_callback
+      ).lines
+
+      parsed_backtrace_lines.reverse.each_with_object(@frames) do |line, frames|
+        frame = convert_parsed_line_into_frame(line, project_root, linecache, context_lines)
+        frames << frame if frame.filename
+      end
+    end
 
     def to_hash
-      data = super
-      data[:frames] = data[:frames].map(&:to_hash)
-      data
+      { frames: @frames.map(&:to_hash) }
+    end
+
+    private
+
+    def convert_parsed_line_into_frame(line, project_root, linecache, context_lines)
+      frame = StacktraceInterface::Frame.new(@project_root, line)
+      frame.set_context(linecache, context_lines) if context_lines
+      frame
     end
 
     # Not actually an interface, but I want to use the same style
