@@ -10,7 +10,7 @@ module Sentry
       @number_of_threads = configuration.background_worker_threads
 
       @executor =
-        if configuration.async?
+        if configuration.async
           configuration.logger.debug(LOGGER_PROGNAME) { "config.async is set, BackgroundWorker is disabled" }
           Concurrent::ImmediateExecutor.new
         elsif @number_of_threads == 0

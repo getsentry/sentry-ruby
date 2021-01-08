@@ -25,11 +25,17 @@ module Sentry
 
       scope.apply_to_event(event, hint)
 
-      if configuration.async?
+      if async_block = configuration.async
         begin
           # We have to convert to a JSON-like hash, because background job
           # processors (esp ActiveJob) may not like weird types in the event hash
-          configuration.async.call(event.to_json_compatible)
+          event_hash = event.to_json_compatible
+
+          if async_block.arity == 2
+            async_block.call(event_hash, hint)
+          else
+            async_block.call(event_hash)
+          end
         rescue => e
           configuration.logger.error(LOGGER_PROGNAME) { "async event sending failed: #{e.message}" }
           send_event(event, hint)

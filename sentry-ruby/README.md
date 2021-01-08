@@ -144,8 +144,8 @@ You're all set - but there's a few more settings you may want to know about too!
 **Before version 4.1.0**, `sentry-ruby` sends every event immediately. But it can be configured to send asynchronously:
 
 ```ruby
-config.async = lambda { |event|
-  Thread.new { Sentry.send_event(event) }
+config.async = lambda { |event, hint|
+  Thread.new { Sentry.send_event(event, hint) }
 }
 ```
 
@@ -154,13 +154,13 @@ Using a thread to send events will be adequate for truly parallel Ruby platforms
 Note that the naive example implementation has a major drawback - it can create an infinite number of threads. We recommend creating a background job, using your background job processor, that will send Sentry notifications in the background.
 
 ```ruby
-config.async = lambda { |event| SentryJob.perform_later(event) }
+config.async = lambda { |event, hint| SentryJob.perform_later(event, hint) }
 
 class SentryJob < ActiveJob::Base
   queue_as :default
 
-  def perform(event)
-    Sentry.send_event(event)
+  def perform(event, hint)
+    Sentry.send_event(event, hint)
   end
 end
 ```

@@ -3,7 +3,9 @@
 ## 4.1.3
 
 - Refactor RequestInterface [#1187](https://github.com/getsentry/sentry-ruby/pull/1187)
-- Supply event hint to async callback when possible [#1189]
+- Supply event hint to async callback when possible [#1189](https://github.com/getsentry/sentry-ruby/pull/1189)
+  - Fixes [#1188](https://github.com/getsentry/sentry-ruby/issues/1188)
+
 
 ## 4.1.2
 

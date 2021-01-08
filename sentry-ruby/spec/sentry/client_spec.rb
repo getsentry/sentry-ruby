@@ -29,33 +29,66 @@ RSpec.describe Sentry::Client do
     let(:event) { subject.event_from_message(message) }
 
     context 'with config.async set' do
+      let(:async_block) do
+        lambda do |event|
+          subject.send_event(event)
+        end
+      end
+
       around do |example|
         prior_async = configuration.async
-        configuration.async = proc { :ok }
+        configuration.async = async_block
         example.run
         configuration.async = prior_async
       end
 
-      before do
-        allow(subject).to receive(:send_data)
-      end
-
-      it "doesn't send the event right away" do
-        expect(configuration.async).to receive(:call)
+      it "executes the given block" do
+        expect(async_block).to receive(:call).and_call_original
 
         returned = subject.capture_event(event, scope)
 
         expect(returned).to be_a(Sentry::Event)
+        expect(subject.transport.events.first).to eq(event.to_json_compatible)
       end
 
       it "doesn't call the async block if not allow sending events" do
         allow(configuration).to receive(:sending_allowed?).and_return(false)
 
-        expect(configuration.async).not_to receive(:call)
+        expect(async_block).not_to receive(:call)
 
         returned = subject.capture_event(event, scope)
 
         expect(returned).to eq(nil)
+      end
+
+      context "with false as value (the legacy way to disable it)" do
+        let(:async_block) { false }
+
+        it "doesn't cause any issue" do
+          returned = subject.capture_event(event, scope, { background: false })
+
+          expect(returned).to be_a(Sentry::Event)
+          expect(subject.transport.events.first).to eq(event)
+        end
+      end
+
+      context "with 2 arity block" do
+        let(:async_block) do
+          lambda do |event, hint|
+            event["tags"]["hint"] = hint
+            subject.send_event(event)
+          end
+        end
+
+        it "supplies hint as the second argument" do
+          expect(configuration.async).to receive(:call).and_call_original
+
+          returned = subject.capture_event(event, scope, { foo: "bar" })
+
+          expect(returned).to be_a(Sentry::Event)
+          event = subject.transport.events.first
+          expect(event.dig("tags", "hint")).to eq({ foo: "bar" })
+        end
       end
 
       context "when async raises an exception" do
