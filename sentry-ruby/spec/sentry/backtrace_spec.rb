@@ -3,7 +3,7 @@ require 'spec_helper'
 RSpec.describe Sentry::Backtrace do
   let(:configuration) { Sentry::Configuration.new }
   let(:backtrace) do
-    Sentry::Backtrace.parse(Thread.current.backtrace, configuration: configuration)
+    Sentry::Backtrace.parse(Thread.current.backtrace, configuration.project_root, configuration.app_dirs_pattern)
   end
 
   it "calls backtrace_cleanup_callback if it's present in the configuration" do
@@ -12,8 +12,7 @@ RSpec.describe Sentry::Backtrace do
       called = true
       backtrace
     end
-    configuration.backtrace_cleanup_callback = callback
-    Sentry::Backtrace.parse(Thread.current.backtrace, configuration: configuration)
+    Sentry::Backtrace.parse(Thread.current.backtrace, configuration.project_root, configuration.app_dirs_pattern, &callback)
 
     expect(called).to eq(true)
   end

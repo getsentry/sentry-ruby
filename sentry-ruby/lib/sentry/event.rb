@@ -141,7 +141,10 @@ module Sentry
     def collect_stacktrace_frames(backtrace)
       project_root = configuration.project_root.to_s
 
-      parsed_backtrace_lines = Backtrace.parse(backtrace, configuration: configuration).lines
+      parsed_backtrace_lines = Backtrace.parse(
+        backtrace, project_root, configuration.app_dirs_pattern, &configuration.backtrace_cleanup_callback
+      ).lines
+
       parsed_backtrace_lines.reverse.each_with_object([]) do |line, memo|
         frame = StacktraceInterface::Frame.new(project_root, line)
 

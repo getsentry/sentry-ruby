@@ -10,7 +10,7 @@ RSpec.describe Sentry::StacktraceInterface::Frame do
       ]
     end
     let(:lines) do
-      Sentry::Backtrace.parse(raw_lines, configuration: configuration).lines
+      Sentry::Backtrace.parse(raw_lines, configuration.project_root, configuration.app_dirs_pattern).lines
     end
 
     it "initializes a Frame with the correct info from the given Backtrace::Line object" do
