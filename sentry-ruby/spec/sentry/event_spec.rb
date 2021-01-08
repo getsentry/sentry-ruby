@@ -113,7 +113,7 @@ RSpec.describe Sentry::Event do
     end
   end
 
-  describe "#stacktrace_interface_from" do
+  describe "#collect_stacktrace_frames" do
     let(:fixture_root) { File.join(Dir.pwd, "spec", "support") }
     let(:fixture_file) { File.join(fixture_root, "stacktrace_test_fixture.rb") }
     let(:configuration) do
@@ -134,7 +134,7 @@ RSpec.describe Sentry::Event do
     end
 
     it "returns an array of StacktraceInterface::Frames with correct information" do
-      frames = subject.stacktrace_interface_from(backtrace)
+      frames = subject.collect_stacktrace_frames(backtrace)
 
       first_frame = frames.first
 

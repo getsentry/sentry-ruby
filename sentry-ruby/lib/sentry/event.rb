@@ -130,7 +130,7 @@ module Sentry
               if e.backtrace && !backtraces.include?(e.backtrace.object_id)
                 backtraces << e.backtrace.object_id
                 StacktraceInterface.new.tap do |stacktrace|
-                  stacktrace.frames = stacktrace_interface_from(e.backtrace)
+                  stacktrace.frames = collect_stacktrace_frames(e.backtrace)
                 end
               end
           end
@@ -138,7 +138,7 @@ module Sentry
       end
     end
 
-    def stacktrace_interface_from(backtrace)
+    def collect_stacktrace_frames(backtrace)
       project_root = configuration.project_root.to_s
 
       parsed_backtrace_lines = Backtrace.parse(backtrace, configuration: configuration).lines
