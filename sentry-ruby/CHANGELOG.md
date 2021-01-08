@@ -1,11 +1,13 @@
 # Changelog
 
-## 4.1.3
+## Unreleased
 
+- rm reference to old constant (from Rails v2.2) [#1184](https://github.com/getsentry/sentry-ruby/pull/1184)
+- Use copied env in events [#1186](https://github.com/getsentry/sentry-ruby/pull/1186)
+  - Fixes [#1183](https://github.com/getsentry/sentry-ruby/issues/1183)
 - Refactor RequestInterface [#1187](https://github.com/getsentry/sentry-ruby/pull/1187)
 - Supply event hint to async callback when possible [#1189](https://github.com/getsentry/sentry-ruby/pull/1189)
   - Fixes [#1188](https://github.com/getsentry/sentry-ruby/issues/1188)
-
 
 ## 4.1.2
 
