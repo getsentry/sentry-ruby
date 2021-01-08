@@ -13,8 +13,14 @@ module Sentry
       attr_accessor :abs_path, :context_line, :function, :in_app,
                     :lineno, :module, :pre_context, :post_context, :vars
 
-      def initialize(project_root)
+      def initialize(project_root, line)
         @project_root = project_root
+
+        @abs_path = line.file if line.file
+        @function = line.method if line.method
+        @lineno = line.number
+        @in_app = line.in_app
+        @module = line.module_name if line.module_name
       end
 
       def filename
