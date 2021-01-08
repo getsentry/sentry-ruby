@@ -39,6 +39,13 @@ module Sentry
         @filename = prefix ? abs_path[prefix.to_s.chomp(File::SEPARATOR).length + 1..-1] : abs_path
       end
 
+      def set_context(linecache, context_lines)
+        return unless abs_path
+
+        self.pre_context, self.context_line, self.post_context = \
+            linecache.get_file_context(abs_path, lineno, context_lines)
+      end
+
       def to_hash(*args)
         data = super(*args)
         data[:filename] = filename

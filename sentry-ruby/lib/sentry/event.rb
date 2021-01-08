@@ -141,15 +141,15 @@ module Sentry
     def stacktrace_interface_from(backtrace)
       project_root = configuration.project_root.to_s
 
-      Backtrace.parse(backtrace, configuration: configuration).lines.reverse.each_with_object([]) do |line, memo|
+      parsed_backtrace_lines = Backtrace.parse(backtrace, configuration: configuration).lines
+      parsed_backtrace_lines.reverse.each_with_object([]) do |line, memo|
         frame = StacktraceInterface::Frame.new(project_root, line)
 
-        if configuration.context_lines && frame.abs_path
-          frame.pre_context, frame.context_line, frame.post_context = \
-            configuration.linecache.get_file_context(frame.abs_path, frame.lineno, configuration.context_lines)
-        end
+        if frame.filename
+          frame.set_context(configuration.linecache, configuration.context_lines) if configuration.context_lines
 
-        memo << frame if frame.filename
+          memo << frame
+        end
       end
     end
 
