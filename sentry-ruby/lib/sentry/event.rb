@@ -129,33 +129,22 @@ module Sentry
             int.stacktrace =
               if e.backtrace && !backtraces.include?(e.backtrace.object_id)
                 backtraces << e.backtrace.object_id
-                StacktraceInterface.new.tap do |stacktrace|
-                  stacktrace.frames = stacktrace_interface_from(e.backtrace)
-                end
+                initialize_stacktrace_interface(e.backtrace)
               end
           end
         end
       end
     end
 
-    def stacktrace_interface_from(backtrace)
-      project_root = configuration.project_root.to_s
-
-      Backtrace.parse(backtrace, configuration: configuration).lines.reverse.each_with_object([]) do |line, memo|
-        frame = StacktraceInterface::Frame.new(project_root)
-        frame.abs_path = line.file if line.file
-        frame.function = line.method if line.method
-        frame.lineno = line.number
-        frame.in_app = line.in_app
-        frame.module = line.module_name if line.module_name
-
-        if configuration.context_lines && frame.abs_path
-          frame.pre_context, frame.context_line, frame.post_context = \
-            configuration.linecache.get_file_context(frame.abs_path, frame.lineno, configuration.context_lines)
-        end
-
-        memo << frame if frame.filename
-      end
+    def initialize_stacktrace_interface(backtrace)
+      StacktraceInterface.new(
+        backtrace: backtrace,
+        project_root: configuration.project_root.to_s,
+        app_dirs_pattern: configuration.app_dirs_pattern,
+        linecache: configuration.linecache,
+        context_lines: configuration.context_lines,
+        backtrace_cleanup_callback: configuration.backtrace_cleanup_callback
+      )
     end
 
     private

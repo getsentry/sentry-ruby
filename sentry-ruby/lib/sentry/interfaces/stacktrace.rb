@@ -1,11 +1,31 @@
 module Sentry
-  class StacktraceInterface < Interface
-    attr_accessor :frames
+  class StacktraceInterface
+    attr_reader :frames
+
+    def initialize(backtrace:, project_root:, app_dirs_pattern:, linecache:, context_lines:, backtrace_cleanup_callback: nil)
+      @project_root = project_root
+      @frames = []
+
+      parsed_backtrace_lines = Backtrace.parse(
+        backtrace, project_root, app_dirs_pattern, &backtrace_cleanup_callback
+      ).lines
+
+      parsed_backtrace_lines.reverse.each_with_object(@frames) do |line, frames|
+        frame = convert_parsed_line_into_frame(line, project_root, linecache, context_lines)
+        frames << frame if frame.filename
+      end
+    end
 
     def to_hash
-      data = super
-      data[:frames] = data[:frames].map(&:to_hash)
-      data
+      { frames: @frames.map(&:to_hash) }
+    end
+
+    private
+
+    def convert_parsed_line_into_frame(line, project_root, linecache, context_lines)
+      frame = StacktraceInterface::Frame.new(@project_root, line)
+      frame.set_context(linecache, context_lines) if context_lines
+      frame
     end
 
     # Not actually an interface, but I want to use the same style
@@ -13,8 +33,14 @@ module Sentry
       attr_accessor :abs_path, :context_line, :function, :in_app,
                     :lineno, :module, :pre_context, :post_context, :vars
 
-      def initialize(project_root)
+      def initialize(project_root, line)
         @project_root = project_root
+
+        @abs_path = line.file if line.file
+        @function = line.method if line.method
+        @lineno = line.number
+        @in_app = line.in_app
+        @module = line.module_name if line.module_name
       end
 
       def filename
@@ -31,6 +57,13 @@ module Sentry
           end
 
         @filename = prefix ? abs_path[prefix.to_s.chomp(File::SEPARATOR).length + 1..-1] : abs_path
+      end
+
+      def set_context(linecache, context_lines)
+        return unless abs_path
+
+        self.pre_context, self.context_line, self.post_context = \
+            linecache.get_file_context(abs_path, lineno, context_lines)
       end
 
       def to_hash(*args)
