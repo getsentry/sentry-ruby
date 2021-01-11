@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 4.1.3
 
 - rm reference to old constant (from Rails v2.2) [#1184](https://github.com/getsentry/sentry-ruby/pull/1184)
 - Use copied env in events [#1186](https://github.com/getsentry/sentry-ruby/pull/1186)
