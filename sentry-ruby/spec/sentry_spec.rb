@@ -77,6 +77,31 @@ RSpec.describe Sentry do
     end
   end
 
+  describe ".send_event" do
+    let(:event) { Sentry.get_current_client.event_from_message("test message") }
+
+    before do
+      Sentry.configuration.before_send = lambda do |event, hint|
+        event.tags[:hint] = hint
+        event
+      end
+    end
+
+    it "sends the event" do
+      described_class.send_event(event)
+
+      expect(transport.events.count).to eq(1)
+    end
+
+    it "sends the event with hint" do
+      described_class.send_event(event, { foo: "bar" })
+
+      expect(transport.events.count).to eq(1)
+      event = transport.events.last
+      expect(event.tags[:hint][:foo]).to eq("bar")
+    end
+  end
+
   describe ".capture_event" do
     it_behaves_like "capture_helper" do
       let(:capture_helper) { :capture_event }
