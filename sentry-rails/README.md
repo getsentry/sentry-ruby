@@ -44,7 +44,7 @@ Sentry.init do |config|
   # the default value is true
   config.rails.report_rescued_exceptions = true
 
-  # this gem also provides a new breadcrumb logger that accepts instrumentaions from ActiveSupport
+  # this gem also provides a new breadcrumb logger that accepts instrumentations from ActiveSupport
   # it's not activated by default, but you can enable it with
   config.breadcrumbs_logger = [:active_support_logger]
 end
