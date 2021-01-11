@@ -54,6 +54,7 @@ module Sentry
   class << self
     extend Forwardable
 
+    def_delegators :get_current_client, :configuration, :send_event
     def_delegators :get_current_scope, :set_tags, :set_extras, :set_user
 
     attr_accessor :background_worker
@@ -85,10 +86,6 @@ module Sentry
       get_current_scope.breadcrumbs.record(breadcrumb, &block)
     end
 
-    def configuration
-      get_current_client.configuration
-    end
-
     def get_current_client
       get_current_hub&.current_client
     end
@@ -116,10 +113,6 @@ module Sentry
 
     def configure_scope(&block)
       get_current_hub&.configure_scope(&block)
-    end
-
-    def send_event(event)
-      get_current_client.send_event(event)
     end
 
     def capture_event(event)
