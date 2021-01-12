@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Rails50</title>
+    <%= csrf_meta_tags %>
+
+    <script src="https://cdn.ravenjs.com/3.1.0/raven.min.js"></script>
+    <script>
+    Raven.config('https://6bca098db7ef423ab983e26e27255fe8@app.getsentry.com/3825').install();
+    Raven.setUserContext({
+      email: 'david@getsentry.com',
+      name: 'David Cramer'
+    });
+    </script>
+  </head>
+
+  <body>
+    <%= yield %>
+  </body>
+</html>
