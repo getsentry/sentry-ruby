@@ -126,6 +126,18 @@ RSpec.describe Raven::Rack do
         expect(interface.headers).to eq("Content-Length" => "0", "X-Request-Id" => "12345678")
       end
     end
+
+    context 'with additional env variables' do
+      let(:mock) { double }
+      let(:env) { { "some.variable" => mock } }
+
+      it 'does not call #to_s for unnecessary env variables' do
+        expect(mock).not_to receive(:to_s)
+
+        interface = Raven::HttpInterface.new
+        interface.from_rack(env)
+      end
+    end
   end
 
   it 'puts cookies into the cookies attribute' do
