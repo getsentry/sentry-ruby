@@ -68,7 +68,6 @@ module Sentry
       env.each_with_object({}) do |(key, value), memo|
         begin
           key = key.to_s # rack env can contain symbols
-          value = value.to_s
           next memo['X-Request-Id'] ||= Utils::RequestId.read_from(env) if Utils::RequestId::REQUEST_ID_HEADERS.include?(key)
           next if is_server_protocol?(key, value, env["SERVER_PROTOCOL"])
           next if is_skippable_header?(key)
@@ -76,7 +75,7 @@ module Sentry
           # Rack stores headers as HTTP_WHAT_EVER, we need What-Ever
           key = key.sub(/^HTTP_/, "")
           key = key.split('_').map(&:capitalize).join('-')
-          memo[key] = value
+          memo[key] = value.to_s
         rescue StandardError => e
           # Rails adds objects to the Rack env that can sometimes raise exceptions
           # when `to_s` is called.

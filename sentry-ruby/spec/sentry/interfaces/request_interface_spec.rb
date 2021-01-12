@@ -58,6 +58,17 @@ RSpec.describe Sentry::RequestInterface do
         expect(interface.headers).to eq("Content-Length" => "0", "X-Request-Id" => "12345678")
       end
     end
+
+    context 'with additional env variables' do
+      let(:mock) { double }
+      let(:env) { { "some.variable" => mock } }
+
+      it 'does not call #to_s for unnecessary env variables' do
+        expect(mock).not_to receive(:to_s)
+
+        interface = described_class.from_rack(env)
+      end
+    end
   end
 
   it "doesn't capture cookies info" do
