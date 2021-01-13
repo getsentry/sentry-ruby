@@ -1,10 +1,10 @@
-name: release
+name: Release
 on:
   workflow_dispatch:
     inputs:
       sdk_name:
         description: SDK to release (raven, rails, ruby, sidekiq)
-        required: ture
+        required: true
       version:
         description: Version to release
         required: true
