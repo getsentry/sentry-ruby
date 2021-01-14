@@ -123,7 +123,7 @@ module Sentry
         @name = UNLABELD_NAME
       end
 
-      return unless @sampled
+      return unless @sampled || @parent_sampled
 
       hub ||= Sentry.get_current_hub
       event = hub.current_client.event_from_transaction(self)
