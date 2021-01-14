@@ -3,7 +3,7 @@ on:
   workflow_dispatch:
     inputs:
       sdk_name:
-        description: SDK to release (raven, rails, ruby, sidekiq)
+        description: SDK to release (sentry-raven, sentry-rails, sentry-ruby, sentry-sidekiq)
         required: true
       version:
         description: Version to release
@@ -25,6 +25,6 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GH_RELEASE_PAT }}
         with:
-          path: sentry-${{ inputs.sdk_name }}
+          path: ${{ inputs.sdk_name }}
           version: ${{ github.event.inputs.version }}
           force: ${{ github.event.inputs.force }}
