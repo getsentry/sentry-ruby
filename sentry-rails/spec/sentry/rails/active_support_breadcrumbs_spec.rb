@@ -32,36 +32,16 @@ RSpec.describe "Sentry::Breadcrumbs::ActiveSupportLogger", type: :request do
     event = transport.events.first.to_json_compatible
     breadcrumbs = event.dig("breadcrumbs", "values")
     expect(breadcrumbs.count).to eq(2)
-
-    if Rails.version.match(/6\.1/)
-      expect(breadcrumbs.first["data"]).to match(
-        {
-          "controller" => "HelloController",
-          "action" => "exception",
-          "params" => { "controller" => "hello", "action" => "exception" },
-          "headers" => anything,
-          "request" => anything,
-          "view_runtime" => nil,
-          "format" => "html",
-          "method" => "GET",
-          "path" => "/exception",
-          "exception" => ["RuntimeError", "An unhandled exception!"],
-          "exception_object" => "An unhandled exception!"
-        }
-      )
-    else
-      expect(breadcrumbs.first["data"]).to match(
-        {
-          "controller" => "HelloController",
-          "action" => "exception",
-          "params" => { "controller" => "hello", "action" => "exception" },
-          "headers" => anything,
-          "format" => "html",
-          "method" => "GET",
-          "path" => "/exception"
-        }
-      )
-    end
+    expect(breadcrumbs.first["data"]).to match(
+      {
+        "controller" => "HelloController",
+        "action" => "exception",
+        "params" => { "controller" => "hello", "action" => "exception" },
+        "format" => "html",
+        "method" => "GET",
+        "path" => "/exception",
+      }
+    )
   end
 
   it "ignores events that doesn't have a started timestamp" do

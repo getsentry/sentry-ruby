@@ -4,6 +4,13 @@ module Sentry
       module ActiveSupportLogger
         class << self
           def add(name, started, _finished, _unique_id, data)
+            if data.is_a?(Hash) && (data.key(:request) || data.key?(:headers))
+              # we should only mutate the copy of the data
+              data = data.dup
+              data.delete(:request)
+              data.delete(:headers)
+            end
+
             crumb = Sentry::Breadcrumb.new(
               data: data,
               category: name,

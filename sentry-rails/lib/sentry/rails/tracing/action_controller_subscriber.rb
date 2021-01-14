@@ -15,6 +15,9 @@ module Sentry
               description: "#{controller}##{action}",
               duration: duration
             ) do |span|
+              payload = payload.dup
+              payload.delete(:headers)
+              payload.delete(:request)
               span.set_data(:payload, payload)
               span.set_http_status(payload[:status])
             end

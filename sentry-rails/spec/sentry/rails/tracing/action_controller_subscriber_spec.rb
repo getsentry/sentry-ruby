@@ -25,6 +25,8 @@ RSpec.describe Sentry::Rails::Tracing::ActionControllerSubscriber, :subscriber, 
       expect(span[:op]).to eq("process_action.action_controller")
       expect(span[:description]).to eq("HelloController#world")
       expect(span[:trace_id]).to eq(transaction.dig(:contexts, :trace, :trace_id))
+      expect(span[:data][:payload].keys).not_to include(:request)
+      expect(span[:data][:payload].keys).not_to include(:headers)
     end
   end
 
