@@ -6,6 +6,8 @@ module Sentry
       end
 
       def call(env)
+        return @app.call(env) unless Sentry.initialized?
+
         begin
           @app.call(env)
         rescue => e

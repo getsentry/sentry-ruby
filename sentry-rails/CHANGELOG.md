@@ -1,5 +1,9 @@
 # Changelog
 
+## Unreleased
+
+- Don't run RescuedExceptionInterceptor unless Sentry is initialized [#1204](https://github.com/getsentry/sentry-ruby/pull/1204)
+
 ## 4.1.3
 
 - Remove DelayedJobAdapter from ignored list [#1179](https://github.com/getsentry/sentry-ruby/pull/1179)
