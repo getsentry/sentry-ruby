@@ -18,4 +18,11 @@ Gem::Specification.new do |gem|
   gem.executables = "raven"
 
   gem.add_dependency "faraday", ">= 1.0"
+
+  gem.post_install_message = <<~EOS
+    `sentry-raven` is deprecated! Please migrate to `sentry-ruby`
+
+    See https://docs.sentry.io/platforms/ruby/migration for the migration guide.
+
+  EOS
 end
