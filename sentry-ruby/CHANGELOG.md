@@ -1,5 +1,9 @@
 # Changelog
 
+## Unreleased
+
+- Support capturing "sentry-trace" header from the middleware [#1205](https://github.com/getsentry/sentry-ruby/pull/1205)
+
 ## 4.1.3
 
 - rm reference to old constant (from Rails v2.2) [#1184](https://github.com/getsentry/sentry-ruby/pull/1184)
