@@ -1,5 +1,9 @@
 # Changelog
 
+## Unreleased (4.2.0)
+
+- Add ThreadsInterface [#1178](https://github.com/getsentry/sentry-ruby/pull/1178)
+
 ## 4.1.6
 
 - Don't detect project root for Rails apps [#1243](https://github.com/getsentry/sentry-ruby/pull/1243)

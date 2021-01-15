@@ -257,6 +257,24 @@ RSpec.describe Sentry::Client do
       expect(hash[:message]).to eq(message)
       expect(hash[:level]).to eq(:error)
     end
+
+    it "inserts threads interface to the event" do
+      event = nil
+
+      t = Thread.new do
+        event = subject.event_from_message(message)
+      end
+
+      t.name = "Thread 1"
+      t.join
+      hash = event.to_hash
+
+      thread = hash[:threads][:values][0]
+      expect(thread[:id]).to eq(t.object_id)
+      expect(thread[:name]).to eq("Thread 1")
+      expect(thread[:crashed]).to eq(false)
+      expect(thread[:stacktrace]).not_to be_empty
+    end
   end
 
   describe "#event_from_transaction" do
@@ -294,6 +312,24 @@ RSpec.describe Sentry::Client do
     it "sets the message to the exception's value and type" do
       expect(hash[:exception][:values][0][:type]).to eq("Exception")
       expect(hash[:exception][:values][0][:value]).to eq(message)
+    end
+
+    it "sets threads interface without stacktrace" do
+      event = nil
+
+      t = Thread.new do
+        event = subject.event_from_exception(exception)
+      end
+
+      t.name = "Thread 1"
+      t.join
+
+      thread = event.to_hash[:threads][:values][0]
+
+      expect(thread[:id]).to eq(t.object_id)
+      expect(thread[:name]).to eq("Thread 1")
+      expect(thread[:crashed]).to eq(true)
+      expect(thread[:stacktrace]).to be_nil
     end
 
     it 'has level ERROR' do
