@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- Don't include headers & request info in tracing span or breadcrumb [#1199](https://github.com/getsentry/sentry-ruby/pull/1199)
 - Don't run RescuedExceptionInterceptor unless Sentry is initialized [#1204](https://github.com/getsentry/sentry-ruby/pull/1204)
 
 ## 4.1.3
