@@ -168,8 +168,13 @@ class SentryJob < ActiveJob::Base
 end
 ```
 
+If you also use `sentry-rails`, you can directly use the job we defined for you:
 
-**After version 4.1.0**, `sentry-ruby` sends events asynchronously by default. The functionality works like this: 
+```ruby
+config.async = lambda { |event, hint| Sentry::SendEventJob.perform_later(event, hint) }
+```
+
+**After version 4.1.0**, `sentry-ruby` sends events asynchronously by default. The functionality works like this:
 
 1. When the SDK is initialized, a `Sentry::BackgroundWorker` will be initialized too.
 2. When an event is passed to `Client#capture_event`, instead of sending it directly with `Client#send_event`, we'll let the worker do it.

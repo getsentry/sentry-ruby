@@ -94,18 +94,40 @@ RSpec.describe "ActiveJob integration" do
       expect(event.dig("exception", "values", 0, "type")).to eq("ZeroDivisionError")
     end
 
-    context "and in SentryJob too" do
+    context "and in user-defined reporting job too" do
       before do
-        Sentry.configuration.async = lambda do |event|
-          SentryJob.perform_now(event)
+        Sentry.configuration.async = lambda do |event, hint|
+          UserDefinedReportingJob.perform_now(event, hint)
         end
       end
 
-      class SentryJob < ActiveJob::Base
-        def perform(event)
+      class UserDefinedReportingJob < ActiveJob::Base
+        def perform(event, hint)
           Post.find(0)
         rescue
           raise ActiveJob::DeserializationError
+        end
+      end
+
+      it "doesn't cause infinite loop because of excluded exceptions" do
+        expect do
+          DeserializationErrorJob.perform_now
+        end.to raise_error(ActiveJob::DeserializationError, /divided by 0/)
+      end
+    end
+
+    context "and in customized SentryJob too" do
+      before do
+        class CustomSentryJob < ::Sentry::SendEventJob
+          def perform(event)
+            raise "Not excluded exception"
+          rescue
+            raise ActiveJob::DeserializationError
+          end
+        end
+
+        Sentry.configuration.async = lambda do |event, hint|
+          CustomSentryJob.perform_now(event, hint)
         end
       end
 
