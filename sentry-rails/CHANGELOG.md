@@ -1,5 +1,10 @@
 # Changelog
 
+## Unreleased (4.2.0)
+
+- Inspect exception cause by default & don't exclude ActiveJob::DeserializationError [#1180](https://github.com/getsentry/sentry-ruby/pull/1180)
+  - Fixes [#1071](https://github.com/getsentry/sentry-ruby/issues/1071)
+
 ## 4.1.4
 
 - Don't include headers & request info in tracing span or breadcrumb [#1199](https://github.com/getsentry/sentry-ruby/pull/1199)
