@@ -4,6 +4,7 @@
 
 - Fix headers serialization for sentry-ruby [#1197](https://github.com/getsentry/sentry-ruby/pull/1197) (by @moofkit)
 - Support capturing "sentry-trace" header from the middleware [#1205](https://github.com/getsentry/sentry-ruby/pull/1205)
+- Document public APIs on the Sentry module [#1208](https://github.com/getsentry/sentry-ruby/pull/1208)
 
 ## 4.1.3
 
