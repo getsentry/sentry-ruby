@@ -51,6 +51,53 @@ RSpec.describe "ActiveJob integration" do
     expect(Sentry.get_current_scope.extra).to eq({})
   end
 
+  context "when DeserializationError happens in user's jobs" do
+    before do
+      make_basic_app
+    end
+
+    class DeserializationErrorJob < ActiveJob::Base
+      def perform
+        1/0
+      rescue
+        raise ActiveJob::DeserializationError
+      end
+    end
+
+    it "reports the root cause to Sentry" do
+      expect do
+        DeserializationErrorJob.perform_now
+      end.to raise_error(ActiveJob::DeserializationError, /divided by 0/)
+
+      expect(transport.events.size).to eq(1)
+
+      event = transport.events.last.to_json_compatible
+      expect(event.dig("exception", "values", 0, "type")).to eq("ZeroDivisionError")
+    end
+
+    context "and in SentryJob too" do
+      before do
+        Sentry.configuration.async = lambda do |event|
+          SentryJob.perform_now(event)
+        end
+      end
+
+      class SentryJob < ActiveJob::Base
+        def perform(event)
+          Post.find(0)
+        rescue
+          raise ActiveJob::DeserializationError
+        end
+      end
+
+      it "doesn't cause infinite loop" do
+        expect do
+          DeserializationErrorJob.perform_now
+        end.to raise_error(ActiveJob::DeserializationError, /divided by 0/)
+      end
+    end
+  end
+
   context 'using rescue_from' do
     it 'does not trigger Sentry' do
       job = RescuedActiveJob.new
