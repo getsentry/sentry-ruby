@@ -1,5 +1,9 @@
 # Changelog
 
+## Unreleased (4.2.0)
+
+- Add ThreadsInterface [#1178](https://github.com/getsentry/sentry-ruby/pull/1178)
+
 ## 4.1.4
 
 - Fix headers serialization for sentry-ruby [#1197](https://github.com/getsentry/sentry-ruby/pull/1197) (by @moofkit)
