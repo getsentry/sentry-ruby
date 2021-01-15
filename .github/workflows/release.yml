@@ -25,6 +25,6 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GH_RELEASE_PAT }}
         with:
-          path: ${{ inputs.sdk_name }}
+          path: ${{ github.event.inputs.sdk_name }}
           version: ${{ github.event.inputs.version }}
           force: ${{ github.event.inputs.force }}
