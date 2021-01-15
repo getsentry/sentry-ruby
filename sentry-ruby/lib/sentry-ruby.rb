@@ -3,6 +3,7 @@ require "time"
 
 require "sentry/version"
 require "sentry/core_ext/object/deep_dup"
+require "sentry/utils/argument_checking_helper"
 require "sentry/configuration"
 require "sentry/logger"
 require "sentry/event"
