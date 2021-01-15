@@ -156,6 +156,46 @@ RSpec.describe Sentry::Rack::CaptureExceptions, rack: true do
       end
     end
 
+    context "when sentry-trace header is sent" do
+      let(:external_transaction) do
+        Sentry::Transaction.new(
+          op: "pageload",
+          status: "ok",
+          sampled: true,
+          name: "a/path"
+        )
+      end
+      let(:stack) do
+        described_class.new(
+          ->(_) do
+            [200, {}, ["ok"]]
+          end
+        )
+      end
+
+      before do
+        allow(Random).to receive(:rand).and_return(0.4)
+      end
+
+      it "inherits trace info from the transaction" do
+        env["sentry-trace"] = external_transaction.to_sentry_trace
+
+        stack.call(env)
+
+        transaction = transport.events.last
+        expect(transaction.type).to eq("transaction")
+        expect(transaction.timestamp).not_to be_nil
+        expect(transaction.contexts.dig(:trace, :status)).to eq("ok")
+        expect(transaction.contexts.dig(:trace, :op)).to eq("rack.request")
+        expect(transaction.spans.count).to eq(0)
+
+        # should inherit information from the external_transaction
+        expect(transaction.contexts.dig(:trace, :trace_id)).to eq(external_transaction.trace_id)
+        expect(transaction.contexts.dig(:trace, :parent_span_id)).to eq(external_transaction.span_id)
+        expect(transaction.contexts.dig(:trace, :span_id)).not_to eq(external_transaction.span_id)
+      end
+    end
+
     context "when the transaction is sampled" do
       before do
         allow(Random).to receive(:rand).and_return(0.4)
