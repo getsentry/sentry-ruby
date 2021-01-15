@@ -151,6 +151,12 @@ RSpec.describe Sentry::Hub do
       end.to change { transport.events.count }.by(1)
     end
 
+    it "raises error when passing a non-exception object" do
+      expect do
+        subject.capture_exception("String")
+      end.to raise_error(ArgumentError, 'expect the argument to be a Exception, got String ("String")')
+    end
+
     it_behaves_like "capture_helper" do
       let(:capture_helper) { :capture_exception }
       let(:capture_subject) { exception }
@@ -171,6 +177,12 @@ RSpec.describe Sentry::Hub do
       expect do
         subject.capture_event(event)
       end.to change { transport.events.count }.by(1)
+    end
+
+    it "raises error when passing a non-exception object" do
+      expect do
+        subject.capture_event("String")
+      end.to raise_error(ArgumentError, 'expect the argument to be a Sentry::Event, got String ("String")')
     end
 
     it_behaves_like "capture_helper" do

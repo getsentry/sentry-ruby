@@ -3,6 +3,8 @@ require "etc"
 
 module Sentry
   class Scope
+    include ArgumentCheckingHelper
+
     ATTRIBUTES = [:transaction_names, :contexts, :extra, :tags, :user, :level, :breadcrumbs, :fingerprint, :event_processors, :rack_env, :span]
 
     attr_reader(*ATTRIBUTES)
@@ -167,12 +169,6 @@ module Sentry
     attr_writer(*ATTRIBUTES)
 
     private
-
-    def check_argument_type!(argument, expected_type)
-      unless argument.is_a?(expected_type)
-        raise ArgumentError, "expect the argument to be a #{expected_type}, got #{argument.class} (#{argument})"
-      end
-    end
 
     def set_default_value
       @breadcrumbs = BreadcrumbBuffer.new

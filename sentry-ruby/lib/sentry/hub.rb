@@ -3,6 +3,8 @@ require "sentry/client"
 
 module Sentry
   class Hub
+    include ArgumentCheckingHelper
+
     attr_reader :last_event_id
 
     def initialize(client, scope)
@@ -76,6 +78,8 @@ module Sentry
     def capture_exception(exception, **options, &block)
       return unless current_client
 
+      check_argument_type!(exception, ::Exception)
+
       options[:hint] ||= {}
       options[:hint][:exception] = exception
       event = current_client.event_from_exception(exception, options[:hint])
@@ -96,6 +100,8 @@ module Sentry
 
     def capture_event(event, **options, &block)
       return unless current_client
+
+      check_argument_type!(event, Sentry::Event)
 
       hint = options.delete(:hint) || {}
       scope = current_scope.dup
