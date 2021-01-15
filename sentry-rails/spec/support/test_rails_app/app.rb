@@ -78,7 +78,6 @@ def make_basic_app
 
   app.config.hosts = nil
   app.config.secret_key_base = "test"
-  app.config.action_dispatch.trusted_proxies = ["5.5.5.5"]
 
   # Usually set for us in production.rb
   app.config.eager_load = true

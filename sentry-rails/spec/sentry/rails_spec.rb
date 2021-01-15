@@ -123,13 +123,22 @@ RSpec.describe Sentry::Rails, type: :request do
     end
   end
 
+  context "with trusted proxies set" do
+    before do
+      make_basic_app do |config, app|
+        app.config.action_dispatch.trusted_proxies = ["5.5.5.5"]
+      end
+    end
+
+    it "sets Sentry.configuration.trusted_proxies correctly" do
+      expect(Sentry.configuration.trusted_proxies).to eq(["5.5.5.5"])
+    end
+  end
+
   it "sets Sentry.configuration.logger correctly" do
     expect(Sentry.configuration.logger).to eq(Rails.logger)
   end
 
-  it "sets Sentry.configuration.trusted_proxies correctly" do
-    expect(Sentry.configuration.trusted_proxies).to eq(["5.5.5.5"])
-  end
 
   it "sets Sentry.configuration.project_root correctly" do
     expect(Sentry.configuration.project_root).to eq(Rails.root.to_s)
