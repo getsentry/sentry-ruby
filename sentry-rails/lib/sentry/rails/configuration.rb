@@ -23,7 +23,6 @@ module Sentry
       'ActionDispatch::Http::MimeNegotiation::InvalidType',
       'ActionController::UnknownHttpMethod',
       'ActionDispatch::Http::Parameters::ParseError',
-      'ActiveJob::DeserializationError', # Can cause infinite loops
       'ActiveRecord::RecordNotFound'
     ].freeze
     class Configuration

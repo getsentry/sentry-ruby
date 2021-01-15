@@ -3,6 +3,8 @@
 ## Unreleased (4.2.0)
 
 - Add ThreadsInterface [#1178](https://github.com/getsentry/sentry-ruby/pull/1178)
+- Inspect exception cause by default & don't exclude ActiveJob::DeserializationError [#1180](https://github.com/getsentry/sentry-ruby/pull/1180)
+  - Fixes [#1071](https://github.com/getsentry/sentry-ruby/issues/1071)
 
 ## 4.1.6
 
