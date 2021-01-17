@@ -13,15 +13,16 @@ require "sentry/transaction"
 require "sentry/hub"
 require "sentry/background_worker"
 
-def safely_require(lib)
+
+[
+  "sentry/rake",
+  "sentry/rack",
+].each do |lib|
   begin
     require lib
   rescue LoadError
   end
 end
-
-safely_require "sentry/rake"
-safely_require "sentry/rack"
 
 module Sentry
   class Error < StandardError
