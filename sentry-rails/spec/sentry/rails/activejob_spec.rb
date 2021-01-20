@@ -1,4 +1,5 @@
 require "spec_helper"
+require "active_job/railtie"
 
 class FailedJob < ActiveJob::Base
   self.logger = nil
@@ -38,7 +39,7 @@ end
 
 RSpec.describe "ActiveJob integration" do
   before(:all) do
-    perform_basic_setup
+    make_basic_app
   end
 
   let(:event) do
