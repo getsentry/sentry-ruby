@@ -20,6 +20,7 @@ module Sentry
       'ActionController::RoutingError',
       'ActionController::UnknownAction',
       'ActionController::UnknownFormat',
+      'ActionDispatch::Http::MimeNegotiation::InvalidType',
       'ActionController::UnknownHttpMethod',
       'ActionDispatch::Http::Parameters::ParseError',
       'ActiveJob::DeserializationError', # Can cause infinite loops
