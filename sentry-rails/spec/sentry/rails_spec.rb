@@ -121,6 +121,12 @@ RSpec.describe Sentry::Rails, type: :request do
 
       expect(event['transaction']).to eq("HelloController#exception")
     end
+
+    it "sets correct request url" do
+      get "/exception"
+
+      expect(event.dig("request", "url")).to eq("http://www.example.com/exception")
+    end
   end
 
   it "sets Sentry.configuration.logger correctly" do
