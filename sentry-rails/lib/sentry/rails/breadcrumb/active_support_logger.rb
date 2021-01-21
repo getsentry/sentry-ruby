@@ -3,12 +3,13 @@ module Sentry
     module Breadcrumb
       module ActiveSupportLogger
         class << self
+          IGNORED_DATA_TYPES = [:request, :headers, :exception, :exception_object]
+
           def add(name, started, _finished, _unique_id, data)
-            if data.is_a?(Hash) && (data.key(:request) || data.key?(:headers))
+            if data.is_a?(Hash)
               # we should only mutate the copy of the data
               data = data.dup
-              data.delete(:request)
-              data.delete(:headers)
+              cleanup_data(data)
             end
 
             crumb = Sentry::Breadcrumb.new(
@@ -17,6 +18,12 @@ module Sentry
               timestamp: started.to_i
             )
             Sentry.add_breadcrumb(crumb)
+          end
+
+          def cleanup_data(data)
+            IGNORED_DATA_TYPES.each do |key|
+              data.delete(key) if data.key?(key)
+            end
           end
 
           def inject
