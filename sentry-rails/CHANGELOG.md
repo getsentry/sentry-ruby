@@ -1,7 +1,12 @@
 # Changelog
 
-## Unreleased (4.1.5)
+## 4.1.5
 
+- Add `ActionDispatch::Http::MimeNegotiation::InvalidType` to the list of default ignored Rails exceptions [#1215](https://github.com/getsentry/sentry-ruby/pull/1215) (by @agrobbin)
+- Continue ActiveJob execution if Sentry is not initialized [#1217](https://github.com/getsentry/sentry-ruby/pull/1217)
+  - Fixes [#1211](https://github.com/getsentry/sentry-ruby/issues/1211) and [#1216](https://github.com/getsentry/sentry-ruby/issues/1216)
+- Only extend ActiveJob when it's defined [#1218](https://github.com/getsentry/sentry-ruby/pull/1218)
+  - Fixes [#1210](https://github.com/getsentry/sentry-ruby/issues/1210)
 - Filter out redundant event/payload from breadcrumbs logger [#1222](https://github.com/getsentry/sentry-ruby/pull/1222)
 - Copy request env before Rails' ShowExceptions middleware [#1223](https://github.com/getsentry/sentry-ruby/pull/1223)
 - Don't subscribe render_partial and render_collection events [#1224](https://github.com/getsentry/sentry-ruby/pull/1224)
