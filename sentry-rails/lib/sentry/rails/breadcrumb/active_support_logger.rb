@@ -6,6 +6,9 @@ module Sentry
           IGNORED_DATA_TYPES = [:request, :headers, :exception, :exception_object]
 
           def add(name, started, _finished, _unique_id, data)
+            # skip Rails' internal events
+            return if name.start_with?("!")
+
             if data.is_a?(Hash)
               # we should only mutate the copy of the data
               data = data.dup
