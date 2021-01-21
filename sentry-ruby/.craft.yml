@@ -10,24 +10,19 @@ statusProvider:
 artifactProvider:
   name: github
 targets:
+    # we always need to make sure sentry-ruby-core is present when pushing to any target
     - name: gem
-      onlyIfPresent: /^sentry-ruby$/
+      onlyIfPresent: /^sentry-ruby-core-\d.*\.gem$/
     - name: github
-      onlyIfPresent: /^sentry-ruby$/
+      onlyIfPresent: /^sentry-ruby-core-\d.*\.gem$/
       tagPrefix: sentry-ruby-v
     - name: registry
-      onlyIfPresent: /^sentry-ruby$/
+      onlyIfPresent: /^sentry-ruby-core-\d.*\.gem$/
       type: sdk
       config:
           canonical: 'gem:sentry-ruby'
-
-    - name: gem
-      onlyIfPresent: /^sentry-ruby-core$/
-    - name: github
-      onlyIfPresent: /^sentry-ruby-core$/
-      tagPrefix: sentry-ruby-v
     - name: registry
-      onlyIfPresent: /^sentry-ruby-core$/
+      onlyIfPresent: /^sentry-ruby-core-\d.*\.gem$/
       type: sdk
       config:
           canonical: 'gem:sentry-ruby-core'
