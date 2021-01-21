@@ -1,5 +1,9 @@
 # Changelog
 
+## Unreleased (4.1.5)
+
+- Event message and exception message should have a size limit [#1221](https://github.com/getsentry/sentry-ruby/pull/1221)
+
 ## 4.1.4
 
 - Fix headers serialization for sentry-ruby [#1197](https://github.com/getsentry/sentry-ruby/pull/1197) (by @moofkit)
