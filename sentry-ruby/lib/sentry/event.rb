@@ -17,6 +17,8 @@ module Sentry
       platform sdk type
     )
 
+    MAX_MESSAGE_SIZE_IN_BYTES = 1024 * 8
+
     attr_accessor(*ATTRIBUTES)
     attr_reader :configuration, :request, :exception, :stacktrace
 
@@ -42,7 +44,7 @@ module Sentry
       @release = configuration.release
       @modules = configuration.gem_specs if configuration.send_modules
 
-      @message = message || ""
+      @message = (message || "").byteslice(0..MAX_MESSAGE_SIZE_IN_BYTES)
 
       self.level = :error
     end
@@ -123,7 +125,7 @@ module Sentry
         exc_int.values = exceptions.map do |e|
           SingleExceptionInterface.new.tap do |int|
             int.type = e.class.to_s
-            int.value = e.to_s
+            int.value = e.message.byteslice(0..MAX_MESSAGE_SIZE_IN_BYTES)
             int.module = e.class.to_s.split('::')[0...-1].join('::')
 
             int.stacktrace =
