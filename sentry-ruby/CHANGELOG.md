@@ -1,5 +1,9 @@
 # Changelog
 
+## 4.1.5-beta.1
+
+- No change
+
 ## 4.1.5-beta.0
 
 - Event message and exception message should have a size limit [#1221](https://github.com/getsentry/sentry-ruby/pull/1221)
