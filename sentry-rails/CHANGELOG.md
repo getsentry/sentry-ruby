@@ -1,5 +1,9 @@
 # Changelog
 
+## Unreleased (4.1.5)
+
+- Filter out redundant event/payload from breadcrumbs logger [#1222](https://github.com/getsentry/sentry-ruby/pull/1222)
+
 ## 4.1.4
 
 - Don't include headers & request info in tracing span or breadcrumb [#1199](https://github.com/getsentry/sentry-ruby/pull/1199)
