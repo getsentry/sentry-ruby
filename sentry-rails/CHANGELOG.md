@@ -3,6 +3,7 @@
 ## Unreleased (4.1.5)
 
 - Filter out redundant event/payload from breadcrumbs logger [#1222](https://github.com/getsentry/sentry-ruby/pull/1222)
+- Copy request env before Rails' ShowExceptions middleware [#1223](https://github.com/getsentry/sentry-ruby/pull/1223)
 
 ## 4.1.4
 
