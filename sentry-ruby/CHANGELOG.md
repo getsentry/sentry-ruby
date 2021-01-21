@@ -1,8 +1,9 @@
 # Changelog
 
-## Unreleased (4.1.5)
+## 4.1.5
 
 - Event message and exception message should have a size limit [#1221](https://github.com/getsentry/sentry-ruby/pull/1221)
+- Add sentry-ruby-core as a more flexible option [#1226](https://github.com/getsentry/sentry-ruby/pull/1226)
 
 ## 4.1.4
 

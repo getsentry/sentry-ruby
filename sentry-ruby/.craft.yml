@@ -11,9 +11,23 @@ artifactProvider:
   name: github
 targets:
     - name: gem
+      onlyIfPresent: /^sentry-ruby$/
     - name: github
+      onlyIfPresent: /^sentry-ruby$/
       tagPrefix: sentry-ruby-v
     - name: registry
+      onlyIfPresent: /^sentry-ruby$/
       type: sdk
       config:
           canonical: 'gem:sentry-ruby'
+
+    - name: gem
+      onlyIfPresent: /^sentry-ruby-core$/
+    - name: github
+      onlyIfPresent: /^sentry-ruby-core$/
+      tagPrefix: sentry-ruby-v
+    - name: registry
+      onlyIfPresent: /^sentry-ruby-core$/
+      type: sdk
+      config:
+          canonical: 'gem:sentry-ruby-core'
