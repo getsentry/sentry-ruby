@@ -51,6 +51,10 @@ class HelloController < ActionController::Base
     raise "An unhandled exception!"
   end
 
+  def reporting
+    head :ok
+  end
+
   def view_exception
     render inline: "<%= foo %>"
   end
@@ -87,6 +91,7 @@ def make_basic_app
     get "/not_found", :to => "hello#not_found"
     get "/world", to: "hello#world"
     resources :posts, only: [:index, :show]
+    get "500", to: "hello#reporting"
     root :to => "hello#world"
   end
 
