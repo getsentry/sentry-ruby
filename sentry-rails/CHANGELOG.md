@@ -1,5 +1,9 @@
 # Changelog
 
+## Unreleased
+
+- Prevent exceptions app from overriding event's transaction name [#1230](https://github.com/getsentry/sentry-ruby/pull/1230)
+
 ## 4.1.5
 
 - Add `ActionDispatch::Http::MimeNegotiation::InvalidType` to the list of default ignored Rails exceptions [#1215](https://github.com/getsentry/sentry-ruby/pull/1215) (by @agrobbin)
