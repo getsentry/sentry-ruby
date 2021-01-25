@@ -6,6 +6,15 @@
 - Inspect exception cause by default & don't exclude ActiveJob::DeserializationError [#1180](https://github.com/getsentry/sentry-ruby/pull/1180)
   - Fixes [#1071](https://github.com/getsentry/sentry-ruby/issues/1071)
 
+## 4.1.5-beta.1
+
+- No change
+
+## 4.1.5-beta.0
+
+- Event message and exception message should have a size limit [#1221](https://github.com/getsentry/sentry-ruby/pull/1221)
+- Add sentry-ruby-core as a more flexible option [#1226](https://github.com/getsentry/sentry-ruby/pull/1226)
+
 ## 4.1.4
 
 - Fix headers serialization for sentry-ruby [#1197](https://github.com/getsentry/sentry-ruby/pull/1197) (by @moofkit)

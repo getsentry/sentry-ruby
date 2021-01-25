@@ -16,5 +16,5 @@ file_name =
   end
 
 text = File.read(file_name)
-new_contents = text.gsub(/\d.\d.\d/, ARGV[1])
+new_contents = text.gsub(/VERSION = ".*"/, "VERSION = \"#{ARGV[1]}\"")
 File.open(file_name, "w") {|file| file.puts new_contents }

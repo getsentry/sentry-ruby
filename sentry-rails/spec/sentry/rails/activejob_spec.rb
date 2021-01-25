@@ -1,14 +1,21 @@
 require "spec_helper"
+require "active_job/railtie"
 
-class MyActiveJob < ActiveJob::Base
+class FailedJob < ActiveJob::Base
   self.logger = nil
 
   class TestError < RuntimeError
   end
 
   def perform
-    Sentry.get_current_scope.set_extras(foo: :bar)
     raise TestError, "Boom!"
+  end
+end
+
+class MyActiveJob < FailedJob
+  def perform
+    Sentry.get_current_scope.set_extras(foo: :bar)
+    super
   end
 end
 
@@ -18,9 +25,21 @@ class RescuedActiveJob < MyActiveJob
   def rescue_callback(error); end
 end
 
+RSpec.describe "without Sentry initialized" do
+  before(:each) do
+    FailedJob.queue_adapter = :inline
+  end
+
+  it "runs job" do
+    job = FailedJob.new
+
+    expect { job.perform_now }.to raise_error(FailedJob::TestError)
+  end
+end
+
 RSpec.describe "ActiveJob integration" do
   before(:all) do
-    perform_basic_setup
+    make_basic_app
   end
 
   let(:event) do

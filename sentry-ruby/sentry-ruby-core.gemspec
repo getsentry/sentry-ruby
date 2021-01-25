@@ -1,10 +1,10 @@
-require_relative "lib/sentry/rails/version"
+require_relative "lib/sentry/version"
 
 Gem::Specification.new do |spec|
-  spec.name          = "sentry-rails"
-  spec.version       = Sentry::Rails::VERSION
+  spec.name          = "sentry-ruby-core"
+  spec.version       = Sentry::VERSION
   spec.authors = ["Sentry Team"]
-  spec.description = spec.summary = "A gem that provides Rails integration for the Sentry error logger"
+  spec.description = spec.summary = "A gem that provides a client interface for the Sentry error logger"
   spec.email = "accounts@sentry.io"
   spec.license = 'Apache-2.0'
   spec.homepage = "https://github.com/getsentry/sentry-ruby"
@@ -16,12 +16,12 @@ Gem::Specification.new do |spec|
 
   spec.metadata["homepage_uri"] = spec.homepage
   spec.metadata["source_code_uri"] = spec.homepage
-  spec.metadata["changelog_uri"] = "#{spec.homepage}/blob/master/sentry-rails/CHANGELOG.md"
+  spec.metadata["changelog_uri"] = "#{spec.homepage}/blob/master/sentry-ruby/CHANGELOG.md"
 
   spec.bindir        = "exe"
   spec.executables   = spec.files.grep(%r{^exe/}) { |f| File.basename(f) }
   spec.require_paths = ["lib"]
 
-  spec.add_dependency "rails", ">= 5.0"
-  spec.add_dependency "sentry-ruby", "~> 4.1.2"
+  spec.add_dependency "faraday"
+  spec.add_dependency "concurrent-ruby"
 end
