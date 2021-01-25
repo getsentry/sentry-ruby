@@ -164,7 +164,7 @@ module Sentry
       self.enabled_environments = []
       self.exclude_loggers = []
       self.excluded_exceptions = IGNORE_DEFAULT.dup
-      self.inspect_exception_causes_for_exclusion = false
+      self.inspect_exception_causes_for_exclusion = true
       self.linecache = ::Sentry::LineCache.new
       self.logger = ::Sentry::Logger.new(STDOUT)
       self.project_root = detect_project_root

@@ -27,7 +27,8 @@ jobs:
       working-directory: ${{env.sdk-directory}}
       run: |
         bundle install
-        gem build *.gemspec
+        gem build sentry-ruby-core.gemspec
+        gem build sentry-ruby.gemspec
     - name: Archive Artifacts
       uses: actions/upload-artifact@v2
       with:

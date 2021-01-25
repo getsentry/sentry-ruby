@@ -8,12 +8,16 @@ module Sentry
       def self.included(base)
         base.class_eval do
           around_perform do |job, block|
-            if already_supported_by_specific_integration?(job)
-              block.call
-            else
-              Sentry.with_scope do
-                capture_and_reraise_with_sentry(job, block)
+            if Sentry.initialized?
+              if already_supported_by_specific_integration?(job)
+                block.call
+              else
+                Sentry.with_scope do
+                  capture_and_reraise_with_sentry(job, block)
+                end
               end
+            else
+              block.call
             end
           end
         end

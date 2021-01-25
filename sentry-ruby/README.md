@@ -65,7 +65,7 @@ end
 
 ### Sentry doesn't report some kinds of data by default
 
-**Sentry ignores some exceptions by default** - most of these are related to 404s parameter parsing errors. [For a complete list, see the `IGNORE_DEFAULT` constant](https://github.com/getsentry/sentry-ruby/blob/master/sentry-ruby/lib/sentry/configuration.rb#L118) and the integration gems' `IGNORE_DEFAULT`, like [`sentry-rails`'s](https://github.com/getsentry/sentry-ruby/blob/update-readme/sentry-rails/lib/sentry/rails/configuration.rb#L12)
+**Sentry ignores some exceptions by default** - most of these are related to 404s parameter parsing errors. [For a complete list, see the `IGNORE_DEFAULT` constant](https://github.com/getsentry/sentry-ruby/blob/master/sentry-ruby/lib/sentry/configuration.rb#L118) and the integration gems' `IGNORE_DEFAULT`, like [`sentry-rails`'s](https://github.com/getsentry/sentry-ruby/blob/master/sentry-rails/lib/sentry/rails/configuration.rb#L12)
 
 Sentry doesn't send personally identifiable information (pii) by default, such as request body, user ip or cookies. If you want those information to be sent, you can use the `send_default_pii` config option:
 
@@ -158,6 +158,7 @@ config.async = lambda { |event, hint| SentryJob.perform_later(event, hint) }
 
 class SentryJob < ActiveJob::Base
   queue_as :default
+  discard_on ActiveJob::DeserializationError # this will prevent infinite loop when there's an issue deserializing SentryJob
 
   def perform(event, hint)
     Sentry.send_event(event, hint)
@@ -165,8 +166,13 @@ class SentryJob < ActiveJob::Base
 end
 ```
 
+If you also use `sentry-rails`, you can directly use the job we defined for you:
 
-**After version 4.1.0**, `sentry-ruby` sends events asynchronously by default. The functionality works like this: 
+```ruby
+config.async = lambda { |event, hint| Sentry::SendEventJob.perform_later(event, hint) }
+```
+
+**After version 4.1.0**, `sentry-ruby` sends events asynchronously by default. The functionality works like this:
 
 1. When the SDK is initialized, a `Sentry::BackgroundWorker` will be initialized too.
 2. When an event is passed to `Client#capture_event`, instead of sending it directly with `Client#send_event`, we'll let the worker do it.

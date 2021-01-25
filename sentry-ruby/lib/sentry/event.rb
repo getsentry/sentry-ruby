@@ -17,8 +17,10 @@ module Sentry
       platform sdk type
     )
 
+    MAX_MESSAGE_SIZE_IN_BYTES = 1024 * 8
+
     attr_accessor(*ATTRIBUTES)
-    attr_reader :configuration, :request, :exception, :stacktrace
+    attr_reader :configuration, :request, :exception, :stacktrace, :threads
 
     def initialize(configuration:, integration_meta: nil, message: nil)
       # this needs to go first because some setters rely on configuration
@@ -42,7 +44,7 @@ module Sentry
       @release = configuration.release
       @modules = configuration.gem_specs if configuration.send_modules
 
-      @message = message || ""
+      @message = (message || "").byteslice(0..MAX_MESSAGE_SIZE_IN_BYTES)
 
       self.level = :error
     end
@@ -100,6 +102,7 @@ module Sentry
       data[:stacktrace] = stacktrace.to_hash if stacktrace
       data[:request] = request.to_hash if request
       data[:exception] = exception.to_hash if exception
+      data[:threads] = threads.to_hash if threads
 
       data
     end
@@ -110,6 +113,11 @@ module Sentry
 
     def add_request_interface(env)
       @request = Sentry::RequestInterface.from_rack(env)
+    end
+
+    def add_threads_interface(backtrace: nil, **options)
+      @threads = ThreadsInterface.new(**options)
+      @threads.stacktrace = initialize_stacktrace_interface(backtrace) if backtrace
     end
 
     def add_exception_interface(exc)
@@ -123,7 +131,7 @@ module Sentry
         exc_int.values = exceptions.map do |e|
           SingleExceptionInterface.new.tap do |int|
             int.type = e.class.to_s
-            int.value = e.to_s
+            int.value = e.message.byteslice(0..MAX_MESSAGE_SIZE_IN_BYTES)
             int.module = e.class.to_s.split('::')[0...-1].join('::')
 
             int.stacktrace =

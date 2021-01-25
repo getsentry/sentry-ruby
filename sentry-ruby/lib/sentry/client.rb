@@ -59,12 +59,15 @@ module Sentry
 
       Event.new(configuration: configuration, integration_meta: integration_meta).tap do |event|
         event.add_exception_interface(exception)
+        event.add_threads_interface(crashed: true)
       end
     end
 
     def event_from_message(message, hint = {})
       integration_meta = Sentry.integrations[hint[:integration]]
-      Event.new(configuration: configuration, integration_meta: integration_meta, message: message)
+      event = Event.new(configuration: configuration, integration_meta: integration_meta, message: message)
+      event.add_threads_interface(backtrace: caller)
+      event
     end
 
     def event_from_transaction(transaction)

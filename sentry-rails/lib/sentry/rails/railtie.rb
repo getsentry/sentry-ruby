@@ -4,7 +4,6 @@ require "sentry/rails/rescued_exception_interceptor"
 require "sentry/rails/backtrace_cleaner"
 require "sentry/rails/controller_methods"
 require "sentry/rails/controller_transaction"
-require "sentry/rails/active_job"
 require "sentry/rails/overrides/streaming_reporter"
 
 module Sentry
@@ -23,7 +22,7 @@ module Sentry
       configure_sentry_logger
       configure_trusted_proxies
       extend_controller_methods
-      extend_active_job
+      extend_active_job if defined?(ActiveJob)
       override_streaming_reporter
       setup_backtrace_cleanup_callback
       inject_breadcrumbs_logger
@@ -39,6 +38,7 @@ module Sentry
     end
 
     def extend_active_job
+      require "sentry/rails/active_job"
       ActiveJob::Base.send(:prepend, Sentry::Rails::ActiveJobExtensions)
     end
 
