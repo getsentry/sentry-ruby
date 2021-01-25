@@ -19,5 +19,7 @@ module Rails60
 
     # https://github.com/getsentry/raven-ruby/issues/494
     config.exceptions_app = self.routes
+
+    config.webpacker.check_yarn_integrity = false
   end
 end
