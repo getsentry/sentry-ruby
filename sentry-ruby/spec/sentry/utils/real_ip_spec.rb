@@ -58,7 +58,7 @@ RSpec.describe Sentry::Utils::RealIp do
       )
     end
 
-    it "should return REMOTE_ADDR" do
+    it "should return the first IP not in the trusted proxy list" do
       expect(subject.calculate_ip).to eq("3.3.3.3")
     end
   end
