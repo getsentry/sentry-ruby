@@ -172,7 +172,8 @@ module Sentry
         :remote_addr => env["REMOTE_ADDR"],
         :client_ip => env["HTTP_CLIENT_IP"],
         :real_ip => env["HTTP_X_REAL_IP"],
-        :forwarded_for => env["HTTP_X_FORWARDED_FOR"]
+        :forwarded_for => env["HTTP_X_FORWARDED_FOR"],
+        :trusted_proxies => configuration.trusted_proxies
       ).calculate_ip
     end
   end
