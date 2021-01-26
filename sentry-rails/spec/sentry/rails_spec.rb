@@ -36,6 +36,7 @@ RSpec.describe Sentry::Rails, type: :request do
       expect(Sentry.configuration.project_root).to eq(Rails.root.to_s)
     end
 
+   
     it "doesn't clobber a manually configured release" do
       expect(Sentry.configuration.release).to eq('beta')
     end
@@ -160,6 +161,18 @@ RSpec.describe Sentry::Rails, type: :request do
 
         expect(event.dig("request", "url")).to eq("http://www.example.com/exception")
       end
+    end
+  end
+  
+  context "with trusted proxies set" do
+    before do
+      make_basic_app do |config, app|
+        app.config.action_dispatch.trusted_proxies = ["5.5.5.5"]
+      end
+    end
+
+    it "sets Sentry.configuration.trusted_proxies correctly" do
+      expect(Sentry.configuration.trusted_proxies).to eq(["5.5.5.5"])
     end
   end
 end
