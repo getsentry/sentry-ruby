@@ -1,3 +1,5 @@
+return unless defined?(ActiveJob)
+
 module Sentry
   parent_job =
     if defined?(ApplicationJob)
