@@ -22,10 +22,10 @@ jobs:
           - { os: ubuntu-latest, ruby_version: 2.5 }
           - { os: ubuntu-latest, ruby_version: 2.6 }
           - { os: ubuntu-latest, ruby_version: 2.7 }
-          - { os: ubuntu-latest, ruby_version: 3.0 }
+          - { os: ubuntu-latest, ruby_version: '3.0' }
           - { os: ubuntu-latest, ruby_version: jruby }
-          - { os: ubuntu-latest, ruby_version: 3.0, options: { rubyopt: "--enable-frozen-string-literal --debug=frozen-string-literal" } }
-          - { os: ubuntu-latest, ruby_version: 3.0, options: { without_rack: 1 } }
+          - { os: ubuntu-latest, ruby_version: '3.0', options: { rubyopt: "--enable-frozen-string-literal --debug=frozen-string-literal" } }
+          - { os: ubuntu-latest, ruby_version: '3.0', options: { without_rack: 1 } }
     steps:
     - uses: actions/checkout@v1
 
