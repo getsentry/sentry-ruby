@@ -80,14 +80,14 @@ RSpec.describe Sentry::Client do
           end
         end
 
-        it "supplies hint as the second argument" do
+        it "serializes hint and supplies it as the second argument" do
           expect(configuration.async).to receive(:call).and_call_original
 
           returned = subject.capture_event(event, scope, { foo: "bar" })
 
           expect(returned).to be_a(Sentry::Event)
           event = subject.transport.events.first
-          expect(event.dig("tags", "hint")).to eq({ foo: "bar" })
+          expect(event.dig("tags", "hint")).to eq({ "foo" => "bar" })
         end
       end
 
