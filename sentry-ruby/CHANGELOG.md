@@ -6,12 +6,24 @@
 - Inspect exception cause by default & don't exclude ActiveJob::DeserializationError [#1180](https://github.com/getsentry/sentry-ruby/pull/1180)
   - Fixes [#1071](https://github.com/getsentry/sentry-ruby/issues/1071)
 
+## Unreleased
+
+- Don't detect project root for Rails apps [#1243](https://github.com/getsentry/sentry-ruby/pull/1243)
+
+## 4.1.5
+
+- Serialize event hint before passing it to the async block [#1231](https://github.com/getsentry/sentry-ruby/pull/1231)
+  - Fixes [#1227](https://github.com/getsentry/sentry-ruby/issues/1227)
+- Require the English library [#1233](https://github.com/getsentry/sentry-ruby/pull/1233) (by @dentarg)
+- Allow `Sentry.init` without block argument [#1235](https://github.com/getsentry/sentry-ruby/pull/1235) (by @sue445)
+
 ## 4.1.5-beta.1
 
 - No change
 
 ## 4.1.5-beta.0
 
+- Inline global method [#1213](https://github.com/getsentry/sentry-ruby/pull/1213) (by @tricknotes)
 - Event message and exception message should have a size limit [#1221](https://github.com/getsentry/sentry-ruby/pull/1221)
 - Add sentry-ruby-core as a more flexible option [#1226](https://github.com/getsentry/sentry-ruby/pull/1226)
 

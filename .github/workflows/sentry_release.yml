@@ -25,10 +25,7 @@ jobs:
       run: echo ${{format('sdk-directory={0}', steps.regex-match.outputs.group1)}} >> $GITHUB_ENV
     - name: Build gem source
       working-directory: ${{env.sdk-directory}}
-      run: |
-        bundle install
-        gem build sentry-ruby-core.gemspec
-        gem build sentry-ruby.gemspec
+      run: make build
     - name: Archive Artifacts
       uses: actions/upload-artifact@v2
       with:

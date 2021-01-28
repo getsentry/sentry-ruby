@@ -6,9 +6,11 @@
   - Fixes [#1071](https://github.com/getsentry/sentry-ruby/issues/1071)
 - Make sentry-rails a Rails engine and provide default job class for async [#1181](https://github.com/getsentry/sentry-ruby/pull/1181)
 
-## Unreleased (4.1.6)
+## 4.1.6
 
 - Prevent exceptions app from overriding event's transaction name [#1230](https://github.com/getsentry/sentry-ruby/pull/1230)
+- Fix project root detection [#1242](https://github.com/getsentry/sentry-ruby/pull/1242)
+- Use sentry-ruby-core as the main SDK dependency [#1244](https://github.com/getsentry/sentry-ruby/pull/1244)
 
 ## 4.1.5
 

@@ -1,3 +1,4 @@
+require "English"
 require "forwardable"
 require "time"
 
@@ -65,7 +66,7 @@ module Sentry
 
     def init(&block)
       config = Configuration.new
-      yield(config)
+      yield(config) if block_given?
       client = Client.new(config)
       scope = Scope.new
       hub = Hub.new(client, scope)

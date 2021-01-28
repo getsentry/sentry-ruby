@@ -167,7 +167,7 @@ module Sentry
       self.inspect_exception_causes_for_exclusion = true
       self.linecache = ::Sentry::LineCache.new
       self.logger = ::Sentry::Logger.new(STDOUT)
-      self.project_root = detect_project_root
+      self.project_root = Dir.pwd
 
       self.release = detect_release
       self.sample_rate = 1.0
@@ -270,14 +270,6 @@ module Sentry
     end
 
     private
-
-    def detect_project_root
-      if defined? Rails.root # we are in a Rails application
-        Rails.root.to_s
-      else
-        Dir.pwd
-      end
-    end
 
     def detect_release
       detect_release_from_env ||

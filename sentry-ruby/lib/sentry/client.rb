@@ -32,6 +32,7 @@ module Sentry
           event_hash = event.to_json_compatible
 
           if async_block.arity == 2
+            hint = JSON.parse(JSON.generate(hint))
             async_block.call(event_hash, hint)
           else
             async_block.call(event_hash)

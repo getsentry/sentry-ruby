@@ -28,6 +28,8 @@ The official Ruby-language client and integration layer for the [Sentry](https:/
 
 We test on Ruby 2.4, 2.5, 2.6 and 2.7 at the latest patchlevel/teeny version. We also support JRuby 9.0.
 
+If you use self-hosted Sentry, please also make sure its version is above `20.6.0`.
+
 ## Migrate From sentry-raven
 
 If you're using `sentry-raven`, we recommend you to migrate to this new SDK. You can find the benefits of migrating and how to do it in our [migration guide](https://docs.sentry.io/platforms/ruby/migration/).

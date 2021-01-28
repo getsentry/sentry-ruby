@@ -12,15 +12,30 @@ RSpec.describe Sentry do
   end
 
   describe ".init" do
-    it "initializes the current hub and main hub" do
-      described_class.init do |config|
-        config.dsn = DUMMY_DSN
-      end
+    context "with block argument" do
+      it "initializes the current hub and main hub" do
+        described_class.init do |config|
+          config.dsn = DUMMY_DSN
+        end
 
-      current_hub = described_class.get_current_hub
-      expect(current_hub).to be_a(Sentry::Hub)
-      expect(current_hub.current_scope).to be_a(Sentry::Scope)
-      expect(subject.get_main_hub).to eq(current_hub)
+        current_hub = described_class.get_current_hub
+        expect(current_hub).to be_a(Sentry::Hub)
+        expect(current_hub.current_scope).to be_a(Sentry::Scope)
+        expect(subject.get_main_hub).to eq(current_hub)
+      end
+    end
+
+    context "without block argument" do
+      it "initializes the current hub and main hub" do
+        ENV['SENTRY_DSN'] = DUMMY_DSN
+
+        described_class.init
+
+        current_hub = described_class.get_current_hub
+        expect(current_hub).to be_a(Sentry::Hub)
+        expect(current_hub.current_scope).to be_a(Sentry::Scope)
+        expect(subject.get_main_hub).to eq(current_hub)
+      end
     end
   end
 
