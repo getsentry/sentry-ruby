@@ -19,6 +19,7 @@ module Sentry
     config.after_initialize do
       next unless Sentry.initialized?
 
+      configure_project_root
       configure_sentry_logger
       extend_controller_methods
       extend_active_job if defined?(ActiveJob)
@@ -26,6 +27,10 @@ module Sentry
       setup_backtrace_cleanup_callback
       inject_breadcrumbs_logger
       activate_tracing
+    end
+
+    def configure_project_root
+      Sentry.configuration.project_root = ::Rails.root.to_s
     end
 
     def configure_sentry_logger

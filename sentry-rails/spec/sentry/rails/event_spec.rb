@@ -2,11 +2,7 @@ require 'spec_helper'
 
 RSpec.describe Sentry::Event do
   before do
-    Sentry.init do |config|
-      config.dsn = DUMMY_DSN
-      config.logger = ::Logger.new(nil)
-      config.transport.transport_class = Sentry::DummyTransport
-    end
+    make_basic_app
   end
 
   it "sets right SDK information" do
@@ -58,7 +54,7 @@ RSpec.describe Sentry::Event do
 
     context 'when a non-in_app path under project_root is on the load path' do
       it 'normalizes the filename using the load path' do
-        $LOAD_PATH.push "#{Rails.root}/vendor/bundle"
+        $LOAD_PATH.push "vendor/bundle"
         frames = hash[:exception][:values][0][:stacktrace][:frames]
         expect(frames[5][:filename]).to eq("cache/other_gem.rb")
         $LOAD_PATH.pop
