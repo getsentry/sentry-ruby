@@ -5,6 +5,8 @@ require "pry"
 require "sidekiq/cli"
 # require "support/test_sidekiq_app/app"
 
+require "sentry-ruby"
+
 require 'simplecov'
 
 SimpleCov.start do

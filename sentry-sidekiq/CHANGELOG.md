@@ -1,5 +1,9 @@
 # Changelog
 
+## 4.1.3
+
+- Use sentry-ruby-core as the main SDK dependency [#1245](https://github.com/getsentry/sentry-ruby/pull/1245)
+
 ## 4.1.2
 
 - Fix sidekiq middleware [#1175](https://github.com/getsentry/sentry-ruby/pull/1175)
