@@ -84,6 +84,24 @@ RSpec.describe Sentry::Rails::Tracing, type: :request do
     end
   end
 
+  context "with sprockets-rails" do
+    before do
+      require "sprockets/railtie"
+
+      make_basic_app do |config, app|
+        app.config.public_file_server.enabled = true
+        config.traces_sample_rate = 1.0
+      end
+    end
+
+    it "doesn't record requests for asset files" do
+      get "/assets/application-ad022df6f1289ec07a560bb6c9a227ecf7bdd5a5cace5e9a8cdbd50b454931fb.css"
+
+      expect(response).to have_http_status(:not_found)
+      expect(transport.events).to be_empty
+    end
+  end
+
   context "with config.public_file_server.enabled = true" do
     before do
       make_basic_app do |config, app|
