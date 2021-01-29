@@ -65,4 +65,18 @@ RSpec.describe Sentry::Sidekiq::ErrorHandler do
     event = transport.events.first.to_hash
     expect(event[:extra][:sidekiq]).to eq(expected_context)
   end
+
+  context "when the job is wrapped" do
+    let(:context) { super().merge("class" => "WrapperJob", "wrapped" => "HardWorker") }
+
+    it "should capture exceptions based on Sidekiq context" do
+      exception = build_exception
+
+      subject.call(exception, context)
+
+      expect(transport.events.count).to eq(1)
+      event = transport.events.first.to_hash
+      expect(event[:transaction]).to eq("Sidekiq/HardWorker")
+    end
+  end
 end
