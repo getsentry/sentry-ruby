@@ -34,7 +34,7 @@ module Sentry
 
     def to_hash
       {
-        :values => members.map(&:to_hash)
+        values: members.map(&:to_hash)
       }
     end
 
