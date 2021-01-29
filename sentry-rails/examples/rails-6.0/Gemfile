@@ -26,6 +26,7 @@ gem 'jbuilder', '~> 2.7'
 gem 'sentry-ruby', path: "../../../sentry-ruby"
 gem 'sentry-sidekiq', path: "../../../sentry-sidekiq"
 gem 'sentry-rails', path: "../../"
+gem "sidekiq"
 
 gem 'pry'
 
