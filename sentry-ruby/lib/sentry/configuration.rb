@@ -38,10 +38,19 @@ module Sentry
     #
     attr_accessor :backtrace_cleanup_callback
 
+    # Optional Proc, called before adding the breadcrumb to the current scope
+    # E.g.: lambda { |breadcrumb, hint| breadcrumb }
+    # E.g.: lambda { |breadcrumb, hint| nil }
+    # E.g.: lambda { |breadcrumb, hint|
+    #   breadcrumb.message = 'a'
+    #   breadcrumb
+    # }
+    attr_reader :before_breadcrumb
+
     # Optional Proc, called before sending an event to the server/
-    # E.g.: lambda { |event| event }
-    # E.g.: lambda { |event| nil }
-    # E.g.: lambda { |event|
+    # E.g.: lambda { |event, hint| event }
+    # E.g.: lambda { |event, hint| nil }
+    # E.g.: lambda { |event, hint|
     #   event[:message] = 'a'
     #   event
     # }
@@ -225,6 +234,14 @@ module Sentry
       end
 
       @before_send = value
+    end
+
+    def before_breadcrumb=(value)
+      unless value.nil? || value.respond_to?(:call)
+        raise ArgumentError, "before_breadcrumb must be callable (or nil to disable)"
+      end
+
+      @before_breadcrumb = value
     end
 
     def environment=(environment)
