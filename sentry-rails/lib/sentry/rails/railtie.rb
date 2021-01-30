@@ -23,6 +23,7 @@ module Sentry
       configure_sentry_logger
       extend_controller_methods
       extend_active_job if defined?(ActiveJob)
+      extend_action_cable if defined?(ActionCable)
       override_streaming_reporter
       setup_backtrace_cleanup_callback
       inject_breadcrumbs_logger
@@ -40,6 +41,19 @@ module Sentry
     def extend_active_job
       require "sentry/rails/active_job"
       ActiveJob::Base.send(:prepend, Sentry::Rails::ActiveJobExtensions)
+    end
+
+    def extend_action_cable
+      require "sentry/rails/action_cable"
+
+      ActiveSupport.on_load :action_cable_connection do
+        prepend Sentry::Rails::ActionCable::Connection
+      end
+
+      ActiveSupport.on_load :action_cable_channel do
+        include Sentry::Rails::ActionCable::Channel::Subscriptions
+        prepend Sentry::Rails::ActionCable::Channel::Actions
+      end
     end
 
     def extend_controller_methods

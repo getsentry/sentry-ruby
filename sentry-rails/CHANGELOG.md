@@ -1,5 +1,9 @@
 # Changelog
 
+## Unreleased
+
+- Add Action Cable exception capturing [#1251](https://github.com/getsentry/sentry-ruby/pull/1251)
+
 ## 4.1.6
 
 - Prevent exceptions app from overriding event's transaction name [#1230](https://github.com/getsentry/sentry-ruby/pull/1230)
