@@ -1,5 +1,9 @@
 # Changelog
 
+## Unreleased
+
+- Add Action Cable exception capturing (Rails 6+) [#1295](https://github.com/getsentry/sentry-ruby/pull/1295)
+
 ## 4.2.2
 
 - Always define Sentry::SendEventJob to avoid eager load issues [#1286](https://github.com/getsentry/sentry-ruby/pull/1286)

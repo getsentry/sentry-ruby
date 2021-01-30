@@ -5,6 +5,9 @@ class WelcomeController < ApplicationController
     1 / 0
   end
 
+  def appearance
+  end
+
   def view_error
   end
 

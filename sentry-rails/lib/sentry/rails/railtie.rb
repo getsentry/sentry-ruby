@@ -25,6 +25,7 @@ module Sentry
       configure_trusted_proxies
       extend_controller_methods
       extend_active_job if defined?(ActiveJob)
+      extend_action_cable if defined?(ActionCable) && ActionCable.version >= Gem::Version.new('6.0.0')
       override_streaming_reporter
       override_file_handler if app.config.public_file_server.enabled
       setup_backtrace_cleanup_callback
@@ -47,6 +48,19 @@ module Sentry
     def extend_active_job
       require "sentry/rails/active_job"
       ActiveJob::Base.send(:prepend, Sentry::Rails::ActiveJobExtensions)
+    end
+
+    def extend_action_cable
+      require "sentry/rails/action_cable"
+
+      ActiveSupport.on_load :action_cable_connection do
+        prepend Sentry::Rails::ActionCable::Connection
+      end
+
+      ActiveSupport.on_load :action_cable_channel do
+        include Sentry::Rails::ActionCable::Channel::Subscriptions
+        prepend Sentry::Rails::ActionCable::Channel::Actions
+      end
     end
 
     def extend_controller_methods
