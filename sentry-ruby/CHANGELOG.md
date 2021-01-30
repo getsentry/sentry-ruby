@@ -3,6 +3,7 @@
 ## Unreleased
 
 - Don't detect project root for Rails apps [#1243](https://github.com/getsentry/sentry-ruby/pull/1243)
+- Separate individual breadcrumb's data serialization [#1250](https://github.com/getsentry/sentry-ruby/pull/1250)
 
 ## 4.1.5
 
