@@ -8,6 +8,16 @@ class WelcomeController < ApplicationController
   def view_error
   end
 
+  def worker_error
+    ErrorWorker.perform_async
+    render plain: "success"
+  end
+
+  def job_error
+    ErrorJob.perform_later
+    render plain: "success"
+  end
+
   def report_demo
     # @sentry_event_id = Raven.last_event_id
     render(:status => 500)

@@ -1,13 +1,17 @@
+require 'sentry/sidekiq/context_filter'
+
 module Sentry
   module Sidekiq
     class SentryContextMiddleware
       def call(_worker, job, queue)
         return yield unless Sentry.initialized?
 
+        context_filter = Sentry::Sidekiq::ContextFilter.new(job)
+
         Sentry.clone_hub_to_current_thread
         scope = Sentry.get_current_scope
         scope.set_extras(sidekiq: job.merge("queue" => queue))
-        scope.set_transaction_name("Sidekiq/#{job["class"]}")
+        scope.set_transaction_name(context_filter.transaction_name)
 
         yield
 

@@ -21,5 +21,6 @@ module Rails60
     config.exceptions_app = self.routes
 
     config.webpacker.check_yarn_integrity = false
+    config.active_job.queue_adapter = :sidekiq
   end
 end
