@@ -17,14 +17,9 @@ module Sentry
           # so we need to hold a copy of env to report the accurate data (like request's url)
           if request.show_exceptions?
             scope = Sentry.get_current_scope
-            scope.set_rack_env(scope.rack_env.dup)
-            transaction = scope.transaction_name
-
-            # we also need to make sure the transaction name won't be overridden by the exceptions app
-            scope.add_event_processor do |event, hint|
-              event.transaction = transaction
-              event
-            end
+            copied_env = scope.rack_env.dup
+            copied_env["sentry.original_transaction"] = scope.transaction_name
+            scope.set_rack_env(copied_env)
           end
 
           env["sentry.rescued_exception"] = e if Sentry.configuration.rails.report_rescued_exceptions

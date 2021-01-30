@@ -43,7 +43,11 @@ RSpec.describe Sentry::Rails, type: :request do
     it "sets transaction to ControllerName#method" do
       get "/exception"
 
-      expect(event['transaction']).to eq("HelloController#exception")
+      expect(transport.events.last.transaction).to eq("HelloController#exception")
+
+      get "/posts"
+
+      expect(transport.events.last.transaction).to eq("PostsController#index")
     end
 
     it "sets correct request url" do
@@ -152,7 +156,11 @@ RSpec.describe Sentry::Rails, type: :request do
       it "sets transaction to ControllerName#method" do
         get "/exception"
 
-        expect(event['transaction']).to eq("HelloController#exception")
+        expect(transport.events.last.transaction).to eq("HelloController#exception")
+
+        get "/posts"
+
+        expect(transport.events.last.transaction).to eq("PostsController#index")
       end
 
       it "sets correct request url" do

@@ -12,6 +12,12 @@ module Sentry
       end
 
       def capture_exception(exception)
+        current_scope = Sentry.get_current_scope
+
+        if original_transaction = current_scope.rack_env["sentry.original_transaction"]
+          current_scope.set_transaction_name(original_transaction)
+        end
+
         Sentry::Rails.capture_exception(exception)
       end
     end

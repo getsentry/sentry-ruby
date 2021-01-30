@@ -85,6 +85,23 @@ RSpec.describe Sentry::Rails::Tracing, type: :request do
       expect(second_span[:parent_span_id]).to eq(parent_span_id)
 
     end
+
+    it "doesn't get messed up by previous exception" do
+      get "/exception"
+
+      expect(transport.events.count).to eq(2)
+
+      get "/posts/1"
+
+      expect(transport.events.count).to eq(3)
+
+      transaction = transport.events.last.to_hash
+
+      expect(transaction[:type]).to eq("transaction")
+      expect(transaction[:transaction]).to eq("PostsController#show")
+      second_span = transaction[:spans][1]
+      expect(second_span[:description]).to eq("PostsController#show")
+    end
   end
 
   context "without traces_sample_rate set" do
