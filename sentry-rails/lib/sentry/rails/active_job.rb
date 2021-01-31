@@ -25,7 +25,14 @@ module Sentry
         rescue_handler_result = rescue_with_handler(e)
         return rescue_handler_result if rescue_handler_result
 
-        Sentry::Rails.capture_exception(e, extra: sentry_context(job))
+        Sentry::Rails.capture_exception(
+          e,
+          extra: sentry_context(job),
+          tags: {
+            job_id: job.job_id,
+            provider_job_id: job.provider_job_id
+          }
+        )
         raise e
       end
 
@@ -34,19 +41,14 @@ module Sentry
       end
 
       def sentry_context(job)
-        ctx = {
-          :active_job => job.class.name,
-          :arguments => job.arguments,
-          :scheduled_at => job.scheduled_at,
-          :job_id => job.job_id,
-          :locale => job.locale
+        {
+          active_job: job.class.name,
+          arguments: job.arguments,
+          scheduled_at: job.scheduled_at,
+          job_id: job.job_id,
+          provider_job_id: job.provider_job_id,
+          locale: job.locale
         }
-        # Add provider_job_id details if Rails 5
-        if job.respond_to?(:provider_job_id)
-          ctx[:provider_job_id] = job.provider_job_id
-        end
-
-        ctx
       end
     end
   end
