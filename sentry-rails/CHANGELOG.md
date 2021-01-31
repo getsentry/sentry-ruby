@@ -1,5 +1,9 @@
 # Changelog
 
+## Unreleased
+
+- Use env to carry original transaction name [#1255](https://github.com/getsentry/sentry-ruby/pull/1255)
+
 ## 4.1.6
 
 - Prevent exceptions app from overriding event's transaction name [#1230](https://github.com/getsentry/sentry-ruby/pull/1230)
