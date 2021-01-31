@@ -14,11 +14,11 @@ module Sentry
 
           def subscribe_to_event(event_name)
             if ::Rails.version.to_i == 5
-              ActiveSupport::Notifications.subscribe(event_name) do |_, start, finish, _, payload|
+              ActiveSupport::Notifications.subscribe(event_name) do |*args|
                 next unless Tracing.get_current_transaction
 
-                duration = finish.to_f - start.to_f
-                yield(event_name, duration, payload)
+                event = ActiveSupport::Notifications::Event.new(*args)
+                yield(event_name, event.duration, event.payload)
               end
             else
               ActiveSupport::Notifications.subscribe(event_name) do |event|

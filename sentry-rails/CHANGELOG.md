@@ -7,6 +7,11 @@
 - Make sentry-rails a Rails engine and provide default job class for async [#1181](https://github.com/getsentry/sentry-ruby/pull/1181)
 - Allow users to configure ActiveJob adapters to ignore [#1256](https://github.com/getsentry/sentry-ruby/pull/1256)
 
+## Unreleased
+
+- Use env to carry original transaction name [#1255](https://github.com/getsentry/sentry-ruby/pull/1255)
+- Fix duration of tracing event in Rails 5 [#1254](https://github.com/getsentry/sentry-ruby/pull/1254) (by @abcang)
+
 ## 4.1.6
 
 - Prevent exceptions app from overriding event's transaction name [#1230](https://github.com/getsentry/sentry-ruby/pull/1230)

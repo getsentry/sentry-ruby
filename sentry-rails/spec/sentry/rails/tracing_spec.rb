@@ -49,7 +49,7 @@ RSpec.describe Sentry::Rails::Tracing, type: :request do
       expect(first_span[:parent_span_id]).to eq(parent_span_id)
 
       # this is to make sure we calculate the timestamp in the correct scale (second instead of millisecond)
-      expect(first_span[:timestamp] - first_span[:start_timestamp]).to be <= 1
+      expect(first_span[:timestamp] - first_span[:start_timestamp]).to be_between(10.0 / 1_000_000, 10.0 / 1000)
 
       second_span = transaction[:spans][1]
       expect(second_span[:op]).to eq("process_action.action_controller")
@@ -77,13 +77,30 @@ RSpec.describe Sentry::Rails::Tracing, type: :request do
       expect(first_span[:parent_span_id]).to eq(parent_span_id)
 
       # this is to make sure we calculate the timestamp in the correct scale (second instead of millisecond)
-      expect(first_span[:timestamp] - first_span[:start_timestamp]).to be <= 1
+      expect(first_span[:timestamp] - first_span[:start_timestamp]).to be_between(10.0 / 1_000_000, 10.0 / 1000)
 
       second_span = transaction[:spans][1]
       expect(second_span[:op]).to eq("process_action.action_controller")
       expect(second_span[:description]).to eq("PostsController#show")
       expect(second_span[:parent_span_id]).to eq(parent_span_id)
 
+    end
+
+    it "doesn't get messed up by previous exception" do
+      get "/exception"
+
+      expect(transport.events.count).to eq(2)
+
+      get "/posts/1"
+
+      expect(transport.events.count).to eq(3)
+
+      transaction = transport.events.last.to_hash
+
+      expect(transaction[:type]).to eq("transaction")
+      expect(transaction[:transaction]).to eq("PostsController#show")
+      second_span = transaction[:spans][1]
+      expect(second_span[:description]).to eq("PostsController#show")
     end
   end
 
