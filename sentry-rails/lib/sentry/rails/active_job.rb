@@ -1,10 +1,6 @@
 module Sentry
   module Rails
     module ActiveJobExtensions
-      ALREADY_SUPPORTED_SENTRY_ADAPTERS = %w(
-        ActiveJob::QueueAdapters::SidekiqAdapter
-      ).freeze
-
       def self.included(base)
         base.class_eval do
           around_perform do |job, block|
@@ -34,7 +30,7 @@ module Sentry
       end
 
       def already_supported_by_specific_integration?(job)
-        ALREADY_SUPPORTED_SENTRY_ADAPTERS.include?(job.class.queue_adapter.class.to_s)
+        Sentry.configuration.rails.ignored_active_job_adapters.include?(job.class.queue_adapter.class.to_s)
       end
 
       def sentry_context(job)
