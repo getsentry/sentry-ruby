@@ -1,7 +1,8 @@
 class ErrorWorker
   include Sidekiq::Worker
+  sidekiq_options retry: false
 
   def perform
-    1 / 0
+    raise "Worker failed"
   end
 end
