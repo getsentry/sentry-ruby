@@ -1,5 +1,9 @@
 # Changelog
 
+## Unreleased (4.2.0)
+
+- Add sidekiq adapter to sentry-rails' ignored adapters list [#1257](https://github.com/getsentry/sentry-ruby/pull/1257)
+
 ## 4.1.3
 
 - Use sentry-ruby-core as the main SDK dependency [#1245](https://github.com/getsentry/sentry-ruby/pull/1245)
