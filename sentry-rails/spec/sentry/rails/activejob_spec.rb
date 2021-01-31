@@ -58,6 +58,18 @@ RSpec.describe "ActiveJob integration" do
     MyActiveJob.queue_adapter = :inline
   end
 
+  it "adds useful context to extra" do
+    job = FailedJob.new
+
+    expect { job.perform_now }.to raise_error(FailedJob::TestError)
+
+    event = transport.events.last.to_json_compatible
+    expect(event.dig("extra", "active_job")).to eq("FailedJob")
+    expect(event.dig("extra", "job_id")).to be_a(String)
+    expect(event.dig("extra", "provider_job_id")).to be_nil
+    expect(event.dig("extra", "arguments")).to eq([])
+  end
+
   it "clears context" do
     job = MyActiveJob.new
 

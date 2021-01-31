@@ -34,19 +34,14 @@ module Sentry
       end
 
       def sentry_context(job)
-        ctx = {
-          :active_job => job.class.name,
-          :arguments => job.arguments,
-          :scheduled_at => job.scheduled_at,
-          :job_id => job.job_id,
-          :locale => job.locale
+        {
+          active_job: job.class.name,
+          arguments: job.arguments,
+          scheduled_at: job.scheduled_at,
+          job_id: job.job_id,
+          provider_job_id: job.provider_job_id,
+          locale: job.locale
         }
-        # Add provider_job_id details if Rails 5
-        if job.respond_to?(:provider_job_id)
-          ctx[:provider_job_id] = job.provider_job_id
-        end
-
-        ctx
       end
     end
   end
