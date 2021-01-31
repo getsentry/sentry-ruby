@@ -5,6 +5,7 @@
 - Inspect exception cause by default & don't exclude ActiveJob::DeserializationError [#1180](https://github.com/getsentry/sentry-ruby/pull/1180)
   - Fixes [#1071](https://github.com/getsentry/sentry-ruby/issues/1071)
 - Make sentry-rails a Rails engine and provide default job class for async [#1181](https://github.com/getsentry/sentry-ruby/pull/1181)
+- Allow users to configure ActiveJob adapters to ignore [#1256](https://github.com/getsentry/sentry-ruby/pull/1256)
 
 ## 4.1.7
 
