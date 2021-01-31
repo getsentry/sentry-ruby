@@ -68,6 +68,9 @@ RSpec.describe "ActiveJob integration" do
     expect(event.dig("extra", "job_id")).to be_a(String)
     expect(event.dig("extra", "provider_job_id")).to be_nil
     expect(event.dig("extra", "arguments")).to eq([])
+
+    expect(event.dig("tags", "job_id")).to eq(event.dig("extra", "job_id"))
+    expect(event.dig("tags", "provider_job_id")).to eq(event.dig("extra", "provider_job_id"))
   end
 
   it "clears context" do
