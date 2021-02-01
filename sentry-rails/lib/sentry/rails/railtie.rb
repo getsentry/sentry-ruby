@@ -5,6 +5,7 @@ require "sentry/rails/backtrace_cleaner"
 require "sentry/rails/controller_methods"
 require "sentry/rails/controller_transaction"
 require "sentry/rails/overrides/streaming_reporter"
+require "sentry/rails/overrides/file_handler"
 
 module Sentry
   class Railtie < ::Rails::Railtie
@@ -16,7 +17,7 @@ module Sentry
       app.config.middleware.use(Sentry::Rails::RescuedExceptionInterceptor)
     end
 
-    config.after_initialize do
+    config.after_initialize do |app|
       next unless Sentry.initialized?
 
       configure_project_root
@@ -24,6 +25,7 @@ module Sentry
       extend_controller_methods
       extend_active_job if defined?(ActiveJob)
       override_streaming_reporter
+      override_file_handler if app.config.public_file_server.enabled
       setup_backtrace_cleanup_callback
       inject_breadcrumbs_logger
       activate_tracing
@@ -68,6 +70,12 @@ module Sentry
     def override_streaming_reporter
       ActiveSupport.on_load :action_view do
         ActionView::StreamingTemplateRenderer::Body.send(:prepend, Sentry::Rails::Overrides::StreamingReporter)
+      end
+    end
+
+    def override_file_handler
+      ActiveSupport.on_load :action_controller do
+        ActionDispatch::FileHandler.send(:prepend, Sentry::Rails::Overrides::FileHandler)
       end
     end
 
