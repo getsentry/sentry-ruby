@@ -69,7 +69,7 @@ module Sentry
 
       event_id = event_hash[:event_id] || event_hash["event_id"]
       event_type = event_hash[:type] || event_hash["type"]
-      configuration.logger.info(LOGGER_PROGNAME) { "Sending #{event_type} #{event_id} to Sentry" }
+      # configuration.logger.info(LOGGER_PROGNAME) { "Sending #{event_type} #{event_id} to Sentry" }
       encode(event_hash)
     end
 
