@@ -104,6 +104,35 @@ RSpec.describe Sentry::Rails::Tracing, type: :request do
       second_span = transaction[:spans][2]
       expect(second_span[:description]).to eq("PostsController#show")
     end
+
+    context "with sentry-trace header" do
+      let(:external_transaction) do
+        Sentry::Transaction.new(
+          op: "pageload",
+          status: "ok",
+          sampled: true,
+          name: "a/path"
+        )
+      end
+
+      it "inherits trace info from the transaction" do
+        p = Post.create!
+
+        get "/posts/#{p.id}", headers: { "sentry-trace" => external_transaction.to_sentry_trace }
+
+        transaction = transport.events.last
+        expect(transaction.type).to eq("transaction")
+        expect(transaction.timestamp).not_to be_nil
+        expect(transaction.contexts.dig(:trace, :status)).to eq("ok")
+        expect(transaction.contexts.dig(:trace, :op)).to eq("rails.request")
+        expect(transaction.spans.count).to eq(0)
+
+        # should inherit information from the external_transaction
+        expect(transaction.contexts.dig(:trace, :trace_id)).to eq(external_transaction.trace_id)
+        expect(transaction.contexts.dig(:trace, :parent_span_id)).to eq(external_transaction.span_id)
+        expect(transaction.contexts.dig(:trace, :span_id)).not_to eq(external_transaction.span_id)
+      end
+    end
   end
 
   context "without traces_sample_rate set" do

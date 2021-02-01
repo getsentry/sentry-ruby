@@ -178,7 +178,7 @@ RSpec.describe Sentry::Rack::CaptureExceptions, rack: true do
       end
 
       it "inherits trace info from the transaction" do
-        env["sentry-trace"] = external_transaction.to_sentry_trace
+        env["HTTP_SENTRY_TRACE"] = external_transaction.to_sentry_trace
 
         stack.call(env)
 
