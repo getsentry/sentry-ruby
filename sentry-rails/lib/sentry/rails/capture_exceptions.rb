@@ -1,6 +1,14 @@
 module Sentry
   module Rails
     class CaptureExceptions < Sentry::Rack::CaptureExceptions
+      def initialize(app)
+        super
+
+        if defined?(::Sprockets::Rails)
+          @assets_regex = %r(\A/{0,2}#{::Rails.application.config.assets.prefix})
+        end
+      end
+
       private
 
       def collect_exception(env)
@@ -19,6 +27,13 @@ module Sentry
         end
 
         Sentry::Rails.capture_exception(exception)
+      end
+
+      def finish_span(span, status_code)
+        if @assets_regex.nil? || !span.name.match?(@assets_regex)
+          span.set_http_status(status_code)
+          span.finish
+        end
       end
     end
   end

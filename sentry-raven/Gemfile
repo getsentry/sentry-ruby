@@ -16,6 +16,9 @@ gem "sidekiq"
 gem "rack"
 gem "rack-timeout"
 
+# TODO: Remove this if https://github.com/jruby/jruby/issues/6547 is addressed
+gem "i18n", "<= 1.8.7"
+
 gem "pry"
 gem "benchmark-ips"
 gem "benchmark_driver"
