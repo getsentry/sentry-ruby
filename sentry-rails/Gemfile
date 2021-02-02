@@ -11,6 +11,7 @@ gem "jdbc-sqlite3", platform: :jruby
 gem "sqlite3", platform: :ruby
 
 gem "rails", "~> #{rails_version}"
+gem "sprockets-rails"
 gem "rspec-rails", "~> 4.0"
 gem "codecov", "0.2.12"
 

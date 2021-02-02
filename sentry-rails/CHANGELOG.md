@@ -8,10 +8,11 @@
 - Allow users to configure ActiveJob adapters to ignore [#1256](https://github.com/getsentry/sentry-ruby/pull/1256)
 - Tag `job_id` and `provider_job_id` on ActiveJob events [#1259](https://github.com/getsentry/sentry-ruby/pull/1259)
 
-## Unreleased
+## 4.1.7
 
 - Use env to carry original transaction name [#1255](https://github.com/getsentry/sentry-ruby/pull/1255)
 - Fix duration of tracing event in Rails 5 [#1254](https://github.com/getsentry/sentry-ruby/pull/1254) (by @abcang)
+- Filter out static file transaction [#1247](https://github.com/getsentry/sentry-ruby/pull/1247)
 
 ## 4.1.6
 
