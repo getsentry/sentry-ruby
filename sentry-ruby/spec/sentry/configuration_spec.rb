@@ -367,4 +367,27 @@ RSpec.describe Sentry::Configuration do
       end
     end
   end
+
+  describe '.add_post_initialization_hook' do
+    module Sentry
+      class Configuration
+        attr_reader :hook1, :hook2
+
+        add_post_initialization_hook do
+          @hook1 = true
+        end
+
+        add_post_initialization_hook do
+          @hook2 = true
+        end
+      end
+    end
+
+    it 'calls all hooks and initializes assigned variables' do
+      instance = described_class.new
+
+      expect(instance.hook1). to eq true
+      expect(instance.hook2).to eq true
+    end
+  end
 end

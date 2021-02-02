@@ -386,7 +386,19 @@ module Sentry
       end
     end
 
-    # allow extensions to extend the Configuration class
-    def post_initialization_callback; end
+    def post_initialization_callback
+      @@post_initialization_hooks ||= []
+      @@post_initialization_hooks.each do |hook|
+        instance_eval(&hook)
+      end
+    end
+
+    protected
+
+    # allow extensions to add their hooks to the Configuration class
+    def self.add_post_initialization_hook(&block)
+      @@post_initialization_hooks ||= []
+      @@post_initialization_hooks << block
+    end
   end
 end
