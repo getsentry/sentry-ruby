@@ -5,6 +5,7 @@
 - Add ThreadsInterface [#1178](https://github.com/getsentry/sentry-ruby/pull/1178)
 - Inspect exception cause by default & don't exclude ActiveJob::DeserializationError [#1180](https://github.com/getsentry/sentry-ruby/pull/1180)
   - Fixes [#1071](https://github.com/getsentry/sentry-ruby/issues/1071)
+- Add ability to have many post initialization callbacks [#1261](https://github.com/getsentry/sentry-ruby/pull/1261)
 
 ## 4.1.6
 
@@ -146,4 +147,3 @@ Fix require reference
 ## 0.1.0
 
 First version
-
