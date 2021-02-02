@@ -18,7 +18,7 @@ jobs:
     strategy:
       matrix:
         rails_version: [0, 4.2, 5.2, 6.0.0]
-        ruby_version: [2.3, 2.4, 2.5, 2.6, 2.7, '3.0', 'jruby-9.2.11.0']
+        ruby_version: [2.3, 2.4, 2.5, 2.6, 2.7, '3.0', jruby]
         os: [ubuntu-latest]
         include:
           - ruby_version: '3.0'
