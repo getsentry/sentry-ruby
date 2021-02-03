@@ -2,8 +2,14 @@
 
 ## Unreleased (4.2.0)
 
-- Add sidekiq adapter to sentry-rails' ignored adapters list [#1257](https://github.com/getsentry/sentry-ruby/pull/1257)
+### Features
+
 - Tag queue name and jid on sidekiq events [#1258](https://github.com/getsentry/sentry-ruby/pull/1258)
+<img width="1234" alt="sidekiq event tagged with queue name and jid" src="https://user-images.githubusercontent.com/5079556/106389900-d0381700-6420-11eb-90b9-a95b0881b696.png">
+
+### Refactorings
+
+- Add sidekiq adapter to sentry-rails' ignored adapters list [#1257](https://github.com/getsentry/sentry-ruby/pull/1257)
 
 ## 4.1.3
 
