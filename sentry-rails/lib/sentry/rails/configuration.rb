@@ -33,13 +33,13 @@ module Sentry
       attr_accessor :report_rescued_exceptions
 
       # Some adapters, like sidekiq, already have their own sentry integration.
-      # In those cases, we should disable ActiveJob's reporting to avoid duplicated reports.
-      attr_accessor :ignored_active_job_adapters
+      # In those cases, we should skip ActiveJob's reporting to avoid duplicated reports.
+      attr_accessor :skippable_job_adapters
 
       def initialize
         @report_rescued_exceptions = true
         # TODO: Remove this in 4.2.0
-        @ignored_active_job_adapters = []
+        @skippable_job_adapters = []
       end
     end
   end

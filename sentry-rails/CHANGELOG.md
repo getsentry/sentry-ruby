@@ -18,6 +18,14 @@ config.async = lambda { |event, hint| Sentry::SendEventJob.perform_later(event, 
 
 - Allow users to configure ActiveJob adapters to ignore [#1256](https://github.com/getsentry/sentry-ruby/pull/1256)
 
+```ruby
+# sentry-rails will skip active_job reporting for jobs that use ActiveJob::QueueAdapters::SidekiqAdapter
+# you should use this option when:
+# - you don't want to see events from a certain adapter
+# - you already have a better reporting setup for the adapter (like having `sentry-sidekiq` installed)
+config.rails.skippable_job_adapters = ["ActiveJob::QueueAdapters::SidekiqAdapter"]
+```
+
 - Tag `job_id` and `provider_job_id` on ActiveJob events [#1259](https://github.com/getsentry/sentry-ruby/pull/1259)
 
 <img width="1330" alt="example of tagged event" src="https://user-images.githubusercontent.com/5079556/106389781-3a03f100-6420-11eb-810c-a99869eb26dd.png">

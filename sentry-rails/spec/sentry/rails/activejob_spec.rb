@@ -168,7 +168,7 @@ RSpec.describe "ActiveJob integration" do
 
   context "when we are using an adapter which has a specific integration" do
     before do
-      Sentry.configuration.rails.ignored_active_job_adapters = ["ActiveJob::QueueAdapters::SidekiqAdapter"]
+      Sentry.configuration.rails.skippable_job_adapters = ["ActiveJob::QueueAdapters::SidekiqAdapter"]
     end
     it "does not trigger sentry and re-raises" do
       MyActiveJob.queue_adapter = :sidekiq

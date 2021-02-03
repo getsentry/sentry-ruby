@@ -37,7 +37,7 @@ module Sentry
       end
 
       def already_supported_by_specific_integration?(job)
-        Sentry.configuration.rails.ignored_active_job_adapters.include?(job.class.queue_adapter.class.to_s)
+        Sentry.configuration.rails.skippable_job_adapters.include?(job.class.queue_adapter.class.to_s)
       end
 
       def sentry_context(job)
