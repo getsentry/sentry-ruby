@@ -2,12 +2,32 @@
 
 ## Unreleased (4.2.0)
 
+### Features
+
+- Make sentry-rails a Rails engine and provide default job class for async [#1181](https://github.com/getsentry/sentry-ruby/pull/1181)
+
+`sentry-rails` now provides a default ActiveJob class for sending events asynchronously. You can use it directly without define your own one:
+
+```ruby
+config.async = lambda { |event, hint| Sentry::SendEventJob.perform_later(event, hint) }
+```
+
+- Add configuration option for trusted proxies [#1126](https://github.com/getsentry/sentry-ruby/pull/1126)
+
+`sentry-rails` now injects `Rails.application.config.action_dispatch.trusted_proxies` into `Sentry.configuration.trusted_proxies` automatically.
+
+- Allow users to configure ActiveJob adapters to ignore [#1256](https://github.com/getsentry/sentry-ruby/pull/1256)
+
+- Tag `job_id` and `provider_job_id` on ActiveJob events [#1259](https://github.com/getsentry/sentry-ruby/pull/1259)
+
+<img width="1330" alt="example of tagged event" src="https://user-images.githubusercontent.com/5079556/106389781-3a03f100-6420-11eb-810c-a99869eb26dd.png">
+
+- Use another method for post initialization callback [#1261](https://github.com/getsentry/sentry-ruby/pull/1261)
+
+### Bug Fixes
+
 - Inspect exception cause by default & don't exclude ActiveJob::DeserializationError [#1180](https://github.com/getsentry/sentry-ruby/pull/1180)
   - Fixes [#1071](https://github.com/getsentry/sentry-ruby/issues/1071)
-- Make sentry-rails a Rails engine and provide default job class for async [#1181](https://github.com/getsentry/sentry-ruby/pull/1181)
-- Allow users to configure ActiveJob adapters to ignore [#1256](https://github.com/getsentry/sentry-ruby/pull/1256)
-- Tag `job_id` and `provider_job_id` on ActiveJob events [#1259](https://github.com/getsentry/sentry-ruby/pull/1259)
-- Use another method for post initialization callback [#1261](https://github.com/getsentry/sentry-ruby/pull/1261)
 
 ## 4.1.7
 
