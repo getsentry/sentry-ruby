@@ -1,5 +1,42 @@
 # Changelog
 
+## Unreleased (4.2.0)
+
+### Features
+
+- Make sentry-rails a Rails engine and provide default job class for async [#1181](https://github.com/getsentry/sentry-ruby/pull/1181)
+
+`sentry-rails` now provides a default ActiveJob class for sending events asynchronously. You can use it directly without define your own one:
+
+```ruby
+config.async = lambda { |event, hint| Sentry::SendEventJob.perform_later(event, hint) }
+```
+
+- Add configuration option for trusted proxies [#1126](https://github.com/getsentry/sentry-ruby/pull/1126)
+
+`sentry-rails` now injects `Rails.application.config.action_dispatch.trusted_proxies` into `Sentry.configuration.trusted_proxies` automatically.
+
+- Allow users to configure ActiveJob adapters to ignore [#1256](https://github.com/getsentry/sentry-ruby/pull/1256)
+
+```ruby
+# sentry-rails will skip active_job reporting for jobs that use ActiveJob::QueueAdapters::SidekiqAdapter
+# you should use this option when:
+# - you don't want to see events from a certain adapter
+# - you already have a better reporting setup for the adapter (like having `sentry-sidekiq` installed)
+config.rails.skippable_job_adapters = ["ActiveJob::QueueAdapters::SidekiqAdapter"]
+```
+
+- Tag `job_id` and `provider_job_id` on ActiveJob events [#1259](https://github.com/getsentry/sentry-ruby/pull/1259)
+
+<img width="1330" alt="example of tagged event" src="https://user-images.githubusercontent.com/5079556/106389781-3a03f100-6420-11eb-810c-a99869eb26dd.png">
+
+- Use another method for post initialization callback [#1261](https://github.com/getsentry/sentry-ruby/pull/1261)
+
+### Bug Fixes
+
+- Inspect exception cause by default & don't exclude ActiveJob::DeserializationError [#1180](https://github.com/getsentry/sentry-ruby/pull/1180)
+  - Fixes [#1071](https://github.com/getsentry/sentry-ruby/issues/1071)
+
 ## 4.1.7
 
 - Use env to carry original transaction name [#1255](https://github.com/getsentry/sentry-ruby/pull/1255)
@@ -75,4 +112,3 @@ Release test
 ## 0.1.0
 
 First version
-

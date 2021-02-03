@@ -1,5 +1,39 @@
 # Changelog
 
+## Unreleased (4.2.0)
+
+### Features
+
+- Add configuration option for trusted proxies [#1126](https://github.com/getsentry/sentry-ruby/pull/1126)
+
+```ruby
+config.trusted_proxies = ["2.2.2.2"] # this ip address will be skipped when computing users' ip addresses
+```
+
+- Add ThreadsInterface [#1178](https://github.com/getsentry/sentry-ruby/pull/1178)
+
+<img width="1029" alt="an exception event that has the new threads interface" src="https://user-images.githubusercontent.com/5079556/103459223-98b64c00-4d48-11eb-9ebb-ee58f15e647e.png">
+
+- Support `config.before_breadcrumb` [#1253](https://github.com/getsentry/sentry-ruby/pull/1253)
+
+```ruby
+# this will be called before every breadcrumb is added to the breadcrumb buffer
+# you can use it to
+# - remove the data you don't want to send
+# - add additional info to the data
+config.before_breadcrumb = lambda do |breadcrumb, hint|
+  breadcrumb.message = "foo"
+  breadcrumb
+end
+```
+
+- Add ability to have many post initialization callbacks [#1261](https://github.com/getsentry/sentry-ruby/pull/1261)
+
+### Bug Fixes
+
+- Inspect exception cause by default & don't exclude ActiveJob::DeserializationError [#1180](https://github.com/getsentry/sentry-ruby/pull/1180)
+  - Fixes [#1071](https://github.com/getsentry/sentry-ruby/issues/1071)
+
 ## 4.1.6
 
 - Don't detect project root for Rails apps [#1243](https://github.com/getsentry/sentry-ruby/pull/1243)
@@ -140,4 +174,3 @@ Fix require reference
 ## 0.1.0
 
 First version
-

@@ -230,12 +230,45 @@ RSpec.describe Sentry::Hub do
       new_breadcrumb
     end
 
+    let(:peek_crumb) do
+      subject.current_scope.breadcrumbs.peek
+    end
+
     it "adds the breadcrumb to the buffer" do
       expect(subject.current_scope.breadcrumbs.empty?).to eq(true)
 
       subject.add_breadcrumb(new_breadcrumb)
 
-      expect(subject.current_scope.breadcrumbs.peek).to eq(new_breadcrumb)
+      expect(peek_crumb).to eq(new_breadcrumb)
+    end
+
+    context "with before_breadcrumb" do
+      before do
+        configuration.before_breadcrumb = lambda do |breadcrumb, hint|
+          breadcrumb.message = hint[:message]
+          breadcrumb
+        end
+      end
+
+      it "adds the updated breadcrumb" do
+        subject.add_breadcrumb(new_breadcrumb, hint: { message: "hey!" })
+
+        expect(peek_crumb.message).to eq("hey!")
+      end
+
+      context "when before_breadcrumb returns nil" do
+        before do
+          configuration.before_breadcrumb = lambda do |breadcrumb, hint|
+            nil
+          end
+        end
+
+        it "doesn't add anything" do
+          subject.add_breadcrumb(new_breadcrumb)
+
+          expect(peek_crumb).to eq(nil)
+        end
+      end
     end
   end
 
