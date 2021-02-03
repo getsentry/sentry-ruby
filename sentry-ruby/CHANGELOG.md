@@ -12,7 +12,7 @@ config.trusted_proxies = ["2.2.2.2"] # this ip address will be skipped when comp
 
 - Add ThreadsInterface [#1178](https://github.com/getsentry/sentry-ruby/pull/1178)
 
-<img width="1029" alt="截圖 2021-01-02 下午10 18 17" src="https://user-images.githubusercontent.com/5079556/103459223-98b64c00-4d48-11eb-9ebb-ee58f15e647e.png">
+<img width="1029" alt="an exception event that has the new threads interface" src="https://user-images.githubusercontent.com/5079556/103459223-98b64c00-4d48-11eb-9ebb-ee58f15e647e.png">
 
 - Support `config.before_breadcrumb` [#1253](https://github.com/getsentry/sentry-ruby/pull/1253)
 
@@ -30,6 +30,9 @@ end
 - Add ability to have many post initialization callbacks [#1261](https://github.com/getsentry/sentry-ruby/pull/1261)
 
 ### Bug Fixes
+
+- Inspect exception cause by default & don't exclude ActiveJob::DeserializationError [#1180](https://github.com/getsentry/sentry-ruby/pull/1180)
+  - Fixes [#1071](https://github.com/getsentry/sentry-ruby/issues/1071)
 
 ## 4.1.6
 
