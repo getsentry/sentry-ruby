@@ -36,7 +36,7 @@ RSpec.describe Sentry::Sidekiq do
     make_basic_app
   end
 
-  it "adds sidekiq adapter to config.rails.ignored_active_job_adapters" do
-    expect(Sentry.configuration.rails.ignored_active_job_adapters).to include("ActiveJob::QueueAdapters::SidekiqAdapter")
+  it "adds sidekiq adapter to config.rails.skippable_job_adapters" do
+    expect(Sentry.configuration.rails.skippable_job_adapters).to include("ActiveJob::QueueAdapters::SidekiqAdapter")
   end
 end

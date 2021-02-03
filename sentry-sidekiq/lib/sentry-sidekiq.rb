@@ -16,7 +16,7 @@ module Sentry
         config.after_initialize do
           next unless Sentry.initialized?
 
-          Sentry.configuration.rails.ignored_active_job_adapters << "ActiveJob::QueueAdapters::SidekiqAdapter"
+          Sentry.configuration.rails.skippable_job_adapters << "ActiveJob::QueueAdapters::SidekiqAdapter"
         end
       end
     end
