@@ -1,5 +1,10 @@
 # Changelog
 
+## Unreleased (4.2.0)
+
+- Add sidekiq adapter to sentry-rails' ignored adapters list [#1257](https://github.com/getsentry/sentry-ruby/pull/1257)
+- Tag queue name and jid on sidekiq events [#1258](https://github.com/getsentry/sentry-ruby/pull/1258)
+
 ## 4.1.3
 
 - Use sentry-ruby-core as the main SDK dependency [#1245](https://github.com/getsentry/sentry-ruby/pull/1245)

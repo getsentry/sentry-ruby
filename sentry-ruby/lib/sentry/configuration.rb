@@ -165,6 +165,10 @@ module Sentry
 
     AVAILABLE_BREADCRUMBS_LOGGERS = [:sentry_logger, :active_support_logger].freeze
 
+    # Post initialization callbacks are called at the end of initialization process
+    # allowing extending the configuration of sentry-ruby by multiple extensions
+    @@post_initialization_callbacks = []
+
     def initialize
       self.background_worker_threads = Concurrent.processor_count
       self.breadcrumbs_logger = []
@@ -191,7 +195,7 @@ module Sentry
 
       @transport = Transport::Configuration.new
       @gem_specs = Hash[Gem::Specification.map { |spec| [spec.name, spec.version.to_s] }] if Gem::Specification.respond_to?(:map)
-      post_initialization_callback
+      run_post_initialization_callbacks
     end
 
     def dsn=(value)
@@ -403,7 +407,21 @@ module Sentry
       end
     end
 
-    # allow extensions to extend the Configuration class
-    def post_initialization_callback; end
+    def run_post_initialization_callbacks
+      self.class.post_initialization_callbacks.each do |hook|
+        instance_eval(&hook)
+      end
+    end
+
+    # allow extensions to add their hooks to the Configuration class
+    def self.add_post_initialization_callback(&block)
+      self.post_initialization_callbacks << block
+    end
+
+    protected
+
+    def self.post_initialization_callbacks
+      @@post_initialization_callbacks
+    end
   end
 end

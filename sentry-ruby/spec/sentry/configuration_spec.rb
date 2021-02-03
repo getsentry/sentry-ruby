@@ -367,4 +367,27 @@ RSpec.describe Sentry::Configuration do
       end
     end
   end
+
+  describe '.add_post_initialization_callback' do
+    class SentryConfigurationSample < Sentry::Configuration
+      attr_reader :var1, :var2
+
+      add_post_initialization_callback do
+        @var1 = 1
+      end
+
+      add_post_initialization_callback do
+        @var2 = 2
+      end
+    end
+
+    subject(:configuration) { SentryConfigurationSample }
+
+    it 'calls all hooks and initializes assigned variables' do
+      instance = configuration.new
+
+      expect(instance.var1). to eq 1
+      expect(instance.var2). to eq 2
+    end
+  end
 end

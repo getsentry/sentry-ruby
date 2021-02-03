@@ -38,7 +38,7 @@ RSpec.describe "without Sentry initialized" do
 end
 
 RSpec.describe "ActiveJob integration" do
-  before(:all) do
+  before(:each) do
     make_basic_app
   end
 
@@ -56,6 +56,21 @@ RSpec.describe "ActiveJob integration" do
 
   before(:each) do
     MyActiveJob.queue_adapter = :inline
+  end
+
+  it "adds useful context to extra" do
+    job = FailedJob.new
+
+    expect { job.perform_now }.to raise_error(FailedJob::TestError)
+
+    event = transport.events.last.to_json_compatible
+    expect(event.dig("extra", "active_job")).to eq("FailedJob")
+    expect(event.dig("extra", "job_id")).to be_a(String)
+    expect(event.dig("extra", "provider_job_id")).to be_nil
+    expect(event.dig("extra", "arguments")).to eq([])
+
+    expect(event.dig("tags", "job_id")).to eq(event.dig("extra", "job_id"))
+    expect(event.dig("tags", "provider_job_id")).to eq(event.dig("extra", "provider_job_id"))
   end
 
   it "clears context" do
@@ -119,7 +134,7 @@ RSpec.describe "ActiveJob integration" do
     context "and in customized SentryJob too" do
       before do
         class CustomSentryJob < ::Sentry::SendEventJob
-          def perform(event)
+          def perform(event, hint)
             raise "Not excluded exception"
           rescue
             raise ActiveJob::DeserializationError
@@ -152,6 +167,9 @@ RSpec.describe "ActiveJob integration" do
   end
 
   context "when we are using an adapter which has a specific integration" do
+    before do
+      Sentry.configuration.rails.ignored_active_job_adapters = ["ActiveJob::QueueAdapters::SidekiqAdapter"]
+    end
     it "does not trigger sentry and re-raises" do
       MyActiveJob.queue_adapter = :sidekiq
       job = MyActiveJob.new

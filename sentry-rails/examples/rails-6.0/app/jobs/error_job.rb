@@ -1,5 +1,7 @@
 class ErrorJob < ApplicationJob
+  self.queue_adapter = :async
+
   def perform
-    1 / 0
+    raise "Job failed"
   end
 end
