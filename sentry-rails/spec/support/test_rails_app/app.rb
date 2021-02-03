@@ -40,7 +40,9 @@ class PostsController < ActionController::Base
   end
 
   def show
-    Post.find(params[:id])
+    p = Post.find(params[:id])
+
+    render plain: p.id
   end
 end
 

@@ -7,10 +7,11 @@
   - Fixes [#1071](https://github.com/getsentry/sentry-ruby/issues/1071)
 - Add ability to have many post initialization callbacks [#1261](https://github.com/getsentry/sentry-ruby/pull/1261)
 
-## Unreleased
+## 4.1.6
 
 - Don't detect project root for Rails apps [#1243](https://github.com/getsentry/sentry-ruby/pull/1243)
 - Separate individual breadcrumb's data serialization [#1250](https://github.com/getsentry/sentry-ruby/pull/1250)
+- Capture sentry-trace with the correct http header key [#1260](https://github.com/getsentry/sentry-ruby/pull/1260)
 
 ## 4.1.5
 
