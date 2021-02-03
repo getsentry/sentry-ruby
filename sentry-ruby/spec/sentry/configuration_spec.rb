@@ -327,6 +327,10 @@ RSpec.describe Sentry::Configuration do
       context 'when the raised exception has a cause that is in excluded_exceptions' do
         let(:incoming_exception) { build_exception_with_cause(MyTestException.new) }
         context 'when inspect_exception_causes_for_exclusion is false' do
+          before do
+            subject.inspect_exception_causes_for_exclusion = false
+          end
+
           it 'returns true' do
             expect(subject.exception_class_allowed?(incoming_exception)).to eq true
           end
@@ -361,6 +365,29 @@ RSpec.describe Sentry::Configuration do
           expect(subject.exception_class_allowed?(incoming_exception)).to eq false
         end
       end
+    end
+  end
+
+  describe '.add_post_initialization_callback' do
+    class SentryConfigurationSample < Sentry::Configuration
+      attr_reader :var1, :var2
+
+      add_post_initialization_callback do
+        @var1 = 1
+      end
+
+      add_post_initialization_callback do
+        @var2 = 2
+      end
+    end
+
+    subject(:configuration) { SentryConfigurationSample }
+
+    it 'calls all hooks and initializes assigned variables' do
+      instance = configuration.new
+
+      expect(instance.var1). to eq 1
+      expect(instance.var2). to eq 2
     end
   end
 end
