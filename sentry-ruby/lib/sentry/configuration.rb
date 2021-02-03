@@ -38,19 +38,10 @@ module Sentry
     #
     attr_accessor :backtrace_cleanup_callback
 
-    # Optional Proc, called before adding the breadcrumb to the current scope
-    # E.g.: lambda { |breadcrumb, hint| breadcrumb }
-    # E.g.: lambda { |breadcrumb, hint| nil }
-    # E.g.: lambda { |breadcrumb, hint|
-    #   breadcrumb.message = 'a'
-    #   breadcrumb
-    # }
-    attr_reader :before_breadcrumb
-
     # Optional Proc, called before sending an event to the server/
-    # E.g.: lambda { |event, hint| event }
-    # E.g.: lambda { |event, hint| nil }
-    # E.g.: lambda { |event, hint|
+    # E.g.: lambda { |event| event }
+    # E.g.: lambda { |event| nil }
+    # E.g.: lambda { |event|
     #   event[:message] = 'a'
     #   event
     # }
@@ -118,9 +109,6 @@ module Sentry
     # will not be sent to Sentry.
     attr_accessor :send_default_pii
 
-    # IP ranges for trusted proxies that will be skipped when calculating IP address.
-    attr_accessor :trusted_proxies
-
     attr_accessor :server_name
 
     # Return a Transport::Configuration object for transport-related configurations.
@@ -165,10 +153,6 @@ module Sentry
 
     AVAILABLE_BREADCRUMBS_LOGGERS = [:sentry_logger, :active_support_logger].freeze
 
-    # Post initialization callbacks are called at the end of initialization process
-    # allowing extending the configuration of sentry-ruby by multiple extensions
-    @@post_initialization_callbacks = []
-
     def initialize
       self.background_worker_threads = Concurrent.processor_count
       self.breadcrumbs_logger = []
@@ -177,7 +161,7 @@ module Sentry
       self.enabled_environments = []
       self.exclude_loggers = []
       self.excluded_exceptions = IGNORE_DEFAULT.dup
-      self.inspect_exception_causes_for_exclusion = true
+      self.inspect_exception_causes_for_exclusion = false
       self.linecache = ::Sentry::LineCache.new
       self.logger = ::Sentry::Logger.new(STDOUT)
       self.project_root = Dir.pwd
@@ -186,7 +170,6 @@ module Sentry
       self.sample_rate = 1.0
       self.send_modules = true
       self.send_default_pii = false
-      self.trusted_proxies = []
       self.dsn = ENV['SENTRY_DSN']
       self.server_name = server_name_from_env
 
@@ -195,7 +178,7 @@ module Sentry
 
       @transport = Transport::Configuration.new
       @gem_specs = Hash[Gem::Specification.map { |spec| [spec.name, spec.version.to_s] }] if Gem::Specification.respond_to?(:map)
-      run_post_initialization_callbacks
+      post_initialization_callback
     end
 
     def dsn=(value)
@@ -238,14 +221,6 @@ module Sentry
       end
 
       @before_send = value
-    end
-
-    def before_breadcrumb=(value)
-      unless value.nil? || value.respond_to?(:call)
-        raise ArgumentError, "before_breadcrumb must be callable (or nil to disable)"
-      end
-
-      @before_breadcrumb = value
     end
 
     def environment=(environment)
@@ -407,21 +382,7 @@ module Sentry
       end
     end
 
-    def run_post_initialization_callbacks
-      self.class.post_initialization_callbacks.each do |hook|
-        instance_eval(&hook)
-      end
-    end
-
-    # allow extensions to add their hooks to the Configuration class
-    def self.add_post_initialization_callback(&block)
-      self.post_initialization_callbacks << block
-    end
-
-    protected
-
-    def self.post_initialization_callbacks
-      @@post_initialization_callbacks
-    end
+    # allow extensions to extend the Configuration class
+    def post_initialization_callback; end
   end
 end

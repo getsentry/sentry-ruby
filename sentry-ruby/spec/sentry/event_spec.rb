@@ -108,30 +108,7 @@ RSpec.describe Sentry::Event do
         )
 
         expect(event.to_hash[:tags][:request_id]).to eq("abcd-1234-abcd-1234")
-        expect(event.to_hash[:user][:ip_address]).to eq("2.2.2.2")
-      end
-
-      context "with config.trusted_proxies = [\"2.2.2.2\"]" do
-        before do
-          Sentry.configuration.trusted_proxies = ["2.2.2.2"]
-        end
-
-        it "calculates the correct ip address" do
-          Sentry.get_current_scope.apply_to_event(event)
-
-          expect(event.to_hash[:request]).to eq(
-            :data=>{"foo"=>"bar"},
-            env: { 'SERVER_NAME' => 'localhost', 'SERVER_PORT' => '80', "REMOTE_ADDR" => "192.168.1.1" },
-            headers: { 'Host' => 'localhost', "X-Forwarded-For" => "1.1.1.1, 2.2.2.2", "X-Request-Id" => "abcd-1234-abcd-1234" },
-            method: 'POST',
-            query_string: 'biz=baz',
-            url: 'http://localhost/lol',
-            cookies: {}
-          )
-
-          expect(event.to_hash[:tags][:request_id]).to eq("abcd-1234-abcd-1234")
-          expect(event.to_hash[:user][:ip_address]).to eq("1.1.1.1")
-        end
+        expect(event.to_hash[:user][:ip_address]).to eq("1.1.1.1")
       end
     end
   end

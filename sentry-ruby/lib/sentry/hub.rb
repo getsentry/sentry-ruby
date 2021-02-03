@@ -120,13 +120,7 @@ module Sentry
       event
     end
 
-    def add_breadcrumb(breadcrumb, hint: {})
-      if before_breadcrumb = current_client.configuration.before_breadcrumb
-        breadcrumb = before_breadcrumb.call(breadcrumb, hint)
-      end
-
-      return unless breadcrumb
-
+    def add_breadcrumb(breadcrumb)
       current_scope.add_breadcrumb(breadcrumb)
     end
 

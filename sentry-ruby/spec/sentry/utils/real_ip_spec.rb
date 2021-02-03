@@ -12,13 +12,13 @@ RSpec.describe Sentry::Utils::RealIp do
   context "when a list of x-forwarded-for ips is provided" do
     subject do
       Sentry::Utils::RealIp.new(
-        :forwarded_for => "2.2.2.2, 3.3.3.3, 4.4.4.4, 192.168.0.2",
+        :forwarded_for => "192.168.0.2, 2.2.2.2, 3.3.3.3, 4.4.4.4",
         :remote_addr => "192.168.0.1"
       )
     end
 
     it "should return the oldest ancestor that is not a local IP" do
-      expect(subject.calculate_ip).to eq("4.4.4.4")
+      expect(subject.calculate_ip).to eq("2.2.2.2")
     end
   end
 
@@ -47,19 +47,6 @@ RSpec.describe Sentry::Utils::RealIp do
 
     it "should return REMOTE_ADDR" do
       expect(subject.calculate_ip).to eq("192.168.0.1")
-    end
-  end
-
-  context "when custom proxies are provided" do
-    subject do
-      Sentry::Utils::RealIp.new(
-        :forwarded_for => "2.2.2.2, 3.3.3.3, 4.4.4.4",
-        :trusted_proxies => ["4.4.4.4"]
-      )
-    end
-
-    it "should return the first IP not in the trusted proxy list" do
-      expect(subject.calculate_ip).to eq("3.3.3.3")
     end
   end
 

@@ -46,7 +46,7 @@ RSpec.describe Sentry::Sidekiq do
 
       event = transport.events.last.to_json_compatible
 
-      expect(event["tags"]).to eq("queue" => "default", "jid" => "123123", "mood" => "sad")
+      expect(event["tags"]).to eq("mood" => "sad")
       expect(event["transaction"]).to eq("Sidekiq/SadWorker")
       expect(event["breadcrumbs"]["values"][0]["message"]).to eq("I'm sad!")
     end
@@ -57,7 +57,7 @@ RSpec.describe Sentry::Sidekiq do
 
       event = transport.events.last.to_json_compatible
 
-      expect(event["tags"]).to eq("queue" => "default", "jid" => "123123", "mood" => "very sad")
+      expect(event["tags"]).to eq("mood" => "very sad")
       expect(event["breadcrumbs"]["values"][0]["message"]).to eq("I'm very sad!")
     end
   end
@@ -68,7 +68,7 @@ RSpec.describe Sentry::Sidekiq do
     event = transport.events.last.to_json_compatible
 
     expect(event["message"]).to eq "I have something to say!"
-    expect(event["extra"]["sidekiq"]).to eq("class" => "ReportingWorker", "jid" => "123123", "queue" => "default")
+    expect(event["extra"]["sidekiq"]).to eq("class" => "ReportingWorker", "queue" => "default")
   end
 
   it "adds the failed job to the retry queue" do

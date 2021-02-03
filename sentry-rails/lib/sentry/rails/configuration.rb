@@ -2,7 +2,7 @@ module Sentry
   class Configuration
     attr_reader :rails
 
-    add_post_initialization_callback do
+    def post_initialization_callback
       @rails = Sentry::Rails::Configuration.new
       @excluded_exceptions = @excluded_exceptions.concat(Sentry::Rails::IGNORE_DEFAULT)
     end
@@ -23,6 +23,7 @@ module Sentry
       'ActionDispatch::Http::MimeNegotiation::InvalidType',
       'ActionController::UnknownHttpMethod',
       'ActionDispatch::Http::Parameters::ParseError',
+      'ActiveJob::DeserializationError', # Can cause infinite loops
       'ActiveRecord::RecordNotFound'
     ].freeze
     class Configuration
@@ -32,14 +33,8 @@ module Sentry
       # will report exceptions even when they are rescued by these middlewares.
       attr_accessor :report_rescued_exceptions
 
-      # Some adapters, like sidekiq, already have their own sentry integration.
-      # In those cases, we should skip ActiveJob's reporting to avoid duplicated reports.
-      attr_accessor :skippable_job_adapters
-
       def initialize
         @report_rescued_exceptions = true
-        # TODO: Remove this in 4.2.0
-        @skippable_job_adapters = []
       end
     end
   end

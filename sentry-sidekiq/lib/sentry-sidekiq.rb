@@ -4,22 +4,13 @@ require "sentry/integrable"
 require "sentry/sidekiq/version"
 require "sentry/sidekiq/error_handler"
 require "sentry/sidekiq/sentry_context_middleware"
+# require "sentry/sidekiq/configuration"
 
 module Sentry
   module Sidekiq
     extend Sentry::Integrable
 
     register_integration name: "sidekiq", version: Sentry::Sidekiq::VERSION
-
-    if defined?(::Rails)
-      class Railtie < ::Rails::Railtie
-        config.after_initialize do
-          next unless Sentry.initialized?
-
-          Sentry.configuration.rails.skippable_job_adapters << "ActiveJob::QueueAdapters::SidekiqAdapter"
-        end
-      end
-    end
   end
 end
 

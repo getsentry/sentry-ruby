@@ -133,7 +133,7 @@ class ReportingWorker
 end
 
 def process_job(processor, klass)
-  msg = Sidekiq.dump_json(jid: "123123", class: klass)
+  msg = Sidekiq.dump_json("class" => klass)
   job = Sidekiq::BasicFetch::UnitOfWork.new('queue:default', msg)
   processor.instance_variable_set(:'@job', job)
 

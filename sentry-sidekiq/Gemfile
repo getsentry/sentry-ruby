@@ -11,9 +11,8 @@ gem "rspec", "~> 3.0"
 gem "codecov", "0.2.12"
 
 gem "sidekiq"
-gem "rails"
+gem "activejob"
 
 gem "sentry-ruby", path: "../sentry-ruby"
-gem "sentry-rails", path: "../sentry-rails"
 
 gem "pry"
