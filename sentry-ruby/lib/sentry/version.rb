@@ -1,3 +1,3 @@
 module Sentry
-  VERSION = "4.1.5"
+  VERSION = "4.2.0"
 end
