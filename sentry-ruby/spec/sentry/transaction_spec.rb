@@ -23,6 +23,12 @@ RSpec.describe Sentry::Transaction do
       expect(child_transaction.parent_sampled).to eq(true)
       expect(child_transaction.op).to eq("child")
     end
+
+    it "handles invalid values without crashing" do
+      child_transaction = described_class.from_sentry_trace("dummy", op: "child")
+
+      expect(child_transaction).to be_nil
+    end
   end
 
   describe "#deep_dup" do

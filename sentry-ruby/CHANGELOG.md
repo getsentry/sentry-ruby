@@ -1,5 +1,11 @@
 # Changelog
 
+## Unreleased
+
+### Bug Fixes
+
+- Ignore invalid values for sentry-trace header that don't match the required format [#1265](https://github.com/getsentry/sentry-ruby/pull/1265)
+
 ## 4.2.0
 
 ### Features

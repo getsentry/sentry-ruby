@@ -29,6 +29,7 @@ module Sentry
       return unless sentry_trace
 
       match = SENTRY_TRACE_REGEXP.match(sentry_trace)
+      return if match.nil?
       trace_id, parent_span_id, sampled_flag = match[1..3]
 
       sampled = sampled_flag != "0"
