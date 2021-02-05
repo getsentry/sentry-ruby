@@ -194,6 +194,20 @@ RSpec.describe Sentry::Rack::CaptureExceptions, rack: true do
         expect(transaction.contexts.dig(:trace, :parent_span_id)).to eq(external_transaction.span_id)
         expect(transaction.contexts.dig(:trace, :span_id)).not_to eq(external_transaction.span_id)
       end
+
+      it "safely handles bugus header values" do
+        env["HTTP_SENTRY_TRACE"] = 'null'
+
+        stack.call(env)
+
+        # creates a new transaction
+        transaction = transport.events.last
+        expect(transaction.type).to eq("transaction")
+        expect(transaction.timestamp).not_to be_nil
+        expect(transaction.contexts.dig(:trace, :status)).to eq("ok")
+        expect(transaction.contexts.dig(:trace, :op)).to eq("rack.request")
+        expect(transaction.spans.count).to eq(0)
+      end
     end
 
     context "when the transaction is sampled" do

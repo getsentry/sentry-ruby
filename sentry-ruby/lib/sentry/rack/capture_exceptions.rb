@@ -16,12 +16,9 @@ module Sentry
           scope.set_transaction_name(env["PATH_INFO"]) if env["PATH_INFO"]
           scope.set_rack_env(env)
 
-          span =
-            if sentry_trace = env["HTTP_SENTRY_TRACE"]
-              Sentry::Transaction.from_sentry_trace(sentry_trace, name: scope.transaction_name, op: transaction_op)
-            else
-              Sentry.start_transaction(name: scope.transaction_name, op: transaction_op)
-            end
+          sentry_trace = env["HTTP_SENTRY_TRACE"]
+          span = Sentry::Transaction.from_sentry_trace(sentry_trace, name: scope.transaction_name, op: transaction_op) if sentry_trace
+          span ||= Sentry.start_transaction(name: scope.transaction_name, op: transaction_op)
 
           scope.set_span(span)
 
