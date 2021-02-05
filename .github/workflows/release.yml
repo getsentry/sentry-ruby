@@ -3,7 +3,7 @@ on:
   workflow_dispatch:
     inputs:
       sdk_name:
-        description: SDK to release (sentry-raven, sentry-rails, sentry-ruby, sentry-sidekiq)
+        description: SDK to release (sentry-raven, sentry-rails, sentry-ruby, sentry-sidekiq, sentry-delayed_job)
         required: true
       version:
         description: Version to release
