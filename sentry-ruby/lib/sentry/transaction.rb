@@ -34,7 +34,7 @@ module Sentry
 
       sampled = sampled_flag != "0"
 
-      new(trace_id: trace_id, parent_span_id: parent_span_id, parent_sampled: sampled, **options)
+      new(trace_id: trace_id, parent_span_id: parent_span_id, parent_sampled: sampled, sampled: sampled, **options)
     end
 
     def to_hash

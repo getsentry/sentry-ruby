@@ -157,7 +157,7 @@ RSpec.describe Sentry::Rails::Tracing, type: :request do
         expect(transaction.timestamp).not_to be_nil
         expect(transaction.contexts.dig(:trace, :status)).to eq("ok")
         expect(transaction.contexts.dig(:trace, :op)).to eq("rails.request")
-        expect(transaction.spans.count).to eq(0)
+        expect(transaction.spans.count).to eq(3)
 
         # should inherit information from the external_transaction
         expect(transaction.contexts.dig(:trace, :trace_id)).to eq(external_transaction.trace_id)
