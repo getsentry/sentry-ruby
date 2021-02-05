@@ -5,6 +5,7 @@
 ### Bug Fixes
 
 - Ignore invalid values for sentry-trace header that don't match the required format [#1265](https://github.com/getsentry/sentry-ruby/pull/1265)
+- Transaction created by `.from_sentry_trace` should inherit sampling decision [#1269](https://github.com/getsentry/sentry-ruby/pull/1269)
 
 ## 4.2.0
 
