@@ -1,6 +1,10 @@
 require "bundler/setup"
 require "pry"
 
+require "active_record"
+require "delayed_job"
+require "delayed_job_active_record"
+
 require "sentry-ruby"
 
 require 'simplecov'
@@ -41,44 +45,29 @@ RSpec.configure do |config|
   end
 end
 
+# This connection will do for database-independent bug reports.
+ActiveRecord::Base.establish_connection(adapter: "sqlite3", database: ":memory:")
+# ActiveRecord::Base.logger = Logger.new(STDOUT)
+
+ActiveRecord::Schema.define do
+  create_table :delayed_jobs do |table|
+    table.integer :priority, default: 0, null: false # Allows some jobs to jump to the front of the queue
+    table.integer :attempts, default: 0, null: false # Provides for retries, but still fail eventually.
+    table.text :handler,                 null: false # YAML-encoded string of the object that will do work
+    table.text :last_error                           # reason for last failure (See Note below)
+    table.datetime :run_at                           # When to run. Could be Time.zone.now for immediately, or sometime in the future.
+    table.datetime :locked_at                        # Set when a client is working on this object
+    table.datetime :failed_at                        # Set when all retries have failed (actually, by default, the record is deleted instead)
+    table.string :locked_by                          # Who is working on this object (if locked)
+    table.string :queue                              # The name of the queue this job is in
+    table.timestamps null: true
+  end
+end
+
 def build_exception
   1 / 0
 rescue ZeroDivisionError => e
   e
-end
-
-def build_exception_with_cause(cause = "exception a")
-  begin
-    raise cause
-  rescue
-    raise "exception b"
-  end
-rescue RuntimeError => e
-  e
-end
-
-def build_exception_with_two_causes
-  begin
-    begin
-      raise "exception a"
-    rescue
-      raise "exception b"
-    end
-  rescue
-    raise "exception c"
-  end
-rescue RuntimeError => e
-  e
-end
-
-def build_exception_with_recursive_cause
-  backtrace = []
-
-  exception = double("Exception")
-  allow(exception).to receive(:cause).and_return(exception)
-  allow(exception).to receive(:message).and_return("example")
-  allow(exception).to receive(:backtrace).and_return(backtrace)
-  exception
 end
 
 def perform_basic_setup

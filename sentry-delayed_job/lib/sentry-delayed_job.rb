@@ -2,6 +2,7 @@ require "delayed_job"
 require "sentry-ruby"
 require "sentry/integrable"
 require "sentry/delayed_job/version"
+require "sentry/delayed_job/plugin"
 
 module Sentry
   module DelayedJob

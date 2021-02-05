@@ -11,7 +11,11 @@ gem "rspec", "~> 3.0"
 gem "codecov", "0.2.12"
 
 gem "delayed_job"
+gem "delayed_job_active_record"
 gem "rails"
+gem "activerecord-jdbcmysql-adapter", platform: :jruby
+gem "jdbc-sqlite3", platform: :jruby
+gem "sqlite3", platform: :ruby
 
 gem "sentry-ruby", path: "../sentry-ruby"
 gem "sentry-rails", path: "../sentry-rails"

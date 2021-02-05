@@ -3,7 +3,8 @@ require "active_job"
 require "active_record"
 require "delayed_job"
 require "delayed_job_active_record"
-require "logger"
+require "sentry-delayed_job"
+# require "logger"
 
 # This connection will do for database-independent bug reports.
 ActiveRecord::Base.establish_connection(adapter: "sqlite3", database: ":memory:")
@@ -22,6 +23,12 @@ ActiveRecord::Schema.define do
     table.string :queue                              # The name of the queue this job is in
     table.timestamps null: true
   end
+end
+
+Sentry.init do |config|
+  config.breadcrumbs_logger = [:sentry_logger]
+  # replace it with your sentry dsn
+  config.dsn = 'https://2fb45f003d054a7ea47feb45898f7649@o447951.ingest.sentry.io/5434472'
 end
 
 class MyJob < ActiveJob::Base
