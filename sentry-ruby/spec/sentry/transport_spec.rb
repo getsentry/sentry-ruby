@@ -125,12 +125,12 @@ RSpec.describe Sentry::Transport do
         allow(subject).to receive(:send_data).and_raise(StandardError)
       end
 
-      it "returns nil" do
-        expect(subject.send_event(event)).to eq(nil)
+      it "raises error" do
+        expect { subject.send_event(event) }.to raise_error
       end
 
       it "logs correct message" do
-        subject.send_event(event)
+        subject.send_event(event) rescue nil
 
         log = io.string
         expect(log).to match(
