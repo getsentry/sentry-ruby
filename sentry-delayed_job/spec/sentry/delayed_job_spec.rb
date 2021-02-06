@@ -118,5 +118,92 @@ RSpec.describe Sentry::DelayedJob do
       expect(Sentry.get_current_scope.tags).to eq({})
     end
   end
+
+  context "with ActiveJob" do
+    require "rails"
+    require "active_job"
+    require "sentry-rails"
+
+    class ReportingJob < ActiveJob::Base
+      self.queue_adapter = :delayed_job
+
+      def perform
+        Sentry.set_tags(number: 1)
+        Sentry.capture_message("report from ActiveJob")
+      end
+    end
+
+    class FailedJob < ActiveJob::Base
+      self.queue_adapter = :delayed_job
+
+      def perform
+        Sentry.set_tags(number: 2)
+        1 / 0
+      end
+    end
+
+    before do
+      ActiveJob::Base.logger = nil
+
+      # because we don't create a full Rails app here, we need to apply sentry-rails' ActiveJob extension manually
+      require "sentry/rails/active_job"
+      ActiveJob::Base.send(:prepend, Sentry::Rails::ActiveJobExtensions)
+
+      if Sentry.configuration.rails.skippable_job_adapters.empty?
+        Sentry.configuration.rails.skippable_job_adapters << "ActiveJob::QueueAdapters::DelayedJobAdapter"
+      end
+    end
+
+    context "when the job succeeded" do
+      before do
+        ReportingJob.perform_later
+
+        enqueued_job = Delayed::Backend::ActiveRecord::Job.last
+        enqueued_job.invoke_job
+      end
+
+      it "doesn't leak scope data" do
+        expect(transport.events.count).to eq(1)
+
+        expect(Sentry.get_current_scope.tags).to eq({})
+      end
+
+      it "injects ActiveJob information to the event" do
+        expect(transport.events.count).to eq(1)
+
+        event = transport.events.last.to_hash
+        expect(event[:message]).to eq("report from ActiveJob")
+        expect(event[:tags]).to match({ "delayed_job.id" => anything, "delayed_job.queue" => "default", number: 1 })
+        expect(event.dig(:extra, :"active_job.job_class")).to eq("ReportingJob")
+      end
+    end
+
+    context "when the job failed" do
+      before do
+        FailedJob.perform_later
+
+        enqueued_job = Delayed::Backend::ActiveRecord::Job.last
+
+        expect do
+          enqueued_job.invoke_job
+        end.to raise_error(ZeroDivisionError)
+      end
+
+      it "doesn't duplicate error reporting" do
+        expect(transport.events.count).to eq(1)
+
+        expect(Sentry.get_current_scope.tags).to eq({})
+      end
+
+      it "injects ActiveJob information to the event" do
+        expect(transport.events.count).to eq(1)
+
+        event = transport.events.last.to_hash
+        expect(event.dig(:exception, :values, 0, :type)).to eq("ZeroDivisionError")
+        expect(event[:tags]).to match({ "delayed_job.id" => anything, "delayed_job.queue" => "default", number: 2 })
+        expect(event.dig(:extra, :"active_job.job_class")).to eq("FailedJob")
+      end
+    end
+  end
 end
 

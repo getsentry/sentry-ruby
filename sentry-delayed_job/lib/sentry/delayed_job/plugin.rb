@@ -22,7 +22,7 @@ module Sentry
       end
 
       def self.generate_extra(job)
-        {
+        extra = {
           "delayed_job.id": job.id,
           "delayed_job.priority": job.priority,
           "delayed_job.attempts": job.attempts,
@@ -34,6 +34,14 @@ module Sentry
           "delayed_job.last_error": job.last_error&.byteslice(0..1000),
           "delayed_job.handler": job.handler&.byteslice(0..1000)
         }
+
+        if job.payload_object.respond_to?(:job_data)
+          job.payload_object.job_data.each do |key, value|
+            extra[:"active_job.#{key}"] = value
+          end
+        end
+
+        extra
       end
     end
   end
