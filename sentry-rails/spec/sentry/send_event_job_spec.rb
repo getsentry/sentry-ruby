@@ -1,3 +1,4 @@
+require "active_job"
 require "spec_helper"
 
 RSpec.describe "Sentry::SendEventJob" do
@@ -8,16 +9,29 @@ RSpec.describe "Sentry::SendEventJob" do
     Sentry.get_current_client.transport
   end
 
-  context "when ActiveJob is loaded" do
-    require "active_job"
+  context "when ActiveJob is not loaded" do
+    before do
+      TempActiveJob = ActiveJob
+      Object.send(:remove_const, "ActiveJob")
+      reload_send_event_job
+    end
 
     after do
-      Sentry.send(:remove_const, "SendEventJob")
-      expect(defined?(Sentry::SendEventJob)).to eq(nil)
+      ActiveJob = TempActiveJob
+      reload_send_event_job
+    end
+
+    it "doesn't get defined" do
+      expect(defined?(Sentry::SendEventJob)).to be_nil
+    end
+  end
+
+  context "when ActiveJob is loaded" do
+    after do
+      reload_send_event_job
     end
 
     it "reports events to Sentry" do
-      load File.join(Dir.pwd, "app", "jobs", "sentry", "send_event_job.rb")
       make_basic_app
 
       Sentry.configuration.before_send = lambda do |event, hint|
@@ -35,7 +49,6 @@ RSpec.describe "Sentry::SendEventJob" do
 
     context "when ApplicationJob is not defined" do
       before do
-        load File.join(Dir.pwd, "app", "jobs", "sentry", "send_event_job.rb")
         make_basic_app
       end
       it "uses ActiveJob::Base as the parent class" do
@@ -46,7 +59,7 @@ RSpec.describe "Sentry::SendEventJob" do
     context "when ApplicationJob is defined" do
       before do
         class ApplicationJob < ActiveJob::Base; end
-        load File.join(Dir.pwd, "app", "jobs", "sentry", "send_event_job.rb")
+        reload_send_event_job
         make_basic_app
       end
 
@@ -62,7 +75,7 @@ RSpec.describe "Sentry::SendEventJob" do
     context "when ApplicationJob is defined but it's something else" do
       before do
         class ApplicationJob; end
-        load File.join(Dir.pwd, "app", "jobs", "sentry", "send_event_job.rb")
+        reload_send_event_job
         make_basic_app
       end
 
