@@ -2,10 +2,10 @@ return unless defined?(ActiveJob)
 
 module Sentry
   parent_job =
-    if defined?(ApplicationJob)
-      ApplicationJob
+    if defined?(::ApplicationJob)
+      ::ApplicationJob
     else
-      ActiveJob::Base
+      ::ActiveJob::Base
     end
 
   class SendEventJob < parent_job
