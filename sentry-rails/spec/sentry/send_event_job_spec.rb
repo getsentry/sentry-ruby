@@ -1,3 +1,4 @@
+require "active_job"
 require "spec_helper"
 
 RSpec.describe "Sentry::SendEventJob" do
