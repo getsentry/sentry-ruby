@@ -50,8 +50,28 @@ RSpec.describe "Sentry::SendEventJob" do
         make_basic_app
       end
 
+      after do
+        Object.send(:remove_const, "ApplicationJob")
+      end
+
       it "uses ApplicationJob as the parent class" do
         expect(Sentry::SendEventJob.superclass).to eq(ApplicationJob)
+      end
+    end
+
+    context "when ApplicationJob is defined but it's something else" do
+      before do
+        class ApplicationJob; end
+        load File.join(Dir.pwd, "app", "jobs", "sentry", "send_event_job.rb")
+        make_basic_app
+      end
+
+      after do
+        Object.send(:remove_const, "ApplicationJob")
+      end
+
+      it "uses ActiveJob::Base as the parent class" do
+        expect(Sentry::SendEventJob.superclass).to eq(ActiveJob::Base)
       end
     end
   end

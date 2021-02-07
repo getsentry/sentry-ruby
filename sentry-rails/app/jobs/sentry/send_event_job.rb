@@ -2,7 +2,7 @@ return unless defined?(ActiveJob)
 
 module Sentry
   parent_job =
-    if defined?(::ApplicationJob)
+    if defined?(::ApplicationJob) && ::ApplicationJob.ancestors.include?(::ActiveJob::Base)
       ::ApplicationJob
     else
       ::ActiveJob::Base
