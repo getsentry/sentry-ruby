@@ -1,5 +1,11 @@
 # Changelog
 
+## Unreleased
+
+- Add additional checks to SendEventJob's definition [#1275](https://github.com/getsentry/sentry-ruby/pull/1275)
+  - Fixes [#1270](https://github.com/getsentry/sentry-ruby/issues/1270)
+  - Fixes [#1277](https://github.com/getsentry/sentry-ruby/issues/1277)
+
 ## 4.2.0
 
 ### Features
