@@ -1,3 +1,5 @@
 # Changelog
 
-## 0.1.0
+## 4.2.0
+
+- First release!
