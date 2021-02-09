@@ -47,6 +47,7 @@ and depends on the integrations you want to have, you might also want to install
 ```ruby
 gem "sentry-rails"
 gem "sentry-sidekiq"
+gem "sentry-delayed_job"
 # and mores to come in the future!
 ```
 
@@ -136,6 +137,7 @@ We also provide integrations with popular frameworks/libraries with the related 
 
 - [sentry-rails](https://github.com/getsentry/sentry-ruby/tree/master/sentry-rails)
 - [sentry-sidekiq](https://github.com/getsentry/sentry-ruby/tree/master/sentry-sidekiq)
+- [sentry-delayed_job](https://github.com/getsentry/sentry-ruby/tree/master/sentry-delayed_job)
 
 ### More configuration
 
