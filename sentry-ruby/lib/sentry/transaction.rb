@@ -90,7 +90,7 @@ module Sentry
         sample_rate = traces_sampler.call(sampling_context)
       end
 
-      unless [true, false].include?(sample_rate) || (sample_rate.is_a?(Float) && sample_rate >= 0.0 && sample_rate <= 1.0)
+      unless [true, false].include?(sample_rate) || (sample_rate.is_a?(Numeric) && sample_rate >= 0.0 && sample_rate <= 1.0)
         @sampled = false
         logger.warn("#{MESSAGE_PREFIX} Discarding #{transaction_description} because of invalid sample_rate: #{sample_rate}")
         return

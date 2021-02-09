@@ -164,6 +164,13 @@ RSpec.describe Sentry::Transaction do
           subject.set_initial_sample_desicion
           expect(subject.sampled).to eq(false)
         end
+
+        it "accepts integer traces_sample_rate" do
+          Sentry.configuration.traces_sample_rate = 1
+
+          subject.set_initial_sample_desicion
+          expect(subject.sampled).to eq(true)
+        end
       end
 
       context "when traces_sampler is provided" do
@@ -204,7 +211,7 @@ RSpec.describe Sentry::Transaction do
         it "uses the genereted rate for sampling (positive)" do
           expect(Sentry.configuration.logger).to receive(:debug).with(
             "[Tracing] Starting transaction"
-          ).exactly(2)
+          ).exactly(3)
 
           subject = described_class.new
           Sentry.configuration.traces_sampler = -> (_) { true }
@@ -213,6 +220,11 @@ RSpec.describe Sentry::Transaction do
 
           subject = described_class.new
           Sentry.configuration.traces_sampler = -> (_) { 1.0 }
+          subject.set_initial_sample_desicion
+          expect(subject.sampled).to eq(true)
+
+          subject = described_class.new
+          Sentry.configuration.traces_sampler = -> (_) { 1 }
           subject.set_initial_sample_desicion
           expect(subject.sampled).to eq(true)
         end

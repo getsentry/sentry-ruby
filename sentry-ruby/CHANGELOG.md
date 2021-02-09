@@ -6,6 +6,7 @@
 
 - Ignore invalid values for sentry-trace header that don't match the required format [#1265](https://github.com/getsentry/sentry-ruby/pull/1265)
 - Transaction created by `.from_sentry_trace` should inherit sampling decision [#1269](https://github.com/getsentry/sentry-ruby/pull/1269)
+- Transaction's sample rate should accept any numeric value [#1278](https://github.com/getsentry/sentry-ruby/pull/1278)
 
 ## 4.2.0
 
