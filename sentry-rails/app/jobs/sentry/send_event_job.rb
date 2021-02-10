@@ -2,15 +2,25 @@ return unless defined?(ActiveJob)
 
 module Sentry
   parent_job =
-    if defined?(ApplicationJob)
-      ApplicationJob
+    if defined?(::ApplicationJob) && ::ApplicationJob.ancestors.include?(::ActiveJob::Base)
+      ::ApplicationJob
     else
-      ActiveJob::Base
+      ::ActiveJob::Base
     end
 
   class SendEventJob < parent_job
-    self.log_arguments = false if ::Rails.version.to_f >= 6.1
-    discard_on ActiveJob::DeserializationError # this will prevent infinite loop when there's an issue deserializing SentryJob
+    # the event argument is usually large and creates noise
+    self.log_arguments = false if respond_to?(:log_arguments=)
+
+    # this will prevent infinite loop when there's an issue deserializing SentryJob
+    if respond_to?(:discard_on)
+      discard_on ActiveJob::DeserializationError
+    else
+      # mimic what discard_on does for Rails 5.0
+      rescue_from ActiveJob::DeserializationError do
+        logger.error "Discarded #{self.class} due to a #{exception}. The original exception was #{error.cause.inspect}."
+      end
+    end
 
     def perform(event, hint = {})
       Sentry.send_event(event, hint)

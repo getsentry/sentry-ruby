@@ -88,6 +88,12 @@ def build_exception_with_recursive_cause
   exception
 end
 
+def reload_send_event_job
+  Sentry.send(:remove_const, "SendEventJob") if defined?(Sentry::SendEventJob)
+  expect(defined?(Sentry::SendEventJob)).to eq(nil)
+  load File.join(Dir.pwd, "app", "jobs", "sentry", "send_event_job.rb")
+end
+
 def perform_basic_setup
   Sentry.init do |config|
     config.dsn = DUMMY_DSN
