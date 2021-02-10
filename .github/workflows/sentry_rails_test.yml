@@ -18,7 +18,7 @@ jobs:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        rails_version: [5.2, 6.0.0, 6.1.0]
+        rails_version: [5.0.0, 5.1.0, 5.2.0, 6.0.0, 6.1.0]
         ruby_version: [2.4, 2.5, 2.6, 2.7, '3.0', jruby]
         os: [ubuntu-latest]
         include:
@@ -31,7 +31,11 @@ jobs:
           - ruby_version: 2.4
             rails_version: 6.1.0
           - ruby_version: '3.0'
-            rails_version: 5.2
+            rails_version: 5.0.0
+          - ruby_version: '3.0'
+            rails_version: 5.1.0
+          - ruby_version: '3.0'
+            rails_version: 5.2.0
           - ruby_version: jruby
             rails_version: 6.1.0
 
