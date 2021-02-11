@@ -1,5 +1,10 @@
 # Changelog
 
+## 4.2.1
+
+- Use ::Rails::Railtie for checking Rails definition [#1284](https://github.com/getsentry/sentry-ruby/pull/1284)
+  - Fixes [#1276](https://github.com/getsentry/sentry-ruby/issues/1276)
+
 ## 4.2.0
 
 ### Features
