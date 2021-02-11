@@ -8,7 +8,7 @@ module Sentry
         lifecycle.around(:invoke_job) do |job, *args, &block|
           Sentry.with_scope do |scope|
             scope.set_extras(**generate_extra(job))
-            scope.set_tags("delayed_job.queue" => job.queue, "delayed_job.id" => job.id)
+            scope.set_tags("delayed_job.queue" => job.queue, "delayed_job.id" => job.id.to_s)
 
             begin
               block.call(job, *args)
@@ -23,7 +23,7 @@ module Sentry
 
       def self.generate_extra(job)
         extra = {
-          "delayed_job.id": job.id,
+          "delayed_job.id": job.id.to_s,
           "delayed_job.priority": job.priority,
           "delayed_job.attempts": job.attempts,
           "delayed_job.run_at": job.run_at,
