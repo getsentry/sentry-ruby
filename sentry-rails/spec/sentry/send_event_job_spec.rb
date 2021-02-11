@@ -21,8 +21,8 @@ RSpec.describe "Sentry::SendEventJob" do
       reload_send_event_job
     end
 
-    it "doesn't get defined" do
-      expect(defined?(Sentry::SendEventJob)).to be_nil
+    it "gets defined as a blank class" do
+      expect(Sentry::SendEventJob.superclass).to eq(Object)
     end
   end
 
