@@ -41,7 +41,7 @@ module Sentry
     end
 
     def configure_trusted_proxies
-      Sentry.configuration.trusted_proxies += Array(::Rails.application.config.action_dispatch.trusted_proxies)
+      Sentry.configuration.trusted_proxies += Array(::Rails.application.config.action_dispatch.trusted_proxies).map(&:to_s)
     end
 
     def extend_active_job
