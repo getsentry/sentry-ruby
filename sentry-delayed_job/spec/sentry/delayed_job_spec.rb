@@ -37,8 +37,8 @@ RSpec.describe Sentry::DelayedJob do
     expect(transport.events.count).to eq(1)
     event = transport.events.last.to_hash
     expect(event[:message]).to eq("report")
-    expect(event[:extra][:"delayed_job.id"]).to eq(enqueued_job.id)
-    expect(event[:tags]).to eq({ "delayed_job.id" => enqueued_job.id, "delayed_job.queue" => nil })
+    expect(event[:extra][:"delayed_job.id"]).to eq(enqueued_job.id.to_s)
+    expect(event[:tags]).to eq({ "delayed_job.id" => enqueued_job.id.to_s, "delayed_job.queue" => nil })
   end
 
   it "doesn't leak scope data outside of the job" do
@@ -59,7 +59,7 @@ RSpec.describe Sentry::DelayedJob do
     expect(transport.events.count).to eq(1)
     event = transport.events.last.to_hash
     expect(event[:message]).to eq("tagged report")
-    expect(event[:tags]).to eq({ "delayed_job.id" => enqueued_job.id, "delayed_job.queue" => nil, number: 1 })
+    expect(event[:tags]).to eq({ "delayed_job.id" => enqueued_job.id.to_s, "delayed_job.queue" => nil, number: 1 })
 
     Post.new.delay.report
     enqueued_job = Delayed::Backend::ActiveRecord::Job.last
@@ -67,7 +67,7 @@ RSpec.describe Sentry::DelayedJob do
 
     expect(transport.events.count).to eq(2)
     event = transport.events.last.to_hash
-    expect(event[:tags]).to eq({ "delayed_job.id" => enqueued_job.id, "delayed_job.queue" => nil })
+    expect(event[:tags]).to eq({ "delayed_job.id" => enqueued_job.id.to_s, "delayed_job.queue" => nil })
   end
 
   context "when a job failed" do
@@ -86,7 +86,7 @@ RSpec.describe Sentry::DelayedJob do
 
       expect(event[:sdk]).to eq({ name: "sentry.ruby.delayed_job", version: described_class::VERSION })
       expect(event.dig(:exception, :values, 0, :type)).to eq("ZeroDivisionError")
-      expect(event[:tags]).to eq({ "delayed_job.id" => enqueued_job.id, "delayed_job.queue" => nil })
+      expect(event[:tags]).to eq({ "delayed_job.id" => enqueued_job.id.to_s, "delayed_job.queue" => nil })
     end
 
     it "doesn't leak scope data" do
@@ -100,7 +100,7 @@ RSpec.describe Sentry::DelayedJob do
       expect(transport.events.count).to eq(1)
       event = transport.events.last.to_hash
 
-      expect(event[:tags]).to eq({ "delayed_job.id" => enqueued_job.id, "delayed_job.queue" => nil, number: 1 })
+      expect(event[:tags]).to eq({ "delayed_job.id" => enqueued_job.id.to_s, "delayed_job.queue" => nil, number: 1 })
       expect(Sentry.get_current_scope.extra).to eq({})
       expect(Sentry.get_current_scope.tags).to eq({})
 
@@ -113,7 +113,7 @@ RSpec.describe Sentry::DelayedJob do
 
       expect(transport.events.count).to eq(2)
       event = transport.events.last.to_hash
-      expect(event[:tags]).to eq({ "delayed_job.id" => enqueued_job.id, "delayed_job.queue" => nil })
+      expect(event[:tags]).to eq({ "delayed_job.id" => enqueued_job.id.to_s, "delayed_job.queue" => nil })
       expect(Sentry.get_current_scope.extra).to eq({})
       expect(Sentry.get_current_scope.tags).to eq({})
     end
