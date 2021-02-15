@@ -10,7 +10,7 @@ module Sentry
 
     register_integration name: "delayed_job", version: Sentry::DelayedJob::VERSION
 
-    if defined?(::Rails)
+    if defined?(::Rails::Railtie)
       class Railtie < ::Rails::Railtie
         config.after_initialize do
           next unless Sentry.initialized?
