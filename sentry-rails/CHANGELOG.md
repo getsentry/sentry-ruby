@@ -1,5 +1,10 @@
 # Changelog
 
+## 4.2.2
+
+- Always define Sentry::SendEventJob to avoid eager load issues [#1286](https://github.com/getsentry/sentry-ruby/pull/1286)
+  - Fixes [#1283](https://github.com/getsentry/sentry-ruby/issues/1283)
+
 ## 4.2.1
 
 - Add additional checks to SendEventJob's definition [#1275](https://github.com/getsentry/sentry-ruby/pull/1275)
