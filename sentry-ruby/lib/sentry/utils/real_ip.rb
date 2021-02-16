@@ -29,7 +29,7 @@ module Sentry
         @client_ip = client_ip
         @real_ip = real_ip
         @forwarded_for = forwarded_for
-        @trusted_proxies = (LOCAL_ADDRESSES + Array(trusted_proxies)).map { |proxy| IPAddr.new(proxy) }.uniq
+        @trusted_proxies = (LOCAL_ADDRESSES + Array(trusted_proxies)).map { |proxy| IPAddr.new(proxy.to_s) }.uniq
       end
 
       def calculate_ip
