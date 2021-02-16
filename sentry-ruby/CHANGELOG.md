@@ -1,5 +1,10 @@
 # Changelog
 
+## Unreleased
+
+- always convert trusted proxies to string [#1288](https://github.com/getsentry/sentry-ruby/pull/1288)
+  - fixes [#1274](https://github.com/getsentry/sentry-ruby/issues/1274)
+
 ## 4.2.1
 
 ### Bug Fixes
