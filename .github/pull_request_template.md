@@ -5,6 +5,7 @@ Thanks for your Pull Request 🎉
 - Add the references of all the related issues/PRs in the description
 - Whether it's a new feature or a bug fix, make sure they're covered by new test cases
 - If this PR contains any refactoring work, please give it its own commit(s)
+- Finally, please add an entry to the corresponding changelog
 
 
 **Other Notes**
