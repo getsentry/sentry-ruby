@@ -324,9 +324,11 @@ RSpec.describe Sentry::Client do
       t.name = "Thread 1"
       t.join
 
-      thread = event.to_hash[:threads][:values][0]
+      event_hash = event.to_hash
+      thread = event_hash[:threads][:values][0]
 
       expect(thread[:id]).to eq(t.object_id)
+      expect(event_hash.dig(:exception, :values, 0, :thread_id)).to eq(t.object_id)
       expect(thread[:name]).to eq("Thread 1")
       expect(thread[:crashed]).to eq(true)
       expect(thread[:stacktrace]).to be_nil

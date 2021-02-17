@@ -3,6 +3,7 @@ module Sentry
     attr_accessor :type
     attr_accessor :value
     attr_accessor :module
+    attr_accessor :thread_id
     attr_accessor :stacktrace
 
     def to_hash

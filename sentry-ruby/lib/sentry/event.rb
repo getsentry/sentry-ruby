@@ -133,6 +133,7 @@ module Sentry
             int.type = e.class.to_s
             int.value = e.message.byteslice(0..MAX_MESSAGE_SIZE_IN_BYTES)
             int.module = e.class.to_s.split('::')[0...-1].join('::')
+            int.thread_id = Thread.current.object_id
 
             int.stacktrace =
               if e.backtrace && !backtraces.include?(e.backtrace.object_id)
