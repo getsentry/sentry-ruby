@@ -38,8 +38,12 @@ module Sentry
             async_block.call(event_hash)
           end
         rescue => e
-          configuration.logger.error(LOGGER_PROGNAME) { "async event sending failed: #{e.message}" }
-          send_event(event, hint)
+          if e.class.name.match?(/Redis/)
+            configuration.logger.error(LOGGER_PROGNAME) { "async event sending failed: #{e.message}" }
+            send_event(event, hint)
+          else
+            raise
+          end
         end
       else
         if hint.fetch(:background, true)
@@ -52,6 +56,9 @@ module Sentry
       end
 
       event
+    rescue Sentry::ExternalError => e
+      configuration.logger.error(LOGGER_PROGNAME) { "event sending failed: #{e.message}" }
+      nil
     end
 
     def event_from_exception(exception, hint = {})

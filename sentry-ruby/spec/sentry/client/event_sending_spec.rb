@@ -76,23 +76,6 @@ RSpec.describe Sentry::Client do
           expect(event.dig("tags", "hint")).to eq({ "foo" => "bar" })
         end
       end
-
-      context "when async raises an exception" do
-        around do |example|
-          prior_async = configuration.async
-          configuration.async = proc { raise TypeError }
-          example.run
-          configuration.async = prior_async
-        end
-
-        it 'sends the result of Event.capture_exception via fallback' do
-          expect(configuration.logger).to receive(:error).with(Sentry::LOGGER_PROGNAME) { "async event sending failed: TypeError" }
-          expect(configuration.async).to receive(:call).and_call_original
-          expect(subject).to receive(:send_event)
-
-          subject.capture_event(event, scope)
-        end
-      end
     end
 
     context "with background_worker enabled (default)" do
@@ -124,16 +107,6 @@ RSpec.describe Sentry::Client do
 
           expect(transport.events.count).to eq(1)
         end
-
-        context "when there's a Sentry::Error" do
-          before do
-            expect(subject.transport).to receive(:send_event).and_raise(Sentry::Error.new("networking error"))
-          end
-
-          it "swallows the error" do
-            expect(subject.capture_event(event, scope, { background: false })).to be_nil
-          end
-        end
       end
     end
   end
@@ -149,13 +122,13 @@ RSpec.describe Sentry::Client do
     shared_examples "Event in send_event" do
       context "when there's an exception" do
         before do
-          expect(subject.transport).to receive(:send_event).and_raise(Sentry::Error.new("networking error"))
+          expect(subject.transport).to receive(:send_event).and_raise(Sentry::ExternalError.new("networking error"))
         end
 
         it "raises the error" do
           expect do
             subject.send_event(event)
-          end.to raise_error(Sentry::Error, "networking error")
+          end.to raise_error(Sentry::ExternalError, "networking error")
         end
       end
       it "sends data through the transport" do
@@ -212,6 +185,98 @@ RSpec.describe Sentry::Client do
 
     it_behaves_like "TransactionEvent in send_event" do
       let(:event) { transaction_event_object.to_json_compatible }
+    end
+  end
+
+  describe "integrated error handling testing with HTTPTransport" do
+    let(:string_io) { StringIO.new }
+    let(:logger) do
+      ::Logger.new(string_io)
+    end
+    let(:configuration) do
+      Sentry::Configuration.new.tap do |config|
+        config.background_worker_threads = 0
+        config.dsn = DUMMY_DSN
+        config.logger = logger
+      end
+    end
+
+    let(:message) { "Test message" }
+    let(:scope) { Sentry::Scope.new }
+    let(:event) { subject.event_from_message(message) }
+
+    describe "#capture_event" do
+      around do |example|
+        prior_async = configuration.async
+        example.run
+        configuration.async = prior_async
+      end
+
+      context "when sending events inline causes error" do
+        before do
+          Sentry.background_worker = Sentry::BackgroundWorker.new(configuration)
+        end
+
+        it "swallows Sentry::ExternalError (caused by transport's networking error)" do
+          expect(subject.capture_event(event, scope)).to be_nil
+
+          expect(string_io.string).to match(/event sending failed/)
+        end
+
+        it "doesn't swallow errors caused by the user (like in before_send)" do
+          configuration.before_send = -> (_, _) { raise TypeError }
+
+          expect do
+            expect(subject.capture_event(event, scope)).to be_nil
+          end.to raise_error(TypeError)
+        end
+      end
+
+      context "when config.async causes error" do
+        it "swallows Redis related error and send the event synchronizely" do
+          class Redis
+            class ConnectionError < StandardError; end
+          end
+
+          configuration.async = -> (_, _) { raise Redis::ConnectionError }
+
+          expect(subject).to receive(:send_event)
+
+          subject.capture_event(event, scope)
+
+          expect(string_io.string).to match(/async event sending failed: Redis::ConnectionError/)
+        end
+
+        it "raises normal exception" do
+          configuration.async = -> (_, _) { raise TypeError }
+
+          expect do
+            subject.capture_event(event, scope)
+          end.to raise_error(TypeError)
+        end
+      end
+    end
+
+    describe "#send_event" do
+      context "error happens when sending the event" do
+        it "raises the error" do
+          expect do
+            subject.send_event(event)
+          end.to raise_error(Sentry::ExternalError)
+        end
+      end
+
+      context "error happens in the before_send callback" do
+        it "raises the error" do
+          configuration.before_send = lambda do |event, _hint|
+            raise TypeError
+          end
+
+          expect do
+            subject.send_event(event)
+          end.to raise_error(TypeError)
+        end
+      end
     end
   end
 end
