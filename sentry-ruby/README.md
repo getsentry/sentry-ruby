@@ -26,7 +26,7 @@ The official Ruby-language client and integration layer for the [Sentry](https:/
 
 ## Requirements
 
-We test on Ruby 2.4, 2.5, 2.6 and 2.7 at the latest patchlevel/teeny version. We also support JRuby 9.0.
+We test on Ruby 2.4, 2.5, 2.6, 2.7, and 3.0 at the latest patchlevel/teeny version. We also support JRuby 9.0.
 
 If you use self-hosted Sentry, please also make sure its version is above `20.6.0`.
 
