@@ -145,38 +145,7 @@ You're all set - but there's a few more settings you may want to know about too!
 
 #### Blocking v.s. Non-blocking
 
-**Before version 4.1.0**, `sentry-ruby` sends every event immediately. But it can be configured to send asynchronously:
-
-```ruby
-config.async = lambda { |event, hint|
-  Thread.new { Sentry.send_event(event, hint) }
-}
-```
-
-Using a thread to send events will be adequate for truly parallel Ruby platforms such as JRuby, though the benefit on MRI/CRuby will be limited. If the async callback raises an exception, Sentry will attempt to send synchronously.
-
-Note that the naive example implementation has a major drawback - it can create an infinite number of threads. We recommend creating a background job, using your background job processor, that will send Sentry notifications in the background.
-
-```ruby
-config.async = lambda { |event, hint| SentryJob.perform_later(event, hint) }
-
-class SentryJob < ActiveJob::Base
-  queue_as :default
-  discard_on ActiveJob::DeserializationError # this will prevent infinite loop when there's an issue deserializing SentryJob
-
-  def perform(event, hint)
-    Sentry.send_event(event, hint)
-  end
-end
-```
-
-If you also use `sentry-rails`, you can directly use the job we defined for you:
-
-```ruby
-config.async = lambda { |event, hint| Sentry::SendEventJob.perform_later(event, hint) }
-```
-
-**After version 4.1.0**, `sentry-ruby` sends events asynchronously by default. The functionality works like this:
+`sentry-ruby` sends events asynchronously by default. The functionality works like this:
 
 1. When the SDK is initialized, a `Sentry::BackgroundWorker` will be initialized too.
 2. When an event is passed to `Client#capture_event`, instead of sending it directly with `Client#send_event`, we'll let the worker do it.
@@ -209,6 +178,21 @@ If you want to send a particular event immediately, you can use event hints to d
 ```ruby
 Sentry.capture_message("send me now!", hint: { background: false })
 ```
+
+##### `config.async`
+
+You can also use `config.async` to send events with you own worker:
+
+```ruby
+config.async = lambda { |event, hint| SentryJob.perform_later(event, hint) }
+```
+
+And if you use `sentry-rails`, you can directly use the job we defined for you:
+
+```ruby
+config.async = lambda { |event, hint| Sentry::SendEventJob.perform_later(event, hint) }
+```
+
 
 #### Contexts
 
