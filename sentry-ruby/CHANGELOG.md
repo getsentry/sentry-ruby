@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 4.2.2
 
 - Add thread_id to Exception interface [#1291](https://github.com/getsentry/sentry-ruby/pull/1291)
 - always convert trusted proxies to string [#1288](https://github.com/getsentry/sentry-ruby/pull/1288)
