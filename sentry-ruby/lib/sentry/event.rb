@@ -141,14 +141,7 @@ module Sentry
     end
 
     def initialize_stacktrace_interface(backtrace)
-      StacktraceInterface.new(
-        backtrace: backtrace,
-        project_root: configuration.project_root.to_s,
-        app_dirs_pattern: configuration.app_dirs_pattern,
-        linecache: configuration.linecache,
-        context_lines: configuration.context_lines,
-        backtrace_cleanup_callback: configuration.backtrace_cleanup_callback
-      )
+      configuration.stacktrace_builder.build(backtrace)
     end
 
     private
