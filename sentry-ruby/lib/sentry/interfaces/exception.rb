@@ -1,6 +1,8 @@
 module Sentry
   class ExceptionInterface < Interface
-    attr_accessor :values
+    def initialize(values)
+      @values = values
+    end
 
     def to_hash
       data = super

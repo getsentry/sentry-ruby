@@ -125,24 +125,19 @@ module Sentry
         @extra.merge!(exc.sentry_context)
       end
 
-      @exception = Sentry::ExceptionInterface.new.tap do |exc_int|
-        exceptions = Sentry::Utils::ExceptionCauseChain.exception_to_array(exc).reverse
-        backtraces = Set.new
-        exc_int.values = exceptions.map do |e|
-          SingleExceptionInterface.new.tap do |int|
-            int.type = e.class.to_s
-            int.value = e.message.byteslice(0..MAX_MESSAGE_SIZE_IN_BYTES)
-            int.module = e.class.to_s.split('::')[0...-1].join('::')
-            int.thread_id = Thread.current.object_id
+      exceptions = Sentry::Utils::ExceptionCauseChain.exception_to_array(exc).reverse
+      backtraces = Set.new
 
-            int.stacktrace =
-              if e.backtrace && !backtraces.include?(e.backtrace.object_id)
-                backtraces << e.backtrace.object_id
-                initialize_stacktrace_interface(e.backtrace)
-              end
+      exceptions = exceptions.map do |e|
+        stacktrace =
+          if e.backtrace && !backtraces.include?(e.backtrace.object_id)
+            backtraces << e.backtrace.object_id
+            initialize_stacktrace_interface(e.backtrace)
           end
-        end
+        SingleExceptionInterface.new(e, stacktrace)
       end
+
+      @exception = Sentry::ExceptionInterface.new(exceptions)
     end
 
     def initialize_stacktrace_interface(backtrace)
