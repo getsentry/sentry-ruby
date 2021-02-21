@@ -1,5 +1,9 @@
 # Changelog
 
+## Unreleased
+
+- Refactor interface construction [#1296](https://github.com/getsentry/sentry-ruby/pull/1296)
+
 ## 4.2.2
 
 - Add thread_id to Exception interface [#1291](https://github.com/getsentry/sentry-ruby/pull/1291)
