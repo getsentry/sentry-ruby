@@ -22,6 +22,8 @@ module Sentry
       }
     end
 
+    # patch this method if you want to change a threads interface's stacktrace frames
+    # also see `StacktraceBuilder.build`.
     def self.build(backtrace:, stacktrace_builder:, **options)
       stacktrace = stacktrace_builder.build(backtrace) if backtrace
       new(**options, stacktrace: stacktrace)

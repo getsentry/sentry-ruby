@@ -10,11 +10,25 @@ module Sentry
       @backtrace_cleanup_callback = backtrace_cleanup_callback
     end
 
-    def build(backtrace)
+    # you can pass a block to customize/exclude frames:
+    #
+    # ```ruby
+    # builder.build(backtrace) do |frame|
+    #   if frame.module.match?(/a_gem/)
+    #     nil
+    #   else
+    #     frame
+    #   end
+    # end
+    # ```
+    def build(backtrace, &frame_callback)
       parsed_lines = parse_backtrace_lines(backtrace).select(&:file)
+
       frames = parsed_lines.reverse.map do |line|
-        convert_parsed_line_into_frame(line)
-      end
+        frame = convert_parsed_line_into_frame(line)
+        frame = frame_callback.call(frame) if frame_callback
+        frame
+      end.compact
 
       StacktraceInterface.new(frames)
     end

@@ -14,7 +14,7 @@ module Sentry
 
     # Not actually an interface, but I want to use the same style
     class Frame < Interface
-      attr_reader :abs_path, :context_line, :function, :in_app, :filename,
+      attr_accessor :abs_path, :context_line, :function, :in_app, :filename,
                   :lineno, :module, :pre_context, :post_context, :vars
 
       def initialize(project_root, line)

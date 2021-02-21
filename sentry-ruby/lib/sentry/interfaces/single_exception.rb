@@ -16,8 +16,11 @@ module Sentry
       data
     end
 
+    # patch this method if you want to change an exception's stacktrace frames
+    # also see `StacktraceBuilder.build`.
     def self.build_with_stacktrace(exception, stacktrace_builder:)
-      new(exception, stacktrace_builder.build(exception.backtrace))
+      stacktrace = stacktrace_builder.build(exception.backtrace)
+      new(exception, stacktrace)
     end
   end
 end
