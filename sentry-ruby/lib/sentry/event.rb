@@ -117,31 +117,15 @@ module Sentry
 
     def add_threads_interface(backtrace: nil, **options)
       @threads = ThreadsInterface.new(**options)
-      @threads.stacktrace = initialize_stacktrace_interface(backtrace) if backtrace
+      @threads.stacktrace = configuration.stacktrace_builder.build(caller) if backtrace
     end
 
-    def add_exception_interface(exc)
-      if exc.respond_to?(:sentry_context)
-        @extra.merge!(exc.sentry_context)
+    def add_exception_interface(exception)
+      if exception.respond_to?(:sentry_context)
+        @extra.merge!(exception.sentry_context)
       end
 
-      exceptions = Sentry::Utils::ExceptionCauseChain.exception_to_array(exc).reverse
-      backtraces = Set.new
-
-      exceptions = exceptions.map do |e|
-        stacktrace =
-          if e.backtrace && !backtraces.include?(e.backtrace.object_id)
-            backtraces << e.backtrace.object_id
-            initialize_stacktrace_interface(e.backtrace)
-          end
-        SingleExceptionInterface.new(e, stacktrace)
-      end
-
-      @exception = Sentry::ExceptionInterface.new(exceptions)
-    end
-
-    def initialize_stacktrace_interface(backtrace)
-      configuration.stacktrace_builder.build(backtrace)
+      @exception = Sentry::ExceptionInterface.build(exception: exception, stacktrace_builder: configuration.stacktrace_builder)
     end
 
     private
