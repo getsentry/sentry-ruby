@@ -11,13 +11,9 @@ module Sentry
     end
 
     def build(backtrace)
-      parsed_backtrace_lines = Backtrace.parse(
-        backtrace, project_root, app_dirs_pattern, &backtrace_cleanup_callback
-      ).lines
-
-      frames = parsed_backtrace_lines.reverse.each_with_object([]) do |line, frames|
-        frame = convert_parsed_line_into_frame(line)
-        frames << frame if frame.filename
+      parsed_lines = parse_backtrace_lines(backtrace).select(&:file)
+      frames = parsed_lines.reverse.map do |line|
+        convert_parsed_line_into_frame(line)
       end
 
       StacktraceInterface.new(frames)
@@ -29,6 +25,12 @@ module Sentry
       frame = StacktraceInterface::Frame.new(project_root, line)
       frame.set_context(linecache, context_lines) if context_lines
       frame
+    end
+
+    def parse_backtrace_lines(backtrace)
+      Backtrace.parse(
+        backtrace, project_root, app_dirs_pattern, &backtrace_cleanup_callback
+      ).lines
     end
   end
 end
