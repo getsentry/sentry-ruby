@@ -20,7 +20,7 @@ module Sentry
     MAX_MESSAGE_SIZE_IN_BYTES = 1024 * 8
 
     attr_accessor(*ATTRIBUTES)
-    attr_reader :configuration, :request, :exception, :stacktrace, :threads
+    attr_reader :configuration, :request, :exception, :threads
 
     def initialize(configuration:, integration_meta: nil, message: nil)
       # this needs to go first because some setters rely on configuration
@@ -99,7 +99,6 @@ module Sentry
     def to_hash
       data = serialize_attributes
       data[:breadcrumbs] = breadcrumbs.to_hash if breadcrumbs
-      data[:stacktrace] = stacktrace.to_hash if stacktrace
       data[:request] = request.to_hash if request
       data[:exception] = exception.to_hash if exception
       data[:threads] = threads.to_hash if threads
