@@ -12,15 +12,15 @@ module Sentry
 
     def self.build(exception:, stacktrace_builder:)
       exceptions = Sentry::Utils::ExceptionCauseChain.exception_to_array(exception).reverse
-      backtraces = Set.new
+      processed_backtrace_ids = Set.new
 
       exceptions = exceptions.map do |e|
-        stacktrace =
-          if e.backtrace && !backtraces.include?(e.backtrace.object_id)
-            backtraces << e.backtrace.object_id
-            stacktrace_builder.build(e.backtrace)
-          end
-        SingleExceptionInterface.new(e, stacktrace)
+        if e.backtrace && !processed_backtrace_ids.include?(e.backtrace.object_id)
+          processed_backtrace_ids << e.backtrace.object_id
+          SingleExceptionInterface.build_with_stacktrace(e, stacktrace_builder: stacktrace_builder)
+        else
+          SingleExceptionInterface.new(exception)
+        end
       end
 
       new(exceptions)
