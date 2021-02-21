@@ -17,7 +17,7 @@ module Sentry
 
     attr_accessor :url, :method, :data, :query_string, :cookies, :headers, :env
 
-    def self.from_rack(env)
+    def self.build(env)
       env = clean_env(env)
       req = ::Rack::Request.new(env)
       self.new(req)
