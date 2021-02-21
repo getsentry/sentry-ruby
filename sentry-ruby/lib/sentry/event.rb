@@ -116,8 +116,11 @@ module Sentry
     end
 
     def add_threads_interface(backtrace: nil, **options)
-      @threads = ThreadsInterface.new(**options)
-      @threads.stacktrace = configuration.stacktrace_builder.build(caller) if backtrace
+      @threads = ThreadsInterface.build(
+        backtrace: backtrace,
+        stacktrace_builder: configuration.stacktrace_builder,
+        **options
+      )
     end
 
     def add_exception_interface(exception)
