@@ -22,12 +22,12 @@ RSpec.describe Sentry::StacktraceBuilder do
     end
 
     it "ignores frames without filename" do
-      interface = subject.build([":6:in `foo'"])
+      interface = subject.build(backtrace: [":6:in `foo'"])
       expect(interface.frames).to be_empty
     end
 
     it "returns an array of StacktraceInterface::Frames with correct information" do
-      interface = subject.build(backtrace)
+      interface = subject.build(backtrace: backtrace)
       expect(interface).to be_a(Sentry::StacktraceInterface)
 
       frames = interface.frames
@@ -53,14 +53,14 @@ RSpec.describe Sentry::StacktraceBuilder do
 
     context "with block argument" do
       it "removes the frame if it's evaluated as nil" do
-        interface = subject.build(backtrace) do |frame|
+        interface = subject.build(backtrace: backtrace) do |frame|
           nil
         end
 
         expect(interface.frames).to be_empty
       end
       it "yields frame to the block" do
-        interface = subject.build(backtrace) do |frame|
+        interface = subject.build(backtrace: backtrace) do |frame|
           frame.vars = { foo: "bar" }
           frame
         end

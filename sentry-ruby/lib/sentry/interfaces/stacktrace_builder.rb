@@ -21,7 +21,7 @@ module Sentry
     #   end
     # end
     # ```
-    def build(backtrace, &frame_callback)
+    def build(backtrace:, &frame_callback)
       parsed_lines = parse_backtrace_lines(backtrace).select(&:file)
 
       frames = parsed_lines.reverse.map do |line|
@@ -30,7 +30,7 @@ module Sentry
         frame
       end.compact
 
-      StacktraceInterface.new(frames)
+      StacktraceInterface.new(frames: frames)
     end
 
     private

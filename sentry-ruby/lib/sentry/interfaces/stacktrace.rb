@@ -2,7 +2,7 @@ module Sentry
   class StacktraceInterface
     attr_reader :frames
 
-    def initialize(frames)
+    def initialize(frames:)
       @frames = frames
     end
 

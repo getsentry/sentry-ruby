@@ -111,7 +111,7 @@ module Sentry
     end
 
     def add_request_interface(env)
-      @request = Sentry::RequestInterface.build(env)
+      @request = Sentry::RequestInterface.build(env: env)
     end
 
     def add_threads_interface(backtrace: nil, **options)

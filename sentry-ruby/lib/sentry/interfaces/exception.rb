@@ -1,6 +1,6 @@
 module Sentry
   class ExceptionInterface < Interface
-    def initialize(values)
+    def initialize(values:)
       @values = values
     end
 
@@ -17,13 +17,13 @@ module Sentry
       exceptions = exceptions.map do |e|
         if e.backtrace && !processed_backtrace_ids.include?(e.backtrace.object_id)
           processed_backtrace_ids << e.backtrace.object_id
-          SingleExceptionInterface.build_with_stacktrace(e, stacktrace_builder: stacktrace_builder)
+          SingleExceptionInterface.build_with_stacktrace(exception: e, stacktrace_builder: stacktrace_builder)
         else
-          SingleExceptionInterface.new(exception)
+          SingleExceptionInterface.new(exception: exception)
         end
       end
 
-      new(exceptions)
+      new(values: exceptions)
     end
   end
 end
