@@ -4,6 +4,7 @@ require "sentry/utils/exception_cause_chain"
 require "sentry/dsn"
 require "sentry/transport/configuration"
 require "sentry/linecache"
+require "sentry/interfaces/stacktrace_builder"
 
 module Sentry
   class Configuration
@@ -195,6 +196,7 @@ module Sentry
 
       @transport = Transport::Configuration.new
       @gem_specs = Hash[Gem::Specification.map { |spec| [spec.name, spec.version.to_s] }] if Gem::Specification.respond_to?(:map)
+
       run_post_initialization_callbacks
     end
 
@@ -288,6 +290,16 @@ module Sentry
 
     def tracing_enabled?
       !!((@traces_sample_rate && @traces_sample_rate > 0.0) || @traces_sampler)
+    end
+
+    def stacktrace_builder
+      @stacktrace_builder ||= StacktraceBuilder.new(
+        project_root: @project_root.to_s,
+        app_dirs_pattern: @app_dirs_pattern,
+        linecache: @linecache,
+        context_lines: @context_lines,
+        backtrace_cleanup_callback: @backtrace_cleanup_callback
+      )
     end
 
     private

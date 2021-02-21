@@ -17,10 +17,10 @@ module Sentry
 
     attr_accessor :url, :method, :data, :query_string, :cookies, :headers, :env
 
-    def self.from_rack(env)
+    def self.build(env:)
       env = clean_env(env)
-      req = ::Rack::Request.new(env)
-      self.new(req)
+      request = ::Rack::Request.new(env)
+      self.new(request: request)
     end
 
     def self.clean_env(env)
@@ -34,17 +34,17 @@ module Sentry
       env
     end
 
-    def initialize(req)
-      env = req.env
+    def initialize(request:)
+      env = request.env
 
       if Sentry.configuration.send_default_pii
-        self.data = read_data_from(req)
-        self.cookies = req.cookies
+        self.data = read_data_from(request)
+        self.cookies = request.cookies
       end
 
-      self.url = req.scheme && req.url.split('?').first
-      self.method = req.request_method
-      self.query_string = req.query_string
+      self.url = request.scheme && request.url.split('?').first
+      self.method = request.request_method
+      self.query_string = request.query_string
 
       self.headers = filter_and_format_headers(env)
       self.env     = filter_and_format_env(env)
