@@ -95,7 +95,7 @@ RSpec.describe Sentry::HTTPTransport do
       end
 
       it 'raises an error' do
-        expect { subject.send_data(data) }.to raise_error(Sentry::Error, /the server responded with status 404/)
+        expect { subject.send_data(data) }.to raise_error(Sentry::ExternalError, /the server responded with status 404/)
 
         stubs.verify_stubbed_calls
       end
@@ -109,7 +109,7 @@ RSpec.describe Sentry::HTTPTransport do
       end
 
       it 'raises an error' do
-        expect { subject.send_data(data) }.to raise_error(Sentry::Error, /the server responded with status 500/)
+        expect { subject.send_data(data) }.to raise_error(Sentry::ExternalError, /the server responded with status 500/)
 
         stubs.verify_stubbed_calls
       end
@@ -123,7 +123,7 @@ RSpec.describe Sentry::HTTPTransport do
       end
 
       it 'raises an error with header' do
-        expect { subject.send_data(data) }.to raise_error(Sentry::Error, /error_in_header/)
+        expect { subject.send_data(data) }.to raise_error(Sentry::ExternalError, /error_in_header/)
 
         stubs.verify_stubbed_calls
       end

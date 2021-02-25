@@ -38,7 +38,7 @@ module Sentry
         error_info += " Error in headers is: #{e.response[:headers]['x-sentry-error']}" if e.response[:headers]['x-sentry-error']
       end
 
-      raise Sentry::Error, error_info
+      raise Sentry::ExternalError, error_info
     end
 
     private
