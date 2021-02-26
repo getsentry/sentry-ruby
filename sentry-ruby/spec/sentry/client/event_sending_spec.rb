@@ -195,7 +195,6 @@ RSpec.describe Sentry::Client do
     end
     let(:configuration) do
       Sentry::Configuration.new.tap do |config|
-        config.background_worker_threads = 0
         config.dsn = DUMMY_DSN
         config.logger = logger
       end
@@ -212,27 +211,69 @@ RSpec.describe Sentry::Client do
         configuration.async = prior_async
       end
 
+      context "when scope.apply_to_event fails" do
+        before do
+          scope.add_event_processor do
+            raise TypeError
+          end
+        end
+
+        it "swallows the event and logs the failure" do
+          expect(subject.capture_event(event, scope)).to be_nil
+
+          expect(string_io.string).to match(/event capturing failed: TypeError/)
+        end
+      end
+
       context "when sending events inline causes error" do
+        before do
+          configuration.background_worker_threads = 0
+          Sentry.background_worker = Sentry::BackgroundWorker.new(configuration)
+        end
+
+        it "swallows and logs Sentry::ExternalError (caused by transport's networking error)" do
+          expect(subject.capture_event(event, scope)).to be_nil
+
+          expect(string_io.string).to match(/event sending failed: Failed to open TCP connection/)
+          expect(string_io.string).to match(/event capturing failed: Failed to open TCP connection/)
+        end
+
+        it "swallows and logs errors caused by the user (like in before_send)" do
+          configuration.before_send = -> (_, _) { raise TypeError }
+
+          expect(subject.capture_event(event, scope)).to be_nil
+
+          expect(string_io.string).to match(/event sending failed: TypeError/)
+        end
+      end
+
+      context "when sending events in background causes error" do
         before do
           Sentry.background_worker = Sentry::BackgroundWorker.new(configuration)
         end
 
-        it "swallows Sentry::ExternalError (caused by transport's networking error)" do
-          expect(subject.capture_event(event, scope)).to be_nil
+        it "swallows and logs Sentry::ExternalError (caused by transport's networking error)" do
+          expect(subject.capture_event(event, scope)).to be_a(Sentry::Event)
+          sleep(0.1)
 
-          expect(string_io.string).to match(/event sending failed/)
+          expect(string_io.string).to match(/event sending failed: Failed to open TCP connection/)
         end
 
-        it "doesn't swallow errors caused by the user (like in before_send)" do
+        it "swallows and logs errors caused by the user (like in before_send)" do
           configuration.before_send = -> (_, _) { raise TypeError }
 
-          expect do
-            expect(subject.capture_event(event, scope)).to be_nil
-          end.to raise_error(TypeError)
+          expect(subject.capture_event(event, scope)).to be_a(Sentry::Event)
+          sleep(0.1)
+
+          expect(string_io.string).to match(/event sending failed: TypeError/)
         end
       end
 
       context "when config.async causes error" do
+        before do
+          expect(subject).to receive(:send_event)
+        end
+
         it "swallows Redis related error and send the event synchronizely" do
           class Redis
             class ConnectionError < StandardError; end
@@ -240,19 +281,17 @@ RSpec.describe Sentry::Client do
 
           configuration.async = -> (_, _) { raise Redis::ConnectionError }
 
-          expect(subject).to receive(:send_event)
-
           subject.capture_event(event, scope)
 
           expect(string_io.string).to match(/async event sending failed: Redis::ConnectionError/)
         end
 
-        it "raises normal exception" do
+        it "swallows and logs the exception" do
           configuration.async = -> (_, _) { raise TypeError }
 
-          expect do
-            subject.capture_event(event, scope)
-          end.to raise_error(TypeError)
+          subject.capture_event(event, scope)
+
+          expect(string_io.string).to match(/async event sending failed: TypeError/)
         end
       end
     end
