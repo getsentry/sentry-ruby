@@ -2,10 +2,11 @@ require "sentry/transport"
 
 module Sentry
   class Client
-    attr_reader :transport, :configuration
+    attr_reader :transport, :configuration, :logger
 
     def initialize(configuration)
       @configuration = configuration
+      @logger = configuration.logger
 
       if transport_class = configuration.transport.transport_class
         @transport = transport_class.new(configuration)
@@ -26,34 +27,16 @@ module Sentry
       scope.apply_to_event(event, hint)
 
       if async_block = configuration.async
-        begin
-          # We have to convert to a JSON-like hash, because background job
-          # processors (esp ActiveJob) may not like weird types in the event hash
-          event_hash = event.to_json_compatible
-
-          if async_block.arity == 2
-            hint = JSON.parse(JSON.generate(hint))
-            async_block.call(event_hash, hint)
-          else
-            async_block.call(event_hash)
-          end
-        rescue => e
-          configuration.logger.error(LOGGER_PROGNAME) { "async event sending failed: #{e.message}" }
-          send_event(event, hint)
-        end
+        dispatch_async_event(async_block, event, hint)
+      elsif hint.fetch(:background, true)
+        dispatch_background_event(event, hint)
       else
-        if hint.fetch(:background, true)
-          Sentry.background_worker.perform do
-            send_event(event, hint)
-          end
-        else
-          send_event(event, hint)
-        end
+        send_event(event, hint)
       end
 
       event
     rescue => e
-      configuration.logger.error(LOGGER_PROGNAME) { "event capturing failed: #{e.message}" }
+      logger.error(LOGGER_PROGNAME) { "event capturing failed: #{e.message}" }
       nil
     end
 
@@ -91,7 +74,7 @@ module Sentry
       event = configuration.before_send.call(event, hint) if configuration.before_send && event_type == "event"
 
       if event.nil?
-        configuration.logger.info(LOGGER_PROGNAME) { "Discarded event because before_send returned nil" }
+        logger.info(LOGGER_PROGNAME) { "Discarded event because before_send returned nil" }
         return
       end
 
@@ -99,8 +82,33 @@ module Sentry
 
       event
     rescue => e
-      configuration.logger.error(LOGGER_PROGNAME) { "event sending failed: #{e.message}" }
+      logger.error(LOGGER_PROGNAME) { "event sending failed: #{e.message}" }
       raise
     end
+
+    private
+
+    def dispatch_background_event(event, hint)
+      Sentry.background_worker.perform do
+        send_event(event, hint)
+      end
+    end
+
+    def dispatch_async_event(async_block, event, hint)
+      # We have to convert to a JSON-like hash, because background job
+      # processors (esp ActiveJob) may not like weird types in the event hash
+      event_hash = event.to_json_compatible
+
+      if async_block.arity == 2
+        hint = JSON.parse(JSON.generate(hint))
+        async_block.call(event_hash, hint)
+      else
+        async_block.call(event_hash)
+      end
+    rescue => e
+      logger.error(LOGGER_PROGNAME) { "async event sending failed: #{e.message}" }
+      send_event(event, hint)
+    end
+
   end
 end
