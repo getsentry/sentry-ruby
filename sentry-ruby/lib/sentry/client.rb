@@ -83,6 +83,7 @@ module Sentry
       event
     rescue => e
       logger.error(LOGGER_PROGNAME) { "event sending failed: #{e.message}" }
+      logger.error(LOGGER_PROGNAME) { "Unreported Event: #{Event.get_log_message(event.to_hash)}" }
       raise
     end
 

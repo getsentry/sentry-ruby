@@ -69,15 +69,6 @@ module Sentry
       configuration.logger.info(LOGGER_PROGNAME) { "Sending #{event_type} #{event_id} to Sentry" }
       encode(event_hash)
     end
-
-    def failed_for_exception(e, event)
-      configuration.logger.warn(LOGGER_PROGNAME) { "Unable to record event with remote Sentry server (#{e.class} - #{e.message}):\n#{e.backtrace[0..10].join("\n")}" }
-      log_not_sending(event)
-    end
-
-    def log_not_sending(event)
-      configuration.logger.warn(LOGGER_PROGNAME) { "Failed to submit event. Unreported Event: #{Event.get_log_message(event.to_hash)}" }
-    end
   end
 end
 
