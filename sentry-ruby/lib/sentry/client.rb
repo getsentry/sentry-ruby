@@ -71,19 +71,22 @@ module Sentry
 
     def send_event(event, hint = nil)
       event_type = event.is_a?(Event) ? event.type : event["type"]
-      event = configuration.before_send.call(event, hint) if configuration.before_send && event_type == "event"
 
-      if event.nil?
-        logger.info(LOGGER_PROGNAME) { "Discarded event because before_send returned nil" }
-        return
+      if event_type == "event" && configuration.before_send
+        event = configuration.before_send.call(event, hint)
+
+        if event.nil?
+          logger.info(LOGGER_PROGNAME) { "Discarded event because before_send returned nil" }
+          return
+        end
       end
 
       transport.send_event(event)
 
       event
     rescue => e
-      logger.error(LOGGER_PROGNAME) { "Event sending failed: #{e.message}" }
-      logger.error(LOGGER_PROGNAME) { "Unreported Event: #{Event.get_log_message(event.to_hash)}" }
+      logger.error(LOGGER_PROGNAME) { "#{event_type.capitalize} sending failed: #{e.message}" }
+      logger.error(LOGGER_PROGNAME) { "Unreported #{event_type.capitalize}: #{Event.get_log_message(event.to_hash)}" }
       raise
     end
 
@@ -107,7 +110,8 @@ module Sentry
         async_block.call(event_hash)
       end
     rescue => e
-      logger.error(LOGGER_PROGNAME) { "Async event sending failed: #{e.message}" }
+      event_type = event_hash["type"]
+      logger.error(LOGGER_PROGNAME) { "Async #{event_type} sending failed: #{e.message}" }
       send_event(event, hint)
     end
 
