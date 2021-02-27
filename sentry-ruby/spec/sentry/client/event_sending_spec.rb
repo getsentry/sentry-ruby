@@ -221,7 +221,7 @@ RSpec.describe Sentry::Client do
         it "swallows the event and logs the failure" do
           expect(subject.capture_event(event, scope)).to be_nil
 
-          expect(string_io.string).to match(/event capturing failed: TypeError/)
+          expect(string_io.string).to match(/Event capturing failed: TypeError/)
         end
       end
 
@@ -234,9 +234,9 @@ RSpec.describe Sentry::Client do
         it "swallows and logs Sentry::ExternalError (caused by transport's networking error)" do
           expect(subject.capture_event(event, scope)).to be_nil
 
-          expect(string_io.string).to match(/event sending failed: Failed to open TCP connection/)
+          expect(string_io.string).to match(/Event sending failed: Failed to open TCP connection/)
           expect(string_io.string).to match(/Unreported Event: Test message/)
-          expect(string_io.string).to match(/event capturing failed: Failed to open TCP connection/)
+          expect(string_io.string).to match(/Event capturing failed: Failed to open TCP connection/)
         end
 
         it "swallows and logs errors caused by the user (like in before_send)" do
@@ -244,7 +244,7 @@ RSpec.describe Sentry::Client do
 
           expect(subject.capture_event(event, scope)).to be_nil
 
-          expect(string_io.string).to match(/event sending failed: TypeError/)
+          expect(string_io.string).to match(/Event sending failed: TypeError/)
           expect(string_io.string).to match(/Unreported Event: Test message/)
         end
       end
@@ -258,7 +258,7 @@ RSpec.describe Sentry::Client do
           expect(subject.capture_event(event, scope)).to be_a(Sentry::Event)
           sleep(0.1)
 
-          expect(string_io.string).to match(/event sending failed: Failed to open TCP connection/)
+          expect(string_io.string).to match(/Event sending failed: Failed to open TCP connection/)
           expect(string_io.string).to match(/Unreported Event: Test message/)
         end
 
@@ -268,7 +268,7 @@ RSpec.describe Sentry::Client do
           expect(subject.capture_event(event, scope)).to be_a(Sentry::Event)
           sleep(0.1)
 
-          expect(string_io.string).to match(/event sending failed: TypeError/)
+          expect(string_io.string).to match(/Event sending failed: TypeError/)
           expect(string_io.string).to match(/Unreported Event: Test message/)
         end
       end
@@ -287,7 +287,7 @@ RSpec.describe Sentry::Client do
 
           subject.capture_event(event, scope)
 
-          expect(string_io.string).to match(/async event sending failed: Redis::ConnectionError/)
+          expect(string_io.string).to match(/Async event sending failed: Redis::ConnectionError/)
         end
 
         it "swallows and logs the exception" do
@@ -295,7 +295,7 @@ RSpec.describe Sentry::Client do
 
           subject.capture_event(event, scope)
 
-          expect(string_io.string).to match(/async event sending failed: TypeError/)
+          expect(string_io.string).to match(/Async event sending failed: TypeError/)
         end
       end
     end
@@ -307,7 +307,7 @@ RSpec.describe Sentry::Client do
             subject.send_event(event)
           end.to raise_error(Sentry::ExternalError)
 
-          expect(string_io.string).to match(/event sending failed: Failed to open TCP connection/)
+          expect(string_io.string).to match(/Event sending failed: Failed to open TCP connection/)
           expect(string_io.string).to match(/Unreported Event: Test message/)
         end
       end
@@ -322,7 +322,7 @@ RSpec.describe Sentry::Client do
             subject.send_event(event)
           end.to raise_error(TypeError)
 
-          expect(string_io.string).to match(/event sending failed: TypeError/)
+          expect(string_io.string).to match(/Event sending failed: TypeError/)
           expect(string_io.string).to match(/Unreported Event: Test message/)
         end
       end

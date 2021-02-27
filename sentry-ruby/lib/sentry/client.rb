@@ -36,7 +36,7 @@ module Sentry
 
       event
     rescue => e
-      logger.error(LOGGER_PROGNAME) { "event capturing failed: #{e.message}" }
+      logger.error(LOGGER_PROGNAME) { "Event capturing failed: #{e.message}" }
       nil
     end
 
@@ -82,7 +82,7 @@ module Sentry
 
       event
     rescue => e
-      logger.error(LOGGER_PROGNAME) { "event sending failed: #{e.message}" }
+      logger.error(LOGGER_PROGNAME) { "Event sending failed: #{e.message}" }
       logger.error(LOGGER_PROGNAME) { "Unreported Event: #{Event.get_log_message(event.to_hash)}" }
       raise
     end
@@ -107,7 +107,7 @@ module Sentry
         async_block.call(event_hash)
       end
     rescue => e
-      logger.error(LOGGER_PROGNAME) { "async event sending failed: #{e.message}" }
+      logger.error(LOGGER_PROGNAME) { "Async event sending failed: #{e.message}" }
       send_event(event, hint)
     end
 
