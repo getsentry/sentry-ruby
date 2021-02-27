@@ -70,7 +70,6 @@ RSpec.describe Sentry::Event do
           env: { 'SERVER_NAME' => 'localhost', 'SERVER_PORT' => '80' },
           headers: { 'Host' => 'localhost', 'X-Request-Id' => 'abcd-1234-abcd-1234' },
           method: 'POST',
-          query_string: 'biz=baz',
           url: 'http://localhost/lol',
         )
         expect(event.to_hash[:tags][:request_id]).to eq("abcd-1234-abcd-1234")
