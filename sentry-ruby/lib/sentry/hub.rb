@@ -71,7 +71,7 @@ module Sentry
 
     def start_transaction(transaction: nil, **options)
       transaction ||= Transaction.new(**options)
-      transaction.set_initial_sample_desicion
+      transaction.set_initial_sample_decision
       transaction
     end
 
