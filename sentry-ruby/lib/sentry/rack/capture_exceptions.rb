@@ -16,10 +16,7 @@ module Sentry
           scope.set_transaction_name(env["PATH_INFO"]) if env["PATH_INFO"]
           scope.set_rack_env(env)
 
-          sentry_trace = env["HTTP_SENTRY_TRACE"]
-          transaction = Sentry::Transaction.from_sentry_trace(sentry_trace, name: scope.transaction_name, op: transaction_op) if sentry_trace
-          transaction ||= Sentry.start_transaction(name: scope.transaction_name, op: transaction_op)
-
+          transaction = start_transaction(env, scope)
           scope.set_span(transaction)
 
           begin
@@ -55,6 +52,13 @@ module Sentry
       def capture_exception(exception)
         Sentry.capture_exception(exception)
       end
+
+      def start_transaction(env, scope)
+        sentry_trace = env["HTTP_SENTRY_TRACE"]
+        transaction = Sentry::Transaction.from_sentry_trace(sentry_trace, name: scope.transaction_name, op: transaction_op) if sentry_trace
+        transaction || Sentry.start_transaction(name: scope.transaction_name, op: transaction_op)
+      end
+
 
       def finish_transaction(transaction, status_code)
         transaction.set_http_status(status_code)
