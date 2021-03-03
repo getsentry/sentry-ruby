@@ -15,20 +15,39 @@ RSpec.describe Sentry::Transaction do
   describe ".from_sentry_trace" do
     let(:sentry_trace) { subject.to_sentry_trace }
 
-    it "returns correctly-formatted value" do
-      child_transaction = described_class.from_sentry_trace(sentry_trace, op: "child")
-
-      expect(child_transaction.trace_id).to eq(subject.trace_id)
-      expect(child_transaction.parent_span_id).to eq(subject.span_id)
-      expect(child_transaction.parent_sampled).to eq(true)
-      expect(child_transaction.sampled).to eq(true)
-      expect(child_transaction.op).to eq("child")
+    before do
+      configuration = Sentry::Configuration.new
+      configuration.traces_sample_rate = 1.0
+      allow(Sentry).to receive(:configuration).and_return(configuration)
     end
 
-    it "handles invalid values without crashing" do
-      child_transaction = described_class.from_sentry_trace("dummy", op: "child")
+    context "when tracing is enabled" do
+      it "returns correctly-formatted value" do
+        child_transaction = described_class.from_sentry_trace(sentry_trace, op: "child")
 
-      expect(child_transaction).to be_nil
+        expect(child_transaction.trace_id).to eq(subject.trace_id)
+        expect(child_transaction.parent_span_id).to eq(subject.span_id)
+        expect(child_transaction.parent_sampled).to eq(true)
+        expect(child_transaction.sampled).to eq(true)
+        expect(child_transaction.op).to eq("child")
+      end
+
+      it "handles invalid values without crashing" do
+        child_transaction = described_class.from_sentry_trace("dummy", op: "child")
+
+        expect(child_transaction).to be_nil
+      end
+    end
+
+    context "when tracing is disabled" do
+      before do
+        configuration = Sentry::Configuration.new
+        allow(Sentry).to receive(:configuration).and_return(configuration)
+      end
+
+      it "returns nil" do
+        expect(described_class.from_sentry_trace(sentry_trace, op: "child")).to be_nil
+      end
     end
   end
 
