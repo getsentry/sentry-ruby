@@ -69,9 +69,9 @@ module Sentry
       @stack.pop
     end
 
-    def start_transaction(transaction: nil, **options)
+    def start_transaction(transaction: nil, configuration: Sentry.configuration, **options)
       transaction ||= Transaction.new(**options)
-      transaction.set_initial_sample_decision
+      transaction.set_initial_sample_decision(configuration: current_client.configuration)
       transaction
     end
 

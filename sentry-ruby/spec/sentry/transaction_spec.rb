@@ -15,15 +15,17 @@ RSpec.describe Sentry::Transaction do
   describe ".from_sentry_trace" do
     let(:sentry_trace) { subject.to_sentry_trace }
 
-    before do
-      configuration = Sentry::Configuration.new
-      configuration.traces_sample_rate = 1.0
-      allow(Sentry).to receive(:configuration).and_return(configuration)
+    let(:configuration) do
+      Sentry::Configuration.new
     end
 
     context "when tracing is enabled" do
+      before do
+        configuration.traces_sample_rate = 1.0
+      end
+
       it "returns correctly-formatted value" do
-        child_transaction = described_class.from_sentry_trace(sentry_trace, op: "child")
+        child_transaction = described_class.from_sentry_trace(sentry_trace, op: "child", configuration: configuration)
 
         expect(child_transaction.trace_id).to eq(subject.trace_id)
         expect(child_transaction.parent_span_id).to eq(subject.span_id)
@@ -33,7 +35,7 @@ RSpec.describe Sentry::Transaction do
       end
 
       it "handles invalid values without crashing" do
-        child_transaction = described_class.from_sentry_trace("dummy", op: "child")
+        child_transaction = described_class.from_sentry_trace("dummy", op: "child", configuration: configuration)
 
         expect(child_transaction).to be_nil
       end
@@ -41,12 +43,11 @@ RSpec.describe Sentry::Transaction do
 
     context "when tracing is disabled" do
       before do
-        configuration = Sentry::Configuration.new
-        allow(Sentry).to receive(:configuration).and_return(configuration)
+        configuration.traces_sample_rate = 0.0
       end
 
       it "returns nil" do
-        expect(described_class.from_sentry_trace(sentry_trace, op: "child")).to be_nil
+        expect(described_class.from_sentry_trace(sentry_trace, op: "child", configuration: configuration)).to be_nil
       end
     end
   end
@@ -208,7 +209,7 @@ RSpec.describe Sentry::Transaction do
             sampling_context = context
           end
 
-          subject.set_initial_sample_decision(foo: "bar")
+          subject.set_initial_sample_decision(sampling_context: { foo: "bar" })
 
           # transaction_context's sampled attribute will be the old value
           expect(sampling_context[:transaction_context].keys).to eq(subject.to_hash.keys)
