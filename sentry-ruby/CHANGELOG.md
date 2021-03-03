@@ -3,6 +3,8 @@
 ## Unreleased
 
 - Refactor interface construction [#1296](https://github.com/getsentry/sentry-ruby/pull/1296)
+- Ignore sentry-trace when tracing is not enabled [#1308](https://github.com/getsentry/sentry-ruby/pull/1308)
+  - Fixes [#1307](https://github.com/getsentry/sentry-ruby/issues/1307)
 
 ## 4.2.2
 

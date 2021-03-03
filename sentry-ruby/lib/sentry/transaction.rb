@@ -26,6 +26,7 @@ module Sentry
     end
 
     def self.from_sentry_trace(sentry_trace, **options)
+      return unless Sentry.configuration.tracing_enabled?
       return unless sentry_trace
 
       match = SENTRY_TRACE_REGEXP.match(sentry_trace)
