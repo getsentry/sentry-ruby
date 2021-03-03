@@ -17,26 +17,26 @@ module Sentry
           scope.set_rack_env(env)
 
           sentry_trace = env["HTTP_SENTRY_TRACE"]
-          span = Sentry::Transaction.from_sentry_trace(sentry_trace, name: scope.transaction_name, op: transaction_op) if sentry_trace
-          span ||= Sentry.start_transaction(name: scope.transaction_name, op: transaction_op)
+          transaction = Sentry::Transaction.from_sentry_trace(sentry_trace, name: scope.transaction_name, op: transaction_op) if sentry_trace
+          transaction ||= Sentry.start_transaction(name: scope.transaction_name, op: transaction_op)
 
-          scope.set_span(span)
+          scope.set_span(transaction)
 
           begin
             response = @app.call(env)
           rescue Sentry::Error
-            finish_span(span, 500)
+            finish_transaction(transaction, 500)
             raise # Don't capture Sentry errors
           rescue Exception => e
             capture_exception(e)
-            finish_span(span, 500)
+            finish_transaction(transaction, 500)
             raise
           end
 
           exception = collect_exception(env)
           capture_exception(exception) if exception
 
-          finish_span(span, response[0])
+          finish_transaction(transaction, response[0])
 
           response
         end
@@ -56,9 +56,9 @@ module Sentry
         Sentry.capture_exception(exception)
       end
 
-      def finish_span(span, status_code)
-        span.set_http_status(status_code)
-        span.finish
+      def finish_transaction(transaction, status_code)
+        transaction.set_http_status(status_code)
+        transaction.finish
       end
     end
   end
