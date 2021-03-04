@@ -68,7 +68,7 @@ module Sentry
       config = Configuration.new
       yield(config) if block_given?
       client = Client.new(config)
-      scope = Scope.new
+      scope = Scope.new(breadcrumb_buffer_limit: config.breadcrumb_buffer_limit)
       hub = Hub.new(client, scope)
       Thread.current[THREAD_LOCAL] = hub
       @main_hub = hub

@@ -2,12 +2,13 @@ require "sentry/breadcrumb"
 
 module Sentry
   class BreadcrumbBuffer
+    DEFAULT_SIZE = 100
     include Enumerable
 
     attr_accessor :buffer
 
-    def initialize(size = 100)
-      @buffer = Array.new(size)
+    def initialize(size = nil)
+      @buffer = Array.new(size || DEFAULT_SIZE)
     end
 
     def record(crumb)

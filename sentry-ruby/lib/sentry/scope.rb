@@ -9,7 +9,8 @@ module Sentry
 
     attr_reader(*ATTRIBUTES)
 
-    def initialize
+    def initialize(breadcrumb_buffer_limit: nil)
+      @breadcrumb_buffer_limit = breadcrumb_buffer_limit
       set_default_value
     end
 
@@ -47,7 +48,7 @@ module Sentry
     end
 
     def clear_breadcrumbs
-      @breadcrumbs = BreadcrumbBuffer.new
+      set_new_breadcrumb_buffer
     end
 
     def dup
@@ -171,7 +172,6 @@ module Sentry
     private
 
     def set_default_value
-      @breadcrumbs = BreadcrumbBuffer.new
       @contexts = { :os => self.class.os_context, :runtime => self.class.runtime_context }
       @extra = {}
       @tags = {}
@@ -182,7 +182,13 @@ module Sentry
       @event_processors = []
       @rack_env = {}
       @span = nil
+      set_new_breadcrumb_buffer
     end
+
+    def set_new_breadcrumb_buffer
+      @breadcrumbs = BreadcrumbBuffer.new(@breadcrumb_buffer_limit)
+    end
+
 
     class << self
       def os_context
