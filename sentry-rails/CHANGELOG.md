@@ -1,5 +1,9 @@
 # Changelog
 
+## Unreleased
+
+- Support performance monitoring on ActiveJob execution [#1304](https://github.com/getsentry/sentry-ruby/pull/1304)
+
 ## 4.2.2
 
 - Always define Sentry::SendEventJob to avoid eager load issues [#1286](https://github.com/getsentry/sentry-ruby/pull/1286)

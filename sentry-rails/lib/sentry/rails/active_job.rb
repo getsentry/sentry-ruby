@@ -8,8 +8,8 @@ module Sentry
               if already_supported_by_specific_integration?(job)
                 block.call
               else
-                Sentry.with_scope do
-                  capture_and_reraise_with_sentry(job, block)
+                Sentry.with_scope do |scope|
+                  capture_and_reraise_with_sentry(job, scope, block)
                 end
               end
             else
@@ -19,10 +19,20 @@ module Sentry
         end
       end
 
-      def capture_and_reraise_with_sentry(job, block)
+      def capture_and_reraise_with_sentry(job, scope, block)
+        scope.set_transaction_name(job.class.name)
+        span = Sentry.start_transaction(name: scope.transaction_name, op: "active_job")
+
+        scope.set_span(span)
+
         block.call
+
+        span.set_http_status(200)
+        span.finish
       rescue Exception => e # rubocop:disable Lint/RescueException
         rescue_handler_result = rescue_with_handler(e)
+        span.set_http_status(500)
+        span.finish
         return rescue_handler_result if rescue_handler_result
 
         Sentry::Rails.capture_exception(

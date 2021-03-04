@@ -19,6 +19,14 @@ class MyActiveJob < FailedJob
   end
 end
 
+class QueryPostJob < ActiveJob::Base
+  self.logger = nil
+
+  def perform
+    Post.all.to_a
+  end
+end
+
 class RescuedActiveJob < MyActiveJob
   rescue_from TestError, :with => :rescue_callback
 
@@ -83,6 +91,53 @@ RSpec.describe "ActiveJob integration" do
     expect(event["extra"]["foo"]).to eq("bar")
 
     expect(Sentry.get_current_scope.extra).to eq({})
+  end
+
+  context "with tracing enabled" do
+    before do
+      make_basic_app do |config|
+        config.traces_sample_rate = 1.0
+      end
+    end
+
+    after do
+      transport.events = []
+
+      Sentry::Rails::Tracing.unsubscribe_tracing_events
+      Sentry::Rails::Tracing.remove_active_support_notifications_patch
+    end
+
+    it "sends transaction" do
+      QueryPostJob.perform_now
+
+      expect(transport.events.count).to eq(1)
+      transaction = transport.events.last
+      expect(transaction.transaction).to eq("QueryPostJob")
+      expect(transaction.contexts.dig(:trace, :trace_id)).to be_present
+      expect(transaction.contexts.dig(:trace, :span_id)).to be_present
+      expect(transaction.contexts.dig(:trace, :status)).to eq("ok")
+
+      expect(transaction.spans.count).to eq(1)
+      expect(transaction.spans.first[:op]).to eq("sql.active_record")
+    end
+
+    context "with error" do
+      it "sends transaction and associates it with the event" do
+        expect { MyActiveJob.perform_now }.to raise_error(MyActiveJob::TestError)
+
+        expect(transport.events.count).to eq(2)
+
+        transaction = transport.events.first
+        expect(transaction.transaction).to eq("MyActiveJob")
+        expect(transaction.contexts.dig(:trace, :trace_id)).to be_present
+        expect(transaction.contexts.dig(:trace, :span_id)).to be_present
+        expect(transaction.contexts.dig(:trace, :status)).to eq("internal_error")
+
+        event = transport.events.last
+        expect(event.transaction).to eq("MyActiveJob")
+        expect(event.contexts.dig(:trace, :trace_id)).to eq(transaction.contexts.dig(:trace, :trace_id))
+      end
+    end
   end
 
   context "when DeserializationError happens in user's jobs" do
