@@ -215,10 +215,12 @@ end
 New:
 
 ```ruby
-Sentry.set_user(id: 1)
-Sentry.set_tags(foo: "bar")
-Sentry.set_extras(debug: true)
-# send event
+Sentry.with_scope do |scope|
+  scope.set_user(id: 1)
+  scope.set_tags(foo: "bar")
+  scope.set_extras(debug: true)
+  # send event
+end
 ```
 
 
