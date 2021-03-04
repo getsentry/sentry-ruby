@@ -20,6 +20,10 @@ RSpec.describe "Sentry::Breadcrumbs::SentryLogger" do
     expect(breadcrumb.message).to eq("foo")
   end
 
+  it "does not affect the return of the logger call" do
+    expect(logger.info("foo")).to be_nil
+  end
+
   it "ignores traces with #{Sentry::LOGGER_PROGNAME}" do
     logger.info(Sentry::LOGGER_PROGNAME) { "foo" }
 

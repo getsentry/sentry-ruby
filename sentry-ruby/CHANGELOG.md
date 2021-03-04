@@ -9,6 +9,7 @@
   - Fixes [#1307](https://github.com/getsentry/sentry-ruby/issues/1307)
 - Refactor tracing implementation [#1309](https://github.com/getsentry/sentry-ruby/pull/1309)
 - Allow configuring BreadcrumbBuffer's size limit [#1310](https://github.com/getsentry/sentry-ruby/pull/1310)
+- Return nil from logger methods instead of breadcrumb buffer [#1299](https://github.com/getsentry/sentry-ruby/pull/1299)
 
 ## 4.2.2
 

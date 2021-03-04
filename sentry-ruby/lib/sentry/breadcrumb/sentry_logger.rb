@@ -14,6 +14,7 @@ module Sentry
       def add(*args, &block)
         super
         add_breadcrumb(*args, &block)
+        nil
       end
 
       def add_breadcrumb(severity, message = nil, progname = nil)
