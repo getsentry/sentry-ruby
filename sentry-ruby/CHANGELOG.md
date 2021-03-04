@@ -5,6 +5,9 @@
 - Refactor interface construction [#1296](https://github.com/getsentry/sentry-ruby/pull/1296)
 - Treat query string as pii too [#1302](https://github.com/getsentry/sentry-ruby/pull/1302)
   - Fixes [#1301](https://github.com/getsentry/sentry-ruby/issues/1301)
+- Ignore sentry-trace when tracing is not enabled [#1308](https://github.com/getsentry/sentry-ruby/pull/1308)
+  - Fixes [#1307](https://github.com/getsentry/sentry-ruby/issues/1307)
+- Refactor tracing implementation [#1309](https://github.com/getsentry/sentry-ruby/pull/1309)
 
 ## 4.2.2
 

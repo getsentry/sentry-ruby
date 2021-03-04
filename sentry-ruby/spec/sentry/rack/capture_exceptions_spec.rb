@@ -287,16 +287,38 @@ RSpec.describe Sentry::Rack::CaptureExceptions, rack: true do
         Sentry.configuration.traces_sample_rate = nil
       end
 
+      let(:stack) do
+        described_class.new(
+          ->(_) do
+            [200, {}, ["ok"]]
+          end
+        )
+      end
+
       it "doesn't record transaction" do
-        app = ->(_) do
-          [200, {}, ["ok"]]
-        end
-
-        stack = described_class.new(app)
-
         stack.call(env)
 
         expect(transport.events.count).to eq(0)
+      end
+
+      context "when sentry-trace header is sent" do
+        let(:external_transaction) do
+          Sentry::Transaction.new(
+            op: "pageload",
+            status: "ok",
+            sampled: true,
+            name: "a/path"
+          )
+        end
+
+        it "doesn't cause the transaction to be recorded" do
+          env["HTTP_SENTRY_TRACE"] = external_transaction.to_sentry_trace
+
+          response = stack.call(env)
+
+          expect(response[0]).to eq(200)
+          expect(transport.events).to be_empty
+        end
       end
     end
   end

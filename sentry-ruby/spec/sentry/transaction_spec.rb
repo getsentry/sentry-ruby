@@ -15,20 +15,40 @@ RSpec.describe Sentry::Transaction do
   describe ".from_sentry_trace" do
     let(:sentry_trace) { subject.to_sentry_trace }
 
-    it "returns correctly-formatted value" do
-      child_transaction = described_class.from_sentry_trace(sentry_trace, op: "child")
-
-      expect(child_transaction.trace_id).to eq(subject.trace_id)
-      expect(child_transaction.parent_span_id).to eq(subject.span_id)
-      expect(child_transaction.parent_sampled).to eq(true)
-      expect(child_transaction.sampled).to eq(true)
-      expect(child_transaction.op).to eq("child")
+    let(:configuration) do
+      Sentry::Configuration.new
     end
 
-    it "handles invalid values without crashing" do
-      child_transaction = described_class.from_sentry_trace("dummy", op: "child")
+    context "when tracing is enabled" do
+      before do
+        configuration.traces_sample_rate = 1.0
+      end
 
-      expect(child_transaction).to be_nil
+      it "returns correctly-formatted value" do
+        child_transaction = described_class.from_sentry_trace(sentry_trace, op: "child", configuration: configuration)
+
+        expect(child_transaction.trace_id).to eq(subject.trace_id)
+        expect(child_transaction.parent_span_id).to eq(subject.span_id)
+        expect(child_transaction.parent_sampled).to eq(true)
+        expect(child_transaction.sampled).to eq(true)
+        expect(child_transaction.op).to eq("child")
+      end
+
+      it "handles invalid values without crashing" do
+        child_transaction = described_class.from_sentry_trace("dummy", op: "child", configuration: configuration)
+
+        expect(child_transaction).to be_nil
+      end
+    end
+
+    context "when tracing is disabled" do
+      before do
+        configuration.traces_sample_rate = 0.0
+      end
+
+      it "returns nil" do
+        expect(described_class.from_sentry_trace(sentry_trace, op: "child", configuration: configuration)).to be_nil
+      end
     end
   end
 
@@ -102,7 +122,7 @@ RSpec.describe Sentry::Transaction do
     end
   end
 
-  describe "#set_initial_sample_desicion" do
+  describe "#set_initial_sample_decision" do
     before do
       perform_basic_setup
     end
@@ -116,7 +136,7 @@ RSpec.describe Sentry::Transaction do
         allow(Sentry.configuration).to receive(:tracing_enabled?).and_return(false)
 
         transaction = described_class.new(sampled: true)
-        transaction.set_initial_sample_desicion
+        transaction.set_initial_sample_decision
         expect(transaction.sampled).to eq(false)
       end
     end
@@ -131,11 +151,11 @@ RSpec.describe Sentry::Transaction do
       context "when the transaction already has a decision" do
         it "doesn't change it" do
           transaction = described_class.new(sampled: true)
-          transaction.set_initial_sample_desicion
+          transaction.set_initial_sample_decision
           expect(transaction.sampled).to eq(true)
 
           transaction = described_class.new(sampled: false)
-          transaction.set_initial_sample_desicion
+          transaction.set_initial_sample_decision
           expect(transaction.sampled).to eq(false)
         end
       end
@@ -151,7 +171,7 @@ RSpec.describe Sentry::Transaction do
             "[Tracing] Starting <rack.request> transaction"
           )
 
-          subject.set_initial_sample_desicion
+          subject.set_initial_sample_decision
           expect(subject.sampled).to eq(true)
         end
 
@@ -161,14 +181,14 @@ RSpec.describe Sentry::Transaction do
             "[Tracing] Discarding <rack.request> transaction because it's not included in the random sample (sampling rate = 0.5)"
           )
 
-          subject.set_initial_sample_desicion
+          subject.set_initial_sample_decision
           expect(subject.sampled).to eq(false)
         end
 
         it "accepts integer traces_sample_rate" do
           Sentry.configuration.traces_sample_rate = 1
 
-          subject.set_initial_sample_desicion
+          subject.set_initial_sample_decision
           expect(subject.sampled).to eq(true)
         end
       end
@@ -178,7 +198,7 @@ RSpec.describe Sentry::Transaction do
           Sentry.configuration.traces_sampler = ""
 
           expect do
-            subject.set_initial_sample_desicion
+            subject.set_initial_sample_decision
           end.not_to raise_error
         end
 
@@ -189,7 +209,7 @@ RSpec.describe Sentry::Transaction do
             sampling_context = context
           end
 
-          subject.set_initial_sample_desicion(foo: "bar")
+          subject.set_initial_sample_decision(sampling_context: { foo: "bar" })
 
           # transaction_context's sampled attribute will be the old value
           expect(sampling_context[:transaction_context].keys).to eq(subject.to_hash.keys)
@@ -203,7 +223,7 @@ RSpec.describe Sentry::Transaction do
           )
 
           Sentry.configuration.traces_sampler = -> (_) { "foo" }
-          subject.set_initial_sample_desicion
+          subject.set_initial_sample_decision
 
           expect(subject.sampled).to eq(false)
         end
@@ -215,17 +235,17 @@ RSpec.describe Sentry::Transaction do
 
           subject = described_class.new
           Sentry.configuration.traces_sampler = -> (_) { true }
-          subject.set_initial_sample_desicion
+          subject.set_initial_sample_decision
           expect(subject.sampled).to eq(true)
 
           subject = described_class.new
           Sentry.configuration.traces_sampler = -> (_) { 1.0 }
-          subject.set_initial_sample_desicion
+          subject.set_initial_sample_decision
           expect(subject.sampled).to eq(true)
 
           subject = described_class.new
           Sentry.configuration.traces_sampler = -> (_) { 1 }
-          subject.set_initial_sample_desicion
+          subject.set_initial_sample_decision
           expect(subject.sampled).to eq(true)
         end
 
@@ -236,12 +256,12 @@ RSpec.describe Sentry::Transaction do
 
           subject = described_class.new
           Sentry.configuration.traces_sampler = -> (_) { false }
-          subject.set_initial_sample_desicion
+          subject.set_initial_sample_decision
           expect(subject.sampled).to eq(false)
 
           subject = described_class.new
           Sentry.configuration.traces_sampler = -> (_) { 0.0 }
-          subject.set_initial_sample_desicion
+          subject.set_initial_sample_decision
           expect(subject.sampled).to eq(false)
         end
       end
