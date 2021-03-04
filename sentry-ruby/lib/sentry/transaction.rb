@@ -25,8 +25,8 @@ module Sentry
       @span_recorder.add(self)
     end
 
-    def self.from_sentry_trace(sentry_trace, **options)
-      return unless Sentry.configuration.tracing_enabled?
+    def self.from_sentry_trace(sentry_trace, configuration: Sentry.configuration, **options)
+      return unless configuration.tracing_enabled?
       return unless sentry_trace
 
       match = SENTRY_TRACE_REGEXP.match(sentry_trace)
@@ -68,8 +68,8 @@ module Sentry
       copy
     end
 
-    def set_initial_sample_desicion(sampling_context = {})
-      unless Sentry.configuration.tracing_enabled?
+    def set_initial_sample_decision(sampling_context: {}, configuration: Sentry.configuration)
+      unless configuration.tracing_enabled?
         @sampled = false
         return
       end
@@ -78,9 +78,9 @@ module Sentry
 
       transaction_description = generate_transaction_description
 
-      logger = Sentry.configuration.logger
-      sample_rate = Sentry.configuration.traces_sample_rate
-      traces_sampler = Sentry.configuration.traces_sampler
+      logger = configuration.logger
+      sample_rate = configuration.traces_sample_rate
+      traces_sampler = configuration.traces_sampler
 
       if traces_sampler.is_a?(Proc)
         sampling_context = sampling_context.merge(

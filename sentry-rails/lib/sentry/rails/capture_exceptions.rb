@@ -29,11 +29,14 @@ module Sentry
         Sentry::Rails.capture_exception(exception)
       end
 
-      def finish_span(span, status_code)
-        if @assets_regex.nil? || !span.name.match?(@assets_regex)
-          span.set_http_status(status_code)
-          span.finish
+      def start_transaction(env, scope)
+        transaction = super
+
+        if @assets_regex && transaction.name.match?(@assets_regex)
+          transaction.instance_variable_set(:@sampled, false)
         end
+
+        transaction
       end
     end
   end
