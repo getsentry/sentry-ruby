@@ -13,9 +13,19 @@ module Sentry
         scope.set_tags(queue: queue, jid: job["jid"])
         scope.set_extras(sidekiq: job.merge("queue" => queue))
         scope.set_transaction_name(context_filter.transaction_name)
+        transaction = Sentry.start_transaction(name: scope.transaction_name, op: "sidekiq")
+        scope.set_span(transaction)
 
-        yield
+        begin
+          yield
+        rescue => e
+          transaction.set_http_status(500)
+          transaction.finish
+          raise
+        end
 
+        transaction.set_http_status(200)
+        transaction.finish
         # don't need to use ensure here
         # if the job failed, we need to keep the scope for error handler. and the scope will be cleared there
         scope.clear

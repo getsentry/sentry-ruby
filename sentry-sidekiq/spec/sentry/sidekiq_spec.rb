@@ -2,7 +2,7 @@ require "spec_helper"
 require 'sidekiq/manager'
 
 RSpec.describe Sentry::Sidekiq do
-  before :all do
+  before do
     perform_basic_setup
   end
 
@@ -20,10 +20,6 @@ RSpec.describe Sentry::Sidekiq do
 
   let(:transport) do
     Sentry.get_current_client.transport
-  end
-
-  before do
-    transport.events = []
   end
 
   it "registers error handlers and middlewares" do
@@ -44,6 +40,7 @@ RSpec.describe Sentry::Sidekiq do
       process_job(processor, "HappyWorker")
       process_job(processor, "SadWorker")
 
+      expect(transport.events.count).to eq(1)
       event = transport.events.last.to_json_compatible
 
       expect(event["tags"]).to eq("queue" => "default", "jid" => "123123", "mood" => "sad")
@@ -55,6 +52,7 @@ RSpec.describe Sentry::Sidekiq do
       process_job(processor, "SadWorker")
       process_job(processor, "VerySadWorker")
 
+      expect(transport.events.count).to eq(2)
       event = transport.events.last.to_json_compatible
 
       expect(event["tags"]).to eq("queue" => "default", "jid" => "123123", "mood" => "very sad")
@@ -76,6 +74,41 @@ RSpec.describe Sentry::Sidekiq do
 
     retries = Sidekiq::RetrySet.new
     expect(retries.count).to eq(1)
+  end
+
+  context "when tracing is enabled" do
+    before do
+      perform_basic_setup do |config|
+        config.traces_sample_rate = 1.0
+      end
+    end
+
+    it "records transaction" do
+      process_job(processor, "HappyWorker")
+
+      expect(transport.events.count).to eq(1)
+      transaction = transport.events.first
+
+      expect(transaction.transaction).to eq("Sidekiq/HappyWorker")
+      expect(transaction.contexts.dig(:trace, :trace_id)).to be_a(String)
+      expect(transaction.contexts.dig(:trace, :span_id)).to be_a(String)
+      expect(transaction.contexts.dig(:trace, :status)).to eq("ok")
+    end
+
+    it "records transaction with exception" do
+      process_job(processor, "SadWorker")
+
+      expect(transport.events.count).to eq(2)
+      transaction = transport.events.first
+
+      expect(transaction.transaction).to eq("Sidekiq/SadWorker")
+      expect(transaction.contexts.dig(:trace, :trace_id)).to be_a(String)
+      expect(transaction.contexts.dig(:trace, :span_id)).to be_a(String)
+      expect(transaction.contexts.dig(:trace, :status)).to eq("internal_error")
+
+      event = transport.events.last
+      expect(event.contexts.dig(:trace, :trace_id)).to eq(transaction.contexts.dig(:trace, :trace_id))
+    end
   end
 end
 
