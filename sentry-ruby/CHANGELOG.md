@@ -8,6 +8,7 @@
 - Ignore sentry-trace when tracing is not enabled [#1308](https://github.com/getsentry/sentry-ruby/pull/1308)
   - Fixes [#1307](https://github.com/getsentry/sentry-ruby/issues/1307)
 - Refactor tracing implementation [#1309](https://github.com/getsentry/sentry-ruby/pull/1309)
+- Allow configuring BreadcrumbBuffer's size limit [#1310](https://github.com/getsentry/sentry-ruby/pull/1310)
 
 ## 4.2.2
 
