@@ -37,6 +37,15 @@ RSpec.describe Sentry do
         expect(subject.get_main_hub).to eq(current_hub)
       end
     end
+
+    it "initializes Scope with correct breadcrumb_buffer_limit" do
+      described_class.init do |config|
+        config.breadcrumb_buffer_limit = 1
+      end
+
+      current_scope = described_class.get_current_scope
+      expect(current_scope.breadcrumbs.buffer.size).to eq(1)
+    end
   end
 
   describe "#clone_hub_to_current_thread" do
