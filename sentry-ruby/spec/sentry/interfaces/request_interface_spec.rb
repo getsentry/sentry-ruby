@@ -137,27 +137,33 @@ RSpec.describe Sentry::RequestInterface do
     end
   end
 
-  context "with form data" do
-    it "doesn't store request body by default" do
-      new_env = env.merge(
-        "REQUEST_METHOD" => "POST",
-        ::Rack::RACK_INPUT => StringIO.new("data=ignore me")
-      )
+  it "doesn't store request body by default" do
+    new_env = env.merge(
+      "REQUEST_METHOD" => "POST",
+      ::Rack::RACK_INPUT => StringIO.new("data=ignore me")
+    )
 
-      interface = described_class.build(env: new_env)
+    interface = described_class.build(env: new_env)
 
-      expect(interface.data).to eq(nil)
-    end
+    expect(interface.data).to eq(nil)
   end
 
-  context "with request body" do
-    it "doesn't store request body by default" do
-      new_env = env.merge(::Rack::RACK_INPUT => StringIO.new("ignore me"))
+  it "doesn't store request body by default" do
+    new_env = env.merge(::Rack::RACK_INPUT => StringIO.new("ignore me"))
 
-      interface = described_class.build(env: new_env)
+    interface = described_class.build(env: new_env)
 
-      expect(interface.data).to eq(nil)
-    end
+    expect(interface.data).to eq(nil)
+  end
+
+  it "doesn't store query_string by default" do
+    new_env = env.merge(
+      "QUERY_STRING" => "token=xxxx"
+    )
+
+    interface = described_class.build(env: new_env)
+
+    expect(interface.query_string).to eq(nil)
   end
 
   context "with config.send_default_pii = true" do
@@ -184,6 +190,16 @@ RSpec.describe Sentry::RequestInterface do
       interface = described_class.build(env: new_env)
 
       expect(interface.data).to eq({ "data" => "catch me" })
+    end
+
+    it "stores query string" do
+      new_env = env.merge(
+        "QUERY_STRING" => "token=xxxx"
+      )
+
+      interface = described_class.build(env: new_env)
+
+      expect(interface.query_string).to eq("token=xxxx")
     end
 
     it "stores request body" do
