@@ -1,5 +1,9 @@
 # Changelog
 
+## Unreleased
+
+- Support performance monitoring on Sidekiq workers [#1311](https://github.com/getsentry/sentry-ruby/pull/1311)
+
 ## 4.2.1
 
 - Use ::Rails::Railtie for checking Rails definition [#1284](https://github.com/getsentry/sentry-ruby/pull/1284)
