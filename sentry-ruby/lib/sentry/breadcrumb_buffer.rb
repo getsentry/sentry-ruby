@@ -6,8 +6,8 @@ module Sentry
 
     attr_accessor :buffer
 
-    def initialize(size = 100)
-      @buffer = Array.new(size)
+    def initialize(size = nil)
+      @buffer = Array.new(size || 100)
     end
 
     def record(crumb)
