@@ -38,9 +38,9 @@ RSpec.describe Sentry do
       end
     end
 
-    it "initializes Scope with correct breadcrumb_buffer_limit" do
+    it "initializes Scope with correct max_breadcrumbs" do
       described_class.init do |config|
-        config.breadcrumb_buffer_limit = 1
+        config.max_breadcrumbs = 1
       end
 
       current_scope = described_class.get_current_scope

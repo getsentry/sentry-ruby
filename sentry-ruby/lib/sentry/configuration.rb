@@ -63,7 +63,7 @@ module Sentry
     attr_reader :breadcrumbs_logger
 
     # Max number of breadcrumbs a breadcrumb buffer can hold
-    attr_accessor :breadcrumb_buffer_limit
+    attr_accessor :max_breadcrumbs
 
     # Number of lines of code context to capture, or nil for none
     attr_accessor :context_lines
@@ -175,7 +175,7 @@ module Sentry
 
     def initialize
       self.background_worker_threads = Concurrent.processor_count
-      self.breadcrumb_buffer_limit = BreadcrumbBuffer::DEFAULT_SIZE
+      self.max_breadcrumbs = BreadcrumbBuffer::DEFAULT_SIZE
       self.breadcrumbs_logger = []
       self.context_lines = 3
       self.environment = environment_from_env

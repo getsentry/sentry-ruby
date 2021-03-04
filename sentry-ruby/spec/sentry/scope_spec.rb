@@ -20,7 +20,7 @@ RSpec.describe Sentry::Scope do
     end
 
     it "allows setting breadcrumb buffer's size limit" do
-      scope = described_class.new(breadcrumb_buffer_limit: 10)
+      scope = described_class.new(max_breadcrumbs: 10)
       expect(scope.breadcrumbs.buffer.count).to eq(10)
     end
   end
@@ -71,7 +71,7 @@ RSpec.describe Sentry::Scope do
 
   describe "#clear_breadcrumbs" do
     subject do
-      described_class.new(breadcrumb_buffer_limit: 10)
+      described_class.new(max_breadcrumbs: 10)
     end
 
     before do

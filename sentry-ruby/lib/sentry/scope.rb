@@ -9,8 +9,8 @@ module Sentry
 
     attr_reader(*ATTRIBUTES)
 
-    def initialize(breadcrumb_buffer_limit: nil)
-      @breadcrumb_buffer_limit = breadcrumb_buffer_limit
+    def initialize(max_breadcrumbs: nil)
+      @max_breadcrumbs = max_breadcrumbs
       set_default_value
     end
 
@@ -186,7 +186,7 @@ module Sentry
     end
 
     def set_new_breadcrumb_buffer
-      @breadcrumbs = BreadcrumbBuffer.new(@breadcrumb_buffer_limit)
+      @breadcrumbs = BreadcrumbBuffer.new(@max_breadcrumbs)
     end
 
 
