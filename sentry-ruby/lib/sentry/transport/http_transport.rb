@@ -1,8 +1,12 @@
 require 'faraday'
+require 'zlib'
 
 module Sentry
   class HTTPTransport < Transport
-    CONTENT_TYPE = 'application/json'
+    GZIP_ENCODING = "gzip"
+    GZIP_THRESHOLD = 1024 * 30
+    CONTENT_TYPE = 'application/x-sentry-envelope'
+
     attr_reader :conn, :adapter
 
     def initialize(*args)
@@ -13,8 +17,16 @@ module Sentry
     end
 
     def send_data(data)
+      encoding = ""
+
+      if should_compress?(data)
+        data = Zlib.gzip(data)
+        encoding = GZIP_ENCODING
+      end
+
       conn.post @endpoint do |req|
         req.headers['Content-Type'] = CONTENT_TYPE
+        req.headers['Content-Encoding'] = encoding
         req.headers['X-Sentry-Auth'] = generate_auth_header
         req.body = data
       end
@@ -30,6 +42,10 @@ module Sentry
     end
 
     private
+
+    def should_compress?(data)
+      @transport_configuration.encoding == GZIP_ENCODING && data.bytesize >= GZIP_THRESHOLD
+    end
 
     def set_conn
       server = @dsn.server
