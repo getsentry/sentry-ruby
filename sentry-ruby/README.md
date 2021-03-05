@@ -2,10 +2,14 @@
   <a href="https://sentry.io" target="_blank" align="center">
     <img src="https://sentry-brand.storage.googleapis.com/sentry-logo-black.png" width="280">
   </a>
-  <br>
+  <br />
 </p>
 
-# sentry-ruby, the Ruby Client for Sentry
+_Bad software is everywhere, and we're tired of it. Sentry is on a mission to help developers write better software faster, so we can get back to enjoying technology. If you want to join us [<kbd>**Check out our open positions**</kbd>](https://sentry.io/careers/)_
+
+Sentry SDK for Ruby
+===========
+
 
 **The old `sentry-raven` client has entered maintenance mode and was moved to [here](https://github.com/getsentry/sentry-ruby/tree/master/sentry-raven).**
 
