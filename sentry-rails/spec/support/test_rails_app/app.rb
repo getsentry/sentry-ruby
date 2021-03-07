@@ -10,7 +10,8 @@ require 'sentry/rails'
 
 ActiveSupport::Deprecation.silenced = true
 
-ActiveRecord::Base.establish_connection(adapter: "sqlite3", database: ":memory:")
+ActiveRecord::Base.establish_connection(adapter: "mysql2", database: "test")
+# ActiveRecord::Base.logger = Logger.new($stdout)
 ActiveRecord::Base.logger = Logger.new(nil)
 
 ActiveRecord::Schema.define do
