@@ -10,7 +10,14 @@ require 'sentry/rails'
 
 ActiveSupport::Deprecation.silenced = true
 
-ActiveRecord::Base.establish_connection(adapter: "mysql2", database: "test")
+ActiveRecord::Base.establish_connection(
+  adapter: "mysql2",
+  database: "test",
+  port: ENV["DB_PORT"],
+  host: "127.0.0.1",
+  username: "root",
+  password: "password"
+)
 # ActiveRecord::Base.logger = Logger.new($stdout)
 ActiveRecord::Base.logger = Logger.new(nil)
 
