@@ -58,6 +58,7 @@ jobs:
 
     - name: Verify MySQL connection from host
       run: |
+        sudo service mysql start
         sudo apt-get install -y mysql-client
         mysql --host 127.0.0.1 --port ${{ job.services.mysql.ports['3306'] }} -uroot -ppassword -e "SHOW DATABASES"
 
@@ -66,7 +67,6 @@ jobs:
         RAILS_VERSION: ${{ matrix.rails_version }}
         DB_PORT: ${{ job.services.mysql.ports['3306'] }}
       run: |
-        sudo service mysql start
         bundle install --jobs 4 --retry 3
         bundle exec rake
 
@@ -85,6 +85,13 @@ jobs:
         ruby_version: [2.6, 2.7]
         os: [ubuntu-latest]
     steps:
+
+    - name: Verify MySQL connection from host
+      run: |
+        sudo service mysql start
+        sudo apt-get install -y mysql-client
+        mysql --host 127.0.0.1 --port ${{ job.services.mysql.ports['3306'] }} -uroot -ppassword -e "SHOW DATABASES"
+
     - name: Set up Ruby ${{ matrix.ruby_version }}
       uses: ruby/setup-ruby@v1
       with:
