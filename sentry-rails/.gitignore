@@ -5,6 +5,7 @@
 /doc/
 /pkg/
 /spec/reports/
+/spec/support/test_rails_app/db
 /tmp/
 
 # rspec failure tracking
