@@ -43,7 +43,7 @@ RSpec.describe Sentry::Rails::Tracing, type: :request do
 
       first_span = transaction[:spans][0]
       expect(first_span[:op]).to eq("sql.active_record")
-      expect(first_span[:description]).to eq("SELECT \"posts\".* FROM \"posts\"")
+      expect(first_span[:description]).to eq("SELECT `posts`.* FROM `posts`")
       expect(first_span[:parent_span_id]).to eq(parent_span_id)
 
       # this is to make sure we calculate the timestamp in the correct scale (second instead of millisecond)
@@ -71,8 +71,8 @@ RSpec.describe Sentry::Rails::Tracing, type: :request do
 
       first_span = transaction[:spans][0]
       expect(first_span[:op]).to eq("sql.active_record")
-      expect(first_span[:description].squeeze("\s")).to eq(
-        'SELECT "posts".* FROM "posts" WHERE "posts"."id" = ? LIMIT ?'
+      expect(first_span[:description].squeeze("\s")).to match(
+        /SELECT `posts`.* FROM `posts` WHERE `posts`.`id` = \d+ LIMIT 1/
       )
       expect(first_span[:parent_span_id]).to eq(parent_span_id)
 

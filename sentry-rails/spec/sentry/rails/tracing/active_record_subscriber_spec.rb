@@ -28,7 +28,7 @@ RSpec.describe Sentry::Rails::Tracing::ActiveRecordSubscriber, :subscriber do
 
       span = transaction[:spans][0]
       expect(span[:op]).to eq("sql.active_record")
-      expect(span[:description]).to eq("SELECT \"posts\".* FROM \"posts\"")
+      expect(span[:description]).to eq("SELECT `posts`.* FROM `posts`")
       expect(span[:trace_id]).to eq(transaction.dig(:contexts, :trace, :trace_id))
     end
   end
