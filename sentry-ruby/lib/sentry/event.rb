@@ -52,19 +52,26 @@ module Sentry
     class << self
       def get_log_message(event_hash)
         message = event_hash[:message] || event_hash['message']
-        message = get_message_from_exception(event_hash) if message.nil? || message.empty?
-        message = '<no message value>' if message.nil? || message.empty?
-        message
+
+        return message unless message.nil? || message.empty?
+
+        message = get_message_from_exception(event_hash)
+
+        return message unless message.nil? || message.empty?
+
+        message = event_hash[:transaction] || event_hash["transaction"]
+
+        return message unless message.nil? || message.empty?
+
+        '<no message value>'
       end
 
       def get_message_from_exception(event_hash)
-        (
-          event_hash &&
-          event_hash[:exception] &&
-          event_hash[:exception][:values] &&
-          event_hash[:exception][:values][0] &&
-          "#{event_hash[:exception][:values][0][:type]}: #{event_hash[:exception][:values][0][:value]}"
-        )
+        if exception = event_hash.dig(:exception, :values, 0)
+          "#{exception[:type]}: #{exception[:value]}"
+        elsif exception = event_hash.dig("exception", "values", 0)
+          "#{exception["type"]}: #{exception["value"]}"
+        end
       end
     end
 

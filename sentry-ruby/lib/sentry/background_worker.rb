@@ -1,5 +1,6 @@
 require "concurrent/executor/thread_pool_executor"
 require "concurrent/executor/immediate_executor"
+require "concurrent/configuration"
 
 module Sentry
   class BackgroundWorker

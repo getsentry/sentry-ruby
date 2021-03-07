@@ -3,6 +3,9 @@
 ## Unreleased
 
 - Refactor interface construction [#1296](https://github.com/getsentry/sentry-ruby/pull/1296)
+- Improve SDK's error handling [#1298](https://github.com/getsentry/sentry-ruby/pull/1298)
+  - Fixes [#1246](https://github.com/getsentry/sentry-ruby/issues/1246) and [#1289](https://github.com/getsentry/sentry-ruby/issues/1289)
+  - Please read [#1290](https://github.com/getsentry/sentry-ruby/issues/1290) to see the full specification
 - Treat query string as pii too [#1302](https://github.com/getsentry/sentry-ruby/pull/1302)
   - Fixes [#1301](https://github.com/getsentry/sentry-ruby/issues/1301)
 - Ignore sentry-trace when tracing is not enabled [#1308](https://github.com/getsentry/sentry-ruby/pull/1308)

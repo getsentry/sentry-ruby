@@ -11,10 +11,10 @@ RSpec.describe Sentry::Transport do
   end
   let(:fake_time) { Time.now }
 
-  subject { described_class.new(configuration) }
+  let(:client) { Sentry::Client.new(configuration) }
+  subject { client.transport }
 
   describe "#encode" do
-    let(:client) { Sentry::Client.new(configuration) }
 
     before do
       Sentry.init do |config|
@@ -121,24 +121,24 @@ RSpec.describe Sentry::Transport do
     end
 
     context "when failed" do
-      before do
-        allow(subject).to receive(:send_data).and_raise(StandardError)
+      context "with normal error" do
+        before do
+          allow(subject).to receive(:send_data).and_raise(StandardError)
+        end
+
+        it "raises the error" do
+          expect do
+            subject.send_event(event)
+          end.to raise_error(StandardError)
+        end
       end
 
-      it "returns nil" do
-        expect(subject.send_event(event)).to eq(nil)
-      end
-
-      it "logs correct message" do
-        subject.send_event(event)
-
-        log = io.string
-        expect(log).to match(
-          /WARN -- sentry: Unable to record event with remote Sentry server \(StandardError - StandardError\):/
-        )
-        expect(log).to match(
-          /WARN -- sentry: Failed to submit event. Unreported Event: ZeroDivisionError: divided by 0/
-        )
+      context "with Faraday::Error" do
+        it "raises the error" do
+          expect do
+            subject.send_event(event)
+          end.to raise_error(Sentry::ExternalError)
+        end
       end
     end
   end

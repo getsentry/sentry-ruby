@@ -3,6 +3,7 @@ require "forwardable"
 require "time"
 
 require "sentry/version"
+require "sentry/exceptions"
 require "sentry/core_ext/object/deep_dup"
 require "sentry/utils/argument_checking_helper"
 require "sentry/configuration"
@@ -26,9 +27,6 @@ require "sentry/background_worker"
 end
 
 module Sentry
-  class Error < StandardError
-  end
-
   META = { "name" => "sentry.ruby", "version" => Sentry::VERSION }.freeze
 
   LOGGER_PROGNAME = "sentry".freeze
