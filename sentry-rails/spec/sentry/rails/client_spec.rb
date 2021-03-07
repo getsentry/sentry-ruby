@@ -1,8 +1,20 @@
 require "spec_helper"
 
+return unless Gem::Version.new(Rails.version) >= Gem::Version.new('5.1.0')
+
 RSpec.describe Sentry::Client, type: :request do
   let(:transport) do
     Sentry.get_current_client.transport
+  end
+
+  before do
+    expect(ActiveRecord::Base.connection_pool.stat[:busy]).to eq(1)
+  end
+
+  def send_events
+    5.times.map do
+      Thread.new { Sentry::Rails.capture_message("msg") }
+    end.join
   end
 
   context "when serialization triggers ActiveRecord queries" do
@@ -19,45 +31,31 @@ RSpec.describe Sentry::Client, type: :request do
     end
 
     it "doesn't hold the ActiveRecord connection after sending the event" do
-      threads = 5.times.map do |i|
-        Thread.new do
-          Sentry::Rails.capture_message("msg", hint: { index: i })
-        end
-      end
+      send_events
 
-      threads.join
-
-      sleep(0.1)
+      sleep(0.5)
 
       expect(transport.events.count).to eq(5)
 
-      pool = ActiveRecord::Base.connection_pool
-      expect(pool.stat[:busy]).to eq(1)
+      expect(ActiveRecord::Base.connection_pool.stat[:busy]).to eq(1)
     end
   end
 
-  context "when doesn't serialization trigger ActiveRecord queries" do
+  context "when serialization doesn't trigger ActiveRecord queries" do
     before do
       make_basic_app do |config|
         config.background_worker_threads = 5
       end
     end
 
-    it "doesn't hold the ActiveRecord connection after sending the event" do
-      threads = 5.times.map do |i|
-        Thread.new do
-          Sentry::Rails.capture_message("msg", hint: { index: i })
-        end
-      end
-
-      threads.join
+    it "doesn't create any extra ActiveRecord connection when sending the event" do
+      send_events
 
       sleep(0.1)
 
       expect(transport.events.count).to eq(5)
 
-      pool = ActiveRecord::Base.connection_pool
-      expect(pool.stat[:busy]).to eq(1)
+      expect(ActiveRecord::Base.connection_pool.stat[:busy]).to eq(1)
     end
   end
 end
