@@ -1,5 +1,6 @@
 require "sentry-ruby"
 require "sentry/integrable"
+require "sentry/rails/background_worker"
 require "sentry/rails/configuration"
 require "sentry/rails/engine"
 require "sentry/rails/railtie"

@@ -10,7 +10,11 @@ require 'sentry/rails'
 
 ActiveSupport::Deprecation.silenced = true
 
-ActiveRecord::Base.establish_connection(adapter: "sqlite3", database: ":memory:")
+# need to init app before establish connection so sqlite can place the database file under the correct project root
+class TestApp < Rails::Application
+end
+
+ActiveRecord::Base.establish_connection(adapter: "sqlite3", database: "db")
 ActiveRecord::Base.logger = Logger.new(nil)
 
 ActiveRecord::Schema.define do
@@ -28,9 +32,6 @@ end
 
 class Comment < ActiveRecord::Base
   belongs_to :post
-end
-
-class TestApp < Rails::Application
 end
 
 class PostsController < ActionController::Base
