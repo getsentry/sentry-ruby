@@ -2,7 +2,23 @@
 
 ## Unreleased
 
+### Features
+
+- Allow configuring BreadcrumbBuffer's size limit [#1310](https://github.com/getsentry/sentry-ruby/pull/1310)
+
+```ruby
+# the SDK will only store 10 breadcrumbs (default is 100)
+config.max_breadcrumbs = 10
+```
+
+- Compress event payload by default [#1314](https://github.com/getsentry/sentry-ruby/pull/1314)
+
+### Refatorings
+
 - Refactor interface construction [#1296](https://github.com/getsentry/sentry-ruby/pull/1296)
+- Refactor tracing implementation [#1309](https://github.com/getsentry/sentry-ruby/pull/1309)
+
+### Bug Fixes
 - Improve SDK's error handling [#1298](https://github.com/getsentry/sentry-ruby/pull/1298)
   - Fixes [#1246](https://github.com/getsentry/sentry-ruby/issues/1246) and [#1289](https://github.com/getsentry/sentry-ruby/issues/1289)
   - Please read [#1290](https://github.com/getsentry/sentry-ruby/issues/1290) to see the full specification
@@ -10,10 +26,7 @@
   - Fixes [#1301](https://github.com/getsentry/sentry-ruby/issues/1301)
 - Ignore sentry-trace when tracing is not enabled [#1308](https://github.com/getsentry/sentry-ruby/pull/1308)
   - Fixes [#1307](https://github.com/getsentry/sentry-ruby/issues/1307)
-- Refactor tracing implementation [#1309](https://github.com/getsentry/sentry-ruby/pull/1309)
-- Allow configuring BreadcrumbBuffer's size limit [#1310](https://github.com/getsentry/sentry-ruby/pull/1310)
 - Return nil from logger methods instead of breadcrumb buffer [#1299](https://github.com/getsentry/sentry-ruby/pull/1299)
-- Compress event payload by default [#1314](https://github.com/getsentry/sentry-ruby/pull/1314)
 
 ## 4.2.2
 

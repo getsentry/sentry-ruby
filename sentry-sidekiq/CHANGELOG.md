@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+### Features
+
 - Support performance monitoring on Sidekiq workers [#1311](https://github.com/getsentry/sentry-ruby/pull/1311)
 
 ## 4.2.1

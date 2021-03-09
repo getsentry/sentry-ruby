@@ -2,7 +2,12 @@
 
 ## Unreleased
 
+### Features
+
 - Support performance monitoring on ActiveJob execution [#1304](https://github.com/getsentry/sentry-ruby/pull/1304)
+
+### Bug Fixes
+
 - Prevent background workers from holding ActiveRecord connections [#1320](https://github.com/getsentry/sentry-ruby/pull/1320)
 
 ## 4.2.2
