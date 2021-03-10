@@ -256,7 +256,7 @@ RSpec.describe Sentry::Client do
 
         it "swallows and logs Sentry::ExternalError (caused by transport's networking error)" do
           expect(subject.capture_event(event, scope)).to be_a(Sentry::Event)
-          sleep(0.1)
+          sleep(0.2)
 
           expect(string_io.string).to match(/Event sending failed: Failed to open TCP connection/)
           expect(string_io.string).to match(/Unreported Event: Test message/)
@@ -266,7 +266,7 @@ RSpec.describe Sentry::Client do
           configuration.before_send = -> (_, _) { raise TypeError }
 
           expect(subject.capture_event(event, scope)).to be_a(Sentry::Event)
-          sleep(0.1)
+          sleep(0.2)
 
           expect(string_io.string).to match(/Event sending failed: TypeError/)
           expect(string_io.string).to match(/Unreported Event: Test message/)
