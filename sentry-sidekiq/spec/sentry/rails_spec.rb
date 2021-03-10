@@ -1,3 +1,5 @@
+return unless ENV["WITH_SENTRY_RAILS"]
+
 require "rails"
 require "sentry-rails"
 require "spec_helper"
