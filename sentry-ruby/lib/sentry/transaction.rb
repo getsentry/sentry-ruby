@@ -35,7 +35,8 @@ module Sentry
 
       sampled = sampled_flag != "0"
 
-      new(trace_id: trace_id, parent_span_id: parent_span_id, parent_sampled: sampled, sampled: sampled, **options)
+
+      new(trace_id: trace_id, parent_span_id: parent_span_id, parent_sampled: parent_sampled, **options)
     end
 
     def to_hash
@@ -81,16 +82,16 @@ module Sentry
 
       return unless @sampled.nil?
 
-      sample_rate = configuration.traces_sample_rate
-      traces_sampler = configuration.traces_sampler
-
-      if traces_sampler.is_a?(Proc)
+      if configuration.traces_sampler.is_a?(Proc)
         sampling_context = sampling_context.merge(
           parent_sampled: @parent_sampled,
           transaction_context: self.to_hash
         )
-
-        sample_rate = traces_sampler.call(sampling_context)
+        sample_rate = configuration.traces_sampler.call(sampling_context)
+      elsif @parent_sampled
+        sample_rate = @parent_sampled
+      else
+        sample_rate = configuration.traces_sample_rate
       end
 
       unless [true, false].include?(sample_rate) || (sample_rate.is_a?(Numeric) && sample_rate >= 0.0 && sample_rate <= 1.0)
@@ -101,7 +102,7 @@ module Sentry
 
       if sample_rate == 0.0 || sample_rate == false
         @sampled = false
-        logger.debug("#{MESSAGE_PREFIX} Discarding #{transaction_description} because traces_sampler returned 0 or false")
+        logger.debug("#{MESSAGE_PREFIX} Discarding #{transaction_description} because traces_sample_rate is 0 or traces_sampler returned 0 or false")
         return
       end
 
@@ -123,14 +124,13 @@ module Sentry
     def finish(hub: nil)
       # it's unlikely we'd get this far if tracing is disabled, but just in case...
       return unless Sentry.configuration.tracing_enabled?
+      return unless @sampled
 
       super() # Span#finish doesn't take arguments
 
       if @name.nil?
         @name = UNLABELD_NAME
       end
-
-      return unless @sampled || @parent_sampled
 
       hub ||= Sentry.get_current_hub
       event = hub.current_client.event_from_transaction(self)
