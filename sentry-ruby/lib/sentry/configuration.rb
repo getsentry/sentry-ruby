@@ -293,7 +293,7 @@ module Sentry
     end
 
     def tracing_enabled?
-      !!((@traces_sample_rate && @traces_sample_rate > 0.0) || @traces_sampler)
+      !!(@traces_sampler || (@traces_sample_rate.is_a?(Numeric) && @traces_sample_rate >= 0.0 && @traces_sample_rate <= 1.0))
     end
 
     def stacktrace_builder

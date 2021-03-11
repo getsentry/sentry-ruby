@@ -11,23 +11,33 @@ RSpec.describe Sentry::Configuration do
   end
 
   describe "#tracing_enabled?" do
-    it "returns false by default" do
-      expect(subject.tracing_enabled?).to eq(false)
-    end
-
-    context "when traces_sample_rate == 0.0" do
+    context "when neither traces_sample_rate nor traces_sampler is set" do
       it "returns false" do
-        subject.traces_sample_rate = 0.0
-
         expect(subject.tracing_enabled?).to eq(false)
       end
     end
 
-    context "when traces_sample_rate > 0" do
+    context "when traces_sample_rate == 0.0" do
+      it "returns true" do
+        subject.traces_sample_rate = 0.0
+
+        expect(subject.tracing_enabled?).to eq(true)
+      end
+    end
+
+    context "when traces_sample_rate > 0 and <= 1" do
       it "returns true" do
         subject.traces_sample_rate = 0.1
 
         expect(subject.tracing_enabled?).to eq(true)
+      end
+    end
+
+    context "when traces_sample_rate > 1" do
+      it "returns false" do
+        subject.traces_sample_rate = 1.1
+
+        expect(subject.tracing_enabled?).to eq(false)
       end
     end
 
