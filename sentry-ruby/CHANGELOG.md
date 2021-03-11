@@ -27,6 +27,8 @@ config.max_breadcrumbs = 10
 - Ignore sentry-trace when tracing is not enabled [#1308](https://github.com/getsentry/sentry-ruby/pull/1308)
   - Fixes [#1307](https://github.com/getsentry/sentry-ruby/issues/1307)
 - Return nil from logger methods instead of breadcrumb buffer [#1299](https://github.com/getsentry/sentry-ruby/pull/1299)
+- Exceptions with nil message shouldn't cause issues [#1327](https://github.com/getsentry/sentry-ruby/pull/1327)
+  - Fixes [#1323](https://github.com/getsentry/sentry-ruby/issues/1323)
 
 ## 4.2.2
 

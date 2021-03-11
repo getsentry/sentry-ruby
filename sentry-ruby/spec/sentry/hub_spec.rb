@@ -157,6 +157,15 @@ RSpec.describe Sentry::Hub do
       end.to raise_error(ArgumentError, 'expect the argument to be a Exception, got String ("String")')
     end
 
+    # see https://github.com/getsentry/sentry-ruby/issues/1323
+    it "don't causes error when the exception's message is nil" do
+      allow(exception).to receive(:message)
+
+      expect do
+        subject.capture_exception(exception)
+      end.to change { transport.events.count }.by(1)
+    end
+
     it_behaves_like "capture_helper" do
       let(:capture_helper) { :capture_exception }
       let(:capture_subject) { exception }
