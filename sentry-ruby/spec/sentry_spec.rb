@@ -178,19 +178,78 @@ RSpec.describe Sentry do
   end
 
   describe ".start_transaction" do
-    it "starts a new transaction" do
-      transaction = described_class.start_transaction(op: "foo")
-      expect(transaction).to be_a(Sentry::Transaction)
-      expect(transaction.op).to eq("foo")
+    context "when tracing is enabled with traces_sample_rate > 0" do
+      it "starts a new transaction" do
+        described_class.init do |config|
+          config.traces_sample_rate = 1
+        end
+
+        transaction = described_class.start_transaction(op: "foo")
+        expect(transaction).to be_a(Sentry::Transaction)
+        expect(transaction.op).to eq("foo")
+      end
+    end
+
+    context "when tracing is enabled with traces_sample_rate == 0" do
+      it "starts a new transaction" do
+        described_class.init do |config|
+          config.traces_sample_rate = 0
+        end
+
+        transaction = described_class.start_transaction(op: "foo")
+        expect(transaction).to be_a(Sentry::Transaction)
+        expect(transaction.op).to eq("foo")
+      end
+    end
+
+    context "when tracing is enabled with traces_sampler" do
+      it "starts a new transaction" do
+        described_class.init do |config|
+          config.traces_sampler = proc { true }
+        end
+
+        transaction = described_class.start_transaction(op: "foo")
+        expect(transaction).to be_a(Sentry::Transaction)
+        expect(transaction.op).to eq("foo")
+      end
+    end
+
+    context "when neither traces_sample_rate nor traces_sampler is set" do
+      it "does not start a new transaction" do
+        transaction = described_class.start_transaction(op: "foo")
+        expect(transaction).to be_nil
+      end
     end
 
     context "when given an transaction object" do
-      it "adds sample decision to it" do
-        transaction = Sentry::Transaction.new
+      before do
+        described_class.init
+      end
 
-        described_class.start_transaction(transaction: transaction)
+      context "when tracing is enabled" do
+        it "adds sample decision to it" do
+          # described_class.init
+          allow(Sentry.configuration).to receive(:tracing_enabled?).and_return(true)
+          allow(Sentry.configuration).to receive(:traces_sample_rate).and_return(1)
 
-        expect(transaction.sampled).to eq(false)
+          transaction = Sentry::Transaction.new
+
+          described_class.start_transaction(transaction: transaction)
+
+          expect(transaction.sampled).to eq(true)
+        end
+      end
+
+      context "when tracing is disabled" do
+        it "bails early" do
+          allow(Sentry.configuration).to receive(:tracing_enabled?).and_return(false)
+
+          transaction = Sentry::Transaction.new
+
+          described_class.start_transaction(transaction: transaction)
+
+          expect(transaction.sampled).to eq(nil)
+        end
       end
     end
   end

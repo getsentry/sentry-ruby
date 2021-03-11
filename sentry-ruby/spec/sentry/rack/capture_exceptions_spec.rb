@@ -182,6 +182,7 @@ RSpec.describe Sentry::Rack::CaptureExceptions, rack: true do
 
         stack.call(env)
 
+
         transaction = transport.events.last
         expect(transaction.type).to eq("transaction")
         expect(transaction.timestamp).not_to be_nil
@@ -215,7 +216,7 @@ RSpec.describe Sentry::Rack::CaptureExceptions, rack: true do
         allow(Random).to receive(:rand).and_return(0.4)
       end
 
-      it "starts a span and finishes it" do
+      it "starts a transaction and finishes it" do
         app = ->(_) do
           [200, {}, ["ok"]]
         end
@@ -282,9 +283,9 @@ RSpec.describe Sentry::Rack::CaptureExceptions, rack: true do
       end
     end
 
-    context "when traces_sample_rate is not set" do
+    context "when tracing is disabled" do
       before do
-        Sentry.configuration.traces_sample_rate = nil
+        allow(Sentry.configuration).to receive(:tracing_enabled?).and_return(false)
       end
 
       let(:stack) do
