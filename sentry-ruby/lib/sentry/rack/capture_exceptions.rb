@@ -17,23 +17,23 @@ module Sentry
           scope.set_rack_env(env)
 
           transaction = start_transaction(env, scope)
-          scope.set_span(transaction)
+          transaction ? scope.set_span(transaction) : nil
 
           begin
             response = @app.call(env)
           rescue Sentry::Error
-            finish_transaction(transaction, 500)
+            transaction ? finish_transaction(transaction, 500) : nil
             raise # Don't capture Sentry errors
           rescue Exception => e
             capture_exception(e)
-            finish_transaction(transaction, 500)
+            transaction ? finish_transaction(transaction, 500) : nil
             raise
           end
 
           exception = collect_exception(env)
           capture_exception(exception) if exception
 
-          finish_transaction(transaction, response[0])
+          transaction ? finish_transaction(transaction, response[0]) : nil
 
           response
         end
@@ -63,6 +63,8 @@ module Sentry
 
 
       def finish_transaction(transaction, status_code)
+        return unless transaction
+
         transaction.set_http_status(status_code)
         transaction.finish
       end
