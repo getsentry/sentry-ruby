@@ -6,14 +6,17 @@ module Sentry
     GZIP_ENCODING = "gzip"
     GZIP_THRESHOLD = 1024 * 30
     CONTENT_TYPE = 'application/x-sentry-envelope'
+    RETRY_AFTER_HEADER = "retry-after"
+    RATE_LIMIT_HEADER = "x-sentry-rate-limits"
 
-    attr_reader :conn, :adapter
+    attr_reader :conn, :adapter, :rate_limits
 
     def initialize(*args)
       super
       @adapter = @transport_configuration.http_adapter || Faraday.default_adapter
       @conn = set_conn
       @endpoint = @dsn.envelope_endpoint
+      @rate_limits = {}
     end
 
     def send_data(data)
@@ -34,14 +37,57 @@ module Sentry
       error_info = e.message
 
       if e.response
-        error_info += "\nbody: #{e.response[:body]}"
-        error_info += " Error in headers is: #{e.response[:headers]['x-sentry-error']}" if e.response[:headers]['x-sentry-error']
+        if has_rate_limited_header?(e.response)
+          handle_sentry_response(e.response)
+        else
+          error_info += "\nbody: #{e.response[:body]}"
+          error_info += " Error in headers is: #{e.response[:headers]['x-sentry-error']}" if e.response[:headers]['x-sentry-error']
+        end
       end
 
       raise Sentry::ExternalError, error_info
     end
 
     private
+
+    def has_rate_limited_header?(response)
+      response.dig(:headers, RETRY_AFTER_HEADER) || response.dig(:headers, RATE_LIMIT_HEADER)
+    end
+
+    def handle_sentry_response(response)
+      rate_limits =
+        if rate_limit_header = response.dig(:headers, RATE_LIMIT_HEADER)
+          parse_rate_limit_header(rate_limit_header)
+        end
+
+      @rate_limits.merge!(rate_limits)
+    end
+
+    def parse_rate_limit_header(rate_limit_header)
+      time = Time.now
+
+      result = {}
+
+      limits = rate_limit_header.split(",")
+      limits.each do |limit|
+        begin
+          retry_after, categories = limit.strip.split(":").first(2)
+          retry_after = time + retry_after.to_i
+          categories = categories.split(";")
+
+          if categories.empty?
+            result[nil] = retry_after
+          else
+            categories.each do |category|
+              result[category] = retry_after
+            end
+          end
+        rescue StandardError
+        end
+      end
+
+      result
+    end
 
     def should_compress?(data)
       @transport_configuration.encoding == GZIP_ENCODING && data.bytesize >= GZIP_THRESHOLD

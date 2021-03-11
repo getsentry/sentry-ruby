@@ -111,6 +111,56 @@ RSpec.describe Sentry::HTTPTransport do
       end
     end
 
+    context "receive 429 response" do
+      let(:stubs) do
+        Faraday::Adapter::Test::Stubs.new do |stub|
+          stub.post('sentry/api/42/envelope/') do
+            [
+              429, headers, "{\"detail\":\"event rejected due to rate limit\"}"
+            ]
+          end
+        end
+      end
+      context "with x-sentry-rate-limits header" do
+        NOW = Time.now
+
+        [
+          {
+            header: "", expected_limits: {}
+          },
+          {
+            header: "invalid", expected_limits: {}
+          },
+          {
+            header: ",,foo,", expected_limits: {}
+          },
+          {
+            header: "42::organization, invalid, 4711:foobar;transaction;security:project",
+            expected_limits: {
+              nil => NOW + 42,
+              "transaction" => NOW + 4711,
+              "foobar" => NOW + 4711,
+              "security" => NOW + 4711
+            }
+          }
+        ].each do |pair|
+          context "with header value: '#{pair[:header]}'" do
+            let(:headers) do
+              { status: 429, "x-sentry-rate-limits" => pair[:header] }
+            end
+
+            it "parses the header into correct limits" do
+              Timecop.freeze(NOW) do
+                expect { subject.send_data(data) }.to raise_error(Sentry::ExternalError, /the server responded with status 429/)
+              end
+
+              expect(subject.rate_limits).to eq(pair[:expected_limits])
+            end
+          end
+        end
+      end
+    end
+
     context "receive 5xx responses" do
       let(:stubs) do
         Faraday::Adapter::Test::Stubs.new do |stub|
