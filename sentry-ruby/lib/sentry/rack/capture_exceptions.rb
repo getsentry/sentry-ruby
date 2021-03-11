@@ -55,8 +55,9 @@ module Sentry
 
       def start_transaction(env, scope)
         sentry_trace = env["HTTP_SENTRY_TRACE"]
-        transaction = Sentry::Transaction.from_sentry_trace(sentry_trace, name: scope.transaction_name, op: transaction_op) if sentry_trace
-        transaction || Sentry.start_transaction(name: scope.transaction_name, op: transaction_op)
+        options = { name: scope.transaction_name, op: transaction_op }
+        transaction = Sentry::Transaction.from_sentry_trace(sentry_trace, **options) if sentry_trace
+        Sentry.start_transaction(transaction: transaction, **options)
       end
 
 
