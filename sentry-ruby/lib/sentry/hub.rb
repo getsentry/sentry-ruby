@@ -70,6 +70,8 @@ module Sentry
     end
 
     def start_transaction(transaction: nil, configuration: Sentry.configuration, **options)
+      return unless configuration.tracing_enabled?
+
       transaction ||= Transaction.new(**options)
       transaction.set_initial_sample_decision(configuration: current_client.configuration)
       transaction

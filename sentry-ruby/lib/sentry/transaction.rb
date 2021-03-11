@@ -119,6 +119,9 @@ module Sentry
     end
 
     def finish(hub: nil)
+      # it's unlikely we'd get this far if tracing is disabled, but just in case...
+      return unless Sentry.configuration.tracing_enabled?
+
       super() # Span#finish doesn't take arguments
 
       if @name.nil?

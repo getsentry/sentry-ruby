@@ -164,6 +164,8 @@ module Sentry
 
     # Takes or initializes a new Sentry::Transaction and makes a sampling decision for it.
     def start_transaction(**options)
+      return unless configuration.tracing_enabled?
+
       get_current_hub&.start_transaction(**options)
     end
 
