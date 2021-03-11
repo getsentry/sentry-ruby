@@ -69,16 +69,18 @@ module Sentry
     end
 
     def set_initial_sample_decision(sampling_context: {}, configuration: Sentry.configuration)
+      logger = configuration.logger
+      transaction_description = generate_transaction_description
+
       unless configuration.tracing_enabled?
-        @sampled = false
-        return
+        # we shouldn't ever get here (because if tracing is disabled, start_transaction should bail
+        # before it calls set_initial_sample_decision), so warn, because something's gone wrong
+        logger.warn("#{MESSAGE_PREFIX} Tracing is disabled. #{transaction_description} will not be sent.")
+        return nil
       end
 
       return unless @sampled.nil?
 
-      transaction_description = generate_transaction_description
-
-      logger = configuration.logger
       sample_rate = configuration.traces_sample_rate
       traces_sampler = configuration.traces_sampler
 
