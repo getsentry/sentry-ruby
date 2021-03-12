@@ -32,6 +32,8 @@ module Sentry
       def start_transaction(env, scope)
         transaction = super
 
+        return unless transaction
+
         if @assets_regex && transaction.name.match?(@assets_regex)
           transaction.instance_variable_set(:@sampled, false)
         end

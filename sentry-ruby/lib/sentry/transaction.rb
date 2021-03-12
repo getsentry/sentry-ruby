@@ -33,7 +33,12 @@ module Sentry
       return if match.nil?
       trace_id, parent_span_id, sampled_flag = match[1..3]
 
-      sampled = sampled_flag != "0"
+      sampled =
+        if sampled_flag.nil?
+          nil
+        else
+          sampled_flag != "0"
+        end
 
       new(trace_id: trace_id, parent_span_id: parent_span_id, parent_sampled: sampled, sampled: sampled, **options)
     end
