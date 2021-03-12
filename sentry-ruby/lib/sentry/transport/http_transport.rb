@@ -29,18 +29,22 @@ module Sentry
         encoding = GZIP_ENCODING
       end
 
-      conn.post @endpoint do |req|
+      response = conn.post @endpoint do |req|
         req.headers['Content-Type'] = CONTENT_TYPE
         req.headers['Content-Encoding'] = encoding
         req.headers['X-Sentry-Auth'] = generate_auth_header
         req.body = data
+      end
+
+      if has_rate_limited_header?(response.headers)
+        handle_rate_limited_response(response.headers)
       end
     rescue Faraday::Error => e
       error_info = e.message
 
       if e.response
         if e.response[:status] == 429
-          handle_rate_limited_response(e.response)
+          handle_rate_limited_response(e.response[:headers])
         else
           error_info += "\nbody: #{e.response[:body]}"
           error_info += " Error in headers is: #{e.response[:headers]['x-sentry-error']}" if e.response[:headers]['x-sentry-error']
@@ -52,15 +56,15 @@ module Sentry
 
     private
 
-    def has_rate_limited_header?(response)
-      response.dig(:headers, RETRY_AFTER_HEADER) || response.dig(:headers, RATE_LIMIT_HEADER)
+    def has_rate_limited_header?(headers)
+      headers[RETRY_AFTER_HEADER] || headers[RATE_LIMIT_HEADER]
     end
 
-    def handle_rate_limited_response(response)
+    def handle_rate_limited_response(headers)
       rate_limits =
-        if rate_limits = response.dig(:headers, RATE_LIMIT_HEADER)
+        if rate_limits = headers[RATE_LIMIT_HEADER]
           parse_rate_limit_header(rate_limits)
-        elsif retry_after = response.dig(:headers, RETRY_AFTER_HEADER)
+        elsif retry_after = headers[RETRY_AFTER_HEADER]
           retry_after = retry_after.to_i
           retry_after = DEFAULT_DELAY if retry_after == 0
 
