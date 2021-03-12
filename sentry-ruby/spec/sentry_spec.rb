@@ -178,19 +178,31 @@ RSpec.describe Sentry do
   end
 
   describe ".start_transaction" do
-    it "starts a new transaction" do
-      transaction = described_class.start_transaction(op: "foo")
-      expect(transaction).to be_a(Sentry::Transaction)
-      expect(transaction.op).to eq("foo")
+    context "when tracing is enabled" do
+      before do
+        Sentry.configuration.traces_sample_rate = 1.0
+      end
+
+      it "starts a new transaction" do
+        transaction = described_class.start_transaction(op: "foo")
+        expect(transaction).to be_a(Sentry::Transaction)
+        expect(transaction.op).to eq("foo")
+      end
+
+      context "when given an transaction object" do
+        it "adds sample decision to it" do
+          transaction = Sentry::Transaction.new
+
+          described_class.start_transaction(transaction: transaction)
+
+          expect(transaction.sampled).to eq(true)
+        end
+      end
     end
 
-    context "when given an transaction object" do
-      it "adds sample decision to it" do
-        transaction = Sentry::Transaction.new
-
-        described_class.start_transaction(transaction: transaction)
-
-        expect(transaction.sampled).to eq(false)
+    context "when tracing is disabled" do
+      it "returns nil" do
+        expect(described_class.start_transaction(op: "foo")).to eq(nil)
       end
     end
   end

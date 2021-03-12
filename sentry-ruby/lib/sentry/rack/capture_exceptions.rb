@@ -17,7 +17,7 @@ module Sentry
           scope.set_rack_env(env)
 
           transaction = start_transaction(env, scope)
-          scope.set_span(transaction)
+          scope.set_span(transaction) if transaction
 
           begin
             response = @app.call(env)
@@ -62,6 +62,8 @@ module Sentry
 
 
       def finish_transaction(transaction, status_code)
+        return unless transaction
+
         transaction.set_http_status(status_code)
         transaction.finish
       end
