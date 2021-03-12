@@ -80,6 +80,9 @@ module Sentry
     # You should probably append to this rather than overwrite it.
     attr_accessor :excluded_exceptions
 
+    # Hash of transaction paths and hosts that should never be sent. 
+    attr_accessor :excluded_transactions
+
     # Boolean to check nested exceptions when deciding if to exclude. Defaults to false
     attr_accessor :inspect_exception_causes_for_exclusion
     alias inspect_exception_causes_for_exclusion? inspect_exception_causes_for_exclusion
@@ -177,6 +180,7 @@ module Sentry
       self.enabled_environments = []
       self.exclude_loggers = []
       self.excluded_exceptions = IGNORE_DEFAULT.dup
+      self.excluded_transactions = { paths: [], hosts: []}
       self.inspect_exception_causes_for_exclusion = true
       self.linecache = ::Sentry::LineCache.new
       self.logger = ::Sentry::Logger.new(STDOUT)
@@ -386,6 +390,10 @@ module Sentry
       else
         true
       end
+    end
+
+    def transaction_allowed?(path, host)
+      !excluded_transactions[:paths].include?(path) && !excluded_transactions[:hosts].include?(host)
     end
 
     # Try to resolve the hostname to an FQDN, but fall back to whatever

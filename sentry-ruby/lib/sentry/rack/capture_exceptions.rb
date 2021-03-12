@@ -20,6 +20,7 @@ module Sentry
           span = Sentry::Transaction.from_sentry_trace(sentry_trace, name: scope.transaction_name, op: transaction_op) if sentry_trace
           span ||= Sentry.start_transaction(name: scope.transaction_name, op: transaction_op)
 
+          span.manual_exclude(env['HTTP_HOST'], env["PATH_INFO"]) if env["PATH_INFO"]
           scope.set_span(span)
 
           begin

@@ -10,6 +10,42 @@ RSpec.describe Sentry::Configuration do
     end
   end
 
+  describe "transaction_allowed?" do
+    subject { service.send(:transaction_allowed?, path, host) }
+    let(:service) { described_class.new }
+    let(:host) { '' }
+    let(:path) { '' }
+
+    context 'without exclusion' do
+      it { is_expected.to be true }
+    end
+ 
+    context 'with exclusion' do
+      let(:excluded_transactions) do
+          { hosts: [host],
+            paths: [path] }
+      end
+      before do
+        expect(service).to receive(:excluded_transactions).once.and_return(excluded_transactions)
+      end
+      context 'with excluded host' do
+        let(:host) { 'some.thing' }
+ 
+        it 'excludes host' do
+          expect(subject).to be false
+        end
+      end
+ 
+      context 'with excluded host' do
+        let(:path) { 'some/thing' }
+ 
+        it 'excludes host' do
+          expect(subject).to be false
+        end
+      end
+    end
+  end
+
   describe "#tracing_enabled?" do
     it "returns false by default" do
       expect(subject.tracing_enabled?).to eq(false)

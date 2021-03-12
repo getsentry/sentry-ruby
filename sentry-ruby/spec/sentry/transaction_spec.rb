@@ -263,6 +263,44 @@ RSpec.describe Sentry::Transaction do
     end
   end
 
+  describe "#manual_exclude" do
+    subject { service.manual_exclude(host, path)}
+    let(:service) do
+      described_class.new(
+        op: "sql.query",
+        description: "SELECT * FROM users;",
+        status: "ok",
+        sampled: true,
+        parent_sampled: true,
+        name: "foo"
+      )
+    end
+    let(:path) { 'some/thing' }
+    let(:host) { 'some.thing' }
+    let(:configuration_double) { double(:configuration_double) }
+
+    before do
+      expect(Sentry).to receive(:configuration).twice.and_return(configuration_double)
+      service.instance_variable_set(:@sampled, true)
+    end
+ 
+    context 'without configuration exclusion matching' do
+      it 'does not change `@sampled` value' do
+        expect(configuration_double).to receive(:transaction_allowed?).with(host, path).and_return true
+ 
+        expect{ subject }.not_to change { service.instance_variable_get(:@sampled) }
+      end
+    end
+ 
+    context 'with configutation exclusion matching' do
+      it 'changes `@sampled` value to false' do
+        expect(configuration_double).to receive(:transaction_allowed?).with(host, path).and_return false
+ 
+        expect{ subject }.to change { service.instance_variable_get(:@sampled) }.from(true).to(false)
+      end
+    end
+  end
+
   describe "#finish" do
     before do
       perform_basic_setup

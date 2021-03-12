@@ -5,6 +5,7 @@
 - Add thread_id to Exception interface [#1291](https://github.com/getsentry/sentry-ruby/pull/1291)
 - always convert trusted proxies to string [#1288](https://github.com/getsentry/sentry-ruby/pull/1288)
   - fixes [#1274](https://github.com/getsentry/sentry-ruby/issues/1274)
+- Add ability to exclude transactions from paths and hosts [#1331](https://github.com/getsentry/sentry-ruby/pull/1331)
 
 ## 4.2.1
 

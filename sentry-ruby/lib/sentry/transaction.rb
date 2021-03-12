@@ -117,6 +117,12 @@ module Sentry
       end
     end
 
+    def manual_exclude(host, path, configuration: Sentry.configuration)
+      return if Sentry.configuration.transaction_allowed?(host, path)
+
+      @sampled = false
+   end
+
     def finish(hub: nil)
       super() # Span#finish doesn't take arguments
 
