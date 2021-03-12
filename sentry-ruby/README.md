@@ -72,7 +72,7 @@ end
 
 ### Sentry doesn't report some kinds of data by default
 
-**Sentry ignores some exceptions by default** - most of these are related to 404s parameter parsing errors. [For a complete list, see the `IGNORE_DEFAULT` constant](https://github.com/getsentry/sentry-ruby/blob/master/sentry-ruby/lib/sentry/configuration.rb#L118) and the integration gems' `IGNORE_DEFAULT`, like [`sentry-rails`'s](https://github.com/getsentry/sentry-ruby/blob/master/sentry-rails/lib/sentry/rails/configuration.rb#L12)
+**Sentry ignores some exceptions by default** - most of these are related to 404s parameter parsing errors. [For a complete list, see the `IGNORE_DEFAULT` constant](https://github.com/getsentry/sentry-ruby/blob/master/sentry-ruby/lib/sentry/configuration.rb#L151) and the integration gems' `IGNORE_DEFAULT`, like [`sentry-rails`'s](https://github.com/getsentry/sentry-ruby/blob/master/sentry-rails/lib/sentry/rails/configuration.rb#L12)
 
 Sentry doesn't send personally identifiable information (pii) by default, such as request body, user ip or cookies. If you want those information to be sent, you can use the `send_default_pii` config option:
 
@@ -249,8 +249,8 @@ Sentry.capture_exception(exception, tags: {foo: "bar"})
 
 ## More Information
 
-* [Documentation](https://docs.sentry.io/platforms/ruby/)
-* [Bug Tracker](https://github.com/getsentry/sentry-ruby/issues)
-* [Forum](https://forum.sentry.io/)
+- [Documentation](https://docs.sentry.io/platforms/ruby/)
+- [Bug Tracker](https://github.com/getsentry/sentry-ruby/issues)
+- [Forum](https://forum.sentry.io/)
 - [Discord](https://discord.gg/ez5KZN7)
 
