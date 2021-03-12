@@ -190,6 +190,38 @@ RSpec.describe Sentry::HTTPTransport do
           end
         end
       end
+
+      context "with both x-sentry-rate-limits and retry-after headers" do
+        let(:headers) do
+          { status: 429, "x-sentry-rate-limits" => "42:error:organization", "retry-after" => "42" }
+        end
+
+        it "parses x-sentry-rate-limits first" do
+          now = Time.now
+
+          Timecop.freeze(now) do
+            expect { subject.send_data(data) }.to raise_error(Sentry::ExternalError, /the server responded with status 429/)
+          end
+
+          expect(subject.rate_limits).to eq({ "error" => now + 42 })
+        end
+      end
+
+      context "with no rate limiting headers" do
+        let(:headers) do
+          { status: 429 }
+        end
+
+        it "adds default limits" do
+          now = Time.now
+
+          Timecop.freeze(now) do
+            expect { subject.send_data(data) }.to raise_error(Sentry::ExternalError, /the server responded with status 429/)
+          end
+
+          expect(subject.rate_limits).to eq({ nil => now + 60 })
+        end
+      end
     end
 
     context "receive 5xx responses" do

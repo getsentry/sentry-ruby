@@ -65,6 +65,8 @@ module Sentry
           retry_after = DEFAULT_DELAY if retry_after == 0
 
           { nil => Time.now + retry_after }
+        else
+          { nil => Time.now + DEFAULT_DELAY }
         end
 
       @rate_limits.merge!(rate_limits)
