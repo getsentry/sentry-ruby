@@ -121,8 +121,9 @@ RSpec.describe Sentry::HTTPTransport do
           end
         end
       end
+
       context "with x-sentry-rate-limits header" do
-        NOW = Time.now
+        now = Time.now
 
         [
           {
@@ -137,10 +138,10 @@ RSpec.describe Sentry::HTTPTransport do
           {
             header: "42::organization, invalid, 4711:foobar;transaction;security:project",
             expected_limits: {
-              nil => NOW + 42,
-              "transaction" => NOW + 4711,
-              "foobar" => NOW + 4711,
-              "security" => NOW + 4711
+              nil => now + 42,
+              "transaction" => now + 4711,
+              "foobar" => now + 4711,
+              "security" => now + 4711
             }
           }
         ].each do |pair|
@@ -150,7 +151,37 @@ RSpec.describe Sentry::HTTPTransport do
             end
 
             it "parses the header into correct limits" do
-              Timecop.freeze(NOW) do
+              Timecop.freeze(now) do
+                expect { subject.send_data(data) }.to raise_error(Sentry::ExternalError, /the server responded with status 429/)
+              end
+
+              expect(subject.rate_limits).to eq(pair[:expected_limits])
+            end
+          end
+        end
+      end
+
+      context "with retry-after header" do
+        now = Time.now
+
+        [
+          {
+            header: "48", expected_limits: { nil => now + 48 }
+          },
+          {
+            header: "invalid", expected_limits: { nil => now + 60}
+          },
+          {
+            header: "", expected_limits: { nil => now + 60}
+          },
+        ].each do |pair|
+          context "with header value: '#{pair[:header]}'" do
+            let(:headers) do
+              { status: 429, "retry-after" => pair[:header] }
+            end
+
+            it "parses the header into correct limits" do
+              Timecop.freeze(now) do
                 expect { subject.send_data(data) }.to raise_error(Sentry::ExternalError, /the server responded with status 429/)
               end
 

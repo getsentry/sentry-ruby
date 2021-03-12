@@ -6,6 +6,8 @@ module Sentry
     GZIP_ENCODING = "gzip"
     GZIP_THRESHOLD = 1024 * 30
     CONTENT_TYPE = 'application/x-sentry-envelope'
+
+    DEFAULT_DELAY = 60
     RETRY_AFTER_HEADER = "retry-after"
     RATE_LIMIT_HEADER = "x-sentry-rate-limits"
 
@@ -37,8 +39,8 @@ module Sentry
       error_info = e.message
 
       if e.response
-        if has_rate_limited_header?(e.response)
-          handle_sentry_response(e.response)
+        if e.response[:status] == 429
+          handle_rate_limited_response(e.response)
         else
           error_info += "\nbody: #{e.response[:body]}"
           error_info += " Error in headers is: #{e.response[:headers]['x-sentry-error']}" if e.response[:headers]['x-sentry-error']
@@ -54,10 +56,15 @@ module Sentry
       response.dig(:headers, RETRY_AFTER_HEADER) || response.dig(:headers, RATE_LIMIT_HEADER)
     end
 
-    def handle_sentry_response(response)
+    def handle_rate_limited_response(response)
       rate_limits =
-        if rate_limit_header = response.dig(:headers, RATE_LIMIT_HEADER)
-          parse_rate_limit_header(rate_limit_header)
+        if rate_limits = response.dig(:headers, RATE_LIMIT_HEADER)
+          parse_rate_limit_header(rate_limits)
+        elsif retry_after = response.dig(:headers, RETRY_AFTER_HEADER)
+          retry_after = retry_after.to_i
+          retry_after = DEFAULT_DELAY if retry_after == 0
+
+          { nil => Time.now + retry_after }
         end
 
       @rate_limits.merge!(rate_limits)
