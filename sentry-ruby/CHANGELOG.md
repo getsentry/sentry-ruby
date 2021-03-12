@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 4.3.0
 
 ### Features
 
@@ -29,6 +29,7 @@ config.max_breadcrumbs = 10
 - Return nil from logger methods instead of breadcrumb buffer [#1299](https://github.com/getsentry/sentry-ruby/pull/1299)
 - Exceptions with nil message shouldn't cause issues [#1327](https://github.com/getsentry/sentry-ruby/pull/1327)
   - Fixes [#1323](https://github.com/getsentry/sentry-ruby/issues/1323)
+- Fix sampling decision with sentry-trace and add more tests [#1326](https://github.com/getsentry/sentry-ruby/pull/1326)
 
 ## 4.2.2
 

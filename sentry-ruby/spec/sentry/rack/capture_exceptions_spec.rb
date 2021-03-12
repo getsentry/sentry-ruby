@@ -173,40 +173,111 @@ RSpec.describe Sentry::Rack::CaptureExceptions, rack: true do
         )
       end
 
-      before do
-        allow(Random).to receive(:rand).and_return(0.4)
-      end
-
-      it "inherits trace info from the transaction" do
-        env["HTTP_SENTRY_TRACE"] = external_transaction.to_sentry_trace
-
-        stack.call(env)
-
-        transaction = transport.events.last
+      def verify_transaction_attributes(transaction)
         expect(transaction.type).to eq("transaction")
         expect(transaction.timestamp).not_to be_nil
         expect(transaction.contexts.dig(:trace, :status)).to eq("ok")
         expect(transaction.contexts.dig(:trace, :op)).to eq("rack.request")
         expect(transaction.spans.count).to eq(0)
+      end
 
-        # should inherit information from the external_transaction
+      def verify_transaction_inherits_external_transaction(transaction, external_transaction)
         expect(transaction.contexts.dig(:trace, :trace_id)).to eq(external_transaction.trace_id)
         expect(transaction.contexts.dig(:trace, :parent_span_id)).to eq(external_transaction.span_id)
-        expect(transaction.contexts.dig(:trace, :span_id)).not_to eq(external_transaction.span_id)
       end
 
-      it "safely handles bugus header values" do
-        env["HTTP_SENTRY_TRACE"] = 'null'
+      def verify_transaction_doesnt_inherit_external_transaction(transaction, external_transaction)
+        expect(transaction.contexts.dig(:trace, :trace_id)).not_to eq(external_transaction.trace_id)
+        expect(transaction.contexts.dig(:trace, :parent_span_id)).not_to eq(external_transaction.span_id)
+      end
 
-        stack.call(env)
+      def wont_be_sampled_by_sdk
+        allow(Random).to receive(:rand).and_return(1.0)
+      end
 
-        # creates a new transaction
-        transaction = transport.events.last
-        expect(transaction.type).to eq("transaction")
-        expect(transaction.timestamp).not_to be_nil
-        expect(transaction.contexts.dig(:trace, :status)).to eq("ok")
-        expect(transaction.contexts.dig(:trace, :op)).to eq("rack.request")
-        expect(transaction.spans.count).to eq(0)
+      def will_be_sampled_by_sdk
+        allow(Random).to receive(:rand).and_return(0.3)
+      end
+
+      before do
+        env["HTTP_SENTRY_TRACE"] = trace
+      end
+
+      let(:transaction) do
+        transport.events.last
+      end
+
+      context "with sampled trace" do
+        let(:trace) do
+          "#{external_transaction.trace_id}-#{external_transaction.span_id}-1"
+        end
+
+        it "inherits trace info and sampled decision from the trace and ignores later sampling" do
+          wont_be_sampled_by_sdk
+
+          stack.call(env)
+
+          verify_transaction_attributes(transaction)
+          verify_transaction_inherits_external_transaction(transaction, external_transaction)
+        end
+      end
+
+      context "with unsampled trace" do
+        let(:trace) do
+          "#{external_transaction.trace_id}-#{external_transaction.span_id}-0"
+        end
+
+        it "doesn't sample any transaction" do
+          will_be_sampled_by_sdk
+
+          stack.call(env)
+
+          expect(transaction).to be_nil
+        end
+      end
+
+      context "with trace that has no sampling bit" do
+        let(:trace) do
+          "#{external_transaction.trace_id}-#{external_transaction.span_id}-"
+        end
+
+        it "inherits trace info but not the sampling decision (later sampled)" do
+          will_be_sampled_by_sdk
+
+          stack.call(env)
+
+          verify_transaction_attributes(transaction)
+          verify_transaction_inherits_external_transaction(transaction, external_transaction)
+        end
+
+        it "inherits trace info but not the sampling decision (later unsampled)" do
+          wont_be_sampled_by_sdk
+
+          stack.call(env)
+
+          expect(transaction).to eq(nil)
+        end
+      end
+
+      context "with bugus trace" do
+        let(:trace) { "null" }
+
+        it "starts a new transaction and follows SDK sampling decision (sampled)" do
+          will_be_sampled_by_sdk
+
+          stack.call(env)
+
+          verify_transaction_attributes(transaction)
+          verify_transaction_doesnt_inherit_external_transaction(transaction, external_transaction)
+        end
+
+        it "starts a new transaction and follows SDK sampling decision (unsampled)" do
+          wont_be_sampled_by_sdk
+
+          stack.call(env)
+
+          expect(transaction).to eq(nil)
+        end
       end
     end
 

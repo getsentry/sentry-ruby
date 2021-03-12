@@ -1,5 +1,9 @@
 # Changelog
 
+## 4.3.0
+
+- No integration-specific changes
+
 ## 4.2.1
 
 - Use ::Rails::Railtie for checking Rails definition [#1287](https://github.com/getsentry/sentry-ruby/pull/1284)
