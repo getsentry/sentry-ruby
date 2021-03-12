@@ -72,6 +72,7 @@ end
 ```
 
 - Add ability to have many post initialization callbacks [#1261](https://github.com/getsentry/sentry-ruby/pull/1261)
+- Add ability to exclude transactions from paths and hosts [#1331](https://github.com/getsentry/sentry-ruby/pull/1331)
 
 ### Bug Fixes
 
