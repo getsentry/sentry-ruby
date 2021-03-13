@@ -18,7 +18,6 @@ module Sentry
       @adapter = @transport_configuration.http_adapter || Faraday.default_adapter
       @conn = set_conn
       @endpoint = @dsn.envelope_endpoint
-      @rate_limits = {}
     end
 
     def send_data(data)
