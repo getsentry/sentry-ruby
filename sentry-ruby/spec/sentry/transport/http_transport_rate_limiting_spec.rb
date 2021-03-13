@@ -104,6 +104,36 @@ RSpec.describe "rate limiting" do
             end
           end
         end
+
+        context "when receiving a greater value for a present category" do
+          let(:headers) do
+            { "x-sentry-rate-limits" => "120:error:organization" }
+          end
+
+          before do
+            subject.rate_limits.merge!("error" => now + 10)
+          end
+
+          it "overrides the current limit" do
+            send_data_and_verify_response(now)
+            expect(subject.rate_limits).to eq({ "error" => now + 120 })
+          end
+        end
+
+        context "when receiving a smaller value for a present category" do
+          let(:headers) do
+            { "x-sentry-rate-limits" => "10:error:organization" }
+          end
+
+          before do
+            subject.rate_limits.merge!("error" => now + 120)
+          end
+
+          it "keeps the current limit" do
+            send_data_and_verify_response(now)
+            expect(subject.rate_limits).to eq({ "error" => now + 120 })
+          end
+        end
       end
 
       context "with retry-after header" do

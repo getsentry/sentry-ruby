@@ -72,7 +72,15 @@ module Sentry
           { nil => Time.now + DEFAULT_DELAY }
         end
 
-      @rate_limits.merge!(rate_limits)
+      rate_limits.each do |category, limit|
+        if current_limit = @rate_limits[category]
+          if current_limit < limit
+            @rate_limits[category] = limit
+          end
+        else
+          @rate_limits[category] = limit
+        end
+      end
     end
 
     def parse_rate_limit_header(rate_limit_header)
