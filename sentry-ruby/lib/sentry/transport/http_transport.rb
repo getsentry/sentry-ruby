@@ -11,7 +11,7 @@ module Sentry
     RETRY_AFTER_HEADER = "retry-after"
     RATE_LIMIT_HEADER = "x-sentry-rate-limits"
 
-    attr_reader :conn, :adapter, :rate_limits
+    attr_reader :conn, :adapter
 
     def initialize(*args)
       super

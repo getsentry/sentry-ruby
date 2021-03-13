@@ -9,7 +9,7 @@ module Sentry
     include LoggingHelper
 
     attr_accessor :configuration
-    attr_reader :logger
+    attr_reader :logger, :rate_limits
 
     def initialize(configuration)
       @configuration = configuration
@@ -24,12 +24,20 @@ module Sentry
     end
 
     def send_event(event)
+      event_hash = event.to_hash
+      item_type = get_item_type(event_hash)
+
       unless configuration.sending_allowed?
-        log_debug("Event not sent: #{configuration.error_messages}")
+        log_debug("Envelope [#{item_type}] not sent: #{configuration.error_messages}")
+
         return
       end
 
-      return if is_rate_limited?(event)
+      if is_rate_limited?(item_type)
+        log_info("Envelope [#{item_type}] not sent: rate limiting")
+
+        return
+      end
 
       encoded_data = encode(event)
 
@@ -40,18 +48,14 @@ module Sentry
       event
     end
 
-    def is_rate_limited?(event)
-      event_hash = event.to_hash
-      event_type = event_hash[:type] || event_hash['type']
-
+    def is_rate_limited?(item_type)
       # check category-specific limit
       delay =
-        case event_type
-        when "event"
-          # confusing mapping, but it's decided by Sentry
-          @rate_limits["error"]
+        case item_type
         when "transaction"
           @rate_limits["transaction"]
+        else
+          @rate_limits["error"]
         end
 
       # check universal limit if not category limit
@@ -77,7 +81,7 @@ module Sentry
       event_hash = event.to_hash
 
       event_id = event_hash[:event_id] || event_hash["event_id"]
-      item_type = event_hash[:type] || event_hash["type"] || "event"
+      item_type = get_item_type(event_hash)
 
       envelope = <<~ENVELOPE
         {"event_id":"#{event_id}","dsn":"#{configuration.dsn.to_s}","sdk":#{Sentry.sdk_meta.to_json},"sent_at":"#{Sentry.utc_now.iso8601}"}
@@ -88,6 +92,12 @@ module Sentry
       log_info("Sending envelope [#{item_type}] #{event_id} to Sentry")
 
       envelope
+    end
+
+    private
+
+    def get_item_type(event_hash)
+      event_hash[:type] || event_hash["type"] || "event"
     end
   end
 end

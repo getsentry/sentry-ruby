@@ -21,21 +21,23 @@ RSpec.describe "rate limiting" do
 
     context "with only category limits" do
       it "returns true for still limited category" do
-        subject.rate_limits.merge!("error" => Time.now + 60)
+        subject.rate_limits.merge!("error" => Time.now + 60, "transaction" => Time.now + 60)
 
-        expect(subject.is_rate_limited?(event.to_hash)).to eq(true)
+        expect(subject.is_rate_limited?("event")).to eq(true)
+        expect(subject.is_rate_limited?("transaction")).to eq(true)
       end
 
       it "returns false for passed limited category" do
-        subject.rate_limits.merge!("error" => Time.now - 10)
+        subject.rate_limits.merge!("error" => Time.now - 10, "transaction" => Time.now - 10)
 
-        expect(subject.is_rate_limited?(event.to_hash)).to eq(false)
+        expect(subject.is_rate_limited?("event")).to eq(false)
+        expect(subject.is_rate_limited?("transaction")).to eq(false)
       end
 
       it "returns false for not listed category" do
         subject.rate_limits.merge!("transaction" => Time.now + 10)
 
-        expect(subject.is_rate_limited?(event.to_hash)).to eq(false)
+        expect(subject.is_rate_limited?("event")).to eq(false)
       end
     end
 
@@ -43,13 +45,13 @@ RSpec.describe "rate limiting" do
       it "returns true when still limited" do
         subject.rate_limits.merge!(nil => Time.now + 60)
 
-        expect(subject.is_rate_limited?(event.to_hash)).to eq(true)
+        expect(subject.is_rate_limited?("event")).to eq(true)
       end
 
       it "returns false when passed limit" do
         subject.rate_limits.merge!(nil => Time.now - 10)
 
-        expect(subject.is_rate_limited?(event.to_hash)).to eq(false)
+        expect(subject.is_rate_limited?("event")).to eq(false)
       end
     end
 
@@ -60,7 +62,7 @@ RSpec.describe "rate limiting" do
           nil => Time.now - 10
         )
 
-        expect(subject.is_rate_limited?(event.to_hash)).to eq(true)
+        expect(subject.is_rate_limited?("event")).to eq(true)
       end
     end
   end
