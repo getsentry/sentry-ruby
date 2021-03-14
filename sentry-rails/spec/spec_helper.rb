@@ -2,6 +2,7 @@ require "bundler/setup"
 require "pry"
 
 require "sentry-ruby"
+require 'rspec/retry'
 
 require 'simplecov'
 
