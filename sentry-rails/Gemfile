@@ -17,11 +17,13 @@ end
 
 gem "rails", "~> #{rails_version}"
 gem "sprockets-rails"
+
+gem "rspec", "~> 3.0"
+gem "rspec-retry"
 gem "rspec-rails", "~> 4.0"
 gem "codecov", "0.2.12"
 
 gem "rake", "~> 12.0"
-gem "rspec", "~> 3.0"
 
 # TODO: Remove this if https://github.com/jruby/jruby/issues/6547 is addressed
 gem "i18n", "<= 1.8.7"

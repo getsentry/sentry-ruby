@@ -2,7 +2,7 @@ require "spec_helper"
 
 return unless Gem::Version.new(Rails.version) >= Gem::Version.new('5.1.0')
 
-RSpec.describe Sentry::Client, type: :request do
+RSpec.describe Sentry::Client, type: :request, retry: 3 do
   let(:transport) do
     Sentry.get_current_client.transport
   end

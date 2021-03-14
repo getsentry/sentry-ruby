@@ -249,7 +249,7 @@ RSpec.describe Sentry::Client do
         end
       end
 
-      context "when sending events in background causes error" do
+      context "when sending events in background causes error", retry: 3 do
         before do
           Sentry.background_worker = Sentry::BackgroundWorker.new(configuration)
         end
