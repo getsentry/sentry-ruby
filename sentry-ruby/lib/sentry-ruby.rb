@@ -58,7 +58,7 @@ module Sentry
     extend Forwardable
 
     def_delegators :get_current_client, :configuration, :send_event
-    def_delegators :get_current_scope, :set_tags, :set_extras, :set_user
+    def_delegators :get_current_scope, :set_tags, :set_extras, :set_user, :set_context
 
     attr_accessor :background_worker
 

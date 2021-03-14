@@ -1,5 +1,9 @@
 # Changelog
 
+## Unreleased
+
+- Add Sentry.set_context helper [#1337](https://github.com/getsentry/sentry-ruby/pull/1337)
+
 ## 4.3.0
 
 ### Features

@@ -240,6 +240,14 @@ RSpec.describe Sentry do
     end
   end
 
+  describe ".set_context" do
+    it "adds context to the current scope" do
+      described_class.set_context("character", { name: "John", age: 25 })
+
+      expect(described_class.get_current_scope.contexts).to include("character" => { name: "John", age: 25 })
+    end
+  end
+
   describe ".set_user" do
     it "adds user to the current scope" do
       described_class.set_user(id: 1)
