@@ -50,7 +50,7 @@ module Sentry
           end
         end
 
-        return if ignored_logger?(progname) || message.empty?
+        return if ignored_logger?(progname) || message == ""
 
         # some loggers will add leading/trailing space as they (incorrectly, mind you)
         # think of logging as a shortcut to std{out,err}
