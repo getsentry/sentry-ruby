@@ -2,7 +2,7 @@ require 'spec_helper'
 
 RSpec.describe Sentry::Transport do
   let(:io) { StringIO.new }
-  let(:logger) { Logger.new(io) }
+  let(:logger) { Logger.new(io, :debug) }
   let(:configuration) do
     Sentry::Configuration.new.tap do |config|
       config.server = 'http://12345:67890@sentry.localdomain/sentry/42'
@@ -115,7 +115,7 @@ RSpec.describe Sentry::Transport do
         expect(subject.send_event(event)).to eq(event)
 
         expect(io.string).to match(
-          /INFO -- sentry: Sending event #{event.event_id} to Sentry/
+          /DEBUG -- sentry: Sending event #{event.event_id} to Sentry/
         )
       end
     end
