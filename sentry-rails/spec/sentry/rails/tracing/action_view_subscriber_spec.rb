@@ -9,6 +9,7 @@ RSpec.describe Sentry::Rails::Tracing::ActionViewSubscriber, :subscriber, type: 
     before do
       make_basic_app do |config|
         config.traces_sample_rate = 1.0
+        config.rails.tracing_subscribers = [described_class]
       end
     end
 
@@ -19,7 +20,7 @@ RSpec.describe Sentry::Rails::Tracing::ActionViewSubscriber, :subscriber, type: 
 
       transaction = transport.events.first.to_hash
       expect(transaction[:type]).to eq("transaction")
-      expect(transaction[:spans].count).to eq(2)
+      expect(transaction[:spans].count).to eq(1)
 
       span = transaction[:spans][0]
       expect(span[:op]).to eq("render_template.action_view")

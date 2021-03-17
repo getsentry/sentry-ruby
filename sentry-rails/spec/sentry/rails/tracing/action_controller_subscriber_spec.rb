@@ -9,6 +9,7 @@ RSpec.describe Sentry::Rails::Tracing::ActionControllerSubscriber, :subscriber, 
     before do
       make_basic_app do |config|
         config.traces_sample_rate = 1.0
+        config.rails.tracing_subscribers = [described_class]
       end
     end
 
@@ -19,9 +20,9 @@ RSpec.describe Sentry::Rails::Tracing::ActionControllerSubscriber, :subscriber, 
 
       transaction = transport.events.first.to_hash
       expect(transaction[:type]).to eq("transaction")
-      expect(transaction[:spans].count).to eq(2)
+      expect(transaction[:spans].count).to eq(1)
 
-      span = transaction[:spans][1]
+      span = transaction[:spans][0]
       expect(span[:op]).to eq("process_action.action_controller")
       expect(span[:description]).to eq("HelloController#world")
       expect(span[:trace_id]).to eq(transaction.dig(:contexts, :trace, :trace_id))

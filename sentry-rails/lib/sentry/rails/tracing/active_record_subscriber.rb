@@ -1,3 +1,5 @@
+require "sentry/rails/tracing/abstract_subscriber"
+
 module Sentry
   module Rails
     module Tracing
