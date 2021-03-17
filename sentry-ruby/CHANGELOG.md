@@ -2,6 +2,7 @@
 
 ## 4.3.1
 
+- Fix handle the case where the logger messages is not of String type [#1341](https://github.com/getsentry/sentry-ruby/pull/1341)
 - Don't report Sentry::ExternalError to Sentry [#1353](https://github.com/getsentry/sentry-ruby/pull/1353)
 
 ## 4.3.0

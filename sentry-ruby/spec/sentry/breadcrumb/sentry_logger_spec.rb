@@ -19,6 +19,11 @@ RSpec.describe "Sentry::Breadcrumbs::SentryLogger" do
     expect(breadcrumb.level).to eq("info")
     expect(breadcrumb.message).to eq("foo")
   end
+  
+  it "records non-String message" do
+    logger.info(200)
+    expect(breadcrumbs.peek.message).to eq("200")
+  end
 
   it "does not affect the return of the logger call" do
     expect(logger.info("foo")).to be_nil
