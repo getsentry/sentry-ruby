@@ -1,3 +1,4 @@
+require "rails"
 require "sentry-ruby"
 require "sentry/integrable"
 require "sentry/rails/configuration"
