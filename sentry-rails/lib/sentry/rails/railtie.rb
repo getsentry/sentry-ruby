@@ -2,10 +2,6 @@ require "rails"
 require "sentry/rails/capture_exceptions"
 require "sentry/rails/rescued_exception_interceptor"
 require "sentry/rails/backtrace_cleaner"
-require "sentry/rails/controller_methods"
-require "sentry/rails/controller_transaction"
-require "sentry/rails/overrides/streaming_reporter"
-require "sentry/rails/overrides/file_handler"
 
 module Sentry
   class Railtie < ::Rails::Railtie
@@ -23,11 +19,11 @@ module Sentry
       configure_project_root
       configure_sentry_logger
       configure_trusted_proxies
-      extend_controller_methods
+      extend_controller_methods if defined?(ActionController)
       extend_active_job if defined?(ActiveJob)
       patch_background_worker if defined?(ActiveRecord)
-      override_streaming_reporter
-      override_file_handler if app.config.public_file_server.enabled
+      override_streaming_reporter if defined?(ActionView)
+      override_file_handler if defined?(ActionDispatch) && app.config.public_file_server.enabled
       setup_backtrace_cleanup_callback
       inject_breadcrumbs_logger
       activate_tracing
@@ -51,6 +47,10 @@ module Sentry
     end
 
     def extend_controller_methods
+      require "sentry/rails/controller_methods"
+      require "sentry/rails/controller_transaction"
+      require "sentry/rails/overrides/streaming_reporter"
+
       ActiveSupport.on_load :action_controller do
         include Sentry::Rails::ControllerMethods
         include Sentry::Rails::ControllerTransaction
@@ -78,12 +78,16 @@ module Sentry
     end
 
     def override_streaming_reporter
+      require "sentry/rails/overrides/streaming_reporter"
+
       ActiveSupport.on_load :action_view do
         ActionView::StreamingTemplateRenderer::Body.send(:prepend, Sentry::Rails::Overrides::StreamingReporter)
       end
     end
 
     def override_file_handler
+      require "sentry/rails/overrides/file_handler"
+
       ActiveSupport.on_load :action_controller do
         ActionDispatch::FileHandler.send(:prepend, Sentry::Rails::Overrides::FileHandler)
       end
