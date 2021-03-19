@@ -47,6 +47,18 @@ RSpec.describe "Sentry::SendEventJob" do
       expect(event.tags[:hint][:foo]).to eq("bar")
     end
 
+    it "doesn't create a new transaction" do
+      make_basic_app do |config|
+        config.traces_sample_rate = 1.0
+      end
+
+      Sentry::SendEventJob.perform_now(event)
+
+      expect(transport.events.count).to eq(1)
+      event = transport.events.first
+      expect(event.type).to eq("event")
+    end
+
     context "when ApplicationJob is not defined" do
       before do
         make_basic_app
