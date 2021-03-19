@@ -25,6 +25,7 @@ module Sentry
       configure_trusted_proxies
       extend_controller_methods
       extend_active_job if defined?(ActiveJob)
+      patch_background_worker if defined?(ActiveRecord)
       override_streaming_reporter
       override_file_handler if app.config.public_file_server.enabled
       setup_backtrace_cleanup_callback
@@ -55,6 +56,10 @@ module Sentry
         include Sentry::Rails::ControllerTransaction
         ActionController::Live.send(:prepend, Sentry::Rails::Overrides::StreamingReporter)
       end
+    end
+
+    def patch_background_worker
+      require "sentry/rails/background_worker"
     end
 
     def inject_breadcrumbs_logger
