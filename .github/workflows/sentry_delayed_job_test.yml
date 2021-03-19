@@ -5,6 +5,7 @@ on:
   push:
     branches:
       - master
+      - \d+-\d+
   pull_request:
     paths:
       - 'sentry-delayed_job/**'
