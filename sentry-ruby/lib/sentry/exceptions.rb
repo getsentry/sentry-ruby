@@ -2,6 +2,6 @@ module Sentry
   class Error < StandardError
   end
 
-  class ExternalError < StandardError
+  class ExternalError < Error
   end
 end

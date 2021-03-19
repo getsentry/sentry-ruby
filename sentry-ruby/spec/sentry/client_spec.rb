@@ -179,6 +179,13 @@ RSpec.describe Sentry::Client do
         end
       end
 
+      context 'for a Sentry::ExternalError' do
+        let(:exception) { Sentry::ExternalError.new }
+        it 'does not create an event' do
+          expect(subject.event_from_exception(exception)).to be_nil
+        end
+      end
+
       context 'for an excluded exception type' do
         module Sentry::Test
           class BaseExc < RuntimeError; end
