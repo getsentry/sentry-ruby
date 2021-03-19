@@ -1,5 +1,10 @@
 # Changelog
 
+## 4.3.1
+
+- Only apply background worker patch if ActiveRecord is loaded [#1350](https://github.com/getsentry/sentry-ruby/pull/1350)
+  - Fixes [#1342](https://github.com/getsentry/sentry-ruby/issues/1342) and [#1346](https://github.com/getsentry/sentry-ruby/issues/1346)
+
 ## 4.3.0
 
 ### Features
