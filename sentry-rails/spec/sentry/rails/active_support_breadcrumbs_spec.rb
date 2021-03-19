@@ -35,7 +35,7 @@ RSpec.describe "Sentry::Breadcrumbs::ActiveSupportLogger", type: :request do
     expect(response.status).to eq(500)
     breadcrumbs = event.dig("breadcrumbs", "values")
     expect(breadcrumbs.count).to eq(2)
-    expect(breadcrumbs.first["data"]).to match(
+    expect(breadcrumbs.first["data"]).to include(
       {
         "controller" => "HelloController",
         "action" => "exception",
