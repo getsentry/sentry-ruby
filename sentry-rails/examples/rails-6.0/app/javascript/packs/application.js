@@ -9,9 +9,16 @@ init({
   dsn: 'https://2fb45f003d054a7ea47feb45898f7649@o447951.ingest.sentry.io/5434472',
 });
 
-captureMessage("hello");
-console.log("Foo");
+function foo() {
+  console.log("Foo");
+  return bar();
+}
 
+function bar() {
+  throw new Error("Test Error");
+}
+
+foo();
 
 // Uncomment to copy all static images under ../images to the output folder and reference
 // them with the image_pack_tag helper in views (e.g <%= image_pack_tag 'rails.png' %>)
