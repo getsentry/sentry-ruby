@@ -14,6 +14,7 @@ environment.plugins.prepend(
     org: "sentry-sdks",
     project: "sentry-ruby",    
     stripPrefix: ["public"],
+    urlPrefix: "~/public"
   })
 )
 
