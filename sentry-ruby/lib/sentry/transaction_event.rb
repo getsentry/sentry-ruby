@@ -2,6 +2,8 @@
 
 module Sentry
   class TransactionEvent < Event
+    TYPE = "transaction"
+
     ATTRIBUTES = %i(
       event_id level timestamp start_timestamp
       release environment server_name modules
@@ -17,7 +19,7 @@ module Sentry
     end
 
     def type
-      "transaction"
+      TYPE
     end
 
     def to_hash
