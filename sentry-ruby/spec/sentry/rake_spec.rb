@@ -10,6 +10,6 @@ RSpec.describe "rake auto-reporting" do
       message = `cd spec/support && bundle exec rake raise_exception 2>&1`
     end.join
 
-    expect(message).to match(/Sending event [abcdef0-9]+ to Sentry/)
+    expect(message).to match(/Sending envelope \[event\] [abcdef0-9]+ to Sentry/)
   end
 end
