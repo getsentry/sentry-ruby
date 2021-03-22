@@ -15,7 +15,9 @@ else
   gem "sqlite3", platform: :ruby
 end
 
-gem "rails", "~> #{rails_version}"
+gem "activejob", "~> #{rails_version}"
+gem "actionpack", "~> #{rails_version}"
+gem "activerecord", "~> #{rails_version}"
 gem "sprockets-rails"
 
 gem "rspec", "~> 3.0"
