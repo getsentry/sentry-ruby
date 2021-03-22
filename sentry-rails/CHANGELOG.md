@@ -1,5 +1,10 @@
 # Changelog
 
+## 4.3.2
+
+- Avoid recording SendEventJob's transaction [#1351](https://github.com/getsentry/sentry-ruby/pull/1351)
+  - Fixes [#1348](https://github.com/getsentry/sentry-ruby/issues/1348)
+
 ## 4.3.1
 
 - Only apply background worker patch if ActiveRecord is loaded [#1350](https://github.com/getsentry/sentry-ruby/pull/1350)
