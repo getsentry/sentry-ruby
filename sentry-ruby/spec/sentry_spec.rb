@@ -222,6 +222,18 @@ RSpec.describe Sentry do
 
       expect(described_class.get_current_scope.breadcrumbs.peek).to eq(crumb)
     end
+
+    it "triggers before_breadcrumb callback" do
+      Sentry.configuration.before_breadcrumb = lambda do |breadcrumb, hint|
+        nil
+      end
+
+      crumb = Sentry::Breadcrumb.new(message: "foo")
+
+      described_class.add_breadcrumb(crumb)
+
+      expect(described_class.get_current_scope.breadcrumbs.peek).to eq(nil)
+    end
   end
 
   describe ".set_tags" do
