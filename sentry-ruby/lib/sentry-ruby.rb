@@ -80,7 +80,7 @@ module Sentry
 
     # Takes an instance of Sentry::Breadcrumb and stores it to the current active scope.
     def add_breadcrumb(breadcrumb)
-      get_current_scope.breadcrumbs.record(breadcrumb)
+      get_current_hub&.add_breadcrumb(breadcrumb)
     end
 
     # Returns the current active hub.
