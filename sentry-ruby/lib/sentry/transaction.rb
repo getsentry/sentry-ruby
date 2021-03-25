@@ -73,7 +73,7 @@ module Sentry
       copy
     end
 
-    def set_initial_sample_decision(sampling_context: {}, configuration: Sentry.configuration)
+    def set_initial_sample_decision(sampling_context:, configuration: Sentry.configuration)
       unless configuration.tracing_enabled?
         @sampled = false
         return
@@ -81,24 +81,19 @@ module Sentry
 
       return unless @sampled.nil?
 
-      transaction_description = generate_transaction_description
-
-      logger = configuration.logger
       traces_sampler = configuration.traces_sampler
 
       sample_rate =
         if traces_sampler.is_a?(Proc)
-          sampling_context = sampling_context.merge(
-            parent_sampled: @parent_sampled,
-            transaction_context: self.to_hash
-          )
-
           traces_sampler.call(sampling_context)
-        elsif !@parent_sampled.nil?
-          @parent_sampled
+        elsif !sampling_context[:parent_sampled].nil?
+          sampling_context[:parent_sampled]
         else
           configuration.traces_sample_rate
         end
+
+      transaction_description = generate_transaction_description
+      logger = configuration.logger
 
       unless [true, false].include?(sample_rate) || (sample_rate.is_a?(Numeric) && sample_rate >= 0.0 && sample_rate <= 1.0)
         @sampled = false

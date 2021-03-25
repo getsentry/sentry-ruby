@@ -137,7 +137,7 @@ RSpec.describe Sentry::Transaction do
         allow(Sentry.configuration).to receive(:tracing_enabled?).and_return(false)
 
         transaction = described_class.new(sampled: true)
-        transaction.set_initial_sample_decision
+        transaction.set_initial_sample_decision(sampling_context: {})
         expect(transaction.sampled).to eq(false)
       end
     end
@@ -152,11 +152,11 @@ RSpec.describe Sentry::Transaction do
       context "when the transaction already has a decision" do
         it "doesn't change it" do
           transaction = described_class.new(sampled: true)
-          transaction.set_initial_sample_decision
+          transaction.set_initial_sample_decision(sampling_context: {})
           expect(transaction.sampled).to eq(true)
 
           transaction = described_class.new(sampled: false)
-          transaction.set_initial_sample_decision
+          transaction.set_initial_sample_decision(sampling_context: {})
           expect(transaction.sampled).to eq(false)
         end
       end
@@ -166,13 +166,20 @@ RSpec.describe Sentry::Transaction do
           Sentry.configuration.traces_sample_rate = 0.5
         end
 
+        it "prioritizes inherited decision over traces_sample_rate" do
+          allow(Random).to receive(:rand).and_return(0.4)
+
+          subject.set_initial_sample_decision(sampling_context: { parent_sampled: false })
+          expect(subject.sampled).to eq(false)
+        end
+
         it "uses traces_sample_rate for sampling (positive result)" do
           allow(Random).to receive(:rand).and_return(0.4)
           expect(Sentry.configuration.logger).to receive(:debug).with(
             "[Tracing] Starting <rack.request> transaction"
           )
 
-          subject.set_initial_sample_decision
+          subject.set_initial_sample_decision(sampling_context: {})
           expect(subject.sampled).to eq(true)
         end
 
@@ -182,48 +189,49 @@ RSpec.describe Sentry::Transaction do
             "[Tracing] Discarding <rack.request> transaction because it's not included in the random sample (sampling rate = 0.5)"
           )
 
-          subject.set_initial_sample_decision
+          subject.set_initial_sample_decision(sampling_context: {})
           expect(subject.sampled).to eq(false)
         end
 
         it "accepts integer traces_sample_rate" do
           Sentry.configuration.traces_sample_rate = 1
 
-          subject.set_initial_sample_decision
+          subject.set_initial_sample_decision(sampling_context: {})
           expect(subject.sampled).to eq(true)
         end
       end
 
       context "when traces_sampler is provided" do
+        it "prioritizes traces_sampler over traces_sample_rate" do
+          Sentry.configuration.traces_sample_rate = 1.0
+          Sentry.configuration.traces_sampler = -> (_) { false }
+
+          subject.set_initial_sample_decision(sampling_context: {})
+          expect(subject.sampled).to eq(false)
+        end
+
+        it "prioritizes traces_sampler over inherited decision" do
+          Sentry.configuration.traces_sampler = -> (_) { false }
+
+          subject.set_initial_sample_decision(sampling_context: { parent_sampled: true })
+          expect(subject.sampled).to eq(false)
+        end
+
         it "ignores the sampler if it's not callable" do
           Sentry.configuration.traces_sampler = ""
 
           expect do
-            subject.set_initial_sample_decision
+            subject.set_initial_sample_decision(sampling_context: {})
           end.not_to raise_error
         end
 
-        it "calls the sampler with sampling_context" do
-          sampling_context = {}
-
-          Sentry.configuration.traces_sampler = lambda do |context|
-            sampling_context = context
-          end
-
-          subject.set_initial_sample_decision(sampling_context: { foo: "bar" })
-
-          # transaction_context's sampled attribute will be the old value
-          expect(sampling_context[:transaction_context].keys).to eq(subject.to_hash.keys)
-          expect(sampling_context[:foo]).to eq("bar")
-        end
-
-        it "disgards the transaction if generated sample rate is not valid" do
+        it "discards the transaction if generated sample rate is not valid" do
           expect(Sentry.configuration.logger).to receive(:warn).with(
             "[Tracing] Discarding <rack.request> transaction because of invalid sample_rate: foo"
           )
 
           Sentry.configuration.traces_sampler = -> (_) { "foo" }
-          subject.set_initial_sample_decision
+          subject.set_initial_sample_decision(sampling_context: {})
 
           expect(subject.sampled).to eq(false)
         end
@@ -235,17 +243,17 @@ RSpec.describe Sentry::Transaction do
 
           subject = described_class.new
           Sentry.configuration.traces_sampler = -> (_) { true }
-          subject.set_initial_sample_decision
+          subject.set_initial_sample_decision(sampling_context: {})
           expect(subject.sampled).to eq(true)
 
           subject = described_class.new
           Sentry.configuration.traces_sampler = -> (_) { 1.0 }
-          subject.set_initial_sample_decision
+          subject.set_initial_sample_decision(sampling_context: {})
           expect(subject.sampled).to eq(true)
 
           subject = described_class.new
           Sentry.configuration.traces_sampler = -> (_) { 1 }
-          subject.set_initial_sample_decision
+          subject.set_initial_sample_decision(sampling_context: {})
           expect(subject.sampled).to eq(true)
         end
 
@@ -256,12 +264,12 @@ RSpec.describe Sentry::Transaction do
 
           subject = described_class.new
           Sentry.configuration.traces_sampler = -> (_) { false }
-          subject.set_initial_sample_decision
+          subject.set_initial_sample_decision(sampling_context: {})
           expect(subject.sampled).to eq(false)
 
           subject = described_class.new
           Sentry.configuration.traces_sampler = -> (_) { 0.0 }
-          subject.set_initial_sample_decision
+          subject.set_initial_sample_decision(sampling_context: {})
           expect(subject.sampled).to eq(false)
         end
       end
