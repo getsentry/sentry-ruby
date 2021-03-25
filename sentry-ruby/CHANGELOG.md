@@ -3,7 +3,7 @@
 ## Unreleased
 
 - Correct type attribute's usages [#1354](https://github.com/getsentry/sentry-ruby/pull/1354)
-
+- Fix sampling decision precedence [#1335](https://github.com/getsentry/sentry-ruby/pull/1335)
 
 ## 4.3.1
 
