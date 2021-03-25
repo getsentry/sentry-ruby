@@ -1,6 +1,6 @@
 # Changelog
 
-## 4.3.3
+## 4.3.3-beta.0
 
 - Minimize sentry-rails' dependency requirement [#1352](https://github.com/getsentry/sentry-ruby/pull/1352)
 
