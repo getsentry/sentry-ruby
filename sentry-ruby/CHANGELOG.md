@@ -1,5 +1,10 @@
 # Changelog
 
+## Unreleased
+
+- Correct type attribute's usages [#1354](https://github.com/getsentry/sentry-ruby/pull/1354)
+
+
 ## 4.3.1
 
 - Add Sentry.set_context helper [#1337](https://github.com/getsentry/sentry-ruby/pull/1337)

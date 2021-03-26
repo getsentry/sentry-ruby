@@ -72,7 +72,7 @@ module Sentry
     def send_event(event, hint = nil)
       event_type = event.is_a?(Event) ? event.type : event["type"]
 
-      if event_type == "event" && configuration.before_send
+      if event_type != TransactionEvent::TYPE && configuration.before_send
         event = configuration.before_send.call(event, hint)
 
         if event.nil?
@@ -85,8 +85,9 @@ module Sentry
 
       event
     rescue => e
-      logger.error(LOGGER_PROGNAME) { "#{event_type.capitalize} sending failed: #{e.message}" }
-      logger.error(LOGGER_PROGNAME) { "Unreported #{event_type.capitalize}: #{Event.get_log_message(event.to_hash)}" }
+      loggable_event_type = (event_type || "event").capitalize
+      logger.error(LOGGER_PROGNAME) { "#{loggable_event_type} sending failed: #{e.message}" }
+      logger.error(LOGGER_PROGNAME) { "Unreported #{loggable_event_type}: #{Event.get_log_message(event.to_hash)}" }
       raise
     end
 
@@ -110,8 +111,8 @@ module Sentry
         async_block.call(event_hash)
       end
     rescue => e
-      event_type = event_hash["type"]
-      logger.error(LOGGER_PROGNAME) { "Async #{event_type} sending failed: #{e.message}" }
+      loggable_event_type = event_hash["type"] || "event"
+      logger.error(LOGGER_PROGNAME) { "Async #{loggable_event_type} sending failed: #{e.message}" }
       send_event(event, hint)
     end
 
