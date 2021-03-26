@@ -50,7 +50,7 @@ module Sentry
 
     def is_rate_limited?(item_type)
       # check category-specific limit
-      delay =
+      category_delay =
         case item_type
         when "transaction"
           @rate_limits["transaction"]
@@ -59,7 +59,20 @@ module Sentry
         end
 
       # check universal limit if not category limit
-      delay ||= @rate_limits[nil]
+      universal_delay = @rate_limits[nil]
+
+      delay =
+        if category_delay && universal_delay
+          if category_delay > universal_delay
+            category_delay
+          else
+            universal_delay
+          end
+        elsif category_delay
+          category_delay
+        else
+          universal_delay
+        end
 
       !!delay && delay > Time.now
     end

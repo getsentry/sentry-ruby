@@ -56,10 +56,17 @@ RSpec.describe "rate limiting" do
     end
 
     context "with both category-based and universal limits" do
-      it "prioritizes category limits" do
+      it "checks both limits and picks the greater value" do
         subject.rate_limits.merge!(
           "error" => Time.now + 60,
           nil => Time.now - 10
+        )
+
+        expect(subject.is_rate_limited?("event")).to eq(true)
+
+        subject.rate_limits.merge!(
+          "error" => Time.now - 60,
+          nil => Time.now + 10
         )
 
         expect(subject.is_rate_limited?("event")).to eq(true)
