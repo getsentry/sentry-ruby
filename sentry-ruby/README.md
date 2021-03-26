@@ -17,17 +17,18 @@ Sentry SDK for Ruby
 | [![Gem Version](https://img.shields.io/gem/v/sentry-sidekiq.svg)](https://rubygems.org/gems/sentry-sidekiq) | ![Build Status](https://github.com/getsentry/sentry-ruby/workflows/sentry-sidekiq%20Test/badge.svg) | [![Coverage Status](https://img.shields.io/codecov/c/github/getsentry/sentry-ruby/master?logo=codecov)](https://codecov.io/gh/getsentry/sentry-ruby/branch/master) | [![Downloads](https://img.shields.io/gem/dt/sentry-sidekiq.svg)](https://rubygems.org/gems/sentry-sidekiq/) | [![SemVer stability](https://api.dependabot.com/badges/compatibility_score?dependency-name=sentry-sidekiq&package-manager=bundler&version-scheme=semver)](https://dependabot.com/compatibility-score.html?dependency-name=sentry-sidekiq&package-manager=bundler&version-scheme=semver) |
 | [![Gem Version](https://img.shields.io/gem/v/sentry-delayed_job.svg)](https://rubygems.org/gems/sentry-delayed_job) | ![Build Status](https://github.com/getsentry/sentry-ruby/workflows/sentry-delayed_job%20Test/badge.svg) | [![Coverage Status](https://img.shields.io/codecov/c/github/getsentry/sentry-ruby/master?logo=codecov)](https://codecov.io/gh/getsentry/sentry-ruby/branch/master) | [![Downloads](https://img.shields.io/gem/dt/sentry-delayed_job.svg)](https://rubygems.org/gems/sentry-delayed_job/) | [![SemVer stability](https://api.dependabot.com/badges/compatibility_score?dependency-name=sentry-delayed_job&package-manager=bundler&version-scheme=semver)](https://dependabot.com/compatibility-score.html?dependency-name=sentry-delayed_job&package-manager=bundler&version-scheme=semver) |
 
+
+## Migrate From sentry-raven
+
 **The old `sentry-raven` client has entered maintenance mode and was moved to [here](https://github.com/getsentry/sentry-ruby/tree/master/sentry-raven).**
+
+If you're using `sentry-raven`, we recommend you to migrate to this new SDK. You can find the benefits of migrating and how to do it in our [migration guide](https://docs.sentry.io/platforms/ruby/migration/).
 
 ## Requirements
 
 We test on Ruby 2.4, 2.5, 2.6, 2.7, and 3.0 at the latest patchlevel/teeny version. We also support JRuby 9.0.
 
 If you use self-hosted Sentry, please also make sure its version is above `20.6.0`.
-
-## Migrate From sentry-raven
-
-If you're using `sentry-raven`, we recommend you to migrate to this new SDK. You can find the benefits of migrating and how to do it in our [migration guide](https://docs.sentry.io/platforms/ruby/migration/).
 
 ## Getting Started
 
