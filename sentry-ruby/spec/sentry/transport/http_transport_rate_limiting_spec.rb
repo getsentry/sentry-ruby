@@ -88,6 +88,12 @@ RSpec.describe "rate limiting" do
             header: "", expected_limits: {}
           },
           {
+            header: " ", expected_limits: {}
+          },
+          {
+            header: " , ", expected_limits: {}
+          },
+          {
             header: "invalid", expected_limits: {}
           },
           {

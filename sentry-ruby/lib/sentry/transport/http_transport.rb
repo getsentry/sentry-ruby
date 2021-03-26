@@ -64,6 +64,8 @@ module Sentry
         if rate_limits = headers[RATE_LIMIT_HEADER]
           parse_rate_limit_header(rate_limits)
         elsif retry_after = headers[RETRY_AFTER_HEADER]
+          # although Sentry doesn't send a date string back
+          # based on HTTP specification, this could be a date string (instead of an integer)
           retry_after = retry_after.to_i
           retry_after = DEFAULT_DELAY if retry_after == 0
 
@@ -90,6 +92,8 @@ module Sentry
 
       limits = rate_limit_header.split(",")
       limits.each do |limit|
+        next if limit.nil? || limit.empty?
+
         begin
           retry_after, categories = limit.strip.split(":").first(2)
           retry_after = time + retry_after.to_i
