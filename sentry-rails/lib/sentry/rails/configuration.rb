@@ -5,6 +5,7 @@ module Sentry
     add_post_initialization_callback do
       @rails = Sentry::Rails::Configuration.new
       @excluded_exceptions = @excluded_exceptions.concat(Sentry::Rails::IGNORE_DEFAULT)
+      @logger = ::Rails.logger
     end
   end
 

@@ -16,7 +16,6 @@ module Sentry
       next unless Sentry.initialized?
 
       configure_project_root
-      configure_sentry_logger
       configure_trusted_proxies
       extend_controller_methods if defined?(ActionController)
       extend_active_job if defined?(ActiveJob)
@@ -30,10 +29,6 @@ module Sentry
 
     def configure_project_root
       Sentry.configuration.project_root = ::Rails.root.to_s
-    end
-
-    def configure_sentry_logger
-      Sentry.configuration.logger = ::Rails.logger
     end
 
     def configure_trusted_proxies
