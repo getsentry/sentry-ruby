@@ -1,5 +1,10 @@
 # Changelog
 
+## 4.3.3
+
+- Correctly set the SDK's logger in sentry-rails [#1363](https://github.com/getsentry/sentry-ruby/pull/1363)
+  - Fixes [#1361](https://github.com/getsentry/sentry-ruby/issues/1361)
+
 ## 4.3.3-beta.0
 
 - Minimize sentry-rails' dependency requirement [#1352](https://github.com/getsentry/sentry-ruby/pull/1352)
