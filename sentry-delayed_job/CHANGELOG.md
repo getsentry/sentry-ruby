@@ -1,5 +1,10 @@
 # Changelog
 
+## 4.3.1
+
+- Return delayed job when the SDK is not initialized [#1373](https://github.com/getsentry/sentry-ruby/pull/1373)
+  - Fixes [#1334](https://github.com/getsentry/sentry-ruby/issues/1334)
+
 ## 4.3.0
 
 - No integration-specific changes
