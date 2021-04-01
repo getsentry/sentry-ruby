@@ -37,7 +37,7 @@ RSpec.describe Sentry::DelayedJob do
     expect(transport.events.count).to eq(1)
     event = transport.events.last.to_hash
     expect(event[:message]).to eq("report")
-    expect(event[:extra][:"delayed_job.id"]).to eq(enqueued_job.id.to_s)
+    expect(event[:contexts][:"Delayed-Job"][:id]).to eq(enqueued_job.id.to_s)
     expect(event[:tags]).to eq({ "delayed_job.id" => enqueued_job.id.to_s, "delayed_job.queue" => nil })
   end
 
@@ -204,7 +204,7 @@ RSpec.describe Sentry::DelayedJob do
         event = transport.events.last.to_hash
         expect(event[:message]).to eq("report from ActiveJob")
         expect(event[:tags]).to match({ "delayed_job.id" => anything, "delayed_job.queue" => "default", number: 1 })
-        expect(event.dig(:extra, :"active_job.job_class")).to eq("ReportingJob")
+        expect(event[:contexts][:"Active-Job"][:job_class]).to eq("ReportingJob")
       end
     end
 
@@ -231,7 +231,7 @@ RSpec.describe Sentry::DelayedJob do
         event = transport.events.last.to_hash
         expect(event.dig(:exception, :values, 0, :type)).to eq("ZeroDivisionError")
         expect(event[:tags]).to match({ "delayed_job.id" => anything, "delayed_job.queue" => "default", number: 2 })
-        expect(event.dig(:extra, :"active_job.job_class")).to eq("FailedJob")
+        expect(event[:contexts][:"Active-Job"][:job_class]).to eq("FailedJob")
       end
     end
   end
