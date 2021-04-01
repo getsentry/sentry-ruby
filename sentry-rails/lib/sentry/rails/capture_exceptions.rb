@@ -12,6 +12,7 @@ module Sentry
       private
 
       def collect_exception(env)
+        return nil if env["sentry.already_captured"]
         super || env["action_dispatch.exception"] || env["sentry.rescued_exception"]
       end
 

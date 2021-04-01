@@ -20,11 +20,20 @@ module Sentry
             copied_env = scope.rack_env.dup
             copied_env["sentry.original_transaction"] = scope.transaction_name
             scope.set_rack_env(copied_env)
+
+            if report_rescued_exceptions?
+              Sentry::Rails.capture_exception(e)
+              env["sentry.already_captured"] = true
+            end
           end
 
-          env["sentry.rescued_exception"] = e if Sentry.configuration.rails.report_rescued_exceptions
+          env["sentry.rescued_exception"] = e if report_rescued_exceptions?
           raise e
         end
+      end
+
+      def report_rescued_exceptions?
+        Sentry.configuration.rails.report_rescued_exceptions
       end
     end
   end

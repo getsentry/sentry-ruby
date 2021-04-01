@@ -166,7 +166,10 @@ RSpec.describe Sentry::Rails, type: :request do
       it "sets transaction to ControllerName#method" do
         get "/exception"
 
-        expect(transport.events.last.transaction).to eq("HelloController#exception")
+        expect(transport.events.count).to eq(1)
+        last_event = transport.events.last
+        expect(last_event.transaction).to eq("HelloController#exception")
+        expect(response.body).to match(last_event.event_id)
 
         get "/posts"
 
