@@ -94,12 +94,14 @@ RSpec.describe Sentry::Scope do
       end.to raise_error(ArgumentError)
     end
 
-    it "replaces the context hash" do
-      subject.set_contexts({foo: "baz"})
-      expect(subject.contexts).to eq({foo: "baz"})
+    it "merges the context hash" do
+      subject.set_contexts({ character: { name: "John" }})
+      expect(subject.contexts).to include({ character: { name: "John" }})
 
-      subject.set_contexts({foo: "bar"})
-      expect(subject.contexts).to eq({foo: "bar"})
+      subject.set_contexts({ character: { name: "John", age: 25 }})
+      subject.set_contexts({ another_character: { name: "Jane", age: 20 }})
+      expect(subject.contexts).to include({ character: { name: "John", age: 25 }})
+      expect(subject.contexts).to include({ another_character: { name: "Jane", age: 20 }})
     end
   end
 
@@ -109,7 +111,7 @@ RSpec.describe Sentry::Scope do
 
       subject.set_context(:foo, "bar")
 
-      expect(subject.contexts).to eq({foo: "bar", bar: "baz"})
+      expect(subject.contexts).to include({foo: "bar", bar: "baz"})
     end
   end
 
