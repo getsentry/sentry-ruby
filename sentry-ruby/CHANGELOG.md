@@ -3,6 +3,7 @@
 ## Unreleased
 
 - Correct type attribute's usages [#1354](https://github.com/getsentry/sentry-ruby/pull/1354)
+- Fix set_contexts [#1375](https://github.com/getsentry/sentry-ruby/pull/1375) 
 
 
 ## 4.3.1

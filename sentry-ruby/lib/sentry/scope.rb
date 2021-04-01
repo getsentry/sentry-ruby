@@ -126,7 +126,7 @@ module Sentry
 
     def set_contexts(contexts_hash)
       check_argument_type!(contexts_hash, Hash)
-      @contexts = contexts_hash
+      @contexts.merge!(contexts_hash)
     end
 
     def set_context(key, value)
