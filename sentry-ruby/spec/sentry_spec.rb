@@ -197,6 +197,46 @@ RSpec.describe Sentry do
 
           expect(transaction.sampled).to eq(true)
         end
+
+        it "provides proper sampling context to the traces_sampler" do
+          transaction = Sentry::Transaction.new(op: "foo")
+
+          context = nil
+          Sentry.configuration.traces_sampler = lambda do |sampling_context|
+            context = sampling_context
+          end
+
+          described_class.start_transaction(transaction: transaction)
+
+          expect(context[:parent_sampled]).to be_nil
+          expect(context[:transaction_context][:op]).to eq("foo")
+        end
+
+        it "passes parent_sampled to the sampling_context" do
+          transaction = Sentry::Transaction.new(parent_sampled: true)
+
+          context = nil
+          Sentry.configuration.traces_sampler = lambda do |sampling_context|
+            context = sampling_context
+          end
+
+          described_class.start_transaction(transaction: transaction)
+
+          expect(context[:parent_sampled]).to eq(true)
+        end
+      end
+
+      context "when given a custom_sampling_context" do
+        it "takes that into account" do
+          context = nil
+          Sentry.configuration.traces_sampler = lambda do |sampling_context|
+            context = sampling_context
+          end
+
+          described_class.start_transaction(custom_sampling_context: { foo: "bar" })
+
+          expect(context).to include({ foo: "bar" })
+        end
       end
     end
 

@@ -33,14 +33,14 @@ module Sentry
       return if match.nil?
       trace_id, parent_span_id, sampled_flag = match[1..3]
 
-      sampled =
+      parent_sampled =
         if sampled_flag.nil?
           nil
         else
           sampled_flag != "0"
         end
 
-      new(trace_id: trace_id, parent_span_id: parent_span_id, parent_sampled: sampled, sampled: sampled, **options)
+      new(trace_id: trace_id, parent_span_id: parent_span_id, parent_sampled: parent_sampled, **options)
     end
 
     def to_hash
@@ -73,7 +73,7 @@ module Sentry
       copy
     end
 
-    def set_initial_sample_decision(sampling_context: {}, configuration: Sentry.configuration)
+    def set_initial_sample_decision(sampling_context:, configuration: Sentry.configuration)
       unless configuration.tracing_enabled?
         @sampled = false
         return
@@ -81,20 +81,19 @@ module Sentry
 
       return unless @sampled.nil?
 
-      transaction_description = generate_transaction_description
-
-      logger = configuration.logger
-      sample_rate = configuration.traces_sample_rate
       traces_sampler = configuration.traces_sampler
 
-      if traces_sampler.is_a?(Proc)
-        sampling_context = sampling_context.merge(
-          parent_sampled: @parent_sampled,
-          transaction_context: self.to_hash
-        )
+      sample_rate =
+        if traces_sampler.is_a?(Proc)
+          traces_sampler.call(sampling_context)
+        elsif !sampling_context[:parent_sampled].nil?
+          sampling_context[:parent_sampled]
+        else
+          configuration.traces_sample_rate
+        end
 
-        sample_rate = traces_sampler.call(sampling_context)
-      end
+      transaction_description = generate_transaction_description
+      logger = configuration.logger
 
       unless [true, false].include?(sample_rate) || (sample_rate.is_a?(Numeric) && sample_rate >= 0.0 && sample_rate <= 1.0)
         @sampled = false
