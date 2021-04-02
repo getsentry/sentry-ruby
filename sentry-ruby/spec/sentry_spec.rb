@@ -64,6 +64,18 @@ RSpec.describe Sentry do
 
       new_thread.join
     end
+
+    it "stores the hub in a thread variable (instead of just fiber variable)" do
+      Sentry.set_tags(outside_fiber: true)
+
+      fiber = Fiber.new do
+        Sentry.set_tags(inside_fiber: true)
+      end
+
+      fiber.resume
+
+      expect(Sentry.get_current_scope.tags).to eq({ outside_fiber: true, inside_fiber: true })
+    end
   end
 
   describe ".configure_scope" do
