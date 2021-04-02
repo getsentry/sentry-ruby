@@ -5,6 +5,8 @@
 - Correct type attribute's usages [#1354](https://github.com/getsentry/sentry-ruby/pull/1354)
 - Fix sampling decision precedence [#1335](https://github.com/getsentry/sentry-ruby/pull/1335)
 - Fix set_contexts [#1375](https://github.com/getsentry/sentry-ruby/pull/1375) 
+- Use thread variable instead of fiber variable to store the hub [#1380](https://github.com/getsentry/sentry-ruby/pull/1380)
+  - Fixes [#1374](https://github.com/getsentry/sentry-ruby/issues/1374)
 
 ## 4.3.1
 
