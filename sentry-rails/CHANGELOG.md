@@ -1,5 +1,10 @@
 # Changelog
 
+## Unreleased
+
+- Report exceptions from the interceptor middleware for exceptions app [#1379](https://github.com/getsentry/sentry-ruby/pull/1379)
+  - Fixes [#1371](https://github.com/getsentry/sentry-ruby/issues/1371)
+
 ## 4.3.3
 
 - Correctly set the SDK's logger in sentry-rails [#1363](https://github.com/getsentry/sentry-ruby/pull/1363)
