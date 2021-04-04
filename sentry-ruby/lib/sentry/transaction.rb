@@ -17,12 +17,7 @@ module Sentry
 
       @name = name
       @parent_sampled = parent_sampled
-      set_span_recorder
-    end
-
-    def set_span_recorder
-      @span_recorder = SpanRecorder.new(1000)
-      @span_recorder.add(self)
+      init_span_recorder
     end
 
     def self.from_sentry_trace(sentry_trace, configuration: Sentry.configuration, **options)
@@ -62,7 +57,7 @@ module Sentry
 
     def deep_dup
       copy = super
-      copy.set_span_recorder
+      copy.init_span_recorder(@span_recorder.max_length)
 
       @span_recorder.spans.each do |span|
         # span_recorder's first span is the current span, which should not be added to the copy's spans
@@ -134,6 +129,13 @@ module Sentry
       hub ||= Sentry.get_current_hub
       event = hub.current_client.event_from_transaction(self)
       hub.capture_event(event)
+    end
+
+    protected
+
+    def init_span_recorder(limit = 1000)
+      @span_recorder = SpanRecorder.new(limit)
+      @span_recorder.add(self)
     end
 
     private
