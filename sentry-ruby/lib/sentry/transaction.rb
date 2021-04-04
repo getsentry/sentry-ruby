@@ -44,17 +44,6 @@ module Sentry
       hash
     end
 
-    def start_child(**options)
-      child_span = super
-      child_span.span_recorder = @span_recorder
-
-      if @sampled
-        @span_recorder.add(child_span)
-      end
-
-      child_span
-    end
-
     def deep_dup
       copy = super
       copy.init_span_recorder(@span_recorder.max_length)
