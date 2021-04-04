@@ -100,7 +100,7 @@ RSpec.describe Sentry::Transaction do
   end
 
   describe "#start_child" do
-    it "initializes a new child Span" do
+    it "initializes a new child Span and assigns the 'transaction' attribute with itself" do
       # create subject span and wait for a sec for making time difference
       subject
 
@@ -113,13 +113,8 @@ RSpec.describe Sentry::Transaction do
       expect(new_span.span_id).not_to eq(subject.span_id)
       expect(new_span.parent_span_id).to eq(subject.span_id)
       expect(new_span.sampled).to eq(true)
-    end
 
-    it "records the child span if span_recorder" do
-      new_span = subject.start_child
-
-      expect(subject.span_recorder.spans).to include(new_span)
-      expect(new_span.span_recorder).to eq(subject.span_recorder)
+      expect(new_span.transaction).to eq(subject)
     end
   end
 

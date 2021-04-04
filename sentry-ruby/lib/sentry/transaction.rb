@@ -17,6 +17,7 @@ module Sentry
 
       @name = name
       @parent_sampled = parent_sampled
+      @transaction = self
       init_span_recorder
     end
 

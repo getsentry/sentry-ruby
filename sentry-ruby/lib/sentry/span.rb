@@ -19,7 +19,7 @@ module Sentry
 
 
     attr_reader :trace_id, :span_id, :parent_span_id, :sampled, :start_timestamp, :timestamp, :description, :op, :status, :tags, :data
-    attr_accessor :span_recorder
+    attr_accessor :span_recorder, :transaction
 
     def initialize(description: nil, op: nil, status: nil, trace_id: nil, parent_span_id: nil, sampled: nil, start_timestamp: nil, timestamp: nil)
       @trace_id = trace_id || SecureRandom.uuid.delete("-")
@@ -79,6 +79,7 @@ module Sentry
     def start_child(**options)
       options = options.dup.merge(trace_id: @trace_id, parent_span_id: @span_id, sampled: @sampled)
       new_span = Span.new(**options)
+      new_span.transaction = transaction
       new_span.span_recorder = span_recorder
 
       if span_recorder
