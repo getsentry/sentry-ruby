@@ -123,8 +123,15 @@ RSpec.describe Sentry::Transaction do
   end
 
   describe "#set_initial_sample_decision" do
+    let(:string_io) { StringIO.new }
+    let(:logger) do
+      ::Logger.new(string_io)
+    end
+
     before do
-      perform_basic_setup
+      perform_basic_setup do |config|
+        config.logger = logger
+      end
     end
 
     context "when tracing is not enabled" do
@@ -174,22 +181,22 @@ RSpec.describe Sentry::Transaction do
 
         it "uses traces_sample_rate for sampling (positive result)" do
           allow(Random).to receive(:rand).and_return(0.4)
-          expect(Sentry.configuration.logger).to receive(:debug).with(
-            "[Tracing] Starting <rack.request> transaction"
-          )
 
           subject.set_initial_sample_decision(sampling_context: {})
           expect(subject.sampled).to eq(true)
+          expect(string_io.string).to include(
+            "[Tracing] Starting <rack.request> transaction"
+          )
         end
 
         it "uses traces_sample_rate for sampling (negative result)" do
           allow(Random).to receive(:rand).and_return(0.6)
-          expect(Sentry.configuration.logger).to receive(:debug).with(
-            "[Tracing] Discarding <rack.request> transaction because it's not included in the random sample (sampling rate = 0.5)"
-          )
 
           subject.set_initial_sample_decision(sampling_context: {})
           expect(subject.sampled).to eq(false)
+          expect(string_io.string).to include(
+            "[Tracing] Discarding <rack.request> transaction because it's not included in the random sample (sampling rate = 0.5)"
+          )
         end
 
         it "accepts integer traces_sample_rate" do
@@ -225,20 +232,18 @@ RSpec.describe Sentry::Transaction do
         end
 
         it "discards the transaction if generated sample rate is not valid" do
-          expect(Sentry.configuration.logger).to receive(:warn).with(
-            "[Tracing] Discarding <rack.request> transaction because of invalid sample_rate: foo"
-          )
-
           Sentry.configuration.traces_sampler = -> (_) { "foo" }
           subject.set_initial_sample_decision(sampling_context: {})
 
           expect(subject.sampled).to eq(false)
+
+          expect(string_io.string).to include(
+            "[Tracing] Discarding <rack.request> transaction because of invalid sample_rate: foo"
+          )
         end
 
         it "uses the genereted rate for sampling (positive)" do
-          expect(Sentry.configuration.logger).to receive(:debug).with(
-            "[Tracing] Starting transaction"
-          ).exactly(3)
+          expect(Sentry.configuration.logger).to receive(:debug).exactly(3).and_call_original
 
           subject = described_class.new
           Sentry.configuration.traces_sampler = -> (_) { true }
@@ -254,12 +259,14 @@ RSpec.describe Sentry::Transaction do
           Sentry.configuration.traces_sampler = -> (_) { 1 }
           subject.set_initial_sample_decision(sampling_context: {})
           expect(subject.sampled).to eq(true)
+
+          expect(string_io.string).to include(
+            "[Tracing] Starting transaction"
+          )
         end
 
         it "uses the genereted rate for sampling (negative)" do
-          expect(Sentry.configuration.logger).to receive(:debug).with(
-            "[Tracing] Discarding transaction because traces_sampler returned 0 or false"
-          ).exactly(2)
+          expect(Sentry.configuration.logger).to receive(:debug).exactly(2).and_call_original
 
           subject = described_class.new
           Sentry.configuration.traces_sampler = -> (_) { false }
@@ -270,6 +277,10 @@ RSpec.describe Sentry::Transaction do
           Sentry.configuration.traces_sampler = -> (_) { 0.0 }
           subject.set_initial_sample_decision(sampling_context: {})
           expect(subject.sampled).to eq(false)
+
+          expect(string_io.string).to include(
+            "[Tracing] Discarding transaction because traces_sampler returned 0 or false"
+          )
         end
       end
     end

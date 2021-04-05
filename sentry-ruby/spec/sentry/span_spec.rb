@@ -79,6 +79,11 @@ RSpec.describe Sentry::Span do
   end
 
   describe "#start_child" do
+    before do
+      # because initializing transactions requires an active hub
+      perform_basic_setup
+    end
+
     it "initializes a new child Span" do
       # create subject span and wait for a sec for making time difference
       subject
