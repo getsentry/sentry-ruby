@@ -1,5 +1,11 @@
 # Changelog
 
+## Unreleased
+
+### Refactorings
+
+- Let Transaction constructor take an optional hub argument [#1384](https://github.com/getsentry/sentry-ruby/pull/1384)
+
 ## 4.3.2
 
 - Correct type attribute's usages [#1354](https://github.com/getsentry/sentry-ruby/pull/1354)
