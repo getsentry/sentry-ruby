@@ -2,6 +2,8 @@ require "sentry/transport"
 
 module Sentry
   class Client
+    include LoggingHelper
+
     attr_reader :transport, :configuration, :logger
 
     def initialize(configuration)
@@ -114,14 +116,6 @@ module Sentry
       loggable_event_type = event_hash["type"] || "event"
       log_error("Async #{loggable_event_type} sending failed: #{e.message}")
       send_event(event, hint)
-    end
-
-    def log_error(message)
-      logger.error(LOGGER_PROGNAME) { message }
-    end
-
-    def log_info(message)
-      logger.info(LOGGER_PROGNAME) { message }
     end
   end
 end
