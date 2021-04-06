@@ -1,5 +1,10 @@
 # Changelog
 
+## 4.3.4
+
+- Don't assign Rails.logger if it's not present [#1387](https://github.com/getsentry/sentry-ruby/pull/1387)
+  - Fixes [#1386](https://github.com/getsentry/sentry-ruby/issues/1386)
+
 ## 4.3.3
 
 - Correctly set the SDK's logger in sentry-rails [#1363](https://github.com/getsentry/sentry-ruby/pull/1363)
