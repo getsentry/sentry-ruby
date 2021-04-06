@@ -5,6 +5,17 @@ module Sentry
     add_post_initialization_callback do
       @rails = Sentry::Rails::Configuration.new
       @excluded_exceptions = @excluded_exceptions.concat(Sentry::Rails::IGNORE_DEFAULT)
+
+      if ::Rails.logger
+        @logger = ::Rails.logger
+      else
+        @logger.warn(Sentry::LOGGER_PROGNAME) do
+          <<~MSG
+          sentry-rails can't detect Rails.logger. it may be caused by misplacement of the SDK initialization code
+          please make sure you place the Sentry.init block under the `config/initializers` folder, e.g. `config/initializers/sentry.rb`
+          MSG
+        end
+      end
     end
   end
 

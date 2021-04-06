@@ -56,7 +56,7 @@ RSpec.describe "Sentry::SendEventJob" do
 
       expect(transport.events.count).to eq(1)
       event = transport.events.first
-      expect(event.type).to eq("event")
+      expect(event.type).to eq(nil)
     end
 
     context "when ApplicationJob is not defined" do

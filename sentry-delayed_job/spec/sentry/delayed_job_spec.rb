@@ -237,3 +237,21 @@ RSpec.describe Sentry::DelayedJob do
   end
 end
 
+
+RSpec.describe Sentry::DelayedJob, "not initialized" do
+  class Thing
+    def self.invoked_method; end
+  end
+
+  it "doesn't swallow jobs" do
+    expect(Thing).to receive(:invoked_method)
+    Delayed::Job.delete_all
+    expect(Delayed::Job.count).to eq(0)
+
+    Thing.delay.invoked_method
+    expect(Delayed::Job.count).to eq(1)
+
+    Delayed::Worker.new.run(Delayed::Job.last)
+    expect(Delayed::Job.count).to eq(0)
+  end
+end

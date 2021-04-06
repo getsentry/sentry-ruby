@@ -28,15 +28,34 @@ RSpec.describe Sentry::Rails, type: :request do
       expect(app.middleware.find_index(Sentry::Rails::RescuedExceptionInterceptor)).to eq(app.middleware.count - 1)
     end
 
-    it "sets Sentry.configuration.logger correctly" do
-      expect(Sentry.configuration.logger).to eq(Rails.logger)
+    describe "logger detection" do
+      it "sets Sentry.configuration.logger correctly" do
+        expect(Sentry.configuration.logger).to eq(Rails.logger)
+      end
+
+      it "respects the logger set by user" do
+        logger = ::Logger.new(nil)
+
+        make_basic_app do |config|
+          config.logger = logger
+        end
+
+        expect(Sentry.configuration.logger).to eq(logger)
+      end
+
+      it "doesn't cause error if Rails::Logger is not present during SDK initialization" do
+        Rails.logger = nil
+
+        Sentry.init
+
+        expect(Sentry.configuration.logger).to be_a(Sentry::Logger)
+      end
     end
 
     it "sets Sentry.configuration.project_root correctly" do
       expect(Sentry.configuration.project_root).to eq(Rails.root.to_s)
     end
 
-   
     it "doesn't clobber a manually configured release" do
       expect(Sentry.configuration.release).to eq('beta')
     end
@@ -171,7 +190,7 @@ RSpec.describe Sentry::Rails, type: :request do
       end
     end
   end
-  
+
   context "with trusted proxies set" do
     before do
       make_basic_app do |config, app|

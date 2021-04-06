@@ -6,6 +6,8 @@ module Sentry
     class Plugin < ::Delayed::Plugin
       callbacks do |lifecycle|
         lifecycle.around(:invoke_job) do |job, *args, &block|
+          next block.call(job, *args) unless Sentry.initialized?
+
           Sentry.with_scope do |scope|
             scope.set_extras(**generate_extra(job))
             scope.set_tags("delayed_job.queue" => job.queue, "delayed_job.id" => job.id.to_s)

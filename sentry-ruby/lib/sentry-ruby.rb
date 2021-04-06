@@ -68,7 +68,7 @@ module Sentry
       client = Client.new(config)
       scope = Scope.new(max_breadcrumbs: config.max_breadcrumbs)
       hub = Hub.new(client, scope)
-      Thread.current[THREAD_LOCAL] = hub
+      Thread.current.thread_variable_set(THREAD_LOCAL, hub)
       @main_hub = hub
       @background_worker = Sentry::BackgroundWorker.new(config)
     end
@@ -92,7 +92,7 @@ module Sentry
       # ideally, we should do this proactively whenever a new thread is created
       # but it's impossible for the SDK to keep track every new thread
       # so we need to use this rather passive way to make sure the app doesn't crash
-      Thread.current[THREAD_LOCAL] || clone_hub_to_current_thread
+      Thread.current.thread_variable_get(THREAD_LOCAL) || clone_hub_to_current_thread
     end
 
     # Returns the current active client.
@@ -107,7 +107,7 @@ module Sentry
 
     # Clones the main thread's active hub and stores it to the current thread.
     def clone_hub_to_current_thread
-      Thread.current[THREAD_LOCAL] = get_main_hub.clone
+      Thread.current.thread_variable_set(THREAD_LOCAL, get_main_hub.clone)
     end
 
     # Takes a block and yields the current active scope.

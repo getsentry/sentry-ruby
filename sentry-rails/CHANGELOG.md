@@ -1,5 +1,19 @@
 # Changelog
 
+## 4.3.4
+
+- Don't assign Rails.logger if it's not present [#1387](https://github.com/getsentry/sentry-ruby/pull/1387)
+  - Fixes [#1386](https://github.com/getsentry/sentry-ruby/issues/1386)
+
+## 4.3.3
+
+- Correctly set the SDK's logger in sentry-rails [#1363](https://github.com/getsentry/sentry-ruby/pull/1363)
+  - Fixes [#1361](https://github.com/getsentry/sentry-ruby/issues/1361)
+
+## 4.3.3-beta.0
+
+- Minimize sentry-rails' dependency requirement [#1352](https://github.com/getsentry/sentry-ruby/pull/1352)
+
 ## 4.3.2
 
 - Avoid recording SendEventJob's transaction [#1351](https://github.com/getsentry/sentry-ruby/pull/1351)
@@ -9,8 +23,6 @@
 
 - Only apply background worker patch if ActiveRecord is loaded [#1350](https://github.com/getsentry/sentry-ruby/pull/1350)
   - Fixes [#1342](https://github.com/getsentry/sentry-ruby/issues/1342) and [#1346](https://github.com/getsentry/sentry-ruby/issues/1346)
-- Avoid recording SendEventJob's transaction [#1351](https://github.com/getsentry/sentry-ruby/pull/1351)
-  - Fixes [#1348](https://github.com/getsentry/sentry-ruby/issues/1348)
 
 ## 4.3.0
 

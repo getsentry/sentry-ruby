@@ -126,7 +126,7 @@ module Sentry
 
     def set_contexts(contexts_hash)
       check_argument_type!(contexts_hash, Hash)
-      @contexts = contexts_hash
+      @contexts.merge!(contexts_hash)
     end
 
     def set_context(key, value)
@@ -146,8 +146,7 @@ module Sentry
     end
 
     def get_transaction
-      # transaction will always be the first in the span_recorder
-      span.span_recorder.spans.first if span
+      span.transaction if span
     end
 
     def get_span

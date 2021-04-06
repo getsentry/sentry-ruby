@@ -100,7 +100,6 @@ module Sentry
     end
 
     def type
-      "event"
     end
 
     def to_hash

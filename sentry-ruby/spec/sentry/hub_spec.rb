@@ -66,7 +66,7 @@ RSpec.describe Sentry::Hub do
         expect(event.extra).to eq({ new_extra: true, old_extra: true })
 
         expect(scope.tags).to eq(old_tag: true)
-        expect(scope.contexts).to eq(old_context: true)
+        expect(scope.contexts).to include(old_context: true)
         expect(scope.extra).to eq(old_extra: true)
       end
     end

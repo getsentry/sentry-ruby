@@ -24,7 +24,7 @@ module Sentry
         return
       end
 
-      encoded_data = prepare_encoded_event(event)
+      encoded_data = encode(event)
 
       return nil unless encoded_data
 
@@ -45,29 +45,22 @@ module Sentry
       'Sentry ' + fields.map { |key, value| "#{key}=#{value}" }.join(', ')
     end
 
-    def encode(event_hash)
-      event_id = event_hash[:event_id] || event_hash['event_id']
-      event_type = event_hash[:type] || event_hash['type']
-
-      envelope = <<~ENVELOPE
-        {"event_id":"#{event_id}","dsn":"#{configuration.dsn.to_s}","sdk":#{Sentry.sdk_meta.to_json},"sent_at":"#{Sentry.utc_now.iso8601}"}
-        {"type":"#{event_type}","content_type":"application/json"}
-        #{JSON.generate(event_hash)}
-      ENVELOPE
-
-      envelope
-    end
-
-    private
-
-    def prepare_encoded_event(event)
+    def encode(event)
       # Convert to hash
       event_hash = event.to_hash
 
       event_id = event_hash[:event_id] || event_hash["event_id"]
-      event_type = event_hash[:type] || event_hash["type"]
-      configuration.logger.info(LOGGER_PROGNAME) { "Sending #{event_type} #{event_id} to Sentry" }
-      encode(event_hash)
+      item_type = event_hash[:type] || event_hash["type"] || "event"
+
+      envelope = <<~ENVELOPE
+        {"event_id":"#{event_id}","dsn":"#{configuration.dsn.to_s}","sdk":#{Sentry.sdk_meta.to_json},"sent_at":"#{Sentry.utc_now.iso8601}"}
+        {"type":"#{item_type}","content_type":"application/json"}
+        #{JSON.generate(event_hash)}
+      ENVELOPE
+
+      configuration.logger.info(LOGGER_PROGNAME) { "Sending envelope [#{item_type}] #{event_id} to Sentry" }
+
+      envelope
     end
   end
 end
