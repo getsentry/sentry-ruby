@@ -82,7 +82,6 @@ RSpec.describe Sentry::Span do
     it "initializes a new child Span" do
       # create subject span and wait for a sec for making time difference
       subject
-      sleep 1
 
       new_span = subject.start_child(op: "sql.query", description: "SELECT * FROM orders WHERE orders.user_id = 1", status: "ok")
 
@@ -94,6 +93,44 @@ RSpec.describe Sentry::Span do
       expect(new_span.parent_span_id).to eq(subject.span_id)
       expect(new_span.start_timestamp).not_to eq(subject.start_timestamp)
       expect(new_span.sampled).to eq(true)
+    end
+
+    context "when the parent span has a span_recorder" do
+      subject do
+        # inherits the span recorder from the transaction
+        Sentry::Transaction.new.start_child
+      end
+
+      it "gives the child span its span_recorder" do
+        # subject span and the transaction
+        expect(subject.span_recorder.spans.count).to eq(2)
+
+        span_1 = subject.start_child
+
+        expect(span_1.span_recorder).to eq(subject.span_recorder)
+        expect(subject.span_recorder.spans.count).to eq(3)
+
+        span_2 = span_1.start_child
+
+        expect(span_2.span_recorder).to eq(subject.span_recorder)
+        expect(subject.span_recorder.spans.count).to eq(4)
+      end
+    end
+
+    context "when the parent span has a transaction" do
+      before do
+        subject.transaction = Sentry::Transaction.new
+      end
+
+      it "gives the child span its transaction" do
+        span_1 = subject.start_child
+
+        expect(span_1.transaction).to eq(subject.transaction)
+
+        span_2 = span_1.start_child
+
+        expect(span_2.transaction).to eq(subject.transaction)
+      end
     end
   end
 

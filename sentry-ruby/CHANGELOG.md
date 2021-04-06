@@ -7,6 +7,8 @@
 - Fix set_contexts [#1375](https://github.com/getsentry/sentry-ruby/pull/1375) 
 - Use thread variable instead of fiber variable to store the hub [#1380](https://github.com/getsentry/sentry-ruby/pull/1380)
   - Fixes [#1374](https://github.com/getsentry/sentry-ruby/issues/1374)
+- Fix Span/Transaction's nesting issue [#1382](https://github.com/getsentry/sentry-ruby/pull/1382) 
+  - Fixes [#1372](https://github.com/getsentry/sentry-ruby/issues/1372)
 
 ## 4.3.1
 
