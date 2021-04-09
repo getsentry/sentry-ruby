@@ -11,9 +11,10 @@ artifactProvider:
   name: github
 targets:
     - name: gem
-    - name: github
-      tagPrefix: sentry-delayed_job-v
     - name: registry
       type: sdk
       config:
           canonical: 'gem:sentry-delayed_job'
+    - name: github
+      tagPrefix: sentry-delayed_job-v
+      changelog: sentry-delayed_job/CHANGELOG
