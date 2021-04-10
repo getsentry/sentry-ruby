@@ -10,19 +10,20 @@ module Sentry
     UNLABELD_NAME = "<unlabeled transaction>".freeze
     MESSAGE_PREFIX = "[Tracing]"
 
-    attr_reader :name, :parent_sampled
+    attr_reader :name, :parent_sampled, :hub
 
-    def initialize(name: nil, parent_sampled: nil, **options)
+    def initialize(name: nil, parent_sampled: nil, hub: Sentry.get_current_hub, **options)
       super(**options)
 
       @name = name
       @parent_sampled = parent_sampled
       @transaction = self
+      @hub = hub
       init_span_recorder
     end
 
-    def self.from_sentry_trace(sentry_trace, configuration: Sentry.configuration, **options)
-      return unless configuration.tracing_enabled?
+    def self.from_sentry_trace(sentry_trace, hub: Sentry.get_current_hub, **options)
+      return unless hub.configuration.tracing_enabled?
       return unless sentry_trace
 
       match = SENTRY_TRACE_REGEXP.match(sentry_trace)
@@ -36,7 +37,7 @@ module Sentry
           sampled_flag != "0"
         end
 
-      new(trace_id: trace_id, parent_span_id: parent_span_id, parent_sampled: parent_sampled, **options)
+      new(trace_id: trace_id, parent_span_id: parent_span_id, parent_sampled: parent_sampled, hub: hub, **options)
     end
 
     def to_hash
@@ -58,7 +59,9 @@ module Sentry
       copy
     end
 
-    def set_initial_sample_decision(sampling_context:, configuration: Sentry.configuration)
+    def set_initial_sample_decision(sampling_context:)
+      configuration = hub.configuration
+
       unless configuration.tracing_enabled?
         @sampled = false
         return
@@ -108,6 +111,8 @@ module Sentry
     end
 
     def finish(hub: nil)
+      hub ||= @hub
+
       super() # Span#finish doesn't take arguments
 
       if @name.nil?
@@ -116,7 +121,6 @@ module Sentry
 
       return unless @sampled || @parent_sampled
 
-      hub ||= Sentry.get_current_hub
       event = hub.current_client.event_from_transaction(self)
       hub.capture_event(event)
     end

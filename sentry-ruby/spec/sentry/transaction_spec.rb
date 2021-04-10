@@ -15,8 +15,12 @@ RSpec.describe Sentry::Transaction do
   describe ".from_sentry_trace" do
     let(:sentry_trace) { subject.to_sentry_trace }
 
+    before do
+      perform_basic_setup
+    end
+
     let(:configuration) do
-      Sentry::Configuration.new
+      Sentry.configuration
     end
 
     context "when tracing is enabled" do
@@ -25,7 +29,7 @@ RSpec.describe Sentry::Transaction do
       end
 
       it "returns correctly-formatted value" do
-        child_transaction = described_class.from_sentry_trace(sentry_trace, op: "child", configuration: configuration)
+        child_transaction = described_class.from_sentry_trace(sentry_trace, op: "child")
 
         expect(child_transaction.trace_id).to eq(subject.trace_id)
         expect(child_transaction.parent_span_id).to eq(subject.span_id)
@@ -36,7 +40,7 @@ RSpec.describe Sentry::Transaction do
       end
 
       it "handles invalid values without crashing" do
-        child_transaction = described_class.from_sentry_trace("dummy", op: "child", configuration: configuration)
+        child_transaction = described_class.from_sentry_trace("dummy", op: "child")
 
         expect(child_transaction).to be_nil
       end
@@ -48,7 +52,7 @@ RSpec.describe Sentry::Transaction do
       end
 
       it "returns nil" do
-        expect(described_class.from_sentry_trace(sentry_trace, op: "child", configuration: configuration)).to be_nil
+        expect(described_class.from_sentry_trace(sentry_trace, op: "child")).to be_nil
       end
     end
   end
@@ -295,6 +299,10 @@ RSpec.describe Sentry::Transaction do
       Sentry.get_current_client.transport.events
     end
 
+    let(:another_hub) do
+      Sentry.get_current_hub.clone
+    end
+
     it "finishes the transaction, converts it into an Event and send it" do
       subject.finish
 
@@ -303,6 +311,22 @@ RSpec.describe Sentry::Transaction do
 
       # don't contain itself
       expect(event[:spans]).to be_empty
+    end
+
+    describe "hub selection" do
+      it "prioritizes the optional hub argument and uses it to submit the transaction" do
+        expect(another_hub).to receive(:capture_event)
+
+        subject.finish(hub: another_hub)
+      end
+
+      it "submits the event with the transaction's hub by default" do
+        subject.instance_variable_set(:@hub, another_hub)
+
+        expect(another_hub).to receive(:capture_event)
+
+        subject.finish
+      end
     end
 
     context "if the transaction is not sampled" do
