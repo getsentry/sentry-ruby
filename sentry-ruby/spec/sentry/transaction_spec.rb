@@ -1,6 +1,10 @@
 require "spec_helper"
 
 RSpec.describe Sentry::Transaction do
+  before do
+    perform_basic_setup
+  end
+
   subject do
     described_class.new(
       op: "sql.query",
@@ -14,10 +18,6 @@ RSpec.describe Sentry::Transaction do
 
   describe ".from_sentry_trace" do
     let(:sentry_trace) { subject.to_sentry_trace }
-
-    before do
-      perform_basic_setup
-    end
 
     let(:configuration) do
       Sentry.configuration
@@ -302,10 +302,6 @@ RSpec.describe Sentry::Transaction do
   end
 
   describe "#finish" do
-    before do
-      perform_basic_setup
-    end
-
     let(:events) do
       Sentry.get_current_client.transport.events
     end
