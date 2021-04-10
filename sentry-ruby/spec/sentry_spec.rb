@@ -111,6 +111,24 @@ RSpec.describe Sentry do
         expect(subject.last_event_id).to eq(nil)
       end
     end
+
+    context "when rate limited" do
+      let(:string_io) { StringIO.new }
+      before do
+        perform_basic_setup do |config|
+          config.logger = Logger.new(string_io)
+          config.transport.transport_class = Sentry::HTTPTransport
+        end
+
+        Sentry.get_current_client.transport.rate_limits.merge!("error" => Time.now + 100)
+      end
+
+      it "stops the event and logs correct message" do
+        described_class.send(capture_helper, capture_subject)
+
+        expect(string_io.string).to match(/Envelope \[event\] not sent: rate limiting/)
+      end
+    end
   end
 
   describe ".send_event" do

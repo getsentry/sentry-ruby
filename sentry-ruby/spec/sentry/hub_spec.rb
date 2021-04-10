@@ -119,6 +119,7 @@ RSpec.describe Sentry::Hub do
       end
     end
   end
+
   describe '#capture_message' do
     let(:message) { "Test message" }
 

@@ -1,5 +1,6 @@
 require "bundler/setup"
 require "pry"
+require "timecop"
 require 'simplecov'
 require 'rspec/retry'
 

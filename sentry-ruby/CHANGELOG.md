@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+### Features
+
+- Support category-based rate limiting [#1336](https://github.com/getsentry/sentry-ruby/pull/1336) 
+
 ### Refactorings
 
 - Let Transaction constructor take an optional hub argument [#1384](https://github.com/getsentry/sentry-ruby/pull/1384)

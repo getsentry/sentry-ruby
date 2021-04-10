@@ -17,7 +17,7 @@ RSpec.describe Sentry::Configuration do
 
     context "when traces_sample_rate == 0.0" do
       it "returns false" do
-        subject.traces_sample_rate = 0.0
+        subject.traces_sample_rate = 0
 
         expect(subject.tracing_enabled?).to eq(false)
       end
