@@ -4,21 +4,24 @@ require "concurrent/configuration"
 
 module Sentry
   class BackgroundWorker
-    attr_reader :max_queue, :number_of_threads
+    include LoggingHelper
+
+    attr_reader :max_queue, :number_of_threads, :logger
 
     def initialize(configuration)
       @max_queue = 30
       @number_of_threads = configuration.background_worker_threads
+      @logger = configuration.logger
 
       @executor =
         if configuration.async
-          configuration.logger.debug(LOGGER_PROGNAME) { "config.async is set, BackgroundWorker is disabled" }
+          log_debug("config.async is set, BackgroundWorker is disabled")
           Concurrent::ImmediateExecutor.new
         elsif @number_of_threads == 0
-          configuration.logger.debug(LOGGER_PROGNAME) { "config.background_worker_threads is set to 0, all events will be sent synchronously" }
+          log_debug("config.background_worker_threads is set to 0, all events will be sent synchronously")
           Concurrent::ImmediateExecutor.new
         else
-          configuration.logger.debug(LOGGER_PROGNAME) { "initialized a background worker with #{@number_of_threads} threads" }
+          log_debug("initialized a background worker with #{@number_of_threads} threads")
 
           Concurrent::ThreadPoolExecutor.new(
             min_threads: 0,

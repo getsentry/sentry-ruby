@@ -129,6 +129,11 @@ RSpec.describe Sentry::Scope do
   end
 
   describe "#get_transaction & #get_span" do
+    before do
+      # because initializing transactions requires an active hub
+      perform_basic_setup
+    end
+
     let(:transaction) do
       Sentry::Transaction.new(op: "parent")
     end

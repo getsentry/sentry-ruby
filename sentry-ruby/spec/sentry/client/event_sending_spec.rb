@@ -9,6 +9,10 @@ RSpec.describe Sentry::Client do
   end
   subject { Sentry::Client.new(configuration) }
 
+  let(:hub) do
+    Sentry::Hub.new(subject, Sentry::Scope.new)
+  end
+
   describe "#capture_event" do
     let(:message) { "Test message" }
     let(:scope) { Sentry::Scope.new }
@@ -116,7 +120,7 @@ RSpec.describe Sentry::Client do
       subject.event_from_exception(ZeroDivisionError.new("divided by 0"))
     end
     let(:transaction_event_object) do
-      subject.event_from_transaction(Sentry::Transaction.new)
+      subject.event_from_transaction(Sentry::Transaction.new(hub: hub))
     end
 
     shared_examples "Event in send_event" do

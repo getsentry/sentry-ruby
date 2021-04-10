@@ -5,6 +5,7 @@
 ### Refactorings
 
 - Let Transaction constructor take an optional hub argument [#1384](https://github.com/getsentry/sentry-ruby/pull/1384)
+- Introduce LoggingHelper [#1385](https://github.com/getsentry/sentry-ruby/pull/1385)
 
 ## 4.3.2
 

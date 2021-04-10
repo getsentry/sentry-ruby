@@ -10,7 +10,9 @@ module Sentry
     UNLABELD_NAME = "<unlabeled transaction>".freeze
     MESSAGE_PREFIX = "[Tracing]"
 
-    attr_reader :name, :parent_sampled, :hub
+    include LoggingHelper
+
+    attr_reader :name, :parent_sampled, :hub, :configuration, :logger
 
     def initialize(name: nil, parent_sampled: nil, hub: Sentry.get_current_hub, **options)
       super(**options)
@@ -19,6 +21,8 @@ module Sentry
       @parent_sampled = parent_sampled
       @transaction = self
       @hub = hub
+      @configuration = hub.configuration
+      @logger = configuration.logger
       init_span_recorder
     end
 
@@ -60,8 +64,6 @@ module Sentry
     end
 
     def set_initial_sample_decision(sampling_context:)
-      configuration = hub.configuration
-
       unless configuration.tracing_enabled?
         @sampled = false
         return
@@ -81,17 +83,16 @@ module Sentry
         end
 
       transaction_description = generate_transaction_description
-      logger = configuration.logger
 
       unless [true, false].include?(sample_rate) || (sample_rate.is_a?(Numeric) && sample_rate >= 0.0 && sample_rate <= 1.0)
         @sampled = false
-        logger.warn("#{MESSAGE_PREFIX} Discarding #{transaction_description} because of invalid sample_rate: #{sample_rate}")
+        log_warn("#{MESSAGE_PREFIX} Discarding #{transaction_description} because of invalid sample_rate: #{sample_rate}")
         return
       end
 
       if sample_rate == 0.0 || sample_rate == false
         @sampled = false
-        logger.debug("#{MESSAGE_PREFIX} Discarding #{transaction_description} because traces_sampler returned 0 or false")
+        log_debug("#{MESSAGE_PREFIX} Discarding #{transaction_description} because traces_sampler returned 0 or false")
         return
       end
 
@@ -102,9 +103,9 @@ module Sentry
       end
 
       if @sampled
-        logger.debug("#{MESSAGE_PREFIX} Starting #{transaction_description}")
+        log_debug("#{MESSAGE_PREFIX} Starting #{transaction_description}")
       else
-        logger.debug(
+        log_debug(
           "#{MESSAGE_PREFIX} Discarding #{transaction_description} because it's not included in the random sample (sampling rate = #{sample_rate})"
         )
       end

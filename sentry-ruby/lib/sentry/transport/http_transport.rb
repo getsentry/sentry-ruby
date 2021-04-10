@@ -50,7 +50,7 @@ module Sentry
     def set_conn
       server = @dsn.server
 
-      configuration.logger.debug(LOGGER_PROGNAME) { "Sentry HTTP Transport connecting to #{server}" }
+      log_debug("Sentry HTTP Transport connecting to #{server}")
 
       Faraday.new(server, :ssl => ssl_configuration, :proxy => @transport_configuration.proxy) do |builder|
         @transport_configuration.faraday_builder&.call(builder)

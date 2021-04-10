@@ -3,7 +3,8 @@ require 'spec_helper'
 RSpec.describe Sentry::HTTPTransport do
   let(:configuration) do
     Sentry::Configuration.new.tap do |config|
-      config.dsn = 'http://12345@sentry.localdomain/sentry/42'
+      config.dsn = DUMMY_DSN
+      config.logger = Logger.new(nil)
     end
   end
   let(:client) { Sentry::Client.new(configuration) }
@@ -13,6 +14,15 @@ RSpec.describe Sentry::HTTPTransport do
   end
 
   subject { described_class.new(configuration) }
+
+  it "logs a debug message during initialization" do
+    string_io = StringIO.new
+    configuration.logger = Logger.new(string_io)
+
+    subject
+
+    expect(string_io.string).to include("sentry: Sentry HTTP Transport connecting to http://sentry.localdomain/sentry")
+  end
 
   describe "customizations" do
     it 'sets a custom User-Agent' do

@@ -6,10 +6,14 @@ module Sentry
     PROTOCOL_VERSION = '5'
     USER_AGENT = "sentry-ruby/#{Sentry::VERSION}"
 
+    include LoggingHelper
+
     attr_accessor :configuration
+    attr_reader :logger
 
     def initialize(configuration)
       @configuration = configuration
+      @logger = configuration.logger
       @transport_configuration = configuration.transport
       @dsn = configuration.dsn
     end
@@ -20,7 +24,7 @@ module Sentry
 
     def send_event(event)
       unless configuration.sending_allowed?
-        configuration.logger.debug(LOGGER_PROGNAME) { "Event not sent: #{configuration.error_messages}" }
+        log_debug("Event not sent: #{configuration.error_messages}")
         return
       end
 
@@ -58,7 +62,7 @@ module Sentry
         #{JSON.generate(event_hash)}
       ENVELOPE
 
-      configuration.logger.info(LOGGER_PROGNAME) { "Sending envelope [#{item_type}] #{event_id} to Sentry" }
+      log_info("Sending envelope [#{item_type}] #{event_id} to Sentry")
 
       envelope
     end
