@@ -1,12 +1,14 @@
 require 'spec_helper'
 
 RSpec.describe "rate limiting" do
-  let(:configuration) do
-    Sentry::Configuration.new.tap do |config|
-      config.dsn = 'http://12345@sentry.localdomain/sentry/42'
-    end
+  before do
+    perform_basic_setup
   end
-  let(:client) { Sentry::Client.new(configuration) }
+
+  let(:configuration) do
+    Sentry.configuration
+  end
+  let(:client) { Sentry.get_current_client }
   let(:event) { client.event_from_message("foobarbaz") }
   let(:data) do
     subject.encode(event.to_hash)
