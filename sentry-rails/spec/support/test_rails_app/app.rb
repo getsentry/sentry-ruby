@@ -55,7 +55,7 @@ class HelloController < ActionController::Base
   end
 
   def reporting
-    head :ok
+    render plain: Sentry.last_event_id
   end
 
   def view_exception
@@ -104,8 +104,6 @@ def make_basic_app
     Sentry.init do |config|
       config.release = 'beta'
       config.dsn = "http://12345:67890@sentry.localdomain:3000/sentry/42"
-      # for speeding up request specs
-      config.rails.report_rescued_exceptions = false
       config.transport.transport_class = Sentry::DummyTransport
       # for sending events synchronously
       config.background_worker_threads = 0
