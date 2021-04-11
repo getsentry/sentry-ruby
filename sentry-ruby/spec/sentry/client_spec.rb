@@ -94,7 +94,7 @@ RSpec.describe Sentry::Client do
       Sentry::Hub.new(subject, Sentry::Scope.new)
     end
     let(:transaction) do
-      Sentry::Transaction.new(name: "test transaction", sampled: true)
+      Sentry::Transaction.new(name: "test transaction", hub: hub, sampled: true)
     end
 
     before do

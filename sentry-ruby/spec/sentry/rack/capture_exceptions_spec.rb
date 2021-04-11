@@ -279,6 +279,24 @@ RSpec.describe Sentry::Rack::CaptureExceptions, rack: true do
           expect(transaction).to eq(nil)
         end
       end
+
+      context "when traces_sampler is set" do
+        let(:trace) do
+          "#{external_transaction.trace_id}-#{external_transaction.span_id}-1"
+        end
+
+        it "passes parent_sampled to the sampling_context" do
+          parent_sampled = false
+
+          Sentry.configuration.traces_sampler = lambda do |sampling_context|
+            parent_sampled = sampling_context[:parent_sampled]
+          end
+
+          stack.call(env)
+
+          expect(parent_sampled).to eq(true)
+        end
+      end
     end
 
     context "when the transaction is sampled" do

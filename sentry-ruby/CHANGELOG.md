@@ -2,9 +2,24 @@
 
 ## Unreleased
 
-- Correct type attribute's usages [#1354](https://github.com/getsentry/sentry-ruby/pull/1354)
-- Fix set_contexts [#1375](https://github.com/getsentry/sentry-ruby/pull/1375) 
+### Features
 
+- Support category-based rate limiting [#1336](https://github.com/getsentry/sentry-ruby/pull/1336) 
+
+### Refactorings
+
+- Let Transaction constructor take an optional hub argument [#1384](https://github.com/getsentry/sentry-ruby/pull/1384)
+- Introduce LoggingHelper [#1385](https://github.com/getsentry/sentry-ruby/pull/1385)
+
+## 4.3.2
+
+- Correct type attribute's usages [#1354](https://github.com/getsentry/sentry-ruby/pull/1354)
+- Fix sampling decision precedence [#1335](https://github.com/getsentry/sentry-ruby/pull/1335)
+- Fix set_contexts [#1375](https://github.com/getsentry/sentry-ruby/pull/1375) 
+- Use thread variable instead of fiber variable to store the hub [#1380](https://github.com/getsentry/sentry-ruby/pull/1380)
+  - Fixes [#1374](https://github.com/getsentry/sentry-ruby/issues/1374)
+- Fix Span/Transaction's nesting issue [#1382](https://github.com/getsentry/sentry-ruby/pull/1382) 
+  - Fixes [#1372](https://github.com/getsentry/sentry-ruby/issues/1372)
 
 ## 4.3.1
 

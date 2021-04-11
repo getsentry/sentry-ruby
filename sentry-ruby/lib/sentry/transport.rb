@@ -6,12 +6,17 @@ module Sentry
     PROTOCOL_VERSION = '5'
     USER_AGENT = "sentry-ruby/#{Sentry::VERSION}"
 
+    include LoggingHelper
+
     attr_accessor :configuration
+    attr_reader :logger, :rate_limits
 
     def initialize(configuration)
       @configuration = configuration
+      @logger = configuration.logger
       @transport_configuration = configuration.transport
       @dsn = configuration.dsn
+      @rate_limits = {}
     end
 
     def send_data(data, options = {})
@@ -19,8 +24,18 @@ module Sentry
     end
 
     def send_event(event)
+      event_hash = event.to_hash
+      item_type = get_item_type(event_hash)
+
       unless configuration.sending_allowed?
-        configuration.logger.debug(LOGGER_PROGNAME) { "Event not sent: #{configuration.error_messages}" }
+        log_debug("Envelope [#{item_type}] not sent: #{configuration.error_messages}")
+
+        return
+      end
+
+      if is_rate_limited?(item_type)
+        log_info("Envelope [#{item_type}] not sent: rate limiting")
+
         return
       end
 
@@ -31,6 +46,35 @@ module Sentry
       send_data(encoded_data)
 
       event
+    end
+
+    def is_rate_limited?(item_type)
+      # check category-specific limit
+      category_delay =
+        case item_type
+        when "transaction"
+          @rate_limits["transaction"]
+        else
+          @rate_limits["error"]
+        end
+
+      # check universal limit if not category limit
+      universal_delay = @rate_limits[nil]
+
+      delay =
+        if category_delay && universal_delay
+          if category_delay > universal_delay
+            category_delay
+          else
+            universal_delay
+          end
+        elsif category_delay
+          category_delay
+        else
+          universal_delay
+        end
+
+      !!delay && delay > Time.now
     end
 
     def generate_auth_header
@@ -50,7 +94,7 @@ module Sentry
       event_hash = event.to_hash
 
       event_id = event_hash[:event_id] || event_hash["event_id"]
-      item_type = event_hash[:type] || event_hash["type"] || "event"
+      item_type = get_item_type(event_hash)
 
       envelope = <<~ENVELOPE
         {"event_id":"#{event_id}","dsn":"#{configuration.dsn.to_s}","sdk":#{Sentry.sdk_meta.to_json},"sent_at":"#{Sentry.utc_now.iso8601}"}
@@ -58,9 +102,15 @@ module Sentry
         #{JSON.generate(event_hash)}
       ENVELOPE
 
-      configuration.logger.info(LOGGER_PROGNAME) { "Sending envelope [#{item_type}] #{event_id} to Sentry" }
+      log_info("Sending envelope [#{item_type}] #{event_id} to Sentry")
 
       envelope
+    end
+
+    private
+
+    def get_item_type(event_hash)
+      event_hash[:type] || event_hash["type"] || "event"
     end
   end
 end

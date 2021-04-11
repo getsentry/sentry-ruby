@@ -1,5 +1,9 @@
 # Changelog
 
+## Unreleased
+
+- Add the `report_after_job_retries` configuration option to only report an exception to Sentry if this is the last job's retry after multiple exceptions. [#1364](https://github.com/getsentry/sentry-ruby/pull/1364)
+
 ## 4.3.1
 
 - Return delayed job when the SDK is not initialized [#1373](https://github.com/getsentry/sentry-ruby/pull/1373)

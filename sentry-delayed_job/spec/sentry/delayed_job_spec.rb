@@ -117,6 +117,36 @@ RSpec.describe Sentry::DelayedJob do
       expect(Sentry.get_current_scope.extra).to eq({})
       expect(Sentry.get_current_scope.tags).to eq({})
     end
+
+    context "with report_after_job_retries set to true" do
+      before do
+        Sentry.configuration.delayed_job.report_after_job_retries = true
+      end
+
+      after do
+        Sentry.configuration.delayed_job.report_after_job_retries = false
+      end
+
+      it "reports exception after the last retry" do
+        enqueued_job.update(attempts: Delayed::Worker.max_attempts.succ)
+
+        expect do
+          enqueued_job.invoke_job
+        end.to raise_error(ZeroDivisionError)
+
+        expect(transport.events.count).to eq(1)
+      end
+
+      it "skips report if not on the last retry" do
+        enqueued_job.update(attempts: 0)
+
+        expect do
+          enqueued_job.invoke_job
+        end.to raise_error(ZeroDivisionError)
+
+        expect(transport.events.count).to eq(0)
+      end
+    end
   end
 
   context "with ActiveJob" do

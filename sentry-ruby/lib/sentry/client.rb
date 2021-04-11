@@ -2,6 +2,8 @@ require "sentry/transport"
 
 module Sentry
   class Client
+    include LoggingHelper
+
     attr_reader :transport, :configuration, :logger
 
     def initialize(configuration)
@@ -36,7 +38,7 @@ module Sentry
 
       event
     rescue => e
-      logger.error(LOGGER_PROGNAME) { "Event capturing failed: #{e.message}" }
+      log_error("Event capturing failed: #{e.message}")
       nil
     end
 
@@ -76,7 +78,7 @@ module Sentry
         event = configuration.before_send.call(event, hint)
 
         if event.nil?
-          logger.info(LOGGER_PROGNAME) { "Discarded event because before_send returned nil" }
+          log_info("Discarded event because before_send returned nil")
           return
         end
       end
@@ -86,8 +88,8 @@ module Sentry
       event
     rescue => e
       loggable_event_type = (event_type || "event").capitalize
-      logger.error(LOGGER_PROGNAME) { "#{loggable_event_type} sending failed: #{e.message}" }
-      logger.error(LOGGER_PROGNAME) { "Unreported #{loggable_event_type}: #{Event.get_log_message(event.to_hash)}" }
+      log_error("#{loggable_event_type} sending failed: #{e.message}")
+      log_error("Unreported #{loggable_event_type}: #{Event.get_log_message(event.to_hash)}")
       raise
     end
 
@@ -112,9 +114,8 @@ module Sentry
       end
     rescue => e
       loggable_event_type = event_hash["type"] || "event"
-      logger.error(LOGGER_PROGNAME) { "Async #{loggable_event_type} sending failed: #{e.message}" }
+      log_error("Async #{loggable_event_type} sending failed: #{e.message}")
       send_event(event, hint)
     end
-
   end
 end

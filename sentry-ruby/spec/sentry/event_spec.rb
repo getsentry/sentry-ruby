@@ -160,6 +160,10 @@ RSpec.describe Sentry::Event do
       Sentry::Client.new(configuration)
     end
 
+    let(:hub) do
+      Sentry::Hub.new(client, Sentry::Scope.new)
+    end
+
     context "with adnormal event" do
       subject do
         Sentry::Event.new(configuration: configuration)
@@ -172,7 +176,7 @@ RSpec.describe Sentry::Event do
     end
     context "with transaction event" do
       let(:transaction) do
-        Sentry::Transaction.new(name: "test transaction", op: "sql.active_record", sampled: true)
+        Sentry::Transaction.new(name: "test transaction", op: "sql.active_record", hub: hub, sampled: true)
       end
 
       subject do

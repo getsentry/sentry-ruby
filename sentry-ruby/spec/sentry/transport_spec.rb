@@ -90,7 +90,7 @@ RSpec.describe Sentry::Transport do
         subject.send_event(event)
 
         logs = string_io.string
-        expect(logs).to match(/Event not sent: Excluded by random sample/)
+        expect(logs).to match(/Envelope \[event\] not sent: Excluded by random sample/)
       end
     end
 

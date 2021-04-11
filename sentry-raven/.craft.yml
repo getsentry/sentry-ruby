@@ -11,9 +11,10 @@ artifactProvider:
   name: github
 targets:
     - name: gem
-    - name: github
-      tagPrefix: sentry-raven-v
     - name: registry
       type: sdk
       config:
           canonical: 'gem:sentry-raven'
+    - name: github
+      tagPrefix: sentry-raven-v
+      changelog: sentry-raven/CHANGELOG.md

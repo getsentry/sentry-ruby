@@ -21,6 +21,10 @@ module Sentry
       current_layer&.client
     end
 
+    def configuration
+      current_client.configuration
+    end
+
     def current_scope
       current_layer&.scope
     end
@@ -69,11 +73,19 @@ module Sentry
       @stack.pop
     end
 
-    def start_transaction(transaction: nil, configuration: Sentry.configuration, **options)
+    def start_transaction(transaction: nil, custom_sampling_context: {}, **options)
       return unless configuration.tracing_enabled?
 
-      transaction ||= Transaction.new(**options)
-      transaction.set_initial_sample_decision(configuration: current_client.configuration)
+      transaction ||= Transaction.new(**options.merge(hub: self))
+
+      sampling_context = {
+        transaction_context: transaction.to_hash,
+        parent_sampled: transaction.parent_sampled
+      }
+
+      sampling_context.merge!(custom_sampling_context)
+
+      transaction.set_initial_sample_decision(sampling_context: sampling_context)
       transaction
     end
 

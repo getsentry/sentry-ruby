@@ -11,9 +11,10 @@ artifactProvider:
   name: github
 targets:
     - name: gem
-    - name: github
-      tagPrefix: sentry-sidekiq-v
     - name: registry
       type: sdk
       config:
           canonical: 'gem:sentry-sidekiq'
+    - name: github
+      tagPrefix: sentry-sidekiq-v
+      changelog: sentry-sidekiq/CHANGELOG.md

@@ -146,8 +146,7 @@ module Sentry
     end
 
     def get_transaction
-      # transaction will always be the first in the span_recorder
-      span.span_recorder.spans.first if span
+      span.transaction if span
     end
 
     def get_span
