@@ -3,6 +3,22 @@ require "spec_helper"
 # we can't stub/mock these requests with tools like webmock
 # because they generally stub the request on the same level as the patch works
 RSpec.describe Sentry::Net::HTTP do
+  context "with http_logger" do
+    before do
+      perform_basic_setup do |config|
+        config.breadcrumbs_logger = [:http_logger]
+      end
+    end
+    it "adds breadcrumbs" do
+      response = Net::HTTP.get_response(URI("https://github.com/getsentry/sentry-ruby?foo=bar"))
+
+      expect(response.code).to eq("200")
+      crumb = Sentry.get_current_scope.breadcrumbs.peek
+      expect(crumb.category).to eq("net.http")
+      expect(crumb.data).to eq({ status: 200, method: "GET", url: "https://github.com/getsentry/sentry-ruby" })
+    end
+  end
+
   context "with tracing enabled" do
     before do
       perform_basic_setup do |config|
@@ -71,7 +87,21 @@ RSpec.describe Sentry::Net::HTTP do
     end
   end
 
-  context "without tracing enabled" do
+  context "without tracing enabled nor http_logger" do
+    before do
+      perform_basic_setup
+    end
+
+    it "doesn't affect the HTTP lib anything" do
+      response = Net::HTTP.get_response(URI("https://www.google.com"))
+      expect(response.code).to eq("200")
+
+      expect(Sentry.get_current_scope.get_transaction).to eq(nil)
+      expect(Sentry.get_current_scope.breadcrumbs.peek).to eq(nil)
+    end
+  end
+
+  context "without SDK" do
     it "doesn't affect the HTTP lib anything" do
       response = Net::HTTP.get_response(URI("https://www.google.com"))
       expect(response.code).to eq("200")
