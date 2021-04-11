@@ -4,38 +4,46 @@ module Sentry
   module Net
     module HTTP
       def request(req, body = nil, &block)
-        res = super
-
-        if @sentry_span
-          @sentry_span.set_description("#{req.method} #{req.uri}")
-          @sentry_span.set_data(:status, res.code.to_i)
+        super.tap do |res|
+          record_sentry_span(req, res)
         end
-
-        res
       end
 
       def do_start
-        return_value = super
+        super.tap do
+          start_sentry_span
+        end
+      end
 
+      def do_finish
+        super.tap do
+          finish_sentry_span
+        end
+      end
+
+      private
+
+      def record_sentry_span(req, res)
+        if Sentry.initialized? && @sentry_span
+          @sentry_span.set_description("#{req.method} #{req.uri}")
+          @sentry_span.set_data(:status, res.code.to_i)
+        end
+      end
+
+      def start_sentry_span
         if Sentry.initialized? && transaction = Sentry.get_current_scope.get_transaction
-          return return_value if transaction.sampled == false
+          return if transaction.sampled == false
 
           child_span = transaction.start_child(op: "net.http", start_timestamp: Sentry.utc_now.to_f)
           @sentry_span = child_span
         end
-
-        return_value
       end
 
-      def do_finish
-        return_value = super
-
+      def finish_sentry_span
         if Sentry.initialized? && @sentry_span
           @sentry_span.set_timestamp(Sentry.utc_now.to_f)
           @sentry_span = nil
         end
-
-        return_value
       end
     end
   end
