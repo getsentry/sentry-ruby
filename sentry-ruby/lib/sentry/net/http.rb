@@ -28,6 +28,8 @@ module Sentry
 
       def record_sentry_breadcrumb(req, res)
         if Sentry.initialized? && Sentry.configuration.breadcrumbs_logger.include?(:http_logger)
+          return if from_sentry_sdk?
+
           request_info = extract_request_info(req)
           crumb = Sentry::Breadcrumb.new(
             level: :info,
@@ -53,6 +55,7 @@ module Sentry
 
       def start_sentry_span
         if Sentry.initialized? && transaction = Sentry.get_current_scope.get_transaction
+          return if from_sentry_sdk?
           return if transaction.sampled == false
 
           child_span = transaction.start_child(op: OP_NAME, start_timestamp: Sentry.utc_now.to_f)
@@ -67,9 +70,14 @@ module Sentry
         end
       end
 
+      def from_sentry_sdk?
+        dsn_host = Sentry.configuration.dsn.host
+        dsn_host == self.address
+      end
+
       def extract_request_info(req)
         uri = req.uri
-        url = "#{uri.scheme}://#{uri.host}#{uri.path}"
+        url = "#{uri.scheme}://#{uri.host}#{uri.path}" rescue uri.to_s
         { method: req.method, url: url }
       end
     end
