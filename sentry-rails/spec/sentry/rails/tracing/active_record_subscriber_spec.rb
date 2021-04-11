@@ -9,6 +9,7 @@ RSpec.describe Sentry::Rails::Tracing::ActiveRecordSubscriber, :subscriber do
     before do
       make_basic_app do |config|
         config.traces_sample_rate = 1.0
+        config.rails.tracing_subscribers = [described_class]
       end
     end
 

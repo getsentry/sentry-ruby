@@ -2,6 +2,24 @@
 
 ## Unreleased
 
+### Features
+
+- Make tracing subscribers configurable [#1344](https://github.com/getsentry/sentry-ruby/pull/1344) 
+
+```ruby
+# current default:
+# - Sentry::Rails::Tracing::ActionControllerSubscriber
+# - Sentry::Rails::Tracing::ActionViewSubscriber
+# - Sentry::Rails::Tracing::ActiveRecordSubscriber
+
+# you can add a new subscriber
+config.rails.tracing_subscribers << MySubscriber
+# or replace the set completely
+config.rails.tracing_subscribers = [MySubscriber]
+```
+
+### Bug Fixes
+
 - Report exceptions from the interceptor middleware for exceptions app [#1379](https://github.com/getsentry/sentry-ruby/pull/1379)
   - Fixes [#1371](https://github.com/getsentry/sentry-ruby/issues/1371)
 

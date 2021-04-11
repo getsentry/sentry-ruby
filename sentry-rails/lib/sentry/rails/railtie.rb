@@ -89,6 +89,8 @@ module Sentry
 
     def activate_tracing
       if Sentry.configuration.tracing_enabled?
+        subscribers = Sentry.configuration.rails.tracing_subscribers
+        Sentry::Rails::Tracing.register_subscribers(subscribers)
         Sentry::Rails::Tracing.subscribe_tracing_events
         Sentry::Rails::Tracing.patch_active_support_notifications
       end

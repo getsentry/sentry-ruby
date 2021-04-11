@@ -1,3 +1,7 @@
+require "sentry/rails/tracing/action_controller_subscriber"
+require "sentry/rails/tracing/action_view_subscriber"
+require "sentry/rails/tracing/active_record_subscriber"
+
 module Sentry
   class Configuration
     attr_reader :rails
@@ -47,10 +51,16 @@ module Sentry
       # In those cases, we should skip ActiveJob's reporting to avoid duplicated reports.
       attr_accessor :skippable_job_adapters
 
+      attr_accessor :tracing_subscribers
+
       def initialize
         @report_rescued_exceptions = true
-        # TODO: Remove this in 4.2.0
         @skippable_job_adapters = []
+        @tracing_subscribers = Set.new([
+          Sentry::Rails::Tracing::ActionControllerSubscriber,
+          Sentry::Rails::Tracing::ActionViewSubscriber,
+          Sentry::Rails::Tracing::ActiveRecordSubscriber
+        ])
       end
     end
   end

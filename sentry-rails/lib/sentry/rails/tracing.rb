@@ -1,18 +1,19 @@
-require "sentry/rails/tracing/abstract_subscriber"
-require "sentry/rails/tracing/active_record_subscriber"
-require "sentry/rails/tracing/action_controller_subscriber"
-require "sentry/rails/tracing/action_view_subscriber"
-
 module Sentry
   module Rails
     module Tracing
-      AVAILABLE_SUBSCRIBERS = [ActionViewSubscriber, ActiveRecordSubscriber, ActionControllerSubscriber]
+      def self.register_subscribers(subscribers)
+        @subscribers = subscribers
+      end
+
+      def self.subscribers
+        @subscribers
+      end
 
       def self.subscribe_tracing_events
         # need to avoid duplicated subscription
         return if @subscribed
 
-        AVAILABLE_SUBSCRIBERS.each(&:subscribe!)
+        subscribers.each(&:subscribe!)
 
         @subscribed = true
       end
@@ -20,7 +21,7 @@ module Sentry
       def self.unsubscribe_tracing_events
         return unless @subscribed
 
-        AVAILABLE_SUBSCRIBERS.each(&:unsubscribe!)
+        subscribers.each(&:unsubscribe!)
 
         @subscribed = false
       end
