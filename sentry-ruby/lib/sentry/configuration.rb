@@ -168,8 +168,6 @@ module Sentry
     LOG_PREFIX = "** [Sentry] ".freeze
     MODULE_SEPARATOR = "::".freeze
 
-    AVAILABLE_BREADCRUMBS_LOGGERS = [:sentry_logger, :active_support_logger].freeze
-
     # Post initialization callbacks are called at the end of initialization process
     # allowing extending the configuration of sentry-ruby by multiple extensions
     @@post_initialization_callbacks = []
@@ -227,10 +225,6 @@ module Sentry
         if logger.is_a?(Array)
           logger
         else
-          unless AVAILABLE_BREADCRUMBS_LOGGERS.include?(logger)
-            raise Sentry::Error, "Unsupported breadcrumbs logger. Supported loggers: #{AVAILABLE_BREADCRUMBS_LOGGERS}"
-          end
-
           Array(logger)
         end
 

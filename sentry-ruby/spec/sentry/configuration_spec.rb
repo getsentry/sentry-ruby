@@ -1,15 +1,6 @@
 require 'spec_helper'
 
 RSpec.describe Sentry::Configuration do
-  describe "#breadcrumbs_logger=" do
-    it "raises error when given an invalid option" do
-      expect { subject.breadcrumbs_logger = :foo }.to raise_error(
-        Sentry::Error,
-        'Unsupported breadcrumbs logger. Supported loggers: [:sentry_logger, :active_support_logger]'
-      )
-    end
-  end
-
   describe "#tracing_enabled?" do
     it "returns false by default" do
       expect(subject.tracing_enabled?).to eq(false)
