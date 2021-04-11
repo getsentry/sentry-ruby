@@ -49,6 +49,8 @@ RSpec.describe Sentry::Scope do
     end
 
     it "deep-copies span as well" do
+      perform_basic_setup
+
       span = Sentry::Transaction.new(sampled: true)
       subject.set_span(span)
       copy = subject.dup
@@ -56,6 +58,7 @@ RSpec.describe Sentry::Scope do
       span.start_child
 
       expect(copy.span.span_recorder.spans.count).to eq(1)
+      expect(subject.span.span_recorder.spans.count).to eq(2)
     end
   end
 

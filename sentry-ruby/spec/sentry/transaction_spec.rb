@@ -16,6 +16,16 @@ RSpec.describe Sentry::Transaction do
     )
   end
 
+  describe "#initialize" do
+    it "raises exception if there's no given hub and the SDK is not initialized" do
+      allow(Sentry).to receive(:get_current_hub)
+
+      expect do
+        described_class.new
+      end.to raise_error(Sentry::Error)
+    end
+  end
+
   describe ".from_sentry_trace" do
     let(:sentry_trace) { subject.to_sentry_trace }
 
