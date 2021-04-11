@@ -35,11 +35,11 @@ RSpec.configure do |config|
     c.syntax = :expect
   end
 
-  config.before :each, :subscriber do
+  config.before :each do
     Sentry::Rails::Tracing.patch_active_support_notifications
   end
 
-  config.after :each, :subscriber do
+  config.after :each do
     Sentry::Rails::Tracing.unsubscribe_tracing_events
     Sentry::Rails::Tracing.remove_active_support_notifications_patch
   end
