@@ -5,6 +5,7 @@
 ### Features
 
 - Support category-based rate limiting [#1336](https://github.com/getsentry/sentry-ruby/pull/1336) 
+- Record request span from Net::HTTP library [#1381](https://github.com/getsentry/sentry-ruby/pull/1381)
 
 ### Refactorings
 
