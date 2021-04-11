@@ -1,5 +1,7 @@
 require "spec_helper"
 
+# we can't stub/mock these requests with tools like webmock
+# because they generally stub the request on the same level as the patch works
 RSpec.describe Sentry::Net::HTTP do
   context "with tracing enabled" do
     before do
