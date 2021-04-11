@@ -15,12 +15,16 @@ module Sentry
             begin
               block.call(job, *args)
             rescue Exception => e
-              Sentry::DelayedJob.capture_exception(e, hint: { background: false })
+              capture_exception(e, job)
 
               raise
             end
           end
         end
+      end
+
+      def self.capture_exception(exception, job)
+        Sentry::DelayedJob.capture_exception(exception, hint: { background: false }) if report?(job)
       end
 
       def self.generate_extra(job)
@@ -44,6 +48,14 @@ module Sentry
         end
 
         extra
+      end
+
+      def self.report?(job)
+        return true unless Sentry.configuration.delayed_job.report_after_job_retries
+
+        # We use the predecessor because the job's attempts haven't been increased to the new
+        # count at this point.
+        job.attempts >= Delayed::Worker.max_attempts.pred
       end
     end
   end
