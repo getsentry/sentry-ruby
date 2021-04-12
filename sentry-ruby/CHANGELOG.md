@@ -6,6 +6,17 @@
 
 - Support category-based rate limiting [#1336](https://github.com/getsentry/sentry-ruby/pull/1336) 
 - Record request span from Net::HTTP library [#1381](https://github.com/getsentry/sentry-ruby/pull/1381)
+- Record breadcrumb for Net::HTTP requests [#1394](https://github.com/getsentry/sentry-ruby/pull/1394)
+
+With the new `http_logger` breadcrumbs logger:
+
+```ruby
+config.breadcrumbs_logger = [:http_logger]
+```
+
+The SDK now records a new `net.http` breadcrumb whenever the user makes a request with the `Net::HTTP` library.
+
+<img width="869" alt="net http breadcrumb" src="https://user-images.githubusercontent.com/5079556/114298326-5f7c3d80-9ae8-11eb-9108-222384a7f1a2.png">
 
 ### Refactorings
 

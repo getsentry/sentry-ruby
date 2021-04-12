@@ -3,39 +3,82 @@ require "net/http"
 module Sentry
   module Net
     module HTTP
+      OP_NAME = "net.http"
+
       def request(req, body = nil, &block)
-        res = super
-
-        if @sentry_span
-          @sentry_span.set_description("#{req.method} #{req.uri}")
-          @sentry_span.set_data(:status, res.code.to_i)
+        super.tap do |res|
+          record_sentry_breadcrumb(req, res)
+          record_sentry_span(req, res)
         end
-
-        res
       end
 
       def do_start
-        return_value = super
-
-        if Sentry.initialized? && transaction = Sentry.get_current_scope.get_transaction
-          return return_value if transaction.sampled == false
-
-          child_span = transaction.start_child(op: "net.http", start_timestamp: Sentry.utc_now.to_f)
-          @sentry_span = child_span
+        super.tap do
+          start_sentry_span
         end
-
-        return_value
       end
 
       def do_finish
-        return_value = super
+        super.tap do
+          finish_sentry_span
+        end
+      end
 
+      private
+
+      def record_sentry_breadcrumb(req, res)
+        if Sentry.initialized? && Sentry.configuration.breadcrumbs_logger.include?(:http_logger)
+          return if from_sentry_sdk?
+
+          request_info = extract_request_info(req)
+          crumb = Sentry::Breadcrumb.new(
+            level: :info,
+            category: OP_NAME,
+            type: :info,
+            data: {
+              method: request_info[:method],
+              url: request_info[:url],
+              status: res.code.to_i
+            }
+          )
+          Sentry.add_breadcrumb(crumb)
+        end
+      end
+
+      def record_sentry_span(req, res)
+        if Sentry.initialized? && @sentry_span
+          request_info = extract_request_info(req)
+          @sentry_span.set_description("#{request_info[:method]} #{request_info[:url]}")
+          @sentry_span.set_data(:status, res.code.to_i)
+        end
+      end
+
+      def start_sentry_span
+        if Sentry.initialized? && transaction = Sentry.get_current_scope.get_transaction
+          return if from_sentry_sdk?
+          return if transaction.sampled == false
+
+          child_span = transaction.start_child(op: OP_NAME, start_timestamp: Sentry.utc_now.to_f)
+          @sentry_span = child_span
+        end
+      end
+
+      def finish_sentry_span
         if Sentry.initialized? && @sentry_span
           @sentry_span.set_timestamp(Sentry.utc_now.to_f)
           @sentry_span = nil
         end
+      end
 
-        return_value
+      def from_sentry_sdk?
+        dsn_host = Sentry.configuration.dsn.host
+        dsn_host == self.address
+      end
+
+      def extract_request_info(req)
+        uri = req.uri
+        url = "#{uri.scheme}://#{uri.host}#{uri.path}" rescue uri.to_s
+        { method: req.method, url: url }
       end
     end
   end
