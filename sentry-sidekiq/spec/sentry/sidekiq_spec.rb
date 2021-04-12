@@ -66,7 +66,7 @@ RSpec.describe Sentry::Sidekiq do
     event = transport.events.last.to_json_compatible
 
     expect(event["message"]).to eq "I have something to say!"
-    expect(event["extra"]["sidekiq"]).to eq("class" => "ReportingWorker", "jid" => "123123", "queue" => "default")
+    expect(event["contexts"]["sidekiq"]).to eq("class" => "ReportingWorker", "jid" => "123123", "queue" => "default")
   end
 
   it "adds the failed job to the retry queue" do

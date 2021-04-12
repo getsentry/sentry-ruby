@@ -11,7 +11,7 @@ module Sentry
         Sentry.clone_hub_to_current_thread
         scope = Sentry.get_current_scope
         scope.set_tags(queue: queue, jid: job["jid"])
-        scope.set_extras(sidekiq: job.merge("queue" => queue))
+        scope.set_contexts(sidekiq: job.merge("queue" => queue))
         scope.set_transaction_name(context_filter.transaction_name)
         transaction = Sentry.start_transaction(name: scope.transaction_name, op: "sidekiq")
         scope.set_span(transaction) if transaction

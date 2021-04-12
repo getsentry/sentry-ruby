@@ -13,7 +13,7 @@ module Sentry
 
         Sentry::Sidekiq.capture_exception(
           ex,
-          extra: { sidekiq: context_filter.filtered },
+          contexts: { sidekiq: context_filter.filtered },
           hint: { background: false }
         )
       end
