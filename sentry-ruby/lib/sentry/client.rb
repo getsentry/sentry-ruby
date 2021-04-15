@@ -89,7 +89,7 @@ module Sentry
     rescue => e
       loggable_event_type = (event_type || "event").capitalize
       log_error("#{loggable_event_type} sending failed: #{e.message}")
-      log_error("Unreported #{loggable_event_type}: #{Event.get_log_message(event.to_hash)}")
+      log_info("Unreported #{loggable_event_type}: #{Event.get_log_message(event.to_hash)}")
       raise
     end
 
