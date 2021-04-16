@@ -18,6 +18,10 @@ The SDK now records a new `net.http` breadcrumb whenever the user makes a reques
 
 <img width="869" alt="net http breadcrumb" src="https://user-images.githubusercontent.com/5079556/114298326-5f7c3d80-9ae8-11eb-9108-222384a7f1a2.png">
 
+- Support config.debug configuration option [#1400](https://github.com/getsentry/sentry-ruby/pull/1400)
+
+It'll determine whether the SDK should run in the debugging mode. Default is `false`. When set to true, SDK errors will be logged with backtrace.
+
 ### Refactorings
 
 - Let Transaction constructor take an optional hub argument [#1384](https://github.com/getsentry/sentry-ruby/pull/1384)
