@@ -112,6 +112,15 @@ module Sentry
     end
 
     def finish(hub: nil)
+      if hub
+        log_warn(
+          <<~MSG
+            Specifying a different hub in `Transaction#finish` will be deprecated in version 5.0.
+            Please use `Hub#start_transaction` with the designated hub.
+          MSG
+        )
+      end
+
       hub ||= @hub
 
       super() # Span#finish doesn't take arguments
