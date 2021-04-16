@@ -226,6 +226,19 @@ RSpec.describe Sentry::Client do
           expect(subject.capture_event(event, scope)).to be_nil
 
           expect(string_io.string).to match(/Event capturing failed: TypeError/)
+          expect(string_io.string).not_to match(__FILE__)
+        end
+
+        context "with config.debug = true" do
+          before do
+            configuration.debug = true
+          end
+          it "logs the error with backtrace" do
+            expect(subject.capture_event(event, scope)).to be_nil
+
+            expect(string_io.string).to match(/Event capturing failed: TypeError/)
+            expect(string_io.string).to match(__FILE__)
+          end
         end
       end
 
@@ -317,17 +330,34 @@ RSpec.describe Sentry::Client do
       end
 
       context "error happens in the before_send callback" do
-        it "raises the error" do
+        before do
           configuration.before_send = lambda do |event, _hint|
             raise TypeError
           end
+        end
 
+        it "raises the error" do
           expect do
             subject.send_event(event)
           end.to raise_error(TypeError)
 
           expect(string_io.string).to match(/Event sending failed: TypeError/)
           expect(string_io.string).to match(/Unreported Event: Test message/)
+        end
+
+        context "with config.debug = true" do
+          before do
+            configuration.debug = true
+          end
+
+          it "logs the error with backtrace" do
+            expect do
+              subject.send_event(event)
+            end.to raise_error(TypeError)
+
+            expect(string_io.string).to match(/Event sending failed: TypeError/)
+            expect(string_io.string).to match(__FILE__)
+          end
         end
       end
     end
