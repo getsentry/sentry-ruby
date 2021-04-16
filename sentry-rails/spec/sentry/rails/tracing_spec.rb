@@ -87,12 +87,18 @@ RSpec.describe Sentry::Rails::Tracing, type: :request do
   end
 
   context "with sprockets-rails" do
+    let(:string_io) { StringIO.new }
+    let(:logger) do
+      ::Logger.new(string_io)
+    end
+
     before do
       require "sprockets/railtie"
 
       make_basic_app do |config, app|
         app.config.public_file_server.enabled = true
         config.traces_sample_rate = 1.0
+        config.logger = logger
       end
     end
 
@@ -101,6 +107,7 @@ RSpec.describe Sentry::Rails::Tracing, type: :request do
 
       expect(response).to have_http_status(:not_found)
       expect(transport.events).to be_empty
+      expect(string_io.string).not_to match(/\[Tracing\] Starting <rails\.request>/)
     end
   end
 
