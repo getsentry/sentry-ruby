@@ -37,7 +37,7 @@ RSpec.describe Sentry::Rails::Tracing::ActionControllerSubscriber, :subscriber, 
     end
 
     it "doesn't record spans" do
-      transaction = Sentry::Transaction.new(sampled: false)
+      transaction = Sentry::Transaction.new(sampled: false, hub: Sentry.get_current_hub)
       Sentry.get_current_scope.set_span(transaction)
 
       get "/world"

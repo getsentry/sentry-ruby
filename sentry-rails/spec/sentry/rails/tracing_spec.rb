@@ -143,7 +143,8 @@ RSpec.describe Sentry::Rails::Tracing, type: :request do
           op: "pageload",
           status: "ok",
           sampled: true,
-          name: "a/path"
+          name: "a/path",
+          hub: Sentry.get_current_hub
         )
       end
 
