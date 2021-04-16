@@ -14,16 +14,13 @@ module Sentry
 
     attr_reader :name, :parent_sampled, :hub, :configuration, :logger
 
-    def initialize(name: nil, parent_sampled: nil, hub: Sentry.get_current_hub, **options)
+    def initialize(name: nil, parent_sampled: nil, hub:, **options)
       super(**options)
 
       @name = name
       @parent_sampled = parent_sampled
       @transaction = self
       @hub = hub
-
-      raise Sentry::Error.new("please initialize the SDK with Sentry.init before initializing a Transaction") unless @hub
-
       @configuration = hub.configuration
       @logger = configuration.logger
       init_span_recorder

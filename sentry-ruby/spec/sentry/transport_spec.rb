@@ -12,6 +12,10 @@ RSpec.describe Sentry::Transport do
   let(:fake_time) { Time.now }
 
   let(:client) { Sentry::Client.new(configuration) }
+  let(:hub) do
+    Sentry::Hub.new(client, subject)
+  end
+
   subject { client.transport }
 
   describe "#encode" do
@@ -45,7 +49,7 @@ RSpec.describe Sentry::Transport do
 
     context "transaction event" do
       let(:transaction) do
-        Sentry::Transaction.new(name: "test transaction", op: "rack.request")
+        Sentry::Transaction.new(name: "test transaction", op: "rack.request", hub: hub)
       end
       let(:event) do
         client.event_from_transaction(transaction)

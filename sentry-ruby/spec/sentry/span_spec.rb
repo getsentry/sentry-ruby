@@ -103,7 +103,7 @@ RSpec.describe Sentry::Span do
     context "when the parent span has a span_recorder" do
       subject do
         # inherits the span recorder from the transaction
-        Sentry::Transaction.new.start_child
+        Sentry::Transaction.new(hub: Sentry.get_current_hub).start_child
       end
 
       it "gives the child span its span_recorder" do
@@ -124,7 +124,7 @@ RSpec.describe Sentry::Span do
 
     context "when the parent span has a transaction" do
       before do
-        subject.transaction = Sentry::Transaction.new
+        subject.transaction = Sentry::Transaction.new(hub: Sentry.get_current_hub)
       end
 
       it "gives the child span its transaction" do

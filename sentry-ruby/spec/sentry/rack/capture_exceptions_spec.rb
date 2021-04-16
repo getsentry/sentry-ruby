@@ -162,7 +162,8 @@ RSpec.describe Sentry::Rack::CaptureExceptions, rack: true do
           op: "pageload",
           status: "ok",
           sampled: true,
-          name: "a/path"
+          name: "a/path",
+          hub: Sentry.get_current_hub
         )
       end
       let(:stack) do
@@ -396,7 +397,8 @@ RSpec.describe Sentry::Rack::CaptureExceptions, rack: true do
             op: "pageload",
             status: "ok",
             sampled: true,
-            name: "a/path"
+            name: "a/path",
+            hub: Sentry.get_current_hub
           )
         end
 

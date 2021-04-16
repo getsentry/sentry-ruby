@@ -7,6 +7,12 @@ RSpec.describe Sentry::Scope do
     new_breadcrumb
   end
 
+  let(:configuration) { Sentry::Configuration.new }
+  let(:client) { Sentry::Client.new(configuration) }
+  let(:hub) do
+    Sentry::Hub.new(client, subject)
+  end
+
   describe "#initialize" do
     it "contains correct defaults" do
       expect(subject.breadcrumbs).to be_a(Sentry::BreadcrumbBuffer)
@@ -51,7 +57,7 @@ RSpec.describe Sentry::Scope do
     it "deep-copies span as well" do
       perform_basic_setup
 
-      span = Sentry::Transaction.new(sampled: true)
+      span = Sentry::Transaction.new(sampled: true, hub: hub)
       subject.set_span(span)
       copy = subject.dup
 
@@ -138,7 +144,7 @@ RSpec.describe Sentry::Scope do
     end
 
     let(:transaction) do
-      Sentry::Transaction.new(op: "parent")
+      Sentry::Transaction.new(op: "parent", hub: hub)
     end
 
     context "with span in the scope" do
