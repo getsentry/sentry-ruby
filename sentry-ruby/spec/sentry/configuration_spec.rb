@@ -238,6 +238,19 @@ RSpec.describe Sentry::Configuration do
           end
         end
       end
+
+      context "when having an error detecting the release" do
+        it "logs the error" do
+          string_io = StringIO.new
+          logger = Logger.new(string_io)
+          allow_any_instance_of(described_class).to receive(:logger).and_return(logger)
+          allow_any_instance_of(described_class).to receive(:detect_release_from_git).and_raise(TypeError.new)
+
+          subject
+
+          expect(string_io.string).to include("ERROR -- sentry: Error detecting release: TypeError")
+        end
+      end
     end
   end
 
