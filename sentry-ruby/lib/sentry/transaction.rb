@@ -14,16 +14,13 @@ module Sentry
 
     attr_reader :name, :parent_sampled, :hub, :configuration, :logger
 
-    def initialize(name: nil, parent_sampled: nil, hub: Sentry.get_current_hub, **options)
+    def initialize(name: nil, parent_sampled: nil, hub:, **options)
       super(**options)
 
       @name = name
       @parent_sampled = parent_sampled
       @transaction = self
       @hub = hub
-
-      raise Sentry::Error.new("please initialize the SDK with Sentry.init before initializing a Transaction") unless @hub
-
       @configuration = hub.configuration
       @logger = configuration.logger
       init_span_recorder
@@ -115,6 +112,15 @@ module Sentry
     end
 
     def finish(hub: nil)
+      if hub
+        log_warn(
+          <<~MSG
+            Specifying a different hub in `Transaction#finish` will be deprecated in version 5.0.
+            Please use `Hub#start_transaction` with the designated hub.
+          MSG
+        )
+      end
+
       hub ||= @hub
 
       super() # Span#finish doesn't take arguments

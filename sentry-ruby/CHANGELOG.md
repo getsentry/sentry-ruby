@@ -23,6 +23,7 @@ The SDK now records a new `net.http` breadcrumb whenever the user makes a reques
 - Let Transaction constructor take an optional hub argument [#1384](https://github.com/getsentry/sentry-ruby/pull/1384)
 - Introduce LoggingHelper [#1385](https://github.com/getsentry/sentry-ruby/pull/1385)
 - Raise exception if a Transaction is initialized without a hub [#1391](https://github.com/getsentry/sentry-ruby/pull/1391)
+- Make hub a required argument for Transaction constructor [#1401](https://github.com/getsentry/sentry-ruby/pull/1401) 
 
 ## 4.3.2
 

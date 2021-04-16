@@ -12,18 +12,9 @@ RSpec.describe Sentry::Transaction do
       status: "ok",
       sampled: true,
       parent_sampled: true,
-      name: "foo"
+      name: "foo",
+      hub: Sentry.get_current_hub
     )
-  end
-
-  describe "#initialize" do
-    it "raises exception if there's no given hub and the SDK is not initialized" do
-      allow(Sentry).to receive(:get_current_hub)
-
-      expect do
-        described_class.new
-      end.to raise_error(Sentry::Error)
-    end
   end
 
   describe ".from_sentry_trace" do
@@ -152,14 +143,14 @@ RSpec.describe Sentry::Transaction do
       it "sets @sampled to false and return" do
         allow(Sentry.configuration).to receive(:tracing_enabled?).and_return(false)
 
-        transaction = described_class.new(sampled: true)
+        transaction = described_class.new(sampled: true, hub: Sentry.get_current_hub)
         transaction.set_initial_sample_decision(sampling_context: {})
         expect(transaction.sampled).to eq(false)
       end
     end
 
     context "when tracing is enabled" do
-      let(:subject) { described_class.new(op: "rack.request") }
+      let(:subject) { described_class.new(op: "rack.request", hub: Sentry.get_current_hub) }
 
       before do
         allow(Sentry.configuration).to receive(:tracing_enabled?).and_return(true)
@@ -167,11 +158,11 @@ RSpec.describe Sentry::Transaction do
 
       context "when the transaction already has a decision" do
         it "doesn't change it" do
-          transaction = described_class.new(sampled: true)
+          transaction = described_class.new(sampled: true, hub: Sentry.get_current_hub)
           transaction.set_initial_sample_decision(sampling_context: {})
           expect(transaction.sampled).to eq(true)
 
-          transaction = described_class.new(sampled: false)
+          transaction = described_class.new(sampled: false, hub: Sentry.get_current_hub)
           transaction.set_initial_sample_decision(sampling_context: {})
           expect(transaction.sampled).to eq(false)
         end
@@ -255,17 +246,17 @@ RSpec.describe Sentry::Transaction do
         it "uses the genereted rate for sampling (positive)" do
           expect(Sentry.configuration.logger).to receive(:debug).exactly(3).and_call_original
 
-          subject = described_class.new
+          subject = described_class.new(hub: Sentry.get_current_hub)
           Sentry.configuration.traces_sampler = -> (_) { true }
           subject.set_initial_sample_decision(sampling_context: {})
           expect(subject.sampled).to eq(true)
 
-          subject = described_class.new
+          subject = described_class.new(hub: Sentry.get_current_hub)
           Sentry.configuration.traces_sampler = -> (_) { 1.0 }
           subject.set_initial_sample_decision(sampling_context: {})
           expect(subject.sampled).to eq(true)
 
-          subject = described_class.new
+          subject = described_class.new(hub: Sentry.get_current_hub)
           Sentry.configuration.traces_sampler = -> (_) { 1 }
           subject.set_initial_sample_decision(sampling_context: {})
           expect(subject.sampled).to eq(true)
@@ -278,12 +269,12 @@ RSpec.describe Sentry::Transaction do
         it "uses the genereted rate for sampling (negative)" do
           expect(Sentry.configuration.logger).to receive(:debug).exactly(2).and_call_original
 
-          subject = described_class.new
+          subject = described_class.new(hub: Sentry.get_current_hub)
           Sentry.configuration.traces_sampler = -> (_) { false }
           subject.set_initial_sample_decision(sampling_context: {})
           expect(subject.sampled).to eq(false)
 
-          subject = described_class.new
+          subject = described_class.new(hub: Sentry.get_current_hub)
           Sentry.configuration.traces_sampler = -> (_) { 0.0 }
           subject.set_initial_sample_decision(sampling_context: {})
           expect(subject.sampled).to eq(false)
@@ -347,7 +338,7 @@ RSpec.describe Sentry::Transaction do
     end
 
     context "if the transaction is not sampled" do
-      subject { described_class.new(sampled: false) }
+      subject { described_class.new(sampled: false, hub: Sentry.get_current_hub) }
 
       it "doesn't send it" do
         subject.finish
@@ -357,7 +348,7 @@ RSpec.describe Sentry::Transaction do
     end
 
     context "if the transaction doesn't have a name" do
-      subject { described_class.new(sampled: true) }
+      subject { described_class.new(sampled: true, hub: Sentry.get_current_hub) }
 
       it "adds a default name" do
         subject.finish

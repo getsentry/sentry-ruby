@@ -14,7 +14,7 @@ RSpec.describe Sentry::Rails::Tracing::ActiveRecordSubscriber, :subscriber do
     end
 
     it "records database query events" do
-      transaction = Sentry::Transaction.new(sampled: true)
+      transaction = Sentry::Transaction.new(sampled: true, hub: Sentry.get_current_hub)
       Sentry.get_current_scope.set_span(transaction)
 
       Post.all.to_a
@@ -40,7 +40,7 @@ RSpec.describe Sentry::Rails::Tracing::ActiveRecordSubscriber, :subscriber do
     end
 
     it "doesn't record spans" do
-      transaction = Sentry::Transaction.new(sampled: false)
+      transaction = Sentry::Transaction.new(sampled: false, hub: Sentry.get_current_hub)
       Sentry.get_current_scope.set_span(transaction)
 
       Post.all.to_a
