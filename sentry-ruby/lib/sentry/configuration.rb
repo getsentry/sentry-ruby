@@ -309,7 +309,7 @@ module Sentry
         detect_release_from_capistrano ||
         detect_release_from_heroku
     rescue => e
-      log_error("Error detecting release: #{e.message}")
+      log_error("Error detecting release", e)
     end
 
     def excluded_exception?(incoming_exception)
