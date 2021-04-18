@@ -21,7 +21,6 @@ module Sentry
       extend_active_job if defined?(ActiveJob)
       patch_background_worker if defined?(ActiveRecord)
       override_streaming_reporter if defined?(ActionView)
-      override_file_handler if defined?(ActionDispatch) && app.config.public_file_server.enabled
       setup_backtrace_cleanup_callback
       inject_breadcrumbs_logger
       activate_tracing
@@ -76,14 +75,6 @@ module Sentry
 
       ActiveSupport.on_load :action_view do
         ActionView::StreamingTemplateRenderer::Body.send(:prepend, Sentry::Rails::Overrides::StreamingReporter)
-      end
-    end
-
-    def override_file_handler
-      require "sentry/rails/overrides/file_handler"
-
-      ActiveSupport.on_load :action_controller do
-        ActionDispatch::FileHandler.send(:prepend, Sentry::Rails::Overrides::FileHandler)
       end
     end
 
