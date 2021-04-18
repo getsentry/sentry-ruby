@@ -6,8 +6,8 @@ module Sentry
   class Railtie < ::Rails::Railtie
     # middlewares can't be injected after initialize
     initializer "sentry.use_rack_middleware" do |app|
-      # need to be placed at first to capture as many errors as possible
-      app.config.middleware.insert 0, Sentry::Rails::CaptureExceptions
+      # placed after all the file-sending middlewares so we can avoid unnecessary transactions
+      app.config.middleware.insert_after ActionDispatch::Executor, Sentry::Rails::CaptureExceptions
       # need to be placed at last to smuggle app exceptions via env
       app.config.middleware.use(Sentry::Rails::RescuedExceptionInterceptor)
     end
@@ -21,7 +21,6 @@ module Sentry
       extend_active_job if defined?(ActiveJob)
       patch_background_worker if defined?(ActiveRecord)
       override_streaming_reporter if defined?(ActionView)
-      override_file_handler if defined?(ActionDispatch) && app.config.public_file_server.enabled
       setup_backtrace_cleanup_callback
       inject_breadcrumbs_logger
       activate_tracing
@@ -76,14 +75,6 @@ module Sentry
 
       ActiveSupport.on_load :action_view do
         ActionView::StreamingTemplateRenderer::Body.send(:prepend, Sentry::Rails::Overrides::StreamingReporter)
-      end
-    end
-
-    def override_file_handler
-      require "sentry/rails/overrides/file_handler"
-
-      ActiveSupport.on_load :action_controller do
-        ActionDispatch::FileHandler.send(:prepend, Sentry::Rails::Overrides::FileHandler)
       end
     end
 

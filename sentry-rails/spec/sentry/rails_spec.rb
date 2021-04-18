@@ -24,7 +24,8 @@ RSpec.describe Sentry::Rails, type: :request do
 
     it "inserts middleware to a correct position" do
       app = Rails.application
-      expect(app.middleware.find_index(Sentry::Rails::CaptureExceptions)).to eq(0)
+      index_of_executor = app.middleware.find_index { |m| m == ActionDispatch::Executor }
+      expect(app.middleware.find_index(Sentry::Rails::CaptureExceptions)).to eq(index_of_executor + 1)
       expect(app.middleware.find_index(Sentry::Rails::RescuedExceptionInterceptor)).to eq(app.middleware.count - 1)
     end
 
