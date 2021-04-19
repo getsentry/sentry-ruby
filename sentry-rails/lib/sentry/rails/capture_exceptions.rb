@@ -31,15 +31,15 @@ module Sentry
       end
 
       def start_transaction(env, scope)
-        transaction = super
+        sentry_trace = env["HTTP_SENTRY_TRACE"]
+        options = { name: scope.transaction_name, op: transaction_op }
 
-        return unless transaction
-
-        if @assets_regex && transaction.name.match?(@assets_regex)
-          transaction.instance_variable_set(:@sampled, false)
+        if @assets_regex && scope.transaction_name.match?(@assets_regex)
+          options.merge!(sampled: false)
         end
 
-        transaction
+        transaction = Sentry::Transaction.from_sentry_trace(sentry_trace, **options) if sentry_trace
+        Sentry.start_transaction(transaction: transaction, **options)
       end
     end
   end

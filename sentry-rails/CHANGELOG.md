@@ -22,6 +22,7 @@ config.rails.tracing_subscribers = [MySubscriber]
 
 - Report exceptions from the interceptor middleware for exceptions app [#1379](https://github.com/getsentry/sentry-ruby/pull/1379)
   - Fixes [#1371](https://github.com/getsentry/sentry-ruby/issues/1371)
+- Re-position CaptureExceptions middleware to reduce tracing noise [#1405](https://github.com/getsentry/sentry-ruby/pull/1405) 
 
 ## 4.3.4
 
