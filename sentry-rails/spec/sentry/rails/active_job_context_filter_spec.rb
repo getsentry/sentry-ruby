@@ -1,6 +1,8 @@
 require "spec_helper"
+require "active_job"
+require "sentry/rails/active_job_context_filter"
 
-RSpec.describe Sentry::Sidekiq::ContextFilter do
+RSpec.describe Sentry::Rails::ActiveJobContextFilter do
   describe "#filtered" do
     subject(:context_filter) { described_class.new(context) }
 
@@ -44,7 +46,7 @@ RSpec.describe Sentry::Sidekiq::ContextFilter do
       let(:context) { { "class" => "FooJob" } }
 
       it "extracts the class" do
-        expect(context_filter.transaction_name).to eq("Sidekiq/FooJob")
+        expect(context_filter.transaction_name).to eq("ActiveJob/FooJob")
       end
     end
 
@@ -52,7 +54,7 @@ RSpec.describe Sentry::Sidekiq::ContextFilter do
       let(:context) { { "wrapped" => "FooJob", "class" => "WrapperJob" } }
 
       it "extracts the wrapped class" do
-        expect(context_filter.transaction_name).to eq("Sidekiq/FooJob")
+        expect(context_filter.transaction_name).to eq("ActiveJob/FooJob")
       end
     end
 
@@ -60,7 +62,7 @@ RSpec.describe Sentry::Sidekiq::ContextFilter do
       let(:context) { { job: { "class" => "FooJob" } } }
 
       it "extracts the class" do
-        expect(context_filter.transaction_name).to eq("Sidekiq/FooJob")
+        expect(context_filter.transaction_name).to eq("ActiveJob/FooJob")
       end
     end
 
@@ -68,7 +70,7 @@ RSpec.describe Sentry::Sidekiq::ContextFilter do
       let(:context) { { job: { "wrapped" => "FooJob", "class" => "WrapperJob" } } }
 
       it "extracts the wrapped class" do
-        expect(context_filter.transaction_name).to eq("Sidekiq/FooJob")
+        expect(context_filter.transaction_name).to eq("ActiveJob/FooJob")
       end
     end
 
@@ -76,7 +78,7 @@ RSpec.describe Sentry::Sidekiq::ContextFilter do
       let(:context) { { event: "startup" } }
 
       it "extracts the event name" do
-        expect(context_filter.transaction_name).to eq("Sidekiq/startup")
+        expect(context_filter.transaction_name).to eq("ActiveJob/startup")
       end
     end
 
@@ -84,7 +86,7 @@ RSpec.describe Sentry::Sidekiq::ContextFilter do
       let(:context) { { foo: "bar" } }
 
       it "extracts nothing" do
-        expect(context_filter.transaction_name).to eq("Sidekiq")
+        expect(context_filter.transaction_name).to eq("ActiveJob")
       end
     end
   end
