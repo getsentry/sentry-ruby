@@ -8,8 +8,8 @@ on:
       - \d+-\d+
   pull_request:
     paths:
-      - 'sentry-sidekiq/**'
-      - 'sentry-ruby/**'
+      - 'sentry-*/**'
+      - '!sentry-raven/**'
 jobs:
   test:
     defaults:
