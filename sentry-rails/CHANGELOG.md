@@ -18,6 +18,11 @@ config.rails.tracing_subscribers << MySubscriber
 config.rails.tracing_subscribers = [MySubscriber]
 ```
 
+
+### Refactorings
+
+- Move active job context filter to sentry-rails [#1406](https://github.com/getsentry/sentry-ruby/pull/1406)
+
 ### Bug Fixes
 
 - Report exceptions from the interceptor middleware for exceptions app [#1379](https://github.com/getsentry/sentry-ruby/pull/1379)
