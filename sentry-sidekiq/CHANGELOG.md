@@ -1,5 +1,19 @@
 # Changelog
 
+## Unreleased
+
+### Features
+
+- Make Sidekiq job context more readable [#1410](https://github.com/getsentry/sentry-ruby/pull/1410) 
+
+**Before**
+
+<img width="300" alt="Sidekiq payload in extra" src="https://user-images.githubusercontent.com/5079556/115679342-0ed8d000-a385-11eb-8e1c-372cb1af572e.png">
+
+**After**
+
+<img width="300" alt="Sidekiq payload in context" src="https://user-images.githubusercontent.com/5079556/115679353-126c5700-a385-11eb-867c-a9a25d1a7099.png">
+
 ## 4.3.0
 
 ### Features

@@ -47,7 +47,7 @@ RSpec.describe Sentry::Sidekiq::ErrorHandler do
 
     expect(transport.events.count).to eq(1)
     event = transport.events.first.to_hash
-    expect(event[:extra][:sidekiq]).to eq(context)
+    expect(event[:contexts][:sidekiq]).to eq(context)
   end
 
   it "filters out ActiveJob keys" do
@@ -63,7 +63,7 @@ RSpec.describe Sentry::Sidekiq::ErrorHandler do
 
     expect(transport.events.count).to eq(1)
     event = transport.events.first.to_hash
-    expect(event[:extra][:sidekiq]).to eq(expected_context)
+    expect(event[:contexts][:sidekiq]).to eq(expected_context)
   end
 
   context "when the job is wrapped" do

@@ -35,6 +35,39 @@ RSpec.describe Sentry::Sidekiq::ContextFilter do
         )
       end
     end
+
+    context "with job entry in the context" do
+      let(:context) do
+        {
+          context: "Job raised exception",
+          job: {
+            "retry"=>0,
+            "queue"=>"default",
+            "class"=>"ErrorWorker",
+            "args"=>[],
+            "jid"=>"6dd2b3862d0e4b637c08a567",
+            "created_at"=>1619077597.620555,
+            "enqueued_at"=>1619077597.620651
+          },
+          jobstr: "STR"
+        }
+      end
+      it "flattens the job entry" do
+        expect(context_filter.filtered).to eq(
+          {
+            context: "Job raised exception",
+            "retry"=>0,
+            "queue"=>"default",
+            "class"=>"ErrorWorker",
+            "args"=>[],
+            "jid"=>"6dd2b3862d0e4b637c08a567",
+            "created_at"=>1619077597.620555,
+            "enqueued_at"=>1619077597.620651,
+            jobstr: "STR"
+          }
+        )
+      end
+    end
   end
 
   describe "#transaction_name" do
