@@ -1,11 +1,5 @@
 # Changelog
 
-## Unreleased
-
-### Refactorings
-
-- Move active job context filter to sentry-rails [#1406](https://github.com/getsentry/sentry-ruby/pull/1406)
-
 ## 4.3.0
 
 ### Features
