@@ -5,6 +5,22 @@
 ### Features
 
 - Support category-based rate limiting [#1336](https://github.com/getsentry/sentry-ruby/pull/1336) 
+
+Sentry rate limits different types of events. And when rate limiting is enabled, it sends back a `429` response to the SDK. Currently, the SDK would then raises an error like this:
+
+```
+Unable to record event with remote Sentry server (Sentry::Error - the server responded with status 429
+body: {"detail":"event rejected due to rate limit"}):
+```
+
+This change improves the SDK's handling on such responses by:
+- Not treating them as errors, so you don't see the noise anymore.
+- Halting event sending for a while according to the duration provided in the response. And warns you with messages like:
+
+```
+Envelope [event] not sent: Excluded by random sample
+```
+
 - Record request span from Net::HTTP library [#1381](https://github.com/getsentry/sentry-ruby/pull/1381)
 - Record breadcrumb for Net::HTTP requests [#1394](https://github.com/getsentry/sentry-ruby/pull/1394)
 
