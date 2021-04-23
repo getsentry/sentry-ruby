@@ -24,11 +24,11 @@ And if you have any questions, please feel free to reach out on [Discord].
 - Use example apps under the `example` or `examples` folder to test the change. (Remember to change the DSN first)
 - To learn more about `sentry-ruby`'s structure, you can read the [Sentry SDK spec]
 
-## To Write Your Sentry Extension
+## Write Your Sentry Extension
 
 Please read the [extension guideline] to learn more. Feel free to open an issue if you find anything missing.
 
-# To Release A Gem
+# Release SDK Gem
 
 ## Before the Release
 
@@ -72,4 +72,3 @@ In addition to all the steps listed above, you also need to:
 [Sentry SDK spec]: https://develop.sentry.dev/sdk/unified-api/
 [sentry-doc repo]: https://github.com/getsentry/sentry-docs
 [Discord]: https://discord.gg/Ww9hbqr
-
