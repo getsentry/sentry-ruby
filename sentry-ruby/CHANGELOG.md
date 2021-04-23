@@ -52,6 +52,10 @@ It'll determine whether the SDK should run in the debugging mode. Default is `fa
 - Raise exception if a Transaction is initialized without a hub [#1391](https://github.com/getsentry/sentry-ruby/pull/1391)
 - Make hub a required argument for Transaction constructor [#1401](https://github.com/getsentry/sentry-ruby/pull/1401) 
 
+### Bug Fixes
+
+- Check `Scope#set_context`'s value argument [#1415](https://github.com/getsentry/sentry-ruby/pull/1415)
+
 ## 4.3.2
 
 - Correct type attribute's usages [#1354](https://github.com/getsentry/sentry-ruby/pull/1354)
