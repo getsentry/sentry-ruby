@@ -45,7 +45,7 @@ The SDK now records a new `net.http` breadcrumb whenever the user makes a reques
 
 It'll determine whether the SDK should run in the debugging mode. Default is `false`. When set to true, SDK errors will be logged with backtrace.
 
-- Add the third tracing state [#1402](https://github.com/getsentry/sentry-ruby/pull/1402)
+#### Add the third tracing state [#1402](https://github.com/getsentry/sentry-ruby/pull/1402)
   - `rate == 0` - Tracing enabled. Rejects all locally created transactions but  respects sentry-trace.
   - `1 > rate > 0` - Tracing enabled. Samples locally created transactions  with the rate and respects sentry-trace.
   - `rate < 0` or `rate > 1` - Tracing disabled.
