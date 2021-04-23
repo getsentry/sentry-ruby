@@ -4,8 +4,23 @@
 
 ### Features
 
-- Add the `report_after_job_retries` configuration option to only report an exception to Sentry if this is the last job's retry after multiple exceptions. [#1364](https://github.com/getsentry/sentry-ruby/pull/1364)
+- Allow delayed job's exceptions to be reported to sentry until the last job retry [#1364](https://github.com/getsentry/sentry-ruby/pull/1364)
+
+Add the `report_after_job_retries` configuration option to only report an exception to Sentry if this is the last job's retry after multiple exceptions. 
+
+```ruby
+config.delayed_job.report_after_job_retries = true # default is false
+```
+
 - Use context for delayed_job's job info [#1395](https://github.com/getsentry/sentry-ruby/pull/1395)
+
+**Before:**
+
+<img width="60%" alt="job info in extra" src="https://user-images.githubusercontent.com/5079556/114307133-de856c00-9b10-11eb-8967-cd0e67e80539.png">
+
+**After:**
+
+<img width="60%" alt="job info in context" src="https://user-images.githubusercontent.com/5079556/114307135-e2b18980-9b10-11eb-9fc4-af885bf0f68d.png">
 
 ## 4.3.1
 
