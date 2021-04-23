@@ -4,9 +4,9 @@
 
 ### Features
 
-- Support category-based rate limiting [#1336](https://github.com/getsentry/sentry-ruby/pull/1336) 
+#### Support category-based rate limiting [#1336](https://github.com/getsentry/sentry-ruby/pull/1336) 
 
-Sentry rate limits different types of events. And when rate limiting is enabled, it sends back a `429` response to the SDK. Currently, the SDK would then raises an error like this:
+Sentry rate limits different types of events. And when rate limiting is enabled, it sends back a `429` response to the SDK. Currently, the SDK would then raise an error like this:
 
 ```
 Unable to record event with remote Sentry server (Sentry::Error - the server responded with status 429
@@ -14,15 +14,22 @@ body: {"detail":"event rejected due to rate limit"}):
 ```
 
 This change improves the SDK's handling on such responses by:
+
 - Not treating them as errors, so you don't see the noise anymore.
-- Halting event sending for a while according to the duration provided in the response. And warns you with messages like:
+- Halting event sending for a while according to the duration provided in the response. And warns you with a message like:
 
 ```
 Envelope [event] not sent: Excluded by random sample
 ```
 
-- Record request span from Net::HTTP library [#1381](https://github.com/getsentry/sentry-ruby/pull/1381)
-- Record breadcrumb for Net::HTTP requests [#1394](https://github.com/getsentry/sentry-ruby/pull/1394)
+#### Record request span from Net::HTTP library [#1381](https://github.com/getsentry/sentry-ruby/pull/1381)
+
+Now any outgoing requests will be recorded as a tracing span. Example:
+
+<img width="60%" alt="net:http span example" src="https://user-images.githubusercontent.com/5079556/115838944-c1279a80-a44c-11eb-8c67-dfd92bf68bbd.png">
+
+
+#### Record breadcrumb for Net::HTTP requests [#1394](https://github.com/getsentry/sentry-ruby/pull/1394)
 
 With the new `http_logger` breadcrumbs logger:
 
@@ -32,9 +39,9 @@ config.breadcrumbs_logger = [:http_logger]
 
 The SDK now records a new `net.http` breadcrumb whenever the user makes a request with the `Net::HTTP` library.
 
-<img width="869" alt="net http breadcrumb" src="https://user-images.githubusercontent.com/5079556/114298326-5f7c3d80-9ae8-11eb-9108-222384a7f1a2.png">
+<img width="60%" alt="net http breadcrumb" src="https://user-images.githubusercontent.com/5079556/114298326-5f7c3d80-9ae8-11eb-9108-222384a7f1a2.png">
 
-- Support config.debug configuration option [#1400](https://github.com/getsentry/sentry-ruby/pull/1400)
+#### Support config.debug configuration option [#1400](https://github.com/getsentry/sentry-ruby/pull/1400)
 
 It'll determine whether the SDK should run in the debugging mode. Default is `false`. When set to true, SDK errors will be logged with backtrace.
 
