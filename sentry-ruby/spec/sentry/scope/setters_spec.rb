@@ -106,12 +106,26 @@ RSpec.describe Sentry::Scope do
   end
 
   describe "#set_context" do
+    it "raises error when passed non-hash value" do
+      expect do
+        subject.set_context(:character, "John")
+      end.to raise_error(ArgumentError)
+    end
+
     it "merges the key value with existing context" do
-      subject.set_contexts({bar: "baz"})
+      subject.set_context(:character, { name: "John" })
+      expect(subject.contexts).to include({ character: { name: "John" }})
 
-      subject.set_context(:foo, "bar")
+      subject.set_context(:character, { name: "John", age: 25 })
+      expect(subject.contexts).to include({ character: { name: "John", age: 25 }})
 
-      expect(subject.contexts).to include({foo: "bar", bar: "baz"})
+      subject.set_context(:another_character, { name: "Jane", age: 20 })
+      expect(subject.contexts).to include(
+        {
+          character: { name: "John", age: 25 },
+          another_character: { name: "Jane", age: 20 }
+        }
+      )
     end
   end
 
