@@ -49,24 +49,29 @@ RSpec.describe Sentry::Hub do
 
       it "merges the contexts/tags/extrac with what the scope already has" do
         scope.set_tags(old_tag: true)
-        scope.set_contexts(old_context: true)
+        scope.set_contexts({ character: { name: "John", age: 25 }})
         scope.set_extras(old_extra: true)
 
         subject.send(
           capture_helper,
           capture_subject,
           tags: { new_tag: true },
-          contexts: { new_context: true },
+          contexts: { another_character: { name: "Jane", age: 20 }},
           extra: { new_extra: true }
         )
 
         event = transport.events.last
         expect(event.tags).to eq({ new_tag: true, old_tag: true })
-        expect(event.contexts).to include({ new_context: true, old_context: true })
+        expect(event.contexts).to include(
+          {
+            character: { name: "John", age: 25 },
+            another_character: { name: "Jane", age: 20 }
+          }
+        )
         expect(event.extra).to eq({ new_extra: true, old_extra: true })
 
         expect(scope.tags).to eq(old_tag: true)
-        expect(scope.contexts).to include(old_context: true)
+        expect(scope.contexts).to include({ character: { name: "John", age: 25 }})
         expect(scope.extra).to eq(old_extra: true)
       end
     end

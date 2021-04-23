@@ -130,6 +130,7 @@ module Sentry
     end
 
     def set_context(key, value)
+      check_argument_type!(value, Hash)
       @contexts.merge!(key => value)
     end
 
