@@ -7,9 +7,6 @@ on:
       - master
       - \d+-\d+
   pull_request:
-    paths:
-      - 'sentry-*/**'
-      - '!sentry-raven/**'
 jobs:
   test:
     defaults:
