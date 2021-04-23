@@ -38,7 +38,7 @@ module Sentry
 
       event
     rescue => e
-      log_error("Event capturing failed: #{e.message}")
+      log_error("Event capturing failed", e, debug: configuration.debug)
       nil
     end
 
@@ -88,8 +88,10 @@ module Sentry
       event
     rescue => e
       loggable_event_type = (event_type || "event").capitalize
-      log_error("#{loggable_event_type} sending failed: #{e.message}")
-      log_error("Unreported #{loggable_event_type}: #{Event.get_log_message(event.to_hash)}")
+      log_error("#{loggable_event_type} sending failed", e, debug: configuration.debug)
+
+      event_info = Event.get_log_message(event.to_hash)
+      log_info("Unreported #{loggable_event_type}: #{event_info}")
       raise
     end
 
@@ -114,7 +116,7 @@ module Sentry
       end
     rescue => e
       loggable_event_type = event_hash["type"] || "event"
-      log_error("Async #{loggable_event_type} sending failed: #{e.message}")
+      log_error("Async #{loggable_event_type} sending failed", e, debug: configuration.debug)
       send_event(event, hint)
     end
   end

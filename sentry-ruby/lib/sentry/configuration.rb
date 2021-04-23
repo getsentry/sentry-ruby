@@ -72,6 +72,10 @@ module Sentry
     # RACK_ENV by default.
     attr_reader :environment
 
+    # Whether the SDK should run in the debugging mode. Default is false.
+    # If set to true, SDK errors will be logged with backtrace
+    attr_accessor :debug
+
     # the dsn value, whether it's set via `config.dsn=` or `ENV["SENTRY_DSN"]`
     attr_reader :dsn
 
@@ -173,6 +177,7 @@ module Sentry
     @@post_initialization_callbacks = []
 
     def initialize
+      self.debug = false
       self.background_worker_threads = Concurrent.processor_count
       self.max_breadcrumbs = BreadcrumbBuffer::DEFAULT_SIZE
       self.breadcrumbs_logger = []
@@ -309,7 +314,7 @@ module Sentry
         detect_release_from_capistrano ||
         detect_release_from_heroku
     rescue => e
-      log_error("Error detecting release: #{e.message}")
+      log_error("Error detecting release", e, debug: debug)
     end
 
     def excluded_exception?(incoming_exception)

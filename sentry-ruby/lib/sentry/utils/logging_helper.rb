@@ -1,7 +1,12 @@
 module Sentry
   module LoggingHelper
-    def log_error(message)
-      logger.error(LOGGER_PROGNAME) { message }
+    def log_error(message, exception, debug: false)
+      message = "#{message}: #{exception.message}"
+      message += "\n#{exception.backtrace.join("\n")}" if debug
+
+      logger.error(LOGGER_PROGNAME) do
+        message
+      end
     end
 
     def log_info(message)
