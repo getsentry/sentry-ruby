@@ -376,6 +376,25 @@ RSpec.describe Sentry do
           expect(context).to include({ foo: "bar" })
         end
       end
+
+      context "when event reporting is not enabled" do
+        let(:string_io) { StringIO.new }
+        let(:logger) do
+          ::Logger.new(string_io)
+        end
+        before do
+          Sentry.configuration.logger = logger
+          Sentry.configuration.enabled_environments = ["production"]
+        end
+
+        it "sets @sampled to false and return" do
+          transaction = described_class.start_transaction
+          expect(transaction).to eq(nil)
+          expect(string_io.string).not_to include(
+            "[Tracing]"
+          )
+        end
+      end
     end
 
     context "when tracing is disabled" do
