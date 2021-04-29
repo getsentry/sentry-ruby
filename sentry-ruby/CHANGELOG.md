@@ -5,6 +5,7 @@
 ### Bug Fixes
 
 - Disable tracing if events are not allowed to be sent [#1421](https://github.com/getsentry/sentry-ruby/pull/1421)
+- `set_initial_sample_decision` should always respect the original decision [#1423](https://github.com/getsentry/sentry-ruby/pull/1423)
 
 ## 4.4.0-beta.0
 
