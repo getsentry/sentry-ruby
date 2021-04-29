@@ -157,12 +157,14 @@ RSpec.describe Sentry::Transaction do
         allow(Sentry.configuration).to receive(:tracing_enabled?).and_return(false)
       end
 
-      it "sets @sampled to false and return" do
-        allow(Sentry.configuration).to receive(:tracing_enabled?).and_return(false)
+      it "skips the sampling process" do
+        transaction = described_class.new(sampled: nil, hub: Sentry.get_current_hub)
+        transaction.set_initial_sample_decision(sampling_context: {})
+        expect(transaction.sampled).to eq(nil)
 
         transaction = described_class.new(sampled: true, hub: Sentry.get_current_hub)
         transaction.set_initial_sample_decision(sampling_context: {})
-        expect(transaction.sampled).to eq(false)
+        expect(transaction.sampled).to eq(true)
       end
     end
 
