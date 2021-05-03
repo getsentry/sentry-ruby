@@ -292,6 +292,17 @@ RSpec.describe Raven::Instance do
         end
         expect(subject.context.user).to eq previous_user_context
       end
+
+      it "resets with nested blocks" do
+        subject.context.user = {}
+        subject.user_context(id: 9999) do
+          subject.user_context(email: 'foo@bar.com') do
+            expect(subject.context.user).to eq(id: 9999, email: 'foo@bar.com')
+          end
+          expect(subject.context.user).to eq(id: 9999)
+        end
+        expect(subject.context.user).to eq({})
+      end
     end
   end
 
