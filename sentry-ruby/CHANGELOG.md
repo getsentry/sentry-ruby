@@ -1,12 +1,6 @@
 # Changelog
 
-## Unreleased
-
-### Bug Fixes
-
-- Disable tracing if events are not allowed to be sent [#1421](https://github.com/getsentry/sentry-ruby/pull/1421)
-
-## 4.4.0-beta.0
+## 4.4.0
 
 ### Features
 
@@ -66,6 +60,7 @@ It'll determine whether the SDK should run in the debugging mode. Default is `fa
 ### Bug Fixes
 
 - Check `Scope#set_context`'s value argument [#1415](https://github.com/getsentry/sentry-ruby/pull/1415)
+- Disable tracing if events are not allowed to be sent [#1421](https://github.com/getsentry/sentry-ruby/pull/1421)
 
 ## 4.3.2
 
