@@ -1,6 +1,6 @@
 # Changelog
 
-## 4.4.0-beta.0
+## 4.4.0
 
 ### Features
 
