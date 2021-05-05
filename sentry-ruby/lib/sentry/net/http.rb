@@ -84,4 +84,7 @@ module Sentry
   end
 end
 
-Net::HTTP.send(:prepend, Sentry::Net::HTTP)
+Sentry.register_patch do
+  patch = Sentry::Net::HTTP
+  Net::HTTP.send(:prepend, patch) unless Net::HTTP.ancestors.include?(patch)
+end
