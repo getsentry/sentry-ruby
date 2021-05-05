@@ -1,5 +1,9 @@
 # Changelog
 
+## 4.4.1
+
+- Apply patches when initializing the SDK [#1432](https://github.com/getsentry/sentry-ruby/pull/1432)
+
 ## 4.4.0
 
 ### Features
