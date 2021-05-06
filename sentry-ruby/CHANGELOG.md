@@ -1,5 +1,9 @@
 # Changelog
 
+## 4.4.2
+
+- Fix NoMethodError when SDK's dsn is nil [#1433](https://github.com/getsentry/sentry-ruby/pull/1433)
+
 ## 4.4.1
 
 - Apply patches when initializing the SDK [#1432](https://github.com/getsentry/sentry-ruby/pull/1432)

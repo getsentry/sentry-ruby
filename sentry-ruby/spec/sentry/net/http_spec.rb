@@ -72,6 +72,23 @@ RSpec.describe Sentry::Net::HTTP do
       expect(string_io.string).to match(/bad sentry DSN public key/)
       expect(Sentry.get_current_scope.breadcrumbs.peek).to be_nil
     end
+
+    context "when dsn is nil" do
+      before do
+        Sentry.configuration.instance_variable_set(:@dsn, nil)
+      end
+      it "doesn't cause error" do
+        stub_normal_response
+
+        response = Net::HTTP.get_response(URI("http://example.com/path?foo=bar"))
+
+        expect(response.code).to eq("200")
+        crumb = Sentry.get_current_scope.breadcrumbs.peek
+        expect(crumb.category).to eq("net.http")
+        expect(crumb.data).to eq({ status: 200, method: "GET", url: "http://example.com/path" })
+      end
+    end
+
   end
 
   context "with tracing enabled" do
