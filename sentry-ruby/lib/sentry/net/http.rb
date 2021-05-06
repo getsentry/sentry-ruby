@@ -71,8 +71,8 @@ module Sentry
       end
 
       def from_sentry_sdk?
-        dsn_host = Sentry.configuration.dsn.host
-        dsn_host == self.address
+        dsn = Sentry.configuration.dsn
+        dsn && dsn.host == self.address
       end
 
       def extract_request_info(req)
