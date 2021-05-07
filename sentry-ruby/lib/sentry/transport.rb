@@ -3,7 +3,7 @@ require "base64"
 
 module Sentry
   class Transport
-    PROTOCOL_VERSION = '5'
+    PROTOCOL_VERSION = '7'
     USER_AGENT = "sentry-ruby/#{Sentry::VERSION}"
 
     include LoggingHelper

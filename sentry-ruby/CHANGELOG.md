@@ -3,6 +3,8 @@
 ## 4.4.2
 
 - Fix NoMethodError when SDK's dsn is nil [#1433](https://github.com/getsentry/sentry-ruby/pull/1433)
+- fix: Update protocol version to 7 [#1434](https://github.com/getsentry/sentry-ruby/pull/1434)
+  - Fixes [#867](https://github.com/getsentry/sentry-ruby/issues/867)
 
 ## 4.4.1
 
