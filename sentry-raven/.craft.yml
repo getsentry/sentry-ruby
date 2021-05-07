@@ -3,6 +3,7 @@ github:
     owner: getsentry
     repo: sentry-ruby
 changelogPolicy: simple
+changelog: sentry-raven/CHANGELOG.md
 preReleaseCommand: ruby .scripts/bump-version.rb
 releaseBranchPrefix: release-sentry-raven
 statusProvider:
@@ -17,4 +18,3 @@ targets:
           canonical: 'gem:sentry-raven'
     - name: github
       tagPrefix: sentry-raven-v
-      changelog: sentry-raven/CHANGELOG.md
