@@ -3,6 +3,7 @@ github:
     owner: getsentry
     repo: sentry-ruby
 changelogPolicy: simple
+changelog: sentry-rails/CHANGELOG.md
 preReleaseCommand: ruby ../.scripts/bump-version.rb
 releaseBranchPrefix: release-sentry-rails
 statusProvider:
@@ -17,4 +18,3 @@ targets:
           canonical: 'gem:sentry-rails'
     - name: github
       tagPrefix: sentry-rails-v
-      changelog: sentry-rails/CHANGELOG.md
