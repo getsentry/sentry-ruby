@@ -208,6 +208,114 @@ RSpec.describe Sentry do
   end
 
   describe ".start_transaction" do
+    describe "sampler example" do
+      before do
+        perform_basic_setup do |config|
+          config.traces_sampler = lambda do |sampling_context|
+            # if this is the continuation of a trace, just use that decision (rate controlled by the caller)
+            unless sampling_context[:parent_sampled].nil?
+              next sampling_context[:parent_sampled]
+            end
+
+            # transaction_context is the transaction object in hash form
+            # keep in mind that sampling happens right after the transaction is initialized
+            # e.g. at the beginning of the request
+            transaction_context = sampling_context[:transaction_context]
+
+            # transaction_context helps you sample transactions with more sophistication
+            # for example, you can provide different sample rates based on the operation or name
+            op = transaction_context[:op]
+            transaction_name = transaction_context[:name]
+
+            case op
+            when /request/
+              case transaction_name
+              when /health_check/
+                0.0
+              when /payment/
+                0.5
+              when /api/
+                0.2
+              else
+                0.1
+              end
+            when /sidekiq/
+              0.01 # you may want to set a lower rate for background jobs if the number is large
+            else
+              0.0 # ignore all other transactions
+            end
+          end
+        end
+      end
+
+      it "prioritizes parent's sampling decision" do
+        sampled_trace = "d298e6b033f84659928a2267c3879aaa-2a35b8e9a1b974f4-1"
+        unsampled_trace = "d298e6b033f84659928a2267c3879aaa-2a35b8e9a1b974f4-0"
+        not_sampled_trace = "d298e6b033f84659928a2267c3879aaa-2a35b8e9a1b974f4-"
+
+        transaction = Sentry::Transaction.from_sentry_trace(sampled_trace, op: "rack.request", name: "/payment")
+        described_class.start_transaction(transaction: transaction)
+
+        expect(transaction.sampled).to eq(true)
+
+        transaction = Sentry::Transaction.from_sentry_trace(unsampled_trace, op: "rack.request", name: "/payment")
+        described_class.start_transaction(transaction: transaction)
+
+        expect(transaction.sampled).to eq(false)
+
+        allow(Random).to receive(:rand).and_return(0.4)
+        transaction = Sentry::Transaction.from_sentry_trace(not_sampled_trace, op: "rack.request", name: "/payment")
+        described_class.start_transaction(transaction: transaction)
+
+        expect(transaction.sampled).to eq(true)
+      end
+
+      it "skips /health_check" do
+        transaction = described_class.start_transaction(op: "rack.request", name: "/health_check")
+        expect(transaction.sampled).to eq(false)
+      end
+
+      it "gives /payment 0.5 of rate" do
+        allow(Random).to receive(:rand).and_return(0.4)
+        transaction = described_class.start_transaction(op: "rack.request", name: "/payment")
+        expect(transaction.sampled).to eq(true)
+
+        allow(Random).to receive(:rand).and_return(0.6)
+        transaction = described_class.start_transaction(op: "rack.request", name: "/payment")
+        expect(transaction.sampled).to eq(false)
+      end
+
+      it "gives /api 0.2 of rate" do
+        allow(Random).to receive(:rand).and_return(0.1)
+        transaction = described_class.start_transaction(op: "rack.request", name: "/api")
+        expect(transaction.sampled).to eq(true)
+
+        allow(Random).to receive(:rand).and_return(0.3)
+        transaction = described_class.start_transaction(op: "rack.request", name: "/api")
+        expect(transaction.sampled).to eq(false)
+      end
+
+      it "gives other paths 0.1 of rate" do
+        allow(Random).to receive(:rand).and_return(0.05)
+        transaction = described_class.start_transaction(op: "rack.request", name: "/orders")
+        expect(transaction.sampled).to eq(true)
+
+        allow(Random).to receive(:rand).and_return(0.2)
+        transaction = described_class.start_transaction(op: "rack.request", name: "/orders")
+        expect(transaction.sampled).to eq(false)
+      end
+
+      it "gives sidekiq ops 0.01 of rate" do
+        allow(Random).to receive(:rand).and_return(0.005)
+        transaction = described_class.start_transaction(op: "sidekiq")
+        expect(transaction.sampled).to eq(true)
+
+        allow(Random).to receive(:rand).and_return(0.02)
+        transaction = described_class.start_transaction(op: "sidekiq")
+        expect(transaction.sampled).to eq(false)
+      end
+    end
+
     context "when tracing is enabled" do
       before do
         Sentry.configuration.traces_sample_rate = 1.0
@@ -266,6 +374,25 @@ RSpec.describe Sentry do
           described_class.start_transaction(custom_sampling_context: { foo: "bar" })
 
           expect(context).to include({ foo: "bar" })
+        end
+      end
+
+      context "when event reporting is not enabled" do
+        let(:string_io) { StringIO.new }
+        let(:logger) do
+          ::Logger.new(string_io)
+        end
+        before do
+          Sentry.configuration.logger = logger
+          Sentry.configuration.enabled_environments = ["production"]
+        end
+
+        it "sets @sampled to false and return" do
+          transaction = described_class.start_transaction
+          expect(transaction).to eq(nil)
+          expect(string_io.string).not_to include(
+            "[Tracing]"
+          )
         end
       end
     end

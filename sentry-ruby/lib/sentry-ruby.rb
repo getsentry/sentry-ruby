@@ -7,7 +7,6 @@ require "sentry/exceptions"
 require "sentry/core_ext/object/deep_dup"
 require "sentry/utils/argument_checking_helper"
 require "sentry/utils/logging_helper"
-require "sentry/net/http"
 require "sentry/configuration"
 require "sentry/logger"
 require "sentry/event"
@@ -64,9 +63,26 @@ module Sentry
 
     attr_accessor :background_worker
 
+    @@registered_patches = []
+
+    def register_patch(&block)
+      registered_patches << block
+    end
+
+    def apply_patches(config)
+      registered_patches.each do |patch|
+        patch.call(config)
+      end
+    end
+
+    def registered_patches
+      @@registered_patches
+    end
+
     def init(&block)
       config = Configuration.new
       yield(config) if block_given?
+      apply_patches(config)
       client = Client.new(config)
       scope = Scope.new(max_breadcrumbs: config.max_breadcrumbs)
       hub = Hub.new(client, scope)
@@ -190,3 +206,6 @@ module Sentry
     end
   end
 end
+
+# patches
+require "sentry/net/http"

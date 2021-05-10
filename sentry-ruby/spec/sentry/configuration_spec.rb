@@ -2,39 +2,66 @@ require 'spec_helper'
 
 RSpec.describe Sentry::Configuration do
   describe "#tracing_enabled?" do
-    it "returns false by default" do
-      expect(subject.tracing_enabled?).to eq(false)
+    context "when sending not allowed" do
+      before do
+        allow(subject).to receive(:sending_allowed?).and_return(false)
+      end
+
+      context "when traces_sample_rate > 0" do
+        it "returns false" do
+          subject.traces_sample_rate = 0.1
+
+          expect(subject.tracing_enabled?).to eq(false)
+        end
+      end
+
+      context "when traces_sampler is set" do
+        it "returns false" do
+          subject.traces_sampler = proc { true }
+
+          expect(subject.tracing_enabled?).to eq(false)
+        end
+      end
     end
+    context "when sending allowed" do
+      before do
+        allow(subject).to receive(:sending_allowed?).and_return(true)
+      end
 
-    context "when traces_sample_rate > 1.0" do
-      it "returns false" do
-        subject.traces_sample_rate = 1.1
-
+      it "returns false by default" do
         expect(subject.tracing_enabled?).to eq(false)
       end
-    end
 
-    context "when traces_sample_rate == 0.0" do
-      it "returns true" do
-        subject.traces_sample_rate = 0
+      context "when traces_sample_rate > 1.0" do
+        it "returns false" do
+          subject.traces_sample_rate = 1.1
 
-        expect(subject.tracing_enabled?).to eq(true)
+          expect(subject.tracing_enabled?).to eq(false)
+        end
       end
-    end
 
-    context "when traces_sample_rate > 0" do
-      it "returns true" do
-        subject.traces_sample_rate = 0.1
+      context "when traces_sample_rate == 0.0" do
+        it "returns true" do
+          subject.traces_sample_rate = 0
 
-        expect(subject.tracing_enabled?).to eq(true)
+          expect(subject.tracing_enabled?).to eq(true)
+        end
       end
-    end
 
-    context "when traces_sampler is set" do
-      it "returns true" do
-        subject.traces_sampler = proc { true }
+      context "when traces_sample_rate > 0" do
+        it "returns true" do
+          subject.traces_sample_rate = 0.1
 
-        expect(subject.tracing_enabled?).to eq(true)
+          expect(subject.tracing_enabled?).to eq(true)
+        end
+      end
+
+      context "when traces_sampler is set" do
+        it "returns true" do
+          subject.traces_sampler = proc { true }
+
+          expect(subject.tracing_enabled?).to eq(true)
+        end
       end
     end
   end
