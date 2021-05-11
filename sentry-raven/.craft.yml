@@ -2,8 +2,8 @@ minVersion: '0.13.2'
 github:
     owner: getsentry
     repo: sentry-ruby
+    projectPath: sentry-raven
 changelogPolicy: simple
-changelog: sentry-raven/CHANGELOG.md
 preReleaseCommand: ruby .scripts/bump-version.rb
 releaseBranchPrefix: release-sentry-raven
 statusProvider:
