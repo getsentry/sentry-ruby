@@ -179,7 +179,7 @@ module Raven
       original_user_context = context.user
 
       if options
-        context.user.merge!(options)
+        context.user = context.user.merge(options)
       else
         context.user = {}
       end
