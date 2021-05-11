@@ -2,7 +2,6 @@ minVersion: '0.13.2'
 github:
     owner: getsentry
     repo: sentry-ruby
-    projectPath: sentry-delayed_job
 changelogPolicy: simple
 preReleaseCommand: ruby ../.scripts/bump-version.rb
 releaseBranchPrefix: release-sentry-delayed_job
