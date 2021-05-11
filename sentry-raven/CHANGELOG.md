@@ -1,5 +1,9 @@
 # Changelog
 
+## Unreleased
+
+- fix: user_context with block does not reset context after block exits
+
 ## 3.1.2
 
 - Fix Delayed::Plugins::Raven when job raises exception [#1057](https://github.com/getsentry/sentry-ruby/pull/1057)
