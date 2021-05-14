@@ -5,6 +5,18 @@ class WelcomeController < ApplicationController
     1 / 0
   end
 
+  def connect_trace
+    transaction = Sentry.get_current_scope.get_transaction
+    # see the sinatra example under the `sentry-ruby` folder
+    uri = URI("http://localhost:4567/connect_trace")
+    http = Net::HTTP.new(uri.host, uri.port)
+    request = Net::HTTP::Get.new(uri.request_uri)
+    request["SENTRY_TRACE"] = transaction.to_sentry_trace
+    response = http.request(request)
+
+    render plain: response.code
+  end
+
   def view_error
   end
 
