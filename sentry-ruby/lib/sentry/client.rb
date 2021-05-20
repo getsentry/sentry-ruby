@@ -30,7 +30,7 @@ module Sentry
 
       if async_block = configuration.async
         dispatch_async_event(async_block, event, hint)
-      elsif hint.fetch(:background, true)
+      elsif configuration.background_worker_threads != 0 && hint.fetch(:background, true)
         dispatch_background_event(event, hint)
       else
         send_event(event, hint)

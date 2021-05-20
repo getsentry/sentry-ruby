@@ -1,5 +1,11 @@
 # Changelog
 
+## Unreleased
+
+### Bug Fixes
+
+- Allow toggling background sending on the fly [#1447](https://github.com/getsentry/sentry-ruby/pull/1447) 
+
 ## 4.4.2
 
 - Fix NoMethodError when SDK's dsn is nil [#1433](https://github.com/getsentry/sentry-ruby/pull/1433)
