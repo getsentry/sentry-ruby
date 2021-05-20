@@ -32,6 +32,8 @@ module Sentry
 
   LOGGER_PROGNAME = "sentry".freeze
 
+  SENTRY_TRACE_HEADER_NAME = "sentry-trace".freeze
+
   THREAD_LOCAL = :sentry_hub
 
   def self.sdk_meta

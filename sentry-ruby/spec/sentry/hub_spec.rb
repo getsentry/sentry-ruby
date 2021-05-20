@@ -1,11 +1,16 @@
 require 'spec_helper'
 
 RSpec.describe Sentry::Hub do
+  let(:string_io) { StringIO.new }
+  let(:logger) do
+    ::Logger.new(string_io)
+  end
   let(:configuration) do
     config = Sentry::Configuration.new
     config.dsn = DUMMY_DSN
     config.transport.transport_class = Sentry::DummyTransport
     config.background_worker_threads = 0
+    config.logger = logger
     config
   end
   let(:client) { Sentry::Client.new(configuration) }

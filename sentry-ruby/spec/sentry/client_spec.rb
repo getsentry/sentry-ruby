@@ -360,4 +360,22 @@ RSpec.describe Sentry::Client do
       end
     end
   end
+
+  describe "#generate_sentry_trace" do
+    let(:string_io) { StringIO.new }
+    let(:logger) do
+      ::Logger.new(string_io)
+    end
+    before do
+      configuration.logger = logger
+    end
+    it "generates the trace with given span and logs correct message" do
+      another_span = Sentry::Span.new
+
+      expect(subject.generate_sentry_trace(another_span)).to eq(another_span.to_sentry_trace)
+      expect(string_io.string).to match(
+        /\[Tracing\] Adding sentry-trace header to outgoing request: #{another_span.to_sentry_trace}/
+      )
+    end
+  end
 end
