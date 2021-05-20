@@ -29,6 +29,14 @@ RSpec.describe Sentry::Rails, type: :request do
       expect(app.middleware.find_index(Sentry::Rails::RescuedExceptionInterceptor)).to eq(app.middleware.count - 1)
     end
 
+    it "inserts a callback to disable background_worker for the runner mode" do
+      Sentry.configuration.background_worker_threads = 10
+
+      Rails.application.load_runner
+
+      expect(Sentry.configuration.background_worker_threads).to eq(0)
+    end
+
     describe "logger detection" do
       it "sets Sentry.configuration.logger correctly" do
         expect(Sentry.configuration.logger).to eq(Rails.logger)

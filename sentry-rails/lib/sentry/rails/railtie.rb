@@ -26,6 +26,11 @@ module Sentry
       activate_tracing
     end
 
+    runner do
+      next unless Sentry.initialized?
+      Sentry.configuration.background_worker_threads = 0
+    end
+
     def configure_project_root
       Sentry.configuration.project_root = ::Rails.root.to_s
     end
