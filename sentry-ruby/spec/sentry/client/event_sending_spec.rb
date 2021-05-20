@@ -112,6 +112,16 @@ RSpec.describe Sentry::Client do
           expect(transport.events.count).to eq(1)
         end
       end
+
+      context "with config.background_worker_threads set to 0 on the fly" do
+        it "sends the event immediately" do
+          configuration.background_worker_threads = 0
+
+          subject.capture_event(event, scope)
+
+          expect(transport.events.count).to eq(1)
+        end
+      end
     end
   end
 
