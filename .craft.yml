@@ -1,14 +1,9 @@
-minVersion: '0.13.2'
+minVersion: '0.22.2'
 github:
     owner: getsentry
     repo: sentry-ruby
 changelogPolicy: simple
 preReleaseCommand: ruby .scripts/batch_release.rb
-releaseBranchPrefix: batch-release-sentry-ruby
-statusProvider:
-  name: github
-artifactProvider:
-  name: github
 targets:
     - name: gem
     - name: registry
@@ -31,3 +26,4 @@ targets:
       type: sdk
       config:
           canonical: 'gem:sentry-delayed_job'
+    - name: github
