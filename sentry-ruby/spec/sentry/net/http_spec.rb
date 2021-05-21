@@ -122,6 +122,51 @@ RSpec.describe Sentry::Net::HTTP do
       expect(request_span.data).to eq({ status: 200 })
     end
 
+    it "adds sentry-trace header to the request header" do
+      stub_normal_response
+
+      uri = URI("http://example.com/path")
+      http = Net::HTTP.new(uri.host, uri.port)
+      request = Net::HTTP::Get.new(uri.request_uri)
+
+      transaction = Sentry.start_transaction
+      Sentry.get_current_scope.set_span(transaction)
+
+      response = http.request(request)
+
+      expect(response.code).to eq("200")
+      expect(string_io.string).to match(
+        /\[Tracing\] Adding sentry-trace header to outgoing request:/
+      )
+      request_span = transaction.span_recorder.spans.last
+      expect(request["sentry-trace"]).to eq(request_span.to_sentry_trace)
+    end
+
+    context "with config.propagate_trace = false" do
+      before do
+        Sentry.configuration.propagate_traces = false
+      end
+
+      it "doesn't add the sentry-trace header to outgoing requests" do
+        stub_normal_response
+
+        uri = URI("http://example.com/path")
+        http = Net::HTTP.new(uri.host, uri.port)
+        request = Net::HTTP::Get.new(uri.request_uri)
+
+        transaction = Sentry.start_transaction
+        Sentry.get_current_scope.set_span(transaction)
+
+        response = http.request(request)
+
+        expect(response.code).to eq("200")
+        expect(string_io.string).not_to match(
+          /Adding sentry-trace header to outgoing request:/
+        )
+        expect(request.key?("sentry-trace")).to eq(false)
+      end
+    end
+
     it "doesn't record span for the SDK's request" do
       stub_sentry_response
 

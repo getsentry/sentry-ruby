@@ -360,4 +360,34 @@ RSpec.describe Sentry::Client do
       end
     end
   end
+
+  describe "#generate_sentry_trace" do
+    let(:string_io) { StringIO.new }
+    let(:logger) do
+      ::Logger.new(string_io)
+    end
+
+    before do
+      configuration.logger = logger
+    end
+
+    let(:span) { Sentry::Span.new }
+
+    it "generates the trace with given span and logs correct message" do
+      expect(subject.generate_sentry_trace(span)).to eq(span.to_sentry_trace)
+      expect(string_io.string).to match(
+        /\[Tracing\] Adding sentry-trace header to outgoing request: #{span.to_sentry_trace}/
+      )
+    end
+
+    context "with config.propagate_traces = false" do
+      before do
+        configuration.propagate_traces = false
+      end
+
+      it "returns nil" do
+        expect(subject.generate_sentry_trace(span)).to eq(nil)
+      end
+    end
+  end
 end

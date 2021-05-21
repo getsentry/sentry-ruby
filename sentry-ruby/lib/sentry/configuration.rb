@@ -106,6 +106,9 @@ module Sentry
     # Set automatically for Rails.
     attr_reader :project_root
 
+    # Insert sentry-trace to outgoing requests' headers
+    attr_accessor :propagate_traces
+
     # Array of rack env parameters to be included in the event sent to sentry.
     attr_accessor :rack_env_whitelist
 
@@ -190,6 +193,7 @@ module Sentry
       self.linecache = ::Sentry::LineCache.new
       self.logger = ::Sentry::Logger.new(STDOUT)
       self.project_root = Dir.pwd
+      self.propagate_traces = true
 
       self.release = detect_release
       self.sample_rate = 1.0

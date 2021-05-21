@@ -95,6 +95,14 @@ module Sentry
       raise
     end
 
+    def generate_sentry_trace(span)
+      return unless configuration.propagate_traces
+
+      trace = span.to_sentry_trace
+      log_debug("[Tracing] Adding #{SENTRY_TRACE_HEADER_NAME} header to outgoing request: #{trace}")
+      trace
+    end
+
     private
 
     def dispatch_background_event(event, hint)

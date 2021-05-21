@@ -5,7 +5,36 @@ module Sentry
     module HTTP
       OP_NAME = "net.http"
 
+      # To explain how the entire thing works, we need to know how the original Net::HTTP#request works
+      # Here's part of its definition. As you can see, it usually calls itself inside a #start block
+      #
+      # ```
+      # def request(req, body = nil, &block)
+      #   unless started?
+      #     start {
+      #       req['connection'] ||= 'close'
+      #       return request(req, body, &block) # <- request will be called for the second time from the first call
+      #     }
+      #   end
+      #   # .....
+      # end
+      # ```
+      #
+      # So when the entire flow looks like this:
+      #
+      # 1. #request is called.
+      #   - But because the request hasn't started yet, it calls #start (which then calls #do_start)
+      #   - At this moment @sentry_span is still nil, so #set_sentry_trace_header returns early
+      # 2. #do_start then creates a new Span and assigns it to @sentry_span
+      # 3. #request is called for the second time.
+      #   - This time @sentry_span should present. So #set_sentry_trace_header will set the sentry-trace header on the request object
+      # 4. Once the request finished, it
+      #   - Records a breadcrumb if http_logger is set
+      #   - Finishes the Span inside @sentry_span and clears the instance variable
+      #
       def request(req, body = nil, &block)
+        set_sentry_trace_header(req)
+
         super.tap do |res|
           record_sentry_breadcrumb(req, res)
           record_sentry_span(req, res)
@@ -25,6 +54,13 @@ module Sentry
       end
 
       private
+
+      def set_sentry_trace_header(req)
+        return unless @sentry_span
+
+        trace = Sentry.get_current_client.generate_sentry_trace(@sentry_span)
+        req[SENTRY_TRACE_HEADER_NAME] = trace if trace
+      end
 
       def record_sentry_breadcrumb(req, res)
         if Sentry.initialized? && Sentry.configuration.breadcrumbs_logger.include?(:http_logger)
