@@ -1,5 +1,12 @@
 # Changelog
 
+## Unreleased
+
+### Bug Fixes
+
+- Disable background worker for runner mode [#1448](https://github.com/getsentry/sentry-ruby/pull/1448)
+  - Fixes [#1324](https://github.com/getsentry/sentry-ruby/issues/1324)
+
 ## 4.4.0
 
 ### Features
