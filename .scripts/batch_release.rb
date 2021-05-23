@@ -37,8 +37,12 @@ GEMS.each do |gem_name|
   update_version_file(gem_name, version)
 end
 
-return if is_patch_version_bump
+unless is_patch_version_bump
+  INTEGRATIONS.each do |gem_name|
+    update_gemspec_dependency(gem_name, version)
+  end
+end
 
-INTEGRATIONS.each do |gem_name|
-  update_gemspec_dependency(gem_name, version)
+GEMS.each do |gem_name|
+  puts(`cd #{gem_name}; make build`)
 end

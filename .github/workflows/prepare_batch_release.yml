@@ -24,3 +24,8 @@ jobs:
         with:
           version: ${{ github.event.inputs.version }}
           force: ${{ github.event.inputs.force }}
+      - name: Archive Artifacts
+        uses: actions/upload-artifact@v2
+        with:
+          name: ${{ github.sha }}
+          path: sentry*/*.gem
