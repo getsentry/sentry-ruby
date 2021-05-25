@@ -19,6 +19,7 @@ require "sentry/background_worker"
 
 [
   "sentry/rake",
+  "sentry/lambda",
   "sentry/rack",
 ].each do |lib|
   begin

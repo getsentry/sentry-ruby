@@ -28,7 +28,7 @@ module Sentry
 
       # Set some simple default values
       @event_id      = SecureRandom.uuid.delete("-")
-      @timestamp     = Sentry.utc_now.iso8601
+      @timestamp     = Sentry.utc_now.round(10).iso8601(6)
       @platform      = :ruby
       @sdk           = integration_meta || Sentry.sdk_meta
 
