@@ -429,4 +429,12 @@ RSpec.describe Sentry::Configuration do
       expect(instance.var2). to eq 2
     end
   end
+
+  describe "#skip_rake_integration" do
+    it "returns true" do
+      subject.skip_rake_integration = true
+      expect(subject.skip_rake_integration).to eq(true)
+    end
+  end
+
 end
