@@ -1,0 +1,19 @@
+minVersion: '0.13.2'
+github:
+    owner: getsentry
+    repo: sentry-ruby
+changelogPolicy: simple
+preReleaseCommand: ruby ../.scripts/bump-version.rb
+releaseBranchPrefix: release-sentry-lambda
+statusProvider:
+  name: github
+artifactProvider:
+  name: github
+targets:
+    - name: gem
+    - name: registry
+      type: sdk
+      config:
+          canonical: 'gem:sentry-lambda'
+    - name: github
+      tagPrefix: sentry-lambda-v

@@ -1,5 +1,6 @@
 require 'spec_helper'
-require 'pry'
+require 'sentry/lambda/capture_exceptions'
+require 'sentry/lambda'
 
 RSpec.describe Sentry::Lambda::CaptureExceptions do
   let(:exception) { ZeroDivisionError.new("divided by 0") }
