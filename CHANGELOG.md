@@ -1,4 +1,4 @@
-## 4.5.0-beta.1
+## 4.5.0
 
 ### Features
 
@@ -13,6 +13,10 @@ Example:
 <img width="1283" alt="connect sentry trace" src="https://user-images.githubusercontent.com/5079556/118963250-d7b40980-b998-11eb-9de4-598d1b220137.png">
 
 This feature is activated by default. But users can use the new `config.propagate_traces` config option to disable it.
+
+- Add configuration option `skip_rake_integration` [#1453](https://github.com/getsentry/sentry-ruby/pull/1453)
+
+With this new option, users can skip exceptions reported from rake tasks by setting it `true`. Default is `false`.
 
 ### Bug Fixes
 
