@@ -1,11 +1,6 @@
 # Changelog
 
-## Unreleased
-
-### Bug Fixes
-
-- Disable background worker for runner mode [#1448](https://github.com/getsentry/sentry-ruby/pull/1448)
-  - Fixes [#1324](https://github.com/getsentry/sentry-ruby/issues/1324)
+Individual gem's changelog has been deprecated. Please check the [project changelog](https://github.com/getsentry/sentry-ruby/blob/master/CHANGELOG.md).
 
 ## 4.4.0
 
