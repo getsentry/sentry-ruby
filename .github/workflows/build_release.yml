@@ -14,7 +14,7 @@ jobs:
     - name: Set up Ruby
       uses: ruby/setup-ruby@v1
       with:
-        ruby-version: 2.6 # Not needed with a .ruby-version file
+        ruby-version: 2.7
     - name: Capture sdk name
       uses: actions-ecosystem/action-regex-match@v2
       id: regex-match
