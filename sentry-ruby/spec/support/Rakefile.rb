@@ -11,8 +11,6 @@ task :raise_exception do
 end
 
 task :raise_exception_without_rake_integration do
-  Sentry.init do |config|
-    config.skip_rake_integration = true
-  end
+  Sentry.configuration.skip_rake_integration = true
   1/0
 end

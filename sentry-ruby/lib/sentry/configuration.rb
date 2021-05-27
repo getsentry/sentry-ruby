@@ -130,7 +130,7 @@ module Sentry
     # will not be sent to Sentry.
     attr_accessor :send_default_pii
 
-    # Allow to skip Sentry emails within rake tasks 
+    # Allow to skip Sentry emails within rake tasks
     attr_accessor :skip_rake_integration
 
     # IP ranges for trusted proxies that will be skipped when calculating IP address.
@@ -202,6 +202,7 @@ module Sentry
       self.sample_rate = 1.0
       self.send_modules = true
       self.send_default_pii = false
+      self.skip_rake_integration = false
       self.trusted_proxies = []
       self.dsn = ENV['SENTRY_DSN']
       self.server_name = server_name_from_env
