@@ -3,8 +3,7 @@ source "https://rubygems.org"
 gem "sentry-ruby-core", path: "./"
 gem "sentry-ruby", path: "./"
 
-# TODO: Remove this if https://github.com/jruby/jruby/issues/6547 is addressed
-gem "i18n", "<= 1.8.7"
+gem "rack" unless ENV["WITHOUT_RACK"] == "1"
 
 gem "rake", "~> 12.0"
 gem "rspec", "~> 3.0"
@@ -12,10 +11,10 @@ gem "rspec-retry"
 gem "webmock"
 gem "timecop"
 gem "codecov", "0.2.12"
-gem "tapping_device"
 
+gem "object_tracer"
+gem "debug", github: "ruby/debug" if RUBY_VERSION.to_f >= 2.6
 gem "pry"
-gem "rack" unless ENV["WITHOUT_RACK"] == "1"
 
 gem "benchmark-ips"
 gem "benchmark_driver"

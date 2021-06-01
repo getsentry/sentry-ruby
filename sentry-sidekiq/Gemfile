@@ -3,8 +3,6 @@ source "https://rubygems.org"
 # Specify your gem's dependencies in sentry-ruby.gemspec
 gemspec
 
-gem "i18n", "~> 1.8.9"
-
 gem "rake", "~> 12.0"
 gem "rspec", "~> 3.0"
 gem "codecov", "0.2.12"
@@ -15,4 +13,6 @@ gem "rails"
 gem "sentry-ruby", path: "../sentry-ruby"
 gem "sentry-rails", path: "../sentry-rails"
 
+gem "object_tracer"
+gem "debug", github: "ruby/debug" if RUBY_VERSION.to_f >= 2.6
 gem "pry"
