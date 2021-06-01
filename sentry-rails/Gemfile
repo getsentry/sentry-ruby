@@ -28,9 +28,6 @@ gem "codecov", "0.2.12"
 
 gem "rake", "~> 12.0"
 
-# TODO: Remove this if https://github.com/jruby/jruby/issues/6547 is addressed
-gem "i18n", "<= 1.8.7"
-
 gem "object_tracer"
 gem "debug", github: "ruby/debug" if RUBY_VERSION.to_f >= 2.6
 gem "pry"
