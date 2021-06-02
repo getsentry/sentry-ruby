@@ -1,26 +1,13 @@
-minVersion: '0.22.2'
+minVersion: '0.23.1'
 changelogPolicy: simple
 preReleaseCommand: ruby .scripts/batch_release.rb
 targets:
     - name: gem
     - name: registry
-      type: sdk
-      config:
-          canonical: 'gem:sentry-ruby'
-    - name: registry
-      type: sdk
-      config:
-          canonical: 'gem:sentry-ruby-core'
-    - name: registry
-      type: sdk
-      config:
-          canonical: 'gem:sentry-rails'
-    - name: registry
-      type: sdk
-      config:
-          canonical: 'gem:sentry-sidekiq'
-    - name: registry
-      type: sdk
-      config:
-          canonical: 'gem:sentry-delayed_job'
+      sdks:
+        'gem:sentry-ruby':
+        'gem:sentry-ruby-core':
+        'gem:sentry-rails':
+        'gem:sentry-sidekiq':
+        'gem:sentry-delayed_job':
     - name: github
