@@ -1,10 +1,7 @@
-name: Prepare Release
+name: Prepare Raven Release
 on:
   workflow_dispatch:
     inputs:
-      sdk_name:
-        description: SDK to release (sentry-raven, sentry-rails, sentry-ruby, sentry-sidekiq, sentry-delayed_job)
-        required: true
       version:
         description: Version to release
         required: true
@@ -25,6 +22,6 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GH_RELEASE_PAT }}
         with:
-          path: ${{ github.event.inputs.sdk_name }}
+          path: sentry-raven
           version: ${{ github.event.inputs.version }}
           force: ${{ github.event.inputs.force }}
