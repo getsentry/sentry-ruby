@@ -1,13 +1,14 @@
 require "spec_helper"
 
 RSpec.describe "Sentry::Breadcrumbs::ActiveSupportLogger", type: :request do
-  before(:all) do
+  before do
     make_basic_app do |sentry_config|
       sentry_config.breadcrumbs_logger = [:active_support_logger]
+      sentry_config.traces_sample_rate = 1.0
     end
   end
 
-  after(:all) do
+  after do
     require 'sentry/rails/breadcrumb/active_support_logger'
     Sentry::Rails::Breadcrumb::ActiveSupportLogger.detach
     # even though we cleanup breadcrumbs in the rack middleware
