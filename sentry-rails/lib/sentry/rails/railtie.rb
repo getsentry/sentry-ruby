@@ -12,13 +12,19 @@ module Sentry
       app.config.middleware.use(Sentry::Rails::RescuedExceptionInterceptor)
     end
 
+    # because the extension works by registering the around_perform callcack, it should always be ran
+    # before the application is eager-loaded (before user's jobs register their own callbacks)
+    # See https://github.com/getsentry/sentry-ruby/issues/1249#issuecomment-853871871 for the detail explanation
+    initializer "sentry.extend_active_job", before: :eager_load! do |app|
+      extend_active_job if defined?(ActiveJob)
+    end
+
     config.after_initialize do |app|
       next unless Sentry.initialized?
 
       configure_project_root
       configure_trusted_proxies
       extend_controller_methods if defined?(ActionController)
-      extend_active_job if defined?(ActiveJob)
       patch_background_worker if defined?(ActiveRecord)
       override_streaming_reporter if defined?(ActionView)
       setup_backtrace_cleanup_callback
