@@ -80,6 +80,9 @@ RSpec.describe Sentry::Rails::Tracing, type: :request do
       expect(first_span[:timestamp] - first_span[:start_timestamp]).to be_between(10.0 / 1_000_000, 10.0 / 1000)
 
       last_span = transaction[:spans][2]
+      expect(last_span[:data][:payload].keys).not_to include(:headers)
+      expect(last_span[:data][:payload].keys).not_to include(:request)
+      expect(last_span[:data][:payload].keys).not_to include(:response)
       expect(last_span[:op]).to eq("process_action.action_controller")
       expect(last_span[:description]).to eq("PostsController#show")
       expect(last_span[:parent_span_id]).to eq(parent_span_id)

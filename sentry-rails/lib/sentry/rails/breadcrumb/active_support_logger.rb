@@ -1,9 +1,11 @@
+require "sentry/rails/instrument_payload_cleanup_helper"
+
 module Sentry
   module Rails
     module Breadcrumb
       module ActiveSupportLogger
         class << self
-          IGNORED_DATA_TYPES = [:request, :headers, :exception, :exception_object]
+          include InstrumentPayloadCleanupHelper
 
           def add(name, started, _finished, _unique_id, data)
             # skip Rails' internal events
@@ -21,12 +23,6 @@ module Sentry
               timestamp: started.to_i
             )
             Sentry.add_breadcrumb(crumb)
-          end
-
-          def cleanup_data(data)
-            IGNORED_DATA_TYPES.each do |key|
-              data.delete(key) if data.key?(key)
-            end
           end
 
           def inject

@@ -1,9 +1,12 @@
 require "sentry/rails/tracing/abstract_subscriber"
+require "sentry/rails/instrument_payload_cleanup_helper"
 
 module Sentry
   module Rails
     module Tracing
       class ActionControllerSubscriber < AbstractSubscriber
+        extend InstrumentPayloadCleanupHelper
+
         EVENT_NAME = "process_action.action_controller".freeze
 
         def self.subscribe!
@@ -18,8 +21,7 @@ module Sentry
               duration: duration
             ) do |span|
               payload = payload.dup
-              payload.delete(:headers)
-              payload.delete(:request)
+              cleanup_data(payload)
               span.set_data(:payload, payload)
               span.set_http_status(payload[:status])
             end

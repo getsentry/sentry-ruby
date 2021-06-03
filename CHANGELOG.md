@@ -1,3 +1,10 @@
+## Unreleased
+
+### Bug Fixes
+
+- Remove response from breadcrumb and span [#1463](https://github.com/getsentry/sentry-ruby/pull/1463)
+  - Fixes the issue mentioned in this [comment](https://github.com/getsentry/sentry-ruby/pull/1199#issuecomment-773069840)
+
 ## 4.5.0
 
 ### Features
