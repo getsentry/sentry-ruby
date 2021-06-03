@@ -3,7 +3,7 @@ module Sentry
     module Breadcrumb
       module ActiveSupportLogger
         class << self
-          IGNORED_DATA_TYPES = [:request, :headers, :exception, :exception_object]
+          IGNORED_DATA_TYPES = [:request, :response, :headers, :exception, :exception_object]
 
           def add(name, started, _finished, _unique_id, data)
             # skip Rails' internal events
