@@ -26,7 +26,12 @@ end
 Sidekiq.configure_server do |config|
   config.error_handlers << Sentry::Sidekiq::ErrorHandler.new
   config.server_middleware do |chain|
-    chain.add Sentry::Sidekiq::SentryContextMiddleware
+    chain.add Sentry::Sidekiq::SentryContextServerMiddleware
   end
 end
 
+Sidekiq.configure_client do |config|
+  config.client_middleware do |chain|
+    chain.add Sentry::Sidekiq::SentryContextClientMiddleware
+  end
+end
