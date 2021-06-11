@@ -84,6 +84,7 @@ module Sentry
     def init(&block)
       config = Configuration.new
       yield(config) if block_given?
+      config.detect_release
       apply_patches(config)
       client = Client.new(config)
       scope = Scope.new(max_breadcrumbs: config.max_breadcrumbs)

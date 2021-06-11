@@ -198,7 +198,6 @@ module Sentry
       self.project_root = Dir.pwd
       self.propagate_traces = true
 
-      self.release = detect_release
       self.sample_rate = 1.0
       self.send_modules = true
       self.send_default_pii = false
@@ -314,16 +313,18 @@ module Sentry
       )
     end
 
-    private
-
     def detect_release
-      detect_release_from_env ||
+      return unless sending_allowed?
+
+      self.release ||= detect_release_from_env ||
         detect_release_from_git ||
         detect_release_from_capistrano ||
         detect_release_from_heroku
     rescue => e
       log_error("Error detecting release", e, debug: debug)
     end
+
+    private
 
     def excluded_exception?(incoming_exception)
       excluded_exception_classes.any? do |excluded_exception|

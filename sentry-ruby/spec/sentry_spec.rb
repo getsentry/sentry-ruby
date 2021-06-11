@@ -464,4 +464,192 @@ RSpec.describe Sentry do
       expect(described_class.get_current_scope.user).to eq(id: 1)
     end
   end
+
+  describe 'release detection' do
+    let(:fake_root) { "/tmp/sentry/" }
+
+    before do
+      allow(File).to receive(:directory?).and_return(false)
+      allow_any_instance_of(Sentry::Configuration).to receive(:project_root).and_return(fake_root)
+      ENV["SENTRY_DSN"] = DUMMY_DSN
+    end
+
+    subject { described_class.configuration }
+
+    it 'defaults to nil' do
+      described_class.init
+      expect(described_class.configuration.release).to eq(nil)
+    end
+
+    it "respects user's config" do
+      described_class.init do |config|
+        config.release = "foo"
+      end
+
+      expect(described_class.configuration.release).to eq("foo")
+    end
+
+    it 'uses `SENTRY_RELEASE` env variable' do
+      ENV['SENTRY_RELEASE'] = 'v1'
+
+      described_class.init
+      expect(described_class.configuration.release).to eq('v1')
+
+      ENV.delete('SENTRY_CURRENT_ENV')
+    end
+
+    context "when the DSN is not set" do
+      before do
+        ENV.delete("SENTRY_DSN")
+      end
+
+      it "doesn't detect release" do
+        ENV['SENTRY_RELEASE'] = 'v1'
+
+        described_class.init
+        expect(described_class.configuration.release).to eq(nil)
+
+        ENV.delete('SENTRY_CURRENT_ENV')
+      end
+    end
+
+    context "when the SDK is not enabled under the current env" do
+      it "doesn't detect release" do
+        ENV['SENTRY_RELEASE'] = 'v1'
+
+        described_class.init do |config|
+          config.enabled_environments = "production"
+        end
+
+        expect(described_class.configuration.release).to eq(nil)
+
+        ENV.delete('SENTRY_CURRENT_ENV')
+      end
+    end
+
+    context "when git is available" do
+      before do
+        allow(File).to receive(:directory?).and_return(false)
+        allow(File).to receive(:directory?).with(".git").and_return(true)
+      end
+      it 'gets release from git' do
+        allow(Sentry).to receive(:`).with("git rev-parse --short HEAD 2>&1").and_return("COMMIT_SHA")
+
+        described_class.init
+        expect(described_class.configuration.release).to eq('COMMIT_SHA')
+      end
+    end
+
+    context "when Capistrano is available" do
+      let(:revision) { "2019010101000" }
+
+      before do
+        Dir.mkdir(fake_root) unless Dir.exist?(fake_root)
+        File.write(filename, file_content)
+      end
+
+      after do
+        File.delete(filename)
+        Dir.delete(fake_root)
+      end
+
+      context "when the REVISION file is present" do
+        let(:filename) do
+          File.join(fake_root, "REVISION")
+        end
+        let(:file_content) { revision }
+
+        it "gets release from the REVISION file" do
+          described_class.init
+          expect(described_class.configuration.release).to eq(revision)
+        end
+      end
+
+      context "when the revisions.log file is present" do
+        let(:filename) do
+          File.join(fake_root, "..", "revisions.log")
+        end
+        let(:file_content) do
+          "Branch master (at COMMIT_SHA) deployed as release #{revision} by alice"
+        end
+
+        it "gets release from the REVISION file" do
+          described_class.init
+          expect(described_class.configuration.release).to eq(revision)
+        end
+      end
+    end
+
+    context "when running on heroku" do
+      before do
+        allow(File).to receive(:directory?).and_return(false)
+        allow(File).to receive(:directory?).with("/etc/heroku").and_return(true)
+      end
+
+      context "when it's on heroku ci" do
+        it "returns nil" do
+          begin
+            original_ci_val = ENV["CI"]
+            ENV["CI"] = "true"
+
+            described_class.init
+            expect(described_class.configuration.release).to eq(nil)
+          ensure
+            ENV["CI"] = original_ci_val
+          end
+        end
+      end
+
+      context "when it's not on heroku ci" do
+        around do |example|
+          begin
+            original_ci_val = ENV["CI"]
+            ENV["CI"] = nil
+
+            example.run
+          ensure
+            ENV["CI"] = original_ci_val
+          end
+        end
+
+        it "returns nil + logs an warning if HEROKU_SLUG_COMMIT is not set" do
+          string_io = StringIO.new
+          logger = Logger.new(string_io)
+
+          described_class.init do |config|
+            config.logger = logger
+          end
+
+          expect(described_class.configuration.release).to eq(nil)
+          expect(string_io.string).to include(Sentry::Configuration::HEROKU_DYNO_METADATA_MESSAGE)
+        end
+
+        it "returns HEROKU_SLUG_COMMIT" do
+          begin
+            ENV["HEROKU_SLUG_COMMIT"] = "REVISION"
+
+            described_class.init
+            expect(described_class.configuration.release).to eq("REVISION")
+          ensure
+            ENV["HEROKU_SLUG_COMMIT"] = nil
+          end
+        end
+      end
+
+      context "when having an error detecting the release" do
+        it "logs the error" do
+          string_io = StringIO.new
+          logger = Logger.new(string_io)
+          allow_any_instance_of(Sentry::Configuration).to receive(:detect_release_from_git).and_raise(TypeError.new)
+
+          described_class.init do |config|
+            config.logger = logger
+          end
+
+          expect(string_io.string).to include("ERROR -- sentry: Error detecting release: TypeError")
+        end
+      end
+    end
+  end
+
 end
