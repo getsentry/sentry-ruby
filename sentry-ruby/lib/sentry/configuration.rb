@@ -314,6 +314,8 @@ module Sentry
     end
 
     def detect_release
+      return unless sending_allowed?
+
       self.release ||= detect_release_from_env ||
         detect_release_from_git ||
         detect_release_from_capistrano ||

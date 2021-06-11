@@ -471,6 +471,7 @@ RSpec.describe Sentry do
     before do
       allow(File).to receive(:directory?).and_return(false)
       allow_any_instance_of(Sentry::Configuration).to receive(:project_root).and_return(fake_root)
+      ENV["SENTRY_DSN"] = DUMMY_DSN
     end
 
     subject { described_class.configuration }
@@ -495,6 +496,35 @@ RSpec.describe Sentry do
       expect(described_class.configuration.release).to eq('v1')
 
       ENV.delete('SENTRY_CURRENT_ENV')
+    end
+
+    context "when the DSN is not set" do
+      before do
+        ENV.delete("SENTRY_DSN")
+      end
+
+      it "doesn't detect release" do
+        ENV['SENTRY_RELEASE'] = 'v1'
+
+        described_class.init
+        expect(described_class.configuration.release).to eq(nil)
+
+        ENV.delete('SENTRY_CURRENT_ENV')
+      end
+    end
+
+    context "when the SDK is not enabled under the current env" do
+      it "doesn't detect release" do
+        ENV['SENTRY_RELEASE'] = 'v1'
+
+        described_class.init do |config|
+          config.enabled_environments = "production"
+        end
+
+        expect(described_class.configuration.release).to eq(nil)
+
+        ENV.delete('SENTRY_CURRENT_ENV')
+      end
     end
 
     context "when git is available" do
