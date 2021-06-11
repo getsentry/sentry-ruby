@@ -1,3 +1,10 @@
+## 4.5.2 (unreleased)
+
+### Bug Fixes
+
+- Disable release detection when SDK is not configured to send events [#1471](https://github.com/getsentry/sentry-ruby/pull/1471)
+  - Fixes [#885](https://github.com/getsentry/sentry-ruby/issues/885)
+
 ## 4.5.1
 
 ### Bug Fixes
