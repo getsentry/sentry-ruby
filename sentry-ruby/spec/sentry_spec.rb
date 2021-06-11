@@ -480,6 +480,14 @@ RSpec.describe Sentry do
       expect(described_class.configuration.release).to eq(nil)
     end
 
+    it "respects user's config" do
+      described_class.init do |config|
+        config.release = "foo"
+      end
+
+      expect(described_class.configuration.release).to eq("foo")
+    end
+
     it 'uses `SENTRY_RELEASE` env variable' do
       ENV['SENTRY_RELEASE'] = 'v1'
 
@@ -577,9 +585,11 @@ RSpec.describe Sentry do
         it "returns nil + logs an warning if HEROKU_SLUG_COMMIT is not set" do
           string_io = StringIO.new
           logger = Logger.new(string_io)
-          allow_any_instance_of(Sentry::Configuration).to receive(:logger).and_return(logger)
 
-          described_class.init
+          described_class.init do |config|
+            config.logger = logger
+          end
+
           expect(described_class.configuration.release).to eq(nil)
           expect(string_io.string).to include(Sentry::Configuration::HEROKU_DYNO_METADATA_MESSAGE)
         end
@@ -600,7 +610,6 @@ RSpec.describe Sentry do
         it "logs the error" do
           string_io = StringIO.new
           logger = Logger.new(string_io)
-          allow_any_instance_of(Sentry::Configuration).to receive(:logger).and_return(logger)
           allow_any_instance_of(Sentry::Configuration).to receive(:detect_release_from_git).and_raise(TypeError.new)
 
           described_class.init do |config|
