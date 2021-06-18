@@ -5,46 +5,67 @@ RSpec.describe Sentry::Resque do
     perform_basic_setup
   end
 
+  class FailedJob
+    def self.perform
+      1/0
+    end
+  end
+
+  class TaggedFailedJob
+    def self.perform
+      Sentry.set_tags(number: 1)
+      1/0
+    end
+  end
+
+  class MessageJob
+    def self.perform(msg)
+      Sentry.capture_message(msg)
+    end
+  end
+
+  class TaggedMessageJob
+    def self.perform(msg)
+      Sentry.set_tags(number: 1)
+      Sentry.capture_message(msg)
+    end
+  end
+
+  around do |example|
+    ENV["FORK_PER_JOB"] = 'false'
+    Resque.redis.del "queue:default"
+    example.run
+    ENV["FORK_PER_JOB"] = ''
+  end
+
   let(:transport) do
     Sentry.get_current_client.transport
   end
 
-  class Post
-    def raise_error
-      1 / 0
-    end
+  let(:worker) do
+    Resque::Worker.new(:default)
+  end
 
-    def tagged_error(number: 1)
-      Sentry.set_tags(number: number)
-      raise
-    end
-
-    def tagged_report(number: 1)
-      Sentry.set_tags(number: number)
-      Sentry.capture_message("tagged report")
-    end
-
-    def report
-      Sentry.capture_message("report")
-    end
+  let(:job) do
+    Resque::Job.create(:default, Foo)
   end
 
   it "sets correct extra/tags context for each job" do
-    Post.new.delay.report
-    enqueued_job = Delayed::Backend::ActiveRecord::Job.last
-    enqueued_job.invoke_job
+    Resque::Job.create(:default, MessageJob, "report")
+
+    worker.work_one_job
 
     expect(transport.events.count).to eq(1)
     event = transport.events.last.to_hash
     expect(event[:message]).to eq("report")
-    expect(event[:contexts][:"Delayed-Job"][:id]).to eq(enqueued_job.id.to_s)
-    expect(event[:tags]).to eq({ "resque.id" => enqueued_job.id.to_s, "resque.queue" => nil })
+    expect(event[:tags]).to eq({ "resque.queue" => "default" })
+    expect(event[:contexts][:"Resque"]).to include({ job_class: "MessageJob", arguments: ["report"], queue: "default" })
   end
 
   it "doesn't leak scope data outside of the job" do
-    Post.new.delay.report
-    enqueued_job = Delayed::Backend::ActiveRecord::Job.last
-    enqueued_job.invoke_job
+    Resque::Job.create(:default, MessageJob, "report")
+
+    worker.work_one_job
 
     expect(transport.events.count).to eq(1)
     expect(Sentry.get_current_scope.extra).to eq({})
@@ -52,100 +73,62 @@ RSpec.describe Sentry::Resque do
   end
 
   it "doesn't share scope data between jobs" do
-    Post.new.delay.tagged_report
-    enqueued_job = Delayed::Backend::ActiveRecord::Job.last
-    enqueued_job.invoke_job
+    Resque::Job.create(:default, TaggedMessageJob, "tagged report")
+
+    worker.work_one_job
 
     expect(transport.events.count).to eq(1)
     event = transport.events.last.to_hash
     expect(event[:message]).to eq("tagged report")
-    expect(event[:tags]).to eq({ "resque.id" => enqueued_job.id.to_s, "resque.queue" => nil, number: 1 })
+    expect(event[:tags]).to include({ number: 1 })
 
-    Post.new.delay.report
-    enqueued_job = Delayed::Backend::ActiveRecord::Job.last
-    enqueued_job.invoke_job
+    Resque::Job.create(:default, MessageJob, "report")
+
+    worker.work_one_job
 
     expect(transport.events.count).to eq(2)
     event = transport.events.last.to_hash
-    expect(event[:tags]).to eq({ "resque.id" => enqueued_job.id.to_s, "resque.queue" => nil })
+    expect(event[:tags]).to eq({ "resque.queue" => "default" })
   end
 
   context "when a job failed" do
-    let(:enqueued_job) do
-      Post.new.delay.raise_error
-      enqueued_job = Delayed::Backend::ActiveRecord::Job.last
-    end
-
     it "reports exception" do
       expect do
-        enqueued_job.invoke_job
-      end.to raise_error(ZeroDivisionError)
+        Resque::Job.create(:default, FailedJob)
+        worker.work_one_job
+      end.to change { worker.failed }.by(1)
 
       expect(transport.events.count).to eq(1)
       event = transport.events.last.to_hash
 
       expect(event[:sdk]).to eq({ name: "sentry.ruby.resque", version: described_class::VERSION })
       expect(event.dig(:exception, :values, 0, :type)).to eq("ZeroDivisionError")
-      expect(event[:tags]).to eq({ "resque.id" => enqueued_job.id.to_s, "resque.queue" => nil })
+      expect(event[:tags]).to eq({ "resque.queue" => "default" })
     end
 
     it "doesn't leak scope data" do
-      Post.new.delay.tagged_error
-      enqueued_job = Delayed::Backend::ActiveRecord::Job.last
-
       expect do
-        enqueued_job.invoke_job
-      end.to raise_error(RuntimeError)
+        Resque::Job.create(:default, TaggedFailedJob)
+        worker.work_one_job
+      end.to change { worker.failed }.by(1)
 
       expect(transport.events.count).to eq(1)
       event = transport.events.last.to_hash
 
-      expect(event[:tags]).to eq({ "resque.id" => enqueued_job.id.to_s, "resque.queue" => nil, number: 1 })
+      expect(event[:tags]).to eq({ "resque.queue" => "default", number: 1})
       expect(Sentry.get_current_scope.extra).to eq({})
       expect(Sentry.get_current_scope.tags).to eq({})
 
-      Post.new.delay.raise_error
-      enqueued_job = Delayed::Backend::ActiveRecord::Job.last
-
       expect do
-        enqueued_job.invoke_job
-      end.to raise_error(ZeroDivisionError)
+        Resque::Job.create(:default, FailedJob)
+        worker.work_one_job
+      end.to change { worker.failed }.by(1)
 
       expect(transport.events.count).to eq(2)
       event = transport.events.last.to_hash
-      expect(event[:tags]).to eq({ "resque.id" => enqueued_job.id.to_s, "resque.queue" => nil })
+      expect(event[:tags]).to eq({ "resque.queue" => "default" })
       expect(Sentry.get_current_scope.extra).to eq({})
       expect(Sentry.get_current_scope.tags).to eq({})
-    end
-
-    context "with report_after_job_retries set to true" do
-      before do
-        Sentry.configuration.resque.report_after_job_retries = true
-      end
-
-      after do
-        Sentry.configuration.resque.report_after_job_retries = false
-      end
-
-      it "reports exception after the last retry" do
-        enqueued_job.update(attempts: Delayed::Worker.max_attempts.succ)
-
-        expect do
-          enqueued_job.invoke_job
-        end.to raise_error(ZeroDivisionError)
-
-        expect(transport.events.count).to eq(1)
-      end
-
-      it "skips report if not on the last retry" do
-        enqueued_job.update(attempts: 0)
-
-        expect do
-          enqueued_job.invoke_job
-        end.to raise_error(ZeroDivisionError)
-
-        expect(transport.events.count).to eq(0)
-      end
     end
   end
 
@@ -154,16 +137,16 @@ RSpec.describe Sentry::Resque do
     require "active_job"
     require "sentry-rails"
 
-    class ReportingJob < ActiveJob::Base
+    class AJMessageJob < ActiveJob::Base
       self.queue_adapter = :resque
 
-      def perform
+      def perform(msg)
         Sentry.set_tags(number: 1)
-        Sentry.capture_message("report from ActiveJob")
+        Sentry.capture_message(msg)
       end
     end
 
-    class FailedJob < ActiveJob::Base
+    class AJFailedJob < ActiveJob::Base
       self.queue_adapter = :resque
 
       def perform
@@ -186,10 +169,9 @@ RSpec.describe Sentry::Resque do
 
     context "when the job succeeded" do
       before do
-        ReportingJob.perform_later
+        AJMessageJob.perform_later("report from ActiveJob")
 
-        enqueued_job = Delayed::Backend::ActiveRecord::Job.last
-        enqueued_job.invoke_job
+        worker.work_one_job
       end
 
       it "doesn't leak scope data" do
@@ -203,20 +185,18 @@ RSpec.describe Sentry::Resque do
 
         event = transport.events.last.to_hash
         expect(event[:message]).to eq("report from ActiveJob")
-        expect(event[:tags]).to match({ "resque.id" => anything, "resque.queue" => "default", number: 1 })
-        expect(event[:contexts][:"Active-Job"][:job_class]).to eq("ReportingJob")
+        expect(event[:tags]).to match({ "resque.queue" => "default", number: 1 })
+        expect(event[:contexts][:"Active-Job"][:job_class]).to eq("AJMessageJob")
       end
     end
 
     context "when the job failed" do
       before do
-        FailedJob.perform_later
-
-        enqueued_job = Delayed::Backend::ActiveRecord::Job.last
+        AJFailedJob.perform_later
 
         expect do
-          enqueued_job.invoke_job
-        end.to raise_error(ZeroDivisionError)
+          worker.work_one_job
+        end.to change { worker.failed }.by(1)
       end
 
       it "doesn't duplicate error reporting" do
@@ -230,8 +210,8 @@ RSpec.describe Sentry::Resque do
 
         event = transport.events.last.to_hash
         expect(event.dig(:exception, :values, 0, :type)).to eq("ZeroDivisionError")
-        expect(event[:tags]).to match({ "resque.id" => anything, "resque.queue" => "default", number: 2 })
-        expect(event[:contexts][:"Active-Job"][:job_class]).to eq("FailedJob")
+        expect(event[:tags]).to match({ "resque.queue" => "default", number: 2 })
+        expect(event[:contexts][:"Active-Job"][:job_class]).to eq("AJFailedJob")
       end
     end
   end
@@ -239,19 +219,20 @@ end
 
 
 RSpec.describe Sentry::Resque, "not initialized" do
-  class Thing
-    def self.invoked_method; end
+  class FailedJob
+    def self.perform
+      1/0
+    end
+  end
+
+  let(:worker) do
+    Resque::Worker.new(:default)
   end
 
   it "doesn't swallow jobs" do
-    expect(Thing).to receive(:invoked_method)
-    Delayed::Job.delete_all
-    expect(Delayed::Job.count).to eq(0)
-
-    Thing.delay.invoked_method
-    expect(Delayed::Job.count).to eq(1)
-
-    Delayed::Worker.new.run(Delayed::Job.last)
-    expect(Delayed::Job.count).to eq(0)
+    expect do
+      Resque::Job.create(:default, FailedJob)
+      worker.work_one_job
+    end.to change { worker.failed }.by(1)
   end
 end

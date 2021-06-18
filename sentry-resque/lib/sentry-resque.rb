@@ -3,7 +3,7 @@ require "sentry-ruby"
 require "sentry/integrable"
 require "sentry/resque/configuration"
 require "sentry/resque/version"
-require "sentry/resque/plugin"
+require "sentry/resque"
 
 module Sentry
   module Resque
