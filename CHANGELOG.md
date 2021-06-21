@@ -1,5 +1,9 @@
 ## 4.5.2 (unreleased)
 
+### Refactoring
+
+- Remove redundant files [#1477](https://github.com/getsentry/sentry-ruby/pull/1477)
+
 ### Bug Fixes
 
 - Disable release detection when SDK is not configured to send events [#1471](https://github.com/getsentry/sentry-ruby/pull/1471)
