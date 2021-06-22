@@ -16,9 +16,9 @@ class WelcomeController < ApplicationController
   def view_error
   end
 
-  def worker_error
+  def sidekiq_error
     ErrorWorker.perform_async
-    render plain: "success"
+    render plain: "Remember to start sidekiq worker with '$ bundle exec sidekiq'"
   end
 
   def job_error

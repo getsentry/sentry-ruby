@@ -5,7 +5,7 @@ Rails.application.routes.draw do
 
   get 'connect_trace', to: 'welcome#connect_trace'
   get 'view_error', to: 'welcome#view_error'
-  get 'worker_error', to: 'welcome#worker_error'
+  get 'sidekiq_error', to: 'welcome#sidekiq_error'
   get 'job_error', to: 'welcome#job_error'
 
   require 'sidekiq/web'
