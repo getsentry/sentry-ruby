@@ -21,6 +21,11 @@ class WelcomeController < ApplicationController
     render plain: "Remember to start sidekiq worker with '$ bundle exec sidekiq'"
   end
 
+  def resque_error
+    Resque.enqueue(RaiseError)
+    render plain: "Remember to start resque worker with '$ QUEUE=* bundle exec rake resque:work'"
+  end
+
   def job_error
     ErrorJob.perform_later
     render plain: "success"

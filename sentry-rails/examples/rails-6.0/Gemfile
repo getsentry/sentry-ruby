@@ -25,7 +25,10 @@ gem 'jbuilder', '~> 2.7'
 
 gem 'sentry-ruby', path: "../../../sentry-ruby"
 gem 'sentry-sidekiq', path: "../../../sentry-sidekiq"
+gem 'sentry-resque', path: "../../../sentry-resque"
 gem 'sentry-rails', path: "../../"
+
+gem "resque"
 gem "sidekiq"
 
 gem 'pry'
@@ -54,8 +57,6 @@ group :test do
   # Easy installation and use of web drivers to run system tests with browsers
   gem 'webdrivers'
 end
-
-gem 'sidekiq'
 
 # Windows does not include zoneinfo files, so bundle the tzinfo-data gem
 gem 'tzinfo-data', platforms: [:mingw, :mswin, :x64_mingw, :jruby]
