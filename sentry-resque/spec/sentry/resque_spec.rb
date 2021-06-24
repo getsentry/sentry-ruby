@@ -39,10 +39,6 @@ RSpec.describe Sentry::Resque do
     Resque::Worker.new(:default)
   end
 
-  let(:job) do
-    Resque::Job.create(:default, Foo)
-  end
-
   it "sets correct extra/tags context for each job" do
     Resque::Job.create(:default, MessageJob, "report")
 

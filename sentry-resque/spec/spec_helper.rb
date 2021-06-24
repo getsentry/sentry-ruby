@@ -50,12 +50,6 @@ RSpec.configure do |config|
   end
 end
 
-def build_exception
-  1 / 0
-rescue ZeroDivisionError => e
-  e
-end
-
 def perform_basic_setup
   Sentry.init do |config|
     config.dsn = DUMMY_DSN
