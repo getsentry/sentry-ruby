@@ -31,23 +31,12 @@ RSpec.describe Sentry::Resque do
     end
   end
 
-  around do |example|
-    ENV["FORK_PER_JOB"] = 'false'
-    Resque.redis.del "queue:default"
-    example.run
-    ENV["FORK_PER_JOB"] = ''
-  end
-
   let(:transport) do
     Sentry.get_current_client.transport
   end
 
   let(:worker) do
     Resque::Worker.new(:default)
-  end
-
-  let(:job) do
-    Resque::Job.create(:default, Foo)
   end
 
   it "sets correct extra/tags context for each job" do

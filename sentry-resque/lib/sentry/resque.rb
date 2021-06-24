@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 require "resque"
 
 module Sentry
@@ -7,12 +9,20 @@ module Sentry
 
       Sentry.with_scope do |scope|
         begin
-          scope.set_contexts(**generate_contexts)
+          contexts = generate_contexts
+          scope.set_contexts(**contexts)
           scope.set_tags("resque.queue" => queue)
 
+          scope.set_transaction_name(contexts.dig(:"Active-Job", :job_class) || contexts.dig(:"Resque", :job_class))
+          transaction = Sentry.start_transaction(name: scope.transaction_name, op: "resque")
+          scope.set_span(transaction) if transaction
+
           super
+
+          finish_transaction(transaction, 200)
         rescue Exception => exception
           ::Sentry::Resque.capture_exception(exception, hint: { background: false })
+          finish_transaction(transaction, 500)
           raise
         end
       end
@@ -45,6 +55,13 @@ module Sentry
       end
 
       context
+    end
+
+    def finish_transaction(transaction, status)
+      return unless transaction
+
+      transaction.set_http_status(status)
+      transaction.finish
     end
   end
 end
