@@ -1,3 +1,10 @@
+## 4.6.0
+
+### Features
+
+- Add `sentry-resque` [#1476](https://github.com/getsentry/sentry-ruby/pull/1476)
+- Add tracing support to `sentry-resque` [#1480](https://github.com/getsentry/sentry-ruby/pull/1480)
+
 ## 4.5.2
 
 ### Refactoring
