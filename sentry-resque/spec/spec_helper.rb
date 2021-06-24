@@ -41,6 +41,13 @@ RSpec.configure do |config|
     ENV.delete('SENTRY_RELEASE')
     ENV.delete('RACK_ENV')
   end
+
+  config.around do |example|
+    ENV["FORK_PER_JOB"] = 'false'
+    Resque.redis.del "queue:default"
+    example.run
+    ENV["FORK_PER_JOB"] = ''
+  end
 end
 
 def build_exception
@@ -55,5 +62,6 @@ def perform_basic_setup
     config.logger = ::Logger.new(nil)
     config.background_worker_threads = 0
     config.transport.transport_class = Sentry::DummyTransport
+    yield(config) if block_given?
   end
 end
