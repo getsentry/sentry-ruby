@@ -27,6 +27,12 @@ RSpec.describe Sentry::DelayedJob do
     def report
       Sentry.capture_message("report")
     end
+
+    def do_nothing
+    end
+
+    def self.class_do_nothing
+    end
   end
 
   it "sets correct extra/tags context for each job" do
@@ -233,6 +239,116 @@ RSpec.describe Sentry::DelayedJob do
         expect(event[:tags]).to match({ "delayed_job.id" => anything, "delayed_job.queue" => "default", number: 2 })
         expect(event[:contexts][:"Active-Job"][:job_class]).to eq("FailedJob")
       end
+    end
+
+    context "when tracing is enabled" do
+      before do
+        perform_basic_setup do |config|
+          config.traces_sample_rate = 1.0
+          config.rails.skippable_job_adapters << "ActiveJob::QueueAdapters::DelayedJobAdapter"
+        end
+      end
+  
+      it "records transaction" do
+        ReportingJob.perform_later
+
+        enqueued_job = Delayed::Backend::ActiveRecord::Job.last
+        enqueued_job.invoke_job
+
+        expect(transport.events.count).to eq(2)
+        transaction = transport.events.last
+  
+        expect(transaction.transaction).to eq("ReportingJob")
+        expect(transaction.contexts.dig(:trace, :trace_id)).to be_a(String)
+        expect(transaction.contexts.dig(:trace, :span_id)).to be_a(String)
+        expect(transaction.contexts.dig(:trace, :status)).to eq("ok")
+      end
+  
+      it "records transaction with exception" do
+        FailedJob.perform_later
+        enqueued_job = Delayed::Backend::ActiveRecord::Job.last
+        begin
+          enqueued_job.invoke_job
+        rescue ZeroDivisionError
+          nil
+        end
+  
+        expect(transport.events.count).to eq(2)
+        transaction = transport.events.last
+  
+        expect(transaction.transaction).to eq("FailedJob")
+        expect(transaction.contexts.dig(:trace, :trace_id)).to be_a(String)
+        expect(transaction.contexts.dig(:trace, :span_id)).to be_a(String)
+        expect(transaction.contexts.dig(:trace, :status)).to eq("internal_error")
+  
+        event = transport.events.last
+        expect(event.contexts.dig(:trace, :trace_id)).to eq(transaction.contexts.dig(:trace, :trace_id))
+      end
+    end
+  end
+
+  context ".compute_job_class" do
+    it 'returns the class and method name for a delayed instance method call' do
+      Post.new.delay.do_nothing
+      enqueued_job = Delayed::Backend::ActiveRecord::Job.last
+
+      expect(Sentry::DelayedJob::Plugin.compute_job_class(enqueued_job.payload_object)).to eq("Post#do_nothing")
+    end
+
+    it 'returns the class and method name for a delayed class method call' do
+      Post.delay.class_do_nothing
+      enqueued_job = Delayed::Backend::ActiveRecord::Job.last
+
+      expect(Sentry::DelayedJob::Plugin.compute_job_class(enqueued_job.payload_object)).to eq("Post#class_do_nothing")
+    end
+
+    it 'returns the class name for anything else' do
+
+      expect(Sentry::DelayedJob::Plugin.compute_job_class("something")).to eq("String")
+      expect(Sentry::DelayedJob::Plugin.compute_job_class(Sentry::DelayedJob::Plugin)).to eq("Class")
+    end
+  end
+
+  context "when tracing is enabled" do
+    before do
+      perform_basic_setup do |config|
+        config.traces_sample_rate = 1.0
+      end
+    end
+
+    it "records transaction" do
+      Post.new.delay.do_nothing
+      enqueued_job = Delayed::Backend::ActiveRecord::Job.last
+      enqueued_job.invoke_job
+
+      expect(transport.events.count).to eq(1)
+      transaction = transport.events.last
+
+      expect(transaction.transaction).to eq("Post#do_nothing")
+      expect(transaction.contexts.dig(:trace, :trace_id)).to be_a(String)
+      expect(transaction.contexts.dig(:trace, :span_id)).to be_a(String)
+      expect(transaction.contexts.dig(:trace, :status)).to eq("ok")
+    end
+
+    it "records transaction with exception" do
+      Post.new.delay.raise_error
+      enqueued_job = Delayed::Backend::ActiveRecord::Job.last
+      begin
+        enqueued_job.invoke_job
+      rescue ZeroDivisionError
+        nil
+      end
+
+      expect(transport.events.count).to eq(2)
+      transaction = transport.events.last
+
+      expect(transaction.transaction).to eq("Post#raise_error")
+      expect(transaction.contexts.dig(:trace, :trace_id)).to be_a(String)
+      expect(transaction.contexts.dig(:trace, :span_id)).to be_a(String)
+      expect(transaction.contexts.dig(:trace, :status)).to eq("internal_error")
+
+      event = transport.events.last
+      expect(event.contexts.dig(:trace, :trace_id)).to eq(transaction.contexts.dig(:trace, :trace_id))
     end
   end
 end
