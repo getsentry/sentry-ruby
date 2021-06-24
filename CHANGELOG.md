@@ -1,4 +1,4 @@
-## 4.5.2 (unreleased)
+## 4.5.2
 
 ### Refactoring
 
