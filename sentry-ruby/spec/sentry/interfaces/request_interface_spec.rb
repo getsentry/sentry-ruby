@@ -210,6 +210,16 @@ RSpec.describe Sentry::RequestInterface do
       expect(interface.data).to eq("catch me")
     end
 
+    it "force encodes request body to avoid encoding issue" do
+      new_env = env.merge(::Rack::RACK_INPUT => StringIO.new("あ"))
+
+      interface = described_class.build(env: new_env)
+
+      expect do
+        JSON.generate(interface.to_hash)
+      end.not_to raise_error
+    end
+
     it "doesn't remove ip address headers" do
       ip = "1.1.1.1"
 
