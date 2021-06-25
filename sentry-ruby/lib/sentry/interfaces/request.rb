@@ -57,6 +57,7 @@ module Sentry
         request.POST
       elsif request.body # JSON requests, etc
         data = request.body.read(MAX_BODY_LIMIT)
+        data = data.force_encoding(Encoding::UTF_8) if data.respond_to?(:force_encoding)
         request.body.rewind
         data
       end
