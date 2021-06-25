@@ -4,6 +4,7 @@
 
 - Add `sentry-resque` [#1476](https://github.com/getsentry/sentry-ruby/pull/1476)
 - Add tracing support to `sentry-resque` [#1480](https://github.com/getsentry/sentry-ruby/pull/1480)
+- Set user to the current scope via sidekiq middleware [#1469](https://github.com/getsentry/sentry-ruby/pull/1469)
 
 ## 4.5.2
 
