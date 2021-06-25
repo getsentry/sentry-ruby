@@ -6,6 +6,11 @@
 - Add tracing support to `sentry-resque` [#1480](https://github.com/getsentry/sentry-ruby/pull/1480)
 - Set user to the current scope via sidekiq middleware [#1469](https://github.com/getsentry/sentry-ruby/pull/1469)
 
+### Bug Fixes
+
+- Force encode request body if it's a string [#1484](https://github.com/getsentry/sentry-ruby/pull/1484)
+  - Fixes [#1475](https://github.com/getsentry/sentry-ruby/issues/1475) and [#1303](https://github.com/getsentry/sentry-ruby/issues/1303)
+
 ## 4.5.2
 
 ### Refactoring
