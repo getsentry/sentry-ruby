@@ -7,6 +7,31 @@
 - Set user to the current scope via sidekiq middleware [#1469](https://github.com/getsentry/sentry-ruby/pull/1469)
 - Add tracing support to `sentry-delayed_job` [#1482](https://github.com/getsentry/sentry-ruby/pull/1482)
 
+**IMPORTANT**
+
+If your application processes a large number of background jobs and has tracing enabled, it is recommended to check your `traces_sampler` (or switch to `traces_sampler`) and give the background job operations a smaller rate:
+
+```ruby
+Sentry.init do |config|
+  config.traces_sampler = lambda do |sampling_context|
+    transaction_context = sampling_context[:transaction_context]
+    op = transaction_context[:op]
+
+    case op
+    when /request/
+      # sampling for requests
+      0.1
+    when /delayed_job/ # or resque
+      0.001 # adjust this value
+    else
+      0.0 # ignore all other transactions
+    end
+  end
+end
+```
+
+This is to prevent the background job tracing consumes too much of your transaction quota.
+
 ### Bug Fixes
 
 - Force encode request body if it's a string [#1484](https://github.com/getsentry/sentry-ruby/pull/1484)
