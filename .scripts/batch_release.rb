@@ -1,4 +1,4 @@
-INTEGRATIONS = %w(sentry-rails sentry-sidekiq sentry-delayed_job)
+INTEGRATIONS = %w(sentry-rails sentry-sidekiq sentry-delayed_job sentry-resque)
 GEMS = %w(sentry-ruby) + INTEGRATIONS
 
 def get_version_file_name(gem_name)
