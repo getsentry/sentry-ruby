@@ -77,98 +77,20 @@ end
 
 To learn more about sampling transactions, please visit the [official documentation](https://docs.sentry.io/platforms/ruby/configuration/sampling/#configuring-the-transaction-sample-rate).
 
-### Usage
+### Integrations
 
-`sentry-ruby` has a default integration with `Rack`, so you only need to use the middleware in your application like:
+- [Rack](https://docs.sentry.io/platforms/ruby/guides/rack/)
+- [Rails](https://docs.sentry.io/platforms/ruby/guides/rails/)
+- [Sidekiq](https://docs.sentry.io/platforms/ruby/guides/sidekiq/)
+- [DelayedJob](https://docs.sentry.io/platforms/ruby/guides/delayed_job/)
+- [Resque](https://docs.sentry.io/platforms/ruby/guides/resque/)
 
-```ruby
-require 'sentry-ruby'
+### Enriching Events
 
-Sentry.init do |config|
-  config.dsn = 'https://examplePublicKey@o0.ingest.sentry.io/0'
-
-  # To activate performance monitoring, set one of these options.
-  # We recommend adjusting the value in production:
-  config.traces_sample_rate = 0.5
-  # or
-  config.traces_sampler = lambda do |context|
-    true
-  end
-end
-
-use Sentry::Rack::CaptureExceptions
-```
-
-Otherwise, Sentry you can always use the capture helpers manually
-
-```ruby
-Sentry.capture_message("hello world!")
-
-begin
-  1 / 0
-rescue ZeroDivisionError => exception
-  Sentry.capture_exception(exception)
-end
-```
-
-We also provide integrations with popular frameworks/libraries with the related extensions:
-
-- [sentry-rails](https://github.com/getsentry/sentry-ruby/tree/master/sentry-rails)
-- [sentry-sidekiq](https://github.com/getsentry/sentry-ruby/tree/master/sentry-sidekiq)
-- [sentry-delayed_job](https://github.com/getsentry/sentry-ruby/tree/master/sentry-delayed_job)
-
-### More configuration
-
-You're all set - but there's a few more settings you may want to know about too!
-
-#### Contexts
-
-In sentry-ruby, every event will inherit their contextual data from the current scope. So you can enrich the event's data by configuring the current scope like:
-
-```ruby
-Sentry.configure_scope do |scope|
-  scope.set_user(id: 1, email: "test@example.com")
-
-  scope.set_tag(:tag, "foo")
-  scope.set_tags(tag_1: "foo", tag_2: "bar")
-
-  scope.set_extra(:order_number, 1234)
-  scope.set_extras(order_number: 1234, tickets_count: 4)
-end
-
-Sentry.capture_exception(exception) # the event will carry all those information now
-```
-
-Or use top-level setters
-
-
-```ruby
-Sentry.set_user(id: 1, email: "test@example.com")
-Sentry.set_tags(tag_1: "foo", tag_2: "bar")
-Sentry.set_extras(order_number: 1234, tickets_count: 4)
-```
-
-Or build up a temporary scope for local information:
-
-```ruby
-Sentry.configure_scope do |scope|
-  scope.set_tags(tag_1: "foo")
-end
-
-Sentry.with_scope do |scope|
-  scope.set_tags(tag_1: "bar", tag_2: "baz")
-
-  Sentry.capture_message("message") # this event will have 2 tags: tag_1 => "bar" and tag_2 => "baz"
-end
-
-Sentry.capture_message("another message") # this event will have 1 tag: tag_1 => "foo"
-```
-
-Of course, you can always assign the information on a per-event basis:
-
-```ruby
-Sentry.capture_exception(exception, tags: {foo: "bar"})
-```
+- [Add more data to the current scope](https://docs.sentry.io/platforms/ruby/guides/rack/enriching-events/scopes/)
+- [Add custom breadcrumbs](https://docs.sentry.io/platforms/ruby/guides/rack/enriching-events/breadcrumbs/)
+- [Add contextual data](https://docs.sentry.io/platforms/ruby/guides/rack/enriching-events/context/)
+- [Add tags](https://docs.sentry.io/platforms/ruby/guides/rack/enriching-events/tags/)
 
 ## Resources
 
