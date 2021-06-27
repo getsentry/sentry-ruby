@@ -46,28 +46,36 @@ and depends on the integrations you want to have, you might also want to install
 gem "sentry-rails"
 gem "sentry-sidekiq"
 gem "sentry-delayed_job"
-# and mores to come in the future!
+gem "sentry-resque"
 ```
+
+### Configuration
+
+You can use `Sentry.init` to initialize and configure your SDK:
+
+```ruby
+Sentry.init do |config|
+  config.dsn = "MY_DSN"
+end
+
+```
+
+To learn more about available configuration options, please visit the [official documentation](https://docs.sentry.io/platforms/ruby/configuration/options/).
 
 ### Performance Monitoring
 
-You can activate performance monitoring by enabling traces sampling:
+You can activate [performance monitoring](https://docs.sentry.io/platforms/ruby/performance) by enabling traces sampling:
 
 ```ruby
 Sentry.init do |config|
   # set a uniform sample rate between 0.0 and 1.0
   config.traces_sample_rate = 0.2
-
-  # or control sampling dynamically
-  config.traces_sampler = lambda do |sampling_context|
-    # sampling_context[:transaction_context] contains the information about the transaction
-    # sampling_context[:parent_sampled] contains the transaction's parent's sample decision
-    true # return value can be a boolean or a float between 0.0 and 1.0
-  end
+  # you can also use traces_sampler for more fine-grained sampling
+  # please click the link below to learn more
 end
 ```
 
-To learn more about performance monitoring, please visit the [official documentation](https://docs.sentry.io/platforms/ruby/performance).
+To learn more about sampling transactions, please visit the [official documentation](https://docs.sentry.io/platforms/ruby/configuration/sampling/#configuring-the-transaction-sample-rate).
 
 ### Usage
 
