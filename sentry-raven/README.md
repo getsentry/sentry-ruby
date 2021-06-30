@@ -65,7 +65,7 @@ end
 
 ### Raven doesn't report some kinds of data by default
 
-**Raven ignores some exceptions by default** - most of these are related to 404s or controller actions not being found. [For a complete list, see the `IGNORE_DEFAULT` constant](https://github.com/getsentry/raven-ruby/blob/master/lib/raven/configuration.rb).
+**Raven ignores some exceptions by default** - most of these are related to 404s or controller actions not being found. [For a complete list, see the `IGNORE_DEFAULT` constant](https://github.com/getsentry/sentry-ruby/blob/master/sentry-raven/lib/raven/configuration.rb).
 
 Raven doesn't report POST data or cookies by default. In addition, it will attempt to remove any obviously sensitive data, such as credit card or Social Security numbers. For more information about how Sentry processes your data, [check out the documentation on the `processors` config setting.](https://docs.sentry.io/platforms/ruby/configuration/options/)
 
