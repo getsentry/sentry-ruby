@@ -1,3 +1,3 @@
 module Sentry
-  VERSION = "4.6.0-beta.0"
+  VERSION = "4.6.0"
 end
