@@ -16,7 +16,10 @@ module Sentry
     # before the application is eager-loaded (before user's jobs register their own callbacks)
     # See https://github.com/getsentry/sentry-ruby/issues/1249#issuecomment-853871871 for the detail explanation
     initializer "sentry.extend_active_job", before: :eager_load! do |app|
-      extend_active_job if defined?(ActiveJob)
+      ActiveSupport.on_load(:active_job) do
+        require "sentry/rails/active_job"
+        prepend Sentry::Rails::ActiveJobExtensions
+      end
     end
 
     config.after_initialize do |app|
@@ -43,11 +46,6 @@ module Sentry
 
     def configure_trusted_proxies
       Sentry.configuration.trusted_proxies += Array(::Rails.application.config.action_dispatch.trusted_proxies)
-    end
-
-    def extend_active_job
-      require "sentry/rails/active_job"
-      ActiveJob::Base.send(:prepend, Sentry::Rails::ActiveJobExtensions)
     end
 
     def extend_controller_methods

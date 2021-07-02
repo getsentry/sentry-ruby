@@ -1,3 +1,5 @@
+- Correct the timing of loading ActiveJobExtensions, take 2 [#1494](https://github.com/getsentry/sentry-ruby/pull/1494)
+
 ## 4.6.0
 
 ### Features

@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 # for https://github.com/getsentry/sentry-ruby/issues/1249
-require "active_job"
+require "active_job/railtie"
 require "active_support/all"
 require "sentry/rails"
 require "minitest/autorun"
@@ -11,6 +11,11 @@ end
 IO_STUB = StringIO.new
 
 app = TestApp
+
+# Simulate code from the application's init files in config/initializer
+app.initializer :config_initializer do
+  Rails.application.config.active_job.queue_name = "bobo"
+end
 
 # to simulate jobs being load during the eager_load initializer
 app.initializer :eager_load! do
@@ -55,5 +60,9 @@ class ActiveJobExtensionsTest < ActiveSupport::TestCase
     log_result = IO_STUB.string
     assert_match(/RESCUED/, log_result, "ApplicationJob's rescue_from should be called")
     refute_match(/I SHOULD NEVER BE EXECUTED/, log_result, "ErrorJob's around_perform should not be triggered")
+  end
+
+  def test_the_extension_doesnt_load_activejob_too_soon
+    assert_equal("bobo", ApplicationJob.queue_name)
   end
 end
