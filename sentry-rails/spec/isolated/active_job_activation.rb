@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 # for https://github.com/getsentry/sentry-ruby/issues/1249
 require "active_job"
+require "active_support/all"
 require "sentry/rails"
 require "minitest/autorun"
 
