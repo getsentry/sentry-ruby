@@ -101,4 +101,17 @@ RSpec.describe Sentry::Utils::RealIp do
       expect(subject.calculate_ip).to eq("2001:db8:a0b:12f0::1")
     end
   end
+  
+  context "when custom proxies are provided as IPAddr as IP subnet" do
+    subject do
+      Sentry::Utils::RealIp.new(
+        :forwarded_for => "2.2.2.2, 3.3.3.3, 4.4.4.4",
+        :trusted_proxies => [IPAddr.new("4.4.4.0/24")]
+      )
+    end
+
+    it "should return the first IP not in the trusted proxy list" do
+      expect(subject.calculate_ip).to eq("3.3.3.3")
+    end
+  end
 end
