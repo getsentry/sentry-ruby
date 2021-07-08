@@ -195,13 +195,13 @@ RSpec.describe Sentry::Configuration do
     end
 
     it 'captured_allowed false when sampled' do
-      allow(Random::DEFAULT).to receive(:rand).and_return(0.76)
+      allow(Random).to receive(:rand).and_return(0.76)
       expect(subject.sending_allowed?).to eq(false)
       expect(subject.errors).to eq(["Excluded by random sample"])
     end
 
     it 'captured_allowed true when not sampled' do
-      allow(Random::DEFAULT).to receive(:rand).and_return(0.74)
+      allow(Random).to receive(:rand).and_return(0.74)
       expect(subject.sending_allowed?).to eq(true)
     end
   end

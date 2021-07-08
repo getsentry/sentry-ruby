@@ -405,7 +405,7 @@ module Sentry
     def sample_allowed?
       return true if sample_rate == 1.0
 
-      if Random::DEFAULT.rand >= sample_rate
+      if Random.rand >= sample_rate
         @errors << "Excluded by random sample"
         false
       else

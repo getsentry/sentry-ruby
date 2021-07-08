@@ -2,7 +2,8 @@ module Sentry
   class Transport
     class Configuration
       attr_accessor :timeout, :open_timeout, :proxy, :ssl, :ssl_ca_file, :ssl_verification, :http_adapter, :faraday_builder,
-        :transport_class, :encoding
+        :encoding
+      attr_reader :transport_class
 
       def initialize
         @ssl_verification = true

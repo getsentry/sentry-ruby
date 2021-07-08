@@ -66,7 +66,7 @@ RSpec.describe Sentry::RequestInterface do
       it 'does not call #to_s for unnecessary env variables' do
         expect(mock).not_to receive(:to_s)
 
-        interface = described_class.build(env: env)
+        described_class.build(env: env)
       end
     end
   end
@@ -133,7 +133,7 @@ RSpec.describe Sentry::RequestInterface do
 
       new_env = env.merge("HTTP_FOO" => "BAR", "rails_object" => obj)
 
-      expect { interface = described_class.build(env: new_env) }.to_not raise_error
+      expect { described_class.build(env: new_env) }.to_not raise_error
     end
   end
 

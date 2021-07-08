@@ -115,6 +115,7 @@ class BigDecimal
 end
 
 class Method
+  undef_method :duplicable? if method_defined?(:duplicable?)
   # Methods are not duplicable:
   #
   #  method(:puts).duplicable? # => false
