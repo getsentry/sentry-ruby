@@ -21,12 +21,12 @@ assignees: st0012
  - Integration Versions (if any):
   - e.g. Rails 6.0, Sidekiq 6.1.2
 
-**Raven Config**
+**Sentry Config**
 
 This is not necessary but could be helpful.
 
 ```ruby
-Raven.configure do |config|
+Sentry.init do |config|
   # the config you're using, without DSN and other sensitive data
 end
 ```

@@ -1,4 +1,4 @@
-name: Batch Build Release
+name: Build Batch Release
 
 on:
   push:
@@ -6,7 +6,7 @@ on:
       - release/**
 jobs:
   build:
-    name: Build
+    name: Build gems
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v2
