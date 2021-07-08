@@ -23,4 +23,5 @@ Gem::Specification.new do |spec|
   spec.require_paths = ["lib"]
 
   spec.add_dependency "sentry-ruby-core", "~> 4.6.0"
+  spec.add_dependency "resque", ">= 1.24"
 end
