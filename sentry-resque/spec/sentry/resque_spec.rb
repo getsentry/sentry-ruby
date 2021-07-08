@@ -42,7 +42,7 @@ RSpec.describe Sentry::Resque do
   it "sets correct extra/tags context for each job" do
     Resque::Job.create(:default, MessageJob, "report")
 
-    worker.work_one_job
+    worker.work(0)
 
     expect(transport.events.count).to eq(1)
     event = transport.events.last.to_hash
@@ -54,7 +54,7 @@ RSpec.describe Sentry::Resque do
   it "doesn't leak scope data outside of the job" do
     Resque::Job.create(:default, MessageJob, "report")
 
-    worker.work_one_job
+    worker.work(0)
 
     expect(transport.events.count).to eq(1)
     expect(Sentry.get_current_scope.extra).to eq({})
@@ -64,7 +64,7 @@ RSpec.describe Sentry::Resque do
   it "doesn't share scope data between jobs" do
     Resque::Job.create(:default, TaggedMessageJob, "tagged report")
 
-    worker.work_one_job
+    worker.work(0)
 
     expect(transport.events.count).to eq(1)
     event = transport.events.last.to_hash
@@ -73,7 +73,7 @@ RSpec.describe Sentry::Resque do
 
     Resque::Job.create(:default, MessageJob, "report")
 
-    worker.work_one_job
+    worker.work(0)
 
     expect(transport.events.count).to eq(2)
     event = transport.events.last.to_hash
@@ -84,8 +84,8 @@ RSpec.describe Sentry::Resque do
     it "reports exception" do
       expect do
         Resque::Job.create(:default, FailedJob)
-        worker.work_one_job
-      end.to change { worker.failed }.by(1)
+        worker.work(0)
+      end.to change { Resque::Stat.get("failed") }.by(1)
 
       expect(transport.events.count).to eq(1)
       event = transport.events.last.to_hash
@@ -98,8 +98,8 @@ RSpec.describe Sentry::Resque do
     it "doesn't leak scope data" do
       expect do
         Resque::Job.create(:default, TaggedFailedJob)
-        worker.work_one_job
-      end.to change { worker.failed }.by(1)
+        worker.work(0)
+      end.to change { Resque::Stat.get("failed") }.by(1)
 
       expect(transport.events.count).to eq(1)
       event = transport.events.last.to_hash
@@ -110,8 +110,8 @@ RSpec.describe Sentry::Resque do
 
       expect do
         Resque::Job.create(:default, FailedJob)
-        worker.work_one_job
-      end.to change { worker.failed }.by(1)
+        worker.work(0)
+      end.to change { Resque::Stat.get("failed") }.by(1)
 
       expect(transport.events.count).to eq(2)
       event = transport.events.last.to_hash
@@ -160,7 +160,7 @@ RSpec.describe Sentry::Resque do
       before do
         AJMessageJob.perform_later("report from ActiveJob")
 
-        worker.work_one_job
+        worker.work(0)
       end
 
       it "doesn't leak scope data" do
@@ -184,8 +184,8 @@ RSpec.describe Sentry::Resque do
         AJFailedJob.perform_later
 
         expect do
-          worker.work_one_job
-        end.to change { worker.failed }.by(1)
+          worker.work(0)
+        end.to change { Resque::Stat.get("failed") }.by(1)
       end
 
       it "doesn't duplicate error reporting" do
@@ -221,7 +221,7 @@ RSpec.describe Sentry::Resque, "not initialized" do
   it "doesn't swallow jobs" do
     expect do
       Resque::Job.create(:default, FailedJob)
-      worker.work_one_job
-    end.to change { worker.failed }.by(1)
+      worker.work(0)
+    end.to change { Resque::Stat.get("failed") }.by(1)
   end
 end
