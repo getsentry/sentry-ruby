@@ -1,4 +1,7 @@
-- Correct the timing of loading ActiveJobExtensions, take 2 [#1494](https://github.com/getsentry/sentry-ruby/pull/1494)
+## 4.6.1
+
+- Use `ActiveSupport` Lazy Load Hook to Apply `ActiveJob` Extension [#1494](https://github.com/getsentry/sentry-ruby/pull/1494)
+- Fix `Sentry::Utils::RealIP` not filtering trusted proxies when part of IP subnet passed as `IPAddr` to `trusted_proxies`. [#1498](https://github.com/getsentry/sentry-ruby/pull/1498)
 
 ## 4.6.0
 
