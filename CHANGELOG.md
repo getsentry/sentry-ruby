@@ -1,3 +1,7 @@
+
+- Declare `resque` as `sentry-resque`'s dependency [#1503](https://github.com/getsentry/sentry-ruby/pull/1503)
+  - Fixes [#1502](https://github.com/getsentry/sentry-ruby/issues/1502)
+
 ## 4.6.1
 
 - Use `ActiveSupport` Lazy Load Hook to Apply `ActiveJob` Extension [#1494](https://github.com/getsentry/sentry-ruby/pull/1494)

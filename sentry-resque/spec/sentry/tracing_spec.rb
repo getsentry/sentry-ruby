@@ -30,7 +30,7 @@ RSpec.describe Sentry::Resque do
   it "records tracing events" do
     Resque::Job.create(:default, MessageJob, "report")
 
-    worker.work_one_job
+    worker.work(0)
 
     expect(transport.events.count).to eq(2)
     event = transport.events.first.to_hash
@@ -46,7 +46,7 @@ RSpec.describe Sentry::Resque do
   it "records tracing events with exceptions" do
     Resque::Job.create(:default, FailedJob)
 
-    worker.work_one_job
+    worker.work(0)
 
     expect(transport.events.count).to eq(2)
     event = transport.events.first.to_hash
