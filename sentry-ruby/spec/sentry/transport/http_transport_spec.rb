@@ -21,7 +21,7 @@ RSpec.describe Sentry::HTTPTransport do
 
     subject
 
-    expect(string_io.string).to include("sentry: Sentry HTTP Transport connecting to http://sentry.localdomain/sentry")
+    expect(string_io.string).to include("sentry: Sentry HTTP Transport connecting to http://sentry.localdomain")
   end
 
   describe "customizations" do

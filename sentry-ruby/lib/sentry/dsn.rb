@@ -37,7 +37,6 @@ module Sentry
     def server
       server = "#{scheme}://#{host}"
       server += ":#{port}" unless port == PORT_MAP[scheme]
-      server += path
       server
     end
 
