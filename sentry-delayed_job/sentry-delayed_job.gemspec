@@ -23,4 +23,5 @@ Gem::Specification.new do |spec|
   spec.require_paths = ["lib"]
 
   spec.add_dependency "sentry-ruby-core", "~> 4.6.0"
+  spec.add_dependency "delayed_job", ">= 4.0"
 end
