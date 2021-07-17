@@ -90,6 +90,18 @@ module Sentry
       @background_worker = Sentry::BackgroundWorker.new(config)
     end
 
+    # Returns an uri for security policy reporting that's generated from the given DSN
+    # (To learn more about security policy reporting: https://docs.sentry.io/product/security-policy-reporting/)
+    #
+    # It returns nil if
+    #
+    # 1. The SDK is not initialized yet.
+    # 2. The DSN is not provided or is invalid.
+    def csp_report_uri
+      return unless initialized?
+      configuration.csp_report_uri
+    end
+
     # Returns the main thread's active hub.
     def get_main_hub
       @main_hub
