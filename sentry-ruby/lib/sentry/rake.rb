@@ -3,6 +3,7 @@ require "rake/task"
 
 module Rake
   class Application
+
     alias orig_display_error_messsage display_error_message
     def display_error_message(ex)
       Sentry.capture_exception(ex, hint: { background: false }) do |scope|
@@ -12,6 +13,18 @@ module Rake
       end if Sentry.initialized? && !Sentry.configuration.skip_rake_integration
 
       orig_display_error_messsage(ex)
+    end
+  end
+
+  class Task
+    alias orig_execute execute
+
+    def execute(args=nil)
+      return orig_execute unless Sentry.initialized? && Sentry.get_current_hub
+
+      Sentry.get_current_hub.with_background_worker_disabled do
+        orig_execute
+      end
     end
   end
 end
