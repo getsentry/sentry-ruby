@@ -94,13 +94,3 @@ def reload_send_event_job
   expect(defined?(Sentry::SendEventJob)).to eq(nil)
   load File.join(Dir.pwd, "app", "jobs", "sentry", "send_event_job.rb")
 end
-
-def perform_basic_setup
-  Sentry.init do |config|
-    config.dsn = DUMMY_DSN
-    config.logger = ::Logger.new(nil)
-    config.transport.transport_class = Sentry::DummyTransport
-    # for sending events synchronously
-    config.background_worker_threads = 0
-  end
-end
