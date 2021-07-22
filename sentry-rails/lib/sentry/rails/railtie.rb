@@ -74,7 +74,7 @@ module Sentry
     def setup_backtrace_cleanup_callback
       backtrace_cleaner = Sentry::Rails::BacktraceCleaner.new
 
-      Sentry.configuration.backtrace_cleanup_callback = lambda do |backtrace|
+      Sentry.configuration.backtrace_cleanup_callback ||= lambda do |backtrace|
         backtrace_cleaner.clean(backtrace)
       end
     end

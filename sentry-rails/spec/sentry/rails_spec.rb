@@ -160,19 +160,15 @@ RSpec.describe Sentry::Rails, type: :request do
     end
 
     it "doesn't filters exception backtrace if backtrace_cleanup_callback is overridden" do
-      original_cleanup_callback = Sentry.configuration.backtrace_cleanup_callback
-
-      begin
-        Sentry.configuration.backtrace_cleanup_callback = nil
-
-        get "/view_exception"
-
-        traces = event.dig("exception", "values", 0, "stacktrace", "frames")
-        expect(traces.dig(-1, "filename")).to eq("inline template")
-        expect(traces.dig(-1, "function")).not_to be_nil
-      ensure
-        Sentry.configuration.backtrace_cleanup_callback = original_cleanup_callback
+      make_basic_app do |config|
+        config.backtrace_cleanup_callback = lambda { |backtrace| backtrace }
       end
+
+      get "/view_exception"
+
+      traces = event.dig("exception", "values", 0, "stacktrace", "frames")
+      expect(traces.dig(-1, "filename")).to eq("inline template")
+      expect(traces.dig(-1, "function")).not_to be_nil
     end
 
     context "with config.exceptions_app = self.routes" do
