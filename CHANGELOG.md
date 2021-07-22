@@ -3,6 +3,7 @@
   - Fixes [#1502](https://github.com/getsentry/sentry-ruby/issues/1502)
 - Declare `delayed_job` and `sidekiq` as integration gem's dependency [#1506](https://github.com/getsentry/sentry-ruby/pull/1506)
 - `DSN#server` shouldn't include path [#1505](https://github.com/getsentry/sentry-ruby/pull/1505)
+- Fix `sentry-rails`' `backtrace_cleanup_callback` injection [#1510](https://github.com/getsentry/sentry-ruby/pull/1510)
 
 ## 4.6.1
 
