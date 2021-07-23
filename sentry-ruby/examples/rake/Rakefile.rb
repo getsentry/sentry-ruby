@@ -7,3 +7,7 @@ end
 task :raise_exception do
   1/0
 end
+
+task :send_message do
+  Sentry.capture_message("message from rake")
+end

@@ -397,4 +397,51 @@ RSpec.describe Sentry::Hub do
       expect(subject.last_event_id).to eq(event.event_id)
     end
   end
+
+  describe "#with_background_worker_disabled" do
+    before do
+      configuration.background_worker_threads = 5
+      Sentry.background_worker = Sentry::BackgroundWorker.new(configuration)
+      configuration.before_send = lambda do |event, _hint|
+        sleep 0.5
+        event
+      end
+    end
+
+    after do
+      Sentry.background_worker = nil
+    end
+
+    it "disables async event sending temporarily" do
+      subject.with_background_worker_disabled do
+        subject.capture_message("foo")
+      end
+
+      expect(transport.events.count).to eq(1)
+    end
+
+    it "returns the original execution result" do
+      result = subject.with_background_worker_disabled do
+        "foo"
+      end
+
+      expect(result).to eq("foo")
+    end
+
+    it "doesn't interfere events outside of the block" do
+      subject.with_background_worker_disabled {}
+
+      subject.capture_message("foo")
+      expect(transport.events.count).to eq(0)
+    end
+
+    it "resumes the backgrounding state even with exception" do
+      subject.with_background_worker_disabled do
+        raise "foo"
+      end rescue nil
+
+      subject.capture_message("foo")
+      expect(transport.events.count).to eq(0)
+    end
+  end
 end

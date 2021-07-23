@@ -144,6 +144,17 @@ module Sentry
       current_scope.add_breadcrumb(breadcrumb)
     end
 
+    # this doesn't do anything to the already initialized background worker
+    # but it temporarily disables dispatching events to it
+    def with_background_worker_disabled(&block)
+      original_background_worker_threads = configuration.background_worker_threads
+      configuration.background_worker_threads = 0
+
+      block.call
+    ensure
+      configuration.background_worker_threads = original_background_worker_threads
+    end
+
     private
 
     def current_layer
