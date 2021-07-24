@@ -10,15 +10,7 @@ RSpec.describe Sentry::Net::HTTP do
     ::Logger.new(string_io)
   end
 
-  original_buffered_io = Net::BufferedIO
-
-  before(:all) do
-    Net.send(:const_set, :BufferedIO, Net::WebMockNetBufferedIO)
-  end
-
-  after(:all) do
-    Net.send(:const_set, :BufferedIO, original_buffered_io)
-  end
+  before { stub_const('Net::BufferedIO', Net::WebMockNetBufferedIO) }
 
   class FakeSocket < StringIO
     def setsockopt(*args); end

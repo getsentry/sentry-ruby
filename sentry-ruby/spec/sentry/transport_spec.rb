@@ -87,7 +87,7 @@ RSpec.describe Sentry::Transport do
       before do
         configuration.logger = Logger.new(string_io)
         configuration.sample_rate = 0.5
-        allow(Random::DEFAULT).to receive(:rand).and_return(0.6)
+        allow(Random).to receive(:rand).and_return(0.6)
       end
 
       it "logs correct message" do
