@@ -1,3 +1,6 @@
+- Silence some ruby warnings [#1504](https://github.com/getsentry/sentry-ruby/pull/1504)
+- Silence method redefined warnings [#1513](https://github.com/getsentry/sentry-ruby/pull/1513)
+
 ## 4.6.2
 
 - Declare `resque` as `sentry-resque`'s dependency [#1503](https://github.com/getsentry/sentry-ruby/pull/1503)
