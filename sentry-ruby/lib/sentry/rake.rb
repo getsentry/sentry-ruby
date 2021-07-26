@@ -20,10 +20,10 @@ module Rake
     alias orig_execute execute
 
     def execute(args=nil)
-      return orig_execute unless Sentry.initialized? && Sentry.get_current_hub
+      return orig_execute(args) unless Sentry.initialized? && Sentry.get_current_hub
 
       Sentry.get_current_hub.with_background_worker_disabled do
-        orig_execute
+        orig_execute(args)
       end
     end
   end
