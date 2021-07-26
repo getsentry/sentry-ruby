@@ -1,5 +1,8 @@
+## 4.6.3
+
 - Silence some ruby warnings [#1504](https://github.com/getsentry/sentry-ruby/pull/1504)
 - Silence method redefined warnings [#1513](https://github.com/getsentry/sentry-ruby/pull/1513)
+- Correctly pass arguments to a rake task [#1514](https://github.com/getsentry/sentry-ruby/pull/1514)
 
 ## 4.6.2
 
