@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+return if Object.method_defined?(:duplicable?)
 
 #########################################
 #  This file was copied from Rails 5.2  #
@@ -115,7 +116,6 @@ class BigDecimal
 end
 
 class Method
-  undef_method :duplicable? if method_defined?(:duplicable?)
   # Methods are not duplicable:
   #
   #  method(:puts).duplicable? # => false

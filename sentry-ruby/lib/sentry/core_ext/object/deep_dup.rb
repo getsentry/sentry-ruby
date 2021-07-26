@@ -1,3 +1,5 @@
+return if Object.method_defined?(:deep_dup)
+
 require 'sentry/core_ext/object/duplicable'
 
 #########################################
@@ -20,7 +22,6 @@ class Object
 end
 
 class Array
-  undef_method :deep_dup if method_defined?(:deep_dup)
   # Returns a deep copy of array.
   #
   #   array = [1, [2, 3]]

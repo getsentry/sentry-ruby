@@ -9,7 +9,7 @@ require 'sentry/utils/request_id'
 
 module Sentry
   class Event
-    ATTRIBUTES = %i(
+    SERIALIZEABLE_ATTRIBUTES = %i(
       event_id level timestamp
       release environment server_name modules
       message user tags contexts extra
@@ -17,9 +17,13 @@ module Sentry
       platform sdk type
     )
 
+    WRITER_ATTRIBUTES = SERIALIZEABLE_ATTRIBUTES - %i(type timestamp level)
+
     MAX_MESSAGE_SIZE_IN_BYTES = 1024 * 8
 
-    attr_accessor(*ATTRIBUTES)
+    attr_writer(*WRITER_ATTRIBUTES)
+    attr_reader(*SERIALIZEABLE_ATTRIBUTES)
+
     attr_reader :configuration, :request, :exception, :threads
 
     def initialize(configuration:, integration_meta: nil, message: nil)
@@ -99,9 +103,6 @@ module Sentry
       end
     end
 
-    def type
-    end
-
     def to_hash
       data = serialize_attributes
       data[:breadcrumbs] = breadcrumbs.to_hash if breadcrumbs
@@ -139,7 +140,7 @@ module Sentry
     private
 
     def serialize_attributes
-      self.class::ATTRIBUTES.each_with_object({}) do |att, memo|
+      self.class::SERIALIZEABLE_ATTRIBUTES.each_with_object({}) do |att, memo|
         if value = public_send(att)
           memo[att] = value
         end
