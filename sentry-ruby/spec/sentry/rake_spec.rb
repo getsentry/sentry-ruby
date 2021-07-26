@@ -24,4 +24,16 @@ RSpec.describe "rake auto-reporting" do
 
     expect(message).not_to match(/Sentry/)
   end
+
+  it "run rake task with original arguments" do
+    message = ""
+
+    # if we change the directory in the current process, it'll affect other tests that relies on system call too
+    # e.g. release detection tests
+    Thread.new do
+      message = `cd spec/support && bundle exec rake pass_arguments[arguments]`
+    end.join
+
+    expect(message).to match("arguments")
+  end
 end
