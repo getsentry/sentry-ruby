@@ -1,30 +1,31 @@
 require "rake"
 require "rake/task"
 
-module Rake
-  class Application
+module Sentry
+  module Rake
+    module Application
+      def display_error_message(ex)
+        Sentry.capture_exception(ex, hint: { background: false }) do |scope|
+          task_name = top_level_tasks.join(' ')
+          scope.set_transaction_name(task_name)
+          scope.set_tag("rake_task", task_name)
+        end if Sentry.initialized? && !Sentry.configuration.skip_rake_integration
 
-    alias orig_display_error_messsage display_error_message
-    def display_error_message(ex)
-      Sentry.capture_exception(ex, hint: { background: false }) do |scope|
-        task_name = top_level_tasks.join(' ')
-        scope.set_transaction_name(task_name)
-        scope.set_tag("rake_task", task_name)
-      end if Sentry.initialized? && !Sentry.configuration.skip_rake_integration
-
-      orig_display_error_messsage(ex)
+        super
+      end
     end
-  end
 
-  class Task
-    alias orig_execute execute
+    module Task
+      def execute(args=nil)
+        return super unless Sentry.initialized? && Sentry.get_current_hub
 
-    def execute(args=nil)
-      return orig_execute(args) unless Sentry.initialized? && Sentry.get_current_hub
-
-      Sentry.get_current_hub.with_background_worker_disabled do
-        orig_execute(args)
+        Sentry.get_current_hub.with_background_worker_disabled do
+          super
+        end
       end
     end
   end
 end
+
+Rake::Application.prepend(Sentry::Rake::Application)
+Rake::Task.prepend(Sentry::Rake::Task)
