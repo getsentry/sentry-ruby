@@ -1,3 +1,8 @@
+## 4.6.4
+
+- Extend Rake with a more elegant and reliable way [#1517](https://github.com/getsentry/sentry-ruby/pull/1517)
+  - Fixes [#1520](https://github.com/getsentry/sentry-ruby/issues/1520)
+
 ## 4.6.3
 
 - Silence some ruby warnings [#1504](https://github.com/getsentry/sentry-ruby/pull/1504)

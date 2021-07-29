@@ -89,7 +89,7 @@ module Sentry
     # You should probably append to this rather than overwrite it.
     attr_accessor :excluded_exceptions
 
-    # Boolean to check nested exceptions when deciding if to exclude. Defaults to false
+    # Boolean to check nested exceptions when deciding if to exclude. Defaults to true
     attr_accessor :inspect_exception_causes_for_exclusion
     alias inspect_exception_causes_for_exclusion? inspect_exception_causes_for_exclusion
 
