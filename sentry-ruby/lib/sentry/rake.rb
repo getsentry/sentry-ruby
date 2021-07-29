@@ -4,7 +4,7 @@ require "rake/task"
 module Sentry
   module Rake
     module Application
-      def display_error_message(*)
+      def display_error_message(ex)
         Sentry.capture_exception(ex, hint: { background: false }) do |scope|
           task_name = top_level_tasks.join(' ')
           scope.set_transaction_name(task_name)
@@ -16,7 +16,7 @@ module Sentry
     end
 
     module Task
-      def execute(*)
+      def execute(args=nil)
         return super unless Sentry.initialized? && Sentry.get_current_hub
 
         Sentry.get_current_hub.with_background_worker_disabled do
