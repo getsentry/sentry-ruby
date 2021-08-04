@@ -26,7 +26,12 @@ module Sentry
     def capture_event(event, scope, hint = {})
       return unless configuration.sending_allowed?
 
-      scope.apply_to_event(event, hint)
+      event = scope.apply_to_event(event, hint)
+
+      if event.nil?
+        log_info("Discarded event because one of the event processors returned nil")
+        return
+      end
 
       if async_block = configuration.async
         dispatch_async_event(async_block, event, hint)
