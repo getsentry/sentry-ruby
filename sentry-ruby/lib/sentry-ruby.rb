@@ -87,7 +87,8 @@ module Sentry
       config.detect_release
       apply_patches(config)
       client = Client.new(config)
-      scope = Scope.new(max_breadcrumbs: config.max_breadcrumbs)
+      scope = Scope.new(max_breadcrumbs: config.max_breadcrumbs,
+                        breadcrumbs_log_level: config.breadcrumbs_log_level)
       hub = Hub.new(client, scope)
       Thread.current.thread_variable_set(THREAD_LOCAL, hub)
       @main_hub = hub
