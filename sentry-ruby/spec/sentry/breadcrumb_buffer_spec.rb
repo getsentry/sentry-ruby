@@ -39,7 +39,7 @@ RSpec.describe Sentry::BreadcrumbBuffer do
 
   describe "#record" do
     subject do
-      described_class.new(1)
+      described_class.new(1, :warn)
     end
 
     it "doesn't exceed the size limit" do
@@ -52,6 +52,36 @@ RSpec.describe Sentry::BreadcrumbBuffer do
       expect(subject.buffer.size).to eq(1)
 
       expect(subject.peek).to eq(crumb_2)
+    end
+
+    it "records crumb without level" do
+      subject.record(crumb_1)
+
+      expect(subject.peek).to eq(crumb_1)
+    end
+
+    it "records crumb with the level equal to the log_level" do
+      crumb_1.level = :warn
+
+      subject.record(crumb_1)
+
+      expect(subject.peek).to eq(crumb_1)
+    end
+
+    it "records crumb with the level greater than the log_level" do
+      crumb_1.level = :error
+
+      subject.record(crumb_1)
+
+      expect(subject.peek).to eq(crumb_1)
+    end
+
+    it "skips crumb with the level lower than the log_level" do
+      crumb_1.level = :debug
+
+      subject.record(crumb_1)
+
+      expect(subject.peek).to be_nil
     end
   end
 

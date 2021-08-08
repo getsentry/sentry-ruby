@@ -46,6 +46,15 @@ RSpec.describe Sentry do
       current_scope = described_class.get_current_scope
       expect(current_scope.breadcrumbs.buffer.size).to eq(1)
     end
+
+    it "initializes Scope with correct breadcrumbs_log_level" do
+      described_class.init do |config|
+        config.breadcrumbs_log_level = :info
+      end
+
+      current_scope = described_class.get_current_scope
+      expect(current_scope.breadcrumbs.instance_variable_get(:@log_level_index)).to eq(1)
+    end
   end
 
   describe "#clone_hub_to_current_thread" do

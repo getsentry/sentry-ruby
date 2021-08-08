@@ -29,6 +29,11 @@ RSpec.describe Sentry::Scope do
       scope = described_class.new(max_breadcrumbs: 10)
       expect(scope.breadcrumbs.buffer.count).to eq(10)
     end
+
+    it "allows setting breadcrumb buffer's log level" do
+      scope = described_class.new(breadcrumbs_log_level: :warn)
+      expect(scope.breadcrumbs.instance_variable_get(:@log_level_index)).to eq(2)
+    end
   end
 
   describe "#dup" do
