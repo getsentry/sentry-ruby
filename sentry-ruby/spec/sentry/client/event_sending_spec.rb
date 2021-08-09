@@ -225,6 +225,20 @@ RSpec.describe Sentry::Client do
         configuration.async = prior_async
       end
 
+      context "when scope.apply_to_event returns nil" do
+        before do
+          scope.add_event_processor do |event, hint|
+            nil
+          end
+        end
+
+        it "discards the event and logs a info" do
+          expect(subject.capture_event(event, scope)).to be_nil
+
+          expect(string_io.string).to match(/Discarded event because one of the event processors returned nil/)
+        end
+      end
+
       context "when scope.apply_to_event fails" do
         before do
           scope.add_event_processor do
