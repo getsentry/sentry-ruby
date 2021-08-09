@@ -67,7 +67,7 @@ module Sentry
             type: severity >= 3 ? "error" : level
           )
 
-          Sentry.add_breadcrumb(crumb)
+          Sentry.add_breadcrumb(crumb, hint: { severity: severity })
         end
       end
 

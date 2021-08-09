@@ -19,7 +19,7 @@ RSpec.describe "Sentry::Breadcrumbs::SentryLogger" do
     expect(breadcrumb.level).to eq("info")
     expect(breadcrumb.message).to eq("foo")
   end
-  
+
   it "records non-String message" do
     logger.info(200)
     expect(breadcrumbs.peek.message).to eq("200")
@@ -33,6 +33,19 @@ RSpec.describe "Sentry::Breadcrumbs::SentryLogger" do
     logger.info(Sentry::LOGGER_PROGNAME) { "foo" }
 
     expect(breadcrumbs.peek).to be_nil
+  end
+
+  it "passes severity as a hint" do
+    hint = nil
+    Sentry.configuration.before_breadcrumb = lambda do |breadcrumb, h|
+      hint = h
+      breadcrumb
+    end
+
+    logger.info("foo")
+
+    expect(breadcrumbs.peek.message).to eq("foo")
+    expect(hint[:severity]).to eq(1)
   end
 
   describe "category assignment" do
