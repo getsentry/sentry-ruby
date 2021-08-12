@@ -36,37 +36,11 @@ module Sentry
 
   THREAD_LOCAL = :sentry_hub
 
-  def self.sdk_meta
-    META
-  end
-
-  def self.utc_now
-    Time.now.utc
-  end
-
   class << self
-    # Returns a hash that contains all the integrations that have been registered to the main SDK.
-    def integrations
-      @integrations ||= {}
-    end
-
-    # Registers the SDK integration with its name and version.
-    def register_integration(name, version)
-      meta = { name: "sentry.ruby.#{name}", version: version }.freeze
-      integrations[name.to_s] = meta
-    end
-  end
-
-  class << self
-    extend Forwardable
-
-    def_delegators :get_current_client, :configuration, :send_event
-    def_delegators :get_current_scope, :set_tags, :set_extras, :set_user, :set_context
-
     attr_accessor :background_worker
 
-    @@registered_patches = []
-
+    ##### Patch Registration #####
+    #
     def register_patch(&block)
       registered_patches << block
     end
@@ -78,9 +52,31 @@ module Sentry
     end
 
     def registered_patches
-      @@registered_patches
+      @registered_patches ||= []
     end
 
+    ##### Integrations #####
+    #
+    # Returns a hash that contains all the integrations that have been registered to the main SDK.
+    def integrations
+      @integrations ||= {}
+    end
+
+    # Registers the SDK integration with its name and version.
+    def register_integration(name, version)
+      meta = { name: "sentry.ruby.#{name}", version: version }.freeze
+      integrations[name.to_s] = meta
+    end
+
+    ##### Method Delegation #####
+    #
+    extend Forwardable
+
+    def_delegators :get_current_client, :configuration, :send_event
+    def_delegators :get_current_scope, :set_tags, :set_extras, :set_user, :set_context
+
+    ##### Main APIs #####
+    #
     def init(&block)
       config = Configuration.new
       yield(config) if block_given?
@@ -193,6 +189,9 @@ module Sentry
       get_current_hub&.last_event_id
     end
 
+
+    ##### Helpers #####
+    #
     def sys_command(command)
       result = `#{command} 2>&1` rescue nil
       return if result.nil? || result.empty? || ($CHILD_STATUS && $CHILD_STATUS.exitstatus != 0)
@@ -206,6 +205,14 @@ module Sentry
 
     def logger
       configuration.logger
+    end
+
+    def sdk_meta
+      META
+    end
+
+    def utc_now
+      Time.now.utc
     end
   end
 end
