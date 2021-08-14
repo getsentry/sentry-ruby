@@ -2,6 +2,7 @@
 
 ### Features
 
+- Add `monotonic_active_support_logger` [#1531][https://github.com/getsentry/sentry-ruby/pull/1531]
 - Support after-retry reporting to `sentry-sidekiq` [#1532](https://github.com/getsentry/sentry-ruby/pull/1532)
 - Generate Security Header Endpoint with `Sentry.csp_report_uri` from dsn [#1507](https://github.com/getsentry/sentry-ruby/pull/1507)
 
@@ -103,7 +104,7 @@ This is to prevent the background job tracing consumes too much of your transact
 
 - Implement sentry-trace propagation [#1446](https://github.com/getsentry/sentry-ruby/pull/1446)
 
-The SDK will insert the `sentry-trace` to outgoing requests made with `Net::HTTP`. Its value would look like `d827317d25d5420aa3aa97a0257db998-57757614642bdff5-1`. 
+The SDK will insert the `sentry-trace` to outgoing requests made with `Net::HTTP`. Its value would look like `d827317d25d5420aa3aa97a0257db998-57757614642bdff5-1`.
 
 If the receiver service also uses Sentry and the SDK supports performance monitoring, its tracing event will be connected with the sender application's.
 
@@ -119,7 +120,6 @@ With this new option, users can skip exceptions reported from rake tasks by sett
 
 ### Bug Fixes
 
-- Allow toggling background sending on the fly [#1447](https://github.com/getsentry/sentry-ruby/pull/1447) 
+- Allow toggling background sending on the fly [#1447](https://github.com/getsentry/sentry-ruby/pull/1447)
 - Disable background worker for runner mode [#1448](https://github.com/getsentry/sentry-ruby/pull/1448)
   - Fixes [#1324](https://github.com/getsentry/sentry-ruby/issues/1324)
-
