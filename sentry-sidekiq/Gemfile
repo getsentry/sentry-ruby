@@ -7,8 +7,11 @@ gem "rake", "~> 12.0"
 gem "rspec", "~> 3.0"
 gem "codecov", "0.2.12"
 
-gem "sidekiq"
+sidekiq_version = ENV["SIDEKIQ_VERSION"]
+sidekiq_version = "6.0" if sidekiq_version.nil?
+
 gem "rails"
+gem "sidekiq", "~> #{sidekiq_version}"
 
 gem "sentry-ruby", path: "../sentry-ruby"
 gem "sentry-rails", path: "../sentry-rails"
@@ -16,3 +19,4 @@ gem "sentry-rails", path: "../sentry-rails"
 gem "object_tracer"
 gem "debug", github: "ruby/debug" if RUBY_VERSION.to_f >= 2.6
 gem "pry"
+
