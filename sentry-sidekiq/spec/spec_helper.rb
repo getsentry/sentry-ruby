@@ -1,5 +1,6 @@
 require "bundler/setup"
 require "pry"
+require "debug" if RUBY_VERSION.to_f >= 2.6
 
 # this enables sidekiq's server mode
 require "sidekiq/cli"
@@ -133,7 +134,7 @@ class ReportingWorker
 end
 
 def process_job(processor, klass)
-  msg = Sidekiq.dump_json(jid: "123123", class: klass)
+  msg = Sidekiq.dump_json(jid: "123123", class: klass, args: [])
   job = Sidekiq::BasicFetch::UnitOfWork.new('queue:default', msg)
   processor.instance_variable_set(:'@job', job)
 

@@ -6,10 +6,23 @@ RSpec.describe Sentry::Sidekiq do
     perform_basic_setup
   end
 
+  let(:queue) do
+    Sidekiq::Queue.new("default")
+  end
+
+  let(:retry_set) do
+    Sidekiq::RetrySet.new
+  end
+
+  before do
+    queue.clear
+  end
+
   after do
     # those test jobs will go into the real Redis and be visiable to other sidekiq processes
     # this can affect local testing and development, so we should clear them after each test
-    Sidekiq::RetrySet.new.clear
+    retry_set.clear
+    queue.clear
   end
 
   let(:processor) do
@@ -66,14 +79,13 @@ RSpec.describe Sentry::Sidekiq do
     event = transport.events.last.to_json_compatible
 
     expect(event["message"]).to eq "I have something to say!"
-    expect(event["contexts"]["sidekiq"]).to eq("class" => "ReportingWorker", "jid" => "123123", "queue" => "default")
+    expect(event["contexts"]["sidekiq"]).to eq("args" => [], "class" => "ReportingWorker", "jid" => "123123", "queue" => "default")
   end
 
   it "adds the failed job to the retry queue" do
     process_job(processor, "SadWorker")
 
-    retries = Sidekiq::RetrySet.new
-    expect(retries.count).to eq(1)
+    expect(retry_set.count).to eq(1)
   end
 
   context "when tracing is enabled" do
