@@ -133,12 +133,22 @@ class ReportingWorker
   end
 end
 
-def process_job(processor, klass)
-  msg = Sidekiq.dump_json(jid: "123123", class: klass, args: [])
-  job = Sidekiq::BasicFetch::UnitOfWork.new('queue:default', msg)
-  processor.instance_variable_set(:'@job', job)
+def execute_worker(processor, klass)
+  klass_options = klass.sidekiq_options_hash || {}
+  options = {}
 
-  processor.send(:process, job)
+  # for Ruby < 2.6
+  klass_options.each do |k, v|
+    options[k.to_sym] = v
+  end
+
+  msg = Sidekiq.dump_json(jid: "123123", class: klass, args: [], **options)
+  work = Sidekiq::BasicFetch::UnitOfWork.new('queue:default', msg)
+  process_work(processor, work)
+end
+
+def process_work(processor, work)
+  processor.send(:process, work)
 rescue StandardError
   # do nothing
 end

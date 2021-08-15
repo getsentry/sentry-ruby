@@ -20,7 +20,7 @@ RSpec.describe Sentry::Sidekiq::SentryContextServerMiddleware do
     perform_basic_setup { |config| config.traces_sample_rate = 0 }
     Sentry.set_user(user)
 
-    process_job(processor, "SadWorker")
+    execute_worker(processor, SadWorker)
 
     expect(transport.events.count).to eq(1)
     event = transport.events.first
@@ -34,7 +34,7 @@ RSpec.describe Sentry::Sidekiq::SentryContextServerMiddleware do
     end
 
     it "sets user to the transaction" do
-      process_job(processor, "HappyWorker")
+      execute_worker(processor, HappyWorker)
 
       expect(transport.events.count).to eq(1)
       transaction = transport.events.first
@@ -43,7 +43,7 @@ RSpec.describe Sentry::Sidekiq::SentryContextServerMiddleware do
     end
 
     it "sets user to both the event and transaction" do
-      process_job(processor, "SadWorker")
+      execute_worker(processor, SadWorker)
 
       expect(transport.events.count).to eq(2)
       transaction = transport.events.first

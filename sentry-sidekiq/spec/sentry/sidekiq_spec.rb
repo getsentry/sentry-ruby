@@ -15,6 +15,7 @@ RSpec.describe Sentry::Sidekiq do
   end
 
   before do
+    retry_set.clear
     queue.clear
   end
 
@@ -41,7 +42,7 @@ RSpec.describe Sentry::Sidekiq do
   end
 
   it "captues exception raised in the worker" do
-    expect { process_job(processor, "SadWorker") }.to change { transport.events.size }.by(1)
+    expect { execute_worker(processor, SadWorker) }.to change { transport.events.size }.by(1)
 
     event = transport.events.last.to_hash
     expect(event[:sdk]).to eq({ name: "sentry.ruby.sidekiq", version: described_class::VERSION })
@@ -50,8 +51,8 @@ RSpec.describe Sentry::Sidekiq do
 
   describe "context cleanup" do
     it "cleans up context from processed jobs" do
-      process_job(processor, "HappyWorker")
-      process_job(processor, "SadWorker")
+      execute_worker(processor, HappyWorker)
+      execute_worker(processor, SadWorker)
 
       expect(transport.events.count).to eq(1)
       event = transport.events.last.to_json_compatible
@@ -62,8 +63,8 @@ RSpec.describe Sentry::Sidekiq do
     end
 
     it "cleans up context from failed jobs" do
-      process_job(processor, "SadWorker")
-      process_job(processor, "VerySadWorker")
+      execute_worker(processor, SadWorker)
+      execute_worker(processor, VerySadWorker)
 
       expect(transport.events.count).to eq(2)
       event = transport.events.last.to_json_compatible
@@ -74,7 +75,7 @@ RSpec.describe Sentry::Sidekiq do
   end
 
   it "has some context when capturing, even if no exception raised" do
-    process_job(processor, "ReportingWorker")
+    execute_worker(processor, ReportingWorker)
 
     event = transport.events.last.to_json_compatible
 
@@ -83,7 +84,7 @@ RSpec.describe Sentry::Sidekiq do
   end
 
   it "adds the failed job to the retry queue" do
-    process_job(processor, "SadWorker")
+    execute_worker(processor, SadWorker)
 
     expect(retry_set.count).to eq(1)
   end
@@ -96,7 +97,7 @@ RSpec.describe Sentry::Sidekiq do
     end
 
     it "records transaction" do
-      process_job(processor, "HappyWorker")
+      execute_worker(processor, HappyWorker)
 
       expect(transport.events.count).to eq(1)
       transaction = transport.events.first
@@ -108,7 +109,7 @@ RSpec.describe Sentry::Sidekiq do
     end
 
     it "records transaction with exception" do
-      process_job(processor, "SadWorker")
+      execute_worker(processor, SadWorker)
 
       expect(transport.events.count).to eq(2)
       transaction = transport.events.first
