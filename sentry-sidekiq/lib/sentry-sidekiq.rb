@@ -2,6 +2,7 @@ require "sidekiq"
 require "sentry-ruby"
 require "sentry/integrable"
 require "sentry/sidekiq/version"
+require "sentry/sidekiq/configuration"
 require "sentry/sidekiq/error_handler"
 require "sentry/sidekiq/sentry_context_middleware"
 

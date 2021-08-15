@@ -133,6 +133,16 @@ class ReportingWorker
   end
 end
 
+class RetryWorker
+  include Sidekiq::Worker
+
+  sidekiq_options retry: 1
+
+  def perform
+    1/0
+  end
+end
+
 def execute_worker(processor, klass)
   klass_options = klass.sidekiq_options_hash || {}
   options = {}
