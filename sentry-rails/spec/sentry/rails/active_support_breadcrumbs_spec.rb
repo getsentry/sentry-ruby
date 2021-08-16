@@ -22,6 +22,10 @@ RSpec.describe "Sentry::Breadcrumbs::ActiveSupportLogger", type: :request do
     Sentry.get_current_client.transport
   end
 
+  let(:breadcrumb_buffer) do
+    Sentry.get_current_scope.breadcrumbs
+  end
+
   let(:event) do
     transport.events.first.to_json_compatible
   end
@@ -86,6 +90,6 @@ RSpec.describe "Sentry::Breadcrumbs::ActiveSupportLogger", type: :request do
       ActiveSupport::Notifications.publish "foo", Object.new
     end.not_to raise_error
 
-    expect(transport.events).to be_empty
+    expect(breadcrumb_buffer.count).to be_zero
   end
 end
