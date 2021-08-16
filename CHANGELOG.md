@@ -1,6 +1,9 @@
 ## Unreleased
 
+### Features
+
 - Support after-retry reporting to `sentry-sidekiq` [#1532](https://github.com/getsentry/sentry-ruby/pull/1532)
+- Generate Security Header Endpoint with `Sentry.csp_report_uri` from dsn [#1507](https://github.com/getsentry/sentry-ruby/pull/1507)
 
 ## 4.6.5
 
