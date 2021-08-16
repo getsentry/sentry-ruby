@@ -6,10 +6,24 @@ RSpec.describe Sentry::Sidekiq do
     perform_basic_setup
   end
 
+  let(:queue) do
+    Sidekiq::Queue.new("default")
+  end
+
+  let(:retry_set) do
+    Sidekiq::RetrySet.new
+  end
+
+  before do
+    retry_set.clear
+    queue.clear
+  end
+
   after do
     # those test jobs will go into the real Redis and be visiable to other sidekiq processes
     # this can affect local testing and development, so we should clear them after each test
-    Sidekiq::RetrySet.new.clear
+    retry_set.clear
+    queue.clear
   end
 
   let(:processor) do
@@ -28,7 +42,7 @@ RSpec.describe Sentry::Sidekiq do
   end
 
   it "captues exception raised in the worker" do
-    expect { process_job(processor, "SadWorker") }.to change { transport.events.size }.by(1)
+    expect { execute_worker(processor, SadWorker) }.to change { transport.events.size }.by(1)
 
     event = transport.events.last.to_hash
     expect(event[:sdk]).to eq({ name: "sentry.ruby.sidekiq", version: described_class::VERSION })
@@ -37,8 +51,8 @@ RSpec.describe Sentry::Sidekiq do
 
   describe "context cleanup" do
     it "cleans up context from processed jobs" do
-      process_job(processor, "HappyWorker")
-      process_job(processor, "SadWorker")
+      execute_worker(processor, HappyWorker)
+      execute_worker(processor, SadWorker)
 
       expect(transport.events.count).to eq(1)
       event = transport.events.last.to_json_compatible
@@ -49,8 +63,8 @@ RSpec.describe Sentry::Sidekiq do
     end
 
     it "cleans up context from failed jobs" do
-      process_job(processor, "SadWorker")
-      process_job(processor, "VerySadWorker")
+      execute_worker(processor, SadWorker)
+      execute_worker(processor, VerySadWorker)
 
       expect(transport.events.count).to eq(2)
       event = transport.events.last.to_json_compatible
@@ -61,19 +75,45 @@ RSpec.describe Sentry::Sidekiq do
   end
 
   it "has some context when capturing, even if no exception raised" do
-    process_job(processor, "ReportingWorker")
+    execute_worker(processor, ReportingWorker)
 
     event = transport.events.last.to_json_compatible
 
     expect(event["message"]).to eq "I have something to say!"
-    expect(event["contexts"]["sidekiq"]).to eq("class" => "ReportingWorker", "jid" => "123123", "queue" => "default")
+    expect(event["contexts"]["sidekiq"]).to eq("args" => [], "class" => "ReportingWorker", "jid" => "123123", "queue" => "default")
   end
 
   it "adds the failed job to the retry queue" do
-    process_job(processor, "SadWorker")
+    execute_worker(processor, SadWorker)
 
-    retries = Sidekiq::RetrySet.new
-    expect(retries.count).to eq(1)
+    expect(retry_set.count).to eq(1)
+  end
+
+  context "with config.report_after_job_retries = true" do
+    before do
+      Sentry.configuration.sidekiq.report_after_job_retries = true
+    end
+
+    it "doesn't report the error until retries are exhuasted" do
+      execute_worker(processor, RetryWorker)
+
+      expect(transport.events.count).to eq(0)
+
+      expect(retry_set.count).to eq(1)
+
+      retry_set.first.add_to_queue
+      job = queue.first
+      work = Sidekiq::BasicFetch::UnitOfWork.new('queue:default', job.value)
+      process_work(processor, work)
+      expect(transport.events.count).to eq(1)
+    end
+
+    it "doesn't affect no-retry jobs" do
+      execute_worker(processor, SadWorker)
+
+      expect(transport.events.count).to eq(1)
+      expect(retry_set.count).to eq(1)
+    end
   end
 
   context "when tracing is enabled" do
@@ -84,7 +124,7 @@ RSpec.describe Sentry::Sidekiq do
     end
 
     it "records transaction" do
-      process_job(processor, "HappyWorker")
+      execute_worker(processor, HappyWorker)
 
       expect(transport.events.count).to eq(1)
       transaction = transport.events.first
@@ -96,7 +136,7 @@ RSpec.describe Sentry::Sidekiq do
     end
 
     it "records transaction with exception" do
-      process_job(processor, "SadWorker")
+      execute_worker(processor, SadWorker)
 
       expect(transport.events.count).to eq(2)
       transaction = transport.events.first

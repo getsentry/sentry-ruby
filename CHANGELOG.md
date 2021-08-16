@@ -1,3 +1,7 @@
+## Unreleased
+
+- Support after-retry reporting to `sentry-sidekiq` [#1532](https://github.com/getsentry/sentry-ruby/pull/1532)
+
 ## 4.6.5
 
 - SDK should drop the event when any event processor returns nil [#1523](https://github.com/getsentry/sentry-ruby/pull/1523)

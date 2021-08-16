@@ -1,5 +1,6 @@
 require "bundler/setup"
 require "pry"
+require "debug" if RUBY_VERSION.to_f >= 2.6
 
 # this enables sidekiq's server mode
 require "sidekiq/cli"
@@ -132,12 +133,32 @@ class ReportingWorker
   end
 end
 
-def process_job(processor, klass)
-  msg = Sidekiq.dump_json(jid: "123123", class: klass)
-  job = Sidekiq::BasicFetch::UnitOfWork.new('queue:default', msg)
-  processor.instance_variable_set(:'@job', job)
+class RetryWorker
+  include Sidekiq::Worker
 
-  processor.send(:process, job)
+  sidekiq_options retry: 1
+
+  def perform
+    1/0
+  end
+end
+
+def execute_worker(processor, klass)
+  klass_options = klass.sidekiq_options_hash || {}
+  options = {}
+
+  # for Ruby < 2.6
+  klass_options.each do |k, v|
+    options[k.to_sym] = v
+  end
+
+  msg = Sidekiq.dump_json(jid: "123123", class: klass, args: [], **options)
+  work = Sidekiq::BasicFetch::UnitOfWork.new('queue:default', msg)
+  process_work(processor, work)
+end
+
+def process_work(processor, work)
+  processor.send(:process, work)
 rescue StandardError
   # do nothing
 end
