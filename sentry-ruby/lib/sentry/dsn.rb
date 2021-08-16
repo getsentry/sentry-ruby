@@ -40,6 +40,10 @@ module Sentry
       server
     end
 
+    def csp_report_uri
+      "#{server}/api/#{project_id}/security/?sentry_key=#{public_key}"
+    end
+
     def envelope_endpoint
       "#{path}/api/#{project_id}/envelope/"
     end

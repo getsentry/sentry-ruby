@@ -465,6 +465,19 @@ RSpec.describe Sentry do
     end
   end
 
+  describe ".csp_report_uri" do
+    it "returns nil if the SDK is not initialized" do
+      described_class.instance_variable_set(:@main_hub, nil)
+      expect(described_class.csp_report_uri).to eq(nil)
+    end
+
+    it "returns the csp_report_uri generated from the main Configuration" do
+      expect(Sentry.configuration).to receive(:csp_report_uri).and_call_original
+
+      expect(described_class.csp_report_uri).to eq("http://sentry.localdomain/api/42/security/?sentry_key=12345&sentry_environment=default")
+    end
+  end
+
   describe 'release detection' do
     let(:fake_root) { "/tmp/sentry/" }
 

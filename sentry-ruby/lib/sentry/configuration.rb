@@ -324,6 +324,15 @@ module Sentry
       log_error("Error detecting release", e, debug: debug)
     end
 
+    def csp_report_uri
+      if dsn && dsn.valid?
+        uri = dsn.csp_report_uri
+        uri += "&sentry_release=#{CGI.escape(release)}" if release && !release.empty?
+        uri += "&sentry_environment=#{CGI.escape(environment)}" if environment && !environment.empty?
+        uri
+      end
+    end
+
     private
 
     def excluded_exception?(incoming_exception)

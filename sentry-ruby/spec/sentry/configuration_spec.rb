@@ -1,6 +1,39 @@
 require 'spec_helper'
 
 RSpec.describe Sentry::Configuration do
+  describe "#csp_report_uri" do
+    it "returns nil if the dsn is not present" do
+      expect(subject.csp_report_uri).to eq(nil)
+    end
+
+    it "returns nil if the dsn is not valid" do
+      subject.dsn = "foo"
+      expect(subject.csp_report_uri).to eq(nil)
+    end
+
+    context "when the DSN is present" do
+      before do
+        subject.release = nil
+        subject.environment = nil
+        subject.dsn = DUMMY_DSN
+      end
+
+      it "returns the uri" do
+        expect(subject.csp_report_uri).to eq("http://sentry.localdomain/api/42/security/?sentry_key=12345")
+      end
+
+      it "adds sentry_release param when there's release information" do
+        subject.release = "test-release"
+        expect(subject.csp_report_uri).to eq("http://sentry.localdomain/api/42/security/?sentry_key=12345&sentry_release=test-release")
+      end
+
+      it "adds sentry_environment param when there's environment information" do
+        subject.environment = "test-environment"
+        expect(subject.csp_report_uri).to eq("http://sentry.localdomain/api/42/security/?sentry_key=12345&sentry_environment=test-environment")
+      end
+    end
+  end
+
   describe "#tracing_enabled?" do
     context "when sending not allowed" do
       before do
