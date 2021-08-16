@@ -2,7 +2,7 @@
 
 ### Features
 
-- Add `monotonic_active_support_logger` [#1531][https://github.com/getsentry/sentry-ruby/pull/1531]
+- Add `monotonic_active_support_logger` [#1531](https://github.com/getsentry/sentry-ruby/pull/1531)
 - Support after-retry reporting to `sentry-sidekiq` [#1532](https://github.com/getsentry/sentry-ruby/pull/1532)
 - Generate Security Header Endpoint with `Sentry.csp_report_uri` from dsn [#1507](https://github.com/getsentry/sentry-ruby/pull/1507)
 
