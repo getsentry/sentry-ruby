@@ -10,10 +10,12 @@ module Sentry
     end
 
     def log_info(message)
+      # issue ENR-759
       # logger.info(LOGGER_PROGNAME) { message }
     end
 
     def log_debug(message)
+      # issue ENR-759
       # logger.debug(LOGGER_PROGNAME) { message }
     end
 
