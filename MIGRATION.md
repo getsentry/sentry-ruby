@@ -78,7 +78,7 @@ Configure data in a local scope
 
 ```ruby
 # Before
-Raven.tag_context(foo: "bar") do
+Raven.tags_context(foo: "bar") do
   Raven.capture_message("test")
 end
 
@@ -204,7 +204,7 @@ Old:
 Raven.user_context(id: 1) do
   # send event
 end
-Raven.tag_context(foo: "bar") do
+Raven.tags_context(foo: "bar") do
   # send event
 end
 Raven.extra_context(debug: true) do
