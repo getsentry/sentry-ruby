@@ -15,7 +15,7 @@ module Sentry
     if defined?(::Rails::Railtie)
       class Railtie < ::Rails::Railtie
         config.after_initialize do
-          next unless Sentry.initialized?
+          next unless Sentry.initialized? && defined?(::Sentry::Rails)
 
           Sentry.configuration.rails.skippable_job_adapters << "ActiveJob::QueueAdapters::SidekiqAdapter"
         end
