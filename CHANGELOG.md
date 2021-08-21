@@ -10,6 +10,8 @@
 
 - Check sentry-rails before injecting ActiveJob skippable adapters [#1544](https://github.com/getsentry/sentry-ruby/pull/1544)
   - Fixes [#1541](https://github.com/getsentry/sentry-ruby/issues/1541)
+- Don't apply Scope's transaction name if it's empty [#1546](https://github.com/getsentry/sentry-ruby/pull/1546)
+  - Fixes [#1540](https://github.com/getsentry/sentry-ruby/issues/1540)
 
 ## 4.6.5
 

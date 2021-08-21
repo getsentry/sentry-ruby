@@ -23,6 +23,7 @@ module Sentry
       event.user = user.merge(event.user)
       event.extra = extra.merge(event.extra)
       event.contexts = contexts.merge(event.contexts)
+      event.transaction = transaction_name if transaction_name
 
       if span
         event.contexts[:trace] = span.get_trace_context
@@ -30,7 +31,6 @@ module Sentry
 
       event.fingerprint = fingerprint
       event.level = level
-      event.transaction = transaction_names.last
       event.breadcrumbs = breadcrumbs
       event.rack_env = rack_env if rack_env
 
