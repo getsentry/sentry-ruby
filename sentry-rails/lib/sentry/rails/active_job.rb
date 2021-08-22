@@ -21,7 +21,12 @@ module Sentry
 
       def capture_and_reraise_with_sentry(job, scope, block)
         scope.set_transaction_name(job.class.name)
-        transaction = Sentry.start_transaction(name: scope.transaction_name, op: "active_job")
+        transaction =
+          if job.is_a?(::Sentry::SendEventJob)
+            nil
+          else
+            Sentry.start_transaction(name: scope.transaction_name, op: "active_job")
+          end
 
         scope.set_span(transaction) if transaction
 

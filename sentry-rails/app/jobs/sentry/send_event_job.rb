@@ -22,11 +22,6 @@ if defined?(ActiveJob)
       end
 
       def perform(event, hint = {})
-        # users don't need the tracing result of this job
-        if transaction = Sentry.get_current_scope.span
-          transaction.instance_variable_set(:@sampled, false)
-        end
-
         Sentry.send_event(event, hint)
       end
     end
