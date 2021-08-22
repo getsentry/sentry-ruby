@@ -12,6 +12,8 @@
   - Fixes [#1541](https://github.com/getsentry/sentry-ruby/issues/1541)
 - Don't apply Scope's transaction name if it's empty [#1546](https://github.com/getsentry/sentry-ruby/pull/1546)
   - Fixes [#1540](https://github.com/getsentry/sentry-ruby/issues/1540)
+- Don't start `Sentry::SendEventJob`'s transaction [#1547](https://github.com/getsentry/sentry-ruby/pull/1547)
+  - Fixes [#1539](https://github.com/getsentry/sentry-ruby/issues/1539)
 
 ## 4.6.5
 
