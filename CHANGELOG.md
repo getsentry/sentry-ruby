@@ -14,6 +14,7 @@
   - Fixes [#1540](https://github.com/getsentry/sentry-ruby/issues/1540)
 - Don't start `Sentry::SendEventJob`'s transaction [#1547](https://github.com/getsentry/sentry-ruby/pull/1547)
   - Fixes [#1539](https://github.com/getsentry/sentry-ruby/issues/1539)
+- Don't record breadcrumbs in disabled environments [#1549](https://github.com/getsentry/sentry-ruby/pull/1549)
 
 ## 4.6.5
 

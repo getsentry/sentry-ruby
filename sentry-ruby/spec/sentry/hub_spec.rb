@@ -290,6 +290,18 @@ RSpec.describe Sentry::Hub do
         end
       end
     end
+
+    context "when the SDK is not activated in the current environment" do
+      before do
+        configuration.enabled_environments = ["production"]
+      end
+
+      it "doesn't record breadcrumbs" do
+        subject.add_breadcrumb(new_breadcrumb)
+
+        expect(peek_crumb).to eq(nil)
+      end
+    end
   end
 
   describe "#new_from_top" do
