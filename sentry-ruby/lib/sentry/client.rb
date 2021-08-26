@@ -57,10 +57,10 @@ module Sentry
       end
     end
 
-    def event_from_message(message, hint = {})
+    def event_from_message(message, hint = {}, backtrace: nil)
       integration_meta = Sentry.integrations[hint[:integration]]
       event = Event.new(configuration: configuration, integration_meta: integration_meta, message: message)
-      event.add_threads_interface(backtrace: caller)
+      event.add_threads_interface(backtrace: backtrace || caller)
       event
     end
 
