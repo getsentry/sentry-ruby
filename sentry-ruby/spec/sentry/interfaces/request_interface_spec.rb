@@ -59,6 +59,17 @@ RSpec.describe Sentry::RequestInterface do
       end
     end
 
+    context 'with special characters' do
+      let(:additional_headers) { { "HTTP_FOO" => "Tekirda\xC4" } }
+
+      it "doesn't cause any issue" do
+        interface = described_class.build(env: env)
+        json = JSON.generate(interface.to_hash)
+
+        expect(JSON.parse(json)["headers"]).to eq({"Content-Length"=>"0", "Foo"=>"Tekirda�"})
+      end
+    end
+
     context 'with additional env variables' do
       let(:mock) { double }
       let(:env) { { "some.variable" => mock } }

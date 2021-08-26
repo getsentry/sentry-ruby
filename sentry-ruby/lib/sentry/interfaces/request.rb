@@ -76,7 +76,18 @@ module Sentry
           # Rack stores headers as HTTP_WHAT_EVER, we need What-Ever
           key = key.sub(/^HTTP_/, "")
           key = key.split('_').map(&:capitalize).join('-')
-          memo[key] = value.to_s
+
+          value = value.to_s
+
+          if value.encoding != Encoding::UTF_8 && value.respond_to?(:force_encoding)
+            value = value.force_encoding(Encoding::UTF_8)
+          end
+
+          if !value.valid_encoding?
+            value = value.scrub
+          end
+
+          memo[key] = value
         rescue StandardError => e
           # Rails adds objects to the Rack env that can sometimes raise exceptions
           # when `to_s` is called.
