@@ -143,6 +143,18 @@ RSpec.describe Sentry::Hub do
       end.to change { transport.events.count }.by(1)
     end
 
+    it "takes backtrace option" do
+      event = subject.capture_message(message, backtrace: ["#{__FILE__}:10:in `foo'"])
+      event_hash = event.to_hash
+      expect(event_hash.dig(:threads, :values, 0, :stacktrace, :frames, 0, :function)).to eq("foo")
+    end
+
+    it "assigns default backtrace with caller" do
+      event = subject.capture_message(message)
+      event_hash = event.to_hash
+      expect(event_hash.dig(:threads, :values, 0, :stacktrace, :frames, 0, :function)).to eq("<main>")
+    end
+
     it_behaves_like "capture_helper" do
       let(:capture_helper) { :capture_message }
       let(:capture_subject) { message }
