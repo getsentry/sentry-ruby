@@ -57,7 +57,7 @@ module Sentry
         request.POST
       elsif request.body # JSON requests, etc
         data = request.body.read(MAX_BODY_LIMIT)
-        data = data.force_encoding(Encoding::UTF_8) if data.respond_to?(:force_encoding)
+        data = encode_to_utf_8(data.to_s)
         request.body.rewind
         data
       end
@@ -77,17 +77,7 @@ module Sentry
           key = key.sub(/^HTTP_/, "")
           key = key.split('_').map(&:capitalize).join('-')
 
-          value = value.to_s
-
-          if value.encoding != Encoding::UTF_8 && value.respond_to?(:force_encoding)
-            value = value.force_encoding(Encoding::UTF_8)
-          end
-
-          if !value.valid_encoding?
-            value = value.scrub
-          end
-
-          memo[key] = value
+          memo[key] = encode_to_utf_8(value.to_s)
         rescue StandardError => e
           # Rails adds objects to the Rack env that can sometimes raise exceptions
           # when `to_s` is called.
@@ -96,6 +86,18 @@ module Sentry
           next
         end
       end
+    end
+
+    def encode_to_utf_8(value)
+      if value.encoding != Encoding::UTF_8 && value.respond_to?(:force_encoding)
+        value = value.dup.force_encoding(Encoding::UTF_8)
+      end
+
+      if !value.valid_encoding?
+        value = value.scrub
+      end
+
+      value
     end
 
     def is_skippable_header?(key)
