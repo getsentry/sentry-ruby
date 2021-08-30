@@ -6,7 +6,7 @@ Gem::Specification.new do |spec|
   spec.authors = ["Sentry Team"]
   spec.description = spec.summary = "A gem that provides Resque integration for the Sentry error logger"
   spec.email = "accounts@sentry.io"
-  spec.license = 'Apache-2.0'
+  spec.license = 'MIT'
   spec.homepage = "https://github.com/getsentry/sentry-ruby"
 
   spec.platform = Gem::Platform::RUBY
