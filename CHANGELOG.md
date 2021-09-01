@@ -18,6 +18,9 @@
 - Don't record breadcrumbs in disabled environments [#1549](https://github.com/getsentry/sentry-ruby/pull/1549)
 - Scrub header values with invalid encoding [#1552](https://github.com/getsentry/sentry-ruby/pull/1552)
   - Fixes [#1551](https://github.com/getsentry/sentry-ruby/issues/1551)
+- Fix mismatched license info. New SDK gems' gemspecs specified `APACHE-2.0` while their `LICENSE.txt` was `MIT`. Now they both are `MIT`.
+  - [#1554](https://github.com/getsentry/sentry-ruby/pull/1554)
+  - [#1555](https://github.com/getsentry/sentry-ruby/pull/1555)
 
 ## 4.6.5
 
