@@ -114,6 +114,12 @@ RSpec.describe Sentry::Sidekiq do
       expect(transport.events.count).to eq(1)
       expect(retry_set.count).to eq(1)
     end
+
+    it "doesn't affect jobs with zero retries" do
+      execute_worker(processor, ZeroRetryWorker)
+
+      expect(transport.events.count).to eq(1)
+    end
   end
 
   context "when tracing is enabled" do
