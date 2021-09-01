@@ -1,3 +1,9 @@
+## Unreleased
+
+### Bug Fixes
+- Send events when report_after_job_retries is true and a job is configured with retry: 0 [#1557](https://github.com/getsentry/sentry-ruby/pull/1557)
+  - Fixes [#1556](https://github.com/getsentry/sentry-ruby/issues/1556)
+
 ## 4.7.0
 
 ### Features
