@@ -13,7 +13,7 @@ module Sentry
 
         retry_option = context.dig(:job, "retry")
 
-        if Sentry.configuration.sidekiq.report_after_job_retries && retry_option.is_a?(Integer)
+        if Sentry.configuration.sidekiq.report_after_job_retries && retry_option.is_a?(Integer) && retry_option.positive?
           retry_count = context.dig(:job, "retry_count")
           if retry_count.nil? || retry_count < retry_option - 1
             return
