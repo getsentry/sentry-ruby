@@ -1,3 +1,9 @@
+## Unreleased
+
+- Change default environment to 'development' [#1565](https://github.com/getsentry/sentry-ruby/pull/1565)
+  - Fixes [#1559](https://github.com/getsentry/sentry-ruby/issues/1559)
+
+
 ## 4.7.1
 
 ### Bug Fixes
