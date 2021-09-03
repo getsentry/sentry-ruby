@@ -8,8 +8,8 @@ module Sentry
     initializer "sentry.use_rack_middleware" do |app|
       # placed after all the file-sending middlewares so we can avoid unnecessary transactions
       app.config.middleware.insert_after ActionDispatch::Executor, Sentry::Rails::CaptureExceptions
-      # need to be placed at last to smuggle app exceptions via env
-      app.config.middleware.use(Sentry::Rails::RescuedExceptionInterceptor)
+      # need to place as close to DebugExceptions as possible to intercept most of the exceptions, including those raised by middlewares
+      app.config.middleware.insert_after ActionDispatch::DebugExceptions, Sentry::Rails::RescuedExceptionInterceptor
     end
 
     # because the extension works by registering the around_perform callcack, it should always be ran
