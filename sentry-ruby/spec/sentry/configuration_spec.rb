@@ -149,8 +149,8 @@ RSpec.describe Sentry::Configuration do
       ENV.delete('RACK_ENV')
     end
 
-    it 'defaults to "default"' do
-      expect(subject.environment).to eq('default')
+    it 'defaults to "development"' do
+      expect(subject.environment).to eq('development')
     end
 
     it 'uses `SENTRY_CURRENT_ENV` env variable' do

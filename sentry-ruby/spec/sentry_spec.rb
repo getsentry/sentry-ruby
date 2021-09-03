@@ -474,7 +474,7 @@ RSpec.describe Sentry do
     it "returns the csp_report_uri generated from the main Configuration" do
       expect(Sentry.configuration).to receive(:csp_report_uri).and_call_original
 
-      expect(described_class.csp_report_uri).to eq("http://sentry.localdomain/api/42/security/?sentry_key=12345&sentry_environment=default")
+      expect(described_class.csp_report_uri).to eq("http://sentry.localdomain/api/42/security/?sentry_key=12345&sentry_environment=development")
     end
   end
 
