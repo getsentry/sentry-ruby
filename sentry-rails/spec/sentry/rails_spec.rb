@@ -26,7 +26,8 @@ RSpec.describe Sentry::Rails, type: :request do
       app = Rails.application
       index_of_executor = app.middleware.find_index { |m| m == ActionDispatch::Executor }
       expect(app.middleware.find_index(Sentry::Rails::CaptureExceptions)).to eq(index_of_executor + 1)
-      expect(app.middleware.find_index(Sentry::Rails::RescuedExceptionInterceptor)).to eq(app.middleware.count - 1)
+      index_of_debug_exceptions = app.middleware.find_index { |m| m == ActionDispatch::DebugExceptions }
+      expect(app.middleware.find_index(Sentry::Rails::RescuedExceptionInterceptor)).to eq(index_of_debug_exceptions + 1)
     end
 
     it "inserts a callback to disable background_worker for the runner mode" do
