@@ -12,7 +12,7 @@ jobs:
     defaults:
       run:
         working-directory: sentry-sidekiq
-    name: Test on ruby ${{ matrix.ruby_version }} and sidekiq ${{ matrix.sidekiq_version }}
+    name: Ruby ${{ matrix.ruby_version }} & Sidekiq ${{ matrix.sidekiq_version }}, options - ${{ toJson(matrix.options) }}
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
@@ -20,8 +20,8 @@ jobs:
         ruby_version: [2.4, 2.5, 2.6, 2.7, '3.0', jruby]
         os: [ubuntu-latest]
         include:
-          - ruby_version: '3.0'
-            env: RUBYOPT="--enable-frozen-string-literal --debug=frozen-string-literal"
+          - { os: ubuntu-latest, ruby_version: '3.0', sidekiq_version: 6.0, options: { rubyopt: "--enable-frozen-string-literal --debug=frozen-string-literal" } }
+          - { os: ubuntu-latest, ruby_version: '2.7', sidekiq_version: 6.0, options: { codecov: 1 } }
         exclude:
           - ruby_version: 2.4
             sidekiq_version: 6.0
@@ -42,6 +42,8 @@ jobs:
     - name: Run specs with Sidekiq ${{ matrix.sidekiq_version }}
       env:
         SIDEKIQ_VERSION: ${{ matrix.sidekiq_version }}
+        RUBYOPT: ${{ matrix.options.rubyopt }}
+        CODECOV: ${{ matrix.options.codecov }}
       run: |
         bundle install --jobs 4 --retry 3
         make test
