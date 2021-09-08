@@ -1,8 +1,9 @@
-## Unreleased
+## 4.7.2
 
 - Change default environment to 'development' [#1565](https://github.com/getsentry/sentry-ruby/pull/1565)
   - Fixes [#1559](https://github.com/getsentry/sentry-ruby/issues/1559)
-
+- Re-position RescuedExceptionInterceptor middleware [#1564](https://github.com/getsentry/sentry-ruby/pull/1564)
+  - Fixes [#1563](https://github.com/getsentry/sentry-ruby/issues/1563)
 
 ## 4.7.1
 
