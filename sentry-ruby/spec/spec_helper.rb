@@ -10,7 +10,7 @@ SimpleCov.start do
   coverage_dir File.join(__FILE__, "../../coverage")
 end
 
-if ENV["CI"]
+if ENV["CI"] && ENV["CODECOV"] == "1"
   require 'codecov'
   SimpleCov.formatter = SimpleCov::Formatter::Codecov
 end
