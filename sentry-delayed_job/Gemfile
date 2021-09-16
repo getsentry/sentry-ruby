@@ -21,3 +21,4 @@ gem "sentry-ruby", path: "../sentry-ruby"
 gem "sentry-rails", path: "../sentry-rails"
 
 gem "pry"
+gem "debug", github: "ruby/debug" if RUBY_VERSION.to_f >= 2.6
