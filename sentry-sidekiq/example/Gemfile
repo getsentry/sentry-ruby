@@ -5,3 +5,4 @@ gem "sentry-sidekiq", path: "../"
 gem "sentry-ruby", path: "../../sentry-ruby"
 
 gem "pry"
+gem "debug", github: "ruby/debug"
