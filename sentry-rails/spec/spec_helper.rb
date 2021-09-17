@@ -1,4 +1,5 @@
 require "bundler/setup"
+require "debug"
 require "pry"
 
 require "sentry-ruby"

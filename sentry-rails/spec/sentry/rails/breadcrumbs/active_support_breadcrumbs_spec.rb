@@ -92,4 +92,18 @@ RSpec.describe "Sentry::Breadcrumbs::ActiveSupportLogger", type: :request do
 
     expect(breadcrumb_buffer.count).to be_zero
   end
+
+  context "when used with tracing" do
+    it "doesn't add internal start timestamp payload to breadcrumbs data" do
+      p = Post.create!
+
+      get "/posts/#{p.id}"
+
+      expect(transport.events.count).to eq(1)
+
+      transaction = transport.events.last.to_hash
+      breadcrumbs = transaction[:breadcrumbs][:values]
+      expect(breadcrumbs.last[:data].has_key?(Sentry::Rails::Tracing::START_TIMESTAMP_NAME)).to eq(false)
+    end
+  end
 end

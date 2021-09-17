@@ -16,7 +16,7 @@ module Sentry
 
             record_on_current_span(
               op: event_name,
-              start_timestamp: payload[:start_timestamp],
+              start_timestamp: payload[START_TIMESTAMP_NAME],
               description: "#{controller}##{action}",
               duration: duration
             ) do |span|

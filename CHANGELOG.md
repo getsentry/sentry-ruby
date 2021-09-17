@@ -1,3 +1,7 @@
+## Unreleased
+
+- Avoid leaking tracing timestamp to breadcrumbs [#1575](https://github.com/getsentry/sentry-ruby/pull/1575)
+
 ## 4.7.2
 
 - Change default environment to 'development' [#1565](https://github.com/getsentry/sentry-ruby/pull/1565)

@@ -1,6 +1,8 @@
 module Sentry
   module Rails
     module Tracing
+      START_TIMESTAMP_NAME = :sentry_start_timestamp
+
       def self.register_subscribers(subscribers)
         @subscribers = subscribers
       end
@@ -37,7 +39,7 @@ module Sentry
           def instrument(name, payload = {}, &block)
             is_public_event = name[0] != "!"
 
-            payload[:start_timestamp] = Time.now.utc.to_f if is_public_event
+            payload[START_TIMESTAMP_NAME] = Time.now.utc.to_f if is_public_event
 
             super(name, payload, &block)
           end
