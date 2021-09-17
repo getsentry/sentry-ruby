@@ -8,7 +8,7 @@ module Sentry
 
         def self.subscribe!
           subscribe_to_event(EVENT_NAME) do |event_name, duration, payload|
-            record_on_current_span(op: event_name, start_timestamp: payload[:start_timestamp], description: payload[:identifier], duration: duration)
+            record_on_current_span(op: event_name, start_timestamp: payload[START_TIMESTAMP_NAME], description: payload[:identifier], duration: duration)
           end
         end
       end

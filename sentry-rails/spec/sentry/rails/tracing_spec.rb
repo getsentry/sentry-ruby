@@ -21,7 +21,6 @@ RSpec.describe Sentry::Rails::Tracing, type: :request do
       expect(described_class).to receive(:subscribe_tracing_events).and_call_original
 
       make_basic_app do |config|
-        config.breadcrumbs_logger = [:active_support_logger]
         config.traces_sample_rate = 1.0
       end
     end
@@ -87,18 +86,6 @@ RSpec.describe Sentry::Rails::Tracing, type: :request do
       expect(last_span[:op]).to eq("process_action.action_controller")
       expect(last_span[:description]).to eq("PostsController#show")
       expect(last_span[:parent_span_id]).to eq(parent_span_id)
-    end
-
-    it "doesn't add internal start timestamp payload to breadcrumbs data" do
-      p = Post.create!
-
-      get "/posts/#{p.id}"
-
-      expect(transport.events.count).to eq(1)
-
-      transaction = transport.events.last.to_hash
-      breadcrumbs = transaction[:breadcrumbs][:values]
-      expect(breadcrumbs.last[:data].has_key?(described_class::START_TIMESTAMP_NAME)).to eq(false)
     end
   end
 
