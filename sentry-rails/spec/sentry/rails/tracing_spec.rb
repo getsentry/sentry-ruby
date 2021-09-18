@@ -28,6 +28,7 @@ RSpec.describe Sentry::Rails::Tracing, type: :request do
     it "records transaction with exception" do
       get "/posts"
 
+      expect(response).to have_http_status(:internal_server_error)
       expect(transport.events.count).to eq(2)
 
       event = transport.events.first.to_hash
@@ -60,6 +61,7 @@ RSpec.describe Sentry::Rails::Tracing, type: :request do
 
       get "/posts/#{p.id}"
 
+      expect(response).to have_http_status(:ok)
       expect(transport.events.count).to eq(1)
 
       transaction = transport.events.last.to_hash
@@ -86,6 +88,13 @@ RSpec.describe Sentry::Rails::Tracing, type: :request do
       expect(last_span[:op]).to eq("process_action.action_controller")
       expect(last_span[:description]).to eq("PostsController#show")
       expect(last_span[:parent_span_id]).to eq(parent_span_id)
+    end
+
+    it "doesn't mess with custom instrumentations" do
+      get "/with_custom_instrumentation"
+      expect(response).to have_http_status(:ok)
+
+      expect(transport.events.count).to eq(1)
     end
   end
 

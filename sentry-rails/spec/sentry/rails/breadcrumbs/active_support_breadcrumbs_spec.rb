@@ -103,7 +103,9 @@ RSpec.describe "Sentry::Breadcrumbs::ActiveSupportLogger", type: :request do
 
       transaction = transport.events.last.to_hash
       breadcrumbs = transaction[:breadcrumbs][:values]
-      expect(breadcrumbs.last[:data].has_key?(Sentry::Rails::Tracing::START_TIMESTAMP_NAME)).to eq(false)
+      process_action_crumb = breadcrumbs.last
+      expect(process_action_crumb[:category]).to eq("process_action.action_controller")
+      expect(process_action_crumb[:data].has_key?(Sentry::Rails::Tracing::START_TIMESTAMP_NAME)).to eq(false)
     end
   end
 end
