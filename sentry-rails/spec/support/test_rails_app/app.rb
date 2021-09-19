@@ -70,6 +70,18 @@ class HelloController < ActionController::Base
     render :plain => "Hello World!"
   end
 
+  def with_custom_instrumentation
+    custom_event = "custom.instrument"
+    ActiveSupport::Notifications.subscribe(custom_event) do |*args|
+      data = args[-1]
+      data += 1
+    end
+
+    ActiveSupport::Notifications.instrument(custom_event, 1)
+
+    head :ok
+  end
+
   def not_found
     raise ActionController::BadRequest
   end
@@ -93,6 +105,7 @@ def make_basic_app
     get "/view", :to => "hello#view"
     get "/not_found", :to => "hello#not_found"
     get "/world", to: "hello#world"
+    get "/with_custom_instrumentation", to: "hello#with_custom_instrumentation"
     resources :posts, only: [:index, :show]
     get "500", to: "hello#reporting"
     root :to => "hello#world"

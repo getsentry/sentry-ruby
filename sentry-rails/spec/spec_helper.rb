@@ -42,6 +42,7 @@ RSpec.configure do |config|
 
   config.after :each do
     Sentry::Rails::Tracing.unsubscribe_tracing_events
+    expect(Sentry::Rails::Tracing.subscribed_tracing_events).to be_empty
     Sentry::Rails::Tracing.remove_active_support_notifications_patch
   end
 

@@ -1,22 +1,15 @@
 require "spec_helper"
 
-
-RSpec.describe "Sentry::Breadcrumbs::MonotonicActiveSupportLogger", type: :request do
-  before do
-    make_basic_app do |sentry_config|
-      sentry_config.breadcrumbs_logger = [:monotonic_active_support_logger]
-      sentry_config.traces_sample_rate = 1.0
-    end
-  end
-
+RSpec.describe "Sentry::Breadcrumbs::ActiveSupportLogger", type: :request do
   after do
-    require 'sentry/rails/breadcrumb/monotonic_active_support_logger'
-    Sentry::Rails::Breadcrumb::MonotonicActiveSupportLogger.detach
+    require 'sentry/rails/breadcrumb/active_support_logger'
+    Sentry::Rails::Breadcrumb::ActiveSupportLogger.detach
     # even though we cleanup breadcrumbs in the rack middleware
-    # Breadcrumbs::MonotonicActiveSupportLogger subscribes to "every" instrumentation
+    # Breadcrumbs::ActiveSupportLogger subscribes to "every" instrumentation
     # so it'll create other instrumentations "after" the request is finished
     # and we should clear those as well
     Sentry.get_current_scope.clear_breadcrumbs
+    transport.events = []
   end
 
   let(:transport) do
@@ -31,20 +24,13 @@ RSpec.describe "Sentry::Breadcrumbs::MonotonicActiveSupportLogger", type: :reque
     transport.events.first.to_json_compatible
   end
 
-  after do
-    transport.events = []
-  end
-
-  context "given a Rails version < 6.1", skip: Rails.version.to_f >= 6.1 do
-    it "does not run instrumentation" do
-      get "/exception"
-
-      breadcrumbs = event.dig("breadcrumbs", "values")
-      expect(breadcrumbs.count).to be_zero
+  context "without tracing" do
+    before do
+      make_basic_app do |sentry_config|
+        sentry_config.breadcrumbs_logger = [:active_support_logger]
+      end
     end
-  end
 
-  context "given a Rails version >= 6.1", skip: Rails.version.to_f <= 6.1 do
     it "captures correct data of exception requests" do
       get "/exception"
 
@@ -65,6 +51,35 @@ RSpec.describe "Sentry::Breadcrumbs::MonotonicActiveSupportLogger", type: :reque
       expect(breadcrumb["data"].keys).not_to include("headers")
       expect(breadcrumb["data"].keys).not_to include("request")
       expect(breadcrumb["data"].keys).not_to include("response")
+    end
+
+    it "ignores exception data" do
+      get "/view_exception"
+
+      expect(event.dig("breadcrumbs", "values", -1, "data").keys).not_to include("exception")
+      expect(event.dig("breadcrumbs", "values", -1, "data").keys).not_to include("exception_object")
+    end
+
+    it "ignores events that doesn't have a started timestamp" do
+      expect do
+        ActiveSupport::Notifications.publish "foo", Object.new
+      end.not_to raise_error
+
+      expect(breadcrumb_buffer.count).to be_zero
+    end
+  end
+
+  context "with tracing" do
+    before do
+      make_basic_app do |sentry_config|
+        sentry_config.breadcrumbs_logger = [:active_support_logger]
+        sentry_config.traces_sample_rate = 1.0
+      end
+    end
+
+    after do
+      Sentry::Rails::Tracing.unsubscribe_tracing_events
+      Sentry::Rails::Tracing.remove_active_support_notifications_patch
     end
 
     it "captures correct request data of normal requests" do
@@ -89,19 +104,18 @@ RSpec.describe "Sentry::Breadcrumbs::MonotonicActiveSupportLogger", type: :reque
       expect(breadcrumb["data"].keys).not_to include("response")
     end
 
-    it "ignores exception data" do
-      get "/view_exception"
+    it "doesn't add internal start timestamp payload to breadcrumbs data" do
+      p = Post.create!
 
-      expect(event.dig("breadcrumbs", "values", -1, "data").keys).not_to include("exception")
-      expect(event.dig("breadcrumbs", "values", -1, "data").keys).not_to include("exception_object")
-    end
+      get "/posts/#{p.id}"
 
-    it "ignores events that doesn't have a float as started attributes" do
-      expect do
-        ActiveSupport::Notifications.publish "foo", Time.now
-      end.not_to raise_error
+      expect(transport.events.count).to eq(1)
 
-      expect(breadcrumb_buffer.count).to be_zero
+      transaction = transport.events.last.to_hash
+      breadcrumbs = transaction[:breadcrumbs][:values]
+      process_action_crumb = breadcrumbs.last
+      expect(process_action_crumb[:category]).to eq("process_action.action_controller")
+      expect(process_action_crumb[:data].has_key?(Sentry::Rails::Tracing::START_TIMESTAMP_NAME)).to eq(false)
     end
   end
 end

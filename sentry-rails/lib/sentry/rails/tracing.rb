@@ -11,11 +11,18 @@ module Sentry
         @subscribers
       end
 
+      def self.subscribed_tracing_events
+        @subscribed_tracing_events ||= []
+      end
+
       def self.subscribe_tracing_events
         # need to avoid duplicated subscription
         return if @subscribed
 
-        subscribers.each(&:subscribe!)
+        subscribers.each do |subscriber|
+          subscriber.subscribe!
+          subscribed_tracing_events << subscriber::EVENT_NAME
+        end
 
         @subscribed = true
       end
@@ -24,6 +31,7 @@ module Sentry
         return unless @subscribed
 
         subscribers.each(&:unsubscribe!)
+        subscribed_tracing_events.clear
 
         @subscribed = false
       end
@@ -37,9 +45,10 @@ module Sentry
 
         SentryNotificationExtension.module_eval do
           def instrument(name, payload = {}, &block)
-            is_public_event = name[0] != "!"
-
-            payload[START_TIMESTAMP_NAME] = Time.now.utc.to_f if is_public_event
+            # only inject timestamp to the events the SDK subscribes to
+            if Tracing.subscribed_tracing_events.include?(name)
+              payload[START_TIMESTAMP_NAME] = Time.now.utc.to_f if name[0] != "!" && payload.is_a?(Hash)
+            end
 
             super(name, payload, &block)
           end
