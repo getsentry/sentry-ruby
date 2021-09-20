@@ -149,6 +149,12 @@ RSpec.describe Sentry::Hub do
       expect(event_hash.dig(:threads, :values, 0, :stacktrace, :frames, 0, :function)).to eq("foo")
     end
 
+    it "raises error when passing a non-string object" do
+      expect do
+        subject.capture_message(1)
+      end.to raise_error(ArgumentError, 'expect the argument to be a String, got Integer (1)')
+    end
+
     it "assigns default backtrace with caller" do
       event = subject.capture_message(message)
       event_hash = event.to_hash
