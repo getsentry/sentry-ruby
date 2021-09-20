@@ -1,7 +1,9 @@
-## Unreleased
+## 4.7.3
 
 - Avoid leaking tracing timestamp to breadcrumbs [#1575](https://github.com/getsentry/sentry-ruby/pull/1575)
 - Avoid injecting tracing timestamp to all ActiveSupport instrument events [#1576](https://github.com/getsentry/sentry-ruby/pull/1576)
+  - Fixes [#1573](https://github.com/getsentry/sentry-ruby/issues/1574)
+- `Hub#capture_message` should check its argument's type [#1577](https://github.com/getsentry/sentry-ruby/pull/1577)
   - Fixes [#1574](https://github.com/getsentry/sentry-ruby/issues/1574)
 
 ## 4.7.2
