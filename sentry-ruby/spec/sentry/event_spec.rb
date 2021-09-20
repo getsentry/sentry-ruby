@@ -62,7 +62,22 @@ RSpec.describe Sentry::Event do
 
     let(:scope) { Sentry.get_current_scope }
 
-    context "without config.send_default_pii = true" do
+    context "with callable tags" do
+      subject(:event) do
+        Sentry::Event.new(configuration: configuration).tap do |event|
+          event.tags = { value_tag: "value", callable_tag: -> { DUMMY_DSN } }
+        end
+      end
+
+      it "calls callable tags" do
+        scope.apply_to_event(event)
+        expect(event.to_hash[:tags]).to eq(
+          value_tag: "value", callable_tag: DUMMY_DSN, request_id: 'abcd-1234-abcd-1234'
+        )
+      end
+    end
+
+    context "without config.send_default_pii = false" do
       it "filters out pii data" do
         scope.apply_to_event(event)
 

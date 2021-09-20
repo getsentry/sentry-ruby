@@ -109,6 +109,7 @@ module Sentry
       data[:request] = request.to_hash if request
       data[:exception] = exception.to_hash if exception
       data[:threads] = threads.to_hash if threads
+      data[:tags] = data[:tags].transform_values { |value| value.respond_to?(:call) ? value.call : value }
 
       data
     end
