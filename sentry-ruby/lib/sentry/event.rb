@@ -39,7 +39,7 @@ module Sentry
       @user          = {}
       @extra         = {}
       @contexts      = {}
-      @tags          = {}
+      @tags          = configuration.tags
 
       @fingerprint = []
 

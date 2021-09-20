@@ -130,6 +130,9 @@ module Sentry
     # will not be sent to Sentry.
     attr_accessor :send_default_pii
 
+    # Tags that would be added to all reported events, empty by default
+    attr_accessor :tags
+
     # Allow to skip Sentry emails within rake tasks
     attr_accessor :skip_rake_integration
 
@@ -208,6 +211,7 @@ module Sentry
 
       self.before_send = false
       self.rack_env_whitelist = RACK_ENV_WHITELIST_DEFAULT
+      self.tags = {}
 
       @transport = Transport::Configuration.new
       @gem_specs = Hash[Gem::Specification.map { |spec| [spec.name, spec.version.to_s] }] if Gem::Specification.respond_to?(:map)

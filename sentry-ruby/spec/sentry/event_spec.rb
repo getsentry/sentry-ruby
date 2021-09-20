@@ -77,6 +77,18 @@ RSpec.describe Sentry::Event do
       end
     end
 
+    context 'with tags set in configuration' do
+      before do
+        Sentry.configuration.tags = { x: 1, y: 2 }
+        Sentry.configure_scope { |scope| scope.set_tags(foo: :bar) }
+      end
+
+      it 'merges configuration tags and scope tags' do
+        scope.apply_to_event(event)
+        expect(event.to_hash[:tags]).to eq(x: 1, y: 2, foo: :bar, request_id: 'abcd-1234-abcd-1234')
+      end
+    end
+
     context "without config.send_default_pii = false" do
       it "filters out pii data" do
         scope.apply_to_event(event)

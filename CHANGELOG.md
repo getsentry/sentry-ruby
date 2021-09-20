@@ -4,6 +4,7 @@
 - Avoid injecting tracing timestamp to all ActiveSupport instrument events [#1576](https://github.com/getsentry/sentry-ruby/pull/1576)
   - Fixes [#1574](https://github.com/getsentry/sentry-ruby/issues/1574)
 - Allow to set tag values to be callables that are evaluated at the event creation time
+- Allow to set default tags that added to all events in `Sentry.configuration`
 
 ## 4.7.2
 
