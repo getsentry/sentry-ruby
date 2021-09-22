@@ -90,9 +90,9 @@ module Sentry
     end
 
     def capture_exception(exception, **options, &block)
-      return unless current_client
-
       check_argument_type!(exception, ::Exception)
+
+      return unless current_client
 
       options[:hint] ||= {}
       options[:hint][:exception] = exception
@@ -104,6 +104,8 @@ module Sentry
     end
 
     def capture_message(message, **options, &block)
+      check_argument_type!(message, ::String)
+
       return unless current_client
 
       options[:hint] ||= {}
@@ -114,9 +116,9 @@ module Sentry
     end
 
     def capture_event(event, **options, &block)
-      return unless current_client
-
       check_argument_type!(event, Sentry::Event)
+
+      return unless current_client
 
       hint = options.delete(:hint) || {}
       scope = current_scope.dup
