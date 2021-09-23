@@ -1,6 +1,6 @@
 name: Bug report
-about: Create a report to help us improve
-title: ''
+description: "Report an SDK issue"
+title: 'Bug: 
 labels: bug
 assignees: st0012
 body:
