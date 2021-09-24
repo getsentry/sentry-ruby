@@ -1,6 +1,8 @@
 module Sentry
   class SingleExceptionInterface < Interface
     PROBLEMATIC_LOCAL_VALUE_REPLACEMENT = "[ignored due to error]".freeze
+    OMISSION_MARK = "...".freeze
+    MAX_LOCAL_BYTES = 1024
 
     attr_reader :type, :value, :module, :thread_id, :stacktrace
 
@@ -25,7 +27,18 @@ module Sentry
 
       if locals = exception.instance_variable_get(:@sentry_locals)
         locals.each do |k, v|
-          locals[k] = v.inspect rescue PROBLEMATIC_LOCAL_VALUE_REPLACEMENT
+          locals[k] =
+            begin
+              v = v.inspect unless v.is_a?(String)
+
+              if v.length >= MAX_LOCAL_BYTES
+                v = v.byteslice(0..MAX_LOCAL_BYTES - 1) + OMISSION_MARK
+              end
+
+              v
+            rescue StandardError
+              PROBLEMATIC_LOCAL_VALUE_REPLACEMENT
+            end
         end
 
         stacktrace.frames.last.vars = locals
