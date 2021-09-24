@@ -104,7 +104,31 @@ RSpec.describe Sentry::Rack::CaptureExceptions, rack: true do
         event = transport.events.last.to_hash
         expect(event.dig(:request, :url)).to eq("http://example.org/test")
         last_frame = event.dig(:exception, :values, 0, :stacktrace, :frames).last
-        expect(last_frame[:vars]).to include({ a: 1, b: 0 })
+        expect(last_frame[:vars]).to include({ a: "1", b: "0" })
+      end
+
+      it 'ignores problematic locals' do
+        class Foo
+          def inspect
+            raise
+          end
+        end
+
+        app = ->(_e) do
+          a = 1
+          b = 0
+          f = Foo.new
+          a / b
+        end
+
+        stack = described_class.new(app)
+
+        expect { stack.call(env) }.to raise_error(ZeroDivisionError)
+
+        event = transport.events.last.to_hash
+        expect(event.dig(:request, :url)).to eq("http://example.org/test")
+        last_frame = event.dig(:exception, :values, 0, :stacktrace, :frames).last
+        expect(last_frame[:vars]).to include({ a: "1", b: "0", f: "[ignored due to error]" })
       end
     end
 

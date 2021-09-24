@@ -1,5 +1,7 @@
 module Sentry
   class SingleExceptionInterface < Interface
+    PROBLEMATIC_LOCAL_VALUE_REPLACEMENT = "[ignored due to error]".freeze
+
     attr_reader :type, :value, :module, :thread_id, :stacktrace
 
     def initialize(exception:, stacktrace: nil)
@@ -22,6 +24,10 @@ module Sentry
       stacktrace = stacktrace_builder.build(backtrace: exception.backtrace)
 
       if locals = exception.instance_variable_get(:@sentry_locals)
+        locals.each do |k, v|
+          locals[k] = v.inspect rescue PROBLEMATIC_LOCAL_VALUE_REPLACEMENT
+        end
+
         stacktrace.frames.last.vars = locals
       end
 
