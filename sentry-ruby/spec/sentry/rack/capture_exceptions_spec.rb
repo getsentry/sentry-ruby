@@ -22,8 +22,10 @@ RSpec.describe Sentry::Rack::CaptureExceptions, rack: true do
 
       expect { stack.call(env) }.to raise_error(ZeroDivisionError)
 
-      event = transport.events.last
-      expect(event.to_hash.dig(:request, :url)).to eq("http://example.org/test")
+      event = transport.events.last.to_hash
+      expect(event.dig(:request, :url)).to eq("http://example.org/test")
+      last_frame = event.dig(:exception, :values, 0, :stacktrace, :frames).last
+      expect(last_frame[:vars]).to eq(nil)
     end
 
     it 'captures the exception from rack.exception' do
@@ -81,6 +83,29 @@ RSpec.describe Sentry::Rack::CaptureExceptions, rack: true do
 
       stack = described_class.new(Rack::Lint.new(app))
       expect { stack.call(env) }.to_not raise_error
+    end
+
+    context "with config.capture_exception_frame_locals = true" do
+      before do
+        Sentry.configuration.capture_exception_frame_locals = true
+      end
+
+      it 'captures the exception with locals' do
+        app = ->(_e) do
+          a = 1
+          b = 0
+          a / b
+        end
+
+        stack = described_class.new(app)
+
+        expect { stack.call(env) }.to raise_error(ZeroDivisionError)
+
+        event = transport.events.last.to_hash
+        expect(event.dig(:request, :url)).to eq("http://example.org/test")
+        last_frame = event.dig(:exception, :values, 0, :stacktrace, :frames).last
+        expect(last_frame[:vars]).to include({ a: 1, b: 0 })
+      end
     end
 
     describe "state encapsulation" do

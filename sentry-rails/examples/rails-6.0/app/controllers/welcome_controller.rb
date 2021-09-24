@@ -2,7 +2,9 @@ class WelcomeController < ApplicationController
   before_action :set_sentry_context
 
   def index
-    1 / 0
+    a = 1
+    b = 0
+    a / b
   end
 
   def connect_trace

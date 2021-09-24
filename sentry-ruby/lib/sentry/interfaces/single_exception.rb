@@ -20,6 +20,11 @@ module Sentry
     # also see `StacktraceBuilder.build`.
     def self.build_with_stacktrace(exception:, stacktrace_builder:)
       stacktrace = stacktrace_builder.build(backtrace: exception.backtrace)
+
+      if locals = exception.instance_variable_get(:@sentry_locals)
+        stacktrace.frames.last.vars = locals
+      end
+
       new(exception: exception, stacktrace: stacktrace)
     end
   end

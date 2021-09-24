@@ -63,6 +63,9 @@ module Sentry
     # - :active_support_logger
     attr_reader :breadcrumbs_logger
 
+    # Whether to capture local variables from the raised exception's frame. Default is false.
+    attr_accessor :capture_exception_frame_locals
+
     # Max number of breadcrumbs a breadcrumb buffer can hold
     attr_accessor :max_breadcrumbs
 
@@ -188,6 +191,7 @@ module Sentry
       self.max_breadcrumbs = BreadcrumbBuffer::DEFAULT_SIZE
       self.breadcrumbs_logger = []
       self.context_lines = 3
+      self.capture_exception_frame_locals = false
       self.environment = environment_from_env
       self.enabled_environments = []
       self.exclude_loggers = []
