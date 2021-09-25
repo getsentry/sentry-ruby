@@ -29,7 +29,7 @@ gem "codecov", "0.2.12"
 gem "rake", "~> 12.0"
 
 gem "object_tracer"
-gem "debug", github: "ruby/debug" if RUBY_VERSION.to_f >= 2.6
+gem "debug", github: "ruby/debug", platform: :ruby if RUBY_VERSION.to_f >= 2.6
 gem "pry"
 
 gem "benchmark-ips"
