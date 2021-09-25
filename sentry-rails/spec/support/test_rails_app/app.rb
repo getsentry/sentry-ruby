@@ -88,6 +88,11 @@ class HelloController < ActionController::Base
 end
 
 def make_basic_app
+  # Rails removes the support of multiple instances, which includes freezing some setting values.
+  # This is the workaround to avoid FrozenError. Related issue: https://github.com/rails/rails/issues/42319
+  ActiveSupport::Dependencies.autoload_once_paths = []
+  ActiveSupport::Dependencies.autoload_paths = []
+
   app = Class.new(TestApp) do
     def self.name
       "RailsTestApp"
