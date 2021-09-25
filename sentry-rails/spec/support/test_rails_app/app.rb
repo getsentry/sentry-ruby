@@ -125,6 +125,7 @@ def make_basic_app
       config.transport.transport_class = Sentry::DummyTransport
       # for sending events synchronously
       config.background_worker_threads = 0
+      config.capture_exception_frame_locals = true
       yield(config, app) if block_given?
     end
   end
