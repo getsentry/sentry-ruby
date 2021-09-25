@@ -1,3 +1,9 @@
+## Unreleased
+
+### Miscellaneous
+
+- Start Testing Against Rails 7.0 [#1581](https://github.com/getsentry/sentry-ruby/pull/1581)
+
 ## 4.7.3
 
 - Avoid leaking tracing timestamp to breadcrumbs [#1575](https://github.com/getsentry/sentry-ruby/pull/1575)
