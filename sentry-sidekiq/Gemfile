@@ -17,6 +17,6 @@ gem "sentry-ruby", path: "../sentry-ruby"
 gem "sentry-rails", path: "../sentry-rails"
 
 gem "object_tracer"
-gem "debug", github: "ruby/debug" if RUBY_VERSION.to_f >= 2.6
+gem "debug", github: "ruby/debug", platform: :ruby if RUBY_VERSION.to_f >= 2.6
 gem "pry"
 
