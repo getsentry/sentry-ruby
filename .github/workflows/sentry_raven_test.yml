@@ -33,6 +33,8 @@ jobs:
             rails_version: 6.0.0
           - ruby_version: 2.7
             rails_version: 4.2
+          - ruby_version: jruby
+            rails_version: 4.2
           - ruby_version: '3.0'
             rails_version: 4.2
           - ruby_version: '3.0'
