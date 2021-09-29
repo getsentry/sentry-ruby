@@ -20,7 +20,15 @@ module Sentry
           scope.set_span(transaction) if transaction
 
           begin
-            response = @app.call(env)
+            response = nil
+
+            if Sentry.configuration.capture_exception_frame_locals
+              exception_locals_tp.enable do
+                response = @app.call(env)
+              end
+            else
+              response = @app.call(env)
+            end
           rescue Sentry::Error
             finish_transaction(transaction, 500)
             raise # Don't capture Sentry errors
@@ -40,6 +48,21 @@ module Sentry
       end
 
       private
+
+      def exception_locals_tp
+        TracePoint.new(:raise) do |tp|
+          exception = tp.raised_exception
+
+          # don't collect locals again if the exception is re-raised
+          next if exception.instance_variable_get(:@sentry_locals)
+
+          locals = tp.binding.local_variables.each_with_object({}) do |local, result|
+            result[local] = tp.binding.local_variable_get(local)
+          end
+
+          exception.instance_variable_set(:@sentry_locals, locals)
+        end
+      end
 
       def collect_exception(env)
         env['rack.exception'] || env['sinatra.error']
