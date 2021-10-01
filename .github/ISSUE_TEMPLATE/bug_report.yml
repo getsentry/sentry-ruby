@@ -1,6 +1,5 @@
 name: Bug report
 description: "Report an SDK issue"
-title: ''
 labels: bug
 assignees: st0012
 body:
