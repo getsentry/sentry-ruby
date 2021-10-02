@@ -4,11 +4,11 @@ module Sentry
   module Rails
     module Tracing
       class ActiveRecordSubscriber < AbstractSubscriber
-        EVENT_NAME = "sql.active_record".freeze
+        EVENT_NAMES = ["sql.active_record"].freeze
         EXCLUDED_EVENTS = ["SCHEMA", "TRANSACTION"].freeze
 
         def self.subscribe!
-          subscribe_to_event(EVENT_NAME) do |event_name, duration, payload|
+          subscribe_to_event(EVENT_NAMES) do |event_name, duration, payload|
             next if EXCLUDED_EVENTS.include? payload[:name]
 
             record_on_current_span(op: event_name, start_timestamp: payload[START_TIMESTAMP_NAME], description: payload[:sql], duration: duration) do |span|
