@@ -10,5 +10,10 @@
   <%= @post.content %>
 </p>
 
+<p>
+  <strong>Cover:</strong>
+  <%= image_tag @post.cover.variant(resize_to_limit: [100, 100]) %>
+</p>
+
 <%= link_to 'Edit', edit_post_path(@post) %> |
 <%= link_to 'Back', posts_path %>
