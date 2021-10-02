@@ -10,6 +10,12 @@ class PostsController < ApplicationController
   # GET /posts/1
   # GET /posts/1.json
   def show
+    @post.cover.attach(
+      io: File.open(File.join(Rails.root, 'public', 'favicon.ico')),
+      filename: 'favicon.ico',
+      identify: false
+    )
+    @post
   end
 
   # GET /posts/new
