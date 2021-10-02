@@ -21,7 +21,8 @@ module Sentry
 
         subscribers.each do |subscriber|
           subscriber.subscribe!
-          subscribed_tracing_events << subscriber::EVENT_NAME
+          @subscribed_tracing_events ||= []
+          @subscribed_tracing_events += subscriber::EVENT_NAMES
         end
 
         @subscribed = true

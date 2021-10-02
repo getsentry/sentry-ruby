@@ -7,10 +7,10 @@ module Sentry
       class ActionControllerSubscriber < AbstractSubscriber
         extend InstrumentPayloadCleanupHelper
 
-        EVENT_NAME = "process_action.action_controller".freeze
+        EVENT_NAMES = ["process_action.action_controller"].freeze
 
         def self.subscribe!
-          subscribe_to_event(EVENT_NAME) do |event_name, duration, payload|
+          subscribe_to_event(EVENT_NAMES) do |event_name, duration, payload|
             controller = payload[:controller]
             action = payload[:action]
 
