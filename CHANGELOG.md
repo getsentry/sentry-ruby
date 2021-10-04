@@ -18,6 +18,7 @@
 
   **Please note that this is an experimental feature and could be further enhanced/removed before the final release.**
 
+- Support `ActiveStorage` spans in tracing events [#1588](https://github.com/getsentry/sentry-ruby/pull/1588)
 
 ### Miscellaneous
 
