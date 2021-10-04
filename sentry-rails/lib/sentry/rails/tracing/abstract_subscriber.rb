@@ -9,7 +9,9 @@ module Sentry
           end
 
           def unsubscribe!
-            ActiveSupport::Notifications.unsubscribe(*self::EVENT_NAMES)
+            self::EVENT_NAMES.each do |name|
+              ActiveSupport::Notifications.unsubscribe(name)
+            end
           end
 
           if ::Rails.version.to_i == 5
