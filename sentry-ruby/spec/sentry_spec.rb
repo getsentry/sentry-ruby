@@ -190,6 +190,46 @@ RSpec.describe Sentry do
 
       expect(result).to eq(nil)
     end
+
+    context "with capture_exception_frame_locals = false (default)" do
+      it "doens't capture local variables" do
+        begin
+          1/0
+        rescue => e
+          described_class.capture_exception(e)
+        end
+
+        event = transport.events.last.to_hash
+        last_frame = event.dig(:exception, :values, 0, :stacktrace, :frames).last
+        expect(last_frame[:vars]).to eq(nil)
+      end
+    end
+
+    context "with capture_exception_frame_locals = true" do
+      before do
+        perform_basic_setup do |config|
+          config.capture_exception_frame_locals = true
+        end
+      end
+
+      after do
+        Sentry.exception_locals_tp.disable
+      end
+
+      it 'captures the exception with locals' do
+        begin
+          a = 1
+          b = 0
+          a/b
+        rescue => e
+          described_class.capture_exception(e)
+        end
+
+        event = transport.events.last.to_hash
+        last_frame = event.dig(:exception, :values, 0, :stacktrace, :frames).last
+        expect(last_frame[:vars]).to include({ a: "1", b: "0" })
+      end
+    end
   end
 
   describe ".capture_message" do
