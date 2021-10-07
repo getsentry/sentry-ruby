@@ -8,6 +8,8 @@ class FailedJob < ActiveJob::Base
   end
 
   def perform
+    a = 1
+    b = 0
     raise TestError, "Boom!"
   end
 end
@@ -79,6 +81,8 @@ RSpec.describe "ActiveJob integration" do
 
     expect(event.dig("tags", "job_id")).to eq(event.dig("extra", "job_id"))
     expect(event.dig("tags", "provider_job_id")).to eq(event.dig("extra", "provider_job_id"))
+    last_frame = event.dig("exception", "values", 0, "stacktrace", "frames").last
+    expect(last_frame["vars"]).to include({ "a" => "1", "b" => "0" })
   end
 
   it "clears context" do
