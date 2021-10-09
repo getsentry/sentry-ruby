@@ -25,6 +25,11 @@
 - Start Testing Against Rails 7.0 [#1581](https://github.com/getsentry/sentry-ruby/pull/1581)
 - Tracing subscribers should be multi-event based [#1587](https://github.com/getsentry/sentry-ruby/pull/1587)
 
+### Bug Fixes
+
+- Connect `Sidekiq`'s transaction with its parent when possible [#1590](https://github.com/getsentry/sentry-ruby/pull/1590)
+  - Fixes [#1586](https://github.com/getsentry/sentry-ruby/issues/1586)
+
 ## 4.7.3
 
 - Avoid leaking tracing timestamp to breadcrumbs [#1575](https://github.com/getsentry/sentry-ruby/pull/1575)
