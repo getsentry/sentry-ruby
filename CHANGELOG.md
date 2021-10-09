@@ -2,11 +2,13 @@
 
 ### Features
 
-- Support recording exception frame's local variables for requests [#1580](https://github.com/getsentry/sentry-ruby/pull/1580)
+- Support exception frame's local variable capturing
+  - [#1580](https://github.com/getsentry/sentry-ruby/pull/1580)
+  - [#1589](https://github.com/getsentry/sentry-ruby/pull/1589)
 
-  This feature will capture local variables when an exception is raised. And currently, 
-    - It only captures the last stack frame's local variables (the one that raises the exception) to minimize performance impact.
-    - It's only enabled with the `Sentry::Rack::CaptureExceptions` middleware. So exceptions raised in background jobs and manually captured outside requests won't contain local variables.
+  **Example**:
+
+  <img width="80%" alt="locals capturing" src="https://user-images.githubusercontent.com/5079556/134694936-8c42ca09-870a-4587-b1ff-e8ddd79d2ce7.png">
 
   To enable this feature, you need to set `config.capture_exception_frame_locals` to `true`:
 
@@ -16,7 +18,7 @@
   end
   ```
 
-  **Please note that this is an experimental feature and could be further enhanced/removed before the final release.**
+  This feature should only introduce negligible performance overhead in most Ruby applications. But if you notice obvious performance regression, please file an issue and we'll investigate it.
 
 - Support `ActiveStorage` spans in tracing events [#1588](https://github.com/getsentry/sentry-ruby/pull/1588)
 
