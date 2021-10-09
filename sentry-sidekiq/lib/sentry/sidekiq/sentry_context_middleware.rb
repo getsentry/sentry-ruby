@@ -16,12 +16,12 @@ module Sentry
         scope.set_tags(queue: queue, jid: job["jid"])
         scope.set_contexts(sidekiq: job.merge("queue" => queue))
         scope.set_transaction_name(context_filter.transaction_name)
-        transaction = Sentry.start_transaction(name: scope.transaction_name, op: "sidekiq")
+        transaction = start_transaction(scope.transaction_name, job["sentry_trace"])
         scope.set_span(transaction) if transaction
 
         begin
           yield
-        rescue => e
+        rescue
           finish_transaction(transaction, 500)
           raise
         end
@@ -30,6 +30,12 @@ module Sentry
         # don't need to use ensure here
         # if the job failed, we need to keep the scope for error handler. and the scope will be cleared there
         scope.clear
+      end
+
+      def start_transaction(transaction_name, sentry_trace)
+        options = { name: transaction_name, op: "sidekiq" }
+        transaction = Sentry::Transaction.from_sentry_trace(sentry_trace, **options) if sentry_trace
+        Sentry.start_transaction(transaction: transaction, **options)
       end
 
       def finish_transaction(transaction, status)
@@ -45,7 +51,9 @@ module Sentry
         return yield unless Sentry.initialized?
 
         user = Sentry.get_current_scope.user
+        transaction = Sentry.get_current_scope.get_transaction
         job["sentry_user"] = user unless user.empty?
+        job["sentry_trace"] = transaction.to_sentry_trace if transaction
         yield
       end
     end

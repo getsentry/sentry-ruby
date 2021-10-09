@@ -153,9 +153,8 @@ class ZeroRetryWorker
   end
 end
 
-def execute_worker(processor, klass)
+def execute_worker(processor, klass, **options)
   klass_options = klass.sidekiq_options_hash || {}
-  options = {}
 
   # for Ruby < 2.6
   klass_options.each do |k, v|
