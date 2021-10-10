@@ -87,7 +87,13 @@ RSpec.describe Sentry::Rack::CaptureExceptions, rack: true do
 
     context "with config.capture_exception_frame_locals = true" do
       before do
-        Sentry.configuration.capture_exception_frame_locals = true
+        perform_basic_setup do |config|
+          config.capture_exception_frame_locals = true
+        end
+      end
+
+      after do
+        Sentry.exception_locals_tp.disable
       end
 
       it 'captures the exception with locals' do

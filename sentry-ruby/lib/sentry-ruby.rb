@@ -37,6 +37,22 @@ module Sentry
   THREAD_LOCAL = :sentry_hub
 
   class << self
+    def exception_locals_tp
+      @exception_locals_tp ||= TracePoint.new(:raise) do |tp|
+        exception = tp.raised_exception
+
+        # don't collect locals again if the exception is re-raised
+        next if exception.instance_variable_get(:@sentry_locals)
+        next unless tp.binding
+
+        locals = tp.binding.local_variables.each_with_object({}) do |local, result|
+          result[local] = tp.binding.local_variable_get(local)
+        end
+
+        exception.instance_variable_set(:@sentry_locals, locals)
+      end
+    end
+
     attr_accessor :background_worker
 
     ##### Patch Registration #####
@@ -88,6 +104,10 @@ module Sentry
       Thread.current.thread_variable_set(THREAD_LOCAL, hub)
       @main_hub = hub
       @background_worker = Sentry::BackgroundWorker.new(config)
+
+      if config.capture_exception_frame_locals
+        exception_locals_tp.enable
+      end
     end
 
     # Returns an uri for security policy reporting that's generated from the given DSN
