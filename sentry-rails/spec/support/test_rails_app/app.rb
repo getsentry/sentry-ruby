@@ -171,6 +171,8 @@ def make_basic_app
 
   app.config.hosts = nil
   app.config.secret_key_base = "test"
+  app.config.logger = Logger.new(nil)
+  app.config.eager_load = true
 
   if ::Rails.version.to_f >= 5.2
     app.config.active_storage.service = :test
@@ -181,8 +183,6 @@ def make_basic_app
     app.config.active_record.sqlite3.represent_boolean_as_integer = nil
   end
 
-  # Usually set for us in production.rb
-  app.config.eager_load = true
   app.routes.append do
     get "/exception", :to => "hello#exception"
     get "/view_exception", :to => "hello#view_exception"
@@ -199,9 +199,7 @@ def make_basic_app
     root :to => "hello#world"
   end
 
-  app.initializer :configure_release do
-    ENV["SENTRY_DSN"] = nil
-
+  app.initializer :configure_sentry do
     Sentry.init do |config|
       config.release = 'beta'
       config.dsn = "http://12345:67890@sentry.localdomain:3000/sentry/42"
