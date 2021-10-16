@@ -54,10 +54,6 @@ RSpec.describe "ActiveJob integration" do
     Sentry.get_current_client.transport
   end
 
-  after do
-    transport.events = []
-  end
-
   it "adds useful context to extra" do
     expect { FailedJob.perform_now }.to raise_error(FailedJob::TestError)
 
@@ -88,13 +84,6 @@ RSpec.describe "ActiveJob integration" do
       make_basic_app do |config|
         config.traces_sample_rate = 1.0
       end
-    end
-
-    after do
-      transport.events = []
-
-      Sentry::Rails::Tracing.unsubscribe_tracing_events
-      Sentry::Rails::Tracing.remove_active_support_notifications_patch
     end
 
     it "sends transaction" do

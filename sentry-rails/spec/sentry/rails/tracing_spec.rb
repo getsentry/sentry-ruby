@@ -9,13 +9,6 @@ RSpec.describe Sentry::Rails::Tracing, type: :request do
     transport.events.last.to_json_compatible
   end
 
-  after do
-    transport.events = []
-
-    described_class.unsubscribe_tracing_events
-    described_class.remove_active_support_notifications_patch
-  end
-
   context "with traces_sample_rate set" do
     before do
       expect(described_class).to receive(:subscribe_tracing_events).and_call_original
