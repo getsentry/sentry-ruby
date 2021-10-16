@@ -3,7 +3,6 @@ require "spec_helper"
 
 RSpec.describe "Sentry::Breadcrumbs::MonotonicActiveSupportLogger", type: :request do
   after do
-    Sentry::Rails::Breadcrumb::MonotonicActiveSupportLogger.detach
     # even though we cleanup breadcrumbs in the rack middleware
     # Breadcrumbs::MonotonicActiveSupportLogger subscribes to "every" instrumentation
     # so it'll create other instrumentations "after" the request is finished
@@ -39,6 +38,10 @@ RSpec.describe "Sentry::Breadcrumbs::MonotonicActiveSupportLogger", type: :reque
     end
 
     context "given a Rails version >= 6.1", skip: Rails.version.to_f < 6.1 do
+      after do
+        Sentry::Rails::Breadcrumb::MonotonicActiveSupportLogger.detach
+      end
+
       it "captures correct data of exception requests" do
         get "/exception"
 
@@ -96,6 +99,10 @@ RSpec.describe "Sentry::Breadcrumbs::MonotonicActiveSupportLogger", type: :reque
     end
 
     context "given a Rails version >= 6.1", skip: Rails.version.to_f < 6.1 do
+      after do
+        Sentry::Rails::Breadcrumb::MonotonicActiveSupportLogger.detach
+      end
+
       it "captures correct request data of normal requests" do
         p = Post.create!
 
