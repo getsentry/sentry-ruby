@@ -53,40 +53,6 @@ RSpec.configure do |config|
   end
 end
 
-def build_exception_with_cause(cause = "exception a")
-  begin
-    raise cause
-  rescue
-    raise "exception b"
-  end
-rescue RuntimeError => e
-  e
-end
-
-def build_exception_with_two_causes
-  begin
-    begin
-      raise "exception a"
-    rescue
-      raise "exception b"
-    end
-  rescue
-    raise "exception c"
-  end
-rescue RuntimeError => e
-  e
-end
-
-def build_exception_with_recursive_cause
-  backtrace = []
-
-  exception = double("Exception")
-  allow(exception).to receive(:cause).and_return(exception)
-  allow(exception).to receive(:message).and_return("example")
-  allow(exception).to receive(:backtrace).and_return(backtrace)
-  exception
-end
-
 def reload_send_event_job
   Sentry.send(:remove_const, "SendEventJob") if defined?(Sentry::SendEventJob)
   expect(defined?(Sentry::SendEventJob)).to eq(nil)
