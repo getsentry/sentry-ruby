@@ -9,10 +9,6 @@ RSpec.describe Sentry::Rails, type: :request do
     transport.events.last.to_json_compatible
   end
 
-  after do
-    transport.events = []
-  end
-
   context "with simplist config" do
     before do
       make_basic_app

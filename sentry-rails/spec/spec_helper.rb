@@ -36,10 +36,6 @@ RSpec.configure do |config|
     c.syntax = :expect
   end
 
-  config.before :each do
-    Sentry::Rails::Tracing.patch_active_support_notifications
-  end
-
   config.after :each do
     Sentry::Rails::Tracing.unsubscribe_tracing_events
     expect(Sentry::Rails::Tracing.subscribed_tracing_events).to be_empty
@@ -55,40 +51,6 @@ RSpec.configure do |config|
     ENV.delete('RAILS_ENV')
     ENV.delete('RACK_ENV')
   end
-end
-
-def build_exception_with_cause(cause = "exception a")
-  begin
-    raise cause
-  rescue
-    raise "exception b"
-  end
-rescue RuntimeError => e
-  e
-end
-
-def build_exception_with_two_causes
-  begin
-    begin
-      raise "exception a"
-    rescue
-      raise "exception b"
-    end
-  rescue
-    raise "exception c"
-  end
-rescue RuntimeError => e
-  e
-end
-
-def build_exception_with_recursive_cause
-  backtrace = []
-
-  exception = double("Exception")
-  allow(exception).to receive(:cause).and_return(exception)
-  allow(exception).to receive(:message).and_return("example")
-  allow(exception).to receive(:backtrace).and_return(backtrace)
-  exception
 end
 
 def reload_send_event_job

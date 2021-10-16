@@ -2,14 +2,12 @@ require "spec_helper"
 
 RSpec.describe "Sentry::Breadcrumbs::ActiveSupportLogger", type: :request do
   after do
-    require 'sentry/rails/breadcrumb/active_support_logger'
     Sentry::Rails::Breadcrumb::ActiveSupportLogger.detach
     # even though we cleanup breadcrumbs in the rack middleware
     # Breadcrumbs::ActiveSupportLogger subscribes to "every" instrumentation
     # so it'll create other instrumentations "after" the request is finished
     # and we should clear those as well
     Sentry.get_current_scope.clear_breadcrumbs
-    transport.events = []
   end
 
   let(:transport) do
@@ -75,11 +73,6 @@ RSpec.describe "Sentry::Breadcrumbs::ActiveSupportLogger", type: :request do
         sentry_config.breadcrumbs_logger = [:active_support_logger]
         sentry_config.traces_sample_rate = 1.0
       end
-    end
-
-    after do
-      Sentry::Rails::Tracing.unsubscribe_tracing_events
-      Sentry::Rails::Tracing.remove_active_support_notifications_patch
     end
 
     it "captures correct request data of normal requests" do
