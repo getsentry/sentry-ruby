@@ -14,7 +14,7 @@ class FailedJob < ActiveJob::Base
   end
 end
 
-class MyActiveJob < FailedJob
+class FailedWithExtraJob < FailedJob
   def perform
     Sentry.get_current_scope.set_extras(foo: :bar)
     super
@@ -29,26 +29,20 @@ class QueryPostJob < ActiveJob::Base
   end
 end
 
-class RescuedActiveJob < MyActiveJob
-  rescue_from TestError, :with => :rescue_callback
+class RescuedActiveJob < FailedWithExtraJob
+  rescue_from TestError, with: :rescue_callback
 
   def rescue_callback(error); end
 end
 
 RSpec.describe "without Sentry initialized" do
-  before(:each) do
-    FailedJob.queue_adapter = :inline
-  end
-
   it "runs job" do
-    job = FailedJob.new
-
-    expect { job.perform_now }.to raise_error(FailedJob::TestError)
+    expect { FailedJob.perform_now }.to raise_error(FailedJob::TestError)
   end
 end
 
 RSpec.describe "ActiveJob integration" do
-  before(:each) do
+  before do
     make_basic_app
   end
 
@@ -64,14 +58,8 @@ RSpec.describe "ActiveJob integration" do
     transport.events = []
   end
 
-  before(:each) do
-    MyActiveJob.queue_adapter = :inline
-  end
-
   it "adds useful context to extra" do
-    job = FailedJob.new
-
-    expect { job.perform_now }.to raise_error(FailedJob::TestError)
+    expect { FailedJob.perform_now }.to raise_error(FailedJob::TestError)
 
     event = transport.events.last.to_json_compatible
     expect(event.dig("extra", "active_job")).to eq("FailedJob")
@@ -86,9 +74,7 @@ RSpec.describe "ActiveJob integration" do
   end
 
   it "clears context" do
-    job = MyActiveJob.new
-
-    expect { job.perform_now }.to raise_error(MyActiveJob::TestError)
+    expect { FailedWithExtraJob.perform_now }.to raise_error(FailedWithExtraJob::TestError)
 
     event = transport.events.last.to_json_compatible
 
@@ -127,18 +113,18 @@ RSpec.describe "ActiveJob integration" do
 
     context "with error" do
       it "sends transaction and associates it with the event" do
-        expect { MyActiveJob.perform_now }.to raise_error(MyActiveJob::TestError)
+        expect { FailedWithExtraJob.perform_now }.to raise_error(FailedWithExtraJob::TestError)
 
         expect(transport.events.count).to eq(2)
 
         transaction = transport.events.first
-        expect(transaction.transaction).to eq("MyActiveJob")
+        expect(transaction.transaction).to eq("FailedWithExtraJob")
         expect(transaction.contexts.dig(:trace, :trace_id)).to be_present
         expect(transaction.contexts.dig(:trace, :span_id)).to be_present
         expect(transaction.contexts.dig(:trace, :status)).to eq("internal_error")
 
         event = transport.events.last
-        expect(event.transaction).to eq("MyActiveJob")
+        expect(event.transaction).to eq("FailedWithExtraJob")
         expect(event.contexts.dig(:trace, :trace_id)).to eq(transaction.contexts.dig(:trace, :trace_id))
       end
     end
@@ -215,13 +201,9 @@ RSpec.describe "ActiveJob integration" do
 
   context 'using rescue_from' do
     it 'does not trigger Sentry' do
-      job = RescuedActiveJob.new
-      allow(job).to receive(:rescue_callback)
-
-      expect { job.perform_now }.not_to raise_error
+      expect { RescuedActiveJob.perform_now }.not_to raise_error
 
       expect(transport.events.size).to eq(0)
-      expect(job).to have_received(:rescue_callback).once
     end
   end
 
@@ -229,13 +211,19 @@ RSpec.describe "ActiveJob integration" do
     before do
       Sentry.configuration.rails.skippable_job_adapters = ["ActiveJob::QueueAdapters::SidekiqAdapter"]
     end
+
     it "does not trigger sentry and re-raises" do
-      MyActiveJob.queue_adapter = :sidekiq
-      job = MyActiveJob.new
+      begin
+        original_queue_adapter = FailedJob.queue_adapter
+        FailedJob.queue_adapter = :sidekiq
 
-      expect { job.perform_now }.to raise_error(MyActiveJob::TestError)
+        expect { FailedJob.perform_now }.to raise_error(FailedJob::TestError)
 
-      expect(transport.events.size).to eq(0)
+        expect(transport.events.size).to eq(0)
+      ensure
+        # this doesn't affect test result, but we shouldn't change it anyway
+        FailedJob.queue_adapter = original_queue_adapter
+      end
     end
   end
 end
