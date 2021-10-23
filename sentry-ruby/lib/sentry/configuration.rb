@@ -2,6 +2,7 @@ require "concurrent/utility/processor_counter"
 
 require "sentry/utils/exception_cause_chain"
 require "sentry/dsn"
+require "sentry/release_detector"
 require "sentry/transport/configuration"
 require "sentry/linecache"
 require "sentry/interfaces/stacktrace_builder"
@@ -311,10 +312,11 @@ module Sentry
     def detect_release
       return unless sending_allowed?
 
-      self.release ||= detect_release_from_env ||
-        detect_release_from_git ||
-        detect_release_from_capistrano ||
-        detect_release_from_heroku
+      self.release ||= ReleaseDetector.detect_release(project_root: project_root, running_on_heroku: running_on_heroku?)
+
+      if running_on_heroku? && release.nil?
+        log_warn(HEROKU_DYNO_METADATA_MESSAGE)
+      end
     rescue => e
       log_error("Error detecting release", e, debug: debug)
     end
@@ -371,37 +373,6 @@ module Sentry
       nil
     end
 
-    def detect_release_from_heroku
-      return unless running_on_heroku?
-      return if ENV['CI']
-      log_warn(HEROKU_DYNO_METADATA_MESSAGE) && return unless ENV['HEROKU_SLUG_COMMIT']
-
-      ENV['HEROKU_SLUG_COMMIT']
-    end
-
-    def running_on_heroku?
-      File.directory?("/etc/heroku")
-    end
-
-    def detect_release_from_capistrano
-      revision_file = File.join(project_root, 'REVISION')
-      revision_log = File.join(project_root, '..', 'revisions.log')
-
-      if File.exist?(revision_file)
-        File.read(revision_file).strip
-      elsif File.exist?(revision_log)
-        File.open(revision_log).to_a.last.strip.sub(/.*as release ([0-9]+).*/, '\1')
-      end
-    end
-
-    def detect_release_from_git
-      Sentry.sys_command("git rev-parse --short HEAD") if File.directory?(".git")
-    end
-
-    def detect_release_from_env
-      ENV['SENTRY_RELEASE']
-    end
-
     def capture_in_environment?
       return true if enabled_in_current_env?
 
@@ -446,6 +417,10 @@ module Sentry
       else
         resolve_hostname
       end
+    end
+
+    def running_on_heroku?
+      File.directory?("/etc/heroku") && !ENV["CI"]
     end
 
     def run_post_initialization_callbacks
