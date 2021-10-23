@@ -186,8 +186,10 @@ module Sentry
     @@post_initialization_callbacks = []
 
     def initialize
+      self.app_dirs_pattern = nil
       self.debug = false
       self.background_worker_threads = Concurrent.processor_count
+      self.backtrace_cleanup_callback = nil
       self.max_breadcrumbs = BreadcrumbBuffer::DEFAULT_SIZE
       self.breadcrumbs_logger = []
       self.context_lines = 3
@@ -212,6 +214,8 @@ module Sentry
 
       self.before_send = nil
       self.rack_env_whitelist = RACK_ENV_WHITELIST_DEFAULT
+      self.traces_sample_rate = nil
+      self.traces_sampler = nil
 
       @transport = Transport::Configuration.new
       @gem_specs = Hash[Gem::Specification.map { |spec| [spec.name, spec.version.to_s] }] if Gem::Specification.respond_to?(:map)
@@ -220,9 +224,7 @@ module Sentry
     end
 
     def dsn=(value)
-      return if value.nil? || value.empty?
-
-      @dsn = DSN.new(value)
+      @dsn = init_dsn(value)
     end
 
     alias server= dsn=
@@ -332,6 +334,12 @@ module Sentry
       unless value == nil || value.respond_to?(:call)
         raise ArgumentError, "#{name} must be callable (or nil to disable)"
       end
+    end
+
+    def init_dsn(dsn_string)
+      return if dsn_string.nil? || dsn_string.empty?
+
+      DSN.new(dsn_string)
     end
 
     def excluded_exception?(incoming_exception)
