@@ -3,6 +3,7 @@ require 'spec_helper'
 RSpec.describe Sentry::Client do
   let(:configuration) do
     Sentry::Configuration.new.tap do |config|
+      config.logger = Logger.new(nil)
       config.dsn = DUMMY_DSN
       config.transport.transport_class = Sentry::DummyTransport
     end

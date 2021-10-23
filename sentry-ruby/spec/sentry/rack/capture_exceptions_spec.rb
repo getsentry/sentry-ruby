@@ -159,6 +159,7 @@ RSpec.describe Sentry::Rack::CaptureExceptions, rack: true do
     describe "state encapsulation" do
       before do
         Sentry.configure_scope { |s| s.set_tags(tag_1: "don't change me") }
+        Sentry.configuration.breadcrumbs_logger = [:sentry_logger]
       end
 
       it "only contains the breadcrumbs of the request" do

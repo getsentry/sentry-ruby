@@ -16,20 +16,6 @@ RSpec.describe Sentry::Breadcrumb do
     )
   end
 
-  let(:problematic_crumb) do
-    # circular reference
-    a = []
-    b = []
-    a.push(b)
-    b.push(a)
-
-    Sentry::Breadcrumb.new(
-      category: "baz",
-      message: "I cause issues",
-      data: a
-    )
-  end
-
   describe "#initialize" do
     it "limits the maximum size of message" do
       long_message = "a" * Sentry::Event::MAX_MESSAGE_SIZE_IN_BYTES * 2
@@ -50,6 +36,20 @@ RSpec.describe Sentry::Breadcrumb do
   end
 
   describe "#to_hash" do
+    let(:problematic_crumb) do
+      # circular reference
+      a = []
+      b = []
+      a.push(b)
+      b.push(a)
+
+      Sentry::Breadcrumb.new(
+        category: "baz",
+        message: "I cause issues",
+        data: a
+      )
+    end
+
     it "serializes data correctly" do
       result = crumb.to_hash
 

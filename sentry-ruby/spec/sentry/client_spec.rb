@@ -251,22 +251,19 @@ RSpec.describe Sentry::Client do
         end
       end
 
-      # Only check causes when they're supported
-      if Exception.new.respond_to? :cause
-        context 'when the exception has a cause' do
-          let(:exception) { build_exception_with_cause }
+      context 'when the exception has a cause' do
+        let(:exception) { build_exception_with_cause }
 
-          it 'captures the cause' do
-            expect(hash[:exception][:values].length).to eq(2)
-          end
+        it 'captures the cause' do
+          expect(hash[:exception][:values].length).to eq(2)
         end
+      end
 
-        context 'when the exception has nested causes' do
-          let(:exception) { build_exception_with_two_causes }
+      context 'when the exception has nested causes' do
+        let(:exception) { build_exception_with_two_causes }
 
-          it 'captures nested causes' do
-            expect(hash[:exception][:values].length).to eq(3)
-          end
+        it 'captures nested causes' do
+          expect(hash[:exception][:values].length).to eq(3)
         end
       end
 

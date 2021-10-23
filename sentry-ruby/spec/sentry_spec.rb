@@ -522,12 +522,9 @@ RSpec.describe Sentry do
     let(:fake_root) { "/tmp/sentry/" }
 
     before do
-      allow(File).to receive(:directory?).and_return(false)
       allow_any_instance_of(Sentry::Configuration).to receive(:project_root).and_return(fake_root)
       ENV["SENTRY_DSN"] = DUMMY_DSN
     end
-
-    subject { described_class.configuration }
 
     it 'defaults to nil' do
       described_class.init
