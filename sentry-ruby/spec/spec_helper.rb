@@ -81,7 +81,6 @@ end
 
 def perform_basic_setup
   Sentry.init do |config|
-    config.breadcrumbs_logger = [:sentry_logger]
     config.dsn = DUMMY_DSN
     config.transport.transport_class = Sentry::DummyTransport
     # so the events will be sent synchronously for testing
