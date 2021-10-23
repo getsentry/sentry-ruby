@@ -52,8 +52,8 @@ RSpec.describe Sentry::Client do
         expect(returned).to eq(nil)
       end
 
-      context "with false as value (the legacy way to disable it)" do
-        let(:async_block) { false }
+      context "with nil as value (the legacy way to disable it)" do
+        let(:async_block) { nil }
 
         it "doesn't cause any issue" do
           returned = subject.capture_event(event, scope, { background: false })

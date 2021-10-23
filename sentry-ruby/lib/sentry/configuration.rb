@@ -210,7 +210,7 @@ module Sentry
       self.dsn = ENV['SENTRY_DSN']
       self.server_name = server_name_from_env
 
-      self.before_send = false
+      self.before_send = nil
       self.rack_env_whitelist = RACK_ENV_WHITELIST_DEFAULT
 
       @transport = Transport::Configuration.new
@@ -229,9 +229,7 @@ module Sentry
 
 
     def async=(value)
-      if value && !value.respond_to?(:call)
-        raise(ArgumentError, "async must be callable")
-      end
+      check_callable!("async", value)
 
       @async = value
     end
@@ -250,17 +248,13 @@ module Sentry
     end
 
     def before_send=(value)
-      unless value == false || value.respond_to?(:call)
-        raise ArgumentError, "before_send must be callable (or false to disable)"
-      end
+      check_callable!("before_send", value)
 
       @before_send = value
     end
 
     def before_breadcrumb=(value)
-      unless value.nil? || value.respond_to?(:call)
-        raise ArgumentError, "before_breadcrumb must be callable (or nil to disable)"
-      end
+      check_callable!("before_breadcrumb", value)
 
       @before_breadcrumb = value
     end
@@ -338,6 +332,12 @@ module Sentry
     end
 
     private
+
+    def check_callable!(name, value)
+      unless value == nil || value.respond_to?(:call)
+        raise ArgumentError, "#{name} must be callable (or nil to disable)"
+      end
+    end
 
     def excluded_exception?(incoming_exception)
       excluded_exception_classes.any? do |excluded_exception|
