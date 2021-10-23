@@ -279,17 +279,9 @@ RSpec.describe Sentry::Configuration do
             subject.inspect_exception_causes_for_exclusion = true
           end
 
-          if Exception.new.respond_to? :cause
-            context 'when the language version supports exception causes' do
-              it 'returns false' do
-                expect(subject.exception_class_allowed?(incoming_exception)).to eq false
-              end
-            end
-          else
-            context 'when the language version does not support exception causes' do
-              it 'returns true' do
-                expect(subject.exception_class_allowed?(incoming_exception)).to eq true
-              end
+          context 'when the language version supports exception causes' do
+            it 'returns false' do
+              expect(subject.exception_class_allowed?(incoming_exception)).to eq false
             end
           end
         end
