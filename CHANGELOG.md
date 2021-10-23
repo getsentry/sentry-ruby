@@ -31,6 +31,7 @@
 
 - Connect `Sidekiq`'s transaction with its parent when possible [#1590](https://github.com/getsentry/sentry-ruby/pull/1590)
   - Fixes [#1586](https://github.com/getsentry/sentry-ruby/issues/1586)
+- Use nil instead of false to disable callable settings [#1594](https://github.com/getsentry/sentry-ruby/pull/1594)
 
 ## 4.7.3
 
