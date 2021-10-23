@@ -107,7 +107,7 @@ module Sentry
 
     # Project directory root for in_app detection. Could be Rails root, etc.
     # Set automatically for Rails.
-    attr_reader :project_root
+    attr_accessor :project_root
 
     # Insert sentry-trace to outgoing requests' headers
     attr_accessor :propagate_traces
@@ -227,7 +227,6 @@ module Sentry
 
     alias server= dsn=
 
-
     def async=(value)
       check_callable!("async", value)
 
@@ -274,10 +273,6 @@ module Sentry
     def error_messages
       @errors = [@errors[0]] + @errors[1..-1].map(&:downcase) # fix case of all but first
       @errors.join(", ")
-    end
-
-    def project_root=(root_dir)
-      @project_root = root_dir
     end
 
     def exception_class_allowed?(exc)
