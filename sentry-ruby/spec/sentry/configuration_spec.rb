@@ -115,10 +115,22 @@ RSpec.describe Sentry::Configuration do
     end
   end
 
-  it 'should raise when setting before_send to anything other than callable or false' do
+  it 'raises error when setting async to anything other than callable or nil' do
+    subject.async = -> {}
+    subject.async = nil
+    expect { subject.async = true }.to raise_error(ArgumentError, "async must be callable (or nil to disable)")
+  end
+
+  it 'raises error when setting before_send to anything other than callable or nil' do
     subject.before_send = -> {}
-    subject.before_send = false
-    expect { subject.before_send = true }.to raise_error(ArgumentError)
+    subject.before_send = nil
+    expect { subject.before_send = true }.to raise_error(ArgumentError, "before_send must be callable (or nil to disable)")
+  end
+
+  it 'raises error when setting before_breadcrumb to anything other than callable or nil' do
+    subject.before_breadcrumb = -> {}
+    subject.before_breadcrumb = nil
+    expect { subject.before_breadcrumb = true }.to raise_error(ArgumentError, "before_breadcrumb must be callable (or nil to disable)")
   end
 
   context 'being initialized with a current environment' do
