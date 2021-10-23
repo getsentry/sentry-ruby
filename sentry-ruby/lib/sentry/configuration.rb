@@ -400,13 +400,6 @@ module Sentry
       end
     end
 
-    # Try to resolve the hostname to an FQDN, but fall back to whatever
-    # the load name is.
-    def resolve_hostname
-      Socket.gethostname ||
-        Socket.gethostbyname(hostname).first rescue server_name
-    end
-
     def environment_from_env
       ENV['SENTRY_CURRENT_ENV'] || ENV['SENTRY_ENVIRONMENT'] || ENV['RAILS_ENV'] || ENV['RACK_ENV'] || 'development'
     end
@@ -415,7 +408,9 @@ module Sentry
       if running_on_heroku?
         ENV['DYNO']
       else
-        resolve_hostname
+        # Try to resolve the hostname to an FQDN, but fall back to whatever
+        # the load name is.
+        Socket.gethostname || Socket.gethostbyname(hostname).first rescue server_name
       end
     end
 
