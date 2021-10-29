@@ -27,6 +27,17 @@ RSpec.describe Sentry::Sidekiq::SentryContextServerMiddleware do
     expect(event.user).to eq(user)
   end
 
+  it "sets extras to the event" do
+    perform_basic_setup { |config| config.traces_sample_rate = 0 }
+    Sentry.set_extras("x-request-id" => "6af7a096-cc9b-4ede-a18e-d5c29c77478e")
+
+    execute_worker(processor, SadWorker)
+
+    expect(transport.events.count).to eq(1)
+    event = transport.events.first
+    expect(event.extra).to eq("x-request-id" => "6af7a096-cc9b-4ede-a18e-d5c29c77478e")
+  end
+
   context "with tracing enabled" do
     before do
       perform_basic_setup { |config| config.traces_sample_rate = 1.0 }
@@ -106,6 +117,19 @@ RSpec.describe Sentry::Sidekiq::SentryContextClientMiddleware do
 
       expect(queue.size).to be(1)
       expect(queue.first["sentry_user"]).to eq(user)
+    end
+  end
+
+  describe "with extras" do
+    before do
+      Sentry.set_extras("x-request-id" => "6af7a096-cc9b-4ede-a18e-d5c29c77478e")
+    end
+
+    it "sets user of the current scope to the job" do
+      client.push('queue' => 'default', 'class' => HappyWorker, 'args' => [])
+
+      expect(queue.size).to be(1)
+      expect(queue.first["sentry_extra"]).to eq("x-request-id" => "6af7a096-cc9b-4ede-a18e-d5c29c77478e")
     end
   end
 

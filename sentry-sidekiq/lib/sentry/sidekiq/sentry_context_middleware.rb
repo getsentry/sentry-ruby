@@ -13,6 +13,9 @@ module Sentry
         if (user = job["sentry_user"])
           scope.set_user(user)
         end
+        if (extra = job["sentry_extra"])
+          scope.set_extras(extra)
+        end
         scope.set_tags(queue: queue, jid: job["jid"])
         scope.set_contexts(sidekiq: job.merge("queue" => queue))
         scope.set_transaction_name(context_filter.transaction_name)
@@ -50,9 +53,12 @@ module Sentry
       def call(_worker_class, job, _queue, _redis_pool)
         return yield unless Sentry.initialized?
 
-        user = Sentry.get_current_scope.user
+        scope = Sentry.get_current_scope
         transaction = Sentry.get_current_scope.get_transaction
+        user = scope.user
         job["sentry_user"] = user unless user.empty?
+        extra = scope.extra
+        job["sentry_extra"] = extra unless extra.empty?
         job["sentry_trace"] = transaction.to_sentry_trace if transaction
         yield
       end
