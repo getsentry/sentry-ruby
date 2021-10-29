@@ -157,6 +157,11 @@ module Sentry
     # ```
     attr_accessor :traces_sampler
 
+    # TODO(neel) Send diagnostic client reports, true by default
+    # tries to attach to an existing envelope after 30s
+    # otherwise sends a new one after 60s
+    attr_accessor :send_client_reports
+
     # these are not config options
     attr_reader :errors, :gem_specs
 
@@ -206,6 +211,7 @@ module Sentry
       self.send_modules = true
       self.send_default_pii = false
       self.skip_rake_integration = false
+      self.send_client_reports = true
       self.trusted_proxies = []
       self.dsn = ENV['SENTRY_DSN']
       self.server_name = server_name_from_env
