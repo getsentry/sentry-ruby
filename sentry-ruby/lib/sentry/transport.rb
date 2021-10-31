@@ -27,12 +27,6 @@ module Sentry
       event_hash = event.to_hash
       item_type = get_item_type(event_hash)
 
-      unless configuration.sending_allowed?
-        log_debug("Envelope [#{item_type}] not sent: #{configuration.error_messages}")
-
-        return
-      end
-
       if is_rate_limited?(item_type)
         log_info("Envelope [#{item_type}] not sent: rate limiting")
 
