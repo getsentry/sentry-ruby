@@ -690,7 +690,7 @@ RSpec.describe Sentry do
         it "logs the error" do
           string_io = StringIO.new
           logger = Logger.new(string_io)
-          allow_any_instance_of(Sentry::Configuration).to receive(:detect_release_from_git).and_raise(TypeError.new)
+          allow(Sentry::ReleaseDetector).to receive(:detect_release_from_git).and_raise(TypeError.new)
 
           described_class.init do |config|
             config.logger = logger
