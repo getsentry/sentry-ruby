@@ -268,9 +268,13 @@ module Sentry
     def sending_allowed?
       @errors = []
 
-      valid? &&
-        capture_in_environment? &&
-        sample_allowed?
+      valid? && capture_in_environment?
+    end
+
+    def sample_allowed?
+      return true if sample_rate == 1.0
+
+      Random.rand < sample_rate
     end
 
     def error_messages
@@ -386,17 +390,6 @@ module Sentry
       else
         @errors << "DSN not set or not valid"
         false
-      end
-    end
-
-    def sample_allowed?
-      return true if sample_rate == 1.0
-
-      if Random.rand >= sample_rate
-        @errors << "Excluded by random sample"
-        false
-      else
-        true
       end
     end
 
