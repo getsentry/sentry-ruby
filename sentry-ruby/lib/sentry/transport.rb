@@ -17,6 +17,7 @@ module Sentry
       @transport_configuration = configuration.transport
       @dsn = configuration.dsn
       @rate_limits = {}
+      @discarded_events = Hash.new(0)
     end
 
     def send_data(data, options = {})
@@ -26,6 +27,7 @@ module Sentry
     def send_event(event)
       event_hash = event.to_hash
       item_type = get_item_type(event_hash)
+      data_category = get_data_category(item_type)
 
       unless configuration.sending_allowed?
         log_debug("Envelope [#{item_type}] not sent: #{configuration.error_messages}")
@@ -33,8 +35,9 @@ module Sentry
         return
       end
 
-      if is_rate_limited?(item_type)
+      if is_rate_limited?(data_category)
         log_info("Envelope [#{item_type}] not sent: rate limiting")
+        record_lost_event(:ratelimit_backoff, data_category)
 
         return
       end
@@ -48,31 +51,14 @@ module Sentry
       event
     end
 
-    def is_rate_limited?(item_type)
+    def is_rate_limited?(data_category)
       # check category-specific limit
-      category_delay =
-        case item_type
-        when "transaction"
-          @rate_limits["transaction"]
-        else
-          @rate_limits["error"]
-        end
+      category_delay = @rate_limits[data_category]
 
       # check universal limit if not category limit
       universal_delay = @rate_limits[nil]
 
-      delay =
-        if category_delay && universal_delay
-          if category_delay > universal_delay
-            category_delay
-          else
-            universal_delay
-          end
-        elsif category_delay
-          category_delay
-        else
-          universal_delay
-        end
+      delay = [category_delay, universal_delay].compact.max
 
       !!delay && delay > Time.now
     end
@@ -107,10 +93,25 @@ module Sentry
       envelope
     end
 
+    # valid reasons are
+    # :ratelimit_backoff
+    # :queue_overflow
+    # :cache_overflow
+    # :network_error
+    # :sample_rate
+    def record_lost_event(reason, data_category)
+      return unless configuration.send_client_reports
+      @discarded_events[[reason, data_category]] += 1
+    end
+
     private
 
     def get_item_type(event_hash)
       event_hash[:type] || event_hash["type"] || "event"
+    end
+
+    def get_data_category(item_type)
+      item_type == 'transaction' ? 'transaction' : 'error'
     end
   end
 end
