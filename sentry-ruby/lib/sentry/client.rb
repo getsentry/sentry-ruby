@@ -43,7 +43,8 @@ module Sentry
       if async_block = configuration.async
         dispatch_async_event(async_block, event, hint)
       elsif configuration.background_worker_threads != 0 && hint.fetch(:background, true)
-        dispatch_background_event(event, hint)
+        queued = dispatch_background_event(event, hint)
+        transport.record_lost_event(:queue_overflow, event_type) unless queued
       else
         send_event(event, hint)
       end
