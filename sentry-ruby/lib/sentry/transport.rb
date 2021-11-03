@@ -27,7 +27,6 @@ module Sentry
     def send_event(event)
       event_hash = event.to_hash
       item_type = get_item_type(event_hash)
-      data_category = get_data_category(item_type)
 
       unless configuration.sending_allowed?
         log_debug("Envelope [#{item_type}] not sent: #{configuration.error_messages}")
@@ -35,9 +34,9 @@ module Sentry
         return
       end
 
-      if is_rate_limited?(data_category)
+      if is_rate_limited?(item_type)
         log_info("Envelope [#{item_type}] not sent: rate limiting")
-        record_lost_event(:ratelimit_backoff, data_category)
+        record_lost_event(:ratelimit_backoff, item_type)
 
         return
       end
@@ -51,14 +50,31 @@ module Sentry
       event
     end
 
-    def is_rate_limited?(data_category)
+    def is_rate_limited?(item_type)
       # check category-specific limit
-      category_delay = @rate_limits[data_category]
+      category_delay =
+        case item_type
+        when "transaction"
+          @rate_limits["transaction"]
+        else
+          @rate_limits["error"]
+        end
 
       # check universal limit if not category limit
       universal_delay = @rate_limits[nil]
 
-      delay = [category_delay, universal_delay].compact.max
+      delay =
+        if category_delay && universal_delay
+          if category_delay > universal_delay
+            category_delay
+          else
+            universal_delay
+          end
+        elsif category_delay
+          category_delay
+        else
+          universal_delay
+        end
 
       !!delay && delay > Time.now
     end
@@ -99,19 +115,19 @@ module Sentry
     # :cache_overflow
     # :network_error
     # :sample_rate
-    def record_lost_event(reason, data_category)
+    # :before_send
+    # :event_processor
+    def record_lost_event(reason, item_type)
       return unless configuration.send_client_reports
-      @discarded_events[[reason, data_category]] += 1
+
+      item_type ||= 'event'
+      @discarded_events[[reason, item_type]] += 1
     end
 
     private
 
     def get_item_type(event_hash)
       event_hash[:type] || event_hash["type"] || "event"
-    end
-
-    def get_data_category(item_type)
-      item_type == 'transaction' ? 'transaction' : 'error'
     end
   end
 end

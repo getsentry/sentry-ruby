@@ -26,10 +26,12 @@ module Sentry
     def capture_event(event, scope, hint = {})
       return unless configuration.sending_allowed?
 
+      event_type = event.is_a?(Event) ? event.type : event["type"]
       event = scope.apply_to_event(event, hint)
 
       if event.nil?
         log_info("Discarded event because one of the event processors returned nil")
+        transport.record_lost_event(:event_processor, event_type)
         return
       end
 
@@ -84,6 +86,7 @@ module Sentry
 
         if event.nil?
           log_info("Discarded event because before_send returned nil")
+          transport.record_lost_event(:before_send, 'event')
           return
         end
       end
@@ -97,6 +100,7 @@ module Sentry
 
       event_info = Event.get_log_message(event.to_hash)
       log_info("Unreported #{loggable_event_type}: #{event_info}")
+      transport.record_lost_event(:network_error, event_type)
       raise
     end
 
