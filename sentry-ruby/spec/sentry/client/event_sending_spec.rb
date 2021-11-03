@@ -19,6 +19,39 @@ RSpec.describe Sentry::Client do
     let(:scope) { Sentry::Scope.new }
     let(:event) { subject.event_from_message(message) }
 
+    context "with sample_rate set" do
+      before do
+        configuration.sample_rate = 0.5
+        configuration.background_worker_threads = 0
+      end
+
+      context "with Event" do
+        it "sends the event when it's sampled" do
+          allow(Random).to receive(:rand).and_return(0.49)
+          subject.capture_event(event, scope)
+          expect(subject.transport.events.count).to eq(1)
+        end
+
+        it "doesn't send the event when it's not sampled" do
+          allow(Random).to receive(:rand).and_return(0.51)
+          subject.capture_event(event, scope)
+          expect(subject.transport.events.count).to eq(0)
+        end
+      end
+
+      context "with TransactionEvent" do
+        require "debug"
+        it "ignores the sampling" do
+          transaction_event = subject.event_from_transaction(Sentry::Transaction.new(hub: hub))
+          allow(Random).to receive(:rand).and_return(0.51)
+
+          subject.capture_event(transaction_event, scope)
+
+          expect(subject.transport.events.count).to eq(1)
+        end
+      end
+    end
+
     context 'with config.async set' do
       let(:async_block) do
         lambda do |event|

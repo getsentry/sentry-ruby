@@ -8,11 +8,9 @@ module Sentry
 
     include LoggingHelper
 
-    attr_accessor :configuration
     attr_reader :logger, :rate_limits
 
     def initialize(configuration)
-      @configuration = configuration
       @logger = configuration.logger
       @transport_configuration = configuration.transport
       @dsn = configuration.dsn
@@ -27,12 +25,6 @@ module Sentry
     def send_event(event)
       event_hash = event.to_hash
       item_type = get_item_type(event_hash)
-
-      unless configuration.sending_allowed?
-        log_debug("Envelope [#{item_type}] not sent: #{configuration.error_messages}")
-
-        return
-      end
 
       if is_rate_limited?(item_type)
         log_info("Envelope [#{item_type}] not sent: rate limiting")
@@ -99,7 +91,7 @@ module Sentry
       item_type = get_item_type(event_hash)
 
       envelope = <<~ENVELOPE
-        {"event_id":"#{event_id}","dsn":"#{configuration.dsn.to_s}","sdk":#{Sentry.sdk_meta.to_json},"sent_at":"#{Sentry.utc_now.iso8601}"}
+        {"event_id":"#{event_id}","dsn":"#{@dsn.to_s}","sdk":#{Sentry.sdk_meta.to_json},"sent_at":"#{Sentry.utc_now.iso8601}"}
         {"type":"#{item_type}","content_type":"application/json"}
         #{JSON.generate(event_hash)}
       ENVELOPE
