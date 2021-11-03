@@ -129,7 +129,10 @@ module Sentry
         @name = UNLABELD_NAME
       end
 
-      return unless @sampled || @parent_sampled
+      unless @sampled || @parent_sampled
+        hub.current_client.transport.record_lost_event(:sample_rate, 'transaction')
+        return
+      end
 
       event = hub.current_client.event_from_transaction(self)
       hub.capture_event(event)

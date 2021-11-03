@@ -104,13 +104,14 @@ module Sentry
     end
 
     # valid reasons are
-    # :ratelimit_backoff
-    # :queue_overflow
-    # :cache_overflow
-    # :network_error
-    # :sample_rate
-    # :before_send
-    # :event_processor
+    #   :ratelimit_backoff
+    #   :queue_overflow
+    #   :cache_overflow
+    #   :network_error
+    #   :sample_rate
+    #   :before_send
+    #   :event_processor
+    # valid item_types are 'event', 'transaction'
     def record_lost_event(reason, item_type)
       return unless configuration.send_client_reports
 
