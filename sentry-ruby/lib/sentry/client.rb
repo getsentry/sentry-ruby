@@ -25,7 +25,7 @@ module Sentry
 
     def capture_event(event, scope, hint = {})
       return unless configuration.sending_allowed?
-      return unless configuration.sample_allowed? || event.is_a?(TransactionEvent)
+      return unless event.is_a?(TransactionEvent) || configuration.sample_allowed?
 
       event = scope.apply_to_event(event, hint)
 
