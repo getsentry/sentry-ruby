@@ -33,6 +33,38 @@ RSpec.describe Sentry::Event do
     end
   end
 
+  describe "#inspect" do
+    let(:client) do
+      Sentry::Client.new(configuration)
+    end
+
+    subject do
+      e = begin
+            1/0
+          rescue => e
+            e
+          end
+
+      client.event_from_exception(e)
+    end
+
+    it "still contains relevant info" do
+      expect(subject.inspect).to match(/@event_id="#{subject.event_id}"/)
+    end
+
+    it "ignores @configuration" do
+      expect(subject.inspect).not_to match(/@configuration/)
+    end
+
+    it "ignores @modules" do
+      expect(subject.inspect).not_to match(/@modules/)
+    end
+
+    it "ignores @backtrace" do
+      expect(subject.inspect).not_to match(/@backtrace/)
+    end
+  end
+
   context 'rack context specified', rack: true do
     require 'stringio'
 
