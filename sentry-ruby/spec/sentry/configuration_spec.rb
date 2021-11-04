@@ -233,21 +233,19 @@ RSpec.describe Sentry::Configuration do
     end
   end
 
-  context "with a sample rate" do
-    before(:each) do
-      subject.dsn = 'http://12345:67890@sentry.localdomain:3000/sentry/42'
+  describe "#sample_allowed?" do
+    before do
       subject.sample_rate = 0.75
     end
 
     it 'captured_allowed false when sampled' do
       allow(Random).to receive(:rand).and_return(0.76)
-      expect(subject.sending_allowed?).to eq(false)
-      expect(subject.errors).to eq(["Excluded by random sample"])
+      expect(subject.sample_allowed?).to eq(false)
     end
 
     it 'captured_allowed true when not sampled' do
       allow(Random).to receive(:rand).and_return(0.74)
-      expect(subject.sending_allowed?).to eq(true)
+      expect(subject.sample_allowed?).to eq(true)
     end
   end
 
