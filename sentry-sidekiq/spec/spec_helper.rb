@@ -153,6 +153,14 @@ class ZeroRetryWorker
   end
 end
 
+class TagsWorker
+  include Sidekiq::Worker
+
+  sidekiq_options tags: ["marvel", "dc"]
+
+  def perform; end
+end
+
 def execute_worker(processor, klass, **options)
   klass_options = klass.sidekiq_options_hash || {}
 
