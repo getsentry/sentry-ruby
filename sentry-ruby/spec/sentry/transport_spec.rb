@@ -73,6 +73,36 @@ RSpec.describe Sentry::Transport do
         expect(item).to eq(event.to_hash.to_json)
       end
     end
+
+    context "client report" do
+      let(:event) { client.event_from_exception(ZeroDivisionError.new("divided by 0")) }
+      before do
+        5.times { subject.record_lost_event(:ratelimit_backoff, 'error') }
+        3.times { subject.record_lost_event(:queue_overflow, 'transaction') }
+      end
+
+      it "incudes client report in envelope" do
+        Timecop.travel(Time.now + 90) do
+          result = subject.encode(event.to_hash)
+
+          client_report_header, client_report_payload = result.split("\n").last(2)
+
+          expect(client_report_header).to eq(
+            '{"type":"client_report"}'
+          )
+
+          expect(client_report_payload).to eq(
+            {
+              timestamp: Time.now.utc.iso8601,
+              discarded_events: [
+                { reason: :ratelimit_backoff, category: 'error', quantity: 5 },
+                { reason: :queue_overflow, category: 'transaction', quantity: 3 }
+              ]
+            }.to_json
+          )
+        end
+      end
+    end
   end
 
   describe "#send_event" do
@@ -124,6 +154,17 @@ RSpec.describe Sentry::Transport do
             subject.send_event(event)
           end.to raise_error(Sentry::ExternalError)
         end
+      end
+    end
+
+    context "when rate limited" do
+      before do
+        allow(subject).to receive(:is_rate_limited?).and_return(true)
+      end
+
+      it "records lost event" do
+        expect(subject).to receive(:record_lost_event).with(:ratelimit_backoff, 'event')
+        subject.send_event(event)
       end
     end
   end

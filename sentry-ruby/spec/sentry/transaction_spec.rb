@@ -371,6 +371,11 @@ RSpec.describe Sentry::Transaction do
 
         expect(events.count).to eq(0)
       end
+
+      it "records lost event" do
+        expect(subject.hub.current_client.transport).to receive(:record_lost_event).with(:sample_rate, 'transaction')
+        subject.finish
+      end
     end
 
     context "if the transaction doesn't have a name" do

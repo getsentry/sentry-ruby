@@ -121,7 +121,7 @@ module Sentry
     # valid reasons are
     #   :ratelimit_backoff
     #   :queue_overflow
-    #   :cache_overflow
+    #   :cache_overflow - NA
     #   :network_error
     #   :sample_rate
     #   :before_send
