@@ -9,11 +9,9 @@ module Sentry
 
     include LoggingHelper
 
-    attr_accessor :configuration
     attr_reader :logger, :rate_limits
 
     def initialize(configuration)
-      @configuration = configuration
       @logger = configuration.logger
       @transport_configuration = configuration.transport
       @dsn = configuration.dsn
