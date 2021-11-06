@@ -13,6 +13,12 @@ SimpleCov.start do
   coverage_dir File.join(__FILE__, "../../coverage")
 end
 
+
+if ENV["CI"]
+  require 'simplecov-cobertura'
+  SimpleCov.formatter = SimpleCov::Formatter::CoberturaFormatter
+end
+
 # this already requires the sdk
 require "support/test_rails_app/app"
 # need to be required after rails is loaded from the above
