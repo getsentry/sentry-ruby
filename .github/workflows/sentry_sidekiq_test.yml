@@ -21,7 +21,7 @@ jobs:
         os: [ubuntu-latest]
         include:
           - { os: ubuntu-latest, ruby_version: '3.0', sidekiq_version: 6.0, options: { rubyopt: "--enable-frozen-string-literal --debug=frozen-string-literal" } }
-          - { os: ubuntu-latest, ruby_version: '2.7', sidekiq_version: 6.0, options: { codecov: 1 } }
+          - { os: ubuntu-latest, ruby_version: '3.0', sidekiq_version: 6.0, options: { codecov: 1 } }
         exclude:
           - ruby_version: 2.4
             sidekiq_version: 6.0
