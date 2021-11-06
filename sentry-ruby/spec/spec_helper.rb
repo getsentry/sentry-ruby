@@ -1,4 +1,5 @@
 require "bundler/setup"
+require "debug" if RUBY_VERSION.to_f >= 2.6
 require "pry"
 require "timecop"
 require 'simplecov'
