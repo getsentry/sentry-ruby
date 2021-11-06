@@ -12,6 +12,7 @@ gem "webmock"
 gem "timecop"
 gem 'simplecov'
 gem "simplecov-cobertura", "~> 1.4"
+gem "rexml"
 
 gem "object_tracer"
 gem "debug", github: "ruby/debug", platform: :ruby if RUBY_VERSION.to_f >= 2.6
