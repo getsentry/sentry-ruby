@@ -16,11 +16,6 @@ SimpleCov.start do
   coverage_dir File.join(__FILE__, "../../coverage")
 end
 
-if ENV["CI"] && ENV["CODECOV"] == "1"
-  require 'codecov'
-  SimpleCov.formatter = SimpleCov::Formatter::Codecov
-end
-
 require "sentry-sidekiq"
 
 DUMMY_DSN = 'http://12345:67890@sentry.localdomain/sentry/42'

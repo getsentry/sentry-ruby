@@ -13,11 +13,6 @@ SimpleCov.start do
   coverage_dir File.join(__FILE__, "../../coverage")
 end
 
-if ENV["CI"] && ENV["CODECOV"] == "1"
-  require 'codecov'
-  SimpleCov.formatter = SimpleCov::Formatter::Codecov
-end
-
 # this already requires the sdk
 require "support/test_rails_app/app"
 # need to be required after rails is loaded from the above

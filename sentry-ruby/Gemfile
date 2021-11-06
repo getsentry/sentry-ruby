@@ -10,7 +10,7 @@ gem "rspec", "~> 3.0"
 gem "rspec-retry"
 gem "webmock"
 gem "timecop"
-gem "codecov", "0.2.12"
+gem 'simplecov'
 
 gem "object_tracer"
 gem "debug", github: "ruby/debug", platform: :ruby if RUBY_VERSION.to_f >= 2.6
