@@ -6,6 +6,7 @@ require 'sentry/interface'
 require 'sentry/backtrace'
 require 'sentry/utils/real_ip'
 require 'sentry/utils/request_id'
+require 'sentry/utils/custom_inspection'
 
 module Sentry
   class Event
@@ -20,6 +21,10 @@ module Sentry
     WRITER_ATTRIBUTES = SERIALIZEABLE_ATTRIBUTES - %i(type timestamp level)
 
     MAX_MESSAGE_SIZE_IN_BYTES = 1024 * 8
+
+    SKIP_INSPECTION_ATTRIBUTES = [:@configuration, :@modules, :@backtrace]
+
+    include CustomInspection
 
     attr_writer(*WRITER_ATTRIBUTES)
     attr_reader(*SERIALIZEABLE_ATTRIBUTES)

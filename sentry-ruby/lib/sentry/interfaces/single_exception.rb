@@ -1,5 +1,10 @@
+require "sentry/utils/exception_cause_chain"
+
 module Sentry
   class SingleExceptionInterface < Interface
+    include CustomInspection
+
+    SKIP_INSPECTION_ATTRIBUTES = [:@stacktrace]
     PROBLEMATIC_LOCAL_VALUE_REPLACEMENT = "[ignored due to error]".freeze
     OMISSION_MARK = "...".freeze
     MAX_LOCAL_BYTES = 1024
