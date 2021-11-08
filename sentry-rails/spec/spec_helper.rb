@@ -13,9 +13,10 @@ SimpleCov.start do
   coverage_dir File.join(__FILE__, "../../coverage")
 end
 
-if ENV["CI"] && ENV["CODECOV"] == "1"
-  require 'codecov'
-  SimpleCov.formatter = SimpleCov::Formatter::Codecov
+
+if ENV["CI"]
+  require 'simplecov-cobertura'
+  SimpleCov.formatter = SimpleCov::Formatter::CoberturaFormatter
 end
 
 # this already requires the sdk

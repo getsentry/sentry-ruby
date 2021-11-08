@@ -5,7 +5,9 @@ gemspec
 
 gem "rake", "~> 12.0"
 gem "rspec", "~> 3.0"
-gem "codecov", "0.2.12"
+gem 'simplecov'
+gem "simplecov-cobertura", "~> 1.4"
+gem "rexml"
 
 sidekiq_version = ENV["SIDEKIQ_VERSION"]
 sidekiq_version = "6.0" if sidekiq_version.nil?

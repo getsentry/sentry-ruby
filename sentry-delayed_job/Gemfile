@@ -8,7 +8,9 @@ gem "i18n", "<= 1.8.7"
 
 gem "rake", "~> 12.0"
 gem "rspec", "~> 3.0"
-gem "codecov", "0.2.12"
+gem 'simplecov'
+gem "simplecov-cobertura", "~> 1.4"
+gem "rexml"
 
 gem "delayed_job"
 gem "delayed_job_active_record"
