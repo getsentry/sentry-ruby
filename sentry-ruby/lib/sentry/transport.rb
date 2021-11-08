@@ -5,7 +5,7 @@ module Sentry
   class Transport
     PROTOCOL_VERSION = '7'
     USER_AGENT = "sentry-ruby/#{Sentry::VERSION}"
-    CLIENT_REPORT_INTERVAL = 60
+    CLIENT_REPORT_INTERVAL = 30
 
     include LoggingHelper
 
