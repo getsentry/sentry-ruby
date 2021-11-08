@@ -7,6 +7,17 @@ module Sentry
     USER_AGENT = "sentry-ruby/#{Sentry::VERSION}"
     CLIENT_REPORT_INTERVAL = 30
 
+    # https://develop.sentry.dev/sdk/client-reports/#envelope-item-payload
+    CLIENT_REPORT_REASONS = [
+      :ratelimit_backoff,
+      :queue_overflow,
+      :cache_overflow, # NA
+      :network_error,
+      :sample_rate,
+      :before_send,
+      :event_processor
+    ]
+
     include LoggingHelper
 
     attr_accessor :configuration
@@ -118,17 +129,9 @@ module Sentry
       envelope
     end
 
-    # valid reasons are
-    #   :ratelimit_backoff
-    #   :queue_overflow
-    #   :cache_overflow - NA
-    #   :network_error
-    #   :sample_rate
-    #   :before_send
-    #   :event_processor
-    # valid item_types are 'event', 'transaction'
     def record_lost_event(reason, item_type)
       return unless @send_client_reports
+      return unless CLIENT_REPORT_REASONS.include?(reason)
 
       item_type ||= 'event'
       @discarded_events[[reason, item_type]] += 1
