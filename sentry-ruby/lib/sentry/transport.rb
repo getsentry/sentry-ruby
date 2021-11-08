@@ -13,13 +13,13 @@ module Sentry
     attr_reader :logger, :rate_limits
 
     def initialize(configuration)
-      @configuration = configuration
       @logger = configuration.logger
       @transport_configuration = configuration.transport
       @dsn = configuration.dsn
       @rate_limits = {}
+      @send_client_reports = configuration.send_client_reports
 
-      if configuration.send_client_reports
+      if @send_client_reports
         @discarded_events = Hash.new(0)
         @last_client_report_sent = Time.now
       end
@@ -128,7 +128,7 @@ module Sentry
     #   :event_processor
     # valid item_types are 'event', 'transaction'
     def record_lost_event(reason, item_type)
-      return unless configuration.send_client_reports
+      return unless @send_client_reports
 
       item_type ||= 'event'
       @discarded_events[[reason, item_type]] += 1
@@ -141,7 +141,7 @@ module Sentry
     end
 
     def fetch_pending_client_report
-      return nil unless configuration.send_client_reports
+      return nil unless @send_client_reports
       return nil if @last_client_report_sent > Time.now - CLIENT_REPORT_INTERVAL
       return nil if @discarded_events.empty?
 
