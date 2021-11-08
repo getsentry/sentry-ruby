@@ -20,7 +20,6 @@ module Sentry
 
     include LoggingHelper
 
-    attr_accessor :configuration
     attr_reader :logger, :rate_limits
 
     def initialize(configuration)
