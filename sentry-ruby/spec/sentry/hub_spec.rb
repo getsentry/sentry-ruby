@@ -223,6 +223,24 @@ RSpec.describe Sentry::Hub do
       end.to raise_error(ArgumentError, 'expect the argument to be a Sentry::Event, got String ("String")')
     end
 
+    it "doesn't log event payload" do
+      subject.capture_event(event)
+
+      expect(string_io.string).not_to include(event.to_json_compatible.to_s)
+    end
+
+    context "in debug mode" do
+      before do
+        configuration.debug = true
+      end
+
+      it "logs event payload" do
+        subject.capture_event(event)
+
+        expect(string_io.string).to include(event.to_json_compatible.to_s)
+      end
+    end
+
     it_behaves_like "capture_helper" do
       let(:capture_helper) { :capture_event }
       let(:capture_subject) { event }

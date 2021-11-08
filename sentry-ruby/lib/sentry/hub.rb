@@ -133,6 +133,11 @@ module Sentry
 
       event = current_client.capture_event(event, scope, hint)
 
+
+      if event && configuration.debug
+        configuration.log_debug(event.to_json_compatible)
+      end
+
       @last_event_id = event&.event_id
       event
     end
