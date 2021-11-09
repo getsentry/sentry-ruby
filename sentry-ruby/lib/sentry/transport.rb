@@ -120,8 +120,10 @@ module Sentry
         #{JSON.generate(envelope_header)}
         #{JSON.generate(event_header)}
         #{JSON.generate(event_payload)}
-        #{fetch_pending_client_report}
       ENVELOPE
+
+      client_report = fetch_pending_client_report
+      envelope << client_report if client_report
 
       log_info("Sending envelope [#{item_type}] #{event_id} to Sentry")
 
