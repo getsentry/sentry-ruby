@@ -161,7 +161,7 @@ module Sentry
     attr_accessor :traces_sampler
 
     # Send diagnostic client reports about dropped events, true by default
-    # tries to attach to an existing envelope max once every minute
+    # tries to attach to an existing envelope max once every 30s
     attr_accessor :send_client_reports
 
     # these are not config options
