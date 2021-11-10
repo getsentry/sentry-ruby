@@ -14,8 +14,8 @@ SimpleCov.start do
 end
 
 if ENV["CI"]
-  require 'codecov'
-  SimpleCov.formatter = SimpleCov::Formatter::Codecov
+  require 'simplecov-cobertura'
+  SimpleCov.formatter = SimpleCov::Formatter::CoberturaFormatter
 end
 
 require "sentry-resque"

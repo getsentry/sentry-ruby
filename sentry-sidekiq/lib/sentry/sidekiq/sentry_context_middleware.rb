@@ -14,6 +14,7 @@ module Sentry
           scope.set_user(user)
         end
         scope.set_tags(queue: queue, jid: job["jid"])
+        scope.set_tags(build_tags(job["tags"]))
         scope.set_contexts(sidekiq: job.merge("queue" => queue))
         scope.set_transaction_name(context_filter.transaction_name)
         transaction = start_transaction(scope.transaction_name, job["sentry_trace"])
@@ -30,6 +31,10 @@ module Sentry
         # don't need to use ensure here
         # if the job failed, we need to keep the scope for error handler. and the scope will be cleared there
         scope.clear
+      end
+
+      def build_tags(tags)
+        Array(tags).each_with_object({}) { |name, tags_hash| tags_hash[:"sidekiq.#{name}"] = true }
       end
 
       def start_transaction(transaction_name, sentry_trace)

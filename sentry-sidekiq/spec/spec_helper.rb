@@ -16,9 +16,9 @@ SimpleCov.start do
   coverage_dir File.join(__FILE__, "../../coverage")
 end
 
-if ENV["CI"] && ENV["CODECOV"] == "1"
-  require 'codecov'
-  SimpleCov.formatter = SimpleCov::Formatter::Codecov
+if ENV["CI"]
+  require 'simplecov-cobertura'
+  SimpleCov.formatter = SimpleCov::Formatter::CoberturaFormatter
 end
 
 require "sentry-sidekiq"
@@ -151,6 +151,14 @@ class ZeroRetryWorker
   def perform
     1/0
   end
+end
+
+class TagsWorker
+  include Sidekiq::Worker
+
+  sidekiq_options tags: ["marvel", "dc"]
+
+  def perform; end
 end
 
 def execute_worker(processor, klass, **options)

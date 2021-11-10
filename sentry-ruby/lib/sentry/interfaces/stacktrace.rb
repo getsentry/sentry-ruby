@@ -10,6 +10,10 @@ module Sentry
       { frames: @frames.map(&:to_hash) }
     end
 
+    def inspect
+      @frames.map(&:to_s)
+    end
+
     private
 
     # Not actually an interface, but I want to use the same style
@@ -26,6 +30,10 @@ module Sentry
         @in_app = line.in_app
         @module = line.module_name if line.module_name
         @filename = compute_filename
+      end
+
+      def to_s
+        "#{@filename}:#{@lineno}"
       end
 
       def compute_filename

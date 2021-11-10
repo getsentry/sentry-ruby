@@ -21,7 +21,7 @@ jobs:
         os: [ubuntu-latest]
         include:
           - { os: ubuntu-latest, ruby_version: '3.0', sidekiq_version: 6.0, options: { rubyopt: "--enable-frozen-string-literal --debug=frozen-string-literal" } }
-          - { os: ubuntu-latest, ruby_version: '2.7', sidekiq_version: 6.0, options: { codecov: 1 } }
+          - { os: ubuntu-latest, ruby_version: '3.0', sidekiq_version: 6.0, options: { codecov: 1 } }
         exclude:
           - ruby_version: 2.4
             sidekiq_version: 6.0
@@ -43,7 +43,13 @@ jobs:
       env:
         SIDEKIQ_VERSION: ${{ matrix.sidekiq_version }}
         RUBYOPT: ${{ matrix.options.rubyopt }}
-        CODECOV: ${{ matrix.options.codecov }}
       run: |
         bundle install --jobs 4 --retry 3
         make test
+
+    - name: Upload Coverage
+      if: ${{ matrix.options.codecov }}
+      run: |
+        curl -Os https://uploader.codecov.io/latest/linux/codecov 
+        chmod +x codecov
+        ./codecov -t ${CODECOV_TOKEN} -R `pwd` -f coverage/coverage.xml

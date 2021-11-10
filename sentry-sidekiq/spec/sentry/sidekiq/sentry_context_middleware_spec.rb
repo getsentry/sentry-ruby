@@ -52,6 +52,12 @@ RSpec.describe Sentry::Sidekiq::SentryContextServerMiddleware do
       expect(event.user).to eq(user)
     end
 
+    it "sets sidekiq tags to the event" do
+      execute_worker(processor, TagsWorker)
+      event = transport.events.last
+      expect(event.tags.keys).to include(:"sidekiq.marvel", :"sidekiq.dc")
+    end
+
     context "with sentry_trace" do
       let(:parent_transaction) { Sentry.start_transaction(op: "sidekiq") }
 

@@ -1,6 +1,7 @@
 require "concurrent/utility/processor_counter"
 
 require "sentry/utils/exception_cause_chain"
+require 'sentry/utils/custom_inspection'
 require "sentry/dsn"
 require "sentry/release_detector"
 require "sentry/transport/configuration"
@@ -9,6 +10,7 @@ require "sentry/interfaces/stacktrace_builder"
 
 module Sentry
   class Configuration
+    include CustomInspection
     include LoggingHelper
     # Directories to be recognized as part of your app. e.g. if you
     # have an `engines` dir at the root of your project, you may want
@@ -185,6 +187,7 @@ module Sentry
 
     LOG_PREFIX = "** [Sentry] ".freeze
     MODULE_SEPARATOR = "::".freeze
+    SKIP_INSPECTION_ATTRIBUTES = [:@linecache, :@stacktrace_builder]
 
     # Post initialization callbacks are called at the end of initialization process
     # allowing extending the configuration of sentry-ruby by multiple extensions

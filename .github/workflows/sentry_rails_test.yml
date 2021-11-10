@@ -59,7 +59,13 @@ jobs:
       env:
         RAILS_VERSION: ${{ matrix.rails_version }}
         RUBYOPT: ${{ matrix.options.rubyopt }}
-        CODECOV: ${{ matrix.options.codecov }}
       run: |
         bundle install --jobs 4 --retry 3
         bundle exec rake
+
+    - name: Upload Coverage
+      if: ${{ matrix.options.codecov }}
+      run: |
+        curl -Os https://uploader.codecov.io/latest/linux/codecov 
+        chmod +x codecov
+        ./codecov -t ${CODECOV_TOKEN} -R `pwd` -f coverage/coverage.xml
