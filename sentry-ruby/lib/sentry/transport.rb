@@ -20,7 +20,7 @@ module Sentry
 
     include LoggingHelper
 
-    attr_reader :logger, :rate_limits
+    attr_reader :logger, :rate_limits, :discarded_events, :last_client_report_sent
 
     def initialize(configuration)
       @logger = configuration.logger

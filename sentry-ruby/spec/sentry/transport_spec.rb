@@ -163,8 +163,8 @@ RSpec.describe Sentry::Transport do
       end
 
       it "records lost event" do
-        expect(subject).to receive(:record_lost_event).with(:ratelimit_backoff, 'event')
         subject.send_event(event)
+        expect(subject).to have_recorded_lost_event(:ratelimit_backoff, 'event')
       end
     end
   end

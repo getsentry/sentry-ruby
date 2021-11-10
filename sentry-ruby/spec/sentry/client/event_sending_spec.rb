@@ -34,8 +34,8 @@ RSpec.describe Sentry::Client do
 
         it "doesn't send the event when it's not sampled" do
           allow(Random).to receive(:rand).and_return(0.51)
-          expect(subject.transport).to receive(:record_lost_event).with(:sample_rate, 'event')
           subject.capture_event(event, scope)
+          expect(subject.transport).to have_recorded_lost_event(:sample_rate, 'event')
           expect(subject.transport.events.count).to eq(0)
         end
       end
@@ -160,9 +160,9 @@ RSpec.describe Sentry::Client do
 
       it "records queue overflow" do
         allow(Sentry.background_worker).to receive(:perform).and_return(false)
-        expect(subject.transport).to receive(:record_lost_event).with(:queue_overflow, anything)
 
         subject.capture_event(event, scope)
+        expect(subject.transport).to have_recorded_lost_event(:queue_overflow, 'event')
 
         expect(transport.events.count).to eq(0)
         sleep(0.2)
@@ -279,10 +279,9 @@ RSpec.describe Sentry::Client do
         end
 
         it "discards the event and logs a info" do
-          expect(subject.transport).to receive(:record_lost_event).with(:event_processor, anything)
-
           expect(subject.capture_event(event, scope)).to be_nil
 
+          expect(subject.transport).to have_recorded_lost_event(:event_processor, 'event')
           expect(string_io.string).to match(/Discarded event because one of the event processors returned nil/)
         end
       end
@@ -321,9 +320,9 @@ RSpec.describe Sentry::Client do
         end
 
         it "swallows and logs Sentry::ExternalError (caused by transport's networking error)" do
-          expect(subject.transport).to receive(:record_lost_event).with(:network_error, anything)
           expect(subject.capture_event(event, scope)).to be_nil
 
+          expect(subject.transport).to have_recorded_lost_event(:network_error, 'event')
           expect(string_io.string).to match(/Event sending failed: Failed to open TCP connection/)
           expect(string_io.string).to match(/Unreported Event: Test message/)
           expect(string_io.string).to match(/Event capturing failed: Failed to open TCP connection/)
@@ -345,10 +344,10 @@ RSpec.describe Sentry::Client do
         end
 
         it "swallows and logs Sentry::ExternalError (caused by transport's networking error)" do
-          expect(subject.transport).to receive(:record_lost_event).with(:network_error, anything)
           expect(subject.capture_event(event, scope)).to be_a(Sentry::Event)
           sleep(0.2)
 
+          expect(subject.transport).to have_recorded_lost_event(:network_error, 'event')
           expect(string_io.string).to match(/Event sending failed: Failed to open TCP connection/)
           expect(string_io.string).to match(/Unreported Event: Test message/)
         end
@@ -443,9 +442,8 @@ RSpec.describe Sentry::Client do
         end
 
         it "records lost event" do
-          expect(subject.transport).to receive(:record_lost_event).with(:before_send, anything)
-
           subject.send_event(event)
+          expect(subject.transport).to have_recorded_lost_event(:before_send, 'event')
         end
       end
     end

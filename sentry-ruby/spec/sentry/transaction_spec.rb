@@ -373,8 +373,8 @@ RSpec.describe Sentry::Transaction do
       end
 
       it "records lost event" do
-        expect(subject.hub.current_client.transport).to receive(:record_lost_event).with(:sample_rate, 'transaction')
         subject.finish
+        expect(subject.hub.current_client.transport).to have_recorded_lost_event(:sample_rate, 'transaction')
       end
     end
 

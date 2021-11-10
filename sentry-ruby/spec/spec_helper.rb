@@ -43,6 +43,12 @@ RSpec.configure do |config|
   config.before(:each, rack: true) do
     skip("skip rack related tests") unless defined?(Rack)
   end
+
+  RSpec::Matchers.define :have_recorded_lost_event do |reason, type|
+    match do |transport|
+      expect(transport.discarded_events[[reason, type]]).to be > 0
+    end
+  end
 end
 
 def build_exception_with_cause(cause = "exception a")
