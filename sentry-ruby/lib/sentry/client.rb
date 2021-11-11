@@ -25,19 +25,26 @@ module Sentry
 
     def capture_event(event, scope, hint = {})
       return unless configuration.sending_allowed?
-      return unless event.is_a?(TransactionEvent) || configuration.sample_allowed?
 
+      unless event.is_a?(TransactionEvent) || configuration.sample_allowed?
+        transport.record_lost_event(:sample_rate, 'event')
+        return
+      end
+
+      event_type = event.is_a?(Event) ? event.type : event["type"]
       event = scope.apply_to_event(event, hint)
 
       if event.nil?
         log_info("Discarded event because one of the event processors returned nil")
+        transport.record_lost_event(:event_processor, event_type)
         return
       end
 
       if async_block = configuration.async
         dispatch_async_event(async_block, event, hint)
       elsif configuration.background_worker_threads != 0 && hint.fetch(:background, true)
-        dispatch_background_event(event, hint)
+        queued = dispatch_background_event(event, hint)
+        transport.record_lost_event(:queue_overflow, event_type) unless queued
       else
         send_event(event, hint)
       end
@@ -85,6 +92,7 @@ module Sentry
 
         if event.nil?
           log_info("Discarded event because before_send returned nil")
+          transport.record_lost_event(:before_send, 'event')
           return
         end
       end
@@ -98,6 +106,7 @@ module Sentry
 
       event_info = Event.get_log_message(event.to_hash)
       log_info("Unreported #{loggable_event_type}: #{event_info}")
+      transport.record_lost_event(:network_error, event_type)
       raise
     end
 
