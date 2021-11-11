@@ -1,5 +1,5 @@
 module Sentry
   module Rails
-    VERSION = "4.7.3"
+    VERSION = "4.8.0"
   end
 end
