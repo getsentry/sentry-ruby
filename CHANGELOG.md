@@ -1,3 +1,9 @@
+## 4.8.1
+
+### Refactoring
+
+- Extract envelope construction logic from Transport [#1616](https://github.com/getsentry/sentry-ruby/pull/1616)
+
 ## 4.8.0
 
 ### Features

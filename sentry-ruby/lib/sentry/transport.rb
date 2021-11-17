@@ -1,5 +1,6 @@
 require "json"
 require "base64"
+require "sentry/envelope"
 
 module Sentry
   class Transport
@@ -103,31 +104,29 @@ module Sentry
     def encode(event)
       # Convert to hash
       event_payload = event.to_hash
-
       event_id = event_payload[:event_id] || event_payload["event_id"]
       item_type = get_item_type(event_payload)
 
-      envelope_header = {
-        event_id: event_id,
-        dsn: @dsn.to_s,
-        sdk: Sentry.sdk_meta,
-        sent_at: Sentry.utc_now.iso8601
-      }
+      envelope = Envelope.new(
+        {
+          event_id: event_id,
+          dsn: @dsn.to_s,
+          sdk: Sentry.sdk_meta,
+          sent_at: Sentry.utc_now.iso8601
+        }
+      )
 
-      event_header = { type: item_type, content_type: 'application/json' }
+      envelope.add_item(
+        { type: item_type, content_type: 'application/json' },
+        event_payload
+      )
 
-      envelope = <<~ENVELOPE
-        #{JSON.generate(envelope_header)}
-        #{JSON.generate(event_header)}
-        #{JSON.generate(event_payload)}
-      ENVELOPE
-
-      client_report = fetch_pending_client_report
-      envelope << client_report if client_report
+      client_report_headers, client_report_payload = fetch_pending_client_report
+      envelope.add_item(client_report_headers, client_report_payload) if client_report_headers
 
       log_info("Sending envelope [#{item_type}] #{event_id} to Sentry")
 
-      envelope
+      envelope.to_s
     end
 
     def record_lost_event(reason, item_type)
@@ -159,21 +158,15 @@ module Sentry
       end
 
       item_header = { type: 'client_report' }
-
       item_payload = {
         timestamp: Sentry.utc_now.iso8601,
         discarded_events: discarded_events_hash
       }
 
-      client_report_item = <<~CLIENT_REPORT_ITEM
-        #{JSON.generate(item_header)}
-        #{JSON.generate(item_payload)}
-      CLIENT_REPORT_ITEM
-
       @discarded_events = Hash.new(0)
       @last_client_report_sent = Time.now
 
-      client_report_item
+      [item_header, item_payload]
     end
   end
 end
