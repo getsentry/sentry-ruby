@@ -1,5 +1,10 @@
 ## 4.8.1
 
+### Bug Fixes
+
+- Merge context with the same key instead of replacing the old value. [#1621](https://github.com/getsentry/sentry-ruby/pull/1621)
+  - Fixes [#1619](https://github.com/getsentry/sentry-ruby/issues/1619)
+
 ### Refactoring
 
 - Extract envelope construction logic from Transport [#1616](https://github.com/getsentry/sentry-ruby/pull/1616)
