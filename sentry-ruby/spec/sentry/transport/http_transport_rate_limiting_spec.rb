@@ -1,4 +1,5 @@
 require 'spec_helper'
+require "webmock"
 
 RSpec.describe "rate limiting" do
   before do
@@ -14,6 +15,23 @@ RSpec.describe "rate limiting" do
   end
 
   subject { Sentry::HTTPTransport.new(configuration) }
+
+  before { stub_const('Net::BufferedIO', Net::WebMockNetBufferedIO) }
+
+  class FakeSocket < StringIO
+    def setsockopt(*args); end
+  end
+
+  before do
+    allow(TCPSocket).to receive(:open).and_return(FakeSocket.new)
+  end
+
+  def mock_request(fake_response, &block)
+    allow(fake_response).to receive(:body).and_return(JSON.generate({ data: "success" }))
+    allow_any_instance_of(Net::HTTP).to receive(:transport_request) do |_, request|
+      block.call(request) if block
+    end.and_return(fake_response)
+  end
 
   describe "#is_rate_limited?" do
     let(:transaction_event) do
@@ -77,7 +95,7 @@ RSpec.describe "rate limiting" do
 
   describe "rate limit header processing" do
     before do
-      configuration.transport.http_adapter = [:test, stubs]
+      mock_request(fake_response)
     end
 
     shared_examples "rate limiting headers handling" do
@@ -194,12 +212,10 @@ RSpec.describe "rate limiting" do
     end
 
     context "received 200 response" do
-      let(:stubs) do
-        Faraday::Adapter::Test::Stubs.new do |stub|
-          stub.post('sentry/api/42/envelope/') do
-            [
-              200, headers, ""
-            ]
+      let(:fake_response) do
+        Net::HTTPResponse.new("1.0", "200", "").tap do |response|
+          headers.each do |k, v|
+            response[k] = v
           end
         end
       end
@@ -229,12 +245,10 @@ RSpec.describe "rate limiting" do
     end
 
     context "received 429 response" do
-      let(:stubs) do
-        Faraday::Adapter::Test::Stubs.new do |stub|
-          stub.post('sentry/api/42/envelope/') do
-            [
-              429, headers, "{\"detail\":\"event rejected due to rate limit\"}"
-            ]
+      let(:fake_response) do
+        Net::HTTPResponse.new("1.0", "429", "").tap do |response|
+          headers.each do |k, v|
+            response[k] = v
           end
         end
       end
