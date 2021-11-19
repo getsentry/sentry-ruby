@@ -1,7 +1,9 @@
 require 'spec_helper'
-require "webmock"
+require 'contexts/with_request_mock'
 
 RSpec.describe Sentry::HTTPTransport do
+  include_context "with request mock"
+
   let(:configuration) do
     Sentry::Configuration.new.tap do |config|
       config.dsn = DUMMY_DSN
@@ -15,23 +17,6 @@ RSpec.describe Sentry::HTTPTransport do
   end
 
   subject { described_class.new(configuration) }
-
-  before { stub_const('Net::BufferedIO', Net::WebMockNetBufferedIO) }
-
-  class FakeSocket < StringIO
-    def setsockopt(*args); end
-  end
-
-  before do
-    allow(TCPSocket).to receive(:open).and_return(FakeSocket.new)
-  end
-
-  def mock_request(fake_response, &block)
-    allow(fake_response).to receive(:body).and_return(JSON.generate({ data: "success" }))
-    allow_any_instance_of(Net::HTTP).to receive(:transport_request) do |_, request|
-      block.call(request) if block
-    end.and_return(fake_response)
-  end
 
   it "logs a debug message during initialization" do
     string_io = StringIO.new
@@ -59,10 +44,10 @@ RSpec.describe Sentry::HTTPTransport do
   end
 
   describe "request payload" do
-    let(:fake_response) { Net::HTTPResponse.new("1.0", "200", "") }
+    let(:fake_response) { build_fake_response("200") }
 
     it "compresses data by default" do
-      mock_request(fake_response) do |request|
+      stub_request(fake_response) do |request|
         expect(request["Content-Type"]).to eq("application/x-sentry-envelope")
         expect(request["Content-Encoding"]).to eq("gzip")
 
@@ -75,7 +60,7 @@ RSpec.describe Sentry::HTTPTransport do
     end
 
     it "doesn't compress small event" do
-      mock_request(fake_response) do |request|
+      stub_request(fake_response) do |request|
         expect(request["Content-Type"]).to eq("application/x-sentry-envelope")
         expect(request["Content-Encoding"]).to eq("")
 
@@ -92,7 +77,7 @@ RSpec.describe Sentry::HTTPTransport do
     it "doesn't compress data if the encoding is not gzip" do
       configuration.transport.encoding = "json"
 
-      mock_request(fake_response) do |request|
+      stub_request(fake_response) do |request|
         expect(request["Content-Type"]).to eq("application/x-sentry-envelope")
         expect(request["Content-Encoding"]).to eq("")
 
@@ -107,20 +92,20 @@ RSpec.describe Sentry::HTTPTransport do
 
   describe "failed request handling" do
     context "receive 4xx responses" do
-      let(:not_found_response) { Net::HTTPResponse.new("1.0", "404", "") }
+      let(:fake_response) { build_fake_response("404") }
 
       it 'raises an error' do
-        mock_request(not_found_response)
+        stub_request(fake_response)
 
         expect { subject.send_data(data) }.to raise_error(Sentry::ExternalError, /the server responded with status 404/)
       end
     end
 
     context "receive 5xx responses" do
-      let(:error_response) { Net::HTTPResponse.new("1.0", "500", "") }
+      let(:fake_response) { build_fake_response("500") }
 
       it 'raises an error' do
-        mock_request(error_response)
+        stub_request(fake_response)
 
         expect { subject.send_data(data) }.to raise_error(Sentry::ExternalError, /the server responded with status 500/)
       end
@@ -128,13 +113,11 @@ RSpec.describe Sentry::HTTPTransport do
 
     context "receive error responses with headers" do
       let(:error_response) do
-        Net::HTTPResponse.new("1.0", "500", "").tap do |response|
-          response['x-sentry-error'] = 'error_in_header'
-        end
+        build_fake_response("500", headers: { 'x-sentry-error' => 'error_in_header' })
       end
 
       it 'raises an error with header' do
-        mock_request(error_response)
+        stub_request(error_response)
 
         expect { subject.send_data(data) }.to raise_error(Sentry::ExternalError, /error_in_header/)
 

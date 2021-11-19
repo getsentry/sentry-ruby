@@ -1,36 +1,24 @@
 require "spec_helper"
-require "webmock"
+require 'contexts/with_request_mock'
 
 # because our patch on Net::HTTP is relatively low-level, we need to stub methods on socket level
 # which is not supported by most of the http mocking library
 # so we need to put something together ourselves
 RSpec.describe Sentry::Net::HTTP do
+  include_context "with request mock"
+
   let(:string_io) { StringIO.new }
   let(:logger) do
     ::Logger.new(string_io)
   end
 
-  before { stub_const('Net::BufferedIO', Net::WebMockNetBufferedIO) }
-
-  class FakeSocket < StringIO
-    def setsockopt(*args); end
-  end
-
-  before do
-    allow(TCPSocket).to receive(:open).and_return(FakeSocket.new)
-  end
-
   def stub_sentry_response
     # use bad request as an example is easier for verifying with error messages
-    fake_response = Net::HTTPResponse.new("1.0", "400", "")
-    allow(fake_response).to receive(:body).and_return(JSON.generate({ data: "bad sentry DSN public key" }))
-    allow_any_instance_of(Net::HTTP).to receive(:transport_request).and_return(fake_response)
+    stub_request(build_fake_response("400", body: { data: "bad sentry DSN public key" }))
   end
 
   def stub_normal_response(code: "200")
-    fake_response = Net::HTTPResponse.new("1.0", code, "")
-    allow(fake_response).to receive(:body).and_return("")
-    allow_any_instance_of(Net::HTTP).to receive(:transport_request).and_return(fake_response)
+    stub_request(build_fake_response(code))
   end
 
   context "with http_logger" do

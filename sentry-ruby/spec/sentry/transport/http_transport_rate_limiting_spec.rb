@@ -1,7 +1,9 @@
 require 'spec_helper'
-require "webmock"
+require 'contexts/with_request_mock'
 
 RSpec.describe "rate limiting" do
+  include_context "with request mock"
+
   before do
     perform_basic_setup
   end
@@ -15,23 +17,6 @@ RSpec.describe "rate limiting" do
   end
 
   subject { Sentry::HTTPTransport.new(configuration) }
-
-  before { stub_const('Net::BufferedIO', Net::WebMockNetBufferedIO) }
-
-  class FakeSocket < StringIO
-    def setsockopt(*args); end
-  end
-
-  before do
-    allow(TCPSocket).to receive(:open).and_return(FakeSocket.new)
-  end
-
-  def mock_request(fake_response, &block)
-    allow(fake_response).to receive(:body).and_return(JSON.generate({ data: "success" }))
-    allow_any_instance_of(Net::HTTP).to receive(:transport_request) do |_, request|
-      block.call(request) if block
-    end.and_return(fake_response)
-  end
 
   describe "#is_rate_limited?" do
     let(:transaction_event) do
@@ -95,7 +80,7 @@ RSpec.describe "rate limiting" do
 
   describe "rate limit header processing" do
     before do
-      mock_request(fake_response)
+      stub_request(fake_response)
     end
 
     shared_examples "rate limiting headers handling" do
@@ -212,13 +197,7 @@ RSpec.describe "rate limiting" do
     end
 
     context "received 200 response" do
-      let(:fake_response) do
-        Net::HTTPResponse.new("1.0", "200", "").tap do |response|
-          headers.each do |k, v|
-            response[k] = v
-          end
-        end
-      end
+      let(:fake_response) { build_fake_response("200", headers: headers) }
 
       it_behaves_like "rate limiting headers handling" do
         def send_data_and_verify_response(time)
@@ -245,13 +224,7 @@ RSpec.describe "rate limiting" do
     end
 
     context "received 429 response" do
-      let(:fake_response) do
-        Net::HTTPResponse.new("1.0", "429", "").tap do |response|
-          headers.each do |k, v|
-            response[k] = v
-          end
-        end
-      end
+      let(:fake_response) { build_fake_response("429", headers: headers) }
 
       it_behaves_like "rate limiting headers handling" do
         def send_data_and_verify_response(time)
