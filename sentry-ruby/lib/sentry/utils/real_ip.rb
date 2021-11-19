@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 require 'ipaddr'
 
 # Based on ActionDispatch::RemoteIp. All security-related precautions from that

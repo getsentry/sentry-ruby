@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 module Sentry
   class ExceptionInterface < Interface
     def initialize(values:)

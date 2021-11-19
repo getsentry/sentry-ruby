@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 require "sentry/breadcrumb"
 
 module Sentry
