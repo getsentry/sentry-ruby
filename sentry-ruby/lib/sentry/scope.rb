@@ -112,7 +112,7 @@ module Sentry
     end
 
     def set_extra(key, value)
-      @extra.merge!(key => value)
+      set_extras(key => value)
     end
 
     def set_tags(tags_hash)
@@ -121,7 +121,7 @@ module Sentry
     end
 
     def set_tag(key, value)
-      @tags.merge!(key => value)
+      set_tags(key => value)
     end
 
     def set_contexts(contexts_hash)
@@ -131,7 +131,7 @@ module Sentry
 
     def set_context(key, value)
       check_argument_type!(value, Hash)
-      @contexts.merge!(key => value)
+      set_contexts(key => value)
     end
 
     def set_level(level)
