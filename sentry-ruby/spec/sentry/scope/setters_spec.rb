@@ -103,6 +103,12 @@ RSpec.describe Sentry::Scope do
       expect(subject.contexts).to include({ character: { name: "John", age: 25 }})
       expect(subject.contexts).to include({ another_character: { name: "Jane", age: 20 }})
     end
+
+    it "merges context with the same key" do
+      subject.set_contexts({ character: { name: "John" }})
+      subject.set_contexts({ character: { age: 25 }})
+      expect(subject.contexts).to include({ character: { name: "John", age: 25 }})
+    end
   end
 
   describe "#set_context" do
@@ -126,6 +132,12 @@ RSpec.describe Sentry::Scope do
           another_character: { name: "Jane", age: 20 }
         }
       )
+    end
+
+    it "merges context with the same key" do
+      subject.set_context(:character, { name: "John" })
+      subject.set_context(:character, { age: 25 })
+      expect(subject.contexts).to include({ character: { name: "John", age: 25 }})
     end
   end
 
