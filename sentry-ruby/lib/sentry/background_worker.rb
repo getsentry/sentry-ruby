@@ -12,6 +12,7 @@ module Sentry
       @max_queue = 30
       @number_of_threads = configuration.background_worker_threads
       @logger = configuration.logger
+      @debug = configuration.debug
 
       @executor =
         if configuration.async
@@ -34,7 +35,11 @@ module Sentry
 
     def perform(&block)
       @executor.post do
-        block.call
+        begin
+          block.call
+        rescue Exception => e
+          log_error("exception happened in background worker", e, debug: @debug)
+        end
       end
     end
   end
