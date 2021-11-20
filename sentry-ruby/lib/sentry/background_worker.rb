@@ -33,14 +33,21 @@ module Sentry
         end
     end
 
+    # if you want to monkey-patch this method, please override `_perform` instead
     def perform(&block)
       @executor.post do
         begin
-          block.call
+          _perform(&block)
         rescue Exception => e
           log_error("exception happened in background worker", e, debug: @debug)
         end
       end
+    end
+
+    private
+
+    def _perform(&block)
+      block.call
     end
   end
 end
