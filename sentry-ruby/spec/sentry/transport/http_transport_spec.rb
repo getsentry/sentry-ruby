@@ -55,6 +55,50 @@ RSpec.describe Sentry::HTTPTransport do
 
       subject.send_data(data)
     end
+
+    describe "ssl configurations" do
+      it "has the corrent default" do
+        stub_request(fake_response) do |_, http_obj|
+          expect(http_obj.verify_mode).to eq(1)
+          expect(http_obj.ca_file).to eq(nil)
+        end
+
+        subject.send_data(data)
+      end
+
+      it "accepts custom ssl_verification configuration" do
+        configuration.transport.ssl_verification = false
+
+        stub_request(fake_response) do |_, http_obj|
+          expect(http_obj.verify_mode).to eq(0)
+          expect(http_obj.ca_file).to eq(nil)
+        end
+
+        subject.send_data(data)
+      end
+
+      it "accepts custom ssl_ca_file configuration" do
+        configuration.transport.ssl_ca_file = "/tmp/foo"
+
+        stub_request(fake_response) do |_, http_obj|
+          expect(http_obj.verify_mode).to eq(1)
+          expect(http_obj.ca_file).to eq("/tmp/foo")
+        end
+
+        subject.send_data(data)
+      end
+
+      it "accepts custom ssl configuration" do
+        configuration.transport.ssl  = { verify: false, ca_file: "/tmp/foo" }
+
+        stub_request(fake_response) do |_, http_obj|
+          expect(http_obj.verify_mode).to eq(0)
+          expect(http_obj.ca_file).to eq("/tmp/foo")
+        end
+
+        subject.send_data(data)
+      end
+    end
   end
 
   describe "request payload" do

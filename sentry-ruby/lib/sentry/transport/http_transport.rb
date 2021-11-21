@@ -139,10 +139,10 @@ module Sentry
     end
 
     def ssl_configuration
-      (@transport_configuration.ssl || {}).merge(
-        :verify => @transport_configuration.ssl_verification,
-        :ca_file => @transport_configuration.ssl_ca_file
-      )
+      {
+        verify: @transport_configuration.ssl_verification,
+        ca_file: @transport_configuration.ssl_ca_file
+      }.merge(@transport_configuration.ssl || {})
     end
   end
 end
