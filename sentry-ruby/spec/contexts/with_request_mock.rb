@@ -12,8 +12,8 @@ RSpec.shared_context "with request mock" do
   end
 
   def stub_request(fake_response, &block)
-    allow_any_instance_of(Net::HTTP).to receive(:transport_request) do |_, request|
-      block.call(request) if block
+    allow_any_instance_of(Net::HTTP).to receive(:transport_request) do |http_obj, request|
+      block.call(request, http_obj) if block
     end.and_return(fake_response)
   end
 

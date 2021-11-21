@@ -28,6 +28,8 @@ RSpec.describe Sentry::HTTPTransport do
   end
 
   describe "customizations" do
+    let(:fake_response) { build_fake_response("200") }
+
     it 'sets a custom User-Agent' do
       expect(subject.conn.headers[:user_agent]).to eq("sentry-ruby/#{Sentry::VERSION}")
     end
@@ -40,6 +42,18 @@ RSpec.describe Sentry::HTTPTransport do
       subject
 
       expect(builder).to have_received(:request).with(:instrumentation)
+    end
+
+    it "accepts custom proxy" do
+      configuration.transport.proxy = { uri:  URI("https://example.com"), user: "stan", password: "foobar" }
+
+      stub_request(fake_response) do |_, http_obj|
+        expect(http_obj.proxy_address).to eq("example.com")
+        expect(http_obj.proxy_user).to eq("stan")
+        expect(http_obj.proxy_pass).to eq("foobar")
+      end
+
+      subject.send_data(data)
     end
   end
 
