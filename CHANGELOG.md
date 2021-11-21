@@ -4,6 +4,7 @@
 
 - Merge context with the same key instead of replacing the old value. [#1621](https://github.com/getsentry/sentry-ruby/pull/1621)
   - Fixes [#1619](https://github.com/getsentry/sentry-ruby/issues/1619)
+- Fix `HTTPTransport`'s `ssl` configuration [#1626](https://github.com/getsentry/sentry-ruby/pull/1626)
 
 ### Refactoring
 
