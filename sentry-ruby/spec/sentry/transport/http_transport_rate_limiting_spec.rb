@@ -1,6 +1,9 @@
 require 'spec_helper'
+require 'contexts/with_request_mock'
 
 RSpec.describe "rate limiting" do
+  include_context "with request mock"
+
   before do
     perform_basic_setup
   end
@@ -77,7 +80,7 @@ RSpec.describe "rate limiting" do
 
   describe "rate limit header processing" do
     before do
-      configuration.transport.http_adapter = [:test, stubs]
+      stub_request(fake_response)
     end
 
     shared_examples "rate limiting headers handling" do
@@ -194,15 +197,7 @@ RSpec.describe "rate limiting" do
     end
 
     context "received 200 response" do
-      let(:stubs) do
-        Faraday::Adapter::Test::Stubs.new do |stub|
-          stub.post('sentry/api/42/envelope/') do
-            [
-              200, headers, ""
-            ]
-          end
-        end
-      end
+      let(:fake_response) { build_fake_response("200", headers: headers) }
 
       it_behaves_like "rate limiting headers handling" do
         def send_data_and_verify_response(time)
@@ -229,15 +224,7 @@ RSpec.describe "rate limiting" do
     end
 
     context "received 429 response" do
-      let(:stubs) do
-        Faraday::Adapter::Test::Stubs.new do |stub|
-          stub.post('sentry/api/42/envelope/') do
-            [
-              429, headers, "{\"detail\":\"event rejected due to rate limit\"}"
-            ]
-          end
-        end
-      end
+      let(:fake_response) { build_fake_response("429", headers: headers) }
 
       it_behaves_like "rate limiting headers handling" do
         def send_data_and_verify_response(time)

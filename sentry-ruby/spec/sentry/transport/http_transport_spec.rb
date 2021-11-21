@@ -1,6 +1,9 @@
 require 'spec_helper'
+require 'contexts/with_request_mock'
 
 RSpec.describe Sentry::HTTPTransport do
+  include_context "with request mock"
+
   let(:configuration) do
     Sentry::Configuration.new.tap do |config|
       config.dsn = DUMMY_DSN
@@ -41,101 +44,83 @@ RSpec.describe Sentry::HTTPTransport do
   end
 
   describe "request payload" do
-    let(:compressed_stubs) do
-      Faraday::Adapter::Test::Stubs.new do |stub|
-        stub.post('sentry/api/42/envelope/') do |env|
-          expect(env.request_headers["Content-Type"]).to eq("application/x-sentry-envelope")
-          expect(env.request_headers["Content-Encoding"]).to eq("gzip")
-
-          envelope = Zlib.gunzip(env.body)
-          expect(envelope).to include(event.event_id)
-          expect(envelope).to include("foobarbaz")
-        end
-      end
-    end
-
-    let(:uncompressed_stubs) do
-      Faraday::Adapter::Test::Stubs.new do |stub|
-        stub.post('sentry/api/42/envelope/') do |env|
-          expect(env.request_headers["Content-Type"]).to eq("application/x-sentry-envelope")
-          expect(env.request_headers["Content-Encoding"]).to eq("")
-
-          envelope = env.body
-          expect(envelope).to include(event.event_id)
-          expect(envelope).to include("foobarbaz")
-        end
-      end
-    end
+    let(:fake_response) { build_fake_response("200") }
 
     it "compresses data by default" do
-      configuration.transport.http_adapter = [:test, compressed_stubs]
+      stub_request(fake_response) do |request|
+        expect(request["Content-Type"]).to eq("application/x-sentry-envelope")
+        expect(request["Content-Encoding"]).to eq("gzip")
+
+        envelope = Zlib.gunzip(request.body)
+        expect(envelope).to include(event.event_id)
+        expect(envelope).to include("foobarbaz")
+      end
 
       subject.send_data(data)
-      compressed_stubs.verify_stubbed_calls
     end
 
     it "doesn't compress small event" do
-      configuration.transport.http_adapter = [:test, uncompressed_stubs]
+      stub_request(fake_response) do |request|
+        expect(request["Content-Type"]).to eq("application/x-sentry-envelope")
+        expect(request["Content-Encoding"]).to eq("")
+
+        envelope = request.body
+        expect(envelope).to include(event.event_id)
+        expect(envelope).to include("foobarbaz")
+      end
 
       event.instance_variable_set(:@threads, nil) # shrink event
 
       subject.send_data(data)
-      uncompressed_stubs.verify_stubbed_calls
     end
 
     it "doesn't compress data if the encoding is not gzip" do
-      configuration.transport.http_adapter = [:test, uncompressed_stubs]
       configuration.transport.encoding = "json"
 
+      stub_request(fake_response) do |request|
+        expect(request["Content-Type"]).to eq("application/x-sentry-envelope")
+        expect(request["Content-Encoding"]).to eq("")
+
+        envelope = request.body
+        expect(envelope).to include(event.event_id)
+        expect(envelope).to include("foobarbaz")
+      end
+
       subject.send_data(data)
-      uncompressed_stubs.verify_stubbed_calls
     end
   end
 
   describe "failed request handling" do
-    before do
-      configuration.transport.http_adapter = [:test, stubs]
-    end
-
     context "receive 4xx responses" do
-      let(:stubs) do
-        Faraday::Adapter::Test::Stubs.new do |stub|
-          stub.post('sentry/api/42/envelope/') { [404, {}, 'not found'] }
-        end
-      end
+      let(:fake_response) { build_fake_response("404") }
 
       it 'raises an error' do
-        expect { subject.send_data(data) }.to raise_error(Sentry::ExternalError, /the server responded with status 404/)
+        stub_request(fake_response)
 
-        stubs.verify_stubbed_calls
+        expect { subject.send_data(data) }.to raise_error(Sentry::ExternalError, /the server responded with status 404/)
       end
     end
 
     context "receive 5xx responses" do
-      let(:stubs) do
-        Faraday::Adapter::Test::Stubs.new do |stub|
-          stub.post('sentry/api/42/envelope/') { [500, {}, 'error'] }
-        end
-      end
+      let(:fake_response) { build_fake_response("500") }
 
       it 'raises an error' do
-        expect { subject.send_data(data) }.to raise_error(Sentry::ExternalError, /the server responded with status 500/)
+        stub_request(fake_response)
 
-        stubs.verify_stubbed_calls
+        expect { subject.send_data(data) }.to raise_error(Sentry::ExternalError, /the server responded with status 500/)
       end
     end
 
     context "receive error responses with headers" do
-      let(:stubs) do
-        Faraday::Adapter::Test::Stubs.new do |stub|
-          stub.post('sentry/api/42/envelope/') { [400, { 'x-sentry-error' => 'error_in_header' }, 'error'] }
-        end
+      let(:error_response) do
+        build_fake_response("500", headers: { 'x-sentry-error' => 'error_in_header' })
       end
 
       it 'raises an error with header' do
+        stub_request(error_response)
+
         expect { subject.send_data(data) }.to raise_error(Sentry::ExternalError, /error_in_header/)
 
-        stubs.verify_stubbed_calls
       end
     end
   end
