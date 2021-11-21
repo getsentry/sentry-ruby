@@ -30,8 +30,12 @@ RSpec.describe Sentry::HTTPTransport do
   describe "customizations" do
     let(:fake_response) { build_fake_response("200") }
 
-    it 'sets a custom User-Agent' do
-      expect(subject.conn.headers[:user_agent]).to eq("sentry-ruby/#{Sentry::VERSION}")
+    it 'sets default User-Agent' do
+      stub_request(fake_response) do |request|
+        expect(request["User-Agent"]).to eq("sentry-ruby/#{Sentry::VERSION}")
+      end
+
+      subject.send_data(data)
     end
 
     it 'allows to customise faraday' do
@@ -51,6 +55,30 @@ RSpec.describe Sentry::HTTPTransport do
         expect(http_obj.proxy_address).to eq("example.com")
         expect(http_obj.proxy_user).to eq("stan")
         expect(http_obj.proxy_pass).to eq("foobar")
+      end
+
+      subject.send_data(data)
+    end
+
+    it "accepts custom timeout" do
+      configuration.transport.timeout = 10
+
+      stub_request(fake_response) do |_, http_obj|
+        expect(http_obj.read_timeout).to eq(10)
+
+        if RUBY_VERSION >= "2.6"
+          expect(http_obj.write_timeout).to eq(10)
+        end
+      end
+
+      subject.send_data(data)
+    end
+
+    it "accepts custom open_timeout" do
+      configuration.transport.open_timeout = 10
+
+      stub_request(fake_response) do |_, http_obj|
+        expect(http_obj.open_timeout).to eq(10)
       end
 
       subject.send_data(data)
