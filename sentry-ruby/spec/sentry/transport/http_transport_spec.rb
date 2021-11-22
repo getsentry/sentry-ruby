@@ -28,8 +28,14 @@ RSpec.describe Sentry::HTTPTransport do
   end
 
   describe "customizations" do
-    it 'sets a custom User-Agent' do
-      expect(subject.conn.headers[:user_agent]).to eq("sentry-ruby/#{Sentry::VERSION}")
+    let(:fake_response) { build_fake_response("200") }
+
+    it 'sets default User-Agent' do
+      stub_request(fake_response) do |request|
+        expect(request["User-Agent"]).to eq("sentry-ruby/#{Sentry::VERSION}")
+      end
+
+      subject.send_data(data)
     end
 
     it 'allows to customise faraday' do
@@ -40,6 +46,86 @@ RSpec.describe Sentry::HTTPTransport do
       subject
 
       expect(builder).to have_received(:request).with(:instrumentation)
+    end
+
+    it "accepts custom proxy" do
+      configuration.transport.proxy = { uri:  URI("https://example.com"), user: "stan", password: "foobar" }
+
+      stub_request(fake_response) do |_, http_obj|
+        expect(http_obj.proxy_address).to eq("example.com")
+        expect(http_obj.proxy_user).to eq("stan")
+        expect(http_obj.proxy_pass).to eq("foobar")
+      end
+
+      subject.send_data(data)
+    end
+
+    it "accepts custom timeout" do
+      configuration.transport.timeout = 10
+
+      stub_request(fake_response) do |_, http_obj|
+        expect(http_obj.read_timeout).to eq(10)
+
+        if RUBY_VERSION >= "2.6"
+          expect(http_obj.write_timeout).to eq(10)
+        end
+      end
+
+      subject.send_data(data)
+    end
+
+    it "accepts custom open_timeout" do
+      configuration.transport.open_timeout = 10
+
+      stub_request(fake_response) do |_, http_obj|
+        expect(http_obj.open_timeout).to eq(10)
+      end
+
+      subject.send_data(data)
+    end
+
+    describe "ssl configurations" do
+      it "has the corrent default" do
+        stub_request(fake_response) do |_, http_obj|
+          expect(http_obj.verify_mode).to eq(1)
+          expect(http_obj.ca_file).to eq(nil)
+        end
+
+        subject.send_data(data)
+      end
+
+      it "accepts custom ssl_verification configuration" do
+        configuration.transport.ssl_verification = false
+
+        stub_request(fake_response) do |_, http_obj|
+          expect(http_obj.verify_mode).to eq(0)
+          expect(http_obj.ca_file).to eq(nil)
+        end
+
+        subject.send_data(data)
+      end
+
+      it "accepts custom ssl_ca_file configuration" do
+        configuration.transport.ssl_ca_file = "/tmp/foo"
+
+        stub_request(fake_response) do |_, http_obj|
+          expect(http_obj.verify_mode).to eq(1)
+          expect(http_obj.ca_file).to eq("/tmp/foo")
+        end
+
+        subject.send_data(data)
+      end
+
+      it "accepts custom ssl configuration" do
+        configuration.transport.ssl  = { verify: false, ca_file: "/tmp/foo" }
+
+        stub_request(fake_response) do |_, http_obj|
+          expect(http_obj.verify_mode).to eq(0)
+          expect(http_obj.ca_file).to eq("/tmp/foo")
+        end
+
+        subject.send_data(data)
+      end
     end
   end
 
