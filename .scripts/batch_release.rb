@@ -31,13 +31,9 @@ version = ARGV[1]
 
 raise "version is not specified!" if version.nil? || version.empty?
 
-is_patch_version_bump = !version.match?(/\d+\.\d+\.0/)
-
 GEMS.each do |gem_name|
   update_version_file(gem_name, version)
 end
-
-return if is_patch_version_bump
 
 INTEGRATIONS.each do |gem_name|
   update_gemspec_dependency(gem_name, version)
