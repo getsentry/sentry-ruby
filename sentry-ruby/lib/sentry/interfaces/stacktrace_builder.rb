@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 module Sentry
   class StacktraceBuilder
     attr_reader :project_root, :app_dirs_pattern, :linecache, :context_lines, :backtrace_cleanup_callback

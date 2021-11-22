@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 require "sentry/scope"
 require "sentry/client"
 

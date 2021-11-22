@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 module Sentry
   class Breadcrumb
     DATA_SERIALIZATION_ERROR_MESSAGE = "[data were removed due to serialization issues]"

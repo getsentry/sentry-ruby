@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 require "sentry/utils/exception_cause_chain"
 
 module Sentry

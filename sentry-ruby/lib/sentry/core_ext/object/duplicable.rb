@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 return if Object.method_defined?(:duplicable?)
 
 #########################################
