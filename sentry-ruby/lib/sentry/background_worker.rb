@@ -9,12 +9,15 @@ module Sentry
     include LoggingHelper
 
     attr_reader :max_queue, :number_of_threads, :logger
+    attr_accessor :shutdown_timeout
 
     def initialize(configuration)
       @max_queue = 30
+      @shutdown_timeout = 1
       @number_of_threads = configuration.background_worker_threads
       @logger = configuration.logger
       @debug = configuration.debug
+      @shutdown_callback = nil
 
       @executor =
         if configuration.async
@@ -26,12 +29,19 @@ module Sentry
         else
           log_debug("initialized a background worker with #{@number_of_threads} threads")
 
-          Concurrent::ThreadPoolExecutor.new(
+          executor = Concurrent::ThreadPoolExecutor.new(
             min_threads: 0,
             max_threads: @number_of_threads,
             max_queue: @max_queue,
             fallback_policy: :discard
           )
+
+          @shutdown_callback = proc do
+            executor.shutdown
+            executor.wait_for_termination(@shutdown_timeout)
+          end
+
+          executor
         end
     end
 
@@ -44,6 +54,10 @@ module Sentry
           log_error("exception happened in background worker", e, debug: @debug)
         end
       end
+    end
+
+    def shutdown
+      @shutdown_callback&.call
     end
 
     private

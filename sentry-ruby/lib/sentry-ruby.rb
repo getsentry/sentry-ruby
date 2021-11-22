@@ -110,6 +110,10 @@ module Sentry
       if config.capture_exception_frame_locals
         exception_locals_tp.enable
       end
+
+      at_exit do
+        @background_worker.shutdown
+      end
     end
 
     # Returns an uri for security policy reporting that's generated from the given DSN
