@@ -7,10 +7,13 @@
 - Fix `HTTPTransport`'s `ssl` configuration [#1626](https://github.com/getsentry/sentry-ruby/pull/1626)
 - Log errors happened in `BackgroundWorker#perform` [#1624](https://github.com/getsentry/sentry-ruby/pull/1624)
   - Fixes [#1618](https://github.com/getsentry/sentry-ruby/issues/1618)
+- Gracefully shutdown background worker before the process exits [#1617](https://github.com/getsentry/sentry-ruby/pull/1617)
+  - Fixes [#1612](https://github.com/getsentry/sentry-ruby/issues/1612)
 
 ### Refactoring
 
 - Extract envelope construction logic from Transport [#1616](https://github.com/getsentry/sentry-ruby/pull/1616)
+- Add frozen string literal comment to sentry-ruby [#1623](https://github.com/getsentry/sentry-ruby/pull/1623)
 
 ## 4.8.0
 
