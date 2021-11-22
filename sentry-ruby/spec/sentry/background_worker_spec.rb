@@ -3,13 +3,13 @@ require "spec_helper"
 RSpec.describe Sentry::BackgroundWorker do
   let(:string_io) { StringIO.new }
 
-  describe "#initialize" do
-    let(:configuration) do
-      Sentry::Configuration.new.tap do |config|
-        config.logger = Logger.new(string_io)
-      end
+  let(:configuration) do
+    Sentry::Configuration.new.tap do |config|
+      config.logger = Logger.new(string_io)
     end
+  end
 
+  describe "#initialize" do
     context "when config.async is set" do
       before do
         configuration.async = proc {}
@@ -65,6 +65,21 @@ RSpec.describe Sentry::BackgroundWorker do
           /initialized a background worker with 5 threads/
         )
       end
+    end
+  end
+
+  describe "#perform" do
+    before { configuration.background_worker_threads = 1 }
+
+    it "logs error message when failed" do
+      worker = described_class.new(configuration)
+
+      worker.perform do
+        1/0
+      end
+
+      sleep(0.1)
+      expect(string_io.string).to match(/exception happened in background worker: divided by 0/)
     end
   end
 end
