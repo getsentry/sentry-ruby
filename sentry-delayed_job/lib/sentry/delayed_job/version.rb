@@ -1,5 +1,5 @@
 module Sentry
   module DelayedJob
-    VERSION = "4.8.0"
+    VERSION = "4.8.1"
   end
 end
