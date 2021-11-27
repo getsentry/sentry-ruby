@@ -16,8 +16,8 @@ if defined?(ActiveJob)
         discard_on ActiveJob::DeserializationError
       else
         # mimic what discard_on does for Rails 5.0
-        rescue_from ActiveJob::DeserializationError do
-          logger.error "Discarded #{self.class} due to a #{exception}. The original exception was #{error.cause.inspect}."
+        rescue_from ActiveJob::DeserializationError do |exception|
+          logger.error "Discarded #{self.class} due to a #{exception}. The original exception was #{exception.cause.inspect}."
         end
       end
 
