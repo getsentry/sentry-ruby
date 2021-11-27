@@ -1,25 +1,23 @@
 module Sentry
   module Rails
     module ActiveJobExtensions
-      def self.included(base)
-        base.class_eval do
-          around_perform do |job, block|
-            if Sentry.initialized?
-              if already_supported_by_specific_integration?(job)
-                block.call
-              else
-                Sentry.with_scope do |scope|
-                  capture_and_reraise_with_sentry(job, scope, block)
-                end
+      def perform_now
+        if Sentry.initialized?
+          if already_supported_by_specific_integration?(self)
+            super
+          else
+            Sentry.with_scope do |scope|
+              capture_and_reraise_with_sentry(self, scope) do
+                super
               end
-            else
-              block.call
             end
           end
+        else
+          super
         end
       end
 
-      def capture_and_reraise_with_sentry(job, scope, block)
+      def capture_and_reraise_with_sentry(job, scope, &block)
         scope.set_transaction_name(job.class.name)
         transaction =
           if job.is_a?(::Sentry::SendEventJob)
@@ -34,9 +32,7 @@ module Sentry
 
         finish_transaction(transaction, 200)
       rescue Exception => e # rubocop:disable Lint/RescueException
-        rescue_handler_result = rescue_with_handler(e)
         finish_transaction(transaction, 500)
-        return rescue_handler_result if rescue_handler_result
 
         Sentry::Rails.capture_exception(
           e,
