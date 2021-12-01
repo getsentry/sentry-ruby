@@ -35,6 +35,14 @@ class RescuedActiveJob < FailedWithExtraJob
   def rescue_callback(error); end
 end
 
+class ProblematicRescuedActiveJob < FailedWithExtraJob
+  rescue_from TestError, with: :rescue_callback
+
+  def rescue_callback(error)
+    raise "foo"
+  end
+end
+
 RSpec.describe "without Sentry initialized" do
   it "runs job" do
     expect { FailedJob.perform_now }.to raise_error(FailedJob::TestError)
@@ -190,9 +198,28 @@ RSpec.describe "ActiveJob integration" do
 
   context 'using rescue_from' do
     it 'does not trigger Sentry' do
+      expect_any_instance_of(RescuedActiveJob).to receive(:rescue_callback).once.and_call_original
+
       expect { RescuedActiveJob.perform_now }.not_to raise_error
 
       expect(transport.events.size).to eq(0)
+    end
+
+    context "with exception in rescue_from" do
+      it "reports both the original error and callback error" do
+        expect_any_instance_of(ProblematicRescuedActiveJob).to receive(:rescue_callback).once.and_call_original
+
+        expect { ProblematicRescuedActiveJob.perform_now }.to raise_error(RuntimeError)
+
+        expect(transport.events.size).to eq(1)
+
+        event = transport.events.first
+        exceptions_data = event.exception.to_hash[:values]
+
+        expect(exceptions_data.count).to eq(2)
+        expect(exceptions_data[0][:type]).to eq("FailedJob::TestError")
+        expect(exceptions_data[1][:type]).to eq("RuntimeError")
+      end
     end
   end
 
