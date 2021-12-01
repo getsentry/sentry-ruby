@@ -456,10 +456,6 @@ RSpec.describe Sentry::Hub do
       end
     end
 
-    after do
-      Sentry.background_worker = nil
-    end
-
     it "disables async event sending temporarily" do
       subject.with_background_worker_disabled do
         subject.capture_message("foo")
