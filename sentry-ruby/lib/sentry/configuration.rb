@@ -17,10 +17,15 @@ module Sentry
     # Directories to be recognized as part of your app. e.g. if you
     # have an `engines` dir at the root of your project, you may want
     # to set this to something like /(app|config|engines|lib)/
+    #
+    # @return [Regexp, nil]
     attr_accessor :app_dirs_pattern
 
     # Provide an object that responds to `call` to send events asynchronously.
     # E.g.: lambda { |event| Thread.new { Sentry.send_event(event) } }
+    #
+    # @deprecated It will be removed in the next major release. Please read https://github.com/getsentry/sentry-ruby/issues/1522 for more information
+    # @return [Proc, nil]
     attr_reader :async
 
     # to send events in a non-blocking way, sentry-ruby has its own background worker
@@ -30,74 +35,94 @@ module Sentry
     #
     # if you want to send events synchronously, set the value to 0
     # E.g.: config.background_worker_threads = 0
+    # @return [Integer]
     attr_accessor :background_worker_threads
 
     # a proc/lambda that takes an array of stack traces
     # it'll be used to silence (reduce) backtrace of the exception
     #
-    # for example:
+    # @example
+    #   config.backtrace_cleanup_callback = lambda do |backtrace|
+    #     Rails.backtrace_cleaner.clean(backtrace)
+    #   end
     #
-    # ```ruby
-    # Sentry.configuration.backtrace_cleanup_callback = lambda do |backtrace|
-    #   Rails.backtrace_cleaner.clean(backtrace)
-    # end
-    # ```
-    #
+    # @return [Proc]
     attr_accessor :backtrace_cleanup_callback
 
     # Optional Proc, called before adding the breadcrumb to the current scope
-    # E.g.: lambda { |breadcrumb, hint| breadcrumb }
-    # E.g.: lambda { |breadcrumb, hint| nil }
-    # E.g.: lambda { |breadcrumb, hint|
-    #   breadcrumb.message = 'a'
-    #   breadcrumb
-    # }
+    # @example
+    #   config.before = lambda do |breadcrumb, hint|
+    #     breadcrumb.message = 'a'
+    #     breadcrumb
+    #   end
+    # @return [Proc]
     attr_reader :before_breadcrumb
 
-    # Optional Proc, called before sending an event to the server/
-    # E.g.: lambda { |event, hint| event }
-    # E.g.: lambda { |event, hint| nil }
-    # E.g.: lambda { |event, hint|
-    #   event[:message] = 'a'
-    #   event
-    # }
+    # Optional Proc, called before sending an event to the server
+    # @example
+    #   config.before_send = lambda do |event, hint|
+    #     # skip ZeroDivisionError exceptions
+    #     # note: hint[:exception] would be a String if you use async callback
+    #     if hint[:exception].is_a?(ZeroDivisionError)
+    #       nil
+    #     else
+    #       event
+    #     end
+    #   end
+    # @return [Proc]
     attr_reader :before_send
 
     # An array of breadcrumbs loggers to be used. Available options are:
     # - :sentry_logger
+    # - :http_logger
+    #
+    # And if you also use sentry-rails:
     # - :active_support_logger
+    # - :monotonic_active_support_logger
+    #
+    # @return [Array<Symbol>]
     attr_reader :breadcrumbs_logger
 
     # Whether to capture local variables from the raised exception's frame. Default is false.
+    # @return [Boolean]
     attr_accessor :capture_exception_frame_locals
 
     # Max number of breadcrumbs a breadcrumb buffer can hold
+    # @return [Integer]
     attr_accessor :max_breadcrumbs
 
     # Number of lines of code context to capture, or nil for none
+    # @return [Integer, nil]
     attr_accessor :context_lines
 
     # RACK_ENV by default.
+    # @return [String]
     attr_reader :environment
 
     # Whether the SDK should run in the debugging mode. Default is false.
     # If set to true, SDK errors will be logged with backtrace
+    # @return [Boolean]
     attr_accessor :debug
 
     # the dsn value, whether it's set via `config.dsn=` or `ENV["SENTRY_DSN"]`
+    # @return [String]
     attr_reader :dsn
 
     # Whitelist of enabled_environments that will send notifications to Sentry. Array of Strings.
+    # @return [Array<String>]
     attr_accessor :enabled_environments
 
     # Logger 'progname's to exclude from breadcrumbs
+    # @return [Array<String>]
     attr_accessor :exclude_loggers
 
     # Array of exception classes that should never be sent. See IGNORE_DEFAULT.
     # You should probably append to this rather than overwrite it.
+    # @return [Array<String>]
     attr_accessor :excluded_exceptions
 
     # Boolean to check nested exceptions when deciding if to exclude. Defaults to true
+    # @return [Boolean]
     attr_accessor :inspect_exception_causes_for_exclusion
     alias inspect_exception_causes_for_exclusion? inspect_exception_causes_for_exclusion
 
@@ -108,65 +133,80 @@ module Sentry
 
     # Logger used by Sentry. In Rails, this is the Rails logger, otherwise
     # Sentry provides its own Sentry::Logger.
+    # @return [Logger]
     attr_accessor :logger
 
     # Project directory root for in_app detection. Could be Rails root, etc.
     # Set automatically for Rails.
+    # @return [String]
     attr_accessor :project_root
 
     # Insert sentry-trace to outgoing requests' headers
+    # @return [Boolean]
     attr_accessor :propagate_traces
 
     # Array of rack env parameters to be included in the event sent to sentry.
+    # @return [Array<String>]
     attr_accessor :rack_env_whitelist
 
     # Release tag to be passed with every event sent to Sentry.
     # We automatically try to set this to a git SHA or Capistrano release.
+    # @return [String]
     attr_accessor :release
 
     # The sampling factor to apply to events. A value of 0.0 will not send
     # any events, and a value of 1.0 will send 100% of events.
+    # @return [Float]
     attr_accessor :sample_rate
 
     # Include module versions in reports - boolean.
+    # @return [Boolean]
     attr_accessor :send_modules
 
     # When send_default_pii's value is false (default), sensitive information like
     # - user ip
     # - user cookie
     # - request body
+    # - query string
     # will not be sent to Sentry.
+    # @return [Boolean]
     attr_accessor :send_default_pii
 
     # Allow to skip Sentry emails within rake tasks
+    # @return [Boolean]
     attr_accessor :skip_rake_integration
 
     # IP ranges for trusted proxies that will be skipped when calculating IP address.
     attr_accessor :trusted_proxies
 
+    # @return [String]
     attr_accessor :server_name
 
     # Return a Transport::Configuration object for transport-related configurations.
+    # @return [Transport]
     attr_reader :transport
 
     # Take a float between 0.0 and 1.0 as the sample rate for tracing events (transactions).
+    # @return [Float]
     attr_accessor :traces_sample_rate
 
     # Take a Proc that controls the sample rate for every tracing event, e.g.
-    # ```
-    # lambda do |tracing_context|
-    #   # tracing_context[:transaction_context] contains the information about the transaction
-    #   # tracing_context[:parent_sampled] contains the transaction's parent's sample decision
-    #   true # return value can be a boolean or a float between 0.0 and 1.0
-    # end
-    # ```
+    # @example
+    #   config.traces_sampler =  lambda do |tracing_context|
+    #     # tracing_context[:transaction_context] contains the information about the transaction
+    #     # tracing_context[:parent_sampled] contains the transaction's parent's sample decision
+    #     true # return value can be a boolean or a float between 0.0 and 1.0
+    #   end
+    # @return [Proc]
     attr_accessor :traces_sampler
 
     # Send diagnostic client reports about dropped events, true by default
     # tries to attach to an existing envelope max once every 30s
+    # @return [Boolean]
     attr_accessor :send_client_reports
 
     # these are not config options
+    # @!visibility private
     attr_reader :errors, :gem_specs
 
     # Most of these errors generate 4XX responses. In general, Sentry clients
@@ -287,11 +327,6 @@ module Sentry
       Random.rand < sample_rate
     end
 
-    def error_messages
-      @errors = [@errors[0]] + @errors[1..-1].map(&:downcase) # fix case of all but first
-      @errors.join(", ")
-    end
-
     def exception_class_allowed?(exc)
       if exc.is_a?(Sentry::Error)
         # Try to prevent error reporting loops
@@ -313,6 +348,17 @@ module Sentry
       !!((@traces_sample_rate && @traces_sample_rate >= 0.0 && @traces_sample_rate <= 1.0) || @traces_sampler) && sending_allowed?
     end
 
+    # @return [String, nil]
+    def csp_report_uri
+      if dsn && dsn.valid?
+        uri = dsn.csp_report_uri
+        uri += "&sentry_release=#{CGI.escape(release)}" if release && !release.empty?
+        uri += "&sentry_environment=#{CGI.escape(environment)}" if environment && !environment.empty?
+        uri
+      end
+    end
+
+    # @api private
     def stacktrace_builder
       @stacktrace_builder ||= StacktraceBuilder.new(
         project_root: @project_root.to_s,
@@ -323,6 +369,7 @@ module Sentry
       )
     end
 
+    # @api private
     def detect_release
       return unless sending_allowed?
 
@@ -335,13 +382,10 @@ module Sentry
       log_error("Error detecting release", e, debug: debug)
     end
 
-    def csp_report_uri
-      if dsn && dsn.valid?
-        uri = dsn.csp_report_uri
-        uri += "&sentry_release=#{CGI.escape(release)}" if release && !release.empty?
-        uri += "&sentry_environment=#{CGI.escape(environment)}" if environment && !environment.empty?
-        uri
-      end
+    # @api private
+    def error_messages
+      @errors = [@errors[0]] + @errors[1..-1].map(&:downcase) # fix case of all but first
+      @errors.join(", ")
     end
 
     private
