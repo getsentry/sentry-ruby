@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 module Sentry
+  # @api private
   class ReleaseDetector
     class << self
       def detect_release(project_root:, running_on_heroku:)

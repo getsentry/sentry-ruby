@@ -3,6 +3,7 @@
 require "net/http"
 
 module Sentry
+  # @api private
   module Net
     module HTTP
       OP_NAME = "net.http"

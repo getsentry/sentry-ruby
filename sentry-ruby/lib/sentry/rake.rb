@@ -6,6 +6,7 @@ require "rake/task"
 module Sentry
   module Rake
     module Application
+      # @api private
       def display_error_message(ex)
         Sentry.capture_exception(ex) do |scope|
           task_name = top_level_tasks.join(' ')
@@ -18,6 +19,7 @@ module Sentry
     end
 
     module Task
+      # @api private
       def execute(args=nil)
         return super unless Sentry.initialized? && Sentry.get_current_hub
 
@@ -27,5 +29,13 @@ module Sentry
   end
 end
 
-Rake::Application.prepend(Sentry::Rake::Application)
-Rake::Task.prepend(Sentry::Rake::Task)
+# @api private
+module Rake
+  class Application
+    prepend(Sentry::Rake::Application)
+  end
+
+  class Task
+    prepend(Sentry::Rake::Task)
+  end
+end

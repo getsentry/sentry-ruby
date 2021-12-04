@@ -4,6 +4,7 @@
 
 module Sentry
   # Front end to parsing the backtrace for each notice
+  # @api private
   class Backtrace
     # Handles backtrace parsing line by line
     class Line
