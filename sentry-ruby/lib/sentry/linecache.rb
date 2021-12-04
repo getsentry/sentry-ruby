@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 module Sentry
+  # @api private
   class LineCache
     def initialize
       @cache = {}
