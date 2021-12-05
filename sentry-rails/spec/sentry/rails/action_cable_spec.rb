@@ -33,6 +33,10 @@ if defined?(ActionCable) && ActionCable.version >= Gem::Version.new('6.0.0')
       ::ActionCable.server.config.cable = { "adapter" => "test" }
     end
 
+    after do
+      transport.events = []
+    end
+
     describe ChatChannel do
       include ActionCable::Channel::TestCase::Behavior
 
@@ -40,6 +44,7 @@ if defined?(ActionCable) && ActionCable.version >= Gem::Version.new('6.0.0')
 
       it "captures errors during the subscribe" do
         expect { subscribe room_id: 42 }.to raise_error('foo')
+        expect(transport.events.count).to eq(1)
 
         event = transport.events.last.to_json_compatible
 
@@ -65,6 +70,7 @@ if defined?(ActionCable) && ActionCable.version >= Gem::Version.new('6.0.0')
 
       it "captures errors during the action" do
         expect { perform :appear, foo: 'bar' }.to raise_error('foo')
+        expect(transport.events.count).to eq(1)
 
         event = transport.events.last.to_json_compatible
 
