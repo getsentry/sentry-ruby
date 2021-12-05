@@ -23,6 +23,10 @@ if defined?(ActionCable) && ActionCable.version >= Gem::Version.new('6.0.0')
     def appear
       raise "foo"
     end
+
+    def unsubscribed
+      raise "foo"
+    end
   end
 
   RSpec.describe "Sentry::Rails::ActionCable" do
@@ -80,6 +84,24 @@ if defined?(ActionCable) && ActionCable.version >= Gem::Version.new('6.0.0')
             "action_cable" => {
               "params" => { "room_id" => 42 },
               "data" => { "action" => "appear", "foo" => "bar" }
+            }
+          }
+        )
+
+        expect(Sentry.get_current_scope.extra).to eq({})
+      end
+
+      it "captures errors during unsubscribe" do
+        expect { unsubscribe }.to raise_error('foo')
+        expect(transport.events.count).to eq(1)
+
+        event = transport.events.last.to_json_compatible
+
+        expect(event).to include(
+          "transaction" => "AppearanceChannel#unsubscribed",
+          "extra" => {
+            "action_cable" => {
+              "params" => { "room_id" => 42 }
             }
           }
         )
