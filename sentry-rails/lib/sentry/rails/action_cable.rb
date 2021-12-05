@@ -2,13 +2,11 @@ module Sentry
   module Rails
     module ActionCableExtensions
       class ErrorHandler
-        ACTION_CABLE_NAME = 'ActionCable'
-
         def self.capture(env, transaction_name:, extra_context: nil, &block)
           Sentry.with_scope do |scope|
             scope.set_rack_env(env)
             scope.set_extras(action_cable: extra_context) if extra_context
-            scope.set_transaction_name("#{ACTION_CABLE_NAME}/#{transaction_name}")
+            scope.set_transaction_name(transaction_name)
 
             begin
               block.call

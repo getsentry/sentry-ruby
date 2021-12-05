@@ -49,7 +49,7 @@ if defined?(ActionCable) && ActionCable.version >= Gem::Version.new('6.0.0')
         event = transport.events.last.to_json_compatible
 
         expect(event).to include(
-          "transaction" => "ActionCable/ChatChannel#subscribed",
+          "transaction" => "ChatChannel#subscribed",
           "extra" => {
             "action_cable" => {
               "params" => { "room_id" => 42 }
@@ -75,7 +75,7 @@ if defined?(ActionCable) && ActionCable.version >= Gem::Version.new('6.0.0')
         event = transport.events.last.to_json_compatible
 
         expect(event).to include(
-          "transaction" => "ActionCable/AppearanceChannel#appear",
+          "transaction" => "AppearanceChannel#appear",
           "extra" => {
             "action_cable" => {
               "params" => { "room_id" => 42 },
