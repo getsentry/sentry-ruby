@@ -93,8 +93,12 @@ module Sentry
 
       def extract_request_info(req)
         uri = req.uri || URI.parse("#{use_ssl? ? 'https' : 'http'}://#{address}#{req.path}")
-        url = "#{uri.scheme}://#{uri.host}#{uri.path}" rescue uri.to_s
+        url = "#{uri.scheme}://#{uri.host}#{uri.path}"
+        url = "#{url}?#{uri.query}" if uri.query && Sentry.configuration.send_default_pii
+
         { method: req.method, url: url }
+      rescue
+        { method: req.method, url: url.to_s }
       end
     end
   end

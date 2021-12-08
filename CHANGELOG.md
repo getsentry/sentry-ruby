@@ -1,6 +1,9 @@
 ## Unreleased
 
+### Features
+
 - Add Action Cable exception capturing (Rails 6+) [#1638](https://github.com/getsentry/sentry-ruby/pull/1638)
+- Add query string to `Net::HTTP` breadcrumb [#1637](https://github.com/getsentry/sentry-ruby/pull/1637)
 
 ### Bug Fixes
 
