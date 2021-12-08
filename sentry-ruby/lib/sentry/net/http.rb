@@ -50,14 +50,15 @@ module Sentry
         return if from_sentry_sdk?
 
         request_info = extract_request_info(req)
+        request_info[:body] = req.body if Sentry.configuration.send_default_pii
+
         crumb = Sentry::Breadcrumb.new(
           level: :info,
           category: OP_NAME,
           type: :info,
           data: {
-            method: request_info[:method],
-            url: request_info[:url],
-            status: res.code.to_i
+            status: res.code.to_i,
+            **request_info
           }
         )
         Sentry.add_breadcrumb(crumb)

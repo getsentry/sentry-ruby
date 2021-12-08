@@ -37,7 +37,7 @@ RSpec.describe Sentry::Net::HTTP do
         Sentry.configuration.send_default_pii = true
       end
 
-      it "adds http breadcrumbs with query string" do
+      it "adds http breadcrumbs with query string & request body" do
         stub_normal_response
 
         response = Net::HTTP.get_response(URI("http://example.com/path?foo=bar"))
@@ -45,7 +45,7 @@ RSpec.describe Sentry::Net::HTTP do
         expect(response.code).to eq("200")
         crumb = Sentry.get_current_scope.breadcrumbs.peek
         expect(crumb.category).to eq("net.http")
-        expect(crumb.data).to eq({ status: 200, method: "GET", url: "http://example.com/path?foo=bar" })
+        expect(crumb.data).to eq({ status: 200, method: "GET", url: "http://example.com/path?foo=bar", body: nil })
 
         http = Net::HTTP.new("example.com")
         request = Net::HTTP::Get.new("/path?foo=bar")
@@ -54,7 +54,18 @@ RSpec.describe Sentry::Net::HTTP do
         expect(response.code).to eq("200")
         crumb = Sentry.get_current_scope.breadcrumbs.peek
         expect(crumb.category).to eq("net.http")
-        expect(crumb.data).to eq({ status: 200, method: "GET", url: "http://example.com/path?foo=bar" })
+        expect(crumb.data).to eq({ status: 200, method: "GET", url: "http://example.com/path?foo=bar", body: nil })
+
+        request = Net::HTTP::Post.new("/path?foo=bar")
+        request.body = 'quz=qux'
+        response = http.request(request)
+
+        expect(response.code).to eq("200")
+        crumb = Sentry.get_current_scope.breadcrumbs.peek
+        expect(crumb.category).to eq("net.http")
+        expect(crumb.data).to eq(
+          { status: 200, method: "POST", url: "http://example.com/path?foo=bar", body: 'quz=qux' }
+        )
       end
     end
 
@@ -63,7 +74,7 @@ RSpec.describe Sentry::Net::HTTP do
         Sentry.configuration.send_default_pii = false
       end
 
-      it "adds http breadcrumbs without query string" do
+      it "adds http breadcrumbs without query string & request body" do
         stub_normal_response
 
         response = Net::HTTP.get_response(URI("http://example.com/path?foo=bar"))
@@ -81,6 +92,15 @@ RSpec.describe Sentry::Net::HTTP do
         crumb = Sentry.get_current_scope.breadcrumbs.peek
         expect(crumb.category).to eq("net.http")
         expect(crumb.data).to eq({ status: 200, method: "GET", url: "http://example.com/path" })
+
+        request = Net::HTTP::Post.new("/path?foo=bar")
+        request.body = 'quz=qux'
+        response = http.request(request)
+
+        expect(response.code).to eq("200")
+        crumb = Sentry.get_current_scope.breadcrumbs.peek
+        expect(crumb.category).to eq("net.http")
+        expect(crumb.data).to eq({ status: 200, method: "POST", url: "http://example.com/path" })
       end
     end
 
