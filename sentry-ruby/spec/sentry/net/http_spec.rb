@@ -41,6 +41,15 @@ RSpec.describe Sentry::Net::HTTP do
       crumb = Sentry.get_current_scope.breadcrumbs.peek
       expect(crumb.category).to eq("net.http")
       expect(crumb.data).to eq({ status: 200, method: "GET", url: "http://example.com/path" })
+
+      http = Net::HTTP.new("example.com")
+      request = Net::HTTP::Get.new("/path")
+      response = http.request(request)
+
+      expect(response.code).to eq("200")
+      crumb = Sentry.get_current_scope.breadcrumbs.peek
+      expect(crumb.category).to eq("net.http")
+      expect(crumb.data).to eq({ status: 200, method: "GET", url: "http://example.com/path" })
     end
 
     it "doesn't record breadcrumb for the SDK's request" do

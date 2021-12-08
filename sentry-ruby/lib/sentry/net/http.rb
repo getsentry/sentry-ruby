@@ -115,7 +115,7 @@ module Sentry
       end
 
       def extract_request_info(req)
-        uri = req.uri
+        uri = req.uri || URI.parse("#{use_ssl? ? 'https' : 'http'}://#{address}#{req.path}")
         url = "#{uri.scheme}://#{uri.host}#{uri.path}" rescue uri.to_s
         { method: req.method, url: url }
       end
