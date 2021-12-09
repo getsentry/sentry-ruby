@@ -4,11 +4,11 @@ require 'rails'
 require "active_record"
 require "active_job/railtie"
 require "active_storage/engine" if Rails.version.to_f >= 5.2
+require "action_cable/engine" if Rails.version.to_f >= 6.0
 require "action_view/railtie"
 require "action_controller/railtie"
 
 # require "action_mailer/railtie"
-# require "action_cable/engine"
 # require "sprockets/railtie"
 # require "rails/test_unit/railtie"
 require 'sentry/rails'

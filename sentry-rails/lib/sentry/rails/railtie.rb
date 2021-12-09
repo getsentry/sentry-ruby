@@ -22,12 +22,24 @@ module Sentry
       end
     end
 
+    initializer "sentry.extend_action_cable", before: :eager_load! do |app|
+      ActiveSupport.on_load(:action_cable_connection) do
+        require "sentry/rails/action_cable"
+        prepend Sentry::Rails::ActionCableExtensions::Connection
+      end
+
+      ActiveSupport.on_load(:action_cable_channel) do
+        require "sentry/rails/action_cable"
+        include Sentry::Rails::ActionCableExtensions::Channel::Subscriptions
+        prepend Sentry::Rails::ActionCableExtensions::Channel::Actions
+      end
+    end
+
     config.after_initialize do |app|
       next unless Sentry.initialized?
 
       configure_project_root
       configure_trusted_proxies
-      extend_action_cable if defined?(ActionCable) && ActionCable.version >= Gem::Version.new('6.0.0')
       extend_controller_methods if defined?(ActionController)
       patch_background_worker if defined?(ActiveRecord)
       override_streaming_reporter if defined?(ActionView)
@@ -47,19 +59,6 @@ module Sentry
 
     def configure_trusted_proxies
       Sentry.configuration.trusted_proxies += Array(::Rails.application.config.action_dispatch.trusted_proxies)
-    end
-
-    def extend_action_cable
-      require "sentry/rails/action_cable"
-
-      ActiveSupport.on_load :action_cable_connection do
-        prepend Sentry::Rails::ActionCable::Connection
-      end
-
-      ActiveSupport.on_load :action_cable_channel do
-        include Sentry::Rails::ActionCable::Channel::Subscriptions
-        prepend Sentry::Rails::ActionCable::Channel::Actions
-      end
     end
 
     def extend_controller_methods

@@ -1,6 +1,6 @@
 module Sentry
   module Rails
-    module ActionCable
+    module ActionCableExtensions
       class ErrorHandler
         ACTION_CABLE_NAME = 'ActionCable'
 
