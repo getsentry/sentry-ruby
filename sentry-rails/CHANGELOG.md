@@ -2,10 +2,6 @@
 
 Individual gem's changelog has been deprecated. Please check the [project changelog](https://github.com/getsentry/sentry-ruby/blob/master/CHANGELOG.md).
 
-## Unreleased
-
-- Add Action Cable exception capturing (Rails 6+) [#1295](https://github.com/getsentry/sentry-ruby/pull/1295)
-
 ## 4.4.0
 
 ### Features
@@ -63,7 +59,6 @@ config.rails.tracing_subscribers = [MySubscriber]
 ### Bug Fixes
 
 - Prevent background workers from holding ActiveRecord connections [#1320](https://github.com/getsentry/sentry-ruby/pull/1320)
->>>>>>> origin/master
 
 ## 4.2.2
 
