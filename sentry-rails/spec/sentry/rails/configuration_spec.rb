@@ -18,4 +18,22 @@ RSpec.describe Sentry::Rails::Configuration do
       expect(subject.report_rescued_exceptions).to eq(true)
     end
   end
+
+  describe "#tracing_subscribers" do
+    class MySubscriber; end
+
+    it "returns the default subscribers" do
+      expect(subject.tracing_subscribers.size).to eq(4)
+    end
+
+    it "is customizable" do
+      subject.tracing_subscribers << MySubscriber
+      expect(subject.tracing_subscribers.size).to eq(5)
+    end
+
+    it "is replaceable" do
+      subject.tracing_subscribers = [MySubscriber]
+      expect(subject.tracing_subscribers.size).to eq(1)
+    end
+  end
 end

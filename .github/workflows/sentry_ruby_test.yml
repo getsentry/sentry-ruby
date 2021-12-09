@@ -5,15 +5,14 @@ on:
   push:
     branches:
       - master
+      - \d+-\d+
   pull_request:
-    paths:
-      - 'sentry-ruby/**'
 jobs:
   test:
     defaults:
       run:
         working-directory: sentry-ruby
-    name: Test on ruby ${{ matrix.ruby_version }} with options - ${{ toJson(matrix.options) }}
+    name: Ruby ${{ matrix.ruby_version }}, options - ${{ toJson(matrix.options) }}
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
@@ -26,6 +25,7 @@ jobs:
           - { os: ubuntu-latest, ruby_version: jruby }
           - { os: ubuntu-latest, ruby_version: '3.0', options: { rubyopt: "--enable-frozen-string-literal --debug=frozen-string-literal" } }
           - { os: ubuntu-latest, ruby_version: '3.0', options: { without_rack: 1 } }
+          - { os: ubuntu-latest, ruby_version: '3.0', options: { codecov: 1 } }
     steps:
     - uses: actions/checkout@v1
 
@@ -42,38 +42,10 @@ jobs:
       run: |
         bundle install --jobs 4 --retry 3
         bundle exec rake
-  compare_allocation:
-    defaults:
-      run:
-        working-directory: sentry-ruby
-    name: Compare memory allocation with ${{ matrix.ruby_version }}
-    runs-on: ${{ matrix.os }}
-    needs: test
-    strategy:
-      matrix:
-        ruby_version: [2.6, 2.7]
-        os: [ubuntu-latest]
-    steps:
-    - name: Set up Ruby ${{ matrix.ruby_version }}
-      uses: ruby/setup-ruby@v1
-      with:
-        bundler: 1
-        ruby-version: ${{ matrix.ruby_version }}
 
-    - uses: actions/checkout@v2
-      with:
-        ref: master
-
-    - name: Build and run allocation report on master
+    - name: Upload Coverage
+      if: ${{ matrix.options.codecov }}
       run: |
-        bundle install --jobs 4 --retry 3
-        bundle exec ruby benchmarks/allocation_comparison.rb
-
-    - uses: actions/checkout@v1
-
-    - name: Rebuild on the branch
-      run: |
-        bundle install --jobs 4 --retry 3
-    - name: Run allocation report on the branch
-      run: |
-        bundle exec ruby benchmarks/allocation_comparison.rb
+        curl -Os https://uploader.codecov.io/latest/linux/codecov 
+        chmod +x codecov
+        ./codecov -t ${CODECOV_TOKEN} -R `pwd` -f coverage/coverage.xml

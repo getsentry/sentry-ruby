@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 require "sentry/breadcrumb_buffer"
 require "etc"
 
@@ -9,7 +11,8 @@ module Sentry
 
     attr_reader(*ATTRIBUTES)
 
-    def initialize
+    def initialize(max_breadcrumbs: nil)
+      @max_breadcrumbs = max_breadcrumbs
       set_default_value
     end
 
@@ -22,6 +25,7 @@ module Sentry
       event.user = user.merge(event.user)
       event.extra = extra.merge(event.extra)
       event.contexts = contexts.merge(event.contexts)
+      event.transaction = transaction_name if transaction_name
 
       if span
         event.contexts[:trace] = span.get_trace_context
@@ -29,7 +33,6 @@ module Sentry
 
       event.fingerprint = fingerprint
       event.level = level
-      event.transaction = transaction_names.last
       event.breadcrumbs = breadcrumbs
       event.rack_env = rack_env if rack_env
 
@@ -47,7 +50,7 @@ module Sentry
     end
 
     def clear_breadcrumbs
-      @breadcrumbs = BreadcrumbBuffer.new
+      set_new_breadcrumb_buffer
     end
 
     def dup
@@ -111,7 +114,7 @@ module Sentry
     end
 
     def set_extra(key, value)
-      @extra.merge!(key => value)
+      set_extras(key => value)
     end
 
     def set_tags(tags_hash)
@@ -120,16 +123,19 @@ module Sentry
     end
 
     def set_tag(key, value)
-      @tags.merge!(key => value)
+      set_tags(key => value)
     end
 
     def set_contexts(contexts_hash)
       check_argument_type!(contexts_hash, Hash)
-      @contexts = contexts_hash
+      @contexts.merge!(contexts_hash) do |key, old, new|
+        new.merge(old)
+      end
     end
 
     def set_context(key, value)
-      @contexts.merge!(key => value)
+      check_argument_type!(value, Hash)
+      set_contexts(key => value)
     end
 
     def set_level(level)
@@ -145,8 +151,7 @@ module Sentry
     end
 
     def get_transaction
-      # transaction will always be the first in the span_recorder
-      span.span_recorder.spans.first if span
+      span.transaction if span
     end
 
     def get_span
@@ -171,7 +176,6 @@ module Sentry
     private
 
     def set_default_value
-      @breadcrumbs = BreadcrumbBuffer.new
       @contexts = { :os => self.class.os_context, :runtime => self.class.runtime_context }
       @extra = {}
       @tags = {}
@@ -182,7 +186,13 @@ module Sentry
       @event_processors = []
       @rack_env = {}
       @span = nil
+      set_new_breadcrumb_buffer
     end
+
+    def set_new_breadcrumb_buffer
+      @breadcrumbs = BreadcrumbBuffer.new(@max_breadcrumbs)
+    end
+
 
     class << self
       def os_context

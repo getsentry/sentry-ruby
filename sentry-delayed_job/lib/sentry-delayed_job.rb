@@ -1,6 +1,7 @@
 require "delayed_job"
 require "sentry-ruby"
 require "sentry/integrable"
+require "sentry/delayed_job/configuration"
 require "sentry/delayed_job/version"
 require "sentry/delayed_job/plugin"
 
@@ -13,7 +14,7 @@ module Sentry
     if defined?(::Rails::Railtie)
       class Railtie < ::Rails::Railtie
         config.after_initialize do
-          next unless Sentry.initialized?
+          next unless Sentry.initialized? && defined?(::Sentry::Rails)
 
           Sentry.configuration.rails.skippable_job_adapters << "ActiveJob::QueueAdapters::DelayedJobAdapter"
         end

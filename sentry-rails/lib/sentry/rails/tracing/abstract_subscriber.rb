@@ -9,22 +9,30 @@ module Sentry
           end
 
           def unsubscribe!
-            ActiveSupport::Notifications.unsubscribe(self::EVENT_NAME)
+            self::EVENT_NAMES.each do |name|
+              ActiveSupport::Notifications.unsubscribe(name)
+            end
           end
 
-          def subscribe_to_event(event_name)
-            if ::Rails.version.to_i == 5
-              ActiveSupport::Notifications.subscribe(event_name) do |*args|
-                next unless Tracing.get_current_transaction
+          if ::Rails.version.to_i == 5
+            def subscribe_to_event(event_names)
+              event_names.each do |event_name|
+                ActiveSupport::Notifications.subscribe(event_name) do |*args|
+                  next unless Tracing.get_current_transaction
 
-                event = ActiveSupport::Notifications::Event.new(*args)
-                yield(event_name, event.duration, event.payload)
+                  event = ActiveSupport::Notifications::Event.new(*args)
+                  yield(event_name, event.duration, event.payload)
+                end
               end
-            else
-              ActiveSupport::Notifications.subscribe(event_name) do |event|
-                next unless Tracing.get_current_transaction
+            end
+          else
+            def subscribe_to_event(event_names)
+              event_names.each do |event_name|
+                ActiveSupport::Notifications.subscribe(event_name) do |event|
+                  next unless Tracing.get_current_transaction
 
-                yield(event_name, event.duration, event.payload)
+                  yield(event_name, event.duration, event.payload)
+                end
               end
             end
           end

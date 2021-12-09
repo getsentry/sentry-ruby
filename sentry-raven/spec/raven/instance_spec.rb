@@ -284,13 +284,23 @@ RSpec.describe Raven::Instance do
       end
 
       it "sets user context only in the block" do
-        subject.context.user = previous_user_context = { id: 9999 }
-        new_user_context = { id: 1 }
+        subject.context.user = { id: 9999 }
 
-        subject.user_context(new_user_context) do
-          expect(subject.context.user).to eq new_user_context
+        subject.user_context(id: 1) do
+          expect(subject.context.user).to eq(id: 1)
         end
-        expect(subject.context.user).to eq previous_user_context
+        expect(subject.context.user).to eq(id: 9999)
+      end
+
+      it "resets with nested blocks" do
+        subject.context.user = {}
+        subject.user_context(id: 9999) do
+          subject.user_context(email: 'foo@bar.com') do
+            expect(subject.context.user).to eq(id: 9999, email: 'foo@bar.com')
+          end
+          expect(subject.context.user).to eq(id: 9999)
+        end
+        expect(subject.context.user).to eq({})
       end
     end
   end

@@ -17,10 +17,10 @@ module Sentry
 
     attr_accessor :url, :method, :data, :query_string, :cookies, :headers, :env
 
-    def self.from_rack(env)
+    def self.build(env:)
       env = clean_env(env)
-      req = ::Rack::Request.new(env)
-      self.new(req)
+      request = ::Rack::Request.new(env)
+      self.new(request: request)
     end
 
     def self.clean_env(env)
@@ -34,17 +34,17 @@ module Sentry
       env
     end
 
-    def initialize(req)
-      env = req.env
+    def initialize(request:)
+      env = request.env
 
       if Sentry.configuration.send_default_pii
-        self.data = read_data_from(req)
-        self.cookies = req.cookies
+        self.data = read_data_from(request)
+        self.cookies = request.cookies
+        self.query_string = request.query_string
       end
 
-      self.url = req.scheme && req.url.split('?').first
-      self.method = req.request_method
-      self.query_string = req.query_string
+      self.url = request.scheme && request.url.split('?').first
+      self.method = request.request_method
 
       self.headers = filter_and_format_headers(env)
       self.env     = filter_and_format_env(env)
@@ -57,6 +57,7 @@ module Sentry
         request.POST
       elsif request.body # JSON requests, etc
         data = request.body.read(MAX_BODY_LIMIT)
+        data = encode_to_utf_8(data.to_s)
         request.body.rewind
         data
       end
@@ -75,7 +76,8 @@ module Sentry
           # Rack stores headers as HTTP_WHAT_EVER, we need What-Ever
           key = key.sub(/^HTTP_/, "")
           key = key.split('_').map(&:capitalize).join('-')
-          memo[key] = value.to_s
+
+          memo[key] = encode_to_utf_8(value.to_s)
         rescue StandardError => e
           # Rails adds objects to the Rack env that can sometimes raise exceptions
           # when `to_s` is called.
@@ -84,6 +86,18 @@ module Sentry
           next
         end
       end
+    end
+
+    def encode_to_utf_8(value)
+      if value.encoding != Encoding::UTF_8 && value.respond_to?(:force_encoding)
+        value = value.dup.force_encoding(Encoding::UTF_8)
+      end
+
+      if !value.valid_encoding?
+        value = value.scrub
+      end
+
+      value
     end
 
     def is_skippable_header?(key)

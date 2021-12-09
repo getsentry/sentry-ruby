@@ -11,3 +11,8 @@ use Sentry::Rack::CaptureExceptions
 get "/exception" do
   1/0
 end
+
+get "/connect_trace" do
+  event = Sentry.capture_message("sentry-trace test")
+  event.event_id
+end

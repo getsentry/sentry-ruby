@@ -9,10 +9,6 @@ RSpec.describe Sentry::Rails, type: :request do
     transport.events.last.to_json_compatible
   end
 
-  after do
-    transport.events = []
-  end
-
   context "with simplist config" do
     before do
       make_basic_app
@@ -24,19 +20,48 @@ RSpec.describe Sentry::Rails, type: :request do
 
     it "inserts middleware to a correct position" do
       app = Rails.application
-      expect(app.middleware.find_index(Sentry::Rails::CaptureExceptions)).to eq(0)
-      expect(app.middleware.find_index(Sentry::Rails::RescuedExceptionInterceptor)).to eq(app.middleware.count - 1)
+      index_of_executor = app.middleware.find_index { |m| m == ActionDispatch::ShowExceptions }
+      expect(app.middleware.find_index(Sentry::Rails::CaptureExceptions)).to eq(index_of_executor + 1)
+      index_of_debug_exceptions = app.middleware.find_index { |m| m == ActionDispatch::DebugExceptions }
+      expect(app.middleware.find_index(Sentry::Rails::RescuedExceptionInterceptor)).to eq(index_of_debug_exceptions + 1)
     end
 
-    it "sets Sentry.configuration.logger correctly" do
-      expect(Sentry.configuration.logger).to eq(Rails.logger)
+    it "inserts a callback to disable background_worker for the runner mode" do
+      Sentry.configuration.background_worker_threads = 10
+
+      Rails.application.load_runner
+
+      expect(Sentry.configuration.background_worker_threads).to eq(0)
+    end
+
+    describe "logger detection" do
+      it "sets Sentry.configuration.logger correctly" do
+        expect(Sentry.configuration.logger).to eq(Rails.logger)
+      end
+
+      it "respects the logger set by user" do
+        logger = ::Logger.new(nil)
+
+        make_basic_app do |config|
+          config.logger = logger
+        end
+
+        expect(Sentry.configuration.logger).to eq(logger)
+      end
+
+      it "doesn't cause error if Rails::Logger is not present during SDK initialization" do
+        Rails.logger = nil
+
+        Sentry.init
+
+        expect(Sentry.configuration.logger).to be_a(Sentry::Logger)
+      end
     end
 
     it "sets Sentry.configuration.project_root correctly" do
       expect(Sentry.configuration.project_root).to eq(Rails.root.to_s)
     end
 
-   
     it "doesn't clobber a manually configured release" do
       expect(Sentry.configuration.release).to eq('beta')
     end
@@ -132,19 +157,15 @@ RSpec.describe Sentry::Rails, type: :request do
     end
 
     it "doesn't filters exception backtrace if backtrace_cleanup_callback is overridden" do
-      original_cleanup_callback = Sentry.configuration.backtrace_cleanup_callback
-
-      begin
-        Sentry.configuration.backtrace_cleanup_callback = nil
-
-        get "/view_exception"
-
-        traces = event.dig("exception", "values", 0, "stacktrace", "frames")
-        expect(traces.dig(-1, "filename")).to eq("inline template")
-        expect(traces.dig(-1, "function")).not_to be_nil
-      ensure
-        Sentry.configuration.backtrace_cleanup_callback = original_cleanup_callback
+      make_basic_app do |config|
+        config.backtrace_cleanup_callback = lambda { |backtrace| backtrace }
       end
+
+      get "/view_exception"
+
+      traces = event.dig("exception", "values", 0, "stacktrace", "frames")
+      expect(traces.dig(-1, "filename")).to eq("inline template")
+      expect(traces.dig(-1, "function")).not_to be_nil
     end
 
     context "with config.exceptions_app = self.routes" do
@@ -157,7 +178,10 @@ RSpec.describe Sentry::Rails, type: :request do
       it "sets transaction to ControllerName#method" do
         get "/exception"
 
-        expect(transport.events.last.transaction).to eq("HelloController#exception")
+        expect(transport.events.count).to eq(1)
+        last_event = transport.events.last
+        expect(last_event.transaction).to eq("HelloController#exception")
+        expect(response.body).to match(last_event.event_id)
 
         get "/posts"
 
@@ -171,7 +195,7 @@ RSpec.describe Sentry::Rails, type: :request do
       end
     end
   end
-  
+
   context "with trusted proxies set" do
     before do
       make_basic_app do |config, app|

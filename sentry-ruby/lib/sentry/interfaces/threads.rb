@@ -1,12 +1,13 @@
+# frozen_string_literal: true
+
 module Sentry
   class ThreadsInterface
-    attr_accessor :stacktrace
-
-    def initialize(crashed: false)
+    def initialize(crashed: false, stacktrace: nil)
       @id = Thread.current.object_id
       @name = Thread.current.name
       @current = true
       @crashed = crashed
+      @stacktrace = stacktrace
     end
 
     def to_hash
@@ -21,6 +22,13 @@ module Sentry
           }
         ]
       }
+    end
+
+    # patch this method if you want to change a threads interface's stacktrace frames
+    # also see `StacktraceBuilder.build`.
+    def self.build(backtrace:, stacktrace_builder:, **options)
+      stacktrace = stacktrace_builder.build(backtrace: backtrace) if backtrace
+      new(**options, stacktrace: stacktrace)
     end
   end
 end

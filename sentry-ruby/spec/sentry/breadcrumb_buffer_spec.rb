@@ -37,6 +37,24 @@ RSpec.describe Sentry::BreadcrumbBuffer do
     )
   end
 
+  describe "#record" do
+    subject do
+      described_class.new(1)
+    end
+
+    it "doesn't exceed the size limit" do
+      subject.record(crumb_1)
+
+      expect(subject.buffer.size).to eq(1)
+
+      subject.record(crumb_2)
+
+      expect(subject.buffer.size).to eq(1)
+
+      expect(subject.peek).to eq(crumb_2)
+    end
+  end
+
   describe "#to_hash" do
     it "doesn't break because of 1 problematic crumb" do
       subject.record(crumb_1)

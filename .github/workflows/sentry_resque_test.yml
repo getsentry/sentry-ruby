@@ -1,0 +1,53 @@
+name: sentry-resque Test
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - master
+      - \d+-\d+
+  pull_request:
+jobs:
+  test:
+    defaults:
+      run:
+        working-directory: sentry-resque
+    name: Ruby ${{ matrix.ruby_version }}, options - ${{ toJson(matrix.options) }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        include:
+          - { os: ubuntu-latest, ruby_version: 2.4 }
+          - { os: ubuntu-latest, ruby_version: 2.5 }
+          - { os: ubuntu-latest, ruby_version: 2.6 }
+          - { os: ubuntu-latest, ruby_version: 2.7 }
+          - { os: ubuntu-latest, ruby_version: '3.0' }
+          - { os: ubuntu-latest, ruby_version: jruby }
+          - { os: ubuntu-latest, ruby_version: '3.0', options: { rubyopt: "--enable-frozen-string-literal --debug=frozen-string-literal" } }
+          - { os: ubuntu-latest, ruby_version: '3.0', options: { codecov: 1 } }
+    steps:
+    - uses: actions/checkout@v1
+    - name: Set up Ruby ${{ matrix.ruby_version }}
+      uses: ruby/setup-ruby@v1
+      with:
+        bundler: 1
+        ruby-version: ${{ matrix.ruby_version }}
+
+    - name: Start Redis
+      uses: supercharge/redis-github-action@1.1.0
+      with:
+        redis-version: 5
+
+    - name: Run specs
+      env:
+        RUBYOPT: ${{ matrix.options.rubyopt }}
+      run: |
+        bundle install --jobs 4 --retry 3
+        bundle exec rake
+
+    - name: Upload Coverage
+      if: ${{ matrix.options.codecov }}
+      run: |
+        curl -Os https://uploader.codecov.io/latest/linux/codecov 
+        chmod +x codecov
+        ./codecov -t ${CODECOV_TOKEN} -R `pwd` -f coverage/coverage.xml

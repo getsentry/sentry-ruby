@@ -7,6 +7,12 @@ RSpec.describe Sentry::Scope do
     new_breadcrumb
   end
 
+  let(:configuration) { Sentry::Configuration.new }
+  let(:client) { Sentry::Client.new(configuration) }
+  let(:hub) do
+    Sentry::Hub.new(client, subject)
+  end
+
   describe "#initialize" do
     it "contains correct defaults" do
       expect(subject.breadcrumbs).to be_a(Sentry::BreadcrumbBuffer)
@@ -17,6 +23,11 @@ RSpec.describe Sentry::Scope do
       expect(subject.user).to eq({})
       expect(subject.fingerprint).to eq([])
       expect(subject.transaction_names).to eq([])
+    end
+
+    it "allows setting breadcrumb buffer's size limit" do
+      scope = described_class.new(max_breadcrumbs: 10)
+      expect(scope.breadcrumbs.buffer.count).to eq(10)
     end
   end
 
@@ -44,13 +55,16 @@ RSpec.describe Sentry::Scope do
     end
 
     it "deep-copies span as well" do
-      span = Sentry::Transaction.new(sampled: true)
+      perform_basic_setup
+
+      span = Sentry::Transaction.new(sampled: true, hub: hub)
       subject.set_span(span)
       copy = subject.dup
 
       span.start_child
 
       expect(copy.span.span_recorder.spans.count).to eq(1)
+      expect(subject.span.span_recorder.spans.count).to eq(2)
     end
   end
 
@@ -65,6 +79,10 @@ RSpec.describe Sentry::Scope do
   end
 
   describe "#clear_breadcrumbs" do
+    subject do
+      described_class.new(max_breadcrumbs: 10)
+    end
+
     before do
       subject.add_breadcrumb(new_breadcrumb)
 
@@ -75,6 +93,7 @@ RSpec.describe Sentry::Scope do
       subject.clear_breadcrumbs
 
       expect(subject.breadcrumbs.empty?).to eq(true)
+      expect(subject.breadcrumbs.buffer.size).to eq(10)
     end
   end
 
@@ -119,8 +138,13 @@ RSpec.describe Sentry::Scope do
   end
 
   describe "#get_transaction & #get_span" do
+    before do
+      # because initializing transactions requires an active hub
+      perform_basic_setup
+    end
+
     let(:transaction) do
-      Sentry::Transaction.new(op: "parent")
+      Sentry::Transaction.new(op: "parent", hub: hub)
     end
 
     context "with span in the scope" do

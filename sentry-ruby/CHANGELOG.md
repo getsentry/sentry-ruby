@@ -1,5 +1,128 @@
 # Changelog
 
+Individual gem's changelog has been deprecated. Please check the [project changelog](https://github.com/getsentry/sentry-ruby/blob/master/CHANGELOG.md).
+
+## 4.4.2
+
+- Fix NoMethodError when SDK's dsn is nil [#1433](https://github.com/getsentry/sentry-ruby/pull/1433)
+- fix: Update protocol version to 7 [#1434](https://github.com/getsentry/sentry-ruby/pull/1434)
+  - Fixes [#867](https://github.com/getsentry/sentry-ruby/issues/867)
+
+## 4.4.1
+
+- Apply patches when initializing the SDK [#1432](https://github.com/getsentry/sentry-ruby/pull/1432)
+
+## 4.4.0
+
+### Features
+
+#### Support category-based rate limiting [#1336](https://github.com/getsentry/sentry-ruby/pull/1336) 
+
+Sentry rate limits different types of events. And when rate limiting is enabled, it sends back a `429` response to the SDK. Currently, the SDK would then raise an error like this:
+
+```
+Unable to record event with remote Sentry server (Sentry::Error - the server responded with status 429
+body: {"detail":"event rejected due to rate limit"}):
+```
+
+This change improves the SDK's handling on such responses by:
+
+- Not treating them as errors, so you don't see the noise anymore.
+- Halting event sending for a while according to the duration provided in the response. And warns you with a message like:
+
+```
+Envelope [event] not sent: Excluded by random sample
+```
+
+#### Record request span from Net::HTTP library [#1381](https://github.com/getsentry/sentry-ruby/pull/1381)
+
+Now any outgoing requests will be recorded as a tracing span. Example:
+
+<img width="60%" alt="net:http span example" src="https://user-images.githubusercontent.com/5079556/115838944-c1279a80-a44c-11eb-8c67-dfd92bf68bbd.png">
+
+
+#### Record breadcrumb for Net::HTTP requests [#1394](https://github.com/getsentry/sentry-ruby/pull/1394)
+
+With the new `http_logger` breadcrumbs logger:
+
+```ruby
+config.breadcrumbs_logger = [:http_logger]
+```
+
+The SDK now records a new `net.http` breadcrumb whenever the user makes a request with the `Net::HTTP` library.
+
+<img width="60%" alt="net http breadcrumb" src="https://user-images.githubusercontent.com/5079556/114298326-5f7c3d80-9ae8-11eb-9108-222384a7f1a2.png">
+
+#### Support config.debug configuration option [#1400](https://github.com/getsentry/sentry-ruby/pull/1400)
+
+It'll determine whether the SDK should run in the debugging mode. Default is `false`. When set to true, SDK errors will be logged with backtrace.
+
+#### Add the third tracing state [#1402](https://github.com/getsentry/sentry-ruby/pull/1402)
+  - `rate == 0` - Tracing enabled. Rejects all locally created transactions but  respects sentry-trace.
+  - `1 > rate > 0` - Tracing enabled. Samples locally created transactions  with the rate and respects sentry-trace.
+  - `rate < 0` or `rate > 1` - Tracing disabled.
+
+### Refactorings
+
+- Let Transaction constructor take an optional hub argument [#1384](https://github.com/getsentry/sentry-ruby/pull/1384)
+- Introduce LoggingHelper [#1385](https://github.com/getsentry/sentry-ruby/pull/1385)
+- Raise exception if a Transaction is initialized without a hub [#1391](https://github.com/getsentry/sentry-ruby/pull/1391)
+- Make hub a required argument for Transaction constructor [#1401](https://github.com/getsentry/sentry-ruby/pull/1401) 
+
+### Bug Fixes
+
+- Check `Scope#set_context`'s value argument [#1415](https://github.com/getsentry/sentry-ruby/pull/1415)
+- Disable tracing if events are not allowed to be sent [#1421](https://github.com/getsentry/sentry-ruby/pull/1421)
+
+## 4.3.2
+
+- Correct type attribute's usages [#1354](https://github.com/getsentry/sentry-ruby/pull/1354)
+- Fix sampling decision precedence [#1335](https://github.com/getsentry/sentry-ruby/pull/1335)
+- Fix set_contexts [#1375](https://github.com/getsentry/sentry-ruby/pull/1375) 
+- Use thread variable instead of fiber variable to store the hub [#1380](https://github.com/getsentry/sentry-ruby/pull/1380)
+  - Fixes [#1374](https://github.com/getsentry/sentry-ruby/issues/1374)
+- Fix Span/Transaction's nesting issue [#1382](https://github.com/getsentry/sentry-ruby/pull/1382) 
+  - Fixes [#1372](https://github.com/getsentry/sentry-ruby/issues/1372)
+
+## 4.3.1
+
+- Add Sentry.set_context helper [#1337](https://github.com/getsentry/sentry-ruby/pull/1337)
+- Fix handle the case where the logger messages is not of String type [#1341](https://github.com/getsentry/sentry-ruby/pull/1341)
+- Don't report Sentry::ExternalError to Sentry [#1353](https://github.com/getsentry/sentry-ruby/pull/1353)
+- Sentry.add_breadcrumb should call Hub#add_breadcrumb [#1358](https://github.com/getsentry/sentry-ruby/pull/1358)
+  - Fixes [#1357](https://github.com/getsentry/sentry-ruby/issues/1357)
+
+## 4.3.0
+
+### Features
+
+- Allow configuring BreadcrumbBuffer's size limit [#1310](https://github.com/getsentry/sentry-ruby/pull/1310)
+
+```ruby
+# the SDK will only store 10 breadcrumbs (default is 100)
+config.max_breadcrumbs = 10
+```
+
+- Compress event payload by default [#1314](https://github.com/getsentry/sentry-ruby/pull/1314)
+
+### Refatorings
+
+- Refactor interface construction [#1296](https://github.com/getsentry/sentry-ruby/pull/1296)
+- Refactor tracing implementation [#1309](https://github.com/getsentry/sentry-ruby/pull/1309)
+
+### Bug Fixes
+- Improve SDK's error handling [#1298](https://github.com/getsentry/sentry-ruby/pull/1298)
+  - Fixes [#1246](https://github.com/getsentry/sentry-ruby/issues/1246) and [#1289](https://github.com/getsentry/sentry-ruby/issues/1289)
+  - Please read [#1290](https://github.com/getsentry/sentry-ruby/issues/1290) to see the full specification
+- Treat query string as pii too [#1302](https://github.com/getsentry/sentry-ruby/pull/1302)
+  - Fixes [#1301](https://github.com/getsentry/sentry-ruby/issues/1301)
+- Ignore sentry-trace when tracing is not enabled [#1308](https://github.com/getsentry/sentry-ruby/pull/1308)
+  - Fixes [#1307](https://github.com/getsentry/sentry-ruby/issues/1307)
+- Return nil from logger methods instead of breadcrumb buffer [#1299](https://github.com/getsentry/sentry-ruby/pull/1299)
+- Exceptions with nil message shouldn't cause issues [#1327](https://github.com/getsentry/sentry-ruby/pull/1327)
+  - Fixes [#1323](https://github.com/getsentry/sentry-ruby/issues/1323)
+- Fix sampling decision with sentry-trace and add more tests [#1326](https://github.com/getsentry/sentry-ruby/pull/1326)
+
 ## 4.2.2
 
 - Add thread_id to Exception interface [#1291](https://github.com/getsentry/sentry-ruby/pull/1291)

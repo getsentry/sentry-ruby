@@ -94,22 +94,50 @@ RSpec.describe Sentry::Scope do
       end.to raise_error(ArgumentError)
     end
 
-    it "replaces the context hash" do
-      subject.set_contexts({foo: "baz"})
-      expect(subject.contexts).to eq({foo: "baz"})
+    it "merges the context hash" do
+      subject.set_contexts({ character: { name: "John" }})
+      expect(subject.contexts).to include({ character: { name: "John" }})
 
-      subject.set_contexts({foo: "bar"})
-      expect(subject.contexts).to eq({foo: "bar"})
+      subject.set_contexts({ character: { name: "John", age: 25 }})
+      subject.set_contexts({ another_character: { name: "Jane", age: 20 }})
+      expect(subject.contexts).to include({ character: { name: "John", age: 25 }})
+      expect(subject.contexts).to include({ another_character: { name: "Jane", age: 20 }})
+    end
+
+    it "merges context with the same key" do
+      subject.set_contexts({ character: { name: "John" }})
+      subject.set_contexts({ character: { age: 25 }})
+      expect(subject.contexts).to include({ character: { name: "John", age: 25 }})
     end
   end
 
   describe "#set_context" do
+    it "raises error when passed non-hash value" do
+      expect do
+        subject.set_context(:character, "John")
+      end.to raise_error(ArgumentError)
+    end
+
     it "merges the key value with existing context" do
-      subject.set_contexts({bar: "baz"})
+      subject.set_context(:character, { name: "John" })
+      expect(subject.contexts).to include({ character: { name: "John" }})
 
-      subject.set_context(:foo, "bar")
+      subject.set_context(:character, { name: "John", age: 25 })
+      expect(subject.contexts).to include({ character: { name: "John", age: 25 }})
 
-      expect(subject.contexts).to eq({foo: "bar", bar: "baz"})
+      subject.set_context(:another_character, { name: "Jane", age: 20 })
+      expect(subject.contexts).to include(
+        {
+          character: { name: "John", age: 25 },
+          another_character: { name: "Jane", age: 20 }
+        }
+      )
+    end
+
+    it "merges context with the same key" do
+      subject.set_context(:character, { name: "John" })
+      subject.set_context(:character, { age: 25 })
+      expect(subject.contexts).to include({ character: { name: "John", age: 25 }})
     end
   end
 

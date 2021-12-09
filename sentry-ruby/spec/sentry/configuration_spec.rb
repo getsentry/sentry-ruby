@@ -1,41 +1,100 @@
 require 'spec_helper'
 
 RSpec.describe Sentry::Configuration do
-  describe "#breadcrumbs_logger=" do
-    it "raises error when given an invalid option" do
-      expect { subject.breadcrumbs_logger = :foo }.to raise_error(
-        Sentry::Error,
-        'Unsupported breadcrumbs logger. Supported loggers: [:sentry_logger, :active_support_logger]'
-      )
+  describe "#csp_report_uri" do
+    it "returns nil if the dsn is not present" do
+      expect(subject.csp_report_uri).to eq(nil)
+    end
+
+    it "returns nil if the dsn is not valid" do
+      subject.dsn = "foo"
+      expect(subject.csp_report_uri).to eq(nil)
+    end
+
+    context "when the DSN is present" do
+      before do
+        subject.release = nil
+        subject.environment = nil
+        subject.dsn = DUMMY_DSN
+      end
+
+      it "returns the uri" do
+        expect(subject.csp_report_uri).to eq("http://sentry.localdomain/api/42/security/?sentry_key=12345")
+      end
+
+      it "adds sentry_release param when there's release information" do
+        subject.release = "test-release"
+        expect(subject.csp_report_uri).to eq("http://sentry.localdomain/api/42/security/?sentry_key=12345&sentry_release=test-release")
+      end
+
+      it "adds sentry_environment param when there's environment information" do
+        subject.environment = "test-environment"
+        expect(subject.csp_report_uri).to eq("http://sentry.localdomain/api/42/security/?sentry_key=12345&sentry_environment=test-environment")
+      end
     end
   end
 
   describe "#tracing_enabled?" do
-    it "returns false by default" do
-      expect(subject.tracing_enabled?).to eq(false)
+    context "when sending not allowed" do
+      before do
+        allow(subject).to receive(:sending_allowed?).and_return(false)
+      end
+
+      context "when traces_sample_rate > 0" do
+        it "returns false" do
+          subject.traces_sample_rate = 0.1
+
+          expect(subject.tracing_enabled?).to eq(false)
+        end
+      end
+
+      context "when traces_sampler is set" do
+        it "returns false" do
+          subject.traces_sampler = proc { true }
+
+          expect(subject.tracing_enabled?).to eq(false)
+        end
+      end
     end
+    context "when sending allowed" do
+      before do
+        allow(subject).to receive(:sending_allowed?).and_return(true)
+      end
 
-    context "when traces_sample_rate == 0.0" do
-      it "returns false" do
-        subject.traces_sample_rate = 0.0
-
+      it "returns false by default" do
         expect(subject.tracing_enabled?).to eq(false)
       end
-    end
 
-    context "when traces_sample_rate > 0" do
-      it "returns true" do
-        subject.traces_sample_rate = 0.1
+      context "when traces_sample_rate > 1.0" do
+        it "returns false" do
+          subject.traces_sample_rate = 1.1
 
-        expect(subject.tracing_enabled?).to eq(true)
+          expect(subject.tracing_enabled?).to eq(false)
+        end
       end
-    end
 
-    context "when traces_sampler is set" do
-      it "returns true" do
-        subject.traces_sampler = proc { true }
+      context "when traces_sample_rate == 0.0" do
+        it "returns true" do
+          subject.traces_sample_rate = 0
 
-        expect(subject.tracing_enabled?).to eq(true)
+          expect(subject.tracing_enabled?).to eq(true)
+        end
+      end
+
+      context "when traces_sample_rate > 0" do
+        it "returns true" do
+          subject.traces_sample_rate = 0.1
+
+          expect(subject.tracing_enabled?).to eq(true)
+        end
+      end
+
+      context "when traces_sampler is set" do
+        it "returns true" do
+          subject.traces_sampler = proc { true }
+
+          expect(subject.tracing_enabled?).to eq(true)
+        end
       end
     end
   end
@@ -56,10 +115,22 @@ RSpec.describe Sentry::Configuration do
     end
   end
 
-  it 'should raise when setting before_send to anything other than callable or false' do
+  it 'raises error when setting async to anything other than callable or nil' do
+    subject.async = -> {}
+    subject.async = nil
+    expect { subject.async = true }.to raise_error(ArgumentError, "async must be callable (or nil to disable)")
+  end
+
+  it 'raises error when setting before_send to anything other than callable or nil' do
     subject.before_send = -> {}
-    subject.before_send = false
-    expect { subject.before_send = true }.to raise_error(ArgumentError)
+    subject.before_send = nil
+    expect { subject.before_send = true }.to raise_error(ArgumentError, "before_send must be callable (or nil to disable)")
+  end
+
+  it 'raises error when setting before_breadcrumb to anything other than callable or nil' do
+    subject.before_breadcrumb = -> {}
+    subject.before_breadcrumb = nil
+    expect { subject.before_breadcrumb = true }.to raise_error(ArgumentError, "before_breadcrumb must be callable (or nil to disable)")
   end
 
   context 'being initialized with a current environment' do
@@ -90,8 +161,8 @@ RSpec.describe Sentry::Configuration do
       ENV.delete('RACK_ENV')
     end
 
-    it 'defaults to "default"' do
-      expect(subject.environment).to eq('default')
+    it 'defaults to "development"' do
+      expect(subject.environment).to eq('development')
     end
 
     it 'uses `SENTRY_CURRENT_ENV` env variable' do
@@ -125,128 +196,6 @@ RSpec.describe Sentry::Configuration do
       ENV['RACK_ENV'] = 'set-with-rack-env'
 
       expect(subject.environment).to eq('set-with-rack-env')
-    end
-  end
-
-  context 'being initialized without a release' do
-    let(:fake_root) { "/tmp/sentry/" }
-
-    before do
-      allow(File).to receive(:directory?).and_return(false)
-      allow_any_instance_of(described_class).to receive(:project_root).and_return(fake_root)
-    end
-
-    it 'defaults to nil' do
-      expect(subject.release).to eq(nil)
-    end
-
-    it 'uses `SENTRY_RELEASE` env variable' do
-      ENV['SENTRY_RELEASE'] = 'v1'
-
-      expect(subject.release).to eq('v1')
-
-      ENV.delete('SENTRY_CURRENT_ENV')
-    end
-
-    context "when git is available" do
-      before do
-        allow(File).to receive(:directory?).and_return(false)
-        allow(File).to receive(:directory?).with(".git").and_return(true)
-      end
-      it 'gets release from git' do
-        allow(Sentry).to receive(:`).with("git rev-parse --short HEAD 2>&1").and_return("COMMIT_SHA")
-
-        expect(subject.release).to eq('COMMIT_SHA')
-      end
-    end
-
-    context "when Capistrano is available" do
-      let(:revision) { "2019010101000" }
-
-      before do
-        Dir.mkdir(fake_root) unless Dir.exist?(fake_root)
-        File.write(filename, file_content)
-      end
-
-      after do
-        File.delete(filename)
-        Dir.delete(fake_root)
-      end
-
-      context "when the REVISION file is present" do
-        let(:filename) do
-          File.join(fake_root, "REVISION")
-        end
-        let(:file_content) { revision }
-
-        it "gets release from the REVISION file" do
-          expect(subject.release).to eq(revision)
-        end
-      end
-
-      context "when the revisions.log file is present" do
-        let(:filename) do
-          File.join(fake_root, "..", "revisions.log")
-        end
-        let(:file_content) do
-          "Branch master (at COMMIT_SHA) deployed as release #{revision} by alice"
-        end
-
-        it "gets release from the REVISION file" do
-          expect(subject.release).to eq(revision)
-        end
-      end
-    end
-
-    context "when running on heroku" do
-      before do
-        allow(File).to receive(:directory?).and_return(false)
-        allow(File).to receive(:directory?).with("/etc/heroku").and_return(true)
-      end
-
-      context "when it's on heroku ci" do
-        it "returns nil" do
-          begin
-            original_ci_val = ENV["CI"]
-            ENV["CI"] = "true"
-
-            expect(subject.release).to eq(nil)
-          ensure
-            ENV["CI"] = original_ci_val
-          end
-        end
-      end
-
-      context "when it's not on heroku ci" do
-        around do |example|
-          begin
-            original_ci_val = ENV["CI"]
-            ENV["CI"] = nil
-
-            example.run
-          ensure
-            ENV["CI"] = original_ci_val
-          end
-        end
-
-        it "returns nil + logs an warning if HEROKU_SLUG_COMMIT is not set" do
-          logger = double("logger")
-          expect(::Sentry::Logger).to receive(:new).and_return(logger)
-          expect(logger).to receive(:warn).with(Sentry::LOGGER_PROGNAME) { described_class::HEROKU_DYNO_METADATA_MESSAGE }
-
-          expect(described_class.new.release).to eq(nil)
-        end
-
-        it "returns HEROKU_SLUG_COMMIT" do
-          begin
-            ENV["HEROKU_SLUG_COMMIT"] = "REVISION"
-
-            expect(subject.release).to eq("REVISION")
-          ensure
-            ENV["HEROKU_SLUG_COMMIT"] = nil
-          end
-        end
-      end
     end
   end
 
@@ -284,21 +233,19 @@ RSpec.describe Sentry::Configuration do
     end
   end
 
-  context "with a sample rate" do
-    before(:each) do
-      subject.dsn = 'http://12345:67890@sentry.localdomain:3000/sentry/42'
+  describe "#sample_allowed?" do
+    before do
       subject.sample_rate = 0.75
     end
 
     it 'captured_allowed false when sampled' do
-      allow(Random::DEFAULT).to receive(:rand).and_return(0.76)
-      expect(subject.sending_allowed?).to eq(false)
-      expect(subject.errors).to eq(["Excluded by random sample"])
+      allow(Random).to receive(:rand).and_return(0.76)
+      expect(subject.sample_allowed?).to eq(false)
     end
 
     it 'captured_allowed true when not sampled' do
-      allow(Random::DEFAULT).to receive(:rand).and_return(0.74)
-      expect(subject.sending_allowed?).to eq(true)
+      allow(Random).to receive(:rand).and_return(0.74)
+      expect(subject.sample_allowed?).to eq(true)
     end
   end
 
@@ -342,17 +289,9 @@ RSpec.describe Sentry::Configuration do
             subject.inspect_exception_causes_for_exclusion = true
           end
 
-          if Exception.new.respond_to? :cause
-            context 'when the language version supports exception causes' do
-              it 'returns false' do
-                expect(subject.exception_class_allowed?(incoming_exception)).to eq false
-              end
-            end
-          else
-            context 'when the language version does not support exception causes' do
-              it 'returns true' do
-                expect(subject.exception_class_allowed?(incoming_exception)).to eq true
-              end
+          context 'when the language version supports exception causes' do
+            it 'returns false' do
+              expect(subject.exception_class_allowed?(incoming_exception)).to eq false
             end
           end
         end
@@ -388,6 +327,17 @@ RSpec.describe Sentry::Configuration do
 
       expect(instance.var1). to eq 1
       expect(instance.var2). to eq 2
+    end
+  end
+
+  describe "#skip_rake_integration" do
+    it "returns false by default" do
+      expect(subject.skip_rake_integration).to eq(false)
+    end
+
+    it "accepts true" do
+      subject.skip_rake_integration = true
+      expect(subject.skip_rake_integration).to eq(true)
     end
   end
 end

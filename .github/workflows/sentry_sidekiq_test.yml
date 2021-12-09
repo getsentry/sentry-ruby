@@ -5,24 +5,26 @@ on:
   push:
     branches:
       - master
+      - \d+-\d+
   pull_request:
-    paths:
-      - 'sentry-sidekiq/**'
-      - 'sentry-ruby/**'
 jobs:
   test:
     defaults:
       run:
         working-directory: sentry-sidekiq
-    name: Test on ruby ${{ matrix.ruby_version }}
+    name: Ruby ${{ matrix.ruby_version }} & Sidekiq ${{ matrix.sidekiq_version }}, options - ${{ toJson(matrix.options) }}
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
+        sidekiq_version: [5.0, 6.0]
         ruby_version: [2.4, 2.5, 2.6, 2.7, '3.0', jruby]
         os: [ubuntu-latest]
         include:
-          - ruby_version: '3.0'
-            env: RUBYOPT="--enable-frozen-string-literal --debug=frozen-string-literal"
+          - { os: ubuntu-latest, ruby_version: '3.0', sidekiq_version: 6.0, options: { rubyopt: "--enable-frozen-string-literal --debug=frozen-string-literal" } }
+          - { os: ubuntu-latest, ruby_version: '3.0', sidekiq_version: 6.0, options: { codecov: 1 } }
+        exclude:
+          - ruby_version: 2.4
+            sidekiq_version: 6.0
     steps:
     - uses: actions/checkout@v1
 
@@ -37,7 +39,17 @@ jobs:
       with:
         redis-version: 5
 
-    - name: Run specs
+    - name: Run specs with Sidekiq ${{ matrix.sidekiq_version }}
+      env:
+        SIDEKIQ_VERSION: ${{ matrix.sidekiq_version }}
+        RUBYOPT: ${{ matrix.options.rubyopt }}
       run: |
         bundle install --jobs 4 --retry 3
-        bundle exec rake
+        make test
+
+    - name: Upload Coverage
+      if: ${{ matrix.options.codecov }}
+      run: |
+        curl -Os https://uploader.codecov.io/latest/linux/codecov 
+        chmod +x codecov
+        ./codecov -t ${CODECOV_TOKEN} -R `pwd` -f coverage/coverage.xml

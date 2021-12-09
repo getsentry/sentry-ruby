@@ -11,10 +11,14 @@ RSpec.describe Sentry::Transport do
   end
   let(:fake_time) { Time.now }
 
-  subject { described_class.new(configuration) }
+  let(:client) { Sentry::Client.new(configuration) }
+  let(:hub) do
+    Sentry::Hub.new(client, subject)
+  end
+
+  subject { client.transport }
 
   describe "#encode" do
-    let(:client) { Sentry::Client.new(configuration) }
 
     before do
       Sentry.init do |config|
@@ -45,7 +49,7 @@ RSpec.describe Sentry::Transport do
 
     context "transaction event" do
       let(:transaction) do
-        Sentry::Transaction.new(name: "test transaction", op: "rack.request")
+        Sentry::Transaction.new(name: "test transaction", op: "rack.request", hub: hub)
       end
       let(:event) do
         client.event_from_transaction(transaction)
@@ -69,30 +73,41 @@ RSpec.describe Sentry::Transport do
         expect(item).to eq(event.to_hash.to_json)
       end
     end
+
+    context "client report" do
+      let(:event) { client.event_from_exception(ZeroDivisionError.new("divided by 0")) }
+      before do
+        5.times { subject.record_lost_event(:ratelimit_backoff, 'error') }
+        3.times { subject.record_lost_event(:queue_overflow, 'transaction') }
+      end
+
+      it "incudes client report in envelope" do
+        Timecop.travel(Time.now + 90) do
+          result = subject.encode(event.to_hash)
+
+          client_report_header, client_report_payload = result.split("\n").last(2)
+
+          expect(client_report_header).to eq(
+            '{"type":"client_report"}'
+          )
+
+          expect(client_report_payload).to eq(
+            {
+              timestamp: Time.now.utc.iso8601,
+              discarded_events: [
+                { reason: :ratelimit_backoff, category: 'error', quantity: 5 },
+                { reason: :queue_overflow, category: 'transaction', quantity: 3 }
+              ]
+            }.to_json
+          )
+        end
+      end
+    end
   end
 
   describe "#send_event" do
     let(:client) { Sentry::Client.new(configuration) }
     let(:event) { client.event_from_exception(ZeroDivisionError.new("divided by 0")) }
-
-    context "when event is not allowed (by sampling)" do
-      let(:string_io) do
-        StringIO.new
-      end
-
-      before do
-        configuration.logger = Logger.new(string_io)
-        configuration.sample_rate = 0.5
-        allow(Random::DEFAULT).to receive(:rand).and_return(0.6)
-      end
-
-      it "logs correct message" do
-        subject.send_event(event)
-
-        logs = string_io.string
-        expect(logs).to match(/Event not sent: Excluded by random sample/)
-      end
-    end
 
     context "when success" do
       before do
@@ -115,30 +130,41 @@ RSpec.describe Sentry::Transport do
         expect(subject.send_event(event)).to eq(event)
 
         expect(io.string).to match(
-          /INFO -- sentry: Sending event #{event.event_id} to Sentry/
+          /INFO -- sentry: Sending envelope \[event\] #{event.event_id} to Sentry/
         )
       end
     end
 
     context "when failed" do
+      context "with normal error" do
+        before do
+          allow(subject).to receive(:send_data).and_raise(StandardError)
+        end
+
+        it "raises the error" do
+          expect do
+            subject.send_event(event)
+          end.to raise_error(StandardError)
+        end
+      end
+
+      context "with Faraday::Error" do
+        it "raises the error" do
+          expect do
+            subject.send_event(event)
+          end.to raise_error(Sentry::ExternalError)
+        end
+      end
+    end
+
+    context "when rate limited" do
       before do
-        allow(subject).to receive(:send_data).and_raise(StandardError)
+        allow(subject).to receive(:is_rate_limited?).and_return(true)
       end
 
-      it "returns nil" do
-        expect(subject.send_event(event)).to eq(nil)
-      end
-
-      it "logs correct message" do
+      it "records lost event" do
         subject.send_event(event)
-
-        log = io.string
-        expect(log).to match(
-          /WARN -- sentry: Unable to record event with remote Sentry server \(StandardError - StandardError\):/
-        )
-        expect(log).to match(
-          /WARN -- sentry: Failed to submit event. Unreported Event: ZeroDivisionError: divided by 0/
-        )
+        expect(subject).to have_recorded_lost_event(:ratelimit_backoff, 'event')
       end
     end
   end
@@ -146,7 +172,7 @@ RSpec.describe Sentry::Transport do
   describe "#generate_auth_header" do
     it "generates an auth header" do
       expect(subject.send(:generate_auth_header)).to eq(
-        "Sentry sentry_version=5, sentry_client=sentry-ruby/#{Sentry::VERSION}, sentry_timestamp=#{fake_time.to_i}, " \
+        "Sentry sentry_version=7, sentry_client=sentry-ruby/#{Sentry::VERSION}, sentry_timestamp=#{fake_time.to_i}, " \
         "sentry_key=12345, sentry_secret=67890"
       )
     end
@@ -155,7 +181,7 @@ RSpec.describe Sentry::Transport do
       configuration.server = "https://66260460f09b5940498e24bb7ce093a0@sentry.io/42"
 
       expect(subject.send(:generate_auth_header)).to eq(
-        "Sentry sentry_version=5, sentry_client=sentry-ruby/#{Sentry::VERSION}, sentry_timestamp=#{fake_time.to_i}, " \
+        "Sentry sentry_version=7, sentry_client=sentry-ruby/#{Sentry::VERSION}, sentry_timestamp=#{fake_time.to_i}, " \
         "sentry_key=66260460f09b5940498e24bb7ce093a0"
       )
     end

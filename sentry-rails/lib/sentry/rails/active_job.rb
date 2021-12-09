@@ -1,53 +1,65 @@
 module Sentry
   module Rails
     module ActiveJobExtensions
-      def self.included(base)
-        base.class_eval do
-          around_perform do |job, block|
-            if Sentry.initialized?
-              if already_supported_by_specific_integration?(job)
-                block.call
-              else
-                Sentry.with_scope do
-                  capture_and_reraise_with_sentry(job, block)
-                end
-              end
-            else
-              block.call
+      def perform_now
+        if !Sentry.initialized? || already_supported_by_sentry_integration?
+          super
+        else
+          Sentry.with_scope do |scope|
+            capture_and_reraise_with_sentry(scope) do
+              super
             end
           end
         end
       end
 
-      def capture_and_reraise_with_sentry(job, block)
+      def capture_and_reraise_with_sentry(scope, &block)
+        scope.set_transaction_name(self.class.name)
+        transaction =
+          if is_a?(::Sentry::SendEventJob)
+            nil
+          else
+            Sentry.start_transaction(name: scope.transaction_name, op: "active_job")
+          end
+
+        scope.set_span(transaction) if transaction
+
         block.call
+
+        finish_sentry_transaction(transaction, 200)
       rescue Exception => e # rubocop:disable Lint/RescueException
-        rescue_handler_result = rescue_with_handler(e)
-        return rescue_handler_result if rescue_handler_result
+        finish_sentry_transaction(transaction, 500)
 
         Sentry::Rails.capture_exception(
           e,
-          extra: sentry_context(job),
+          extra: sentry_context,
           tags: {
-            job_id: job.job_id,
-            provider_job_id: job.provider_job_id
+            job_id: job_id,
+            provider_job_id:provider_job_id
           }
         )
         raise e
       end
 
-      def already_supported_by_specific_integration?(job)
-        Sentry.configuration.rails.skippable_job_adapters.include?(job.class.queue_adapter.class.to_s)
+      def finish_sentry_transaction(transaction, status)
+        return unless transaction
+
+        transaction.set_http_status(status)
+        transaction.finish
       end
 
-      def sentry_context(job)
+      def already_supported_by_sentry_integration?
+        Sentry.configuration.rails.skippable_job_adapters.include?(self.class.queue_adapter.class.to_s)
+      end
+
+      def sentry_context
         {
-          active_job: job.class.name,
-          arguments: job.arguments,
-          scheduled_at: job.scheduled_at,
-          job_id: job.job_id,
-          provider_job_id: job.provider_job_id,
-          locale: job.locale
+          active_job: self.class.name,
+          arguments: arguments,
+          scheduled_at: scheduled_at,
+          job_id: job_id,
+          provider_job_id: provider_job_id,
+          locale: locale
         }
       end
     end

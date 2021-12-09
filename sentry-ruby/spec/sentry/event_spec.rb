@@ -33,6 +33,38 @@ RSpec.describe Sentry::Event do
     end
   end
 
+  describe "#inspect" do
+    let(:client) do
+      Sentry::Client.new(configuration)
+    end
+
+    subject do
+      e = begin
+            1/0
+          rescue => e
+            e
+          end
+
+      client.event_from_exception(e)
+    end
+
+    it "still contains relevant info" do
+      expect(subject.inspect).to match(/@event_id="#{subject.event_id}"/)
+    end
+
+    it "ignores @configuration" do
+      expect(subject.inspect).not_to match(/@configuration/)
+    end
+
+    it "ignores @modules" do
+      expect(subject.inspect).not_to match(/@modules/)
+    end
+
+    it "ignores @backtrace" do
+      expect(subject.inspect).not_to match(/@backtrace/)
+    end
+  end
+
   context 'rack context specified', rack: true do
     require 'stringio'
 
@@ -70,7 +102,6 @@ RSpec.describe Sentry::Event do
           env: { 'SERVER_NAME' => 'localhost', 'SERVER_PORT' => '80' },
           headers: { 'Host' => 'localhost', 'X-Request-Id' => 'abcd-1234-abcd-1234' },
           method: 'POST',
-          query_string: 'biz=baz',
           url: 'http://localhost/lol',
         )
         expect(event.to_hash[:tags][:request_id]).to eq("abcd-1234-abcd-1234")
@@ -136,52 +167,6 @@ RSpec.describe Sentry::Event do
     end
   end
 
-  describe "#initialize_stacktrace_interface" do
-    let(:fixture_root) { File.join(Dir.pwd, "spec", "support") }
-    let(:fixture_file) { File.join(fixture_root, "stacktrace_test_fixture.rb") }
-    let(:configuration) do
-      Sentry::Configuration.new.tap do |config|
-        config.project_root = fixture_root
-      end
-    end
-
-    let(:backtrace) do
-      [
-        "#{fixture_file}:6:in `bar'",
-        "#{fixture_file}:2:in `foo'"
-      ]
-    end
-
-    subject do
-      described_class.new(configuration: configuration)
-    end
-
-    it "returns an array of StacktraceInterface::Frames with correct information" do
-      interface = subject.initialize_stacktrace_interface(backtrace)
-      expect(interface).to be_a(Sentry::StacktraceInterface)
-
-      frames = interface.frames
-
-      first_frame = frames.first
-
-      expect(first_frame.filename).to match(/stacktrace_test_fixture.rb/)
-      expect(first_frame.function).to eq("foo")
-      expect(first_frame.lineno).to eq(2)
-      expect(first_frame.pre_context).to eq([nil, nil, "def foo\n"])
-      expect(first_frame.context_line).to eq("  bar\n")
-      expect(first_frame.post_context).to eq(["end\n", "\n", "def bar\n"])
-
-      second_frame = frames.last
-
-      expect(second_frame.filename).to match(/stacktrace_test_fixture.rb/)
-      expect(second_frame.function).to eq("bar")
-      expect(second_frame.lineno).to eq(6)
-      expect(second_frame.pre_context).to eq(["end\n", "\n", "def bar\n"])
-      expect(second_frame.context_line).to eq("  baz\n")
-      expect(second_frame.post_context).to eq(["end\n", nil, nil])
-    end
-  end
-
   describe '#to_json_compatible' do
     subject do
       Sentry::Event.new(configuration: configuration).tap do |event|
@@ -199,6 +184,61 @@ RSpec.describe Sentry::Event do
       expect(json["extra"]['my_custom_variable']).to eq('value')
       expect(json["extra"]['date']).to be_a(String)
       expect(json["extra"]['anonymous_module']).not_to be_a(Class)
+    end
+  end
+
+  describe ".get_log_message" do
+    let(:client) do
+      Sentry::Client.new(configuration)
+    end
+
+    let(:hub) do
+      Sentry::Hub.new(client, Sentry::Scope.new)
+    end
+
+    context "with adnormal event" do
+      subject do
+        Sentry::Event.new(configuration: configuration)
+      end
+
+      it "returns placeholder message" do
+        expect(described_class.get_log_message(subject.to_hash)).to eq('<no message value>')
+        expect(described_class.get_log_message(subject.to_json_compatible)).to eq('<no message value>')
+      end
+    end
+    context "with transaction event" do
+      let(:transaction) do
+        Sentry::Transaction.new(name: "test transaction", op: "sql.active_record", hub: hub, sampled: true)
+      end
+
+      subject do
+        client.event_from_transaction(transaction)
+      end
+
+      it "returns the transaction's name" do
+        expect(described_class.get_log_message(subject.to_hash)).to eq("test transaction")
+        expect(described_class.get_log_message(subject.to_json_compatible)).to eq("test transaction")
+      end
+    end
+    context "with exception event" do
+      subject do
+        client.event_from_exception(Exception.new("error!"))
+      end
+
+      it "returns the exception's message" do
+        expect(described_class.get_log_message(subject.to_hash)).to eq("Exception: error!")
+        expect(described_class.get_log_message(subject.to_json_compatible)).to eq("Exception: error!")
+      end
+    end
+    context "with message event" do
+      subject do
+        client.event_from_message("test")
+      end
+
+      it "returns the event's message" do
+        expect(described_class.get_log_message(subject.to_hash)).to eq("test")
+        expect(described_class.get_log_message(subject.to_json_compatible)).to eq("test")
+      end
     end
   end
 end

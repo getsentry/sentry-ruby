@@ -1,18 +1,29 @@
-require "sentry/rails/tracing/abstract_subscriber"
-require "sentry/rails/tracing/active_record_subscriber"
-require "sentry/rails/tracing/action_controller_subscriber"
-require "sentry/rails/tracing/action_view_subscriber"
-
 module Sentry
   module Rails
     module Tracing
-      AVAILABLE_SUBSCRIBERS = [ActionViewSubscriber, ActiveRecordSubscriber, ActionControllerSubscriber]
+      START_TIMESTAMP_NAME = :sentry_start_timestamp
+
+      def self.register_subscribers(subscribers)
+        @subscribers = subscribers
+      end
+
+      def self.subscribers
+        @subscribers
+      end
+
+      def self.subscribed_tracing_events
+        @subscribed_tracing_events ||= []
+      end
 
       def self.subscribe_tracing_events
         # need to avoid duplicated subscription
         return if @subscribed
 
-        AVAILABLE_SUBSCRIBERS.each(&:subscribe!)
+        subscribers.each do |subscriber|
+          subscriber.subscribe!
+          @subscribed_tracing_events ||= []
+          @subscribed_tracing_events += subscriber::EVENT_NAMES
+        end
 
         @subscribed = true
       end
@@ -20,7 +31,8 @@ module Sentry
       def self.unsubscribe_tracing_events
         return unless @subscribed
 
-        AVAILABLE_SUBSCRIBERS.each(&:unsubscribe!)
+        subscribers.each(&:unsubscribe!)
+        subscribed_tracing_events.clear
 
         @subscribed = false
       end
@@ -34,9 +46,10 @@ module Sentry
 
         SentryNotificationExtension.module_eval do
           def instrument(name, payload = {}, &block)
-            is_public_event = name[0] != "!"
-
-            payload[:start_timestamp] = Time.now.utc.to_f if is_public_event
+            # only inject timestamp to the events the SDK subscribes to
+            if Tracing.subscribed_tracing_events.include?(name)
+              payload[START_TIMESTAMP_NAME] = Time.now.utc.to_f if name[0] != "!" && payload.is_a?(Hash)
+            end
 
             super(name, payload, &block)
           end

@@ -1,7 +1,9 @@
 require "bundler/setup"
+require "debug" if RUBY_VERSION.to_f >= 2.6
 require "pry"
 
 require "sentry-ruby"
+require 'rspec/retry'
 
 require 'simplecov'
 
@@ -11,9 +13,10 @@ SimpleCov.start do
   coverage_dir File.join(__FILE__, "../../coverage")
 end
 
+
 if ENV["CI"]
-  require 'codecov'
-  SimpleCov.formatter = SimpleCov::Formatter::Codecov
+  require 'simplecov-cobertura'
+  SimpleCov.formatter = SimpleCov::Formatter::CoberturaFormatter
 end
 
 # this already requires the sdk
@@ -34,12 +37,9 @@ RSpec.configure do |config|
     c.syntax = :expect
   end
 
-  config.before :each, :subscriber do
-    Sentry::Rails::Tracing.patch_active_support_notifications
-  end
-
-  config.after :each, :subscriber do
+  config.after :each do
     Sentry::Rails::Tracing.unsubscribe_tracing_events
+    expect(Sentry::Rails::Tracing.subscribed_tracing_events).to be_empty
     Sentry::Rails::Tracing.remove_active_support_notifications_patch
   end
 
@@ -54,52 +54,8 @@ RSpec.configure do |config|
   end
 end
 
-def build_exception_with_cause(cause = "exception a")
-  begin
-    raise cause
-  rescue
-    raise "exception b"
-  end
-rescue RuntimeError => e
-  e
-end
-
-def build_exception_with_two_causes
-  begin
-    begin
-      raise "exception a"
-    rescue
-      raise "exception b"
-    end
-  rescue
-    raise "exception c"
-  end
-rescue RuntimeError => e
-  e
-end
-
-def build_exception_with_recursive_cause
-  backtrace = []
-
-  exception = double("Exception")
-  allow(exception).to receive(:cause).and_return(exception)
-  allow(exception).to receive(:message).and_return("example")
-  allow(exception).to receive(:backtrace).and_return(backtrace)
-  exception
-end
-
 def reload_send_event_job
   Sentry.send(:remove_const, "SendEventJob") if defined?(Sentry::SendEventJob)
   expect(defined?(Sentry::SendEventJob)).to eq(nil)
   load File.join(Dir.pwd, "app", "jobs", "sentry", "send_event_job.rb")
-end
-
-def perform_basic_setup
-  Sentry.init do |config|
-    config.dsn = DUMMY_DSN
-    config.logger = ::Logger.new(nil)
-    config.transport.transport_class = Sentry::DummyTransport
-    # for sending events synchronously
-    config.background_worker_threads = 0
-  end
 end

@@ -1,5 +1,3 @@
 class Post < ApplicationRecord
-  before_save do
-    raise "foo"
-  end
+  has_one_attached :cover
 end

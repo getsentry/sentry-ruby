@@ -18,7 +18,15 @@ module Sentry
       # these magic reserved keys, ActiveJob will throw up and error. We want to
       # capture these and mutate the keys so we can sanely report it.
       def filtered
-        filter_context(context)
+        filtered_context = filter_context(context)
+
+        if job_entry = filtered_context.delete(:job)
+          job_entry.each do |k, v|
+            filtered_context[k] = v
+          end
+        end
+
+        filtered_context
       end
 
       def transaction_name

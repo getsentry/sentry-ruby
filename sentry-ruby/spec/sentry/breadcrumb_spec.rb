@@ -16,21 +16,40 @@ RSpec.describe Sentry::Breadcrumb do
     )
   end
 
-  let(:problematic_crumb) do
-    # circular reference
-    a = []
-    b = []
-    a.push(b)
-    b.push(a)
+  describe "#initialize" do
+    it "limits the maximum size of message" do
+      long_message = "a" * Sentry::Event::MAX_MESSAGE_SIZE_IN_BYTES * 2
 
-    Sentry::Breadcrumb.new(
-      category: "baz",
-      message: "I cause issues",
-      data: a
-    )
+      crumb = described_class.new(message: long_message)
+      expect(crumb.message.length).to eq(Sentry::Event::MAX_MESSAGE_SIZE_IN_BYTES + 1)
+    end
+  end
+
+  describe "#message=" do
+    it "limits the maximum size of message" do
+      long_message = "a" * Sentry::Event::MAX_MESSAGE_SIZE_IN_BYTES * 2
+
+      crumb = described_class.new
+      crumb.message = long_message
+      expect(crumb.message.length).to eq(Sentry::Event::MAX_MESSAGE_SIZE_IN_BYTES + 1)
+    end
   end
 
   describe "#to_hash" do
+    let(:problematic_crumb) do
+      # circular reference
+      a = []
+      b = []
+      a.push(b)
+      b.push(a)
+
+      Sentry::Breadcrumb.new(
+        category: "baz",
+        message: "I cause issues",
+        data: a
+      )
+    end
+
     it "serializes data correctly" do
       result = crumb.to_hash
 

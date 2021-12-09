@@ -12,6 +12,7 @@ module Sentry
       private
 
       def collect_exception(env)
+        return nil if env["sentry.already_captured"]
         super || env["action_dispatch.exception"] || env["sentry.rescued_exception"]
       end
 
@@ -29,11 +30,16 @@ module Sentry
         Sentry::Rails.capture_exception(exception)
       end
 
-      def finish_span(span, status_code)
-        if @assets_regex.nil? || !span.name.match?(@assets_regex)
-          span.set_http_status(status_code)
-          span.finish
+      def start_transaction(env, scope)
+        sentry_trace = env["HTTP_SENTRY_TRACE"]
+        options = { name: scope.transaction_name, op: transaction_op }
+
+        if @assets_regex && scope.transaction_name.match?(@assets_regex)
+          options.merge!(sampled: false)
         end
+
+        transaction = Sentry::Transaction.from_sentry_trace(sentry_trace, **options) if sentry_trace
+        Sentry.start_transaction(transaction: transaction, **options)
       end
     end
   end

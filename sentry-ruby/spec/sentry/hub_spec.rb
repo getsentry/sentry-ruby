@@ -1,11 +1,16 @@
 require 'spec_helper'
 
 RSpec.describe Sentry::Hub do
+  let(:string_io) { StringIO.new }
+  let(:logger) do
+    ::Logger.new(string_io)
+  end
   let(:configuration) do
     config = Sentry::Configuration.new
     config.dsn = DUMMY_DSN
     config.transport.transport_class = Sentry::DummyTransport
     config.background_worker_threads = 0
+    config.logger = logger
     config
   end
   let(:client) { Sentry::Client.new(configuration) }
@@ -49,24 +54,29 @@ RSpec.describe Sentry::Hub do
 
       it "merges the contexts/tags/extrac with what the scope already has" do
         scope.set_tags(old_tag: true)
-        scope.set_contexts(old_context: true)
+        scope.set_contexts({ character: { name: "John", age: 25 }})
         scope.set_extras(old_extra: true)
 
         subject.send(
           capture_helper,
           capture_subject,
           tags: { new_tag: true },
-          contexts: { new_context: true },
+          contexts: { another_character: { name: "Jane", age: 20 }},
           extra: { new_extra: true }
         )
 
         event = transport.events.last
         expect(event.tags).to eq({ new_tag: true, old_tag: true })
-        expect(event.contexts).to include({ new_context: true, old_context: true })
+        expect(event.contexts).to include(
+          {
+            character: { name: "John", age: 25 },
+            another_character: { name: "Jane", age: 20 }
+          }
+        )
         expect(event.extra).to eq({ new_extra: true, old_extra: true })
 
         expect(scope.tags).to eq(old_tag: true)
-        expect(scope.contexts).to eq(old_context: true)
+        expect(scope.contexts).to include({ character: { name: "John", age: 25 }})
         expect(scope.extra).to eq(old_extra: true)
       end
     end
@@ -119,6 +129,7 @@ RSpec.describe Sentry::Hub do
       end
     end
   end
+
   describe '#capture_message' do
     let(:message) { "Test message" }
 
@@ -130,6 +141,24 @@ RSpec.describe Sentry::Hub do
       expect do
         subject.capture_message(message)
       end.to change { transport.events.count }.by(1)
+    end
+
+    it "takes backtrace option" do
+      event = subject.capture_message(message, backtrace: ["#{__FILE__}:10:in `foo'"])
+      event_hash = event.to_hash
+      expect(event_hash.dig(:threads, :values, 0, :stacktrace, :frames, 0, :function)).to eq("foo")
+    end
+
+    it "raises error when passing a non-string object" do
+      expect do
+        subject.capture_message(1)
+      end.to raise_error(ArgumentError, 'expect the argument to be a String, got Integer (1)')
+    end
+
+    it "assigns default backtrace with caller" do
+      event = subject.capture_message(message)
+      event_hash = event.to_hash
+      expect(event_hash.dig(:threads, :values, 0, :stacktrace, :frames, 0, :function)).to eq("<main>")
     end
 
     it_behaves_like "capture_helper" do
@@ -155,6 +184,15 @@ RSpec.describe Sentry::Hub do
       expect do
         subject.capture_exception("String")
       end.to raise_error(ArgumentError, 'expect the argument to be a Exception, got String ("String")')
+    end
+
+    # see https://github.com/getsentry/sentry-ruby/issues/1323
+    it "don't causes error when the exception's message is nil" do
+      allow(exception).to receive(:message)
+
+      expect do
+        subject.capture_exception(exception)
+      end.to change { transport.events.count }.by(1)
     end
 
     it_behaves_like "capture_helper" do
@@ -183,6 +221,24 @@ RSpec.describe Sentry::Hub do
       expect do
         subject.capture_event("String")
       end.to raise_error(ArgumentError, 'expect the argument to be a Sentry::Event, got String ("String")')
+    end
+
+    it "doesn't log event payload" do
+      subject.capture_event(event)
+
+      expect(string_io.string).not_to include(event.to_json_compatible.to_s)
+    end
+
+    context "in debug mode" do
+      before do
+        configuration.debug = true
+      end
+
+      it "logs event payload" do
+        subject.capture_event(event)
+
+        expect(string_io.string).to include(event.to_json_compatible.to_s)
+      end
     end
 
     it_behaves_like "capture_helper" do
@@ -268,6 +324,18 @@ RSpec.describe Sentry::Hub do
 
           expect(peek_crumb).to eq(nil)
         end
+      end
+    end
+
+    context "when the SDK is not activated in the current environment" do
+      before do
+        configuration.enabled_environments = ["production"]
+      end
+
+      it "doesn't record breadcrumbs" do
+        subject.add_breadcrumb(new_breadcrumb)
+
+        expect(peek_crumb).to eq(nil)
       end
     end
   end
@@ -375,6 +443,49 @@ RSpec.describe Sentry::Hub do
       event = subject.capture_message("Test message")
 
       expect(subject.last_event_id).to eq(event.event_id)
+    end
+  end
+
+  describe "#with_background_worker_disabled" do
+    before do
+      configuration.background_worker_threads = 5
+      Sentry.background_worker = Sentry::BackgroundWorker.new(configuration)
+      configuration.before_send = lambda do |event, _hint|
+        sleep 0.5
+        event
+      end
+    end
+
+    it "disables async event sending temporarily" do
+      subject.with_background_worker_disabled do
+        subject.capture_message("foo")
+      end
+
+      expect(transport.events.count).to eq(1)
+    end
+
+    it "returns the original execution result" do
+      result = subject.with_background_worker_disabled do
+        "foo"
+      end
+
+      expect(result).to eq("foo")
+    end
+
+    it "doesn't interfere events outside of the block" do
+      subject.with_background_worker_disabled {}
+
+      subject.capture_message("foo")
+      expect(transport.events.count).to eq(0)
+    end
+
+    it "resumes the backgrounding state even with exception" do
+      subject.with_background_worker_disabled do
+        raise "foo"
+      end rescue nil
+
+      subject.capture_message("foo")
+      expect(transport.events.count).to eq(0)
     end
   end
 end

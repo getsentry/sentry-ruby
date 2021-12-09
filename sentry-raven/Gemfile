@@ -26,7 +26,6 @@ gem "benchmark-ipsa"
 gem "benchmark-memory"
 gem "ruby-prof", platform: :mri
 gem "rake", "> 12"
-gem "rubocop", "~> 0.81.0"
 gem "rspec", "~> 3.9.0"
 gem "capybara", "~> 3.15.0" # rspec system tests
 gem "puma" # rspec system tests

@@ -9,13 +9,6 @@ RSpec.describe Sentry::Rails::Tracing, type: :request do
     transport.events.last.to_json_compatible
   end
 
-  after do
-    transport.events = []
-
-    described_class.unsubscribe_tracing_events
-    described_class.remove_active_support_notifications_patch
-  end
-
   context "with traces_sample_rate set" do
     before do
       expect(described_class).to receive(:subscribe_tracing_events).and_call_original
@@ -28,6 +21,7 @@ RSpec.describe Sentry::Rails::Tracing, type: :request do
     it "records transaction with exception" do
       get "/posts"
 
+      expect(response).to have_http_status(:internal_server_error)
       expect(transport.events.count).to eq(2)
 
       event = transport.events.first.to_hash
@@ -60,6 +54,7 @@ RSpec.describe Sentry::Rails::Tracing, type: :request do
 
       get "/posts/#{p.id}"
 
+      expect(response).to have_http_status(:ok)
       expect(transport.events.count).to eq(1)
 
       transaction = transport.events.last.to_hash
@@ -80,19 +75,35 @@ RSpec.describe Sentry::Rails::Tracing, type: :request do
       expect(first_span[:timestamp] - first_span[:start_timestamp]).to be_between(10.0 / 1_000_000, 10.0 / 1000)
 
       last_span = transaction[:spans][2]
+      expect(last_span[:data][:payload].keys).not_to include(:headers)
+      expect(last_span[:data][:payload].keys).not_to include(:request)
+      expect(last_span[:data][:payload].keys).not_to include(:response)
       expect(last_span[:op]).to eq("process_action.action_controller")
       expect(last_span[:description]).to eq("PostsController#show")
       expect(last_span[:parent_span_id]).to eq(parent_span_id)
     end
+
+    it "doesn't mess with custom instrumentations" do
+      get "/with_custom_instrumentation"
+      expect(response).to have_http_status(:ok)
+
+      expect(transport.events.count).to eq(1)
+    end
   end
 
   context "with sprockets-rails" do
+    let(:string_io) { StringIO.new }
+    let(:logger) do
+      ::Logger.new(string_io)
+    end
+
     before do
       require "sprockets/railtie"
 
       make_basic_app do |config, app|
         app.config.public_file_server.enabled = true
         config.traces_sample_rate = 1.0
+        config.logger = logger
       end
     end
 
@@ -101,14 +112,21 @@ RSpec.describe Sentry::Rails::Tracing, type: :request do
 
       expect(response).to have_http_status(:not_found)
       expect(transport.events).to be_empty
+      expect(string_io.string).not_to match(/\[Tracing\] Starting <rails\.request>/)
     end
   end
 
   context "with config.public_file_server.enabled = true" do
+    let(:string_io) { StringIO.new }
+    let(:logger) do
+      ::Logger.new(string_io)
+    end
+
     before do
       make_basic_app do |config, app|
         app.config.public_file_server.enabled = true
         config.traces_sample_rate = 1.0
+        config.logger = logger
       end
     end
 
@@ -117,6 +135,7 @@ RSpec.describe Sentry::Rails::Tracing, type: :request do
 
       expect(response).to have_http_status(:ok)
       expect(transport.events).to be_empty
+      expect(string_io.string).not_to match(/\[Tracing\] Starting <rails\.request>/)
     end
 
     it "doesn't get messed up by previous exception" do
@@ -143,7 +162,8 @@ RSpec.describe Sentry::Rails::Tracing, type: :request do
           op: "pageload",
           status: "ok",
           sampled: true,
-          name: "a/path"
+          name: "a/path",
+          hub: Sentry.get_current_hub
         )
       end
 

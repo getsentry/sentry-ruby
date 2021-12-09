@@ -9,6 +9,7 @@ RSpec.describe Sentry::Rails::Tracing::ActionViewSubscriber, :subscriber, type: 
     before do
       make_basic_app do |config|
         config.traces_sample_rate = 1.0
+        config.rails.tracing_subscribers = [described_class]
       end
     end
 
@@ -19,7 +20,7 @@ RSpec.describe Sentry::Rails::Tracing::ActionViewSubscriber, :subscriber, type: 
 
       transaction = transport.events.first.to_hash
       expect(transaction[:type]).to eq("transaction")
-      expect(transaction[:spans].count).to eq(2)
+      expect(transaction[:spans].count).to eq(1)
 
       span = transaction[:spans][0]
       expect(span[:op]).to eq("render_template.action_view")
@@ -34,7 +35,7 @@ RSpec.describe Sentry::Rails::Tracing::ActionViewSubscriber, :subscriber, type: 
     end
 
     it "doesn't record spans" do
-      transaction = Sentry::Transaction.new(sampled: false)
+      transaction = Sentry::Transaction.new(sampled: false, hub: Sentry.get_current_hub)
       Sentry.get_current_scope.set_span(transaction)
 
       get "/view"

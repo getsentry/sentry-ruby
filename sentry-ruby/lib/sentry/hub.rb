@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 require "sentry/scope"
 require "sentry/client"
 
@@ -19,6 +21,10 @@ module Sentry
 
     def current_client
       current_layer&.client
+    end
+
+    def configuration
+      current_client.configuration
     end
 
     def current_scope
@@ -69,16 +75,26 @@ module Sentry
       @stack.pop
     end
 
-    def start_transaction(transaction: nil, **options)
-      transaction ||= Transaction.new(**options)
-      transaction.set_initial_sample_desicion
+    def start_transaction(transaction: nil, custom_sampling_context: {}, **options)
+      return unless configuration.tracing_enabled?
+
+      transaction ||= Transaction.new(**options.merge(hub: self))
+
+      sampling_context = {
+        transaction_context: transaction.to_hash,
+        parent_sampled: transaction.parent_sampled
+      }
+
+      sampling_context.merge!(custom_sampling_context)
+
+      transaction.set_initial_sample_decision(sampling_context: sampling_context)
       transaction
     end
 
     def capture_exception(exception, **options, &block)
-      return unless current_client
-
       check_argument_type!(exception, ::Exception)
+
+      return unless current_client
 
       options[:hint] ||= {}
       options[:hint][:exception] = exception
@@ -90,18 +106,21 @@ module Sentry
     end
 
     def capture_message(message, **options, &block)
+      check_argument_type!(message, ::String)
+
       return unless current_client
 
       options[:hint] ||= {}
       options[:hint][:message] = message
-      event = current_client.event_from_message(message, options[:hint])
+      backtrace = options.delete(:backtrace)
+      event = current_client.event_from_message(message, options[:hint], backtrace: backtrace)
       capture_event(event, **options, &block)
     end
 
     def capture_event(event, **options, &block)
-      return unless current_client
-
       check_argument_type!(event, Sentry::Event)
+
+      return unless current_client
 
       hint = options.delete(:hint) || {}
       scope = current_scope.dup
@@ -116,11 +135,18 @@ module Sentry
 
       event = current_client.capture_event(event, scope, hint)
 
+
+      if event && configuration.debug
+        configuration.log_debug(event.to_json_compatible)
+      end
+
       @last_event_id = event&.event_id
       event
     end
 
     def add_breadcrumb(breadcrumb, hint: {})
+      return unless configuration.enabled_in_current_env?
+
       if before_breadcrumb = current_client.configuration.before_breadcrumb
         breadcrumb = before_breadcrumb.call(breadcrumb, hint)
       end
@@ -128,6 +154,17 @@ module Sentry
       return unless breadcrumb
 
       current_scope.add_breadcrumb(breadcrumb)
+    end
+
+    # this doesn't do anything to the already initialized background worker
+    # but it temporarily disables dispatching events to it
+    def with_background_worker_disabled(&block)
+      original_background_worker_threads = configuration.background_worker_threads
+      configuration.background_worker_threads = 0
+
+      block.call
+    ensure
+      configuration.background_worker_threads = original_background_worker_threads
     end
 
     private

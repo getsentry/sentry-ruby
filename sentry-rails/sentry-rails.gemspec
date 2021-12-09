@@ -6,7 +6,7 @@ Gem::Specification.new do |spec|
   spec.authors = ["Sentry Team"]
   spec.description = spec.summary = "A gem that provides Rails integration for the Sentry error logger"
   spec.email = "accounts@sentry.io"
-  spec.license = 'Apache-2.0'
+  spec.license = 'MIT'
   spec.homepage = "https://github.com/getsentry/sentry-ruby"
 
   spec.platform = Gem::Platform::RUBY
@@ -16,12 +16,12 @@ Gem::Specification.new do |spec|
 
   spec.metadata["homepage_uri"] = spec.homepage
   spec.metadata["source_code_uri"] = spec.homepage
-  spec.metadata["changelog_uri"] = "#{spec.homepage}/blob/master/sentry-rails/CHANGELOG.md"
+  spec.metadata["changelog_uri"] = "#{spec.homepage}/blob/master/CHANGELOG.md"
 
   spec.bindir        = "exe"
   spec.executables   = spec.files.grep(%r{^exe/}) { |f| File.basename(f) }
   spec.require_paths = ["lib"]
 
-  spec.add_dependency "rails", ">= 5.0"
-  spec.add_dependency "sentry-ruby-core", "~> 4.2.0"
+  spec.add_dependency "railties", ">= 5.0"
+  spec.add_dependency "sentry-ruby-core", "~> 4.8.1"
 end

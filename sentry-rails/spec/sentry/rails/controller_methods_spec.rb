@@ -1,4 +1,5 @@
 require 'spec_helper'
+require "sentry/rails/controller_methods"
 
 RSpec.describe Sentry::Rails::ControllerMethods do
   include described_class
@@ -8,7 +9,7 @@ RSpec.describe Sentry::Rails::ControllerMethods do
   end
 
   before do
-    perform_basic_setup
+    make_basic_app
   end
 
   let(:options) do

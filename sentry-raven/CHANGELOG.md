@@ -1,5 +1,20 @@
 # Changelog
 
+## Unreleased
+
+- fix: user_context with block does not reset context after block exits
+
+## 3.1.2
+
+- Fix Delayed::Plugins::Raven when job raises exception [#1057](https://github.com/getsentry/sentry-ruby/pull/1057)
+- Merge hash instead of replacing the original value in user_context [#1064](https://github.com/getsentry/sentry-ruby/pull/1064)
+- Don't exclude ActionView::MissingTemplate error by default [#1092](https://github.com/getsentry/sentry-ruby/pull/1092)
+- Fix typo: much -> must for Raven::Event [#1106](https://github.com/getsentry/sentry-ruby/pull/1106)
+- Fix undefined local variable or method logger [#1143](https://github.com/getsentry/sentry-ruby/pull/1143)
+  - Fixes [#1110](https://github.com/getsentry/sentry-ruby/issues/1110)
+- fix format headers for sentry-raven [#1198](https://github.com/getsentry/sentry-ruby/pull/1198)
+- Print deprecation message after sentry-raven is installed [#1206](https://github.com/getsentry/sentry-ruby/pull/1206)
+
 ## 3.1.1
 
 **Feature**

@@ -25,4 +25,16 @@ RSpec.describe Sentry::DSN do
       expect(subject.envelope_endpoint).to eq("/sentry/api/42/envelope/")
     end
   end
+
+  describe "#server" do
+    it "returns scheme + host" do
+      expect(subject.server).to eq("http://sentry.localdomain:3000")
+    end
+  end
+
+  describe "#csp_report_uri" do
+    it "returns the correct uri" do
+      expect(subject.csp_report_uri).to eq("http://sentry.localdomain:3000/api/42/security/?sentry_key=12345")
+    end
+  end
 end

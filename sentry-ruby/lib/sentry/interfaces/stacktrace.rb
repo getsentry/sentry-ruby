@@ -1,51 +1,45 @@
+# frozen_string_literal: true
+
 module Sentry
   class StacktraceInterface
     attr_reader :frames
 
-    def initialize(backtrace:, project_root:, app_dirs_pattern:, linecache:, context_lines:, backtrace_cleanup_callback: nil)
-      @project_root = project_root
-      @frames = []
-
-      parsed_backtrace_lines = Backtrace.parse(
-        backtrace, project_root, app_dirs_pattern, &backtrace_cleanup_callback
-      ).lines
-
-      parsed_backtrace_lines.reverse.each_with_object(@frames) do |line, frames|
-        frame = convert_parsed_line_into_frame(line, project_root, linecache, context_lines)
-        frames << frame if frame.filename
-      end
+    def initialize(frames:)
+      @frames = frames
     end
 
     def to_hash
       { frames: @frames.map(&:to_hash) }
     end
 
-    private
-
-    def convert_parsed_line_into_frame(line, project_root, linecache, context_lines)
-      frame = StacktraceInterface::Frame.new(@project_root, line)
-      frame.set_context(linecache, context_lines) if context_lines
-      frame
+    def inspect
+      @frames.map(&:to_s)
     end
+
+    private
 
     # Not actually an interface, but I want to use the same style
     class Frame < Interface
-      attr_accessor :abs_path, :context_line, :function, :in_app,
-                    :lineno, :module, :pre_context, :post_context, :vars
+      attr_accessor :abs_path, :context_line, :function, :in_app, :filename,
+                  :lineno, :module, :pre_context, :post_context, :vars
 
       def initialize(project_root, line)
         @project_root = project_root
 
-        @abs_path = line.file if line.file
+        @abs_path = line.file
         @function = line.method if line.method
         @lineno = line.number
         @in_app = line.in_app
         @module = line.module_name if line.module_name
+        @filename = compute_filename
       end
 
-      def filename
+      def to_s
+        "#{@filename}:#{@lineno}"
+      end
+
+      def compute_filename
         return if abs_path.nil?
-        return @filename if instance_variable_defined?(:@filename)
 
         prefix =
           if under_project_root? && in_app
@@ -56,19 +50,18 @@ module Sentry
             longest_load_path
           end
 
-        @filename = prefix ? abs_path[prefix.to_s.chomp(File::SEPARATOR).length + 1..-1] : abs_path
+        prefix ? abs_path[prefix.to_s.chomp(File::SEPARATOR).length + 1..-1] : abs_path
       end
 
       def set_context(linecache, context_lines)
         return unless abs_path
 
-        self.pre_context, self.context_line, self.post_context = \
+        @pre_context, @context_line, @post_context = \
             linecache.get_file_context(abs_path, lineno, context_lines)
       end
 
       def to_hash(*args)
         data = super(*args)
-        data[:filename] = filename
         data.delete(:vars) unless vars && !vars.empty?
         data.delete(:pre_context) unless pre_context && !pre_context.empty?
         data.delete(:post_context) unless post_context && !post_context.empty?

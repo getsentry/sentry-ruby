@@ -1,6 +1,9 @@
 require "bundler/setup"
+require "debug" if RUBY_VERSION.to_f >= 2.6
 require "pry"
+require "timecop"
 require 'simplecov'
+require 'rspec/retry'
 
 SimpleCov.start do
   project_name "sentry-ruby"
@@ -9,8 +12,8 @@ SimpleCov.start do
 end
 
 if ENV["CI"]
-  require 'codecov'
-  SimpleCov.formatter = SimpleCov::Formatter::Codecov
+  require 'simplecov-cobertura'
+  SimpleCov.formatter = SimpleCov::Formatter::CoberturaFormatter
 end
 
 require "sentry-ruby"
@@ -40,6 +43,12 @@ RSpec.configure do |config|
 
   config.before(:each, rack: true) do
     skip("skip rack related tests") unless defined?(Rack)
+  end
+
+  RSpec::Matchers.define :have_recorded_lost_event do |reason, type|
+    match do |transport|
+      expect(transport.discarded_events[[reason, type]]).to be > 0
+    end
   end
 end
 
@@ -79,7 +88,7 @@ end
 
 def perform_basic_setup
   Sentry.init do |config|
-    config.breadcrumbs_logger = [:sentry_logger]
+    config.logger = Logger.new(nil)
     config.dsn = DUMMY_DSN
     config.transport.transport_class = Sentry::DummyTransport
     # so the events will be sent synchronously for testing

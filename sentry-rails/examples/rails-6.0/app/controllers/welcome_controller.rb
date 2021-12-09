@@ -2,7 +2,16 @@ class WelcomeController < ApplicationController
   before_action :set_sentry_context
 
   def index
-    1 / 0
+    a = 1
+    b = 0
+    a / b
+  end
+
+  def connect_trace
+    # see the sinatra example under the `sentry-ruby` folder
+    response = Net::HTTP.get_response(URI("http://localhost:4567/connect_trace"))
+
+    render plain: response.code
   end
 
   def appearance
@@ -11,9 +20,14 @@ class WelcomeController < ApplicationController
   def view_error
   end
 
-  def worker_error
+  def sidekiq_error
     ErrorWorker.perform_async
-    render plain: "success"
+    render plain: "Remember to start sidekiq worker with '$ bundle exec sidekiq'"
+  end
+
+  def resque_error
+    Resque.enqueue(RaiseError)
+    render plain: "Remember to start resque worker with '$ QUEUE=* bundle exec rake resque:work'"
   end
 
   def job_error

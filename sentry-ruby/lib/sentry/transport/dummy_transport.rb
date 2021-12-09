@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 module Sentry
   class DummyTransport < Transport
     attr_accessor :events

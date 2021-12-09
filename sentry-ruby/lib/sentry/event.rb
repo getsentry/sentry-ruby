@@ -6,10 +6,11 @@ require 'sentry/interface'
 require 'sentry/backtrace'
 require 'sentry/utils/real_ip'
 require 'sentry/utils/request_id'
+require 'sentry/utils/custom_inspection'
 
 module Sentry
   class Event
-    ATTRIBUTES = %i(
+    SERIALIZEABLE_ATTRIBUTES = %i(
       event_id level timestamp
       release environment server_name modules
       message user tags contexts extra
@@ -17,10 +18,18 @@ module Sentry
       platform sdk type
     )
 
+    WRITER_ATTRIBUTES = SERIALIZEABLE_ATTRIBUTES - %i(type timestamp level)
+
     MAX_MESSAGE_SIZE_IN_BYTES = 1024 * 8
 
-    attr_accessor(*ATTRIBUTES)
-    attr_reader :configuration, :request, :exception, :stacktrace, :threads
+    SKIP_INSPECTION_ATTRIBUTES = [:@configuration, :@modules, :@backtrace]
+
+    include CustomInspection
+
+    attr_writer(*WRITER_ATTRIBUTES)
+    attr_reader(*SERIALIZEABLE_ATTRIBUTES)
+
+    attr_reader :configuration, :request, :exception, :threads
 
     def initialize(configuration:, integration_meta: nil, message: nil)
       # this needs to go first because some setters rely on configuration
@@ -52,19 +61,26 @@ module Sentry
     class << self
       def get_log_message(event_hash)
         message = event_hash[:message] || event_hash['message']
-        message = get_message_from_exception(event_hash) if message.nil? || message.empty?
-        message = '<no message value>' if message.nil? || message.empty?
-        message
+
+        return message unless message.nil? || message.empty?
+
+        message = get_message_from_exception(event_hash)
+
+        return message unless message.nil? || message.empty?
+
+        message = event_hash[:transaction] || event_hash["transaction"]
+
+        return message unless message.nil? || message.empty?
+
+        '<no message value>'
       end
 
       def get_message_from_exception(event_hash)
-        (
-          event_hash &&
-          event_hash[:exception] &&
-          event_hash[:exception][:values] &&
-          event_hash[:exception][:values][0] &&
-          "#{event_hash[:exception][:values][0][:type]}: #{event_hash[:exception][:values][0][:value]}"
-        )
+        if exception = event_hash.dig(:exception, :values, 0)
+          "#{exception[:type]}: #{exception[:value]}"
+        elsif exception = event_hash.dig("exception", "values", 0)
+          "#{exception["type"]}: #{exception["value"]}"
+        end
       end
     end
 
@@ -92,14 +108,9 @@ module Sentry
       end
     end
 
-    def type
-      "event"
-    end
-
     def to_hash
       data = serialize_attributes
       data[:breadcrumbs] = breadcrumbs.to_hash if breadcrumbs
-      data[:stacktrace] = stacktrace.to_hash if stacktrace
       data[:request] = request.to_hash if request
       data[:exception] = exception.to_hash if exception
       data[:threads] = threads.to_hash if threads
@@ -112,54 +123,29 @@ module Sentry
     end
 
     def add_request_interface(env)
-      @request = Sentry::RequestInterface.from_rack(env)
+      @request = Sentry::RequestInterface.build(env: env)
     end
 
     def add_threads_interface(backtrace: nil, **options)
-      @threads = ThreadsInterface.new(**options)
-      @threads.stacktrace = initialize_stacktrace_interface(backtrace) if backtrace
-    end
-
-    def add_exception_interface(exc)
-      if exc.respond_to?(:sentry_context)
-        @extra.merge!(exc.sentry_context)
-      end
-
-      @exception = Sentry::ExceptionInterface.new.tap do |exc_int|
-        exceptions = Sentry::Utils::ExceptionCauseChain.exception_to_array(exc).reverse
-        backtraces = Set.new
-        exc_int.values = exceptions.map do |e|
-          SingleExceptionInterface.new.tap do |int|
-            int.type = e.class.to_s
-            int.value = e.message.byteslice(0..MAX_MESSAGE_SIZE_IN_BYTES)
-            int.module = e.class.to_s.split('::')[0...-1].join('::')
-            int.thread_id = Thread.current.object_id
-
-            int.stacktrace =
-              if e.backtrace && !backtraces.include?(e.backtrace.object_id)
-                backtraces << e.backtrace.object_id
-                initialize_stacktrace_interface(e.backtrace)
-              end
-          end
-        end
-      end
-    end
-
-    def initialize_stacktrace_interface(backtrace)
-      StacktraceInterface.new(
+      @threads = ThreadsInterface.build(
         backtrace: backtrace,
-        project_root: configuration.project_root.to_s,
-        app_dirs_pattern: configuration.app_dirs_pattern,
-        linecache: configuration.linecache,
-        context_lines: configuration.context_lines,
-        backtrace_cleanup_callback: configuration.backtrace_cleanup_callback
+        stacktrace_builder: configuration.stacktrace_builder,
+        **options
       )
+    end
+
+    def add_exception_interface(exception)
+      if exception.respond_to?(:sentry_context)
+        @extra.merge!(exception.sentry_context)
+      end
+
+      @exception = Sentry::ExceptionInterface.build(exception: exception, stacktrace_builder: configuration.stacktrace_builder)
     end
 
     private
 
     def serialize_attributes
-      self.class::ATTRIBUTES.each_with_object({}) do |att, memo|
+      self.class::SERIALIZEABLE_ATTRIBUTES.each_with_object({}) do |att, memo|
         if value = public_send(att)
           memo[att] = value
         end

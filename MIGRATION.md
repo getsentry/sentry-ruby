@@ -78,7 +78,7 @@ Configure data in a local scope
 
 ```ruby
 # Before
-Raven.tag_context(foo: "bar") do
+Raven.tags_context(foo: "bar") do
   Raven.capture_message("test")
 end
 
@@ -204,7 +204,7 @@ Old:
 Raven.user_context(id: 1) do
   # send event
 end
-Raven.tag_context(foo: "bar") do
+Raven.tags_context(foo: "bar") do
   # send event
 end
 Raven.extra_context(debug: true) do
@@ -215,10 +215,12 @@ end
 New:
 
 ```ruby
-Sentry.set_user(id: 1)
-Sentry.set_tags(foo: "bar")
-Sentry.set_extras(debug: true)
-# send event
+Sentry.with_scope do |scope|
+  scope.set_user(id: 1)
+  scope.set_tags(foo: "bar")
+  scope.set_extras(debug: true)
+  # send event
+end
 ```
 
 

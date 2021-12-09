@@ -10,6 +10,12 @@ class PostsController < ApplicationController
   # GET /posts/1
   # GET /posts/1.json
   def show
+    @post.cover.attach(
+      io: File.open(File.join(Rails.root, 'public', 'favicon.ico')),
+      filename: 'favicon.ico',
+      identify: false
+    )
+    @post
   end
 
   # GET /posts/new
@@ -69,6 +75,6 @@ class PostsController < ApplicationController
 
     # Only allow a list of trusted parameters through.
     def post_params
-      params.require(:post).permit(:title, :content)
+      params.require(:post).permit(:title, :content, :cover)
     end
 end

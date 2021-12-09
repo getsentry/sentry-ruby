@@ -23,194 +23,6 @@ RSpec.describe Sentry::Client do
     allow(Time).to receive(:now).and_return fake_time
   end
 
-  describe "#capture_event" do
-    let(:message) { "Test message" }
-    let(:scope) { Sentry::Scope.new }
-    let(:event) { subject.event_from_message(message) }
-
-    context 'with config.async set' do
-      let(:async_block) do
-        lambda do |event|
-          subject.send_event(event)
-        end
-      end
-
-      around do |example|
-        prior_async = configuration.async
-        configuration.async = async_block
-        example.run
-        configuration.async = prior_async
-      end
-
-      it "executes the given block" do
-        expect(async_block).to receive(:call).and_call_original
-
-        returned = subject.capture_event(event, scope)
-
-        expect(returned).to be_a(Sentry::Event)
-        expect(subject.transport.events.first).to eq(event.to_json_compatible)
-      end
-
-      it "doesn't call the async block if not allow sending events" do
-        allow(configuration).to receive(:sending_allowed?).and_return(false)
-
-        expect(async_block).not_to receive(:call)
-
-        returned = subject.capture_event(event, scope)
-
-        expect(returned).to eq(nil)
-      end
-
-      context "with false as value (the legacy way to disable it)" do
-        let(:async_block) { false }
-
-        it "doesn't cause any issue" do
-          returned = subject.capture_event(event, scope, { background: false })
-
-          expect(returned).to be_a(Sentry::Event)
-          expect(subject.transport.events.first).to eq(event)
-        end
-      end
-
-      context "with 2 arity block" do
-        let(:async_block) do
-          lambda do |event, hint|
-            event["tags"]["hint"] = hint
-            subject.send_event(event)
-          end
-        end
-
-        it "serializes hint and supplies it as the second argument" do
-          expect(configuration.async).to receive(:call).and_call_original
-
-          returned = subject.capture_event(event, scope, { foo: "bar" })
-
-          expect(returned).to be_a(Sentry::Event)
-          event = subject.transport.events.first
-          expect(event.dig("tags", "hint")).to eq({ "foo" => "bar" })
-        end
-      end
-
-      context "when async raises an exception" do
-        around do |example|
-          prior_async = configuration.async
-          configuration.async = proc { raise TypeError }
-          example.run
-          configuration.async = prior_async
-        end
-
-        it 'sends the result of Event.capture_exception via fallback' do
-          expect(configuration.logger).to receive(:error).with(Sentry::LOGGER_PROGNAME) { "async event sending failed: TypeError" }
-          expect(configuration.async).to receive(:call).and_call_original
-          expect(subject).to receive(:send_event)
-
-          subject.capture_event(event, scope)
-        end
-      end
-    end
-
-    context "with background_worker enabled (default)" do
-      before do
-        Sentry.background_worker = Sentry::BackgroundWorker.new(configuration)
-        configuration.before_send = lambda do |event, _hint|
-          sleep 0.1
-          event
-        end
-      end
-
-      let(:transport) do
-        subject.transport
-      end
-
-      it "sends events asynchronously" do
-        subject.capture_event(event, scope)
-
-        expect(transport.events.count).to eq(0)
-
-        sleep(0.2)
-
-        expect(transport.events.count).to eq(1)
-      end
-
-      context "with hint: { background: false }" do
-        it "sends the event immediately" do
-          subject.capture_event(event, scope, { background: false })
-
-          expect(transport.events.count).to eq(1)
-        end
-      end
-    end
-  end
-
-  describe "#send_event" do
-    let(:event_object) do
-      subject.event_from_exception(ZeroDivisionError.new("divided by 0"))
-    end
-    let(:transaction_event_object) do
-      subject.event_from_transaction(Sentry::Transaction.new)
-    end
-
-    before do
-      expect(subject.transport).to receive(:send_event).with(event)
-    end
-
-    shared_examples "Event in send_event" do
-      it "sends data through the transport" do
-        subject.send_event(event)
-      end
-
-      it "applies before_send callback before sending the event" do
-        configuration.before_send = lambda do |event, _hint|
-          if event.is_a?(Sentry::Event)
-            event.tags[:called] = true
-          else
-            event["tags"]["called"] = true
-          end
-
-          event
-        end
-
-        subject.send_event(event)
-
-        if event.is_a?(Sentry::Event)
-          expect(event.tags[:called]).to eq(true)
-        else
-          expect(event["tags"]["called"]).to eq(true)
-        end
-      end
-    end
-
-    it_behaves_like "Event in send_event" do
-      let(:event) { event_object }
-    end
-
-    it_behaves_like "Event in send_event" do
-      let(:event) { event_object.to_json_compatible }
-    end
-
-    shared_examples "TransactionEvent in send_event" do
-      it "sends data through the transport" do
-        subject.send_event(event)
-      end
-
-      it "doesn't apply before_send to TransactionEvent" do
-        configuration.before_send = lambda do |event, _hint|
-          raise "shouldn't trigger me"
-        end
-
-        subject.send_event(event)
-      end
-    end
-
-    it_behaves_like "TransactionEvent in send_event" do
-      let(:event) { transaction_event_object }
-    end
-
-    it_behaves_like "TransactionEvent in send_event" do
-      let(:event) { transaction_event_object.to_json_compatible }
-    end
-  end
-
   describe "#transport" do
     let(:configuration) { Sentry::Configuration.new }
 
@@ -282,7 +94,7 @@ RSpec.describe Sentry::Client do
       Sentry::Hub.new(subject, Sentry::Scope.new)
     end
     let(:transaction) do
-      Sentry::Transaction.new(name: "test transaction", sampled: true)
+      Sentry::Transaction.new(name: "test transaction", hub: hub, sampled: true)
     end
 
     before do
@@ -367,6 +179,13 @@ RSpec.describe Sentry::Client do
         end
       end
 
+      context 'for a Sentry::ExternalError' do
+        let(:exception) { Sentry::ExternalError.new }
+        it 'does not create an event' do
+          expect(subject.event_from_exception(exception)).to be_nil
+        end
+      end
+
       context 'for an excluded exception type' do
         module Sentry::Test
           class BaseExc < RuntimeError; end
@@ -432,22 +251,19 @@ RSpec.describe Sentry::Client do
         end
       end
 
-      # Only check causes when they're supported
-      if Exception.new.respond_to? :cause
-        context 'when the exception has a cause' do
-          let(:exception) { build_exception_with_cause }
+      context 'when the exception has a cause' do
+        let(:exception) { build_exception_with_cause }
 
-          it 'captures the cause' do
-            expect(hash[:exception][:values].length).to eq(2)
-          end
+        it 'captures the cause' do
+          expect(hash[:exception][:values].length).to eq(2)
         end
+      end
 
-        context 'when the exception has nested causes' do
-          let(:exception) { build_exception_with_two_causes }
+      context 'when the exception has nested causes' do
+        let(:exception) { build_exception_with_two_causes }
 
-          it 'captures nested causes' do
-            expect(hash[:exception][:values].length).to eq(3)
-          end
+        it 'captures nested causes' do
+          expect(hash[:exception][:values].length).to eq(3)
         end
       end
 
@@ -538,6 +354,36 @@ RSpec.describe Sentry::Client do
         it "merges the context into event's extra" do
           expect(hash[:extra][:foo]).to eq('bar')
         end
+      end
+    end
+  end
+
+  describe "#generate_sentry_trace" do
+    let(:string_io) { StringIO.new }
+    let(:logger) do
+      ::Logger.new(string_io)
+    end
+
+    before do
+      configuration.logger = logger
+    end
+
+    let(:span) { Sentry::Span.new }
+
+    it "generates the trace with given span and logs correct message" do
+      expect(subject.generate_sentry_trace(span)).to eq(span.to_sentry_trace)
+      expect(string_io.string).to match(
+        /\[Tracing\] Adding sentry-trace header to outgoing request: #{span.to_sentry_trace}/
+      )
+    end
+
+    context "with config.propagate_traces = false" do
+      before do
+        configuration.propagate_traces = false
+      end
+
+      it "returns nil" do
+        expect(subject.generate_sentry_trace(span)).to eq(nil)
       end
     end
   end

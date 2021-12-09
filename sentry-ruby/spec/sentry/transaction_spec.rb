@@ -1,6 +1,10 @@
 require "spec_helper"
 
 RSpec.describe Sentry::Transaction do
+  before do
+    perform_basic_setup
+  end
+
   subject do
     described_class.new(
       op: "sql.query",
@@ -8,27 +12,66 @@ RSpec.describe Sentry::Transaction do
       status: "ok",
       sampled: true,
       parent_sampled: true,
-      name: "foo"
+      name: "foo",
+      hub: Sentry.get_current_hub
     )
   end
 
   describe ".from_sentry_trace" do
     let(:sentry_trace) { subject.to_sentry_trace }
 
-    it "returns correctly-formatted value" do
-      child_transaction = described_class.from_sentry_trace(sentry_trace, op: "child")
-
-      expect(child_transaction.trace_id).to eq(subject.trace_id)
-      expect(child_transaction.parent_span_id).to eq(subject.span_id)
-      expect(child_transaction.parent_sampled).to eq(true)
-      expect(child_transaction.sampled).to eq(true)
-      expect(child_transaction.op).to eq("child")
+    let(:configuration) do
+      Sentry.configuration
     end
 
-    it "handles invalid values without crashing" do
-      child_transaction = described_class.from_sentry_trace("dummy", op: "child")
+    context "when tracing is enabled (> 0)" do
+      before do
+        configuration.traces_sample_rate = 1.0
+      end
 
-      expect(child_transaction).to be_nil
+      it "returns correctly-formatted value" do
+        child_transaction = described_class.from_sentry_trace(sentry_trace, op: "child")
+
+        expect(child_transaction.trace_id).to eq(subject.trace_id)
+        expect(child_transaction.parent_span_id).to eq(subject.span_id)
+        expect(child_transaction.parent_sampled).to eq(true)
+        # doesn't set the sampled value
+        expect(child_transaction.sampled).to eq(nil)
+        expect(child_transaction.op).to eq("child")
+      end
+
+      it "handles invalid values without crashing" do
+        child_transaction = described_class.from_sentry_trace("dummy", op: "child")
+
+        expect(child_transaction).to be_nil
+      end
+    end
+
+    context "when tracing is enabled (= 0)" do
+      before do
+        configuration.traces_sample_rate = 0.0
+      end
+
+      it "returns correctly-formatted value" do
+        child_transaction = described_class.from_sentry_trace(sentry_trace, op: "child")
+
+        expect(child_transaction.trace_id).to eq(subject.trace_id)
+        expect(child_transaction.parent_span_id).to eq(subject.span_id)
+        expect(child_transaction.parent_sampled).to eq(true)
+        # doesn't set the sampled value
+        expect(child_transaction.sampled).to eq(nil)
+        expect(child_transaction.op).to eq("child")
+      end
+    end
+
+    context "when tracing is disabled" do
+      before do
+        configuration.traces_sample_rate = nil
+      end
+
+      it "returns nil" do
+        expect(described_class.from_sentry_trace(sentry_trace, op: "child")).to be_nil
+      end
     end
   end
 
@@ -79,7 +122,7 @@ RSpec.describe Sentry::Transaction do
   end
 
   describe "#start_child" do
-    it "initializes a new child Span" do
+    it "initializes a new child Span and assigns the 'transaction' attribute with itself" do
       # create subject span and wait for a sec for making time difference
       subject
 
@@ -92,19 +135,21 @@ RSpec.describe Sentry::Transaction do
       expect(new_span.span_id).not_to eq(subject.span_id)
       expect(new_span.parent_span_id).to eq(subject.span_id)
       expect(new_span.sampled).to eq(true)
-    end
 
-    it "records the child span if span_recorder" do
-      new_span = subject.start_child
-
-      expect(subject.span_recorder.spans).to include(new_span)
-      expect(new_span.span_recorder).to eq(subject.span_recorder)
+      expect(new_span.transaction).to eq(subject)
     end
   end
 
-  describe "#set_initial_sample_desicion" do
+  describe "#set_initial_sample_decision" do
+    let(:string_io) { StringIO.new }
+    let(:logger) do
+      ::Logger.new(string_io)
+    end
+
     before do
-      perform_basic_setup
+      perform_basic_setup do |config|
+        config.logger = logger
+      end
     end
 
     context "when tracing is not enabled" do
@@ -115,14 +160,14 @@ RSpec.describe Sentry::Transaction do
       it "sets @sampled to false and return" do
         allow(Sentry.configuration).to receive(:tracing_enabled?).and_return(false)
 
-        transaction = described_class.new(sampled: true)
-        transaction.set_initial_sample_desicion
+        transaction = described_class.new(sampled: true, hub: Sentry.get_current_hub)
+        transaction.set_initial_sample_decision(sampling_context: {})
         expect(transaction.sampled).to eq(false)
       end
     end
 
     context "when tracing is enabled" do
-      let(:subject) { described_class.new(op: "rack.request", parent_sampled: true) }
+      let(:subject) { described_class.new(op: "rack.request", hub: Sentry.get_current_hub) }
 
       before do
         allow(Sentry.configuration).to receive(:tracing_enabled?).and_return(true)
@@ -130,12 +175,12 @@ RSpec.describe Sentry::Transaction do
 
       context "when the transaction already has a decision" do
         it "doesn't change it" do
-          transaction = described_class.new(sampled: true)
-          transaction.set_initial_sample_desicion
+          transaction = described_class.new(sampled: true, hub: Sentry.get_current_hub)
+          transaction.set_initial_sample_decision(sampling_context: {})
           expect(transaction.sampled).to eq(true)
 
-          transaction = described_class.new(sampled: false)
-          transaction.set_initial_sample_desicion
+          transaction = described_class.new(sampled: false, hub: Sentry.get_current_hub)
+          transaction.set_initial_sample_decision(sampling_context: {})
           expect(transaction.sampled).to eq(false)
         end
       end
@@ -145,104 +190,115 @@ RSpec.describe Sentry::Transaction do
           Sentry.configuration.traces_sample_rate = 0.5
         end
 
+        it "prioritizes inherited decision over traces_sample_rate" do
+          allow(Random).to receive(:rand).and_return(0.4)
+
+          subject.set_initial_sample_decision(sampling_context: { parent_sampled: false })
+          expect(subject.sampled).to eq(false)
+        end
+
         it "uses traces_sample_rate for sampling (positive result)" do
           allow(Random).to receive(:rand).and_return(0.4)
-          expect(Sentry.configuration.logger).to receive(:debug).with(
+
+          subject.set_initial_sample_decision(sampling_context: {})
+          expect(subject.sampled).to eq(true)
+          expect(string_io.string).to include(
             "[Tracing] Starting <rack.request> transaction"
           )
-
-          subject.set_initial_sample_desicion
-          expect(subject.sampled).to eq(true)
         end
 
         it "uses traces_sample_rate for sampling (negative result)" do
           allow(Random).to receive(:rand).and_return(0.6)
-          expect(Sentry.configuration.logger).to receive(:debug).with(
+
+          subject.set_initial_sample_decision(sampling_context: {})
+          expect(subject.sampled).to eq(false)
+          expect(string_io.string).to include(
             "[Tracing] Discarding <rack.request> transaction because it's not included in the random sample (sampling rate = 0.5)"
           )
-
-          subject.set_initial_sample_desicion
-          expect(subject.sampled).to eq(false)
         end
 
         it "accepts integer traces_sample_rate" do
           Sentry.configuration.traces_sample_rate = 1
 
-          subject.set_initial_sample_desicion
+          subject.set_initial_sample_decision(sampling_context: {})
           expect(subject.sampled).to eq(true)
         end
       end
 
       context "when traces_sampler is provided" do
+        it "prioritizes traces_sampler over traces_sample_rate" do
+          Sentry.configuration.traces_sample_rate = 1.0
+          Sentry.configuration.traces_sampler = -> (_) { false }
+
+          subject.set_initial_sample_decision(sampling_context: {})
+          expect(subject.sampled).to eq(false)
+        end
+
+        it "prioritizes traces_sampler over inherited decision" do
+          Sentry.configuration.traces_sampler = -> (_) { false }
+
+          subject.set_initial_sample_decision(sampling_context: { parent_sampled: true })
+          expect(subject.sampled).to eq(false)
+        end
+
         it "ignores the sampler if it's not callable" do
           Sentry.configuration.traces_sampler = ""
 
           expect do
-            subject.set_initial_sample_desicion
+            subject.set_initial_sample_decision(sampling_context: {})
           end.not_to raise_error
         end
 
-        it "calls the sampler with sampling_context" do
-          sampling_context = {}
-
-          Sentry.configuration.traces_sampler = lambda do |context|
-            sampling_context = context
-          end
-
-          subject.set_initial_sample_desicion(foo: "bar")
-
-          # transaction_context's sampled attribute will be the old value
-          expect(sampling_context[:transaction_context].keys).to eq(subject.to_hash.keys)
-          expect(sampling_context[:parent_sampled]).to eq(true)
-          expect(sampling_context[:foo]).to eq("bar")
-        end
-
-        it "disgards the transaction if generated sample rate is not valid" do
-          expect(Sentry.configuration.logger).to receive(:warn).with(
-            "[Tracing] Discarding <rack.request> transaction because of invalid sample_rate: foo"
-          )
-
+        it "discards the transaction if generated sample rate is not valid" do
           Sentry.configuration.traces_sampler = -> (_) { "foo" }
-          subject.set_initial_sample_desicion
+          subject.set_initial_sample_decision(sampling_context: {})
 
           expect(subject.sampled).to eq(false)
+
+          expect(string_io.string).to include(
+            "[Tracing] Discarding <rack.request> transaction because of invalid sample_rate: foo"
+          )
         end
 
         it "uses the genereted rate for sampling (positive)" do
-          expect(Sentry.configuration.logger).to receive(:debug).with(
-            "[Tracing] Starting transaction"
-          ).exactly(3)
+          expect(Sentry.configuration.logger).to receive(:debug).exactly(3).and_call_original
 
-          subject = described_class.new
+          subject = described_class.new(hub: Sentry.get_current_hub)
           Sentry.configuration.traces_sampler = -> (_) { true }
-          subject.set_initial_sample_desicion
+          subject.set_initial_sample_decision(sampling_context: {})
           expect(subject.sampled).to eq(true)
 
-          subject = described_class.new
+          subject = described_class.new(hub: Sentry.get_current_hub)
           Sentry.configuration.traces_sampler = -> (_) { 1.0 }
-          subject.set_initial_sample_desicion
+          subject.set_initial_sample_decision(sampling_context: {})
           expect(subject.sampled).to eq(true)
 
-          subject = described_class.new
+          subject = described_class.new(hub: Sentry.get_current_hub)
           Sentry.configuration.traces_sampler = -> (_) { 1 }
-          subject.set_initial_sample_desicion
+          subject.set_initial_sample_decision(sampling_context: {})
           expect(subject.sampled).to eq(true)
+
+          expect(string_io.string).to include(
+            "[Tracing] Starting transaction"
+          )
         end
 
         it "uses the genereted rate for sampling (negative)" do
-          expect(Sentry.configuration.logger).to receive(:debug).with(
-            "[Tracing] Discarding transaction because traces_sampler returned 0 or false"
-          ).exactly(2)
+          expect(Sentry.configuration.logger).to receive(:debug).exactly(2).and_call_original
 
-          subject = described_class.new
+          subject = described_class.new(hub: Sentry.get_current_hub)
           Sentry.configuration.traces_sampler = -> (_) { false }
-          subject.set_initial_sample_desicion
+          subject.set_initial_sample_decision(sampling_context: {})
           expect(subject.sampled).to eq(false)
 
-          subject = described_class.new
+          subject = described_class.new(hub: Sentry.get_current_hub)
           Sentry.configuration.traces_sampler = -> (_) { 0.0 }
-          subject.set_initial_sample_desicion
+          subject.set_initial_sample_decision(sampling_context: {})
           expect(subject.sampled).to eq(false)
+
+          expect(string_io.string).to include(
+            "[Tracing] Discarding transaction because traces_sampler returned 0 or false"
+          )
         end
       end
     end
@@ -264,12 +320,12 @@ RSpec.describe Sentry::Transaction do
   end
 
   describe "#finish" do
-    before do
-      perform_basic_setup
-    end
-
     let(:events) do
       Sentry.get_current_client.transport.events
+    end
+
+    let(:another_hub) do
+      Sentry.get_current_hub.clone
     end
 
     it "finishes the transaction, converts it into an Event and send it" do
@@ -282,18 +338,48 @@ RSpec.describe Sentry::Transaction do
       expect(event[:spans]).to be_empty
     end
 
+    it "doesn't override the event's transaction attribute with the scope's" do
+      subject.finish
+
+      expect(events.count).to eq(1)
+      event = events.last.to_hash
+
+      expect(event[:transaction]).to eq("foo")
+    end
+
+    describe "hub selection" do
+      it "prioritizes the optional hub argument and uses it to submit the transaction" do
+        expect(another_hub).to receive(:capture_event)
+
+        subject.finish(hub: another_hub)
+      end
+
+      it "submits the event with the transaction's hub by default" do
+        subject.instance_variable_set(:@hub, another_hub)
+
+        expect(another_hub).to receive(:capture_event)
+
+        subject.finish
+      end
+    end
+
     context "if the transaction is not sampled" do
-      subject { described_class.new(sampled: false) }
+      subject { described_class.new(sampled: false, hub: Sentry.get_current_hub) }
 
       it "doesn't send it" do
         subject.finish
 
         expect(events.count).to eq(0)
       end
+
+      it "records lost event" do
+        subject.finish
+        expect(subject.hub.current_client.transport).to have_recorded_lost_event(:sample_rate, 'transaction')
+      end
     end
 
     context "if the transaction doesn't have a name" do
-      subject { described_class.new(sampled: true) }
+      subject { described_class.new(sampled: true, hub: Sentry.get_current_hub) }
 
       it "adds a default name" do
         subject.finish

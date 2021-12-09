@@ -16,8 +16,8 @@ SimpleCov.start do
 end
 
 if ENV["CI"]
-  require 'codecov'
-  SimpleCov.formatter = SimpleCov::Formatter::Codecov
+  require 'simplecov-cobertura'
+  SimpleCov.formatter = SimpleCov::Formatter::CoberturaFormatter
 end
 
 require "sentry-delayed_job"
@@ -76,5 +76,6 @@ def perform_basic_setup
     config.logger = ::Logger.new(nil)
     config.background_worker_threads = 0
     config.transport.transport_class = Sentry::DummyTransport
+    yield(config) if block_given?
   end
 end

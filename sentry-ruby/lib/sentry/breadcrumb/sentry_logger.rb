@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 require 'logger'
 
 module Sentry
@@ -14,6 +16,7 @@ module Sentry
       def add(*args, &block)
         super
         add_breadcrumb(*args, &block)
+        nil
       end
 
       def add_breadcrumb(severity, message = nil, progname = nil)
@@ -49,7 +52,7 @@ module Sentry
           end
         end
 
-        return if ignored_logger?(progname) || message.empty?
+        return if ignored_logger?(progname) || message == ""
 
         # some loggers will add leading/trailing space as they (incorrectly, mind you)
         # think of logging as a shortcut to std{out,err}
@@ -66,7 +69,7 @@ module Sentry
             type: severity >= 3 ? "error" : level
           )
 
-          Sentry.add_breadcrumb(crumb)
+          Sentry.add_breadcrumb(crumb, hint: { severity: severity })
         end
       end
 

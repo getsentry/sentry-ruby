@@ -5,24 +5,26 @@ on:
   push:
     branches:
       - master
+      - \d+-\d+
   pull_request:
-    paths:
-      - 'sentry-delayed_job/**'
-      - 'sentry-ruby/**'
 jobs:
   test:
     defaults:
       run:
         working-directory: sentry-delayed_job
-    name: Test on ruby ${{ matrix.ruby_version }}
+    name: Ruby ${{ matrix.ruby_version }}, options - ${{ toJson(matrix.options) }}
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        ruby_version: [2.4, 2.5, 2.6, 2.7, '3.0', jruby]
-        os: [ubuntu-latest]
         include:
-          - ruby_version: '3.0'
-            env: RUBYOPT="--enable-frozen-string-literal --debug=frozen-string-literal"
+          - { os: ubuntu-latest, ruby_version: 2.4 }
+          - { os: ubuntu-latest, ruby_version: 2.5 }
+          - { os: ubuntu-latest, ruby_version: 2.6 }
+          - { os: ubuntu-latest, ruby_version: 2.7 }
+          - { os: ubuntu-latest, ruby_version: '3.0' }
+          - { os: ubuntu-latest, ruby_version: jruby }
+          - { os: ubuntu-latest, ruby_version: '3.0', options: { rubyopt: "--enable-frozen-string-literal --debug=frozen-string-literal" } }
+          - { os: ubuntu-latest, ruby_version: '3.0', options: { codecov: 1 } }
     steps:
     - uses: actions/checkout@v1
     - name: Install sqlite
@@ -39,6 +41,15 @@ jobs:
         ruby-version: ${{ matrix.ruby_version }}
 
     - name: Run specs
+      env:
+        RUBYOPT: ${{ matrix.options.rubyopt }}
       run: |
         bundle install --jobs 4 --retry 3
         bundle exec rake
+
+    - name: Upload Coverage
+      if: ${{ matrix.options.codecov }}
+      run: |
+        curl -Os https://uploader.codecov.io/latest/linux/codecov
+        chmod +x codecov
+        ./codecov -t ${CODECOV_TOKEN} -R `pwd` -f coverage/coverage.xml

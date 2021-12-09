@@ -2,6 +2,7 @@ require "sidekiq"
 require "sentry-ruby"
 require "sentry/integrable"
 require "sentry/sidekiq/version"
+require "sentry/sidekiq/configuration"
 require "sentry/sidekiq/error_handler"
 require "sentry/sidekiq/sentry_context_middleware"
 
@@ -14,7 +15,7 @@ module Sentry
     if defined?(::Rails::Railtie)
       class Railtie < ::Rails::Railtie
         config.after_initialize do
-          next unless Sentry.initialized?
+          next unless Sentry.initialized? && defined?(::Sentry::Rails)
 
           Sentry.configuration.rails.skippable_job_adapters << "ActiveJob::QueueAdapters::SidekiqAdapter"
         end
@@ -26,7 +27,12 @@ end
 Sidekiq.configure_server do |config|
   config.error_handlers << Sentry::Sidekiq::ErrorHandler.new
   config.server_middleware do |chain|
-    chain.add Sentry::Sidekiq::SentryContextMiddleware
+    chain.add Sentry::Sidekiq::SentryContextServerMiddleware
   end
 end
 
+Sidekiq.configure_client do |config|
+  config.client_middleware do |chain|
+    chain.add Sentry::Sidekiq::SentryContextClientMiddleware
+  end
+end

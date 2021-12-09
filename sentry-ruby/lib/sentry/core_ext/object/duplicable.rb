@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+return if Object.method_defined?(:duplicable?)
+
 #########################################
 #  This file was copied from Rails 5.2  #
 #########################################
