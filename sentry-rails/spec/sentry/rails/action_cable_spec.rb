@@ -1,8 +1,6 @@
 if defined?(ActionCable) && ActionCable.version >= Gem::Version.new('6.0.0')
   require "spec_helper"
   require "action_cable/engine"
-  require "action_cable/connection/test_case"
-  require "action_cable/channel/test_case"
 
   # ensure we can access `connection.env` in tests like we can in production
   ActiveSupport.on_load :action_cable_channel_test_case do
@@ -29,7 +27,7 @@ if defined?(ActionCable) && ActionCable.version >= Gem::Version.new('6.0.0')
     end
   end
 
-  RSpec.describe "Sentry::Rails::ActionCable" do
+  RSpec.describe "Sentry::Rails::ActionCableExtensions", type: :channel do
     let(:transport) { Sentry.get_current_client.transport }
 
     before(:all) do
@@ -42,10 +40,6 @@ if defined?(ActionCable) && ActionCable.version >= Gem::Version.new('6.0.0')
     end
 
     describe ChatChannel do
-      include ActionCable::Channel::TestCase::Behavior
-
-      tests ChatChannel
-
       it "captures errors during the subscribe" do
         expect { subscribe room_id: 42 }.to raise_error('foo')
         expect(transport.events.count).to eq(1)
@@ -66,10 +60,6 @@ if defined?(ActionCable) && ActionCable.version >= Gem::Version.new('6.0.0')
     end
 
     describe AppearanceChannel do
-      include ActionCable::Channel::TestCase::Behavior
-
-      tests AppearanceChannel
-
       before { subscribe room_id: 42 }
 
       it "captures errors during the action" do
