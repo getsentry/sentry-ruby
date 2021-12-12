@@ -41,7 +41,6 @@ RSpec.describe Sentry::Client do
       end
 
       context "with TransactionEvent" do
-        require "debug"
         it "ignores the sampling" do
           transaction_event = subject.event_from_transaction(Sentry::Transaction.new(hub: hub))
           allow(Random).to receive(:rand).and_return(0.51)
