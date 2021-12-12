@@ -14,6 +14,9 @@ class WelcomeController < ApplicationController
     render plain: response.code
   end
 
+  def appearance
+  end
+
   def view_error
   end
 

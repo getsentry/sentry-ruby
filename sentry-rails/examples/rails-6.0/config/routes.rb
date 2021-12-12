@@ -5,6 +5,7 @@ Rails.application.routes.draw do
   get '500', :to => 'welcome#report_demo'
   root to: "welcome#index"
 
+  get 'appearance', to: 'welcome#appearance'
   get 'connect_trace', to: 'welcome#connect_trace'
   get 'view_error', to: 'welcome#view_error'
   get 'sidekiq_error', to: 'welcome#sidekiq_error'
