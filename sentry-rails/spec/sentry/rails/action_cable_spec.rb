@@ -33,7 +33,6 @@ if defined?(ActionCable) && ActionCable.version >= Gem::Version.new('6.0.0')
     let(:transport) { Sentry.get_current_client.transport }
 
     after do
-      expect(Sentry.get_current_scope.extra).to eq({})
       transport.events = []
     end
 
@@ -48,14 +47,13 @@ if defined?(ActionCable) && ActionCable.version >= Gem::Version.new('6.0.0')
           expect(transport.events.count).to eq(1)
 
           event = transport.events.last.to_json_compatible
-
           expect(event).to include(
             "transaction" => "ChatChannel#subscribed",
-            "extra" => {
+            "contexts" => hash_including(
               "action_cable" => {
                 "params" => { "room_id" => 42 }
               }
-            }
+            )
           )
         end
       end
@@ -71,12 +69,12 @@ if defined?(ActionCable) && ActionCable.version >= Gem::Version.new('6.0.0')
 
           expect(event).to include(
             "transaction" => "AppearanceChannel#appear",
-            "extra" => {
+            "contexts" => hash_including(
               "action_cable" => {
                 "params" => { "room_id" => 42 },
                 "data" => { "action" => "appear", "foo" => "bar" }
               }
-            }
+            )
           )
         end
 
@@ -88,11 +86,11 @@ if defined?(ActionCable) && ActionCable.version >= Gem::Version.new('6.0.0')
 
           expect(event).to include(
             "transaction" => "AppearanceChannel#unsubscribed",
-            "extra" => {
+            "contexts" => hash_including(
               "action_cable" => {
                 "params" => { "room_id" => 42 }
               }
-            }
+            )
           )
         end
       end
@@ -114,29 +112,27 @@ if defined?(ActionCable) && ActionCable.version >= Gem::Version.new('6.0.0')
 
           expect(event).to include(
             "transaction" => "ChatChannel#subscribed",
-            "extra" => {
+            "contexts" => hash_including(
               "action_cable" => {
                 "params" => { "room_id" => 42 }
               }
-            }
+            )
           )
 
           transaction = transport.events.last.to_json_compatible
 
           expect(transaction).to include(
             "type" => "transaction",
+            "transaction" => "ChatChannel#subscribed",
             "contexts" => hash_including(
+              "action_cable" => {
+                "params" => { "room_id" => 42 }
+              },
               "trace" => hash_including(
                 "op" => "rails.action_cable",
                 "status" => "internal_error"
               )
-            ),
-            "transaction" => "ChatChannel#subscribed",
-            "extra" => {
-              "action_cable" => {
-                "params" => { "room_id" => 42 }
-              }
-            }
+            )
           )
         end
       end
@@ -156,26 +152,24 @@ if defined?(ActionCable) && ActionCable.version >= Gem::Version.new('6.0.0')
               "trace" => hash_including(
                 "op" => "rails.action_cable",
                 "status" => "ok"
-              )
-            ),
-            "transaction" => "AppearanceChannel#subscribed",
-            "extra" => {
+              ),
               "action_cable" => {
                 "params" => { "room_id" => 42 }
               }
-            }
+            ),
+            "transaction" => "AppearanceChannel#subscribed"
           )
 
           event = transport.events[1].to_json_compatible
 
           expect(event).to include(
             "transaction" => "AppearanceChannel#appear",
-            "extra" => {
+            "contexts" => hash_including(
               "action_cable" => {
                 "params" => { "room_id" => 42 },
                 "data" => { "action" => "appear", "foo" => "bar" }
               }
-            }
+            )
           )
 
           action_transaction = transport.events[2].to_json_compatible
@@ -186,15 +180,13 @@ if defined?(ActionCable) && ActionCable.version >= Gem::Version.new('6.0.0')
               "trace" => hash_including(
                 "op" => "rails.action_cable",
                 "status" => "internal_error"
-              )
-            ),
-            "transaction" => "AppearanceChannel#appear",
-            "extra" => {
+              ),
               "action_cable" => {
                 "params" => { "room_id" => 42 },
                 "data" => { "action" => "appear", "foo" => "bar" }
               }
-            }
+            ),
+            "transaction" => "AppearanceChannel#appear"
           )
         end
 
@@ -210,25 +202,23 @@ if defined?(ActionCable) && ActionCable.version >= Gem::Version.new('6.0.0')
               "trace" => hash_including(
                 "op" => "rails.action_cable",
                 "status" => "ok"
-              )
-            ),
-            "transaction" => "AppearanceChannel#subscribed",
-            "extra" => {
+              ),
               "action_cable" => {
                 "params" => { "room_id" => 42 }
               }
-            }
+            ),
+            "transaction" => "AppearanceChannel#subscribed"
           )
 
           event = transport.events[1].to_json_compatible
 
           expect(event).to include(
             "transaction" => "AppearanceChannel#unsubscribed",
-            "extra" => {
+            "contexts" => hash_including(
               "action_cable" => {
                 "params" => { "room_id" => 42 }
               }
-            }
+            )
           )
 
           transaction = transport.events[2].to_json_compatible
@@ -239,14 +229,12 @@ if defined?(ActionCable) && ActionCable.version >= Gem::Version.new('6.0.0')
               "trace" => hash_including(
                 "op" => "rails.action_cable",
                 "status" => "internal_error"
-              )
-            ),
-            "transaction" => "AppearanceChannel#unsubscribed",
-            "extra" => {
+              ),
               "action_cable" => {
                 "params" => { "room_id" => 42 }
               }
-            }
+            ),
+            "transaction" => "AppearanceChannel#unsubscribed"
           )
         end
       end

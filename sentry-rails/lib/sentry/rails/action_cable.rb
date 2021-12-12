@@ -6,7 +6,7 @@ module Sentry
           def capture(env, transaction_name:, extra_context: nil, &block)
             Sentry.with_scope do |scope|
               scope.set_rack_env(env)
-              scope.set_extras(action_cable: extra_context) if extra_context
+              scope.set_context("action_cable", extra_context) if extra_context
               scope.set_transaction_name(transaction_name)
               transaction = start_transaction(env, scope.transaction_name)
               scope.set_span(transaction) if transaction
