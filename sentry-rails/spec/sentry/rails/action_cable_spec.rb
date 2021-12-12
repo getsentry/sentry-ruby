@@ -2,6 +2,8 @@ if defined?(ActionCable) && ActionCable.version >= Gem::Version.new('6.0.0')
   require "spec_helper"
   require "action_cable/engine"
 
+  ::ActionCable.server.config.cable = { "adapter" => "test" }
+
   # ensure we can access `connection.env` in tests like we can in production
   ActiveSupport.on_load :action_cable_channel_test_case do
     class ::ActionCable::Channel::ConnectionStub
@@ -30,9 +32,8 @@ if defined?(ActionCable) && ActionCable.version >= Gem::Version.new('6.0.0')
   RSpec.describe "Sentry::Rails::ActionCableExtensions", type: :channel do
     let(:transport) { Sentry.get_current_client.transport }
 
-    before(:all) do
+    before do
       make_basic_app
-      ::ActionCable.server.config.cable = { "adapter" => "test" }
     end
 
     after do
