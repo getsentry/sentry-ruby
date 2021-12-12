@@ -32,72 +32,223 @@ if defined?(ActionCable) && ActionCable.version >= Gem::Version.new('6.0.0')
   RSpec.describe "Sentry::Rails::ActionCableExtensions", type: :channel do
     let(:transport) { Sentry.get_current_client.transport }
 
-    before do
-      make_basic_app
-    end
-
     after do
+      expect(Sentry.get_current_scope.extra).to eq({})
       transport.events = []
     end
 
-    describe ChatChannel do
-      it "captures errors during the subscribe" do
-        expect { subscribe room_id: 42 }.to raise_error('foo')
-        expect(transport.events.count).to eq(1)
+    context "without tracing" do
+      before do
+        make_basic_app
+      end
 
-        event = transport.events.last.to_json_compatible
+      describe ChatChannel do
+        it "captures errors during the subscribe" do
+          expect { subscribe room_id: 42 }.to raise_error('foo')
+          expect(transport.events.count).to eq(1)
 
-        expect(event).to include(
-          "transaction" => "ChatChannel#subscribed",
-          "extra" => {
-            "action_cable" => {
-              "params" => { "room_id" => 42 }
+          event = transport.events.last.to_json_compatible
+
+          expect(event).to include(
+            "transaction" => "ChatChannel#subscribed",
+            "extra" => {
+              "action_cable" => {
+                "params" => { "room_id" => 42 }
+              }
             }
-          }
-        )
+          )
+        end
+      end
 
-        expect(Sentry.get_current_scope.extra).to eq({})
+      describe AppearanceChannel do
+        before { subscribe room_id: 42 }
+
+        it "captures errors during the action" do
+          expect { perform :appear, foo: 'bar' }.to raise_error('foo')
+          expect(transport.events.count).to eq(1)
+
+          event = transport.events.last.to_json_compatible
+
+          expect(event).to include(
+            "transaction" => "AppearanceChannel#appear",
+            "extra" => {
+              "action_cable" => {
+                "params" => { "room_id" => 42 },
+                "data" => { "action" => "appear", "foo" => "bar" }
+              }
+            }
+          )
+        end
+
+        it "captures errors during unsubscribe" do
+          expect { unsubscribe }.to raise_error('foo')
+          expect(transport.events.count).to eq(1)
+
+          event = transport.events.last.to_json_compatible
+
+          expect(event).to include(
+            "transaction" => "AppearanceChannel#unsubscribed",
+            "extra" => {
+              "action_cable" => {
+                "params" => { "room_id" => 42 }
+              }
+            }
+          )
+        end
       end
     end
 
-    describe AppearanceChannel do
-      before { subscribe room_id: 42 }
-
-      it "captures errors during the action" do
-        expect { perform :appear, foo: 'bar' }.to raise_error('foo')
-        expect(transport.events.count).to eq(1)
-
-        event = transport.events.last.to_json_compatible
-
-        expect(event).to include(
-          "transaction" => "AppearanceChannel#appear",
-          "extra" => {
-            "action_cable" => {
-              "params" => { "room_id" => 42 },
-              "data" => { "action" => "appear", "foo" => "bar" }
-            }
-          }
-        )
-
-        expect(Sentry.get_current_scope.extra).to eq({})
+    context "with tracing enabled" do
+      before do
+        make_basic_app do |config|
+          config.traces_sample_rate = 1.0
+        end
       end
 
-      it "captures errors during unsubscribe" do
-        expect { unsubscribe }.to raise_error('foo')
-        expect(transport.events.count).to eq(1)
+      describe ChatChannel do
+        it "captures errors and transactions during the subscribe" do
+          expect { subscribe room_id: 42 }.to raise_error('foo')
+          expect(transport.events.count).to eq(2)
 
-        event = transport.events.last.to_json_compatible
+          event = transport.events.first.to_json_compatible
 
-        expect(event).to include(
-          "transaction" => "AppearanceChannel#unsubscribed",
-          "extra" => {
-            "action_cable" => {
-              "params" => { "room_id" => 42 }
+          expect(event).to include(
+            "transaction" => "ChatChannel#subscribed",
+            "extra" => {
+              "action_cable" => {
+                "params" => { "room_id" => 42 }
+              }
             }
-          }
-        )
+          )
 
-        expect(Sentry.get_current_scope.extra).to eq({})
+          transaction = transport.events.last.to_json_compatible
+
+          expect(transaction).to include(
+            "type" => "transaction",
+            "contexts" => hash_including(
+              "trace" => hash_including(
+                "op" => "rails.action_cable",
+                "status" => "internal_error"
+              )
+            ),
+            "transaction" => "ChatChannel#subscribed",
+            "extra" => {
+              "action_cable" => {
+                "params" => { "room_id" => 42 }
+              }
+            }
+          )
+        end
+      end
+
+      describe AppearanceChannel do
+        before { subscribe room_id: 42 }
+
+        it "captures errors and transactions during the action" do
+          expect { perform :appear, foo: 'bar' }.to raise_error('foo')
+          expect(transport.events.count).to eq(3)
+
+          subscription_transaction = transport.events[0].to_json_compatible
+
+          expect(subscription_transaction).to include(
+            "type" => "transaction",
+            "contexts" => hash_including(
+              "trace" => hash_including(
+                "op" => "rails.action_cable",
+                "status" => "ok"
+              )
+            ),
+            "transaction" => "AppearanceChannel#subscribed",
+            "extra" => {
+              "action_cable" => {
+                "params" => { "room_id" => 42 }
+              }
+            }
+          )
+
+          event = transport.events[1].to_json_compatible
+
+          expect(event).to include(
+            "transaction" => "AppearanceChannel#appear",
+            "extra" => {
+              "action_cable" => {
+                "params" => { "room_id" => 42 },
+                "data" => { "action" => "appear", "foo" => "bar" }
+              }
+            }
+          )
+
+          action_transaction = transport.events[2].to_json_compatible
+
+          expect(action_transaction).to include(
+            "type" => "transaction",
+            "contexts" => hash_including(
+              "trace" => hash_including(
+                "op" => "rails.action_cable",
+                "status" => "internal_error"
+              )
+            ),
+            "transaction" => "AppearanceChannel#appear",
+            "extra" => {
+              "action_cable" => {
+                "params" => { "room_id" => 42 },
+                "data" => { "action" => "appear", "foo" => "bar" }
+              }
+            }
+          )
+        end
+
+        it "captures errors during unsubscribe" do
+          expect { unsubscribe }.to raise_error('foo')
+          expect(transport.events.count).to eq(3)
+
+          subscription_transaction = transport.events[0].to_json_compatible
+
+          expect(subscription_transaction).to include(
+            "type" => "transaction",
+            "contexts" => hash_including(
+              "trace" => hash_including(
+                "op" => "rails.action_cable",
+                "status" => "ok"
+              )
+            ),
+            "transaction" => "AppearanceChannel#subscribed",
+            "extra" => {
+              "action_cable" => {
+                "params" => { "room_id" => 42 }
+              }
+            }
+          )
+
+          event = transport.events[1].to_json_compatible
+
+          expect(event).to include(
+            "transaction" => "AppearanceChannel#unsubscribed",
+            "extra" => {
+              "action_cable" => {
+                "params" => { "room_id" => 42 }
+              }
+            }
+          )
+
+          transaction = transport.events[2].to_json_compatible
+
+          expect(transaction).to include(
+            "type" => "transaction",
+            "contexts" => hash_including(
+              "trace" => hash_including(
+                "op" => "rails.action_cable",
+                "status" => "internal_error"
+              )
+            ),
+            "transaction" => "AppearanceChannel#unsubscribed",
+            "extra" => {
+              "action_cable" => {
+                "params" => { "room_id" => 42 }
+              }
+            }
+          )
+        end
       end
     end
   end
