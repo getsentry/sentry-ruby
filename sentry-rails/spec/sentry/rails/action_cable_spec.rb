@@ -47,14 +47,8 @@ if defined?(ActionCable) && ActionCable.version >= Gem::Version.new('6.0.0')
           expect(transport.events.count).to eq(1)
 
           event = transport.events.last.to_json_compatible
-          expect(event).to include(
-            "transaction" => "ChatChannel#subscribed",
-            "contexts" => hash_including(
-              "action_cable" => {
-                "params" => { "room_id" => 42 }
-              }
-            )
-          )
+          expect(event["transaction"]).to eq("ChatChannel#subscribed")
+          expect(event["contexts"]).to include("action_cable" => { "params" => { "room_id" => 42 } })
         end
       end
 
@@ -67,14 +61,12 @@ if defined?(ActionCable) && ActionCable.version >= Gem::Version.new('6.0.0')
 
           event = transport.events.last.to_json_compatible
 
-          expect(event).to include(
-            "transaction" => "AppearanceChannel#appear",
-            "contexts" => hash_including(
-              "action_cable" => {
-                "params" => { "room_id" => 42 },
-                "data" => { "action" => "appear", "foo" => "bar" }
-              }
-            )
+          expect(event["transaction"]).to eq("AppearanceChannel#appear")
+          expect(event["contexts"]).to include(
+            "action_cable" => {
+              "params" => { "room_id" => 42 },
+              "data" => { "action" => "appear", "foo" => "bar" }
+            }
           )
         end
 
@@ -84,13 +76,11 @@ if defined?(ActionCable) && ActionCable.version >= Gem::Version.new('6.0.0')
 
           event = transport.events.last.to_json_compatible
 
-          expect(event).to include(
-            "transaction" => "AppearanceChannel#unsubscribed",
-            "contexts" => hash_including(
-              "action_cable" => {
-                "params" => { "room_id" => 42 }
-              }
-            )
+          expect(event["transaction"]).to eq("AppearanceChannel#unsubscribed")
+          expect(event["contexts"]).to include(
+            "action_cable" => {
+              "params" => { "room_id" => 42 }
+            }
           )
         end
       end
@@ -110,28 +100,22 @@ if defined?(ActionCable) && ActionCable.version >= Gem::Version.new('6.0.0')
 
           event = transport.events.first.to_json_compatible
 
-          expect(event).to include(
-            "transaction" => "ChatChannel#subscribed",
-            "contexts" => hash_including(
-              "action_cable" => {
-                "params" => { "room_id" => 42 }
-              }
-            )
-          )
+          expect(event["transaction"]).to eq("ChatChannel#subscribed")
+          expect(event["contexts"]).to include("action_cable" => { "params" => { "room_id" => 42 } })
 
           transaction = transport.events.last.to_json_compatible
 
-          expect(transaction).to include(
-            "type" => "transaction",
-            "transaction" => "ChatChannel#subscribed",
-            "contexts" => hash_including(
-              "action_cable" => {
-                "params" => { "room_id" => 42 }
-              },
-              "trace" => hash_including(
-                "op" => "rails.action_cable",
-                "status" => "internal_error"
-              )
+          expect(transaction["type"]).to eq("transaction")
+          expect(transaction["transaction"]).to eq("ChatChannel#subscribed")
+          expect(transaction["contexts"]).to include(
+            "action_cable" => {
+              "params" => { "room_id" => 42 }
+            }
+          )
+          expect(transaction["contexts"]).to include(
+            "trace" => hash_including(
+              "op" => "rails.action_cable",
+              "status" => "internal_error"
             )
           )
         end
@@ -146,47 +130,45 @@ if defined?(ActionCable) && ActionCable.version >= Gem::Version.new('6.0.0')
 
           subscription_transaction = transport.events[0].to_json_compatible
 
-          expect(subscription_transaction).to include(
-            "type" => "transaction",
-            "contexts" => hash_including(
-              "trace" => hash_including(
-                "op" => "rails.action_cable",
-                "status" => "ok"
-              ),
-              "action_cable" => {
-                "params" => { "room_id" => 42 }
-              }
-            ),
-            "transaction" => "AppearanceChannel#subscribed"
+          expect(subscription_transaction["type"]).to eq("transaction")
+          expect(subscription_transaction["transaction"]).to eq("AppearanceChannel#subscribed")
+          expect(subscription_transaction["contexts"]).to include(
+            "action_cable" => {
+              "params" => { "room_id" => 42 }
+            }
+          )
+          expect(subscription_transaction["contexts"]).to include(
+            "trace" => hash_including(
+              "op" => "rails.action_cable",
+              "status" => "ok"
+            )
           )
 
           event = transport.events[1].to_json_compatible
 
-          expect(event).to include(
-            "transaction" => "AppearanceChannel#appear",
-            "contexts" => hash_including(
-              "action_cable" => {
-                "params" => { "room_id" => 42 },
-                "data" => { "action" => "appear", "foo" => "bar" }
-              }
-            )
+          expect(event["transaction"]).to eq("AppearanceChannel#appear")
+          expect(event["contexts"]).to include(
+            "action_cable" => {
+              "params" => { "room_id" => 42 },
+              "data" => { "action" => "appear", "foo" => "bar" }
+            }
           )
 
           action_transaction = transport.events[2].to_json_compatible
 
-          expect(action_transaction).to include(
-            "type" => "transaction",
-            "contexts" => hash_including(
-              "trace" => hash_including(
-                "op" => "rails.action_cable",
-                "status" => "internal_error"
-              ),
-              "action_cable" => {
-                "params" => { "room_id" => 42 },
-                "data" => { "action" => "appear", "foo" => "bar" }
-              }
-            ),
-            "transaction" => "AppearanceChannel#appear"
+          expect(action_transaction["type"]).to eq("transaction")
+          expect(action_transaction["transaction"]).to eq("AppearanceChannel#appear")
+          expect(action_transaction["contexts"]).to include(
+            "action_cable" => {
+              "params" => { "room_id" => 42 },
+              "data" => { "action" => "appear", "foo" => "bar" }
+            }
+          )
+          expect(action_transaction["contexts"]).to include(
+            "trace" => hash_including(
+              "op" => "rails.action_cable",
+              "status" => "internal_error"
+            )
           )
         end
 
@@ -196,45 +178,43 @@ if defined?(ActionCable) && ActionCable.version >= Gem::Version.new('6.0.0')
 
           subscription_transaction = transport.events[0].to_json_compatible
 
-          expect(subscription_transaction).to include(
-            "type" => "transaction",
-            "contexts" => hash_including(
-              "trace" => hash_including(
-                "op" => "rails.action_cable",
-                "status" => "ok"
-              ),
-              "action_cable" => {
-                "params" => { "room_id" => 42 }
-              }
-            ),
-            "transaction" => "AppearanceChannel#subscribed"
+          expect(subscription_transaction["type"]).to eq("transaction")
+          expect(subscription_transaction["transaction"]).to eq("AppearanceChannel#subscribed")
+          expect(subscription_transaction["contexts"]).to include(
+            "action_cable" => {
+              "params" => { "room_id" => 42 }
+            }
+          )
+          expect(subscription_transaction["contexts"]).to include(
+            "trace" => hash_including(
+              "op" => "rails.action_cable",
+              "status" => "ok"
+            )
           )
 
           event = transport.events[1].to_json_compatible
 
-          expect(event).to include(
-            "transaction" => "AppearanceChannel#unsubscribed",
-            "contexts" => hash_including(
-              "action_cable" => {
-                "params" => { "room_id" => 42 }
-              }
-            )
+          expect(event["transaction"]).to eq("AppearanceChannel#unsubscribed")
+          expect(event["contexts"]).to include(
+            "action_cable" => {
+              "params" => { "room_id" => 42 }
+            }
           )
 
           transaction = transport.events[2].to_json_compatible
 
-          expect(transaction).to include(
-            "type" => "transaction",
-            "contexts" => hash_including(
-              "trace" => hash_including(
-                "op" => "rails.action_cable",
-                "status" => "internal_error"
-              ),
-              "action_cable" => {
-                "params" => { "room_id" => 42 }
-              }
-            ),
-            "transaction" => "AppearanceChannel#unsubscribed"
+          expect(transaction["type"]).to eq("transaction")
+          expect(transaction["transaction"]).to eq("AppearanceChannel#unsubscribed")
+          expect(transaction["contexts"]).to include(
+            "action_cable" => {
+              "params" => { "room_id" => 42 }
+            }
+          )
+          expect(transaction["contexts"]).to include(
+            "trace" => hash_including(
+              "op" => "rails.action_cable",
+              "status" => "internal_error"
+            )
           )
         end
       end
