@@ -78,6 +78,8 @@ end
 
 To learn more about sampling transactions, please visit the [official documentation](https://docs.sentry.io/platforms/ruby/configuration/sampling/#configuring-the-transaction-sample-rate).
 
+### [Migration Guide](https://docs.sentry.io/platforms/ruby/migration/)
+
 ### Integrations
 
 - [Rack](https://docs.sentry.io/platforms/ruby/guides/rack/)
