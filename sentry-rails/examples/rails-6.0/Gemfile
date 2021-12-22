@@ -28,10 +28,13 @@ gem 'image_processing', '~> 1.2'
 gem 'sentry-ruby', path: "../../../sentry-ruby"
 gem 'sentry-sidekiq', path: "../../../sentry-sidekiq"
 gem 'sentry-resque', path: "../../../sentry-resque"
+gem 'sentry-delayed_job', path: "../../../sentry-delayed_job"
 gem 'sentry-rails', path: "../../"
 
 gem "resque"
 gem "sidekiq"
+gem 'delayed_job_active_record'
+gem "daemons"
 
 # Use Active Storage variant
 # gem 'image_processing', '~> 1.2'
@@ -41,7 +44,7 @@ gem 'bootsnap', '>= 1.4.2', require: false
 
 group :development, :test do
   gem 'pry'
-  gem "debug", github: "ruby/debug"
+  gem "debug", github: "ruby/debug", require: false
 end
 
 group :development do

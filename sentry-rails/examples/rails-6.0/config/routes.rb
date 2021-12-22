@@ -10,6 +10,7 @@ Rails.application.routes.draw do
   get 'view_error', to: 'welcome#view_error'
   get 'sidekiq_error', to: 'welcome#sidekiq_error'
   get 'resque_error', to: 'welcome#resque_error'
+  get 'delayed_job_error', to: 'welcome#delayed_job_error'
   get 'job_error', to: 'welcome#job_error'
 
   require 'sidekiq/web'

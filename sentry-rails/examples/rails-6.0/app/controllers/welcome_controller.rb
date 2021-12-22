@@ -30,6 +30,11 @@ class WelcomeController < ApplicationController
     render plain: "Remember to start resque worker with '$ QUEUE=* bundle exec rake resque:work'"
   end
 
+  def delayed_job_error
+    ErrorDelayedJob.delay.perform
+    render plain: "Remember to start delayed_job worker with '$ bundle exec rake jobs:work'"
+  end
+
   def job_error
     ErrorJob.perform_later
     render plain: "success"
