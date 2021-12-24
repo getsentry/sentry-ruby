@@ -46,31 +46,30 @@ module Sentry
       end
 
       def record_sentry_breadcrumb(req, res)
-        if Sentry.initialized? && Sentry.configuration.breadcrumbs_logger.include?(:http_logger)
-          return if from_sentry_sdk?
+        return unless Sentry.initialized? && Sentry.configuration.breadcrumbs_logger.include?(:http_logger)
+        return if from_sentry_sdk?
 
-          request_info = extract_request_info(req)
-          crumb = Sentry::Breadcrumb.new(
-            level: :info,
-            category: OP_NAME,
-            type: :info,
-            data: {
-              method: request_info[:method],
-              url: request_info[:url],
-              status: res.code.to_i
-            }
-          )
-          Sentry.add_breadcrumb(crumb)
-        end
+        request_info = extract_request_info(req)
+        crumb = Sentry::Breadcrumb.new(
+          level: :info,
+          category: OP_NAME,
+          type: :info,
+          data: {
+            method: request_info[:method],
+            url: request_info[:url],
+            status: res.code.to_i
+          }
+        )
+        Sentry.add_breadcrumb(crumb)
       end
 
       def record_sentry_span(req, res, sentry_span)
-        if Sentry.initialized? && sentry_span
-          request_info = extract_request_info(req)
-          sentry_span.set_description("#{request_info[:method]} #{request_info[:url]}")
-          sentry_span.set_data(:status, res.code.to_i)
-          finish_sentry_span(sentry_span)
-        end
+        return unless Sentry.initialized? && sentry_span
+
+        request_info = extract_request_info(req)
+        sentry_span.set_description("#{request_info[:method]} #{request_info[:url]}")
+        sentry_span.set_data(:status, res.code.to_i)
+        finish_sentry_span(sentry_span)
       end
 
       def start_sentry_span
@@ -85,7 +84,6 @@ module Sentry
         return unless Sentry.initialized? && sentry_span
 
         sentry_span.set_timestamp(Sentry.utc_now.to_f)
-        sentry_span = nil
       end
 
       def from_sentry_sdk?
