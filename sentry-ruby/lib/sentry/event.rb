@@ -139,6 +139,10 @@ module Sentry
         @extra.merge!(exception.sentry_context)
       end
 
+      if exception.respond_to?(:sentry_tags)
+        @tags.merge!(exception.sentry_tags)
+      end
+
       @exception = Sentry::ExceptionInterface.build(exception: exception, stacktrace_builder: configuration.stacktrace_builder)
     end
 

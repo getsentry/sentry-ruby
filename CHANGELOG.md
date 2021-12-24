@@ -1,6 +1,7 @@
 ## Unreleased
 
 - Add Action Cable exception capturing (Rails 6+) [#1638](https://github.com/getsentry/sentry-ruby/pull/1638)
+- Be able to define exception tags from the exception itself. [#1650](https://github.com/getsentry/sentry-ruby/pull/1650)
 
 ### Bug Fixes
 

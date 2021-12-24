@@ -6,6 +6,13 @@ class ExceptionWithContext < StandardError
       foo: "bar"
     }
   end
+
+  def sentry_tags
+    {
+      a: 'b',
+      c: 'd'
+    }
+  end
 end
 
 RSpec.describe Sentry::Client do
@@ -353,6 +360,17 @@ RSpec.describe Sentry::Client do
 
         it "merges the context into event's extra" do
           expect(hash[:extra][:foo]).to eq('bar')
+        end
+      end
+
+      context 'when the exception responds to sentry_tags' do
+        let(:hash) do
+          event = subject.event_from_exception(ExceptionWithContext.new)
+          event.to_hash
+        end
+
+        it "merges the tags into event's tags" do
+          expect(hash[:tags]).to eq( a: 'b', c: 'd')
         end
       end
     end
