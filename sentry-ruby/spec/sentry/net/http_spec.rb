@@ -41,6 +41,15 @@ RSpec.describe Sentry::Net::HTTP do
       crumb = Sentry.get_current_scope.breadcrumbs.peek
       expect(crumb.category).to eq("net.http")
       expect(crumb.data).to eq({ status: 200, method: "GET", url: "http://example.com/path" })
+
+      http = Net::HTTP.new("example.com")
+      request = Net::HTTP::Get.new("/path")
+      response = http.request(request)
+
+      expect(response.code).to eq("200")
+      crumb = Sentry.get_current_scope.breadcrumbs.peek
+      expect(crumb.category).to eq("net.http")
+      expect(crumb.data).to eq({ status: 200, method: "GET", url: "http://example.com/path" })
     end
 
     it "doesn't record breadcrumb for the SDK's request" do
@@ -161,17 +170,20 @@ RSpec.describe Sentry::Net::HTTP do
     end
 
     it "doesn't mess different requests' data together" do
-
       transaction = Sentry.start_transaction
       Sentry.get_current_scope.set_span(transaction)
 
-      stub_normal_response(code: "200")
-      response = Net::HTTP.get_response(URI("http://example.com/path"))
-      expect(response.code).to eq("200")
+      Net::HTTP.start("example.com") do |http|
+        stub_normal_response(code: "200")
+        request = Net::HTTP::Get.new("/path?foo=bar")
+        response = http.request(request)
+        expect(response.code).to eq("200")
 
-      stub_normal_response(code: "404")
-      response = Net::HTTP.get_response(URI("http://example.com/path"))
-      expect(response.code).to eq("404")
+        stub_normal_response(code: "404")
+        request = Net::HTTP::Get.new("/path?foo=bar")
+        response = http.request(request)
+        expect(response.code).to eq("404")
+      end
 
       expect(transaction.span_recorder.spans.count).to eq(3)
 
