@@ -169,39 +169,72 @@ RSpec.describe Sentry::Net::HTTP do
       expect(transaction.span_recorder.spans.count).to eq(1)
     end
 
-    it "doesn't mess different requests' data together" do
-      transaction = Sentry.start_transaction
-      Sentry.get_current_scope.set_span(transaction)
+    context "when there're multiple requests" do
+      let(:transaction) { Sentry.start_transaction }
 
-      Net::HTTP.start("example.com") do |http|
+      before do
+        Sentry.get_current_scope.set_span(transaction)
+      end
+
+      it "doesn't mess different requests' data together" do
         stub_normal_response(code: "200")
-        request = Net::HTTP::Get.new("/path?foo=bar")
-        response = http.request(request)
+        response = Net::HTTP.get_response(URI("http://example.com/path?foo=bar"))
         expect(response.code).to eq("200")
 
         stub_normal_response(code: "404")
-        request = Net::HTTP::Get.new("/path?foo=bar")
-        response = http.request(request)
+        response = Net::HTTP.get_response(URI("http://example.com/path?foo=bar"))
         expect(response.code).to eq("404")
+
+        expect(transaction.span_recorder.spans.count).to eq(3)
+
+        request_span = transaction.span_recorder.spans[1]
+        expect(request_span.op).to eq("net.http")
+        expect(request_span.start_timestamp).not_to be_nil
+        expect(request_span.timestamp).not_to be_nil
+        expect(request_span.start_timestamp).not_to eq(request_span.timestamp)
+        expect(request_span.description).to eq("GET http://example.com/path")
+        expect(request_span.data).to eq({ status: 200 })
+
+        request_span = transaction.span_recorder.spans[2]
+        expect(request_span.op).to eq("net.http")
+        expect(request_span.start_timestamp).not_to be_nil
+        expect(request_span.timestamp).not_to be_nil
+        expect(request_span.start_timestamp).not_to eq(request_span.timestamp)
+        expect(request_span.description).to eq("GET http://example.com/path")
+        expect(request_span.data).to eq({ status: 404 })
       end
 
-      expect(transaction.span_recorder.spans.count).to eq(3)
+      it "doesn't mess different requests' data together when making multiple requests with Net::HTTP.start" do
+        Net::HTTP.start("example.com") do |http|
+          stub_normal_response(code: "200")
+          request = Net::HTTP::Get.new("/path?foo=bar")
+          response = http.request(request)
+          expect(response.code).to eq("200")
 
-      request_span = transaction.span_recorder.spans[1]
-      expect(request_span.op).to eq("net.http")
-      expect(request_span.start_timestamp).not_to be_nil
-      expect(request_span.timestamp).not_to be_nil
-      expect(request_span.start_timestamp).not_to eq(request_span.timestamp)
-      expect(request_span.description).to eq("GET http://example.com/path")
-      expect(request_span.data).to eq({ status: 200 })
+          stub_normal_response(code: "404")
+          request = Net::HTTP::Get.new("/path?foo=bar")
+          response = http.request(request)
+          expect(response.code).to eq("404")
+        end
 
-      request_span = transaction.span_recorder.spans[2]
-      expect(request_span.op).to eq("net.http")
-      expect(request_span.start_timestamp).not_to be_nil
-      expect(request_span.timestamp).not_to be_nil
-      expect(request_span.start_timestamp).not_to eq(request_span.timestamp)
-      expect(request_span.description).to eq("GET http://example.com/path")
-      expect(request_span.data).to eq({ status: 404 })
+        expect(transaction.span_recorder.spans.count).to eq(3)
+
+        request_span = transaction.span_recorder.spans[1]
+        expect(request_span.op).to eq("net.http")
+        expect(request_span.start_timestamp).not_to be_nil
+        expect(request_span.timestamp).not_to be_nil
+        expect(request_span.start_timestamp).not_to eq(request_span.timestamp)
+        expect(request_span.description).to eq("GET http://example.com/path")
+        expect(request_span.data).to eq({ status: 200 })
+
+        request_span = transaction.span_recorder.spans[2]
+        expect(request_span.op).to eq("net.http")
+        expect(request_span.start_timestamp).not_to be_nil
+        expect(request_span.timestamp).not_to be_nil
+        expect(request_span.start_timestamp).not_to eq(request_span.timestamp)
+        expect(request_span.description).to eq("GET http://example.com/path")
+        expect(request_span.data).to eq({ status: 404 })
+      end
     end
 
     context "with unsampled transaction" do
