@@ -12,6 +12,7 @@
 ### Refactoring
 
 - Minor improvements on Net::HTTP patch [#1651](https://github.com/getsentry/sentry-ruby/pull/1651)
+- Deprecate unnecessarily exposed attributes [#1652](https://github.com/getsentry/sentry-ruby/pull/1652)
 
 ## 4.8.1
 
