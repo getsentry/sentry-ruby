@@ -14,7 +14,10 @@ module Sentry
 
     include LoggingHelper
 
-    attr_reader :name, :parent_sampled, :hub, :configuration, :logger
+    attr_reader :name, :parent_sampled, :hub, :configuration
+
+    # @deprecated Use Sentry.logger to retrieve the current logger instead.
+    attr_reader :logger
 
     def initialize(name: nil, parent_sampled: nil, hub:, **options)
       super(**options)

@@ -8,7 +8,9 @@ module Sentry
   class BackgroundWorker
     include LoggingHelper
 
-    attr_reader :max_queue, :number_of_threads, :logger
+    attr_reader :max_queue, :number_of_threads
+    # @deprecated Use Sentry.logger to retrieve the current logger instead.
+    attr_reader :logger
     attr_accessor :shutdown_timeout
 
     def initialize(configuration)

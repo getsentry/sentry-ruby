@@ -23,7 +23,10 @@ module Sentry
 
     include LoggingHelper
 
-    attr_reader :logger, :rate_limits, :discarded_events, :last_client_report_sent
+    attr_reader :rate_limits, :discarded_events, :last_client_report_sent
+
+    # @deprecated Use Sentry.logger to retrieve the current logger instead.
+    attr_reader :logger
 
     def initialize(configuration)
       @logger = configuration.logger
