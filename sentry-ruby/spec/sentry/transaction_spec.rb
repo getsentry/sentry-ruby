@@ -263,18 +263,18 @@ RSpec.describe Sentry::Transaction do
         it "uses the genereted rate for sampling (positive)" do
           expect(Sentry.configuration.logger).to receive(:debug).exactly(3).and_call_original
 
-          subject = described_class.new(hub: Sentry.get_current_hub)
           Sentry.configuration.traces_sampler = -> (_) { true }
+          subject = described_class.new(hub: Sentry.get_current_hub)
           subject.set_initial_sample_decision(sampling_context: {})
           expect(subject.sampled).to eq(true)
 
-          subject = described_class.new(hub: Sentry.get_current_hub)
           Sentry.configuration.traces_sampler = -> (_) { 1.0 }
+          subject = described_class.new(hub: Sentry.get_current_hub)
           subject.set_initial_sample_decision(sampling_context: {})
           expect(subject.sampled).to eq(true)
 
-          subject = described_class.new(hub: Sentry.get_current_hub)
           Sentry.configuration.traces_sampler = -> (_) { 1 }
+          subject = described_class.new(hub: Sentry.get_current_hub)
           subject.set_initial_sample_decision(sampling_context: {})
           expect(subject.sampled).to eq(true)
 
@@ -286,13 +286,13 @@ RSpec.describe Sentry::Transaction do
         it "uses the genereted rate for sampling (negative)" do
           expect(Sentry.configuration.logger).to receive(:debug).exactly(2).and_call_original
 
-          subject = described_class.new(hub: Sentry.get_current_hub)
           Sentry.configuration.traces_sampler = -> (_) { false }
+          subject = described_class.new(hub: Sentry.get_current_hub)
           subject.set_initial_sample_decision(sampling_context: {})
           expect(subject.sampled).to eq(false)
 
-          subject = described_class.new(hub: Sentry.get_current_hub)
           Sentry.configuration.traces_sampler = -> (_) { 0.0 }
+          subject = described_class.new(hub: Sentry.get_current_hub)
           subject.set_initial_sample_decision(sampling_context: {})
           expect(subject.sampled).to eq(false)
 
@@ -374,7 +374,7 @@ RSpec.describe Sentry::Transaction do
 
       it "records lost event" do
         subject.finish
-        expect(subject.hub.current_client.transport).to have_recorded_lost_event(:sample_rate, 'transaction')
+        expect(Sentry.get_current_client.transport).to have_recorded_lost_event(:sample_rate, 'transaction')
       end
     end
 
