@@ -1,6 +1,9 @@
 ## Unreleased
 
+### Features
+
 - Add Action Cable exception capturing (Rails 6+) [#1638](https://github.com/getsentry/sentry-ruby/pull/1638)
+- Add tracing support to `ActionCable` integration [#1640](https://github.com/getsentry/sentry-ruby/pull/1640)
 
 ### Bug Fixes
 
