@@ -17,6 +17,11 @@ When `config.send_default_pii` is set as `true`, `:http_logger` will include que
 - Fix `Net::HTTP` breadcrump url when using `Net::HTTP.new` [#1637](https://github.com/getsentry/sentry-ruby/pull/1637)
 - Fix trace span creation when using `Net::HTTP.start` [#1637](https://github.com/getsentry/sentry-ruby/pull/1637)
 
+### Documentation
+
+- Rewrite documents with yard [#1635](https://github.com/getsentry/sentry-ruby/pull/1635)
+- Document Transaction and Span classes [#1653](https://github.com/getsentry/sentry-ruby/pull/1653)
+
 ### Refactoring
 
 - Minor improvements on Net::HTTP patch [#1651](https://github.com/getsentry/sentry-ruby/pull/1651)
