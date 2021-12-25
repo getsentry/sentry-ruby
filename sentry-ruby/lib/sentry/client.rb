@@ -6,7 +6,10 @@ module Sentry
   class Client
     include LoggingHelper
 
-    attr_reader :transport, :configuration, :logger
+    attr_reader :transport, :configuration
+
+    # @deprecated Use Sentry.logger to retrieve the current logger instead.
+    attr_reader :logger
 
     def initialize(configuration)
       @configuration = configuration
