@@ -1,5 +1,8 @@
 require "webmock"
 
+# because our patch on Net::HTTP is relatively low-level, we need to stub methods on socket level
+# which is not supported by most of the http mocking library
+# so we need to put something together ourselves
 RSpec.shared_context "with request mock" do
   before { stub_const('Net::BufferedIO', Net::WebMockNetBufferedIO) }
 
@@ -27,5 +30,14 @@ RSpec.shared_context "with request mock" do
       # stubbing body to avoid dealing with socket and io issues
       allow(response).to receive(:body).and_return(JSON.generate(body))
     end
+  end
+
+  def stub_sentry_response
+    # use bad request as an example is easier for verifying with error messages
+    stub_request(build_fake_response("400", body: { data: "bad sentry DSN public key" }))
+  end
+
+  def stub_normal_response(code: "200")
+    stub_request(build_fake_response(code))
   end
 end
