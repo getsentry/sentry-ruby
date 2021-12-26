@@ -50,7 +50,6 @@ module Sentry
         return if from_sentry_sdk?
 
         request_info = extract_request_info(req)
-        request_info[:body] = req.body if Sentry.configuration.send_default_pii
 
         crumb = Sentry::Breadcrumb.new(
           level: :info,
@@ -94,12 +93,16 @@ module Sentry
 
       def extract_request_info(req)
         uri = req.uri || URI.parse("#{use_ssl? ? 'https' : 'http'}://#{address}#{req.path}")
-        url = "#{uri.scheme}://#{uri.host}#{uri.path}"
-        url = "#{url}?#{uri.query}" if uri.query && Sentry.configuration.send_default_pii
+        url = "#{uri.scheme}://#{uri.host}#{uri.path}" rescue uri.to_s
 
-        { method: req.method, url: url }
-      rescue
-        { method: req.method, url: url.to_s }
+        result = { method: req.method, url: url }
+
+        if Sentry.configuration.send_default_pii
+          result[:url] = result[:url] + "?#{uri.query}"
+          result[:body] = req.body
+        end
+
+        result
       end
     end
   end
