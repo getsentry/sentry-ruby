@@ -14,7 +14,16 @@ module Sentry
 
     include LoggingHelper
 
-    attr_reader :name, :parent_sampled, :hub, :configuration, :logger
+    attr_reader :name, :parent_sampled
+
+    # @deprecated Use Sentry.get_current_hub instead.
+    attr_reader :hub
+
+    # @deprecated Use Sentry.configuration instead.
+    attr_reader :configuration
+
+    # @deprecated Use Sentry.logger instead.
+    attr_reader :logger
 
     def initialize(name: nil, parent_sampled: nil, hub:, **options)
       super(**options)
@@ -23,8 +32,11 @@ module Sentry
       @parent_sampled = parent_sampled
       @transaction = self
       @hub = hub
-      @configuration = hub.configuration
-      @logger = configuration.logger
+      @configuration = hub.configuration # to be removed
+      @tracing_enabled = hub.configuration.tracing_enabled?
+      @traces_sampler = hub.configuration.traces_sampler
+      @traces_sample_rate = hub.configuration.traces_sample_rate
+      @logger = hub.configuration.logger
       init_span_recorder
     end
 
@@ -66,22 +78,20 @@ module Sentry
     end
 
     def set_initial_sample_decision(sampling_context:)
-      unless configuration.tracing_enabled?
+      unless @tracing_enabled
         @sampled = false
         return
       end
 
       return unless @sampled.nil?
 
-      traces_sampler = configuration.traces_sampler
-
       sample_rate =
-        if traces_sampler.is_a?(Proc)
-          traces_sampler.call(sampling_context)
+        if @traces_sampler.is_a?(Proc)
+          @traces_sampler.call(sampling_context)
         elsif !sampling_context[:parent_sampled].nil?
           sampling_context[:parent_sampled]
         else
-          configuration.traces_sample_rate
+          @traces_sample_rate
         end
 
       transaction_description = generate_transaction_description

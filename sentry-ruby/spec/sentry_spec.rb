@@ -377,12 +377,12 @@ RSpec.describe Sentry do
         end
 
         it "provides proper sampling context to the traces_sampler" do
-          transaction = Sentry::Transaction.new(op: "foo", hub: Sentry.get_current_hub)
-
           context = nil
           Sentry.configuration.traces_sampler = lambda do |sampling_context|
             context = sampling_context
           end
+
+          transaction = Sentry::Transaction.new(op: "foo", hub: Sentry.get_current_hub)
 
           described_class.start_transaction(transaction: transaction)
 
@@ -391,12 +391,12 @@ RSpec.describe Sentry do
         end
 
         it "passes parent_sampled to the sampling_context" do
-          transaction = Sentry::Transaction.new(parent_sampled: true, hub: Sentry.get_current_hub)
-
           context = nil
           Sentry.configuration.traces_sampler = lambda do |sampling_context|
             context = sampling_context
           end
+
+          transaction = Sentry::Transaction.new(parent_sampled: true, hub: Sentry.get_current_hub)
 
           described_class.start_transaction(transaction: transaction)
 
