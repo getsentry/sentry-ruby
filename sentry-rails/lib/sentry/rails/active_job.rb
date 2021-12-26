@@ -65,7 +65,3 @@ module Sentry
     end
   end
 end
-
-class ActiveJob::Base
-  include Sentry::Rails::ActiveJobExtensions
-end
