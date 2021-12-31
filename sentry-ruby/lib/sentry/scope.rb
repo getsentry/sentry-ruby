@@ -11,15 +11,22 @@ module Sentry
 
     attr_reader(*ATTRIBUTES)
 
+    # @param max_breadcrumbs [Integer] the maximum number of breadcrumbs to be stored in the scope.
     def initialize(max_breadcrumbs: nil)
       @max_breadcrumbs = max_breadcrumbs
       set_default_value
     end
 
+    # Resets the scope's attributes to defaults.
+    # @return [void]
     def clear
       set_default_value
     end
 
+    # Applies stored attributes and event processors to the given event.
+    # @param event [Event]
+    # @param hint [Hash] the hint data that'll be passed to event processors.
+    # @return [Event]
     def apply_to_event(event, hint = nil)
       event.tags = tags.merge(event.tags)
       event.user = user.merge(event.user)
@@ -45,14 +52,20 @@ module Sentry
       event
     end
 
+    # Adds the breadcrumb to the scope's breadcrumbs buffer.
+    # @param breadcrumb [Breadcrumb]
+    # @return [void]
     def add_breadcrumb(breadcrumb)
       breadcrumbs.record(breadcrumb)
     end
 
+    # Clears the scope's breadcrumbs buffer
+    # @return [void]
     def clear_breadcrumbs
       set_new_breadcrumb_buffer
     end
 
+    # @return [Scope]
     def dup
       copy = super
       copy.breadcrumbs = breadcrumbs.dup
@@ -66,6 +79,9 @@ module Sentry
       copy
     end
 
+    # Updates the scope's data from a given scope.
+    # @param scope [Scope]
+    # @return [void]
     def update_from_scope(scope)
       self.breadcrumbs = scope.breadcrumbs
       self.contexts = scope.contexts
@@ -77,6 +93,14 @@ module Sentry
       self.span = scope.span
     end
 
+    # Updates the scope's data from the given options.
+    # @param contexts [Hash]
+    # @param extras [Hash]
+    # @param tags [Hash]
+    # @param user [Hash]
+    # @param level [String, Symbol]
+    # @param fingerprint [Array]
+    # @return [void]
     def update_from_options(
       contexts: nil,
       extra: nil,
@@ -93,39 +117,65 @@ module Sentry
       self.fingerprint = fingerprint if fingerprint
     end
 
+    # Sets the scope's rack_env attribute.
+    # @param env [Hash]
+    # @return [Hash]
     def set_rack_env(env)
       env = env || {}
       @rack_env = env
     end
 
+    # Sets the scope's span attribute.
+    # @param span [Span]
+    # @return [Span]
     def set_span(span)
       check_argument_type!(span, Span)
       @span = span
     end
 
+    # Sets the scope's user attribute.
+    # @param user [Hash]
+    # @return [Hash]
     def set_user(user_hash)
       check_argument_type!(user_hash, Hash)
       @user = user_hash
     end
 
+    # Updates the scope's extras attribute by merging with the old value.
+    # @param extras [Hash]
+    # @return [Hash]
     def set_extras(extras_hash)
       check_argument_type!(extras_hash, Hash)
       @extra.merge!(extras_hash)
     end
 
+    # Adds a new key-value pair to current extras.
+    # @param key [String, Symbol]
+    # @param value [Object]
+    # @return [Hash]
     def set_extra(key, value)
       set_extras(key => value)
     end
 
+    # Updates the scope's tags attribute by merging with the old value.
+    # @param tags [Hash]
+    # @return [Hash]
     def set_tags(tags_hash)
       check_argument_type!(tags_hash, Hash)
       @tags.merge!(tags_hash)
     end
 
+    # Adds a new key-value pair to current tags.
+    # @param key [String, Symbol]
+    # @param value [Object]
+    # @return [Hash]
     def set_tag(key, value)
       set_tags(key => value)
     end
 
+    # Updates the scope's contexts attribute by merging with the old value.
+    # @param contexts [Hash]
+    # @return [Hash]
     def set_contexts(contexts_hash)
       check_argument_type!(contexts_hash, Hash)
       @contexts.merge!(contexts_hash) do |key, old, new|
@@ -133,37 +183,61 @@ module Sentry
       end
     end
 
+    # Adds a new key-value pair to current contexts.
+    # @param key [String, Symbol]
+    # @param value [Object]
+    # @return [Hash]
     def set_context(key, value)
       check_argument_type!(value, Hash)
       set_contexts(key => value)
     end
 
+    # Sets the scope's level attribute.
+    # @param level [String, Symbol]
+    # @return [void]
     def set_level(level)
       @level = level
     end
 
+    # Appends a new transaction name to the scope.
+    # The "transaction" here does not refer to `Transaction` objects.
+    # @param transaction_name [String]
+    # @return [void]
     def set_transaction_name(transaction_name)
       @transaction_names << transaction_name
     end
 
+    # Returns current transaction name.
+    # The "transaction" here does not refer to `Transaction` objects.
+    # @return [String, nil]
     def transaction_name
       @transaction_names.last
     end
 
+    # Returns the associated Transaction object.
+    # @return [Transaction, nil]
     def get_transaction
       span.transaction if span
     end
 
+    # Returns the associated Span object.
+    # @return [Span, nil]
     def get_span
       span
     end
 
+    # Sets the scope's fingerprint attribute.
+    # @param fingerprint [Array]
+    # @return [Array]
     def set_fingerprint(fingerprint)
       check_argument_type!(fingerprint, Array)
 
       @fingerprint = fingerprint
     end
 
+    # Adds a new event processor [Proc] to the scope.
+    # @param block [Proc]
+    # @return [void]
     def add_event_processor(&block)
       @event_processors << block
     end
@@ -193,8 +267,8 @@ module Sentry
       @breadcrumbs = BreadcrumbBuffer.new(@max_breadcrumbs)
     end
 
-
     class << self
+      # @return [Hash]
       def os_context
         @os_context ||=
           begin
@@ -208,6 +282,7 @@ module Sentry
           end
       end
 
+      # @return [Hash]
       def runtime_context
         @runtime_context ||= {
           name: RbConfig::CONFIG["ruby_install_name"],

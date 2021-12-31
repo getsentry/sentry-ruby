@@ -106,6 +106,15 @@ module Sentry
     # @!method send_event
     #   @see Client#send_event
     def_delegators :get_current_client, :configuration, :send_event
+
+    # @!method set_tags
+    #   @see Scope#set_tags
+    # @!method set_extras
+    #   @see Scope#set_extras
+    # @!method set_user
+    #   @see Scope#set_user
+    # @!method set_context
+    #   @see Scope#set_context
     def_delegators :get_current_scope, :set_tags, :set_extras, :set_user, :set_context
 
     ##### Main APIs #####
