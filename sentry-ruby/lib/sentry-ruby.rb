@@ -101,6 +101,10 @@ module Sentry
 
     extend Forwardable
 
+    # @!method configuration
+    #   @see Client#configuration
+    # @!method send_event
+    #   @see Client#send_event
     def_delegators :get_current_client, :configuration, :send_event
     def_delegators :get_current_scope, :set_tags, :set_extras, :set_user, :set_context
 
