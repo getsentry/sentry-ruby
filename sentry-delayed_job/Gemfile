@@ -14,7 +14,7 @@ gem "rexml"
 
 gem "delayed_job"
 gem "delayed_job_active_record"
-gem "rails"
+gem "rails", "< 7.0"
 gem "activerecord-jdbcmysql-adapter", platform: :jruby
 gem "jdbc-sqlite3", platform: :jruby
 gem "sqlite3", platform: :ruby

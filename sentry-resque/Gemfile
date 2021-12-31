@@ -9,7 +9,7 @@ gem 'simplecov'
 gem "simplecov-cobertura", "~> 1.4"
 gem "rexml"
 
-gem "rails"
+gem "rails", "< 7.0"
 
 gem "sentry-ruby", path: "../sentry-ruby"
 gem "sentry-rails", path: "../sentry-rails"
