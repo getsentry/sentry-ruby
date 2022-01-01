@@ -6,11 +6,18 @@ module Sentry
   class Client
     include LoggingHelper
 
-    attr_reader :transport, :configuration
+    # The Transport object that'll send events for the client.
+    # @return [Transport]
+    attr_reader :transport
+
+    # The Configuration object that's used for configuring the client and its transport.
+    # @return [Configuration]
+    attr_reader :configuration
 
     # @deprecated Use Sentry.logger to retrieve the current logger instead.
     attr_reader :logger
 
+    # @param configuration [Configuration]
     def initialize(configuration)
       @configuration = configuration
       @logger = configuration.logger
@@ -28,6 +35,11 @@ module Sentry
       end
     end
 
+    # Applies the given scope's data to the event and sends it to Sentry.
+    # @param event [Event] the event to be sent.
+    # @param scope [Scope] the scope with contextual data that'll be applied to the event before it's sent.
+    # @param hint [Hash] the hint data that'll be passed to `before_send` callback and the scope's event processors.
+    # @return [Event, nil]
     def capture_event(event, scope, hint = {})
       return unless configuration.sending_allowed?
 
@@ -60,6 +72,10 @@ module Sentry
       nil
     end
 
+    # Initializes an Event object with the given exception. Returns `nil` if the exception's class is excluded from reporting.
+    # @param exception [Exception] the exception to be reported.
+    # @param hint [Hash] the hint data that'll be passed to `before_send` callback and the scope's event processors.
+    # @return [Event, nil]
     def event_from_exception(exception, hint = {})
       integration_meta = Sentry.integrations[hint[:integration]]
       return unless @configuration.exception_class_allowed?(exception)
@@ -70,6 +86,10 @@ module Sentry
       end
     end
 
+    # Initializes an Event object with the given message.
+    # @param message [String] the message to be reported.
+    # @param hint [Hash] the hint data that'll be passed to `before_send` callback and the scope's event processors.
+    # @return [Event]
     def event_from_message(message, hint = {}, backtrace: nil)
       integration_meta = Sentry.integrations[hint[:integration]]
       event = Event.new(configuration: configuration, integration_meta: integration_meta, message: message)
@@ -77,6 +97,9 @@ module Sentry
       event
     end
 
+    # Initializes an Event object with the given Transaction object.
+    # @param transaction [Transaction] the transaction to be recorded.
+    # @return [TransactionEvent]
     def event_from_transaction(transaction)
       TransactionEvent.new(configuration: configuration).tap do |event|
         event.transaction = transaction.name
@@ -89,6 +112,10 @@ module Sentry
       end
     end
 
+    # Sends the event to Sentry.
+    # @param event [Event] the event to be sent.
+    # @param hint [Hash] the hint data that'll be passed to `before_send` callback.
+    # @return [Event]
     def send_event(event, hint = nil)
       event_type = event.is_a?(Event) ? event.type : event["type"]
 
@@ -115,6 +142,10 @@ module Sentry
       raise
     end
 
+    # Generates a Sentry trace for distribted tracing from the given Span.
+    # Returns `nil` if `config.propagate_traces` is `false`.
+    # @param span [Span] the span to generate trace from.
+    # @return [String, nil]
     def generate_sentry_trace(span)
       return unless configuration.propagate_traces
 
