@@ -22,7 +22,7 @@ module Sentry
 
     MAX_MESSAGE_SIZE_IN_BYTES = 1024 * 8
 
-    SKIP_INSPECTION_ATTRIBUTES = [:@modules, :@backtrace, :@stacktrace_builder, :@send_default_pii, :@trusted_proxies]
+    SKIP_INSPECTION_ATTRIBUTES = [:@modules, :@backtrace, :@stacktrace_builder, :@send_default_pii, :@trusted_proxies, :@rack_env_whitelist]
 
     include CustomInspection
 
@@ -55,6 +55,7 @@ module Sentry
       @send_default_pii = configuration.send_default_pii
       @trusted_proxies = configuration.trusted_proxies
       @stacktrace_builder = configuration.stacktrace_builder
+      @rack_env_whitelist = configuration.rack_env_whitelist
 
       @message = (message || "").byteslice(0..MAX_MESSAGE_SIZE_IN_BYTES)
 
@@ -132,7 +133,7 @@ module Sentry
     end
 
     def add_request_interface(env)
-      @request = Sentry::RequestInterface.build(env: env)
+      @request = Sentry::RequestInterface.build(env: env, send_default_pii: @send_default_pii, rack_env_whitelist: @rack_env_whitelist)
     end
 
     def add_threads_interface(backtrace: nil, **options)
