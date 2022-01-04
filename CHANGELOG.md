@@ -1,4 +1,8 @@
-## Unreleased
+## 4.8.2
+
+### Documentation
+
+- Rewrite documents with yard [#1635](https://github.com/getsentry/sentry-ruby/pull/1635)
 
 ### Bug Fixes
 
