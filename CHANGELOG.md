@@ -16,6 +16,9 @@ When `config.send_default_pii` is set as `true`, `:http_logger` will include que
 - Remove unnecessary ActiveJob inclusion [#1655](https://github.com/getsentry/sentry-ruby/pull/1655)
 - Fix `Net::HTTP` breadcrump url when using `Net::HTTP.new` [#1637](https://github.com/getsentry/sentry-ruby/pull/1637)
 - Fix trace span creation when using `Net::HTTP.start` [#1637](https://github.com/getsentry/sentry-ruby/pull/1637)
+- Lock faraday to version 1.x [#1664](https://github.com/getsentry/sentry-ruby/pull/1664)
+  - This is a temporary effort to avoid dependency issue with `faraday 2.0` and `faraday` will be removed from dependencies very soon. 
+    See [this comment](https://github.com/getsentry/sentry-ruby/issues/1663) for more information about our plan to remove it.
 
 ### Documentation
 
