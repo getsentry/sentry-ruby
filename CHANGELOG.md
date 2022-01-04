@@ -5,6 +5,9 @@
 - Use prepended method instead of `around_perform` for `ActiveJob` integration [#1631](https://github.com/getsentry/sentry-ruby/pull/1631)
   - Fixes [#956](https://github.com/getsentry/sentry-ruby/issues/956) and [#1629](https://github.com/getsentry/sentry-ruby/issues/1629)
 - Remove unnecessary ActiveJob inclusion [#1655](https://github.com/getsentry/sentry-ruby/pull/1655)
+- Lock faraday to version 1.x [#1664](https://github.com/getsentry/sentry-ruby/pull/1664)
+  - This is a temporary effort to avoid dependency issue with `faraday 2.0` and `faraday` will be removed from dependencies very soon. 
+    See [this comment](https://github.com/getsentry/sentry-ruby/issues/1663) for more information about our plan to remove it.
 
 ## 4.8.1
 
