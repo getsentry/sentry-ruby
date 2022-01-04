@@ -21,12 +21,15 @@ When `config.send_default_pii` is set as `true`, `:http_logger` will include que
 
 - Rewrite documents with yard [#1635](https://github.com/getsentry/sentry-ruby/pull/1635)
 - Document Transaction and Span classes [#1653](https://github.com/getsentry/sentry-ruby/pull/1653)
+- Document Client and Scope classes [#1659](https://github.com/getsentry/sentry-ruby/pull/1659)
 
 ### Refactoring
 
 - Minor improvements on Net::HTTP patch [#1651](https://github.com/getsentry/sentry-ruby/pull/1651)
 - Deprecate unnecessarily exposed attributes [#1652](https://github.com/getsentry/sentry-ruby/pull/1652)
 - Refactor Net::HTTP patch [#1656](https://github.com/getsentry/sentry-ruby/pull/1656)
+- Deprecate Event#configuration [#1661](https://github.com/getsentry/sentry-ruby/pull/1661)
+- Explicitly passing Rack related configurations [#1662](https://github.com/getsentry/sentry-ruby/pull/1662)
 
 ## 4.8.1
 

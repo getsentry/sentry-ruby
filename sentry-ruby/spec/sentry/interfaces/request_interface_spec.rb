@@ -4,15 +4,11 @@ require 'spec_helper'
 
 RSpec.describe Sentry::RequestInterface do
   let(:env) { Rack::MockRequest.env_for("/test") }
+  let(:send_default_pii) { false }
+  let(:rack_env_whitelist) { Sentry::Configuration::RACK_ENV_WHITELIST_DEFAULT }
 
   subject do
-    described_class.build(env: env)
-  end
-
-  before do
-    Sentry.init do |config|
-      config.dsn = DUMMY_DSN
-    end
+    described_class.build(env: env, send_default_pii: send_default_pii, rack_env_whitelist: rack_env_whitelist)
   end
 
   describe "rack_env_whitelist" do
@@ -26,15 +22,20 @@ RSpec.describe Sentry::RequestInterface do
       expect(subject.env).to_not include(additional_env)
     end
 
-    it 'formats rack env according to the provided whitelist' do
-      Sentry.configuration.rack_env_whitelist = %w(random_param query_string)
-      expect(subject.env).to eq(additional_env)
+    context "with provided whitelist" do
+      let(:rack_env_whitelist) { %w(random_param query_string) }
+
+      it 'formats rack env according to the provided whitelist' do
+        expect(subject.env).to eq(additional_env)
+      end
     end
 
-    it 'keeps the original env intact when an empty whitelist is provided' do
-      Sentry.configuration.rack_env_whitelist = []
+    context "with empty whitelist" do
+      let(:rack_env_whitelist) { [] }
 
-      expect(subject.env).to eq(env)
+      it 'keeps the original env intact' do
+        expect(subject.env).to eq(env)
+      end
     end
   end
 
@@ -71,7 +72,7 @@ RSpec.describe Sentry::RequestInterface do
       it 'does not call #to_s for unnecessary env variables' do
         expect(mock).not_to receive(:to_s)
 
-        described_class.build(env: env)
+        subject
       end
     end
   end
@@ -124,7 +125,7 @@ RSpec.describe Sentry::RequestInterface do
 
       env.merge!("HTTP_FOO" => "BAR", "rails_object" => obj)
 
-      expect { described_class.build(env: env) }.to_not raise_error
+      expect { described_class.build(env: env, send_default_pii: send_default_pii, rack_env_whitelist: rack_env_whitelist) }.to_not raise_error
     end
   end
 
@@ -147,9 +148,7 @@ RSpec.describe Sentry::RequestInterface do
   end
 
   context "with config.send_default_pii = true" do
-    before do
-      Sentry.configuration.send_default_pii = true
-    end
+    let(:send_default_pii) { true }
 
     it "stores cookies" do
       env.merge!(::Rack::RACK_REQUEST_COOKIE_HASH => "cookies!")
