@@ -11,18 +11,11 @@ When `config.send_default_pii` is set as `true`, `:http_logger` will include que
 
 ### Bug Fixes
 
-- Use prepended method instead of `around_perform` for `ActiveJob` integration [#1631](https://github.com/getsentry/sentry-ruby/pull/1631)
-  - Fixes [#956](https://github.com/getsentry/sentry-ruby/issues/956) and [#1629](https://github.com/getsentry/sentry-ruby/issues/1629)
-- Remove unnecessary ActiveJob inclusion [#1655](https://github.com/getsentry/sentry-ruby/pull/1655)
 - Fix `Net::HTTP` breadcrump url when using `Net::HTTP.new` [#1637](https://github.com/getsentry/sentry-ruby/pull/1637)
 - Fix trace span creation when using `Net::HTTP.start` [#1637](https://github.com/getsentry/sentry-ruby/pull/1637)
-- Lock faraday to version 1.x [#1664](https://github.com/getsentry/sentry-ruby/pull/1664)
-  - This is a temporary effort to avoid dependency issue with `faraday 2.0` and `faraday` will be removed from dependencies very soon. 
-    See [this comment](https://github.com/getsentry/sentry-ruby/issues/1663) for more information about our plan to remove it.
 
 ### Documentation
 
-- Rewrite documents with yard [#1635](https://github.com/getsentry/sentry-ruby/pull/1635)
 - Document Transaction and Span classes [#1653](https://github.com/getsentry/sentry-ruby/pull/1653)
 - Document Client and Scope classes [#1659](https://github.com/getsentry/sentry-ruby/pull/1659)
 
@@ -33,6 +26,21 @@ When `config.send_default_pii` is set as `true`, `:http_logger` will include que
 - Refactor Net::HTTP patch [#1656](https://github.com/getsentry/sentry-ruby/pull/1656)
 - Deprecate Event#configuration [#1661](https://github.com/getsentry/sentry-ruby/pull/1661)
 - Explicitly passing Rack related configurations [#1662](https://github.com/getsentry/sentry-ruby/pull/1662)
+
+## 4.8.2
+
+### Documentation
+
+- Rewrite documents with yard [#1635](https://github.com/getsentry/sentry-ruby/pull/1635)
+
+### Bug Fixes
+
+- Use prepended method instead of `around_perform` for `ActiveJob` integration [#1631](https://github.com/getsentry/sentry-ruby/pull/1631)
+  - Fixes [#956](https://github.com/getsentry/sentry-ruby/issues/956) and [#1629](https://github.com/getsentry/sentry-ruby/issues/1629)
+- Remove unnecessary ActiveJob inclusion [#1655](https://github.com/getsentry/sentry-ruby/pull/1655)
+- Lock faraday to version 1.x [#1664](https://github.com/getsentry/sentry-ruby/pull/1664)
+  - This is a temporary effort to avoid dependency issue with `faraday 2.0` and `faraday` will be removed from dependencies very soon. 
+    See [this comment](https://github.com/getsentry/sentry-ruby/issues/1663) for more information about our plan to remove it.
 
 ## 4.8.1
 
