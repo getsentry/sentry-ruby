@@ -1,6 +1,12 @@
 require "spec_helper"
 require "active_job/railtie"
 
+class NormalJob < ActiveJob::Base
+  def perform
+    "foo"
+  end
+end
+
 class FailedJob < ActiveJob::Base
   self.logger = nil
 
@@ -47,6 +53,10 @@ RSpec.describe "without Sentry initialized" do
   it "runs job" do
     expect { FailedJob.perform_now }.to raise_error(FailedJob::TestError)
   end
+
+  it "returns #perform method's return value" do
+    expect(NormalJob.perform_now).to eq("foo")
+  end
 end
 
 RSpec.describe "ActiveJob integration" do
@@ -60,6 +70,10 @@ RSpec.describe "ActiveJob integration" do
 
   let(:transport) do
     Sentry.get_current_client.transport
+  end
+
+  it "returns #perform method's return value" do
+    expect(NormalJob.perform_now).to eq("foo")
   end
 
   it "adds useful context to extra" do
