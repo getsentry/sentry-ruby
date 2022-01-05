@@ -24,9 +24,11 @@ module Sentry
 
         scope.set_span(transaction) if transaction
 
-        block.call
+        return_value = block.call
 
         finish_sentry_transaction(transaction, 200)
+
+        return_value
       rescue Exception => e # rubocop:disable Lint/RescueException
         finish_sentry_transaction(transaction, 500)
 
