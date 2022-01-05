@@ -1,3 +1,10 @@
+## 4.8.3
+
+### Bug Fixes
+
+- Correctly return `JobClass#perform`'s return value [#1667](https://github.com/getsentry/sentry-ruby/pull/1667)
+  - Fixes [#1666](https://github.com/getsentry/sentry-ruby/issues/1666)
+
 ## 4.8.2
 
 ### Documentation
