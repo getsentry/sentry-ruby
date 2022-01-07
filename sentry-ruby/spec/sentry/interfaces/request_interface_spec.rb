@@ -8,7 +8,7 @@ RSpec.describe Sentry::RequestInterface do
   let(:rack_env_whitelist) { Sentry::Configuration::RACK_ENV_WHITELIST_DEFAULT }
 
   subject do
-    described_class.build(env: env, send_default_pii: send_default_pii, rack_env_whitelist: rack_env_whitelist)
+    described_class.new(env: env, send_default_pii: send_default_pii, rack_env_whitelist: rack_env_whitelist)
   end
 
   describe "rack_env_whitelist" do
@@ -125,7 +125,7 @@ RSpec.describe Sentry::RequestInterface do
 
       env.merge!("HTTP_FOO" => "BAR", "rails_object" => obj)
 
-      expect { described_class.build(env: env, send_default_pii: send_default_pii, rack_env_whitelist: rack_env_whitelist) }.to_not raise_error
+      expect { described_class.new(env: env, send_default_pii: send_default_pii, rack_env_whitelist: rack_env_whitelist) }.to_not raise_error
     end
   end
 

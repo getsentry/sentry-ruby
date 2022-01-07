@@ -131,7 +131,7 @@ module Sentry
     end
 
     def add_request_interface(env)
-      @request = Sentry::RequestInterface.build(env: env, send_default_pii: @send_default_pii, rack_env_whitelist: @rack_env_whitelist)
+      @request = Sentry::RequestInterface.new(env: env, send_default_pii: @send_default_pii, rack_env_whitelist: @rack_env_whitelist)
     end
 
     def add_threads_interface(backtrace: nil, **options)

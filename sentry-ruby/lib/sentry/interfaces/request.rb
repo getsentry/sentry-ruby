@@ -17,7 +17,7 @@ module Sentry
 
     attr_accessor :url, :method, :data, :query_string, :cookies, :headers, :env
 
-    def self.build(env:, send_default_pii:, rack_env_whitelist:)
+    def initialize(env:, send_default_pii:, rack_env_whitelist:)
       env = env.dup
 
       unless send_default_pii
@@ -28,11 +28,6 @@ module Sentry
       end
 
       request = ::Rack::Request.new(env)
-      self.new(request: request, send_default_pii: send_default_pii, rack_env_whitelist: rack_env_whitelist)
-    end
-
-    def initialize(request:, send_default_pii:, rack_env_whitelist:)
-      env = request.env
 
       if send_default_pii
         self.data = read_data_from(request)
