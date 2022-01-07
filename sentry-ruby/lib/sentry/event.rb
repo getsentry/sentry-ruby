@@ -22,19 +22,16 @@ module Sentry
 
     MAX_MESSAGE_SIZE_IN_BYTES = 1024 * 8
 
-    SKIP_INSPECTION_ATTRIBUTES = [:@configuration, :@modules, :@backtrace]
+    SKIP_INSPECTION_ATTRIBUTES = [:@modules, :@backtrace, :@stacktrace_builder, :@send_default_pii, :@trusted_proxies, :@rack_env_whitelist]
 
     include CustomInspection
 
     attr_writer(*WRITER_ATTRIBUTES)
     attr_reader(*SERIALIZEABLE_ATTRIBUTES)
 
-    attr_reader :configuration, :request, :exception, :threads
+    attr_reader :request, :exception, :threads
 
     def initialize(configuration:, integration_meta: nil, message: nil)
-      # this needs to go first because some setters rely on configuration
-      @configuration = configuration
-
       # Set some simple default values
       @event_id      = SecureRandom.uuid.delete("-")
       @timestamp     = Sentry.utc_now.iso8601
@@ -48,10 +45,17 @@ module Sentry
 
       @fingerprint = []
 
+      # configuration data that's directly used by events
       @server_name = configuration.server_name
       @environment = configuration.environment
       @release = configuration.release
       @modules = configuration.gem_specs if configuration.send_modules
+
+      # configuration options to help events process data
+      @send_default_pii = configuration.send_default_pii
+      @trusted_proxies = configuration.trusted_proxies
+      @stacktrace_builder = configuration.stacktrace_builder
+      @rack_env_whitelist = configuration.rack_env_whitelist
 
       @message = (message || "").byteslice(0..MAX_MESSAGE_SIZE_IN_BYTES)
 
@@ -84,6 +88,12 @@ module Sentry
       end
     end
 
+    # @deprecated This method will be removed in v5.0.0. Please just use Sentry.configuration
+    # @return [Configuration]
+    def configuration
+      Sentry.configuration
+    end
+
     def timestamp=(time)
       @timestamp = time.is_a?(Time) ? time.to_f : time
     end
@@ -98,7 +108,7 @@ module Sentry
 
         add_request_interface(env)
 
-        if configuration.send_default_pii
+        if @send_default_pii
           user[:ip_address] = calculate_real_ip_from_rack(env)
         end
 
@@ -123,13 +133,13 @@ module Sentry
     end
 
     def add_request_interface(env)
-      @request = Sentry::RequestInterface.build(env: env)
+      @request = Sentry::RequestInterface.build(env: env, send_default_pii: @send_default_pii, rack_env_whitelist: @rack_env_whitelist)
     end
 
     def add_threads_interface(backtrace: nil, **options)
       @threads = ThreadsInterface.build(
         backtrace: backtrace,
-        stacktrace_builder: configuration.stacktrace_builder,
+        stacktrace_builder: @stacktrace_builder,
         **options
       )
     end
@@ -139,7 +149,7 @@ module Sentry
         @extra.merge!(exception.sentry_context)
       end
 
-      @exception = Sentry::ExceptionInterface.build(exception: exception, stacktrace_builder: configuration.stacktrace_builder)
+      @exception = Sentry::ExceptionInterface.build(exception: exception, stacktrace_builder: @stacktrace_builder)
     end
 
     private
@@ -160,7 +170,7 @@ module Sentry
         :client_ip => env["HTTP_CLIENT_IP"],
         :real_ip => env["HTTP_X_REAL_IP"],
         :forwarded_for => env["HTTP_X_FORWARDED_FOR"],
-        :trusted_proxies => configuration.trusted_proxies
+        :trusted_proxies => @trusted_proxies
       ).calculate_ip
     end
   end

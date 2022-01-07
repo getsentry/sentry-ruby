@@ -1,3 +1,32 @@
+## Unreleased
+
+### Features
+
+- Add Action Cable exception capturing (Rails 6+) [#1638](https://github.com/getsentry/sentry-ruby/pull/1638)
+- Add request body & query string to `Net::HTTP` breadcrumb [#1637](https://github.com/getsentry/sentry-ruby/pull/1637)
+
+When `config.send_default_pii` is set as `true`, `:http_logger` will include query string and request body in the breadcrumbs it logs.
+
+- Add tracing support to `ActionCable` integration [#1640](https://github.com/getsentry/sentry-ruby/pull/1640)
+
+### Bug Fixes
+
+- Fix `Net::HTTP` breadcrump url when using `Net::HTTP.new` [#1637](https://github.com/getsentry/sentry-ruby/pull/1637)
+- Fix trace span creation when using `Net::HTTP.start` [#1637](https://github.com/getsentry/sentry-ruby/pull/1637)
+
+### Documentation
+
+- Document Transaction and Span classes [#1653](https://github.com/getsentry/sentry-ruby/pull/1653)
+- Document Client and Scope classes [#1659](https://github.com/getsentry/sentry-ruby/pull/1659)
+
+### Refactoring
+
+- Minor improvements on Net::HTTP patch [#1651](https://github.com/getsentry/sentry-ruby/pull/1651)
+- Deprecate unnecessarily exposed attributes [#1652](https://github.com/getsentry/sentry-ruby/pull/1652)
+- Refactor Net::HTTP patch [#1656](https://github.com/getsentry/sentry-ruby/pull/1656)
+- Deprecate Event#configuration [#1661](https://github.com/getsentry/sentry-ruby/pull/1661)
+- Explicitly passing Rack related configurations [#1662](https://github.com/getsentry/sentry-ruby/pull/1662)
+
 ## 4.8.3
 
 ### Bug Fixes

@@ -14,7 +14,22 @@ module Sentry
 
     include LoggingHelper
 
-    attr_reader :name, :parent_sampled, :hub, :configuration, :logger
+    # The name of the transaction.
+    # @return [String]
+    attr_reader :name
+
+    # The sampling decision of the parent transaction, which will be considered when making the current transaction's sampling decision.
+    # @return [String]
+    attr_reader :parent_sampled
+
+    # @deprecated Use Sentry.get_current_hub instead.
+    attr_reader :hub
+
+    # @deprecated Use Sentry.configuration instead.
+    attr_reader :configuration
+
+    # @deprecated Use Sentry.logger instead.
+    attr_reader :logger
 
     def initialize(name: nil, parent_sampled: nil, hub:, **options)
       super(**options)
@@ -23,11 +38,23 @@ module Sentry
       @parent_sampled = parent_sampled
       @transaction = self
       @hub = hub
-      @configuration = hub.configuration
-      @logger = configuration.logger
+      @configuration = hub.configuration # to be removed
+      @tracing_enabled = hub.configuration.tracing_enabled?
+      @traces_sampler = hub.configuration.traces_sampler
+      @traces_sample_rate = hub.configuration.traces_sample_rate
+      @logger = hub.configuration.logger
       init_span_recorder
     end
 
+    # Initalizes a Transaction instance with a Sentry trace string from another transaction (usually from an external request).
+    #
+    # The original transaction will become the parent of the new Transaction instance. And they will share the same `trace_id`.
+    #
+    # The child transaction will also store the parent's sampling decision in its `parent_sampled` attribute.
+    # @param sentry_trace [String] the trace string from the previous transaction.
+    # @param hub [Hub] the hub that'll be responsible for sending this transaction when it's finished.
+    # @param options [Hash] the options you want to use to initialize a Transaction instance.
+    # @return [Transaction, nil]
     def self.from_sentry_trace(sentry_trace, hub: Sentry.get_current_hub, **options)
       return unless hub.configuration.tracing_enabled?
       return unless sentry_trace
@@ -46,12 +73,14 @@ module Sentry
       new(trace_id: trace_id, parent_span_id: parent_span_id, parent_sampled: parent_sampled, hub: hub, **options)
     end
 
+    # @return [Hash]
     def to_hash
       hash = super
       hash.merge!(name: @name, sampled: @sampled, parent_sampled: @parent_sampled)
       hash
     end
 
+    # @return [Transaction]
     def deep_dup
       copy = super
       copy.init_span_recorder(@span_recorder.max_length)
@@ -65,23 +94,24 @@ module Sentry
       copy
     end
 
+    # Sets initial sampling decision of the transaction.
+    # @param sampling_context [Hash] a context Hash that'll be passed to `traces_sampler` (if provided).
+    # @return [void]
     def set_initial_sample_decision(sampling_context:)
-      unless configuration.tracing_enabled?
+      unless @tracing_enabled
         @sampled = false
         return
       end
 
       return unless @sampled.nil?
 
-      traces_sampler = configuration.traces_sampler
-
       sample_rate =
-        if traces_sampler.is_a?(Proc)
-          traces_sampler.call(sampling_context)
+        if @traces_sampler.is_a?(Proc)
+          @traces_sampler.call(sampling_context)
         elsif !sampling_context[:parent_sampled].nil?
           sampling_context[:parent_sampled]
         else
-          configuration.traces_sample_rate
+          @traces_sample_rate
         end
 
       transaction_description = generate_transaction_description
@@ -113,6 +143,9 @@ module Sentry
       end
     end
 
+    # Finishes the transaction's recording and send it to Sentry.
+    # @param hub [Hub] the hub that'll send this transaction. (Deprecated)
+    # @return [TransactionEvent]
     def finish(hub: nil)
       if hub
         log_warn(

@@ -17,14 +17,14 @@ module Sentry
 
     attr_accessor :url, :method, :data, :query_string, :cookies, :headers, :env
 
-    def self.build(env:)
-      env = clean_env(env)
+    def self.build(env:, send_default_pii:, rack_env_whitelist:)
+      env = clean_env(env, send_default_pii)
       request = ::Rack::Request.new(env)
-      self.new(request: request)
+      self.new(request: request, send_default_pii: send_default_pii, rack_env_whitelist: rack_env_whitelist)
     end
 
-    def self.clean_env(env)
-      unless Sentry.configuration.send_default_pii
+    def self.clean_env(env, send_default_pii)
+      unless send_default_pii
         # need to completely wipe out ip addresses
         RequestInterface::IP_HEADERS.each do |header|
           env.delete(header)
@@ -34,10 +34,10 @@ module Sentry
       env
     end
 
-    def initialize(request:)
+    def initialize(request:, send_default_pii:, rack_env_whitelist:)
       env = request.env
 
-      if Sentry.configuration.send_default_pii
+      if send_default_pii
         self.data = read_data_from(request)
         self.cookies = request.cookies
         self.query_string = request.query_string
@@ -47,7 +47,7 @@ module Sentry
       self.method = request.request_method
 
       self.headers = filter_and_format_headers(env)
-      self.env     = filter_and_format_env(env)
+      self.env     = filter_and_format_env(env, rack_env_whitelist)
     end
 
     private
@@ -116,11 +116,11 @@ module Sentry
       key == 'HTTP_VERSION' && value == protocol_version
     end
 
-    def filter_and_format_env(env)
-      return env if Sentry.configuration.rack_env_whitelist.empty?
+    def filter_and_format_env(env, rack_env_whitelist)
+      return env if rack_env_whitelist.empty?
 
       env.select do |k, _v|
-        Sentry.configuration.rack_env_whitelist.include? k.to_s
+        rack_env_whitelist.include? k.to_s
       end
     end
   end

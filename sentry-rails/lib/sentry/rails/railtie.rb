@@ -22,6 +22,19 @@ module Sentry
       end
     end
 
+    initializer "sentry.extend_action_cable", before: :eager_load! do |app|
+      ActiveSupport.on_load(:action_cable_connection) do
+        require "sentry/rails/action_cable"
+        prepend Sentry::Rails::ActionCableExtensions::Connection
+      end
+
+      ActiveSupport.on_load(:action_cable_channel) do
+        require "sentry/rails/action_cable"
+        include Sentry::Rails::ActionCableExtensions::Channel::Subscriptions
+        prepend Sentry::Rails::ActionCableExtensions::Channel::Actions
+      end
+    end
+
     config.after_initialize do |app|
       next unless Sentry.initialized?
 

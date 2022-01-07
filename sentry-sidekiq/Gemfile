@@ -12,7 +12,7 @@ gem "rexml"
 sidekiq_version = ENV["SIDEKIQ_VERSION"]
 sidekiq_version = "6.0" if sidekiq_version.nil?
 
-gem "rails"
+gem "rails", "< 7.0"
 gem "sidekiq", "~> #{sidekiq_version}"
 
 gem "sentry-ruby", path: "../sentry-ruby"

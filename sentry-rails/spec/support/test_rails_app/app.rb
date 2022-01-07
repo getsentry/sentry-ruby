@@ -4,11 +4,11 @@ require 'rails'
 require "active_record"
 require "active_job/railtie"
 require "active_storage/engine" if Rails.version.to_f >= 5.2
+require "action_cable/engine" if Rails.version.to_f >= 6.0
 require "action_view/railtie"
 require "action_controller/railtie"
 
 # require "action_mailer/railtie"
-# require "action_cable/engine"
 # require "sprockets/railtie"
 # require "rails/test_unit/railtie"
 require 'sentry/rails'
@@ -162,6 +162,10 @@ def make_basic_app
   # the callbacks duplicate after each time we initialize the application and cause issues when they're executed
   ActiveSupport::Executor.reset_callbacks(:run)
   ActiveSupport::Executor.reset_callbacks(:complete)
+  if defined?(ActionCable)
+    ActionCable::Channel::Base.reset_callbacks(:subscribe)
+    ActionCable::Channel::Base.reset_callbacks(:unsubscribe)
+  end
 
   app = Class.new(TestApp) do
     def self.name
