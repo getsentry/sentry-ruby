@@ -10,8 +10,7 @@ module Sentry
     # @return [Transport]
     attr_reader :transport
 
-    # The Configuration object that's used for configuring the client and its transport.
-    # @return [Configuration]
+    # @!macro configuration
     attr_reader :configuration
 
     # @deprecated Use Sentry.logger to retrieve the current logger instead.
@@ -112,10 +111,7 @@ module Sentry
       end
     end
 
-    # Sends the event to Sentry.
-    # @param event [Event] the event to be sent.
-    # @param hint [Hash] the hint data that'll be passed to `before_send` callback.
-    # @return [Event]
+    # @!macro send_event
     def send_event(event, hint = nil)
       event_type = event.is_a?(Event) ? event.type : event["type"]
 

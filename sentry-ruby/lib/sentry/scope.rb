@@ -133,17 +133,13 @@ module Sentry
       @span = span
     end
 
-    # Sets the scope's user attribute.
-    # @param user [Hash]
-    # @return [Hash]
+    # @!macro set_user
     def set_user(user_hash)
       check_argument_type!(user_hash, Hash)
       @user = user_hash
     end
 
-    # Updates the scope's extras attribute by merging with the old value.
-    # @param extras [Hash]
-    # @return [Hash]
+    # @!macro set_extras
     def set_extras(extras_hash)
       check_argument_type!(extras_hash, Hash)
       @extra.merge!(extras_hash)
@@ -157,9 +153,7 @@ module Sentry
       set_extras(key => value)
     end
 
-    # Updates the scope's tags attribute by merging with the old value.
-    # @param tags [Hash]
-    # @return [Hash]
+    # @!macro set_tags
     def set_tags(tags_hash)
       check_argument_type!(tags_hash, Hash)
       @tags.merge!(tags_hash)
@@ -183,10 +177,7 @@ module Sentry
       end
     end
 
-    # Adds a new key-value pair to current contexts.
-    # @param key [String, Symbol]
-    # @param value [Object]
-    # @return [Hash]
+    # @!macro set_context
     def set_context(key, value)
       check_argument_type!(value, Hash)
       set_contexts(key => value)
