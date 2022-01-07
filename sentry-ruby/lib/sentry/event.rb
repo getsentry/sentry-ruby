@@ -14,7 +14,7 @@ module Sentry
       event_id level timestamp
       release environment server_name modules
       message user tags contexts extra
-      fingerprint breadcrumbs backtrace transaction
+      fingerprint breadcrumbs transaction
       platform sdk type
     )
 
@@ -22,7 +22,7 @@ module Sentry
 
     MAX_MESSAGE_SIZE_IN_BYTES = 1024 * 8
 
-    SKIP_INSPECTION_ATTRIBUTES = [:@modules, :@backtrace, :@stacktrace_builder, :@send_default_pii, :@trusted_proxies, :@rack_env_whitelist]
+    SKIP_INSPECTION_ATTRIBUTES = [:@modules, :@stacktrace_builder, :@send_default_pii, :@trusted_proxies, :@rack_env_whitelist]
 
     include CustomInspection
 
