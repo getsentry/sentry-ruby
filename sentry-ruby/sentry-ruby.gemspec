@@ -18,6 +18,5 @@ Gem::Specification.new do |spec|
   spec.metadata["changelog_uri"] = "#{spec.homepage}/blob/master/CHANGELOG.md"
 
   spec.add_dependency "sentry-ruby-core", Sentry::VERSION
-  spec.add_dependency "faraday", "~> 1.0"
   spec.add_dependency "concurrent-ruby", '~> 1.0', '>= 1.0.2'
 end
