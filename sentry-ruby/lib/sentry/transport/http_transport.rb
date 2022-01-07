@@ -13,11 +13,10 @@ module Sentry
     RETRY_AFTER_HEADER = "retry-after"
     RATE_LIMIT_HEADER = "x-sentry-rate-limits"
 
-    attr_reader :conn, :adapter
+    attr_reader :conn
 
     def initialize(*args)
       super
-      @adapter = @transport_configuration.http_adapter || Faraday.default_adapter
       @conn = set_conn
       @endpoint = @dsn.envelope_endpoint
     end
@@ -125,11 +124,10 @@ module Sentry
       log_debug("Sentry HTTP Transport connecting to #{server}")
 
       Faraday.new(server, :ssl => ssl_configuration, :proxy => @transport_configuration.proxy) do |builder|
-        @transport_configuration.faraday_builder&.call(builder)
         builder.response :raise_error
         builder.options.merge! faraday_opts
         builder.headers[:user_agent] = "sentry-ruby/#{Sentry::VERSION}"
-        builder.adapter(*adapter)
+        builder.adapter(Faraday.default_adapter)
       end
     end
 

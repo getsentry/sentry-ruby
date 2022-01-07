@@ -38,16 +38,6 @@ RSpec.describe Sentry::HTTPTransport do
       subject.send_data(data)
     end
 
-    it 'allows to customise faraday' do
-      builder = spy('faraday_builder')
-      expect(Faraday).to receive(:new).and_yield(builder)
-      configuration.transport.faraday_builder = proc { |b| b.request :instrumentation }
-
-      subject
-
-      expect(builder).to have_received(:request).with(:instrumentation)
-    end
-
     it "accepts custom proxy" do
       configuration.transport.proxy = { uri:  URI("https://example.com"), user: "stan", password: "foobar" }
 
