@@ -27,6 +27,7 @@ When `config.send_default_pii` is set as `true`, `:http_logger` will include que
 - Refactor Net::HTTP patch [#1656](https://github.com/getsentry/sentry-ruby/pull/1656)
 - Deprecate Event#configuration [#1661](https://github.com/getsentry/sentry-ruby/pull/1661)
 - Explicitly passing Rack related configurations [#1662](https://github.com/getsentry/sentry-ruby/pull/1662)
+- Refactor RequestInterface [#1673](https://github.com/getsentry/sentry-ruby/pull/1673)
 
 ## 4.8.3
 

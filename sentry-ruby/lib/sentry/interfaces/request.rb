@@ -17,13 +17,9 @@ module Sentry
 
     attr_accessor :url, :method, :data, :query_string, :cookies, :headers, :env
 
-    def self.build(env:, send_default_pii:, rack_env_whitelist:)
-      env = clean_env(env, send_default_pii)
-      request = ::Rack::Request.new(env)
-      self.new(request: request, send_default_pii: send_default_pii, rack_env_whitelist: rack_env_whitelist)
-    end
+    def initialize(env:, send_default_pii:, rack_env_whitelist:)
+      env = env.dup
 
-    def self.clean_env(env, send_default_pii)
       unless send_default_pii
         # need to completely wipe out ip addresses
         RequestInterface::IP_HEADERS.each do |header|
@@ -31,11 +27,7 @@ module Sentry
         end
       end
 
-      env
-    end
-
-    def initialize(request:, send_default_pii:, rack_env_whitelist:)
-      env = request.env
+      request = ::Rack::Request.new(env)
 
       if send_default_pii
         self.data = read_data_from(request)
