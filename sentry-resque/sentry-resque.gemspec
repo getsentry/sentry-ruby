@@ -22,6 +22,6 @@ Gem::Specification.new do |spec|
   spec.executables   = spec.files.grep(%r{^exe/}) { |f| File.basename(f) }
   spec.require_paths = ["lib"]
 
-  spec.add_dependency "sentry-ruby-core", "~> 4.8.3"
+  spec.add_dependency "sentry-ruby-core", "~> 4.9.0"
   spec.add_dependency "resque", ">= 1.24"
 end
