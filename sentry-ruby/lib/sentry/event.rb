@@ -104,8 +104,6 @@ module Sentry
 
     def rack_env=(env)
       unless request || env.empty?
-        env = env.dup
-
         add_request_interface(env)
 
         if @send_default_pii

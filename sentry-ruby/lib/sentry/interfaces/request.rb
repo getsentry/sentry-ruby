@@ -18,6 +18,8 @@ module Sentry
     attr_accessor :url, :method, :data, :query_string, :cookies, :headers, :env
 
     def self.build(env:, send_default_pii:, rack_env_whitelist:)
+      env = env.dup
+
       unless send_default_pii
         # need to completely wipe out ip addresses
         RequestInterface::IP_HEADERS.each do |header|
