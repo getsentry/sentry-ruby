@@ -1,9 +1,6 @@
 # frozen_string_literal: true
 
-## Inspired by Rails' and Airbrake's backtrace parsers.
-
 module Sentry
-  # Front end to parsing the backtrace for each notice
   # @api private
   class Backtrace
     # Handles backtrace parsing line by line
