@@ -46,7 +46,7 @@ module Sentry
     #     Rails.backtrace_cleaner.clean(backtrace)
     #   end
     #
-    # @return [Proc]
+    # @return [Proc, nil]
     attr_accessor :backtrace_cleanup_callback
 
     # Optional Proc, called before adding the breadcrumb to the current scope
@@ -127,8 +127,9 @@ module Sentry
     alias inspect_exception_causes_for_exclusion? inspect_exception_causes_for_exclusion
 
     # You may provide your own LineCache for matching paths with source files.
-    # This may be useful if you need to get source code from places other than
-    # the disk. See Sentry::LineCache for the required interface you must implement.
+    # This may be useful if you need to get source code from places other than the disk.
+    # @see LineCache
+    # @return [LineCache]
     attr_accessor :linecache
 
     # Logger used by Sentry. In Rails, this is the Rails logger, otherwise

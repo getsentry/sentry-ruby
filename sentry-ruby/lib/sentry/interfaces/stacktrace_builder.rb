@@ -2,8 +2,31 @@
 
 module Sentry
   class StacktraceBuilder
-    attr_reader :project_root, :app_dirs_pattern, :linecache, :context_lines, :backtrace_cleanup_callback
+    # @return [String]
+    attr_reader :project_root
 
+    # @return [Regexp, nil]
+    attr_reader :app_dirs_pattern
+
+    # @return [LineCache]
+    attr_reader :linecache
+
+    # @return [Integer, nil]
+    attr_reader :context_lines
+
+    # @return [Proc, nil]
+    attr_reader :backtrace_cleanup_callback
+
+    # @param project_root [String]
+    # @param app_dirs_pattern [Regexp, nil]
+    # @param linecache [LineCache]
+    # @param context_lines [Integer, nil]
+    # @param backtrace_cleanup_callback [Proc, nil]
+    # @see Configuration#project_root
+    # @see Configuration#app_dirs_pattern
+    # @see Configuration#linecache
+    # @see Configuration#context_lines
+    # @see Configuration#backtrace_cleanup_callback
     def initialize(project_root:, app_dirs_pattern:, linecache:, context_lines:, backtrace_cleanup_callback: nil)
       @project_root = project_root
       @app_dirs_pattern = app_dirs_pattern
@@ -12,17 +35,21 @@ module Sentry
       @backtrace_cleanup_callback = backtrace_cleanup_callback
     end
 
-    # you can pass a block to customize/exclude frames:
+    # Generates a StacktraceInterface with the given backtrace.
+    # You can pass a block to customize/exclude frames:
     #
-    # ```ruby
-    # builder.build(backtrace) do |frame|
-    #   if frame.module.match?(/a_gem/)
-    #     nil
-    #   else
-    #     frame
+    # @example
+    #   builder.build(backtrace) do |frame|
+    #     if frame.module.match?(/a_gem/)
+    #       nil
+    #     else
+    #       frame
+    #     end
     #   end
-    # end
-    # ```
+    # @param backtrace [Array<String>]
+    # @param frame_callback [Proc]
+    # @yieldparam frame [StacktraceInterface::Frame]
+    # @return [StacktraceInterface]
     def build(backtrace:, &frame_callback)
       parsed_lines = parse_backtrace_lines(backtrace).select(&:file)
 
