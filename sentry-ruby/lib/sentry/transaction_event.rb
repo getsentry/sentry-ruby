@@ -16,17 +16,25 @@ module Sentry
     attr_writer(*WRITER_ATTRIBUTES)
     attr_reader(*SERIALIZEABLE_ATTRIBUTES)
 
+    # @return [<Array[Span]>]
     attr_accessor :spans
 
+    # @param configuration [Configuration]
+    # @param integration_meta [Hash, nil]
+    # @param message [String, nil]
     def initialize(configuration:, integration_meta: nil, message: nil)
       super
       @type = TYPE
     end
 
+    # Sets the event's start_timestamp.
+    # @param time [Time, Float]
+    # @return [void]
     def start_timestamp=(time)
       @start_timestamp = time.is_a?(Time) ? time.to_f : time
     end
 
+    # @return [Hash]
     def to_hash
       data = super
       data[:spans] = @spans.map(&:to_hash) if @spans
