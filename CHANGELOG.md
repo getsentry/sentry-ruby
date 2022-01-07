@@ -27,6 +27,13 @@ When `config.send_default_pii` is set as `true`, `:http_logger` will include que
 - Deprecate Event#configuration [#1661](https://github.com/getsentry/sentry-ruby/pull/1661)
 - Explicitly passing Rack related configurations [#1662](https://github.com/getsentry/sentry-ruby/pull/1662)
 
+## 4.8.3
+
+### Bug Fixes
+
+- Correctly return `JobClass#perform`'s return value [#1667](https://github.com/getsentry/sentry-ruby/pull/1667)
+  - Fixes [#1666](https://github.com/getsentry/sentry-ruby/issues/1666)
+
 ## 4.8.2
 
 ### Documentation
