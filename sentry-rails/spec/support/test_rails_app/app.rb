@@ -152,6 +152,10 @@ class HelloController < ActionController::Base
 end
 
 def make_basic_app
+  # Zeitwerk checks if registered loaders load paths repeatedly and raises error if that happens.
+  # And because every new Rails::Application instance registers its own loader, we need to clear previously registered ones from Zeitwerk.
+  Zeitwerk::Registry.loaders.clear if defined?(Zeitwerk)
+
   # Rails removes the support of multiple instances, which includes freezing some setting values.
   # This is the workaround to avoid FrozenError. Related issue: https://github.com/rails/rails/issues/42319
   ActiveSupport::Dependencies.autoload_once_paths = []
