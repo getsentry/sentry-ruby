@@ -4,9 +4,25 @@ module Sentry
   class Breadcrumb
     DATA_SERIALIZATION_ERROR_MESSAGE = "[data were removed due to serialization issues]"
 
-    attr_accessor :category, :data, :level, :timestamp, :type
+    # @return [String, nil]
+    attr_accessor :category
+    # @return [Hash, nil]
+    attr_accessor :data
+    # @return [String, nil]
+    attr_accessor :level
+    # @return [Time, Integer, nil]
+    attr_accessor :timestamp
+    # @return [String, nil]
+    attr_accessor :type
+    # @return [String, nil]
     attr_reader :message
 
+    # @param category [String, nil]
+    # @param data [Hash, nil]
+    # @param message [String, nil]
+    # @param timestamp [Time, Integer, nil]
+    # @param level [String, nil]
+    # @param type [String, nil]
     def initialize(category: nil, data: nil, message: nil, timestamp: nil, level: nil, type: nil)
       @category = category
       @data = data || {}
@@ -16,6 +32,7 @@ module Sentry
       self.message = message
     end
 
+    # @return [Hash]
     def to_hash
       {
         category: @category,
@@ -27,8 +44,10 @@ module Sentry
       }
     end
 
-    def message=(msg)
-      @message = (msg || "").byteslice(0..Event::MAX_MESSAGE_SIZE_IN_BYTES)
+    # @param message [String]
+    # @return [void]
+    def message=(message)
+      @message = (message || "").byteslice(0..Event::MAX_MESSAGE_SIZE_IN_BYTES)
     end
 
     private

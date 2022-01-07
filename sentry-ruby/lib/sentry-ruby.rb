@@ -18,7 +18,6 @@ require "sentry/transaction"
 require "sentry/hub"
 require "sentry/background_worker"
 
-
 [
   "sentry/rake",
   "sentry/rack",
