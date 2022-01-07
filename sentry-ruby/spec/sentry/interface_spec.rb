@@ -6,10 +6,6 @@ class TestInterface < Sentry::Interface
 end
 
 RSpec.describe Sentry::Interface do
-  it "should register an interface when a new class is defined" do
-    expect(Sentry::Interface.registered[:test]).to eq(TestInterface)
-  end
-
   it "serializes to a Hash" do
     interface = TestInterface.new
     interface.some_attr = "test"

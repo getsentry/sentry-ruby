@@ -15,8 +15,32 @@ module Sentry
     # https://github.com/getsentry/sentry/blob/master/src/sentry/conf/server.py
     MAX_BODY_LIMIT = 4096 * 4
 
-    attr_accessor :url, :method, :data, :query_string, :cookies, :headers, :env
+    # @return [String]
+    attr_accessor :url
 
+    # @return [String]
+    attr_accessor :method
+
+    # @return [Hash]
+    attr_accessor :data
+
+    # @return [String]
+    attr_accessor :query_string
+
+    # @return [String]
+    attr_accessor :cookies
+
+    # @return [Hash]
+    attr_accessor :headers
+
+    # @return [Hash]
+    attr_accessor :env
+
+    # @param env [Hash]
+    # @param send_default_pii [Boolean]
+    # @param rack_env_whitelist [Array]
+    # @see Configuration#send_default_pii
+    # @see Configuration#rack_env_whitelist
     def initialize(env:, send_default_pii:, rack_env_whitelist:)
       env = env.dup
 

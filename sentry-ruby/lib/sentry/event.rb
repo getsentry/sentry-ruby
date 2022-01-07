@@ -10,6 +10,7 @@ require 'sentry/utils/custom_inspection'
 
 module Sentry
   class Event
+    # These are readable attributes.
     SERIALIZEABLE_ATTRIBUTES = %i(
       event_id level timestamp
       release environment server_name modules
@@ -18,6 +19,7 @@ module Sentry
       platform sdk type
     )
 
+    # These are writable attributes.
     WRITER_ATTRIBUTES = SERIALIZEABLE_ATTRIBUTES - %i(type timestamp level)
 
     MAX_MESSAGE_SIZE_IN_BYTES = 1024 * 8
@@ -29,8 +31,18 @@ module Sentry
     attr_writer(*WRITER_ATTRIBUTES)
     attr_reader(*SERIALIZEABLE_ATTRIBUTES)
 
-    attr_reader :request, :exception, :threads
+    # @return [RequestInterface]
+    attr_reader :request
 
+    # @return [ExceptionInterface]
+    attr_reader :exception
+
+    # @return [ThreadsInterface]
+    attr_reader :threads
+
+    # @param configuration [Configuration]
+    # @param integration_meta [Hash, nil]
+    # @param message [String, nil]
     def initialize(configuration:, integration_meta: nil, message: nil)
       # Set some simple default values
       @event_id      = SecureRandom.uuid.delete("-")
@@ -63,6 +75,7 @@ module Sentry
     end
 
     class << self
+      # @!visibility private
       def get_log_message(event_hash)
         message = event_hash[:message] || event_hash['message']
 
@@ -79,6 +92,7 @@ module Sentry
         '<no message value>'
       end
 
+      # @!visibility private
       def get_message_from_exception(event_hash)
         if exception = event_hash.dig(:exception, :values, 0)
           "#{exception[:type]}: #{exception[:value]}"
@@ -94,14 +108,24 @@ module Sentry
       Sentry.configuration
     end
 
+    # Sets the event's timestamp.
+    # @param time [Time, Float]
+    # @return [void]
     def timestamp=(time)
       @timestamp = time.is_a?(Time) ? time.to_f : time
     end
 
-    def level=(new_level) # needed to meet the Sentry spec
-      @level = new_level.to_s == "warn" ? :warning : new_level
+    # Sets the event's level.
+    # @param level [String, Symbol]
+    # @return [void]
+    def level=(level) # needed to meet the Sentry spec
+      @level = level.to_s == "warn" ? :warning : level
     end
 
+    # Sets the event's request environment data with RequestInterface.
+    # @see RequestInterface
+    # @param env [Hash]
+    # @return [void]
     def rack_env=(env)
       unless request || env.empty?
         add_request_interface(env)
@@ -116,6 +140,7 @@ module Sentry
       end
     end
 
+    # @return [Hash]
     def to_hash
       data = serialize_attributes
       data[:breadcrumbs] = breadcrumbs.to_hash if breadcrumbs
@@ -126,14 +151,12 @@ module Sentry
       data
     end
 
+    # @return [Hash]
     def to_json_compatible
       JSON.parse(JSON.generate(to_hash))
     end
 
-    def add_request_interface(env)
-      @request = Sentry::RequestInterface.new(env: env, send_default_pii: @send_default_pii, rack_env_whitelist: @rack_env_whitelist)
-    end
-
+    # @!visibility private
     def add_threads_interface(backtrace: nil, **options)
       @threads = ThreadsInterface.build(
         backtrace: backtrace,
@@ -142,6 +165,7 @@ module Sentry
       )
     end
 
+    # @!visibility private
     def add_exception_interface(exception)
       if exception.respond_to?(:sentry_context)
         @extra.merge!(exception.sentry_context)
@@ -151,6 +175,10 @@ module Sentry
     end
 
     private
+
+    def add_request_interface(env)
+      @request = Sentry::RequestInterface.new(env: env, send_default_pii: @send_default_pii, rack_env_whitelist: @rack_env_whitelist)
+    end
 
     def serialize_attributes
       self.class::SERIALIZEABLE_ATTRIBUTES.each_with_object({}) do |att, memo|

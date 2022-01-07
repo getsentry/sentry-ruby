@@ -2,6 +2,8 @@
 
 module Sentry
   class ThreadsInterface
+    # @param crashed [Boolean]
+    # @param stacktrace [Array]
     def initialize(crashed: false, stacktrace: nil)
       @id = Thread.current.object_id
       @name = Thread.current.name
@@ -10,6 +12,7 @@ module Sentry
       @stacktrace = stacktrace
     end
 
+    # @return [Hash]
     def to_hash
       {
         values: [
@@ -24,8 +27,13 @@ module Sentry
       }
     end
 
-    # patch this method if you want to change a threads interface's stacktrace frames
-    # also see `StacktraceBuilder.build`.
+    # Builds the ThreadsInterface with given backtrace and stacktrace_builder.
+    # Patch this method if you want to change a threads interface's stacktrace frames.
+    # @see StacktraceBuilder.build
+    # @param backtrace [Array]
+    # @param stacktrace_builder [StacktraceBuilder]
+    # @param crashed [Hash]
+    # @return [ThreadsInterface]
     def self.build(backtrace:, stacktrace_builder:, **options)
       stacktrace = stacktrace_builder.build(backtrace: backtrace) if backtrace
       new(**options, stacktrace: stacktrace)
