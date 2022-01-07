@@ -19,6 +19,7 @@ When `config.send_default_pii` is set as `true`, `:http_logger` will include que
 
 - Document Transaction and Span classes [#1653](https://github.com/getsentry/sentry-ruby/pull/1653)
 - Document Client and Scope classes [#1659](https://github.com/getsentry/sentry-ruby/pull/1659)
+- Document Event and interface classes [#1675](https://github.com/getsentry/sentry-ruby/pull/1675)
 
 ### Refactoring
 
