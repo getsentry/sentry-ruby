@@ -100,20 +100,47 @@ module Sentry
 
     extend Forwardable
 
+    # @!macro [new] configuration
+    #   The Configuration object that's used for configuring the client and its transport.
+    #   @return [Configuration]
+    # @!macro [new] send_event
+    #   Sends the event to Sentry.
+    #   @param event [Event] the event to be sent.
+    #   @param hint [Hash] the hint data that'll be passed to `before_send` callback.
+    #   @return [Event]
+
     # @!method configuration
-    #   @see Client#configuration
+    #   @!macro configuration
     # @!method send_event
-    #   @see Client#send_event
+    #   @!macro send_event
     def_delegators :get_current_client, :configuration, :send_event
 
+    # @!macro [new] set_extras
+    #   Updates the scope's extras attribute by merging with the old value.
+    #   @param extras [Hash]
+    #   @return [Hash]
+    # @!macro [new] set_user
+    #   Sets the scope's user attribute.
+    #   @param user [Hash]
+    #   @return [Hash]
+    # @!macro [new] set_context
+    #   Adds a new key-value pair to current contexts.
+    #   @param key [String, Symbol]
+    #   @param value [Object]
+    #   @return [Hash]
+    # @!macro [new] set_tags
+    #   Updates the scope's tags attribute by merging with the old value.
+    #   @param tags [Hash]
+    #   @return [Hash]
+
     # @!method set_tags
-    #   @see Scope#set_tags
+    #   @!macro set_tags
     # @!method set_extras
-    #   @see Scope#set_extras
+    #   @!macro set_extras
     # @!method set_user
-    #   @see Scope#set_user
+    #   @!macro set_user
     # @!method set_context
-    #   @see Scope#set_context
+    #   @!macro set_context
     def_delegators :get_current_scope, :set_tags, :set_extras, :set_user, :set_context
 
     ##### Main APIs #####
