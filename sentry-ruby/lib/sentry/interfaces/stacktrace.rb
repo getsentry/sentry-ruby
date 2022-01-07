@@ -2,16 +2,20 @@
 
 module Sentry
   class StacktraceInterface
+    # @return [<Array[Frame]>]
     attr_reader :frames
 
+    # @param frames [<Array[Frame]>]
     def initialize(frames:)
       @frames = frames
     end
 
+    # @return [Hash]
     def to_hash
       { frames: @frames.map(&:to_hash) }
     end
 
+    # @return [String]
     def inspect
       @frames.map(&:to_s)
     end
