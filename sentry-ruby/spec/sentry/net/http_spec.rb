@@ -37,7 +37,7 @@ RSpec.describe Sentry::Net::HTTP do
         expect(transaction.span_recorder.spans.count).to eq(2)
 
         request_span = transaction.span_recorder.spans.last
-        expect(request_span.op).to eq("net.http")
+        expect(request_span.op).to eq("http.client")
         expect(request_span.start_timestamp).not_to be_nil
         expect(request_span.timestamp).not_to be_nil
         expect(request_span.start_timestamp).not_to eq(request_span.timestamp)
@@ -63,7 +63,7 @@ RSpec.describe Sentry::Net::HTTP do
         expect(transaction.span_recorder.spans.count).to eq(2)
 
         request_span = transaction.span_recorder.spans.last
-        expect(request_span.op).to eq("net.http")
+        expect(request_span.op).to eq("http.client")
         expect(request_span.start_timestamp).not_to be_nil
         expect(request_span.timestamp).not_to be_nil
         expect(request_span.start_timestamp).not_to eq(request_span.timestamp)
@@ -142,7 +142,7 @@ RSpec.describe Sentry::Net::HTTP do
         expect(transaction.span_recorder.spans[0]).to eq(transaction)
 
         request_span = transaction.span_recorder.spans[1]
-        expect(request_span.op).to eq("net.http")
+        expect(request_span.op).to eq("http.client")
         expect(request_span.start_timestamp).not_to be_nil
         expect(request_span.timestamp).not_to be_nil
         expect(request_span.start_timestamp).not_to eq(request_span.timestamp)
@@ -150,7 +150,7 @@ RSpec.describe Sentry::Net::HTTP do
         expect(request_span.data).to eq({ status: 200 })
 
         request_span = transaction.span_recorder.spans[2]
-        expect(request_span.op).to eq("net.http")
+        expect(request_span.op).to eq("http.client")
         expect(request_span.start_timestamp).not_to be_nil
         expect(request_span.timestamp).not_to be_nil
         expect(request_span.start_timestamp).not_to eq(request_span.timestamp)

@@ -6,7 +6,8 @@ module Sentry
   # @api private
   module Net
     module HTTP
-      OP_NAME = "net.http"
+      OP_NAME = "http.client"
+      BREADCRUMB_CATEGORY = "net.http"
 
       # To explain how the entire thing works, we need to know how the original Net::HTTP#request works
       # Here's part of its definition. As you can see, it usually calls itself inside a #start block
@@ -53,7 +54,7 @@ module Sentry
 
         crumb = Sentry::Breadcrumb.new(
           level: :info,
-          category: OP_NAME,
+          category: BREADCRUMB_CATEGORY,
           type: :info,
           data: {
             status: res.code.to_i,
