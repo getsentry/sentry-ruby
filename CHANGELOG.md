@@ -2,7 +2,7 @@
 
 ### Features
 
-- Sync activerecord and net-http span names [#1681](https://github.com/getsentry/sentry-ruby/pull/1681)
+- Sync activerecord, actionview and net-http span names [#1681](https://github.com/getsentry/sentry-ruby/pull/1681)
 
 ## 4.9.0
 
