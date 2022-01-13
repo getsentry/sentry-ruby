@@ -69,7 +69,8 @@ module Sentry
           def sentry_capture(hook, &block)
             extra_context = { params: params }
 
-            ErrorHandler.capture(connection.env, transaction_name: "#{self.class.name}##{hook}", extra_context: extra_context, &block)
+            env = connection.respond_to?(:env) ? connection.env : {}
+            ErrorHandler.capture(env, transaction_name: "#{self.class.name}##{hook}", extra_context: extra_context, &block)
           end
         end
 
@@ -79,7 +80,8 @@ module Sentry
           def dispatch_action(action, data)
             extra_context = { params: params, data: data }
 
-            ErrorHandler.capture(connection.env, transaction_name: "#{self.class.name}##{action}", extra_context: extra_context) do
+            env = connection.respond_to?(:env) ? connection.env : {}
+            ErrorHandler.capture(env, transaction_name: "#{self.class.name}##{action}", extra_context: extra_context) do
               super
             end
           end
