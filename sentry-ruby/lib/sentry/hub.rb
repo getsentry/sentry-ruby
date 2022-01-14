@@ -114,6 +114,9 @@ module Sentry
       options[:hint][:message] = message
       backtrace = options.delete(:backtrace)
       event = current_client.event_from_message(message, options[:hint], backtrace: backtrace)
+
+      return unless event
+
       capture_event(event, **options, &block)
     end
 
