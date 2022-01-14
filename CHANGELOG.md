@@ -4,6 +4,8 @@
 
 - Add workaround for ConnectionStub's missing interface [#1686](https://github.com/getsentry/sentry-ruby/pull/1686)
   - Fixes [#1685](https://github.com/getsentry/sentry-ruby/issues/1685)
+- Don't initialize Event objects when they won't be sent [#1687](https://github.com/getsentry/sentry-ruby/pull/1687)
+  - Fixes [#1683](https://github.com/getsentry/sentry-ruby/issues/1683)
 
 ## 4.9.0
 
