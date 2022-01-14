@@ -4,15 +4,6 @@ if defined?(ActionCable) && ActionCable.version >= Gem::Version.new('6.0.0')
 
   ::ActionCable.server.config.cable = { "adapter" => "test" }
 
-  # ensure we can access `connection.env` in tests like we can in production
-  ActiveSupport.on_load :action_cable_channel_test_case do
-    class ::ActionCable::Channel::ConnectionStub
-      def env
-        @_env ||= ::ActionCable::Connection::TestRequest.create.env
-      end
-    end
-  end
-
   class ChatChannel < ::ActionCable::Channel::Base
     def subscribed
       raise "foo"

@@ -3,7 +3,12 @@ module Sentry
     module ActionCableExtensions
       class ErrorHandler
         class << self
-          def capture(env, transaction_name:, extra_context: nil, &block)
+          def capture(connection, transaction_name:, extra_context: nil, &block)
+            # ActionCable's ConnectionStub (for testing) doesn't implement the exact same interfaces as Connection::Base.
+            # One thing that's missing is `env`. So calling `connection.env` direclty will fail in test environments when `stub_connection` is used.
+            # See https://github.com/getsentry/sentry-ruby/pull/1684 for more information.
+            env = connection.respond_to?(:env) ? connection.env : {}
+
             Sentry.with_scope do |scope|
               scope.set_rack_env(env)
               scope.set_context("action_cable", extra_context) if extra_context
@@ -43,13 +48,13 @@ module Sentry
         private
 
         def handle_open
-          ErrorHandler.capture(env, transaction_name: "#{self.class.name}#connect") do
+          ErrorHandler.capture(self, transaction_name: "#{self.class.name}#connect") do
             super
           end
         end
 
         def handle_close
-          ErrorHandler.capture(env, transaction_name: "#{self.class.name}#disconnect") do
+          ErrorHandler.capture(self, transaction_name: "#{self.class.name}#disconnect") do
             super
           end
         end
@@ -69,7 +74,7 @@ module Sentry
           def sentry_capture(hook, &block)
             extra_context = { params: params }
 
-            ErrorHandler.capture(connection.env, transaction_name: "#{self.class.name}##{hook}", extra_context: extra_context, &block)
+            ErrorHandler.capture(connection, transaction_name: "#{self.class.name}##{hook}", extra_context: extra_context, &block)
           end
         end
 
@@ -79,7 +84,7 @@ module Sentry
           def dispatch_action(action, data)
             extra_context = { params: params, data: data }
 
-            ErrorHandler.capture(connection.env, transaction_name: "#{self.class.name}##{action}", extra_context: extra_context) do
+            ErrorHandler.capture(connection, transaction_name: "#{self.class.name}##{action}", extra_context: extra_context) do
               super
             end
           end
