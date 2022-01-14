@@ -1,3 +1,10 @@
+## 4.9.1
+
+### Bug Fixes
+
+- Add workaround for ConnectionStub's missing interface [#1686](https://github.com/getsentry/sentry-ruby/pull/1686)
+  - Fixes [#1685](https://github.com/getsentry/sentry-ruby/issues/1685)
+
 ## 4.9.0
 
 ### Features
