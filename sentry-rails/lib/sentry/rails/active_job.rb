@@ -37,7 +37,7 @@ module Sentry
           extra: sentry_context,
           tags: {
             job_id: job_id,
-            provider_job_id:provider_job_id
+            provider_job_id: provider_job_id
           }
         )
         raise e
@@ -57,12 +57,25 @@ module Sentry
       def sentry_context
         {
           active_job: self.class.name,
-          arguments: arguments,
+          arguments: sentry_serialize_arguments(arguments),
           scheduled_at: scheduled_at,
           job_id: job_id,
           provider_job_id: provider_job_id,
           locale: locale
         }
+      end
+
+      def sentry_serialize_arguments(argument)
+        case argument
+        when Hash
+          argument.transform_values { |v| sentry_serialize_arguments(v) }
+        when Array, Enumerable
+          argument.map { |v| sentry_serialize_arguments(v) }
+        when ->(v) { v.respond_to?(:to_global_id) }
+          argument.to_global_id.to_s rescue argument
+        else
+          argument
+        end
       end
     end
   end
