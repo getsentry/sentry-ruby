@@ -32,6 +32,19 @@ if defined?(ActionCable) && ActionCable.version >= Gem::Version.new('6.0.0')
     end
   end
 
+  RSpec.describe "without Sentry initialized" do
+    before do
+      allow(Sentry).to receive(:get_main_hub).and_return(nil)
+      make_basic_app
+      Sentry.clone_hub_to_current_thread # make sure the thread doesn't set a hub
+    end
+
+    describe ChatChannel, type: :channel do
+      it "doesn't swallow the app's operation" do
+        expect { subscribe }.to raise_error('foo')
+      end
+    end
+  end
 
   RSpec.describe "Sentry::Rails::ActionCableExtensions", type: :channel do
     let(:transport) { Sentry.get_current_client.transport }
