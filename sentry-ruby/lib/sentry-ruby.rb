@@ -174,7 +174,7 @@ module Sentry
     #
     # @return [Boolean]
     def initialized?
-      !!@main_hub
+      !!get_main_hub
     end
 
     # Returns an uri for security policy reporting that's generated from the given DSN

@@ -4,6 +4,7 @@ module Sentry
       class ErrorHandler
         class << self
           def capture(connection, transaction_name:, extra_context: nil, &block)
+            return block.call unless Sentry.initialized?
             # ActionCable's ConnectionStub (for testing) doesn't implement the exact same interfaces as Connection::Base.
             # One thing that's missing is `env`. So calling `connection.env` direclty will fail in test environments when `stub_connection` is used.
             # See https://github.com/getsentry/sentry-ruby/pull/1684 for more information.
