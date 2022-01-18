@@ -1,3 +1,5 @@
+## 4.9.2
+
 ### Bug Fixes
 
 - Directly execute ActionCable's action if the SDK is not initialized [#1692](https://github.com/getsentry/sentry-ruby/pull/1692)
