@@ -2,23 +2,24 @@
 
 ### Breaking Change - Goodbye `faraday` 👋 
 
+**TL;DR: If you are already on version `4.9` and do not use `config.transport.http_adapter` and `config.transport.faraday_builder`, you don't need to change anything.**
+
 This version removes the dependency of [faraday](https://github.com/lostisland/faraday) and replaces related implementation with the `Net::HTTP` standard library. 
 
-(If you didn't notice it, the SDK previously used `faraday` as the HTTP client to send events to Sentry. You can find the implementation in [HTTPTransport](https://github.com/getsentry/sentry-ruby/blob/v4-9/sentry-ruby/lib/sentry/transport/http_transport.rb).)
 
-#### Why
+#### Why?
 
-Since the old `sentry-raven` SDK, we've been using `faraday` as the SDKs' HTTP client for years. It's an amazing tool and saved us many work, allowing us to focus on SDK features. 
+Since the old `sentry-raven` SDK, we've been using `faraday` as the HTTP client for years (see [HTTPTransport](https://github.com/getsentry/sentry-ruby/blob/4-9/sentry-ruby/lib/sentry/transport/http_transport.rb)). It's an amazing tool that saved us many work and allowed us to focus on SDK features. 
 
-But because many users also use `faraday` in their own apps and have their own version requirements, managing this dependency has become harder and harder over the past few years. Just to list a few related issues:
+But because many users also use `faraday` themselves and have their own version requirements, managing this dependency has become harder over the past few years. Just to list a few related issues:
 
 - [#944](https://github.com/getsentry/sentry-ruby/issues/944)
 - [#1424](https://github.com/getsentry/sentry-ruby/issues/1424)
 - [#1524](https://github.com/getsentry/sentry-ruby/issues/1524)
 
-And with the release of [faraday 2.0](https://github.com/lostisland/faraday/releases/tag/v2.0.0), we could only imagine it gets even more difficult (which it kinda did, see [#1663](https://github.com/getsentry/sentry-ruby/issues/1663)).
+And with the release of [faraday 2.0](https://github.com/lostisland/faraday/releases/tag/v2.0.0), we could only imagine it getting even more difficult (which it kind of did, see [#1663](https://github.com/getsentry/sentry-ruby/issues/1663)).
 
-So we decided to officially say goodbye to it with this release.
+So we think it's time to say goodbye to it with this release.
 
 
 #### What's changed?
@@ -31,7 +32,7 @@ The only noticeable changes are the removal of 2 faraday-specific transport conf
 - `config.transport.http_adapter`
 - `config.transport.faraday_builder`
 
-**If you are already on version `4.9.x` and do not use those configuration options, it'll be as simple as `bundle update`.**
+**If you are already on version `4.9` and do not use those configuration options, it'll be as simple as `bundle update`.**
 
 #### What if I still want to use `faraday` to send my events?
 
@@ -125,7 +126,7 @@ end
 2. Set `config.transport.transport = FaradayTransport`
 
 
-**Please keep in mind that this may not work in the future when the SDK changes its transport implementation.**
+**Please keep in mind that this may not work in the future when the SDK changes its `HTTPTransport` implementation.**
 
 ## 4.9.2
 
