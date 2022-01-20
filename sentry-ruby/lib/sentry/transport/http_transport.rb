@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
-require 'faraday'
-require 'zlib'
+require "net/http"
+require "zlib"
 
 module Sentry
   class HTTPTransport < Transport
@@ -12,12 +12,12 @@ module Sentry
     DEFAULT_DELAY = 60
     RETRY_AFTER_HEADER = "retry-after"
     RATE_LIMIT_HEADER = "x-sentry-rate-limits"
+    USER_AGENT = "sentry-ruby/#{Sentry::VERSION}"
 
-    attr_reader :conn, :adapter
+    attr_reader :conn
 
     def initialize(*args)
       super
-      @adapter = @transport_configuration.http_adapter || Faraday.default_adapter
       @conn = set_conn
       @endpoint = @dsn.envelope_endpoint
     end
@@ -30,29 +30,37 @@ module Sentry
         encoding = GZIP_ENCODING
       end
 
-      response = conn.post @endpoint do |req|
-        req.headers['Content-Type'] = CONTENT_TYPE
-        req.headers['Content-Encoding'] = encoding
-        req.headers['X-Sentry-Auth'] = generate_auth_header
-        req.body = data
+      headers = {
+        'Content-Type' => CONTENT_TYPE,
+        'Content-Encoding' => encoding,
+        'X-Sentry-Auth' => generate_auth_header,
+        'User-Agent' => USER_AGENT
+      }
+
+      response = conn.start do |http|
+        request = ::Net::HTTP::Post.new(@endpoint, headers)
+        request.body = data
+        http.request(request)
       end
 
-      if has_rate_limited_header?(response.headers)
-        handle_rate_limited_response(response.headers)
-      end
-    rescue Faraday::Error => e
-      error_info = e.message
-
-      if e.response
-        if e.response[:status] == 429
-          handle_rate_limited_response(e.response[:headers])
-        else
-          error_info += "\nbody: #{e.response[:body]}"
-          error_info += " Error in headers is: #{e.response[:headers]['x-sentry-error']}" if e.response[:headers]['x-sentry-error']
+      if response.code.match?(/\A2\d{2}/)
+        if has_rate_limited_header?(response)
+          handle_rate_limited_response(response)
         end
-      end
+      else
+        error_info = "the server responded with status #{response.code}"
 
-      raise Sentry::ExternalError, error_info
+        if response.code == "429"
+          handle_rate_limited_response(response)
+        else
+          error_info += "\nbody: #{response.body}"
+          error_info += " Error in headers is: #{response['x-sentry-error']}" if response['x-sentry-error']
+        end
+
+        raise Sentry::ExternalError, error_info
+      end
+    rescue SocketError => e
+      raise Sentry::ExternalError.new(e.message)
     end
 
     private
@@ -120,31 +128,40 @@ module Sentry
     end
 
     def set_conn
-      server = @dsn.server
+      server = URI(@dsn.server)
 
       log_debug("Sentry HTTP Transport connecting to #{server}")
 
-      Faraday.new(server, :ssl => ssl_configuration, :proxy => @transport_configuration.proxy) do |builder|
-        @transport_configuration.faraday_builder&.call(builder)
-        builder.response :raise_error
-        builder.options.merge! faraday_opts
-        builder.headers[:user_agent] = "sentry-ruby/#{Sentry::VERSION}"
-        builder.adapter(*adapter)
-      end
-    end
+      use_ssl = server.scheme == "https"
+      port = use_ssl ? 443 : 80
 
-    # TODO: deprecate and replace where possible w/Faraday Builder
-    def faraday_opts
-      [:timeout, :open_timeout].each_with_object({}) do |opt, memo|
-        memo[opt] = @transport_configuration.public_send(opt) if @transport_configuration.public_send(opt)
+      connection =
+        if proxy = @transport_configuration.proxy
+          ::Net::HTTP.new(server.hostname, port, proxy[:uri].hostname, proxy[:uri].port, proxy[:user], proxy[:password])
+        else
+          ::Net::HTTP.new(server.hostname, port, nil)
+        end
+
+      connection.use_ssl = use_ssl
+      connection.read_timeout = @transport_configuration.timeout
+      connection.write_timeout = @transport_configuration.timeout if connection.respond_to?(:write_timeout)
+      connection.open_timeout = @transport_configuration.open_timeout
+
+      ssl_configuration.each do |key, value|
+        connection.send("#{key}=", value)
       end
+
+      connection
     end
 
     def ssl_configuration
-      {
+      configuration = {
         verify: @transport_configuration.ssl_verification,
         ca_file: @transport_configuration.ssl_ca_file
       }.merge(@transport_configuration.ssl || {})
+
+      configuration[:verify_mode] = configuration.delete(:verify) ? OpenSSL::SSL::VERIFY_PEER : OpenSSL::SSL::VERIFY_NONE
+      configuration
     end
   end
 end

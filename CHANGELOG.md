@@ -1,3 +1,132 @@
+## 5.0.0
+
+### Breaking Change - Goodbye `faraday` 👋 
+
+This version removes the dependency of [faraday](https://github.com/lostisland/faraday) and replaces related implementation with the `Net::HTTP` standard library. 
+
+(If you didn't notice it, the SDK previously used `faraday` as the HTTP client to send events to Sentry. You can find the implementation in [HTTPTransport](https://github.com/getsentry/sentry-ruby/blob/v4-9/sentry-ruby/lib/sentry/transport/http_transport.rb).)
+
+#### Why
+
+Since the old `sentry-raven` SDK, we've been using `faraday` as the SDKs' HTTP client for years. It's an amazing tool and saved us many work, allowing us to focus on SDK features. 
+
+But because many users also use `faraday` in their own apps and have their own version requirements, managing this dependency has become harder and harder over the past few years. Just to list a few related issues:
+
+- [#944](https://github.com/getsentry/sentry-ruby/issues/944)
+- [#1424](https://github.com/getsentry/sentry-ruby/issues/1424)
+- [#1524](https://github.com/getsentry/sentry-ruby/issues/1524)
+
+And with the release of [faraday 2.0](https://github.com/lostisland/faraday/releases/tag/v2.0.0), we could only imagine it gets even more difficult (which it kinda did, see [#1663](https://github.com/getsentry/sentry-ruby/issues/1663)).
+
+So we decided to officially say goodbye to it with this release.
+
+
+#### What's changed?
+
+
+By default, the SDK used `faraday`'s `net_http` adapter, which is also built on top of `Net::HTTP`. So this change shouldn't impact most of the users.
+
+The only noticeable changes are the removal of 2 faraday-specific transport configurations:
+
+- `config.transport.http_adapter`
+- `config.transport.faraday_builder`
+
+**If you are already on version `4.9.x` and do not use those configuration options, it'll be as simple as `bundle update`.**
+
+#### What if I still want to use `faraday` to send my events?
+
+`sentry-ruby` already allows users to set a custom transport class with:
+
+```ruby
+Sentry.init do |config|
+  config.transport.transport_class = MyTransportClass
+end
+```
+
+So to use a faraday-based transport, you can:
+
+1. Build a `FaradayTransport` like this:
+
+```rb
+require 'sentry/transport/http_transport'
+require 'faraday'
+
+class FaradayTransport < Sentry::HTTPTransport
+  attr_reader :adapter
+
+  def initialize(*args)
+    @adapter = :net_http
+    super
+  end
+
+  def send_data(data)
+    encoding = ""
+
+    if should_compress?(data)
+      data = Zlib.gzip(data)
+      encoding = GZIP_ENCODING
+    end
+
+    response = conn.post @endpoint do |req|
+      req.headers['Content-Type'] = CONTENT_TYPE
+      req.headers['Content-Encoding'] = encoding
+      req.headers['X-Sentry-Auth'] = generate_auth_header
+      req.body = data
+    end
+
+    if has_rate_limited_header?(response.headers)
+      handle_rate_limited_response(response.headers)
+    end
+  rescue Faraday::Error => e
+    error_info = e.message
+
+    if e.response
+      if e.response[:status] == 429
+        handle_rate_limited_response(e.response[:headers])
+      else
+        error_info += "\nbody: #{e.response[:body]}"
+        error_info += " Error in headers is: #{e.response[:headers]['x-sentry-error']}" if e.response[:headers]['x-sentry-error']
+      end
+    end
+
+    raise Sentry::ExternalError, error_info
+  end
+
+  private
+
+  def set_conn
+    server = @dsn.server
+
+    log_debug("Sentry HTTP Transport connecting to #{server}")
+
+    Faraday.new(server, :ssl => ssl_configuration, :proxy => @transport_configuration.proxy) do |builder|
+      builder.response :raise_error
+      builder.options.merge! faraday_opts
+      builder.headers[:user_agent] = "sentry-ruby/#{Sentry::VERSION}"
+      builder.adapter(*adapter)
+    end
+  end
+
+  def faraday_opts
+    [:timeout, :open_timeout].each_with_object({}) do |opt, memo|
+      memo[opt] = @transport_configuration.public_send(opt) if @transport_configuration.public_send(opt)
+    end
+  end
+
+  def ssl_configuration
+    {
+      verify: @transport_configuration.ssl_verification,
+      ca_file: @transport_configuration.ssl_ca_file
+    }.merge(@transport_configuration.ssl || {})
+  end
+end
+```
+
+2. Set `config.transport.transport = FaradayTransport`
+
+
+**Please keep in mind that this may not work in the future when the SDK changes its transport implementation.**
+
 ## 4.9.2
 
 ### Bug Fixes
