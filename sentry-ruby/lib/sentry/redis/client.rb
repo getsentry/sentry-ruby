@@ -4,7 +4,7 @@ module Sentry
   # @api private
   module Redis
     module Client
-      OP_NAME = "db.redis.command"
+      OP_NAME ||= "db.redis.command"
 
       def logging(commands, &block)
         instrument_for_sentry(commands) do
