@@ -16,15 +16,36 @@ RSpec.describe Sentry::HTTPTransport do
     subject.encode(event.to_hash)
   end
 
-  subject { described_class.new(configuration) }
+  subject { client.transport }
 
-  it "logs a debug message during initialization" do
+  it "logs a debug message only during initialization" do
+    stub_request(build_fake_response("200"))
     string_io = StringIO.new
     configuration.logger = Logger.new(string_io)
 
     subject
 
-    expect(string_io.string).to include("sentry: Sentry HTTP Transport connecting to http://sentry.localdomain")
+    expect(string_io.string).to include("sentry: Sentry HTTP Transport will connect to http://sentry.localdomain")
+
+    string_io.string = ""
+    expect(string_io.string).to eq("")
+
+    subject.send_data(data)
+
+    expect(string_io.string).not_to include("sentry: Sentry HTTP Transport will connect to http://sentry.localdomain")
+  end
+
+  it "initializes new Net::HTTP instance for every request" do
+    stub_request(build_fake_response("200")) do |request|
+      expect(request["User-Agent"]).to eq("sentry-ruby/#{Sentry::VERSION}")
+    end
+
+    subject
+
+    expect(Net::HTTP).to receive(:new).and_call_original.exactly(2)
+
+    subject.send_data(data)
+    subject.send_data(data)
   end
 
   describe "customizations" do
