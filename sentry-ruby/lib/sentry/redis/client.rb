@@ -73,7 +73,9 @@ module Sentry
   end
 end
 
-Sentry.register_patch do
-  patch = Sentry::Redis::Client
-  Redis::Client.prepend(patch) unless Redis::Client.ancestors.include?(patch)
+if defined?(::Redis::Client)
+  Sentry.register_patch do
+    patch = Sentry::Redis::Client
+    Redis::Client.prepend(patch) unless Redis::Client.ancestors.include?(patch)
+  end
 end
