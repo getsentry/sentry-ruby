@@ -14,12 +14,11 @@ module Sentry
     RATE_LIMIT_HEADER = "x-sentry-rate-limits"
     USER_AGENT = "sentry-ruby/#{Sentry::VERSION}"
 
-    attr_reader :conn
-
     def initialize(*args)
       super
-      @conn = set_conn
       @endpoint = @dsn.envelope_endpoint
+
+      log_debug("Sentry HTTP Transport will connect to #{@dsn.server}")
     end
 
     def send_data(data)
@@ -127,10 +126,8 @@ module Sentry
       @transport_configuration.encoding == GZIP_ENCODING && data.bytesize >= GZIP_THRESHOLD
     end
 
-    def set_conn
+    def conn
       server = URI(@dsn.server)
-
-      log_debug("Sentry HTTP Transport connecting to #{server}")
 
       use_ssl = server.scheme == "https"
       port = use_ssl ? 443 : 80

@@ -1,3 +1,7 @@
+## 5.0.1
+
+- Don't reuse Net::HTTP objects in `HTTPTransport` [#1696](https://github.com/getsentry/sentry-ruby/pull/1696)
+
 ## 5.0.0
 
 ### Breaking Change - Goodbye `faraday` 👋 
