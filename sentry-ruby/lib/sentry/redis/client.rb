@@ -4,7 +4,7 @@ module Sentry
   # @api private
   module Redis
     module Client
-      OP_NAME = "redis"
+      OP_NAME = "db.redis.command"
 
       def logging(commands, &block)
         instrument_for_sentry(commands) do
@@ -15,7 +15,7 @@ module Sentry
       private
 
       def instrument_for_sentry(commands)
-        yield unless Sentry.initialized?
+        return yield unless Sentry.initialized?
 
         record_sentry_span(commands) do
           yield.tap do
@@ -25,14 +25,14 @@ module Sentry
       end
 
       def record_sentry_span(commands)
-        yield unless (transaction = Sentry.get_current_scope.get_transaction) && transaction.sampled
+        return yield unless (transaction = Sentry.get_current_scope.get_transaction) && transaction.sampled
 
         transaction.start_child(op: OP_NAME, start_timestamp: Sentry.utc_now.to_f).then do |sentry_span|
-          yield
-
-          sentry_span.set_description(generate_description(commands))
-          sentry_span.set_data(:server, server_description)
-          sentry_span.set_timestamp(Sentry.utc_now.to_f)
+          yield.tap do
+            sentry_span.set_description(generate_description(commands))
+            sentry_span.set_data(:server, server_description)
+            sentry_span.set_timestamp(Sentry.utc_now.to_f)
+          end
         end
       end
 
@@ -45,15 +45,25 @@ module Sentry
             category: OP_NAME,
             type: :info,
             data: {
-              command: commands.first.first,
-              key: commands.first.second
+              commands: parse_commands(commands),
+              server: server_description
             }
           )
         )
       end
 
       def generate_description(commands)
-        commands.first.take(2).join(" ")
+        parse_commands(commands).map do |statement|
+          statement.values.join(" ").strip
+        end.join(", ")
+      end
+
+      def parse_commands(commands)
+        commands.map do |statement|
+          command, key, *_values = statement
+
+          { command: command.to_s.upcase, key: key }
+        end
       end
 
       def server_description
