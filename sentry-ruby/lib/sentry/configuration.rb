@@ -75,6 +75,7 @@ module Sentry
     # An array of breadcrumbs loggers to be used. Available options are:
     # - :sentry_logger
     # - :http_logger
+    # - :redis_logger
     #
     # And if you also use sentry-rails:
     # - :active_support_logger
