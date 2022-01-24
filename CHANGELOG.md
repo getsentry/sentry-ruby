@@ -9,8 +9,8 @@ config.breadcrumbs_logger = [:redis_logger]
 ```
 
 The SDK now records a new `db.redis.command` breadcrumb whenever the Redis client is called. Attributes sent are
-`commands`, an array of each Redis command called with the attributes `command` and `key`, as well as the Redis server
-details.
+`commands`, an array of each Redis command called with the attributes `command` and `key`, as well as `server`, which is
+the Redis server hostname, port and db number.
 
 Calls to Redis are also wrapped in a span called `db.redis.command` and if tracing is enabled will be reported to
 Sentry. The description will be set the the command and key. e.g. "SET mykey". For Redis transactions this will be in
