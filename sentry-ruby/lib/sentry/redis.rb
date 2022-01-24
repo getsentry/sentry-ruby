@@ -2,15 +2,15 @@
 
 module Sentry
   # @api private
-  module Redis
+  class Redis
     OP_NAME ||= "db.redis.command"
 
-    extend self
-
-    def instrument(commands, host, port, db)
-      return yield unless Sentry.initialized?
-
+    def initialize(commands, host, port, db)
       @commands, @host, @port, @db = commands, host, port, db
+    end
+
+    def instrument
+      return yield unless Sentry.initialized?
 
       record_span do
         yield.tap do
@@ -20,6 +20,8 @@ module Sentry
     end
 
     private
+
+    attr_reader :commands, :host, :port, :db
 
     def record_span
       return yield unless (transaction = Sentry.get_current_scope.get_transaction) && transaction.sampled
@@ -56,7 +58,7 @@ module Sentry
     end
 
     def parsed_commands
-      @commands.map do |statement|
+      commands.map do |statement|
         command, key, *_values = statement
 
         { command: command.to_s.upcase, key: key }
@@ -64,12 +66,12 @@ module Sentry
     end
 
     def server_description
-      "#{@host}:#{@port}/#{@db}"
+      "#{host}:#{port}/#{db}"
     end
 
     module Client
       def logging(commands, &block)
-        Sentry::Redis.instrument(commands, host, port, db) do
+        Sentry::Redis.new(commands, host, port, db).instrument do
           super
         end
       end
