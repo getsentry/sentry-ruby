@@ -4,6 +4,7 @@ module Sentry
   # @api private
   class Redis
     OP_NAME ||= "db.redis.command"
+    LOGGER_NAME ||= :redis_logger
 
     def initialize(commands, host, port, db)
       @commands, @host, @port, @db = commands, host, port, db
@@ -36,7 +37,7 @@ module Sentry
     end
 
     def record_breadcrumb
-      return unless Sentry.configuration.breadcrumbs_logger.include?(:redis_logger)
+      return unless Sentry.configuration.breadcrumbs_logger.include?(LOGGER_NAME)
 
       Sentry.add_breadcrumb(
         Sentry::Breadcrumb.new(

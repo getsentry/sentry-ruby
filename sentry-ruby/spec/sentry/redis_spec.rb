@@ -4,10 +4,6 @@ require "fakeredis"
 load "sentry/redis.rb"
 
 RSpec.describe Sentry::Redis do
-  let(:string_io) { StringIO.new }
-  let(:logger) do
-    ::Logger.new(string_io)
-  end
   let(:redis) do
     Redis.new
   end
@@ -16,8 +12,6 @@ RSpec.describe Sentry::Redis do
     before do
       perform_basic_setup do |config|
         config.traces_sample_rate = 1.0
-        config.transport.transport_class = Sentry::HTTPTransport
-        config.logger = logger
       end
     end
 
@@ -54,6 +48,22 @@ RSpec.describe Sentry::Redis do
         expect(result).to contain_exactly("OK", kind_of(Numeric))
         request_span = transaction.span_recorder.spans.last
         expect(request_span.description).to eq("MULTI, SET key, INCR counter, EXEC")
+      end
+    end
+  end
+
+  context "with tracing disabled" do
+    before do
+      perform_basic_setup do |config|
+        config.traces_sample_rate = 0.0
+      end
+    end
+
+    context "calling Redis SET command" do
+      let(:result) { redis.set("key", "value") }
+
+      it "works as usual" do
+        expect(result).to eq("OK")
       end
     end
   end

@@ -4,10 +4,6 @@ require "fakeredis"
 load "sentry/redis.rb"
 
 RSpec.describe :redis_logger do
-  let(:string_io) { StringIO.new }
-  let(:logger) do
-    ::Logger.new(string_io)
-  end
   let(:redis) do
     Redis.new
   end
@@ -15,7 +11,6 @@ RSpec.describe :redis_logger do
   before do
     perform_basic_setup do |config|
       config.breadcrumbs_logger = [:redis_logger]
-      config.logger = logger
     end
   end
 
