@@ -1,5 +1,7 @@
 ## Unreleased
 
+### Features
+
 #### Support for Redis [#1697](https://github.com/getsentry/sentry-ruby/pull/1697)
 
 When you opt in to the new `redis_logger` breadcrumbs logger:
