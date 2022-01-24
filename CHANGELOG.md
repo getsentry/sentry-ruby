@@ -13,7 +13,7 @@ The SDK now records a new `db.redis.command` breadcrumb whenever the Redis clien
 the Redis server hostname, port and db number.
 
 Calls to Redis are also wrapped in a span called `db.redis.command` and if tracing is enabled will be reported to
-Sentry. The description will be set the the command and key. e.g. "SET mykey". For Redis transactions this will be in
+Sentry. The span description will be the command and key. e.g. "SET mykey". For transactions this will be in
 the format "MULTI, SET mykey, INCR counter, EXEC".
 
 ## 5.0.1
