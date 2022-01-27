@@ -2,6 +2,7 @@
 
 - Respect port info provided in user's DSN [#1702](https://github.com/getsentry/sentry-ruby/pull/1702)
   - Fixes [#1699](https://github.com/getsentry/sentry-ruby/issues/1699)
+- Capture transaction tags [#1701](https://github.com/getsentry/sentry-ruby/pull/1701)
 
 ## 5.0.1
 
