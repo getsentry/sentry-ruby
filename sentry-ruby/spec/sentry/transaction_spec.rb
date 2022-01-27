@@ -338,7 +338,7 @@ RSpec.describe Sentry::Transaction do
       expect(event[:spans]).to be_empty
     end
 
-    it "doesn't override the event's transaction attribute with the scope's" do
+    it "assigns the transaction's transaction name" do
       subject.finish
 
       expect(events.count).to eq(1)
@@ -347,7 +347,9 @@ RSpec.describe Sentry::Transaction do
       expect(event[:transaction]).to eq("foo")
     end
 
-    it "doesn't override the event's tags attribute with the scope's" do
+    it "assigns the transaction's tags" do
+      Sentry.set_tags(name: "apple")
+
       subject.set_tag(:foo, 'bar')
 
       subject.finish
@@ -355,7 +357,7 @@ RSpec.describe Sentry::Transaction do
       expect(events.count).to eq(1)
       event = events.last.to_hash
 
-      expect(event[:tags]).to eq({foo: 'bar'})
+      expect(event[:tags]).to eq({ foo: 'bar', name: "apple" })
     end
 
     describe "hub selection" do
