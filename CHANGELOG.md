@@ -1,3 +1,8 @@
+## 5.0.2
+
+- Respect port info provided in user's DSN [#1702](https://github.com/getsentry/sentry-ruby/pull/1702)
+  - Fixes [#1699](https://github.com/getsentry/sentry-ruby/issues/1699)
+
 ## 5.0.1
 
 - Don't reuse Net::HTTP objects in `HTTPTransport` [#1696](https://github.com/getsentry/sentry-ruby/pull/1696)

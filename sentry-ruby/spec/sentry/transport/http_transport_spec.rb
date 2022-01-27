@@ -48,6 +48,38 @@ RSpec.describe Sentry::HTTPTransport do
     subject.send_data(data)
   end
 
+  describe "port detection" do
+    let(:configuration) do
+      Sentry::Configuration.new.tap do |config|
+        config.dsn = dsn
+        config.logger = Logger.new(nil)
+      end
+    end
+
+    context "with http DSN" do
+      let(:dsn) { "http://12345:67890@sentry.localdomain/sentry/42" }
+
+      it "sets port to 80" do
+        expect(subject.send(:conn).port).to eq(80)
+      end
+    end
+    context "with http DSN" do
+      let(:dsn) { "https://12345:67890@sentry.localdomain/sentry/42" }
+
+      it "sets port to 443" do
+        expect(subject.send(:conn).port).to eq(443)
+      end
+    end
+
+    context "with specified port" do
+      let(:dsn) { "https://12345:67890@sentry.localdomain:1234/sentry/42" }
+
+      it "sets port to 1234" do
+        expect(subject.send(:conn).port).to eq(1234)
+      end
+    end
+  end
+
   describe "customizations" do
     let(:fake_response) { build_fake_response("200") }
 
