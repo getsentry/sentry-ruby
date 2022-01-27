@@ -129,17 +129,14 @@ module Sentry
     def conn
       server = URI(@dsn.server)
 
-      use_ssl = server.scheme == "https"
-      port = use_ssl ? 443 : 80
-
       connection =
         if proxy = @transport_configuration.proxy
-          ::Net::HTTP.new(server.hostname, port, proxy[:uri].hostname, proxy[:uri].port, proxy[:user], proxy[:password])
+          ::Net::HTTP.new(server.hostname, server.port, proxy[:uri].hostname, proxy[:uri].port, proxy[:user], proxy[:password])
         else
-          ::Net::HTTP.new(server.hostname, port, nil)
+          ::Net::HTTP.new(server.hostname, server.port, nil)
         end
 
-      connection.use_ssl = use_ssl
+      connection.use_ssl = server.scheme == "https"
       connection.read_timeout = @transport_configuration.timeout
       connection.write_timeout = @transport_configuration.timeout if connection.respond_to?(:write_timeout)
       connection.open_timeout = @transport_configuration.open_timeout
