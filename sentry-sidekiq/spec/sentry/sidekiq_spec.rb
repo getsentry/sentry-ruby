@@ -94,31 +94,90 @@ RSpec.describe Sentry::Sidekiq do
       Sentry.configuration.sidekiq.report_after_job_retries = true
     end
 
-    it "doesn't report the error until retries are exhuasted" do
-      execute_worker(processor, RetryWorker)
-
-      expect(transport.events.count).to eq(0)
-
-      expect(retry_set.count).to eq(1)
-
+    def retry_last_failed_job
       retry_set.first.add_to_queue
       job = queue.first
       work = Sidekiq::BasicFetch::UnitOfWork.new('queue:default', job.value)
       process_work(processor, work)
-      expect(transport.events.count).to eq(1)
     end
 
-    it "doesn't affect no-retry jobs" do
-      execute_worker(processor, SadWorker)
+    context "when retry: is specified" do
+      it "doesn't report the error until retries are exhuasted" do
+        worker = Class.new(SadWorker)
+        worker.sidekiq_options retry: 5
+        execute_worker(processor, worker)
+        expect(transport.events.count).to eq(0)
+        expect(retry_set.count).to eq(1)
 
-      expect(transport.events.count).to eq(1)
-      expect(retry_set.count).to eq(1)
+        4.times do |i|
+          retry_last_failed_job
+          expect(transport.events.count).to eq(0)
+        end
+
+        retry_last_failed_job
+        expect(transport.events.count).to eq(1)
+      end
     end
 
-    it "doesn't affect jobs with zero retries" do
-      execute_worker(processor, ZeroRetryWorker)
+    context "when the job has 0 retries" do
+      it "reports on the first failure" do
+        worker = Class.new(SadWorker)
+        worker.sidekiq_options retry: 0
 
-      expect(transport.events.count).to eq(1)
+        execute_worker(processor, worker)
+
+        expect(transport.events.count).to eq(1)
+      end
+    end
+
+    context "when the job has retry: false" do
+      it "reports on the first failure" do
+        worker = Class.new(SadWorker)
+        worker.sidekiq_options retry: false
+
+        execute_worker(processor, worker)
+
+        expect(transport.events.count).to eq(1)
+      end
+    end
+
+    context "when retry is not specified on the worker" do
+      before do
+        # this is required for Sidekiq to assign default options to the worker
+        SadWorker.sidekiq_options
+      end
+
+      it "reports on the 25th retry" do
+        execute_worker(processor, SadWorker)
+        expect(transport.events.count).to eq(0)
+        expect(retry_set.count).to eq(1)
+
+        24.times do |i|
+          retry_last_failed_job
+          expect(transport.events.count).to eq(0)
+        end
+
+        retry_last_failed_job
+        expect(transport.events.count).to eq(1)
+      end
+
+      context "when Sidekiq.options[:max_retries] is set" do
+        it "respects the set limit" do
+          Sidekiq.options[:max_retries] = 5
+
+          execute_worker(processor, SadWorker)
+          expect(transport.events.count).to eq(0)
+          expect(retry_set.count).to eq(1)
+
+          4.times do |i|
+            retry_last_failed_job
+            expect(transport.events.count).to eq(0)
+          end
+
+          retry_last_failed_job
+          expect(transport.events.count).to eq(1)
+        end
+      end
     end
   end
 
