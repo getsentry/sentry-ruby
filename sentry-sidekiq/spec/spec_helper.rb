@@ -133,26 +133,6 @@ class ReportingWorker
   end
 end
 
-class RetryWorker
-  include Sidekiq::Worker
-
-  sidekiq_options retry: 1
-
-  def perform
-    1/0
-  end
-end
-
-class ZeroRetryWorker
-  include Sidekiq::Worker
-
-  sidekiq_options retry: 0
-
-  def perform
-    1/0
-  end
-end
-
 class TagsWorker
   include Sidekiq::Worker
 
