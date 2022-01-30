@@ -166,6 +166,11 @@ def make_basic_app
   # the callbacks duplicate after each time we initialize the application and cause issues when they're executed
   ActiveSupport::Executor.reset_callbacks(:run)
   ActiveSupport::Executor.reset_callbacks(:complete)
+
+  # Rails uses this module to set a global context for its ErrorReporter feature.
+  # this needs to be cleared so previously set context won't pollute later reportings (see ErrorSubscriber).
+  ActiveSupport::ExecutionContext.clear if defined?(ActiveSupport::ExecutionContext)
+
   if defined?(ActionCable)
     ActionCable::Channel::Base.reset_callbacks(:subscribe)
     ActionCable::Channel::Base.reset_callbacks(:unsubscribe)
