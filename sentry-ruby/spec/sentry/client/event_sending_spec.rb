@@ -1,5 +1,4 @@
 require 'spec_helper'
-require 'fakeredis'
 
 RSpec.describe Sentry::Client do
   let(:configuration) do

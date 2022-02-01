@@ -1,7 +1,4 @@
 require "spec_helper"
-require "fakeredis"
-# After requiring a Redis client (fakeredis), we need to forceably reload the Redis client patch:
-load "sentry/redis.rb"
 
 RSpec.describe Sentry::Redis do
   let(:redis) do

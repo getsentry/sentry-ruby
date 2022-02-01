@@ -2,8 +2,9 @@ require "bundler/setup"
 require "debug" if RUBY_VERSION.to_f >= 2.6
 require "pry"
 require "timecop"
-require 'simplecov'
-require 'rspec/retry'
+require "simplecov"
+require "rspec/retry"
+require "fakeredis/rspec"
 
 SimpleCov.start do
   project_name "sentry-ruby"
