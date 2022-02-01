@@ -27,6 +27,12 @@ class FailedWithExtraJob < FailedJob
   end
 end
 
+class JobWithArgument < ActiveJob::Base
+  def perform(*args, integer:, post:, **options)
+    raise "foo"
+  end
+end
+
 class QueryPostJob < ActiveJob::Base
   self.logger = nil
 
@@ -74,6 +80,52 @@ RSpec.describe "ActiveJob integration" do
 
   it "returns #perform method's return value" do
     expect(NormalJob.perform_now).to eq("foo")
+  end
+
+  describe "ActiveJob arguments serialization" do
+    it "serializes ActiveRecord arguments in globalid form" do
+      post = Post.create!
+      post2 = Post.create!
+
+      expect do
+        JobWithArgument.perform_now("foo", { bar: Sentry }, integer: 1, post: post, nested: { another_level: { post: post2 } })
+      end.to raise_error(RuntimeError)
+
+      event = transport.events.last.to_json_compatible
+      expect(event.dig("extra", "arguments")).to eq(
+        [
+          "foo",
+          { "bar" => "Sentry" },
+          {
+            "integer" => 1,
+            "post" => "gid://rails-test-app/Post/#{post.id}",
+            "nested" => { "another_level" => { "post" => "gid://rails-test-app/Post/#{post2.id}" } }
+          }
+        ]
+      )
+    end
+
+    it "handles problematic globalid conversion gracefully" do
+      post = Post.create!
+
+      def post.to_global_id
+        raise
+      end
+
+      expect do
+        JobWithArgument.perform_now(integer: 1, post: post)
+      end.to raise_error(RuntimeError)
+
+      event = transport.events.last.to_json_compatible
+      expect(event.dig("extra", "arguments")).to eq(
+        [
+          {
+            "integer" => 1,
+            "post" => post.to_s,
+          }
+        ]
+      )
+    end
   end
 
   it "adds useful context to extra" do

@@ -76,8 +76,9 @@ module Sentry
     # @param hint [Hash] the hint data that'll be passed to `before_send` callback and the scope's event processors.
     # @return [Event, nil]
     def event_from_exception(exception, hint = {})
+      return unless @configuration.sending_allowed? && @configuration.exception_class_allowed?(exception)
+
       integration_meta = Sentry.integrations[hint[:integration]]
-      return unless @configuration.exception_class_allowed?(exception)
 
       Event.new(configuration: configuration, integration_meta: integration_meta).tap do |event|
         event.add_exception_interface(exception)
@@ -90,6 +91,8 @@ module Sentry
     # @param hint [Hash] the hint data that'll be passed to `before_send` callback and the scope's event processors.
     # @return [Event]
     def event_from_message(message, hint = {}, backtrace: nil)
+      return unless @configuration.sending_allowed?
+
       integration_meta = Sentry.integrations[hint[:integration]]
       event = Event.new(configuration: configuration, integration_meta: integration_meta, message: message)
       event.add_threads_interface(backtrace: backtrace || caller)
@@ -105,6 +108,7 @@ module Sentry
         event.contexts.merge!(trace: transaction.get_trace_context)
         event.timestamp = transaction.timestamp
         event.start_timestamp = transaction.start_timestamp
+        event.tags = transaction.tags
 
         finished_spans = transaction.span_recorder.spans.select { |span| span.timestamp && span != transaction }
         event.spans = finished_spans.map(&:to_hash)

@@ -4,15 +4,6 @@ if defined?(ActionCable) && ActionCable.version >= Gem::Version.new('6.0.0')
 
   ::ActionCable.server.config.cable = { "adapter" => "test" }
 
-  # ensure we can access `connection.env` in tests like we can in production
-  ActiveSupport.on_load :action_cable_channel_test_case do
-    class ::ActionCable::Channel::ConnectionStub
-      def env
-        @_env ||= ::ActionCable::Connection::TestRequest.create.env
-      end
-    end
-  end
-
   class ChatChannel < ::ActionCable::Channel::Base
     def subscribed
       raise "foo"
@@ -29,11 +20,77 @@ if defined?(ActionCable) && ActionCable.version >= Gem::Version.new('6.0.0')
     end
   end
 
+  class FailToOpenConnection < ActionCable::Connection::Base
+    def connect
+      raise "foo"
+    end
+  end
+
+  class FailToCloseConnection < ActionCable::Connection::Base
+    def disconnect
+      raise "bar"
+    end
+  end
+
+  RSpec.describe "without Sentry initialized" do
+    before do
+      allow(Sentry).to receive(:get_main_hub).and_return(nil)
+      make_basic_app
+      Sentry.clone_hub_to_current_thread # make sure the thread doesn't set a hub
+    end
+
+    describe ChatChannel, type: :channel do
+      it "doesn't swallow the app's operation" do
+        expect { subscribe }.to raise_error('foo')
+      end
+    end
+  end
+
   RSpec.describe "Sentry::Rails::ActionCableExtensions", type: :channel do
     let(:transport) { Sentry.get_current_client.transport }
 
     after do
       transport.events = []
+    end
+
+    describe "Connection" do
+      before do
+        make_basic_app
+      end
+
+      let(:connection) do
+        env = Rack::MockRequest.env_for "/test", "HTTP_CONNECTION" => "upgrade", "HTTP_UPGRADE" => "websocket",
+          "HTTP_HOST" => "localhost", "HTTP_ORIGIN" => "http://rubyonrails.com"
+        described_class.new(spy, env)
+      end
+
+      before do
+        connection.process
+      end
+
+      describe FailToOpenConnection do
+        it "captures errors happen when establishing connection" do
+          expect { connection.send(:handle_open) }.to raise_error(RuntimeError, "foo")
+
+          expect(transport.events.count).to eq(1)
+
+          event = transport.events.last.to_json_compatible
+          expect(event["transaction"]).to eq("FailToOpenConnection#connect")
+        end
+      end
+
+      describe FailToCloseConnection do
+        it "captures errors happen when establishing connection" do
+          connection.send(:handle_open)
+
+          expect { connection.send(:handle_close) }.to raise_error(RuntimeError, "bar")
+
+          expect(transport.events.count).to eq(1)
+
+          event = transport.events.last.to_json_compatible
+          expect(event["transaction"]).to eq("FailToCloseConnection#disconnect")
+        end
+      end
     end
 
     context "without tracing" do

@@ -16,15 +16,68 @@ RSpec.describe Sentry::HTTPTransport do
     subject.encode(event.to_hash)
   end
 
-  subject { described_class.new(configuration) }
+  subject { client.transport }
 
-  it "logs a debug message during initialization" do
+  it "logs a debug message only during initialization" do
+    stub_request(build_fake_response("200"))
     string_io = StringIO.new
     configuration.logger = Logger.new(string_io)
 
     subject
 
-    expect(string_io.string).to include("sentry: Sentry HTTP Transport connecting to http://sentry.localdomain")
+    expect(string_io.string).to include("sentry: Sentry HTTP Transport will connect to http://sentry.localdomain")
+
+    string_io.string = ""
+    expect(string_io.string).to eq("")
+
+    subject.send_data(data)
+
+    expect(string_io.string).not_to include("sentry: Sentry HTTP Transport will connect to http://sentry.localdomain")
+  end
+
+  it "initializes new Net::HTTP instance for every request" do
+    stub_request(build_fake_response("200")) do |request|
+      expect(request["User-Agent"]).to eq("sentry-ruby/#{Sentry::VERSION}")
+    end
+
+    subject
+
+    expect(Net::HTTP).to receive(:new).and_call_original.exactly(2)
+
+    subject.send_data(data)
+    subject.send_data(data)
+  end
+
+  describe "port detection" do
+    let(:configuration) do
+      Sentry::Configuration.new.tap do |config|
+        config.dsn = dsn
+        config.logger = Logger.new(nil)
+      end
+    end
+
+    context "with http DSN" do
+      let(:dsn) { "http://12345:67890@sentry.localdomain/sentry/42" }
+
+      it "sets port to 80" do
+        expect(subject.send(:conn).port).to eq(80)
+      end
+    end
+    context "with http DSN" do
+      let(:dsn) { "https://12345:67890@sentry.localdomain/sentry/42" }
+
+      it "sets port to 443" do
+        expect(subject.send(:conn).port).to eq(443)
+      end
+    end
+
+    context "with specified port" do
+      let(:dsn) { "https://12345:67890@sentry.localdomain:1234/sentry/42" }
+
+      it "sets port to 1234" do
+        expect(subject.send(:conn).port).to eq(1234)
+      end
+    end
   end
 
   describe "customizations" do
@@ -36,16 +89,6 @@ RSpec.describe Sentry::HTTPTransport do
       end
 
       subject.send_data(data)
-    end
-
-    it 'allows to customise faraday' do
-      builder = spy('faraday_builder')
-      expect(Faraday).to receive(:new).and_yield(builder)
-      configuration.transport.faraday_builder = proc { |b| b.request :instrumentation }
-
-      subject
-
-      expect(builder).to have_received(:request).with(:instrumentation)
     end
 
     it "accepts custom proxy" do

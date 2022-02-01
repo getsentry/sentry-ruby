@@ -3,6 +3,166 @@
 ### Features
 
 - Sync activerecord, actionview and net-http span names [#1681](https://github.com/getsentry/sentry-ruby/pull/1681)
+- Support serializing ActiveRecord job arguments in global id form [#1688](https://github.com/getsentry/sentry-ruby/pull/1688)
+- Register Sentry's ErrorSubscriber for Rails 7.0+ apps [#1705](https://github.com/getsentry/sentry-ruby/pull/1705)
+
+## 5.0.2
+
+- Respect port info provided in user's DSN [#1702](https://github.com/getsentry/sentry-ruby/pull/1702)
+  - Fixes [#1699](https://github.com/getsentry/sentry-ruby/issues/1699)
+- Capture transaction tags [#1701](https://github.com/getsentry/sentry-ruby/pull/1701)
+- Fix `report_after_job_retries`'s decision logic [#1704](https://github.com/getsentry/sentry-ruby/pull/1704)
+  - Fixes [#1698](https://github.com/getsentry/sentry-ruby/issues/1698)
+
+## 5.0.1
+
+- Don't reuse Net::HTTP objects in `HTTPTransport` [#1696](https://github.com/getsentry/sentry-ruby/pull/1696)
+
+## 5.0.0
+
+### Breaking Change - Goodbye `faraday` 👋 
+
+**TL;DR: If you are already on version `4.9` and do not use `config.transport.http_adapter` and `config.transport.faraday_builder`, you don't need to change anything.**
+
+This version removes the dependency of [faraday](https://github.com/lostisland/faraday) and replaces related implementation with the `Net::HTTP` standard library. 
+
+
+#### Why?
+
+Since the old `sentry-raven` SDK, we've been using `faraday` as the HTTP client for years (see [HTTPTransport](https://github.com/getsentry/sentry-ruby/blob/4-9/sentry-ruby/lib/sentry/transport/http_transport.rb)). It's an amazing tool that saved us many work and allowed us to focus on SDK features. 
+
+But because many users also use `faraday` themselves and have their own version requirements, managing this dependency has become harder over the past few years. Just to list a few related issues:
+
+- [#944](https://github.com/getsentry/sentry-ruby/issues/944)
+- [#1424](https://github.com/getsentry/sentry-ruby/issues/1424)
+- [#1524](https://github.com/getsentry/sentry-ruby/issues/1524)
+
+And with the release of [faraday 2.0](https://github.com/lostisland/faraday/releases/tag/v2.0.0), we could only imagine it getting even more difficult (which it kind of did, see [#1663](https://github.com/getsentry/sentry-ruby/issues/1663)).
+
+So we think it's time to say goodbye to it with this release.
+
+
+#### What's changed?
+
+
+By default, the SDK used `faraday`'s `net_http` adapter, which is also built on top of `Net::HTTP`. So this change shouldn't impact most of the users.
+
+The only noticeable changes are the removal of 2 faraday-specific transport configurations:
+
+- `config.transport.http_adapter`
+- `config.transport.faraday_builder`
+
+**If you are already on version `4.9` and do not use those configuration options, it'll be as simple as `bundle update`.**
+
+#### What if I still want to use `faraday` to send my events?
+
+`sentry-ruby` already allows users to set a custom transport class with:
+
+```ruby
+Sentry.init do |config|
+  config.transport.transport_class = MyTransportClass
+end
+```
+
+So to use a faraday-based transport, you can:
+
+1. Build a `FaradayTransport` like this:
+
+```rb
+require 'sentry/transport/http_transport'
+require 'faraday'
+
+class FaradayTransport < Sentry::HTTPTransport
+  attr_reader :adapter
+
+  def initialize(*args)
+    @adapter = :net_http
+    super
+  end
+
+  def send_data(data)
+    encoding = ""
+
+    if should_compress?(data)
+      data = Zlib.gzip(data)
+      encoding = GZIP_ENCODING
+    end
+
+    response = conn.post @endpoint do |req|
+      req.headers['Content-Type'] = CONTENT_TYPE
+      req.headers['Content-Encoding'] = encoding
+      req.headers['X-Sentry-Auth'] = generate_auth_header
+      req.body = data
+    end
+
+    if has_rate_limited_header?(response.headers)
+      handle_rate_limited_response(response.headers)
+    end
+  rescue Faraday::Error => e
+    error_info = e.message
+
+    if e.response
+      if e.response[:status] == 429
+        handle_rate_limited_response(e.response[:headers])
+      else
+        error_info += "\nbody: #{e.response[:body]}"
+        error_info += " Error in headers is: #{e.response[:headers]['x-sentry-error']}" if e.response[:headers]['x-sentry-error']
+      end
+    end
+
+    raise Sentry::ExternalError, error_info
+  end
+
+  private
+
+  def set_conn
+    server = @dsn.server
+
+    log_debug("Sentry HTTP Transport connecting to #{server}")
+
+    Faraday.new(server, :ssl => ssl_configuration, :proxy => @transport_configuration.proxy) do |builder|
+      builder.response :raise_error
+      builder.options.merge! faraday_opts
+      builder.headers[:user_agent] = "sentry-ruby/#{Sentry::VERSION}"
+      builder.adapter(*adapter)
+    end
+  end
+
+  def faraday_opts
+    [:timeout, :open_timeout].each_with_object({}) do |opt, memo|
+      memo[opt] = @transport_configuration.public_send(opt) if @transport_configuration.public_send(opt)
+    end
+  end
+
+  def ssl_configuration
+    {
+      verify: @transport_configuration.ssl_verification,
+      ca_file: @transport_configuration.ssl_ca_file
+    }.merge(@transport_configuration.ssl || {})
+  end
+end
+```
+
+2. Set `config.transport.transport = FaradayTransport`
+
+
+**Please keep in mind that this may not work in the future when the SDK changes its `HTTPTransport` implementation.**
+
+## 4.9.2
+
+### Bug Fixes
+
+- Directly execute ActionCable's action if the SDK is not initialized [#1692](https://github.com/getsentry/sentry-ruby/pull/1692)
+  - Fixes [#1691](https://github.com/getsentry/sentry-ruby/issues/1691)
+
+## 4.9.1
+
+### Bug Fixes
+
+- Add workaround for ConnectionStub's missing interface [#1686](https://github.com/getsentry/sentry-ruby/pull/1686)
+  - Fixes [#1685](https://github.com/getsentry/sentry-ruby/issues/1685)
+- Don't initialize Event objects when they won't be sent [#1687](https://github.com/getsentry/sentry-ruby/pull/1687)
+  - Fixes [#1683](https://github.com/getsentry/sentry-ruby/issues/1683)
 
 ## 4.9.0
 
