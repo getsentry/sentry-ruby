@@ -27,12 +27,12 @@ module Sentry
     def record_span
       return yield unless (transaction = Sentry.get_current_scope.get_transaction) && transaction.sampled
 
-      transaction.start_child(op: OP_NAME, start_timestamp: Sentry.utc_now.to_f).then do |sentry_span|
-        yield.tap do
-          sentry_span.set_description(commands_description)
-          sentry_span.set_data(:server, server_description)
-          sentry_span.set_timestamp(Sentry.utc_now.to_f)
-        end
+      sentry_span = transaction.start_child(op: OP_NAME, start_timestamp: Sentry.utc_now.to_f)
+
+      yield.tap do
+        sentry_span.set_description(commands_description)
+        sentry_span.set_data(:server, server_description)
+        sentry_span.set_timestamp(Sentry.utc_now.to_f)
       end
     end
 
