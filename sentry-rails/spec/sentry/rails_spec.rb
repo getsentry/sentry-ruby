@@ -207,4 +207,33 @@ RSpec.describe Sentry::Rails, type: :request do
       expect(Sentry.configuration.trusted_proxies).to eq(["5.5.5.5"])
     end
   end
+
+  describe "error reporter integration", skip: Rails.version.to_f < 7.0 do
+    before do
+      make_basic_app
+    end
+
+    it "registers Sentry::Rails::ErrorSubscriber to Rails" do
+      Rails.error.report(Exception.new, handled: false)
+
+      expect(transport.events.count).to eq(1)
+
+      ActiveSupport.error_reporter.report(Exception.new, handled: false)
+
+      expect(transport.events.count).to eq(2)
+    end
+
+    it "sets correct contextual data to the reported event" do
+      Rails.error.handle(severity: :info, context: { foo: "bar" }) do
+        1/0
+      end
+
+      expect(transport.events.count).to eq(1)
+
+      event = transport.events.first
+      expect(event.tags).to eq({ handled: true })
+      expect(event.level).to eq(:info)
+      expect(event.contexts).to include({ "rails.error" => { foo: "bar" }})
+    end
+  end
 end

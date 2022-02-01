@@ -102,7 +102,10 @@ module Sentry
 
       return unless event
 
-      capture_event(event, **options, &block)
+      capture_event(event, **options, &block).tap do
+        # mark the exception as captured so we can use this information to avoid duplicated capturing
+        exception.instance_variable_set(:@__sentry_captured, true)
+      end
     end
 
     def capture_message(message, **options, &block)
