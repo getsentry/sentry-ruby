@@ -46,6 +46,8 @@ module Sentry
       setup_backtrace_cleanup_callback
       inject_breadcrumbs_logger
       activate_tracing
+
+      register_error_subscriber(app) if ::Rails.version.to_f >= 7.0
     end
 
     runner do
@@ -114,6 +116,11 @@ module Sentry
         Sentry::Rails::Tracing.subscribe_tracing_events
         Sentry::Rails::Tracing.patch_active_support_notifications
       end
+    end
+
+    def register_error_subscriber(app)
+      require "sentry/rails/error_subscriber"
+      app.executor.error_reporter.subscribe(Sentry::Rails::ErrorSubscriber.new)
     end
   end
 end

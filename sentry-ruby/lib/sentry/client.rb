@@ -108,6 +108,7 @@ module Sentry
         event.contexts.merge!(trace: transaction.get_trace_context)
         event.timestamp = transaction.timestamp
         event.start_timestamp = transaction.start_timestamp
+        event.tags = transaction.tags
 
         finished_spans = transaction.span_recorder.spans.select { |span| span.timestamp && span != transaction }
         event.spans = finished_spans.map(&:to_hash)

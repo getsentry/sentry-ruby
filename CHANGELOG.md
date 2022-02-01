@@ -18,10 +18,19 @@ Calls to Redis are also wrapped in a span called `db.redis.command` and if traci
 Sentry. The span description will be the command and key. e.g. "SET mykey". For transactions this will be in
 the format "MULTI, SET mykey, INCR counter, EXEC".
 
+#### Other
+
+- Sync activerecord, actionview and net-http span names [#1681](https://github.com/getsentry/sentry-ruby/pull/1681)
+- Support serializing ActiveRecord job arguments in global id form [#1688](https://github.com/getsentry/sentry-ruby/pull/1688)
+- Register Sentry's ErrorSubscriber for Rails 7.0+ apps [#1705](https://github.com/getsentry/sentry-ruby/pull/1705)
+
 ## 5.0.2
 
 - Respect port info provided in user's DSN [#1702](https://github.com/getsentry/sentry-ruby/pull/1702)
   - Fixes [#1699](https://github.com/getsentry/sentry-ruby/issues/1699)
+- Capture transaction tags [#1701](https://github.com/getsentry/sentry-ruby/pull/1701)
+- Fix `report_after_job_retries`'s decision logic [#1704](https://github.com/getsentry/sentry-ruby/pull/1704)
+  - Fixes [#1698](https://github.com/getsentry/sentry-ruby/issues/1698)
 
 ## 5.0.1
 

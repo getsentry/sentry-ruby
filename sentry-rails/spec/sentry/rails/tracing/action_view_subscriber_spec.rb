@@ -23,7 +23,7 @@ RSpec.describe Sentry::Rails::Tracing::ActionViewSubscriber, :subscriber, type: 
       expect(transaction[:spans].count).to eq(1)
 
       span = transaction[:spans][0]
-      expect(span[:op]).to eq("render_template.action_view")
+      expect(span[:op]).to eq("template.render_template.action_view")
       expect(span[:description]).to match(/test_template\.html\.erb/)
       expect(span[:trace_id]).to eq(transaction.dig(:contexts, :trace, :trace_id))
     end
