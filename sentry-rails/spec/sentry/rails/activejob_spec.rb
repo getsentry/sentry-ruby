@@ -171,7 +171,7 @@ RSpec.describe "ActiveJob integration" do
       expect(transaction.contexts.dig(:trace, :status)).to eq("ok")
 
       expect(transaction.spans.count).to eq(1)
-      expect(transaction.spans.first[:op]).to eq("sql.active_record")
+      expect(transaction.spans.first[:op]).to eq("db.sql.active_record")
     end
 
     context "with error" do

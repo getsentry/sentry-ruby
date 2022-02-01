@@ -36,7 +36,7 @@ RSpec.describe Sentry::Rails::Tracing, type: :request do
       expect(transaction[:spans].count).to eq(2)
 
       first_span = transaction[:spans][0]
-      expect(first_span[:op]).to eq("sql.active_record")
+      expect(first_span[:op]).to eq("db.sql.active_record")
       expect(first_span[:description]).to eq("SELECT \"posts\".* FROM \"posts\"")
       expect(first_span[:parent_span_id]).to eq(parent_span_id)
 
@@ -65,7 +65,7 @@ RSpec.describe Sentry::Rails::Tracing, type: :request do
       expect(transaction[:spans].count).to eq(3)
 
       first_span = transaction[:spans][0]
-      expect(first_span[:op]).to eq("sql.active_record")
+      expect(first_span[:op]).to eq("db.sql.active_record")
       expect(first_span[:description].squeeze("\s")).to eq(
         'SELECT "posts".* FROM "posts" WHERE "posts"."id" = ? LIMIT ?'
       )
