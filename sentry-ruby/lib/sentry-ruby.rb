@@ -344,3 +344,4 @@ end
 
 # patches
 require "sentry/net/http"
+require "sentry/redis"

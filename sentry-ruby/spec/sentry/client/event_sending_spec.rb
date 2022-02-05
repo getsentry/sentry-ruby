@@ -368,10 +368,6 @@ RSpec.describe Sentry::Client do
         end
 
         it "swallows Redis related error and send the event synchronizely" do
-          class Redis
-            class ConnectionError < StandardError; end
-          end
-
           configuration.async = -> (_, _) { raise Redis::ConnectionError }
 
           subject.capture_event(event, scope)

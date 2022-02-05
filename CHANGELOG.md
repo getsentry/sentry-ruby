@@ -2,6 +2,24 @@
 
 ### Features
 
+#### Support for Redis [#1697](https://github.com/getsentry/sentry-ruby/pull/1697)
+
+When you opt in to the new `redis_logger` breadcrumbs logger:
+
+```ruby
+config.breadcrumbs_logger = [:redis_logger]
+```
+
+The SDK now records a new `db.redis.command` breadcrumb whenever the Redis client is called. Attributes sent are
+`commands`, an array of each Redis command called with the attributes `command` and `key`, as well as `server`, which is
+the Redis server hostname, port and db number.
+
+Calls to Redis are also wrapped in a span called `db.redis.command` and if tracing is enabled will be reported to
+Sentry. The span description will be the command and key. e.g. "SET mykey". For transactions this will be in
+the format "MULTI, SET mykey, INCR counter, EXEC".
+
+#### Other
+
 - Sync activerecord, actionview and net-http span names [#1681](https://github.com/getsentry/sentry-ruby/pull/1681)
 - Support serializing ActiveRecord job arguments in global id form [#1688](https://github.com/getsentry/sentry-ruby/pull/1688)
 - Register Sentry's ErrorSubscriber for Rails 7.0+ apps [#1705](https://github.com/getsentry/sentry-ruby/pull/1705)
@@ -20,16 +38,16 @@
 
 ## 5.0.0
 
-### Breaking Change - Goodbye `faraday` 👋 
+### Breaking Change - Goodbye `faraday` 👋
 
 **TL;DR: If you are already on version `4.9` and do not use `config.transport.http_adapter` and `config.transport.faraday_builder`, you don't need to change anything.**
 
-This version removes the dependency of [faraday](https://github.com/lostisland/faraday) and replaces related implementation with the `Net::HTTP` standard library. 
+This version removes the dependency of [faraday](https://github.com/lostisland/faraday) and replaces related implementation with the `Net::HTTP` standard library.
 
 
 #### Why?
 
-Since the old `sentry-raven` SDK, we've been using `faraday` as the HTTP client for years (see [HTTPTransport](https://github.com/getsentry/sentry-ruby/blob/4-9/sentry-ruby/lib/sentry/transport/http_transport.rb)). It's an amazing tool that saved us many work and allowed us to focus on SDK features. 
+Since the old `sentry-raven` SDK, we've been using `faraday` as the HTTP client for years (see [HTTPTransport](https://github.com/getsentry/sentry-ruby/blob/4-9/sentry-ruby/lib/sentry/transport/http_transport.rb)). It's an amazing tool that saved us many work and allowed us to focus on SDK features.
 
 But because many users also use `faraday` themselves and have their own version requirements, managing this dependency has become harder over the past few years. Just to list a few related issues:
 
@@ -217,7 +235,7 @@ When `config.send_default_pii` is set as `true`, `:http_logger` will include que
   - Fixes [#956](https://github.com/getsentry/sentry-ruby/issues/956) and [#1629](https://github.com/getsentry/sentry-ruby/issues/1629)
 - Remove unnecessary ActiveJob inclusion [#1655](https://github.com/getsentry/sentry-ruby/pull/1655)
 - Lock faraday to version 1.x [#1664](https://github.com/getsentry/sentry-ruby/pull/1664)
-  - This is a temporary effort to avoid dependency issue with `faraday 2.0` and `faraday` will be removed from dependencies very soon. 
+  - This is a temporary effort to avoid dependency issue with `faraday 2.0` and `faraday` will be removed from dependencies very soon.
     See [this comment](https://github.com/getsentry/sentry-ruby/issues/1663) for more information about our plan to remove it.
 
 ## 4.8.1
