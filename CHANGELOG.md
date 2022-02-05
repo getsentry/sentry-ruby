@@ -24,6 +24,11 @@ the format "MULTI, SET mykey, INCR counter, EXEC".
 - Support serializing ActiveRecord job arguments in global id form [#1688](https://github.com/getsentry/sentry-ruby/pull/1688)
 - Register Sentry's ErrorSubscriber for Rails 7.0+ apps [#1705](https://github.com/getsentry/sentry-ruby/pull/1705)
 
+### Bug Fixes
+
+- Avoid causing NoMethodError for Sentry.* calls when the SDK is not inited [#1713](https://github.com/getsentry/sentry-ruby/pull/1713)
+  - Fixes [#1706](https://github.com/getsentry/sentry-ruby/issues/1706)
+
 ## 5.0.2
 
 - Respect port info provided in user's DSN [#1702](https://github.com/getsentry/sentry-ruby/pull/1702)
