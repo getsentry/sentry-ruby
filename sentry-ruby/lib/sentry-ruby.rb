@@ -17,6 +17,7 @@ require "sentry/span"
 require "sentry/transaction"
 require "sentry/hub"
 require "sentry/background_worker"
+require "sentry/session_flusher"
 
 [
   "sentry/rake",
@@ -186,12 +187,14 @@ module Sentry
       Thread.current.thread_variable_set(THREAD_LOCAL, hub)
       @main_hub = hub
       @background_worker = Sentry::BackgroundWorker.new(config)
+      @session_flusher = Sentry::SessionFlusher.new
 
       if config.capture_exception_frame_locals
         exception_locals_tp.enable
       end
 
       at_exit do
+        @session_flusher.kill
         @background_worker.shutdown
       end
     end
