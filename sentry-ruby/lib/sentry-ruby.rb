@@ -111,9 +111,17 @@ module Sentry
 
     # @!method configuration
     #   @!macro configuration
+    def configuration
+      return unless initialized?
+      get_current_client.configuration
+    end
+
     # @!method send_event
     #   @!macro send_event
-    def_delegators :get_current_client, :configuration, :send_event
+    def send_event(*args)
+      return unless initialized?
+      get_current_client.send_event(*args)
+    end
 
     # @!macro [new] set_extras
     #   Updates the scope's extras attribute by merging with the old value.
@@ -135,13 +143,31 @@ module Sentry
 
     # @!method set_tags
     #   @!macro set_tags
+    def set_tags(*args)
+      return unless initialized?
+      get_current_scope.set_tags(*args)
+    end
+
     # @!method set_extras
     #   @!macro set_extras
+    def set_extras(*args)
+      return unless initialized?
+      get_current_scope.set_extras(*args)
+    end
+
     # @!method set_user
     #   @!macro set_user
+    def set_user(*args)
+      return unless initialized?
+      get_current_scope.set_user(*args)
+    end
+
     # @!method set_context
     #   @!macro set_context
-    def_delegators :get_current_scope, :set_tags, :set_extras, :set_user, :set_context
+    def set_context(*args)
+      return unless initialized?
+      get_current_scope.set_context(*args)
+    end
 
     ##### Main APIs #####
 
@@ -201,7 +227,8 @@ module Sentry
     #
     # @return [Breadcrumb, nil]
     def add_breadcrumb(breadcrumb, **options)
-      get_current_hub&.add_breadcrumb(breadcrumb, **options)
+      return unless initialized?
+      get_current_hub.add_breadcrumb(breadcrumb, **options)
     end
 
     # Returns the current active hub.
@@ -221,14 +248,16 @@ module Sentry
     # Returns the current active client.
     # @return [Client, nil]
     def get_current_client
-      get_current_hub&.current_client
+      return unless initialized?
+      get_current_hub.current_client
     end
 
     # Returns the current active scope.
     #
     # @return [Scope, nil]
     def get_current_scope
-      get_current_hub&.current_scope
+      return unless initialized?
+      get_current_hub.current_scope
     end
 
     # Clones the main thread's active hub and stores it to the current thread.
@@ -250,7 +279,8 @@ module Sentry
     # @yieldparam scope [Scope]
     # @return [void]
     def configure_scope(&block)
-      get_current_hub&.configure_scope(&block)
+      return unless initialized?
+      get_current_hub.configure_scope(&block)
     end
 
     # Takes a block and yields a temporary scope.
@@ -274,7 +304,8 @@ module Sentry
     # @yieldparam scope [Scope]
     # @return [void]
     def with_scope(&block)
-      get_current_hub&.with_scope(&block)
+      return unless initialized?
+      get_current_hub.with_scope(&block)
     end
 
     # Takes an exception and reports it to Sentry via the currently active hub.
@@ -282,7 +313,8 @@ module Sentry
     # @yieldparam scope [Scope]
     # @return [Event, nil]
     def capture_exception(exception, **options, &block)
-      get_current_hub&.capture_exception(exception, **options, &block)
+      return unless initialized?
+      get_current_hub.capture_exception(exception, **options, &block)
     end
 
     # Takes a message string and reports it to Sentry via the currently active hub.
@@ -290,28 +322,32 @@ module Sentry
     # @yieldparam scope [Scope]
     # @return [Event, nil]
     def capture_message(message, **options, &block)
-      get_current_hub&.capture_message(message, **options, &block)
+      return unless initialized?
+      get_current_hub.capture_message(message, **options, &block)
     end
 
     # Takes an instance of Sentry::Event and dispatches it to the currently active hub.
     #
     # @return [Event, nil]
     def capture_event(event)
-      get_current_hub&.capture_event(event)
+      return unless initialized?
+      get_current_hub.capture_event(event)
     end
 
     # Takes or initializes a new Sentry::Transaction and makes a sampling decision for it.
     #
     # @return [Transaction, nil]
     def start_transaction(**options)
-      get_current_hub&.start_transaction(**options)
+      return unless initialized?
+      get_current_hub.start_transaction(**options)
     end
 
     # Returns the id of the lastly reported Sentry::Event.
     #
     # @return [String, nil]
     def last_event_id
-      get_current_hub&.last_event_id
+      return unless initialized?
+      get_current_hub.last_event_id
     end
 
 

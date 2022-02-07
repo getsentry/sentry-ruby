@@ -227,7 +227,10 @@ def make_basic_app
   app.initialize!
 
   Post.all.to_a # to run the sqlte version query first
-  Sentry.get_current_scope.clear_breadcrumbs # and then clear breadcrumbs in case the above query is recorded
+
+  if Sentry.initialized?
+    Sentry.get_current_scope.clear_breadcrumbs # and then clear breadcrumbs in case the above query is recorded
+  end
 
   Rails.application = app
   app
