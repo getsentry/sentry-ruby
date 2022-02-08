@@ -173,6 +173,32 @@ module Sentry
       configuration.background_worker_threads = original_background_worker_threads
     end
 
+    def start_session(mode: :request)
+      return unless current_scope
+      end_session
+
+      session = Session.new(
+        mode: mode,
+        release: configuration.release,
+        environment: configuration.environment,
+        user: scope.user # TODO-neel? just extract ip/did here?
+      )
+
+      current_scope.set_session(session)
+    end
+
+    def end_session
+      return unless current_scope
+      session = current_scope.session
+      current_scope.set_session(nil)
+
+      return unless session
+      session.close
+
+      return unless current_client
+      current_client.capture_session(session)
+    end
+
     private
 
     def current_layer
