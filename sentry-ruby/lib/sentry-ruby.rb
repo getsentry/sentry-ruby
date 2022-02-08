@@ -60,6 +60,10 @@ module Sentry
     #   @return [BackgroundWorker]
     attr_accessor :background_worker
 
+    # @!attribute [rw] session_flusher
+    #   @return [SessionFlusher]
+    attr_accessor :session_flusher
+
     ##### Patch Registration #####
 
     # @!visibility private
