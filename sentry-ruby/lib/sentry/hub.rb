@@ -199,6 +199,14 @@ module Sentry
       current_client.capture_session(session)
     end
 
+    def with_session_tracking(mode: :request, &block)
+      return yield unless configuration.auto_session_tracking
+
+      start_session(mode: mode)
+      yield
+      end_session
+    end
+
     private
 
     def current_layer

@@ -17,7 +17,7 @@ module Sentry
     attr_accessor :user
     attr_accessor :mode
 
-    def initialize(mode: :application, **options)
+    def initialize(mode: :request, **options)
       @mode = mode
       @sid = options[:sid] || SecureRandom.uuid.delete('-')
       @started = options[:started] || Sentry.utc_now
@@ -27,6 +27,10 @@ module Sentry
     end
 
     def update(**options)
+    end
+
+    def close(status: :exited)
+      @status = status
     end
 
     def deep_dup

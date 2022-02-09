@@ -207,6 +207,10 @@ module Sentry
     # @return [Boolean]
     attr_accessor :send_client_reports
 
+    # Track sessions in request/response cycles automatically
+    # @return [Boolean]
+    attr_accessor :auto_session_tracking
+
     # these are not config options
     # @!visibility private
     attr_reader :errors, :gem_specs
@@ -261,6 +265,7 @@ module Sentry
       self.send_default_pii = false
       self.skip_rake_integration = false
       self.send_client_reports = true
+      self.auto_session_tracking = true
       self.trusted_proxies = []
       self.dsn = ENV['SENTRY_DSN']
       self.server_name = server_name_from_env

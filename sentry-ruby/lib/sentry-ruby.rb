@@ -315,6 +315,13 @@ module Sentry
       get_current_hub.with_scope(&block)
     end
 
+    # Wrap a given block with session tracking. TODO-neel example/docs
+    # @return [void]
+    def with_session_tracking(mode: :request, &block)
+      return unless initialized?
+      get_current_hub.with_session_tracking(mode: mode, &block)
+    end
+
     # Takes an exception and reports it to Sentry via the currently active hub.
     #
     # @yieldparam scope [Scope]
