@@ -30,6 +30,8 @@ the format "MULTI, SET mykey, INCR counter, EXEC".
   - Fixes [#1706](https://github.com/getsentry/sentry-ruby/issues/1706)
 - Transaction#finish should ignore the parent's sampling decision [#1716](https://github.com/getsentry/sentry-ruby/pull/1716)
   - Fixes [#1712](https://github.com/getsentry/sentry-ruby/issues/1712)
+- Skip authorization header when send_default_pii is false [#1717](https://github.com/getsentry/sentry-ruby/pull/1717)
+  - Fixes [#1714](https://github.com/getsentry/sentry-ruby/issues/1714)
 
 ## 5.0.2
 

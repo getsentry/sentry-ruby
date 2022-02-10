@@ -116,6 +116,12 @@ RSpec.describe Sentry::RequestInterface do
       expect(subject.headers).to include("Http-Custom-Http-Header" => "test")
     end
 
+    it "skips Authorization header" do
+      env.merge!("HTTP_AUTHORIZATION" => "Basic YWxhZGRpbjpvcGVuc2VzYW1l")
+
+      expect(subject.headers["Authorization"]).to eq(nil)
+    end
+
     it 'does not fail if an object in the env cannot be cast to string' do
       obj = Class.new do
         def to_s
@@ -172,6 +178,12 @@ RSpec.describe Sentry::RequestInterface do
       env.merge!(::Rack::RACK_INPUT => StringIO.new("catch me"))
 
       expect(subject.data).to eq("catch me")
+    end
+
+    it "stores Authorization header" do
+      env.merge!("HTTP_AUTHORIZATION" => "Basic YWxhZGRpbjpvcGVuc2VzYW1l")
+
+      expect(subject.headers["Authorization"]).to eq("Basic YWxhZGRpbjpvcGVuc2VzYW1l")
     end
 
     it "force encodes request body to avoid encoding issue" do
