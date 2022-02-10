@@ -62,7 +62,7 @@ module Sentry
       self.url = request.scheme && request.url.split('?').first
       self.method = request.request_method
 
-      self.headers = filter_and_format_headers(env)
+      self.headers = filter_and_format_headers(env, send_default_pii)
       self.env     = filter_and_format_env(env, rack_env_whitelist)
     end
 
@@ -81,13 +81,14 @@ module Sentry
       e.message
     end
 
-    def filter_and_format_headers(env)
+    def filter_and_format_headers(env, send_default_pii)
       env.each_with_object({}) do |(key, value), memo|
         begin
           key = key.to_s # rack env can contain symbols
           next memo['X-Request-Id'] ||= Utils::RequestId.read_from(env) if Utils::RequestId::REQUEST_ID_HEADERS.include?(key)
           next if is_server_protocol?(key, value, env["SERVER_PROTOCOL"])
           next if is_skippable_header?(key)
+          next if key == "HTTP_AUTHORIZATION" && !send_default_pii
 
           # Rack stores headers as HTTP_WHAT_EVER, we need What-Ever
           key = key.sub(/^HTTP_/, "")
