@@ -1,6 +1,12 @@
 ENV["RAILS_ENV"] = "test"
 
 require 'rails'
+
+if Rails.version.to_f < 5.2
+  require "support/test_rails_app/apps/5-0"
+  return
+end
+
 require "active_record"
 require "active_job/railtie"
 require "active_storage/engine" if Rails.version.to_f >= 5.2
