@@ -28,6 +28,8 @@ the format "MULTI, SET mykey, INCR counter, EXEC".
 
 - Avoid causing NoMethodError for Sentry.* calls when the SDK is not inited [#1713](https://github.com/getsentry/sentry-ruby/pull/1713)
   - Fixes [#1706](https://github.com/getsentry/sentry-ruby/issues/1706)
+- Transaction#finish should ignore the parent's sampling decision [#1716](https://github.com/getsentry/sentry-ruby/pull/1716)
+  - Fixes [#1712](https://github.com/getsentry/sentry-ruby/issues/1712)
 
 ## 5.0.2
 
