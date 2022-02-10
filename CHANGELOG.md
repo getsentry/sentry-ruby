@@ -1,28 +1,32 @@
-## Unreleased
+## 5.1.0
 
 ### Features
 
-#### Support for Redis [#1697](https://github.com/getsentry/sentry-ruby/pull/1697)
+- Support for Redis [#1697](https://github.com/getsentry/sentry-ruby/pull/1697)
 
-When you opt in to the new `redis_logger` breadcrumbs logger:
+  **New breadcrumb logger: `redis_logger`**
 
-```ruby
-config.breadcrumbs_logger = [:redis_logger]
-```
+  When you opt in to the new `redis_logger` breadcrumbs logger:
 
-The SDK now records a new `db.redis.command` breadcrumb whenever the Redis client is called. Attributes sent are
-`commands`, an array of each Redis command called with the attributes `command` and `key`, as well as `server`, which is
-the Redis server hostname, port and db number.
+  ```ruby
+  config.breadcrumbs_logger = [:redis_logger]
+  ```
 
-Calls to Redis are also wrapped in a span called `db.redis.command` and if tracing is enabled will be reported to
-Sentry. The span description will be the command and key. e.g. "SET mykey". For transactions this will be in
-the format "MULTI, SET mykey, INCR counter, EXEC".
+  The SDK now records a new `db.redis.command` breadcrumb whenever the Redis client is called. Attributes sent are
+  `commands`, an array of each Redis command called with the attributes `command` and `key`, as well as `server`, which is
+  the Redis server hostname, port and db number.
 
-#### Other
+  **Redis command spans**
+
+  Calls to Redis are also wrapped in a span called `db.redis.command` and if tracing is enabled will be reported to
+  Sentry. The span description will be the command and key. e.g. "SET mykey". For transactions this will be in
+  the format `MULTI, SET mykey, INCR counter, EXEC`.
 
 - Sync activerecord, actionview and net-http span names [#1681](https://github.com/getsentry/sentry-ruby/pull/1681)
 - Support serializing ActiveRecord job arguments in global id form [#1688](https://github.com/getsentry/sentry-ruby/pull/1688)
 - Register Sentry's ErrorSubscriber for Rails 7.0+ apps [#1705](https://github.com/getsentry/sentry-ruby/pull/1705)
+
+  Users can now use the unified interfaces: `Rails.error.handle` or `Rails.error.record` to capture exceptions. See [ActiveSupport::ErrorReporter](https://github.com/rails/rails/blob/main/activesupport/lib/active_support/error_reporter.rb) for more information about this feature.
 
 ### Bug Fixes
 
