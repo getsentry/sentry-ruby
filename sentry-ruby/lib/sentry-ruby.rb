@@ -318,7 +318,7 @@ module Sentry
     # Wrap a given block with session tracking. TODO-neel example/docs
     # @return [void]
     def with_session_tracking(&block)
-      return unless initialized?
+      return yield unless initialized?
       get_current_hub.with_session_tracking(&block)
     end
 

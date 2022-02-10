@@ -9,6 +9,7 @@ module Sentry
       @pending_aggregates = Hash.new(0)
       @release = configuration.release
       @environment = configuration.environment
+      @logger = configuration.logger
 
       log_debug("[Sessions] Sessions won't be captured without a valid release") unless @release
     end

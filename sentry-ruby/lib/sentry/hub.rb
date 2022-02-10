@@ -2,6 +2,7 @@
 
 require "sentry/scope"
 require "sentry/client"
+require "sentry/session"
 
 module Sentry
   class Hub
@@ -195,6 +196,7 @@ module Sentry
 
       start_session
       yield
+    ensure
       end_session
     end
 
