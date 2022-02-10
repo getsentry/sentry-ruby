@@ -360,6 +360,15 @@ RSpec.describe Sentry::Transaction do
       expect(event[:tags]).to eq({ foo: 'bar', name: "apple" })
     end
 
+    it "only follows sampling decision" do
+      Sentry.configuration.traces_sampler = proc { false }
+      subject = described_class.new(parent_sampled: true, hub: Sentry.get_current_hub)
+
+      subject.finish
+
+      expect(events.count).to eq(0)
+    end
+
     describe "hub selection" do
       it "prioritizes the optional hub argument and uses it to submit the transaction" do
         expect(another_hub).to receive(:capture_event)
