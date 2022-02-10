@@ -1,32 +1,29 @@
 module Sentry
   class SessionFlusher
+    include LoggingHelper
+
     FLUSH_INTERVAL = 60
 
-    def initialize
+    def initialize(configuration)
       @thread = nil
-      @pending_sessions = []
       @pending_aggregates = Hash.new(0)
+      @release = configuration.release
+      @environment = configuration.environment
+
+      log_debug("[Sessions] Sessions won't be captured without a valid release") unless @release
     end
 
     def flush
       # TODO-neel envelope/send here
       # maybe capture_envelope
-      @pending_sessions = []
       @pending_aggregates = Hash.new(0)
     end
 
-    def add_aggregate_session(session)
-      # TODO-neel deal with the numbers here once session structure is done
-    end
-
     def add_session(session)
-      ensure_thread
+      return unless @release
 
-      if session.mode == :request
-        add_aggregate_session(session)
-      else
-        @pending_sessions << session # TODO-neel json?
-      end
+      ensure_thread
+      # TODO-neel deal with the numbers here once session structure is done
     end
 
     def kill

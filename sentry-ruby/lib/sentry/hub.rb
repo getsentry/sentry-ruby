@@ -173,18 +173,10 @@ module Sentry
       configuration.background_worker_threads = original_background_worker_threads
     end
 
-    def start_session(mode: :request)
+    def start_session
       return unless current_scope
       end_session
-
-      session = Session.new(
-        mode: mode,
-        release: configuration.release,
-        environment: configuration.environment,
-        user: scope.user # TODO-neel? just extract ip/did here?
-      )
-
-      current_scope.set_session(session)
+      current_scope.set_session(Session.new)
     end
 
     def end_session
@@ -195,14 +187,13 @@ module Sentry
       return unless session
       session.close
 
-      return unless current_client
-      current_client.capture_session(session)
+      Sentry.session_flusher.add_session(session)
     end
 
-    def with_session_tracking(mode: :request, &block)
+    def with_session_tracking(&block)
       return yield unless configuration.auto_session_tracking
 
-      start_session(mode: mode)
+      start_session
       yield
       end_session
     end

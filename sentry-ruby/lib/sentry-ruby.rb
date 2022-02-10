@@ -60,9 +60,9 @@ module Sentry
     #   @return [BackgroundWorker]
     attr_accessor :background_worker
 
-    # @!attribute [rw] session_flusher
+    # @!attribute [r] session_flusher
     #   @return [SessionFlusher]
-    attr_accessor :session_flusher
+    attr_reader :session_flusher
 
     ##### Patch Registration #####
 
@@ -191,7 +191,7 @@ module Sentry
       Thread.current.thread_variable_set(THREAD_LOCAL, hub)
       @main_hub = hub
       @background_worker = Sentry::BackgroundWorker.new(config)
-      @session_flusher = Sentry::SessionFlusher.new
+      @session_flusher = Sentry::SessionFlusher.new(config)
 
       if config.capture_exception_frame_locals
         exception_locals_tp.enable
@@ -317,9 +317,9 @@ module Sentry
 
     # Wrap a given block with session tracking. TODO-neel example/docs
     # @return [void]
-    def with_session_tracking(mode: :request, &block)
+    def with_session_tracking(&block)
       return unless initialized?
-      get_current_hub.with_session_tracking(mode: mode, &block)
+      get_current_hub.with_session_tracking(&block)
     end
 
     # Takes an exception and reports it to Sentry via the currently active hub.
