@@ -176,7 +176,6 @@ module Sentry
 
     def start_session
       return unless current_scope
-      end_session
       current_scope.set_session(Session.new)
     end
 
@@ -187,7 +186,6 @@ module Sentry
 
       return unless session
       session.close
-
       Sentry.session_flusher.add_session(session)
     end
 
