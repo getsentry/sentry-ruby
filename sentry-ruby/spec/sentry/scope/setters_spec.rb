@@ -109,6 +109,12 @@ RSpec.describe Sentry::Scope do
       subject.set_contexts({ character: { age: 25 }})
       expect(subject.contexts).to include({ character: { name: "John", age: 25 }})
     end
+
+    it "allows overwriting old values" do
+      subject.set_contexts({ character: { name: "John" }})
+      subject.set_contexts({ character: { name: "Jimmy" }})
+      expect(subject.contexts).to include({ character: { name: "Jimmy" }})
+    end
   end
 
   describe "#set_context" do
@@ -138,6 +144,12 @@ RSpec.describe Sentry::Scope do
       subject.set_context(:character, { name: "John" })
       subject.set_context(:character, { age: 25 })
       expect(subject.contexts).to include({ character: { name: "John", age: 25 }})
+    end
+
+    it "allows overwriting old values" do
+      subject.set_context(:character, { name: "John" })
+      subject.set_context(:character, { name: "Jimmy" })
+      expect(subject.contexts).to include({ character: { name: "Jimmy" }})
     end
   end
 
