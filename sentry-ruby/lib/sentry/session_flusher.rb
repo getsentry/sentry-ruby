@@ -6,7 +6,7 @@ module Sentry
 
     def initialize(configuration)
       @thread = nil
-      @pending_aggregates = Hash.new(0)
+      @pending_aggregates = {}
       @release = configuration.release
       @environment = configuration.environment
       @logger = configuration.logger
@@ -17,14 +17,17 @@ module Sentry
     def flush
       # TODO-neel envelope/send here
       # maybe capture_envelope
-      @pending_aggregates = Hash.new(0)
+      @pending_aggregates = {}
     end
 
     def add_session(session)
       return unless @release
 
       ensure_thread
-      # TODO-neel deal with the numbers here once session structure is done
+
+      return unless Session::VALID_AGGREGATE_STATUSES.include?(session.status)
+      @pending_aggregates[session.started_bucket] ||= init_aggregates
+      @pending_aggregates[session.started_bucket][session.status] += 1
     end
 
     def kill
@@ -32,6 +35,10 @@ module Sentry
     end
 
     private
+
+    def init_aggregates
+      Session::VALID_AGGREGATE_STATUSES.map { |k| [k, 0] }.to_h
+    end
 
     def ensure_thread
       return if @thread&.alive?

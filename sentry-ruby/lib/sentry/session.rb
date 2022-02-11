@@ -6,15 +6,15 @@ module Sentry
     attr_reader :started
     attr_reader :status
 
-    # only :ok, :exited and :errored used currently
-    VALID_STATES = %i(ok exited crashed abnormal errored)
+    # TODO-neel add :crashed after adding handled
+    VALID_STATUSES = %i(ok errored exited)
+    VALID_AGGREGATE_STATUSES = %i(errored exited)
 
     def initialize
       @started = Sentry.utc_now
       @status = :ok
     end
 
-    # TODO-neel add :crashed after adding handled
     def update_from_event(event)
       return unless event.is_a?(Event) && event.exception
       @status = :errored
