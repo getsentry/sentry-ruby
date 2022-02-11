@@ -24,15 +24,15 @@ v7_1 = Gem::Version.new("7.1")
 
 case Gem::Version.new(Rails.version)
 when -> (v) { v < v5_2 }
-  require "support/test_rails_app/apps/5-0"
+  require "dummy/test_rails_app/apps/5-0"
 when -> (v) { v.between?(v5_2, v6_0) }
-  require "support/test_rails_app/apps/5-2"
+  require "dummy/test_rails_app/apps/5-2"
 when -> (v) { v.between?(v6_0, v6_1) }
-  require "support/test_rails_app/apps/6-0"
+  require "dummy/test_rails_app/apps/6-0"
 when -> (v) { v.between?(v6_1, v7_0) }
-  require "support/test_rails_app/apps/6-1"
+  require "dummy/test_rails_app/apps/6-1"
 when -> (v) { v.between?(v7_0, v7_1) }
-  require "support/test_rails_app/apps/7-0"
+  require "dummy/test_rails_app/apps/7-0"
 end
 
 def make_basic_app(&block)

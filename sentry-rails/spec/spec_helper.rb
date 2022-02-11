@@ -20,7 +20,7 @@ if ENV["CI"]
 end
 
 # this already requires the sdk
-require "support/test_rails_app/app"
+require "dummy/test_rails_app/app"
 # need to be required after rails is loaded from the above
 require "rspec/rails"
 

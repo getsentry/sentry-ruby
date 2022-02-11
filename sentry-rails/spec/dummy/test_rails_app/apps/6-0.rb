@@ -84,7 +84,7 @@ class PostsController < ActionController::Base
 end
 
 class HelloController < ActionController::Base
-  prepend_view_path "spec/support/test_rails_app"
+  prepend_view_path "spec/fixtures/test_rails_app"
 
   def exception
     raise "An unhandled exception!"
