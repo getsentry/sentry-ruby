@@ -56,6 +56,8 @@ module Sentry
         return
       end
 
+      scope.session&.update_from_event(event)
+
       if async_block = configuration.async
         dispatch_async_event(async_block, event, hint)
       elsif configuration.background_worker_threads != 0 && hint.fetch(:background, true)
