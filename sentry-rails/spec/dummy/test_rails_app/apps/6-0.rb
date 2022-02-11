@@ -1,8 +1,6 @@
 require "active_storage/engine"
 require "action_cable/engine"
 
-ActiveRecord::Base.establish_connection(adapter: "sqlite3", database: "db")
-
 ActiveRecord::Schema.define do
   create_table "active_storage_attachments", force: :cascade do |t|
     t.string "name", null: false

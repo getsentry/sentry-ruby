@@ -1,5 +1,3 @@
-ActiveRecord::Base.establish_connection(adapter: "sqlite3", database: "db")
-
 ActiveRecord::Schema.define do
   create_table :posts, force: true do |t|
   end
