@@ -1,5 +1,3 @@
-ActiveRecord::Base.establish_connection(adapter: "sqlite3", database: "db")
-
 ActiveRecord::Schema.define do
   create_table :posts, force: true do |t|
   end
@@ -35,8 +33,6 @@ class PostsController < ActionController::Base
 end
 
 class HelloController < ActionController::Base
-  prepend_view_path "spec/support/test_rails_app"
-
   def exception
     raise "An unhandled exception!"
   end

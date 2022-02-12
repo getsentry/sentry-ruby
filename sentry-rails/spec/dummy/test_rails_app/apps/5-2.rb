@@ -1,7 +1,4 @@
 require "active_storage/engine"
-require "action_cable/engine"
-
-ActiveRecord::Base.establish_connection(adapter: "sqlite3", database: "db")
 
 ActiveRecord::Schema.define do
   create_table "active_storage_attachments", force: :cascade do |t|
@@ -43,9 +40,7 @@ end
 class ApplicationRecord < ActiveRecord::Base
   self.abstract_class = true
 
-  include ActiveStorage::Attached::Model
-  include ActiveStorage::Reflection::ActiveRecordExtensions
-  ActiveRecord::Reflection.singleton_class.prepend(ActiveStorage::Reflection::ReflectionExtension)
+  extend ActiveStorage::Attached::Macros
 end
 
 class Post < ApplicationRecord
@@ -75,7 +70,6 @@ class PostsController < ActionController::Base
     attach_params = {
       io: File.open(File.join(Rails.root, 'public', 'sentry-logo.png')),
       filename: 'sentry-logo.png',
-      service_name: "test"
     }
 
     p.cover.attach(attach_params)
@@ -85,8 +79,6 @@ class PostsController < ActionController::Base
 end
 
 class HelloController < ActionController::Base
-  prepend_view_path "spec/support/test_rails_app"
-
   def exception
     raise "An unhandled exception!"
   end
@@ -124,10 +116,7 @@ class HelloController < ActionController::Base
   end
 end
 
-def run_pre_initialize_cleanup
-  ActionCable::Channel::Base.reset_callbacks(:subscribe)
-  ActionCable::Channel::Base.reset_callbacks(:unsubscribe)
-end
+def run_pre_initialize_cleanup; end
 
 def configure_app(app)
   app.config.active_storage.service = :test
