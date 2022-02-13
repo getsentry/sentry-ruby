@@ -1,5 +1,9 @@
 ## Unreleased
 
+### Features
+
+- Log Redis command arguments when sending PII is enabled [#1726](https://github.com/getsentry/sentry-ruby/pull/1726)
+
 ### Bug Fixes
 
 - Allow overwriting of context values [#1724](https://github.com/getsentry/sentry-ruby/pull/1724)
