@@ -3,8 +3,8 @@
 module Sentry
   # @api private
   class Redis
-    OP_NAME ||= "db.redis.command"
-    LOGGER_NAME ||= :redis_logger
+    OP_NAME = "db.redis.command"
+    LOGGER_NAME = :redis_logger
 
     def initialize(commands, host, port, db)
       @commands, @host, @port, @db = commands, host, port, db
@@ -60,9 +60,11 @@ module Sentry
 
     def parsed_commands
       commands.map do |statement|
-        command, key, *_values = statement
+        command, key, *arguments = statement
 
-        { command: command.to_s.upcase, key: key }
+        { command: command.to_s.upcase, key: key }.tap do |command_set|
+          command_set[:arguments] = arguments.join(" ") if Sentry.configuration.send_default_pii
+        end
       end
     end
 
