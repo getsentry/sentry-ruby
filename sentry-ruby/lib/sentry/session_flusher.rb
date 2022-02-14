@@ -4,8 +4,9 @@ module Sentry
 
     FLUSH_INTERVAL = 60
 
-    def initialize(configuration)
+    def initialize(configuration, client)
       @thread = nil
+      @client = client
       @pending_aggregates = {}
       @release = configuration.release
       @environment = configuration.environment
@@ -15,8 +16,10 @@ module Sentry
     end
 
     def flush
-      # TODO-neel envelope/send here
-      # maybe capture_envelope
+      Sentry.background_worker.perform do
+        client.transport.send_envelope(envelope)
+      end
+
       @pending_aggregates = {}
     end
 
@@ -25,7 +28,7 @@ module Sentry
 
       ensure_thread
 
-      return unless Session::VALID_AGGREGATE_STATUSES.include?(session.status)
+      return unless Session::AGGREGATE_STATUSES.include?(session.status)
       @pending_aggregates[session.started_bucket] ||= init_aggregates
       @pending_aggregates[session.started_bucket][session.status] += 1
     end
@@ -37,7 +40,28 @@ module Sentry
     private
 
     def init_aggregates
-      Session::VALID_AGGREGATE_STATUSES.map { |k| [k, 0] }.to_h
+      Session::AGGREGATE_STATUSES.map { |k| [k, 0] }.to_h
+    end
+
+    def envelope
+      envelope = Envelope.new
+
+      header = { type: 'sessions' }
+      payload = { attrs: attrs, aggregates: aggregates_payload }
+
+      envelope.add_item(header, payload)
+      envelope
+    end
+
+    def attrs
+      { release: @release, environment: @environment }
+    end
+
+    def aggregates_payload
+      @pending_aggregates.map do |started, aggregates|
+        aggregates[:started] = started.iso8601
+        aggregates
+      end
     end
 
     def ensure_thread

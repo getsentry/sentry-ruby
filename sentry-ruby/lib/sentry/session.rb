@@ -7,8 +7,8 @@ module Sentry
     attr_reader :status
 
     # TODO-neel add :crashed after adding handled
-    VALID_STATUSES = %i(ok errored exited)
-    VALID_AGGREGATE_STATUSES = %i(errored exited)
+    STATUSES = %i(ok errored exited)
+    AGGREGATE_STATUSES = %i(errored exited)
 
     def initialize
       @started = Sentry.utc_now

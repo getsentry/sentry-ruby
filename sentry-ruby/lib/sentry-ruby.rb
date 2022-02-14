@@ -191,7 +191,7 @@ module Sentry
       Thread.current.thread_variable_set(THREAD_LOCAL, hub)
       @main_hub = hub
       @background_worker = Sentry::BackgroundWorker.new(config)
-      @session_flusher = Sentry::SessionFlusher.new(config)
+      @session_flusher = Sentry::SessionFlusher.new(config, client)
 
       if config.capture_exception_frame_locals
         exception_locals_tp.enable

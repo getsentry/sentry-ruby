@@ -45,6 +45,11 @@ module Sentry
       raise NotImplementedError
     end
 
+    def send_envelope(envelope)
+      # TODO-neel rate limit checks
+      send_data(envelope.to_s)
+    end
+
     def send_event(event)
       event_hash = event.to_hash
       item_type = get_item_type(event_hash)
@@ -71,6 +76,8 @@ module Sentry
         case item_type
         when "transaction"
           @rate_limits["transaction"]
+        when "session"
+          @rate_limits["session"]
         else
           @rate_limits["error"]
         end
