@@ -127,6 +127,8 @@ module Sentry
     def capture_event(event, **options, &block)
       check_argument_type!(event, Sentry::Event)
 
+      current_scope.session&.update_from_event(event)
+
       return unless current_client
 
       hint = options.delete(:hint) || {}
@@ -141,7 +143,6 @@ module Sentry
       end
 
       event = current_client.capture_event(event, scope, hint)
-
 
       if event && configuration.debug
         configuration.log_debug(event.to_json_compatible)
