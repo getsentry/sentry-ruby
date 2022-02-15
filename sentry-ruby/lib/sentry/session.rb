@@ -1,4 +1,4 @@
-require 'securerandom'
+# frozen_string_literal: true
 
 module Sentry
   class Session
