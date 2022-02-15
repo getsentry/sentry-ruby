@@ -47,6 +47,7 @@ module Sentry
 
     def send_envelope(envelope)
       # TODO-neel rate limit checks
+      log_debug("[Sessions] sending #{envelope.to_s}")
       send_data(envelope.to_s)
     end
 

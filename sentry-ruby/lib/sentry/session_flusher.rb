@@ -17,6 +17,7 @@ module Sentry
 
     def flush
       return if @pending_aggregates.empty?
+      envelope = pending_envelope
 
       Sentry.background_worker.perform do
         @client.transport.send_envelope(envelope)
@@ -33,6 +34,7 @@ module Sentry
       return unless Session::AGGREGATE_STATUSES.include?(session.status)
       @pending_aggregates[session.started_bucket] ||= init_aggregates
       @pending_aggregates[session.started_bucket][session.status] += 1
+      log_debug("[Sessions] #{@pending_aggregates}")
     end
 
     def kill
@@ -45,7 +47,7 @@ module Sentry
       Session::AGGREGATE_STATUSES.map { |k| [k, 0] }.to_h
     end
 
-    def envelope
+    def pending_envelope
       envelope = Envelope.new
 
       header = { type: 'sessions' }
