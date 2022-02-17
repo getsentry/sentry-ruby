@@ -192,9 +192,11 @@ module Sentry
       @main_hub = hub
       @background_worker = Sentry::BackgroundWorker.new(config)
 
-      if config.auto_session_tracking
-        @session_flusher = Sentry::SessionFlusher.new(config, client)
-      end
+      @session_flusher = if config.auto_session_tracking
+                           Sentry::SessionFlusher.new(config, client)
+                         else
+                           nil
+                         end
 
       if config.capture_exception_frame_locals
         exception_locals_tp.enable
