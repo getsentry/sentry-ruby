@@ -191,14 +191,17 @@ module Sentry
       Thread.current.thread_variable_set(THREAD_LOCAL, hub)
       @main_hub = hub
       @background_worker = Sentry::BackgroundWorker.new(config)
-      @session_flusher = Sentry::SessionFlusher.new(config, client)
+
+      if config.auto_session_tracking
+        @session_flusher = Sentry::SessionFlusher.new(config, client)
+      end
 
       if config.capture_exception_frame_locals
         exception_locals_tp.enable
       end
 
       at_exit do
-        @session_flusher.kill
+        @session_flusher&.kill
         @background_worker.shutdown
       end
     end

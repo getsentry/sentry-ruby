@@ -340,4 +340,15 @@ RSpec.describe Sentry::Configuration do
       expect(subject.skip_rake_integration).to eq(true)
     end
   end
+
+  describe "#auto_session_tracking" do
+    it "returns true by default" do
+      expect(subject.auto_session_tracking).to eq(true)
+    end
+
+    it "accepts false" do
+      subject.auto_session_tracking = false
+      expect(subject.auto_session_tracking).to eq(false)
+    end
+  end
 end

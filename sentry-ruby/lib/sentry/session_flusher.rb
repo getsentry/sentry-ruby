@@ -36,7 +36,6 @@ module Sentry
       return unless Session::AGGREGATE_STATUSES.include?(session.status)
       @pending_aggregates[session.started_bucket] ||= init_aggregates
       @pending_aggregates[session.started_bucket][session.status] += 1
-      log_debug("[Sessions] #{@pending_aggregates}")
     end
 
     def kill
