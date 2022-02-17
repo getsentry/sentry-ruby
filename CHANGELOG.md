@@ -5,6 +5,11 @@
 - Allow overwriting of context values [#1724](https://github.com/getsentry/sentry-ruby/pull/1724)
   - Fixes [#1722](https://github.com/getsentry/sentry-ruby/issues/1722)
 
+
+### Refactoring
+
+- Encapsulate extension helpers [#1725](https://github.com/getsentry/sentry-ruby/pull/1725)
+
 ## 5.1.0
 
 ### Features
