@@ -46,8 +46,8 @@ module Sentry
     end
 
     def send_envelope(envelope)
-      # TODO-neel rate limit checks
-      log_debug("[Sessions] sending #{envelope.to_s}")
+      # TODO-neel rate limit checks/envelope item filtering
+      log_info("[Transport] sending envelope with items [#{envelope.item_types.join(', ')}] to Sentry")
       send_data(envelope.to_s)
     end
 
@@ -135,7 +135,7 @@ module Sentry
       client_report_headers, client_report_payload = fetch_pending_client_report
       envelope.add_item(client_report_headers, client_report_payload) if client_report_headers
 
-      log_info("Sending envelope [#{item_type}] #{event_id} to Sentry")
+      log_info("[Transport] Sending envelope [#{item_type}] #{event_id} to Sentry")
 
       envelope.to_s
     end

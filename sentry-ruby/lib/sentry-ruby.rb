@@ -320,7 +320,20 @@ module Sentry
       get_current_hub.with_scope(&block)
     end
 
-    # Wrap a given block with session tracking. TODO-neel example/docs
+    # Wrap a given block with session tracking.
+    # Aggregate sessions in minutely buckets will be recorded
+    # around this block and flushed every minute.
+    #
+    # @example
+    #   Sentry.with_session_tracking do
+    #     a = 1 + 1 # new session recorded with :exited status
+    #   end
+    #
+    #   Sentry.with_session_tracking do
+    #     1 / 0
+    #   rescue => e
+    #     Sentry.capture_exception(e) # new session recorded with :errored status
+    #   end
     # @return [void]
     def with_session_tracking(&block)
       return yield unless initialized?

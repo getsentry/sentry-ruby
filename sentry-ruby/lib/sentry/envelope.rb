@@ -37,5 +37,9 @@ module Sentry
     def to_s
       [JSON.generate(@headers), *@items.map(&:to_s)].join("\n")
     end
+
+    def item_types
+      @items.map(&:type)
+    end
   end
 end

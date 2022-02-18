@@ -130,7 +130,7 @@ RSpec.describe Sentry::Transport do
         expect(subject.send_event(event)).to eq(event)
 
         expect(io.string).to match(
-          /INFO -- sentry: Sending envelope \[event\] #{event.event_id} to Sentry/
+          /INFO -- sentry: \[Transport\] Sending envelope \[event\] #{event.event_id} to Sentry/
         )
       end
     end

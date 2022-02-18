@@ -2,9 +2,7 @@
 
 module Sentry
   class Session
-    # TODO-neel docs, types
-    attr_reader :started
-    attr_reader :status
+    attr_reader :started, :status
 
     # TODO-neel add :crashed after adding handled
     STATUSES = %i(ok errored exited)
