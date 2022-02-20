@@ -88,17 +88,6 @@ RSpec.describe Sentry do
   end
 
   shared_examples "capture_helper" do
-    context "without any Sentry setup" do
-      before do
-        allow(Sentry).to receive(:get_main_hub)
-        allow(Sentry).to receive(:get_current_hub)
-      end
-
-      it "doesn't cause any issue" do
-        described_class.send(capture_helper, capture_subject)
-      end
-    end
-
     context "with sending_allowed? condition" do
       before do
         expect(Sentry.configuration).to receive(:sending_allowed?).and_return(false)
@@ -520,11 +509,6 @@ RSpec.describe Sentry do
   end
 
   describe ".csp_report_uri" do
-    it "returns nil if the SDK is not initialized" do
-      described_class.instance_variable_set(:@main_hub, nil)
-      expect(described_class.csp_report_uri).to eq(nil)
-    end
-
     it "returns the csp_report_uri generated from the main Configuration" do
       expect(Sentry.configuration).to receive(:csp_report_uri).and_call_original
 
