@@ -183,8 +183,18 @@ RSpec.describe Sentry do
 
     it "sends the exception via current hub" do
       expect do
-        described_class.capture_exception(exception, tags: { foo: "baz" })
+        described_class.capture_exception(exception)
       end.to change { transport.events.count }.by(1)
+    end
+
+    it "doesn't send captured exception" do
+      expect do
+        described_class.capture_exception(exception)
+      end.to change { transport.events.count }.by(1)
+
+      expect do
+        described_class.capture_exception(exception)
+      end.to change { transport.events.count }.by(0)
     end
 
     it "doesn't do anything if the exception is excluded" do
@@ -519,6 +529,18 @@ RSpec.describe Sentry do
       expect(Sentry.configuration).to receive(:csp_report_uri).and_call_original
 
       expect(described_class.csp_report_uri).to eq("http://sentry.localdomain/api/42/security/?sentry_key=12345&sentry_environment=development")
+    end
+  end
+
+  describe ".exception_captured?" do
+    let(:exception) { Exception.new }
+
+    it "returns true if the exception has been captured by the SDK" do
+      expect(described_class.exception_captured?(exception)).to eq(false)
+
+      described_class.capture_exception(exception)
+
+      expect(described_class.exception_captured?(exception)).to eq(true)
     end
   end
 
