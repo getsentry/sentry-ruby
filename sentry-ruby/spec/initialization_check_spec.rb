@@ -17,6 +17,7 @@ RSpec.describe "with uninitialized SDK" do
   it { expect(Sentry.set_extras(foo: "bar")).to eq(nil) }
   it { expect(Sentry.set_context(foo:  { bar: "baz" })).to eq(nil) }
   it { expect(Sentry.last_event_id).to eq(nil) }
+  it { expect(Sentry.exception_captured?(Exception.new)).to eq(false) }
   it do
     expect { Sentry.configure_scope { raise "foo" } }.not_to raise_error(RuntimeError)
   end

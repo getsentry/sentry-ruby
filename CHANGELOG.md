@@ -4,6 +4,8 @@
 
 - Allow overwriting of context values [#1724](https://github.com/getsentry/sentry-ruby/pull/1724)
   - Fixes [#1722](https://github.com/getsentry/sentry-ruby/issues/1722)
+- Avoid duplicated capturing on the same exception object [#1738](https://github.com/getsentry/sentry-ruby/pull/1738)
+  - Fixes [#1731](https://github.com/getsentry/sentry-ruby/issues/1731)
 
 
 ### Refactoring

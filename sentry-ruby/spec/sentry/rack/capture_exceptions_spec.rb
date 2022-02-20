@@ -50,8 +50,6 @@ RSpec.describe Sentry::Rack::CaptureExceptions, rack: true do
       end
       stack = described_class.new(app)
 
-      stack.call(env)
-
       expect do
         stack.call(env)
       end.to change { transport.events.count }.by(1)
@@ -198,7 +196,7 @@ RSpec.describe Sentry::Rack::CaptureExceptions, rack: true do
       it "doesn't pollute other request's scope" do
         request_1 = lambda do |e|
           Sentry.configure_scope { |s| s.set_tags({tag_1: "foo"}) }
-          e['rack.exception'] = exception
+          e['rack.exception'] = Exception.new
           [200, {}, ["ok"]]
         end
         app_1 = described_class.new(request_1)
@@ -210,7 +208,7 @@ RSpec.describe Sentry::Rack::CaptureExceptions, rack: true do
 
         request_2 = proc do |e|
           Sentry.configure_scope { |s| s.set_tags({tag_2: "bar"}) }
-          e['rack.exception'] = exception
+          e['rack.exception'] = Exception.new
           [200, {}, ["ok"]]
         end
         app_2 = described_class.new(request_2)

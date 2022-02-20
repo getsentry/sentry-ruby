@@ -31,6 +31,8 @@ end
 module Sentry
   META = { "name" => "sentry.ruby", "version" => Sentry::VERSION }.freeze
 
+  CAPTURED_SIGNATURE = :@__sentry_captured
+
   LOGGER_PROGNAME = "sentry".freeze
 
   SENTRY_TRACE_HEADER_NAME = "sentry-trace".freeze
@@ -350,6 +352,13 @@ module Sentry
       get_current_hub.last_event_id
     end
 
+    # Checks if the exception object has been captured by the SDK.
+    #
+    # @return [Boolean]
+    def exception_captured?(exc)
+      return false unless initialized?
+      !!exc.instance_variable_get(CAPTURED_SIGNATURE)
+    end
 
     ##### Helpers #####
 

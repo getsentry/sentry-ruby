@@ -94,6 +94,8 @@ module Sentry
     def capture_exception(exception, **options, &block)
       check_argument_type!(exception, ::Exception)
 
+      return if Sentry.exception_captured?(exception)
+
       return unless current_client
 
       options[:hint] ||= {}
@@ -104,7 +106,7 @@ module Sentry
 
       capture_event(event, **options, &block).tap do
         # mark the exception as captured so we can use this information to avoid duplicated capturing
-        exception.instance_variable_set(:@__sentry_captured, true)
+        exception.instance_variable_set(Sentry::CAPTURED_SIGNATURE, true)
       end
     end
 
