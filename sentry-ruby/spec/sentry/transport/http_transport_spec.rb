@@ -13,7 +13,7 @@ RSpec.describe Sentry::HTTPTransport do
   let(:client) { Sentry::Client.new(configuration) }
   let(:event) { client.event_from_message("foobarbaz") }
   let(:data) do
-    subject.encode(event.to_hash)
+    subject.envelope_from_event(event.to_hash).to_s
   end
 
   subject { client.transport }

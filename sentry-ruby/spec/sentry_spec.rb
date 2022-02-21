@@ -88,17 +88,6 @@ RSpec.describe Sentry do
   end
 
   shared_examples "capture_helper" do
-    context "without any Sentry setup" do
-      before do
-        allow(Sentry).to receive(:get_main_hub)
-        allow(Sentry).to receive(:get_current_hub)
-      end
-
-      it "doesn't cause any issue" do
-        described_class.send(capture_helper, capture_subject)
-      end
-    end
-
     context "with sending_allowed? condition" do
       before do
         expect(Sentry.configuration).to receive(:sending_allowed?).and_return(false)
@@ -130,7 +119,7 @@ RSpec.describe Sentry do
       it "stops the event and logs correct message" do
         described_class.send(capture_helper, capture_subject)
 
-        expect(string_io.string).to match(/Envelope \[event\] not sent: rate limiting/)
+        expect(string_io.string).to match(/\[Transport\] Envelope item \[event\] not sent: rate limiting/)
       end
     end
   end
@@ -183,8 +172,18 @@ RSpec.describe Sentry do
 
     it "sends the exception via current hub" do
       expect do
-        described_class.capture_exception(exception, tags: { foo: "baz" })
+        described_class.capture_exception(exception)
       end.to change { transport.events.count }.by(1)
+    end
+
+    it "doesn't send captured exception" do
+      expect do
+        described_class.capture_exception(exception)
+      end.to change { transport.events.count }.by(1)
+
+      expect do
+        described_class.capture_exception(exception)
+      end.to change { transport.events.count }.by(0)
     end
 
     it "doesn't do anything if the exception is excluded" do
@@ -510,15 +509,22 @@ RSpec.describe Sentry do
   end
 
   describe ".csp_report_uri" do
-    it "returns nil if the SDK is not initialized" do
-      described_class.instance_variable_set(:@main_hub, nil)
-      expect(described_class.csp_report_uri).to eq(nil)
-    end
-
     it "returns the csp_report_uri generated from the main Configuration" do
       expect(Sentry.configuration).to receive(:csp_report_uri).and_call_original
 
       expect(described_class.csp_report_uri).to eq("http://sentry.localdomain/api/42/security/?sentry_key=12345&sentry_environment=development")
+    end
+  end
+
+  describe ".exception_captured?" do
+    let(:exception) { Exception.new }
+
+    it "returns true if the exception has been captured by the SDK" do
+      expect(described_class.exception_captured?(exception)).to eq(false)
+
+      described_class.capture_exception(exception)
+
+      expect(described_class.exception_captured?(exception)).to eq(true)
     end
   end
 

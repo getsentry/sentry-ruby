@@ -4,7 +4,7 @@ module Sentry
   # @api private
   class Envelope
     class Item
-      attr_reader :headers, :payload
+      attr_accessor :headers, :payload
 
       def initialize(headers, payload)
         @headers = headers
@@ -12,7 +12,7 @@ module Sentry
       end
 
       def type
-        @headers[:type] || @headers['type'] || 'event'
+        @headers[:type] || 'event'
       end
 
       def to_s
@@ -23,7 +23,7 @@ module Sentry
       end
     end
 
-    attr_reader :headers, :items
+    attr_accessor :headers, :items
 
     def initialize(headers = {})
       @headers = headers
@@ -40,6 +40,10 @@ module Sentry
 
     def item_types
       @items.map(&:type)
+    end
+
+    def event_id
+      @headers[:event_id]
     end
   end
 end
