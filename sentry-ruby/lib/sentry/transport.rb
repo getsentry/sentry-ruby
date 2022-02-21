@@ -67,7 +67,7 @@ module Sentry
         case item_type
         when "transaction"
           @rate_limits["transaction"]
-        when "session"
+        when "sessions"
           @rate_limits["session"]
         else
           @rate_limits["error"]
