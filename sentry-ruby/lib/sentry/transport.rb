@@ -45,12 +45,6 @@ module Sentry
       raise NotImplementedError
     end
 
-    def send_envelope(envelope)
-      # TODO-neel rate limit checks/envelope item filtering
-      log_info("[Transport] sending envelope with items [#{envelope.item_types.join(', ')}] to Sentry")
-      send_data(envelope.to_s)
-    end
-
     def send_event(event)
       envelope = envelope_from_event(event)
       send_envelope(envelope)
