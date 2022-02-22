@@ -53,7 +53,7 @@ module Sentry
     end
 
     def send_envelope(envelope)
-      process_rate_limits(envelope)
+      reject_rate_limited_items(envelope)
 
       return if envelope.items.empty?
 
@@ -169,7 +169,7 @@ module Sentry
       [item_header, item_payload]
     end
 
-    def process_rate_limits(envelope)
+    def reject_rate_limited_items(envelope)
       envelope.items.reject! do |item|
         if is_rate_limited?(item.type)
           log_info("[Transport] Envelope item [#{item.type}] not sent: rate limiting")
