@@ -11,6 +11,7 @@
 ### Refactoring
 
 - Encapsulate extension helpers [#1725](https://github.com/getsentry/sentry-ruby/pull/1725)
+- Move rate limiting logic to each item in envelope [#1742](https://github.com/getsentry/sentry-ruby/pull/1742)
 
 ## 5.1.0
 

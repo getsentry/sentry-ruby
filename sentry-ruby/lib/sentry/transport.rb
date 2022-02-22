@@ -46,23 +46,19 @@ module Sentry
     end
 
     def send_event(event)
-      event_hash = event.to_hash
-      item_type = get_item_type(event_hash)
-
-      if is_rate_limited?(item_type)
-        log_info("Envelope [#{item_type}] not sent: rate limiting")
-        record_lost_event(:ratelimit_backoff, item_type)
-
-        return
-      end
-
-      encoded_data = encode(event)
-
-      return nil unless encoded_data
-
-      send_data(encoded_data)
+      envelope = envelope_from_event(event)
+      send_envelope(envelope)
 
       event
+    end
+
+    def send_envelope(envelope)
+      reject_rate_limited_items(envelope)
+
+      return if envelope.items.empty?
+
+      log_info("[Transport] Sending envelope with items [#{envelope.item_types.join(', ')}] #{envelope.event_id} to Sentry")
+      send_data(envelope.to_s)
     end
 
     def is_rate_limited?(item_type)
@@ -106,7 +102,7 @@ module Sentry
       'Sentry ' + fields.map { |key, value| "#{key}=#{value}" }.join(', ')
     end
 
-    def encode(event)
+    def envelope_from_event(event)
       # Convert to hash
       event_payload = event.to_hash
       event_id = event_payload[:event_id] || event_payload["event_id"]
@@ -129,9 +125,8 @@ module Sentry
       client_report_headers, client_report_payload = fetch_pending_client_report
       envelope.add_item(client_report_headers, client_report_payload) if client_report_headers
 
-      log_info("Sending envelope [#{item_type}] #{event_id} to Sentry")
 
-      envelope.to_s
+      envelope
     end
 
     def record_lost_event(reason, item_type)
@@ -172,6 +167,19 @@ module Sentry
       @last_client_report_sent = Time.now
 
       [item_header, item_payload]
+    end
+
+    def reject_rate_limited_items(envelope)
+      envelope.items.reject! do |item|
+        if is_rate_limited?(item.type)
+          log_info("[Transport] Envelope item [#{item.type}] not sent: rate limiting")
+          record_lost_event(:ratelimit_backoff, item.type)
+
+          true
+        else
+          false
+        end
+      end
     end
   end
 end

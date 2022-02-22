@@ -119,7 +119,7 @@ RSpec.describe Sentry do
       it "stops the event and logs correct message" do
         described_class.send(capture_helper, capture_subject)
 
-        expect(string_io.string).to match(/Envelope \[event\] not sent: rate limiting/)
+        expect(string_io.string).to match(/\[Transport\] Envelope item \[event\] not sent: rate limiting/)
       end
     end
   end

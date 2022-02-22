@@ -10,7 +10,7 @@ RSpec.describe "rake auto-reporting" do
       message = `cd spec/support && bundle exec rake raise_exception 2>&1`
     end.join
 
-    expect(message).to match(/Sending envelope \[event\] [abcdef0-9]+ to Sentry/)
+    expect(message).to match(/\[Transport\] Sending envelope with items \[event\] [abcdef0-9]+ to Sentry/)
   end
 
   it "skip sending report to Sentry when skip_rake_integration = true" do
