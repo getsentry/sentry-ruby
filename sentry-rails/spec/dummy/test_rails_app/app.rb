@@ -2,7 +2,7 @@ ENV["RAILS_ENV"] = "test"
 
 require "rails"
 
-require "active_record"
+require "active_record/railtie"
 require "active_job/railtie"
 require "action_view/railtie"
 require "action_controller/railtie"
