@@ -57,8 +57,50 @@ module Sentry
 
       return if envelope.items.empty?
 
-      log_info("[Transport] Sending envelope with items [#{envelope.item_types.join(', ')}] #{envelope.event_id} to Sentry")
-      send_data(envelope.to_s)
+      data = serialize_envelope(envelope)
+
+      if data
+        log_info("[Transport] Sending envelope with items [#{envelope.item_types.join(', ')}] #{envelope.event_id} to Sentry")
+        send_data(data)
+      end
+    end
+
+    def serialize_envelope(envelope)
+      oversized_items = []
+
+      serialized_items = envelope.items.map do |item|
+        result = item.to_s
+
+        if result.bytesize > Event::MAX_SERIALIZED_PAYLOAD_SIZE
+          item.payload.delete(:breadcrumbs)
+          result = item.to_s
+        end
+
+        if result.bytesize > Event::MAX_SERIALIZED_PAYLOAD_SIZE
+          oversized_items << item
+
+          size_breakdown = item.payload.map do |key, value|
+            "#{key}: #{JSON.generate(value).bytesize}"
+          end.join(", ")
+
+          log_debug("Envelope item [#{item.type}] is still oversized without breadcrumbs: {#{size_breakdown}}")
+          result = nil
+        end
+
+        result
+      end
+
+      oversized_items.each do |item|
+        envelope.items.delete(item)
+      end
+
+      serialized_items.compact!
+
+      if serialized_items.empty?
+        nil
+      else
+        [JSON.generate(envelope.headers), *serialized_items].join("\n")
+      end
     end
 
     def is_rate_limited?(item_type)

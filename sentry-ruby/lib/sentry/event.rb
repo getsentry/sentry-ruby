@@ -23,6 +23,7 @@ module Sentry
     WRITER_ATTRIBUTES = SERIALIZEABLE_ATTRIBUTES - %i(type timestamp level)
 
     MAX_MESSAGE_SIZE_IN_BYTES = 1024 * 8
+    MAX_SERIALIZED_PAYLOAD_SIZE = 1024 * 200
 
     SKIP_INSPECTION_ATTRIBUTES = [:@modules, :@stacktrace_builder, :@send_default_pii, :@trusted_proxies, :@rack_env_whitelist]
 

@@ -18,18 +18,13 @@ RSpec.describe Sentry::Transport do
 
   subject { client.transport }
 
-  describe "#envelope_from_event" do
-
-    before do
-      Sentry.init do |config|
-        config.dsn = DUMMY_DSN
-      end
-    end
-
+  describe "#serialize_envelope" do
     context "normal event" do
       let(:event) { client.event_from_exception(ZeroDivisionError.new("divided by 0")) }
+      let(:envelope) { subject.envelope_from_event(event) }
+
       it "generates correct envelope content" do
-        result = subject.envelope_from_event(event.to_hash).to_s
+        result = subject.serialize_envelope(envelope)
 
         envelope_header, item_header, item = result.split("\n")
 
@@ -51,12 +46,11 @@ RSpec.describe Sentry::Transport do
       let(:transaction) do
         Sentry::Transaction.new(name: "test transaction", op: "rack.request", hub: hub)
       end
-      let(:event) do
-        client.event_from_transaction(transaction)
-      end
+      let(:event) { client.event_from_transaction(transaction) }
+      let(:envelope) { subject.envelope_from_event(event) }
 
       it "generates correct envelope content" do
-        result = subject.envelope_from_event(event.to_hash).to_s
+        result = subject.serialize_envelope(envelope)
 
         envelope_header, item_header, item = result.split("\n")
 
@@ -76,6 +70,7 @@ RSpec.describe Sentry::Transport do
 
     context "client report" do
       let(:event) { client.event_from_exception(ZeroDivisionError.new("divided by 0")) }
+      let(:envelope) { subject.envelope_from_event(event) }
       before do
         5.times { subject.record_lost_event(:ratelimit_backoff, 'error') }
         3.times { subject.record_lost_event(:queue_overflow, 'transaction') }
@@ -83,7 +78,7 @@ RSpec.describe Sentry::Transport do
 
       it "incudes client report in envelope" do
         Timecop.travel(Time.now + 90) do
-          result = subject.envelope_from_event(event.to_hash).to_s
+          result = subject.serialize_envelope(envelope)
 
           client_report_header, client_report_payload = result.split("\n").last(2)
 
@@ -100,6 +95,151 @@ RSpec.describe Sentry::Transport do
               ]
             }.to_json
           )
+        end
+      end
+    end
+
+    context "oversized event" do
+      let(:event) { client.event_from_message("foo") }
+      let(:envelope) { subject.envelope_from_event(event) }
+
+      before do
+        event.breadcrumbs = Sentry::BreadcrumbBuffer.new(100)
+        100.times do |i|
+          event.breadcrumbs.record Sentry::Breadcrumb.new(category: i.to_s, message: "x" * Sentry::Event::MAX_MESSAGE_SIZE_IN_BYTES)
+        end
+        serialized_result = JSON.generate(event.to_hash)
+        expect(serialized_result.bytesize).to be > Sentry::Event::MAX_SERIALIZED_PAYLOAD_SIZE
+      end
+
+      it "removes breadcrumbs and carry on" do
+        data = subject.serialize_envelope(envelope)
+        expect(data.bytesize).to be < Sentry::Event::MAX_SERIALIZED_PAYLOAD_SIZE
+
+        expect(envelope.items.count).to eq(1)
+
+        event_item = envelope.items.first
+        expect(event_item.payload[:breadcrumbs]).to be_nil
+      end
+
+      context "if it's still oversized" do
+        before do
+          100.times do |i|
+            event.contexts["context_#{i}"] = "s" * Sentry::Event::MAX_MESSAGE_SIZE_IN_BYTES
+          end
+        end
+
+        it "rejects the item and logs attributes size breakdown" do
+          data = subject.serialize_envelope(envelope)
+          expect(data).to be_nil
+          expect(io.string).not_to match(/Sending envelope with items \[event\]/)
+          expect(io.string).to match(/tags: 2, contexts: 820791, extra: 2/)
+        end
+      end
+    end
+  end
+
+  describe "#send_envelope" do
+    context "normal event" do
+      let(:event) { client.event_from_exception(ZeroDivisionError.new("divided by 0")) }
+      let(:envelope) { subject.envelope_from_event(event) }
+
+      it "sends the event and logs the action" do
+        expect(subject).to receive(:send_data)
+
+        subject.send_envelope(envelope)
+
+        expect(io.string).to match(/Sending envelope with items \[event\]/)
+      end
+    end
+
+    context "transaction event" do
+      let(:transaction) do
+        Sentry::Transaction.new(name: "test transaction", op: "rack.request", hub: hub)
+      end
+      let(:event) { client.event_from_transaction(transaction) }
+      let(:envelope) { subject.envelope_from_event(event) }
+
+      it "sends the event and logs the action" do
+        expect(subject).to receive(:send_data)
+
+        subject.send_envelope(envelope)
+
+        expect(io.string).to match(/Sending envelope with items \[transaction\]/)
+      end
+    end
+
+    context "client report" do
+      let(:event) { client.event_from_exception(ZeroDivisionError.new("divided by 0")) }
+      let(:envelope) { subject.envelope_from_event(event) }
+      before do
+        5.times { subject.record_lost_event(:ratelimit_backoff, 'error') }
+        3.times { subject.record_lost_event(:queue_overflow, 'transaction') }
+      end
+
+      it "sends the event and logs the action" do
+        Timecop.travel(Time.now + 90) do
+          expect(subject).to receive(:send_data)
+
+          subject.send_envelope(envelope)
+
+          expect(io.string).to match(/Sending envelope with items \[event, client_report\]/)
+        end
+      end
+    end
+
+    context "oversized event" do
+      let(:event) { client.event_from_message("foo") }
+      let(:envelope) { subject.envelope_from_event(event) }
+
+      before do
+        event.breadcrumbs = Sentry::BreadcrumbBuffer.new(100)
+        100.times do |i|
+          event.breadcrumbs.record Sentry::Breadcrumb.new(category: i.to_s, message: "x" * Sentry::Event::MAX_MESSAGE_SIZE_IN_BYTES)
+        end
+        serialized_result = JSON.generate(event.to_hash)
+        expect(serialized_result.bytesize).to be > Sentry::Event::MAX_SERIALIZED_PAYLOAD_SIZE
+      end
+
+      it "sends the event and logs the action" do
+        expect(subject).to receive(:send_data)
+
+        subject.send_envelope(envelope)
+
+        expect(io.string).to match(/Sending envelope with items \[event\]/)
+      end
+
+      context "if it's still oversized" do
+        before do
+          100.times do |i|
+            event.contexts["context_#{i}"] = "s" * Sentry::Event::MAX_MESSAGE_SIZE_IN_BYTES
+          end
+        end
+
+        it "rejects the event item and doesn't send the envelope" do
+          expect(subject).not_to receive(:send_data)
+
+          subject.send_envelope(envelope)
+
+          expect(io.string).to match(/tags: 2, contexts: 820791, extra: 2/)
+          expect(io.string).not_to match(/Sending envelope with items \[event\]/)
+        end
+
+        context "with other types of items" do
+          before do
+            5.times { subject.record_lost_event(:ratelimit_backoff, 'error') }
+            3.times { subject.record_lost_event(:queue_overflow, 'transaction') }
+          end
+
+          it "excludes oversized event and sends the rest" do
+            Timecop.travel(Time.now + 90) do
+              expect(subject).to receive(:send_data)
+
+              subject.send_envelope(envelope)
+
+              expect(io.string).to match(/Sending envelope with items \[client_report\]/)
+            end
+          end
         end
       end
     end
