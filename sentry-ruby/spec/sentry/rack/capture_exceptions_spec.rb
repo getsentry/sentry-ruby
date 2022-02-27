@@ -369,6 +369,18 @@ RSpec.describe Sentry::Rack::CaptureExceptions, rack: true do
 
           expect(parent_sampled).to eq(true)
         end
+
+        it "passes request env to the sampling_context" do
+          sampling_context_env = nil
+
+          Sentry.configuration.traces_sampler = lambda do |sampling_context|
+            sampling_context_env = sampling_context[:env]
+          end
+
+          stack.call(env)
+
+          expect(sampling_context_env).to eq(env)
+        end
       end
     end
 
