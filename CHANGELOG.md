@@ -1,3 +1,10 @@
+## Unreleased
+
+### Bug Fixes
+
+- Require set library [#1753](https://github.com/getsentry/sentry-ruby/pull/1753)
+  - Fixes [#1752](https://github.com/getsentry/sentry-ruby/issues/1752)
+
 ## 5.1.1
 
 ### Bug Fixes
