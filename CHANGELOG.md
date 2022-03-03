@@ -1,5 +1,9 @@
 ## Unreleased
 
+### Features
+
+- Add request env to sampling context [#1749](https://github.com/getsentry/sentry-ruby/pull/1749)
+
 ### Bug Fixes
 
 - Require set library [#1753](https://github.com/getsentry/sentry-ruby/pull/1753)
