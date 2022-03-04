@@ -3,8 +3,10 @@ module Sentry
     module ActiveJobExtensions
       def perform_now
         if !Sentry.initialized? || already_supported_by_sentry_integration?
+          puts "#{Thread.current.object_id} --- Start handling by integration? #{already_supported_by_sentry_integration?}"
           super
         else
+          puts "#{Thread.current.object_id} --- Start handling by #{self.class}"
           SentryReporter.record(self) do
             super
           end

@@ -31,6 +31,7 @@ module Sentry
 
               finish_transaction(transaction, 200)
             rescue Exception => exception
+              puts "#{Thread.current.object_id} --- Handle by #{self}"
               ::Sentry::Resque.capture_exception(exception, hint: { background: false })
               finish_transaction(transaction, 500)
               raise

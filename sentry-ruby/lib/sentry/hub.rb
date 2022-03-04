@@ -106,6 +106,7 @@ module Sentry
 
       capture_event(event, **options, &block).tap do
         # mark the exception as captured so we can use this information to avoid duplicated capturing
+        puts "#{Thread.current.object_id} --- Mark even as captured"
         exception.instance_variable_set(Sentry::CAPTURED_SIGNATURE, true)
       end
     end

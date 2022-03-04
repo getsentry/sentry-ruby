@@ -36,11 +36,13 @@ module Sentry
         'User-Agent' => USER_AGENT
       }
 
+      puts "#{Thread.current.object_id} --- Sending HTTP request"
       response = conn.start do |http|
         request = ::Net::HTTP::Post.new(@endpoint, headers)
         request.body = data
         http.request(request)
       end
+      puts "#{Thread.current.object_id} --- HTTP response code is #{response.code}"
 
       if response.code.match?(/\A2\d{2}/)
         if has_rate_limited_header?(response)

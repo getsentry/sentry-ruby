@@ -14,6 +14,7 @@ module Sentry
     def capture_exception(exception, **options, &block)
       options[:hint] ||= {}
       options[:hint][:integration] = integration_name
+      puts "#{Thread.current.object_id} --- #{self}: #{options.inspect}"
       Sentry.capture_exception(exception, **options, &block)
     end
 

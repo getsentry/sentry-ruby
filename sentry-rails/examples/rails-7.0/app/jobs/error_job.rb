@@ -1,5 +1,5 @@
 class ErrorJob < ApplicationJob
-  self.queue_adapter = :async
+  self.queue_adapter = :resque
 
   def perform
     a = 1

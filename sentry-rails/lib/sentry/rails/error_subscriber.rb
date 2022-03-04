@@ -4,6 +4,11 @@ module Sentry
     # See https://github.com/rails/rails/blob/main/activesupport/lib/active_support/error_reporter.rb for more information.
     class ErrorSubscriber
       def report(error, handled:, severity:, context:)
+        # if context.is_a?(Hash) && context.key?(:job)
+        #   puts "#{Thread.current.object_id} --- Skipped by ErrorSubscriber"
+        #   return
+        # end
+
         Sentry::Rails.capture_exception(error, level: severity, contexts: { "rails.error" => context }, tags: { handled: handled })
       end
     end
