@@ -12,21 +12,41 @@ RSpec.describe Sentry::Redis do
       end
     end
 
-    context "calling Redis SET command" do
-      let(:result) { redis.set("key", "value") }
+    context "config.send_default_pii = true" do
+      before { Sentry.configuration.send_default_pii = true }
 
-      it "records the Redis call's span with command and key" do
-        transaction = Sentry.start_transaction
-        Sentry.get_current_scope.set_span(transaction)
+      context "calling Redis SET command" do
+        let(:result) { redis.set("key", "value") }
 
-        expect(result).to eq("OK")
-        request_span = transaction.span_recorder.spans.last
-        expect(request_span.op).to eq("db.redis.command")
-        expect(request_span.start_timestamp).not_to be_nil
-        expect(request_span.timestamp).not_to be_nil
-        expect(request_span.start_timestamp).not_to eq(request_span.timestamp)
-        expect(request_span.description).to eq("SET key")
-        expect(request_span.data).to eq({ server: "127.0.0.1:6379/0" })
+        it "records the Redis call's span with command and key" do
+          transaction = Sentry.start_transaction
+          Sentry.get_current_scope.set_span(transaction)
+
+          expect(result).to eq("OK")
+          request_span = transaction.span_recorder.spans.last
+          expect(request_span.op).to eq("db.redis.command")
+          expect(request_span.start_timestamp).not_to be_nil
+          expect(request_span.timestamp).not_to be_nil
+          expect(request_span.start_timestamp).not_to eq(request_span.timestamp)
+          expect(request_span.description).to eq("SET key value")
+          expect(request_span.data).to eq({ server: "127.0.0.1:6379/0" })
+        end
+      end
+    end
+
+    context "config.send_default_pii = false" do
+      before { Sentry.configuration.send_default_pii = false }
+
+      context "calling Redis SET command" do
+        let(:result) { redis.set("key", "value") }
+
+        it "records the Redis call's span with command and key" do
+          transaction = Sentry.start_transaction
+          Sentry.get_current_scope.set_span(transaction)
+
+          expect(result).to eq("OK")
+          expect(transaction.span_recorder.spans.last.description).to eq("SET key")
+        end
       end
     end
 
