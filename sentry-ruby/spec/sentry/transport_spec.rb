@@ -18,7 +18,7 @@ RSpec.describe Sentry::Transport do
 
   subject { client.transport }
 
-  describe "#encode" do
+  describe "#envelope_from_event" do
 
     before do
       Sentry.init do |config|
@@ -29,7 +29,7 @@ RSpec.describe Sentry::Transport do
     context "normal event" do
       let(:event) { client.event_from_exception(ZeroDivisionError.new("divided by 0")) }
       it "generates correct envelope content" do
-        result = subject.encode(event.to_hash)
+        result = subject.envelope_from_event(event.to_hash).to_s
 
         envelope_header, item_header, item = result.split("\n")
 
@@ -56,7 +56,7 @@ RSpec.describe Sentry::Transport do
       end
 
       it "generates correct envelope content" do
-        result = subject.encode(event.to_hash)
+        result = subject.envelope_from_event(event.to_hash).to_s
 
         envelope_header, item_header, item = result.split("\n")
 
@@ -83,7 +83,7 @@ RSpec.describe Sentry::Transport do
 
       it "incudes client report in envelope" do
         Timecop.travel(Time.now + 90) do
-          result = subject.encode(event.to_hash)
+          result = subject.envelope_from_event(event.to_hash).to_s
 
           client_report_header, client_report_payload = result.split("\n").last(2)
 
@@ -130,7 +130,7 @@ RSpec.describe Sentry::Transport do
         expect(subject.send_event(event)).to eq(event)
 
         expect(io.string).to match(
-          /INFO -- sentry: Sending envelope \[event\] #{event.event_id} to Sentry/
+          /INFO -- sentry: \[Transport\] Sending envelope with items \[event\] #{event.event_id} to Sentry/
         )
       end
     end

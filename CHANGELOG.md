@@ -3,11 +3,27 @@
 ### Features
 
 - Log Redis command arguments when sending PII is enabled [#1726](https://github.com/getsentry/sentry-ruby/pull/1726)
+- Add request env to sampling context [#1749](https://github.com/getsentry/sentry-ruby/pull/1749)
+
+### Bug Fixes
+
+- Require set library [#1753](https://github.com/getsentry/sentry-ruby/pull/1753)
+  - Fixes [#1752](https://github.com/getsentry/sentry-ruby/issues/1752)
+
+## 5.1.1
 
 ### Bug Fixes
 
 - Allow overwriting of context values [#1724](https://github.com/getsentry/sentry-ruby/pull/1724)
   - Fixes [#1722](https://github.com/getsentry/sentry-ruby/issues/1722)
+- Avoid duplicated capturing on the same exception object [#1738](https://github.com/getsentry/sentry-ruby/pull/1738)
+  - Fixes [#1731](https://github.com/getsentry/sentry-ruby/issues/1731)
+
+
+### Refactoring
+
+- Encapsulate extension helpers [#1725](https://github.com/getsentry/sentry-ruby/pull/1725)
+- Move rate limiting logic to each item in envelope [#1742](https://github.com/getsentry/sentry-ruby/pull/1742)
 
 ## 5.1.0
 
