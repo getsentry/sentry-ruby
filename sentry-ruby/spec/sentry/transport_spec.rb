@@ -24,7 +24,7 @@ RSpec.describe Sentry::Transport do
       let(:envelope) { subject.envelope_from_event(event) }
 
       it "generates correct envelope content" do
-        result = subject.serialize_envelope(envelope)
+        result, _ = subject.serialize_envelope(envelope)
 
         envelope_header, item_header, item = result.split("\n")
 
@@ -50,7 +50,7 @@ RSpec.describe Sentry::Transport do
       let(:envelope) { subject.envelope_from_event(event) }
 
       it "generates correct envelope content" do
-        result = subject.serialize_envelope(envelope)
+        result, _ = subject.serialize_envelope(envelope)
 
         envelope_header, item_header, item = result.split("\n")
 
@@ -78,7 +78,7 @@ RSpec.describe Sentry::Transport do
 
       it "incudes client report in envelope" do
         Timecop.travel(Time.now + 90) do
-          result = subject.serialize_envelope(envelope)
+          result, _ = subject.serialize_envelope(envelope)
 
           client_report_header, client_report_payload = result.split("\n").last(2)
 
@@ -113,7 +113,7 @@ RSpec.describe Sentry::Transport do
       end
 
       it "removes breadcrumbs and carry on" do
-        data = subject.serialize_envelope(envelope)
+        data, _ = subject.serialize_envelope(envelope)
         expect(data.bytesize).to be < Sentry::Event::MAX_SERIALIZED_PAYLOAD_SIZE
 
         expect(envelope.items.count).to eq(1)
@@ -130,7 +130,7 @@ RSpec.describe Sentry::Transport do
         end
 
         it "rejects the item and logs attributes size breakdown" do
-          data = subject.serialize_envelope(envelope)
+          data, _ = subject.serialize_envelope(envelope)
           expect(data).to be_nil
           expect(io.string).not_to match(/Sending envelope with items \[event\]/)
           expect(io.string).to match(/tags: 2, contexts: 820791, extra: 2/)
