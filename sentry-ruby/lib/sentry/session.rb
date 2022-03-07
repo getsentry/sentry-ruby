@@ -24,7 +24,7 @@ module Sentry
 
     # truncate seconds from the timestamp since we only care about
     # minute level granularity for aggregation
-    def started_bucket
+    def aggregation_key
       Time.utc(started.year, started.month, started.day, started.hour, started.min)
     end
 

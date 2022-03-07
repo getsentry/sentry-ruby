@@ -34,8 +34,8 @@ module Sentry
       ensure_thread
 
       return unless Session::AGGREGATE_STATUSES.include?(session.status)
-      @pending_aggregates[session.started_bucket] ||= init_aggregates
-      @pending_aggregates[session.started_bucket][session.status] += 1
+      @pending_aggregates[session.aggregation_key] ||= init_aggregates
+      @pending_aggregates[session.aggregation_key][session.status] += 1
     end
 
     def kill

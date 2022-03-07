@@ -37,7 +37,7 @@ RSpec.describe Sentry::SessionFlusher do
 
   describe "#flush" do
     it "early returns with no pending_aggregates" do
-      subject.instance_variable_set(:@pending_aggregates, {})
+      expect(subject.instance_variable_get(:@pending_aggregates)).to eq({})
 
       expect do
         subject.flush
