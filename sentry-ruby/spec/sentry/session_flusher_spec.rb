@@ -89,6 +89,19 @@ RSpec.describe Sentry::SessionFlusher do
       expect(subject.instance_variable_get(:@thread)).to be_a(Thread)
     end
 
+    it "spawns only one thread" do
+      expect do
+        subject.add_session(session)
+      end.to change { Thread.list.count }.by(1)
+
+      thread = subject.instance_variable_get(:@thread)
+      expect(thread).to receive(:alive?).and_return(true)
+
+      expect do
+        subject.add_session(session)
+      end.to change { Thread.list.count }.by(0)
+    end
+
     it "adds session to pending_aggregates" do
       subject.add_session(session)
       pending_aggregates = subject.instance_variable_get(:@pending_aggregates)
