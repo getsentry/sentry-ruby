@@ -2,6 +2,7 @@
 
 require "sentry/scope"
 require "sentry/client"
+require "sentry/session"
 
 module Sentry
   class Hub
@@ -104,6 +105,8 @@ module Sentry
 
       return unless event
 
+      current_scope.session&.update_from_exception(event.exception)
+
       capture_event(event, **options, &block).tap do
         # mark the exception as captured so we can use this information to avoid duplicated capturing
         exception.instance_variable_set(Sentry::CAPTURED_SIGNATURE, true)
@@ -143,7 +146,6 @@ module Sentry
 
       event = current_client.capture_event(event, scope, hint)
 
-
       if event && configuration.debug
         configuration.log_debug(event.to_json_compatible)
       end
@@ -173,6 +175,30 @@ module Sentry
       block.call
     ensure
       configuration.background_worker_threads = original_background_worker_threads
+    end
+
+    def start_session
+      return unless current_scope
+      current_scope.set_session(Session.new)
+    end
+
+    def end_session
+      return unless current_scope
+      session = current_scope.session
+      current_scope.set_session(nil)
+
+      return unless session
+      session.close
+      Sentry.session_flusher.add_session(session)
+    end
+
+    def with_session_tracking(&block)
+      return yield unless configuration.auto_session_tracking
+
+      start_session
+      yield
+    ensure
+      end_session
     end
 
     private

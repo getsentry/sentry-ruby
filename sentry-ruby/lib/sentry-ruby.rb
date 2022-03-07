@@ -17,6 +17,7 @@ require "sentry/span"
 require "sentry/transaction"
 require "sentry/hub"
 require "sentry/background_worker"
+require "sentry/session_flusher"
 
 [
   "sentry/rake",
@@ -60,6 +61,10 @@ module Sentry
     # @!attribute [rw] background_worker
     #   @return [BackgroundWorker]
     attr_accessor :background_worker
+
+    # @!attribute [r] session_flusher
+    #   @return [SessionFlusher]
+    attr_reader :session_flusher
 
     ##### Patch Registration #####
 
@@ -189,11 +194,18 @@ module Sentry
       @main_hub = hub
       @background_worker = Sentry::BackgroundWorker.new(config)
 
+      @session_flusher = if config.auto_session_tracking
+                           Sentry::SessionFlusher.new(config, client)
+                         else
+                           nil
+                         end
+
       if config.capture_exception_frame_locals
         exception_locals_tp.enable
       end
 
       at_exit do
+        @session_flusher&.kill
         @background_worker.shutdown
       end
     end
@@ -308,6 +320,26 @@ module Sentry
     def with_scope(&block)
       return unless initialized?
       get_current_hub.with_scope(&block)
+    end
+
+    # Wrap a given block with session tracking.
+    # Aggregate sessions in minutely buckets will be recorded
+    # around this block and flushed every minute.
+    #
+    # @example
+    #   Sentry.with_session_tracking do
+    #     a = 1 + 1 # new session recorded with :exited status
+    #   end
+    #
+    #   Sentry.with_session_tracking do
+    #     1 / 0
+    #   rescue => e
+    #     Sentry.capture_exception(e) # new session recorded with :errored status
+    #   end
+    # @return [void]
+    def with_session_tracking(&block)
+      return yield unless initialized?
+      get_current_hub.with_session_tracking(&block)
     end
 
     # Takes an exception and reports it to Sentry via the currently active hub.

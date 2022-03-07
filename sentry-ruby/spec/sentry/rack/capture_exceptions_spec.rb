@@ -497,4 +497,80 @@ RSpec.describe Sentry::Rack::CaptureExceptions, rack: true do
       end
     end
   end
+
+  describe "session capturing" do
+    context "when auto_session_tracking is false" do
+      before do
+        perform_basic_setup do |config|
+          config.auto_session_tracking = false
+        end
+      end
+
+      it "passthrough" do
+        app = ->(_) do
+          [200, {}, ["ok"]]
+        end
+
+        expect_any_instance_of(Sentry::Hub).not_to receive(:start_session)
+        expect(Sentry.session_flusher).to be_nil
+        stack = described_class.new(app)
+        stack.call(env)
+
+        expect(transport.envelopes.count).to eq(0)
+      end
+    end
+
+    context "tracks sessions by default" do
+      before do
+        perform_basic_setup do |config|
+          config.release = 'test-release'
+          config.environment = 'test'
+        end
+      end
+
+      it "collects session stats and sends envelope with aggregated sessions" do
+        app = lambda do |env|
+          req = Rack::Request.new(env)
+          case req.path_info
+          when /success/
+            [200, {}, ['ok']]
+          when /error/
+            1 / 0
+          end
+        end
+
+        stack = described_class.new(app)
+
+        expect(Sentry.session_flusher).not_to be_nil
+
+        now = Time.now.utc
+        now_bucket = Time.utc(now.year, now.month, now.day, now.hour, now.min)
+
+        Timecop.freeze(now) do
+          10.times do
+            env = Rack::MockRequest.env_for('/success')
+            stack.call(env)
+          end
+
+          2.times do
+            env = Rack::MockRequest.env_for('/error')
+            expect { stack.call(env) }.to raise_error(ZeroDivisionError)
+          end
+
+          expect(transport.events.count).to eq(2)
+
+          Sentry.session_flusher.flush
+
+          expect(transport.envelopes.count).to eq(1)
+          envelope = transport.envelopes.first
+
+          expect(envelope.items.length).to eq(1)
+          item = envelope.items.first
+          expect(item.type).to eq('sessions')
+          expect(item.payload[:attrs]).to eq({ release: 'test-release', environment: 'test' })
+          expect(item.payload[:aggregates].first).to eq({ exited: 10, errored: 2, started: now_bucket.iso8601 })
+        end
+      end
+    end
+  end
 end

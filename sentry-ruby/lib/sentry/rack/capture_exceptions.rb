@@ -14,30 +14,32 @@ module Sentry
         Sentry.clone_hub_to_current_thread
 
         Sentry.with_scope do |scope|
-          scope.clear_breadcrumbs
-          scope.set_transaction_name(env["PATH_INFO"]) if env["PATH_INFO"]
-          scope.set_rack_env(env)
+          Sentry.with_session_tracking do
+            scope.clear_breadcrumbs
+            scope.set_transaction_name(env["PATH_INFO"]) if env["PATH_INFO"]
+            scope.set_rack_env(env)
 
-          transaction = start_transaction(env, scope)
-          scope.set_span(transaction) if transaction
+            transaction = start_transaction(env, scope)
+            scope.set_span(transaction) if transaction
 
-          begin
-            response = @app.call(env)
-          rescue Sentry::Error
-            finish_transaction(transaction, 500)
-            raise # Don't capture Sentry errors
-          rescue Exception => e
-            capture_exception(e)
-            finish_transaction(transaction, 500)
-            raise
+            begin
+              response = @app.call(env)
+            rescue Sentry::Error
+              finish_transaction(transaction, 500)
+              raise # Don't capture Sentry errors
+            rescue Exception => e
+              capture_exception(e)
+              finish_transaction(transaction, 500)
+              raise
+            end
+
+            exception = collect_exception(env)
+            capture_exception(exception) if exception
+
+            finish_transaction(transaction, response[0])
+
+            response
           end
-
-          exception = collect_exception(env)
-          capture_exception(exception) if exception
-
-          finish_transaction(transaction, response[0])
-
-          response
         end
       end
 

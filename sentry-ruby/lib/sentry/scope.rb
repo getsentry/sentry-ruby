@@ -7,7 +7,7 @@ module Sentry
   class Scope
     include ArgumentCheckingHelper
 
-    ATTRIBUTES = [:transaction_names, :contexts, :extra, :tags, :user, :level, :breadcrumbs, :fingerprint, :event_processors, :rack_env, :span]
+    ATTRIBUTES = [:transaction_names, :contexts, :extra, :tags, :user, :level, :breadcrumbs, :fingerprint, :event_processors, :rack_env, :span, :session]
 
     attr_reader(*ATTRIBUTES)
 
@@ -76,6 +76,7 @@ module Sentry
       copy.transaction_names = transaction_names.deep_dup
       copy.fingerprint = fingerprint.deep_dup
       copy.span = span.deep_dup
+      copy.session = session.deep_dup
       copy
     end
 
@@ -198,6 +199,13 @@ module Sentry
       @transaction_names << transaction_name
     end
 
+    # Sets the currently active session on the scope.
+    # @param session [Session, nil]
+    # @return [void]
+    def set_session(session)
+      @session = session
+    end
+
     # Returns current transaction name.
     # The "transaction" here does not refer to `Transaction` objects.
     # @return [String, nil]
@@ -251,6 +259,7 @@ module Sentry
       @event_processors = []
       @rack_env = {}
       @span = nil
+      @session = nil
       set_new_breadcrumb_buffer
     end
 

@@ -67,6 +67,8 @@ module Sentry
         case item_type
         when "transaction"
           @rate_limits["transaction"]
+        when "sessions"
+          @rate_limits["session"]
         else
           @rate_limits["error"]
         end
@@ -124,7 +126,6 @@ module Sentry
 
       client_report_headers, client_report_payload = fetch_pending_client_report
       envelope.add_item(client_report_headers, client_report_payload) if client_report_headers
-
 
       envelope
     end
