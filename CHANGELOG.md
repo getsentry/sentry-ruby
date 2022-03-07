@@ -14,7 +14,7 @@
 
   The SDK now supports [automatic session tracking / release health](https://docs.sentry.io/product/releases/health/) by default in Rack based applications.  
   Aggregate statistics on successful / errored requests are collected and sent to the server every minute.  
-  To use this feature, just remember to set the `config.release` while initializing the SDK.
+  To use this feature, make sure the SDK can detect your app's release. Or you have set it with:
 
   ```ruby
   Sentry.init do |config|
