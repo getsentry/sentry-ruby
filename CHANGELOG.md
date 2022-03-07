@@ -22,9 +22,8 @@
 - Automatic session tracking [#1715](https://github.com/getsentry/sentry-ruby/pull/1715)
 
   **Example**:
-  
-  ![image](https://user-images.githubusercontent.com/6536764/157057827-2893527e-7973-4901-a070-bd78a720574a.png)
 
+  <img width="80%" src="https://user-images.githubusercontent.com/6536764/157057827-2893527e-7973-4901-a070-bd78a720574a.png">
 
   The SDK now supports [automatic session tracking / release health](https://docs.sentry.io/product/releases/health/) by default in Rack based applications.  
   Aggregate statistics on successful / errored requests are collected and sent to the server every minute.  
