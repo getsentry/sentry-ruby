@@ -44,23 +44,41 @@ RSpec.describe Sentry::SessionFlusher do
       end.not_to change { transport.envelopes.count }
     end
 
-    it "captures pending_aggregates in background worker" do
-      t1 = Sentry.utc_now
-      t1_bucket = Time.utc(t1.year, t1.month, t1.day, t1.hour, t1.min)
+    context "with pending aggregates" do
+      let(:now) do
+        time = Time.now.utc
+        Time.utc(time.year, time.month, time.day, time.hour, time.min)
+      end
 
-      aggregates = { t1_bucket => { started: t1_bucket.iso8601, exited: 50, errored: 10 } }
-      subject.instance_variable_set(:@pending_aggregates, aggregates)
+      before do
+        Timecop.freeze(now) do
+          10.times do
+            session = Sentry::Session.new
+            session.close
+            subject.add_session(session)
+          end
 
-      expect do
-        subject.flush
-      end.to change { transport.envelopes.count }.by(1)
+          5.times do
+            session = Sentry::Session.new
+            session.update_from_exception
+            session.close
+            subject.add_session(session)
+          end
+        end
+      end
 
-      envelope = transport.envelopes.first
-      expect(envelope.items.length).to eq(1)
-      item = envelope.items.first
-      expect(item.type).to eq('sessions')
-      expect(item.payload[:attrs]).to eq({ release: 'test-release', environment: 'test' })
-      expect(item.payload[:aggregates].first).to eq({ exited: 50, errored: 10, started: t1_bucket.iso8601 })
+      it "captures pending_aggregates in background worker" do
+        expect do
+          subject.flush
+        end.to change { transport.envelopes.count }.by(1)
+
+        envelope = transport.envelopes.first
+        expect(envelope.items.length).to eq(1)
+        item = envelope.items.first
+        expect(item.type).to eq('sessions')
+        expect(item.payload[:attrs]).to eq({ release: 'test-release', environment: 'test' })
+        expect(item.payload[:aggregates].first).to eq({ exited: 10, errored: 5, started: now.iso8601 })
+      end
     end
   end
 

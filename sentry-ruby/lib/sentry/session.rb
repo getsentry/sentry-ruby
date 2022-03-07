@@ -14,7 +14,7 @@ module Sentry
     end
 
     # TODO-neel add :crashed after adding handled mechanism
-    def update_from_exception(_exception)
+    def update_from_exception(_exception = nil)
       @status = :errored
     end
 
