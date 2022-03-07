@@ -34,7 +34,7 @@ module Sentry
       ensure_thread
 
       return unless Session::AGGREGATE_STATUSES.include?(session.status)
-      @pending_aggregates[session.aggregation_key] ||= init_aggregates
+      @pending_aggregates[session.aggregation_key] ||= init_aggregates(session.aggregation_key)
       @pending_aggregates[session.aggregation_key][session.status] += 1
     end
 
@@ -44,15 +44,17 @@ module Sentry
 
     private
 
-    def init_aggregates
-      Session::AGGREGATE_STATUSES.map { |k| [k, 0] }.to_h
+    def init_aggregates(aggregation_key)
+      aggregates = { started: aggregation_key.iso8601 }
+      Session::AGGREGATE_STATUSES.each { |k| aggregates[k] = 0 }
+      aggregates
     end
 
     def pending_envelope
       envelope = Envelope.new
 
       header = { type: 'sessions' }
-      payload = { attrs: attrs, aggregates: aggregates_payload }
+      payload = { attrs: attrs, aggregates: @pending_aggregates.values }
 
       envelope.add_item(header, payload)
       envelope
@@ -60,13 +62,6 @@ module Sentry
 
     def attrs
       { release: @release, environment: @environment }
-    end
-
-    def aggregates_payload
-      @pending_aggregates.map do |started, aggregates|
-        aggregates[:started] = started.iso8601
-        aggregates
-      end
     end
 
     def ensure_thread

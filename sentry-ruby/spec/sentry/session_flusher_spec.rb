@@ -48,7 +48,7 @@ RSpec.describe Sentry::SessionFlusher do
       t1 = Sentry.utc_now
       t1_bucket = Time.utc(t1.year, t1.month, t1.day, t1.hour, t1.min)
 
-      aggregates = { t1_bucket => { exited: 50, errored: 10 } }
+      aggregates = { t1_bucket => { started: t1_bucket.iso8601, exited: 50, errored: 10 } }
       subject.instance_variable_set(:@pending_aggregates, aggregates)
 
       expect do
@@ -106,7 +106,7 @@ RSpec.describe Sentry::SessionFlusher do
       subject.add_session(session)
       pending_aggregates = subject.instance_variable_get(:@pending_aggregates)
       expect(pending_aggregates.keys.first).to be_a(Time)
-      expect(pending_aggregates.values.first).to eq({ errored: 0, exited: 1 })
+      expect(pending_aggregates.values.first).to include({ errored: 0, exited: 1 })
     end
   end
 end
