@@ -1,9 +1,26 @@
-## Unreleased
+## 5.2.0
 
 ### Features
 
 - Log Redis command arguments when sending PII is enabled [#1726](https://github.com/getsentry/sentry-ruby/pull/1726)
 - Add request env to sampling context [#1749](https://github.com/getsentry/sentry-ruby/pull/1749)
+
+  **Example**
+
+  ```rb
+  Sentry.init do |config|
+    config.traces_sampler = lambda do |sampling_context|
+      env = sampling_context[:env]
+
+      if env["REQUEST_METHOD"] == "GET"
+        0.01
+      else
+        0.1
+      end
+    end
+  end
+  ```
+
 - Check envelope size before sending it [#1747](https://github.com/getsentry/sentry-ruby/pull/1747)
 
   The SDK will now check if the envelope's event items are oversized before sending the envelope. It goes like this:
