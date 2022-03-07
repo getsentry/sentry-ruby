@@ -2,6 +2,26 @@
 
 Individual gem's changelog has been deprecated. Please check the [project changelog](https://github.com/getsentry/sentry-ruby/blob/master/CHANGELOG.md).
 
+## Unreleased
+
+### Features
+
+- Automatic session tracking [#1715](https://github.com/getsentry/sentry-ruby/pull/1715)
+
+  **Example**:(TODO)
+
+  The SDK now supports [automatic session tracking / release health](https://docs.sentry.io/product/releases/health/) by default in Rack based applications.
+  Aggregate statistics on successful/errored requests are collected and sent to the server every minute.
+  To use this feature, just remember to set the `config.release` while initializing the SDK.
+
+  ```ruby
+  Sentry.init do |config|
+    config.release = 'release-foo-v1'
+  end
+  ```
+
+  To disable this feature, set `config.auto_session_tracking` to `false`.
+
 ## 4.4.2
 
 - Fix NoMethodError when SDK's dsn is nil [#1433](https://github.com/getsentry/sentry-ruby/pull/1433)
