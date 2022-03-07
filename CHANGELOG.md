@@ -1,16 +1,46 @@
-## Unreleased
+## 5.2.0
 
 ### Features
 
 - Log Redis command arguments when sending PII is enabled [#1726](https://github.com/getsentry/sentry-ruby/pull/1726)
 - Add request env to sampling context [#1749](https://github.com/getsentry/sentry-ruby/pull/1749)
 
+  **Example**
+
+  ```rb
+  Sentry.init do |config|
+    config.traces_sampler = lambda do |sampling_context|
+      env = sampling_context[:env]
+
+      if env["REQUEST_METHOD"] == "GET"
+        0.01
+      else
+        0.1
+      end
+    end
+  end
+  ```
+
+- Check envelope size before sending it [#1747](https://github.com/getsentry/sentry-ruby/pull/1747)
+
+  The SDK will now check if the envelope's event items are oversized before sending the envelope. It goes like this:
+
+  1. If an event is oversized (200kb), the SDK will remove its breadcrumbs (which in our experience is the most common cause).
+  2. If the event size now falls within the limit, it'll be sent.
+  3. Otherwise, the event will be thrown away. The SDK will also log a debug message about the event's attributes size (in bytes) breakdown. For example,
+
+  ```
+  {event_id: 34, level: 7, timestamp: 22, environment: 13, server_name: 14, modules: 935, message: 5, user: 2, tags: 2, contexts: 820791, extra: 2, fingerprint: 2, platform: 6, sdk: 40, threads: 51690}
+  ```
+
+  This will help users report size-related issues in the future.
+
+
 - Automatic session tracking [#1715](https://github.com/getsentry/sentry-ruby/pull/1715)
 
   **Example**:
-  
-  ![image](https://user-images.githubusercontent.com/6536764/157057827-2893527e-7973-4901-a070-bd78a720574a.png)
 
+  <img width="80%" src="https://user-images.githubusercontent.com/6536764/157057827-2893527e-7973-4901-a070-bd78a720574a.png">
 
   The SDK now supports [automatic session tracking / release health](https://docs.sentry.io/product/releases/health/) by default in Rack based applications.  
   Aggregate statistics on successful / errored requests are collected and sent to the server every minute.  
