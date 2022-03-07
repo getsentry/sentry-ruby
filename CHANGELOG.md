@@ -26,8 +26,8 @@
   The SDK will now check if the envelope's event items are oversized before sending the envelope. It goes like this:
 
   1. If an event is oversized (200kb), the SDK will remove its breadcrumbs (which in our experience is the most common cause).
-  2-1. If the event size now falls within the limit, it'll be sent.
-  2-2. Otherwise, the event will be thrown away. The SDK will also log a debug message about the event's attributes size breakdown. For example,
+  2. If the event size now falls within the limit, it'll be sent.
+  3. Otherwise, the event will be thrown away. The SDK will also log a debug message about the event's attributes size (in bytes) breakdown. For example,
 
   ```
   {event_id: 34, level: 7, timestamp: 22, environment: 13, server_name: 14, modules: 935, message: 5, user: 2, tags: 2, contexts: 820791, extra: 2, fingerprint: 2, platform: 6, sdk: 40, threads: 51690}
