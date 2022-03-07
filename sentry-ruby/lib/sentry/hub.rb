@@ -105,6 +105,8 @@ module Sentry
 
       return unless event
 
+      current_scope.session&.update_from_exception(event.exception)
+
       capture_event(event, **options, &block).tap do
         # mark the exception as captured so we can use this information to avoid duplicated capturing
         exception.instance_variable_set(Sentry::CAPTURED_SIGNATURE, true)
@@ -128,8 +130,6 @@ module Sentry
 
     def capture_event(event, **options, &block)
       check_argument_type!(event, Sentry::Event)
-
-      current_scope.session&.update_from_event(event)
 
       return unless current_client
 

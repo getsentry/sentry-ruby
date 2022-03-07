@@ -4,7 +4,7 @@ module Sentry
   class Session
     attr_reader :started, :status
 
-    # TODO-neel add :crashed after adding handled
+    # TODO-neel add :crashed after adding handled mechanism
     STATUSES = %i(ok errored exited)
     AGGREGATE_STATUSES = %i(errored exited)
 
@@ -13,8 +13,8 @@ module Sentry
       @status = :ok
     end
 
-    def update_from_event(event)
-      return unless event.is_a?(Event) && event.exception
+    # TODO-neel add :crashed after adding handled mechanism
+    def update_from_exception(_exception)
       @status = :errored
     end
 
