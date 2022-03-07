@@ -5,6 +5,23 @@
 - Log Redis command arguments when sending PII is enabled [#1726](https://github.com/getsentry/sentry-ruby/pull/1726)
 - Add request env to sampling context [#1749](https://github.com/getsentry/sentry-ruby/pull/1749)
 
+- Automatic session tracking [#1715](https://github.com/getsentry/sentry-ruby/pull/1715)
+
+  **Example**:(TODO)
+
+  The SDK now supports [automatic session tracking / release health](https://docs.sentry.io/product/releases/health/) by default in Rack based applications.
+  Aggregate statistics on successful/errored requests are collected and sent to the server every minute.
+  To use this feature, just remember to set the `config.release` while initializing the SDK.
+
+  ```ruby
+  Sentry.init do |config|
+    config.release = 'release-foo-v1'
+  end
+  ```
+
+  To disable this feature, set `config.auto_session_tracking` to `false`.
+
+
 ### Bug Fixes
 
 - Require set library [#1753](https://github.com/getsentry/sentry-ruby/pull/1753)
