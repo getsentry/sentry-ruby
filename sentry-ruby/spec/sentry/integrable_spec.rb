@@ -16,6 +16,28 @@ RSpec.describe Sentry::Integrable do
     expect(meta).to eq({ name: "sentry.ruby.fake_integration", version: "0.1.0" })
   end
 
+  context "when the SDK is initialized" do
+    let(:io) { StringIO.new }
+    let(:logger) { Logger.new(io) }
+
+    module Sentry
+      module AnotherIntegration; end
+    end
+
+    before do
+      perform_basic_setup do |config|
+        config.logger = logger
+      end
+    end
+
+    it "logs warning message about the incorrect loading order" do
+      Sentry::AnotherIntegration.extend Sentry::Integrable
+      Sentry::AnotherIntegration.register_integration name: "another_integration", version: "0.1.0"
+
+      expect(io.string).to match(/Integration 'another_integration' is loaded after the SDK is initialized/)
+    end
+  end
+
   describe "helpers generation" do
     before do
       perform_basic_setup
