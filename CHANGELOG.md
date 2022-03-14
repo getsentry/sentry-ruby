@@ -5,6 +5,10 @@
 - Also check stringified breadcrumbs key when reducing payload size [#1758](https://github.com/getsentry/sentry-ruby/pull/1758)
   - Fixes [#1757](https://github.com/getsentry/sentry-ruby/issues/1757)
 
+### Miscellaneous
+
+- Warn user if any integration is required after SDK initialization [#1759](https://github.com/getsentry/sentry-ruby/pull/1759)
+
 ## 5.2.0
 
 ### Features
