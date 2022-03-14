@@ -99,6 +99,14 @@ module Sentry
     # @param name [String] name of the integration
     # @param version [String] version of the integration
     def register_integration(name, version)
+      if initialized?
+        logger.warn(LOGGER_PROGNAME) do
+          <<~MSG
+            Integration '#{name}' is loaded after the SDK is initialized, which can cause expected behavior.  Please make sure all integrations are loaded before SDK initialization.
+          MSG
+        end
+      end
+
       meta = { name: "sentry.ruby.#{name}", version: version }.freeze
       integrations[name.to_s] = meta
     end
