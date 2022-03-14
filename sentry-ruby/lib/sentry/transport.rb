@@ -73,7 +73,12 @@ module Sentry
         result = item.to_s
 
         if result.bytesize > Event::MAX_SERIALIZED_PAYLOAD_SIZE
-          item.payload.delete(:breadcrumbs)
+          if item.payload.key?(:breadcrumbs)
+            item.payload.delete(:breadcrumbs)
+          elsif item.payload.key?("breadcrumbs")
+            item.payload.delete("breadcrumbs")
+          end
+
           result = item.to_s
         end
 

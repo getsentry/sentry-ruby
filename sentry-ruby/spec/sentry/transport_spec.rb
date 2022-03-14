@@ -201,12 +201,24 @@ RSpec.describe Sentry::Transport do
         expect(serialized_result.bytesize).to be > Sentry::Event::MAX_SERIALIZED_PAYLOAD_SIZE
       end
 
-      it "sends the event and logs the action" do
+      it "deletes the event's breadcrumbs and sends it" do
         expect(subject).to receive(:send_data)
 
         subject.send_envelope(envelope)
 
         expect(io.string).to match(/Sending envelope with items \[event\]/)
+      end
+
+      context "when the event hash has string keys" do
+        let(:envelope) { subject.envelope_from_event(event.to_json_compatible) }
+
+        it "deletes the event's breadcrumbs and sends it" do
+          expect(subject).to receive(:send_data)
+
+          subject.send_envelope(envelope)
+
+          expect(io.string).to match(/Sending envelope with items \[event\]/)
+        end
       end
 
       context "if it's still oversized" do

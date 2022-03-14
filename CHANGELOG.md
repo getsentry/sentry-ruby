@@ -1,3 +1,10 @@
+## Unreleased
+
+### Bug Fixes
+
+- Also check stringified breadcrumbs key when reducing payload size [#1758](https://github.com/getsentry/sentry-ruby/pull/1758)
+  - Fixes [#1757](https://github.com/getsentry/sentry-ruby/issues/1757)
+
 ## 5.2.0
 
 ### Features
