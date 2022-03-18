@@ -150,7 +150,7 @@ module Sentry
         configuration.log_debug(event.to_json_compatible)
       end
 
-      @last_event_id = event&.event_id
+      @last_event_id = event&.event_id unless event.is_a?(Sentry::TransactionEvent)
       event
     end
 
