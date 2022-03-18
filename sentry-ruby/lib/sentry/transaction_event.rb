@@ -25,6 +25,7 @@ module Sentry
     def initialize(configuration:, integration_meta: nil, message: nil)
       super
       @type = TYPE
+      self.level = nil
     end
 
     # Sets the event's start_timestamp.
