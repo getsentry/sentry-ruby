@@ -4,6 +4,8 @@
 
 - Also check stringified breadcrumbs key when reducing payload size [#1758](https://github.com/getsentry/sentry-ruby/pull/1758)
   - Fixes [#1757](https://github.com/getsentry/sentry-ruby/issues/1757)
+- Ignore internal Sidekiq::JobRetry::Skip exception [#1763](https://github.com/getsentry/sentry-ruby/pull/1763)
+  - Fixes [#1731](https://github.com/getsentry/sentry-ruby/issues/1731)
 
 ### Miscellaneous
 
