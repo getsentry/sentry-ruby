@@ -1,3 +1,10 @@
+## Unreleased
+
+### Bug Fixes
+
+- Set `last_event_id` only for error events [#1767](https://github.com/getsentry/sentry-ruby/pull/1767)
+  - Fixes [#1766](https://github.com/getsentry/sentry-ruby/issues/1766)
+
 ## 5.2.1
 
 ### Bug Fixes
