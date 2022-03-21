@@ -444,6 +444,20 @@ RSpec.describe Sentry::Hub do
 
       expect(subject.last_event_id).to eq(event.event_id)
     end
+
+    it 'only records last_event_id for error events' do
+      exception = ZeroDivisionError.new("divided by 0")
+      transaction = Sentry::Transaction.new(name: "test transaction", op: "rack.request", hub: subject)
+
+      error_event = client.event_from_exception(exception)
+      transaction_event = client.event_from_transaction(transaction)
+
+      subject.capture_event(error_event)
+      subject.capture_event(transaction_event)
+
+      expect(subject.last_event_id).to eq(error_event.event_id)
+      expect(subject.last_event_id).not_to eq(transaction_event.event_id)
+    end
   end
 
   describe "#with_background_worker_disabled" do
