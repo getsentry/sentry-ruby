@@ -4,6 +4,9 @@
 
 - Set `last_event_id` only for error events [#1767](https://github.com/getsentry/sentry-ruby/pull/1767)
   - Fixes [#1766](https://github.com/getsentry/sentry-ruby/issues/1766)
+- Add `config.rails.register_error_subscriber` to control error reporter integration [#1771](https://github.com/getsentry/sentry-ruby/pull/1771)
+  - Fixes [#1731](https://github.com/getsentry/sentry-ruby/issues/1731), [#1754](https://github.com/getsentry/sentry-ruby/issues/1754), and [#1765](https://github.com/getsentry/sentry-ruby/issues/1765)
+  - [Discussion thread and explanation on the decision](https://github.com/rails/rails/pull/43625#issuecomment-1072514175)
 
 ## 5.2.1
 

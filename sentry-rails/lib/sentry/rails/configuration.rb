@@ -42,6 +42,12 @@ module Sentry
       'ActiveRecord::RecordNotFound'
     ].freeze
     class Configuration
+      # Rails 7.0 introduced a new error reporter feature, which the SDK once opted-in by default.
+      # But after receiving multiple issue reports, the integration seemed to cause serious troubles to some users.
+      # So the integration is now controlled by this configuration, which is disabled (false) by default.
+      # More information can be found from: https://github.com/rails/rails/pull/43625#issuecomment-1072514175
+      attr_accessor :register_error_subscriber
+
       # Rails catches exceptions in the ActionDispatch::ShowExceptions or
       # ActionDispatch::DebugExceptions middlewares, depending on the environment.
       # When `rails_report_rescued_exceptions` is true (it is by default), Sentry
@@ -55,6 +61,7 @@ module Sentry
       attr_accessor :tracing_subscribers
 
       def initialize
+        @register_error_subscriber = false
         @report_rescued_exceptions = true
         @skippable_job_adapters = []
         @tracing_subscribers = Set.new([

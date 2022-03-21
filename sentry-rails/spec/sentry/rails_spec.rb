@@ -209,31 +209,51 @@ RSpec.describe Sentry::Rails, type: :request do
   end
 
   describe "error reporter integration", skip: Rails.version.to_f < 7.0 do
-    before do
-      make_basic_app
-    end
-
-    it "registers Sentry::Rails::ErrorSubscriber to Rails" do
-      Rails.error.report(Exception.new, handled: false)
-
-      expect(transport.events.count).to eq(1)
-
-      ActiveSupport.error_reporter.report(Exception.new, handled: false)
-
-      expect(transport.events.count).to eq(2)
-    end
-
-    it "sets correct contextual data to the reported event" do
-      Rails.error.handle(severity: :info, context: { foo: "bar" }) do
-        1/0
+    context "when config.register_error_subscriber = false (default)" do
+      before do
+        make_basic_app
       end
 
-      expect(transport.events.count).to eq(1)
+      it "doesn't register Sentry::Rails::ErrorSubscriber" do
+        Rails.error.report(Exception.new, handled: false)
 
-      event = transport.events.first
-      expect(event.tags).to eq({ handled: true })
-      expect(event.level).to eq(:info)
-      expect(event.contexts).to include({ "rails.error" => { foo: "bar" }})
+        expect(transport.events.count).to eq(0)
+
+        ActiveSupport.error_reporter.report(Exception.new, handled: false)
+
+        expect(transport.events.count).to eq(0)
+      end
+    end
+
+    context "when config.register_error_subscriber = true" do
+      before do
+        make_basic_app do |config|
+          config.rails.register_error_subscriber = true
+        end
+      end
+
+      it "registers Sentry::Rails::ErrorSubscriber to Rails" do
+        Rails.error.report(Exception.new, handled: false)
+
+        expect(transport.events.count).to eq(1)
+
+        ActiveSupport.error_reporter.report(Exception.new, handled: false)
+
+        expect(transport.events.count).to eq(2)
+      end
+
+      it "sets correct contextual data to the reported event" do
+        Rails.error.handle(severity: :info, context: { foo: "bar" }) do
+          1/0
+        end
+
+        expect(transport.events.count).to eq(1)
+
+        event = transport.events.first
+        expect(event.tags).to eq({ handled: true })
+        expect(event.level).to eq(:info)
+        expect(event.contexts).to include({ "rails.error" => { foo: "bar" }})
+      end
     end
   end
 end
