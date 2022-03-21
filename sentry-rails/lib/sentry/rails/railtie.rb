@@ -47,7 +47,7 @@ module Sentry
       inject_breadcrumbs_logger
       activate_tracing
 
-      register_error_subscriber(app) if ::Rails.version.to_f >= 7.0
+      register_error_subscriber(app) if ::Rails.version.to_f >= 7.0 && Sentry.configuration.rails.register_error_subscriber
     end
 
     runner do
