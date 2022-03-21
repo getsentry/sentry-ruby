@@ -102,7 +102,7 @@ module Sentry
       if initialized?
         logger.warn(LOGGER_PROGNAME) do
           <<~MSG
-            Integration '#{name}' is loaded after the SDK is initialized, which can cause expected behavior.  Please make sure all integrations are loaded before SDK initialization.
+            Integration '#{name}' is loaded after the SDK is initialized, which can cause unexpected behavior.  Please make sure all integrations are loaded before SDK initialization.
           MSG
         end
       end
