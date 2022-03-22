@@ -7,6 +7,8 @@
 - Add `config.rails.register_error_subscriber` to control error reporter integration [#1771](https://github.com/getsentry/sentry-ruby/pull/1771)
   - Fixes [#1731](https://github.com/getsentry/sentry-ruby/issues/1731), [#1754](https://github.com/getsentry/sentry-ruby/issues/1754), and [#1765](https://github.com/getsentry/sentry-ruby/issues/1765)
   - [Discussion thread and explanation on the decision](https://github.com/rails/rails/pull/43625#issuecomment-1072514175)
+- Check if ActiveRecord connection exists before calling AR connection pool [#1769](https://github.com/getsentry/sentry-ruby/pull/1769)
+  - Fixes [#1745](https://github.com/getsentry/sentry-ruby/issues/1745)
 
 ## 5.2.1
 
