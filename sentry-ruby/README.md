@@ -29,7 +29,7 @@ If you're using `sentry-raven`, we recommend you to migrate to this new SDK. You
 
 ## Requirements
 
-We test on Ruby 2.4, 2.5, 2.6, 2.7, and 3.0 at the latest patchlevel/teeny version. We also support JRuby 9.0.
+We test on Ruby 2.4, 2.5, 2.6, 2.7, 3.0, and 3.1 at the latest patchlevel/teeny version. We also support JRuby 9.0.
 
 If you use self-hosted Sentry, please also make sure its version is above `20.6.0`.
 
