@@ -3,7 +3,7 @@ require 'spec_helper'
 RSpec.describe Sentry::Event do
   let(:configuration) do
     Sentry::Configuration.new.tap do |config|
-      config.dsn = DUMMY_DSN
+      config.dsn = Sentry::TestHelper::DUMMY_DSN
     end
   end
 
@@ -69,9 +69,7 @@ RSpec.describe Sentry::Event do
     require 'stringio'
 
     before do
-      Sentry.init do |config|
-        config.dsn = DUMMY_DSN
-      end
+      perform_basic_setup
 
       Sentry.get_current_scope.set_rack_env(
         'REQUEST_METHOD' => 'POST',

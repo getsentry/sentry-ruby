@@ -18,8 +18,7 @@ if ENV["CI"]
 end
 
 require "sentry-ruby"
-
-DUMMY_DSN = 'http://12345:67890@sentry.localdomain/sentry/42'
+require "sentry/test_helper"
 
 RSpec.configure do |config|
   # Enable flags like --only-failures and --next-failure
@@ -27,6 +26,8 @@ RSpec.configure do |config|
 
   # Disable RSpec exposing methods globally on `Module` and `main`
   config.disable_monkey_patching!
+
+  config.include(Sentry::TestHelper)
 
   config.expect_with :rspec do |c|
     c.syntax = :expect
@@ -90,7 +91,7 @@ end
 def perform_basic_setup
   Sentry.init do |config|
     config.logger = Logger.new(nil)
-    config.dsn = DUMMY_DSN
+    config.dsn = Sentry::TestHelper::DUMMY_DSN
     config.transport.transport_class = Sentry::DummyTransport
     # so the events will be sent synchronously for testing
     config.background_worker_threads = 0

@@ -7,15 +7,11 @@ RSpec.describe Sentry do
     Sentry::ErrorEvent.new(configuration: Sentry::Configuration.new)
   end
 
-  let(:transport) do
-    Sentry.get_current_client.transport
-  end
-
   describe ".init" do
     context "with block argument" do
       it "initializes the current hub and main hub" do
         described_class.init do |config|
-          config.dsn = DUMMY_DSN
+          config.dsn = Sentry::TestHelper::DUMMY_DSN
         end
 
         current_hub = described_class.get_current_hub
@@ -27,7 +23,7 @@ RSpec.describe Sentry do
 
     context "without block argument" do
       it "initializes the current hub and main hub" do
-        ENV['SENTRY_DSN'] = DUMMY_DSN
+        ENV['SENTRY_DSN'] = Sentry::TestHelper::DUMMY_DSN
 
         described_class.init
 
@@ -100,7 +96,7 @@ RSpec.describe Sentry do
 
         described_class.send(capture_helper, capture_subject)
 
-        expect(transport.events).to be_empty
+        expect(sentry_events).to be_empty
         expect(subject.last_event_id).to eq(nil)
       end
     end
@@ -137,14 +133,14 @@ RSpec.describe Sentry do
     it "sends the event" do
       described_class.send_event(event)
 
-      expect(transport.events.count).to eq(1)
+      expect(sentry_events.count).to eq(1)
     end
 
     it "sends the event with hint" do
       described_class.send_event(event, { foo: "bar" })
 
-      expect(transport.events.count).to eq(1)
-      event = transport.events.last
+      expect(sentry_events.count).to eq(1)
+      event = last_sentry_event
       expect(event.tags[:hint][:foo]).to eq("bar")
     end
   end
@@ -158,7 +154,7 @@ RSpec.describe Sentry do
     it "sends the event via current hub" do
       expect do
         described_class.capture_event(event)
-      end.to change { transport.events.count }.by(1)
+      end.to change { sentry_events.count }.by(1)
     end
   end
 
@@ -178,17 +174,17 @@ RSpec.describe Sentry do
     it "sends the exception via current hub" do
       expect do
         described_class.capture_exception(exception)
-      end.to change { transport.events.count }.by(1)
+      end.to change { sentry_events.count }.by(1)
     end
 
     it "doesn't send captured exception" do
       expect do
         described_class.capture_exception(exception)
-      end.to change { transport.events.count }.by(1)
+      end.to change { sentry_events.count }.by(1)
 
       expect do
         described_class.capture_exception(exception)
-      end.to change { transport.events.count }.by(0)
+      end.to change { sentry_events.count }.by(0)
     end
 
     it "doesn't do anything if the exception is excluded" do
@@ -207,7 +203,7 @@ RSpec.describe Sentry do
           described_class.capture_exception(e)
         end
 
-        event = transport.events.last.to_hash
+        event = last_sentry_event.to_hash
         last_frame = event.dig(:exception, :values, 0, :stacktrace, :frames).last
         expect(last_frame[:vars]).to eq(nil)
       end
@@ -233,7 +229,7 @@ RSpec.describe Sentry do
           described_class.capture_exception(e)
         end
 
-        event = transport.events.last.to_hash
+        event = last_sentry_event.to_hash
         last_frame = event.dig(:exception, :values, 0, :stacktrace, :frames).last
         expect(last_frame[:vars]).to include({ a: "1", b: "0" })
       end
@@ -245,7 +241,7 @@ RSpec.describe Sentry do
       result = described_class.with_exception_captured { 2 }
 
       expect(result).to eq(2)
-      expect(transport.events.count).to eq(0)
+      expect(sentry_events.count).to eq(0)
     end
 
     it "rescues and reports the exception happened inside the block" do
@@ -253,8 +249,8 @@ RSpec.describe Sentry do
         described_class.with_exception_captured(tags: { foo: "bar" }) { 1/0 }
       end.to raise_error(ZeroDivisionError)
 
-      expect(transport.events.count).to eq(1)
-      expect(transport.events.first.tags).to eq(foo: "bar")
+      expect(sentry_events.count).to eq(1)
+      expect(sentry_events.first.tags).to eq(foo: "bar")
     end
   end
 
@@ -269,7 +265,7 @@ RSpec.describe Sentry do
     it "sends the message via current hub" do
       expect do
         described_class.capture_message("Test", tags: { foo: "baz" })
-      end.to change { transport.events.count }.by(1)
+      end.to change { sentry_events.count }.by(1)
     end
 
     it "returns ErrorEvent" do
@@ -605,7 +601,7 @@ RSpec.describe Sentry do
 
     before do
       allow_any_instance_of(Sentry::Configuration).to receive(:project_root).and_return(fake_root)
-      ENV["SENTRY_DSN"] = DUMMY_DSN
+      ENV["SENTRY_DSN"] = Sentry::TestHelper::DUMMY_DSN
     end
 
     it 'defaults to nil' do
@@ -829,6 +825,8 @@ RSpec.describe Sentry do
 
     it "can reinitialize closed SDK" do
       perform_basic_setup
+
+      transport = Sentry.get_current_client.transport
 
       expect do
         described_class.capture_event(event)

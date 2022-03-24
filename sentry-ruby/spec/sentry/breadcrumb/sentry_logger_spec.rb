@@ -2,8 +2,7 @@ require "spec_helper"
 
 RSpec.describe "Sentry::Breadcrumbs::SentryLogger" do
   before do
-    Sentry.init do |config|
-      config.dsn = DUMMY_DSN
+    perform_basic_setup do |config|
       config.breadcrumbs_logger = [:sentry_logger]
     end
   end

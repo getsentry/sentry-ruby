@@ -15,7 +15,7 @@ RSpec.describe Sentry::Configuration do
       before do
         subject.release = nil
         subject.environment = nil
-        subject.dsn = DUMMY_DSN
+        subject.dsn = Sentry::TestHelper::DUMMY_DSN
       end
 
       it "returns the uri" do

@@ -7,7 +7,7 @@ RSpec.describe Sentry::Hub do
   end
   let(:configuration) do
     config = Sentry::Configuration.new
-    config.dsn = DUMMY_DSN
+    config.dsn = Sentry::TestHelper::DUMMY_DSN
     config.transport.transport_class = Sentry::DummyTransport
     config.background_worker_threads = 0
     config.logger = logger
