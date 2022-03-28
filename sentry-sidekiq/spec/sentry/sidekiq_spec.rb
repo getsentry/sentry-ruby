@@ -39,6 +39,7 @@ RSpec.describe Sentry::Sidekiq do
   it "registers error handlers and middlewares" do
     expect(Sidekiq.error_handlers).to include(described_class::ErrorHandler)
     expect(Sidekiq.server_middleware.entries.first.klass).to eq(described_class::SentryContextServerMiddleware)
+    expect(Sidekiq.client_middleware.entries.first.klass).to eq(described_class::SentryContextClientMiddleware)
   end
 
   it "captues exception raised in the worker" do
