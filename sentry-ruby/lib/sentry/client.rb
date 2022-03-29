@@ -80,9 +80,10 @@ module Sentry
 
       integration_meta = Sentry.integrations[hint[:integration]]
 
-      Event.new(configuration: configuration, integration_meta: integration_meta).tap do |event|
+      ErrorEvent.new(configuration: configuration, integration_meta: integration_meta).tap do |event|
         event.add_exception_interface(exception)
         event.add_threads_interface(crashed: true)
+        event.level = :error
       end
     end
 
@@ -94,8 +95,9 @@ module Sentry
       return unless @configuration.sending_allowed?
 
       integration_meta = Sentry.integrations[hint[:integration]]
-      event = Event.new(configuration: configuration, integration_meta: integration_meta, message: message)
+      event = ErrorEvent.new(configuration: configuration, integration_meta: integration_meta, message: message)
       event.add_threads_interface(backtrace: backtrace || caller)
+      event.level = :error
       event
     end
 

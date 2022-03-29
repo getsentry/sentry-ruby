@@ -112,6 +112,7 @@ RSpec.describe Sentry::Client do
       expect(event[:transaction]).to eq("test transaction")
       expect(event[:spans].count).to eq(1)
       expect(event[:spans][0][:op]).to eq("finished child")
+      expect(event[:level]).to eq(nil)
     end
   end
 
