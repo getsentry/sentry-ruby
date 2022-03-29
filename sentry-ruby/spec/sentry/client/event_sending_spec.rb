@@ -71,7 +71,7 @@ RSpec.describe Sentry::Client do
 
         returned = subject.capture_event(event, scope)
 
-        expect(returned).to be_a(Sentry::Event)
+        expect(returned).to be_a(Sentry::ErrorEvent)
         expect(subject.transport.events.first).to eq(event.to_json_compatible)
       end
 
@@ -91,7 +91,7 @@ RSpec.describe Sentry::Client do
         it "doesn't cause any issue" do
           returned = subject.capture_event(event, scope, { background: false })
 
-          expect(returned).to be_a(Sentry::Event)
+          expect(returned).to be_a(Sentry::ErrorEvent)
           expect(subject.transport.events.first).to eq(event)
         end
       end
@@ -109,7 +109,7 @@ RSpec.describe Sentry::Client do
 
           returned = subject.capture_event(event, scope, { foo: "bar" })
 
-          expect(returned).to be_a(Sentry::Event)
+          expect(returned).to be_a(Sentry::ErrorEvent)
           event = subject.transport.events.first
           expect(event.dig("tags", "hint")).to eq({ "foo" => "bar" })
         end
@@ -343,7 +343,7 @@ RSpec.describe Sentry::Client do
         end
 
         it "swallows and logs Sentry::ExternalError (caused by transport's networking error)" do
-          expect(subject.capture_event(event, scope)).to be_a(Sentry::Event)
+          expect(subject.capture_event(event, scope)).to be_a(Sentry::ErrorEvent)
           sleep(0.2)
 
           expect(subject.transport).to have_recorded_lost_event(:network_error, 'event')
@@ -354,7 +354,7 @@ RSpec.describe Sentry::Client do
         it "swallows and logs errors caused by the user (like in before_send)" do
           configuration.before_send = -> (_, _) { raise TypeError }
 
-          expect(subject.capture_event(event, scope)).to be_a(Sentry::Event)
+          expect(subject.capture_event(event, scope)).to be_a(Sentry::ErrorEvent)
           sleep(0.2)
 
           expect(string_io.string).to match(/Event sending failed: TypeError/)

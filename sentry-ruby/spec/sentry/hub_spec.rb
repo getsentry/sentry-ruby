@@ -134,7 +134,7 @@ RSpec.describe Sentry::Hub do
     let(:message) { "Test message" }
 
     it "returns an Event instance" do
-      expect(subject.capture_message(message)).to be_a(Sentry::Event)
+      expect(subject.capture_message(message)).to be_a(Sentry::ErrorEvent)
     end
 
     it 'initializes an Event, and sends it via the Client' do
@@ -171,7 +171,7 @@ RSpec.describe Sentry::Hub do
     let(:exception) { ZeroDivisionError.new("divided by 0") }
 
     it "returns an Event instance" do
-      expect(subject.capture_exception(exception)).to be_a(Sentry::Event)
+      expect(subject.capture_exception(exception)).to be_a(Sentry::ErrorEvent)
     end
 
     it 'initializes an Event, and sends it via the Client' do
@@ -208,7 +208,7 @@ RSpec.describe Sentry::Hub do
     end
 
     it "returns an Event instance" do
-      expect(subject.capture_event(event)).to be_a(Sentry::Event)
+      expect(subject.capture_event(event)).to be_a(Sentry::ErrorEvent)
     end
 
     it 'sends the event via client' do

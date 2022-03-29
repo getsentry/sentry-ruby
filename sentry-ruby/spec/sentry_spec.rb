@@ -4,7 +4,7 @@ RSpec.describe Sentry do
   end
 
   let(:event) do
-    Sentry::Event.new(configuration: Sentry::Configuration.new)
+    Sentry::ErrorEvent.new(configuration: Sentry::Configuration.new)
   end
 
   let(:transport) do
@@ -170,6 +170,11 @@ RSpec.describe Sentry do
       let(:capture_subject) { exception }
     end
 
+    it "returns ErrorEvent" do
+      event = described_class.capture_exception(exception)
+      expect(event).to be_a(Sentry::ErrorEvent)
+    end
+
     it "sends the exception via current hub" do
       expect do
         described_class.capture_exception(exception)
@@ -247,6 +252,11 @@ RSpec.describe Sentry do
       expect do
         described_class.capture_message("Test", tags: { foo: "baz" })
       end.to change { transport.events.count }.by(1)
+    end
+
+    it "returns ErrorEvent" do
+      event = described_class.capture_message(message)
+      expect(event).to be_a(Sentry::ErrorEvent)
     end
   end
 
