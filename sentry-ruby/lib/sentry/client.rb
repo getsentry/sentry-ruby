@@ -135,7 +135,7 @@ module Sentry
 
       event
     rescue => e
-      loggable_event_type = (event_type || "event").capitalize
+      loggable_event_type = event_type.capitalize
       log_error("#{loggable_event_type} sending failed", e, debug: configuration.debug)
 
       event_info = Event.get_log_message(event.to_hash)
@@ -176,8 +176,7 @@ module Sentry
         async_block.call(event_hash)
       end
     rescue => e
-      loggable_event_type = event_hash["type"] || "event"
-      log_error("Async #{loggable_event_type} sending failed", e, debug: configuration.debug)
+      log_error("Async #{event_hash["type"]} sending failed", e, debug: configuration.debug)
       send_event(event, hint)
     end
   end

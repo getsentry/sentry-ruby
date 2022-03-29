@@ -148,7 +148,7 @@ module Sentry
       # Convert to hash
       event_payload = event.to_hash
       event_id = event_payload[:event_id] || event_payload["event_id"]
-      item_type = get_item_type(event_payload)
+      item_type = event_payload[:type] || event_payload["type"]
 
       envelope = Envelope.new(
         {
@@ -174,15 +174,10 @@ module Sentry
       return unless @send_client_reports
       return unless CLIENT_REPORT_REASONS.include?(reason)
 
-      item_type ||= 'event'
       @discarded_events[[reason, item_type]] += 1
     end
 
     private
-
-    def get_item_type(event_hash)
-      event_hash[:type] || event_hash["type"] || "event"
-    end
 
     def fetch_pending_client_report
       return nil unless @send_client_reports
