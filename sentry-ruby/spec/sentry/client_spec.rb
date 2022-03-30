@@ -65,7 +65,7 @@ RSpec.describe Sentry::Client do
       event = subject.event_from_message(message)
       hash = event.to_hash
 
-      expect(event).to be_a(Sentry::Event)
+      expect(event).to be_a(Sentry::ErrorEvent)
       expect(hash[:message]).to eq(message)
       expect(hash[:level]).to eq(:error)
     end
@@ -112,6 +112,7 @@ RSpec.describe Sentry::Client do
       expect(event[:transaction]).to eq("test transaction")
       expect(event[:spans].count).to eq(1)
       expect(event[:spans][0][:op]).to eq("finished child")
+      expect(event[:level]).to eq(nil)
     end
   end
 
@@ -156,7 +157,7 @@ RSpec.describe Sentry::Client do
 
     it 'returns an event' do
       event = subject.event_from_exception(ZeroDivisionError.new("divided by 0"))
-      expect(event).to be_a(Sentry::Event)
+      expect(event).to be_a(Sentry::ErrorEvent)
       expect(Sentry::Event.get_message_from_exception(event.to_hash)).to eq("ZeroDivisionError: divided by 0")
     end
 
@@ -196,11 +197,11 @@ RSpec.describe Sentry::Client do
         let(:config) { subject.configuration }
 
         context "invalid exclusion type" do
-          it 'returns Sentry::Event' do
+          it 'returns Sentry::ErrorEvent' do
             config.excluded_exceptions << nil
             config.excluded_exceptions << 1
             config.excluded_exceptions << {}
-            expect(subject.event_from_exception(Sentry::Test::BaseExc.new)).to be_a(Sentry::Event)
+            expect(subject.event_from_exception(Sentry::Test::BaseExc.new)).to be_a(Sentry::ErrorEvent)
           end
         end
 
@@ -227,9 +228,9 @@ RSpec.describe Sentry::Client do
             ).to be_nil
           end
 
-          it 'returns Sentry::Event for an undefined exception class' do
+          it 'returns Sentry::ErrorEvent for an undefined exception class' do
             config.excluded_exceptions << 'Sentry::Test::NonExistentExc'
-            expect(subject.event_from_exception(Sentry::Test::BaseExc.new)).to be_a(Sentry::Event)
+            expect(subject.event_from_exception(Sentry::Test::BaseExc.new)).to be_a(Sentry::ErrorEvent)
           end
         end
 

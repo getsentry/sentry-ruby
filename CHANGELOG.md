@@ -10,6 +10,10 @@
 - Check if ActiveRecord connection exists before calling AR connection pool [#1769](https://github.com/getsentry/sentry-ruby/pull/1769)
   - Fixes [#1745](https://github.com/getsentry/sentry-ruby/issues/1745)
 
+### Refactoring
+
+- Correct inaccurate event model relationships [#1777](https://github.com/getsentry/sentry-ruby/pull/1777)
+
 ## 5.2.1
 
 ### Bug Fixes

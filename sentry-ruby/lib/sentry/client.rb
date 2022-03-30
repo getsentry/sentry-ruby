@@ -80,9 +80,10 @@ module Sentry
 
       integration_meta = Sentry.integrations[hint[:integration]]
 
-      Event.new(configuration: configuration, integration_meta: integration_meta).tap do |event|
+      ErrorEvent.new(configuration: configuration, integration_meta: integration_meta).tap do |event|
         event.add_exception_interface(exception)
         event.add_threads_interface(crashed: true)
+        event.level = :error
       end
     end
 
@@ -94,8 +95,9 @@ module Sentry
       return unless @configuration.sending_allowed?
 
       integration_meta = Sentry.integrations[hint[:integration]]
-      event = Event.new(configuration: configuration, integration_meta: integration_meta, message: message)
+      event = ErrorEvent.new(configuration: configuration, integration_meta: integration_meta, message: message)
       event.add_threads_interface(backtrace: backtrace || caller)
+      event.level = :error
       event
     end
 
@@ -133,7 +135,7 @@ module Sentry
 
       event
     rescue => e
-      loggable_event_type = (event_type || "event").capitalize
+      loggable_event_type = event_type.capitalize
       log_error("#{loggable_event_type} sending failed", e, debug: configuration.debug)
 
       event_info = Event.get_log_message(event.to_hash)
@@ -174,8 +176,7 @@ module Sentry
         async_block.call(event_hash)
       end
     rescue => e
-      loggable_event_type = event_hash["type"] || "event"
-      log_error("Async #{loggable_event_type} sending failed", e, debug: configuration.debug)
+      log_error("Async #{event_hash["type"]} sending failed", e, debug: configuration.debug)
       send_event(event, hint)
     end
   end

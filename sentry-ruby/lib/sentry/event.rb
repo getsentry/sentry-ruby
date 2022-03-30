@@ -9,7 +9,10 @@ require 'sentry/utils/request_id'
 require 'sentry/utils/custom_inspection'
 
 module Sentry
+  # This is an abstract class that defines the shared attributes of an event.
+  # Please don't use it directly. The user-facing classes are its child classes.
   class Event
+    TYPE = "event"
     # These are readable attributes.
     SERIALIZEABLE_ATTRIBUTES = %i(
       event_id level timestamp
@@ -35,12 +38,6 @@ module Sentry
     # @return [RequestInterface]
     attr_reader :request
 
-    # @return [ExceptionInterface]
-    attr_reader :exception
-
-    # @return [ThreadsInterface]
-    attr_reader :threads
-
     # @param configuration [Configuration]
     # @param integration_meta [Hash, nil]
     # @param message [String, nil]
@@ -49,6 +46,7 @@ module Sentry
       @event_id      = SecureRandom.uuid.delete("-")
       @timestamp     = Sentry.utc_now.iso8601
       @platform      = :ruby
+      @type          = self.class::TYPE
       @sdk           = integration_meta || Sentry.sdk_meta
 
       @user          = {}
@@ -71,8 +69,6 @@ module Sentry
       @rack_env_whitelist = configuration.rack_env_whitelist
 
       @message = (message || "").byteslice(0..MAX_MESSAGE_SIZE_IN_BYTES)
-
-      self.level = :error
     end
 
     class << self
@@ -146,33 +142,12 @@ module Sentry
       data = serialize_attributes
       data[:breadcrumbs] = breadcrumbs.to_hash if breadcrumbs
       data[:request] = request.to_hash if request
-      data[:exception] = exception.to_hash if exception
-      data[:threads] = threads.to_hash if threads
-
       data
     end
 
     # @return [Hash]
     def to_json_compatible
       JSON.parse(JSON.generate(to_hash))
-    end
-
-    # @!visibility private
-    def add_threads_interface(backtrace: nil, **options)
-      @threads = ThreadsInterface.build(
-        backtrace: backtrace,
-        stacktrace_builder: @stacktrace_builder,
-        **options
-      )
-    end
-
-    # @!visibility private
-    def add_exception_interface(exception)
-      if exception.respond_to?(:sentry_context)
-        @extra.merge!(exception.sentry_context)
-      end
-
-      @exception = Sentry::ExceptionInterface.build(exception: exception, stacktrace_builder: @stacktrace_builder)
     end
 
     private
