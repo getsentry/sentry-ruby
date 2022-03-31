@@ -14,6 +14,10 @@
 
 - Correct inaccurate event model relationships [#1777](https://github.com/getsentry/sentry-ruby/pull/1777)
 
+### Miscellaneous
+
+- Log message when shutting down/killing SDK managed components [#1779](https://github.com/getsentry/sentry-ruby/pull/1779)
+
 ## 5.2.1
 
 ### Bug Fixes

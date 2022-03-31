@@ -127,4 +127,12 @@ RSpec.describe Sentry::SessionFlusher do
       expect(pending_aggregates.values.first).to include({ errored: 0, exited: 1 })
     end
   end
+
+  describe "#kill" do
+    it "logs message when killing the thread" do
+      subject.kill
+
+      expect(string_io.string).to match(/Killing session flusher/)
+    end
+  end
 end
