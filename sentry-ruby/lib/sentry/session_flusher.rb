@@ -39,6 +39,7 @@ module Sentry
     end
 
     def kill
+      log_debug("Killing session flusher")
       @thread&.kill
     end
 

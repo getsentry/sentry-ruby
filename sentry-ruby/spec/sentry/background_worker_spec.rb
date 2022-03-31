@@ -62,7 +62,7 @@ RSpec.describe Sentry::BackgroundWorker do
         expect(worker.number_of_threads).to eq(5)
 
         expect(string_io.string).to match(
-          /initialized a background worker with 5 threads/
+          /Initializing the background worker with 5 threads/
         )
       end
     end
@@ -80,6 +80,17 @@ RSpec.describe Sentry::BackgroundWorker do
 
       sleep(0.1)
       expect(string_io.string).to match(/exception happened in background worker: divided by 0/)
+    end
+  end
+
+  describe "#shutdown" do
+    before { configuration.background_worker_threads = 1 }
+
+    it "logs message about the shutdown" do
+      worker = described_class.new(configuration)
+      worker.shutdown
+
+      expect(string_io.string).to match(/Shutting down background worker/)
     end
   end
 end
