@@ -389,7 +389,7 @@ RSpec.describe Sentry::Rack::CaptureExceptions, rack: true do
         allow(Random).to receive(:rand).and_return(0.4)
       end
 
-      it "starts a span and finishes it" do
+      it "starts a transaction and finishes it" do
         app = ->(_) do
           [200, {}, ["ok"]]
         end
@@ -404,6 +404,37 @@ RSpec.describe Sentry::Rack::CaptureExceptions, rack: true do
         expect(transaction.contexts.dig(:trace, :status)).to eq("ok")
         expect(transaction.contexts.dig(:trace, :op)).to eq("rack.request")
         expect(transaction.spans.count).to eq(0)
+      end
+
+      describe "Sentry.with_child_span" do
+        it "sets nested spans correctly under the request's transaction" do
+          app = ->(_) do
+            Sentry.with_child_span(op: "first level") do
+              Sentry.with_child_span(op: "second level") do
+                [200, {}, ["ok"]]
+              end
+            end
+          end
+
+          stack = described_class.new(app)
+
+          stack.call(env)
+
+          transaction = transport.events.last
+          expect(transaction.type).to eq("transaction")
+          expect(transaction.timestamp).not_to be_nil
+          expect(transaction.contexts.dig(:trace, :status)).to eq("ok")
+          expect(transaction.contexts.dig(:trace, :op)).to eq("rack.request")
+          expect(transaction.spans.count).to eq(2)
+
+          first_span = transaction.spans.first
+          expect(first_span[:op]).to eq("first level")
+          expect(first_span[:parent_span_id]).to eq(transaction.contexts.dig(:trace, :span_id))
+
+          second_span = transaction.spans.last
+          expect(second_span[:op]).to eq("second level")
+          expect(second_span[:parent_span_id]).to eq(first_span[:span_id])
+        end
       end
     end
 
