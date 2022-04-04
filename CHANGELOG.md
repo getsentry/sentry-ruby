@@ -1,5 +1,9 @@
 ## Unreleased
 
+### Features
+
+- Add `Sentry.with_child_span` for easier span recording [#1783](https://github.com/getsentry/sentry-ruby/pull/1783)
+
 ### Bug Fixes
 
 - Set `last_event_id` only for error events [#1767](https://github.com/getsentry/sentry-ruby/pull/1767)
