@@ -13,6 +13,8 @@
   - [Discussion thread and explanation on the decision](https://github.com/rails/rails/pull/43625#issuecomment-1072514175)
 - Check if ActiveRecord connection exists before calling AR connection pool [#1769](https://github.com/getsentry/sentry-ruby/pull/1769)
   - Fixes [#1745](https://github.com/getsentry/sentry-ruby/issues/1745)
+- Fix `sentry-rails`'s tracing spans not nesting issue - [#1784](https://github.com/getsentry/sentry-ruby/pull/1784)
+  - Fixes [#1723](https://github.com/getsentry/sentry-ruby/issues/1723)
 
 ### Refactoring
 
