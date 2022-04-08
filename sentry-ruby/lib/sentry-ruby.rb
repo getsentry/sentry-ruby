@@ -385,6 +385,40 @@ module Sentry
       get_current_hub.start_transaction(**options)
     end
 
+    # Records the block's execution as a child of the current span.
+    # If the current scope doesn't have a span, the block would still be executed but the yield param will be nil.
+    # @param attributes [Hash] attributes for the child span.
+    # @yieldparam child_span [Span, nil]
+    # @return yield result
+    #
+    # @example
+    #   Sentry.with_child_span(op: "my operation") do |child_span|
+    #     child_span.set_data(operation_data)
+    #     child_span.set_description(operation_detail)
+    #     # result will be returned
+    #   end
+    #
+    def with_child_span(**attributes, &block)
+      current_span = get_current_scope.get_span
+
+      if current_span
+        result = nil
+
+        begin
+          current_span.with_child_span(**attributes) do |child_span|
+            get_current_scope.set_span(child_span)
+            result = yield(child_span)
+          end
+        ensure
+          get_current_scope.set_span(current_span)
+        end
+
+        result
+      else
+        yield(nil)
+      end
+    end
+
     # Returns the id of the lastly reported Sentry::Event.
     #
     # @return [String, nil]

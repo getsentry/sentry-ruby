@@ -457,6 +457,50 @@ RSpec.describe Sentry do
     end
   end
 
+  describe ".with_child_span" do
+    context "when the current span is nil" do
+      before do
+        expect(described_class.get_current_scope.get_span).to eq(nil)
+      end
+
+      it "yields the block with nil" do
+        span = nil
+        executed = false
+
+        result = described_class.with_child_span do |child_span|
+          span = child_span
+          executed = true
+          "foobar"
+        end
+
+        expect(result).to eq("foobar")
+        expect(span).to eq(nil)
+        expect(executed).to eq(true)
+      end
+    end
+
+    context "when the current span is present" do
+      let(:parent_span) { Sentry::Span.new(op: "parent") }
+
+      before do
+        described_class.get_current_scope.set_span(parent_span)
+      end
+
+      it "records the child span and attaches it to the parent span" do
+        child_span = nil
+
+        result = described_class.with_child_span(op: "child") do |span|
+          child_span = span
+          "foobar"
+        end
+
+        expect(result).to eq("foobar")
+        expect(child_span.parent_span_id).to eq(parent_span.span_id)
+        expect(child_span.timestamp).to be_a(Float)
+      end
+    end
+  end
+
   describe ".last_event_id" do
     it "gets the last_event_id from current_hub" do
       expect(described_class.get_current_hub).to receive(:last_event_id)
