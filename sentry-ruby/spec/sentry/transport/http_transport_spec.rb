@@ -103,6 +103,32 @@ RSpec.describe Sentry::HTTPTransport do
       subject.send_data(data)
     end
 
+    it "accepts a custom proxy string" do
+      configuration.transport.proxy = "https://stan:foobar@example.com:8080"
+
+      stub_request(fake_response) do |_, http_obj|
+        expect(http_obj.proxy_address).to eq("example.com")
+        expect(http_obj.proxy_user).to eq("stan")
+        expect(http_obj.proxy_pass).to eq("foobar")
+        expect(http_obj.proxy_port).to eq(8080)
+      end
+
+      subject.send_data(data)
+    end
+
+    it "accepts a custom proxy URI" do
+      configuration.transport.proxy = URI("https://stan:foobar@example.com:8080")
+
+      stub_request(fake_response) do |_, http_obj|
+        expect(http_obj.proxy_address).to eq("example.com")
+        expect(http_obj.proxy_user).to eq("stan")
+        expect(http_obj.proxy_pass).to eq("foobar")
+        expect(http_obj.proxy_port).to eq(8080)
+      end
+
+      subject.send_data(data)
+    end
+
     it "accepts custom timeout" do
       configuration.transport.timeout = 10
 
