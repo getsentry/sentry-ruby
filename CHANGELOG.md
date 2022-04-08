@@ -13,6 +13,8 @@
   - [Discussion thread and explanation on the decision](https://github.com/rails/rails/pull/43625#issuecomment-1072514175)
 - Check if ActiveRecord connection exists before calling AR connection pool [#1769](https://github.com/getsentry/sentry-ruby/pull/1769)
   - Fixes [#1745](https://github.com/getsentry/sentry-ruby/issues/1745)
+- Update `config.transport.proxy` to allow String and URI values as previously supported by `sentry-ruby` versions <= 4.8 using Faraday
+  - Fixes [#1782](https://github.com/getsentry/sentry-ruby/issues/1782)
 
 ### Refactoring
 
@@ -79,8 +81,8 @@
 
   <img width="80%" src="https://user-images.githubusercontent.com/6536764/157057827-2893527e-7973-4901-a070-bd78a720574a.png">
 
-  The SDK now supports [automatic session tracking / release health](https://docs.sentry.io/product/releases/health/) by default in Rack based applications.  
-  Aggregate statistics on successful / errored requests are collected and sent to the server every minute.  
+  The SDK now supports [automatic session tracking / release health](https://docs.sentry.io/product/releases/health/) by default in Rack based applications.
+  Aggregate statistics on successful / errored requests are collected and sent to the server every minute.
   To use this feature, make sure the SDK can detect your app's release. Or you have set it with:
 
   ```ruby
