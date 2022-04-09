@@ -130,7 +130,7 @@ module Sentry
       server = URI(@dsn.server)
 
       connection =
-        if proxy = @transport_configuration.proxy
+        if proxy = normalize_proxy(@transport_configuration.proxy)
           ::Net::HTTP.new(server.hostname, server.port, proxy[:uri].hostname, proxy[:uri].port, proxy[:user], proxy[:password])
         else
           ::Net::HTTP.new(server.hostname, server.port, nil)
@@ -146,6 +146,20 @@ module Sentry
       end
 
       connection
+    end
+
+    def normalize_proxy(proxy)
+      return proxy unless proxy
+
+      case proxy
+      when String
+        uri = URI(proxy)
+        { uri: uri, user: uri.user, password: uri.password }
+      when URI
+        { uri: proxy, user: proxy.user, password: proxy.password }
+      when Hash
+        proxy
+      end
     end
 
     def ssl_configuration
