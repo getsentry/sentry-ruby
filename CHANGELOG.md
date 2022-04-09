@@ -17,6 +17,7 @@
   - Fixes [#1723](https://github.com/getsentry/sentry-ruby/issues/1723)
 - Update `config.transport.proxy` to allow String and URI values as previously supported by `sentry-ruby` versions <= 4.8 using Faraday
   - Fixes [#1782](https://github.com/getsentry/sentry-ruby/issues/1782)
+- Register SentryContextClientMiddleware on sidekiq workers [#1774](https://github.com/getsentry/sentry-ruby/pull/1774)
 
 ### Refactoring
 
