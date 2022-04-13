@@ -200,4 +200,38 @@ RSpec.describe Sentry::Rails::Tracing, type: :request do
       expect(transport.events.count).to eq(1)
     end
   end
+
+  context "with traces_sampler set" do
+    before do
+      expect(described_class).to receive(:subscribe_tracing_events).and_call_original
+
+      make_basic_app do |config|
+        config.traces_sampler = lambda do |sampling_context|
+          request_env = sampling_context[:env]
+          case request_env.dig('HTTP_USER_AGENT')
+          when /node-fetch/
+            0.0
+          else
+            1.0
+          end
+        end
+      end
+    end
+
+    context "with sampling condition matches" do
+      it "records all transactions" do
+        get "/posts"
+
+        expect(transport.events.count).to eq(2)
+      end
+    end
+
+    context "with sampling condition doesn't matched" do
+      it "doesn't records any transactions" do
+        get "/posts", headers: { "user-agent" => "node-fetch/1.0" }
+
+        expect(transport.events.count).to eq(1)
+      end
+    end
+  end
 end
