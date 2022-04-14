@@ -208,7 +208,7 @@ RSpec.describe Sentry::Rails::Tracing, type: :request do
       make_basic_app do |config|
         config.traces_sampler = lambda do |sampling_context|
           request_env = sampling_context[:env]
-          case request_env.dig('HTTP_USER_AGENT')
+          case request_env&.dig('HTTP_USER_AGENT')
           when /node-fetch/
             0.0
           else
