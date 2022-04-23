@@ -185,6 +185,25 @@ RSpec.describe Sentry::Net::HTTP do
 
         verify_spans(transaction)
       end
+
+      context "with nested span" do
+        let(:span) { transaction.start_child(op: "child span") }
+
+        before do
+          Sentry.get_current_scope.set_span(span)
+        end
+
+        it "attaches http spans to the span instead of top-level transaction" do
+          stub_normal_response(code: "200")
+          response = Net::HTTP.get_response(URI("http://example.com/path?foo=bar"))
+          expect(response.code).to eq("200")
+
+          expect(transaction.span_recorder.spans.count).to eq(3)
+          expect(span.parent_span_id).to eq(transaction.span_id)
+          http_span = transaction.span_recorder.spans.last
+          expect(http_span.parent_span_id).to eq(span.span_id)
+        end
+      end
     end
 
     context "with unsampled transaction" do
