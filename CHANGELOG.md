@@ -39,6 +39,7 @@
 
 - Respect `report_rescued_exceptions` config [#1847](https://github.com/getsentry/sentry-ruby/pull/1847)
   - Fixes [#1840](https://github.com/getsentry/sentry-ruby/issues/1840)
+- Rescue event's to JSON conversion error [#1853](https://github.com/getsentry/sentry-ruby/pull/1853)
 
 ### Refactoring
 

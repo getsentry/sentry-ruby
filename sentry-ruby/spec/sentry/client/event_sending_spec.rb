@@ -85,6 +85,20 @@ RSpec.describe Sentry::Client do
         expect(returned).to eq(nil)
       end
 
+      context "with to json conversion failed" do
+        let(:logger) { ::Logger.new(string_io) }
+        let(:string_io) { StringIO.new }
+        let(:event) { subject.event_from_message("Bad data '\x80\xF8'") }
+
+        it "does not mask the exception" do
+          configuration.logger = logger
+
+          subject.capture_event(event, scope)
+
+          expect(string_io.string).to include("Converting event (#{event.event_id}) to JSON compatible hash failed: source sequence is illegal/malformed utf-8")
+        end
+      end
+
       context "with nil as value (the legacy way to disable it)" do
         let(:async_block) { nil }
 
