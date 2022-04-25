@@ -176,7 +176,7 @@ module Sentry
         async_block.call(event_hash)
       end
     rescue => e
-      log_error("Async #{event_hash["type"]} sending failed", e, debug: configuration.debug)
+      log_error("Async #{(event_hash.nil? ? nil : event_hash["type"] )|| "unknown"} sending failed", e, debug: configuration.debug)
       send_event(event, hint)
     end
   end

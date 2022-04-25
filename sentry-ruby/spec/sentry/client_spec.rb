@@ -23,6 +23,32 @@ RSpec.describe Sentry::Client do
     allow(Time).to receive(:now).and_return fake_time
   end
 
+  describe "#capture_event" do
+    let(:logger) { ::Logger.new(string_io) }
+    let(:scope) { Sentry::Scope.new }
+    let(:string_io) { StringIO.new }
+
+    before do
+      configuration.logger = logger
+    end
+
+    context "async" do
+      before do
+        configuration.async = ->(event) { }
+      end
+
+      context "and the JSON encoding fails" do
+        let(:event) { subject.event_from_message("Bad data '\x80\xF8'") }
+
+        it "does not mask the exception" do
+          subject.capture_event(event, scope)
+
+          expect(string_io.string).to match(/Async unknown sending failed: source sequence is illegal\/malformed utf-8/)
+        end
+      end
+    end
+  end
+
   describe "#transport" do
     let(:configuration) { Sentry::Configuration.new }
 
