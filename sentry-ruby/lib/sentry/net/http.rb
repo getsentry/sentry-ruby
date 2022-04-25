@@ -74,11 +74,11 @@ module Sentry
       end
 
       def start_sentry_span
-        return unless Sentry.initialized? && transaction = Sentry.get_current_scope.get_transaction
+        return unless Sentry.initialized? && span = Sentry.get_current_scope.get_span
         return if from_sentry_sdk?
-        return if transaction.sampled == false
+        return if span.sampled == false
 
-        transaction.start_child(op: OP_NAME, start_timestamp: Sentry.utc_now.to_f)
+        span.start_child(op: OP_NAME, start_timestamp: Sentry.utc_now.to_f)
       end
 
       def finish_sentry_span(sentry_span)

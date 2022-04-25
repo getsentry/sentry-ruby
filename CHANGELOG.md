@@ -20,6 +20,7 @@
 - Register SentryContextClientMiddleware on sidekiq workers [#1774](https://github.com/getsentry/sentry-ruby/pull/1774)
 - Add request env to sampling context when using `sentry-rails` [#1792](https://github.com/getsentry/sentry-ruby/pull/1792)
   - Fixes [#1791](https://github.com/getsentry/sentry-ruby/issues/1791)
+- Fix net-http tracing's span nesting issue [#1796](https://github.com/getsentry/sentry-ruby/pull/1796)
 
 ### Refactoring
 
