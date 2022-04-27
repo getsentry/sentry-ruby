@@ -4,6 +4,15 @@
 
 - Add `Sentry.with_child_span` for easier span recording [#1783](https://github.com/getsentry/sentry-ruby/pull/1783)
 
+```rb
+operation_result = Sentry.with_child_span(op: "my op") do |child_span|
+  my_operation
+end
+
+# the "my op" span will be attached to the result of Sentry.get_current_scope.get_span
+# which could be either the top-level transaction, or a span set by the user or other integrations
+```
+
 ### Bug Fixes
 
 - Set `last_event_id` only for error events [#1767](https://github.com/getsentry/sentry-ruby/pull/1767)
