@@ -786,6 +786,26 @@ RSpec.describe Raven::Event do
       end
     end
 
+    context 'when the exception does not have a backtrace' do
+      context 'when a Hash' do
+        let(:exception) { {} }
+
+        it 'does not error' do
+          stacktrace = hash[:exception][:values][0][:stacktrace]
+          expect(stacktrace).to be_nil
+        end
+      end
+
+      context 'when a Class' do
+        let(:exception) { Class.new }
+
+        it 'does not error' do
+          stacktrace = hash[:exception][:values][0][:stacktrace]
+          expect(stacktrace).to be_nil
+        end
+      end
+    end
+
     it 'uses an annotation if one exists' do
       Raven.annotate_exception(exception, logger: 'logger')
       expect(Raven::Event.capture_exception(exception, **essential_options).logger).to eq('logger')

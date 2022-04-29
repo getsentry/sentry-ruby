@@ -163,7 +163,7 @@ module Raven
             int.module = e.class.to_s.split('::')[0...-1].join('::')
 
             int.stacktrace =
-              if e.backtrace && !backtraces.include?(e.backtrace.object_id)
+              if e.respond_to?(:backtrace) && e.backtrace && !backtraces.include?(e.backtrace.object_id)
                 backtraces << e.backtrace.object_id
                 StacktraceInterface.new do |stacktrace|
                   stacktrace.frames = stacktrace_interface_from(e.backtrace)
