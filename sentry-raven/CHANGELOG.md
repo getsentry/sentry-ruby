@@ -3,6 +3,7 @@
 ## Unreleased
 
 - fix: user_context with block does not reset context after block exits
+- fix: Don't expect `.backtrace` to be present
 
 ## 3.1.2
 
