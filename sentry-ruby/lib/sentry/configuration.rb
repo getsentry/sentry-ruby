@@ -290,6 +290,16 @@ module Sentry
     def async=(value)
       check_callable!("async", value)
 
+      log_warn <<~MSG
+
+        sentry-ruby now sends events asynchronously by default with its backgrounrd worker (supported since 4.1.0).
+        The `config.async` callback has become redundant while continuing to cause issues.
+        (The problems of `async` are detailed in https://github.com/getsentry/sentry-ruby/issues/1522)
+
+        Therefore, we encourage you to remove it and let the background worker take care of async job sending.
+      It's deprecation is planned in the next major release (6.0), which is scheduled around the 3rd quarter of 2022.
+      MSG
+
       @async = value
     end
 
