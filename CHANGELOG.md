@@ -1,3 +1,9 @@
+## Unreleased
+
+### Miscellaneous
+
+- Warn users about `config.async`'s deprecation [#1803](https://github.com/getsentry/sentry-ruby/pull/1803)
+
 ## 5.3.0
 
 ### Features
