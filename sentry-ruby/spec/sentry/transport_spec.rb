@@ -100,40 +100,98 @@ RSpec.describe Sentry::Transport do
     end
 
     context "oversized event" do
-      let(:event) { client.event_from_message("foo") }
-      let(:envelope) { subject.envelope_from_event(event) }
+      context "due to breadcrumb" do
+        let(:event) { client.event_from_message("foo") }
+        let(:envelope) { subject.envelope_from_event(event) }
 
-      before do
-        event.breadcrumbs = Sentry::BreadcrumbBuffer.new(100)
-        100.times do |i|
-          event.breadcrumbs.record Sentry::Breadcrumb.new(category: i.to_s, message: "x" * Sentry::Event::MAX_MESSAGE_SIZE_IN_BYTES)
-        end
-        serialized_result = JSON.generate(event.to_hash)
-        expect(serialized_result.bytesize).to be > Sentry::Event::MAX_SERIALIZED_PAYLOAD_SIZE
-      end
-
-      it "removes breadcrumbs and carry on" do
-        data, _ = subject.serialize_envelope(envelope)
-        expect(data.bytesize).to be < Sentry::Event::MAX_SERIALIZED_PAYLOAD_SIZE
-
-        expect(envelope.items.count).to eq(1)
-
-        event_item = envelope.items.first
-        expect(event_item.payload[:breadcrumbs]).to be_nil
-      end
-
-      context "if it's still oversized" do
         before do
+          event.breadcrumbs = Sentry::BreadcrumbBuffer.new(100)
           100.times do |i|
-            event.contexts["context_#{i}"] = "s" * Sentry::Event::MAX_MESSAGE_SIZE_IN_BYTES
+            event.breadcrumbs.record Sentry::Breadcrumb.new(category: i.to_s, message: "x" * Sentry::Event::MAX_MESSAGE_SIZE_IN_BYTES)
+          end
+          serialized_result = JSON.generate(event.to_hash)
+          expect(serialized_result.bytesize).to be > Sentry::Event::MAX_SERIALIZED_PAYLOAD_SIZE
+        end
+
+        it "removes breadcrumbs and carry on" do
+          data, _ = subject.serialize_envelope(envelope)
+          expect(data.bytesize).to be < Sentry::Event::MAX_SERIALIZED_PAYLOAD_SIZE
+
+          expect(envelope.items.count).to eq(1)
+
+          event_item = envelope.items.first
+          expect(event_item.payload[:breadcrumbs]).to be_nil
+        end
+
+        context "if it's still oversized" do
+          before do
+            100.times do |i|
+              event.contexts["context_#{i}"] = "s" * Sentry::Event::MAX_MESSAGE_SIZE_IN_BYTES
+            end
+          end
+
+          it "rejects the item and logs attributes size breakdown" do
+            data, _ = subject.serialize_envelope(envelope)
+            expect(data).to be_nil
+            expect(io.string).not_to match(/Sending envelope with items \[event\]/)
+            expect(io.string).to match(/tags: 2, contexts: 820791, extra: 2/)
           end
         end
+      end
 
-        it "rejects the item and logs attributes size breakdown" do
+      context "due to stacktrace frames" do
+        let(:event) { client.event_from_exception(SystemStackError.new("stack level too deep")) }
+        let(:envelope) { subject.envelope_from_event(event) }
+
+        let(:in_app_pattern) do
+          project_root = "/fake/project_root"
+          Regexp.new("^(#{project_root}/)?#{Sentry::Backtrace::APP_DIRS_PATTERN}")
+        end
+        let(:frame_list_size) { Sentry::Transport::STACKTRACE_FRAME_LIMIT_ON_OVERSIZED_PAYLOAD * 4 }
+
+        before do
+          single_exception = event.exception.instance_variable_get(:@values)[0]
+          new_stacktrace = Sentry::StacktraceInterface.new(
+            frames: frame_list_size.times.map do |zero_based_index|
+              Sentry::StacktraceInterface::Frame.new(
+                "/fake/path",
+                Sentry::Backtrace::Line.parse("app.rb:#{zero_based_index + 1}:in `/'", in_app_pattern)
+              )
+            end,
+          )
+          single_exception.instance_variable_set(:@stacktrace, new_stacktrace)
+
+          serialized_result = JSON.generate(event.to_hash)
+          expect(serialized_result.bytesize).to be > Sentry::Event::MAX_SERIALIZED_PAYLOAD_SIZE
+        end
+
+        it "keeps some stacktrace frames and carry on" do
           data, _ = subject.serialize_envelope(envelope)
-          expect(data).to be_nil
-          expect(io.string).not_to match(/Sending envelope with items \[event\]/)
-          expect(io.string).to match(/tags: 2, contexts: 820791, extra: 2/)
+          expect(data.bytesize).to be < Sentry::Event::MAX_SERIALIZED_PAYLOAD_SIZE
+
+          expect(envelope.items.count).to eq(1)
+
+          event_item = envelope.items.first
+          frames = event_item.payload[:exception][:values][0][:stacktrace][:frames]
+          expect(frames.length).to eq(Sentry::Transport::STACKTRACE_FRAME_LIMIT_ON_OVERSIZED_PAYLOAD)
+          expect(frames[-1][:lineno]).to eq(frame_list_size)
+          expect(frames[-1][:filename]).to eq('app.rb')
+          expect(frames[-1][:function]).to eq('/')
+        end
+
+        context "if it's still oversized" do
+          before do
+            100.times do |i|
+              event.contexts["context_#{i}"] = "s" * Sentry::Event::MAX_MESSAGE_SIZE_IN_BYTES
+            end
+          end
+
+          it "rejects the item and logs attributes size breakdown" do
+            data, _ = subject.serialize_envelope(envelope)
+            expect(data).to be_nil
+            expect(io.string).not_to match(/Sending envelope with items \[event\]/)
+            expect(io.string).to match(/tags: 2, contexts: 820791, extra: 2/)
+          end
         end
       end
     end
