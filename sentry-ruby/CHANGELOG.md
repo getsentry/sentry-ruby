@@ -2,6 +2,12 @@
 
 Individual gem's changelog has been deprecated. Please check the [project changelog](https://github.com/getsentry/sentry-ruby/blob/master/CHANGELOG.md).
 
+## Unreleased
+
+### Bug Fixes
+
+- Fix: Handle exception with large stacktrace without dropping entire item [#1806](https://github.com/getsentry/sentry-ruby/pull/1806)
+
 ## 4.4.2
 
 - Fix NoMethodError when SDK's dsn is nil [#1433](https://github.com/getsentry/sentry-ruby/pull/1433)
