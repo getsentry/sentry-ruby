@@ -292,7 +292,7 @@ module Sentry
 
       log_warn <<~MSG
 
-        sentry-ruby now sends events asynchronously by default with its backgrounrd worker (supported since 4.1.0).
+        sentry-ruby now sends events asynchronously by default with its background worker (supported since 4.1.0).
         The `config.async` callback has become redundant while continuing to cause issues.
         (The problems of `async` are detailed in https://github.com/getsentry/sentry-ruby/issues/1522)
 
