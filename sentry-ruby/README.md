@@ -55,13 +55,17 @@ gem "sentry-resque"
 
 ### Configuration
 
-You can use `Sentry.init` to initialize and configure your SDK:
-
+You need to initialize Sentry once with:
 ```ruby
 Sentry.init do |config|
   config.dsn = "MY_DSN"
 end
+```
 
+The DSN can be also set via the `SENTRY_DSN` environment variable, then you
+only need to run:
+```ruby
+Sentry.init
 ```
 
 To learn more about available configuration options, please visit the [official documentation](https://docs.sentry.io/platforms/ruby/configuration/options/).
