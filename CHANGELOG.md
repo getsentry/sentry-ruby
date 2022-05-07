@@ -1,5 +1,10 @@
 ## Unreleased
 
+### Bug Fixes
+
+- Don't require a DB connection, but release one if it is acquired [#1812](https://github.com/getsentry/sentry-ruby/pull/1812)
+  - Fixes [#1808](https://github.com/getsentry/sentry-ruby/issues/1808)
+
 ### Miscellaneous
 
 - Warn users about `config.async`'s deprecation [#1803](https://github.com/getsentry/sentry-ruby/pull/1803)
