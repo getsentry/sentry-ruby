@@ -1,5 +1,21 @@
 ## Unreleased
 
+## Features
+
+- Add `Sentry.with_exception_captured` helper [#1814](https://github.com/getsentry/sentry-ruby/pull/1814)
+
+    Usage:
+
+    ```rb
+    Sentry.with_exception_captured do
+     1/1 #=> 1 will be returned
+    end
+
+    Sentry.with_exception_captured do
+     1/0 #=> ZeroDivisionError will be reported and re-raised
+    end
+    ```
+
 ### Bug Fixes
 
 - Don't require a DB connection, but release one if it is acquired [#1812](https://github.com/getsentry/sentry-ruby/pull/1812)
