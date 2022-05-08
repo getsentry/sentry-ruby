@@ -240,6 +240,24 @@ RSpec.describe Sentry do
     end
   end
 
+  describe ".with_exception_captured" do
+    it "returns the block's result" do
+      result = described_class.with_exception_captured { 2 }
+
+      expect(result).to eq(2)
+      expect(transport.events.count).to eq(0)
+    end
+
+    it "rescues and reports the exception happened inside the block" do
+      expect do
+        described_class.with_exception_captured(tags: { foo: "bar" }) { 1/0 }
+      end.to raise_error(ZeroDivisionError)
+
+      expect(transport.events.count).to eq(1)
+      expect(transport.events.first.tags).to eq(foo: "bar")
+    end
+  end
+
   describe ".capture_message" do
     let(:message) { "Test" }
 
