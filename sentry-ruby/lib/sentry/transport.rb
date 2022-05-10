@@ -88,14 +88,20 @@ module Sentry
             single_exceptions.each do |single_exception|
               traces = single_exception.dig(:stacktrace, :frames)
               if traces && traces.size > STACKTRACE_FRAME_LIMIT_ON_OVERSIZED_PAYLOAD
-                traces.replace(traces[-STACKTRACE_FRAME_LIMIT_ON_OVERSIZED_PAYLOAD..-1])
+                size_on_both_ends = STACKTRACE_FRAME_LIMIT_ON_OVERSIZED_PAYLOAD / 2
+                traces.replace(
+                  traces[0..(size_on_both_ends - 1)] + traces[-size_on_both_ends..-1],
+                )
               end
             end
           elsif single_exceptions = item.payload.dig("exception", "values")
             single_exceptions.each do |single_exception|
               traces = single_exception.dig("stacktrace", "frames")
               if traces && traces.size > STACKTRACE_FRAME_LIMIT_ON_OVERSIZED_PAYLOAD
-                traces.replace(traces[-STACKTRACE_FRAME_LIMIT_ON_OVERSIZED_PAYLOAD..-1])
+                size_on_both_ends = STACKTRACE_FRAME_LIMIT_ON_OVERSIZED_PAYLOAD / 2
+                traces.replace(
+                  traces[0..(size_on_both_ends - 1)] + traces[-size_on_both_ends..-1],
+                )
               end
             end
           end

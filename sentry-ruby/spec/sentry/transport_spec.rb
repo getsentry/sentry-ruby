@@ -147,7 +147,8 @@ RSpec.describe Sentry::Transport do
           project_root = "/fake/project_root"
           Regexp.new("^(#{project_root}/)?#{Sentry::Backtrace::APP_DIRS_PATTERN}")
         end
-        let(:frame_list_size) { Sentry::Transport::STACKTRACE_FRAME_LIMIT_ON_OVERSIZED_PAYLOAD * 4 }
+        let(:frame_list_limit) { Sentry::Transport::STACKTRACE_FRAME_LIMIT_ON_OVERSIZED_PAYLOAD }
+        let(:frame_list_size) { frame_list_limit * 4 }
 
         before do
           single_exception = event.exception.instance_variable_get(:@values)[0]
@@ -173,10 +174,26 @@ RSpec.describe Sentry::Transport do
 
           event_item = envelope.items.first
           frames = event_item.payload[:exception][:values][0][:stacktrace][:frames]
-          expect(frames.length).to eq(Sentry::Transport::STACKTRACE_FRAME_LIMIT_ON_OVERSIZED_PAYLOAD)
+          expect(frames.length).to eq(frame_list_limit)
+
+          # Last N lines kept
+          # N = Frame limit / 2
           expect(frames[-1][:lineno]).to eq(frame_list_size)
           expect(frames[-1][:filename]).to eq('app.rb')
           expect(frames[-1][:function]).to eq('/')
+          #
+          expect(frames[-(frame_list_limit / 2)][:lineno]).to eq(frame_list_size - ((frame_list_limit / 2) - 1))
+          expect(frames[-(frame_list_limit / 2)][:filename]).to eq('app.rb')
+          expect(frames[-(frame_list_limit / 2)][:function]).to eq('/')
+
+          # First N lines kept
+          # N = Frame limit / 2
+          expect(frames[0][:lineno]).to eq(1)
+          expect(frames[0][:filename]).to eq('app.rb')
+          expect(frames[0][:function]).to eq('/')
+          expect(frames[(frame_list_limit / 2) - 1][:lineno]).to eq(frame_list_limit / 2)
+          expect(frames[(frame_list_limit / 2) - 1][:filename]).to eq('app.rb')
+          expect(frames[(frame_list_limit / 2) - 1][:function]).to eq('/')
         end
 
         context "if it's still oversized" do
