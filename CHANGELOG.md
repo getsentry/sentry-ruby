@@ -4,6 +4,8 @@
 
 - Don't require a DB connection, but release one if it is acquired [#1812](https://github.com/getsentry/sentry-ruby/pull/1812)
   - Fixes [#1808](https://github.com/getsentry/sentry-ruby/issues/1808)
+- `Sentry.with_child_span` should check SDK's initialization state [#1819](https://github.com/getsentry/sentry-ruby/pull/1819)
+  - Fixes [#1818](https://github.com/getsentry/sentry-ruby/issues/1818)
 
 ### Miscellaneous
 
