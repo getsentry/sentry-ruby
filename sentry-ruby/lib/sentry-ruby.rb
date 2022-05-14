@@ -399,9 +399,7 @@ module Sentry
     #   end
     #
     def with_child_span(**attributes, &block)
-      current_span = get_current_scope.get_span
-
-      if current_span
+      if Sentry.initialized? && current_span = get_current_scope.get_span
         result = nil
 
         begin
