@@ -18,6 +18,7 @@ RSpec.describe Sentry::Rails::Tracing::ActiveStorageSubscriber, :subscriber, typ
       get "/posts/#{p.id}/attach"
 
       expect(response).to have_http_status(:ok)
+      transport.events.each { |e| pp e } # TODO: Remove it once this test is not flaky anymore
       expect(transport.events.count).to eq(1)
 
       transaction = transport.events.first.to_hash
