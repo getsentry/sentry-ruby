@@ -1,3 +1,9 @@
+## Unreleased
+
+### Features
+
+- Capture Rails runner's exceptions before exiting [#1820](https://github.com/getsentry/sentry-ruby/pull/1820)
+
 ## 5.3.1
 
 ### Bug Fixes
