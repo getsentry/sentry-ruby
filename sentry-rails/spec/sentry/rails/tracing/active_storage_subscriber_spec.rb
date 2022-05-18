@@ -14,22 +14,30 @@ RSpec.describe Sentry::Rails::Tracing::ActiveStorageSubscriber, :subscriber, typ
     end
 
     it "records the upload event" do
+      # make sure AnalyzeJob will be executed immediately
+      ActiveStorage::AnalyzeJob.queue_adapter.perform_enqueued_jobs = true
+
       p = Post.create!
       get "/posts/#{p.id}/attach"
 
       expect(response).to have_http_status(:ok)
-      transport.events.each { |e| pp e } # TODO: Remove it once this test is not flaky anymore
-      expect(transport.events.count).to eq(1)
+      expect(transport.events.count).to eq(2)
 
-      transaction = transport.events.first.to_hash
-      expect(transaction[:type]).to eq("transaction")
-      expect(transaction[:spans].count).to eq(1)
+      analysis_transaction = transport.events.first.to_hash
+      expect(analysis_transaction[:type]).to eq("transaction")
+      expect(analysis_transaction[:spans].count).to eq(1)
+      span = analysis_transaction[:spans][0]
+      expect(span[:op]).to eq("service_streaming_download.active_storage")
 
-      span = transaction[:spans][0]
+      request_transaction = transport.events.last.to_hash
+      expect(request_transaction[:type]).to eq("transaction")
+      expect(request_transaction[:spans].count).to eq(1)
+
+      span = request_transaction[:spans][0]
       expect(span[:op]).to eq("service_upload.active_storage")
       expect(span[:description]).to eq("Disk")
       expect(span.dig(:data, :key)).to eq(p.cover.key)
-      expect(span[:trace_id]).to eq(transaction.dig(:contexts, :trace, :trace_id))
+      expect(span[:trace_id]).to eq(request_transaction.dig(:contexts, :trace, :trace_id))
     end
   end
 
