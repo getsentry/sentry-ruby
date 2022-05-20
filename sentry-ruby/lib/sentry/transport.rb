@@ -9,6 +9,7 @@ module Sentry
     PROTOCOL_VERSION = '7'
     USER_AGENT = "sentry-ruby/#{Sentry::VERSION}"
     CLIENT_REPORT_INTERVAL = 30
+    STACKTRACE_FRAME_LIMIT_ON_OVERSIZED_PAYLOAD = 500
 
     # https://develop.sentry.dev/sdk/client-reports/#envelope-item-payload
     CLIENT_REPORT_REASONS = [
@@ -77,6 +78,32 @@ module Sentry
             item.payload.delete(:breadcrumbs)
           elsif item.payload.key?("breadcrumbs")
             item.payload.delete("breadcrumbs")
+          end
+
+          result = item.to_s
+        end
+
+        if result.bytesize > Event::MAX_SERIALIZED_PAYLOAD_SIZE
+          if single_exceptions = item.payload.dig(:exception, :values)
+            single_exceptions.each do |single_exception|
+              traces = single_exception.dig(:stacktrace, :frames)
+              if traces && traces.size > STACKTRACE_FRAME_LIMIT_ON_OVERSIZED_PAYLOAD
+                size_on_both_ends = STACKTRACE_FRAME_LIMIT_ON_OVERSIZED_PAYLOAD / 2
+                traces.replace(
+                  traces[0..(size_on_both_ends - 1)] + traces[-size_on_both_ends..-1],
+                )
+              end
+            end
+          elsif single_exceptions = item.payload.dig("exception", "values")
+            single_exceptions.each do |single_exception|
+              traces = single_exception.dig("stacktrace", "frames")
+              if traces && traces.size > STACKTRACE_FRAME_LIMIT_ON_OVERSIZED_PAYLOAD
+                size_on_both_ends = STACKTRACE_FRAME_LIMIT_ON_OVERSIZED_PAYLOAD / 2
+                traces.replace(
+                  traces[0..(size_on_both_ends - 1)] + traces[-size_on_both_ends..-1],
+                )
+              end
+            end
           end
 
           result = item.to_s

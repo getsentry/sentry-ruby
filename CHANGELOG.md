@@ -1,3 +1,9 @@
+## Unreleased
+
+### Features
+
+- Handle exception with large stacktrace without dropping entire item [#1807](https://github.com/getsentry/sentry-ruby/pull/1807)
+
 ## 5.3.1
 
 ### Bug Fixes
