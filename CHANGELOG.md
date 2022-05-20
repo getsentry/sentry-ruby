@@ -1,6 +1,9 @@
 ## Unreleased
 
-## Features
+### Features
+
+- Handle exception with large stacktrace without dropping entire item [#1807](https://github.com/getsentry/sentry-ruby/pull/1807)
+- Capture Rails runner's exceptions before exiting [#1820](https://github.com/getsentry/sentry-ruby/pull/1820)
 
 - Add `Sentry.with_exception_captured` helper [#1814](https://github.com/getsentry/sentry-ruby/pull/1814)
 
@@ -16,10 +19,18 @@
     end
     ```
 
+### Refactoring
+
+- Move envelope item processing/trimming logic to the Item class [#1824](https://github.com/getsentry/sentry-ruby/pull/1824)
+
+## 5.3.1
+
 ### Bug Fixes
 
 - Don't require a DB connection, but release one if it is acquired [#1812](https://github.com/getsentry/sentry-ruby/pull/1812)
   - Fixes [#1808](https://github.com/getsentry/sentry-ruby/issues/1808)
+- `Sentry.with_child_span` should check SDK's initialization state [#1819](https://github.com/getsentry/sentry-ruby/pull/1819)
+  - Fixes [#1818](https://github.com/getsentry/sentry-ruby/issues/1818)
 
 ### Miscellaneous
 
