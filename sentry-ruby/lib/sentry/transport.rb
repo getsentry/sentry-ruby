@@ -70,24 +70,10 @@ module Sentry
       serialized_results = []
 
       envelope.items.each do |item|
-        result = item.to_s
+        result, oversized = item.serialize
 
-        if result.bytesize > Event::MAX_SERIALIZED_PAYLOAD_SIZE
-          if item.payload.key?(:breadcrumbs)
-            item.payload.delete(:breadcrumbs)
-          elsif item.payload.key?("breadcrumbs")
-            item.payload.delete("breadcrumbs")
-          end
-
-          result = item.to_s
-        end
-
-        if result.bytesize > Event::MAX_SERIALIZED_PAYLOAD_SIZE
-          size_breakdown = item.payload.map do |key, value|
-            "#{key}: #{JSON.generate(value).bytesize}"
-          end.join(", ")
-
-          log_debug("Envelope item [#{item.type}] is still oversized without breadcrumbs: {#{size_breakdown}}")
+        if oversized
+          log_info("Envelope item [#{item.type}] is still oversized after size reduction: {#{item.size_breakdown}}")
 
           next
         end

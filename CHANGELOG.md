@@ -2,7 +2,12 @@
 
 ### Features
 
-- Capture Rails runner's exceptions before exiting [#1820](https://github.com/getsentry/sentry-ruby/pull/1820)
+- Handle exception with large stacktrace without dropping entire item [#1807](https://github.com/getsentry/sentry-ruby/pull/1807)
+- - Capture Rails runner's exceptions before exiting [#1820](https://github.com/getsentry/sentry-ruby/pull/1820)
+
+### Refactoring
+
+- Move envelope item processing/trimming logic to the Item class [#1824](https://github.com/getsentry/sentry-ruby/pull/1824)
 
 ## 5.3.1
 
