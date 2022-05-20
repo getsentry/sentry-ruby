@@ -360,6 +360,25 @@ module Sentry
       get_current_hub.capture_exception(exception, **options, &block)
     end
 
+    # Takes a block and evaluates it. If the block raised an exception, it reports the exception to Sentry and re-raises it.
+    # If the block ran without exception, it returns the evaluation result.
+    #
+    # @example
+    #   Sentry.with_exception_captured do
+    #     1/1 #=> 1 will be returned
+    #   end
+    #
+    #   Sentry.with_exception_captured do
+    #     1/0 #=> ZeroDivisionError will be reported and re-raised
+    #   end
+    #
+    def with_exception_captured(**options, &block)
+      yield
+    rescue Exception => e
+      capture_exception(e, **options)
+      raise
+    end
+
     # Takes a message string and reports it to Sentry via the currently active hub.
     #
     # @yieldparam scope [Scope]
