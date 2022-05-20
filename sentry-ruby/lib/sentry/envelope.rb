@@ -38,7 +38,13 @@ module Sentry
           result = to_s
         end
 
-        result
+        [result, result.bytesize > MAX_SERIALIZED_PAYLOAD_SIZE]
+      end
+
+      def size_breakdown
+        payload.map do |key, value|
+          "#{key}: #{JSON.generate(value).bytesize}"
+        end.join(", ")
       end
 
       private
