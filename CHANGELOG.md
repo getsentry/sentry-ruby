@@ -3,6 +3,7 @@
 ### Features
 
 - Handle exception with large stacktrace without dropping entire item [#1807](https://github.com/getsentry/sentry-ruby/pull/1807)
+- - Capture Rails runner's exceptions before exiting [#1820](https://github.com/getsentry/sentry-ruby/pull/1820)
 
 ### Refactoring
 

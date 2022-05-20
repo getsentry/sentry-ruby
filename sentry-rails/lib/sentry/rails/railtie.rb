@@ -53,6 +53,11 @@ module Sentry
     runner do
       next unless Sentry.initialized?
       Sentry.configuration.background_worker_threads = 0
+
+      at_exit do
+        # TODO: Add a condition for Rails 7.1 to avoid confliction with https://github.com/rails/rails/pull/44999
+        Sentry::Rails.capture_exception($ERROR_INFO, tags: { source: "runner" }) if $ERROR_INFO
+      end
     end
 
     def configure_project_root
