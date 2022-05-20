@@ -72,7 +72,7 @@ module Sentry
       envelope.items.each do |item|
         result = item.serialize
 
-        if result.bytesize > Event::MAX_SERIALIZED_PAYLOAD_SIZE
+        if result.bytesize > Envelope::Item::MAX_SERIALIZED_PAYLOAD_SIZE
           size_breakdown = item.payload.map do |key, value|
             "#{key}: #{JSON.generate(value).bytesize}"
           end.join(", ")

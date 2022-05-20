@@ -5,6 +5,7 @@ module Sentry
   class Envelope
     class Item
       STACKTRACE_FRAME_LIMIT_ON_OVERSIZED_PAYLOAD = 500
+      MAX_SERIALIZED_PAYLOAD_SIZE = 1024 * 200
 
       attr_accessor :headers, :payload
 
@@ -27,12 +28,12 @@ module Sentry
       def serialize
         result = to_s
 
-        if result.bytesize > Event::MAX_SERIALIZED_PAYLOAD_SIZE
+        if result.bytesize > MAX_SERIALIZED_PAYLOAD_SIZE
           remove_breadcrumbs!
           result = to_s
         end
 
-        if result.bytesize > Event::MAX_SERIALIZED_PAYLOAD_SIZE
+        if result.bytesize > MAX_SERIALIZED_PAYLOAD_SIZE
           reduce_stacktrace!
           result = to_s
         end

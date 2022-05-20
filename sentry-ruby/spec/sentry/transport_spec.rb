@@ -110,12 +110,12 @@ RSpec.describe Sentry::Transport do
             event.breadcrumbs.record Sentry::Breadcrumb.new(category: i.to_s, message: "x" * Sentry::Event::MAX_MESSAGE_SIZE_IN_BYTES)
           end
           serialized_result = JSON.generate(event.to_hash)
-          expect(serialized_result.bytesize).to be > Sentry::Event::MAX_SERIALIZED_PAYLOAD_SIZE
+          expect(serialized_result.bytesize).to be > Sentry::Envelope::Item::MAX_SERIALIZED_PAYLOAD_SIZE
         end
 
         it "removes breadcrumbs and carry on" do
           data, _ = subject.serialize_envelope(envelope)
-          expect(data.bytesize).to be < Sentry::Event::MAX_SERIALIZED_PAYLOAD_SIZE
+          expect(data.bytesize).to be < Sentry::Envelope::Item::MAX_SERIALIZED_PAYLOAD_SIZE
 
           expect(envelope.items.count).to eq(1)
 
@@ -163,12 +163,12 @@ RSpec.describe Sentry::Transport do
           single_exception.instance_variable_set(:@stacktrace, new_stacktrace)
 
           serialized_result = JSON.generate(event.to_hash)
-          expect(serialized_result.bytesize).to be > Sentry::Event::MAX_SERIALIZED_PAYLOAD_SIZE
+          expect(serialized_result.bytesize).to be > Sentry::Envelope::Item::MAX_SERIALIZED_PAYLOAD_SIZE
         end
 
         it "keeps some stacktrace frames and carry on" do
           data, _ = subject.serialize_envelope(envelope)
-          expect(data.bytesize).to be < Sentry::Event::MAX_SERIALIZED_PAYLOAD_SIZE
+          expect(data.bytesize).to be < Sentry::Envelope::Item::MAX_SERIALIZED_PAYLOAD_SIZE
 
           expect(envelope.items.count).to eq(1)
 
@@ -273,7 +273,7 @@ RSpec.describe Sentry::Transport do
           event.breadcrumbs.record Sentry::Breadcrumb.new(category: i.to_s, message: "x" * Sentry::Event::MAX_MESSAGE_SIZE_IN_BYTES)
         end
         serialized_result = JSON.generate(event.to_hash)
-        expect(serialized_result.bytesize).to be > Sentry::Event::MAX_SERIALIZED_PAYLOAD_SIZE
+        expect(serialized_result.bytesize).to be > Sentry::Envelope::Item::MAX_SERIALIZED_PAYLOAD_SIZE
       end
 
       it "deletes the event's breadcrumbs and sends it" do
