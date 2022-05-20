@@ -73,7 +73,7 @@ module Sentry
         result, oversized = item.serialize
 
         if oversized
-          log_debug("Envelope item [#{item.type}] is still oversized after size reduction: {#{item.size_breakdown}}")
+          log_info("Envelope item [#{item.type}] is still oversized after size reduction: {#{item.size_breakdown}}")
 
           next
         end
