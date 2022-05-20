@@ -147,7 +147,7 @@ RSpec.describe Sentry::Transport do
           project_root = "/fake/project_root"
           Regexp.new("^(#{project_root}/)?#{Sentry::Backtrace::APP_DIRS_PATTERN}")
         end
-        let(:frame_list_limit) { Sentry::Transport::STACKTRACE_FRAME_LIMIT_ON_OVERSIZED_PAYLOAD }
+        let(:frame_list_limit) { 500 }
         let(:frame_list_size) { frame_list_limit * 4 }
 
         before do
