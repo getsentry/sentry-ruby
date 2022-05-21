@@ -17,6 +17,7 @@ Gem::Specification.new do |spec|
   spec.metadata["source_code_uri"] = spec.homepage
   spec.metadata["changelog_uri"] = "#{spec.homepage}/blob/master/CHANGELOG.md"
 
-  spec.add_dependency "sentry-ruby-core", Sentry::VERSION
+  spec.require_paths = ["lib"]
+
   spec.add_dependency "concurrent-ruby", '~> 1.0', '>= 1.0.2'
 end
