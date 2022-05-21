@@ -22,6 +22,7 @@
 ### Refactoring
 
 - Move envelope item processing/trimming logic to the Item class [#1824](https://github.com/getsentry/sentry-ruby/pull/1824)
+- Replace sentry-ruby-core with sentry-ruby as integration dependency [#1825](https://github.com/getsentry/sentry-ruby/pull/1825)
 
 ## 5.3.1
 
