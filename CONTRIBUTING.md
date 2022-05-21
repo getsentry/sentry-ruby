@@ -55,16 +55,6 @@ In addition to all the steps listed above, you also need to:
 - Update gem READMEs.
 - May need to check related wizard files in the [sentry-doc repo].
 
-## Prepare the Release
-
-1. Visit the [`Prepare Release`](https://github.com/getsentry/sentry-ruby/actions/workflows/prepare_release.yml) workflow.
-2. Click `Run workflow`.
-3. Fill in the required fields and run the workflow.
-
-### Extra Steps
-
-4. Once `sentry-ruby` is released, you need to bump the required version of `sentry-ruby-core` in the integration gems before releasing them.
-
 
 [bug report]: https://github.com/getsentry/sentry-ruby/issues/new?template=bug_report.md
 [propose a feature]: https://github.com/getsentry/sentry-ruby/issues/new?template=feature_request.md
