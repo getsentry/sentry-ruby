@@ -1,7 +1,6 @@
 source "https://rubygems.org"
 git_source(:github) { |name| "https://github.com/#{name}.git" }
 
-gem "sentry-ruby-core", path: "./"
 gem "sentry-ruby", path: "./"
 
 gem "rack" unless ENV["WITHOUT_RACK"] == "1"

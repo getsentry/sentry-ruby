@@ -22,7 +22,7 @@ end
 def update_gemspec_dependency(gem_name, version)
   file_name = "#{gem_name}/#{gem_name}.gemspec"
   text = File.read(file_name)
-  new_contents = text.gsub(/spec.add_dependency "sentry-ruby-core", ".+"/, "spec.add_dependency \"sentry-ruby-core\", \"~> #{version}\"")
+  new_contents = text.gsub(/spec.add_dependency "sentry-ruby", ".+"/, "spec.add_dependency \"sentry-ruby\", \"~> #{version}\"")
   File.open(file_name, "w") {|file| file.puts new_contents }
 end
 
