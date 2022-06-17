@@ -1,5 +1,3 @@
-require "active_storage/engine"
-
 ActiveRecord::Schema.define do
   create_table "active_storage_attachments", force: :cascade do |t|
     t.string "name", null: false
@@ -115,10 +113,3 @@ class HelloController < ActionController::Base
     raise ActionController::BadRequest
   end
 end
-
-def run_pre_initialize_cleanup; end
-
-def configure_app(app)
-  app.config.active_storage.service = :test
-end
-

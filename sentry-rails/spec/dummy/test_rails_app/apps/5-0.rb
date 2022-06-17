@@ -69,7 +69,3 @@ class HelloController < ActionController::Base
     raise ActionController::BadRequest
   end
 end
-
-def run_pre_initialize_cleanup; end
-
-def configure_app(app); end
