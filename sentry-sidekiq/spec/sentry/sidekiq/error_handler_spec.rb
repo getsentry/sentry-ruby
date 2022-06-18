@@ -26,9 +26,7 @@ RSpec.describe Sentry::Sidekiq::ErrorHandler do
   end
 
   let(:processor) do
-    opts = { :queues => ['default'] }
-    manager = Sidekiq::Manager.new(opts)
-    manager.workers.first
+    new_processor
   end
 
   it "captures exceptions raised during events" do

@@ -27,9 +27,7 @@ RSpec.describe Sentry::Sidekiq do
   end
 
   let(:processor) do
-    opts = { :queues => ['default'] }
-    manager = Sidekiq::Manager.new(opts)
-    manager.workers.first
+    new_processor
   end
 
   let(:transport) do
