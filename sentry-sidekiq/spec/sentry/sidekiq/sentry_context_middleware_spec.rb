@@ -4,8 +4,7 @@ RSpec.shared_context "sidekiq", shared_context: :metadata do
   let(:user) { { "id" => rand(10_000) } }
 
   let(:processor) do
-    options = { queues: ['default'] }
-    Sidekiq::Manager.new(options).workers.first
+    new_processor
   end
 
   let(:transport) do

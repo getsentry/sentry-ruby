@@ -141,6 +141,19 @@ class TagsWorker
   def perform; end
 end
 
+def new_processor
+  options =
+    if Gem::Version.new(Sidekiq::VERSION) >= Gem::Version.new("6.0")
+      Sidekiq[:queue] = ['default']
+      Sidekiq
+    else
+      { queues: ['default'] }
+    end
+
+  manager = Sidekiq::Manager.new(options)
+  manager.workers.first
+end
+
 def execute_worker(processor, klass, **options)
   klass_options = klass.sidekiq_options_hash || {}
 
