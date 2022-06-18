@@ -35,18 +35,12 @@ ActiveRecord::Schema.define do
   end
 end
 
-class ApplicationRecord < ActiveRecord::Base
-  self.abstract_class = true
-
-  extend ActiveStorage::Attached::Macros
-end
-
-class Post < ApplicationRecord
+class Post < ActiveRecord::Base
   has_many :comments
   has_one_attached :cover
 end
 
-class Comment < ApplicationRecord
+class Comment < ActiveRecord::Base
   belongs_to :post
 end
 
