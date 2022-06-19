@@ -18,6 +18,7 @@
      1/0 #=> ZeroDivisionError will be reported and re-raised
     end
     ```
+- Prepare for Rails 7.1's error reporter API change [#1834](https://github.com/getsentry/sentry-ruby/pull/1834)
 
 ### Refactoring
 
