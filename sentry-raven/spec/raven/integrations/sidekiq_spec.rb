@@ -74,8 +74,15 @@ RSpec.describe "Sidekiq full-stack integration" do
   end
 
   before do
-    Sidekiq[:queue] = ['default']
-    manager = Sidekiq::Manager.new(Sidekiq)
+    options =
+      if Gem::Version.new(Sidekiq::VERSION) >= Gem::Version.new("6.0")
+        Sidekiq[:queue] = ['default']
+        Sidekiq
+      else
+        { queues: ['default'] }
+      end
+
+    manager = Sidekiq::Manager.new(options)
     @processor = manager.workers.first
   end
 
