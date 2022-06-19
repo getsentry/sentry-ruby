@@ -1,6 +1,3 @@
-require "active_storage/engine"
-require "action_cable/engine"
-
 ActiveRecord::Schema.define do
   create_table "active_storage_attachments", force: :cascade do |t|
     t.string "name", null: false
@@ -38,20 +35,12 @@ ActiveRecord::Schema.define do
   end
 end
 
-class ApplicationRecord < ActiveRecord::Base
-  self.abstract_class = true
-
-  include ActiveStorage::Attached::Model
-  include ActiveStorage::Reflection::ActiveRecordExtensions
-  ActiveRecord::Reflection.singleton_class.prepend(ActiveStorage::Reflection::ReflectionExtension)
-end
-
-class Post < ApplicationRecord
+class Post < ActiveRecord::Base
   has_many :comments
   has_one_attached :cover
 end
 
-class Comment < ApplicationRecord
+class Comment < ActiveRecord::Base
   belongs_to :post
 end
 
@@ -119,13 +108,3 @@ class HelloController < ActionController::Base
     raise ActionController::BadRequest
   end
 end
-
-def run_pre_initialize_cleanup
-  ActionCable::Channel::Base.reset_callbacks(:subscribe)
-  ActionCable::Channel::Base.reset_callbacks(:unsubscribe)
-end
-
-def configure_app(app)
-  app.config.active_storage.service = :test
-end
-

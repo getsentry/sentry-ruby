@@ -1,5 +1,3 @@
-require "active_storage/engine"
-
 ActiveRecord::Schema.define do
   create_table "active_storage_attachments", force: :cascade do |t|
     t.string "name", null: false
@@ -37,18 +35,12 @@ ActiveRecord::Schema.define do
   end
 end
 
-class ApplicationRecord < ActiveRecord::Base
-  self.abstract_class = true
-
-  extend ActiveStorage::Attached::Macros
-end
-
-class Post < ApplicationRecord
+class Post < ActiveRecord::Base
   has_many :comments
   has_one_attached :cover
 end
 
-class Comment < ApplicationRecord
+class Comment < ActiveRecord::Base
   belongs_to :post
 end
 
@@ -115,10 +107,3 @@ class HelloController < ActionController::Base
     raise ActionController::BadRequest
   end
 end
-
-def run_pre_initialize_cleanup; end
-
-def configure_app(app)
-  app.config.active_storage.service = :test
-end
-

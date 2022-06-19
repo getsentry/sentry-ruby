@@ -13,7 +13,6 @@ ActiveSupport::Deprecation.silenced = true
 ActiveRecord::Base.logger = Logger.new(nil)
 ActiveRecord::Base.establish_connection(adapter: "sqlite3", database: "db")
 
-# need to init app before establish connection so sqlite can place the database file under the correct project root
 class TestApp < Rails::Application
 end
 
@@ -23,18 +22,22 @@ v6_1 = Gem::Version.new("6.1")
 v7_0 = Gem::Version.new("7.0")
 v7_1 = Gem::Version.new("7.1")
 
-case Gem::Version.new(Rails.version)
-when -> (v) { v < v5_2 }
-  require "dummy/test_rails_app/apps/5-0"
-when -> (v) { v.between?(v5_2, v6_0) }
-  require "dummy/test_rails_app/apps/5-2"
-when -> (v) { v.between?(v6_0, v6_1) }
-  require "dummy/test_rails_app/apps/6-0"
-when -> (v) { v.between?(v6_1, v7_0) }
-  require "dummy/test_rails_app/apps/6-1"
-when -> (v) { v.between?(v7_0, v7_1) }
-  require "dummy/test_rails_app/apps/7-0"
-end
+FILE_NAME =
+  case Gem::Version.new(Rails.version)
+  when -> (v) { v < v5_2 }
+    "5-0"
+  when -> (v) { v.between?(v5_2, v6_0) }
+    "5-2"
+  when -> (v) { v.between?(v6_0, v6_1) }
+    "6-0"
+  when -> (v) { v.between?(v6_1, v7_0) }
+    "6-1"
+  when -> (v) { v.between?(v7_0, v7_1) }
+    "7-0"
+  end
+
+# require files and defined relevant setup methods for the Rails version
+require "dummy/test_rails_app/configs/#{FILE_NAME}"
 
 def make_basic_app(&block)
   run_pre_initialize_cleanup
@@ -85,6 +88,9 @@ def make_basic_app(&block)
   app.initialize!
 
   Rails.application = app
+
+  # load application code for the Rails version
+  require "dummy/test_rails_app/apps/#{FILE_NAME}"
 
   Post.all.to_a # to run the sqlte version query first
 

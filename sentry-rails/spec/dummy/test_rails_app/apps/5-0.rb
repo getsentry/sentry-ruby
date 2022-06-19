@@ -7,15 +7,11 @@ ActiveRecord::Schema.define do
   end
 end
 
-class ApplicationRecord < ActiveRecord::Base
-  self.abstract_class = true
-end
-
-class Post < ApplicationRecord
+class Post < ActiveRecord::Base
   has_many :comments
 end
 
-class Comment < ApplicationRecord
+class Comment < ActiveRecord::Base
   belongs_to :post
 end
 
@@ -69,7 +65,3 @@ class HelloController < ActionController::Base
     raise ActionController::BadRequest
   end
 end
-
-def run_pre_initialize_cleanup; end
-
-def configure_app(app); end
