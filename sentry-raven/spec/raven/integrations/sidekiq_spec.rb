@@ -74,8 +74,8 @@ RSpec.describe "Sidekiq full-stack integration" do
   end
 
   before do
-    opts = { :queues => ['default'] }
-    manager = Sidekiq::Manager.new(opts)
+    Sidekiq[:queue] = ['default']
+    manager = Sidekiq::Manager.new(Sidekiq)
     @processor = manager.workers.first
   end
 
