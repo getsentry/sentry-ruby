@@ -13,7 +13,6 @@ ActiveSupport::Deprecation.silenced = true
 ActiveRecord::Base.logger = Logger.new(nil)
 ActiveRecord::Base.establish_connection(adapter: "sqlite3", database: "db")
 
-# need to init app before establish connection so sqlite can place the database file under the correct project root
 class TestApp < Rails::Application
 end
 
