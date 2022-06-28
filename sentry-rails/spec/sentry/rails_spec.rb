@@ -250,9 +250,23 @@ RSpec.describe Sentry::Rails, type: :request do
         expect(transport.events.count).to eq(1)
 
         event = transport.events.first
-        expect(event.tags).to eq({ handled: true })
+
+        if Rails.version.to_f > 7.0
+          expect(event.tags).to eq({ handled: true, source: "application" })
+        else
+          expect(event.tags).to eq({ handled: true })
+        end
+
         expect(event.level).to eq(:info)
         expect(event.contexts).to include({ "rails.error" => { foo: "bar" }})
+      end
+
+      it "skips cache storage sources", skip: Rails.version.to_f < 7.1 do
+        Rails.error.handle(severity: :info, source: "mem_cache_store.active_support") do
+          1/0
+        end
+
+        expect(transport.events.count).to eq(0)
       end
     end
   end
