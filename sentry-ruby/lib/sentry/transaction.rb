@@ -37,6 +37,10 @@ module Sentry
     # @return [Baggage, nil]
     attr_reader :baggage
 
+    # The measurements added to the transaction.
+    # @return [Hash]
+    attr_reader :measurements
+
     # @deprecated Use Sentry.get_current_hub instead.
     attr_reader :hub
 
@@ -78,6 +82,7 @@ module Sentry
       @dsn = hub.configuration.dsn
       @effective_sample_rate = nil
       @contexts = {}
+      @measurements = {}
       init_span_recorder
     end
 
@@ -161,6 +166,15 @@ module Sentry
       end
 
       copy
+    end
+
+    # Sets a custom measurement on the transaction.
+    # @param name [String] name of the measurement
+    # @param value [Float] value of the measurement
+    # @param unit [String] unit of the measurement
+    # @return [void]
+    def set_measurement(name, value, unit = "")
+      @measurements[name] = { value: value, unit: unit }
     end
 
     # Sets initial sampling decision of the transaction.

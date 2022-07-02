@@ -11,6 +11,9 @@ module Sentry
     # @return [Hash, nil]
     attr_accessor :dynamic_sampling_context
 
+    # @return [Hash]
+    attr_accessor :measurements
+
     # @return [Float, nil]
     attr_reader :start_timestamp
 
@@ -25,6 +28,7 @@ module Sentry
       self.start_timestamp = transaction.start_timestamp
       self.tags = transaction.tags
       self.dynamic_sampling_context = transaction.get_baggage.dynamic_sampling_context
+      self.measurements = transaction.measurements
 
       finished_spans = transaction.span_recorder.spans.select { |span| span.timestamp && span != transaction }
       self.spans = finished_spans.map(&:to_hash)
@@ -42,6 +46,7 @@ module Sentry
       data = super
       data[:spans] = @spans.map(&:to_hash) if @spans
       data[:start_timestamp] = @start_timestamp
+      data[:measurements] = @measurements
       data
     end
   end
