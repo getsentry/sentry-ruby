@@ -24,6 +24,8 @@ else
   gem "rails", "~> #{rails_version}"
 end
 
+gem "mini_magick"
+
 gem "sprockets-rails"
 
 gem "sidekiq"

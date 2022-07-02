@@ -25,9 +25,15 @@ RSpec.describe Sentry::Rails::Tracing::ActiveStorageSubscriber, :subscriber, typ
 
       analysis_transaction = transport.events.first.to_hash
       expect(analysis_transaction[:type]).to eq("transaction")
-      expect(analysis_transaction[:spans].count).to eq(1)
-      span = analysis_transaction[:spans][0]
-      expect(span[:op]).to eq("service_streaming_download.active_storage")
+
+      if Rails.version.to_f > 6.1
+        expect(analysis_transaction[:spans].count).to eq(2)
+        expect(analysis_transaction[:spans][0][:op]).to eq("service_streaming_download.active_storage")
+        expect(analysis_transaction[:spans][1][:op]).to eq("analyze.active_storage")
+      else
+        expect(analysis_transaction[:spans].count).to eq(1)
+        expect(analysis_transaction[:spans][0][:op]).to eq("service_streaming_download.active_storage")
+      end
 
       request_transaction = transport.events.last.to_hash
       expect(request_transaction[:type]).to eq("transaction")
