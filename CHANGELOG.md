@@ -32,6 +32,15 @@
     end
     ```
 
+- Support `Sentry::Transaction#set_measurement` [#1838](https://github.com/getsentry/sentry-ruby/pull/1838)
+
+    Usage:
+
+    ```rb
+    transaction = Sentry.get_current_scope.get_transaction
+    transaction.set_measurement("metrics.foo", 0.5, "millisecond")
+    ```
+
 ### Bug Fixes
 
 - Support redis-rb 5.0+ [#1963](https://github.com/getsentry/sentry-ruby/pull/1963)
