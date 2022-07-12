@@ -60,11 +60,11 @@ module Sentry
     end
 
     # @!attribute [rw] background_worker
-    #   @return [BackgroundWorker]
+    #   @return [BackgroundWorker, nil]
     attr_accessor :background_worker
 
     # @!attribute [r] session_flusher
-    #   @return [SessionFlusher]
+    #   @return [SessionFlusher, nil]
     attr_reader :session_flusher
 
     ##### Patch Registration #####
@@ -215,8 +215,31 @@ module Sentry
 
       at_exit do
         @session_flusher&.kill
-        @background_worker.shutdown
+        @background_worker&.shutdown
       end
+    end
+
+    # Flushes pending events and cleans up SDK state.
+    # SDK will stop sending events and all top-level APIs will be no-ops after this.
+    #
+    # @return [void]
+    def close
+      if @background_worker
+        @background_worker.shutdown
+        @background_worker = nil
+      end
+
+      if @session_flusher
+        @session_flusher.kill
+        @session_flusher = nil
+      end
+
+      if config.capture_exception_frame_locals
+        exception_locals_tp.disable
+      end
+
+      @main_hub = nil
+      Thread.current.thread_variable_set(THREAD_LOCAL, nil)
     end
 
     # Returns true if the SDK is initialized.
@@ -287,6 +310,7 @@ module Sentry
     #
     # @return [void]
     def clone_hub_to_current_thread
+      return unless initialized?
       Thread.current.thread_variable_set(THREAD_LOCAL, get_main_hub.clone)
     end
 
