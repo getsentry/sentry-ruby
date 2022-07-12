@@ -3,6 +3,9 @@ require "set"
 
 module Sentry
   class ExceptionInterface < Interface
+    # @return [<Array[SingleExceptionInterface]>]
+    attr_reader :values
+
     # @param exceptions [Array<SingleExceptionInterface>]
     def initialize(exceptions:)
       @values = exceptions
