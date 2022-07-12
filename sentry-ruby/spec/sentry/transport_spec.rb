@@ -151,7 +151,7 @@ RSpec.describe Sentry::Transport do
         let(:frame_list_size) { frame_list_limit * 4 }
 
         before do
-          single_exception = event.exception.instance_variable_get(:@values)[0]
+          single_exception = event.exception.values[0]
           new_stacktrace = Sentry::StacktraceInterface.new(
             frames: frame_list_size.times.map do |zero_based_index|
               Sentry::StacktraceInterface::Frame.new(
