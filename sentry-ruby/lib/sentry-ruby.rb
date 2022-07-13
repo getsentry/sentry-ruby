@@ -234,7 +234,7 @@ module Sentry
         @session_flusher = nil
       end
 
-      if config.capture_exception_frame_locals
+      if configuration.capture_exception_frame_locals
         exception_locals_tp.disable
       end
 
