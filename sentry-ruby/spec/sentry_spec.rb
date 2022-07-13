@@ -786,12 +786,6 @@ RSpec.describe Sentry do
 
   describe ".close" do
     context "when closing initialized SDK" do
-      before do
-        perform_basic_setup do |config|
-          config.capture_exception_frame_locals = true
-        end
-      end
-
       it "not initialized?" do
         expect(described_class.initialized?).to eq(true)
         described_class.close
@@ -824,6 +818,10 @@ RSpec.describe Sentry do
       end
 
       it "disables Tracepoint" do
+        perform_basic_setup do |config|
+          config.capture_exception_frame_locals = true
+        end
+
         expect(described_class.exception_locals_tp).to receive(:disable)
         described_class.close
       end
