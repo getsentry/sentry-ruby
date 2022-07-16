@@ -83,16 +83,11 @@ RSpec.describe Sentry::Rails, type: :request do
     end
   end
 
-  context "with development config" do
-    before do
-      make_basic_app do |config, app|
-        app.config.consider_all_requests_local = true
-        config.rails.report_rescued_exceptions = report_rescued_exceptions
-      end
-    end
-
+  RSpec.shared_examples "report_rescued_exceptions" do
     context "with report_rescued_exceptions = true" do
-      let(:report_rescued_exceptions) { true }
+      before do
+        Sentry.configuration.rails.report_rescued_exceptions = true
+      end
 
       it "captures exceptions" do
         get "/exception"
@@ -105,7 +100,9 @@ RSpec.describe Sentry::Rails, type: :request do
     end
 
     context "with report_rescued_exceptions = false" do
-      let(:report_rescued_exceptions) { false }
+      before do
+        Sentry.configuration.rails.report_rescued_exceptions = false
+      end
 
       it "doesn't report rescued exceptions" do
         get "/exception"
@@ -115,12 +112,24 @@ RSpec.describe Sentry::Rails, type: :request do
     end
   end
 
+  context "with development config" do
+    before do
+      make_basic_app do |config, app|
+        app.config.consider_all_requests_local = true
+      end
+    end
+
+    include_examples "report_rescued_exceptions"
+  end
+
   context "with production config" do
     before do
       make_basic_app do |config, app|
         app.config.consider_all_requests_local = false
       end
     end
+
+    include_examples "report_rescued_exceptions"
 
     it "doesn't do anything on a normal route" do
       get "/"
