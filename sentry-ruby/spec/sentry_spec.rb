@@ -822,78 +822,8 @@ RSpec.describe Sentry do
           config.capture_exception_frame_locals = true
         end
 
-        expect(described_class.exception_locals_tp).to receive(:disable)
+        expect(described_class.exception_locals_tp).to receive(:disable).and_call_original
         described_class.close
-      end
-
-      it "no-ops top level API getters" do
-        described_class.close
-        expect(described_class.configuration).to eq(nil)
-        expect(described_class.csp_report_uri).to eq(nil)
-        expect(described_class.get_main_hub).to eq(nil)
-        expect(described_class.get_current_hub).to eq(nil)
-        expect(described_class.get_current_client).to eq(nil)
-        expect(described_class.get_current_scope).to eq(nil)
-        expect(described_class.last_event_id).to eq(nil)
-      end
-
-      it "no-ops top level API actions" do
-        described_class.close
-
-        expect_any_instance_of(Sentry::DummyTransport).not_to receive(:send_event)
-        expect_any_instance_of(Sentry::DummyTransport).not_to receive(:send_envelope)
-
-        described_class.send_event(event)
-        described_class.capture_event(event)
-        described_class.capture_message("test")
-
-        exception = ZeroDivisionError.new("divided by 0")
-        described_class.capture_exception(exception)
-        expect(described_class.exception_captured?(exception)).to eq(false)
-
-        expect do
-          described_class.with_exception_captured { 1 / 0 }
-        end.to raise_error(ZeroDivisionError)
-
-        expect_any_instance_of(Sentry::Scope).not_to receive(:set_tags)
-        described_class.set_tags(foo: "bar")
-
-        expect_any_instance_of(Sentry::Scope).not_to receive(:set_extras)
-        described_class.set_extras(foo: "bar")
-
-        expect_any_instance_of(Sentry::Scope).not_to receive(:set_user)
-        described_class.set_user(id: 1)
-
-        expect_any_instance_of(Sentry::Scope).not_to receive(:set_context)
-        described_class.set_context("character", { name: "John", age: 25 })
-
-        expect_any_instance_of(Sentry::Scope).not_to receive(:add_breadcrumb)
-        crumb = Sentry::Breadcrumb.new(message: "foo")
-        described_class.add_breadcrumb(crumb)
-
-        expect_any_instance_of(Sentry::Hub).not_to receive(:configure_scope)
-        described_class.configure_scope do |scope|
-          scope.set_tags(foo: "bar")
-        end
-
-        expect_any_instance_of(Sentry::Hub).not_to receive(:with_scope)
-        described_class.configure_scope do |scope|
-          scope.set_tags(foo: "bar")
-          Sentry.capture_message("test message")
-        end
-
-        expect_any_instance_of(Sentry::Hub).not_to receive(:with_session_tracking)
-        described_class.with_session_tracking do
-          1 + 1
-        end
-
-        expect_any_instance_of(Sentry::Hub).not_to receive(:start_transaction)
-        described_class.start_transaction(name: "foobar")
-
-        expect_any_instance_of(Sentry::Span).not_to receive(:with_child_span)
-        described_class.with_child_span do |child_span|
-          1 + 1
-        end
       end
     end
 
