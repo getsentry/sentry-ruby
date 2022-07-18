@@ -2,6 +2,15 @@
 
 Individual gem's changelog has been deprecated. Please check the [project changelog](https://github.com/getsentry/sentry-ruby/blob/master/CHANGELOG.md).
 
+## Unreleased
+
+### Features
+
+- Expose `:values` in `ExceptionInterface`, so that it can be accessed in `before_send` under `event.exception.values` [#1843](https://github.com/getsentry/sentry-ruby/pull/1843)
+- Add top level `Sentry.close` API [#1844](https://github.com/getsentry/sentry-ruby/pull/1844)
+  - Cleans up SDK state and sets it to uninitialized
+  - No-ops all SDK APIs and also disables the transport layer, so nothing will be sent to Sentry after closing the SDK
+
 ## 4.4.2
 
 - Fix NoMethodError when SDK's dsn is nil [#1433](https://github.com/getsentry/sentry-ruby/pull/1433)
