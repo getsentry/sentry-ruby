@@ -20,6 +20,11 @@
     ```
 - Prepare for Rails 7.1's error reporter API change [#1834](https://github.com/getsentry/sentry-ruby/pull/1834)
 
+### Bug Fixes
+
+- Respect `report_rescued_exceptions` config [#1847](https://github.com/getsentry/sentry-ruby/pull/1847)
+  - Fixes [#1840](https://github.com/getsentry/sentry-ruby/issues/1840)
+
 ### Refactoring
 
 - Move envelope item processing/trimming logic to the Item class [#1824](https://github.com/getsentry/sentry-ruby/pull/1824)

@@ -28,13 +28,13 @@ module Sentry
               finish_transaction(transaction, 500)
               raise # Don't capture Sentry errors
             rescue Exception => e
-              capture_exception(e)
+              capture_exception(e, env)
               finish_transaction(transaction, 500)
               raise
             end
 
             exception = collect_exception(env)
-            capture_exception(exception) if exception
+            capture_exception(exception, env) if exception
 
             finish_transaction(transaction, response[0])
 
@@ -53,7 +53,7 @@ module Sentry
         "rack.request".freeze
       end
 
-      def capture_exception(exception)
+      def capture_exception(exception, _env)
         Sentry.capture_exception(exception)
       end
 

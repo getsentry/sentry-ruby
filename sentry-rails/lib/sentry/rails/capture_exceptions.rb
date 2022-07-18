@@ -20,10 +20,15 @@ module Sentry
         "rails.request".freeze
       end
 
-      def capture_exception(exception)
+      def capture_exception(exception, env)
+        request = ActionDispatch::Request.new(env)
+
+        # the exception will be swallowed by ShowExceptions middleware
+        return if request.show_exceptions? && !Sentry.configuration.rails.report_rescued_exceptions
+
         current_scope = Sentry.get_current_scope
 
-        if original_transaction = current_scope.rack_env["sentry.original_transaction"]
+        if original_transaction = env["sentry.original_transaction"]
           current_scope.set_transaction_name(original_transaction)
         end
 
