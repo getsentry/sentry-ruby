@@ -2,6 +2,12 @@
 
 ### Features
 
+- Expose `:values` in `ExceptionInterface`, so that it can be accessed in `before_send` under `event.exception.values` [#1843](https://github.com/getsentry/sentry-ruby/pull/1843)
+
+- Add top level `Sentry.close` API [#1844](https://github.com/getsentry/sentry-ruby/pull/1844)
+  - Cleans up SDK state and sets it to uninitialized
+  - No-ops all SDK APIs and also disables the transport layer, so nothing will be sent to Sentry after closing the SDK
+
 - Handle exception with large stacktrace without dropping entire item [#1807](https://github.com/getsentry/sentry-ruby/pull/1807)
 - Capture Rails runner's exceptions before exiting [#1820](https://github.com/getsentry/sentry-ruby/pull/1820)
 

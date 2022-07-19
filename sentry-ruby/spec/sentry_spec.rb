@@ -784,4 +784,71 @@ RSpec.describe Sentry do
     end
   end
 
+  describe ".close" do
+    context "when closing initialized SDK" do
+      it "not initialized?" do
+        expect(described_class.initialized?).to eq(true)
+        described_class.close
+        expect(described_class.initialized?).to eq(false)
+      end
+
+      it "removes main hub" do
+        expect(described_class.get_main_hub).to be_a(Sentry::Hub)
+        described_class.close
+        expect(described_class.get_main_hub).to eq(nil)
+      end
+
+      it "removes thread local" do
+        expect(Thread.current.thread_variable_get(described_class::THREAD_LOCAL)).to be_a(Sentry::Hub)
+        described_class.close
+        expect(Thread.current.thread_variable_get(described_class::THREAD_LOCAL)).to eq(nil)
+
+      end
+
+      it "calls background worker shutdown" do
+        expect(described_class.background_worker).to receive(:shutdown)
+        described_class.close
+        expect(described_class.background_worker).to eq(nil)
+      end
+
+      it "kills session flusher" do
+        expect(described_class.session_flusher).to receive(:kill)
+        described_class.close
+        expect(described_class.session_flusher).to eq(nil)
+      end
+
+      it "disables Tracepoint" do
+        perform_basic_setup do |config|
+          config.capture_exception_frame_locals = true
+        end
+
+        expect(described_class.exception_locals_tp).to receive(:disable).and_call_original
+        described_class.close
+      end
+    end
+
+    it "can reinitialize closed SDK" do
+      perform_basic_setup
+
+      expect do
+        described_class.capture_event(event)
+      end.to change { transport.events.count }.by(1)
+
+      described_class.close
+
+      expect do
+        described_class.capture_event(event)
+      end.to change { transport.events.count }.by(0)
+
+      perform_basic_setup
+
+      expect(described_class.initialized?).to eq(true)
+
+      new_transport = described_class.get_current_client.transport
+
+      expect do
+        described_class.capture_event(event)
+      end.to change { new_transport.events.count }.by(1)
+    end
+  end
 end
