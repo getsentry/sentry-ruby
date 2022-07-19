@@ -213,10 +213,7 @@ module Sentry
         exception_locals_tp.enable
       end
 
-      at_exit do
-        @session_flusher&.kill
-        @background_worker&.shutdown
-      end
+      at_exit { close }
     end
 
     # Flushes pending events and cleans up SDK state.
@@ -234,7 +231,7 @@ module Sentry
         @session_flusher = nil
       end
 
-      if configuration.capture_exception_frame_locals
+      if configuration&.capture_exception_frame_locals
         exception_locals_tp.disable
       end
 
