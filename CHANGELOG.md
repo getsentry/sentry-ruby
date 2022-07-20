@@ -25,6 +25,15 @@
     end
     ```
 - Prepare for Rails 7.1's error reporter API change [#1834](https://github.com/getsentry/sentry-ruby/pull/1834)
+- Set `sentry.error_event_id` in request env if the middleware captures errors [#1849](https://github.com/getsentry/sentry-ruby/pull/1849)
+
+  If the SDK's Rack middleware captures an error, the reported event's id will be stored in the request env. For example:
+
+  ```rb
+  env["sentry.error_event_id"] #=> "507bd4c1a07e4355bb70bcd7afe8ab17"
+  ```
+
+  Users can display this information on the error page via a middleware as proposed in [#1846](https://github.com/getsentry/sentry-ruby/issues/1846)
 
 ### Bug Fixes
 
