@@ -3,6 +3,8 @@
 module Sentry
   module Rack
     class CaptureExceptions
+      ERROR_EVENT_ID_KEY = "sentry.error_event_id"
+
       def initialize(app)
         @app = app
       end
@@ -53,8 +55,10 @@ module Sentry
         "rack.request".freeze
       end
 
-      def capture_exception(exception, _env)
-        Sentry.capture_exception(exception)
+      def capture_exception(exception, env)
+        Sentry.capture_exception(exception).tap do |event|
+          env[ERROR_EVENT_ID_KEY] = event.event_id if event
+        end
       end
 
       def start_transaction(env, scope)

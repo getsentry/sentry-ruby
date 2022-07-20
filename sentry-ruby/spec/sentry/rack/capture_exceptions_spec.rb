@@ -24,6 +24,7 @@ RSpec.describe Sentry::Rack::CaptureExceptions, rack: true do
 
       event = transport.events.last.to_hash
       expect(event.dig(:request, :url)).to eq("http://example.org/test")
+      expect(env["sentry.error_event_id"]).to eq(event[:event_id])
       last_frame = event.dig(:exception, :values, 0, :stacktrace, :frames).last
       expect(last_frame[:vars]).to eq(nil)
     end
@@ -40,6 +41,7 @@ RSpec.describe Sentry::Rack::CaptureExceptions, rack: true do
       end.to change { transport.events.count }.by(1)
 
       event = transport.events.last
+      expect(env["sentry.error_event_id"]).to eq(event.event_id)
       expect(event.to_hash.dig(:request, :url)).to eq("http://example.org/test")
     end
 
@@ -81,6 +83,7 @@ RSpec.describe Sentry::Rack::CaptureExceptions, rack: true do
 
       stack = described_class.new(Rack::Lint.new(app))
       expect { stack.call(env) }.to_not raise_error
+      expect(env.key?("sentry.error_event_id")).to eq(false)
     end
 
     context "with config.capture_exception_frame_locals = true" do

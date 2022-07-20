@@ -32,7 +32,9 @@ module Sentry
           current_scope.set_transaction_name(original_transaction)
         end
 
-        Sentry::Rails.capture_exception(exception)
+        Sentry::Rails.capture_exception(exception).tap do |event|
+          env[ERROR_EVENT_ID_KEY] = event.event_id if event
+        end
       end
 
       def start_transaction(env, scope)
