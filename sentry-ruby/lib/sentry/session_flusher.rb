@@ -8,6 +8,7 @@ module Sentry
 
     def initialize(configuration, client)
       @thread = nil
+      @exited = false
       @client = client
       @pending_aggregates = {}
       @release = configuration.release
@@ -30,6 +31,7 @@ module Sentry
 
     def add_session(session)
       return unless @release
+      return if @exited
 
       ensure_thread
 
@@ -40,6 +42,8 @@ module Sentry
 
     def kill
       log_debug("Killing session flusher")
+
+      @exited = true
       @thread&.kill
     end
 
@@ -66,7 +70,7 @@ module Sentry
     end
 
     def ensure_thread
-      return if @thread&.alive?
+      return if @thread&.alive? || @exited
 
       @thread = Thread.new do
         loop do
@@ -74,6 +78,9 @@ module Sentry
           flush
         end
       end
+
+    rescue ThreadError
+      @exited = true
     end
 
   end
