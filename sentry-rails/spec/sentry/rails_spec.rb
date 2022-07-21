@@ -81,6 +81,12 @@ RSpec.describe Sentry::Rails, type: :request do
 
       expect(event.dig("request", "url")).to eq("http://www.example.com/exception")
     end
+
+    it "sets the error event id to env" do
+      get "/exception"
+
+      expect(response.request.env["sentry.error_event_id"]).to eq(event["event_id"])
+    end
   end
 
   RSpec.shared_examples "report_rescued_exceptions" do
