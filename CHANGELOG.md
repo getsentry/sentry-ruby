@@ -45,6 +45,30 @@
 - Move envelope item processing/trimming logic to the Item class [#1824](https://github.com/getsentry/sentry-ruby/pull/1824)
 - Replace sentry-ruby-core with sentry-ruby as integration dependency [#1825](https://github.com/getsentry/sentry-ruby/pull/1825)
 
+### Test Helpers
+
+The SDK now provides a set of [test helpers](https://github.com/getsentry/sentry-ruby/blob/master/sentry-ruby/lib/sentry/test_helper.rb) to help users setup and teardown Sentry related tests.
+
+To get started:
+
+```rb
+require "sentry/test_helper"
+
+# in minitest
+class MyTest < Minitest::Test
+  include Sentry::TestHelper
+  # ...
+end
+
+# in RSpec
+RSpec.configure do |config|
+  config.include Sentry::TestHelper
+  # ...
+end
+```
+
+It's still an early attempt so please give us feedback in [#1680](https://github.com/getsentry/sentry-ruby/issues/1680).
+
 ## 5.3.1
 
 ### Bug Fixes
