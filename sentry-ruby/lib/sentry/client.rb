@@ -167,7 +167,14 @@ module Sentry
     def dispatch_async_event(async_block, event, hint)
       # We have to convert to a JSON-like hash, because background job
       # processors (esp ActiveJob) may not like weird types in the event hash
-      event_hash = event.to_json_compatible
+
+      event_hash =
+        begin
+          event.to_json_compatible
+        rescue => e
+          log_error("Converting #{event.type} (#{event.event_id}) to JSON compatible hash failed", e, debug: configuration.debug)
+          return
+        end
 
       if async_block.arity == 2
         hint = JSON.parse(JSON.generate(hint))
