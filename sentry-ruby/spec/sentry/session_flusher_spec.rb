@@ -126,12 +126,52 @@ RSpec.describe Sentry::SessionFlusher do
       expect(pending_aggregates.keys.first).to be_a(Time)
       expect(pending_aggregates.values.first).to include({ errored: 0, exited: 1 })
     end
+
+    context "when thread creation fails" do
+      before do
+        expect(Thread).to receive(:new).and_raise(ThreadError)
+      end
+
+      it "doesn't create new thread" do
+        expect do
+          subject.add_session(session)
+        end.to change { Thread.list.count }.by(0)
+      end
+
+      it "noops" do
+        subject.add_session(session)
+        expect(subject.instance_variable_get(:@pending_aggregates)).to eq({})
+      end
+
+      it "logs error" do
+        subject.add_session(session)
+        expect(string_io.string).to match(/Session flusher thread creation failed/)
+      end
+    end
+
+    context "when killed" do
+      before do
+        subject.kill
+      end
+
+      it "noops" do
+        subject.add_session(session)
+        expect(subject.instance_variable_get(:@pending_aggregates)).to eq({})
+      end
+
+      it "doesn't create new thread" do
+        expect(Thread).not_to receive(:new)
+
+        expect do
+          subject.add_session(session)
+        end.to change { Thread.list.count }.by(0)
+      end
+    end
   end
 
   describe "#kill" do
     it "logs message when killing the thread" do
       subject.kill
-
       expect(string_io.string).to match(/Killing session flusher/)
     end
   end

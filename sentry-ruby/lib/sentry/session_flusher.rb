@@ -8,6 +8,7 @@ module Sentry
 
     def initialize(configuration, client)
       @thread = nil
+      @exited = false
       @client = client
       @pending_aggregates = {}
       @release = configuration.release
@@ -29,9 +30,16 @@ module Sentry
     end
 
     def add_session(session)
+      return if @exited
       return unless @release
 
-      ensure_thread
+      begin
+        ensure_thread
+      rescue ThreadError
+        log_debug("Session flusher thread creation failed")
+        @exited = true
+        return
+      end
 
       return unless Session::AGGREGATE_STATUSES.include?(session.status)
       @pending_aggregates[session.aggregation_key] ||= init_aggregates(session.aggregation_key)
@@ -40,6 +48,8 @@ module Sentry
 
     def kill
       log_debug("Killing session flusher")
+
+      @exited = true
       @thread&.kill
     end
 
