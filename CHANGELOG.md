@@ -40,8 +40,6 @@
 - Respect `report_rescued_exceptions` config [#1847](https://github.com/getsentry/sentry-ruby/pull/1847)
   - Fixes [#1840](https://github.com/getsentry/sentry-ruby/issues/1840)
 - Rescue event's to JSON conversion error [#1853](https://github.com/getsentry/sentry-ruby/pull/1853)
-- Rescue `ThreadError` in `SessionFlusher` and stop creating threads if flusher is killed [#1851](https://github.com/getsentry/sentry-ruby/issues/1851)
-  - Fixes [#1848](https://github.com/getsentry/sentry-ruby/issues/1848)
 
 ### Refactoring
 
