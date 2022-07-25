@@ -11,7 +11,7 @@ end
 RSpec.describe Sentry::Client do
   let(:configuration) do
     Sentry::Configuration.new.tap do |config|
-      config.dsn = DUMMY_DSN
+      config.dsn = Sentry::TestHelper::DUMMY_DSN
       config.transport.transport_class = Sentry::DummyTransport
     end
   end
@@ -28,7 +28,7 @@ RSpec.describe Sentry::Client do
 
     context "when transport.transport_class is provided" do
       before do
-        configuration.dsn = DUMMY_DSN
+        configuration.dsn = Sentry::TestHelper::DUMMY_DSN
         configuration.transport.transport_class = Sentry::DummyTransport
       end
 
@@ -48,7 +48,7 @@ RSpec.describe Sentry::Client do
 
       context "when dsn is set" do
         before do
-          configuration.dsn = DUMMY_DSN
+          configuration.dsn = Sentry::TestHelper::DUMMY_DSN
         end
 
         it "returns HTTP transport object" do

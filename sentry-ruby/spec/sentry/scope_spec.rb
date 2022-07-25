@@ -177,11 +177,7 @@ RSpec.describe Sentry::Scope do
   end
 
   describe "#apply_to_event" do
-    before do
-      Sentry.init do |config|
-        config.dsn = DUMMY_DSN
-      end
-    end
+    before { perform_basic_setup }
 
     let(:client) do
       Sentry.get_current_client
