@@ -1,3 +1,10 @@
+## 5.4.1
+
+### Bug Fixes
+
+- Fix missing `spec.files` in `sentry-ruby.gemspec`
+  - Fixes [#1856](https://github.com/getsentry/sentry-ruby/issues/1856)
+
 ## 5.4.0
 
 ### Features
