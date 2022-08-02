@@ -60,4 +60,42 @@ RSpec.describe "Sentry::Breadcrumbs::SentryLogger" do
       expect(breadcrumbs.peek.category).to eq("test category")
     end
   end
+
+  describe "when closed" do
+    it "noops" do
+      Sentry.close
+      expect(Sentry).not_to receive(:add_breadcrumb)
+      logger.info("foo")
+    end
+
+    # see https://github.com/getsentry/sentry-ruby/issues/1858
+    it "noops on thread with cloned hub" do
+      mutex = Mutex.new
+      cv = ConditionVariable.new
+
+      a = Thread.new do
+        expect(Sentry.get_current_hub).to be_a(Sentry::Hub)
+
+        # close in another thread
+        b = Thread.new do
+          mutex.synchronize do
+            Sentry.close
+            cv.signal
+          end
+        end
+
+        mutex.synchronize do
+          # wait for other thread to close SDK
+          cv.wait(mutex)
+
+          expect(Sentry).not_to receive(:add_breadcrumb)
+          logger.info("foo")
+        end
+
+        b.join
+      end
+
+      a.join
+    end
+  end
 end

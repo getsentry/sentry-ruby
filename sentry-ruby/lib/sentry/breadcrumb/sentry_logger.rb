@@ -22,7 +22,7 @@ module Sentry
       def add_breadcrumb(severity, message = nil, progname = nil)
         # because the breadcrumbs now belongs to different Hub's Scope in different threads
         # we need to make sure the current thread's Hub has been set before adding breadcrumbs
-        return unless Sentry.get_current_hub
+        return unless Sentry.initialized? && Sentry.get_current_hub
 
         category = "logger"
 
