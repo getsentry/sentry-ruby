@@ -1,3 +1,9 @@
+## Unreleased
+
+### Features
+
+- Include `Delayed::Job` instance in hint [#1861](https://github.com/getsentry/sentry-ruby/pull/1861)
+
 ## 5.4.1
 
 ### Bug Fixes
