@@ -75,10 +75,8 @@ RSpec.describe "Sentry::Breadcrumbs::SentryLogger" do
 
       a = Thread.new do
         mutex.synchronize do
-          expect(Sentry.get_current_hub).to be_a(Sentry::Hub)
-
           # wait for other thread to close SDK
-          cv.wait(mutex)
+          cv.wait(mutex) unless Sentry.get_current_hub.nil?
 
           expect(Sentry).not_to receive(:add_breadcrumb)
           logger.info("foo")
