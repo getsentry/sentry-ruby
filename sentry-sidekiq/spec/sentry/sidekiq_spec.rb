@@ -1,5 +1,6 @@
 require "spec_helper"
 require 'sidekiq/manager'
+require 'sidekiq/api'
 
 RSpec.describe Sentry::Sidekiq do
   before do
