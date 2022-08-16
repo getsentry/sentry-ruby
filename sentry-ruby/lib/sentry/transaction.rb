@@ -31,13 +31,14 @@ module Sentry
     # @deprecated Use Sentry.logger instead.
     attr_reader :logger
 
-    def initialize(name: nil, parent_sampled: nil, hub:, **options)
+    def initialize(name: nil, parent_sampled: nil, baggage: nil, hub:, **options)
       super(**options)
 
       @name = name
       @parent_sampled = parent_sampled
       @transaction = self
       @hub = hub
+      @baggage = baggage # TODO-neel Baggage object
       @configuration = hub.configuration # to be removed
       @tracing_enabled = hub.configuration.tracing_enabled?
       @traces_sampler = hub.configuration.traces_sampler
