@@ -1,3 +1,10 @@
+## 5.4.2
+
+### Bug Fixes
+
+- Fix sentry_logger when SDK is closed from another thread [#1860](https://github.com/getsentry/sentry-ruby/pull/1860)
+  - Fixes [#1858](https://github.com/getsentry/sentry-ruby/issues/1858)
+
 ## 5.4.1
 
 ### Bug Fixes
