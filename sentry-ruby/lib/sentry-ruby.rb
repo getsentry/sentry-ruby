@@ -19,6 +19,7 @@ require "sentry/transaction"
 require "sentry/hub"
 require "sentry/background_worker"
 require "sentry/session_flusher"
+require "sentry/baggage"
 
 [
   "sentry/rake",
