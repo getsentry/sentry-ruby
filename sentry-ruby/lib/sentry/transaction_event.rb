@@ -8,6 +8,9 @@ module Sentry
     # @return [<Array[Span]>]
     attr_accessor :spans
 
+    # @return [Hash, nil]
+    attr_accessor :dynamic_sampling_context
+
     # @return [Float, nil]
     attr_reader :start_timestamp
 

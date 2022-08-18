@@ -22,6 +22,10 @@ module Sentry
     # @return [String]
     attr_reader :parent_sampled
 
+    # The parsed incoming W3C baggage header
+    # @return [Baggage, nil]
+    attr_reader :baggage
+
     # @deprecated Use Sentry.get_current_hub instead.
     attr_reader :hub
 
@@ -38,7 +42,7 @@ module Sentry
       @parent_sampled = parent_sampled
       @transaction = self
       @hub = hub
-      @baggage = baggage # TODO-neel Baggage object
+      @baggage = Baggage.from_incoming_header(baggage) if baggage
       @configuration = hub.configuration # to be removed
       @tracing_enabled = hub.configuration.tracing_enabled?
       @traces_sampler = hub.configuration.traces_sampler
