@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+require "sentry/baggage"
+
 module Sentry
   class Transaction < Span
     SENTRY_TRACE_REGEXP = Regexp.new(
