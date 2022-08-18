@@ -8,7 +8,6 @@ gem "rack" unless ENV["WITHOUT_RACK"] == "1"
 gem "rake", "~> 12.0"
 gem "rspec", "~> 3.0"
 gem "rspec-retry"
-gem "webmock"
 gem "fakeredis"
 gem "timecop"
 gem 'simplecov'
