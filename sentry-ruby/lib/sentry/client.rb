@@ -157,6 +157,18 @@ module Sentry
       trace
     end
 
+    # Generates a W3C Baggage header for distribted tracing from the given Span.
+    # Returns `nil` if `config.propagate_traces` is `false`.
+    # @param span [Span] the span to generate trace from.
+    # @return [String, nil]
+    def generate_baggage(span)
+      return unless configuration.propagate_traces
+
+      baggage = span.to_baggage
+      log_debug("[Tracing] Adding #{BAGGAGE_HEADER_NAME} header to outgoing request: #{baggage}")
+      baggage
+    end
+
     private
 
     def dispatch_background_event(event, hint)

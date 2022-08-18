@@ -40,6 +40,8 @@ module Sentry
 
   SENTRY_TRACE_HEADER_NAME = "sentry-trace".freeze
 
+  BAGGAGE_HEADER_NAME = "baggage".freeze
+
   THREAD_LOCAL = :sentry_hub
 
   class << self

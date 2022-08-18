@@ -104,6 +104,10 @@ module Sentry
       "#{@trace_id}-#{@span_id}-#{sampled_flag}"
     end
 
+    def to_baggage
+      transaction.baggage&.serialize
+    end
+
     # @return [Hash]
     def to_hash
       {
