@@ -70,7 +70,7 @@ module Sentry
     # hash to be used in the trace envelope header.
     # @return [Hash]
     def dynamic_sampling_context
-      @sentry_items.slice(*DSC_KEYS)
+      @sentry_items.select { |k, _v| DSC_KEYS.include?(k) }
     end
 
     # Serialize the Baggage object back to a string.
