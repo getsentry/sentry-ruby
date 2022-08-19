@@ -104,8 +104,11 @@ module Sentry
       "#{@trace_id}-#{@span_id}-#{sampled_flag}"
     end
 
+    # Generates a W3C Baggage header string for distributed tracing
+    # from the incoming baggage stored on the transation.
+    # @return [String]
     def to_baggage
-      transaction.baggage&.serialize
+      transaction&.baggage&.serialize
     end
 
     # @return [Hash]
