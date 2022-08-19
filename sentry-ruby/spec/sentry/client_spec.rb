@@ -118,13 +118,15 @@ RSpec.describe Sentry::Client do
     end
 
     context "when baggage present" do
-      let(:baggage) do
-        "other-vendor-value-1=foo;bar;baz, sentry-trace_id=771a43a4192642f0b136d5159a501700, "\
-        "sentry-public_key=49d0f7386ad645858ae85020e393bef3, sentry-sample_rate=0.01337, "\
-        "sentry-user_id=Am%C3%A9lie, other-vendor-value-2=foo;bar;"
-      end
-
       let(:transaction) do
+        baggage = "other-vendor-value-1=foo;bar;baz, "\
+          "sentry-trace_id=771a43a4192642f0b136d5159a501700, "\
+          "sentry-public_key=49d0f7386ad645858ae85020e393bef3, "\
+          "sentry-sample_rate=0.01337, "\
+          "sentry-user_id=Am%C3%A9lie,  "\
+          "other-vendor-value-2=foo;bar;"
+
+
         Sentry::Transaction.new(name: "test transaction", hub: hub, baggage: baggage, sampled: true)
       end
 
