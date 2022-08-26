@@ -211,6 +211,9 @@ module Sentry
     # @return [Boolean]
     attr_accessor :auto_session_tracking
 
+    # Automatically instrument supported libraries with transactions and spans.
+    attr_accessor :auto_instrument_traces
+
     # these are not config options
     # @!visibility private
     attr_reader :errors, :gem_specs
@@ -269,6 +272,7 @@ module Sentry
       self.trusted_proxies = []
       self.dsn = ENV['SENTRY_DSN']
       self.server_name = server_name_from_env
+      self.auto_instrument_traces = true
 
       self.before_send = nil
       self.rack_env_whitelist = RACK_ENV_WHITELIST_DEFAULT

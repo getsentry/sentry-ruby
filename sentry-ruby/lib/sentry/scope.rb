@@ -7,7 +7,7 @@ module Sentry
   class Scope
     include ArgumentCheckingHelper
 
-    ATTRIBUTES = [:transaction_names, :contexts, :extra, :tags, :user, :level, :breadcrumbs, :fingerprint, :event_processors, :rack_env, :span, :session]
+    ATTRIBUTES = [:transaction_names, :contexts, :extra, :tags, :user, :level, :breadcrumbs, :fingerprint, :event_processors, :rack_env, :span, :session, :trace]
 
     attr_reader(*ATTRIBUTES)
 
@@ -239,6 +239,13 @@ module Sentry
     # @return [void]
     def add_event_processor(&block)
       @event_processors << block
+    end
+
+    # Sets the scope's trace (the header value used by Sentry to propagate traces).
+    def set_trace(trace)
+      check_argument_type!(trace, String) unless trace.nil?
+
+      @trace = trace
     end
 
     protected

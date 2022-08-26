@@ -83,7 +83,9 @@ module Sentry
 end
 
 if defined?(::Redis::Client)
-  Sentry.register_patch do
+  Sentry.register_patch do |config|
+    return unless config.auto_instrument_traces
+
     patch = Sentry::Redis::Client
     Redis::Client.prepend(patch) unless Redis::Client.ancestors.include?(patch)
   end

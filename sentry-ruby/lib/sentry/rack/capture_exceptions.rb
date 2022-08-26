@@ -21,7 +21,10 @@ module Sentry
             scope.set_transaction_name(env["PATH_INFO"]) if env["PATH_INFO"]
             scope.set_rack_env(env)
 
-            transaction = start_transaction(env, scope)
+            sentry_trace = env["HTTP_SENTRY_TRACE"]
+            scope.set_trace(sentry_trace)
+
+            transaction = start_transaction(env, scope, sentry_trace) if Sentry.configuration.auto_instrument_traces
             scope.set_span(transaction) if transaction
 
             begin
@@ -61,8 +64,7 @@ module Sentry
         end
       end
 
-      def start_transaction(env, scope)
-        sentry_trace = env["HTTP_SENTRY_TRACE"]
+      def start_transaction(env, scope, sentry_trace)
         options = { name: scope.transaction_name, op: transaction_op }
         transaction = Sentry::Transaction.from_sentry_trace(sentry_trace, **options) if sentry_trace
         Sentry.start_transaction(transaction: transaction, custom_sampling_context: { env: env }, **options)

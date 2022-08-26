@@ -28,8 +28,12 @@ module Sentry
       def request(req, body = nil, &block)
         return super unless started?
 
-        sentry_span = start_sentry_span
-        set_sentry_trace_header(req, sentry_span)
+        if Sentry.configuration.auto_instrument_traces
+          sentry_span = start_sentry_span
+          set_sentry_trace_header(req, sentry_span)
+        else
+          set_sentry_trace_header(req, Sentry.get_current_scope.get_span)
+        end
 
         super.tap do |res|
           record_sentry_breadcrumb(req, res)
