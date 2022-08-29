@@ -106,7 +106,7 @@ module Sentry
 
     # Generates a W3C Baggage header string for distributed tracing
     # from the incoming baggage stored on the transation.
-    # @return [String]
+    # @return [String, nil]
     def to_baggage
       transaction&.baggage&.serialize
     end

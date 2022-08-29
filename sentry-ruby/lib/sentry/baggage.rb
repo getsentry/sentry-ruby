@@ -43,13 +43,16 @@ module Sentry
       third_party_items = ''
       mutable = true
 
-      header.split(',').map(&:strip).each do |item|
+      header.split(',').each do |item|
+        item = item.strip
         key, val = item.split('=')
         next unless key && val
 
         if key =~ SENTRY_PREFIX_REGEX
-          baggage_key = CGI.unescape(key.split('-')[1])
-          sentry_items[baggage_key] = CGI.unescape(val)
+          baggage_key = key.split('-')[1]
+          next unless baggage_key
+
+          sentry_items[CGI.unescape(baggage_key)] = CGI.unescape(val)
           mutable = false
         else
           delim = third_party_items.empty? ? '' : ','
