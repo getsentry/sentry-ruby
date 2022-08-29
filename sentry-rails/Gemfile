@@ -29,6 +29,9 @@ gem "mini_magick"
 gem "sprockets-rails"
 
 gem "sidekiq"
+# TODO-neel remove after upstream fixed
+# https://github.com/mperham/sidekiq/issues/5498
+gem "redis", "< 5.0"
 
 gem "rspec", "~> 3.0"
 gem "rspec-retry"
