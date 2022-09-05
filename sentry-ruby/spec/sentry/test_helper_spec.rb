@@ -111,5 +111,14 @@ RSpec.describe Sentry::TestHelper do
 
       expect(sentry_envelopes.count).to eq(0)
     end
+
+    it "clears stored breadcrumbs" do
+      Sentry.add_breadcrumb(Sentry::Breadcrumb.new(message: "woopsie doopsie"))
+      expect(Sentry.get_current_scope.breadcrumbs.members.size).to eq(1)
+
+      teardown_sentry_test
+
+      expect(Sentry.get_current_scope.breadcrumbs.members.size).to eq(0)
+    end
   end
 end

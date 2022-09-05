@@ -41,6 +41,7 @@ module Sentry
 
       sentry_transport.events = []
       sentry_transport.envelopes = []
+      Sentry.get_current_scope.clear_breadcrumbs
     end
 
     # @return [Transport]
@@ -73,4 +74,3 @@ module Sentry
     end
   end
 end
-
