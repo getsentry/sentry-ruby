@@ -15,7 +15,7 @@ module Sentry
 
     def initialize(exception:, stacktrace: nil)
       @type = exception.class.to_s
-      @value = (exception.message || "").try(:byteslice, 0..Event::MAX_MESSAGE_SIZE_IN_BYTES).to_s
+      @value = (exception.message || "")&.byteslice(0..Event::MAX_MESSAGE_SIZE_IN_BYTES)&.to_s
       @module = exception.class.to_s.split('::')[0...-1].join('::')
       @thread_id = Thread.current.object_id
       @stacktrace = stacktrace
