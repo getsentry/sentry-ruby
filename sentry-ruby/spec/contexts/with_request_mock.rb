@@ -1,11 +1,7 @@
-require "webmock"
-
 # because our patch on Net::HTTP is relatively low-level, we need to stub methods on socket level
 # which is not supported by most of the http mocking library
 # so we need to put something together ourselves
 RSpec.shared_context "with request mock" do
-  before { stub_const('Net::BufferedIO', Net::WebMockNetBufferedIO) }
-
   class FakeSocket < StringIO
     def setsockopt(*args); end
   end

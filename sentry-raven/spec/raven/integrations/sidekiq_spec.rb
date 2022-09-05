@@ -4,6 +4,7 @@ require 'spec_helper'
 # so we need to load the CLI class to achieve full integration in test environment
 require 'sidekiq/cli'
 require 'sidekiq/manager'
+require 'sidekiq/api'
 
 require 'raven/integrations/sidekiq'
 
