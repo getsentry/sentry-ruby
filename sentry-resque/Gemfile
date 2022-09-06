@@ -17,6 +17,3 @@ gem "sentry-rails", path: "../sentry-rails"
 
 gem "pry"
 gem "debug", github: "ruby/debug", platform: :ruby if RUBY_VERSION.to_f >= 2.6
-
-# remove this after https://github.com/resque/resque/pull/1828 is merged and released
-gem "redis", "< 5.0"
