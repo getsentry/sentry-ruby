@@ -74,7 +74,7 @@ RSpec.describe Sentry::Rack::CaptureExceptions, rack: true do
 
     it 'passes rack/lint' do
       app = proc do
-        [200, { 'Content-Type' => 'text/plain' }, ['OK']]
+        [200, { 'content-type' => 'text/plain' }, ['OK']]
       end
 
       stack = described_class.new(Rack::Lint.new(app))

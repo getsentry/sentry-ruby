@@ -12,17 +12,14 @@ jobs:
     defaults:
       run:
         working-directory: sentry-ruby
-    name: Ruby ${{ matrix.ruby_version }}, options - ${{ toJson(matrix.options) }}
+    name: Ruby ${{ matrix.ruby_version }} & Rack ${{ matrix.rack_version }}, options - ${{ toJson(matrix.options) }}
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
+        ruby_version: [2.4, 2.5, 2.6, 2.7, '3.0', jruby]
+        rack_version: [2.0, 3.0]
+        os: [ubuntu-latest]
         include:
-          - { os: ubuntu-latest, ruby_version: 2.4 }
-          - { os: ubuntu-latest, ruby_version: 2.5 }
-          - { os: ubuntu-latest, ruby_version: 2.6 }
-          - { os: ubuntu-latest, ruby_version: 2.7 }
-          - { os: ubuntu-latest, ruby_version: '3.0' }
-          - { os: ubuntu-latest, ruby_version: jruby }
           - { os: ubuntu-latest, ruby_version: '3.1', options: { rubyopt: "--enable-frozen-string-literal --debug=frozen-string-literal" } }
           - { os: ubuntu-latest, ruby_version: '3.1', options: { without_rack: 1 } }
           - { os: ubuntu-latest, ruby_version: '3.1', options: { codecov: 1 } }
@@ -39,6 +36,7 @@ jobs:
       env:
         RUBYOPT: ${{ matrix.options.rubyopt }}
         WITHOUT_RACK: ${{ matrix.options.without_rack }}
+        RACK_VERSION: ${{ matrix.options.rack_version }}
       run: |
         bundle install --jobs 4 --retry 3
         bundle exec rake

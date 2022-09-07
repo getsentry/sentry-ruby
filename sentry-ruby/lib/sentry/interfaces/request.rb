@@ -123,13 +123,14 @@ module Sentry
         !(key.start_with?('HTTP_') || CONTENT_HEADERS.include?(key))
     end
 
-    # Rack adds in an incorrect HTTP_VERSION key, which causes downstream
+    # In versions < 3, Rack adds in an incorrect HTTP_VERSION key, which causes downstream
     # to think this is a Version header. Instead, this is mapped to
     # env['SERVER_PROTOCOL']. But we don't want to ignore a valid header
     # if the request has legitimately sent a Version header themselves.
     # See: https://github.com/rack/rack/blob/028438f/lib/rack/handler/cgi.rb#L29
-    # NOTE: This will be removed in version 3.0+
     def is_server_protocol?(key, value, protocol_version)
+      return false if ::Rack.release.start_with?('3')
+
       key == 'HTTP_VERSION' && value == protocol_version
     end
 
