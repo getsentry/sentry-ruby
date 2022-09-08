@@ -221,9 +221,11 @@ RSpec.describe Sentry::Rack::CaptureExceptions, rack: true do
   end
 
   describe "performance monitoring" do
+    let(:traces_sample_rate) { 0.5 }
+
     before do
       perform_basic_setup do |config|
-        config.traces_sample_rate = 0.5
+        config.traces_sample_rate = traces_sample_rate
       end
     end
 
@@ -237,6 +239,7 @@ RSpec.describe Sentry::Rack::CaptureExceptions, rack: true do
           hub: Sentry.get_current_hub
         )
       end
+
       let(:stack) do
         described_class.new(
           ->(_) do
@@ -381,6 +384,49 @@ RSpec.describe Sentry::Rack::CaptureExceptions, rack: true do
           expect(sampling_context_env).to eq(env)
         end
       end
+    end
+
+    context "when the baggage header is sent" do
+      let(:traces_sample_rate) { 1.0 }
+      let(:baggage_string) do
+        "other-vendor-value-1=foo;bar;baz, "\
+          "sentry-trace_id=771a43a4192642f0b136d5159a501700, "\
+          "sentry-public_key=49d0f7386ad645858ae85020e393bef3, "\
+          "sentry-sample_rate=0.01337, "\
+          "sentry-user_id=Am%C3%A9lie,  "\
+          "other-vendor-value-2=foo;bar;"
+      end
+
+      let(:additional_headers) { { "HTTP_BAGGAGE" => baggage_string } }
+
+      let(:stack) do
+        described_class.new(
+          ->(_) do
+            [200, {}, ["ok"]]
+          end
+        )
+      end
+
+      let(:transaction_event) { last_sentry_event }
+
+      it "passes in baggage header to transaction" do
+        expect(Sentry::Transaction).to receive(:new).
+          with(hash_including(baggage: baggage_string)).
+          and_call_original
+
+        stack.call(env)
+      end
+
+      it "has the dynamic_sampling_context on the TransactionEvent" do
+        stack.call(env)
+        expect(transaction_event.dynamic_sampling_context).to eq({
+          "sample_rate" => "0.01337",
+          "public_key" => "49d0f7386ad645858ae85020e393bef3",
+          "trace_id" => "771a43a4192642f0b136d5159a501700",
+          "user_id" => "Amélie"
+        })
+      end
+
     end
 
     context "when the transaction is sampled" do
