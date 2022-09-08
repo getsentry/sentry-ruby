@@ -129,7 +129,8 @@ module Sentry
     # if the request has legitimately sent a Version header themselves.
     # See: https://github.com/rack/rack/blob/028438f/lib/rack/handler/cgi.rb#L29
     def is_server_protocol?(key, value, protocol_version)
-      return false if ::Rack.release.start_with?('3')
+      rack_version = Gem::Version.new(::Rack.release)
+      return false if rack_version >= Gem::Version.new("3.0")
 
       key == 'HTTP_VERSION' && value == protocol_version
     end
