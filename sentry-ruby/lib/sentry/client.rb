@@ -165,7 +165,11 @@ module Sentry
       return unless configuration.propagate_traces
 
       baggage = span.to_baggage
-      log_debug("[Tracing] Adding #{BAGGAGE_HEADER_NAME} header to outgoing request: #{baggage}")
+
+      if baggage && !baggage.empty?
+        log_debug("[Tracing] Adding #{BAGGAGE_HEADER_NAME} header to outgoing request: #{baggage}")
+      end
+
       baggage
     end
 
