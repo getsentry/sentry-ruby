@@ -185,6 +185,34 @@ RSpec.describe Sentry::Rails::Tracing, type: :request do
         expect(transaction.contexts.dig(:trace, :span_id)).not_to eq(external_transaction.span_id)
       end
     end
+
+    context "with baggage header" do
+      let(:baggage_string) do
+        "other-vendor-value-1=foo;bar;baz, "\
+          "sentry-trace_id=771a43a4192642f0b136d5159a501700, "\
+          "sentry-public_key=49d0f7386ad645858ae85020e393bef3, "\
+          "sentry-sample_rate=0.01337, "\
+          "sentry-user_id=Am%C3%A9lie,  "\
+          "other-vendor-value-2=foo;bar;"
+      end
+
+      it "has the dynamic_sampling_context on the TransactionEvent" do
+        expect(Sentry::Transaction).to receive(:new).
+          with(hash_including(baggage: baggage_string)).
+          and_call_original
+
+        p = Post.create!
+        get "/posts/#{p.id}", headers: { "baggage" => baggage_string }
+
+        transaction_event = transport.events.last
+        expect(transaction_event.dynamic_sampling_context).to eq({
+          "sample_rate" => "0.01337",
+          "public_key" => "49d0f7386ad645858ae85020e393bef3",
+          "trace_id" => "771a43a4192642f0b136d5159a501700",
+          "user_id" => "Amélie"
+        })
+      end
+    end
   end
 
   context "without traces_sample_rate set" do

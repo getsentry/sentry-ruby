@@ -409,16 +409,13 @@ RSpec.describe Sentry::Rack::CaptureExceptions, rack: true do
 
       let(:transaction_event) { last_sentry_event }
 
-      it "passes in baggage header to transaction" do
+      it "has the dynamic_sampling_context on the TransactionEvent" do
         expect(Sentry::Transaction).to receive(:new).
           with(hash_including(baggage: baggage_string)).
           and_call_original
 
         stack.call(env)
-      end
 
-      it "has the dynamic_sampling_context on the TransactionEvent" do
-        stack.call(env)
         expect(transaction_event.dynamic_sampling_context).to eq({
           "sample_rate" => "0.01337",
           "public_key" => "49d0f7386ad645858ae85020e393bef3",
@@ -426,7 +423,6 @@ RSpec.describe Sentry::Rack::CaptureExceptions, rack: true do
           "user_id" => "Amélie"
         })
       end
-
     end
 
     context "when the transaction is sampled" do
