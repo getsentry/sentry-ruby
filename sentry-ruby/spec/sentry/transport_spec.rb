@@ -66,6 +66,26 @@ RSpec.describe Sentry::Transport do
 
         expect(item).to eq(event.to_hash.to_json)
       end
+
+      context "when dynamic_sampling_context present" do
+        before do
+          event.dynamic_sampling_context = {
+            "sample_rate" => "0.01337",
+            "public_key" => "49d0f7386ad645858ae85020e393bef3",
+            "trace_id" => "771a43a4192642f0b136d5159a501700",
+            "user_id" => "Amélie"
+          }
+        end
+
+        it "adds the trace header to envelope" do
+          result, _ = subject.serialize_envelope(envelope)
+          envelope_header, _, _ = result.split("\n")
+          header_parsed = JSON.parse(envelope_header)
+
+          expect(header_parsed).to include("trace")
+          expect(header_parsed["trace"]).to eq(event.dynamic_sampling_context)
+        end
+      end
     end
 
     context "client report" do
