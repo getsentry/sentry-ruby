@@ -36,7 +36,6 @@ jobs:
     - name: Run specs
       env:
         RUBYOPT: ${{ matrix.options.rubyopt }}
-        WITHOUT_RACK: ${{ matrix.options.without_rack }}
         RACK_VERSION: ${{ matrix.rack_version }}
       run: |
         bundle install --jobs 4 --retry 3
