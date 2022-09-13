@@ -1,3 +1,10 @@
+## Unreleased
+
+### Features
+
+- Support rack 3 [#1884](https://github.com/getsentry/sentry-ruby/pull/1884)
+  - We no longer need the `HTTP_VERSION` check for ignoring the header
+
 ## 5.4.2
 
 ### Bug Fixes
