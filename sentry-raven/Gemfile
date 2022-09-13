@@ -14,7 +14,7 @@ end
 gem "delayed_job"
 gem "sidekiq"
 
-gem "rack"
+gem "rack", "< 3.0"
 gem "rack-timeout"
 
 # TODO: Remove this if https://github.com/jruby/jruby/issues/6547 is addressed
