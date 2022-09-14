@@ -5,6 +5,11 @@
 - Support rack 3 [#1884](https://github.com/getsentry/sentry-ruby/pull/1884)
   - We no longer need the `HTTP_VERSION` check for ignoring the header
 
+### Bug Fixes
+
+- Memoize session.aggregation_key [#1892](https://github.com/getsentry/sentry-ruby/pull/1892)
+  - Fixes [#1891](https://github.com/getsentry/sentry-ruby/issues/1891)
+
 ## 5.4.2
 
 ### Bug Fixes
