@@ -14,6 +14,20 @@ module Sentry
     # @return [Float, nil]
     attr_reader :start_timestamp
 
+    def initialize(transaction:, **options)
+      super(**options)
+
+      self.transaction = transaction.name
+      self.contexts.merge!(trace: transaction.get_trace_context)
+      self.timestamp = transaction.timestamp
+      self.start_timestamp = transaction.start_timestamp
+      self.tags = transaction.tags
+      self.dynamic_sampling_context = transaction.baggage&.dynamic_sampling_context
+
+      finished_spans = transaction.span_recorder.spans.select { |span| span.timestamp && span != transaction }
+      self.spans = finished_spans.map(&:to_hash)
+    end
+
     # Sets the event's start_timestamp.
     # @param time [Time, Float]
     # @return [void]

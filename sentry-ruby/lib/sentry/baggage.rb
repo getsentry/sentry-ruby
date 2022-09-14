@@ -5,7 +5,7 @@ require 'cgi'
 module Sentry
   # A {https://www.w3.org/TR/baggage W3C Baggage Header} implementation.
   class Baggage
-    SENTRY_PREFIX = 'sentry-'.freeze
+    SENTRY_PREFIX = 'sentry-'
     SENTRY_PREFIX_REGEX = /^sentry-/.freeze
 
     DSC_KEYS = %w(

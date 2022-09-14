@@ -105,17 +105,7 @@ module Sentry
     # @param transaction [Transaction] the transaction to be recorded.
     # @return [TransactionEvent]
     def event_from_transaction(transaction)
-      TransactionEvent.new(configuration: configuration).tap do |event|
-        event.transaction = transaction.name
-        event.contexts.merge!(trace: transaction.get_trace_context)
-        event.timestamp = transaction.timestamp
-        event.start_timestamp = transaction.start_timestamp
-        event.tags = transaction.tags
-        event.dynamic_sampling_context = transaction.baggage&.dynamic_sampling_context
-
-        finished_spans = transaction.span_recorder.spans.select { |span| span.timestamp && span != transaction }
-        event.spans = finished_spans.map(&:to_hash)
-      end
+      TransactionEvent.new(configuration: configuration, transaction: transaction)
     end
 
     # @!macro send_event
