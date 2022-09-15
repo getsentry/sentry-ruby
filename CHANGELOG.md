@@ -5,6 +5,15 @@
 - Support rack 3 [#1884](https://github.com/getsentry/sentry-ruby/pull/1884)
   - We no longer need the `HTTP_VERSION` check for ignoring the header
 
+- Add [Dynamic Sampling](https://docs.sentry.io/product/sentry-basics/sampling/) support
+  The SDK now supports Sentry's Dynamic Sampling product.
+
+  Note that this is not supported for users still using the `config.async` option.
+
+  - Parse incoming [W3C Baggage Headers](https://www.w3.org/TR/baggage/) and propagate them [#1869](https://github.com/getsentry/sentry-ruby/pull/1869)
+    - in all outgoing requests in our net/http patch
+    - in Sentry transactions as [Dynamic Sampling Context](https://develop.sentry.dev/sdk/performance/dynamic-sampling-context/)
+
 ### Bug Fixes
 
 - Memoize session.aggregation_key [#1892](https://github.com/getsentry/sentry-ruby/pull/1892)
