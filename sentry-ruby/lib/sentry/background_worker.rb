@@ -22,10 +22,7 @@ module Sentry
       @shutdown_callback = nil
 
       @executor =
-        if configuration.async
-          log_debug("config.async is set, BackgroundWorker is disabled")
-          Concurrent::ImmediateExecutor.new
-        elsif @number_of_threads == 0
+        if @number_of_threads == 0
           log_debug("config.background_worker_threads is set to 0, all events will be sent synchronously")
           Concurrent::ImmediateExecutor.new
         else

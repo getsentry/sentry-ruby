@@ -131,19 +131,6 @@ RSpec.describe Sentry::Configuration do
     end
   end
 
-  context 'configuring for async' do
-    it 'should be configurable to send events async' do
-      subject.async = ->(_e) { :ok }
-      expect(subject.async.call('event')).to eq(:ok)
-    end
-  end
-
-  it 'raises error when setting async to anything other than callable or nil' do
-    subject.async = -> {}
-    subject.async = nil
-    expect { subject.async = true }.to raise_error(ArgumentError, "async must be callable (or nil to disable)")
-  end
-
   it 'raises error when setting before_send to anything other than callable or nil' do
     subject.before_send = -> {}
     subject.before_send = nil
