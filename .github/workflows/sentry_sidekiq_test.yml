@@ -17,7 +17,7 @@ jobs:
     strategy:
       matrix:
         sidekiq_version: [5.0, 6.0]
-        ruby_version: [2.4, 2.5, 2.6, 2.7, '3.0', '3.1', jruby]
+        ruby_version: [2.4, 2.5, 2.6, 2.7, '3.0', '3.1', head, jruby]
         os: [ubuntu-latest]
         include:
           - { os: ubuntu-latest, ruby_version: '3.1', sidekiq_version: 6.0, options: { rubyopt: "--enable-frozen-string-literal --debug=frozen-string-literal" } }

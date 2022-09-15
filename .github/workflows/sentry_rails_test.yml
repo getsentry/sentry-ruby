@@ -27,6 +27,7 @@ jobs:
           - { os: ubuntu-latest, ruby_version: '3.0', rails_version: 7.1.0 }
           - { os: ubuntu-latest, ruby_version: '3.1', rails_version: 7.0.0 }
           - { os: ubuntu-latest, ruby_version: '3.1', rails_version: 7.1.0 }
+          - { os: ubuntu-latest, ruby_version: head, rails_version: 7.1.0 }
         exclude:
           - ruby_version: 2.4
             rails_version: 6.0.0
