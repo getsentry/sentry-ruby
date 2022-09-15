@@ -9,6 +9,8 @@
 
 - Memoize session.aggregation_key [#1892](https://github.com/getsentry/sentry-ruby/pull/1892)
   - Fixes [#1891](https://github.com/getsentry/sentry-ruby/issues/1891)
+- Execute `with_scope`'s block even when SDK is not initialized [#1897](https://github.com/getsentry/sentry-ruby/pull/1897)
+  - Fixes [#1896](https://github.com/getsentry/sentry-ruby/issues/1896)
 
 ## 5.4.2
 
