@@ -44,7 +44,7 @@ module Sentry
       @parent_sampled = parent_sampled
       @transaction = self
       @hub = hub
-      @baggage = Baggage.from_incoming_header(baggage) if baggage
+      @baggage = baggage
       @configuration = hub.configuration # to be removed
       @tracing_enabled = hub.configuration.tracing_enabled?
       @traces_sampler = hub.configuration.traces_sampler
@@ -59,10 +59,11 @@ module Sentry
     #
     # The child transaction will also store the parent's sampling decision in its `parent_sampled` attribute.
     # @param sentry_trace [String] the trace string from the previous transaction.
+    # @param baggage [String, nil] the incoming baggage header string.
     # @param hub [Hub] the hub that'll be responsible for sending this transaction when it's finished.
     # @param options [Hash] the options you want to use to initialize a Transaction instance.
     # @return [Transaction, nil]
-    def self.from_sentry_trace(sentry_trace, hub: Sentry.get_current_hub, **options)
+    def self.from_sentry_trace(sentry_trace, baggage: nil, hub: Sentry.get_current_hub, **options)
       return unless hub.configuration.tracing_enabled?
       return unless sentry_trace
 
@@ -77,7 +78,16 @@ module Sentry
           sampled_flag != "0"
         end
 
-      new(trace_id: trace_id, parent_span_id: parent_span_id, parent_sampled: parent_sampled, hub: hub, **options)
+      baggage = Baggage.from_incoming_header(baggage) if baggage
+
+      new(
+        trace_id: trace_id,
+        parent_span_id: parent_span_id,
+        parent_sampled: parent_sampled,
+        hub: hub,
+        baggage: baggage,
+        **options
+      )
     end
 
     # @return [Hash]

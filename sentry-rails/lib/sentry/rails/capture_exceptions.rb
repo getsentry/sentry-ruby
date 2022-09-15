@@ -39,13 +39,15 @@ module Sentry
 
       def start_transaction(env, scope)
         sentry_trace = env["HTTP_SENTRY_TRACE"]
-        options = { name: scope.transaction_name, op: transaction_op, baggage: env["HTTP_BAGGAGE"] }
+        baggage = env["HTTP_BAGGAGE"]
+
+        options = { name: scope.transaction_name, op: transaction_op }
 
         if @assets_regex && scope.transaction_name.match?(@assets_regex)
           options.merge!(sampled: false)
         end
 
-        transaction = Sentry::Transaction.from_sentry_trace(sentry_trace, **options) if sentry_trace
+        transaction = Sentry::Transaction.from_sentry_trace(sentry_trace, baggage: baggage, **options) if sentry_trace
         Sentry.start_transaction(transaction: transaction, custom_sampling_context: { env: env }, **options)
       end
     end

@@ -31,8 +31,10 @@ module Sentry
 
           def start_transaction(env, transaction_name)
             sentry_trace = env["HTTP_SENTRY_TRACE"]
-            options = { name: transaction_name, op: "rails.action_cable".freeze, baggage: env["HTTP_BAGGAGE"] }
-            transaction = Sentry::Transaction.from_sentry_trace(sentry_trace, **options) if sentry_trace
+            baggage = env["HTTP_BAGGAGE"]
+
+            options = { name: transaction_name, op: "rails.action_cable".freeze }
+            transaction = Sentry::Transaction.from_sentry_trace(sentry_trace, baggage: baggage, **options) if sentry_trace
             Sentry.start_transaction(transaction: transaction, **options)
           end
 
