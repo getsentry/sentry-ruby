@@ -93,11 +93,14 @@ RSpec.describe Sentry::Client do
     let(:hub) do
       Sentry::Hub.new(subject, Sentry::Scope.new)
     end
+
     let(:transaction) do
-      Sentry::Transaction.new(name: "test transaction", hub: hub, sampled: true)
+      hub.start_transaction(name: "test transaction")
     end
 
     before do
+      configuration.traces_sample_rate = 1.0
+
       transaction.start_child(op: "unfinished child")
       transaction.start_child(op: "finished child", timestamp: Time.now.utc.iso8601)
     end
@@ -114,33 +117,37 @@ RSpec.describe Sentry::Client do
       expect(event_hash[:spans].count).to eq(1)
       expect(event_hash[:spans][0][:op]).to eq("finished child")
       expect(event_hash[:level]).to eq(nil)
-      expect(event.dynamic_sampling_context).to eq(nil)
     end
 
-    context "when baggage present" do
-      let(:transaction) do
-        baggage = Sentry::Baggage.from_incoming_header(
-          "other-vendor-value-1=foo;bar;baz, "\
-          "sentry-trace_id=771a43a4192642f0b136d5159a501700, "\
-          "sentry-public_key=49d0f7386ad645858ae85020e393bef3, "\
-          "sentry-sample_rate=0.01337, "\
-          "sentry-user_id=Am%C3%A9lie,  "\
-          "other-vendor-value-2=foo;bar;"
-        )
+    it "correct dynamic_sampling_context when incoming baggage header" do
+      baggage = Sentry::Baggage.from_incoming_header(
+        "other-vendor-value-1=foo;bar;baz, "\
+        "sentry-trace_id=771a43a4192642f0b136d5159a501700, "\
+        "sentry-public_key=49d0f7386ad645858ae85020e393bef3, "\
+        "sentry-sample_rate=0.01337, "\
+        "sentry-user_id=Am%C3%A9lie,  "\
+        "other-vendor-value-2=foo;bar;"
+      )
 
+      transaction = Sentry::Transaction.new(name: "test transaction", hub: hub, baggage: baggage, sampled: true)
+      event = subject.event_from_transaction(transaction)
 
-        Sentry::Transaction.new(name: "test transaction", hub: hub, baggage: baggage, sampled: true)
-      end
+      expect(event.dynamic_sampling_context).to eq({
+        "sample_rate" => "0.01337",
+        "public_key" => "49d0f7386ad645858ae85020e393bef3",
+        "trace_id" => "771a43a4192642f0b136d5159a501700",
+        "user_id" => "Amélie"
+      })
+    end
 
-      it "TransactionEvent has dynamic_sampling_context" do
-        event = subject.event_from_transaction(transaction)
-        expect(event.dynamic_sampling_context).to eq({
-          "sample_rate" => "0.01337",
-          "public_key" => "49d0f7386ad645858ae85020e393bef3",
-          "trace_id" => "771a43a4192642f0b136d5159a501700",
-          "user_id" => "Amélie"
-        })
-      end
+    it "correct dynamic_sampling_context when head SDK" do
+      event = subject.event_from_transaction(transaction)
+
+      expect(event.dynamic_sampling_context).to eq({
+        "sample_rate" => "1.0",
+        "transaction" => "test transaction",
+        "trace_id" => transaction.trace_id
+      })
     end
   end
 

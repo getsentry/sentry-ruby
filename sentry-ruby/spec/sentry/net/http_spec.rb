@@ -92,8 +92,7 @@ RSpec.describe Sentry::Net::HTTP do
       expect(request["sentry-trace"]).to eq(request_span.to_sentry_trace)
     end
 
-    # TODO-neel change this when head SDK implemented
-    it "does not add empty baggage header to the request header when no incoming trace" do
+    it "adds baggage header to the request header as head SDK when no incoming trace" do
       stub_normal_response
 
       uri = URI("http://example.com/path")
@@ -106,10 +105,18 @@ RSpec.describe Sentry::Net::HTTP do
       response = http.request(request)
 
       expect(response.code).to eq("200")
-      expect(string_io.string).not_to match(
+      expect(string_io.string).to match(
         /\[Tracing\] Adding baggage header to outgoing request:/
       )
-      expect(request.key?("baggage")).to eq(false)
+
+      request_span = transaction.span_recorder.spans.last
+      expect(request["baggage"]).to eq(request_span.to_baggage)
+      expect(request["baggage"]).to eq(
+        "sentry-trace_id=#{transaction.trace_id},"\
+        "sentry-sample_rate=1.0,"\
+        "sentry-environment=development,"\
+        "sentry-public_key=foobarbaz"
+      )
     end
 
     it "adds baggage header to the request header when continuing incoming trace" do
@@ -136,6 +143,7 @@ RSpec.describe Sentry::Net::HTTP do
       expect(string_io.string).to match(
         /\[Tracing\] Adding baggage header to outgoing request:/
       )
+
       request_span = transaction.span_recorder.spans.last
       expect(request["baggage"]).to eq(request_span.to_baggage)
       expect(request["baggage"]).to eq(
