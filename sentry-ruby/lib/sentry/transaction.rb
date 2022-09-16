@@ -24,6 +24,12 @@ module Sentry
     # @return [String]
     attr_reader :parent_sampled
 
+    # The parsed incoming W3C baggage header.
+    # This is only for accessing the current baggage variable.
+    # Please use the #get_baggage method for interfacing outside this class.
+    # @return [Baggage, nil]
+    attr_reader :baggage
+
     # @deprecated Use Sentry.get_current_hub instead.
     attr_reader :hub
 

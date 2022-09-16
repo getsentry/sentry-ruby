@@ -19,6 +19,12 @@ module Sentry
       user_segment
     ).freeze
 
+    # @return [Hash]
+    attr_reader :sentry_items
+
+    # @return [String]
+    attr_reader :third_party_items
+
     # @return [Boolean]
     attr_reader :mutable
 
