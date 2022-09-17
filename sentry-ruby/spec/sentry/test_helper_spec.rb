@@ -111,5 +111,13 @@ RSpec.describe Sentry::TestHelper do
 
       expect(sentry_envelopes.count).to eq(0)
     end
+
+    it "clears the scope" do
+      Sentry.set_tags(foo: "bar")
+
+      teardown_sentry_test
+
+      expect(Sentry.get_current_scope.tags).to eq({})
+    end
   end
 end
