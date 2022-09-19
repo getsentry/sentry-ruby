@@ -71,39 +71,6 @@ RSpec.describe Sentry::Baggage do
         end
       end
     end
-
-    context "with third party" do
-      context "when malformed baggage" do
-        it "is empty string" do
-          baggage = described_class.from_incoming_header(malformed_baggage)
-          expect(baggage.serialize(include_third_party: true)).to eq("")
-        end
-      end
-
-      context "when only third party baggage" do
-        it "has third party items" do
-          baggage = described_class.from_incoming_header(third_party_baggage)
-          expect(baggage.serialize(include_third_party: true)).to eq(
-            "other-vendor-value-1=foo;bar;baz,other-vendor-value-2=foo;bar;"
-          )
-        end
-      end
-
-      context "when mixed baggage" do
-        it "populates DSC" do
-          baggage = described_class.from_incoming_header(mixed_baggage)
-
-          expect(baggage.serialize(include_third_party: true)).to eq(
-            "sentry-trace_id=771a43a4192642f0b136d5159a501700,"\
-            "sentry-public_key=49d0f7386ad645858ae85020e393bef3,"\
-            "sentry-sample_rate=0.01337,"\
-            "sentry-user_id=Am%C3%A9lie,"\
-            "other-vendor-value-1=foo;bar;baz,"\
-            "other-vendor-value-2=foo;bar;"
-          )
-        end
-      end
-    end
   end
 
   describe "#mutable" do
