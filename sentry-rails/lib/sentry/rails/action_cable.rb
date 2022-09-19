@@ -13,8 +13,8 @@ module Sentry
             Sentry.with_scope do |scope|
               scope.set_rack_env(env)
               scope.set_context("action_cable", extra_context) if extra_context
-              scope.set_transaction_name(transaction_name)
-              transaction = start_transaction(env, scope.transaction_name)
+              scope.set_transaction_name(transaction_name, source: :view)
+              transaction = start_transaction(env, scope.transaction_name, scope.transaction_source)
               scope.set_span(transaction) if transaction
 
               begin
@@ -29,11 +29,11 @@ module Sentry
             end
           end
 
-          def start_transaction(env, transaction_name)
+          def start_transaction(env, transaction_name, transaction_source)
             sentry_trace = env["HTTP_SENTRY_TRACE"]
             baggage = env["HTTP_BAGGAGE"]
 
-            options = { name: transaction_name, op: "rails.action_cable".freeze }
+            options = { name: transaction_name, source: transaction_source, op: "rails.action_cable".freeze }
             transaction = Sentry::Transaction.from_sentry_trace(sentry_trace, baggage: baggage, **options) if sentry_trace
             Sentry.start_transaction(transaction: transaction, **options)
           end

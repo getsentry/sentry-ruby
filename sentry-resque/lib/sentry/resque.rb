@@ -24,7 +24,7 @@ module Sentry
               scope.set_tags("resque.queue" => queue)
 
               name = contexts.dig(:"Active-Job", :job_class) || contexts.dig(:"Resque", :job_class)
-              scope.set_transaction_name(name: name, source: :task)
+              scope.set_transaction_name(name, source: :task)
               transaction = Sentry.start_transaction(name: scope.transaction_name, source: scope.transaction_source, op: "resque")
               scope.set_span(transaction) if transaction
 
