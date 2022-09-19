@@ -20,7 +20,7 @@ v5_2 = Gem::Version.new("5.2")
 v6_0 = Gem::Version.new("6.0")
 v6_1 = Gem::Version.new("6.1")
 v7_0 = Gem::Version.new("7.0")
-v7_1 = Gem::Version.new("7.1")
+v7_1 = Gem::Version.new("7.1.alpha")
 
 FILE_NAME =
   case Gem::Version.new(Rails.version)
@@ -32,8 +32,10 @@ FILE_NAME =
     "6-0"
   when -> (v) { v.between?(v6_1, v7_0) }
     "6-1"
-  when -> (v) { v.between?(v7_0, v7_1) }
+  when -> (v) { v > v7_0 && v < v7_1 }
     "7-0"
+  when -> (v) { v >= v7_1 }
+    "7-1"
   end
 
 # require files and defined relevant setup methods for the Rails version
