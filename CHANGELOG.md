@@ -11,6 +11,7 @@
   - Fixes [#1891](https://github.com/getsentry/sentry-ruby/issues/1891)
 - Execute `with_scope`'s block even when SDK is not initialized [#1897](https://github.com/getsentry/sentry-ruby/pull/1897)
   - Fixes [#1896](https://github.com/getsentry/sentry-ruby/issues/1896)
+- Make sure test helper clears the current scope before/after a test [#1900](https://github.com/getsentry/sentry-ruby/pull/1900)
 
 ## 5.4.2
 
