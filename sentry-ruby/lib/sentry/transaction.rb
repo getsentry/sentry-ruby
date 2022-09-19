@@ -15,12 +15,7 @@ module Sentry
     MESSAGE_PREFIX = "[Tracing]"
 
     # https://develop.sentry.dev/sdk/event-payloads/transaction/#transaction-annotations
-    SOURCE_CUSTOM = "custom"
-    SOURCE_URL = "url"
-    SOURCE_ROUTE = "route"
-    SOURCE_VIEW = "view"
-    SOURCE_COMPONENT = "component"
-    SOURCE_TASK = "task"
+    SOURCES = %i(custom url route view component task)
 
     include LoggingHelper
 
@@ -58,7 +53,7 @@ module Sentry
     def initialize(
       hub:,
       name: nil,
-      source: SOURCE_CUSTOM,
+      source: :custom,
       parent_sampled: nil,
       baggage: nil,
       **options
@@ -66,7 +61,7 @@ module Sentry
       super(**options)
 
       @name = name
-      @source = source
+      @source = SOURCES.include?(source) ? source : :custom
       @parent_sampled = parent_sampled
       @transaction = self
       @hub = hub
@@ -286,7 +281,7 @@ module Sentry
 
     # These are high cardinality and thus bad
     def source_low_quality?
-      source == SOURCE_URL
+      source == :url
     end
 
     class SpanRecorder

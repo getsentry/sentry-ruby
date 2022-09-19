@@ -211,7 +211,7 @@ module Sentry
     # The "transaction" here does not refer to `Transaction` objects.
     # @param transaction_name [String]
     # @return [void]
-    def set_transaction_name(transaction_name, source: Transaction::SOURCE_CUSTOM)
+    def set_transaction_name(transaction_name, source: :custom)
       @transaction_names << transaction_name
       @transaction_sources << source
     end
