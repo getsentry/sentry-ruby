@@ -56,6 +56,9 @@ module Sentry
       @traces_sampler = hub.configuration.traces_sampler
       @traces_sample_rate = hub.configuration.traces_sample_rate
       @logger = hub.configuration.logger
+      @release = hub.configuration.release
+      @environment = hub.configuration.environment
+      @dsn = hub.configuration.dsn
       @effective_sample_rate = nil
       init_span_recorder
     end
@@ -85,11 +88,15 @@ module Sentry
           sampled_flag != "0"
         end
 
-      # If there's an incoming sentry-trace but no incoming baggage header,
-      # for instance in traces coming from older SDKs,
-      # baggage will be empty and frozen and won't be populated as head SDK.
-      baggage = Baggage.from_incoming_header(baggage) if baggage
-      baggage ||= Baggage.new({})
+      baggage = if baggage && !baggage.empty?
+                  Baggage.from_incoming_header(baggage)
+                else
+                  # If there's an incoming sentry-trace but no incoming baggage header,
+                  # for instance in traces coming from older SDKs,
+                  # baggage will be empty and frozen and won't be populated as head SDK.
+                  Baggage.new({})
+                end
+
       baggage.freeze!
 
       new(
@@ -148,17 +155,15 @@ module Sentry
 
       transaction_description = generate_transaction_description
 
-      unless [true, false].include?(sample_rate) || (sample_rate.is_a?(Numeric) && sample_rate >= 0.0 && sample_rate <= 1.0)
+      if [true, false].include?(sample_rate)
+        @effective_sample_rate = sample_rate ? 1.0 : 0.0
+      elsif sample_rate.is_a?(Numeric) && sample_rate >= 0.0 && sample_rate <= 1.0
+        @effective_sample_rate = sample_rate.to_f
+      else
         @sampled = false
         log_warn("#{MESSAGE_PREFIX} Discarding #{transaction_description} because of invalid sample_rate: #{sample_rate}")
         return
       end
-
-      @effective_sample_rate = if [true, false].include?(sample_rate)
-                                 sample_rate ? 1.0 : 0.0
-                               else
-                                 sample_rate.to_f
-                               end
 
       if sample_rate == 0.0 || sample_rate == false
         @sampled = false
@@ -235,31 +240,20 @@ module Sentry
     end
 
     def populate_head_baggage
-      sentry_items = {}
-      sentry_items["trace_id"] = trace_id
-
-      # TODO-neel filter for high cardinality / low quality tx source here
-      sentry_items["transaction"] = name
-      sentry_items["sample_rate"] = effective_sample_rate&.to_s
-
-      configuration = Sentry.configuration
-
-      if configuration
-        sentry_items["environment"] = configuration.environment
-        sentry_items["release"] = configuration.release
-        sentry_items["public_key"] = configuration.dsn&.public_key
-      end
+      items = {
+        "trace_id" => trace_id,
+        "transaction" => name,# TODO-neel filter for high cardinality tx source
+        "sample_rate" => effective_sample_rate&.to_s,
+        "environment" => @environment,
+        "release" => @release,
+        "public_key" => @dsn&.public_key
+      }
 
       user = Sentry.get_current_scope&.user
-      sentry_items["user_segment"] = user["segment"] if user && user["segment"]
+      items["user_segment"] = user["segment"] if user && user["segment"]
 
-      # there's an existing baggage but it was mutable,
-      # which is why we are creating this new baggage.
-      # However, if by chance the user put some sentry items in there, give them precedence.
-      sentry_items.merge!(@baggage.sentry_items) if @baggage && !@baggage.sentry_items.empty?
-      sentry_items.compact!
-
-      @baggage = Baggage.new(sentry_items, mutable: false)
+      items.compact!
+      @baggage = Baggage.new(items, mutable: false)
     end
 
     class SpanRecorder

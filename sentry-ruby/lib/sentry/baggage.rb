@@ -20,10 +20,7 @@ module Sentry
     ).freeze
 
     # @return [Hash]
-    attr_reader :sentry_items
-
-    # @return [String]
-    attr_reader :third_party_items
+    attr_reader :items
 
     # @return [Boolean]
     attr_reader :mutable
@@ -41,8 +38,6 @@ module Sentry
     # @param header [String] The incoming Baggage header string.
     # @return [Baggage, nil]
     def self.from_incoming_header(header)
-      return nil if header.nil? || header.empty?
-
       items = {}
       mutable = true
 

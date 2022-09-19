@@ -144,6 +144,8 @@ RSpec.describe Sentry::Client do
       event = subject.event_from_transaction(transaction)
 
       expect(event.dynamic_sampling_context).to eq({
+        "environment" => "development",
+        "public_key" => "12345",
         "sample_rate" => "1.0",
         "transaction" => "test transaction",
         "trace_id" => transaction.trace_id

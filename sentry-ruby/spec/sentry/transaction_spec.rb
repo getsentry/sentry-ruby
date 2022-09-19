@@ -59,8 +59,7 @@ RSpec.describe Sentry::Transaction do
         child_transaction = described_class.from_sentry_trace(sentry_trace, baggage: nil, op: "child")
         expect(child_transaction.baggage).not_to be_nil
         expect(child_transaction.baggage.mutable).to be(false)
-        expect(child_transaction.baggage.sentry_items).to eq({})
-        expect(child_transaction.baggage.third_party_items).to eq("")
+        expect(child_transaction.baggage.items).to eq({})
       end
 
       it "stores correct baggage on incoming baggage header" do
@@ -68,16 +67,12 @@ RSpec.describe Sentry::Transaction do
         expect(child_transaction.baggage).not_to be_nil
         expect(child_transaction.baggage.mutable).to be(false)
 
-        expect(child_transaction.baggage.sentry_items).to eq({
+        expect(child_transaction.baggage.items).to eq({
           "sample_rate" => "0.01337",
           "public_key" => "49d0f7386ad645858ae85020e393bef3",
           "trace_id" => "771a43a4192642f0b136d5159a501700",
           "user_id" => "Amélie"
         })
-
-        expect(child_transaction.baggage.third_party_items).to eq(
-          "other-vendor-value-1=foo;bar;baz,other-vendor-value-2=foo;bar;"
-        )
       end
     end
 
@@ -480,8 +475,7 @@ RSpec.describe Sentry::Transaction do
 
         baggage = subject.get_baggage
         expect(baggage.mutable).to eq(false)
-        expect(baggage.third_party_items).to eq("")
-        expect(baggage.sentry_items).to eq({
+        expect(baggage.items).to eq({
           "environment" => "development",
           "public_key" => "12345",
           "trace_id" => subject.trace_id,
@@ -498,8 +492,7 @@ RSpec.describe Sentry::Transaction do
 
         baggage = subject.get_baggage
         expect(baggage.mutable).to eq(false)
-        expect(baggage.third_party_items).to eq("")
-        expect(baggage.sentry_items).to eq({})
+        expect(baggage.items).to eq({})
       end
     end
 
@@ -513,8 +506,7 @@ RSpec.describe Sentry::Transaction do
 
         baggage = subject.get_baggage
         expect(baggage.mutable).to eq(false)
-        expect(baggage.third_party_items).to eq("foo=bar")
-        expect(baggage.sentry_items).to eq({ "trace_id" => "12345" })
+        expect(baggage.items).to eq({ "trace_id" => "12345" })
       end
     end
 
@@ -528,8 +520,7 @@ RSpec.describe Sentry::Transaction do
 
         baggage = subject.get_baggage
         expect(baggage.mutable).to eq(false)
-        expect(baggage.third_party_items).to eq("")
-        expect(baggage.sentry_items).to eq({
+        expect(baggage.items).to eq({
           "environment" => "development",
           "public_key" => "12345",
           "trace_id" => subject.trace_id,
