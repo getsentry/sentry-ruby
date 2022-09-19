@@ -14,11 +14,23 @@ module Sentry
     UNLABELD_NAME = "<unlabeled transaction>".freeze
     MESSAGE_PREFIX = "[Tracing]"
 
+    # https://develop.sentry.dev/sdk/event-payloads/transaction/#transaction-annotations
+    SOURCE_CUSTOM = "custom"
+    SOURCE_URL = "url"
+    SOURCE_ROUTE = "route"
+    SOURCE_VIEW = "view"
+    SOURCE_COMPONENT = "component"
+    SOURCE_TASK = "task"
+
     include LoggingHelper
 
     # The name of the transaction.
     # @return [String]
     attr_reader :name
+
+    # The source of the transaction name.
+    # @return [String]
+    attr_reader :source
 
     # The sampling decision of the parent transaction, which will be considered when making the current transaction's sampling decision.
     # @return [String]
@@ -43,10 +55,18 @@ module Sentry
     # @return [Float, nil]
     attr_reader :effective_sample_rate
 
-    def initialize(name: nil, parent_sampled: nil, baggage: nil, hub:, **options)
+    def initialize(
+      hub:,
+      name: nil,
+      source: SOURCE_CUSTOM,
+      parent_sampled: nil,
+      baggage: nil,
+      **options
+    )
       super(**options)
 
       @name = name
+      @source = source
       @parent_sampled = parent_sampled
       @transaction = self
       @hub = hub
@@ -112,7 +132,14 @@ module Sentry
     # @return [Hash]
     def to_hash
       hash = super
-      hash.merge!(name: @name, sampled: @sampled, parent_sampled: @parent_sampled)
+
+      hash.merge!(
+        name: @name,
+        source: @source,
+        sampled: @sampled,
+        parent_sampled: @parent_sampled
+      )
+
       hash
     end
 
@@ -242,18 +269,24 @@ module Sentry
     def populate_head_baggage
       items = {
         "trace_id" => trace_id,
-        "transaction" => name,# TODO-neel filter for high cardinality tx source
         "sample_rate" => effective_sample_rate&.to_s,
         "environment" => @environment,
         "release" => @release,
         "public_key" => @dsn&.public_key
       }
 
+      items["transaction"] = name unless source_low_quality?
+
       user = Sentry.get_current_scope&.user
       items["user_segment"] = user["segment"] if user && user["segment"]
 
       items.compact!
       @baggage = Baggage.new(items, mutable: false)
+    end
+
+    # These are high cardinality and thus bad
+    def source_low_quality?
+      source == SOURCE_URL
     end
 
     class SpanRecorder
