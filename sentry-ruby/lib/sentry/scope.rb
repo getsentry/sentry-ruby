@@ -7,7 +7,21 @@ module Sentry
   class Scope
     include ArgumentCheckingHelper
 
-    ATTRIBUTES = [:transaction_names, :transaction_sources, :contexts, :extra, :tags, :user, :level, :breadcrumbs, :fingerprint, :event_processors, :rack_env, :span, :session]
+    ATTRIBUTES = [
+      :transaction_names,
+      :transaction_sources,
+      :contexts,
+      :extra,
+      :tags,
+      :user,
+      :level,
+      :breadcrumbs,
+      :fingerprint,
+      :event_processors,
+      :rack_env,
+      :span,
+      :session
+    ]
 
     attr_reader(*ATTRIBUTES)
 
@@ -74,6 +88,7 @@ module Sentry
       copy.tags = tags.deep_dup
       copy.user = user.deep_dup
       copy.transaction_names = transaction_names.deep_dup
+      copy.transaction_sources = transaction_sources.deep_dup
       copy.fingerprint = fingerprint.deep_dup
       copy.span = span.deep_dup
       copy.session = session.deep_dup
@@ -90,6 +105,7 @@ module Sentry
       self.tags = scope.tags
       self.user = scope.user
       self.transaction_names = scope.transaction_names
+      self.transaction_sources = scope.transaction_sources
       self.fingerprint = scope.fingerprint
       self.span = scope.span
     end
@@ -195,8 +211,9 @@ module Sentry
     # The "transaction" here does not refer to `Transaction` objects.
     # @param transaction_name [String]
     # @return [void]
-    def set_transaction_name(transaction_name)
+    def set_transaction_name(transaction_name, source: Transaction::SOURCE_CUSTOM)
       @transaction_names << transaction_name
+      @transaction_sources << source
     end
 
     # Sets the currently active session on the scope.
@@ -211,6 +228,13 @@ module Sentry
     # @return [String, nil]
     def transaction_name
       @transaction_names.last
+    end
+
+    # Returns current transaction source.
+    # The "transaction" here does not refer to `Transaction` objects.
+    # @return [String, nil]
+    def transaction_source
+      @transaction_sources.last
     end
 
     # Returns the associated Transaction object.
@@ -256,6 +280,7 @@ module Sentry
       @level = :error
       @fingerprint = []
       @transaction_names = []
+      @transaction_sources = []
       @event_processors = []
       @rack_env = {}
       @span = nil
