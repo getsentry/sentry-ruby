@@ -46,12 +46,8 @@ module Sentry
       event.user = user.merge(event.user)
       event.extra = extra.merge(event.extra)
       event.contexts = contexts.merge(event.contexts)
-      event.transaction ||= transaction_name if transaction_name
-
-      if transaction_sources
-        event.transaction_info ||= {}
-        event.transaction_info = { source: transaction_source }.merge(event.transaction_info)
-      end
+      event.transaction = transaction_name if transaction_name
+      event.transaction_info = { source: transaction_source } if transaction_source
 
       if span
         event.contexts[:trace] = span.get_trace_context

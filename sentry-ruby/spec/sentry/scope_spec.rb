@@ -219,16 +219,12 @@ RSpec.describe Sentry::Scope do
       event.user = {id: 2}
       event.extra = {additional_info: "nothing"}
       event.contexts = {os: nil}
-      event.transaction = "/some/url"
-      event.transaction_info = { source: :url }
 
       subject.apply_to_event(event)
       expect(event.tags).to eq({foo: "baz"})
       expect(event.user).to eq({id: 2})
       expect(event.extra[:additional_info]).to eq("nothing")
       expect(event.contexts[:os]).to eq(nil)
-      expect(event.transaction).to eq("/some/url")
-      expect(event.transaction_info).to eq({ source: :url })
     end
 
     it "applies event processors to the event" do
