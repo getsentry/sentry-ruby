@@ -20,6 +20,15 @@ RSpec.describe Sentry::Transaction do
   describe ".from_sentry_trace" do
     let(:sentry_trace) { subject.to_sentry_trace }
 
+    let(:baggage) {
+      "other-vendor-value-1=foo;bar;baz, "\
+      "sentry-trace_id=771a43a4192642f0b136d5159a501700, "\
+      "sentry-public_key=49d0f7386ad645858ae85020e393bef3, "\
+      "sentry-sample_rate=0.01337, "\
+      "sentry-user_id=Am%C3%A9lie,  "\
+      "other-vendor-value-2=foo;bar;"
+    }
+
     let(:configuration) do
       Sentry.configuration
     end
@@ -44,6 +53,26 @@ RSpec.describe Sentry::Transaction do
         child_transaction = described_class.from_sentry_trace("dummy", op: "child")
 
         expect(child_transaction).to be_nil
+      end
+
+      it "stores frozen empty baggage on incoming traces from older SDKs" do
+        child_transaction = described_class.from_sentry_trace(sentry_trace, baggage: nil, op: "child")
+        expect(child_transaction.baggage).not_to be_nil
+        expect(child_transaction.baggage.mutable).to be(false)
+        expect(child_transaction.baggage.items).to eq({})
+      end
+
+      it "stores correct baggage on incoming baggage header" do
+        child_transaction = described_class.from_sentry_trace(sentry_trace, baggage: baggage, op: "child")
+        expect(child_transaction.baggage).not_to be_nil
+        expect(child_transaction.baggage.mutable).to be(false)
+
+        expect(child_transaction.baggage.items).to eq({
+          "sample_rate" => "0.01337",
+          "public_key" => "49d0f7386ad645858ae85020e393bef3",
+          "trace_id" => "771a43a4192642f0b136d5159a501700",
+          "user_id" => "Amélie"
+        })
       end
     end
 
@@ -178,10 +207,12 @@ RSpec.describe Sentry::Transaction do
           transaction = described_class.new(sampled: true, hub: Sentry.get_current_hub)
           transaction.set_initial_sample_decision(sampling_context: {})
           expect(transaction.sampled).to eq(true)
+          expect(transaction.effective_sample_rate).to eq(1.0)
 
           transaction = described_class.new(sampled: false, hub: Sentry.get_current_hub)
           transaction.set_initial_sample_decision(sampling_context: {})
           expect(transaction.sampled).to eq(false)
+          expect(transaction.effective_sample_rate).to eq(0.0)
         end
       end
 
@@ -195,6 +226,7 @@ RSpec.describe Sentry::Transaction do
 
           subject.set_initial_sample_decision(sampling_context: { parent_sampled: false })
           expect(subject.sampled).to eq(false)
+          expect(subject.effective_sample_rate).to eq(0.0)
         end
 
         it "uses traces_sample_rate for sampling (positive result)" do
@@ -202,6 +234,7 @@ RSpec.describe Sentry::Transaction do
 
           subject.set_initial_sample_decision(sampling_context: {})
           expect(subject.sampled).to eq(true)
+          expect(subject.effective_sample_rate).to eq(0.5)
           expect(string_io.string).to include(
             "[Tracing] Starting <rack.request> transaction"
           )
@@ -212,6 +245,7 @@ RSpec.describe Sentry::Transaction do
 
           subject.set_initial_sample_decision(sampling_context: {})
           expect(subject.sampled).to eq(false)
+          expect(subject.effective_sample_rate).to eq(0.5)
           expect(string_io.string).to include(
             "[Tracing] Discarding <rack.request> transaction because it's not included in the random sample (sampling rate = 0.5)"
           )
@@ -222,6 +256,7 @@ RSpec.describe Sentry::Transaction do
 
           subject.set_initial_sample_decision(sampling_context: {})
           expect(subject.sampled).to eq(true)
+          expect(subject.effective_sample_rate).to eq(1.0)
         end
       end
 
@@ -232,6 +267,7 @@ RSpec.describe Sentry::Transaction do
 
           subject.set_initial_sample_decision(sampling_context: {})
           expect(subject.sampled).to eq(false)
+          expect(subject.effective_sample_rate).to eq(0.0)
         end
 
         it "prioritizes traces_sampler over inherited decision" do
@@ -239,6 +275,7 @@ RSpec.describe Sentry::Transaction do
 
           subject.set_initial_sample_decision(sampling_context: { parent_sampled: true })
           expect(subject.sampled).to eq(false)
+          expect(subject.effective_sample_rate).to eq(0.0)
         end
 
         it "ignores the sampler if it's not callable" do
@@ -267,16 +304,19 @@ RSpec.describe Sentry::Transaction do
           subject = described_class.new(hub: Sentry.get_current_hub)
           subject.set_initial_sample_decision(sampling_context: {})
           expect(subject.sampled).to eq(true)
+          expect(subject.effective_sample_rate).to eq(1.0)
 
           Sentry.configuration.traces_sampler = -> (_) { 1.0 }
           subject = described_class.new(hub: Sentry.get_current_hub)
           subject.set_initial_sample_decision(sampling_context: {})
           expect(subject.sampled).to eq(true)
+          expect(subject.effective_sample_rate).to eq(1.0)
 
           Sentry.configuration.traces_sampler = -> (_) { 1 }
           subject = described_class.new(hub: Sentry.get_current_hub)
           subject.set_initial_sample_decision(sampling_context: {})
           expect(subject.sampled).to eq(true)
+          expect(subject.effective_sample_rate).to eq(1.0)
 
           expect(string_io.string).to include(
             "[Tracing] Starting transaction"
@@ -290,11 +330,13 @@ RSpec.describe Sentry::Transaction do
           subject = described_class.new(hub: Sentry.get_current_hub)
           subject.set_initial_sample_decision(sampling_context: {})
           expect(subject.sampled).to eq(false)
+          expect(subject.effective_sample_rate).to eq(0.0)
 
           Sentry.configuration.traces_sampler = -> (_) { 0.0 }
           subject = described_class.new(hub: Sentry.get_current_hub)
           subject.set_initial_sample_decision(sampling_context: {})
           expect(subject.sampled).to eq(false)
+          expect(subject.effective_sample_rate).to eq(0.0)
 
           expect(string_io.string).to include(
             "[Tracing] Discarding transaction because traces_sampler returned 0 or false"
@@ -407,6 +449,83 @@ RSpec.describe Sentry::Transaction do
         subject.finish
 
         expect(subject.name).to eq("<unlabeled transaction>")
+      end
+    end
+  end
+
+  describe "#get_baggage" do
+    subject do
+      transaction = described_class.new(
+        sampled: true,
+        parent_sampled: true,
+        name: "foo",
+        hub: Sentry.get_current_hub,
+        baggage: incoming_baggage
+      )
+
+      transaction.set_initial_sample_decision(sampling_context: {})
+      transaction
+    end
+
+    context "when no incoming baggage" do
+      let(:incoming_baggage) { nil }
+
+      it "populates baggage as head SDK" do
+        expect(subject).to receive(:populate_head_baggage).and_call_original
+
+        baggage = subject.get_baggage
+        expect(baggage.mutable).to eq(false)
+        expect(baggage.items).to eq({
+          "environment" => "development",
+          "public_key" => "12345",
+          "trace_id" => subject.trace_id,
+          "transaction"=>"foo"
+        })
+      end
+    end
+
+    context "when incoming empty frozen baggage from old SDK" do
+      let(:incoming_baggage) { Sentry::Baggage.new({}, mutable: false) }
+
+      it "does not populate new baggage" do
+        expect(subject).not_to receive(:populate_head_baggage)
+
+        baggage = subject.get_baggage
+        expect(baggage.mutable).to eq(false)
+        expect(baggage.items).to eq({})
+      end
+    end
+
+    context "when incoming baggage with sentry items" do
+      let(:incoming_baggage) do
+        Sentry::Baggage.from_incoming_header("sentry-trace_id=12345,foo=bar")
+      end
+
+      it "does not populate new baggage" do
+        expect(subject).not_to receive(:populate_head_baggage)
+
+        baggage = subject.get_baggage
+        expect(baggage.mutable).to eq(false)
+        expect(baggage.items).to eq({ "trace_id" => "12345" })
+      end
+    end
+
+    context "when incoming baggage with no sentry items" do
+      let(:incoming_baggage) do
+        Sentry::Baggage.from_incoming_header("foo=bar")
+      end
+
+      it "populates sentry baggage" do
+        expect(subject).to receive(:populate_head_baggage).and_call_original
+
+        baggage = subject.get_baggage
+        expect(baggage.mutable).to eq(false)
+        expect(baggage.items).to eq({
+          "environment" => "development",
+          "public_key" => "12345",
+          "trace_id" => subject.trace_id,
+          "transaction"=>"foo"
+        })
       end
     end
   end

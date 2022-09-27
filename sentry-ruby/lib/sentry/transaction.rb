@@ -24,7 +24,9 @@ module Sentry
     # @return [String]
     attr_reader :parent_sampled
 
-    # The parsed incoming W3C baggage header
+    # The parsed incoming W3C baggage header.
+    # This is only for accessing the current baggage variable.
+    # Please use the #get_baggage method for interfacing outside this class.
     # @return [Baggage, nil]
     attr_reader :baggage
 
@@ -36,6 +38,10 @@ module Sentry
 
     # @deprecated Use Sentry.logger instead.
     attr_reader :logger
+
+    # The effective sample rate at which this transaction was sampled.
+    # @return [Float, nil]
+    attr_reader :effective_sample_rate
 
     def initialize(name: nil, parent_sampled: nil, baggage: nil, hub:, **options)
       super(**options)
@@ -50,6 +56,10 @@ module Sentry
       @traces_sampler = hub.configuration.traces_sampler
       @traces_sample_rate = hub.configuration.traces_sample_rate
       @logger = hub.configuration.logger
+      @release = hub.configuration.release
+      @environment = hub.configuration.environment
+      @dsn = hub.configuration.dsn
+      @effective_sample_rate = nil
       init_span_recorder
     end
 
@@ -78,7 +88,16 @@ module Sentry
           sampled_flag != "0"
         end
 
-      baggage = Baggage.from_incoming_header(baggage) if baggage
+      baggage = if baggage && !baggage.empty?
+                  Baggage.from_incoming_header(baggage)
+                else
+                  # If there's an incoming sentry-trace but no incoming baggage header,
+                  # for instance in traces coming from older SDKs,
+                  # baggage will be empty and frozen and won't be populated as head SDK.
+                  Baggage.new({})
+                end
+
+      baggage.freeze!
 
       new(
         trace_id: trace_id,
@@ -120,7 +139,10 @@ module Sentry
         return
       end
 
-      return unless @sampled.nil?
+      unless @sampled.nil?
+        @effective_sample_rate = @sampled ? 1.0 : 0.0
+        return
+      end
 
       sample_rate =
         if @traces_sampler.is_a?(Proc)
@@ -133,7 +155,11 @@ module Sentry
 
       transaction_description = generate_transaction_description
 
-      unless [true, false].include?(sample_rate) || (sample_rate.is_a?(Numeric) && sample_rate >= 0.0 && sample_rate <= 1.0)
+      if [true, false].include?(sample_rate)
+        @effective_sample_rate = sample_rate ? 1.0 : 0.0
+      elsif sample_rate.is_a?(Numeric) && sample_rate >= 0.0 && sample_rate <= 1.0
+        @effective_sample_rate = sample_rate.to_f
+      else
         @sampled = false
         log_warn("#{MESSAGE_PREFIX} Discarding #{transaction_description} because of invalid sample_rate: #{sample_rate}")
         return
@@ -189,6 +215,14 @@ module Sentry
       end
     end
 
+    # Get the existing frozen incoming baggage
+    # or populate one with sentry- items as the head SDK.
+    # @return [Baggage]
+    def get_baggage
+      populate_head_baggage if @baggage.nil? || @baggage.mutable
+      @baggage
+    end
+
     protected
 
     def init_span_recorder(limit = 1000)
@@ -203,6 +237,23 @@ module Sentry
       result += "transaction"
       result += " <#{@name}>" if @name
       result
+    end
+
+    def populate_head_baggage
+      items = {
+        "trace_id" => trace_id,
+        "transaction" => name,# TODO-neel filter for high cardinality tx source
+        "sample_rate" => effective_sample_rate&.to_s,
+        "environment" => @environment,
+        "release" => @release,
+        "public_key" => @dsn&.public_key
+      }
+
+      user = Sentry.get_current_scope&.user
+      items["user_segment"] = user["segment"] if user && user["segment"]
+
+      items.compact!
+      @baggage = Baggage.new(items, mutable: false)
     end
 
     class SpanRecorder
