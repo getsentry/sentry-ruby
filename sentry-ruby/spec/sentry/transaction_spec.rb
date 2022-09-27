@@ -13,6 +13,7 @@ RSpec.describe Sentry::Transaction do
       sampled: true,
       parent_sampled: true,
       name: "foo",
+      source: :view,
       hub: Sentry.get_current_hub
     )
   end
@@ -358,6 +359,7 @@ RSpec.describe Sentry::Transaction do
       expect(hash[:sampled]).to eq(true)
       expect(hash[:parent_sampled]).to eq(true)
       expect(hash[:name]).to eq("foo")
+      expect(hash[:source]).to eq(:view)
     end
   end
 
@@ -454,11 +456,18 @@ RSpec.describe Sentry::Transaction do
   end
 
   describe "#get_baggage" do
+    before do
+      allow(Sentry.configuration).to receive(:tracing_enabled?).and_return(true)
+    end
+
+    let(:source) { :view }
+
     subject do
       transaction = described_class.new(
         sampled: true,
         parent_sampled: true,
         name: "foo",
+        source: source,
         hub: Sentry.get_current_hub,
         baggage: incoming_baggage
       )
@@ -479,8 +488,18 @@ RSpec.describe Sentry::Transaction do
           "environment" => "development",
           "public_key" => "12345",
           "trace_id" => subject.trace_id,
-          "transaction"=>"foo"
+          "transaction"=>"foo",
+          "sample_rate" => "1.0"
         })
+      end
+
+      context "when source is low quality" do
+        let(:source) { :url }
+
+        it "populates baggage as head SDK without transaction" do
+          baggage = subject.get_baggage
+          expect(baggage.items).not_to include("transaction")
+        end
       end
     end
 
@@ -524,7 +543,8 @@ RSpec.describe Sentry::Transaction do
           "environment" => "development",
           "public_key" => "12345",
           "trace_id" => subject.trace_id,
-          "transaction"=>"foo"
+          "transaction"=>"foo",
+          "sample_rate" => "1.0"
         })
       end
     end
