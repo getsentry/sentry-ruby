@@ -23,6 +23,7 @@ RSpec.describe Sentry::Scope do
       expect(subject.user).to eq({})
       expect(subject.fingerprint).to eq([])
       expect(subject.transaction_names).to eq([])
+      expect(subject.transaction_sources).to eq([])
     end
 
     it "allows setting breadcrumb buffer's size limit" do
@@ -41,6 +42,7 @@ RSpec.describe Sentry::Scope do
       copy.tags.merge!(foo: "bar")
       copy.user.merge!(foo: "bar")
       copy.transaction_names << "foo"
+      copy.transaction_sources << :url
       copy.fingerprint << "bar"
 
       expect(subject.breadcrumbs.to_hash).to eq({ values: [] })
@@ -51,6 +53,7 @@ RSpec.describe Sentry::Scope do
       expect(subject.user).to eq({})
       expect(subject.fingerprint).to eq([])
       expect(subject.transaction_names).to eq([])
+      expect(subject.transaction_sources).to eq([])
       expect(subject.span).to eq(nil)
     end
 
@@ -133,6 +136,7 @@ RSpec.describe Sentry::Scope do
       expect(subject.user).to eq({})
       expect(subject.fingerprint).to eq([])
       expect(subject.transaction_names).to eq([])
+      expect(subject.transaction_sources).to eq([])
       expect(subject.span).to eq(nil)
     end
   end
@@ -188,7 +192,7 @@ RSpec.describe Sentry::Scope do
       scope.set_tags({foo: "bar"})
       scope.set_extras({additional_info: "hello"})
       scope.set_user({id: 1})
-      scope.set_transaction_name("WelcomeController#index")
+      scope.set_transaction_name("WelcomeController#index", source: :view)
       scope.set_fingerprint(["foo"])
       scope
     end
@@ -203,6 +207,7 @@ RSpec.describe Sentry::Scope do
       expect(event.user).to eq({id: 1})
       expect(event.extra).to eq({additional_info: "hello"})
       expect(event.transaction).to eq("WelcomeController#index")
+      expect(event.transaction_info).to eq({ source: :view })
       expect(event.breadcrumbs).to be_a(Sentry::BreadcrumbBuffer)
       expect(event.fingerprint).to eq(["foo"])
       expect(event.contexts[:os].keys).to match_array([:name, :version, :build, :kernel_version])
@@ -214,12 +219,16 @@ RSpec.describe Sentry::Scope do
       event.user = {id: 2}
       event.extra = {additional_info: "nothing"}
       event.contexts = {os: nil}
+      event.transaction = "/some/url"
+      event.transaction_info = { source: :url }
 
       subject.apply_to_event(event)
       expect(event.tags).to eq({foo: "baz"})
       expect(event.user).to eq({id: 2})
       expect(event.extra[:additional_info]).to eq("nothing")
       expect(event.contexts[:os]).to eq(nil)
+      expect(event.transaction).to eq("/some/url")
+      expect(event.transaction_info).to eq({ source: :url })
     end
 
     it "applies event processors to the event" do
