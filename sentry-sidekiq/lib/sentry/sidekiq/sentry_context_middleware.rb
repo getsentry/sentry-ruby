@@ -17,7 +17,7 @@ module Sentry
         scope.set_tags(build_tags(job["tags"]))
         scope.set_contexts(sidekiq: job.merge("queue" => queue))
         scope.set_transaction_name(context_filter.transaction_name, source: :task)
-        transaction = start_transaction(scope.transaction_name, scope.transaction_source, job["sentry_trace"])
+        transaction = start_transaction(scope, job["sentry_trace"])
         scope.set_span(transaction) if transaction
 
         begin
@@ -37,8 +37,8 @@ module Sentry
         Array(tags).each_with_object({}) { |name, tags_hash| tags_hash[:"sidekiq.#{name}"] = true }
       end
 
-      def start_transaction(transaction_name, transaction_source, sentry_trace)
-        options = { name: transaction_name, source: transaction_source, op: "sidekiq" }
+      def start_transaction(scope, sentry_trace)
+        options = { name: scope.transaction_name, source: scope.transaction_source, op: "sidekiq" }
         transaction = Sentry::Transaction.from_sentry_trace(sentry_trace, **options) if sentry_trace
         Sentry.start_transaction(transaction: transaction, **options)
       end

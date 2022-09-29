@@ -13,7 +13,7 @@ RSpec.describe Sentry::Transport do
 
   let(:client) { Sentry::Client.new(configuration) }
   let(:hub) do
-    Sentry::Hub.new(client, subject)
+    Sentry::Hub.new(client, Sentry::Scope.new)
   end
 
   subject { client.transport }

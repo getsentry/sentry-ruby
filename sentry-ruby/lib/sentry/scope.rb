@@ -88,8 +88,8 @@ module Sentry
       copy.extra = extra.deep_dup
       copy.tags = tags.deep_dup
       copy.user = user.deep_dup
-      copy.transaction_names = transaction_names.deep_dup
-      copy.transaction_sources = transaction_sources.deep_dup
+      copy.transaction_names = transaction_names.dup
+      copy.transaction_sources = transaction_sources.dup
       copy.fingerprint = fingerprint.deep_dup
       copy.span = span.deep_dup
       copy.session = session.deep_dup

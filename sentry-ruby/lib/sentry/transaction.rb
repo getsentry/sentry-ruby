@@ -24,7 +24,7 @@ module Sentry
     attr_reader :name
 
     # The source of the transaction name.
-    # @return [String]
+    # @return [Symbol]
     attr_reader :source
 
     # The sampling decision of the parent transaction, which will be considered when making the current transaction's sampling decision.
@@ -61,7 +61,7 @@ module Sentry
       super(**options)
 
       @name = name
-      @source = SOURCES.include?(source) ? source : :custom
+      @source = SOURCES.include?(source) ? source.to_sym : :custom
       @parent_sampled = parent_sampled
       @transaction = self
       @hub = hub
@@ -272,7 +272,7 @@ module Sentry
 
       items["transaction"] = name unless source_low_quality?
 
-      user = Sentry.get_current_scope&.user
+      user = @hub.current_scope&.user
       items["user_segment"] = user["segment"] if user && user["segment"]
 
       items.compact!
