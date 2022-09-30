@@ -9,7 +9,7 @@ module Sentry
         context_filter = Sentry::Sidekiq::ContextFilter.new(context)
 
         scope = Sentry.get_current_scope
-        scope.set_transaction_name(context_filter.transaction_name) unless scope.transaction_name
+        scope.set_transaction_name(context_filter.transaction_name, source: :task) unless scope.transaction_name
 
         if Sentry.configuration.sidekiq.report_after_job_retries && retryable?(context)
           retry_count = context.dig(:job, "retry_count")

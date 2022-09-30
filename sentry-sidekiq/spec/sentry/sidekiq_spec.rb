@@ -195,6 +195,7 @@ RSpec.describe Sentry::Sidekiq do
       transaction = transport.events.first
 
       expect(transaction.transaction).to eq("Sidekiq/HappyWorker")
+      expect(transaction.transaction_info).to eq({ source: :task })
       expect(transaction.contexts.dig(:trace, :trace_id)).to be_a(String)
       expect(transaction.contexts.dig(:trace, :span_id)).to be_a(String)
       expect(transaction.contexts.dig(:trace, :status)).to eq("ok")
@@ -207,6 +208,7 @@ RSpec.describe Sentry::Sidekiq do
       transaction = transport.events.first
 
       expect(transaction.transaction).to eq("Sidekiq/SadWorker")
+      expect(transaction.transaction_info).to eq({ source: :task })
       expect(transaction.contexts.dig(:trace, :trace_id)).to be_a(String)
       expect(transaction.contexts.dig(:trace, :span_id)).to be_a(String)
       expect(transaction.contexts.dig(:trace, :status)).to eq("internal_error")

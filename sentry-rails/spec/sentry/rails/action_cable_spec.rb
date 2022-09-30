@@ -76,6 +76,7 @@ if defined?(ActionCable) && ActionCable.version >= Gem::Version.new('6.0.0')
 
           event = transport.events.last.to_json_compatible
           expect(event["transaction"]).to eq("FailToOpenConnection#connect")
+          expect(event["transaction_info"]).to eq({ "source" => "view" })
         end
       end
 
@@ -89,6 +90,7 @@ if defined?(ActionCable) && ActionCable.version >= Gem::Version.new('6.0.0')
 
           event = transport.events.last.to_json_compatible
           expect(event["transaction"]).to eq("FailToCloseConnection#disconnect")
+          expect(event["transaction_info"]).to eq({ "source" => "view" })
         end
       end
     end
@@ -105,6 +107,7 @@ if defined?(ActionCable) && ActionCable.version >= Gem::Version.new('6.0.0')
 
           event = transport.events.last.to_json_compatible
           expect(event["transaction"]).to eq("ChatChannel#subscribed")
+          expect(event["transaction_info"]).to eq({ "source" => "view" })
           expect(event["contexts"]).to include("action_cable" => { "params" => { "room_id" => 42 } })
         end
       end
@@ -119,6 +122,7 @@ if defined?(ActionCable) && ActionCable.version >= Gem::Version.new('6.0.0')
           event = transport.events.last.to_json_compatible
 
           expect(event["transaction"]).to eq("AppearanceChannel#appear")
+          expect(event["transaction_info"]).to eq({ "source" => "view" })
           expect(event["contexts"]).to include(
             "action_cable" => {
               "params" => { "room_id" => 42 },
@@ -134,6 +138,7 @@ if defined?(ActionCable) && ActionCable.version >= Gem::Version.new('6.0.0')
           event = transport.events.last.to_json_compatible
 
           expect(event["transaction"]).to eq("AppearanceChannel#unsubscribed")
+          expect(event["transaction_info"]).to eq({ "source" => "view" })
           expect(event["contexts"]).to include(
             "action_cable" => {
               "params" => { "room_id" => 42 }
@@ -164,6 +169,7 @@ if defined?(ActionCable) && ActionCable.version >= Gem::Version.new('6.0.0')
 
           expect(transaction["type"]).to eq("transaction")
           expect(transaction["transaction"]).to eq("ChatChannel#subscribed")
+          expect(transaction["transaction_info"]).to eq({ "source" => "view" })
           expect(transaction["contexts"]).to include(
             "action_cable" => {
               "params" => { "room_id" => 42 }
@@ -189,6 +195,7 @@ if defined?(ActionCable) && ActionCable.version >= Gem::Version.new('6.0.0')
 
           expect(subscription_transaction["type"]).to eq("transaction")
           expect(subscription_transaction["transaction"]).to eq("AppearanceChannel#subscribed")
+          expect(subscription_transaction["transaction_info"]).to eq({ "source" => "view" })
           expect(subscription_transaction["contexts"]).to include(
             "action_cable" => {
               "params" => { "room_id" => 42 }
@@ -204,6 +211,7 @@ if defined?(ActionCable) && ActionCable.version >= Gem::Version.new('6.0.0')
           event = transport.events[1].to_json_compatible
 
           expect(event["transaction"]).to eq("AppearanceChannel#appear")
+          expect(event["transaction_info"]).to eq({ "source" => "view" })
           expect(event["contexts"]).to include(
             "action_cable" => {
               "params" => { "room_id" => 42 },
@@ -215,6 +223,7 @@ if defined?(ActionCable) && ActionCable.version >= Gem::Version.new('6.0.0')
 
           expect(action_transaction["type"]).to eq("transaction")
           expect(action_transaction["transaction"]).to eq("AppearanceChannel#appear")
+          expect(action_transaction["transaction_info"]).to eq({ "source" => "view" })
           expect(action_transaction["contexts"]).to include(
             "action_cable" => {
               "params" => { "room_id" => 42 },
@@ -237,6 +246,7 @@ if defined?(ActionCable) && ActionCable.version >= Gem::Version.new('6.0.0')
 
           expect(subscription_transaction["type"]).to eq("transaction")
           expect(subscription_transaction["transaction"]).to eq("AppearanceChannel#subscribed")
+          expect(subscription_transaction["transaction_info"]).to eq({ "source" => "view" })
           expect(subscription_transaction["contexts"]).to include(
             "action_cable" => {
               "params" => { "room_id" => 42 }
@@ -252,6 +262,7 @@ if defined?(ActionCable) && ActionCable.version >= Gem::Version.new('6.0.0')
           event = transport.events[1].to_json_compatible
 
           expect(event["transaction"]).to eq("AppearanceChannel#unsubscribed")
+          expect(event["transaction_info"]).to eq({ "source" => "view" })
           expect(event["contexts"]).to include(
             "action_cable" => {
               "params" => { "room_id" => 42 }
@@ -262,6 +273,7 @@ if defined?(ActionCable) && ActionCable.version >= Gem::Version.new('6.0.0')
 
           expect(transaction["type"]).to eq("transaction")
           expect(transaction["transaction"]).to eq("AppearanceChannel#unsubscribed")
+          expect(transaction["transaction_info"]).to eq({ "source" => "view" })
           expect(transaction["contexts"]).to include(
             "action_cable" => {
               "params" => { "room_id" => 42 }

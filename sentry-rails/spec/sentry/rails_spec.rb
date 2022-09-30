@@ -66,14 +66,16 @@ RSpec.describe Sentry::Rails, type: :request do
       expect(Sentry.configuration.release).to eq('beta')
     end
 
-    it "sets transaction to ControllerName#method" do
+    it "sets transaction to ControllerName#method and sets correct source" do
       get "/exception"
 
       expect(transport.events.last.transaction).to eq("HelloController#exception")
+      expect(transport.events.last.transaction_info).to eq({ source: :view })
 
       get "/posts"
 
       expect(transport.events.last.transaction).to eq("PostsController#index")
+      expect(transport.events.last.transaction_info).to eq({ source: :view })
     end
 
     it "sets correct request url" do
@@ -196,11 +198,13 @@ RSpec.describe Sentry::Rails, type: :request do
         expect(transport.events.count).to eq(1)
         last_event = transport.events.last
         expect(last_event.transaction).to eq("HelloController#exception")
+        expect(transport.events.last.transaction_info).to eq({ source: :view })
         expect(response.body).to match(last_event.event_id)
 
         get "/posts"
 
         expect(transport.events.last.transaction).to eq("PostsController#index")
+        expect(transport.events.last.transaction_info).to eq({ source: :view })
       end
 
       it "sets correct request url" do

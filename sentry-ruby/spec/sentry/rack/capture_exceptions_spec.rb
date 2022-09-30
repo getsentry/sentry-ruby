@@ -248,6 +248,8 @@ RSpec.describe Sentry::Rack::CaptureExceptions, rack: true do
 
       def verify_transaction_attributes(transaction)
         expect(transaction.type).to eq("transaction")
+        expect(transaction.transaction).to eq("/test")
+        expect(transaction.transaction_info).to eq({ source: :url })
         expect(transaction.timestamp).not_to be_nil
         expect(transaction.contexts.dig(:trace, :status)).to eq("ok")
         expect(transaction.contexts.dig(:trace, :op)).to eq("rack.request")
@@ -430,6 +432,8 @@ RSpec.describe Sentry::Rack::CaptureExceptions, rack: true do
 
         transaction = last_sentry_event
         expect(transaction.type).to eq("transaction")
+        expect(transaction.transaction).to eq("/test")
+        expect(transaction.transaction_info).to eq({ source: :url })
         expect(transaction.timestamp).not_to be_nil
         expect(transaction.contexts.dig(:trace, :status)).to eq("ok")
         expect(transaction.contexts.dig(:trace, :op)).to eq("rack.request")
@@ -453,6 +457,8 @@ RSpec.describe Sentry::Rack::CaptureExceptions, rack: true do
           transaction = last_sentry_event
           expect(transaction.type).to eq("transaction")
           expect(transaction.timestamp).not_to be_nil
+          expect(transaction.transaction).to eq("/test")
+          expect(transaction.transaction_info).to eq({ source: :url })
           expect(transaction.contexts.dig(:trace, :status)).to eq("ok")
           expect(transaction.contexts.dig(:trace, :op)).to eq("rack.request")
           expect(transaction.spans.count).to eq(2)

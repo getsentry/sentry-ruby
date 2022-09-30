@@ -18,6 +18,7 @@ module Sentry
       super(**options)
 
       self.transaction = transaction.name
+      self.transaction_info = { source: transaction.source }
       self.contexts.merge!(trace: transaction.get_trace_context)
       self.timestamp = transaction.timestamp
       self.start_timestamp = transaction.start_timestamp
