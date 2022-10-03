@@ -42,8 +42,13 @@ module Sentry
       def set_sentry_trace_header(req, sentry_span)
         return unless sentry_span
 
-        trace = Sentry.get_current_client.generate_sentry_trace(sentry_span)
+        client = Sentry.get_current_client
+
+        trace = client.generate_sentry_trace(sentry_span)
         req[SENTRY_TRACE_HEADER_NAME] = trace if trace
+
+        baggage = client.generate_baggage(sentry_span)
+        req[BAGGAGE_HEADER_NAME] = baggage if baggage && !baggage.empty?
       end
 
       def record_sentry_breadcrumb(req, res)

@@ -248,7 +248,7 @@ RSpec.describe Sentry::DelayedJob do
           config.rails.skippable_job_adapters << "ActiveJob::QueueAdapters::DelayedJobAdapter"
         end
       end
-  
+
       it "records transaction" do
         ReportingJob.perform_later
 
@@ -257,13 +257,13 @@ RSpec.describe Sentry::DelayedJob do
 
         expect(transport.events.count).to eq(2)
         transaction = transport.events.last
-  
+
         expect(transaction.transaction).to eq("ReportingJob")
         expect(transaction.contexts.dig(:trace, :trace_id)).to be_a(String)
         expect(transaction.contexts.dig(:trace, :span_id)).to be_a(String)
         expect(transaction.contexts.dig(:trace, :status)).to eq("ok")
       end
-  
+
       it "records transaction with exception" do
         FailedJob.perform_later
         enqueued_job = Delayed::Backend::ActiveRecord::Job.last
@@ -272,15 +272,15 @@ RSpec.describe Sentry::DelayedJob do
         rescue ZeroDivisionError
           nil
         end
-  
+
         expect(transport.events.count).to eq(2)
         transaction = transport.events.last
-  
+
         expect(transaction.transaction).to eq("FailedJob")
         expect(transaction.contexts.dig(:trace, :trace_id)).to be_a(String)
         expect(transaction.contexts.dig(:trace, :span_id)).to be_a(String)
         expect(transaction.contexts.dig(:trace, :status)).to eq("internal_error")
-  
+
         event = transport.events.last
         expect(event.contexts.dig(:trace, :trace_id)).to eq(transaction.contexts.dig(:trace, :trace_id))
       end
@@ -325,6 +325,7 @@ RSpec.describe Sentry::DelayedJob do
       transaction = transport.events.last
 
       expect(transaction.transaction).to eq("Post#do_nothing")
+      expect(transaction.transaction_info).to eq({ source: :task })
       expect(transaction.contexts.dig(:trace, :trace_id)).to be_a(String)
       expect(transaction.contexts.dig(:trace, :span_id)).to be_a(String)
       expect(transaction.contexts.dig(:trace, :status)).to eq("ok")
@@ -343,6 +344,7 @@ RSpec.describe Sentry::DelayedJob do
       transaction = transport.events.last
 
       expect(transaction.transaction).to eq("Post#raise_error")
+      expect(transaction.transaction_info).to eq({ source: :task })
       expect(transaction.contexts.dig(:trace, :trace_id)).to be_a(String)
       expect(transaction.contexts.dig(:trace, :span_id)).to be_a(String)
       expect(transaction.contexts.dig(:trace, :status)).to eq("internal_error")

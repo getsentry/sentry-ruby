@@ -93,26 +93,63 @@ RSpec.describe Sentry::Client do
     let(:hub) do
       Sentry::Hub.new(subject, Sentry::Scope.new)
     end
+
     let(:transaction) do
-      Sentry::Transaction.new(name: "test transaction", hub: hub, sampled: true)
+      hub.start_transaction(name: "test transaction")
     end
 
     before do
+      configuration.traces_sample_rate = 1.0
+
       transaction.start_child(op: "unfinished child")
       transaction.start_child(op: "finished child", timestamp: Time.now.utc.iso8601)
     end
 
     it "initializes a correct event for the transaction" do
-      event = subject.event_from_transaction(transaction).to_hash
+      event = subject.event_from_transaction(transaction)
+      event_hash = event.to_hash
 
-      expect(event[:type]).to eq("transaction")
-      expect(event[:contexts][:trace]).to eq(transaction.get_trace_context)
-      expect(event[:timestamp]).to eq(transaction.timestamp)
-      expect(event[:start_timestamp]).to eq(transaction.start_timestamp)
-      expect(event[:transaction]).to eq("test transaction")
-      expect(event[:spans].count).to eq(1)
-      expect(event[:spans][0][:op]).to eq("finished child")
-      expect(event[:level]).to eq(nil)
+      expect(event_hash[:type]).to eq("transaction")
+      expect(event_hash[:contexts][:trace]).to eq(transaction.get_trace_context)
+      expect(event_hash[:timestamp]).to eq(transaction.timestamp)
+      expect(event_hash[:start_timestamp]).to eq(transaction.start_timestamp)
+      expect(event_hash[:transaction]).to eq("test transaction")
+      expect(event_hash[:spans].count).to eq(1)
+      expect(event_hash[:spans][0][:op]).to eq("finished child")
+      expect(event_hash[:level]).to eq(nil)
+    end
+
+    it "correct dynamic_sampling_context when incoming baggage header" do
+      baggage = Sentry::Baggage.from_incoming_header(
+        "other-vendor-value-1=foo;bar;baz, "\
+        "sentry-trace_id=771a43a4192642f0b136d5159a501700, "\
+        "sentry-public_key=49d0f7386ad645858ae85020e393bef3, "\
+        "sentry-sample_rate=0.01337, "\
+        "sentry-user_id=Am%C3%A9lie,  "\
+        "other-vendor-value-2=foo;bar;"
+      )
+
+      transaction = Sentry::Transaction.new(name: "test transaction", hub: hub, baggage: baggage, sampled: true)
+      event = subject.event_from_transaction(transaction)
+
+      expect(event.dynamic_sampling_context).to eq({
+        "sample_rate" => "0.01337",
+        "public_key" => "49d0f7386ad645858ae85020e393bef3",
+        "trace_id" => "771a43a4192642f0b136d5159a501700",
+        "user_id" => "Amélie"
+      })
+    end
+
+    it "correct dynamic_sampling_context when head SDK" do
+      event = subject.event_from_transaction(transaction)
+
+      expect(event.dynamic_sampling_context).to eq({
+        "environment" => "development",
+        "public_key" => "12345",
+        "sample_rate" => "1.0",
+        "transaction" => "test transaction",
+        "trace_id" => transaction.trace_id
+      })
     end
   end
 
@@ -385,6 +422,56 @@ RSpec.describe Sentry::Client do
 
       it "returns nil" do
         expect(subject.generate_sentry_trace(span)).to eq(nil)
+      end
+    end
+  end
+
+  describe "#generate_baggage" do
+    before { configuration.logger = logger }
+
+    let(:string_io) { StringIO.new }
+    let(:logger) { ::Logger.new(string_io) }
+    let(:baggage) do
+      Sentry::Baggage.from_incoming_header(
+        "other-vendor-value-1=foo;bar;baz, sentry-trace_id=771a43a4192642f0b136d5159a501700, "\
+        "sentry-public_key=49d0f7386ad645858ae85020e393bef3, sentry-sample_rate=0.01337, "\
+        "sentry-user_id=Am%C3%A9lie, other-vendor-value-2=foo;bar;"
+      )
+    end
+
+    let(:span) do
+      hub = Sentry::Hub.new(subject, Sentry::Scope.new)
+      transaction = Sentry::Transaction.new(name: "test transaction",
+                                            baggage: baggage,
+                                            hub: hub,
+                                            sampled: true)
+
+      transaction.start_child(op: "finished child", timestamp: Time.now.utc.iso8601)
+    end
+
+    it "generates the baggage header with given span and logs correct message" do
+      generated_baggage = subject.generate_baggage(span)
+      expect(generated_baggage).to eq(span.to_baggage)
+
+      expect(generated_baggage).to eq(
+        "sentry-trace_id=771a43a4192642f0b136d5159a501700,"\
+        "sentry-public_key=49d0f7386ad645858ae85020e393bef3,"\
+        "sentry-sample_rate=0.01337,"\
+        "sentry-user_id=Am%C3%A9lie"
+      )
+
+      expect(string_io.string).to match(
+        /\[Tracing\] Adding baggage header to outgoing request: #{span.to_baggage}/
+      )
+    end
+
+    context "with config.propagate_traces = false" do
+      before do
+        configuration.propagate_traces = false
+      end
+
+      it "returns nil" do
+        expect(subject.generate_baggage(span)).to eq(nil)
       end
     end
   end

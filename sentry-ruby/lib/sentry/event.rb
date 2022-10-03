@@ -18,7 +18,7 @@ module Sentry
       event_id level timestamp
       release environment server_name modules
       message user tags contexts extra
-      fingerprint breadcrumbs transaction
+      fingerprint breadcrumbs transaction transaction_info
       platform sdk type
     )
 

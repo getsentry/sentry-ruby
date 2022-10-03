@@ -14,11 +14,12 @@ module Sentry
 
           Sentry.with_scope do |scope|
             contexts = generate_contexts(job)
-            scope.set_transaction_name(contexts.dig(ACTIVE_JOB_CONTEXT_KEY, :job_class) || contexts.dig(DELAYED_JOB_CONTEXT_KEY, :job_class))
+            name = contexts.dig(ACTIVE_JOB_CONTEXT_KEY, :job_class) || contexts.dig(DELAYED_JOB_CONTEXT_KEY, :job_class)
+            scope.set_transaction_name(name, source: :task)
             scope.set_contexts(**contexts)
             scope.set_tags("delayed_job.queue" => job.queue, "delayed_job.id" => job.id.to_s)
 
-            transaction = Sentry.start_transaction(name: scope.transaction_name, op: "delayed_job")
+            transaction = Sentry.start_transaction(name: scope.transaction_name, source: scope.transaction_source, op: "delayed_job")
             scope.set_span(transaction) if transaction
 
             begin
