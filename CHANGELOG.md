@@ -1,3 +1,9 @@
+## Unreleased
+
+### Bug Fixes
+
+- `Sentry::BackgroundWorker` will release `ActiveRecord` connection pool only when the `ActiveRecord` connection is established
+
 ## 5.5.0
 
 ### Features
