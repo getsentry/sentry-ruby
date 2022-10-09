@@ -1,5 +1,17 @@
 ## Unreleased
 
+### Features
+
+- Allow users to configure their asset-skipping pattern [#1915](https://github.com/getsentry/sentry-ruby/pull/1915)
+
+  Users can now configure their own pattern to skip asset requests' transactions
+
+  ```rb
+  Sentry.init do |config|
+    config.rails.assets_regexp = /my_regexp/
+  end
+  ```
+
 ### Bug Fixes
 
 - `Sentry::BackgroundWorker` will release `ActiveRecord` connection pool only when the `ActiveRecord` connection is established

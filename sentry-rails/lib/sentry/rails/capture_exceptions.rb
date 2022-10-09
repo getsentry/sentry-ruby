@@ -1,11 +1,11 @@
 module Sentry
   module Rails
     class CaptureExceptions < Sentry::Rack::CaptureExceptions
-      def initialize(app)
+      def initialize(_)
         super
 
-        if defined?(::Sprockets::Rails)
-          @assets_regex = %r(\A/{0,2}#{::Rails.application.config.assets.prefix})
+        if Sentry.initialized?
+          @assets_regexp = Sentry.configuration.rails.assets_regexp
         end
       end
 
@@ -36,7 +36,7 @@ module Sentry
 
         options = { name: scope.transaction_name, source: scope.transaction_source, op: transaction_op }
 
-        if @assets_regex && scope.transaction_name.match?(@assets_regex)
+        if @assets_regexp && scope.transaction_name.match?(@assets_regexp)
           options.merge!(sampled: false)
         end
 

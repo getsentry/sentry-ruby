@@ -60,10 +60,28 @@ module Sentry
 
       attr_accessor :tracing_subscribers
 
+      # sentry-rails by default skips asset request' transactions by checking if the path matches
+      #
+      # ```rb
+      # %r(\A/{0,2}#{::Rails.application.config.assets.prefix})
+      # ```
+      #
+      # If you want to use a different pattern, you can configure the `assets_regexp` option like:
+      #
+      # ```rb
+      # Sentry.init do |config|
+      #   config.rails.assets_regexp = /my_regexp/
+      # end
+      # ```
+      attr_accessor :assets_regexp
+
       def initialize
         @register_error_subscriber = false
         @report_rescued_exceptions = true
         @skippable_job_adapters = []
+        @assets_regexp = if defined?(::Sprockets::Rails)
+          %r(\A/{0,2}#{::Rails.application.config.assets.prefix})
+        end
         @tracing_subscribers = Set.new([
           Sentry::Rails::Tracing::ActionControllerSubscriber,
           Sentry::Rails::Tracing::ActionViewSubscriber,
