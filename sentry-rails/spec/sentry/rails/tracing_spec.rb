@@ -97,22 +97,50 @@ RSpec.describe Sentry::Rails::Tracing, type: :request do
       ::Logger.new(string_io)
     end
 
-    before do
-      require "sprockets/railtie"
+    context "with default setup" do
+      before do
+        require "sprockets/railtie"
 
-      make_basic_app do |config, app|
-        app.config.public_file_server.enabled = true
-        config.traces_sample_rate = 1.0
-        config.logger = logger
+        make_basic_app do |config, app|
+          app.config.public_file_server.enabled = true
+          config.traces_sample_rate = 1.0
+          config.logger = logger
+        end
+      end
+
+      it "doesn't record requests for asset files" do
+        get "/assets/application-ad022df6f1289ec07a560bb6c9a227ecf7bdd5a5cace5e9a8cdbd50b454931fb.css"
+
+        expect(response).to have_http_status(:not_found)
+        expect(transport.events).to be_empty
+        expect(string_io.string).not_to match(/\[Tracing\] Starting <rails\.request>/)
       end
     end
 
-    it "doesn't record requests for asset files" do
-      get "/assets/application-ad022df6f1289ec07a560bb6c9a227ecf7bdd5a5cace5e9a8cdbd50b454931fb.css"
+    context "with custom assets_regexp config" do
+      before do
+        require "sprockets/railtie"
 
-      expect(response).to have_http_status(:not_found)
-      expect(transport.events).to be_empty
-      expect(string_io.string).not_to match(/\[Tracing\] Starting <rails\.request>/)
+        make_basic_app do |config, app|
+          app.config.public_file_server.enabled = true
+          config.traces_sample_rate = 1.0
+          config.logger = logger
+          config.rails.assets_regexp = %r(/foo/)
+        end
+      end
+
+      it "accepts customized asset path patterns" do
+        get "/foo/application-ad022df6f1289ec07a560bb6c9a227ecf7bdd5a5cace5e9a8cdbd50b454931fb.css"
+
+        expect(response).to have_http_status(:not_found)
+        expect(transport.events).to be_empty
+        expect(string_io.string).not_to match(/\[Tracing\] Starting <rails\.request>/)
+
+        get "/assets/application-ad022df6f1289ec07a560bb6c9a227ecf7bdd5a5cace5e9a8cdbd50b454931fb.css"
+
+        expect(response).to have_http_status(:not_found)
+        expect(transport.events.count).to eq(1)
+      end
     end
   end
 
