@@ -24,7 +24,7 @@ module Sentry
             sentry_trace = env["HTTP_SENTRY_TRACE"]
             scope.set_trace(sentry_trace)
 
-            transaction = start_transaction(env, scope, sentry_trace) if Sentry.configuration.auto_instrument_traces
+            transaction = start_transaction(env, scope, sentry_trace) if Sentry.configuration.instrumenter == :sentry
             scope.set_span(transaction) if transaction
 
             begin

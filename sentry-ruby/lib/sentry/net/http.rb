@@ -28,7 +28,7 @@ module Sentry
       def request(req, body = nil, &block)
         return super unless started?
 
-        if Sentry.configuration.auto_instrument_traces
+        if Sentry.configuration.instrumenter == :sentry
           sentry_span = start_sentry_span
           set_sentry_trace_header(req, sentry_span)
         else
