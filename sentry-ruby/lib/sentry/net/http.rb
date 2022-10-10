@@ -28,12 +28,8 @@ module Sentry
       def request(req, body = nil, &block)
         return super unless started?
 
-        if Sentry.configuration.instrumenter == :sentry
-          sentry_span = start_sentry_span
-          set_sentry_trace_header(req, sentry_span)
-        else
-          set_sentry_trace_header(req, Sentry.get_current_scope.get_span)
-        end
+        sentry_span = start_sentry_span
+        set_sentry_trace_header(req, sentry_span)
 
         super.tap do |res|
           record_sentry_breadcrumb(req, res)
@@ -44,14 +40,16 @@ module Sentry
       private
 
       def set_sentry_trace_header(req, sentry_span)
-        return unless sentry_span
+        # TODO-neel maybe some otel span validation
+        sentry_or_otel_span = sentry_span || Sentry.get_current_scope.get_span
+        return unless sentry_or_otel_span
 
         client = Sentry.get_current_client
 
-        trace = client.generate_sentry_trace(sentry_span)
+        trace = client.generate_sentry_trace(sentry_or_otel_span)
         req[SENTRY_TRACE_HEADER_NAME] = trace if trace
 
-        baggage = client.generate_baggage(sentry_span)
+        baggage = client.generate_baggage(sentry_or_otel_span)
         req[BAGGAGE_HEADER_NAME] = baggage if baggage && !baggage.empty?
       end
 
@@ -83,9 +81,12 @@ module Sentry
       end
 
       def start_sentry_span
-        return unless Sentry.initialized? && span = Sentry.get_current_scope.get_span
+        return unless Sentry.initialized?
+        return unless Sentry.configuration.instrumenter == :sentry
         return if from_sentry_sdk?
-        return if span.sampled == false
+
+        span = Sentry.get_current_scope.get_span
+        return unless span&.sampled
 
         span.start_child(op: OP_NAME, start_timestamp: Sentry.utc_now.to_f)
       end
