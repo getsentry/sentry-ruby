@@ -1,3 +1,49 @@
+## Unreleased
+
+### Features
+
+- Allow users to configure their asset-skipping pattern [#1915](https://github.com/getsentry/sentry-ruby/pull/1915)
+
+  Users can now configure their own pattern to skip asset requests' transactions
+
+  ```rb
+  Sentry.init do |config|
+    config.rails.assets_regexp = /my_regexp/
+  end
+  ```
+
+### Bug Fixes
+
+- `Sentry::BackgroundWorker` will release `ActiveRecord` connection pool only when the `ActiveRecord` connection is established
+-  Remove bad encoding arguments in redis span descriptions [#1914](https://github.com/getsentry/sentry-ruby/pull/1914)
+  - Fixes [#1911](https://github.com/getsentry/sentry-ruby/issues/1911)
+
+## 5.5.0
+
+### Features
+
+- Support rack 3 [#1884](https://github.com/getsentry/sentry-ruby/pull/1884)
+  - We no longer need the `HTTP_VERSION` check for ignoring the header
+
+- Add [Dynamic Sampling](https://docs.sentry.io/product/sentry-basics/sampling/) support
+  The SDK now supports Sentry's Dynamic Sampling product.
+
+  Note that this is not supported for users still using the `config.async` option.
+
+  - Parse incoming [W3C Baggage Headers](https://www.w3.org/TR/baggage/) and propagate them to continue traces [#1869](https://github.com/getsentry/sentry-ruby/pull/1869)
+    - in all outgoing requests in our net/http patch
+    - in Sentry transactions as [Dynamic Sampling Context](https://develop.sentry.dev/sdk/performance/dynamic-sampling-context/)
+  - Create new Baggage entries as Head SDK (originator of trace) [#1898](https://github.com/getsentry/sentry-ruby/pull/1898)
+  - Add Transaction source annotations to classify low quality (high cardinality) transaction names [#1902](https://github.com/getsentry/sentry-ruby/pull/1902)
+
+### Bug Fixes
+
+- Memoize session.aggregation_key [#1892](https://github.com/getsentry/sentry-ruby/pull/1892)
+  - Fixes [#1891](https://github.com/getsentry/sentry-ruby/issues/1891)
+- Execute `with_scope`'s block even when SDK is not initialized [#1897](https://github.com/getsentry/sentry-ruby/pull/1897)
+  - Fixes [#1896](https://github.com/getsentry/sentry-ruby/issues/1896)
+- Make sure test helper clears the current scope before/after a test [#1900](https://github.com/getsentry/sentry-ruby/pull/1900)
+
 ## 5.4.2
 
 ### Bug Fixes

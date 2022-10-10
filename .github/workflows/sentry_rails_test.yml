@@ -7,6 +7,11 @@ on:
       - master
       - \d+-\d+
   pull_request:
+# Cancel in progress workflows on pull_requests.
+# https://docs.github.com/en/actions/using-jobs/using-concurrency#example-using-a-fallback-value
+concurrency:
+  group: ${{ github.workflow }}-${{ github.head_ref || github.run_id }}
+  cancel-in-progress: true
 jobs:
   test:
     defaults:
@@ -27,6 +32,7 @@ jobs:
           - { os: ubuntu-latest, ruby_version: '3.0', rails_version: 7.1.0 }
           - { os: ubuntu-latest, ruby_version: '3.1', rails_version: 7.0.0 }
           - { os: ubuntu-latest, ruby_version: '3.1', rails_version: 7.1.0 }
+          - { os: ubuntu-latest, ruby_version: head, rails_version: 7.1.0 }
         exclude:
           - ruby_version: 2.4
             rails_version: 6.0.0
@@ -56,7 +62,6 @@ jobs:
     - name: Set up Ruby ${{ matrix.ruby_version }}
       uses: ruby/setup-ruby@v1
       with:
-        bundler: 1
         ruby-version: ${{ matrix.ruby_version }}
 
     - name: Build with Rails ${{ matrix.rails_version }}

@@ -7,6 +7,11 @@ on:
       - master
       - \d+-\d+
   pull_request:
+# Cancel in progress workflows on pull_requests.
+# https://docs.github.com/en/actions/using-jobs/using-concurrency#example-using-a-fallback-value
+concurrency:
+  group: ${{ github.workflow }}-${{ github.head_ref || github.run_id }}
+  cancel-in-progress: true
 jobs:
   test:
     defaults:
@@ -22,6 +27,7 @@ jobs:
           - { os: ubuntu-latest, ruby_version: 2.6 }
           - { os: ubuntu-latest, ruby_version: 2.7 }
           - { os: ubuntu-latest, ruby_version: '3.0' }
+          - { os: ubuntu-latest, ruby_version: head }
           - { os: ubuntu-latest, ruby_version: jruby }
           - { os: ubuntu-latest, ruby_version: '3.1', options: { rubyopt: "--enable-frozen-string-literal --debug=frozen-string-literal" } }
           - { os: ubuntu-latest, ruby_version: '3.1', options: { codecov: 1 } }
@@ -30,7 +36,6 @@ jobs:
     - name: Set up Ruby ${{ matrix.ruby_version }}
       uses: ruby/setup-ruby@v1
       with:
-        bundler: 1
         ruby-version: ${{ matrix.ruby_version }}
 
     - name: Start Redis

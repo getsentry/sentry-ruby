@@ -136,14 +136,18 @@ module Sentry
       event_id = event_payload[:event_id] || event_payload["event_id"]
       item_type = event_payload[:type] || event_payload["type"]
 
-      envelope = Envelope.new(
-        {
-          event_id: event_id,
-          dsn: @dsn.to_s,
-          sdk: Sentry.sdk_meta,
-          sent_at: Sentry.utc_now.iso8601
-        }
-      )
+      envelope_headers = {
+        event_id: event_id,
+        dsn: @dsn.to_s,
+        sdk: Sentry.sdk_meta,
+        sent_at: Sentry.utc_now.iso8601
+      }
+
+      if event.is_a?(TransactionEvent) && event.dynamic_sampling_context
+        envelope_headers[:trace] = event.dynamic_sampling_context
+      end
+
+      envelope = Envelope.new(envelope_headers)
 
       envelope.add_item(
         { type: item_type, content_type: 'application/json' },

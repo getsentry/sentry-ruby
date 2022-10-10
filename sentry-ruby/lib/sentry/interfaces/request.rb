@@ -73,7 +73,7 @@ module Sentry
         request.POST
       elsif request.body # JSON requests, etc
         data = request.body.read(MAX_BODY_LIMIT)
-        data = encode_to_utf_8(data.to_s)
+        data = Utils::EncodingHelper.encode_to_utf_8(data.to_s)
         request.body.rewind
         data
       end
@@ -94,7 +94,7 @@ module Sentry
           key = key.sub(/^HTTP_/, "")
           key = key.split('_').map(&:capitalize).join('-')
 
-          memo[key] = encode_to_utf_8(value.to_s)
+          memo[key] = Utils::EncodingHelper.encode_to_utf_8(value.to_s)
         rescue StandardError => e
           # Rails adds objects to the Rack env that can sometimes raise exceptions
           # when `to_s` is called.
@@ -105,31 +105,21 @@ module Sentry
       end
     end
 
-    def encode_to_utf_8(value)
-      if value.encoding != Encoding::UTF_8 && value.respond_to?(:force_encoding)
-        value = value.dup.force_encoding(Encoding::UTF_8)
-      end
-
-      if !value.valid_encoding?
-        value = value.scrub
-      end
-
-      value
-    end
-
     def is_skippable_header?(key)
       key.upcase != key || # lower-case envs aren't real http headers
         key == "HTTP_COOKIE" || # Cookies don't go here, they go somewhere else
         !(key.start_with?('HTTP_') || CONTENT_HEADERS.include?(key))
     end
 
-    # Rack adds in an incorrect HTTP_VERSION key, which causes downstream
+    # In versions < 3, Rack adds in an incorrect HTTP_VERSION key, which causes downstream
     # to think this is a Version header. Instead, this is mapped to
     # env['SERVER_PROTOCOL']. But we don't want to ignore a valid header
     # if the request has legitimately sent a Version header themselves.
     # See: https://github.com/rack/rack/blob/028438f/lib/rack/handler/cgi.rb#L29
-    # NOTE: This will be removed in version 3.0+
     def is_server_protocol?(key, value, protocol_version)
+      rack_version = Gem::Version.new(::Rack.release)
+      return false if rack_version >= Gem::Version.new("3.0")
+
       key == 'HTTP_VERSION' && value == protocol_version
     end
 

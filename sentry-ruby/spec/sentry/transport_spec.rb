@@ -13,7 +13,7 @@ RSpec.describe Sentry::Transport do
 
   let(:client) { Sentry::Client.new(configuration) }
   let(:hub) do
-    Sentry::Hub.new(client, subject)
+    Sentry::Hub.new(client, Sentry::Scope.new)
   end
 
   subject { client.transport }
@@ -46,19 +46,37 @@ RSpec.describe Sentry::Transport do
       let(:transaction) do
         Sentry::Transaction.new(name: "test transaction", op: "rack.request", hub: hub)
       end
-      let(:event) { client.event_from_transaction(transaction) }
+
+      let(:dynamic_sampling_context) do
+        {
+          "sample_rate" => "0.01337",
+          "public_key" => "49d0f7386ad645858ae85020e393bef3",
+          "trace_id" => "771a43a4192642f0b136d5159a501700",
+          "user_id" => "Amélie"
+        }
+      end
+
+      let(:event) do
+        event = client.event_from_transaction(transaction)
+        event.dynamic_sampling_context = dynamic_sampling_context
+        event
+      end
+
       let(:envelope) { subject.envelope_from_event(event) }
 
       it "generates correct envelope content" do
         result, _ = subject.serialize_envelope(envelope)
 
         envelope_header, item_header, item = result.split("\n")
+        envelope_header_parsed = JSON.parse(envelope_header)
 
-        expect(envelope_header).to eq(
-          <<~ENVELOPE_HEADER.chomp
-            {"event_id":"#{event.event_id}","dsn":"#{Sentry::TestHelper::DUMMY_DSN}","sdk":#{Sentry.sdk_meta.to_json},"sent_at":"#{Time.now.utc.iso8601}"}
-          ENVELOPE_HEADER
-        )
+        expect(envelope_header_parsed).to eq({
+          "event_id" => event.event_id,
+          "dsn" => Sentry::TestHelper::DUMMY_DSN,
+          "sdk" => Sentry.sdk_meta,
+          "sent_at" => Time.now.utc.iso8601,
+          "trace" => dynamic_sampling_context
+        })
 
         expect(item_header).to eq(
           '{"type":"transaction","content_type":"application/json"}'

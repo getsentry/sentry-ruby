@@ -38,6 +38,7 @@ RSpec.describe Sentry::Resque do
 
     tracing_event = transport.events.last.to_hash
     expect(tracing_event[:transaction]).to eq("MessageJob")
+    expect(tracing_event[:transaction_info]).to eq({ source: :task })
     expect(tracing_event[:type]).to eq("transaction")
     expect(tracing_event.dig(:contexts, :trace, :status)).to eq("ok")
     expect(tracing_event.dig(:contexts, :trace, :op)).to eq("resque")
@@ -54,6 +55,7 @@ RSpec.describe Sentry::Resque do
 
     tracing_event = transport.events.last.to_hash
     expect(tracing_event[:transaction]).to eq("FailedJob")
+    expect(tracing_event[:transaction_info]).to eq({ source: :task })
     expect(tracing_event[:type]).to eq("transaction")
     expect(tracing_event.dig(:contexts, :trace, :status)).to eq("internal_error")
     expect(tracing_event.dig(:contexts, :trace, :op)).to eq("resque")

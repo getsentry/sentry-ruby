@@ -8,6 +8,7 @@ require "sentry/version"
 require "sentry/exceptions"
 require "sentry/core_ext/object/deep_dup"
 require "sentry/utils/argument_checking_helper"
+require "sentry/utils/encoding_helper"
 require "sentry/utils/logging_helper"
 require "sentry/configuration"
 require "sentry/logger"
@@ -39,6 +40,8 @@ module Sentry
   LOGGER_PROGNAME = "sentry".freeze
 
   SENTRY_TRACE_HEADER_NAME = "sentry-trace".freeze
+
+  BAGGAGE_HEADER_NAME = "baggage".freeze
 
   THREAD_LOCAL = :sentry_hub
 
@@ -349,7 +352,7 @@ module Sentry
     # @yieldparam scope [Scope]
     # @return [void]
     def with_scope(&block)
-      return unless initialized?
+      return yield unless initialized?
       get_current_hub.with_scope(&block)
     end
 

@@ -74,7 +74,7 @@ RSpec.describe Sentry::Rack::CaptureExceptions, rack: true do
 
     it 'passes rack/lint' do
       app = proc do
-        [200, { 'Content-Type' => 'text/plain' }, ['OK']]
+        [200, { 'content-type' => 'text/plain' }, ['OK']]
       end
 
       stack = described_class.new(Rack::Lint.new(app))
@@ -237,6 +237,7 @@ RSpec.describe Sentry::Rack::CaptureExceptions, rack: true do
           hub: Sentry.get_current_hub
         )
       end
+
       let(:stack) do
         described_class.new(
           ->(_) do
@@ -247,6 +248,8 @@ RSpec.describe Sentry::Rack::CaptureExceptions, rack: true do
 
       def verify_transaction_attributes(transaction)
         expect(transaction.type).to eq("transaction")
+        expect(transaction.transaction).to eq("/test")
+        expect(transaction.transaction_info).to eq({ source: :url })
         expect(transaction.timestamp).not_to be_nil
         expect(transaction.contexts.dig(:trace, :status)).to eq("ok")
         expect(transaction.contexts.dig(:trace, :op)).to eq("rack.request")
@@ -381,6 +384,36 @@ RSpec.describe Sentry::Rack::CaptureExceptions, rack: true do
           expect(sampling_context_env).to eq(env)
         end
       end
+
+      context "when the baggage header is sent" do
+        let(:trace) do
+          "#{external_transaction.trace_id}-#{external_transaction.span_id}-1"
+        end
+
+        before do
+          env["HTTP_BAGGAGE"] = "other-vendor-value-1=foo;bar;baz, "\
+            "sentry-trace_id=771a43a4192642f0b136d5159a501700, "\
+            "sentry-public_key=49d0f7386ad645858ae85020e393bef3, "\
+            "sentry-sample_rate=0.01337, "\
+            "sentry-user_id=Am%C3%A9lie,  "\
+            "other-vendor-value-2=foo;bar;"
+        end
+
+        it "has the dynamic_sampling_context on the TransactionEvent" do
+          expect(Sentry::Transaction).to receive(:new).
+            with(hash_including(:baggage)).
+            and_call_original
+
+          stack.call(env)
+
+          expect(transaction.dynamic_sampling_context).to eq({
+            "sample_rate" => "0.01337",
+            "public_key" => "49d0f7386ad645858ae85020e393bef3",
+            "trace_id" => "771a43a4192642f0b136d5159a501700",
+            "user_id" => "Amélie"
+          })
+        end
+      end
     end
 
     context "when the transaction is sampled" do
@@ -399,6 +432,8 @@ RSpec.describe Sentry::Rack::CaptureExceptions, rack: true do
 
         transaction = last_sentry_event
         expect(transaction.type).to eq("transaction")
+        expect(transaction.transaction).to eq("/test")
+        expect(transaction.transaction_info).to eq({ source: :url })
         expect(transaction.timestamp).not_to be_nil
         expect(transaction.contexts.dig(:trace, :status)).to eq("ok")
         expect(transaction.contexts.dig(:trace, :op)).to eq("rack.request")
@@ -422,6 +457,8 @@ RSpec.describe Sentry::Rack::CaptureExceptions, rack: true do
           transaction = last_sentry_event
           expect(transaction.type).to eq("transaction")
           expect(transaction.timestamp).not_to be_nil
+          expect(transaction.transaction).to eq("/test")
+          expect(transaction.transaction_info).to eq({ source: :url })
           expect(transaction.contexts.dig(:trace, :status)).to eq("ok")
           expect(transaction.contexts.dig(:trace, :op)).to eq("rack.request")
           expect(transaction.spans.count).to eq(2)

@@ -97,22 +97,50 @@ RSpec.describe Sentry::Rails::Tracing, type: :request do
       ::Logger.new(string_io)
     end
 
-    before do
-      require "sprockets/railtie"
+    context "with default setup" do
+      before do
+        require "sprockets/railtie"
 
-      make_basic_app do |config, app|
-        app.config.public_file_server.enabled = true
-        config.traces_sample_rate = 1.0
-        config.logger = logger
+        make_basic_app do |config, app|
+          app.config.public_file_server.enabled = true
+          config.traces_sample_rate = 1.0
+          config.logger = logger
+        end
+      end
+
+      it "doesn't record requests for asset files" do
+        get "/assets/application-ad022df6f1289ec07a560bb6c9a227ecf7bdd5a5cace5e9a8cdbd50b454931fb.css"
+
+        expect(response).to have_http_status(:not_found)
+        expect(transport.events).to be_empty
+        expect(string_io.string).not_to match(/\[Tracing\] Starting <rails\.request>/)
       end
     end
 
-    it "doesn't record requests for asset files" do
-      get "/assets/application-ad022df6f1289ec07a560bb6c9a227ecf7bdd5a5cace5e9a8cdbd50b454931fb.css"
+    context "with custom assets_regexp config" do
+      before do
+        require "sprockets/railtie"
 
-      expect(response).to have_http_status(:not_found)
-      expect(transport.events).to be_empty
-      expect(string_io.string).not_to match(/\[Tracing\] Starting <rails\.request>/)
+        make_basic_app do |config, app|
+          app.config.public_file_server.enabled = true
+          config.traces_sample_rate = 1.0
+          config.logger = logger
+          config.rails.assets_regexp = %r(/foo/)
+        end
+      end
+
+      it "accepts customized asset path patterns" do
+        get "/foo/application-ad022df6f1289ec07a560bb6c9a227ecf7bdd5a5cace5e9a8cdbd50b454931fb.css"
+
+        expect(response).to have_http_status(:not_found)
+        expect(transport.events).to be_empty
+        expect(string_io.string).not_to match(/\[Tracing\] Starting <rails\.request>/)
+
+        get "/assets/application-ad022df6f1289ec07a560bb6c9a227ecf7bdd5a5cace5e9a8cdbd50b454931fb.css"
+
+        expect(response).to have_http_status(:not_found)
+        expect(transport.events.count).to eq(1)
+      end
     end
   end
 
@@ -156,7 +184,7 @@ RSpec.describe Sentry::Rails::Tracing, type: :request do
       expect(second_span[:description]).to eq("PostsController#show")
     end
 
-    context "with sentry-trace header" do
+    context "with sentry-trace and baggage headers" do
       let(:external_transaction) do
         Sentry::Transaction.new(
           op: "pageload",
@@ -167,10 +195,20 @@ RSpec.describe Sentry::Rails::Tracing, type: :request do
         )
       end
 
+      let(:baggage) do
+        "other-vendor-value-1=foo;bar;baz, "\
+          "sentry-trace_id=771a43a4192642f0b136d5159a501700, "\
+          "sentry-public_key=49d0f7386ad645858ae85020e393bef3, "\
+          "sentry-sample_rate=0.01337, "\
+          "sentry-user_id=Am%C3%A9lie,  "\
+          "other-vendor-value-2=foo;bar;"
+      end
+
       it "inherits trace info from the transaction" do
         p = Post.create!
 
-        get "/posts/#{p.id}", headers: { "sentry-trace" => external_transaction.to_sentry_trace }
+        headers = { "sentry-trace" => external_transaction.to_sentry_trace, baggage: baggage }
+        get "/posts/#{p.id}", headers: headers
 
         transaction = transport.events.last
         expect(transaction.type).to eq("transaction")
@@ -183,6 +221,14 @@ RSpec.describe Sentry::Rails::Tracing, type: :request do
         expect(transaction.contexts.dig(:trace, :trace_id)).to eq(external_transaction.trace_id)
         expect(transaction.contexts.dig(:trace, :parent_span_id)).to eq(external_transaction.span_id)
         expect(transaction.contexts.dig(:trace, :span_id)).not_to eq(external_transaction.span_id)
+
+        # should have baggage converted to DSC
+        expect(transaction.dynamic_sampling_context).to eq({
+          "sample_rate" => "0.01337",
+          "public_key" => "49d0f7386ad645858ae85020e393bef3",
+          "trace_id" => "771a43a4192642f0b136d5159a501700",
+          "user_id" => "Amélie"
+        })
       end
     end
   end

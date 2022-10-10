@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+require "sentry/baggage"
+
 module Sentry
   class Transaction < Span
     SENTRY_TRACE_REGEXP = Regexp.new(
@@ -12,15 +14,28 @@ module Sentry
     UNLABELD_NAME = "<unlabeled transaction>".freeze
     MESSAGE_PREFIX = "[Tracing]"
 
+    # https://develop.sentry.dev/sdk/event-payloads/transaction/#transaction-annotations
+    SOURCES = %i(custom url route view component task)
+
     include LoggingHelper
 
     # The name of the transaction.
     # @return [String]
     attr_reader :name
 
+    # The source of the transaction name.
+    # @return [Symbol]
+    attr_reader :source
+
     # The sampling decision of the parent transaction, which will be considered when making the current transaction's sampling decision.
     # @return [String]
     attr_reader :parent_sampled
+
+    # The parsed incoming W3C baggage header.
+    # This is only for accessing the current baggage variable.
+    # Please use the #get_baggage method for interfacing outside this class.
+    # @return [Baggage, nil]
+    attr_reader :baggage
 
     # @deprecated Use Sentry.get_current_hub instead.
     attr_reader :hub
@@ -31,18 +46,35 @@ module Sentry
     # @deprecated Use Sentry.logger instead.
     attr_reader :logger
 
-    def initialize(name: nil, parent_sampled: nil, hub:, **options)
+    # The effective sample rate at which this transaction was sampled.
+    # @return [Float, nil]
+    attr_reader :effective_sample_rate
+
+    def initialize(
+      hub:,
+      name: nil,
+      source: :custom,
+      parent_sampled: nil,
+      baggage: nil,
+      **options
+    )
       super(**options)
 
       @name = name
+      @source = SOURCES.include?(source) ? source.to_sym : :custom
       @parent_sampled = parent_sampled
       @transaction = self
       @hub = hub
+      @baggage = baggage
       @configuration = hub.configuration # to be removed
       @tracing_enabled = hub.configuration.tracing_enabled?
       @traces_sampler = hub.configuration.traces_sampler
       @traces_sample_rate = hub.configuration.traces_sample_rate
       @logger = hub.configuration.logger
+      @release = hub.configuration.release
+      @environment = hub.configuration.environment
+      @dsn = hub.configuration.dsn
+      @effective_sample_rate = nil
       init_span_recorder
     end
 
@@ -52,10 +84,11 @@ module Sentry
     #
     # The child transaction will also store the parent's sampling decision in its `parent_sampled` attribute.
     # @param sentry_trace [String] the trace string from the previous transaction.
+    # @param baggage [String, nil] the incoming baggage header string.
     # @param hub [Hub] the hub that'll be responsible for sending this transaction when it's finished.
     # @param options [Hash] the options you want to use to initialize a Transaction instance.
     # @return [Transaction, nil]
-    def self.from_sentry_trace(sentry_trace, hub: Sentry.get_current_hub, **options)
+    def self.from_sentry_trace(sentry_trace, baggage: nil, hub: Sentry.get_current_hub, **options)
       return unless hub.configuration.tracing_enabled?
       return unless sentry_trace
 
@@ -70,13 +103,38 @@ module Sentry
           sampled_flag != "0"
         end
 
-      new(trace_id: trace_id, parent_span_id: parent_span_id, parent_sampled: parent_sampled, hub: hub, **options)
+      baggage = if baggage && !baggage.empty?
+                  Baggage.from_incoming_header(baggage)
+                else
+                  # If there's an incoming sentry-trace but no incoming baggage header,
+                  # for instance in traces coming from older SDKs,
+                  # baggage will be empty and frozen and won't be populated as head SDK.
+                  Baggage.new({})
+                end
+
+      baggage.freeze!
+
+      new(
+        trace_id: trace_id,
+        parent_span_id: parent_span_id,
+        parent_sampled: parent_sampled,
+        hub: hub,
+        baggage: baggage,
+        **options
+      )
     end
 
     # @return [Hash]
     def to_hash
       hash = super
-      hash.merge!(name: @name, sampled: @sampled, parent_sampled: @parent_sampled)
+
+      hash.merge!(
+        name: @name,
+        source: @source,
+        sampled: @sampled,
+        parent_sampled: @parent_sampled
+      )
+
       hash
     end
 
@@ -103,7 +161,10 @@ module Sentry
         return
       end
 
-      return unless @sampled.nil?
+      unless @sampled.nil?
+        @effective_sample_rate = @sampled ? 1.0 : 0.0
+        return
+      end
 
       sample_rate =
         if @traces_sampler.is_a?(Proc)
@@ -116,7 +177,11 @@ module Sentry
 
       transaction_description = generate_transaction_description
 
-      unless [true, false].include?(sample_rate) || (sample_rate.is_a?(Numeric) && sample_rate >= 0.0 && sample_rate <= 1.0)
+      if [true, false].include?(sample_rate)
+        @effective_sample_rate = sample_rate ? 1.0 : 0.0
+      elsif sample_rate.is_a?(Numeric) && sample_rate >= 0.0 && sample_rate <= 1.0
+        @effective_sample_rate = sample_rate.to_f
+      else
         @sampled = false
         log_warn("#{MESSAGE_PREFIX} Discarding #{transaction_description} because of invalid sample_rate: #{sample_rate}")
         return
@@ -172,6 +237,14 @@ module Sentry
       end
     end
 
+    # Get the existing frozen incoming baggage
+    # or populate one with sentry- items as the head SDK.
+    # @return [Baggage]
+    def get_baggage
+      populate_head_baggage if @baggage.nil? || @baggage.mutable
+      @baggage
+    end
+
     protected
 
     def init_span_recorder(limit = 1000)
@@ -186,6 +259,29 @@ module Sentry
       result += "transaction"
       result += " <#{@name}>" if @name
       result
+    end
+
+    def populate_head_baggage
+      items = {
+        "trace_id" => trace_id,
+        "sample_rate" => effective_sample_rate&.to_s,
+        "environment" => @environment,
+        "release" => @release,
+        "public_key" => @dsn&.public_key
+      }
+
+      items["transaction"] = name unless source_low_quality?
+
+      user = @hub.current_scope&.user
+      items["user_segment"] = user["segment"] if user && user["segment"]
+
+      items.compact!
+      @baggage = Baggage.new(items, mutable: false)
+    end
+
+    # These are high cardinality and thus bad
+    def source_low_quality?
+      source == :url
     end
 
     class SpanRecorder

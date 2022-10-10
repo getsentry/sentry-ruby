@@ -23,11 +23,21 @@ RSpec.describe "with uninitialized SDK" do
   end
 
   it do
-    expect { Sentry.with_scope { raise "foo" } }.not_to raise_error(RuntimeError)
+    expect { Sentry.with_exception_captured { raise "foo" } }.to raise_error(RuntimeError)
   end
 
   it do
-    result = Sentry.with_child_span { "foo" }
+    result = Sentry.with_child_span { |span| "foo" }
+    expect(result).to eq("foo")
+  end
+
+  it do
+    result = Sentry.with_scope { |scope| "foo" }
+    expect(result).to eq("foo")
+  end
+
+  it do
+    result = Sentry.with_session_tracking { |scope| "foo" }
     expect(result).to eq("foo")
   end
 end

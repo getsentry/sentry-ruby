@@ -105,16 +105,7 @@ module Sentry
     # @param transaction [Transaction] the transaction to be recorded.
     # @return [TransactionEvent]
     def event_from_transaction(transaction)
-      TransactionEvent.new(configuration: configuration).tap do |event|
-        event.transaction = transaction.name
-        event.contexts.merge!(trace: transaction.get_trace_context)
-        event.timestamp = transaction.timestamp
-        event.start_timestamp = transaction.start_timestamp
-        event.tags = transaction.tags
-
-        finished_spans = transaction.span_recorder.spans.select { |span| span.timestamp && span != transaction }
-        event.spans = finished_spans.map(&:to_hash)
-      end
+      TransactionEvent.new(configuration: configuration, transaction: transaction)
     end
 
     # @!macro send_event
@@ -154,6 +145,22 @@ module Sentry
       trace = span.to_sentry_trace
       log_debug("[Tracing] Adding #{SENTRY_TRACE_HEADER_NAME} header to outgoing request: #{trace}")
       trace
+    end
+
+    # Generates a W3C Baggage header for distribted tracing from the given Span.
+    # Returns `nil` if `config.propagate_traces` is `false`.
+    # @param span [Span] the span to generate trace from.
+    # @return [String, nil]
+    def generate_baggage(span)
+      return unless configuration.propagate_traces
+
+      baggage = span.to_baggage
+
+      if baggage && !baggage.empty?
+        log_debug("[Tracing] Adding #{BAGGAGE_HEADER_NAME} header to outgoing request: #{baggage}")
+      end
+
+      baggage
     end
 
     private

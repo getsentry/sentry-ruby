@@ -31,6 +31,7 @@ module Sentry
 
       test_client = Sentry::Client.new(copied_config)
       Sentry.get_current_hub.bind_client(test_client)
+      Sentry.get_current_scope.clear
     end
 
     # Clears all stored events and envelopes.
@@ -41,6 +42,7 @@ module Sentry
 
       sentry_transport.events = []
       sentry_transport.envelopes = []
+      Sentry.get_current_scope.clear
     end
 
     # @return [Transport]
