@@ -15,8 +15,8 @@ module Sentry
           parent_sentry_span.start_child(op: otel_span.name)
         else
           options = { name: otel_span.name, op: otel_span.name }
-          transaction = Sentry::Transaction.from_sentry_trace(scope.trace, **options) if scope.trace
-          scope.set_trace(nil)
+          sentry_trace = scope.sentry_trace
+          transaction = Sentry::Transaction.from_sentry_trace(sentry_trace, **options) if sentry_trace
           Sentry.start_transaction(transaction: transaction, **options)
         end
 
