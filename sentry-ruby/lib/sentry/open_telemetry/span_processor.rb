@@ -16,7 +16,8 @@ module Sentry
         else
           options = { name: otel_span.name, op: otel_span.name }
           sentry_trace = scope.sentry_trace
-          transaction = Sentry::Transaction.from_sentry_trace(sentry_trace, **options) if sentry_trace
+          baggage = scope.baggage
+          transaction = Sentry::Transaction.from_sentry_trace(sentry_trace, baggage: baggage, **options) if sentry_trace
           Sentry.start_transaction(transaction: transaction, **options)
         end
 
