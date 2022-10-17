@@ -40,6 +40,8 @@ module Sentry
       private
 
       def set_sentry_trace_header(req, sentry_span)
+        return unless Sentry.initialized?
+
         # TODO-neel maybe some otel span validation
         sentry_or_otel_span = sentry_span || Sentry.get_current_scope.get_span
         return unless sentry_or_otel_span
