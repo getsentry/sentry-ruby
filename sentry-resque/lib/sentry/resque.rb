@@ -25,7 +25,7 @@ module Sentry
 
               name = contexts.dig(:"Active-Job", :job_class) || contexts.dig(:"Resque", :job_class)
               scope.set_transaction_name(name, source: :task)
-              transaction = Sentry.start_transaction(name: scope.transaction_name, source: scope.transaction_source, op: "resque")
+              transaction = Sentry.start_transaction(name: scope.transaction_name, source: scope.transaction_source, op: "resque") if Sentry.configuration.instrumenter == :sentry
               scope.set_span(transaction) if transaction
 
               yield

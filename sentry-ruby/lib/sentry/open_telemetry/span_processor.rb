@@ -56,6 +56,7 @@ module Sentry
 
       private
 
+      # TODO-neel what to do about this
       def from_sentry_sdk?(otel_span)
         caller.any? { |line| line =~ /lib[\\\/]sentry[\\\/]background_worker.rb/ }
       end
