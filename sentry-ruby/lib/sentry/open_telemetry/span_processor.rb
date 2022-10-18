@@ -1,23 +1,28 @@
 module Sentry
   module OpenTelemetry
     class SpanProcessor
+      include LoggingHelper
+
       def initialize
         @otel_span_map = {}
       end
 
       def on_start(otel_span, _parent_context)
+        return unless Sentry.initialized? && Sentry.configuration.instrumenter == :otel
         return if from_sentry_sdk?(otel_span)
 
         scope = Sentry.get_current_scope
         parent_sentry_span = scope.get_span
 
         sentry_span = if parent_sentry_span
+          Sentry.configuration.logger.info("Continuing otel span on parent #{parent_sentry_span.name}")
           parent_sentry_span.start_child(op: otel_span.name)
         else
           options = { name: otel_span.name, op: otel_span.name }
           sentry_trace = scope.sentry_trace
           baggage = scope.baggage
           transaction = Sentry::Transaction.from_sentry_trace(sentry_trace, baggage: baggage, **options) if sentry_trace
+          Sentry.configuration.logger.info("Starting otel transaction #{otel_span.name}")
           Sentry.start_transaction(transaction: transaction, **options)
         end
 
@@ -26,6 +31,8 @@ module Sentry
       end
 
       def on_finish(otel_span)
+        return unless Sentry.initialized? && Sentry.configuration.instrumenter == :otel
+
         current_scope = Sentry.get_current_scope
         sentry_span, parent_span = @otel_span_map.delete(otel_span.context.span_id)
         return unless sentry_span
