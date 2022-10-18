@@ -442,22 +442,8 @@ module Sentry
     #   end
     #
     def with_child_span(**attributes, &block)
-      if Sentry.initialized? && current_span = get_current_scope.get_span
-        result = nil
-
-        begin
-          current_span.with_child_span(**attributes) do |child_span|
-            get_current_scope.set_span(child_span)
-            result = yield(child_span)
-          end
-        ensure
-          get_current_scope.set_span(current_span)
-        end
-
-        result
-      else
-        yield(nil)
-      end
+      return yield(nil) unless Sentry.initialized?
+      get_current_hub.with_child_span(**attributes, &block)
     end
 
     # Returns the id of the lastly reported Sentry::Event.
