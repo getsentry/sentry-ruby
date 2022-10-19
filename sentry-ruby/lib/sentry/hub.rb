@@ -92,6 +92,24 @@ module Sentry
       transaction
     end
 
+    def with_child_span(**attributes, &block)
+      current_span = current_scope.get_span
+      return yield(nil) unless current_span
+
+      result = nil
+
+      begin
+        current_span.with_child_span(**attributes) do |child_span|
+          current_scope.set_span(child_span)
+          result = yield(child_span)
+        end
+      ensure
+        current_scope.set_span(current_span)
+      end
+
+      result
+    end
+
     def capture_exception(exception, **options, &block)
       check_argument_type!(exception, ::Exception)
 
