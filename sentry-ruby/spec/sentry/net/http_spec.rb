@@ -294,21 +294,6 @@ RSpec.describe Sentry::Net::HTTP do
         end
       end
     end
-
-    context "with unsampled transaction" do
-      it "doesn't do anything" do
-        stub_normal_response
-
-        transaction = Sentry.start_transaction(sampled: false)
-        expect(transaction).not_to receive(:start_child)
-        Sentry.get_current_scope.set_span(transaction)
-
-        response = Net::HTTP.get_response(URI("http://example.com/path"))
-
-        expect(response.code).to eq("200")
-        expect(transaction.span_recorder.spans.count).to eq(1)
-      end
-    end
   end
 
   context "without tracing enabled nor http_logger" do
