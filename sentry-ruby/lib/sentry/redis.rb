@@ -13,9 +13,14 @@ module Sentry
     def instrument
       return yield unless Sentry.initialized?
 
-      record_span do
+      Sentry.with_child_span(op: OP_NAME, start_timestamp: Sentry.utc_now.to_f) do |span|
         yield.tap do
           record_breadcrumb
+
+          if span
+            span.set_description(commands_description)
+            span.set_data(:server, server_description)
+          end
         end
       end
     end
@@ -23,18 +28,6 @@ module Sentry
     private
 
     attr_reader :commands, :host, :port, :db
-
-    def record_span
-      return yield unless (transaction = Sentry.get_current_scope.get_transaction) && transaction.sampled
-
-      sentry_span = transaction.start_child(op: OP_NAME, start_timestamp: Sentry.utc_now.to_f)
-
-      yield.tap do
-        sentry_span.set_description(commands_description)
-        sentry_span.set_data(:server, server_description)
-        sentry_span.set_timestamp(Sentry.utc_now.to_f)
-      end
-    end
 
     def record_breadcrumb
       return unless Sentry.configuration.breadcrumbs_logger.include?(LOGGER_NAME)
