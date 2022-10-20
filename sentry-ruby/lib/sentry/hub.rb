@@ -76,8 +76,9 @@ module Sentry
       @stack.pop
     end
 
-    def start_transaction(transaction: nil, custom_sampling_context: {}, **options)
+    def start_transaction(transaction: nil, custom_sampling_context: {}, instrumenter: :sentry, **options)
       return unless configuration.tracing_enabled?
+      return unless instrumenter == configuration.instrumenter
 
       transaction ||= Transaction.new(**options.merge(hub: self))
 

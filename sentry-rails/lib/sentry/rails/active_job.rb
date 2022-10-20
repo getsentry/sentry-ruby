@@ -22,7 +22,7 @@ module Sentry
               begin
                 scope.set_transaction_name(job.class.name, source: :task)
                 transaction =
-                  if job.is_a?(::Sentry::SendEventJob) || Sentry.configuration.instrumenter != :sentry
+                  if job.is_a?(::Sentry::SendEventJob)
                     nil
                   else
                     Sentry.start_transaction(name: scope.transaction_name, source: scope.transaction_source, op: "active_job")

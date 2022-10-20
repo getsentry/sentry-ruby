@@ -21,7 +21,7 @@ module Sentry
             scope.set_transaction_name(env["PATH_INFO"], source: :url) if env["PATH_INFO"]
             scope.set_rack_env(env)
 
-            transaction = start_transaction(env, scope) if Sentry.configuration.instrumenter == :sentry
+            transaction = start_transaction(env, scope)
             scope.set_span(transaction) if transaction
 
             begin

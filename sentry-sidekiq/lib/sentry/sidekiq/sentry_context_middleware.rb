@@ -17,7 +17,7 @@ module Sentry
         scope.set_tags(build_tags(job["tags"]))
         scope.set_contexts(sidekiq: job.merge("queue" => queue))
         scope.set_transaction_name(context_filter.transaction_name, source: :task)
-        transaction = start_transaction(scope, job["sentry_trace"]) if Sentry.configuration.instrumenter == :sentry
+        transaction = start_transaction(scope, job["sentry_trace"])
         scope.set_span(transaction) if transaction
 
         begin

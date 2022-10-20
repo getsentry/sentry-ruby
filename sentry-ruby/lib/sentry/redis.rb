@@ -89,8 +89,6 @@ end
 
 if defined?(::Redis::Client)
   Sentry.register_patch do |config|
-    return unless config.instrumenter == :sentry
-
     patch = Sentry::Redis::Client
     Redis::Client.prepend(patch) unless Redis::Client.ancestors.include?(patch)
   end

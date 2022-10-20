@@ -1,8 +1,6 @@
 module Sentry
   module OpenTelemetry
     class SpanProcessor
-      include LoggingHelper
-
       def initialize
         @otel_span_map = {}
       end

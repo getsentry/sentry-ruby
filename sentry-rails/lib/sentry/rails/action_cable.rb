@@ -14,7 +14,7 @@ module Sentry
               scope.set_rack_env(env)
               scope.set_context("action_cable", extra_context) if extra_context
               scope.set_transaction_name(transaction_name, source: :view)
-              transaction = start_transaction(env, scope) if Sentry.configuration.instrumenter == :sentry
+              transaction = start_transaction(env, scope)
               scope.set_span(transaction) if transaction
 
               begin

@@ -84,7 +84,6 @@ module Sentry
 
       def start_sentry_span
         return unless Sentry.initialized?
-        return unless Sentry.configuration.instrumenter == :sentry
         return if from_sentry_sdk?
 
         span = Sentry.get_current_scope.get_span
