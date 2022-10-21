@@ -22,8 +22,8 @@ module Sentry
             ) do |span|
               payload = payload.dup
               cleanup_data(payload)
-              span.set_data(:payload, payload)
-              span.set_http_status(payload[:status])
+              span&.set_data(:payload, payload)
+              span&.set_http_status(payload[:status])
             end
           end
         end

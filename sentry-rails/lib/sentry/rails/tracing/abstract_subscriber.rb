@@ -43,7 +43,7 @@ module Sentry
             Sentry.with_child_span(**options) do |child_span|
               # duration in ActiveSupport is computed in millisecond
               # so we need to covert it as second before calculating the timestamp
-              child_span.set_timestamp(child_span.start_timestamp + duration / 1000)
+              child_span&.set_timestamp(child_span.start_timestamp + duration / 1000)
               yield(child_span) if block_given?
             end
           end
