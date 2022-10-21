@@ -93,7 +93,9 @@ module Sentry
       transaction
     end
 
-    def with_child_span(**attributes, &block)
+    def with_child_span(instrumenter: :sentry, **attributes, &block)
+      return yield(nil) unless instrumenter == configuration.instrumenter
+
       current_span = current_scope.get_span
       return yield(nil) unless current_span
 

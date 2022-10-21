@@ -21,7 +21,7 @@ module Sentry
           baggage = scope.baggage
           transaction = Sentry::Transaction.from_sentry_trace(sentry_trace, baggage: baggage, **options) if sentry_trace
           Sentry.configuration.logger.info("Starting otel transaction #{otel_span.name}")
-          Sentry.start_transaction(transaction: transaction, **options)
+          Sentry.start_transaction(transaction: transaction, instrumenter: :otel, **options)
         end
 
         scope.set_span(sentry_span)
