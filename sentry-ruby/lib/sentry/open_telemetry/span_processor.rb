@@ -1,6 +1,10 @@
 module Sentry
   module OpenTelemetry
     class SpanProcessor
+
+      ATTRIBUTE_NET_PEER_NAME = "net.peer.name"
+      ATTRIBUTE_DB_STATEMENT = "db.statement"
+
       def initialize
         @otel_span_map = {}
       end
@@ -44,12 +48,13 @@ module Sentry
         else
           otel_span.attributes&.each do |key, value|
             sentry_span.set_data(key, value)
-            if key == "db.statement"
+            if key == ATTRIBUTE_DB_STATEMENT
               sentry_span.set_description(value)
             end
           end
         end
 
+        Sentry.configuration.logger.info("Finishing sentry_span #{sentry_span.op}")
         sentry_span.finish
         current_scope.set_span(parent_span) if parent_span
       end
@@ -66,9 +71,22 @@ module Sentry
 
       private
 
-      # TODO-neel what to do about this
       def from_sentry_sdk?(otel_span)
-        caller.any? { |line| line =~ /lib[\\\/]sentry[\\\/]background_worker.rb/ }
+        dsn = Sentry.configuration.dsn
+        return false unless dsn
+
+        if otel_span.name.start_with?("HTTP")
+          # only check client requests, connects are sometimes internal
+          return false unless %i(client internal).include?(otel_span.kind)
+
+          address = otel_span.attributes[ATTRIBUTE_NET_PEER_NAME]
+
+          # if no address drop it, just noise
+          return true unless address
+          return true if dsn.host == address
+        end
+
+        false
       end
 
       def otel_context_hash(otel_span)
