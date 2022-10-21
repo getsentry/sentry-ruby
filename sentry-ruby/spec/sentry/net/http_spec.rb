@@ -73,8 +73,6 @@ RSpec.describe Sentry::Net::HTTP do
     end
 
     it "adds sentry-trace header to the request header" do
-      stub_normal_response
-
       uri = URI("http://example.com/path")
       http = Net::HTTP.new(uri.host, uri.port)
       request = Net::HTTP::Get.new(uri.request_uri)
@@ -82,14 +80,17 @@ RSpec.describe Sentry::Net::HTTP do
       transaction = Sentry.start_transaction
       Sentry.get_current_scope.set_span(transaction)
 
+      stub_normal_response do |request, _|
+        request_span = transaction.span_recorder.spans.last
+        expect(request["sentry-trace"]).to eq(request_span.to_sentry_trace)
+      end
+
       response = http.request(request)
 
       expect(response.code).to eq("200")
       expect(string_io.string).to match(
         /\[Tracing\] Adding sentry-trace header to outgoing request:/
       )
-      request_span = transaction.span_recorder.spans.last
-      expect(request["sentry-trace"]).to eq(request_span.to_sentry_trace)
     end
 
     it "adds baggage header to the request header as head SDK when no incoming trace" do
