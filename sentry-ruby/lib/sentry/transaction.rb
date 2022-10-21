@@ -58,12 +58,11 @@ module Sentry
       baggage: nil,
       **options
     )
-      super(**options)
+      super(transaction: self, **options)
 
       @name = name
       @source = SOURCES.include?(source) ? source.to_sym : :custom
       @parent_sampled = parent_sampled
-      @transaction = self
       @hub = hub
       @baggage = baggage
       @configuration = hub.configuration # to be removed

@@ -17,6 +17,15 @@ RSpec.describe Sentry::Client do
   end
   subject { Sentry::Client.new(configuration) }
 
+  let(:transaction) do
+    hub = Sentry::Hub.new(subject, Sentry::Scope.new)
+    Sentry::Transaction.new(
+      name: "test transaction",
+      hub: hub,
+      sampled: true
+    )
+  end
+
   let(:fake_time) { Time.now }
 
   before do
@@ -406,7 +415,7 @@ RSpec.describe Sentry::Client do
       configuration.logger = logger
     end
 
-    let(:span) { Sentry::Span.new }
+    let(:span) { Sentry::Span.new(transaction: transaction) }
 
     it "generates the trace with given span and logs correct message" do
       expect(subject.generate_sentry_trace(span)).to eq(span.to_sentry_trace)

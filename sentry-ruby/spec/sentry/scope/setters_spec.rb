@@ -24,12 +24,24 @@ RSpec.describe Sentry::Scope do
   end
 
   describe "#set_span" do
-    let(:span) { Sentry::Span.new(op: "foo") }
+    let(:transaction) do
+      client = Sentry::Client.new(Sentry::Configuration.new)
+      hub = Sentry::Hub.new(client, subject)
+      Sentry::Transaction.new(name: "test transaction", hub: hub)
+    end
+
+    let(:span) { Sentry::Span.new(op: "foo", transaction: transaction) }
 
     it "sets the Span" do
       subject.set_span(span)
 
       expect(subject.span).to eq(span)
+    end
+
+    it "sets the Transaction" do
+      subject.set_span(transaction)
+
+      expect(subject.span).to eq(transaction)
     end
 
     it "raises error when passed non-Span argument" do

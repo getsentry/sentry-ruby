@@ -494,7 +494,10 @@ RSpec.describe Sentry do
     end
 
     context "when the current span is present" do
-      let(:parent_span) { Sentry::Span.new(op: "parent") }
+      let(:parent_span) do
+        transaction = Sentry::Transaction.new(op: "foo", hub: Sentry.get_current_hub)
+        Sentry::Span.new(op: "parent", transaction: transaction)
+      end
 
       before do
         described_class.get_current_scope.set_span(parent_span)

@@ -1,8 +1,22 @@
 require "spec_helper"
 
 RSpec.describe Sentry::Span do
+  let(:hub) do
+    client = Sentry::Client.new(Sentry::Configuration.new)
+    Sentry::Hub.new(client, Sentry::Scope.new)
+  end
+
+  let(:transaction) do
+    Sentry::Transaction.new(
+      name: "test transaction",
+      hub: hub,
+      sampled: true
+    )
+  end
+
   subject do
     described_class.new(
+      transaction: transaction,
       op: "sql.query",
       description: "SELECT * FROM users;",
       status: "ok",
@@ -67,7 +81,7 @@ RSpec.describe Sentry::Span do
     end
 
     context "without sampled value" do
-      subject { described_class.new }
+      subject { described_class.new(transaction: transaction) }
 
       it "doesn't contain the sampled flag" do
         sentry_trace = subject.to_sentry_trace
@@ -129,6 +143,16 @@ RSpec.describe Sentry::Span do
       expect(new_span.sampled).to eq(true)
     end
 
+    it "gives the child span its transaction" do
+      span_1 = subject.start_child
+
+      expect(span_1.transaction).to eq(subject.transaction)
+
+      span_2 = span_1.start_child
+
+      expect(span_2.transaction).to eq(subject.transaction)
+    end
+
     context "when the parent span has a span_recorder" do
       subject do
         # inherits the span recorder from the transaction
@@ -148,22 +172,6 @@ RSpec.describe Sentry::Span do
 
         expect(span_2.span_recorder).to eq(subject.span_recorder)
         expect(subject.span_recorder.spans.count).to eq(4)
-      end
-    end
-
-    context "when the parent span has a transaction" do
-      before do
-        subject.transaction = Sentry::Transaction.new(hub: Sentry.get_current_hub)
-      end
-
-      it "gives the child span its transaction" do
-        span_1 = subject.start_child
-
-        expect(span_1.transaction).to eq(subject.transaction)
-
-        span_2 = span_1.start_child
-
-        expect(span_2.transaction).to eq(subject.transaction)
       end
     end
   end
