@@ -37,12 +37,16 @@ module Sentry
 
         # TODO-neel ops
         sentry_span.set_op(otel_span.name)
-        current_scope.set_transaction_name(otel_span.name) if sentry_span.is_a?(Sentry::Transaction)
 
-        otel_span.attributes&.each do |key, value|
-          sentry_span.set_data(key, value)
-          if key == "db.statement"
-            sentry_span.set_description(value)
+        if sentry_span.is_a?(Sentry::Transaction)
+          current_scope.set_transaction_name(otel_span.name)
+          current_scope.set_context(:otel, otel_context_hash(otel_span))
+        else
+          otel_span.attributes&.each do |key, value|
+            sentry_span.set_data(key, value)
+            if key == "db.statement"
+              sentry_span.set_description(value)
+            end
           end
         end
 
@@ -65,6 +69,34 @@ module Sentry
       # TODO-neel what to do about this
       def from_sentry_sdk?(otel_span)
         caller.any? { |line| line =~ /lib[\\\/]sentry[\\\/]background_worker.rb/ }
+      end
+
+      def otel_context_hash(otel_span)
+        otel_context = {}
+        otel_context[:attributes] = otel_span.attributes unless otel_span.attributes.empty?
+
+        resource_attributes = otel_span.resource.attribute_enumerator.to_h
+
+        service = {}
+        service[:name] = resource_attributes.delete("service.name")
+        service[:namespace] = resource_attributes.delete("service.namespace")
+        service[:instance_id] = resource_attributes.delete("service.instance.id")
+        service[:version] = resource_attributes.delete("service.version")
+        service.compact!
+
+        otel_context[:service] = service unless service.empty?
+
+        otel_sdk = {}
+        otel_sdk[:name] = resource_attributes.delete("telemetry.sdk.name")
+        otel_sdk[:language] = resource_attributes.delete("telemetry.sdk.language")
+        otel_sdk[:version] = resource_attributes.delete("telemetry.sdk.version")
+        otel_sdk[:auto_version] = resource_attributes.delete("telemetry.auto.version")
+        otel_sdk.compact!
+
+        otel_context[:otel_sdk] = otel_sdk unless otel_sdk.empty?
+
+        # remaining resource_attributes just go to the main hash
+        otel_context.merge!(resource_attributes)
       end
     end
   end
