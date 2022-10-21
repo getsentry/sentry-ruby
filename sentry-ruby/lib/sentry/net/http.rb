@@ -26,14 +26,20 @@ module Sentry
       #
       # So we're only instrumenting request when `Net::HTTP` is already started
       def request(req, body = nil, &block)
-        return super unless started?
+        return super unless started? && Sentry.initialized?
+        return super if from_sentry_sdk?
 
-        sentry_span = start_sentry_span
-        set_sentry_trace_header(req, sentry_span)
+        Sentry.with_child_span(op: OP_NAME, start_timestamp: Sentry.utc_now.to_f) do |sentry_span|
+          super.tap do |res|
+            record_sentry_breadcrumb(req, res)
+            set_sentry_trace_header(req, sentry_span)
 
-        super.tap do |res|
-          record_sentry_breadcrumb(req, res)
-          record_sentry_span(req, res, sentry_span)
+            if sentry_span
+              request_info = extract_request_info(req)
+              sentry_span.set_description("#{request_info[:method]} #{request_info[:url]}")
+              sentry_span.set_data(:status, res.code.to_i)
+            end
+          end
         end
       end
 
@@ -57,7 +63,6 @@ module Sentry
 
       def record_sentry_breadcrumb(req, res)
         return unless Sentry.initialized? && Sentry.configuration.breadcrumbs_logger.include?(:http_logger)
-        return if from_sentry_sdk?
 
         request_info = extract_request_info(req)
 
@@ -71,31 +76,6 @@ module Sentry
           }
         )
         Sentry.add_breadcrumb(crumb)
-      end
-
-      def record_sentry_span(req, res, sentry_span)
-        return unless Sentry.initialized? && sentry_span
-
-        request_info = extract_request_info(req)
-        sentry_span.set_description("#{request_info[:method]} #{request_info[:url]}")
-        sentry_span.set_data(:status, res.code.to_i)
-        finish_sentry_span(sentry_span)
-      end
-
-      def start_sentry_span
-        return unless Sentry.initialized?
-        return if from_sentry_sdk?
-
-        span = Sentry.get_current_scope.get_span
-        return unless span&.sampled
-
-        span.start_child(op: OP_NAME, start_timestamp: Sentry.utc_now.to_f)
-      end
-
-      def finish_sentry_span(sentry_span)
-        return unless Sentry.initialized? && sentry_span
-
-        sentry_span.set_timestamp(Sentry.utc_now.to_f)
       end
 
       def from_sentry_sdk?

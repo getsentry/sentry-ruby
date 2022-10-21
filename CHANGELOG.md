@@ -11,12 +11,16 @@
     config.rails.assets_regexp = /my_regexp/
   end
   ```
+- Use `Sentry.with_child_span` in redis and net/http instead of `span.start_child` [#1920](https://github.com/getsentry/sentry-ruby/pull/1920)
+  - This might change the nesting of some spans and make it more accurate
 
 ### Bug Fixes
 
 - `Sentry::BackgroundWorker` will release `ActiveRecord` connection pool only when the `ActiveRecord` connection is established
 -  Remove bad encoding arguments in redis span descriptions [#1914](https://github.com/getsentry/sentry-ruby/pull/1914)
   - Fixes [#1911](https://github.com/getsentry/sentry-ruby/issues/1911)
+- Add missing `initialized?` checks to `sentry-rails` [#1919](https://github.com/getsentry/sentry-ruby/pull/1919)
+  - Fixes [#1885](https://github.com/getsentry/sentry-ruby/issues/1885)
 
 ## 5.5.0
 

@@ -67,7 +67,7 @@ module Sentry
       end
 
       def self.get_current_transaction
-        Sentry.get_current_scope.get_transaction
+        Sentry.get_current_scope.get_transaction if Sentry.initialized?
       end
 
       # it's just a container for the extended method
