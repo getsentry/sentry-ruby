@@ -20,6 +20,10 @@
 -  Remove bad encoding arguments in redis span descriptions [#1914](https://github.com/getsentry/sentry-ruby/pull/1914)
   - Fixes [#1911](https://github.com/getsentry/sentry-ruby/issues/1911)
 
+### Refactoring
+
+- Make transaction a required argument of Span [#1921](https://github.com/getsentry/sentry-ruby/pull/1921)
+
 ## 5.5.0
 
 ### Features
