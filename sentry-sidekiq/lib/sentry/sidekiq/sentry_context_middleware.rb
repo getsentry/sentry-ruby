@@ -3,6 +3,8 @@ require 'sentry/sidekiq/context_filter'
 module Sentry
   module Sidekiq
     class SentryContextServerMiddleware
+      OP_NAME = "queue.sidekiq".freeze
+
       def call(_worker, job, queue)
         return yield unless Sentry.initialized?
 
@@ -38,7 +40,7 @@ module Sentry
       end
 
       def start_transaction(scope, sentry_trace)
-        options = { name: scope.transaction_name, source: scope.transaction_source, op: "sidekiq" }
+        options = { name: scope.transaction_name, source: scope.transaction_source, op: OP_NAME }
         transaction = Sentry::Transaction.from_sentry_trace(sentry_trace, **options) if sentry_trace
         Sentry.start_transaction(transaction: transaction, **options)
       end
