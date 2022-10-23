@@ -7,6 +7,7 @@ module Sentry
       # need to symbolize strings as keyword arguments in Ruby 2.4~2.6
       DELAYED_JOB_CONTEXT_KEY = :"Delayed-Job"
       ACTIVE_JOB_CONTEXT_KEY = :"Active-Job"
+      OP_NAME = "queue.delayed_job".freeze
 
       callbacks do |lifecycle|
         lifecycle.around(:invoke_job) do |job, *args, &block|
@@ -19,7 +20,7 @@ module Sentry
             scope.set_contexts(**contexts)
             scope.set_tags("delayed_job.queue" => job.queue, "delayed_job.id" => job.id.to_s)
 
-            transaction = Sentry.start_transaction(name: scope.transaction_name, source: scope.transaction_source, op: "delayed_job")
+            transaction = Sentry.start_transaction(name: scope.transaction_name, source: scope.transaction_source, op: OP_NAME)
             scope.set_span(transaction) if transaction
 
             begin
@@ -86,7 +87,7 @@ module Sentry
 
       def self.finish_transaction(transaction, status)
         return unless transaction
-  
+
         transaction.set_http_status(status)
         transaction.finish
       end
