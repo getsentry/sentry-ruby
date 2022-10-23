@@ -3,7 +3,7 @@
 module Sentry
   # @api private
   class Redis
-    OP_NAME = "db.redis.command"
+    OP_NAME = "db.redis"
     LOGGER_NAME = :redis_logger
 
     def initialize(commands, host, port, db)
