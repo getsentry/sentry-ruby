@@ -224,8 +224,8 @@ RSpec.describe Sentry::Event do
       end
 
       it "returns the exception's message" do
-        expect(described_class.get_log_message(subject.to_hash)).to eq("Exception: error!")
-        expect(described_class.get_log_message(subject.to_json_compatible)).to eq("Exception: error!")
+        expect(described_class.get_log_message(subject.to_hash)).to include("Exception: error!")
+        expect(described_class.get_log_message(subject.to_json_compatible)).to match("Exception: error!")
       end
     end
     context "with message event" do
