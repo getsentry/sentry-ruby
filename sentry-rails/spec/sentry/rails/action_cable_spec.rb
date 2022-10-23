@@ -177,7 +177,7 @@ if defined?(ActionCable) && ActionCable.version >= Gem::Version.new('6.0.0')
           )
           expect(transaction["contexts"]).to include(
             "trace" => hash_including(
-              "op" => "rails.action_cable",
+              "op" => "websocket.server",
               "status" => "internal_error"
             )
           )
@@ -203,7 +203,7 @@ if defined?(ActionCable) && ActionCable.version >= Gem::Version.new('6.0.0')
           )
           expect(subscription_transaction["contexts"]).to include(
             "trace" => hash_including(
-              "op" => "rails.action_cable",
+              "op" => "websocket.server",
               "status" => "ok"
             )
           )
@@ -232,7 +232,7 @@ if defined?(ActionCable) && ActionCable.version >= Gem::Version.new('6.0.0')
           )
           expect(action_transaction["contexts"]).to include(
             "trace" => hash_including(
-              "op" => "rails.action_cable",
+              "op" => "websocket.server",
               "status" => "internal_error"
             )
           )
@@ -254,7 +254,7 @@ if defined?(ActionCable) && ActionCable.version >= Gem::Version.new('6.0.0')
           )
           expect(subscription_transaction["contexts"]).to include(
             "trace" => hash_including(
-              "op" => "rails.action_cable",
+              "op" => "websocket.server",
               "status" => "ok"
             )
           )
@@ -281,7 +281,7 @@ if defined?(ActionCable) && ActionCable.version >= Gem::Version.new('6.0.0')
           )
           expect(transaction["contexts"]).to include(
             "trace" => hash_including(
-              "op" => "rails.action_cable",
+              "op" => "websocket.server",
               "status" => "internal_error"
             )
           )
