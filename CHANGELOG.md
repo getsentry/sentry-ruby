@@ -24,6 +24,10 @@
 - Add missing `initialized?` checks to `sentry-rails` [#1919](https://github.com/getsentry/sentry-ruby/pull/1919)
   - Fixes [#1885](https://github.com/getsentry/sentry-ruby/issues/1885)
 
+### Refactoring
+
+- Make transaction a required argument of Span [#1921](https://github.com/getsentry/sentry-ruby/pull/1921)
+
 ## 5.5.0
 
 ### Features
