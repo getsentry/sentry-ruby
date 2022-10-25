@@ -46,7 +46,7 @@ RSpec.describe Sentry::Sidekiq do
 
     event = transport.events.last.to_hash
     expect(event[:sdk]).to eq({ name: "sentry.ruby.sidekiq", version: described_class::VERSION })
-    expect(Sentry::Event.get_message_from_exception(event)).to eq("RuntimeError: I'm sad!")
+    expect(Sentry::Event.get_message_from_exception(event)).to match("RuntimeError: I'm sad!")
   end
 
   describe "context cleanup" do

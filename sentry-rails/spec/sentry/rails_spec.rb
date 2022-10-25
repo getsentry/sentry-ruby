@@ -103,7 +103,7 @@ RSpec.describe Sentry::Rails, type: :request do
         expect(response.status).to eq(500)
 
         expect(event["exception"]["values"][0]["type"]).to eq("RuntimeError")
-        expect(event["exception"]["values"][0]["value"]).to eq("An unhandled exception!")
+        expect(event["exception"]["values"][0]["value"]).to match("An unhandled exception!")
       end
     end
 
@@ -159,7 +159,7 @@ RSpec.describe Sentry::Rails, type: :request do
       expect(response.status).to eq(500)
 
       expect(event["exception"]["values"][0]["type"]).to eq("RuntimeError")
-      expect(event["exception"]["values"][0]["value"]).to eq("An unhandled exception!")
+      expect(event["exception"]["values"][0]["value"]).to match("An unhandled exception!")
       expect(event["sdk"]).to eq("name" => "sentry.ruby.rails", "version" => Sentry::Rails::VERSION)
     end
 
