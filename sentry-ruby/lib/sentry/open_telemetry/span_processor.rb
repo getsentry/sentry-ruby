@@ -5,6 +5,13 @@ module Sentry
       ATTRIBUTE_NET_PEER_NAME = "net.peer.name"
       ATTRIBUTE_DB_STATEMENT = "db.statement"
 
+      # https://github.com/open-telemetry/opentelemetry-ruby/blob/18bfd391f2bda2c958d5d6935886c8cba61414dd/api/lib/opentelemetry/trace.rb#L18-L22
+      # An invalid trace identifier, a 16-byte string with all zero bytes.
+      INVALID_TRACE_ID = ("\0" * 16).b
+
+      # An invalid span identifier, an 8-byte string with all zero bytes.
+      INVALID_SPAN_ID = ("\0" * 8).b
+
       def initialize
         @otel_span_map = {}
       end
@@ -13,30 +20,40 @@ module Sentry
         return unless Sentry.initialized? && Sentry.configuration.instrumenter == :otel
         return if from_sentry_sdk?(otel_span)
 
+        span_id, trace_id, parent_span_id = get_trace_data(otel_span)
+
         scope = Sentry.get_current_scope
         parent_sentry_span = scope.get_span
 
         sentry_span = if parent_sentry_span
           Sentry.configuration.logger.info("Continuing otel span #{otel_span.name} on parent #{parent_sentry_span.name}")
-          parent_sentry_span.start_child(description: otel_span.name)
+
+          parent_sentry_span.start_child(span_id: span_id, description: otel_span.name)
         else
-          options = { name: otel_span.name }
+          options = {
+            span_id: span_id,
+            trace_id: trace_id,
+            parent_span_id: parent_span_id,
+            name: otel_span.name
+          }
+
           sentry_trace = scope.sentry_trace
           baggage = scope.baggage
-          transaction = Sentry::Transaction.from_sentry_trace(sentry_trace, baggage: baggage, **options) if sentry_trace
+
           Sentry.configuration.logger.info("Starting otel transaction #{otel_span.name}")
+          transaction = Sentry::Transaction.from_sentry_trace(sentry_trace, baggage: baggage, **options) if sentry_trace
           Sentry.start_transaction(transaction: transaction, instrumenter: :otel, **options)
         end
 
         scope.set_span(sentry_span)
-        @otel_span_map[otel_span.context.span_id] = [sentry_span, parent_sentry_span]
+        @otel_span_map[span_id] = [sentry_span, parent_sentry_span]
       end
 
       def on_finish(otel_span)
         return unless Sentry.initialized? && Sentry.configuration.instrumenter == :otel
 
         current_scope = Sentry.get_current_scope
-        sentry_span, parent_span = @otel_span_map.delete(otel_span.context.span_id)
+        sentry_span, parent_span = @otel_span_map.delete(otel_span.context.hex_span_id)
         return unless sentry_span
 
         # TODO-neel ops
@@ -87,6 +104,14 @@ module Sentry
         end
 
         false
+      end
+
+      def get_trace_data(otel_span)
+        span_id = otel_span.context.hex_span_id
+        trace_id = otel_span.context.hex_trace_id unless otel_span.context.trace_id == INVALID_TRACE_ID
+        parent_span_id = otel_span.parent_span_id.unpack1("H*") unless otel_span.parent_span_id == INVALID_SPAN_ID
+
+        [span_id, trace_id, parent_span_id]
       end
 
       def otel_context_hash(otel_span)
