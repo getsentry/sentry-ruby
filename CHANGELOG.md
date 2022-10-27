@@ -13,6 +13,7 @@
   ```
 - Use `Sentry.with_child_span` in redis and net/http instead of `span.start_child` [#1920](https://github.com/getsentry/sentry-ruby/pull/1920)
   - This might change the nesting of some spans and make it more accurate
+- Add OpenTelemetry `SpanProcessor` TODO-neel expand [#1876](https://github.com/getsentry/sentry-ruby/pull/1876)
 
 ### Bug Fixes
 
