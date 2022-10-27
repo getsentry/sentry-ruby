@@ -34,7 +34,7 @@ RSpec.describe Sentry::Sidekiq::ErrorHandler do
     processor.fire_event(:startup)
 
     event = transport.events.last.to_hash
-    expect(Sentry::Event.get_message_from_exception(event)).to eq("RuntimeError: Uhoh!")
+    expect(Sentry::Event.get_message_from_exception(event)).to match("RuntimeError: Uhoh!")
     expect(event[:transaction]).to eq "Sidekiq/startup"
   end
 

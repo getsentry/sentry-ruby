@@ -111,18 +111,13 @@ RSpec.describe Sentry::Scope do
   end
 
   describe "#clear" do
-    subject do
-      scope = described_class.new
-      scope.set_tags({foo: "bar"})
-      scope.set_extras({additional_info: "hello"})
-      scope.set_user({id: 1})
-      scope.set_transaction_name("WelcomeController#index")
-      scope.set_span(Sentry::Span.new)
-      scope.set_fingerprint(["foo"])
-      scope
-    end
-
     it "resets the scope's data" do
+      subject.set_tags({foo: "bar"})
+      subject.set_extras({additional_info: "hello"})
+      subject.set_user({id: 1})
+      subject.set_transaction_name("WelcomeController#index")
+      subject.set_span(Sentry::Transaction.new(op: "foo", hub: hub))
+      subject.set_fingerprint(["foo"])
       scope_id = subject.object_id
 
       subject.clear
@@ -241,12 +236,12 @@ RSpec.describe Sentry::Scope do
     end
 
     it "sets trace context if there's a span" do
-      span = Sentry::Span.new(op: "foo")
-      subject.set_span(span)
+      transaction = Sentry::Transaction.new(op: "foo", hub: hub)
+      subject.set_span(transaction)
 
       subject.apply_to_event(event)
 
-      expect(event.contexts[:trace]).to eq(span.get_trace_context)
+      expect(event.contexts[:trace]).to eq(transaction.get_trace_context)
       expect(event.contexts.dig(:trace, :op)).to eq("foo")
     end
 

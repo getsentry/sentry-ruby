@@ -17,6 +17,15 @@ RSpec.describe Sentry::Client do
   end
   subject { Sentry::Client.new(configuration) }
 
+  let(:transaction) do
+    hub = Sentry::Hub.new(subject, Sentry::Scope.new)
+    Sentry::Transaction.new(
+      name: "test transaction",
+      hub: hub,
+      sampled: true
+    )
+  end
+
   let(:fake_time) { Time.now }
 
   before do
@@ -161,7 +170,33 @@ RSpec.describe Sentry::Client do
 
     it "sets the message to the exception's value and type" do
       expect(hash[:exception][:values][0][:type]).to eq("Exception")
-      expect(hash[:exception][:values][0][:value]).to eq(message)
+      expect(hash[:exception][:values][0][:value]).to match(message)
+    end
+
+    context "with special error messages" do
+      let(:exception) do
+        begin
+          {}[:foo][:bar]
+        rescue => e
+          e
+        end
+      end
+
+      it "sets correct exception message based on Ruby version" do
+        version = Gem::Version.new(RUBY_VERSION)
+
+        if version >= Gem::Version.new("3.2.0-dev")
+          expect(hash[:exception][:values][0][:value]).to eq(
+            "undefined method `[]' for nil:NilClass (NoMethodError)\n\n          {}[:foo][:bar]\n                  ^^^^^^"
+          )
+        elsif version >= Gem::Version.new("3.1")
+          expect(hash[:exception][:values][0][:value]).to eq(
+            "undefined method `[]' for nil:NilClass\n\n          {}[:foo][:bar]\n                  ^^^^^^"
+          )
+        else
+          expect(hash[:exception][:values][0][:value]).to eq("undefined method `[]' for nil:NilClass")
+        end
+      end
     end
 
     it "sets threads interface without stacktrace" do
@@ -195,7 +230,7 @@ RSpec.describe Sentry::Client do
     it 'returns an event' do
       event = subject.event_from_exception(ZeroDivisionError.new("divided by 0"))
       expect(event).to be_a(Sentry::ErrorEvent)
-      expect(Sentry::Event.get_message_from_exception(event.to_hash)).to eq("ZeroDivisionError: divided by 0")
+      expect(Sentry::Event.get_message_from_exception(event.to_hash)).to match("ZeroDivisionError: divided by 0")
     end
 
     context 'for a nested exception type' do
@@ -406,7 +441,7 @@ RSpec.describe Sentry::Client do
       configuration.logger = logger
     end
 
-    let(:span) { Sentry::Span.new }
+    let(:span) { Sentry::Span.new(transaction: transaction) }
 
     it "generates the trace with given span and logs correct message" do
       expect(subject.generate_sentry_trace(span)).to eq(span.to_sentry_trace)

@@ -60,9 +60,10 @@ module Sentry
     # The Transaction object the Span belongs to.
     # Every span needs to be attached to a Transaction and their child spans will also inherit the same transaction.
     # @return [Transaction]
-    attr_accessor :transaction
+    attr_reader :transaction
 
     def initialize(
+      transaction:,
       description: nil,
       op: nil,
       status: nil,
@@ -80,6 +81,7 @@ module Sentry
       @start_timestamp = start_timestamp || Sentry.utc_now.to_f
       @timestamp = timestamp
       @description = description
+      @transaction = transaction
       @op = op
       @status = status
       @data = {}
@@ -106,10 +108,10 @@ module Sentry
     end
 
     # Generates a W3C Baggage header string for distributed tracing
-    # from the incoming baggage stored on the transation.
+    # from the incoming baggage stored on the transaction.
     # @return [String, nil]
     def to_baggage
-      transaction&.get_baggage&.serialize
+      transaction.get_baggage&.serialize
     end
 
     # @return [Hash]
@@ -144,9 +146,8 @@ module Sentry
     # Starts a child span with given attributes.
     # @param attributes [Hash] the attributes for the child span.
     def start_child(**attributes)
-      attributes = attributes.dup.merge(trace_id: @trace_id, parent_span_id: @span_id, sampled: @sampled)
+      attributes = attributes.dup.merge(transaction: @transaction, trace_id: @trace_id, parent_span_id: @span_id, sampled: @sampled)
       new_span = Span.new(**attributes)
-      new_span.transaction = transaction
       new_span.span_recorder = span_recorder
 
       if span_recorder

@@ -30,9 +30,10 @@ module Sentry
         return super if from_sentry_sdk?
 
         Sentry.with_child_span(op: OP_NAME, start_timestamp: Sentry.utc_now.to_f) do |sentry_span|
+          set_sentry_trace_header(req, sentry_span)
+
           super.tap do |res|
             record_sentry_breadcrumb(req, res)
-            set_sentry_trace_header(req, sentry_span)
 
             if sentry_span
               request_info = extract_request_info(req)

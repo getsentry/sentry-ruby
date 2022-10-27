@@ -13,6 +13,9 @@
   ```
 - Use `Sentry.with_child_span` in redis and net/http instead of `span.start_child` [#1920](https://github.com/getsentry/sentry-ruby/pull/1920)
   - This might change the nesting of some spans and make it more accurate
+  - Followup fix to set the sentry-trace header in the correct place [#1922](https://github.com/getsentry/sentry-ruby/pull/1922)
+
+- Use `Exception#detailed_message` when generating exception message if applicable [#1924](https://github.com/getsentry/sentry-ruby/pull/1924)
 - Add OpenTelemetry `SpanProcessor` TODO-neel expand [#1876](https://github.com/getsentry/sentry-ruby/pull/1876)
 
 ### Bug Fixes
@@ -22,6 +25,10 @@
   - Fixes [#1911](https://github.com/getsentry/sentry-ruby/issues/1911)
 - Add missing `initialized?` checks to `sentry-rails` [#1919](https://github.com/getsentry/sentry-ruby/pull/1919)
   - Fixes [#1885](https://github.com/getsentry/sentry-ruby/issues/1885)
+
+### Refactoring
+
+- Make transaction a required argument of Span [#1921](https://github.com/getsentry/sentry-ruby/pull/1921)
 
 ## 5.5.0
 
