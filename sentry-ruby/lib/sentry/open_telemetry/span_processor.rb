@@ -21,6 +21,7 @@ module Sentry
         return if from_sentry_sdk?(otel_span)
 
         span_id, trace_id, parent_span_id = get_trace_data(otel_span)
+        return unless span_id
 
         scope = Sentry.get_current_scope
         parent_sentry_span = scope.get_span
@@ -30,18 +31,22 @@ module Sentry
 
           parent_sentry_span.start_child(span_id: span_id, description: otel_span.name)
         else
-          options = {
+          continue_options = {
             span_id: span_id,
+            name: otel_span.name
+          }
+
+          options = {
             trace_id: trace_id,
             parent_span_id: parent_span_id,
-            name: otel_span.name
+            **continue_options
           }
 
           sentry_trace = scope.sentry_trace
           baggage = scope.baggage
 
           Sentry.configuration.logger.info("Starting otel transaction #{otel_span.name}")
-          transaction = Sentry::Transaction.from_sentry_trace(sentry_trace, baggage: baggage, **options) if sentry_trace
+          transaction = Sentry::Transaction.from_sentry_trace(sentry_trace, baggage: baggage, **continue_options) if sentry_trace
           Sentry.start_transaction(transaction: transaction, instrumenter: :otel, **options)
         end
 
@@ -52,9 +57,13 @@ module Sentry
       def on_finish(otel_span)
         return unless Sentry.initialized? && Sentry.configuration.instrumenter == :otel
 
-        current_scope = Sentry.get_current_scope
-        sentry_span, parent_span = @otel_span_map.delete(otel_span.context.hex_span_id)
+        span_id = otel_span.context.hex_span_id unless otel_span.context.span_id == INVALID_SPAN_ID
+        return unless span_id
+
+        sentry_span, parent_span = @otel_span_map.delete(span_id)
         return unless sentry_span
+
+        current_scope = Sentry.get_current_scope
 
         # TODO-neel ops
         sentry_span.set_op(otel_span.name)
@@ -107,7 +116,7 @@ module Sentry
       end
 
       def get_trace_data(otel_span)
-        span_id = otel_span.context.hex_span_id
+        span_id = otel_span.context.hex_span_id unless otel_span.context.span_id == INVALID_SPAN_ID
         trace_id = otel_span.context.hex_trace_id unless otel_span.context.trace_id == INVALID_TRACE_ID
         parent_span_id = otel_span.parent_span_id.unpack1("H*") unless otel_span.parent_span_id == INVALID_SPAN_ID
 
