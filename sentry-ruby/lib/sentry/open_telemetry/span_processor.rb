@@ -29,11 +29,16 @@ module Sentry
         sentry_span = if parent_sentry_span
           Sentry.configuration.logger.info("Continuing otel span #{otel_span.name} on parent #{parent_sentry_span.name}")
 
-          parent_sentry_span.start_child(span_id: span_id, description: otel_span.name)
+          parent_sentry_span.start_child(
+            span_id: span_id,
+            description: otel_span.name,
+            start_timestamp: otel_span.start_timestamp / 1e9
+          )
         else
           continue_options = {
             span_id: span_id,
-            name: otel_span.name
+            name: otel_span.name,
+            start_timestamp: otel_span.start_timestamp / 1e9
           }
 
           options = {
@@ -81,7 +86,7 @@ module Sentry
         end
 
         Sentry.configuration.logger.info("Finishing sentry_span #{sentry_span.op}")
-        sentry_span.finish
+        sentry_span.finish(end_timestamp: otel_span.end_timestamp / 1e9)
         current_scope.set_span(parent_span) if parent_span
       end
 
