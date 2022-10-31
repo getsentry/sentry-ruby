@@ -8,6 +8,7 @@ module Sentry
         extend InstrumentPayloadCleanupHelper
 
         EVENT_NAMES = ["process_action.action_controller"].freeze
+        OP_NAME = "view.process_action.action_controller".freeze
 
         def self.subscribe!
           subscribe_to_event(EVENT_NAMES) do |event_name, duration, payload|
@@ -15,7 +16,7 @@ module Sentry
             action = payload[:action]
 
             record_on_current_span(
-              op: event_name,
+              op: OP_NAME,
               start_timestamp: payload[START_TIMESTAMP_NAME],
               description: "#{controller}##{action}",
               duration: duration

@@ -2,6 +2,8 @@ module Sentry
   module Rails
     module ActionCableExtensions
       class ErrorHandler
+        OP_NAME = "websocket.server".freeze
+
         class << self
           def capture(connection, transaction_name:, extra_context: nil, &block)
             return block.call unless Sentry.initialized?
@@ -33,7 +35,7 @@ module Sentry
             sentry_trace = env["HTTP_SENTRY_TRACE"]
             baggage = env["HTTP_BAGGAGE"]
 
-            options = { name: scope.transaction_name, source: scope.transaction_source, op: "rails.action_cable".freeze }
+            options = { name: scope.transaction_name, source: scope.transaction_source, op: OP_NAME }
             transaction = Sentry::Transaction.from_sentry_trace(sentry_trace, baggage: baggage, **options) if sentry_trace
             Sentry.start_transaction(transaction: transaction, **options)
           end

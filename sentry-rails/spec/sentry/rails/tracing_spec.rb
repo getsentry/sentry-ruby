@@ -31,7 +31,7 @@ RSpec.describe Sentry::Rails::Tracing, type: :request do
       expect(event.dig(:contexts, :trace, :trace_id)).to eq(transaction.dig(:contexts, :trace, :trace_id))
 
       expect(transaction[:type]).to eq("transaction")
-      expect(transaction.dig(:contexts, :trace, :op)).to eq("rails.request")
+      expect(transaction.dig(:contexts, :trace, :op)).to eq("http.server")
       parent_span_id = transaction.dig(:contexts, :trace, :span_id)
       expect(transaction[:spans].count).to eq(2)
 
@@ -44,7 +44,7 @@ RSpec.describe Sentry::Rails::Tracing, type: :request do
       expect(first_span[:timestamp] - first_span[:start_timestamp]).to be_between(10.0 / 1_000_000, 10.0 / 1000)
 
       second_span = transaction[:spans][1]
-      expect(second_span[:op]).to eq("process_action.action_controller")
+      expect(second_span[:op]).to eq("view.process_action.action_controller")
       expect(second_span[:description]).to eq("PostsController#index")
       expect(second_span[:parent_span_id]).to eq(parent_span_id)
     end
@@ -60,7 +60,7 @@ RSpec.describe Sentry::Rails::Tracing, type: :request do
       transaction = transport.events.last.to_hash
 
       expect(transaction[:type]).to eq("transaction")
-      expect(transaction.dig(:contexts, :trace, :op)).to eq("rails.request")
+      expect(transaction.dig(:contexts, :trace, :op)).to eq("http.server")
       parent_span_id = transaction.dig(:contexts, :trace, :span_id)
       expect(transaction[:spans].count).to eq(3)
 
@@ -78,7 +78,7 @@ RSpec.describe Sentry::Rails::Tracing, type: :request do
       expect(last_span[:data][:payload].keys).not_to include(:headers)
       expect(last_span[:data][:payload].keys).not_to include(:request)
       expect(last_span[:data][:payload].keys).not_to include(:response)
-      expect(last_span[:op]).to eq("process_action.action_controller")
+      expect(last_span[:op]).to eq("view.process_action.action_controller")
       expect(last_span[:description]).to eq("PostsController#show")
       expect(last_span[:parent_span_id]).to eq(parent_span_id)
     end
@@ -214,7 +214,7 @@ RSpec.describe Sentry::Rails::Tracing, type: :request do
         expect(transaction.type).to eq("transaction")
         expect(transaction.timestamp).not_to be_nil
         expect(transaction.contexts.dig(:trace, :status)).to eq("ok")
-        expect(transaction.contexts.dig(:trace, :op)).to eq("rails.request")
+        expect(transaction.contexts.dig(:trace, :op)).to eq("http.server")
         expect(transaction.spans.count).to eq(3)
 
         # should inherit information from the external_transaction

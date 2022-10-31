@@ -52,7 +52,7 @@ module Sentry
       end
 
       def transaction_op
-        "rack.request".freeze
+        "http.server".freeze
       end
 
       def capture_exception(exception, env)
