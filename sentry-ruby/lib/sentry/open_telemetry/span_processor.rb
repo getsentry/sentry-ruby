@@ -2,6 +2,9 @@ module Sentry
   module OpenTelemetry
     class SpanProcessor
 
+      ATTRIBUTE_HTTP_METHOD = "http.method"
+      ATTRIBUTE_HTTP_TARGET = "http.target"
+      ATTRIBUTE_HTTP_STATUS_CODE = "http.status_code"
       ATTRIBUTE_NET_PEER_NAME = "net.peer.name"
       ATTRIBUTE_DB_STATEMENT = "db.statement"
 
@@ -70,19 +73,13 @@ module Sentry
 
         current_scope = Sentry.get_current_scope
 
-        # TODO-neel ops
         sentry_span.set_op(otel_span.name)
 
         if sentry_span.is_a?(Sentry::Transaction)
           current_scope.set_transaction_name(otel_span.name)
           current_scope.set_context(:otel, otel_context_hash(otel_span))
         else
-          otel_span.attributes&.each do |key, value|
-            sentry_span.set_data(key, value)
-            if key == ATTRIBUTE_DB_STATEMENT
-              sentry_span.set_description(value)
-            end
-          end
+          update_span_with_otel_data(sentry_span, otel_span)
         end
 
         Sentry.configuration.logger.info("Finishing sentry_span #{sentry_span.op}")
@@ -136,6 +133,33 @@ module Sentry
         otel_context[:resource] = resource_attributes unless resource_attributes.empty?
 
         otel_context
+      end
+
+      def update_span_with_otel_data(sentry_span, otel_span)
+        otel_span.attributes&.each { |k, v| sentry_span.set_data(k, v) }
+
+        op = otel_span.name
+        description = otel_span.name
+
+        if (http_method = otel_span.attributes[ATTRIBUTE_HTTP_METHOD])
+          op = "http.#{otel_span.kind}"
+          description = http_method
+
+          peer_name = otel_span.attributes[ATTRIBUTE_NET_PEER_NAME]
+          description += " #{peer_name}" if peer_name
+
+          target = otel_span.attributes[ATTRIBUTE_HTTP_TARGET]
+          description += target if target
+
+          status_code = otel_span.attributes[ATTRIBUTE_HTTP_STATUS_CODE]
+          sentry_span.set_http_status(status_code) if status_code
+        end
+
+        # if key == ATTRIBUTE_DB_STATEMENT
+        #   sentry_span.set_description(value)
+        # end
+        sentry_span.set_op(op)
+        sentry_span.set_description(description)
       end
     end
   end
