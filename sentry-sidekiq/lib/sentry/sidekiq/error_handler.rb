@@ -3,6 +3,8 @@ require 'sentry/sidekiq/context_filter'
 module Sentry
   module Sidekiq
     class ErrorHandler
+      WITH_SIDEKIQ_7 = ::Gem::Version.new(::Sidekiq::VERSION) >= ::Gem::Version.new("7.0")
+
       def call(ex, context)
         return unless Sentry.initialized?
 
@@ -40,7 +42,13 @@ module Sentry
         when Integer
           limit
         when TrueClass
-          ::Sidekiq.options[:max_retries] || 25
+          max_retries =
+            if WITH_SIDEKIQ_7
+              ::Sidekiq.default_configuration[:max_retries]
+            else
+              ::Sidekiq.options[:max_retries]
+            end
+          max_retries || 25
         else
           0
         end
