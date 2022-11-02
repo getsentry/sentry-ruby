@@ -12,7 +12,7 @@ if rails_version.to_f != 0
 end
 
 gem "delayed_job"
-gem "sidekiq"
+gem "sidekiq", "< 7.0"
 
 gem "rack", "< 3.0"
 gem "rack-timeout"
