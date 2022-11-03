@@ -6,6 +6,7 @@ module Sentry
       ATTRIBUTE_HTTP_TARGET = "http.target"
       ATTRIBUTE_HTTP_STATUS_CODE = "http.status_code"
       ATTRIBUTE_NET_PEER_NAME = "net.peer.name"
+      ATTRIBUTE_DB_SYSTEM = "db.system"
       ATTRIBUTE_DB_STATEMENT = "db.statement"
 
       # https://github.com/open-telemetry/opentelemetry-ruby/blob/18bfd391f2bda2c958d5d6935886c8cba61414dd/api/lib/opentelemetry/trace.rb#L18-L22
@@ -30,7 +31,7 @@ module Sentry
         parent_sentry_span = scope.get_span
 
         sentry_span = if parent_sentry_span
-          Sentry.configuration.logger.info("Continuing otel span #{otel_span.name} on parent #{parent_sentry_span.name}")
+          Sentry.configuration.logger.info("Continuing otel span #{otel_span.name} on parent #{parent_sentry_span.op}")
 
           parent_sentry_span.start_child(
             span_id: span_id,
@@ -153,11 +154,13 @@ module Sentry
 
           status_code = otel_span.attributes[ATTRIBUTE_HTTP_STATUS_CODE]
           sentry_span.set_http_status(status_code) if status_code
+        elsif otel_span.attributes[ATTRIBUTE_DB_SYSTEM]
+          op = "db"
+
+          statement = otel_span.attributes[ATTRIBUTE_DB_STATEMENT]
+          description = statement if statement
         end
 
-        # if key == ATTRIBUTE_DB_STATEMENT
-        #   sentry_span.set_description(value)
-        # end
         sentry_span.set_op(op)
         sentry_span.set_description(description)
       end
