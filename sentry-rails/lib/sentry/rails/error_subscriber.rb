@@ -14,6 +14,8 @@ module Sentry
           tags[:source] = source
         end
 
+        tags.merge!(context.delete(:tags)) if context[:tags].is_a?(Hash)
+
         Sentry::Rails.capture_exception(error, level: severity, contexts: { "rails.error" => context }, tags: tags)
       end
     end
