@@ -25,6 +25,10 @@
   - Fixes [#1911](https://github.com/getsentry/sentry-ruby/issues/1911)
 - Add missing `initialized?` checks to `sentry-rails` [#1919](https://github.com/getsentry/sentry-ruby/pull/1919)
   - Fixes [#1885](https://github.com/getsentry/sentry-ruby/issues/1885)
+- Update Tracing Span's op names [#1923](https://github.com/getsentry/sentry-ruby/pull/1923)
+
+  Currently, Ruby integrations' Span op names aren't aligned with the core specification's convention, so we decided to update them altogether in this PR.
+  **If you rely on Span op names for fine-grained event filtering, this may affect the data your app sends to Sentry.**
 
 ### Refactoring
 

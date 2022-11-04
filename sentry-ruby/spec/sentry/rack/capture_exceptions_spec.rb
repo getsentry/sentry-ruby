@@ -252,7 +252,7 @@ RSpec.describe Sentry::Rack::CaptureExceptions, rack: true do
         expect(transaction.transaction_info).to eq({ source: :url })
         expect(transaction.timestamp).not_to be_nil
         expect(transaction.contexts.dig(:trace, :status)).to eq("ok")
-        expect(transaction.contexts.dig(:trace, :op)).to eq("rack.request")
+        expect(transaction.contexts.dig(:trace, :op)).to eq("http.server")
         expect(transaction.spans.count).to eq(0)
       end
 
@@ -436,7 +436,7 @@ RSpec.describe Sentry::Rack::CaptureExceptions, rack: true do
         expect(transaction.transaction_info).to eq({ source: :url })
         expect(transaction.timestamp).not_to be_nil
         expect(transaction.contexts.dig(:trace, :status)).to eq("ok")
-        expect(transaction.contexts.dig(:trace, :op)).to eq("rack.request")
+        expect(transaction.contexts.dig(:trace, :op)).to eq("http.server")
         expect(transaction.spans.count).to eq(0)
       end
 
@@ -460,7 +460,7 @@ RSpec.describe Sentry::Rack::CaptureExceptions, rack: true do
           expect(transaction.transaction).to eq("/test")
           expect(transaction.transaction_info).to eq({ source: :url })
           expect(transaction.contexts.dig(:trace, :status)).to eq("ok")
-          expect(transaction.contexts.dig(:trace, :op)).to eq("rack.request")
+          expect(transaction.contexts.dig(:trace, :op)).to eq("http.server")
           expect(transaction.spans.count).to eq(2)
 
           first_span = transaction.spans.first
@@ -518,7 +518,7 @@ RSpec.describe Sentry::Rack::CaptureExceptions, rack: true do
         expect(transaction.type).to eq("transaction")
         expect(transaction.timestamp).not_to be_nil
         expect(transaction.contexts.dig(:trace, :status)).to eq("internal_error")
-        expect(transaction.contexts.dig(:trace, :op)).to eq("rack.request")
+        expect(transaction.contexts.dig(:trace, :op)).to eq("http.server")
         expect(transaction.spans.count).to eq(0)
       end
     end
