@@ -4,7 +4,13 @@ require "debug" if RUBY_VERSION.to_f >= 2.6
 
 # this enables sidekiq's server mode
 require "sidekiq/cli"
-# require "support/test_sidekiq_app/app"
+
+WITH_SIDEKIQ_7 = Gem::Version.new(Sidekiq::VERSION) >= Gem::Version.new("7.0")
+WITH_SIDEKIQ_6 = Gem::Version.new(Sidekiq::VERSION) >= Gem::Version.new("6.0") && !WITH_SIDEKIQ_7
+
+if WITH_SIDEKIQ_7
+  require "sidekiq/embedded"
+end
 
 require "sentry-ruby"
 
@@ -47,7 +53,17 @@ RSpec.configure do |config|
   end
 
   config.before :all do
-    Sidekiq.logger = Logger.new(nil)
+    silence_sidekiq
+  end
+end
+
+def silence_sidekiq
+  logger = Logger.new(nil)
+
+  if WITH_SIDEKIQ_7
+    Sidekiq.instance_variable_get(:@config).logger = logger
+  else
+    Sidekiq.logger = logger
   end
 end
 
@@ -142,15 +158,18 @@ class TagsWorker
 end
 
 def new_processor
-  options =
-    if Gem::Version.new(Sidekiq::VERSION) >= Gem::Version.new("6.0")
+  manager =
+    case
+    when WITH_SIDEKIQ_7
+      capsule = Sidekiq.instance_variable_get(:@config).default_capsule
+      Sidekiq::Manager.new(capsule)
+    when WITH_SIDEKIQ_6
       Sidekiq[:queue] = ['default']
-      Sidekiq
+      Sidekiq::Manager.new(Sidekiq)
     else
-      { queues: ['default'] }
+      Sidekiq::Manager.new({ queues: ['default'] })
     end
 
-  manager = Sidekiq::Manager.new(options)
   manager.workers.first
 end
 
