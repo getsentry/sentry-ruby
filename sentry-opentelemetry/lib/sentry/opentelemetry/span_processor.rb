@@ -1,14 +1,12 @@
-require "opentelemetry"
-require "opentelemetry-sdk"
-require "opentelemetry-semantic_conventions"
-
 module Sentry
   module OpenTelemetry
     class SpanProcessor < ::OpenTelemetry::SDK::Trace::SpanProcessor
       SEMANTIC_CONVENTIONS = ::OpenTelemetry::SemanticConventions::Trace
 
+      attr_reader :span_map
+
       def initialize
-        @otel_span_map = {}
+        @span_map = {}
       end
 
       def on_start(otel_span, _parent_context)
@@ -18,6 +16,7 @@ module Sentry
         span_id, trace_id, parent_span_id = get_trace_data(otel_span)
         return unless span_id
 
+        # TODO-neel remove scope
         scope = Sentry.get_current_scope
         parent_sentry_span = scope.get_span
 
@@ -46,12 +45,13 @@ module Sentry
           baggage = scope.baggage
 
           Sentry.configuration.logger.info("Starting otel transaction #{otel_span.name}")
+          # TODO-neel remove this, pass in everything from context to start_transaction
           transaction = Sentry::Transaction.from_sentry_trace(sentry_trace, baggage: baggage, **continue_options) if sentry_trace
           Sentry.start_transaction(transaction: transaction, instrumenter: :otel, **options)
         end
 
         scope.set_span(sentry_span)
-        @otel_span_map[span_id] = [sentry_span, parent_sentry_span]
+        @span_map[span_id] = [sentry_span, parent_sentry_span]
       end
 
       def on_finish(otel_span)
@@ -60,7 +60,7 @@ module Sentry
         span_id = otel_span.context.hex_span_id unless otel_span.context.span_id == ::OpenTelemetry::Trace::INVALID_SPAN_ID
         return unless span_id
 
-        sentry_span, parent_span = @otel_span_map.delete(span_id)
+        sentry_span, parent_span = @span_map.delete(span_id)
         return unless sentry_span
 
         current_scope = Sentry.get_current_scope
@@ -110,6 +110,7 @@ module Sentry
       end
 
       def get_trace_data(otel_span)
+        # TODO-neel get sentry-trace from context
         span_id = otel_span.context.hex_span_id unless otel_span.context.span_id == ::OpenTelemetry::Trace::INVALID_SPAN_ID
         trace_id = otel_span.context.hex_trace_id unless otel_span.context.trace_id == ::OpenTelemetry::Trace::INVALID_TRACE_ID
         parent_span_id = otel_span.parent_span_id.unpack1("H*") unless otel_span.parent_span_id == ::OpenTelemetry::Trace::INVALID_SPAN_ID

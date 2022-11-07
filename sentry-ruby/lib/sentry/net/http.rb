@@ -102,6 +102,7 @@ module Sentry
 end
 
 Sentry.register_patch do
+  # TODO-neel don't patch if otel
   patch = Sentry::Net::HTTP
   Net::HTTP.send(:prepend, patch) unless Net::HTTP.ancestors.include?(patch)
 end
