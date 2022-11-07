@@ -1,20 +1,11 @@
+require "opentelemetry"
+require "opentelemetry-sdk"
+require "opentelemetry-semantic_conventions"
+
 module Sentry
   module OpenTelemetry
-    class SpanProcessor
-
-      ATTRIBUTE_HTTP_METHOD = "http.method"
-      ATTRIBUTE_HTTP_TARGET = "http.target"
-      ATTRIBUTE_HTTP_STATUS_CODE = "http.status_code"
-      ATTRIBUTE_NET_PEER_NAME = "net.peer.name"
-      ATTRIBUTE_DB_SYSTEM = "db.system"
-      ATTRIBUTE_DB_STATEMENT = "db.statement"
-
-      # https://github.com/open-telemetry/opentelemetry-ruby/blob/18bfd391f2bda2c958d5d6935886c8cba61414dd/api/lib/opentelemetry/trace.rb#L18-L22
-      # An invalid trace identifier, a 16-byte string with all zero bytes.
-      INVALID_TRACE_ID = ("\0" * 16).b
-
-      # An invalid span identifier, an 8-byte string with all zero bytes.
-      INVALID_SPAN_ID = ("\0" * 8).b
+    class SpanProcessor < ::OpenTelemetry::SDK::Trace::SpanProcessor
+      SEMANTIC_CONVENTIONS = ::OpenTelemetry::SemanticConventions::Trace
 
       def initialize
         @otel_span_map = {}
@@ -66,7 +57,7 @@ module Sentry
       def on_finish(otel_span)
         return unless Sentry.initialized? && Sentry.configuration.instrumenter == :otel
 
-        span_id = otel_span.context.hex_span_id unless otel_span.context.span_id == INVALID_SPAN_ID
+        span_id = otel_span.context.hex_span_id unless otel_span.context.span_id == ::OpenTelemetry::Trace::INVALID_SPAN_ID
         return unless span_id
 
         sentry_span, parent_span = @otel_span_map.delete(span_id)
@@ -108,7 +99,7 @@ module Sentry
           # only check client requests, connects are sometimes internal
           return false unless %i(client internal).include?(otel_span.kind)
 
-          address = otel_span.attributes[ATTRIBUTE_NET_PEER_NAME]
+          address = otel_span.attributes[SEMANTIC_CONVENTIONS::NET_PEER_NAME]
 
           # if no address drop it, just noise
           return true unless address
@@ -119,9 +110,9 @@ module Sentry
       end
 
       def get_trace_data(otel_span)
-        span_id = otel_span.context.hex_span_id unless otel_span.context.span_id == INVALID_SPAN_ID
-        trace_id = otel_span.context.hex_trace_id unless otel_span.context.trace_id == INVALID_TRACE_ID
-        parent_span_id = otel_span.parent_span_id.unpack1("H*") unless otel_span.parent_span_id == INVALID_SPAN_ID
+        span_id = otel_span.context.hex_span_id unless otel_span.context.span_id == ::OpenTelemetry::Trace::INVALID_SPAN_ID
+        trace_id = otel_span.context.hex_trace_id unless otel_span.context.trace_id == ::OpenTelemetry::Trace::INVALID_TRACE_ID
+        parent_span_id = otel_span.parent_span_id.unpack1("H*") unless otel_span.parent_span_id == ::OpenTelemetry::Trace::INVALID_SPAN_ID
 
         [span_id, trace_id, parent_span_id]
       end
@@ -142,22 +133,22 @@ module Sentry
         op = otel_span.name
         description = otel_span.name
 
-        if (http_method = otel_span.attributes[ATTRIBUTE_HTTP_METHOD])
+        if (http_method = otel_span.attributes[SEMANTIC_CONVENTIONS::HTTP_METHOD])
           op = "http.#{otel_span.kind}"
           description = http_method
 
-          peer_name = otel_span.attributes[ATTRIBUTE_NET_PEER_NAME]
+          peer_name = otel_span.attributes[SEMANTIC_CONVENTIONS::NET_PEER_NAME]
           description += " #{peer_name}" if peer_name
 
-          target = otel_span.attributes[ATTRIBUTE_HTTP_TARGET]
+          target = otel_span.attributes[SEMANTIC_CONVENTIONS::HTTP_TARGET]
           description += target if target
 
-          status_code = otel_span.attributes[ATTRIBUTE_HTTP_STATUS_CODE]
+          status_code = otel_span.attributes[SEMANTIC_CONVENTIONS::HTTP_STATUS_CODE]
           sentry_span.set_http_status(status_code) if status_code
-        elsif otel_span.attributes[ATTRIBUTE_DB_SYSTEM]
+        elsif otel_span.attributes[SEMANTIC_CONVENTIONS::DB_SYSTEM]
           op = "db"
 
-          statement = otel_span.attributes[ATTRIBUTE_DB_STATEMENT]
+          statement = otel_span.attributes[SEMANTIC_CONVENTIONS::DB_STATEMENT]
           description = statement if statement
         end
 
