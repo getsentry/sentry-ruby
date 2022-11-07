@@ -91,16 +91,10 @@ module Sentry
       return unless hub.configuration.tracing_enabled?
       return unless sentry_trace
 
-      match = SENTRY_TRACE_REGEXP.match(sentry_trace)
-      return if match.nil?
-      trace_id, parent_span_id, sampled_flag = match[1..3]
+      sentry_trace_data = extract_sentry_trace(sentry_trace)
+      return unless sentry_trace_data
 
-      parent_sampled =
-        if sampled_flag.nil?
-          nil
-        else
-          sampled_flag != "0"
-        end
+      trace_id, parent_span_id, parent_sampled = sentry_trace_data
 
       baggage = if baggage && !baggage.empty?
                   Baggage.from_incoming_header(baggage)
@@ -121,6 +115,16 @@ module Sentry
         baggage: baggage,
         **options
       )
+    end
+
+    def self.extract_sentry_trace(sentry_trace)
+      match = SENTRY_TRACE_REGEXP.match(sentry_trace)
+      return nil if match.nil?
+
+      trace_id, parent_span_id, sampled_flag = match[1..3]
+      parent_sampled = sampled_flag.nil? ? nil : sampled_flag != "0"
+
+      [trace_id, parent_span_id, parent_sampled]
     end
 
     # @return [Hash]
