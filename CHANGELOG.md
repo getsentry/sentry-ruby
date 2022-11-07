@@ -4,31 +4,33 @@
 
 - Allow users to configure their asset-skipping pattern [#1915](https://github.com/getsentry/sentry-ruby/pull/1915)
 
-  Users can now configure their own pattern to skip asset requests' transactions
+    Users can now configure their own pattern to skip asset requests' transactions
 
-  ```rb
-  Sentry.init do |config|
-    config.rails.assets_regexp = /my_regexp/
-  end
-  ```
+    ```rb
+    Sentry.init do |config|
+      config.rails.assets_regexp = /my_regexp/
+    end
+    ```
+
 - Use `Sentry.with_child_span` in redis and net/http instead of `span.start_child` [#1920](https://github.com/getsentry/sentry-ruby/pull/1920)
-  - This might change the nesting of some spans and make it more accurate
-  - Followup fix to set the sentry-trace header in the correct place [#1922](https://github.com/getsentry/sentry-ruby/pull/1922)
+    - This might change the nesting of some spans and make it more accurate
+    - Followup fix to set the sentry-trace header in the correct place [#1922](https://github.com/getsentry/sentry-ruby/pull/1922)
 
 - Use `Exception#detailed_message` when generating exception message if applicable [#1924](https://github.com/getsentry/sentry-ruby/pull/1924)
+- Make `sentry-sidekiq` compatible with Sidekiq 7 [#1930](https://github.com/getsentry/sentry-ruby/pull/1930)
 - Add OpenTelemetry `SpanProcessor` TODO-neel expand [#1876](https://github.com/getsentry/sentry-ruby/pull/1876)
 
 ### Bug Fixes
 
 - `Sentry::BackgroundWorker` will release `ActiveRecord` connection pool only when the `ActiveRecord` connection is established
 -  Remove bad encoding arguments in redis span descriptions [#1914](https://github.com/getsentry/sentry-ruby/pull/1914)
-  - Fixes [#1911](https://github.com/getsentry/sentry-ruby/issues/1911)
+    - Fixes [#1911](https://github.com/getsentry/sentry-ruby/issues/1911)
 - Add missing `initialized?` checks to `sentry-rails` [#1919](https://github.com/getsentry/sentry-ruby/pull/1919)
-  - Fixes [#1885](https://github.com/getsentry/sentry-ruby/issues/1885)
+    - Fixes [#1885](https://github.com/getsentry/sentry-ruby/issues/1885)
 - Update Tracing Span's op names [#1923](https://github.com/getsentry/sentry-ruby/pull/1923)
 
-  Currently, Ruby integrations' Span op names aren't aligned with the core specification's convention, so we decided to update them altogether in this PR.
-  **If you rely on Span op names for fine-grained event filtering, this may affect the data your app sends to Sentry.**
+    Currently, Ruby integrations' Span op names aren't aligned with the core specification's convention, so we decided to update them altogether in this PR.
+    **If you rely on Span op names for fine-grained event filtering, this may affect the data your app sends to Sentry.**
 
 ### Refactoring
 

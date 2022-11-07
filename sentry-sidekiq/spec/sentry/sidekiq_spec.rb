@@ -36,9 +36,17 @@ RSpec.describe Sentry::Sidekiq do
   end
 
   it "registers error handlers and middlewares" do
-    expect(Sidekiq.error_handlers).to include(described_class::ErrorHandler)
-    expect(Sidekiq.server_middleware.entries.first.klass).to eq(described_class::SentryContextServerMiddleware)
-    expect(Sidekiq.client_middleware.entries.first.klass).to eq(described_class::SentryContextClientMiddleware)
+    if WITH_SIDEKIQ_7
+      config = Sidekiq.instance_variable_get(:@config)
+
+      expect(config.error_handlers).to include(described_class::ErrorHandler)
+      expect(config.server_middleware.entries.map(&:klass)).to include(described_class::SentryContextServerMiddleware)
+      expect(config.client_middleware.entries.map(&:klass)).to include(described_class::SentryContextClientMiddleware)
+    else
+      expect(Sidekiq.error_handlers).to include(described_class::ErrorHandler)
+      expect(Sidekiq.server_middleware.entries.first.klass).to eq(described_class::SentryContextServerMiddleware)
+      expect(Sidekiq.client_middleware.entries.first.klass).to eq(described_class::SentryContextClientMiddleware)
+    end
   end
 
   it "captues exception raised in the worker" do
@@ -163,7 +171,11 @@ RSpec.describe Sentry::Sidekiq do
 
       context "when Sidekiq.options[:max_retries] is set" do
         it "respects the set limit" do
-          Sidekiq.options[:max_retries] = 5
+          if WITH_SIDEKIQ_7
+            Sidekiq.default_configuration[:max_retries] = 5
+          else
+            Sidekiq.options[:max_retries] = 5
+          end
 
           execute_worker(processor, SadWorker)
           expect(transport.events.count).to eq(0)

@@ -21,7 +21,7 @@ jobs:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        sidekiq_version: [5.0, 6.0]
+        sidekiq_version: ['5.0', '6.0', '7.0']
         ruby_version: [2.4, 2.5, 2.6, 2.7, '3.0', '3.1', head, jruby]
         os: [ubuntu-latest]
         include:
@@ -30,6 +30,14 @@ jobs:
         exclude:
           - ruby_version: 2.4
             sidekiq_version: 6.0
+          - ruby_version: 2.4
+            sidekiq_version: 7.0
+          - ruby_version: 2.5
+            sidekiq_version: 7.0
+          - ruby_version: 2.6
+            sidekiq_version: 7.0
+          - ruby_version: jruby
+            sidekiq_version: 7.0
     steps:
     - uses: actions/checkout@v1
 
@@ -41,7 +49,7 @@ jobs:
     - name: Start Redis
       uses: supercharge/redis-github-action@1.1.0
       with:
-        redis-version: 5
+        redis-version: ${{ matrix.sidekiq_version == '7.0' && 6 || 5 }}
 
     - name: Run specs with Sidekiq ${{ matrix.sidekiq_version }}
       env:
