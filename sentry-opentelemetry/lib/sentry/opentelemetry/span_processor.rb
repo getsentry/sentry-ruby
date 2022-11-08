@@ -56,9 +56,8 @@ module Sentry
         sentry_span.set_op(otel_span.name)
 
         if sentry_span.is_a?(Sentry::Transaction)
-          current_scope = Sentry.get_current_scope
-          current_scope.set_transaction_name(otel_span.name)
-          current_scope.set_context(:otel, otel_context_hash(otel_span))
+          sentry_span.set_name(otel_span.name)
+          sentry_span.set_context(:otel, otel_context_hash(otel_span))
         else
           update_span_with_otel_data(sentry_span, otel_span)
         end

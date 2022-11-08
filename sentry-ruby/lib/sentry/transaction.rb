@@ -50,6 +50,10 @@ module Sentry
     # @return [Float, nil]
     attr_reader :effective_sample_rate
 
+    # Additional contexts stored directly on the transaction object.
+    # @return [Hash]
+    attr_reader :contexts
+
     def initialize(
       hub:,
       name: nil,
@@ -74,6 +78,7 @@ module Sentry
       @environment = hub.configuration.environment
       @dsn = hub.configuration.dsn
       @effective_sample_rate = nil
+      @contexts = {}
       init_span_recorder
     end
 
@@ -246,6 +251,23 @@ module Sentry
     def get_baggage
       populate_head_baggage if @baggage.nil? || @baggage.mutable
       @baggage
+    end
+
+    # Set the transaction name directly.
+    # @param name [String]
+    # @param source [Symbol]
+    # @return [void]
+    def set_name(name, source: :custom)
+      @name = name
+      @source = SOURCES.include?(source) ? source.to_sym : :custom
+    end
+
+    # Set contexts directly on the transaction.
+    # @param key [String, Symbol]
+    # @param value [Object]
+    # @return [void]
+    def set_context(key, value)
+      @contexts[key] = value
     end
 
     protected
