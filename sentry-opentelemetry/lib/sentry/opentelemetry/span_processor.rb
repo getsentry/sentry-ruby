@@ -16,43 +16,32 @@ module Sentry
         span_id, trace_id, parent_span_id = get_trace_data(otel_span)
         return unless span_id
 
-        # TODO-neel remove scope
-        scope = Sentry.get_current_scope
-        parent_sentry_span = scope.get_span
+        sentry_parent_span = @span_map[parent_span_id] if parent_span_id
 
-        sentry_span = if parent_sentry_span
-          Sentry.configuration.logger.info("Continuing otel span #{otel_span.name} on parent #{parent_sentry_span.op}")
+        sentry_span = if sentry_parent_span
+          Sentry.configuration.logger.info("Continuing otel span #{otel_span.name} on parent #{sentry_parent_span.op}")
 
-          parent_sentry_span.start_child(
+          sentry_parent_span.start_child(
             span_id: span_id,
             description: otel_span.name,
             start_timestamp: otel_span.start_timestamp / 1e9
           )
         else
-          continue_options = {
-            span_id: span_id,
+          Sentry.configuration.logger.info("Starting otel transaction #{otel_span.name}")
+
+          options = {
+            instrumenter: :otel,
             name: otel_span.name,
+            span_id: span_id,
+            trace_id: trace_id,
+            parent_span_id: parent_span_id,
             start_timestamp: otel_span.start_timestamp / 1e9
           }
 
-          options = {
-            trace_id: trace_id,
-            parent_span_id: parent_span_id,
-            **continue_options
-          }
-
-          # TODO-neel cleanup
-          sentry_trace = scope.sentry_trace
-          baggage = scope.baggage
-
-          Sentry.configuration.logger.info("Starting otel transaction #{otel_span.name}")
-          # TODO-neel remove this, pass in everything from context to start_transaction
-          transaction = Sentry::Transaction.from_sentry_trace(sentry_trace, baggage: baggage, **continue_options) if sentry_trace
-          Sentry.start_transaction(transaction: transaction, instrumenter: :otel, **options)
+          Sentry.start_transaction(**options)
         end
 
-        scope.set_span(sentry_span)
-        @span_map[span_id] = [sentry_span, parent_sentry_span]
+        @span_map[span_id] = sentry_span
       end
 
       def on_finish(otel_span)
@@ -61,14 +50,13 @@ module Sentry
         span_id = otel_span.context.hex_span_id unless otel_span.context.span_id == ::OpenTelemetry::Trace::INVALID_SPAN_ID
         return unless span_id
 
-        sentry_span, parent_span = @span_map.delete(span_id)
+        sentry_span = @span_map.delete(span_id)
         return unless sentry_span
-
-        current_scope = Sentry.get_current_scope
 
         sentry_span.set_op(otel_span.name)
 
         if sentry_span.is_a?(Sentry::Transaction)
+          current_scope = Sentry.get_current_scope
           current_scope.set_transaction_name(otel_span.name)
           current_scope.set_context(:otel, otel_context_hash(otel_span))
         else
@@ -77,17 +65,6 @@ module Sentry
 
         Sentry.configuration.logger.info("Finishing sentry_span #{sentry_span.op}")
         sentry_span.finish(end_timestamp: otel_span.end_timestamp / 1e9)
-        current_scope.set_span(parent_span) if parent_span
-      end
-
-      def force_flush(timeout: nil)
-        # no-op: we rely on Sentry.close being called for the same reason as
-        # whatever triggered this shutdown.
-      end
-
-      def shutdown(timeout: nil)
-        # no-op: we rely on Sentry.close being called for the same reason as
-        # whatever triggered this shutdown.
       end
 
       private
@@ -110,10 +87,16 @@ module Sentry
         false
       end
 
+      # TODO-neel get sentry-trace/baggage from context
       def get_trace_data(otel_span)
-        # TODO-neel get sentry-trace from context
-        span_id = otel_span.context.hex_span_id unless otel_span.context.span_id == ::OpenTelemetry::Trace::INVALID_SPAN_ID
-        trace_id = otel_span.context.hex_trace_id unless otel_span.context.trace_id == ::OpenTelemetry::Trace::INVALID_TRACE_ID
+        if otel_span.context.valid?
+          span_id = otel_span.context.hex_span_id
+          trace_id = otel_span.context.hex_trace_id
+        else
+          span_id = nil
+          trace_id = nil
+        end
+
         parent_span_id = otel_span.parent_span_id.unpack1("H*") unless otel_span.parent_span_id == ::OpenTelemetry::Trace::INVALID_SPAN_ID
 
         [span_id, trace_id, parent_span_id]

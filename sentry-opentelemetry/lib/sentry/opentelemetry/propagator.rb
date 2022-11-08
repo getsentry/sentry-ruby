@@ -31,7 +31,7 @@ module Sentry
         return unless sentry_trace_data
 
         context = context.set_value(SENTRY_TRACE_PARENT_KEY, sentry_trace_data)
-        trace_id, parent_span_id, parent_sampled = sentry_trace_data
+        trace_id, span_id, parent_sampled = sentry_trace_data
 
         trace_flags = if parent_sampled.nil?
                         nil
@@ -42,7 +42,7 @@ module Sentry
                       end
 
         span_context = ::OpenTelemetry::Trace::SpanContext.new(trace_id: trace_id,
-                                                               span_id: parent_span_id,
+                                                               span_id: span_id,
                                                                trace_flags: trace_flags,
                                                                remote: true)
 
