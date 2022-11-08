@@ -47,18 +47,14 @@ module Sentry
       private
 
       def set_sentry_trace_header(req, sentry_span)
-        return unless Sentry.initialized?
-
-        # TODO-neel maybe some otel span validation
-        sentry_or_otel_span = sentry_span || Sentry.get_current_scope.get_span
-        return unless sentry_or_otel_span
+        return unless sentry_span
 
         client = Sentry.get_current_client
 
-        trace = client.generate_sentry_trace(sentry_or_otel_span)
+        trace = client.generate_sentry_trace(sentry_span)
         req[SENTRY_TRACE_HEADER_NAME] = trace if trace
 
-        baggage = client.generate_baggage(sentry_or_otel_span)
+        baggage = client.generate_baggage(sentry_span)
         req[BAGGAGE_HEADER_NAME] = baggage if baggage && !baggage.empty?
       end
 
@@ -102,7 +98,6 @@ module Sentry
 end
 
 Sentry.register_patch do
-  # TODO-neel don't patch if otel
   patch = Sentry::Net::HTTP
   Net::HTTP.send(:prepend, patch) unless Net::HTTP.ancestors.include?(patch)
 end

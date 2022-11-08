@@ -31,8 +31,8 @@ module Sentry
       end
 
       def start_transaction(env, scope)
-        sentry_trace = scope.sentry_trace
-        baggage = scope.baggage
+        sentry_trace = env["HTTP_SENTRY_TRACE"]
+        baggage = env["HTTP_BAGGAGE"]
 
         options = { name: scope.transaction_name, source: scope.transaction_source, op: transaction_op }
 

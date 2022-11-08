@@ -143,20 +143,6 @@ module Sentry
       @rack_env = env
     end
 
-    # Get the sentry-trace header on the rack env
-    # @return [String, nil]
-    def sentry_trace
-      return nil unless rack_env
-      rack_env["HTTP_SENTRY_TRACE"]
-    end
-
-    # Get the baggage header on the rack env
-    # @return [String, nil]
-    def baggage
-      return nil unless rack_env
-      rack_env["HTTP_BAGGAGE"]
-    end
-
     # Sets the scope's span attribute.
     # @param span [Span]
     # @return [Span]

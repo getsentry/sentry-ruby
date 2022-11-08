@@ -41,6 +41,7 @@ module Sentry
             **continue_options
           }
 
+          # TODO-neel cleanup
           sentry_trace = scope.sentry_trace
           baggage = scope.baggage
 

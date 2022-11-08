@@ -62,8 +62,9 @@ module Sentry
       end
 
       def start_transaction(env, scope)
-        sentry_trace = scope.sentry_trace
-        baggage = scope.baggage
+        sentry_trace = env["HTTP_SENTRY_TRACE"]
+        baggage = env["HTTP_BAGGAGE"]
+
         options = { name: scope.transaction_name, source: scope.transaction_source, op: transaction_op }
         transaction = Sentry::Transaction.from_sentry_trace(sentry_trace, baggage: baggage, **options) if sentry_trace
         Sentry.start_transaction(transaction: transaction, custom_sampling_context: { env: env }, **options)
