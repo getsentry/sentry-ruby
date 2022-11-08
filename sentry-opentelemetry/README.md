@@ -50,7 +50,7 @@ end
 
 This will disable all Sentry instrumentation and rely on the chosen OpenTelemetry tracers for creating spans.
 
-Next, configure OpenTelemetry as per your needs and hook in the Sentry span processor and propagator(?? TODO-neel). Note that you need to re-order the middlewares (?? TODO-neel) for Sentry to pick spans up correctly.
+Next, configure OpenTelemetry as per your needs and hook in the Sentry span processor and propagator.
 
 ```ruby
 # config/initializers/02_otel.rb
@@ -61,10 +61,5 @@ OpenTelemetry::SDK.configure do |c|
 end
 
 OpenTelemetry.propagation = Sentry::OpenTelemetry::Propagator.new
-
-Rails.application.config.middleware.move_after(
-  Sentry::Rails::CaptureExceptions,
-  OpenTelemetry::Instrumentation::Rack::Middlewares::TracerMiddleware
-)
 ```
 
