@@ -2,7 +2,7 @@ require 'singleton'
 
 module Sentry
   module OpenTelemetry
-    TraceData = Struct.new(:trace_id, :span_id, :parent_span_id, :parent_sampled)
+    TraceData = Struct.new(:trace_id, :span_id, :parent_span_id, :parent_sampled, :baggage)
 
     class SpanProcessor < ::OpenTelemetry::SDK::Trace::SpanProcessor
       include Singleton
@@ -20,9 +20,9 @@ module Sentry
       def on_start(otel_span, parent_context)
         return unless Sentry.initialized? && Sentry.configuration.instrumenter == :otel
         return if from_sentry_sdk?(otel_span)
+        return unless otel_span.context.valid?
 
         trace_data = get_trace_data(otel_span, parent_context)
-        return unless trace_data.span_id
 
         sentry_parent_span = @span_map[trace_data.parent_span_id] if trace_data.parent_span_id
 
@@ -43,6 +43,7 @@ module Sentry
             span_id: trace_data.span_id,
             trace_id: trace_data.trace_id,
             parent_span_id: trace_data.parent_span_id,
+            baggage: trace_data.baggage,
             start_timestamp: otel_span.start_timestamp / 1e9
           }
 
@@ -92,11 +93,8 @@ module Sentry
         false
       end
 
-      # TODO-neel get baggage from context
       def get_trace_data(otel_span, parent_context)
         trace_data = TraceData.new
-        return trace_data unless otel_span.context.valid?
-
         trace_data.span_id = otel_span.context.hex_span_id
         trace_data.trace_id = otel_span.context.hex_trace_id
 
@@ -106,6 +104,8 @@ module Sentry
 
         sentry_trace_data = parent_context[Propagator::SENTRY_TRACE_KEY]
         trace_data.parent_sampled = sentry_trace_data[2] if sentry_trace_data
+
+        trace_data.baggage = parent_context[Propagator::SENTRY_BAGGAGE_KEY]
 
         trace_data
       end

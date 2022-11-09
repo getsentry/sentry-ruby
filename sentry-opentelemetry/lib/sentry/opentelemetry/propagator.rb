@@ -5,7 +5,7 @@ module Sentry
       FIELDS = [SENTRY_TRACE_HEADER_NAME, BAGGAGE_HEADER_NAME].freeze
 
       SENTRY_TRACE_KEY = ::OpenTelemetry::Context.create_key('sentry-trace')
-      SENTRY_DSC_KEY = ::OpenTelemetry::Context.create_key('sentry-dsc')
+      SENTRY_BAGGAGE_KEY = ::OpenTelemetry::Context.create_key('sentry-baggage')
 
       def inject(
         carrier,
@@ -20,6 +20,9 @@ module Sentry
         return unless sentry_span
 
         setter.set(carrier, SENTRY_TRACE_HEADER_NAME, sentry_span.to_sentry_trace)
+
+        baggage = sentry_span.to_baggage
+        setter.set(carrier, BAGGAGE_HEADER_NAME, baggage) if baggage && !baggage.empty?
       end
 
       def extract(
@@ -45,7 +48,19 @@ module Sentry
         )
 
         # TODO-neel baggage
-        # baggage = getter.get(carrier, SENTRY_TRACE_HEADER_NAME)
+        baggage_header = getter.get(carrier, BAGGAGE_HEADER_NAME)
+
+        baggage = if baggage_header && !baggage_header.empty?
+                    Baggage.from_incoming_header(baggage_header)
+                  else
+                    # If there's an incoming sentry-trace but no incoming baggage header,
+                    # for instance in traces coming from older SDKs,
+                    # baggage will be empty and frozen and won't be populated as head SDK.
+                    Baggage.new({})
+                  end
+
+        baggage.freeze!
+        context = context.set_value(SENTRY_BAGGAGE_KEY, baggage)
 
         span = ::OpenTelemetry::Trace.non_recording_span(span_context)
         ::OpenTelemetry::Trace.context_with_span(span, parent_context: context)
