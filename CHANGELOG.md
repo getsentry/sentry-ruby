@@ -2,6 +2,12 @@
 
 ### Features
 
+- Add OpenTelemetry `SpanProcessor` TODO-neel expand [#1876](https://github.com/getsentry/sentry-ruby/pull/1876)
+
+## 5.6.0
+
+### Features
+
 - Allow users to configure their asset-skipping pattern [#1915](https://github.com/getsentry/sentry-ruby/pull/1915)
 
     Users can now configure their own pattern to skip asset requests' transactions
@@ -18,7 +24,6 @@
 
 - Use `Exception#detailed_message` when generating exception message if applicable [#1924](https://github.com/getsentry/sentry-ruby/pull/1924)
 - Make `sentry-sidekiq` compatible with Sidekiq 7 [#1930](https://github.com/getsentry/sentry-ruby/pull/1930)
-- Add OpenTelemetry `SpanProcessor` TODO-neel expand [#1876](https://github.com/getsentry/sentry-ruby/pull/1876)
 
 ### Bug Fixes
 
