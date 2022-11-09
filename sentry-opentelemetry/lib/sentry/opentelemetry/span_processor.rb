@@ -1,6 +1,10 @@
+require 'singleton'
+
 module Sentry
   module OpenTelemetry
     class SpanProcessor < ::OpenTelemetry::SDK::Trace::SpanProcessor
+      include Singleton
+
       SEMANTIC_CONVENTIONS = ::OpenTelemetry::SemanticConventions::Trace
 
       attr_reader :span_map
