@@ -2,31 +2,35 @@ require 'singleton'
 
 module Sentry
   module OpenTelemetry
+    TraceData = Struct.new(:trace_id, :span_id, :parent_span_id, :parent_sampled)
+
     class SpanProcessor < ::OpenTelemetry::SDK::Trace::SpanProcessor
       include Singleton
 
       SEMANTIC_CONVENTIONS = ::OpenTelemetry::SemanticConventions::Trace
 
+      # The mapping from otel span ids to sentry spans
+      # @return [Hash]
       attr_reader :span_map
 
       def initialize
         @span_map = {}
       end
 
-      def on_start(otel_span, _parent_context)
+      def on_start(otel_span, parent_context)
         return unless Sentry.initialized? && Sentry.configuration.instrumenter == :otel
         return if from_sentry_sdk?(otel_span)
 
-        span_id, trace_id, parent_span_id = get_trace_data(otel_span)
-        return unless span_id
+        trace_data = get_trace_data(otel_span, parent_context)
+        return unless trace_data.span_id
 
-        sentry_parent_span = @span_map[parent_span_id] if parent_span_id
+        sentry_parent_span = @span_map[trace_data.parent_span_id] if trace_data.parent_span_id
 
         sentry_span = if sentry_parent_span
           Sentry.configuration.logger.info("Continuing otel span #{otel_span.name} on parent #{sentry_parent_span.op}")
 
           sentry_parent_span.start_child(
-            span_id: span_id,
+            span_id: trace_data.span_id,
             description: otel_span.name,
             start_timestamp: otel_span.start_timestamp / 1e9
           )
@@ -36,25 +40,23 @@ module Sentry
           options = {
             instrumenter: :otel,
             name: otel_span.name,
-            span_id: span_id,
-            trace_id: trace_id,
-            parent_span_id: parent_span_id,
+            span_id: trace_data.span_id,
+            trace_id: trace_data.trace_id,
+            parent_span_id: trace_data.parent_span_id,
             start_timestamp: otel_span.start_timestamp / 1e9
           }
 
           Sentry.start_transaction(**options)
         end
 
-        @span_map[span_id] = sentry_span
+        @span_map[trace_data.span_id] = sentry_span
       end
 
       def on_finish(otel_span)
         return unless Sentry.initialized? && Sentry.configuration.instrumenter == :otel
+        return unless otel_span.context.valid?
 
-        span_id = otel_span.context.hex_span_id unless otel_span.context.span_id == ::OpenTelemetry::Trace::INVALID_SPAN_ID
-        return unless span_id
-
-        sentry_span = @span_map.delete(span_id)
+        sentry_span = @span_map.delete(otel_span.context.hex_span_id)
         return unless sentry_span
 
         sentry_span.set_op(otel_span.name)
@@ -90,19 +92,22 @@ module Sentry
         false
       end
 
-      # TODO-neel get sentry-trace/baggage from context
-      def get_trace_data(otel_span)
-        if otel_span.context.valid?
-          span_id = otel_span.context.hex_span_id
-          trace_id = otel_span.context.hex_trace_id
-        else
-          span_id = nil
-          trace_id = nil
+      # TODO-neel get baggage from context
+      def get_trace_data(otel_span, parent_context)
+        trace_data = TraceData.new
+        return trace_data unless otel_span.context.valid?
+
+        trace_data.span_id = otel_span.context.hex_span_id
+        trace_data.trace_id = otel_span.context.hex_trace_id
+
+        unless otel_span.parent_span_id == ::OpenTelemetry::Trace::INVALID_SPAN_ID
+          trace_data.parent_span_id = otel_span.parent_span_id.unpack1("H*")
         end
 
-        parent_span_id = otel_span.parent_span_id.unpack1("H*") unless otel_span.parent_span_id == ::OpenTelemetry::Trace::INVALID_SPAN_ID
+        sentry_trace_data = parent_context[Propagator::SENTRY_TRACE_KEY]
+        trace_data.parent_sampled = sentry_trace_data[2] if sentry_trace_data
 
-        [span_id, trace_id, parent_span_id]
+        trace_data
       end
 
       def otel_context_hash(otel_span)
