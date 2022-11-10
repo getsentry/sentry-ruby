@@ -121,6 +121,7 @@ module Sentry
       end
 
       def update_span_with_otel_data(sentry_span, otel_span)
+        sentry_span.set_data('otel.kind', otel_span.kind)
         otel_span.attributes&.each { |k, v| sentry_span.set_data(k, v) }
 
         op = otel_span.name
