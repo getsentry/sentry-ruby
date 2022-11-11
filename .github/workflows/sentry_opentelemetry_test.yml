@@ -21,8 +21,8 @@ jobs:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        ruby_version: [2.4, 2.5, 2.6, 2.7, '3.0', head, jruby]
-        opentelemetry_version: [1.0.0, 1.1.0, 1.2.0]
+        ruby_version: [2.6, 2.7, '3.0', head, jruby]
+        # opentelemetry_version: [1.2.0]
         os: [ubuntu-latest]
         include:
           - { os: ubuntu-latest, ruby_version: 3.1, options: { rubyopt: "--enable-frozen-string-literal --debug=frozen-string-literal" } }

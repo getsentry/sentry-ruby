@@ -10,10 +10,11 @@ gem 'simplecov'
 gem "simplecov-cobertura", "~> 1.4"
 gem "rexml"
 
-opentelemetry_version = ENV["OPENTELEMETRY_VERSION"]
-opentelemetry_version = "1.2.0" if opentelemetry_version.nil?
+# opentelemetry_version = ENV["OPENTELEMETRY_VERSION"]
+# opentelemetry_version = "1.2.0" if opentelemetry_version.nil?
+# gem "opentelemetry-sdk", "~> #{opentelemetry_version}"
 
-gem "opentelemetry-sdk", "~> #{opentelemetry_version}"
+gem "opentelemetry-sdk"
 gem "opentelemetry-instrumentation-all"
 
 gem "sentry-ruby", path: "../sentry-ruby"
