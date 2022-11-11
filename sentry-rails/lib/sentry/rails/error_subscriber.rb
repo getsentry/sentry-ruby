@@ -7,6 +7,7 @@ module Sentry
       SKIP_SOURCES = Regexp.union([/.*_cache_store.active_support/])
 
       def report(error, handled:, severity:, context:, source: nil)
+        context = context.deep_dup
         tags = { handled: handled }
 
         if source
