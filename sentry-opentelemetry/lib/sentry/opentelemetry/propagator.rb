@@ -47,7 +47,6 @@ module Sentry
           remote: true
         )
 
-        # TODO-neel baggage
         baggage_header = getter.get(carrier, BAGGAGE_HEADER_NAME)
 
         baggage = if baggage_header && !baggage_header.empty?
