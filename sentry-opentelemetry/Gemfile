@@ -15,7 +15,7 @@ gem "rexml"
 # gem "opentelemetry-sdk", "~> #{opentelemetry_version}"
 
 gem "opentelemetry-sdk"
-gem "opentelemetry-instrumentation-all"
+gem "opentelemetry-instrumentation-rails"
 
 gem "sentry-ruby", path: "../sentry-ruby"
 

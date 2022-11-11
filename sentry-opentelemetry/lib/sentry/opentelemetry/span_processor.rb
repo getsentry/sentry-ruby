@@ -73,6 +73,10 @@ module Sentry
         sentry_span.finish(end_timestamp: otel_span.end_timestamp / 1e9)
       end
 
+      def clear
+        @span_map = {}
+      end
+
       private
 
       def from_sentry_sdk?(otel_span)
