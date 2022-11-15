@@ -19,8 +19,8 @@ module Sentry
 
       def on_start(otel_span, parent_context)
         return unless Sentry.initialized? && Sentry.configuration.instrumenter == :otel
-        return if from_sentry_sdk?(otel_span)
         return unless otel_span.context.valid?
+        return if from_sentry_sdk?(otel_span)
 
         trace_data = get_trace_data(otel_span, parent_context)
 
@@ -43,6 +43,7 @@ module Sentry
             span_id: trace_data.span_id,
             trace_id: trace_data.trace_id,
             parent_span_id: trace_data.parent_span_id,
+            parent_sampled: trace_data.parent_sampled,
             baggage: trace_data.baggage,
             start_timestamp: otel_span.start_timestamp / 1e9
           }

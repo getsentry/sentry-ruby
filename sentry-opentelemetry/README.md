@@ -57,7 +57,7 @@ Next, configure OpenTelemetry as per your needs and hook in the Sentry span proc
 
 OpenTelemetry::SDK.configure do |c|
   c.use_all
-  c.add_span_processor(Sentry::OpenTelemetry::SpanProcessor.new)
+  c.add_span_processor(Sentry::OpenTelemetry::SpanProcessor.instance)
 end
 
 OpenTelemetry.propagation = Sentry::OpenTelemetry::Propagator.new

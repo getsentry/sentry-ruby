@@ -2,8 +2,6 @@ require "bundler/setup"
 require "pry"
 require "debug" if RUBY_VERSION.to_f >= 2.6
 
-require "sentry-ruby"
-
 require 'simplecov'
 
 SimpleCov.start do
@@ -17,7 +15,10 @@ if ENV["CI"]
   SimpleCov.formatter = SimpleCov::Formatter::CoberturaFormatter
 end
 
+require "sentry-ruby"
+require "sentry/test_helper"
 require "sentry-opentelemetry"
+require "opentelemetry/sdk"
 
 DUMMY_DSN = 'http://12345:67890@sentry.localdomain/sentry/42'
 
@@ -30,5 +31,25 @@ RSpec.configure do |config|
 
   config.expect_with :rspec do |c|
     c.syntax = :expect
+  end
+end
+
+def perform_basic_setup
+  Sentry.init do |config|
+    config.logger = Logger.new(nil)
+    config.dsn = Sentry::TestHelper::DUMMY_DSN
+    config.transport.transport_class = Sentry::DummyTransport
+    # so the events will be sent synchronously for testing
+    config.background_worker_threads = 0
+    config.instrumenter = :otel
+    config.traces_sample_rate = 1.0
+    yield(config) if block_given?
+  end
+end
+
+def perform_otel_setup
+  ::OpenTelemetry::SDK.configure do |c|
+    # suppress otlp warnings
+    c.logger = Logger.new(File::NULL)
   end
 end
