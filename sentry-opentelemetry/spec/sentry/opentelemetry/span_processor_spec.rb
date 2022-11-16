@@ -2,14 +2,8 @@ require 'spec_helper'
 
 RSpec.describe Sentry::OpenTelemetry::SpanProcessor do
   let(:subject) { described_class.instance }
+
   let(:tracer) { ::OpenTelemetry.tracer_provider.tracer('sentry', '1.0') }
-
-  before do
-    perform_basic_setup
-    perform_otel_setup
-    subject.clear
-  end
-
   let(:empty_context) { ::OpenTelemetry::Context.empty }
   let(:invalid_span) { ::OpenTelemetry::SDK::Trace::Span::INVALID }
 
@@ -43,6 +37,19 @@ RSpec.describe Sentry::OpenTelemetry::SpanProcessor do
     tracer.start_span('SELECT table', with_parent: root_parent_context, attributes: attributes, kind: :client)
   end
 
+  let(:child_http_span) do
+    attributes = {
+      'http.method' => 'GET',
+      'http.scheme' => 'https',
+      'http.target' => '/search',
+      'net.peer.name' => 'www.google.com',
+      'net.peer.port' => 443,
+      'http.status_code' => 200
+    }
+
+    tracer.start_span('HTTP GET', with_parent: root_parent_context, attributes: attributes, kind: :client)
+  end
+
   let(:child_internal_span) do
     attributes = {
       'http.method' => 'POST',
@@ -55,12 +62,11 @@ RSpec.describe Sentry::OpenTelemetry::SpanProcessor do
     tracer.start_span('HTTP POST', with_parent: root_parent_context, attributes: attributes, kind: :client)
   end
 
-  def setup_root
-    subject.on_start(root_span, empty_context)
-    transaction = subject.span_map.values.first
-    transaction
+  before do
+    perform_basic_setup
+    perform_otel_setup
+    subject.clear
   end
-
 
   describe 'singleton instance' do
     it 'has empty span_map' do
@@ -93,12 +99,6 @@ RSpec.describe Sentry::OpenTelemetry::SpanProcessor do
       expect(subject.span_map).to eq({})
     end
 
-    it 'noops on internal sentry sdk requests' do
-      transaction = setup_root
-      expect(transaction).not_to receive(:start_child)
-      subject.on_start(child_internal_span, root_parent_context)
-    end
-
     it 'starts a sentry transaction on otel root span' do
       expect(Sentry).to receive(:start_transaction).and_call_original
       subject.on_start(root_span, empty_context)
@@ -121,25 +121,131 @@ RSpec.describe Sentry::OpenTelemetry::SpanProcessor do
       expect(transaction.baggage).to eq(nil)
     end
 
-    it 'starts a sentry child span on otel child span' do
-      transaction = setup_root
+    context 'with started transaction' do
+      let(:transaction) do
+        subject.on_start(root_span, empty_context)
+        subject.span_map.values.first
+      end
 
-      expect(transaction).to receive(:start_child).and_call_original
+      it 'noops on internal sentry sdk requests' do
+        expect(transaction).not_to receive(:start_child)
+        subject.on_start(child_internal_span, root_parent_context)
+      end
+
+      it 'starts a sentry child span on otel child span' do
+        expect(transaction).to receive(:start_child).and_call_original
+        subject.on_start(child_db_span, root_parent_context)
+
+        span_id = child_db_span.context.hex_span_id
+        trace_id = child_db_span.context.hex_trace_id
+
+        expect(subject.span_map.size).to eq(2)
+        expect(subject.span_map.keys.last).to eq(span_id)
+
+        sentry_span = subject.span_map[span_id]
+        expect(sentry_span).to be_a(Sentry::Span)
+        expect(sentry_span.transaction).to eq(transaction)
+        expect(sentry_span.span_id).to eq(span_id)
+        expect(sentry_span.trace_id).to eq(trace_id)
+        expect(sentry_span.description).to eq(child_db_span.name)
+        expect(sentry_span.start_timestamp).to eq(child_db_span.start_timestamp / 1e9)
+      end
+    end
+  end
+
+  describe '#on_finish' do
+    before do
+      subject.on_start(root_span, empty_context)
       subject.on_start(child_db_span, root_parent_context)
+      subject.on_start(child_http_span, root_parent_context)
+    end
 
-      span_id = child_db_span.context.hex_span_id
-      trace_id = child_db_span.context.hex_trace_id
+    let(:finished_db_span) { child_db_span.finish }
+    let(:finished_http_span) { child_http_span.finish }
+    let(:finished_root_span) { root_span.finish }
+    let(:finished_invalid_span) { invalid_span.finish }
 
-      expect(subject.span_map.size).to eq(2)
-      expect(subject.span_map.keys.last).to eq(span_id)
+    it 'noops when not initialized' do
+      expect(Sentry).to receive(:initialized?).and_return(false)
+      expect(subject.span_map).not_to receive(:delete)
+      subject.on_finish(finished_root_span)
+    end
 
+    it 'noops when instrumenter is not otel' do
+      perform_basic_setup do |c|
+        c.instrumenter = :sentry
+      end
+
+      expect(subject.span_map).not_to receive(:delete)
+      subject.on_finish(finished_root_span)
+    end
+
+    it 'noops when invalid span' do
+      expect(subject.span_map).not_to receive(:delete)
+      subject.on_finish(finished_invalid_span)
+    end
+
+    it 'finishes sentry child span on otel child db span finish' do
+      expect(subject.span_map).to receive(:delete).and_call_original
+
+      span_id = finished_db_span.context.hex_span_id
       sentry_span = subject.span_map[span_id]
       expect(sentry_span).to be_a(Sentry::Span)
-      expect(sentry_span.transaction).to eq(transaction)
-      expect(sentry_span.span_id).to eq(span_id)
-      expect(sentry_span.trace_id).to eq(trace_id)
-      expect(sentry_span.description).to eq(child_db_span.name)
-      expect(sentry_span.start_timestamp).to eq(child_db_span.start_timestamp / 1e9)
+
+      expect(sentry_span).to receive(:finish).and_call_original
+      subject.on_finish(finished_db_span)
+
+      expect(sentry_span.op).to eq('db')
+      expect(sentry_span.description).to eq(finished_db_span.attributes['db.statement'])
+      expect(sentry_span.data).to include(finished_db_span.attributes)
+      expect(sentry_span.data).to include({ 'otel.kind' => finished_db_span.kind })
+      expect(sentry_span.timestamp).to eq(finished_db_span.end_timestamp / 1e9)
+
+      expect(subject.span_map.size).to eq(2)
+      expect(subject.span_map.keys).not_to include(span_id)
+    end
+
+    it 'finishes sentry child span on otel child http span finish' do
+      expect(subject.span_map).to receive(:delete).and_call_original
+
+      span_id = finished_http_span.context.hex_span_id
+      sentry_span = subject.span_map[span_id]
+      expect(sentry_span).to be_a(Sentry::Span)
+
+      expect(sentry_span).to receive(:finish).and_call_original
+      subject.on_finish(finished_http_span)
+
+      expect(sentry_span.op).to eq('http.client')
+      expect(sentry_span.description).to eq('GET www.google.com/search')
+      expect(sentry_span.data).to include(finished_http_span.attributes)
+      expect(sentry_span.data).to include({ 'otel.kind' => finished_http_span.kind })
+      expect(sentry_span.timestamp).to eq(finished_http_span.end_timestamp / 1e9)
+
+      expect(subject.span_map.size).to eq(2)
+      expect(subject.span_map.keys).not_to include(span_id)
+    end
+
+    it 'finishes sentry transaction on otel root span finish' do
+      subject.on_finish(finished_db_span)
+      subject.on_finish(finished_http_span)
+
+      expect(subject.span_map).to receive(:delete).and_call_original
+
+      span_id = finished_root_span.context.hex_span_id
+      transaction = subject.span_map[span_id]
+      expect(transaction).to be_a(Sentry::Transaction)
+
+      expect(transaction).to receive(:finish).and_call_original
+      subject.on_finish(finished_root_span)
+
+      expect(transaction.op).to eq(finished_root_span.name)
+      expect(transaction.name).to eq(finished_root_span.name)
+      expect(transaction.contexts[:otel]).to eq({
+        attributes: finished_root_span.attributes,
+        resource: finished_root_span.resource.attribute_enumerator.to_h
+      })
+
+      expect(subject.span_map).to eq({})
     end
   end
 end
