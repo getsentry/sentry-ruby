@@ -36,6 +36,7 @@
 
     Currently, Ruby integrations' Span op names aren't aligned with the core specification's convention, so we decided to update them altogether in this PR.
     **If you rely on Span op names for fine-grained event filtering, this may affect the data your app sends to Sentry.**
+    **Also make sure to update your [`traces_sampler`](https://docs.sentry.io/platforms/ruby/configuration/sampling/#setting-a-sampling-function) if you rely on the `op` for filtering some requests.**
 
 ### Refactoring
 
