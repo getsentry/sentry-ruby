@@ -34,14 +34,14 @@ module Sentry
         return context unless sentry_trace
 
         sentry_trace_data = Transaction.extract_sentry_trace(sentry_trace)
-        return unless sentry_trace_data
+        return context unless sentry_trace_data
 
         context = context.set_value(SENTRY_TRACE_KEY, sentry_trace_data)
         trace_id, span_id, _parent_sampled = sentry_trace_data
 
         span_context = ::OpenTelemetry::Trace::SpanContext.new(
-          trace_id: trace_id,
-          span_id: span_id,
+          trace_id: [trace_id].pack('H*'),
+          span_id: [span_id].pack('H*'),
           # we simulate a sampled trace on the otel side and leave the sampling to sentry
           trace_flags: ::OpenTelemetry::Trace::TraceFlags::SAMPLED,
           remote: true
