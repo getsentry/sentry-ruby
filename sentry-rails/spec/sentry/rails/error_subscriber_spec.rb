@@ -1,7 +1,7 @@
 require 'spec_helper'
 require 'sentry/rails/error_subscriber'
 
-RSpec.describe Sentry::Rails::ErrorSubscriber do
+RSpec.describe Sentry::Rails::ErrorSubscriber, skip: Rails.version.to_f < 7.0 ? "ActiveSupport::ErrorReporter not available until Rails 7" : false do
   describe "#report" do
     it 'does not mutate context' do
       context = { tags: { foo: 'bar' } }
