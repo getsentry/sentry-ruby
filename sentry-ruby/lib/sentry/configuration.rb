@@ -211,6 +211,10 @@ module Sentry
     # @return [Boolean]
     attr_accessor :auto_session_tracking
 
+    # The instrumenter to use, :sentry or :otel
+    # @return [Symbol]
+    attr_reader :instrumenter
+
     # these are not config options
     # @!visibility private
     attr_reader :errors, :gem_specs
@@ -236,6 +240,8 @@ module Sentry
     LOG_PREFIX = "** [Sentry] ".freeze
     MODULE_SEPARATOR = "::".freeze
     SKIP_INSPECTION_ATTRIBUTES = [:@linecache, :@stacktrace_builder]
+
+    INSTRUMENTERS = [:sentry, :otel]
 
     # Post initialization callbacks are called at the end of initialization process
     # allowing extending the configuration of sentry-ruby by multiple extensions
@@ -269,6 +275,7 @@ module Sentry
       self.trusted_proxies = []
       self.dsn = ENV['SENTRY_DSN']
       self.server_name = server_name_from_env
+      self.instrumenter = :sentry
 
       self.before_send = nil
       self.rack_env_whitelist = RACK_ENV_WHITELIST_DEFAULT
@@ -330,6 +337,10 @@ module Sentry
 
     def environment=(environment)
       @environment = environment.to_s
+    end
+
+    def instrumenter=(instrumenter)
+      @instrumenter = INSTRUMENTERS.include?(instrumenter) ? instrumenter : :sentry
     end
 
     def sending_allowed?

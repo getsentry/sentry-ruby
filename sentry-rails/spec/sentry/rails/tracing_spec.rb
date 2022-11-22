@@ -91,6 +91,23 @@ RSpec.describe Sentry::Rails::Tracing, type: :request do
     end
   end
 
+  context "with instrumenter :otel" do
+    before do
+      make_basic_app do |config|
+        config.traces_sample_rate = 1.0
+        config.instrumenter = :otel
+      end
+    end
+
+    it "doesn't do any tracing" do
+      p = Post.create!
+      get "/posts/#{p.id}"
+
+      expect(response).to have_http_status(:ok)
+      expect(transport.events.count).to eq(0)
+    end
+  end
+
   context "with sprockets-rails" do
     let(:string_io) { StringIO.new }
     let(:logger) do

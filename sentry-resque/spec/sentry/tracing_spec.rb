@@ -60,4 +60,22 @@ RSpec.describe Sentry::Resque do
     expect(tracing_event.dig(:contexts, :trace, :status)).to eq("internal_error")
     expect(tracing_event.dig(:contexts, :trace, :op)).to eq("queue.resque")
   end
+
+  context "with instrumenter :otel" do
+    before do
+      perform_basic_setup do |config|
+        config.traces_sample_rate = 1.0
+        config.instrumenter = :otel
+      end
+    end
+
+    it "does not record transaction" do
+      Resque::Job.create(:default, MessageJob, "report")
+      worker.work(0)
+
+      expect(transport.events.count).to eq(1)
+      event = transport.events.first.to_hash
+      expect(event[:message]).to eq("report")
+    end
+  end
 end

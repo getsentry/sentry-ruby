@@ -76,8 +76,9 @@ module Sentry
       @stack.pop
     end
 
-    def start_transaction(transaction: nil, custom_sampling_context: {}, **options)
+    def start_transaction(transaction: nil, custom_sampling_context: {}, instrumenter: :sentry, **options)
       return unless configuration.tracing_enabled?
+      return unless instrumenter == configuration.instrumenter
 
       transaction ||= Transaction.new(**options.merge(hub: self))
 
@@ -92,7 +93,9 @@ module Sentry
       transaction
     end
 
-    def with_child_span(**attributes, &block)
+    def with_child_span(instrumenter: :sentry, **attributes, &block)
+      return yield(nil) unless instrumenter == configuration.instrumenter
+
       current_span = current_scope.get_span
       return yield(nil) unless current_span
 

@@ -469,6 +469,24 @@ RSpec.describe Sentry do
         expect(described_class.start_transaction(op: "foo")).to eq(nil)
       end
     end
+
+    context "when instrumenter is not :sentry" do
+      before do
+        perform_basic_setup do |config|
+          config.traces_sample_rate = 1.0
+          config.instrumenter = :otel
+        end
+      end
+
+      it "noops without explicit instrumenter" do
+        expect(described_class.start_transaction(op: "foo")).to eq(nil)
+      end
+
+      it "creates transaction with explicit instrumenter" do
+        transaction = described_class.start_transaction(op: "foo", instrumenter: :otel)
+        expect(transaction).to be_a(Sentry::Transaction)
+      end
+    end
   end
 
   describe ".with_child_span" do
@@ -514,6 +532,45 @@ RSpec.describe Sentry do
         expect(result).to eq("foobar")
         expect(child_span.parent_span_id).to eq(parent_span.span_id)
         expect(child_span.timestamp).to be_a(Float)
+      end
+
+      context "when instrumenter is not :sentry" do
+        before do
+          perform_basic_setup do |config|
+            config.traces_sample_rate = 1.0
+            config.instrumenter = :otel
+          end
+
+          described_class.get_current_scope.set_span(parent_span)
+        end
+
+        it "yields block with nil without explicit instrumenter" do
+          span = nil
+          executed = false
+
+          result = described_class.with_child_span do |child_span|
+            span = child_span
+            executed = true
+            "foobar"
+          end
+
+          expect(result).to eq("foobar")
+          expect(span).to eq(nil)
+          expect(executed).to eq(true)
+        end
+
+        it "records the child span with explicit instrumenter" do
+          child_span = nil
+
+          result = described_class.with_child_span(instrumenter: :otel, op: "child") do |span|
+            child_span = span
+            "foobar"
+          end
+
+          expect(result).to eq("foobar")
+          expect(child_span.parent_span_id).to eq(parent_span.span_id)
+          expect(child_span.timestamp).to be_a(Float)
+        end
       end
     end
   end
