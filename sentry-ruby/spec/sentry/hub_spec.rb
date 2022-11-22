@@ -241,6 +241,25 @@ RSpec.describe Sentry::Hub do
       end
     end
 
+    context "when event is a transaction" do
+      it "scope.set_context merges and takes precedence over transaction.set_context" do
+        scope.set_context(:foo, { val: 42 })
+        scope.set_context(:bar, { val: 43 })
+
+        transaction = Sentry::Transaction.new(hub: subject, name: 'test')
+        transaction.set_context(:foo, { val: 44 })
+        transaction.set_context(:baz, { val: 45 })
+
+        transaction_event = subject.current_client.event_from_transaction(transaction)
+        subject.capture_event(transaction_event)
+
+        event = transport.events.last
+        expect(event.contexts[:foo]). to eq({ val: 44 })
+        expect(event.contexts[:bar]). to eq({ val: 43 })
+        expect(event.contexts[:baz]). to eq({ val: 45 })
+      end
+    end
+
     it_behaves_like "capture_helper" do
       let(:capture_helper) { :capture_event }
       let(:capture_subject) { event }
