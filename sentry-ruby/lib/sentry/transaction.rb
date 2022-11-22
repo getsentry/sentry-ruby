@@ -210,7 +210,7 @@ module Sentry
     # Finishes the transaction's recording and send it to Sentry.
     # @param hub [Hub] the hub that'll send this transaction. (Deprecated)
     # @return [TransactionEvent]
-    def finish(hub: nil)
+    def finish(hub: nil, end_timestamp: nil)
       if hub
         log_warn(
           <<~MSG
@@ -222,7 +222,7 @@ module Sentry
 
       hub ||= @hub
 
-      super() # Span#finish doesn't take arguments
+      super(end_timestamp: end_timestamp)
 
       if @name.nil?
         @name = UNLABELD_NAME
