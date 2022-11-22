@@ -13,7 +13,7 @@ module Sentry
             next if EXCLUDED_EVENTS.include? payload[:name]
 
             record_on_current_span(op: SPAN_PREFIX + event_name, start_timestamp: payload[START_TIMESTAMP_NAME], description: payload[:sql], duration: duration) do |span|
-              span&.set_data(:connection_id, payload[:connection_id])
+              span.set_data(:connection_id, payload[:connection_id])
             end
           end
         end
