@@ -559,4 +559,19 @@ RSpec.describe Sentry::Transaction do
       end
     end
   end
+
+  describe "#set_name" do
+    it "sets name and source directly" do
+      subject.set_name("bar", source: :url)
+      expect(subject.name).to eq("bar")
+      expect(subject.source).to eq(:url)
+    end
+  end
+
+  describe "#set_context" do
+    it "sets arbitrary context" do
+      subject.set_context(:foo, { bar: 42 })
+      expect(subject.contexts).to eq({ foo: { bar: 42 } })
+    end
+  end
 end
