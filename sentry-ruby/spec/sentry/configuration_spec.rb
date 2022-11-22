@@ -351,4 +351,25 @@ RSpec.describe Sentry::Configuration do
       expect(subject.auto_session_tracking).to eq(false)
     end
   end
+
+  describe "#instrumenter" do
+    it "returns :sentry by default" do
+      expect(subject.instrumenter).to eq(:sentry)
+    end
+
+    it "can be set to :sentry" do
+      subject.instrumenter = :sentry
+      expect(subject.instrumenter).to eq(:sentry)
+    end
+
+    it "can be set to :otel" do
+      subject.instrumenter = :otel
+      expect(subject.instrumenter).to eq(:otel)
+    end
+
+    it "defaults to :sentry if invalid" do
+      subject.instrumenter = :foo
+      expect(subject.instrumenter).to eq(:sentry)
+    end
+  end
 end
