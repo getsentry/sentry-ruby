@@ -2,7 +2,7 @@
 
 ### Features
 
-- Add OpenTelemetry support with new `sentry-opentelemetry` gem
+- Add OpenTelemetry support with new `sentry-opentelemetry` gem [#1948](https://github.com/getsentry/sentry-ruby/pull/1948)
   - Add `config.instrumenter` to switch between sentry and otel instrumentation [#1944](https://github.com/getsentry/sentry-ruby/pull/1944)
   - Expose `span_id` in `Span` constructor [#1945](https://github.com/getsentry/sentry-ruby/pull/1945)
   - Expose `end_timestamp` in `Span#finish` and `Transaction#finish` [#1946](https://github.com/getsentry/sentry-ruby/pull/1946)
