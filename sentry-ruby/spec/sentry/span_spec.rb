@@ -153,6 +153,14 @@ RSpec.describe Sentry::Span do
       expect(span_2.transaction).to eq(subject.transaction)
     end
 
+    it "initializes a new child Span with explicit span id" do
+      span_id = SecureRandom.hex(8)
+      new_span = subject.start_child(op: "foo", span_id: span_id)
+
+      expect(new_span.op).to eq("foo")
+      expect(new_span.span_id).to eq(span_id)
+    end
+
     context "when the parent span has a span_recorder" do
       subject do
         # inherits the span recorder from the transaction

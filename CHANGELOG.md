@@ -4,6 +4,7 @@
 
 - Add OpenTelemetry support with new `sentry-opentelemetry` gem
   - Add `config.instrumenter` to switch between sentry and otel instrumentation [#1944](https://github.com/getsentry/sentry-ruby/pull/1944)
+  - Expose `span_id` in Span constructor [#1945](https://github.com/getsentry/sentry-ruby/pull/1945)
 
 ## 5.6.0
 
