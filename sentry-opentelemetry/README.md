@@ -37,9 +37,9 @@ gem "opentelemetry-instrumentation-all"
 
 ### Configuration
 
-First, make sure to initialize Sentry before OpenTelemetry by prefixing your initializers and set the `instrumenter` to `:otel`.
+Initialize Sentry for tracing and set the `instrumenter` to `:otel`.
 ```ruby
-# config/initializers/01_sentry.rb
+# config/initializers/sentry.rb
 
 Sentry.init do |config|
   config.dsn = "MY_DSN"
@@ -53,7 +53,7 @@ This will disable all Sentry instrumentation and rely on the chosen OpenTelemetr
 Next, configure OpenTelemetry as per your needs and hook in the Sentry span processor and propagator.
 
 ```ruby
-# config/initializers/02_otel.rb
+# config/initializers/otel.rb
 
 OpenTelemetry::SDK.configure do |c|
   c.use_all

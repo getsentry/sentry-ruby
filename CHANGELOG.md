@@ -3,10 +3,12 @@
 ### Features
 
 - Add OpenTelemetry support with new `sentry-opentelemetry` gem [#1948](https://github.com/getsentry/sentry-ruby/pull/1948)
-  - Add `config.instrumenter` to switch between sentry and otel instrumentation [#1944](https://github.com/getsentry/sentry-ruby/pull/1944)
-  - Expose `span_id` in `Span` constructor [#1945](https://github.com/getsentry/sentry-ruby/pull/1945)
-  - Expose `end_timestamp` in `Span#finish` and `Transaction#finish` [#1946](https://github.com/getsentry/sentry-ruby/pull/1946)
-  - Add `Transaction#set_context` api [#1947](https://github.com/getsentry/sentry-ruby/pull/1947)
+    The new `sentry-opentelemetry` gem adds support to automatically integrate OpenTelemetry performance training with Sentry. [Give it a try](https://github.com/getsentry/sentry-ruby/tree/neel/otel-gem/sentry-opentelemetry#getting-started) and let us know if you have any feedback or problems with using it.
+  - Add `config.instrumenter` to switch between sentry and OpenTelemetry instrumentation [#1944](https://github.com/getsentry/sentry-ruby/pull/1944)
+- Expose `span_id` in `Span` constructor [#1945](https://github.com/getsentry/sentry-ruby/pull/1945)
+- Expose `end_timestamp` in `Span#finish` and `Transaction#finish` [#1946](https://github.com/getsentry/sentry-ruby/pull/1946)
+- Add `Transaction#set_context` api [#1947](https://github.com/getsentry/sentry-ruby/pull/1947)
+
 
 ## 5.6.0
 
