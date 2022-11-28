@@ -49,8 +49,9 @@ jobs:
           - ruby_version: jruby
             rails_version: 5.1.0
           - ruby_version: jruby
-            rails_version: 6.1.0
-
+            rails_version: 5.2.0
+          - ruby_version: jruby
+            rails_version: 6.0.0
     steps:
     - uses: actions/checkout@v1
     - name: Install sqlite and ImageMagick
@@ -75,6 +76,6 @@ jobs:
     - name: Upload Coverage
       if: ${{ matrix.options.codecov }}
       run: |
-        curl -Os https://uploader.codecov.io/latest/linux/codecov 
+        curl -Os https://uploader.codecov.io/latest/linux/codecov
         chmod +x codecov
         ./codecov -t ${CODECOV_TOKEN} -R `pwd` -f coverage/coverage.xml
