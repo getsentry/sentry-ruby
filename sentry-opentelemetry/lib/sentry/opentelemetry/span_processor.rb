@@ -10,6 +10,7 @@ module Sentry
       include Singleton
 
       SEMANTIC_CONVENTIONS = ::OpenTelemetry::SemanticConventions::Trace
+      INTERNAL_SPAN_KINDS = %i(client internal)
 
       # The mapping from otel span ids to sentry spans
       # @return [Hash]
@@ -29,16 +30,12 @@ module Sentry
         sentry_parent_span = @span_map[trace_data.parent_span_id] if trace_data.parent_span_id
 
         sentry_span = if sentry_parent_span
-          Sentry.configuration.logger.info("Continuing otel span #{otel_span.name} on parent #{sentry_parent_span.op}")
-
           sentry_parent_span.start_child(
             span_id: trace_data.span_id,
             description: otel_span.name,
             start_timestamp: otel_span.start_timestamp / 1e9
           )
         else
-          Sentry.configuration.logger.info("Starting otel transaction #{otel_span.name}")
-
           options = {
             instrumenter: :otel,
             name: otel_span.name,
@@ -72,7 +69,6 @@ module Sentry
           update_span_with_otel_data(sentry_span, otel_span)
         end
 
-        Sentry.configuration.logger.info("Finishing sentry_span #{sentry_span.op}")
         sentry_span.finish(end_timestamp: otel_span.end_timestamp / 1e9)
       end
 
@@ -88,7 +84,7 @@ module Sentry
 
         if otel_span.name.start_with?("HTTP")
           # only check client requests, connects are sometimes internal
-          return false unless %i(client internal).include?(otel_span.kind)
+          return false unless INTERNAL_SPAN_KINDS.include?(otel_span.kind)
 
           address = otel_span.attributes[SEMANTIC_CONVENTIONS::NET_PEER_NAME]
 
