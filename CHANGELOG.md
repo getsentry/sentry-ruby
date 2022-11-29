@@ -8,7 +8,7 @@
 - Add OpenTelemetry support with new `sentry-opentelemetry` gem
   - Add `config.instrumenter` to switch between `:sentry` and `:otel` instrumentation [#1944](https://github.com/getsentry/sentry-ruby/pull/1944)
 
-    The new `sentry-opentelemetry` gem adds support to automatically integrate OpenTelemetry performance training with Sentry. [Give it a try](https://github.com/getsentry/sentry-ruby/tree/neel/otel-gem/sentry-opentelemetry#getting-started) and let us know if you have any feedback or problems with using it.
+    The new `sentry-opentelemetry` gem adds support to automatically integrate OpenTelemetry performance tracing with Sentry. [Give it a try](https://github.com/getsentry/sentry-ruby/tree/neel/otel-gem/sentry-opentelemetry#getting-started) and let us know if you have any feedback or problems with using it.
 
 ## 5.6.0
 
