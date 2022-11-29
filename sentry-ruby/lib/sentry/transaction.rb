@@ -64,8 +64,7 @@ module Sentry
     )
       super(transaction: self, **options)
 
-      @name = name
-      @source = SOURCES.include?(source) ? source.to_sym : :custom
+      set_name(name, source: source)
       @parent_sampled = parent_sampled
       @hub = hub
       @baggage = baggage

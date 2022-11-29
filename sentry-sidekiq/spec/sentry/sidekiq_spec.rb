@@ -229,6 +229,22 @@ RSpec.describe Sentry::Sidekiq do
       event = transport.events.last
       expect(event.contexts.dig(:trace, :trace_id)).to eq(transaction.contexts.dig(:trace, :trace_id))
     end
+
+    context "with instrumenter :otel" do
+      before do
+        perform_basic_setup do |config|
+          config.traces_sample_rate = 1.0
+          config.instrumenter = :otel
+        end
+      end
+
+      it "does not record transaction" do
+        execute_worker(processor, SadWorker)
+        expect(transport.events.count).to eq(1)
+        event = transport.events.first
+        expect(event).to be_a(Sentry::ErrorEvent)
+      end
+    end
   end
 end
 
