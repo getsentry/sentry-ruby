@@ -391,6 +391,16 @@ RSpec.describe Sentry::Transaction do
       expect(event[:transaction]).to eq("foo")
     end
 
+    it "finishes the transaction with explicit timestamp" do
+      timestamp = Sentry.utc_now.to_f
+      subject.finish(end_timestamp: timestamp)
+
+      expect(events.count).to eq(1)
+      event = events.last.to_hash
+
+      expect(event[:timestamp]).to eq(timestamp)
+    end
+
     it "assigns the transaction's tags" do
       Sentry.set_tags(name: "apple")
 

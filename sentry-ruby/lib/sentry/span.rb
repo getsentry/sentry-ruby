@@ -90,11 +90,8 @@ module Sentry
 
     # Finishes the span by adding a timestamp.
     # @return [self]
-    def finish
-      # already finished
-      return if @timestamp
-
-      @timestamp = Sentry.utc_now.to_f
+    def finish(end_timestamp: nil)
+      @timestamp = end_timestamp || @timestamp || Sentry.utc_now.to_f
       self
     end
 
