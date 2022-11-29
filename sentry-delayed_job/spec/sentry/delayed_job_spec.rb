@@ -284,6 +284,30 @@ RSpec.describe Sentry::DelayedJob do
         event = transport.events.last
         expect(event.contexts.dig(:trace, :trace_id)).to eq(transaction.contexts.dig(:trace, :trace_id))
       end
+
+      context "with instrumenter :otel" do
+        before do
+          perform_basic_setup do |config|
+            config.traces_sample_rate = 1.0
+            config.instrumenter = :otel
+            config.rails.skippable_job_adapters << "ActiveJob::QueueAdapters::DelayedJobAdapter"
+          end
+        end
+
+        it "does not record transaction" do
+          FailedJob.perform_later
+          enqueued_job = Delayed::Backend::ActiveRecord::Job.last
+          begin
+            enqueued_job.invoke_job
+          rescue ZeroDivisionError
+            nil
+          end
+
+          expect(transport.events.count).to eq(1)
+          event = transport.events.last
+          expect(event).to be_a(Sentry::ErrorEvent)
+        end
+      end
     end
   end
 

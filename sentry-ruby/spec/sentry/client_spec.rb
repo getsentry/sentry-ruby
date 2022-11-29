@@ -195,7 +195,7 @@ RSpec.describe Sentry::Client do
           expect(hash[:exception][:values][0][:value]).to eq(
             "undefined method `[]' for nil:NilClass (NoMethodError)\n\n          {}[:foo][:bar]\n                  ^^^^^^"
           )
-        elsif version >= Gem::Version.new("3.1")
+        elsif version >= Gem::Version.new("3.1") && RUBY_ENGINE == "ruby"
           expect(hash[:exception][:values][0][:value]).to eq(
             "undefined method `[]' for nil:NilClass\n\n          {}[:foo][:bar]\n                  ^^^^^^"
           )
