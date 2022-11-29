@@ -242,7 +242,7 @@ RSpec.describe Sentry::Hub do
     end
 
     context "when event is a transaction" do
-      it "scope.set_context merges and takes precedence over transaction.set_context" do
+      it "transaction.set_context merges and takes precedence over scope.set_context" do
         scope.set_context(:foo, { val: 42 })
         scope.set_context(:bar, { val: 43 })
 
