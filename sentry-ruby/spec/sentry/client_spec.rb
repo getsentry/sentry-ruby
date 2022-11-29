@@ -160,6 +160,12 @@ RSpec.describe Sentry::Client do
         "trace_id" => transaction.trace_id
       })
     end
+
+    it "adds explicitly added contexts to event" do
+      transaction.set_context(:foo, { bar: 42 })
+      event = subject.event_from_transaction(transaction)
+      expect(event.contexts).to include({ foo: { bar: 42 } })
+    end
   end
 
   describe "#event_from_exception" do
