@@ -10,5 +10,4 @@ targets:
         'gem:sentry-rails':
         'gem:sentry-sidekiq':
         'gem:sentry-delayed_job':
-        'gem:sentry-opentelemetry':
     - name: github
