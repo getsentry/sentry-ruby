@@ -7,7 +7,6 @@ module Sentry
       SKIP_SOURCES = Regexp.union([/.*_cache_store.active_support/])
 
       def report(error, handled:, severity:, context:, source: nil)
-        context = context.deep_dup
         tags = { handled: handled }
 
         if source
@@ -15,7 +14,10 @@ module Sentry
           tags[:source] = source
         end
 
-        tags.merge!(context.delete(:tags)) if context[:tags].is_a?(Hash)
+        if context[:tags].is_a?(Hash)
+          context = context.dup
+          tags.merge!(context.delete(:tags))
+        end
 
         Sentry::Rails.capture_exception(error, level: severity, contexts: { "rails.error" => context }, tags: tags)
       end
