@@ -50,6 +50,10 @@ module Sentry
     # @return [Float, nil]
     attr_reader :effective_sample_rate
 
+    # Additional contexts stored directly on the transaction object.
+    # @return [Hash]
+    attr_reader :contexts
+
     def initialize(
       hub:,
       name: nil,
@@ -60,8 +64,7 @@ module Sentry
     )
       super(transaction: self, **options)
 
-      @name = name
-      @source = SOURCES.include?(source) ? source.to_sym : :custom
+      set_name(name, source: source)
       @parent_sampled = parent_sampled
       @hub = hub
       @baggage = baggage
@@ -74,6 +77,7 @@ module Sentry
       @environment = hub.configuration.environment
       @dsn = hub.configuration.dsn
       @effective_sample_rate = nil
+      @contexts = {}
       init_span_recorder
     end
 
@@ -91,16 +95,10 @@ module Sentry
       return unless hub.configuration.tracing_enabled?
       return unless sentry_trace
 
-      match = SENTRY_TRACE_REGEXP.match(sentry_trace)
-      return if match.nil?
-      trace_id, parent_span_id, sampled_flag = match[1..3]
+      sentry_trace_data = extract_sentry_trace(sentry_trace)
+      return unless sentry_trace_data
 
-      parent_sampled =
-        if sampled_flag.nil?
-          nil
-        else
-          sampled_flag != "0"
-        end
+      trace_id, parent_span_id, parent_sampled = sentry_trace_data
 
       baggage = if baggage && !baggage.empty?
                   Baggage.from_incoming_header(baggage)
@@ -121,6 +119,20 @@ module Sentry
         baggage: baggage,
         **options
       )
+    end
+
+    # Extract the trace_id, parent_span_id and parent_sampled values from a sentry-trace header.
+    #
+    # @param sentry_trace [String] the sentry-trace header value from the previous transaction.
+    # @return [Array, nil]
+    def self.extract_sentry_trace(sentry_trace)
+      match = SENTRY_TRACE_REGEXP.match(sentry_trace)
+      return nil if match.nil?
+
+      trace_id, parent_span_id, sampled_flag = match[1..3]
+      parent_sampled = sampled_flag.nil? ? nil : sampled_flag != "0"
+
+      [trace_id, parent_span_id, parent_sampled]
     end
 
     # @return [Hash]
@@ -210,7 +222,7 @@ module Sentry
     # Finishes the transaction's recording and send it to Sentry.
     # @param hub [Hub] the hub that'll send this transaction. (Deprecated)
     # @return [TransactionEvent]
-    def finish(hub: nil)
+    def finish(hub: nil, end_timestamp: nil)
       if hub
         log_warn(
           <<~MSG
@@ -222,7 +234,7 @@ module Sentry
 
       hub ||= @hub
 
-      super() # Span#finish doesn't take arguments
+      super(end_timestamp: end_timestamp)
 
       if @name.nil?
         @name = UNLABELD_NAME
@@ -242,6 +254,24 @@ module Sentry
     def get_baggage
       populate_head_baggage if @baggage.nil? || @baggage.mutable
       @baggage
+    end
+
+    # Set the transaction name directly.
+    # Considered internal api since it bypasses the usual scope logic.
+    # @param name [String]
+    # @param source [Symbol]
+    # @return [void]
+    def set_name(name, source: :custom)
+      @name = name
+      @source = SOURCES.include?(source) ? source.to_sym : :custom
+    end
+
+    # Set contexts directly on the transaction.
+    # @param key [String, Symbol]
+    # @param value [Object]
+    # @return [void]
+    def set_context(key, value)
+      @contexts[key] = value
     end
 
     protected

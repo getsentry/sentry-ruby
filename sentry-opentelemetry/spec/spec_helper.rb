@@ -1,15 +1,13 @@
+# frozen_string_literal: true
+
 require "bundler/setup"
 require "pry"
-require "debug" if RUBY_VERSION.to_f >= 2.6 && RUBY_ENGINE == "ruby"
-
-require "resque"
-
-require "sentry-ruby"
+require "debug" if RUBY_VERSION.to_f >= 2.6
 
 require 'simplecov'
 
 SimpleCov.start do
-  project_name "sentry-resque"
+  project_name "sentry-opentelemetry"
   root File.join(__FILE__, "../../../")
   coverage_dir File.join(__FILE__, "../../coverage")
 end
@@ -19,9 +17,10 @@ if ENV["CI"]
   SimpleCov.formatter = SimpleCov::Formatter::CoberturaFormatter
 end
 
-require "sentry-resque"
-
-DUMMY_DSN = 'http://12345:67890@sentry.localdomain/sentry/42'
+require "sentry-ruby"
+require "sentry/test_helper"
+require "sentry-opentelemetry"
+require "opentelemetry/sdk"
 
 RSpec.configure do |config|
   # Enable flags like --only-failures and --next-failure
@@ -33,30 +32,24 @@ RSpec.configure do |config|
   config.expect_with :rspec do |c|
     c.syntax = :expect
   end
-
-  config.before :each do
-    # Make sure we reset the env in case something leaks in
-    ENV.delete('SENTRY_DSN')
-    ENV.delete('SENTRY_CURRENT_ENV')
-    ENV.delete('SENTRY_ENVIRONMENT')
-    ENV.delete('SENTRY_RELEASE')
-    ENV.delete('RACK_ENV')
-  end
-
-  config.around do |example|
-    ENV["FORK_PER_JOB"] = 'false'
-    Resque.redis.del "queue:default"
-    example.run
-    ENV["FORK_PER_JOB"] = ''
-  end
 end
 
 def perform_basic_setup
   Sentry.init do |config|
-    config.dsn = DUMMY_DSN
-    config.logger = ::Logger.new(nil)
-    config.background_worker_threads = 0
+    config.logger = Logger.new(nil)
+    config.dsn = Sentry::TestHelper::DUMMY_DSN
     config.transport.transport_class = Sentry::DummyTransport
+    # so the events will be sent synchronously for testing
+    config.background_worker_threads = 0
+    config.instrumenter = :otel
+    config.traces_sample_rate = 1.0
     yield(config) if block_given?
+  end
+end
+
+def perform_otel_setup
+  ::OpenTelemetry::SDK.configure do |c|
+    # suppress otlp warnings
+    c.logger = Logger.new(File::NULL)
   end
 end

@@ -1,10 +1,12 @@
-require_relative "lib/sentry/delayed_job/version"
+# frozen_string_literal: true
+
+require_relative "lib/sentry/opentelemetry/version"
 
 Gem::Specification.new do |spec|
-  spec.name          = "sentry-delayed_job"
-  spec.version       = Sentry::DelayedJob::VERSION
+  spec.name          = "sentry-opentelemetry"
+  spec.version       = Sentry::OpenTelemetry::VERSION
   spec.authors = ["Sentry Team"]
-  spec.description = spec.summary = "A gem that provides DelayedJob integration for the Sentry error logger"
+  spec.description = spec.summary = "A gem that provides OpenTelemetry integration for the Sentry error logger"
   spec.email = "accounts@sentry.io"
   spec.license = 'MIT'
   spec.homepage = "https://github.com/getsentry/sentry-ruby"
@@ -23,5 +25,5 @@ Gem::Specification.new do |spec|
   spec.require_paths = ["lib"]
 
   spec.add_dependency "sentry-ruby", "~> 5.7.0"
-  spec.add_dependency "delayed_job", ">= 4.0"
+  spec.add_dependency "opentelemetry-sdk", "~> 1.0"
 end

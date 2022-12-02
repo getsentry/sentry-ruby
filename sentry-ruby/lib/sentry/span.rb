@@ -68,13 +68,14 @@ module Sentry
       op: nil,
       status: nil,
       trace_id: nil,
+      span_id: nil,
       parent_span_id: nil,
       sampled: nil,
       start_timestamp: nil,
       timestamp: nil
     )
       @trace_id = trace_id || SecureRandom.uuid.delete("-")
-      @span_id = SecureRandom.hex(8)
+      @span_id = span_id || SecureRandom.hex(8)
       @parent_span_id = parent_span_id
       @sampled = sampled
       @start_timestamp = start_timestamp || Sentry.utc_now.to_f
@@ -89,11 +90,8 @@ module Sentry
 
     # Finishes the span by adding a timestamp.
     # @return [self]
-    def finish
-      # already finished
-      return if @timestamp
-
-      @timestamp = Sentry.utc_now.to_f
+    def finish(end_timestamp: nil)
+      @timestamp = end_timestamp || @timestamp || Sentry.utc_now.to_f
       self
     end
 

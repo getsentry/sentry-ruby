@@ -1,3 +1,15 @@
+## 5.7.0
+
+### Features
+
+- Expose `span_id` in `Span` constructor [#1945](https://github.com/getsentry/sentry-ruby/pull/1945)
+- Expose `end_timestamp` in `Span#finish` and `Transaction#finish` [#1946](https://github.com/getsentry/sentry-ruby/pull/1946)
+- Add `Transaction#set_context` api [#1947](https://github.com/getsentry/sentry-ruby/pull/1947)
+- Add OpenTelemetry support with new `sentry-opentelemetry` gem
+  - Add `config.instrumenter` to switch between `:sentry` and `:otel` instrumentation [#1944](https://github.com/getsentry/sentry-ruby/pull/1944)
+
+    The new `sentry-opentelemetry` gem adds support to automatically integrate OpenTelemetry performance tracing with Sentry. [Give it a try](https://github.com/getsentry/sentry-ruby/tree/master/sentry-opentelemetry#getting-started) and let us know if you have any feedback or problems with using it.
+
 ## 5.6.0
 
 ### Features
@@ -30,6 +42,7 @@
 
     Currently, Ruby integrations' Span op names aren't aligned with the core specification's convention, so we decided to update them altogether in this PR.
     **If you rely on Span op names for fine-grained event filtering, this may affect the data your app sends to Sentry.**
+    **Also make sure to update your [`traces_sampler`](https://docs.sentry.io/platforms/ruby/configuration/sampling/#setting-a-sampling-function) if you rely on the `op` for filtering some requests.**
 
 ### Refactoring
 
