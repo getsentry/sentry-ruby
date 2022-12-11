@@ -4,7 +4,7 @@ require "pry"
 require "timecop"
 require "simplecov"
 require "rspec/retry"
-require "fakeredis/rspec"
+require "redis"
 
 SimpleCov.start do
   project_name "sentry-ruby"

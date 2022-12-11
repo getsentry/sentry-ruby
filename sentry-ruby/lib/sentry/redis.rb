@@ -70,19 +70,37 @@ module Sentry
       "#{host}:#{port}/#{db}"
     end
 
-    module Client
+    module OldClientPatch
       def logging(commands, &block)
-        Sentry::Redis.new(commands, host, port, db).instrument do
-          super
-        end
+        Sentry::Redis.new(commands, host, port, db).instrument { super }
+      end
+    end
+
+    module GlobalRedisInstrumentation
+      def call(command, redis_config)
+        Sentry::Redis
+          .new([command], redis_config.host, redis_config.port, redis_config.db)
+          .instrument { super }
+      end
+
+      def call_pipelined(commands, redis_config)
+        Sentry::Redis
+          .new(commands, redis_config.host, redis_config.port, redis_config.db)
+          .instrument { super }
       end
     end
   end
 end
 
 if defined?(::Redis::Client)
-  Sentry.register_patch do
-    patch = Sentry::Redis::Client
-    Redis::Client.prepend(patch) unless Redis::Client.ancestors.include?(patch)
+  if Gem::Version.new(::Redis::VERSION) < Gem::Version.new("5.0")
+    Sentry.register_patch do
+      patch = Sentry::Redis::OldClientPatch
+      unless Redis::Client.ancestors.include?(patch)
+        Redis::Client.prepend(patch)
+      end
+    end
+  elsif defined?(RedisClient)
+    RedisClient.register(Sentry::Redis::GlobalRedisInstrumentation)
   end
 end

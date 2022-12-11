@@ -10,10 +10,10 @@ gem "rack", "~> #{Gem::Version.new(rack_version)}" unless rack_version == "0"
 gem "rake", "~> 12.0"
 gem "rspec", "~> 3.0"
 gem "rspec-retry"
-gem "fakeredis"
 gem "timecop"
-gem 'simplecov'
+gem "simplecov"
 gem "simplecov-cobertura", "~> 1.4"
+gem "redis"
 gem "rexml"
 
 gem "object_tracer"
