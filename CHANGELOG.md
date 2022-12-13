@@ -1,7 +1,13 @@
 ## Unreleased
 
 ### Features
+
 - Allow [tags](https://docs.sentry.io/platforms/ruby/enriching-events/tags/) to be passed via the context hash when reporting errors using ActiveSupport::ErrorReporter and Sentry::Rails::ErrorSubscriber in `sentry-rails` [#1932](https://github.com/getsentry/sentry-ruby/pull/1932)
+
+### Bug Fixes
+
+- Support redis-rb 5.0+ [#1963](https://github.com/getsentry/sentry-ruby/pull/1963)
+  - Fixes [#1932](https://github.com/getsentry/sentry-ruby/pull/1932)
 
 ## 5.7.0
 

@@ -1,9 +1,7 @@
 require "spec_helper"
 
 RSpec.describe :redis_logger do
-  let(:redis) do
-    Redis.new
-  end
+  let(:redis) { Redis.new(host: "127.0.0.1") }
 
   before do
     perform_basic_setup do |config|
@@ -59,7 +57,7 @@ RSpec.describe :redis_logger do
     let(:result) { redis.info }
 
     it "doesn't cause an error" do
-      expect(result).to include("uptime_in_days" => 0)
+      expect(result["uptime_in_days"].to_s).to eq("0")
       expect(Sentry.get_current_scope.breadcrumbs.peek).to have_attributes(
         category: "db.redis",
         data: { commands: [{ command: "INFO", key: nil }], server: "127.0.0.1:6379/0" }

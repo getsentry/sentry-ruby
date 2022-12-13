@@ -21,34 +21,71 @@ jobs:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        ruby_version: [2.4, 2.5, 2.6, 2.7, '3.0', head, jruby]
+        ruby_version: [2.4, 2.5, 2.6, 2.7, "3.0", head, jruby]
         rack_version: [2.0, 3.0]
+        redis_rb_version: [4.0]
         os: [ubuntu-latest]
         include:
-          - { os: ubuntu-latest, ruby_version: 3.1, rack_version: 0 }
-          - { os: ubuntu-latest, ruby_version: 3.1, rack_version: 2.0 }
-          - { os: ubuntu-latest, ruby_version: 3.1, rack_version: 3.0 }
-          - { os: ubuntu-latest, ruby_version: 3.1, rack_version: 3.0, options: { rubyopt: "--enable-frozen-string-literal --debug=frozen-string-literal" } }
-          - { os: ubuntu-latest, ruby_version: 3.1, rack_version: 3.0, options: { codecov: 1 } }
+          - {
+              os: ubuntu-latest,
+              ruby_version: 3.1,
+              rack_version: 0,
+              redis_rb_version: 5.0,
+            }
+          - {
+              os: ubuntu-latest,
+              ruby_version: 3.1,
+              rack_version: 2.0,
+              redis_rb_version: 5.0,
+            }
+          - {
+              os: ubuntu-latest,
+              ruby_version: 3.1,
+              rack_version: 3.0,
+              redis_rb_version: 5.0,
+            }
+          - {
+              os: ubuntu-latest,
+              ruby_version: 3.1,
+              rack_version: 3.0,
+              redis_rb_version: 5.0,
+              options:
+                {
+                  rubyopt: "--enable-frozen-string-literal --debug=frozen-string-literal",
+                },
+            }
+          - {
+              os: ubuntu-latest,
+              ruby_version: 3.1,
+              rack_version: 3.0,
+              redis_rb_version: 5.0,
+              options: { codecov: 1 },
+            }
     steps:
-    - uses: actions/checkout@v1
+      - uses: actions/checkout@v1
 
-    - name: Set up Ruby ${{ matrix.ruby_version }}
-      uses: ruby/setup-ruby@v1
-      with:
-        ruby-version: ${{ matrix.ruby_version }}
+      - name: Set up Ruby ${{ matrix.ruby_version }}
+        uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: ${{ matrix.ruby_version }}
 
-    - name: Run specs
-      env:
-        RUBYOPT: ${{ matrix.options.rubyopt }}
-        RACK_VERSION: ${{ matrix.rack_version }}
-      run: |
-        bundle install --jobs 4 --retry 3
-        bundle exec rake
+      - name: Start Redis
+        uses: supercharge/redis-github-action@c169aa53af4cd5d9321e9114669dbd11be08d307
+        with:
+          redis-version: 6
 
-    - name: Upload Coverage
-      if: ${{ matrix.options.codecov }}
-      run: |
-        curl -Os https://uploader.codecov.io/latest/linux/codecov
-        chmod +x codecov
-        ./codecov -t ${CODECOV_TOKEN} -R `pwd` -f coverage/coverage.xml
+      - name: Run specs with Rack ${{ matrix.rack_version }} and redis-rb ${{ matrix.redis_rb_version }}
+        env:
+          RUBYOPT: ${{ matrix.options.rubyopt }}
+          RACK_VERSION: ${{ matrix.rack_version }}
+          REDIS_RB_VERSION: ${{ matrix.redis_rb_version }}
+        run: |
+          bundle install --jobs 4 --retry 3
+          bundle exec rake
+
+      - name: Upload Coverage
+        if: ${{ matrix.options.codecov }}
+        run: |
+          curl -Os https://uploader.codecov.io/latest/linux/codecov
+          chmod +x codecov
+          ./codecov -t ${CODECOV_TOKEN} -R `pwd` -f coverage/coverage.xml

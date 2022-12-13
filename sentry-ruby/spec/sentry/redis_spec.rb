@@ -1,9 +1,7 @@
 require "spec_helper"
 
 RSpec.describe Sentry::Redis do
-  let(:redis) do
-    Redis.new
-  end
+  let(:redis) { Redis.new(host: "127.0.0.1") }
 
   context "with tracing enabled" do
     before do
