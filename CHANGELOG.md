@@ -3,6 +3,7 @@
 ### Features
 
 - Allow [tags](https://docs.sentry.io/platforms/ruby/enriching-events/tags/) to be passed via the context hash when reporting errors using ActiveSupport::ErrorReporter and Sentry::Rails::ErrorSubscriber in `sentry-rails` [#1932](https://github.com/getsentry/sentry-ruby/pull/1932)
+- Return value from `perform_action` in ActionCable::Channel instances when initialized [#1966](https://github.com/getsentry/sentry-ruby/pull/1966)
 
 ### Bug Fixes
 
