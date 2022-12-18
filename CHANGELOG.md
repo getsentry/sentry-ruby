@@ -8,6 +8,8 @@
 
 - Support redis-rb 5.0+ [#1963](https://github.com/getsentry/sentry-ruby/pull/1963)
   - Fixes [#1932](https://github.com/getsentry/sentry-ruby/pull/1932)
+- Skip private _config context in Sidekiq 7+ [#1967](https://github.com/getsentry/sentry-ruby/pull/1967)
+  - Fixes [#1956](https://github.com/getsentry/sentry-ruby/issues/1956)
 
 ## 5.7.0
 
