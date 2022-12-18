@@ -26,6 +26,9 @@ module Sentry
           end
         end
 
+        # Sidekiq 7.0 started adding `_config` to the context, which is not easily serialisable
+        # And it's presence could be confusing so it's better to remove it until we decided to add it for a reason
+        filtered_context.delete(:_config)
         filtered_context
       end
 

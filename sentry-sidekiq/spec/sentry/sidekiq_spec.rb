@@ -57,6 +57,13 @@ RSpec.describe Sentry::Sidekiq do
     expect(Sentry::Event.get_message_from_exception(event)).to match("RuntimeError: I'm sad!")
   end
 
+  it "doesn't store the private `_config` context", skip: !WITH_SIDEKIQ_7 do
+    expect { execute_worker(processor, SadWorker) }.to change { transport.events.size }.by(1)
+
+    event = transport.events.last.to_hash
+    expect(event[:contexts][:sidekiq].keys.map(&:to_s)).not_to include("_config")
+  end
+
   describe "context cleanup" do
     it "cleans up context from processed jobs" do
       execute_worker(processor, HappyWorker)
