@@ -32,6 +32,29 @@ RSpec.describe Sentry::Rails::Tracing::ActiveRecordSubscriber, :subscriber do
       expect(span[:description]).to eq("SELECT \"posts\".* FROM \"posts\"")
       expect(span[:trace_id]).to eq(transaction.dig(:contexts, :trace, :trace_id))
     end
+
+    it "records database cached query events", skip: Rails.version.to_f < 5.1 do
+      transaction = Sentry::Transaction.new(sampled: true, hub: Sentry.get_current_hub)
+      Sentry.get_current_scope.set_span(transaction)
+
+      ActiveRecord::Base.connection.cache do
+        Post.all.to_a
+        Post.all.to_a # Execute a second time, hitting the query cache
+      end
+
+      transaction.finish
+
+      expect(transport.events.count).to eq(1)
+
+      transaction = transport.events.first.to_hash
+      expect(transaction[:type]).to eq("transaction")
+      expect(transaction[:spans].count).to eq(2)
+
+      span = transaction[:spans][1]
+      expect(span[:op]).to eq("db.sql.active_record")
+      expect(span[:description]).to eq("SELECT \"posts\".* FROM \"posts\"")
+      expect(span[:tags]).to include({cached: true})
+    end
   end
 
   context "when transaction is not sampled" do

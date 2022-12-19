@@ -14,6 +14,7 @@ module Sentry
 
             record_on_current_span(op: SPAN_PREFIX + event_name, start_timestamp: payload[START_TIMESTAMP_NAME], description: payload[:sql], duration: duration) do |span|
               span.set_data(:connection_id, payload[:connection_id])
+              span.set_tag(:cached, true) if payload.fetch(:cached, false) # cached key is only set for hits in the QueryCache, from Rails 5.1
             end
           end
         end
