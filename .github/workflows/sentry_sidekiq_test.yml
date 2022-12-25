@@ -45,6 +45,7 @@ jobs:
       uses: ruby/setup-ruby@v1
       with:
         ruby-version: ${{ matrix.ruby_version }}
+        bundler: "2.3"
 
     - name: Start Redis
       uses: supercharge/redis-github-action@1.1.0
@@ -62,6 +63,6 @@ jobs:
     - name: Upload Coverage
       if: ${{ matrix.options.codecov }}
       run: |
-        curl -Os https://uploader.codecov.io/latest/linux/codecov 
+        curl -Os https://uploader.codecov.io/latest/linux/codecov
         chmod +x codecov
         ./codecov -t ${CODECOV_TOKEN} -R `pwd` -f coverage/coverage.xml

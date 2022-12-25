@@ -68,6 +68,7 @@ jobs:
         uses: ruby/setup-ruby@v1
         with:
           ruby-version: ${{ matrix.ruby_version }}
+          bundler: "2.3"
 
       - name: Start Redis
         uses: supercharge/redis-github-action@c169aa53af4cd5d9321e9114669dbd11be08d307
