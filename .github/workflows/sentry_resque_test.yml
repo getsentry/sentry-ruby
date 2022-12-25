@@ -21,14 +21,9 @@ jobs:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
+        ruby_version: [2.4, 2.5, 2.6, 2.7, '3.0', '3.1', head, jruby]
+        os: [ubuntu-latest]
         include:
-          - { os: ubuntu-latest, ruby_version: 2.4 }
-          - { os: ubuntu-latest, ruby_version: 2.5 }
-          - { os: ubuntu-latest, ruby_version: 2.6 }
-          - { os: ubuntu-latest, ruby_version: 2.7 }
-          - { os: ubuntu-latest, ruby_version: '3.0' }
-          - { os: ubuntu-latest, ruby_version: head }
-          - { os: ubuntu-latest, ruby_version: jruby }
           - { os: ubuntu-latest, ruby_version: '3.1', options: { rubyopt: "--enable-frozen-string-literal --debug=frozen-string-literal" } }
           - { os: ubuntu-latest, ruby_version: '3.1', options: { codecov: 1 } }
     steps:
