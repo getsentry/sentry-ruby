@@ -21,7 +21,7 @@ jobs:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        ruby_version: [2.4, 2.5, 2.6, 2.7, "3.0", head, jruby]
+        ruby_version: [2.4, 2.5, 2.6, 2.7, "3.0", "3.1", head, jruby]
         rack_version: [2.0, 3.0]
         redis_rb_version: [4.0]
         os: [ubuntu-latest]
@@ -36,12 +36,6 @@ jobs:
               os: ubuntu-latest,
               ruby_version: 3.1,
               rack_version: 2.0,
-              redis_rb_version: 5.0,
-            }
-          - {
-              os: ubuntu-latest,
-              ruby_version: 3.1,
-              rack_version: 3.0,
               redis_rb_version: 5.0,
             }
           - {
