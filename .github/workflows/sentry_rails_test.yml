@@ -64,6 +64,7 @@ jobs:
       uses: ruby/setup-ruby@v1
       with:
         ruby-version: ${{ matrix.ruby_version }}
+        bundler: "2.3"
 
     - name: Build with Rails ${{ matrix.rails_version }}
       env:
