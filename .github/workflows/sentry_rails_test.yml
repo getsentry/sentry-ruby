@@ -65,6 +65,7 @@ jobs:
       with:
         ruby-version: ${{ matrix.ruby_version }}
         bundler: "2.3"
+        rubygems: ${{ matrix.rails_version == '7.1.0' && 'latest' || 'default' }}
 
     - name: Build with Rails ${{ matrix.rails_version }}
       env:
