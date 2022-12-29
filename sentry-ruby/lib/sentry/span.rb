@@ -4,6 +4,8 @@ require "securerandom"
 
 module Sentry
   class Span
+    include ArgumentCheckingHelper
+
     STATUS_MAP = {
       400 => "invalid_argument",
       401 => "unauthenticated",
@@ -51,6 +53,9 @@ module Sentry
     # Span data
     # @return [Hash]
     attr_reader :data
+    # Span extra
+    # @return [Hash]
+    attr_reader :extra
 
     # The SpanRecorder the current span belongs to.
     # SpanRecorder holds all spans under the same Transaction object (including the Transaction itself).
@@ -86,6 +91,7 @@ module Sentry
       @status = status
       @data = {}
       @tags = {}
+      @extra = {}
     end
 
     # Finishes the span by adding a timestamp.
@@ -227,6 +233,20 @@ module Sentry
     # @param value [String]
     def set_tag(key, value)
       @tags[key] = value
+    end
+
+    # Inserts a key-value pair to the span's extra payload.
+    # @param key [String, Symbol]
+    # @param value [String]
+    def set_extra(key, value)
+      @extra[key] = value
+    end
+
+    # Inserts a multiple key-value pairs to the span's extra payload.
+    # @param extras_hash [Hash]
+    def set_extras(extras_hash)
+      check_argument_type!(extras_hash, Hash)
+      @extra.merge!(extras_hash)
     end
   end
 end

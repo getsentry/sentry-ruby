@@ -24,6 +24,7 @@ module Sentry
       self.timestamp = transaction.timestamp
       self.start_timestamp = transaction.start_timestamp
       self.tags = transaction.tags
+      self.extra = transaction.extra
       self.dynamic_sampling_context = transaction.get_baggage.dynamic_sampling_context
 
       finished_spans = transaction.span_recorder.spans.select { |span| span.timestamp && span != transaction }

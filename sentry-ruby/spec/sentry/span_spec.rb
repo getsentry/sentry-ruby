@@ -272,4 +272,20 @@ RSpec.describe Sentry::Span do
       expect(subject.tags).to eq({ foo: "bar" })
     end
   end
+
+  describe "#set_extra" do
+    it "sets extra" do
+      subject.set_extra(:foo, "bar")
+
+      expect(subject.extra).to eq({ foo: "bar" })
+    end
+  end
+
+  describe "#set_extras" do
+    it "sets extras" do
+      subject.set_extras({ foo: "bar", bar: "foo" })
+
+      expect(subject.extra).to eq({ foo: "bar", bar: "foo" })
+    end
+  end
 end
