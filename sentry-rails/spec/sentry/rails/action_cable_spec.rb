@@ -10,6 +10,12 @@ if defined?(ActionCable) && ActionCable.version >= Gem::Version.new('6.0.0')
     end
   end
 
+  class ContentChannel < ::ActionCable::Channel::Base
+    def content
+      "value"
+    end
+  end
+
   class AppearanceChannel < ::ActionCable::Channel::Base
     def appear
       raise "foo"
@@ -42,6 +48,18 @@ if defined?(ActionCable) && ActionCable.version >= Gem::Version.new('6.0.0')
     describe ChatChannel, type: :channel do
       it "doesn't swallow the app's operation" do
         expect { subscribe }.to raise_error('foo')
+      end
+    end
+
+    describe ContentChannel, type: :channel do
+      let(:connection) do
+        env = Rack::MockRequest.env_for "/test", "HTTP_CONNECTION" => "upgrade", "HTTP_UPGRADE" => "websocket",
+          "HTTP_HOST" => "localhost", "HTTP_ORIGIN" => "http://rubyonrails.com"
+        described_class.new(spy, env)
+      end
+
+      it "perform_action returns content" do
+        expect(connection.perform_action({ "action" => "content" })).to eq("value")
       end
     end
   end
@@ -109,6 +127,14 @@ if defined?(ActionCable) && ActionCable.version >= Gem::Version.new('6.0.0')
           expect(event["transaction"]).to eq("ChatChannel#subscribed")
           expect(event["transaction_info"]).to eq({ "source" => "view" })
           expect(event["contexts"]).to include("action_cable" => { "params" => { "room_id" => 42 } })
+        end
+      end
+
+      describe ContentChannel do
+        before { subscribe }
+        
+        it "perform_action returns content" do
+          expect(perform :content, foo: 'bar').to eq("value")
         end
       end
 
