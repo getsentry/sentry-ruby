@@ -51,10 +51,10 @@ RSpec.describe Sentry::Rails::Tracing::ActiveRecordSubscriber, :subscriber do
       expect(transaction[:type]).to eq("transaction")
       expect(transaction[:spans].count).to eq(2)
 
-      span = transaction[:spans][1]
-      expect(span[:op]).to eq("db.sql.active_record")
-      expect(span[:description]).to eq("SELECT \"posts\".* FROM \"posts\"")
-      expect(span[:tags]).to include({cached: true})
+      cached_query_span = transaction[:spans][1]
+      expect(cached_query_span[:op]).to eq("db.sql.active_record")
+      expect(cached_query_span[:description]).to eq("SELECT \"posts\".* FROM \"posts\"")
+      expect(cached_query_span[:tags]).to include({cached: true})
     end
   end
 
