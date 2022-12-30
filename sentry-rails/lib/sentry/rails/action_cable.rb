@@ -22,7 +22,7 @@ module Sentry
               begin
                 result = block.call
                 finish_transaction(transaction, 200)
-                return result
+                result
               rescue Exception => e # rubocop:disable Lint/RescueException
                 Sentry::Rails.capture_exception(e)
                 finish_transaction(transaction, 500)
