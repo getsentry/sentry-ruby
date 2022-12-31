@@ -198,6 +198,20 @@ RSpec.describe Sentry::Span do
       expect(new_span.start_timestamp).not_to eq(subject.start_timestamp)
       expect(new_span.timestamp).not_to be(nil)
     end
+
+    it "finishes the span even when exception occurs" do
+      child_span = nil
+
+      expect do
+        subject.with_child_span(op: "sql.query") do |span|
+          child_span = span
+          1/0
+        end
+      end.to raise_error(ZeroDivisionError)
+
+      expect(child_span.timestamp).to be_a(Float)
+      expect(child_span.status).to eq("internal_error")
+    end
   end
 
   describe "#set_status" do

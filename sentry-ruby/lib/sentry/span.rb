@@ -169,6 +169,10 @@ module Sentry
       yield(child_span)
 
       child_span.finish
+    rescue
+      child_span.set_http_status(500)
+      child_span.finish
+      raise
     end
 
     def deep_dup
