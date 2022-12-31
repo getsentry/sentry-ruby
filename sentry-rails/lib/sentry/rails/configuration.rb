@@ -83,7 +83,6 @@ module Sentry
           %r(\A/{0,2}#{::Rails.application.config.assets.prefix})
         end
         @tracing_subscribers = Set.new([
-          Sentry::Rails::Tracing::ActionControllerSubscriber,
           Sentry::Rails::Tracing::ActionViewSubscriber,
           Sentry::Rails::Tracing::ActiveRecordSubscriber,
           Sentry::Rails::Tracing::ActiveStorageSubscriber
