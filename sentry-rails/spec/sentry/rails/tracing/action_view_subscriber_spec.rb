@@ -20,9 +20,10 @@ RSpec.describe Sentry::Rails::Tracing::ActionViewSubscriber, :subscriber, type: 
 
       transaction = transport.events.first.to_hash
       expect(transaction[:type]).to eq("transaction")
-      expect(transaction[:spans].count).to eq(1)
+      expect(transaction[:spans].count).to eq(2)
 
-      span = transaction[:spans][0]
+      # ignore the first span, which is for controller action
+      span = transaction[:spans][1]
       expect(span[:op]).to eq("template.render_template.action_view")
       expect(span[:description]).to match(/test_template\.html\.erb/)
       expect(span[:trace_id]).to eq(transaction.dig(:contexts, :trace, :trace_id))

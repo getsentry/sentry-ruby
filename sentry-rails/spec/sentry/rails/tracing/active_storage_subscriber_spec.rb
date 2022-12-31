@@ -37,9 +37,9 @@ RSpec.describe Sentry::Rails::Tracing::ActiveStorageSubscriber, :subscriber, typ
 
       request_transaction = transport.events.last.to_hash
       expect(request_transaction[:type]).to eq("transaction")
-      expect(request_transaction[:spans].count).to eq(1)
+      expect(request_transaction[:spans].count).to eq(2)
 
-      span = request_transaction[:spans][0]
+      span = request_transaction[:spans][1]
       expect(span[:op]).to eq("file.service_upload.active_storage")
       expect(span[:description]).to eq("Disk")
       expect(span.dig(:data, :key)).to eq(p.cover.key)
