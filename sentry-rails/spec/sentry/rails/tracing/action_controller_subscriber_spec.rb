@@ -6,11 +6,23 @@ RSpec.describe Sentry::Rails::Tracing::ActionControllerSubscriber, :subscriber, 
   end
 
   context "when transaction is sampled" do
+    let(:string_io) { StringIO.new }
+    let(:logger) do
+      ::Logger.new(string_io)
+    end
+
     before do
       make_basic_app do |config|
         config.traces_sample_rate = 1.0
         config.rails.tracing_subscribers = [described_class]
+        config.logger = logger
       end
+    end
+
+    it "logs deprecation message" do
+      expect(string_io.string).to include(
+        "DEPRECATION WARNING: sentry-rails has changed its approach on controller span recording and Sentry::Rails::Tracing::ActionControllerSubscriber is now depreacted."
+      )
     end
 
     it "records controller action processing event" do
@@ -20,7 +32,7 @@ RSpec.describe Sentry::Rails::Tracing::ActionControllerSubscriber, :subscriber, 
 
       transaction = transport.events.first.to_hash
       expect(transaction[:type]).to eq("transaction")
-      expect(transaction[:spans].count).to eq(1)
+      expect(transaction[:spans].count).to eq(2)
 
       span = transaction[:spans][0]
       expect(span[:op]).to eq("view.process_action.action_controller")
