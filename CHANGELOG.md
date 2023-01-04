@@ -4,6 +4,17 @@
 
 - Allow [tags](https://docs.sentry.io/platforms/ruby/enriching-events/tags/) to be passed via the context hash when reporting errors using ActiveSupport::ErrorReporter and Sentry::Rails::ErrorSubscriber in `sentry-rails` [#1932](https://github.com/getsentry/sentry-ruby/pull/1932)
 - Pass a `cached: true` tag for SQL query spans that utilized the ActiveRecord QueryCache when using ActiveRecordSubscriber in `sentry-rails` [#1968](https://github.com/getsentry/sentry-ruby/pull/1968)
+- Add `Sentry.add_global_event_processor` API [#1976](https://github.com/getsentry/sentry-ruby/pull/1976)
+
+    Users can now configure global event processors without configuring scope as well.
+
+    ```rb
+    Sentry.add_global_event_processor do |event, hint|
+      event.tags = { foo: 42 }
+      event
+    end
+    ```
+
 
 ### Bug Fixes
 
