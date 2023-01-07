@@ -12,6 +12,7 @@
 - Skip private _config context in Sidekiq 7+ [#1967](https://github.com/getsentry/sentry-ruby/pull/1967)
   - Fixes [#1956](https://github.com/getsentry/sentry-ruby/issues/1956)
 - Return value from `perform_action` in ActionCable::Channel instances when initialized [#1966](https://github.com/getsentry/sentry-ruby/pull/1966)
+- `Span#with_child_span` should finish the span even with exception raised [#1982](https://github.com/getsentry/sentry-ruby/pull/1982)
 
 ## 5.7.0
 
