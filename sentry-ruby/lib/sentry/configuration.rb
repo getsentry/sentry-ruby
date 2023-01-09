@@ -243,9 +243,18 @@ module Sentry
 
     INSTRUMENTERS = [:sentry, :otel]
 
-    # Post initialization callbacks are called at the end of initialization process
-    # allowing extending the configuration of sentry-ruby by multiple extensions
-    @@post_initialization_callbacks = []
+    class << self
+      # Post initialization callbacks are called at the end of initialization process
+      # allowing extending the configuration of sentry-ruby by multiple extensions
+      def post_initialization_callbacks
+        @post_initialization_callbacks ||= []
+      end
+
+    # allow extensions to add their hooks to the Configuration class
+      def add_post_initialization_callback(&block)
+        post_initialization_callbacks << block
+      end
+    end
 
     def initialize
       self.app_dirs_pattern = nil
@@ -497,17 +506,6 @@ module Sentry
       self.class.post_initialization_callbacks.each do |hook|
         instance_eval(&hook)
       end
-    end
-
-    # allow extensions to add their hooks to the Configuration class
-    def self.add_post_initialization_callback(&block)
-      self.post_initialization_callbacks << block
-    end
-
-    protected
-
-    def self.post_initialization_callbacks
-      @@post_initialization_callbacks
     end
   end
 end
