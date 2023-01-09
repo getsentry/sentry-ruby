@@ -58,8 +58,10 @@ module Sentry
       event.breadcrumbs = breadcrumbs
       event.rack_env = rack_env if rack_env
 
-      unless @event_processors.empty?
-        @event_processors.each do |processor_block|
+      all_event_processors = self.class.global_event_processors + @event_processors
+
+      unless all_event_processors.empty?
+        all_event_processors.each do |processor_block|
           event = processor_block.call(event, hint)
         end
       end
@@ -314,6 +316,22 @@ module Sentry
           name: RbConfig::CONFIG["ruby_install_name"],
           version: RUBY_DESCRIPTION || Sentry.sys_command("ruby -v")
         }
+      end
+
+      # Returns the global event processors array.
+      # @return [Array<Proc>]
+      def global_event_processors
+        @global_event_processors ||= []
+      end
+
+      # Adds a new global event processor [Proc].
+      # Sometimes we need a global event processor without needing to configure scope.
+      # These run before scope event processors.
+      #
+      # @param block [Proc]
+      # @return [void]
+      def add_global_event_processor(&block)
+        global_event_processors << block
       end
     end
 

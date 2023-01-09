@@ -462,6 +462,23 @@ module Sentry
       !!exc.instance_variable_get(CAPTURED_SIGNATURE)
     end
 
+    # Add a global event processor [Proc].
+    # These run before scope event processors.
+    #
+    # @yieldparam event [Event]
+    # @yieldparam hint [Hash, nil]
+    # @return [void]
+    #
+    # @example
+    #   Sentry.add_global_event_processor do |event, hint|
+    #     event.tags = { foo: 42 }
+    #     event
+    #   end
+    #
+    def add_global_event_processor(&block)
+      Scope.add_global_event_processor(&block)
+    end
+
     ##### Helpers #####
 
     # @!visibility private

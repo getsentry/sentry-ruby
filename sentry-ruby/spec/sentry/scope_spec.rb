@@ -110,6 +110,18 @@ RSpec.describe Sentry::Scope do
     end
   end
 
+  describe ".add_global_event_processor" do
+    after { described_class.global_event_processors.clear }
+
+    it "adds the global processor to the scope" do
+      expect(described_class.global_event_processors.count).to eq(0)
+
+      expect do
+        described_class.add_global_event_processor { |e| e }
+      end.to change { described_class.global_event_processors.count }.by(1)
+    end
+  end
+
   describe "#clear" do
     it "resets the scope's data" do
       subject.set_tags({foo: "bar"})
@@ -233,6 +245,35 @@ RSpec.describe Sentry::Scope do
 
       expect(event.tags).to eq({ processed: true })
       expect(event.extra).to eq({ foo: "bar" })
+    end
+
+    context "with global event processor" do
+      before do
+        described_class.add_global_event_processor do |event, hint|
+          event.tags = { bar: 99 }
+          event.extra = hint
+          event
+        end
+      end
+
+      after { described_class.global_event_processors.clear }
+
+      it "applies global event processors to the event" do
+        subject.apply_to_event(event, { foo: 42 })
+
+        expect(event.tags).to eq({ bar: 99 })
+        expect(event.extra).to eq({ foo: 42 })
+      end
+
+      it "scope event processors take precedence over global event processors" do
+        subject.add_event_processor do |event, hint|
+          event.tags = { foo: 42 }
+          event
+        end
+
+        subject.apply_to_event(event)
+        expect(event.tags).to eq({ foo: 42 })
+      end
     end
 
     it "sets trace context if there's a span" do
