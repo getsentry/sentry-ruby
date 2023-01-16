@@ -18,6 +18,7 @@ module Sentry
 
       def initialize
         @span_map = {}
+        setup_event_processor
       end
 
       def on_start(otel_span, parent_context)
@@ -151,6 +152,19 @@ module Sentry
 
         sentry_span.set_op(op)
         sentry_span.set_description(description)
+      end
+
+      def setup_event_processor
+        Sentry.add_global_event_processor do |event, _hint|
+          span_context = ::OpenTelemetry::Trace.current_span.context
+          next event unless span_context.valid?
+
+          sentry_span = @span_map[span_context.hex_span_id]
+          next event unless sentry_span
+
+          event.contexts[:trace] ||= sentry_span.get_trace_context
+          event
+        end
       end
     end
   end

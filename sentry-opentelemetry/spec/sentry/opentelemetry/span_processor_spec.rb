@@ -78,6 +78,23 @@ RSpec.describe Sentry::OpenTelemetry::SpanProcessor do
     it 'raises error on instantiation' do
       expect { described_class.new }.to raise_error(NoMethodError)
     end
+
+    context 'global event processor' do
+      let(:event_processor) { Sentry::Scope.global_event_processors.first }
+      let(:event) { Sentry::Event.new(configuration: Sentry.configuration) }
+      let(:hint) { {} }
+
+      before { subject.on_start(root_span, empty_context) }
+
+      it 'sets trace context on event' do
+        OpenTelemetry::Context.with_current(root_parent_context) do
+          event_processor.call(event, hint)
+          expect(event.contexts).to include(:trace)
+          expect(event.contexts[:trace][:trace_id]).to eq(root_span.context.hex_trace_id)
+          expect(event.contexts[:trace][:span_id]).to eq(root_span.context.hex_span_id)
+        end
+      end
+    end
   end
 
   describe '#on_start' do
