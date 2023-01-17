@@ -14,7 +14,7 @@ module Sentry
             end
           end
 
-          if ::Rails.version.to_i == 5
+          if ::Rails.version.to_f < 6.1
             def subscribe_to_event(event_names)
               event_names.each do |event_name|
                 ActiveSupport::Notifications.subscribe(event_name) do |*args|
