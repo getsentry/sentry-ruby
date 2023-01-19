@@ -36,17 +36,19 @@ RSpec.describe Sentry::Rails::Tracing, type: :request do
       expect(transaction[:spans].count).to eq(2)
 
       first_span = transaction[:spans][0]
-      expect(first_span[:op]).to eq("db.sql.active_record")
-      expect(first_span[:description]).to eq("SELECT \"posts\".* FROM \"posts\"")
+      expect(first_span[:op]).to eq("view.process_action.action_controller")
+      expect(first_span[:description]).to eq("PostsController#index")
       expect(first_span[:parent_span_id]).to eq(parent_span_id)
-
-      # this is to make sure we calculate the timestamp in the correct scale (second instead of millisecond)
-      expect(first_span[:timestamp] - first_span[:start_timestamp]).to be_between(10.0 / 1_000_000, 10.0 / 1000)
+      expect(first_span[:status]).to eq("internal_error")
+      expect(first_span[:data].keys).to match_array(["status_code", :format, :method, :path, :params])
 
       second_span = transaction[:spans][1]
-      expect(second_span[:op]).to eq("view.process_action.action_controller")
-      expect(second_span[:description]).to eq("PostsController#index")
-      expect(second_span[:parent_span_id]).to eq(parent_span_id)
+      expect(second_span[:op]).to eq("db.sql.active_record")
+      expect(second_span[:description]).to eq("SELECT \"posts\".* FROM \"posts\"")
+      expect(second_span[:parent_span_id]).to eq(first_span[:span_id])
+
+      # this is to make sure we calculate the timestamp in the correct scale (second instead of millisecond)
+      expect(second_span[:timestamp] - second_span[:start_timestamp]).to be_between(10.0 / 1_000_000, 10.0 / 1000)
     end
 
     it "records transaction alone" do
@@ -65,22 +67,27 @@ RSpec.describe Sentry::Rails::Tracing, type: :request do
       expect(transaction[:spans].count).to eq(3)
 
       first_span = transaction[:spans][0]
-      expect(first_span[:op]).to eq("db.sql.active_record")
-      expect(first_span[:description].squeeze("\s")).to eq(
+      expect(first_span[:data].keys).to match_array(["status_code", :format, :method, :path, :params])
+      expect(first_span[:op]).to eq("view.process_action.action_controller")
+      expect(first_span[:description]).to eq("PostsController#show")
+      expect(first_span[:parent_span_id]).to eq(parent_span_id)
+      expect(first_span[:status]).to eq("ok")
+
+
+      second_span = transaction[:spans][1]
+      expect(second_span[:op]).to eq("db.sql.active_record")
+      expect(second_span[:description].squeeze("\s")).to eq(
         'SELECT "posts".* FROM "posts" WHERE "posts"."id" = ? LIMIT ?'
       )
-      expect(first_span[:parent_span_id]).to eq(parent_span_id)
+      expect(second_span[:parent_span_id]).to eq(first_span[:span_id])
 
       # this is to make sure we calculate the timestamp in the correct scale (second instead of millisecond)
-      expect(first_span[:timestamp] - first_span[:start_timestamp]).to be_between(10.0 / 1_000_000, 10.0 / 1000)
+      expect(second_span[:timestamp] - second_span[:start_timestamp]).to be_between(10.0 / 1_000_000, 10.0 / 1000)
 
-      last_span = transaction[:spans][2]
-      expect(last_span[:data][:payload].keys).not_to include(:headers)
-      expect(last_span[:data][:payload].keys).not_to include(:request)
-      expect(last_span[:data][:payload].keys).not_to include(:response)
-      expect(last_span[:op]).to eq("view.process_action.action_controller")
-      expect(last_span[:description]).to eq("PostsController#show")
-      expect(last_span[:parent_span_id]).to eq(parent_span_id)
+      third_span = transaction[:spans][2]
+      expect(third_span[:op]).to eq("template.render_template.action_view")
+      expect(third_span[:description].squeeze("\s")).to eq("text template")
+      expect(third_span[:parent_span_id]).to eq(first_span[:span_id])
     end
 
     it "doesn't mess with custom instrumentations" do
@@ -197,8 +204,8 @@ RSpec.describe Sentry::Rails::Tracing, type: :request do
 
       expect(transaction[:type]).to eq("transaction")
       expect(transaction[:transaction]).to eq("PostsController#show")
-      second_span = transaction[:spans][2]
-      expect(second_span[:description]).to eq("PostsController#show")
+      first_span = transaction[:spans][0]
+      expect(first_span[:description]).to eq("PostsController#show")
     end
 
     context "with sentry-trace and baggage headers" do
