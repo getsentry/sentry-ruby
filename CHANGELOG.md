@@ -16,6 +16,7 @@
     ```
 
 - Add global event processor in OpenTelemetry `SpanProcessor` to link errors with transactions [#1983](https://github.com/getsentry/sentry-ruby/pull/1983)
+- Fix some inconsistencies in setting name/op/status in OpenTelemetry `SpanProcessor` [#1987](https://github.com/getsentry/sentry-ruby/pull/1987)
 
 
 ### Bug Fixes

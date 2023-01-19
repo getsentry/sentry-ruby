@@ -61,11 +61,8 @@ module Sentry
         sentry_span = @span_map.delete(otel_span.context.hex_span_id)
         return unless sentry_span
 
-        sentry_span.set_op(otel_span.name)
-
         if sentry_span.is_a?(Sentry::Transaction)
-          sentry_span.set_name(otel_span.name)
-          sentry_span.set_context(:otel, otel_context_hash(otel_span))
+          update_transaction_with_otel_data(sentry_span, otel_span)
         else
           update_span_with_otel_data(sentry_span, otel_span)
         end
@@ -124,10 +121,7 @@ module Sentry
         otel_context
       end
 
-      def update_span_with_otel_data(sentry_span, otel_span)
-        sentry_span.set_data('otel.kind', otel_span.kind)
-        otel_span.attributes&.each { |k, v| sentry_span.set_data(k, v) }
-
+      def parse_span_description(otel_span)
         op = otel_span.name
         description = otel_span.name
 
@@ -140,9 +134,6 @@ module Sentry
 
           target = otel_span.attributes[SEMANTIC_CONVENTIONS::HTTP_TARGET]
           description += target if target
-
-          status_code = otel_span.attributes[SEMANTIC_CONVENTIONS::HTTP_STATUS_CODE]
-          sentry_span.set_http_status(status_code) if status_code
         elsif otel_span.attributes[SEMANTIC_CONVENTIONS::DB_SYSTEM]
           op = "db"
 
@@ -150,8 +141,35 @@ module Sentry
           description = statement if statement
         end
 
+        [op, description]
+      end
+
+      def update_span_status(sentry_span, otel_span)
+        if (http_status_code = otel_span.attributes[SEMANTIC_CONVENTIONS::HTTP_STATUS_CODE])
+          sentry_span.set_http_status(http_status_code)
+        elsif (status_code = otel_span.status.code)
+          status = [0, 1].include?(status_code) ? 'ok' : 'unknown_error'
+          sentry_span.set_status(status)
+        end
+      end
+
+      def update_span_with_otel_data(sentry_span, otel_span)
+        update_span_status(sentry_span, otel_span)
+        sentry_span.set_data('otel.kind', otel_span.kind)
+        otel_span.attributes&.each { |k, v| sentry_span.set_data(k, v) }
+
+        op, description = parse_span_description(otel_span)
         sentry_span.set_op(op)
         sentry_span.set_description(description)
+      end
+
+      def update_transaction_with_otel_data(transaction, otel_span)
+        update_span_status(transaction, otel_span)
+        transaction.set_context(:otel, otel_context_hash(otel_span))
+
+        op, _ = parse_span_description(otel_span)
+        transaction.set_op(op)
+        transaction.set_name(otel_span.name)
       end
 
       def setup_event_processor
