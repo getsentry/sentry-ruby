@@ -64,8 +64,7 @@ module Sentry
         sentry_span.set_op(otel_span.name)
 
         if sentry_span.is_a?(Sentry::Transaction)
-          sentry_span.set_name(otel_span.name)
-          sentry_span.set_context(:otel, otel_context_hash(otel_span))
+          update_transaction_with_otel_data(sentry_span, otel_span)
         else
           update_span_with_otel_data(sentry_span, otel_span)
         end
@@ -124,6 +123,17 @@ module Sentry
         otel_context
       end
 
+      def parse_span_description(otel_span)
+
+      end
+
+      def update_span_status(sentry_span, otel_span)
+        if (status_code = otel_span.attributes[SEMANTIC_CONVENTIONS::HTTP_STATUS_CODE])
+          sentry_span.set_http_status(status_code)
+        elsif 
+        end
+      end
+
       def update_span_with_otel_data(sentry_span, otel_span)
         sentry_span.set_data('otel.kind', otel_span.kind)
         otel_span.attributes&.each { |k, v| sentry_span.set_data(k, v) }
@@ -141,8 +151,7 @@ module Sentry
           target = otel_span.attributes[SEMANTIC_CONVENTIONS::HTTP_TARGET]
           description += target if target
 
-          status_code = otel_span.attributes[SEMANTIC_CONVENTIONS::HTTP_STATUS_CODE]
-          sentry_span.set_http_status(status_code) if status_code
+          update_span_status(sentry_span, otel_span)
         elsif otel_span.attributes[SEMANTIC_CONVENTIONS::DB_SYSTEM]
           op = "db"
 
@@ -152,6 +161,11 @@ module Sentry
 
         sentry_span.set_op(op)
         sentry_span.set_description(description)
+      end
+
+      def update_transaction_with_otel_data(transaction, otel_span)
+          sentry_span.set_name(otel_span.name)
+          sentry_span.set_context(:otel, otel_context_hash(otel_span))
       end
 
       def setup_event_processor
