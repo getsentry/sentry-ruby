@@ -239,6 +239,7 @@ RSpec.describe Sentry::OpenTelemetry::SpanProcessor do
       expect(sentry_span.data).to include(finished_http_span.attributes)
       expect(sentry_span.data).to include({ 'otel.kind' => finished_http_span.kind })
       expect(sentry_span.timestamp).to eq(finished_http_span.end_timestamp / 1e9)
+      expect(sentry_span.status).to eq('ok')
 
       expect(subject.span_map.size).to eq(2)
       expect(subject.span_map.keys).not_to include(span_id)
@@ -257,8 +258,9 @@ RSpec.describe Sentry::OpenTelemetry::SpanProcessor do
       expect(transaction).to receive(:finish).and_call_original
       subject.on_finish(finished_root_span)
 
-      expect(transaction.op).to eq(finished_root_span.name)
+      expect(transaction.op).to eq('http.server')
       expect(transaction.name).to eq(finished_root_span.name)
+      expect(transaction.status).to eq('ok')
       expect(transaction.contexts[:otel]).to eq({
         attributes: finished_root_span.attributes,
         resource: finished_root_span.resource.attribute_enumerator.to_h
