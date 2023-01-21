@@ -91,6 +91,45 @@ RSpec.describe Sentry::Rails, type: :request do
     end
   end
 
+  context "at exit" do
+    before do
+      make_basic_app
+      Rails.application.load_runner
+    end
+
+    def capture_in_separate_process
+      pipe_in, pipe_out = IO.pipe
+
+      fork do
+        pipe_in.close
+
+        allow(Sentry::Rails).to receive(:capture_exception) do |event|
+          # raise "hello"
+          pipe_out.puts event
+        end
+
+        # silence process
+        $stderr.reopen('/dev/null', 'w')
+        $stdout.reopen('/dev/null', 'w')
+
+        exit
+      end
+
+      pipe_out.close
+      captured_messages = pipe_in.read
+      pipe_in.close
+      # sometimes the at_exit hook was registered multiple times
+      captured_messages.split("\n").last
+    end
+
+    it "captures exception" do
+      skip('fork not supported in jruby') if RUBY_PLATFORM == 'java'
+      captured_message = capture_in_separate_process
+
+      expect(captured_message).to eq('exit')
+    end
+  end
+
   RSpec.shared_examples "report_rescued_exceptions" do
     context "with report_rescued_exceptions = true" do
       before do
