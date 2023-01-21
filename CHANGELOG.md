@@ -42,6 +42,7 @@
 - `Span#with_child_span` should finish the span even with exception raised [#1982](https://github.com/getsentry/sentry-ruby/pull/1982)
 - Fix sentry-rails' controller span nesting [#1973](https://github.com/getsentry/sentry-ruby/pull/1973)
   - Fixes [#1899](https://github.com/getsentry/sentry-ruby/issues/1899)
+- Do not report exceptions when a Rails runner exits with `exit 0` [#1988](https://github.com/getsentry/sentry-ruby/pull/1988)
 
 ## 5.7.0
 
