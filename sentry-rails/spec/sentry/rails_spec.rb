@@ -97,7 +97,7 @@ RSpec.describe Sentry::Rails, type: :request do
       Rails.application.load_runner
     end
 
-    def capture_in_separate_process
+    def capture_in_separate_process(exit_code:)
       pipe_in, pipe_out = IO.pipe
 
       fork do
@@ -112,7 +112,7 @@ RSpec.describe Sentry::Rails, type: :request do
         $stderr.reopen('/dev/null', 'w')
         $stdout.reopen('/dev/null', 'w')
 
-        exit
+        exit exit_code
       end
 
       pipe_out.close
@@ -122,11 +122,18 @@ RSpec.describe Sentry::Rails, type: :request do
       captured_messages.split("\n").last
     end
 
-    it "captures exception" do
+    it "captures exception if exit code is non-zero" do
       skip('fork not supported in jruby') if RUBY_PLATFORM == 'java'
-      captured_message = capture_in_separate_process
+      captured_message = capture_in_separate_process(exit_code: 1)
 
       expect(captured_message).to eq('exit')
+    end
+
+    it "does not capture exception if exit code is zero" do
+      skip('fork not supported in jruby') if RUBY_PLATFORM == 'java'
+      captured_message = capture_in_separate_process(exit_code: 0)
+
+      expect(captured_message).to be_nil
     end
   end
 

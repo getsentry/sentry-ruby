@@ -56,7 +56,9 @@ module Sentry
 
       at_exit do
         # TODO: Add a condition for Rails 7.1 to avoid confliction with https://github.com/rails/rails/pull/44999
-        Sentry::Rails.capture_exception($ERROR_INFO, tags: { source: "runner" }) if $ERROR_INFO
+        if $ERROR_INFO && !($ERROR_INFO.is_a?(SystemExit) && $ERROR_INFO.success?)
+          Sentry::Rails.capture_exception($ERROR_INFO, tags: { source: "runner" })
+        end
       end
     end
 
