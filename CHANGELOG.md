@@ -17,7 +17,20 @@
 
 - Add global event processor in OpenTelemetry `SpanProcessor` to link errors with transactions [#1983](https://github.com/getsentry/sentry-ruby/pull/1983)
 - Fix some inconsistencies in setting name/op/status in OpenTelemetry `SpanProcessor` [#1987](https://github.com/getsentry/sentry-ruby/pull/1987)
+- Add `config.before_send_transaction` hook [#1989](https://github.com/getsentry/sentry-ruby/pull/1989)
 
+    Users can now configure a `before_send_transaction` callback that runs similar to `before_send` but for transaction events.
+
+    ```rb
+    config.before_send_transaction = lambda do |event, hint|
+      # skip unimportant transactions or strip sensitive data
+      if event.transaction == "/healthcheck/route"
+        nil
+      else
+        event
+      end
+    end
+    ```
 
 ### Bug Fixes
 

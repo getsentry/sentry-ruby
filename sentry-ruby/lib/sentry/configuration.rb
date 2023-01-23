@@ -72,6 +72,19 @@ module Sentry
     # @return [Proc]
     attr_reader :before_send
 
+    # Optional Proc, called before sending an event to the server
+    # @example
+    #   config.before_send_transaction = lambda do |event, hint|
+    #     # skip unimportant transactions or strip sensitive data
+    #     if event.transaction == "/healthcheck/route"
+    #       nil
+    #     else
+    #       event
+    #     end
+    #   end
+    # @return [Proc]
+    attr_reader :before_send_transaction
+
     # An array of breadcrumbs loggers to be used. Available options are:
     # - :sentry_logger
     # - :http_logger
@@ -287,6 +300,7 @@ module Sentry
       self.instrumenter = :sentry
 
       self.before_send = nil
+      self.before_send_transaction = nil
       self.rack_env_whitelist = RACK_ENV_WHITELIST_DEFAULT
       self.traces_sample_rate = nil
       self.traces_sampler = nil
@@ -336,6 +350,12 @@ module Sentry
       check_callable!("before_send", value)
 
       @before_send = value
+    end
+
+    def before_send_transaction=(value)
+      check_callable!("before_send_transaction", value)
+
+      @before_send_transaction = value
     end
 
     def before_breadcrumb=(value)
