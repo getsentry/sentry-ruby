@@ -122,6 +122,16 @@ module Sentry
         end
       end
 
+      if event_type == TransactionEvent::TYPE && configuration.before_send_transaction
+        event = configuration.before_send_transaction.call(event, hint)
+
+        if event.nil?
+          log_info("Discarded event because before_send_transaction returned nil")
+          transport.record_lost_event(:before_send, 'transaction')
+          return
+        end
+      end
+
       transport.send_event(event)
 
       event
