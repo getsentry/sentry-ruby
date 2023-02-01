@@ -1,2 +1,4 @@
 codecov:
   disable_default_path_fixes: true
+comment:
+  require_changes: true
