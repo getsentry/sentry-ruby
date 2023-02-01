@@ -104,7 +104,6 @@ RSpec.describe Sentry::Rails, type: :request do
         pipe_in.close
 
         allow(Sentry::Rails).to receive(:capture_exception) do |event|
-          # raise "hello"
           pipe_out.puts event
         end
 
