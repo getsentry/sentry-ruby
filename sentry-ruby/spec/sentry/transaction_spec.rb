@@ -151,6 +151,32 @@ RSpec.describe Sentry::Transaction do
     end
   end
 
+  describe "#set_measurement" do
+    it "sets the measurement" do
+      subject.set_measurement("metric.foo", 0.1, "second")
+      subject.set_measurement("metric.bar", 1.0, "minute")
+      subject.set_measurement("metric.baz", 1.0)
+
+      expect(subject.measurements).to eq(
+        {
+          "metric.foo" => { value: 0.1, unit: "second" },
+          "metric.bar" => { value: 1.0, unit: "minute" },
+          "metric.baz" => { value: 1.0, unit: "" },
+        }
+      )
+
+      subject.set_measurement("metric.foo", 2, "second")
+
+      expect(subject.measurements).to eq(
+        {
+          "metric.foo" => { value: 2, unit: "second" },
+          "metric.bar" => { value: 1.0, unit: "minute" },
+          "metric.baz" => { value: 1.0, unit: "" },
+        }
+      )
+    end
+  end
+
   describe "#start_child" do
     it "initializes a new child Span and assigns the 'transaction' attribute with itself" do
       # create subject span and wait for a sec for making time difference
@@ -461,6 +487,18 @@ RSpec.describe Sentry::Transaction do
         subject.finish
 
         expect(subject.name).to eq("<unlabeled transaction>")
+      end
+    end
+
+    describe "#set_measurement" do
+      it "adds measurements the event" do
+        subject.set_measurement("metric.foo", 0.5, "second")
+        subject.finish
+
+        transaction = events.last.to_hash
+        expect(transaction[:measurements]).to eq(
+          { "metric.foo" => { value: 0.5, unit: "second" } }
+        )
       end
     end
   end
