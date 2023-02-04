@@ -97,10 +97,6 @@ module Sentry
     # @return [Array<Symbol>]
     attr_reader :breadcrumbs_logger
 
-    # Whether to capture local variables from the raised exception's frame. Default is false.
-    # @return [Boolean]
-    attr_accessor :capture_exception_frame_locals
-
     # Max number of breadcrumbs a breadcrumb buffer can hold
     # @return [Integer]
     attr_accessor :max_breadcrumbs
@@ -139,6 +135,22 @@ module Sentry
     # @return [Boolean]
     attr_accessor :inspect_exception_causes_for_exclusion
     alias inspect_exception_causes_for_exclusion? inspect_exception_causes_for_exclusion
+
+    # Whether to capture local variables from the raised exception's frame. Default is false.
+    # @return [Boolean]
+    attr_accessor :include_local_variables
+
+    # @deprecated Use {#include_local_variables} instead.
+    alias_method :capture_exception_frame_locals, :include_local_variables
+
+    # @deprecated Use {#include_local_variables=} instead.
+    def capture_exception_frame_locals=(value)
+      log_warn <<~MSG
+        `capture_exception_frame_locals` is now deprecated in favor of `include_local_variables`.
+      MSG
+
+      self.include_local_variables = value
+    end
 
     # You may provide your own LineCache for matching paths with source files.
     # This may be useful if you need to get source code from places other than the disk.
@@ -277,7 +289,7 @@ module Sentry
       self.max_breadcrumbs = BreadcrumbBuffer::DEFAULT_SIZE
       self.breadcrumbs_logger = []
       self.context_lines = 3
-      self.capture_exception_frame_locals = false
+      self.include_local_variables = false
       self.environment = environment_from_env
       self.enabled_environments = []
       self.exclude_loggers = []

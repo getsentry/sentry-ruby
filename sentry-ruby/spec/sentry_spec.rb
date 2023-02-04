@@ -195,7 +195,7 @@ RSpec.describe Sentry do
       expect(result).to eq(nil)
     end
 
-    context "with capture_exception_frame_locals = false (default)" do
+    context "with include_local_variables = false (default)" do
       it "doens't capture local variables" do
         begin
           1/0
@@ -209,10 +209,10 @@ RSpec.describe Sentry do
       end
     end
 
-    context "with capture_exception_frame_locals = true" do
+    context "with include_local_variables = true" do
       before do
         perform_basic_setup do |config|
-          config.capture_exception_frame_locals = true
+          config.include_local_variables = true
         end
       end
 
@@ -273,6 +273,7 @@ RSpec.describe Sentry do
       expect(event).to be_a(Sentry::ErrorEvent)
     end
   end
+
 
   describe ".start_transaction" do
     describe "sampler example" do
@@ -875,7 +876,7 @@ RSpec.describe Sentry do
 
       it "disables Tracepoint" do
         perform_basic_setup do |config|
-          config.capture_exception_frame_locals = true
+          config.include_local_variables = true
         end
 
         expect(described_class.exception_locals_tp).to receive(:disable).and_call_original
