@@ -27,4 +27,5 @@ gem "benchmark_driver"
 gem "benchmark-ipsa"
 gem "benchmark-memory"
 
-gem "yard", "~> 0.9.27"
+gem "yard", github: "lsegal/yard"
+gem "webrick"
