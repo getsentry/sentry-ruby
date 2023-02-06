@@ -52,6 +52,8 @@
 - Fix sentry-rails' controller span nesting [#1973](https://github.com/getsentry/sentry-ruby/pull/1973)
   - Fixes [#1899](https://github.com/getsentry/sentry-ruby/issues/1899)
 - Do not report exceptions when a Rails runner exits with `exit 0` [#1988](https://github.com/getsentry/sentry-ruby/pull/1988)
+- Ignore redis key if not UTF8 [#1997](https://github.com/getsentry/sentry-ruby/pull/1997)
+  - Fixes [#1992](https://github.com/getsentry/sentry-ruby/issues/1992)
 
 ### Miscellaneous
 [
