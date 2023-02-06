@@ -54,7 +54,8 @@ module Sentry
     def parsed_commands
       commands.map do |statement|
         command, key, *arguments = statement
-        command_set = { command: command.to_s.upcase, key: key }
+        command_set = { command: command.to_s.upcase }
+        command_set[:key] = key if Utils::EncodingHelper.valid_utf_8?(key)
 
         if Sentry.configuration.send_default_pii
           command_set[:arguments] = arguments

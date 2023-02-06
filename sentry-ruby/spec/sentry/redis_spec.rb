@@ -30,17 +30,17 @@ RSpec.describe Sentry::Redis do
           expect(request_span.data).to eq({ server: "127.0.0.1:6379/0" })
         end
 
-        it "removes bad encoding commands gracefully" do
+        it "removes bad encoding keys and arguments gracefully" do
           transaction = Sentry.start_transaction
           Sentry.get_current_scope.set_span(transaction)
 
           # random bytes
-          redis.set("key", "foo \x1F\xE6")
+          redis.set("key \x1F\xE6", "val \x1F\xE6")
 
           request_span = transaction.span_recorder.spans.last
           description = request_span.description
 
-          expect(description).to eq("SET key")
+          expect(description).to eq("SET")
 
           expect do
             JSON.generate(description)
