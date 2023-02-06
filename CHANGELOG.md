@@ -53,6 +53,10 @@
   - Fixes [#1899](https://github.com/getsentry/sentry-ruby/issues/1899)
 - Do not report exceptions when a Rails runner exits with `exit 0` [#1988](https://github.com/getsentry/sentry-ruby/pull/1988)
 
+### Miscellaneous
+[
+- Deprecate `capture_exception_frame_locals` in favor of `include_local_variables` [#1993](https://github.com/getsentry/sentry-ruby/pull/1993)
+
 ## 5.7.0
 
 ### Features

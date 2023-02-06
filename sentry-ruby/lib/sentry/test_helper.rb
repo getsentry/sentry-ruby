@@ -25,7 +25,7 @@ module Sentry
       copied_config.background_worker_threads = 0
 
       # user can overwrite some of the configs, with a few exceptions like:
-      # - capture_exception_frame_locals
+      # - include_local_variables
       # - auto_session_tracking
       block&.call(copied_config)
 

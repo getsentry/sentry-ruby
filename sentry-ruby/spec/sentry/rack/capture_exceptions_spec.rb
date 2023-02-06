@@ -82,10 +82,10 @@ RSpec.describe Sentry::Rack::CaptureExceptions, rack: true do
       expect(env.key?("sentry.error_event_id")).to eq(false)
     end
 
-    context "with config.capture_exception_frame_locals = true" do
+    context "with config.include_local_variables = true" do
       before do
         perform_basic_setup do |config|
-          config.capture_exception_frame_locals = true
+          config.include_local_variables = true
         end
       end
 
