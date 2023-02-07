@@ -74,7 +74,7 @@ module Sentry
     # Serialize the Baggage object back to a string.
     # @return [String]
     def serialize
-      items = @items.map { |k, v| "#{SENTRY_PREFIX}#{CGI.escape(k)}=#{CGI.escape(v)}" }
+      items = @items.map { |k, v| "#{SENTRY_PREFIX}#{CGI.escape(k.to_s)}=#{CGI.escape(v.to_s)}" }
       items.join(',')
     end
   end
