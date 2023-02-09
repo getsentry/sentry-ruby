@@ -23,7 +23,7 @@ module Raven
     # RACK_ENV by default.
     attr_reader :current_environment
 
-    # Encoding type for event bodies. Must be :json or :gzip.
+    # Encoding type for event bodies. Must be "json" or "gzip".
     attr_reader :encoding
 
     # Whitelist of environments that will send notifications to Sentry. Array of Strings.
