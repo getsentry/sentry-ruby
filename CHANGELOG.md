@@ -56,7 +56,7 @@
   - Fixes [#1992](https://github.com/getsentry/sentry-ruby/issues/1992)
 
 ### Miscellaneous
-[
+
 - Deprecate `capture_exception_frame_locals` in favor of `include_local_variables` [#1993](https://github.com/getsentry/sentry-ruby/pull/1993)
 
 ## 5.7.0
