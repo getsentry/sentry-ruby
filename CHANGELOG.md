@@ -1,3 +1,12 @@
+## Unreleased
+
+### Features
+
+- Add new boolean option `config.enable_tracing` to simplify enabling performance tracing [#2005](https://github.com/getsentry/sentry-ruby/pull/2005)
+  - `config.enable_tracing = true` will set `traces_sample_rate` to `1.0` if not set already
+  - `config.enable_tracing = false` will turn off tracing even if `traces_sample_rate/traces_sampler` is set
+  - `config.enable_tracing = nil` (default) will keep the current behaviour
+
 ## 5.8.0
 
 ### Features
