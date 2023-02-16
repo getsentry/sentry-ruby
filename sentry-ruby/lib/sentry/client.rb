@@ -74,9 +74,14 @@ module Sentry
     # Initializes an Event object with the given exception. Returns `nil` if the exception's class is excluded from reporting.
     # @param exception [Exception] the exception to be reported.
     # @param hint [Hash] the hint data that'll be passed to `before_send` callback and the scope's event processors.
+    # @param ignore_exclusions [Boolean] override checking whether exceptions should be excluded based on configuration.
     # @return [Event, nil]
-    def event_from_exception(exception, hint = {})
-      return unless @configuration.sending_allowed? && @configuration.exception_class_allowed?(exception)
+    def event_from_exception(exception, hint = {}, ignore_exclusions: false)
+      return unless @configuration.sending_allowed?
+
+      if !ignore_exclusions
+        return unless @configuration.exception_class_allowed?(exception)
+      end
 
       integration_meta = Sentry.integrations[hint[:integration]]
 
