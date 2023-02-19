@@ -79,9 +79,7 @@ module Sentry
     def event_from_exception(exception, hint = {}, ignore_exclusions: false)
       return unless @configuration.sending_allowed?
 
-      if !ignore_exclusions
-        return unless @configuration.exception_class_allowed?(exception)
-      end
+      return if !ignore_exclusions && !@configuration.exception_class_allowed?(exception)
 
       integration_meta = Sentry.integrations[hint[:integration]]
 
