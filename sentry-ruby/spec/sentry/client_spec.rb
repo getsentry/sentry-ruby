@@ -329,51 +329,10 @@ RSpec.describe Sentry::Client do
           end
         end
 
-        context "when exclusions overridden" do
-          context "defined by string type" do
-            it 'returns nil for a class match' do
-              config.excluded_exceptions << 'Sentry::Test::BaseExc'
-              expect(subject.event_from_exception(Sentry::Test::BaseExc.new, ignore_exclusions: true)).to be_a(Sentry::ErrorEvent)
-            end
-  
-            it 'returns nil for a top class match' do
-              config.excluded_exceptions << '::Sentry::Test::BaseExc'
-              expect(subject.event_from_exception(Sentry::Test::BaseExc.new, ignore_exclusions: true)).to be_a(Sentry::ErrorEvent)
-            end
-  
-            it 'returns nil for a sub class match' do
-              config.excluded_exceptions << 'Sentry::Test::BaseExc'
-              expect(subject.event_from_exception(Sentry::Test::SubExc.new, ignore_exclusions: true)).to be_a(Sentry::ErrorEvent)
-            end
-  
-            it 'returns nil for a tagged class match' do
-              config.excluded_exceptions << 'Sentry::Test::ExcTag'
-              expect(
-                subject.event_from_exception(Sentry::Test::SubExc.new, ignore_exclusions: true).tap { |x| x.extend(Sentry::Test::ExcTag) }
-              ).to be_a(Sentry::ErrorEvent)
-            end
-  
-            it 'returns Sentry::ErrorEvent for an undefined exception class' do
-              config.excluded_exceptions << 'Sentry::Test::NonExistentExc'
-              expect(subject.event_from_exception(Sentry::Test::BaseExc.new, ignore_exclusions: true)).to be_a(Sentry::ErrorEvent)
-            end
-          end
-  
-          context "defined by class type" do
-            it 'returns nil for a class match' do
-              config.excluded_exceptions << Sentry::Test::BaseExc
-              expect(subject.event_from_exception(Sentry::Test::BaseExc.new, ignore_exclusions: true)).to be_a(Sentry::ErrorEvent)
-            end
-  
-            it 'returns nil for a sub class match' do
-              config.excluded_exceptions << Sentry::Test::BaseExc
-              expect(subject.event_from_exception(Sentry::Test::SubExc.new, ignore_exclusions: true)).to be_a(Sentry::ErrorEvent)
-            end
-  
-            it 'returns nil for a tagged class match' do
-              config.excluded_exceptions << Sentry::Test::ExcTag
-              expect(subject.event_from_exception(Sentry::Test::SubExc.new, ignore_exclusions: true).tap { |x| x.extend(Sentry::Test::ExcTag) }).to be_a(Sentry::ErrorEvent)
-            end
+        context "when exclusions overridden with :ignore_exclusions" do
+          it 'returns Sentry::ErrorEvent' do
+            config.excluded_exceptions << Sentry::Test::BaseExc
+            expect(subject.event_from_exception(Sentry::Test::BaseExc.new, ignore_exclusions: true)).to be_a(Sentry::ErrorEvent)
           end
         end
       end
