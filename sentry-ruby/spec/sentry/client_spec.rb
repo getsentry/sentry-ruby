@@ -191,11 +191,16 @@ RSpec.describe Sentry::Client do
       it "sets correct exception message based on Ruby version" do
         version = Gem::Version.new(RUBY_VERSION)
 
-        if version >= Gem::Version.new("3.2.0-dev")
+        case
+        when version >= Gem::Version.new("3.3.0-dev")
+          expect(hash[:exception][:values][0][:value]).to eq(
+            "undefined method `[]' for nil (NoMethodError)\n\n          {}[:foo][:bar]\n                  ^^^^^^"
+          )
+        when version >= Gem::Version.new("3.2")
           expect(hash[:exception][:values][0][:value]).to eq(
             "undefined method `[]' for nil:NilClass (NoMethodError)\n\n          {}[:foo][:bar]\n                  ^^^^^^"
           )
-        elsif version >= Gem::Version.new("3.1") && RUBY_ENGINE == "ruby"
+        when version >= Gem::Version.new("3.1") && RUBY_ENGINE == "ruby"
           expect(hash[:exception][:values][0][:value]).to eq(
             "undefined method `[]' for nil:NilClass\n\n          {}[:foo][:bar]\n                  ^^^^^^"
           )
