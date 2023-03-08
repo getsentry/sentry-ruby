@@ -32,4 +32,5 @@ end
 
 def configure_app(app)
   app.config.active_storage.service = :test
+  app.config.enable_reloading = false
 end

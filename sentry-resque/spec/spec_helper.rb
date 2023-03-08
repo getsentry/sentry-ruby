@@ -4,6 +4,10 @@ require "debug" if RUBY_VERSION.to_f >= 2.6 && RUBY_ENGINE == "ruby"
 
 require "resque"
 
+# To workaround https://github.com/steveklabnik/mono_logger/issues/13
+# Note: mono_logger is resque's default logger
+Resque.logger = ::Logger.new(nil)
+
 require "sentry-ruby"
 
 require 'simplecov'
