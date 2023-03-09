@@ -227,6 +227,11 @@ module Sentry
     # @return [Proc]
     attr_accessor :traces_sampler
 
+    # Easier way to use performance tracing
+    # If set to true, will set traces_sample_rate to 1.0
+    # @return [Boolean, nil]
+    attr_reader :enable_tracing
+
     # Send diagnostic client reports about dropped events, true by default
     # tries to attach to an existing envelope max once every 30s
     # @return [Boolean]
@@ -316,6 +321,7 @@ module Sentry
       self.rack_env_whitelist = RACK_ENV_WHITELIST_DEFAULT
       self.traces_sample_rate = nil
       self.traces_sampler = nil
+      self.enable_tracing = nil
 
       @transport = Transport::Configuration.new
       @gem_specs = Hash[Gem::Specification.map { |spec| [spec.name, spec.version.to_s] }] if Gem::Specification.respond_to?(:map)
@@ -384,6 +390,11 @@ module Sentry
       @instrumenter = INSTRUMENTERS.include?(instrumenter) ? instrumenter : :sentry
     end
 
+    def enable_tracing=(enable_tracing)
+      @enable_tracing = enable_tracing
+      @traces_sample_rate ||= 1.0 if enable_tracing
+    end
+
     def sending_allowed?
       @errors = []
 
@@ -414,7 +425,12 @@ module Sentry
     end
 
     def tracing_enabled?
-      !!((@traces_sample_rate && @traces_sample_rate >= 0.0 && @traces_sample_rate <= 1.0) || @traces_sampler) && sending_allowed?
+      valid_sampler = !!((@traces_sample_rate &&
+                          @traces_sample_rate >= 0.0 &&
+                          @traces_sample_rate <= 1.0) ||
+                         @traces_sampler)
+
+      (@enable_tracing != false) && valid_sampler && sending_allowed?
     end
 
     # @return [String, nil]

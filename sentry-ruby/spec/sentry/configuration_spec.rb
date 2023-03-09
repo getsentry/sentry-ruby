@@ -78,7 +78,16 @@ RSpec.describe Sentry::Configuration do
           expect(subject.tracing_enabled?).to eq(false)
         end
       end
+
+      context "when enable_tracing is set" do
+        it "returns false" do
+          subject.enable_tracing = true
+
+          expect(subject.tracing_enabled?).to eq(false)
+        end
+      end
     end
+
     context "when sending allowed" do
       before do
         allow(subject).to receive(:sending_allowed?).and_return(true)
@@ -119,6 +128,42 @@ RSpec.describe Sentry::Configuration do
           expect(subject.tracing_enabled?).to eq(true)
         end
       end
+
+      context "when enable_tracing is true" do
+        it "returns true" do
+          subject.enable_tracing = true
+
+          expect(subject.tracing_enabled?).to eq(true)
+        end
+      end
+
+      context "when enable_tracing is false" do
+        it "returns false" do
+          subject.enable_tracing = false
+
+          expect(subject.tracing_enabled?).to eq(false)
+        end
+
+        it "returns false even with explicit traces_sample_rate" do
+          subject.traces_sample_rate = 1.0
+          subject.enable_tracing = false
+
+          expect(subject.tracing_enabled?).to eq(false)
+        end
+      end
+    end
+  end
+
+  describe "#enable_tracing=" do
+    it "sets traces_sample_rate to 1.0 automatically" do
+      subject.enable_tracing = true
+      expect(subject.traces_sample_rate).to eq(1.0)
+    end
+
+    it "doesn't override existing traces_sample_rate" do
+      subject.traces_sample_rate = 0.5
+      subject.enable_tracing = true
+      expect(subject.traces_sample_rate).to eq(0.5)
     end
   end
 
