@@ -106,6 +106,12 @@ RSpec.describe Sentry::Scope do
       end.to raise_error(ArgumentError)
     end
 
+    it "raises error when passed non-hash context value" do
+      expect do
+        subject.set_contexts({ character: "John" })
+      end.to raise_error(ArgumentError)
+    end
+
     it "merges the context hash" do
       subject.set_contexts({ character: { name: "John" }})
       expect(subject.contexts).to include({ character: { name: "John" }})
