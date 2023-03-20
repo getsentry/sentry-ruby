@@ -333,6 +333,13 @@ RSpec.describe Sentry::Client do
             expect(subject.event_from_exception(Sentry::Test::SubExc.new.tap { |x| x.extend(Sentry::Test::ExcTag) })).to be_nil
           end
         end
+
+        context "when exclusions overridden with :ignore_exclusions" do
+          it 'returns Sentry::ErrorEvent' do
+            config.excluded_exceptions << Sentry::Test::BaseExc
+            expect(subject.event_from_exception(Sentry::Test::BaseExc.new, ignore_exclusions: true)).to be_a(Sentry::ErrorEvent)
+          end
+        end
       end
 
       context 'when the exception has a cause' do

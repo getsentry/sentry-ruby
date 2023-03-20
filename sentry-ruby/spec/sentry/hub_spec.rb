@@ -195,6 +195,14 @@ RSpec.describe Sentry::Hub do
       end.to change { transport.events.count }.by(1)
     end
 
+    it "takes ignore_exclusions option" do
+      configuration.excluded_exceptions << exception.class
+
+      expect do
+        subject.capture_exception(exception, ignore_exclusions: true)
+      end.to change { transport.events.count }.by(1)
+    end
+
     it_behaves_like "capture_helper" do
       let(:capture_helper) { :capture_exception }
       let(:capture_subject) { exception }
