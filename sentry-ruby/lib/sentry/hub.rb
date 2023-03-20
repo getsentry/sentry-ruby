@@ -122,7 +122,6 @@ module Sentry
 
       options[:hint] ||= {}
       options[:hint][:exception] = exception
-      options[:hint][:ignore_exclusions] = options.delete(:ignore_exclusions) { false }
 
       event = current_client.event_from_exception(exception, options[:hint])
 

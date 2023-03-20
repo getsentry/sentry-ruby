@@ -6,6 +6,14 @@
   - `config.enable_tracing = true` will set `traces_sample_rate` to `1.0` if not set already
   - `config.enable_tracing = false` will turn off tracing even if `traces_sample_rate/traces_sampler` is set
   - `config.enable_tracing = nil` (default) will keep the current behaviour
+- Allow ignoring `excluded_exceptions` when manually capturing exceptions [#2007](https://github.com/getsentry/sentry-ruby/pull/2007)
+  Users can now ignore the SDK's `excluded_exceptions` by passing `ignore_exclusions` hint when using `Sentry.capture_exception`.
+
+  ```rb
+  # assume ignored_exception.class is included in config.excluded_exception
+  Sentry.capture_exception(ignored_exception) # won't be sent to Sentry
+  Sentry.capture_exception(ignored_exception, hint: { ignore_exclusions: true }) # will be sent to Sentry
+  ```
 
 ### Bug Fixes
 
