@@ -7,6 +7,11 @@
   - `config.enable_tracing = false` will turn off tracing even if `traces_sample_rate/traces_sampler` is set
   - `config.enable_tracing = nil` (default) will keep the current behaviour
 
+### Bug Fixes
+
+- Validate that contexts set in `set_contexts` are also Hash instances [#2022](https://github.com/getsentry/sentry-ruby/pull/2022/files)
+  - Fixes [#2021](https://github.com/getsentry/sentry-ruby/issues/2021)
+
 ## 5.8.0
 
 ### Features
