@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require "sentry/baggage"
+require "sentry/profiler"
 
 module Sentry
   class Transaction < Span
@@ -83,6 +84,7 @@ module Sentry
       @effective_sample_rate = nil
       @contexts = {}
       @measurements = {}
+      @profiler = nil
       init_span_recorder
     end
 
@@ -254,6 +256,9 @@ module Sentry
         @name = UNLABELD_NAME
       end
 
+      # TODO-neel-profiler sample
+      @profiler&.stop
+
       if @sampled
         event = hub.current_client.event_from_transaction(self)
         hub.capture_event(event)
@@ -286,6 +291,12 @@ module Sentry
     # @return [void]
     def set_context(key, value)
       @contexts[key] = value
+    end
+
+    # The stackprof profiler instance
+    # @return [Profiler]
+    def profiler
+      @profiler ||= Profiler.new
     end
 
     protected

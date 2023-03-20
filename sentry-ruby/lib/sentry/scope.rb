@@ -309,7 +309,8 @@ module Sentry
               name: uname[:sysname] || RbConfig::CONFIG["host_os"],
               version: uname[:version],
               build: uname[:release],
-              kernel_version: uname[:version]
+              kernel_version: uname[:version],
+              machine: uname[:machine]
             }
           end
       end

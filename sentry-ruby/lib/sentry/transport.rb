@@ -61,6 +61,7 @@ module Sentry
 
       if data
         log_info("[Transport] Sending envelope with items [#{serialized_items.map(&:type).join(', ')}] #{envelope.event_id} to Sentry")
+        File.open('/tmp/dump', 'w') { |file| file.write(data) } if envelope.items.map(&:type).include?('profile')
         send_data(data)
       end
     end
@@ -153,6 +154,13 @@ module Sentry
         { type: item_type, content_type: 'application/json' },
         event_payload
       )
+
+      if event.is_a?(TransactionEvent) && event.profile
+        envelope.add_item(
+          { type: 'profile', content_type: 'application/json' },
+          event.profile
+        )
+      end
 
       client_report_headers, client_report_payload = fetch_pending_client_report
       envelope.add_item(client_report_headers, client_report_payload) if client_report_headers

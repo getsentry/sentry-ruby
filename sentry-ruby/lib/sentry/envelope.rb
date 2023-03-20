@@ -19,10 +19,7 @@ module Sentry
       end
 
       def to_s
-        <<~ITEM
-          #{JSON.generate(@headers)}
-          #{JSON.generate(@payload)}
-        ITEM
+        [JSON.generate(@headers), JSON.generate(@payload)].join("\n")
       end
 
       def serialize

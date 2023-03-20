@@ -90,6 +90,10 @@ module Sentry
       sampling_context.merge!(custom_sampling_context)
 
       transaction.set_initial_sample_decision(sampling_context: sampling_context)
+
+      #TODO-neel-profiler sample
+      transaction.profiler.start
+
       transaction
     end
 
