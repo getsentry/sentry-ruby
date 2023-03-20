@@ -1,3 +1,5 @@
+require "spec_helper"
+
 RSpec.describe Sentry do
   before do
     perform_basic_setup
@@ -190,9 +192,17 @@ RSpec.describe Sentry do
     it "doesn't do anything if the exception is excluded" do
       Sentry.get_current_client.configuration.excluded_exceptions = ["ZeroDivisionError"]
 
-      result = described_class.capture_exception(exception)
+      expect do
+        described_class.capture_exception(exception)
+      end.to change { sentry_events.count }.by(0)
+    end
 
-      expect(result).to eq(nil)
+    it "passes ignore_exclusions hint" do
+      Sentry.get_current_client.configuration.excluded_exceptions = ["ZeroDivisionError"]
+
+      expect do
+        described_class.capture_exception(exception, hint: { ignore_exclusions: true })
+      end.to change { sentry_events.count }.by(1)
     end
 
     context "with include_local_variables = false (default)" do
