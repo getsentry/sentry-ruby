@@ -1,5 +1,7 @@
 ## Unreleased
 
+- Forward all `baggage` header items that are prefixed with `sentry-` [#2025](https://github.com/getsentry/sentry-ruby/pull/2025)
+
 ### Features
 
 - Add new boolean option `config.enable_tracing` to simplify enabling performance tracing [#2005](https://github.com/getsentry/sentry-ruby/pull/2005)
