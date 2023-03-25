@@ -519,3 +519,4 @@ end
 # patches
 require "sentry/net/http"
 require "sentry/redis"
+require "sentry/puma"
