@@ -38,6 +38,10 @@ if defined?(StackProf)
         log('Stopped')
       end
 
+      def profile_context
+        { profile_id: @event_id }
+      end
+
       # Sets initial sampling decision of the profile.
       # @return [void]
       def set_initial_sample_decision(transaction_sampled)
@@ -134,9 +138,9 @@ if defined?(StackProf)
 
             samples << {
               stack_id: i,
-              # TODO-neel we need to patch rb_profile_frames and write our own C extension to enable threading info
-              # till then, on multi-threaded servers like puma, we will get frames from other active threads when the one
-              # we're profiling is idle/sleeping/waiting for IO etc
+              # TODO-neel we need to patch rb_profile_frames and write our own C extension to enable threading info.
+              # Till then, on multi-threaded servers like puma, we will get frames from other active threads when the one
+              # we're profiling is idle/sleeping/waiting for IO etc.
               # https://bugs.ruby-lang.org/issues/10602
               thread_id: '0',
               elapsed_since_start_ns: elapsed_since_start_ns.to_s

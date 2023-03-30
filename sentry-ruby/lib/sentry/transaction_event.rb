@@ -36,8 +36,7 @@ module Sentry
       finished_spans = transaction.span_recorder.spans.select { |span| span.timestamp && span != transaction }
       self.spans = finished_spans.map(&:to_hash)
 
-      # TODO-neel-profiler profiling context
-      self.profile = populate_profile(transaction)
+      populate_profile(transaction)
     end
 
     # Sets the event's start_timestamp.
@@ -61,10 +60,10 @@ module Sentry
     def populate_profile(transaction)
       return nil unless transaction.profiler
 
-      profile = transaction.profiler.to_hash
-      return nil unless profile
+      profile_hash = transaction.profiler.to_hash
+      return nil unless profile_hash
 
-      profile.merge(
+      profile_hash.merge!(
         environment: environment,
         release: release,
         timestamp: Time.at(start_timestamp).iso8601,
@@ -79,6 +78,9 @@ module Sentry
           active_thead_id: '0'
         }
       )
+
+      self.profile = profile_hash
+      self.contexts.merge!(profile: transaction.profiler.profile_context)
     end
   end
 end
