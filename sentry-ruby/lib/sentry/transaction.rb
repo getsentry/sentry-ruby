@@ -294,8 +294,10 @@ module Sentry
     end
 
     # The stackprof profiler instance
-    # @return [Profiler]
+    # @return [Profiler, nil]
     def profiler
+      return nil unless defined?(Profiler)
+
       @profiler ||= Profiler.new
     end
 
