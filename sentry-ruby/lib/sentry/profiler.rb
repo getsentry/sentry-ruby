@@ -12,11 +12,16 @@ if defined?(StackProf)
       DEFAULT_INTERVAL = 1e6 / 101
 
       def initialize
+        @profiling_enabled = Sentry.configuration.profiling_enabled?
+        @profiles_sample_rate = Sentry.configuration.profiles_sample_rate
         @event_id = SecureRandom.uuid.delete('-')
         @started = false
+        @sampled = nil
       end
 
       def start
+        return unless @sampled
+
         @started = StackProf.start(interval: DEFAULT_INTERVAL,
                                    mode: :wall,
                                    raw: true,
@@ -26,14 +31,50 @@ if defined?(StackProf)
       end
 
       def stop
+        return unless @sampled
         return unless @started
 
         StackProf.stop
         log('Stopped')
       end
 
+      # Sets initial sampling decision of the profile.
+      # @return [void]
+      def set_initial_sample_decision(transaction_sampled)
+        unless @profiling_enabled
+          @sampled = false
+          return
+        end
+
+        unless transaction_sampled
+          @sampled = false
+          log('Discarding profile because transaction not sampled')
+          return
+        end
+
+        if @profiles_sample_rate < 0.0 || @profiles_sample_rate > 1.0
+          @sampled = false
+          log("Discarding profile because of invalid sample_rate: #{@profiles_sample_rate}")
+          return
+        end
+
+        case @profiles_sample_rate
+        when 0.0
+          @sampled = false
+          log('Discarding profile because sample_rate is 0')
+          return
+        when 1.0
+          @sampled = true
+          return
+        else
+          @sampled = Random.rand < @profiles_sample_rate
+        end
+
+        log('Discarding profile due to sampling decision') unless @sampled
+      end
+
       def to_hash
-        return nil unless Sentry.initialized?
+        return nil unless @sampled
         return nil unless @started
 
         results = StackProf.results

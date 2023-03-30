@@ -91,8 +91,10 @@ module Sentry
 
       transaction.set_initial_sample_decision(sampling_context: sampling_context)
 
-      #TODO-neel-profiler sample
-      transaction.profiler&.start
+      if transaction.profiler
+        transaction.profiler.set_initial_sample_decision(transaction.sampled)
+        transaction.profiler.start
+      end
 
       transaction
     end

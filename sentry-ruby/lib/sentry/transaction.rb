@@ -256,7 +256,6 @@ module Sentry
         @name = UNLABELD_NAME
       end
 
-      # TODO-neel-profiler sample
       @profiler&.stop
 
       if @sampled

@@ -245,6 +245,12 @@ module Sentry
     # @return [Symbol]
     attr_reader :instrumenter
 
+    # Take a float between 0.0 and 1.0 as the sample rate for capturing profiles.
+    # Note that this rate is relative to traces_sample_rate / traces_sampler,
+    # i.e. the profile is sampled by this rate after the transaction is sampled.
+    # @return [Float, nil]
+    attr_reader :profiles_sample_rate
+
     # these are not config options
     # @!visibility private
     attr_reader :errors, :gem_specs
@@ -395,6 +401,18 @@ module Sentry
       @traces_sample_rate ||= 1.0 if enable_tracing
     end
 
+    def profiles_sample_rate=(profiles_sample_rate)
+      log_info("Thank you for trying out Profiling on Sentry. Please note that this is currently an experimental feature.")
+
+      if defined?(StackProf)
+        log_info("Feedback on how it is working for you is appreciated!")
+      else
+        log_info("Please make sure to include the 'stackprof' gem in your Gemfile to use Profiling with Sentry.")
+      end
+
+      @profiles_sample_rate = profiles_sample_rate
+    end
+
     def sending_allowed?
       @errors = []
 
@@ -431,6 +449,14 @@ module Sentry
                          @traces_sampler)
 
       (@enable_tracing != false) && valid_sampler && sending_allowed?
+    end
+
+    def profiling_enabled?
+      valid_sampler = !!(@profiles_sample_rate &&
+                         @profiles_sample_rate >= 0.0 &&
+                         @profiles_sample_rate <= 1.0)
+
+      tracing_enabled? && valid_sampler && sending_allowed?
     end
 
     # @return [String, nil]

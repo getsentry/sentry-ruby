@@ -36,7 +36,7 @@ module Sentry
       finished_spans = transaction.span_recorder.spans.select { |span| span.timestamp && span != transaction }
       self.spans = finished_spans.map(&:to_hash)
 
-      # TODO-neel-profiler cleanup sampling etc
+      # TODO-neel-profiler profiling context
       self.profile = populate_profile(transaction)
     end
 
