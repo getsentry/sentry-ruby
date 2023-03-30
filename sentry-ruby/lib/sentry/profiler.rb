@@ -14,6 +14,11 @@ if defined?(StackProf)
       def initialize
         @profiling_enabled = Sentry.configuration.profiling_enabled?
         @profiles_sample_rate = Sentry.configuration.profiles_sample_rate
+
+        @project_root = Sentry.configuration.project_root
+        @app_dirs_pattern = Sentry.configuration.app_dirs_pattern
+        @in_app_pattern = Regexp.new("^(#{@project_root}/)?#{@app_dirs_pattern || Backtrace::APP_DIRS_PATTERN}")
+
         @event_id = SecureRandom.uuid.delete('-')
         @started = false
         @sampled = nil
@@ -93,11 +98,17 @@ if defined?(StackProf)
           # need to map over stackprof frame ids to ours
           frame_map[frame_id] = idx
 
-          # TODO-neel module, filename, in_app
+          in_app = in_app?(frame_data[:file])
+          filename = compute_filename(frame_data[:file], in_app)
+          function, mod = split_module(frame_data[:name])
+
           {
             abs_path: frame_data[:file],
-            function: frame_data[:name],
-            lineno: frame_data[:line]
+            function: function,
+            module: mod,
+            lineno: frame_data[:line],
+            filename: filename,
+            in_app: in_app
           }.compact
         end
 
@@ -138,7 +149,7 @@ if defined?(StackProf)
 
             samples << {
               stack_id: i,
-              # TODO-neel we need to patch rb_profile_frames and write our own C extension to enable threading info.
+              # TODO-neel-profiler we need to patch rb_profile_frames and write our own C extension to enable threading info.
               # Till then, on multi-threaded servers like puma, we will get frames from other active threads when the one
               # we're profiling is idle/sleeping/waiting for IO etc.
               # https://bugs.ruby-lang.org/issues/10602
@@ -175,6 +186,42 @@ if defined?(StackProf)
         Sentry.logger.debug(LOGGER_PROGNAME) { "[Profiler] #{message}" }
       end
 
+      def in_app?(abs_path)
+        abs_path.match?(@in_app_pattern)
+      end
+
+      # copied from stacktrace.rb since I don't want to touch existing code
+      # TODO-neel-profiler try to fetch this from stackprof once we patch
+      # the native extension
+      def compute_filename(abs_path, in_app)
+        return nil if abs_path.nil?
+
+        under_project_root = @project_root && abs_path.start_with?(@project_root)
+
+        prefix =
+          if under_project_root && in_app
+            @project_root
+          else
+            longest_load_path = $LOAD_PATH.select { |path| abs_path.start_with?(path.to_s) }.max_by(&:size)
+
+            if under_project_root
+              longest_load_path || @project_root
+            else
+              longest_load_path
+            end
+          end
+
+        prefix ? abs_path[prefix.to_s.chomp(File::SEPARATOR).length + 1..-1] : abs_path
+      end
+
+      def split_module(name)
+        # last module plus class/instance method
+        i = name.rindex('::')
+        function = i ? name[(i + 2)..-1] : name
+        mod = i ? name[0...i] : nil
+
+        [function, mod]
+      end
     end
   end
 end
