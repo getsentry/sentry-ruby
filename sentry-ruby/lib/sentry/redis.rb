@@ -95,12 +95,7 @@ end
 
 if defined?(::Redis::Client)
   if Gem::Version.new(::Redis::VERSION) < Gem::Version.new("5.0")
-    Sentry.register_patch do
-      patch = Sentry::Redis::OldClientPatch
-      unless Redis::Client.ancestors.include?(patch)
-        Redis::Client.prepend(patch)
-      end
-    end
+    Sentry.register_patch(Sentry::Redis::OldClientPatch, ::Redis::Client)
   elsif defined?(RedisClient)
     RedisClient.register(Sentry::Redis::GlobalRedisInstrumentation)
   end
