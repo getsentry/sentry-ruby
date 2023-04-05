@@ -61,7 +61,6 @@ module Sentry
 
       if data
         log_info("[Transport] Sending envelope with items [#{serialized_items.map(&:type).join(', ')}] #{envelope.event_id} to Sentry")
-        File.open('/tmp/dump', 'w') { |file| file.write(data) } if envelope.items.map(&:type).include?('profile')
         send_data(data)
       end
     end

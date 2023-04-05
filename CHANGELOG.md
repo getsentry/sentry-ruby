@@ -16,6 +16,7 @@
   ```
 - Add `spec` to `Backtrace::APP_DIRS_PATTERN` [#2029](https://github.com/getsentry/sentry-ruby/pull/2029)
 - Forward all `baggage` header items that are prefixed with `sentry-` [#2025](https://github.com/getsentry/sentry-ruby/pull/2025)
+- Profiling TODO-neel-profiler changelog entry
 
 ### Bug Fixes
 

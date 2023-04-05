@@ -1,6 +1,13 @@
-return unless defined?(Rack)
+# return unless defined?(Rack)
 
 require 'spec_helper'
+
+module TestApp
+  def self.foo
+    sleep 0.1
+    "ok"
+  end
+end
 
 RSpec.describe Sentry::Rack::CaptureExceptions, rack: true do
   let(:exception) { ZeroDivisionError.new("divided by 0") }
@@ -637,6 +644,65 @@ RSpec.describe Sentry::Rack::CaptureExceptions, rack: true do
           expect(item.payload[:attrs]).to eq({ release: 'test-release', environment: 'test' })
           expect(item.payload[:aggregates].first).to eq({ exited: 10, errored: 2, started: now_bucket.iso8601 })
         end
+      end
+    end
+  end
+
+  describe "profiling" do
+    context "when profiling is enabled" do
+      before do
+        perform_basic_setup do |config|
+          config.traces_sample_rate = 1.0
+          config.profiles_sample_rate = 1.0
+          config.release = "test-release"
+        end
+      end
+
+      it "collects a profile" do
+        app = ->(_) do
+          [200, {}, [TestApp.foo]]
+        end
+
+        stack = described_class.new(app)
+        stack.call(env)
+        event = last_sentry_event
+
+        profile = event.profile
+        expect(profile).not_to be_nil
+
+        expect(profile[:event_id]).not_to be_nil
+        expect(event.contexts[:profile]).to eq({ profile_id: profile[:event_id] })
+
+        expect(profile[:platform]).to eq("ruby")
+        expect(profile[:version]).to eq("1")
+        expect(profile[:environment]).to eq("development")
+        expect(profile[:release]).to eq("test-release")
+        expect { Time.parse(profile[:timestamp]) }.not_to raise_error
+
+        expect(profile[:device]).to include(:architecture)
+        expect(profile[:os]).to include(:name, :version)
+        expect(profile[:runtime]).to include(:name, :version)
+
+        expect(profile[:transaction]).to include(:id, :name, :trace_id, :active_thead_id)
+        expect(profile[:transaction][:id]).to eq(event.event_id)
+        expect(profile[:transaction][:name]).to eq(event.transaction)
+        expect(profile[:transaction][:trace_id]).to eq(event.contexts[:trace][:trace_id])
+        expect(profile[:transaction][:active_thead_id]).to eq("0")
+
+        # detailed checking of content is done in profiler_spec,
+        # just check basic structure here
+        frames = profile[:profile][:frames]
+        expect(frames).to be_a(Array)
+        expect(frames.first).to include(:function, :filename, :abs_path, :in_app)
+
+        stacks = profile[:profile][:stacks]
+        expect(stacks).to be_a(Array)
+        expect(stacks.first).to be_a(Array)
+        expect(stacks.first.first).to be_a(Integer)
+
+        samples = profile[:profile][:samples]
+        expect(samples).to be_a(Array)
+        expect(samples.first).to include(:stack_id, :thread_id, :elapsed_since_start_ns)
       end
     end
   end

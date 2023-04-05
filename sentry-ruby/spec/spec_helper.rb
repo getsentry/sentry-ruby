@@ -5,6 +5,7 @@ require "timecop"
 require "simplecov"
 require "rspec/retry"
 require "redis"
+require "stackprof" unless RUBY_PLATFORM == "java"
 
 SimpleCov.start do
   project_name "sentry-ruby"

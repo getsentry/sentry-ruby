@@ -84,6 +84,60 @@ RSpec.describe Sentry::Transport do
 
         expect(item).to eq(event.to_hash.to_json)
       end
+
+      context "with profiling on transaction" do
+        let(:profile) do
+          frames = [
+            { function: "foo" },
+            { function: "bar" },
+            { function: "baz" }
+          ]
+
+          stacks = [
+            [0, 1],
+            [0, 2],
+            [1, 2],
+            [0, 1, 2]
+          ]
+
+          samples = [
+            { stack_id: 0, elapsed_since_start_ns: 10000 },
+            { stack_id: 0, elapsed_since_start_ns: 20000 },
+            { stack_id: 1, elapsed_since_start_ns: 30000 },
+            { stack_id: 2, elapsed_since_start_ns: 40000 },
+            { stack_id: 3, elapsed_since_start_ns: 50000 }
+          ]
+
+          {
+            environment: "test",
+            release: "release",
+            profile: {
+              frames: frames,
+              stacks: stacks,
+              samples: samples
+            }
+          }
+        end
+
+        let(:event_with_profile) do
+          event.profile = profile
+          event
+        end
+
+        let(:envelope) { subject.envelope_from_event(event_with_profile) }
+
+        it "adds profile item to envelope" do
+          result, _ = subject.serialize_envelope(envelope)
+
+          profile_header, profile_payload = result.split("\n").last(2)
+
+          expect(profile_header).to eq(
+            '{"type":"profile","content_type":"application/json"}'
+          )
+
+          expect(profile_payload).to eq(profile.to_json)
+        end
+      end
     end
 
     context "client report" do
