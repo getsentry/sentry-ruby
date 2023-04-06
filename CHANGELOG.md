@@ -1,7 +1,5 @@
 ## Unreleased
 
-- Forward all `baggage` header items that are prefixed with `sentry-` [#2025](https://github.com/getsentry/sentry-ruby/pull/2025)
-
 ### Features
 
 - Add new boolean option `config.enable_tracing` to simplify enabling performance tracing [#2005](https://github.com/getsentry/sentry-ruby/pull/2005)
@@ -16,6 +14,8 @@
   Sentry.capture_exception(ignored_exception) # won't be sent to Sentry
   Sentry.capture_exception(ignored_exception, hint: { ignore_exclusions: true }) # will be sent to Sentry
   ```
+- Add `spec` to `Backtrace::APP_DIRS_PATTERN` [#2029](https://github.com/getsentry/sentry-ruby/pull/2029)
+- Forward all `baggage` header items that are prefixed with `sentry-` [#2025](https://github.com/getsentry/sentry-ruby/pull/2025)
 
 ### Bug Fixes
 
