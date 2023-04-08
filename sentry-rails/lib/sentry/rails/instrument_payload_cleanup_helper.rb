@@ -1,11 +1,12 @@
 module Sentry
   module Rails
     module InstrumentPayloadCleanupHelper
-      IGNORED_DATA_TYPES = [:connection, :binds, :request, :response, :headers, :exception, :exception_object, Tracing::START_TIMESTAMP_NAME]
+      IGNORED_KEYS = [:connection, :binds, :request, :response, :headers, :exception, :exception_object, Tracing::START_TIMESTAMP_NAME]
+      ACCEPTABLE_DATA_TYPES = [String, Symbol, Numeric, TrueClass, FalseClass, NilClass, Array, Hash]
 
       def cleanup_data(data)
-        IGNORED_DATA_TYPES.each do |key|
-          data.delete(key) if data.key?(key)
+        data.delete_if do |key, value|
+          IGNORED_KEYS.include?(key) || ACCEPTABLE_DATA_TYPES.none? { |type| value.is_a?(type) }
         end
       end
     end

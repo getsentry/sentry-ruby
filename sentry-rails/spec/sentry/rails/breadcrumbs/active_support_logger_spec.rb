@@ -117,6 +117,17 @@ RSpec.describe "Sentry::Breadcrumbs::ActiveSupportLogger", type: :request do
       expect(breadcrumb["data"].keys).not_to include("binds")
     end
 
+    it "doesn't capture non-primitive objects" do
+      ActiveSupport::Notifications.instrument "my.custom.event", foo: Object.new, bar: 123
+
+      breadcrumbs = Sentry.get_current_scope.breadcrumbs
+
+      expect(breadcrumbs.count).to eq(1)
+
+      breadcrumb = breadcrumbs.first
+      expect(breadcrumb.data).to eq({ bar: 123 })
+    end
+
     it "doesn't add internal start timestamp payload to breadcrumbs data" do
       p = Post.create!
 
