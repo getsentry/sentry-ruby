@@ -97,6 +97,26 @@ RSpec.describe "Sentry::Breadcrumbs::ActiveSupportLogger", type: :request do
       expect(breadcrumb["data"].keys).not_to include("response")
     end
 
+    it "doesn't capture sql.active_record's connection and binds" do
+      p = Post.create!
+
+      get "/posts/#{p.id}"
+
+      breadcrumbs = event.dig("breadcrumbs", "values")
+
+      breadcrumb = breadcrumbs.detect { |b| b["category"] == "sql.active_record" }
+      expect(breadcrumb["data"]).to include(
+        {
+          "name" => "Post Load",
+          "sql" => "SELECT \"posts\".* FROM \"posts\" WHERE \"posts\".\"id\" = ? LIMIT ?",
+          "statement_name" => nil,
+          "type_casted_binds" => [p.id, 1],
+        }
+      )
+      expect(breadcrumb["data"].keys).not_to include("connection")
+      expect(breadcrumb["data"].keys).not_to include("binds")
+    end
+
     it "doesn't add internal start timestamp payload to breadcrumbs data" do
       p = Post.create!
 
