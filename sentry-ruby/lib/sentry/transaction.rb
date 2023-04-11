@@ -292,12 +292,21 @@ module Sentry
       @contexts[key] = value
     end
 
-    # The stackprof profiler instance
+    # The stackprof profiler instance.
     # @return [Profiler, nil]
     def profiler
       return nil unless defined?(Profiler)
 
-      @profiler ||= Profiler.new
+      @profiler ||= Profiler.new(configuration)
+    end
+
+    # Start the profiler if exists.
+    # @return [void]
+    def start_profiler!
+      return unless profiler
+
+      profiler.set_initial_sample_decision(sampled)
+      profiler.start
     end
 
     protected

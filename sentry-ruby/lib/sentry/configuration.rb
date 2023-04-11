@@ -402,14 +402,7 @@ module Sentry
     end
 
     def profiles_sample_rate=(profiles_sample_rate)
-      log_info("Thank you for trying out Profiling on Sentry. Please note that this is currently an experimental feature.")
-
-      if defined?(StackProf)
-        log_info("Feedback on how it is working for you is appreciated!")
-      else
-        log_info("Please make sure to include the 'stackprof' gem in your Gemfile to use Profiling with Sentry.")
-      end
-
+      log_info("Please make sure to include the 'stackprof' gem in your Gemfile to use Profiling with Sentry.") unless defined?(StackProf)
       @profiles_sample_rate = profiles_sample_rate
     end
 

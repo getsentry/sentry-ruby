@@ -11,13 +11,20 @@ module Sentry
     PLATFORM = 'ruby'
     # 101 Hz in microseconds
     DEFAULT_INTERVAL = 1e6 / 101
+    MICRO_TO_NANO_SECONDS = 1e3
 
     attr_reader :sampled, :started, :event_id
 
-    def initialize
+    def initialize(configuration)
       @event_id = SecureRandom.uuid.delete('-')
       @started = false
       @sampled = nil
+
+      @profiling_enabled = configuration.profiling_enabled?
+      @profiles_sample_rate = configuration.profiles_sample_rate
+      @project_root = configuration.project_root
+      @app_dirs_pattern = configuration.app_dirs_pattern || Backtrace::APP_DIRS_PATTERN
+      @in_app_pattern = Regexp.new("^(#{@project_root}/)?#{@app_dirs_pattern}")
     end
 
     def start
@@ -46,7 +53,7 @@ module Sentry
     # Sets initial sampling decision of the profile.
     # @return [void]
     def set_initial_sample_decision(transaction_sampled)
-      unless Sentry.initialized? && Sentry.configuration.profiling_enabled?
+      unless @profiling_enabled
         @sampled = false
         return
       end
@@ -57,9 +64,7 @@ module Sentry
         return
       end
 
-      profiles_sample_rate = Sentry.configuration.profiles_sample_rate
-
-      case profiles_sample_rate
+      case @profiles_sample_rate
       when 0.0
         @sampled = false
         log('Discarding profile because sample_rate is 0')
@@ -68,14 +73,13 @@ module Sentry
         @sampled = true
         return
       else
-        @sampled = Random.rand < profiles_sample_rate
+        @sampled = Random.rand < @profiles_sample_rate
       end
 
       log('Discarding profile due to sampling decision') unless @sampled
     end
 
     def to_hash
-      return nil unless Sentry.initialized?
       return nil unless @sampled
       return nil unless @started
 
@@ -93,18 +97,22 @@ module Sentry
         # need to map over stackprof frame ids to ours
         frame_map[frame_id] = idx
 
-        in_app = in_app?(frame_data[:file])
-        filename = compute_filename(frame_data[:file], in_app)
+        file_path = frame_data[:file]
+        in_app = in_app?(file_path)
+        filename = compute_filename(file_path, in_app)
         function, mod = split_module(frame_data[:name])
 
-        {
-          abs_path: frame_data[:file],
+        frame_hash = {
+          abs_path: file_path,
           function: function,
-          module: mod,
-          lineno: frame_data[:line],
           filename: filename,
           in_app: in_app
-        }.compact
+        }
+
+        frame_hash[:module] = mod if mod
+        frame_hash[:lineno] = frame_data[:line] if frame_data[:line]
+
+        frame_hash
       end
 
       idx = 0
@@ -134,7 +142,7 @@ module Sentry
         n.times do
           # stackprof deltas are in microseconds
           delta = results[:raw_timestamp_deltas][idx]
-          elapsed_since_start_ns += (delta * 1e3).to_i
+          elapsed_since_start_ns += (delta * MICRO_TO_NANO_SECONDS).to_i
           idx += 1
 
           # Not sure why but some deltas are very small like 0/1 values,
@@ -181,19 +189,8 @@ module Sentry
       Sentry.logger.debug(LOGGER_PROGNAME) { "[Profiler] #{message}" }
     end
 
-    def project_root
-      @project_root ||= Sentry.configuration.project_root
-    end
-
-    def in_app_pattern
-      @in_app_pattern ||= begin
-        app_dirs_pattern = Sentry.configuration.app_dirs_pattern || Backtrace::APP_DIRS_PATTERN
-        Regexp.new("^(#{project_root}/)?#{app_dirs_pattern}")
-      end
-    end
-
     def in_app?(abs_path)
-      abs_path.match?(in_app_pattern)
+      abs_path.match?(@in_app_pattern)
     end
 
     # copied from stacktrace.rb since I don't want to touch existing code
@@ -202,16 +199,16 @@ module Sentry
     def compute_filename(abs_path, in_app)
       return nil if abs_path.nil?
 
-      under_project_root = project_root && abs_path.start_with?(project_root)
+      under_project_root = @project_root && abs_path.start_with?(@project_root)
 
       prefix =
         if under_project_root && in_app
-          project_root
+          @project_root
         else
           longest_load_path = $LOAD_PATH.select { |path| abs_path.start_with?(path.to_s) }.max_by(&:size)
 
           if under_project_root
-            longest_load_path || project_root
+            longest_load_path || @project_root
           else
             longest_load_path
           end

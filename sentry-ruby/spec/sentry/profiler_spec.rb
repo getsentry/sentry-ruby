@@ -12,6 +12,8 @@ RSpec.describe Sentry::Profiler do
 
   before { StackProf.stop }
 
+  let(:subject) { described_class.new(Sentry.configuration) }
+
   describe '#start' do
     context 'without sampling decision' do
       it 'does not start StackProf' do
