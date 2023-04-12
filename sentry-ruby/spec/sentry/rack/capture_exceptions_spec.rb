@@ -658,6 +658,8 @@ RSpec.describe Sentry::Rack::CaptureExceptions, rack: true do
         end
       end
 
+      before { StackProf.stop }
+
       it "collects a profile" do
         app = ->(_) do
           [200, {}, [TestApp.foo]]
@@ -666,6 +668,10 @@ RSpec.describe Sentry::Rack::CaptureExceptions, rack: true do
         stack = described_class.new(app)
         stack.call(env)
         event = last_sentry_event
+
+        # TODO-neel debugging
+        expect(defined?(StackProf)).to eq("constant")
+        puts("NEEL: " + event.profiler.inspect)
 
         profile = event.profile
         expect(profile).not_to be_nil
