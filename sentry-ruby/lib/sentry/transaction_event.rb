@@ -20,9 +20,6 @@ module Sentry
     # @return [Hash, nil]
     attr_accessor :profile
 
-    # TODO-neel remove
-    attr_reader :profiler
-
     def initialize(transaction:, **options)
       super(**options)
 
@@ -39,8 +36,6 @@ module Sentry
       finished_spans = transaction.span_recorder.spans.select { |span| span.timestamp && span != transaction }
       self.spans = finished_spans.map(&:to_hash)
 
-      # TODO-neel remove
-      @profiler = transaction.profiler
       populate_profile(transaction)
     end
 

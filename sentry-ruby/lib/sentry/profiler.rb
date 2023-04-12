@@ -26,7 +26,6 @@ module Sentry
     MICRO_TO_NANO_SECONDS = 1e3
 
     attr_reader :sampled, :started, :event_id
-    attr_reader :results
 
     def initialize(configuration)
       @event_id = SecureRandom.uuid.delete('-')
@@ -97,7 +96,6 @@ module Sentry
       return {} unless @started
 
       results = StackProf.results
-      @results = results
       return {} unless results
       return {} if results.empty?
       return {} if results[:samples] == 0
