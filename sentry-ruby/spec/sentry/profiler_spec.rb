@@ -1,6 +1,6 @@
 require "spec_helper"
 
-return unless defined?(Sentry::Profiler)
+return unless defined?(StackProf)
 
 RSpec.describe Sentry::Profiler do
   before do
