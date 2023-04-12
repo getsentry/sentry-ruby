@@ -1,12 +1,24 @@
 # frozen_string_literal: true
 
-return unless defined?(StackProf)
-
 require 'securerandom'
 
 module Sentry
-  class Profiler
+  class NoopProfiler
+    def initialize(_configuration); end
+    def start; end
+    def stop; end
+    def set_initial_sample_decision(_transaction_sampled); end
 
+    def profile_context
+      {}
+    end
+
+    def to_hash
+      {}
+    end
+  end
+
+  class StackProfProfiler < NoopProfiler
     VERSION = '1'
     PLATFORM = 'ruby'
     # 101 Hz in microseconds
@@ -80,14 +92,14 @@ module Sentry
     end
 
     def to_hash
-      return nil unless @sampled
-      return nil unless @started
+      return {} unless @sampled
+      return {} unless @started
 
       results = StackProf.results
-      return nil unless results
-      return nil if results.empty?
-      return nil if results[:samples] == 0
-      return nil unless results[:raw]
+      return {} unless results
+      return {} if results.empty?
+      return {} if results[:samples] == 0
+      return {} unless results[:raw]
 
       frame_map = {}
 
@@ -166,7 +178,7 @@ module Sentry
 
       if samples.size <= 2
         log('Not enough samples, discarding profiler')
-        return nil
+        return {}
       end
 
       profile = {
@@ -226,4 +238,6 @@ module Sentry
       [function, mod]
     end
   end
+
+  Profiler = defined?(StackProf) ? StackProfProfiler : NoopProfiler
 end

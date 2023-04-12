@@ -59,6 +59,10 @@ module Sentry
     # @return [Hash]
     attr_reader :contexts
 
+    # The Profiler instance for this transaction.
+    # @return [Profiler]
+    attr_reader :profiler
+
     def initialize(
       hub:,
       name: nil,
@@ -84,7 +88,7 @@ module Sentry
       @effective_sample_rate = nil
       @contexts = {}
       @measurements = {}
-      @profiler = nil
+      @profiler = Profiler.new(@configuration)
       init_span_recorder
     end
 
@@ -256,7 +260,7 @@ module Sentry
         @name = UNLABELD_NAME
       end
 
-      @profiler&.stop
+      @profiler.stop
 
       if @sampled
         event = hub.current_client.event_from_transaction(self)
@@ -292,19 +296,9 @@ module Sentry
       @contexts[key] = value
     end
 
-    # The stackprof profiler instance.
-    # @return [Profiler, nil]
-    def profiler
-      return nil unless defined?(Profiler)
-
-      @profiler ||= Profiler.new(configuration)
-    end
-
-    # Start the profiler if exists.
+    # Start the profiler.
     # @return [void]
     def start_profiler!
-      return unless profiler
-
       profiler.set_initial_sample_decision(sampled)
       profiler.start
     end

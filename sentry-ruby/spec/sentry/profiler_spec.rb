@@ -137,12 +137,12 @@ RSpec.describe Sentry::Profiler do
   describe '#to_hash' do
     it 'returns nil unless sampled' do
       subject.set_initial_sample_decision(false)
-      expect(subject.to_hash).to eq(nil)
+      expect(subject.to_hash).to eq({})
     end
 
     it 'returns nil unless started' do
       subject.set_initial_sample_decision(true)
-      expect(subject.to_hash).to eq(nil)
+      expect(subject.to_hash).to eq({})
     end
 
     it 'returns nil if empty results' do
@@ -151,7 +151,7 @@ RSpec.describe Sentry::Profiler do
       subject.stop
 
       expect(StackProf).to receive(:results).and_call_original
-      expect(subject.to_hash).to eq(nil)
+      expect(subject.to_hash).to eq({})
     end
 
     context 'with profiled code' do
