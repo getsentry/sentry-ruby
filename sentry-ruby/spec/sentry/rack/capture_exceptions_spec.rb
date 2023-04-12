@@ -1,13 +1,6 @@
-# return unless defined?(Rack)
-
 require 'spec_helper'
 
-module TestApp
-  def self.foo
-    sleep 0.1
-    "ok"
-  end
-end
+return unless defined?(Rack)
 
 RSpec.describe Sentry::Rack::CaptureExceptions, rack: true do
   let(:exception) { ZeroDivisionError.new("divided by 0") }
@@ -658,9 +651,20 @@ RSpec.describe Sentry::Rack::CaptureExceptions, rack: true do
         end
       end
 
+      let(:stackprof_results) do
+        data = StackProf::Report.from_file('spec/support/stackprof_results.json').data
+        # relative dir differs on each machine
+        data[:frames].each { |_id, fra| fra[:file].gsub!(/<dir>/, Dir.pwd) }
+        data
+      end
+
+      before do
+        allow(StackProf).to receive(:results).and_return(stackprof_results)
+      end
+
       it "collects a profile" do
         app = ->(_) do
-          [200, {}, [TestApp.foo]]
+          [200, {}, "ok"]
         end
 
         stack = described_class.new(app)
