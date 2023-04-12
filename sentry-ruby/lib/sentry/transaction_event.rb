@@ -59,7 +59,7 @@ module Sentry
 
     def populate_profile(transaction)
       profile_hash = transaction.profiler.to_hash
-      return nil if profile_hash.empty?
+      return if profile_hash.empty?
 
       profile_hash.merge!(
         environment: environment,

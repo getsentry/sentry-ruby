@@ -659,6 +659,7 @@ RSpec.describe Sentry::Rack::CaptureExceptions, rack: true do
       end
 
       before do
+        StackProf.stop
         allow(StackProf).to receive(:results).and_return(stackprof_results)
       end
 
