@@ -7,6 +7,7 @@
   - `config.enable_tracing = false` will turn off tracing even if `traces_sample_rate/traces_sampler` is set
   - `config.enable_tracing = nil` (default) will keep the current behaviour
 - Allow ignoring `excluded_exceptions` when manually capturing exceptions [#2007](https://github.com/getsentry/sentry-ruby/pull/2007)
+
   Users can now ignore the SDK's `excluded_exceptions` by passing `ignore_exclusions` hint when using `Sentry.capture_exception`.
 
   ```rb
@@ -14,9 +15,44 @@
   Sentry.capture_exception(ignored_exception) # won't be sent to Sentry
   Sentry.capture_exception(ignored_exception, hint: { ignore_exclusions: true }) # will be sent to Sentry
   ```
+
 - Add `spec` to `Backtrace::APP_DIRS_PATTERN` [#2029](https://github.com/getsentry/sentry-ruby/pull/2029)
 - Forward all `baggage` header items that are prefixed with `sentry-` [#2025](https://github.com/getsentry/sentry-ruby/pull/2025)
-- Profiling TODO-neel-profiler changelog entry
+- Add `stackprof` based profiler [#2024](https://github.com/getsentry/sentry-ruby/pull/2024)
+
+  The SDK now supports sending profiles taken by the [`stackprof` gem](https://github.com/tmm1/stackprof) and viewing them in the [Profiling](https://docs.sentry.io/product/profiling/) section.
+
+  To use it, first add `stackprof` to your `Gemfile` and make sure it is loaded before `sentry-ruby`.
+
+  ```ruby
+  # Gemfile
+
+  gem 'stackprof'
+  gem 'sentry-ruby'
+  ```
+
+  Then, make sure both `traces_sample_rate` and `profiles_sample_rate` are set and non-zero in your sentry initializer.
+
+  ```ruby
+  # config/initializers/sentry.rb
+
+  Sentry.init do |config|
+    config.dsn = "<dsn>"
+    config.traces_sample_rate = 1.0
+    config.profiles_sample_rate = 1.0
+  end
+  ```
+
+  Some implementation caveats:
+  - Profiles are sampled **relative** to traces, so if both rates are 0.5, we will capture 0.25 of all requests.
+  - Profiles are only captured for code running within a transaction.
+  - Profiles for multi-threaded servers like `puma` might not capture frames correctly when async I/O is happening. This is a `stackprof` limitation.
+
+  <br />
+
+  > **Warning**
+  > Profiling is currently in beta. Beta features are still in-progress and may have bugs. We recognize the irony.
+  > If you have any questions or feedback, please email us at profiling@sentry.io, reach out via Discord (#profiling), or open an issue.
 
 ### Bug Fixes
 
