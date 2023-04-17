@@ -3,22 +3,7 @@
 require 'securerandom'
 
 module Sentry
-  class NoopProfiler
-    def initialize(_configuration); end
-    def start; end
-    def stop; end
-    def set_initial_sample_decision(_transaction_sampled); end
-
-    def profile_context
-      {}
-    end
-
-    def to_hash
-      {}
-    end
-  end
-
-  class StackProfProfiler < NoopProfiler
+  class Profiler
     VERSION = '1'
     PLATFORM = 'ruby'
     # 101 Hz in microseconds
@@ -32,7 +17,7 @@ module Sentry
       @started = false
       @sampled = nil
 
-      @profiling_enabled = configuration.profiling_enabled?
+      @profiling_enabled = defined?(StackProf) && configuration.profiling_enabled?
       @profiles_sample_rate = configuration.profiles_sample_rate
       @project_root = configuration.project_root
       @app_dirs_pattern = configuration.app_dirs_pattern || Backtrace::APP_DIRS_PATTERN
@@ -238,6 +223,4 @@ module Sentry
       [function, mod]
     end
   end
-
-  Profiler = defined?(StackProf) ? StackProfProfiler : NoopProfiler
 end
