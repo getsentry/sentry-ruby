@@ -77,12 +77,6 @@ RSpec.describe Sentry::Profiler do
     end
   end
 
-  describe '#profile_context' do
-    it 'returns profile context hash' do
-      expect(subject.profile_context).to eq({ profile_id: subject.event_id })
-    end
-  end
-
   describe '#set_initial_sample_decision' do
     context 'with profiling disabled' do
       it 'does not sample when profiles_sample_rate is nil' do

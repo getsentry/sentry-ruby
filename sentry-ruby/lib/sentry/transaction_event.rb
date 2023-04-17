@@ -78,7 +78,6 @@ module Sentry
       )
 
       self.profile = profile_hash
-      self.contexts.merge!(profile: transaction.profiler.profile_context)
     end
   end
 end

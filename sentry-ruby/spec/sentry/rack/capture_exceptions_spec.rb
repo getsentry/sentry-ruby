@@ -677,8 +677,6 @@ RSpec.describe Sentry::Rack::CaptureExceptions, rack: true do
           expect(profile).not_to be_nil
 
           expect(profile[:event_id]).not_to be_nil
-          expect(event.contexts[:profile]).to eq({ profile_id: profile[:event_id] })
-
           expect(profile[:platform]).to eq("ruby")
           expect(profile[:version]).to eq("1")
           expect(profile[:environment]).to eq("development")

@@ -43,10 +43,6 @@ module Sentry
       log('Stopped')
     end
 
-    def profile_context
-      { profile_id: @event_id }
-    end
-
     # Sets initial sampling decision of the profile.
     # @return [void]
     def set_initial_sample_decision(transaction_sampled)
