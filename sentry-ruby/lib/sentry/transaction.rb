@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require "sentry/baggage"
+require "sentry/profiler"
 
 module Sentry
   class Transaction < Span
@@ -58,6 +59,10 @@ module Sentry
     # @return [Hash]
     attr_reader :contexts
 
+    # The Profiler instance for this transaction.
+    # @return [Profiler]
+    attr_reader :profiler
+
     def initialize(
       hub:,
       name: nil,
@@ -83,6 +88,7 @@ module Sentry
       @effective_sample_rate = nil
       @contexts = {}
       @measurements = {}
+      @profiler = Profiler.new(@configuration)
       init_span_recorder
     end
 
@@ -254,6 +260,8 @@ module Sentry
         @name = UNLABELD_NAME
       end
 
+      @profiler.stop
+
       if @sampled
         event = hub.current_client.event_from_transaction(self)
         hub.capture_event(event)
@@ -286,6 +294,13 @@ module Sentry
     # @return [void]
     def set_context(key, value)
       @contexts[key] = value
+    end
+
+    # Start the profiler.
+    # @return [void]
+    def start_profiler!
+      profiler.set_initial_sample_decision(sampled)
+      profiler.start
     end
 
     protected

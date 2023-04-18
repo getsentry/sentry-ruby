@@ -154,6 +154,13 @@ module Sentry
         event_payload
       )
 
+      if event.is_a?(TransactionEvent) && event.profile
+        envelope.add_item(
+          { type: 'profile', content_type: 'application/json' },
+          event.profile
+        )
+      end
+
       client_report_headers, client_report_payload = fetch_pending_client_report
       envelope.add_item(client_report_headers, client_report_payload) if client_report_headers
 

@@ -1,5 +1,4 @@
-require "sentry-ruby"
-require "sentry/test_helper"
+require "spec_helper"
 
 RSpec.describe Sentry::TestHelper do
   include described_class

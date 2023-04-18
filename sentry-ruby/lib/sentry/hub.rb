@@ -88,8 +88,10 @@ module Sentry
       }
 
       sampling_context.merge!(custom_sampling_context)
-
       transaction.set_initial_sample_decision(sampling_context: sampling_context)
+
+      transaction.start_profiler!
+
       transaction
     end
 

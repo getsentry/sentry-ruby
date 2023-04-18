@@ -16,7 +16,7 @@ RSpec.describe Sentry::Scope do
   describe "#initialize" do
     it "contains correct defaults" do
       expect(subject.breadcrumbs).to be_a(Sentry::BreadcrumbBuffer)
-      expect(subject.contexts[:os].keys).to match_array([:name, :version, :build, :kernel_version])
+      expect(subject.contexts[:os].keys).to match_array([:name, :version, :build, :kernel_version, :machine])
       expect(subject.contexts.dig(:runtime, :version)).to match(/ruby/)
       expect(subject.extra).to eq({})
       expect(subject.tags).to eq({})
@@ -46,7 +46,7 @@ RSpec.describe Sentry::Scope do
       copy.fingerprint << "bar"
 
       expect(subject.breadcrumbs.to_hash).to eq({ values: [] })
-      expect(subject.contexts[:os].keys).to match_array([:name, :version, :build, :kernel_version])
+      expect(subject.contexts[:os].keys).to match_array([:name, :version, :build, :kernel_version, :machine])
       expect(subject.contexts.dig(:runtime, :version)).to match(/ruby/)
       expect(subject.extra).to eq({})
       expect(subject.tags).to eq({})
@@ -136,7 +136,7 @@ RSpec.describe Sentry::Scope do
 
       expect(subject.object_id).to eq(scope_id)
       expect(subject.breadcrumbs).to be_a(Sentry::BreadcrumbBuffer)
-      expect(subject.contexts[:os].keys).to match_array([:name, :version, :build, :kernel_version])
+      expect(subject.contexts[:os].keys).to match_array([:name, :version, :build, :kernel_version, :machine])
       expect(subject.contexts.dig(:runtime, :version)).to match(/ruby/)
       expect(subject.extra).to eq({})
       expect(subject.tags).to eq({})
@@ -217,7 +217,7 @@ RSpec.describe Sentry::Scope do
       expect(event.transaction_info).to eq({ source: :view })
       expect(event.breadcrumbs).to be_a(Sentry::BreadcrumbBuffer)
       expect(event.fingerprint).to eq(["foo"])
-      expect(event.contexts[:os].keys).to match_array([:name, :version, :build, :kernel_version])
+      expect(event.contexts[:os].keys).to match_array([:name, :version, :build, :kernel_version, :machine])
       expect(event.contexts.dig(:runtime, :version)).to match(/ruby/)
     end
 

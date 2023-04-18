@@ -154,6 +154,40 @@ RSpec.describe Sentry::Configuration do
     end
   end
 
+  describe "#profiling_enabled?" do
+    it "returns false unless tracing enabled" do
+      subject.enable_tracing = false
+      expect(subject.profiling_enabled?).to eq(false)
+    end
+
+    it "returns false unless sending enabled" do
+      subject.enable_tracing = true
+      subject.profiles_sample_rate = 1.0
+      allow(subject).to receive(:sending_allowed?).and_return(false)
+      expect(subject.profiling_enabled?).to eq(false)
+    end
+
+    context 'when tracing and sending enabled' do
+      before { subject.enable_tracing = true }
+      before { allow(subject).to receive(:sending_allowed?).and_return(true) }
+
+      it "returns false if nil sample rate" do
+        subject.profiles_sample_rate = nil
+        expect(subject.profiling_enabled?).to eq(false)
+      end
+
+      it "returns false if invalid sample rate" do
+        subject.profiles_sample_rate = 5.0
+        expect(subject.profiling_enabled?).to eq(false)
+      end
+
+      it "returns true if valid sample rate" do
+        subject.profiles_sample_rate = 0.5
+        expect(subject.profiling_enabled?).to eq(true)
+      end
+    end
+  end
+
   describe "#enable_tracing=" do
     it "sets traces_sample_rate to 1.0 automatically" do
       subject.enable_tracing = true
