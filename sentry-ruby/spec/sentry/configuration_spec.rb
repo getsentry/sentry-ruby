@@ -57,6 +57,32 @@ RSpec.describe Sentry::Configuration do
     end
   end
 
+  describe "#traces_sample_rate" do
+    context "when enable_tracing is unset" do
+      it "returns nil by default" do
+          expect(subject.traces_sample_rate).to eq(nil)
+        end
+
+      it "returns 0.0 when passed a non-numeric String" do
+        subject.traces_sample_rate = "foobar"
+        expect(subject.traces_sample_rate).to eq(0.0)
+      end
+
+      it "returns 0.5 when passed a numeric String" do
+        subject.traces_sample_rate = "0.5"
+        expect(subject.traces_sample_rate).to eq(0.5)
+      end
+    end
+
+    context "when enable_tracing is true" do
+      it "returns 0.0 when given a non-numeric String" do
+        subject.enable_tracing = true
+        subject.traces_sample_rate = "foobar"
+        expect(subject.traces_sample_rate).to eq(0.0)
+      end
+    end
+  end
+
   describe "#tracing_enabled?" do
     context "when sending not allowed" do
       before do
@@ -121,6 +147,13 @@ RSpec.describe Sentry::Configuration do
         end
       end
 
+      context "when traces_sample_rate is a String" do
+        it "returns true without any exceptions" do
+          expect { subject.traces_sample_rate = "0.1" }.not_to raise_error(ArgumentError)
+          expect(subject.tracing_enabled?).to eq(true)
+        end
+      end
+
       context "when traces_sampler is set" do
         it "returns true" do
           subject.traces_sampler = proc { true }
@@ -151,6 +184,22 @@ RSpec.describe Sentry::Configuration do
           expect(subject.tracing_enabled?).to eq(false)
         end
       end
+    end
+  end
+
+  describe "#profiles_sample_rate" do
+    it "returns nil by default" do
+      expect(subject.profiles_sample_rate).to eq(nil)
+    end
+
+    it "returns 0.0 when given as non-numeric String" do
+      subject.profiles_sample_rate = "foobar"
+      expect(subject.profiles_sample_rate).to eq(0.0)
+    end
+
+    it "returns 0.5 when given a numeric String" do
+      subject.profiles_sample_rate = "0.5"
+      expect(subject.profiles_sample_rate).to eq(0.5)
     end
   end
 
