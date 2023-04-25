@@ -216,8 +216,8 @@ module Sentry
     attr_reader :transport
 
     # Take a float between 0.0 and 1.0 as the sample rate for tracing events (transactions).
-    # @return [Float]
-    attr_accessor :traces_sample_rate
+    # @return [Float, nil]
+    attr_reader :traces_sample_rate
 
     # Take a Proc that controls the sample rate for every tracing event, e.g.
     # @example
@@ -327,7 +327,6 @@ module Sentry
       self.before_send = nil
       self.before_send_transaction = nil
       self.rack_env_whitelist = RACK_ENV_WHITELIST_DEFAULT
-      self.traces_sample_rate = nil
       self.traces_sampler = nil
       self.enable_tracing = nil
 
@@ -409,9 +408,13 @@ module Sentry
       @traces_sample_rate ||= 1.0 if enable_tracing
     end
 
+    def traces_sample_rate=(traces_sample_rate)
+      @traces_sample_rate = traces_sample_rate&.to_f
+    end
+
     def profiles_sample_rate=(profiles_sample_rate)
       log_info("Please make sure to include the 'stackprof' gem in your Gemfile to use Profiling with Sentry.") unless defined?(StackProf)
-      @profiles_sample_rate = profiles_sample_rate
+      @profiles_sample_rate = profiles_sample_rate&.to_f
     end
 
     def sending_allowed?
