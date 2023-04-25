@@ -446,19 +446,22 @@ module Sentry
       enabled_environments.empty? || enabled_environments.include?(environment)
     end
 
+    def valid_sample_rate?(sample_rate)
+      sample_rate &&
+      sample_rate.respond_to?(:>=) &&
+      sample_rate >= 0.0 &&
+      sample_rate.respond_to?(:<=) &&
+      sample_rate <= 1.0
+    end
+
     def tracing_enabled?
-      valid_sampler = !!((@traces_sample_rate &&
-                          @traces_sample_rate >= 0.0 &&
-                          @traces_sample_rate <= 1.0) ||
-                         @traces_sampler)
+      valid_sampler = !!((valid_sample_rate?(@traces_sample_rate)) || @traces_sampler)
 
       (@enable_tracing != false) && valid_sampler && sending_allowed?
     end
 
     def profiling_enabled?
-      valid_sampler = !!(@profiles_sample_rate &&
-                         @profiles_sample_rate >= 0.0 &&
-                         @profiles_sample_rate <= 1.0)
+      valid_sampler = !!(valid_sample_rate?(@profiles_sample_rate))
 
       tracing_enabled? && valid_sampler && sending_allowed?
     end
