@@ -23,6 +23,7 @@ RSpec.describe Puma::Server do
     end
 
     def close
+      @server.stop(true)
       @ios.each { |io| io.close }
     end
   end
