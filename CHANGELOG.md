@@ -3,6 +3,7 @@
 ### Features
 
 - Move `http.query` to span data in net/http integration [#2039](https://github.com/getsentry/sentry-ruby/pull/2039)
+- Validate `release` is a `String` during configuration [#2040](https://github.com/getsentry/sentry-ruby/pull/2040)
 
 ## 5.9.0
 
