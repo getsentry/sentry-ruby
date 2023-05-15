@@ -16,6 +16,10 @@ sidekiq_version = "6.0" if sidekiq_version.nil?
 gem "rails", "< 7.0"
 gem "sidekiq", "~> #{sidekiq_version}"
 
+# https://github.com/flavorjones/loofah/pull/267
+# loofah changed the required ruby version in a patch so we need to explicitly pin it
+gem "loofah", "2.20.0" if RUBY_VERSION.to_f < 2.5
+
 gem "sentry-ruby", path: "../sentry-ruby"
 gem "sentry-rails", path: "../sentry-rails"
 

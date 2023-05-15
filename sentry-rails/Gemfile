@@ -37,6 +37,10 @@ gem 'simplecov'
 gem "simplecov-cobertura", "~> 1.4"
 gem "rexml"
 
+# https://github.com/flavorjones/loofah/pull/267
+# loofah changed the required ruby version in a patch so we need to explicitly pin it
+gem "loofah", "2.20.0" if RUBY_VERSION.to_f < 2.5
+
 gem "rake", "~> 12.0"
 
 gem "object_tracer"
