@@ -10,22 +10,6 @@ RSpec.describe Sentry::BackgroundWorker do
   end
 
   describe "#initialize" do
-    context "when config.async is set" do
-      before do
-        configuration.async = proc {}
-      end
-
-      it "initializes a background_worker with ImmediateExecutor" do
-        worker = described_class.new(configuration)
-
-        expect(string_io.string).to match(
-          /config.async is set, BackgroundWorker is disabled/
-        )
-
-        expect(worker.instance_variable_get(:@executor)).to be_a(Concurrent::ImmediateExecutor)
-      end
-    end
-
     context "when config.background_worker_threads is set" do
       it "initializes a background worker with correct number of threads and queue size" do
         worker = described_class.new(configuration)
