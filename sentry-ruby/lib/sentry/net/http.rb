@@ -38,7 +38,10 @@ module Sentry
             if sentry_span
               request_info = extract_request_info(req)
               sentry_span.set_description("#{request_info[:method]} #{request_info[:url]}")
-              sentry_span.set_data(:status, res.code.to_i)
+              sentry_span.set_data('url', request_info[:url])
+              sentry_span.set_data('http.method', request_info[:method])
+              sentry_span.set_data('http.query', request_info[:query]) if request_info[:query]
+              sentry_span.set_data('status', res.code.to_i)
             end
           end
         end
@@ -87,7 +90,7 @@ module Sentry
         result = { method: req.method, url: url }
 
         if Sentry.configuration.send_default_pii
-          result[:url] = result[:url] + "?#{uri.query}"
+          result[:query] = uri.query
           result[:body] = req.body
         end
 

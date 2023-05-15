@@ -1,3 +1,9 @@
+## Unreleased
+
+### Features
+
+- Move `http.query` to span data in net/http integration [#2039](https://github.com/getsentry/sentry-ruby/pull/2039)
+
 ## 5.9.0
 
 ### Features
