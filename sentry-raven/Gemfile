@@ -31,6 +31,10 @@ gem "rspec", "~> 3.9.0"
 gem "capybara", "~> 3.15.0" # rspec system tests
 gem "puma" # rspec system tests
 
+# https://github.com/flavorjones/loofah/pull/267
+# loofah changed the required ruby version in a patch so we need to explicitly pin it
+gem "loofah", "2.20.0" if RUBY_VERSION.to_f < 2.5
+
 gem "timecop"
 gem "test-unit"
 gem "simplecov"
