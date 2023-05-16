@@ -14,6 +14,8 @@ module Sentry
   class Configuration
     include CustomInspection
     include LoggingHelper
+    include ArgumentCheckingHelper
+
     # Directories to be recognized as part of your app. e.g. if you
     # have an `engines` dir at the root of your project, you may want
     # to set this to something like /(app|config|engines|lib)/
@@ -179,7 +181,7 @@ module Sentry
     # Release tag to be passed with every event sent to Sentry.
     # We automatically try to set this to a git SHA or Capistrano release.
     # @return [String]
-    attr_accessor :release
+    attr_reader :release
 
     # The sampling factor to apply to events. A value of 0.0 will not send
     # any events, and a value of 1.0 will send 100% of events.
@@ -341,6 +343,12 @@ module Sentry
 
     alias server= dsn=
 
+    def release=(value)
+      check_argument_type!(value, String, NilClass)
+
+      @release = value
+    end
+
     def async=(value)
       check_callable!("async", value)
 
@@ -477,7 +485,7 @@ module Sentry
     def detect_release
       return unless sending_allowed?
 
-      self.release ||= ReleaseDetector.detect_release(project_root: project_root, running_on_heroku: running_on_heroku?)
+      @release ||= ReleaseDetector.detect_release(project_root: project_root, running_on_heroku: running_on_heroku?)
 
       if running_on_heroku? && release.nil?
         log_warn(HEROKU_DYNO_METADATA_MESSAGE)
