@@ -5,6 +5,10 @@
 - Move `http.query` to span data in net/http integration [#2039](https://github.com/getsentry/sentry-ruby/pull/2039)
 - Validate `release` is a `String` during configuration [#2040](https://github.com/getsentry/sentry-ruby/pull/2040)
 
+### Bug Fixes
+
+- Support Rails 7.1's show exception check [#2049](https://github.com/getsentry/sentry-ruby/pull/2049)
+
 ## 5.9.0
 
 ### Features
