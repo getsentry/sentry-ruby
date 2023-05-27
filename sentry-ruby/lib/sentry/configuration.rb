@@ -408,13 +408,19 @@ module Sentry
       @traces_sample_rate ||= 1.0 if enable_tracing
     end
 
+    def is_numeric_or_nil?(value)
+      value.is_a?(Numeric) || value.nil?
+    end
+
     def traces_sample_rate=(traces_sample_rate)
-      @traces_sample_rate = traces_sample_rate&.to_f
+      raise ArgumentError, "traces_sample_rate must be a Numeric or nil" unless is_numeric_or_nil?(traces_sample_rate)
+      @traces_sample_rate = traces_sample_rate
     end
 
     def profiles_sample_rate=(profiles_sample_rate)
+      raise ArgumentError, "profiles_sample_rate must be a Numeric or nil" unless is_numeric_or_nil?(profiles_sample_rate)
       log_info("Please make sure to include the 'stackprof' gem in your Gemfile to use Profiling with Sentry.") unless defined?(StackProf)
-      @profiles_sample_rate = profiles_sample_rate&.to_f
+      @profiles_sample_rate = profiles_sample_rate
     end
 
     def sending_allowed?
