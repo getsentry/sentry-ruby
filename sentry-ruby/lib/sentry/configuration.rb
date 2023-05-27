@@ -447,11 +447,8 @@ module Sentry
     end
 
     def valid_sample_rate?(sample_rate)
-      sample_rate &&
-      sample_rate.respond_to?(:>=) &&
-      sample_rate >= 0.0 &&
-      sample_rate.respond_to?(:<=) &&
-      sample_rate <= 1.0
+      return false unless sample_rate.is_a?(Numeric)
+      sample_rate >= 0.0 && sample_rate <= 1.0
     end
 
     def tracing_enabled?
