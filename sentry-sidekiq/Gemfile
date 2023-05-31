@@ -19,7 +19,7 @@ sidekiq_version = ENV["SIDEKIQ_VERSION"]
 sidekiq_version = "6.0" if sidekiq_version.nil?
 
 gem "sidekiq", "~> #{sidekiq_version}"
-gem "rails", "< 7.0"
+gem "rails"
 
 if RUBY_VERSION.to_f >= 2.6
   gem "debug", github: "ruby/debug", platform: :ruby

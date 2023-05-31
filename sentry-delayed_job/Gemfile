@@ -14,7 +14,7 @@ gem "rexml"
 
 gem "delayed_job"
 gem "delayed_job_active_record"
-gem "rails", "< 7.0"
+gem "rails"
 
 platform :jruby do
   gem "activerecord-jdbcmysql-adapter"

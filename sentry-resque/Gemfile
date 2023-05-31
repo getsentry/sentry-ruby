@@ -6,7 +6,7 @@ gemspec
 gem "sentry-ruby", path: "../sentry-ruby"
 gem "sentry-rails", path: "../sentry-rails"
 
-gem "rails", "< 7.0"
+gem "rails"
 
 gem "rake", "~> 12.0"
 gem "rspec", "~> 3.0"
