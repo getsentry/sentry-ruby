@@ -21,8 +21,11 @@ gem "simplecov-cobertura", "~> 1.4"
 gem "rexml"
 gem "stackprof" unless RUBY_PLATFORM == "java"
 
-gem "object_tracer"
-gem "debug", github: "ruby/debug", platform: :ruby if RUBY_VERSION.to_f >= 2.6
+if RUBY_VERSION.to_f >= 2.6
+  gem "debug", github: "ruby/debug", platform: :ruby
+  gem "irb"
+end
+
 gem "pry"
 
 gem "benchmark-ips"
