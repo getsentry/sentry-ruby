@@ -24,8 +24,8 @@ jobs:
         ruby_version: [2.4, 2.5, 2.6, 2.7, '3.0', '3.1', '3.2', head, jruby]
         os: [ubuntu-latest]
         include:
-          - { os: ubuntu-latest, ruby_version: '3.1', options: { rubyopt: "--enable-frozen-string-literal --debug=frozen-string-literal" } }
-          - { os: ubuntu-latest, ruby_version: '3.1', options: { codecov: 1 } }
+          - { os: ubuntu-latest, ruby_version: '3.2', options: { rubyopt: "--enable-frozen-string-literal --debug=frozen-string-literal" } }
+          - { os: ubuntu-latest, ruby_version: '3.2', options: { codecov: 1 } }
     steps:
     - uses: actions/checkout@v1
     - name: Set up Ruby ${{ matrix.ruby_version }}

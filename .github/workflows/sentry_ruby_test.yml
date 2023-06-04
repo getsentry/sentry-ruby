@@ -28,19 +28,19 @@ jobs:
         include:
           - {
               os: ubuntu-latest,
-              ruby_version: 3.1,
+              ruby_version: 3.2,
               rack_version: 0,
               redis_rb_version: 5.0,
             }
           - {
               os: ubuntu-latest,
-              ruby_version: 3.1,
+              ruby_version: 3.2,
               rack_version: 2.0,
               redis_rb_version: 5.0,
             }
           - {
               os: ubuntu-latest,
-              ruby_version: 3.1,
+              ruby_version: 3.2,
               rack_version: 3.0,
               redis_rb_version: 5.0,
               options:
@@ -50,7 +50,7 @@ jobs:
             }
           - {
               os: ubuntu-latest,
-              ruby_version: 3.1,
+              ruby_version: 3.2,
               rack_version: 3.0,
               redis_rb_version: 5.0,
               options: { codecov: 1 },
