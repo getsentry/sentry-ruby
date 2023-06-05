@@ -182,7 +182,20 @@ RSpec.describe Sentry::Configuration do
       expect(subject.profiles_sample_rate).to eq(nil)
     end
 
-    it "is non-Numeric and results in an ArgumentError" do
+    it "accepts Numeric values" do
+      subject.profiles_sample_rate = 1
+      expect(subject.profiles_sample_rate).to eq(1)
+      subject.profiles_sample_rate = 1.0
+      expect(subject.profiles_sample_rate).to eq(1.0)
+    end
+
+    it "accepts nil value" do
+      subject.profiles_sample_rate = 1
+      subject.profiles_sample_rate = nil
+      expect(subject.profiles_sample_rate).to eq(nil)
+    end
+
+    it "raises ArgumentError when the value is not Numeric nor nil" do
       expect { subject.profiles_sample_rate = "foobar" }.to raise_error(ArgumentError)
     end
   end
