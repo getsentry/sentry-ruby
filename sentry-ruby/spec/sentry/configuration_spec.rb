@@ -58,21 +58,25 @@ RSpec.describe Sentry::Configuration do
   end
 
   describe "#traces_sample_rate" do
-    context "when enable_tracing is unset" do
-      it "returns nil by default" do
-          expect(subject.traces_sample_rate).to eq(nil)
-        end
-
-      it "is non-Numeric and results in an ArgumentError" do
-        expect { subject.traces_sample_rate = "foobar" }.to raise_error(ArgumentError)
-      end
+    it "returns nil by default" do
+      expect(subject.traces_sample_rate).to eq(nil)
     end
 
-    context "when enable_tracing is true" do
-      it "is non-Numeric and results in an ArgumentError" do
-        subject.enable_tracing = true
-        expect { subject.traces_sample_rate = "foobar" }.to raise_error(ArgumentError)
-      end
+    it "accepts Numeric values" do
+      subject.traces_sample_rate = 1
+      expect(subject.traces_sample_rate).to eq(1)
+      subject.traces_sample_rate = 1.0
+      expect(subject.traces_sample_rate).to eq(1.0)
+    end
+
+    it "accepts nil value" do
+      subject.traces_sample_rate = 1
+      subject.traces_sample_rate = nil
+      expect(subject.traces_sample_rate).to eq(nil)
+    end
+
+    it "raises ArgumentError when the value is not Numeric nor nil" do
+      expect { subject.traces_sample_rate = "foobar" }.to raise_error(ArgumentError)
     end
   end
 
