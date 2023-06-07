@@ -116,7 +116,11 @@ module Sentry
     end
 
     def capture_exception(exception, **options, &block)
-      check_argument_type!(exception, ::Exception)
+      if RUBY_PLATFORM == "java"
+        check_argument_type!(exception, ::Exception, ::Java::JavaLang::Throwable)
+      else
+        check_argument_type!(exception, ::Exception)
+      end
 
       return if Sentry.exception_captured?(exception)
 
