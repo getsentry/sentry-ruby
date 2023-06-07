@@ -180,10 +180,35 @@ RSpec.describe Sentry::Hub do
       end.to change { transport.events.count }.by(1)
     end
 
-    it "raises error when passing a non-exception object" do
-      expect do
-        subject.capture_exception("String")
-      end.to raise_error(ArgumentError, 'expect the argument to be a Exception, got String ("String")')
+    if RUBY_PLATFORM == "java"
+      context 'when called under jRuby' do
+        let(:exception) do
+          begin
+            raise java.lang.OutOfMemoryError, "A Java error"
+          rescue Exception => exception
+            exception
+          end
+        end
+
+
+      it "raises error when passing a non-exception object" do
+        expect do
+          subject.capture_exception("String")
+        end.to raise_error(ArgumentError, 'expect the argument to be a Exception or Java::JavaLang::Throwable, got String ("String")')
+      end
+
+        it 'allows a java error object to be passed' do
+          expect do
+            subject.capture_exception(exception)
+          end.not_to raise_error
+        end
+      end
+    else
+      it "raises error when passing a non-exception object" do
+        expect do
+          subject.capture_exception("String")
+        end.to raise_error(ArgumentError, 'expect the argument to be a Exception, got String ("String")')
+      end
     end
 
     # see https://github.com/getsentry/sentry-ruby/issues/1323
