@@ -5,6 +5,7 @@
 - Move `http.query` to span data in net/http integration [#2039](https://github.com/getsentry/sentry-ruby/pull/2039)
 - Validate `release` is a `String` during configuration [#2040](https://github.com/getsentry/sentry-ruby/pull/2040)
 - Allow JRuby Java exceptions to be captured [#2043](https://github.com/getsentry/sentry-ruby/pull/2043)
+- Improved error handling around `traces_sample_rate`/`profiles_sample_rate` [#2036](https://github.com/getsentry/sentry-ruby/pull/2036)
 
 ### Bug Fixes
 
