@@ -77,6 +77,39 @@ RSpec.describe Puma::Server do
     end
   end
 
+  context "when puma raises its own errors" do
+    [Puma::MiniSSL::SSLError, Puma::HttpParserError, Puma::HttpParserError501].each do |error_class|
+      it "doesn't capture #{error_class}" do
+        app = proc { raise error_class.new("foo") }
+
+        res = server_run(app) do |server|
+          server.send_http_and_read("GET / HTTP/1.0\r\n\r\n")
+        end
+
+        expect(res).to match(/500 Internal Server Error/)
+        events = sentry_events
+        expect(events.count).to eq(0)
+      end
+
+      it "captures #{error_class} when it is removed from the SDK's config.excluded_exceptions" do
+        Sentry.configuration.excluded_exceptions.delete(error_class.name)
+
+        app = proc { raise error_class.new("foo") }
+
+        res = server_run(app) do |server|
+          server.send_http_and_read("GET / HTTP/1.0\r\n\r\n")
+        end
+
+        expect(res).to match(/500 Internal Server Error/)
+        events = sentry_events
+        expect(events.count).to eq(1)
+        event = events.first
+        expect(event.exception.values.first.type).to match(error_class.name)
+        expect(event.exception.values.first.value).to match("foo")
+      end
+    end
+  end
+
   context "when Sentry.capture_exception causes error" do
     it "doesn't affect the response" do
       expect(Sentry).to receive(:capture_exception).and_raise("bar")
