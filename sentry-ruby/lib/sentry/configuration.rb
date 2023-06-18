@@ -216,8 +216,8 @@ module Sentry
     attr_reader :transport
 
     # Take a float between 0.0 and 1.0 as the sample rate for tracing events (transactions).
-    # @return [Float]
-    attr_accessor :traces_sample_rate
+    # @return [Float, nil]
+    attr_reader :traces_sample_rate
 
     # Take a Proc that controls the sample rate for every tracing event, e.g.
     # @example
@@ -327,7 +327,6 @@ module Sentry
       self.before_send = nil
       self.before_send_transaction = nil
       self.rack_env_whitelist = RACK_ENV_WHITELIST_DEFAULT
-      self.traces_sample_rate = nil
       self.traces_sampler = nil
       self.enable_tracing = nil
 
@@ -409,7 +408,17 @@ module Sentry
       @traces_sample_rate ||= 1.0 if enable_tracing
     end
 
+    def is_numeric_or_nil?(value)
+      value.is_a?(Numeric) || value.nil?
+    end
+
+    def traces_sample_rate=(traces_sample_rate)
+      raise ArgumentError, "traces_sample_rate must be a Numeric or nil" unless is_numeric_or_nil?(traces_sample_rate)
+      @traces_sample_rate = traces_sample_rate
+    end
+
     def profiles_sample_rate=(profiles_sample_rate)
+      raise ArgumentError, "profiles_sample_rate must be a Numeric or nil" unless is_numeric_or_nil?(profiles_sample_rate)
       log_info("Please make sure to include the 'stackprof' gem in your Gemfile to use Profiling with Sentry.") unless defined?(StackProf)
       @profiles_sample_rate = profiles_sample_rate
     end
@@ -443,19 +452,19 @@ module Sentry
       enabled_environments.empty? || enabled_environments.include?(environment)
     end
 
+    def valid_sample_rate?(sample_rate)
+      return false unless sample_rate.is_a?(Numeric)
+      sample_rate >= 0.0 && sample_rate <= 1.0
+    end
+
     def tracing_enabled?
-      valid_sampler = !!((@traces_sample_rate &&
-                          @traces_sample_rate >= 0.0 &&
-                          @traces_sample_rate <= 1.0) ||
-                         @traces_sampler)
+      valid_sampler = !!((valid_sample_rate?(@traces_sample_rate)) || @traces_sampler)
 
       (@enable_tracing != false) && valid_sampler && sending_allowed?
     end
 
     def profiling_enabled?
-      valid_sampler = !!(@profiles_sample_rate &&
-                         @profiles_sample_rate >= 0.0 &&
-                         @profiles_sample_rate <= 1.0)
+      valid_sampler = !!(valid_sample_rate?(@profiles_sample_rate))
 
       tracing_enabled? && valid_sampler && sending_allowed?
     end

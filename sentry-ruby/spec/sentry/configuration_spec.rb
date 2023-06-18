@@ -57,6 +57,29 @@ RSpec.describe Sentry::Configuration do
     end
   end
 
+  describe "#traces_sample_rate" do
+    it "returns nil by default" do
+      expect(subject.traces_sample_rate).to eq(nil)
+    end
+
+    it "accepts Numeric values" do
+      subject.traces_sample_rate = 1
+      expect(subject.traces_sample_rate).to eq(1)
+      subject.traces_sample_rate = 1.0
+      expect(subject.traces_sample_rate).to eq(1.0)
+    end
+
+    it "accepts nil value" do
+      subject.traces_sample_rate = 1
+      subject.traces_sample_rate = nil
+      expect(subject.traces_sample_rate).to eq(nil)
+    end
+
+    it "raises ArgumentError when the value is not Numeric nor nil" do
+      expect { subject.traces_sample_rate = "foobar" }.to raise_error(ArgumentError)
+    end
+  end
+
   describe "#tracing_enabled?" do
     context "when sending not allowed" do
       before do
@@ -151,6 +174,29 @@ RSpec.describe Sentry::Configuration do
           expect(subject.tracing_enabled?).to eq(false)
         end
       end
+    end
+  end
+
+  describe "#profiles_sample_rate" do
+    it "returns nil by default" do
+      expect(subject.profiles_sample_rate).to eq(nil)
+    end
+
+    it "accepts Numeric values" do
+      subject.profiles_sample_rate = 1
+      expect(subject.profiles_sample_rate).to eq(1)
+      subject.profiles_sample_rate = 1.0
+      expect(subject.profiles_sample_rate).to eq(1.0)
+    end
+
+    it "accepts nil value" do
+      subject.profiles_sample_rate = 1
+      subject.profiles_sample_rate = nil
+      expect(subject.profiles_sample_rate).to eq(nil)
+    end
+
+    it "raises ArgumentError when the value is not Numeric nor nil" do
+      expect { subject.profiles_sample_rate = "foobar" }.to raise_error(ArgumentError)
     end
   end
 
