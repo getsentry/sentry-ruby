@@ -30,6 +30,7 @@ module Sentry
     attr_reader :commands, :host, :port, :db
 
     def record_breadcrumb
+      return unless Sentry.initialized?
       return unless Sentry.configuration.breadcrumbs_logger.include?(LOGGER_NAME)
 
       Sentry.add_breadcrumb(
