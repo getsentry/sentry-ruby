@@ -13,6 +13,7 @@
 - Fix uninitialzed race condition in Redis integration [#2057](https://github.com/getsentry/sentry-ruby/pull/2057)
   - Fixes [#2054](https://github.com/getsentry/sentry-ruby/issues/2054)
 - Ignore low-level Puma exceptions by default [#2055](https://github.com/getsentry/sentry-ruby/pull/2055)
+- Use allowlist to filter `ActiveSupport` breadcrumbs' data [#2048](https://github.com/getsentry/sentry-ruby/pull/2048)
 
 
 ## 5.9.0
