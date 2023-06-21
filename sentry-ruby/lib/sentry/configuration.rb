@@ -257,6 +257,15 @@ module Sentry
     # @!visibility private
     attr_reader :errors, :gem_specs
 
+    # These exceptions could enter Puma's `lowlevel_error_handler` callback and the SDK's Puma integration
+    # But they are mostly considered as noise and should be ignored by default
+    # Please see https://github.com/getsentry/sentry-ruby/pull/2026 for more information
+    PUMA_IGNORE_DEFAULT = [
+      'Puma::MiniSSL::SSLError',
+      'Puma::HttpParserError',
+      'Puma::HttpParserError501'
+    ].freeze
+
     # Most of these errors generate 4XX responses. In general, Sentry clients
     # only automatically report 5xx responses.
     IGNORE_DEFAULT = [
@@ -306,7 +315,7 @@ module Sentry
       self.environment = environment_from_env
       self.enabled_environments = []
       self.exclude_loggers = []
-      self.excluded_exceptions = IGNORE_DEFAULT.dup
+      self.excluded_exceptions = IGNORE_DEFAULT + PUMA_IGNORE_DEFAULT
       self.inspect_exception_causes_for_exclusion = true
       self.linecache = ::Sentry::LineCache.new
       self.logger = ::Sentry::Logger.new(STDOUT)

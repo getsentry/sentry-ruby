@@ -10,6 +10,7 @@
 ### Bug Fixes
 
 - Support Rails 7.1's show exception check [#2049](https://github.com/getsentry/sentry-ruby/pull/2049)
+- Ignore low-level Puma exceptions by default [#2055](https://github.com/getsentry/sentry-ruby/pull/2055)
 
 ## 5.9.0
 
