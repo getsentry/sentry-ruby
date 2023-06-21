@@ -12,6 +12,8 @@
 - Support Rails 7.1's show exception check [#2049](https://github.com/getsentry/sentry-ruby/pull/2049)
 - Fix uninitialzed race condition in Redis integration [#2057](https://github.com/getsentry/sentry-ruby/pull/2057)
   - Fixes [#2054](https://github.com/getsentry/sentry-ruby/issues/2054)
+- Ignore low-level Puma exceptions by default [#2055](https://github.com/getsentry/sentry-ruby/pull/2055)
+
 
 ## 5.9.0
 
