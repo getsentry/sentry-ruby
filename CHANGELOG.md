@@ -14,6 +14,7 @@
   - Fixes [#2054](https://github.com/getsentry/sentry-ruby/issues/2054)
 - Ignore low-level Puma exceptions by default [#2055](https://github.com/getsentry/sentry-ruby/pull/2055)
 - Use allowlist to filter `ActiveSupport` breadcrumbs' data [#2048](https://github.com/getsentry/sentry-ruby/pull/2048)
+- ErrorHandler should cleanup the scope ([#2059](https://github.com/getsentry/sentry-ruby/pull/2059))
 
 
 ## 5.9.0
