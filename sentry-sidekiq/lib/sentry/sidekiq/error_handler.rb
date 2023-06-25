@@ -25,6 +25,8 @@ module Sentry
           contexts: { sidekiq: context_filter.filtered },
           hint: { background: false }
         )
+      ensure
+        scope&.clear
       end
 
       private

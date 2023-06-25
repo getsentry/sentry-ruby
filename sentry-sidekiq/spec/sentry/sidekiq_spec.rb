@@ -75,6 +75,7 @@ RSpec.describe Sentry::Sidekiq do
       expect(event["tags"]).to eq("queue" => "default", "jid" => "123123", "mood" => "sad")
       expect(event["transaction"]).to eq("Sidekiq/SadWorker")
       expect(event["breadcrumbs"]["values"][0]["message"]).to eq("I'm sad!")
+      expect(Sentry.get_current_scope.tags).to be_empty
     end
 
     it "cleans up context from failed jobs" do
@@ -86,6 +87,7 @@ RSpec.describe Sentry::Sidekiq do
 
       expect(event["tags"]).to eq("queue" => "default", "jid" => "123123", "mood" => "very sad")
       expect(event["breadcrumbs"]["values"][0]["message"]).to eq("I'm very sad!")
+      expect(Sentry.get_current_scope.tags).to be_empty
     end
   end
 
