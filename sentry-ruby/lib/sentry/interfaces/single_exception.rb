@@ -11,7 +11,8 @@ module Sentry
     OMISSION_MARK = "...".freeze
     MAX_LOCAL_BYTES = 1024
 
-    attr_reader :type, :value, :module, :thread_id, :stacktrace
+    attr_reader :type, :module, :thread_id, :stacktrace
+    attr_accessor :value
 
     def initialize(exception:, stacktrace: nil)
       @type = exception.class.to_s
