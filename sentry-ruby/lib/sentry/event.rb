@@ -98,12 +98,6 @@ module Sentry
       end
     end
 
-    # @deprecated This method will be removed in v5.0.0. Please just use Sentry.configuration
-    # @return [Configuration]
-    def configuration
-      Sentry.configuration
-    end
-
     # Sets the event's timestamp.
     # @param time [Time, Float]
     # @return [void]
