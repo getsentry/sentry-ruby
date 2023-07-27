@@ -1,3 +1,9 @@
+## Unreleased
+
+### Features
+
+- Make `:value` in `SingleExceptionInterface` writable, so that it can be modified in `before_send` under `event.exception.values[n].value` [#2072](https://github.com/getsentry/sentry-ruby/pull/2072)
+
 ## 5.10.0
 
 ### Features
