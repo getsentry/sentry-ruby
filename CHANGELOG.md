@@ -8,7 +8,7 @@
   ```rb
   # takes an array of strings or regexps
   config.trace_propagation_targets = [/.*/]  # default is to all targets
-  config.trace_propagation_targets = [/example.com/, 'foobar.org']
+  config.trace_propagation_targets = [/example.com/, 'foobar.org/api/v2']
   ```
 
 ## 5.10.0

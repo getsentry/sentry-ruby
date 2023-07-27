@@ -34,7 +34,7 @@ module Sentry
           set_sentry_trace_header(req, sentry_span, request_info)
 
           super.tap do |res|
-            record_sentry_breadcrumb(req, res, request_info)
+            record_sentry_breadcrumb(request_info, res)
 
             if sentry_span
               sentry_span.set_description("#{request_info[:method]} #{request_info[:url]}")
@@ -53,7 +53,6 @@ module Sentry
         return unless sentry_span
 
         client = Sentry.get_current_client
-        return unless client
         return unless propagate_trace?(request_info[:url], client.configuration.trace_propagation_targets)
 
         trace = client.generate_sentry_trace(sentry_span)
@@ -63,7 +62,7 @@ module Sentry
         req[BAGGAGE_HEADER_NAME] = baggage if baggage && !baggage.empty?
       end
 
-      def record_sentry_breadcrumb(req, res, request_info)
+      def record_sentry_breadcrumb(request_info, res)
         return unless Sentry.initialized? && Sentry.configuration.breadcrumbs_logger.include?(:http_logger)
 
         crumb = Sentry::Breadcrumb.new(
