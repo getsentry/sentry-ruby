@@ -216,6 +216,76 @@ RSpec.describe Sentry::Net::HTTP do
       end
     end
 
+    context "with custom trace_propagation_targets" do
+      before do
+        Sentry.configuration.trace_propagation_targets = ["example.com", /foobar.org\/api\/v2/]
+      end
+
+      it "doesn't add sentry headers to outgoing requests to different target" do
+        stub_normal_response
+
+        uri = URI("http://google.com/path")
+        http = Net::HTTP.new(uri.host, uri.port)
+        request = Net::HTTP::Get.new(uri.request_uri)
+
+        transaction = Sentry.start_transaction
+        Sentry.get_current_scope.set_span(transaction)
+
+        http.request(request)
+
+        expect(request.key?("sentry-trace")).to eq(false)
+        expect(request.key?("baggage")).to eq(false)
+      end
+
+      it "doesn't add sentry headers to outgoing requests to different target path" do
+        stub_normal_response
+
+        uri = URI("http://foobar.org/api/v1/path")
+        http = Net::HTTP.new(uri.host, uri.port)
+        request = Net::HTTP::Get.new(uri.request_uri)
+
+        transaction = Sentry.start_transaction
+        Sentry.get_current_scope.set_span(transaction)
+
+        http.request(request)
+
+        expect(request.key?("sentry-trace")).to eq(false)
+        expect(request.key?("baggage")).to eq(false)
+      end
+
+      it "adds sentry headers to outgoing requests matching string" do
+        stub_normal_response
+
+        uri = URI("http://example.com/path")
+        http = Net::HTTP.new(uri.host, uri.port)
+        request = Net::HTTP::Get.new(uri.request_uri)
+
+        transaction = Sentry.start_transaction
+        Sentry.get_current_scope.set_span(transaction)
+
+        http.request(request)
+
+        expect(request.key?("sentry-trace")).to eq(true)
+        expect(request.key?("baggage")).to eq(true)
+      end
+
+      it "adds sentry headers to outgoing requests matching regexp" do
+        stub_normal_response
+
+        uri = URI("http://foobar.org/api/v2/path")
+        http = Net::HTTP.new(uri.host, uri.port)
+        request = Net::HTTP::Get.new(uri.request_uri)
+
+        transaction = Sentry.start_transaction
+        Sentry.get_current_scope.set_span(transaction)
+
+        http.request(request)
+
+        expect(request.key?("sentry-trace")).to eq(true)
+        expect(request.key?("baggage")).to eq(true)
+      end
+    end
+
     it "doesn't record span for the SDK's request" do
       stub_sentry_response
 

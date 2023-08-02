@@ -3,6 +3,13 @@
 ### Features
 
 - Make `:value` in `SingleExceptionInterface` writable, so that it can be modified in `before_send` under `event.exception.values[n].value` [#2072](https://github.com/getsentry/sentry-ruby/pull/2072)
+- Add new `config.trace_propagation_targets` option to set targets for which headers are propagated in outgoing HTTP requests [#2079](https://github.com/getsentry/sentry-ruby/pull/2079)
+
+  ```rb
+  # takes an array of strings or regexps
+  config.trace_propagation_targets = [/.*/]  # default is to all targets
+  config.trace_propagation_targets = [/example.com/, 'foobar.org/api/v2']
+  ```
 
 ## 5.10.0
 

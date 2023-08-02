@@ -511,6 +511,17 @@ RSpec.describe Sentry::Configuration do
     end
   end
 
+  describe "#trace_propagation_targets" do
+    it "returns match all by default" do
+      expect(subject.trace_propagation_targets).to eq([/.*/])
+    end
+
+    it "accepts array of strings or regexps" do
+      subject.trace_propagation_targets = ["example.com", /foobar.org\/api\/v2/]
+      expect(subject.trace_propagation_targets).to eq(["example.com", /foobar.org\/api\/v2/])
+    end
+  end
+
   describe "#instrumenter" do
     it "returns :sentry by default" do
       expect(subject.instrumenter).to eq(:sentry)

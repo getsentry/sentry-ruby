@@ -243,6 +243,11 @@ module Sentry
     # @return [Boolean]
     attr_accessor :auto_session_tracking
 
+    # Allowlist of outgoing request targets to which sentry-trace and baggage headers are attached.
+    # Default is all (/.*/)
+    # @return [Array<String, Regexp>]
+    attr_accessor :trace_propagation_targets
+
     # The instrumenter to use, :sentry or :otel
     # @return [Symbol]
     attr_reader :instrumenter
@@ -290,6 +295,8 @@ module Sentry
 
     INSTRUMENTERS = [:sentry, :otel]
 
+    PROPAGATION_TARGETS_MATCH_ALL = /.*/.freeze
+
     class << self
       # Post initialization callbacks are called at the end of initialization process
       # allowing extending the configuration of sentry-ruby by multiple extensions
@@ -332,6 +339,7 @@ module Sentry
       self.dsn = ENV['SENTRY_DSN']
       self.server_name = server_name_from_env
       self.instrumenter = :sentry
+      self.trace_propagation_targets = [PROPAGATION_TARGETS_MATCH_ALL]
 
       self.before_send = nil
       self.before_send_transaction = nil
