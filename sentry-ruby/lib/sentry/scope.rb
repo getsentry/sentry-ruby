@@ -292,11 +292,16 @@ module Sentry
       @rack_env = {}
       @span = nil
       @session = nil
+      generate_propagation_context
       set_new_breadcrumb_buffer
     end
 
     def set_new_breadcrumb_buffer
       @breadcrumbs = BreadcrumbBuffer.new(@max_breadcrumbs)
+    end
+
+    def generate_propagation_context
+      @propagation_context = PropagationContext.new
     end
 
     class << self
