@@ -55,6 +55,7 @@ module Sentry
         event.contexts[:trace] ||= span.get_trace_context
       else
         event.contexts[:trace] ||= propagation_context.get_trace_context
+        event.dynamic_sampling_context ||= propagation_context.get_dynamic_sampling_context
       end
 
       event.fingerprint = fingerprint
@@ -307,7 +308,7 @@ module Sentry
     end
 
     def generate_propagation_context
-      @propagation_context = PropagationContext.new
+      @propagation_context = PropagationContext.new(self)
     end
 
     class << self
