@@ -37,6 +37,11 @@ module Sentry
     # @return [RequestInterface]
     attr_reader :request
 
+    # Dynamic Sampling Context (DSC) that gets attached
+    # as the trace envelope header in the transport.
+    # @return [Hash, nil]
+    attr_accessor :dynamic_sampling_context
+
     # @param configuration [Configuration]
     # @param integration_meta [Hash, nil]
     # @param message [String, nil]

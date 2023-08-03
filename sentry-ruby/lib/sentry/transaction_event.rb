@@ -8,9 +8,6 @@ module Sentry
     # @return [<Array[Span]>]
     attr_accessor :spans
 
-    # @return [Hash, nil]
-    attr_accessor :dynamic_sampling_context
-
     # @return [Hash]
     attr_accessor :measurements
 
