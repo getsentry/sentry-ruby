@@ -489,6 +489,24 @@ module Sentry
       Scope.add_global_event_processor(&block)
     end
 
+    # Returns the traceparent (sentry-trace) header for distributed tracing.
+    # Can be either from the currently active span or the propagation context.
+    #
+    # @return [String, nil]
+    def get_traceparent
+      return nil unless initialized?
+      get_current_hub.get_traceparent
+    end
+
+    # Returns the baggage header for distributed tracing.
+    # Can be either from the currently active span or the propagation context.
+    #
+    # @return [String, nil]
+    def get_baggage
+      return nil unless initialized?
+      get_current_hub.get_baggage
+    end
+
     ##### Helpers #####
 
     # @!visibility private
