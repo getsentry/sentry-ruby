@@ -11,6 +11,10 @@
   config.trace_propagation_targets = [/example.com/, 'foobar.org/api/v2']
   ```
 
+### Bug Fixes
+
+- Duplicate `Rails.logger` before assigning it to the SDK ([#2086](https://github.com/getsentry/sentry-ruby/pull/2086))
+
 ## 5.10.0
 
 ### Features
