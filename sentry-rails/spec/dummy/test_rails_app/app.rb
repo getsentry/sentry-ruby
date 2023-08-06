@@ -53,7 +53,7 @@ def make_basic_app(&block)
   app.config.action_controller.view_paths = "spec/dummy/test_rails_app"
   app.config.hosts = nil
   app.config.secret_key_base = "test"
-  app.config.logger = Logger.new(nil)
+  app.config.logger = ActiveSupport::Logger.new(nil)
   app.config.eager_load = true
   app.config.active_job.queue_adapter = :test
 

@@ -35,8 +35,12 @@ RSpec.describe Sentry::Rails, type: :request do
     end
 
     describe "logger detection" do
-      it "sets Sentry.configuration.logger correctly" do
-        expect(Sentry.configuration.logger).to eq(Rails.logger)
+      it "sets a duplicated Rails logger as the SDK's logger" do
+        expect(Sentry.configuration.logger).to be_a(ActiveSupport::Logger)
+        Sentry.configuration.logger.level = ::Logger::WARN
+        # Configuring the SDK's logger should not affect the Rails logger
+        expect(Rails.logger.level).to eq(::Logger::DEBUG)
+        expect(Sentry.configuration.logger.level).to eq(::Logger::WARN)
       end
 
       it "respects the logger set by user" do
