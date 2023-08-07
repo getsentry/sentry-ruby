@@ -32,6 +32,15 @@ module Sentry
 
               finish_transaction(transaction, 200)
             rescue Exception => exception
+              klass = payload['class'].constantize
+
+              if Sentry.configuration.resque.report_after_job_retries && defined?(::Resque::Plugins::Retry) == 'constant' && klass.is_a?(::Resque::Plugins::Retry)
+                retry_key = klass.redis_retry_key(payload['args'])
+                retry_attempt = ::Resque.redis.get(retry_key)
+
+                # If retry_attempt is nil, it means the resque-retry has already called the #clean_retry_key no retries are left
+                raise unless retry_attempt.nil?
+              end
               ::Sentry::Resque.capture_exception(exception, hint: { background: false })
               finish_transaction(transaction, 500)
               raise
