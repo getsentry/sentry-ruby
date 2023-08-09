@@ -12,7 +12,7 @@ module Sentry
       @excluded_exceptions = @excluded_exceptions.concat(Sentry::Rails::IGNORE_DEFAULT)
 
       if ::Rails.logger
-        @logger = ::Rails.logger
+        @logger = ::Rails.logger.dup
       else
         @logger.warn(Sentry::LOGGER_PROGNAME) do
           <<~MSG
