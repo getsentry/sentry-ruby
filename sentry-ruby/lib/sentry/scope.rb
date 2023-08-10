@@ -279,6 +279,13 @@ module Sentry
       @event_processors << block
     end
 
+    # Generate a new propagation context either from the incoming env headers or from scratch.
+    # @param env [Hash, nil]
+    # @return [void]
+    def generate_propagation_context(env = nil)
+      @propagation_context = PropagationContext.new(self, env)
+    end
+
     protected
 
     # for duplicating scopes internally
@@ -305,10 +312,6 @@ module Sentry
 
     def set_new_breadcrumb_buffer
       @breadcrumbs = BreadcrumbBuffer.new(@max_breadcrumbs)
-    end
-
-    def generate_propagation_context
-      @propagation_context = PropagationContext.new(self)
     end
 
     class << self

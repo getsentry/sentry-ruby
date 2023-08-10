@@ -23,12 +23,37 @@ module Sentry
     # @return [String]
     attr_reader :parent_span_id
 
-    def initialize(scope)
+    def initialize(scope, env = nil)
       @scope = scope
-      @trace_id = SecureRandom.uuid.delete("-")
-      @span_id = SecureRandom.uuid.delete("-").slice(0, 16)
       @parent_span_id = nil
       @baggage = nil
+
+      if env
+        sentry_trace_header = env["HTTP_SENTRY_TRACE"]
+        baggage_header = env["HTTP_BAGGAGE"]
+
+        if sentry_trace_header
+          sentry_trace_data = extract_sentry_trace(sentry_trace_header)
+
+          if sentry_trace_data
+            @trace_id, @parent_span_id, _ = sentry_trace_data
+
+            @baggage = if baggage_header && !baggage_header.empty?
+                        Baggage.from_incoming_header(baggage_header)
+                      else
+                        # If there's an incoming sentry-trace but no incoming baggage header,
+                        # for instance in traces coming from older SDKs,
+                        # baggage will be empty and frozen and won't be populated as head SDK.
+                        Baggage.new({})
+                      end
+
+            @baggage.freeze!
+          end
+        end
+      end
+
+      @trace_id ||= SecureRandom.uuid.delete("-")
+      @span_id = SecureRandom.uuid.delete("-").slice(0, 16)
     end
 
     # Extract the trace_id, parent_span_id and parent_sampled values from a sentry-trace header.
