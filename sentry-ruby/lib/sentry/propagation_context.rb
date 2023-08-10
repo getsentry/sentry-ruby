@@ -5,6 +5,13 @@ require "sentry/baggage"
 
 module Sentry
   class PropagationContext
+    SENTRY_TRACE_REGEXP = Regexp.new(
+      "^[ \t]*" +  # whitespace
+      "([0-9a-f]{32})?" +  # trace_id
+      "-?([0-9a-f]{16})?" +  # span_id
+      "-?([01])?" +  # sampled
+      "[ \t]*$"  # whitespace
+    )
 
     # An uuid that can be used to identify a trace.
     # @return [String]
@@ -24,6 +31,21 @@ module Sentry
       @baggage = nil
     end
 
+    # Extract the trace_id, parent_span_id and parent_sampled values from a sentry-trace header.
+    #
+    # @param sentry_trace [String] the sentry-trace header value from the previous transaction.
+    # @return [Array, nil]
+    def self.extract_sentry_trace(sentry_trace)
+      match = SENTRY_TRACE_REGEXP.match(sentry_trace)
+      return nil if match.nil?
+
+      trace_id, parent_span_id, sampled_flag = match[1..3]
+      parent_sampled = sampled_flag.nil? ? nil : sampled_flag != "0"
+
+      [trace_id, parent_span_id, parent_sampled]
+    end
+
+
     # Returns the trace context that can be used to embed in an Event.
     # @return [Hash]
     def get_trace_context
@@ -40,8 +62,8 @@ module Sentry
       "#{trace_id}-#{span_id}"
     end
 
-    # Returns the W3C baggage header from the propagation context.
-    # @return [String, nil]
+    # Returns the Baggage from the propagation context.
+    # @return [Baggage, nil]
     def get_baggage
       populate_head_baggage if @baggage.nil? || @baggage.mutable
       @baggage
