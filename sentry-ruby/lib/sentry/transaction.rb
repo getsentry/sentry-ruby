@@ -89,6 +89,8 @@ module Sentry
       init_span_recorder
     end
 
+    # @deprecated use Sentry.continue_trace instead.
+    #
     # Initalizes a Transaction instance with a Sentry trace string from another transaction (usually from an external request).
     #
     # The original transaction will become the parent of the new Transaction instance. And they will share the same `trace_id`.

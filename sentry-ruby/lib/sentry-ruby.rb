@@ -516,6 +516,15 @@ module Sentry
       get_current_hub.get_trace_propagation_headers
     end
 
+    # Continue an incoming trace from a rack env like hash.
+    #
+    # @param env [Hash]
+    # @return [Transaction, nil]
+    def continue_trace(env, **options)
+      return nil unless initialized?
+      get_current_hub.continue_trace(env, **options)
+    end
+
     ##### Helpers #####
 
     # @!visibility private

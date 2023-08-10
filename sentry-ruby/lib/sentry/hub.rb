@@ -255,6 +255,24 @@ module Sentry
       headers
     end
 
+    def continue_trace(env, **options)
+      configure_scope { |s| s.generate_propagation_context(env) }
+
+      return nil unless configuration.tracing_enabled?
+
+      propagation_context = current_scope.propagation_context
+      return nil unless propagation_context.incoming_trace
+
+      Transaction.new(
+        hub: self,
+        trace_id: propagation_context.trace_id,
+        parent_span_id: propagation_context.parent_span_id,
+        parent_sampled: propagation_context.parent_sampled,
+        baggage: propagation_context.baggage,
+        **options
+      )
+    end
+
     private
 
     def current_layer
