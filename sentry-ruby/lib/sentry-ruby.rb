@@ -507,6 +507,15 @@ module Sentry
       get_current_hub.get_baggage
     end
 
+    # Returns the a Hash containing sentry-trace and baggage.
+    # Can be either from the currently active span or the propagation context.
+    #
+    # @return [Hash, nil]
+    def get_trace_propagation_headers
+      return nil unless initialized?
+      get_current_hub.get_trace_propagation_headers
+    end
+
     ##### Helpers #####
 
     # @!visibility private

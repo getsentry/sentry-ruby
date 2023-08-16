@@ -31,7 +31,7 @@ module Sentry
 
         Sentry.with_child_span(op: OP_NAME, start_timestamp: Sentry.utc_now.to_f) do |sentry_span|
           request_info = extract_request_info(req)
-          set_sentry_trace_header(req, sentry_span, request_info)
+          set_propagation_headers(req, request_info)
 
           super.tap do |res|
             record_sentry_breadcrumb(request_info, res)
@@ -49,17 +49,11 @@ module Sentry
 
       private
 
-      def set_sentry_trace_header(req, sentry_span, request_info)
-        return unless sentry_span
-
+      def set_propagation_headers(req, request_info)
         client = Sentry.get_current_client
         return unless propagate_trace?(request_info[:url], client.configuration.trace_propagation_targets)
 
-        trace = client.generate_sentry_trace(sentry_span)
-        req[SENTRY_TRACE_HEADER_NAME] = trace if trace
-
-        baggage = client.generate_baggage(sentry_span)
-        req[BAGGAGE_HEADER_NAME] = baggage if baggage && !baggage.empty?
+        Sentry.get_trace_propagation_headers&.each { |k, v| req[k] = v }
       end
 
       def record_sentry_breadcrumb(request_info, res)

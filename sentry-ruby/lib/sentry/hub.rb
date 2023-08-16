@@ -243,6 +243,15 @@ module Sentry
         current_scope.propagation_context&.get_baggage&.serialize
     end
 
+    def get_trace_propagation_headers
+      return nil unless configuration.propagate_traces
+
+      {
+        SENTRY_TRACE_HEADER_NAME => get_traceparent,
+        BAGGAGE_HEADER_NAME => get_baggage
+      }.compact
+    end
+
     private
 
     def current_layer
