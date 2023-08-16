@@ -148,6 +148,8 @@ module Sentry
       raise
     end
 
+    # @deprecated use Sentry.get_traceparent instead.
+    #
     # Generates a Sentry trace for distribted tracing from the given Span.
     # Returns `nil` if `config.propagate_traces` is `false`.
     # @param span [Span] the span to generate trace from.
@@ -160,7 +162,9 @@ module Sentry
       trace
     end
 
-    # Generates a W3C Baggage header for distribted tracing from the given Span.
+    # @deprecated Use Sentry.get_baggage instead.
+    #
+    # Generates a W3C Baggage header for distributed tracing from the given Span.
     # Returns `nil` if `config.propagate_traces` is `false`.
     # @param span [Span] the span to generate trace from.
     # @return [String, nil]

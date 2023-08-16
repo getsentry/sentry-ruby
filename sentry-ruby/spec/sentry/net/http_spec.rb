@@ -97,9 +97,6 @@ RSpec.describe Sentry::Net::HTTP do
       response = http.request(request)
 
       expect(response.code).to eq("200")
-      expect(string_io.string).to match(
-        /\[Tracing\] Adding sentry-trace header to outgoing request:/
-      )
     end
 
     it "adds baggage header to the request header as head SDK when no incoming trace" do
@@ -115,10 +112,6 @@ RSpec.describe Sentry::Net::HTTP do
       response = http.request(request)
 
       expect(response.code).to eq("200")
-      expect(string_io.string).to match(
-        /\[Tracing\] Adding baggage header to outgoing request:/
-      )
-
       request_span = transaction.span_recorder.spans.last
       expect(request["baggage"]).to eq(request_span.to_baggage)
       expect(request["baggage"]).to eq(
@@ -151,10 +144,6 @@ RSpec.describe Sentry::Net::HTTP do
       response = http.request(request)
 
       expect(response.code).to eq("200")
-      expect(string_io.string).to match(
-        /\[Tracing\] Adding baggage header to outgoing request:/
-      )
-
       request_span = transaction.span_recorder.spans.last
       expect(request["baggage"]).to eq(request_span.to_baggage)
       expect(request["baggage"]).to eq(
@@ -165,7 +154,7 @@ RSpec.describe Sentry::Net::HTTP do
       )
     end
 
-    context "with config.propagate_trace = false" do
+    context "with config.propagate_traces = false" do
       before do
         Sentry.configuration.propagate_traces = false
       end
@@ -183,9 +172,6 @@ RSpec.describe Sentry::Net::HTTP do
         response = http.request(request)
 
         expect(response.code).to eq("200")
-        expect(string_io.string).not_to match(
-          /Adding sentry-trace header to outgoing request:/
-        )
         expect(request.key?("sentry-trace")).to eq(false)
       end
 
@@ -210,9 +196,6 @@ RSpec.describe Sentry::Net::HTTP do
         response = http.request(request)
 
         expect(response.code).to eq("200")
-        expect(string_io.string).not_to match(
-          /Adding baggage header to outgoing request:/
-        )
         expect(request.key?("baggage")).to eq(false)
       end
     end
