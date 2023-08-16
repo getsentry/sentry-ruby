@@ -41,8 +41,8 @@ module Sentry
       @incoming_trace = false
 
       if env
-        sentry_trace_header = env["HTTP_SENTRY_TRACE"]
-        baggage_header = env["HTTP_BAGGAGE"]
+        sentry_trace_header = env["HTTP_SENTRY_TRACE"] || env[SENTRY_TRACE_HEADER_NAME]
+        baggage_header = env["HTTP_BAGGAGE"] || env[BAGGAGE_HEADER_NAME]
 
         if sentry_trace_header
           sentry_trace_data = self.class.extract_sentry_trace(sentry_trace_header)

@@ -57,11 +57,12 @@ RSpec.describe Sentry::Sidekiq::SentryContextServerMiddleware do
       expect(event.tags.keys).to include(:"sidekiq.marvel", :"sidekiq.dc")
     end
 
-    context "with sentry_trace" do
+    context "with trace_propagation_headers" do
       let(:parent_transaction) { Sentry.start_transaction(op: "sidekiq") }
 
       it "starts the transaction from it" do
-        execute_worker(processor, HappyWorker, sentry_trace: parent_transaction.to_sentry_trace)
+        trace_propagation_headers = { "sentry-trace" => parent_transaction.to_sentry_trace }
+        execute_worker(processor, HappyWorker, trace_propagation_headers: trace_propagation_headers)
 
         expect(transport.events.count).to eq(1)
         transaction = transport.events.first
@@ -93,12 +94,11 @@ RSpec.describe Sentry::Sidekiq::SentryContextClientMiddleware do
     end
   end
 
-  it "does not add user or sentry_trace to the job if they're absence in the current scope" do
+  it "does not add user to the job if they're absent in the current scope" do
     client.push('queue' => 'default', 'class' => HappyWorker, 'args' => [])
 
     expect(queue.size).to be(1)
     expect(queue.first["sentry_user"]).to be_nil
-    expect(queue.first["sentry_trace"]).to be_nil
   end
 
   describe "with user" do
@@ -121,11 +121,13 @@ RSpec.describe Sentry::Sidekiq::SentryContextClientMiddleware do
       Sentry.get_current_scope.set_span(transaction)
     end
 
-    it "sets user of the current scope to the job" do
+    it "sets the correct trace_propagation_headers linked to the transaction" do
       client.push('queue' => 'default', 'class' => HappyWorker, 'args' => [])
 
       expect(queue.size).to be(1)
-      expect(queue.first["sentry_trace"]).to eq(transaction.to_sentry_trace)
+      headers = queue.first["trace_propagation_headers"]
+      expect(headers["sentry-trace"]).to eq(transaction.to_sentry_trace)
+      expect(headers["baggage"]).to eq(transaction.to_baggage)
     end
   end
 end
