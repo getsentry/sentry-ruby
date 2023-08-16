@@ -31,7 +31,10 @@ module Sentry
 
         Sentry.with_child_span(op: OP_NAME, start_timestamp: Sentry.utc_now.to_f) do |sentry_span|
           request_info = extract_request_info(req)
-          set_propagation_headers(req, request_info)
+
+          if propagate_trace?(request_info[:url], Sentry.configuration.trace_propagation_targets)
+            set_propagation_headers(req)
+          end
 
           super.tap do |res|
             record_sentry_breadcrumb(request_info, res)
@@ -49,10 +52,7 @@ module Sentry
 
       private
 
-      def set_propagation_headers(req, request_info)
-        client = Sentry.get_current_client
-        return unless propagate_trace?(request_info[:url], client.configuration.trace_propagation_targets)
-
+      def set_propagation_headers(req)
         Sentry.get_trace_propagation_headers&.each { |k, v| req[k] = v }
       end
 

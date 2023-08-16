@@ -246,10 +246,15 @@ module Sentry
     def get_trace_propagation_headers
       return nil unless configuration.propagate_traces
 
-      {
-        SENTRY_TRACE_HEADER_NAME => get_traceparent,
-        BAGGAGE_HEADER_NAME => get_baggage
-      }.compact
+      headers = {}
+
+      traceparent = get_traceparent
+      headers[SENTRY_TRACE_HEADER_NAME] = traceparent if traceparent
+
+      baggage = get_baggage
+      headers[BAGGAGE_HEADER_NAME] = baggage if baggage && !baggage.empty?
+
+      headers
     end
 
     private
