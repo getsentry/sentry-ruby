@@ -38,7 +38,7 @@ RSpec.describe Sentry::Rails::Tracing::ActionControllerSubscriber, :subscriber, 
       expect(span[:op]).to eq("view.process_action.action_controller")
       expect(span[:description]).to eq("HelloController#world")
       expect(span[:trace_id]).to eq(transaction.dig(:contexts, :trace, :trace_id))
-      expect(span[:data].keys).to match_array(["status_code", :format, :method, :path, :params])
+      expect(span[:data].keys).to match_array(["http.response.status_code", :format, :method, :path, :params])
     end
   end
 

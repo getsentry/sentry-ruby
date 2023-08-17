@@ -43,7 +43,7 @@ RSpec.describe Sentry::Net::HTTP do
         expect(request_span.start_timestamp).not_to eq(request_span.timestamp)
         expect(request_span.description).to eq("GET http://example.com/path")
         expect(request_span.data).to eq({
-          "status" => 200,
+          "http.response.status_code" => 200,
           "url" => "http://example.com/path",
           "http.method" => "GET",
           "http.query" => "foo=bar"
@@ -74,7 +74,7 @@ RSpec.describe Sentry::Net::HTTP do
         expect(request_span.start_timestamp).not_to eq(request_span.timestamp)
         expect(request_span.description).to eq("GET http://example.com/path")
         expect(request_span.data).to eq({
-          "status" => 200,
+          "http.response.status_code" => 200,
           "url" => "http://example.com/path",
           "http.method" => "GET",
         })
@@ -318,7 +318,7 @@ RSpec.describe Sentry::Net::HTTP do
         expect(request_span.start_timestamp).not_to eq(request_span.timestamp)
         expect(request_span.description).to eq("GET http://example.com/path")
         expect(request_span.data).to eq({
-          "status" => 200,
+          "http.response.status_code" => 200,
           "url" => "http://example.com/path",
           "http.method" => "GET",
         })
@@ -330,7 +330,7 @@ RSpec.describe Sentry::Net::HTTP do
         expect(request_span.start_timestamp).not_to eq(request_span.timestamp)
         expect(request_span.description).to eq("GET http://example.com/path")
         expect(request_span.data).to eq({
-          "status" => 404,
+          "http.response.status_code" => 404,
           "url" => "http://example.com/path",
           "http.method" => "GET",
         })

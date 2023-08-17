@@ -38,10 +38,10 @@ module Sentry
 
             if sentry_span
               sentry_span.set_description("#{request_info[:method]} #{request_info[:url]}")
-              sentry_span.set_data('url', request_info[:url])
-              sentry_span.set_data('http.method', request_info[:method])
-              sentry_span.set_data('http.query', request_info[:query]) if request_info[:query]
-              sentry_span.set_data('status', res.code.to_i)
+              sentry_span.set_data(Span::DataConventions::URL, request_info[:url])
+              sentry_span.set_data(Span::DataConventions::HTTP_METHOD, request_info[:method])
+              sentry_span.set_data(Span::DataConventions::HTTP_QUERY, request_info[:query]) if request_info[:query]
+              sentry_span.set_data(Span::DataConventions::HTTP_STATUS_CODE, res.code.to_i)
             end
           end
         end

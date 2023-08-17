@@ -265,7 +265,7 @@ RSpec.describe Sentry::Span do
       it "adds status_code (#{status_code}) to data and sets correct status (#{status})" do
         subject.set_http_status(status_code)
 
-        expect(subject.data["status_code"]).to eq(status_code)
+        expect(subject.data["http.response.status_code"]).to eq(status_code)
         expect(subject.status).to eq(status)
       end
     end

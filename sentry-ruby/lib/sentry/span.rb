@@ -4,6 +4,15 @@ require "securerandom"
 
 module Sentry
   class Span
+
+    # We will try to be consistent with OpenTelemetry on this front going forward.
+    module DataConventions
+      URL = "url"
+      HTTP_STATUS_CODE = "http.response.status_code"
+      HTTP_QUERY = "http.query"
+      HTTP_METHOD = "http.method"
+    end
+
     STATUS_MAP = {
       400 => "invalid_argument",
       401 => "unauthenticated",
@@ -208,7 +217,7 @@ module Sentry
     # @param status_code [String] example: "500".
     def set_http_status(status_code)
       status_code = status_code.to_i
-      set_data("status_code", status_code)
+      set_data(DataConventions::HTTP_STATUS_CODE, status_code)
 
       status =
         if status_code >= 200 && status_code < 299
