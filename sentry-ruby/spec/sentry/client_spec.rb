@@ -156,6 +156,7 @@ RSpec.describe Sentry::Client do
         "environment" => "development",
         "public_key" => "12345",
         "sample_rate" => "1.0",
+        "sampled" => "true",
         "transaction" => "test transaction",
         "trace_id" => transaction.trace_id
       })

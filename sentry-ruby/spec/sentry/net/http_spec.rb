@@ -124,6 +124,7 @@ RSpec.describe Sentry::Net::HTTP do
       expect(request["baggage"]).to eq(
         "sentry-trace_id=#{transaction.trace_id},"\
         "sentry-sample_rate=1.0,"\
+        "sentry-sampled=true,"\
         "sentry-environment=development,"\
         "sentry-public_key=foobarbaz"
       )

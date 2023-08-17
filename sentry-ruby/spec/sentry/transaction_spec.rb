@@ -537,7 +537,8 @@ RSpec.describe Sentry::Transaction do
           "public_key" => "12345",
           "trace_id" => subject.trace_id,
           "transaction"=>"foo",
-          "sample_rate" => "1.0"
+          "sample_rate" => "1.0",
+          "sampled" => "true"
         })
       end
 
@@ -592,7 +593,8 @@ RSpec.describe Sentry::Transaction do
           "public_key" => "12345",
           "trace_id" => subject.trace_id,
           "transaction"=>"foo",
-          "sample_rate" => "1.0"
+          "sample_rate" => "1.0",
+          "sampled" => "true"
         })
       end
     end
