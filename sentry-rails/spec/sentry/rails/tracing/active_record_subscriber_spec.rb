@@ -32,6 +32,10 @@ RSpec.describe Sentry::Rails::Tracing::ActiveRecordSubscriber, :subscriber do
       expect(span[:description]).to eq("SELECT \"posts\".* FROM \"posts\"")
       expect(span[:tags].key?(:cached)).to eq(false)
       expect(span[:trace_id]).to eq(transaction.dig(:contexts, :trace, :trace_id))
+
+      data = span[:data]
+      expect(data["db.name"]).to eq("db")
+      expect(data["db.system"]).to eq("sqlite3")
     end
 
     it "records database cached query events", skip: Rails.version.to_f < 5.1 do
@@ -55,6 +59,10 @@ RSpec.describe Sentry::Rails::Tracing::ActiveRecordSubscriber, :subscriber do
       expect(cached_query_span[:op]).to eq("db.sql.active_record")
       expect(cached_query_span[:description]).to eq("SELECT \"posts\".* FROM \"posts\"")
       expect(cached_query_span[:tags]).to include({cached: true})
+
+      data = cached_query_span[:data]
+      expect(data["db.name"]).to eq("db")
+      expect(data["db.system"]).to eq("sqlite3")
     end
   end
 

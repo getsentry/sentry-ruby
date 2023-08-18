@@ -13,8 +13,19 @@ module Sentry
             next if EXCLUDED_EVENTS.include? payload[:name]
 
             record_on_current_span(op: SPAN_PREFIX + event_name, start_timestamp: payload[START_TIMESTAMP_NAME], description: payload[:sql], duration: duration) do |span|
-              span.set_data(:connection_id, payload[:connection_id])
+              span.set_data(:connection_id, payload[:connection_id]) if payload[:connection_id]
               span.set_tag(:cached, true) if payload.fetch(:cached, false) # cached key is only set for hits in the QueryCache, from Rails 5.1
+
+              if payload[:connection]
+                db_config = payload[:connection].pool.db_config.configuration_hash
+
+                span.set_data(Span::DataConventions::DB_NAME, db_config[:database])
+                span.set_data(Span::DataConventions::DB_SYSTEM, db_config[:adapter])
+
+                span.set_data(Span::DataConventions::SERVER_ADDRESS, db_config[:host]) if db_config[:host]
+                span.set_data(Span::DataConventions::SERVER_PORT, db_config[:port]) if db_config[:port]
+                span.set_data(Span::DataConventions::SERVER_SOCKET_ADDRESS, db_config[:socket]) if db_config[:socket]
+              end
             end
           end
         end
