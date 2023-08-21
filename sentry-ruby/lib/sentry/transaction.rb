@@ -323,6 +323,7 @@ module Sentry
       items = {
         "trace_id" => trace_id,
         "sample_rate" => effective_sample_rate&.to_s,
+        "sampled" => sampled&.to_s,
         "environment" => @environment,
         "release" => @release,
         "public_key" => @dsn&.public_key
