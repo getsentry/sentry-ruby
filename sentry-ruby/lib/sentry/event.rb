@@ -59,6 +59,7 @@ module Sentry
       @tags          = {}
 
       @fingerprint = []
+      @dynamic_sampling_context = nil
 
       # configuration data that's directly used by events
       @server_name = configuration.server_name
