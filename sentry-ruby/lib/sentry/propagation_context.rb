@@ -65,11 +65,9 @@ module Sentry
         "sample_rate" => configuration.traces_sample_rate&.to_s,
         "environment" => configuration.environment,
         "release" => configuration.release,
-        "public_key" => configuration.dsn&.public_key
+        "public_key" => configuration.dsn&.public_key,
+        "user_segment" => @scope.user && @scope.user["segment"]
       }
-
-      user = @scope&.user
-      items["user_segment"] = user["segment"] if user && user["segment"]
 
       items.compact!
       @baggage = Baggage.new(items, mutable: false)

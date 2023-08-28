@@ -233,14 +233,14 @@ module Sentry
       return nil unless current_scope
 
       current_scope.get_span&.to_sentry_trace ||
-        current_scope.propagation_context&.get_traceparent
+        current_scope.propagation_context.get_traceparent
     end
 
     def get_baggage
       return nil unless current_scope
 
       current_scope.get_span&.to_baggage ||
-        current_scope.propagation_context&.get_baggage&.serialize
+        current_scope.propagation_context.get_baggage&.serialize
     end
 
     def get_trace_propagation_headers
