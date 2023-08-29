@@ -24,6 +24,7 @@ RSpec.describe Sentry::Scope do
       expect(subject.fingerprint).to eq([])
       expect(subject.transaction_names).to eq([])
       expect(subject.transaction_sources).to eq([])
+      expect(subject.propagation_context).to be_a(Sentry::PropagationContext)
     end
 
     it "allows setting breadcrumb buffer's size limit" do
@@ -276,7 +277,7 @@ RSpec.describe Sentry::Scope do
       end
     end
 
-    it "sets trace context if there's a span" do
+    it "sets trace context from span if there's a span" do
       transaction = Sentry::Transaction.new(op: "foo", hub: hub)
       subject.set_span(transaction)
 
@@ -284,6 +285,12 @@ RSpec.describe Sentry::Scope do
 
       expect(event.contexts[:trace]).to eq(transaction.get_trace_context)
       expect(event.contexts.dig(:trace, :op)).to eq("foo")
+    end
+
+    it "sets trace context and dynamic_sampling_context from propagation context if there's no span" do
+      subject.apply_to_event(event)
+      expect(event.contexts[:trace]).to eq(subject.propagation_context.get_trace_context)
+      expect(event.dynamic_sampling_context).to eq(subject.propagation_context.get_dynamic_sampling_context)
     end
 
     context "with Rack", rack: true do
