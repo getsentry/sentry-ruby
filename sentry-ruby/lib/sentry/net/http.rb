@@ -32,7 +32,7 @@ module Sentry
         Sentry.with_child_span(op: OP_NAME, start_timestamp: Sentry.utc_now.to_f) do |sentry_span|
           request_info = extract_request_info(req)
 
-          if propagate_trace?(request_info[:url], Sentry.configuration.trace_propagation_targets)
+          if propagate_trace?(request_info[:url], Sentry.configuration)
             set_propagation_headers(req)
           end
 
@@ -90,8 +90,10 @@ module Sentry
         result
       end
 
-      def propagate_trace?(url, trace_propagation_targets)
-        url && trace_propagation_targets.any? { |target| url.match?(target) }
+      def propagate_trace?(url, configuration)
+        url &&
+          configuration.propagate_traces &&
+          configuration.trace_propagation_targets.any? { |target| url.match?(target) }
       end
     end
   end

@@ -373,7 +373,20 @@ RSpec.describe Sentry::Net::HTTP do
       perform_basic_setup
     end
 
-    it "doesn't affect the HTTP lib anything" do
+    it "adds sentry-trace and baggage headers for tracing without performance" do
+      stub_normal_response
+
+      uri = URI("http://example.com/path")
+      http = Net::HTTP.new(uri.host, uri.port)
+      request = Net::HTTP::Get.new(uri.request_uri)
+      response = http.request(request)
+
+      expect(request["sentry-trace"]).to eq(Sentry.get_traceparent)
+      expect(request["baggage"]).to eq(Sentry.get_baggage)
+      expect(response.code).to eq("200")
+    end
+
+    it "doesn't create transaction or breadcrumbs" do
       stub_normal_response
 
       response = Net::HTTP.get_response(URI("http://example.com/path"))

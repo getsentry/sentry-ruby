@@ -667,6 +667,55 @@ RSpec.describe Sentry do
     end
   end
 
+  describe ".get_traceparent" do
+    it "returns a valid traceparent header from scope propagation context" do
+      traceparent = described_class.get_traceparent
+      propagation_context = described_class.get_current_scope.propagation_context
+
+      expect(traceparent).to match(Sentry::Transaction::SENTRY_TRACE_REGEXP)
+      expect(traceparent).to eq("#{propagation_context.trace_id}-#{propagation_context.span_id}")
+    end
+
+    it "returns a valid traceparent header from scope current span" do
+      transaction = Sentry::Transaction.new(op: "foo", hub: Sentry.get_current_hub, sampled: true)
+      span = transaction.start_child(op: "parent")
+      described_class.get_current_scope.set_span(span)
+
+      traceparent = described_class.get_traceparent
+
+      expect(traceparent).to match(Sentry::Transaction::SENTRY_TRACE_REGEXP)
+      expect(traceparent).to eq("#{span.trace_id}-#{span.span_id}-1")
+    end
+  end
+
+  describe ".get_baggage" do
+    it "returns a valid baggage header from scope propagation context" do
+      baggage = described_class.get_baggage
+      propagation_context = described_class.get_current_scope.propagation_context
+
+      expect(baggage).to eq("sentry-trace_id=#{propagation_context.trace_id},sentry-environment=development,sentry-public_key=12345")
+    end
+
+    it "returns a valid baggage header from scope current span" do
+      transaction = Sentry::Transaction.new(op: "foo", hub: Sentry.get_current_hub, sampled: true)
+      span = transaction.start_child(op: "parent")
+      described_class.get_current_scope.set_span(span)
+
+      baggage = described_class.get_baggage
+
+      expect(baggage).to eq("sentry-trace_id=#{span.trace_id},sentry-sampled=true,sentry-environment=development,sentry-public_key=12345")
+    end
+  end
+
+  describe ".get_trace_propagation_headers" do
+    it "returns a Hash of sentry-trace and baggage" do
+      expect(described_class.get_trace_propagation_headers).to eq({
+        "sentry-trace" => described_class.get_traceparent,
+        "baggage" => described_class.get_baggage
+      })
+    end
+  end
+
   describe 'release detection' do
     let(:fake_root) { "/tmp/sentry/" }
 

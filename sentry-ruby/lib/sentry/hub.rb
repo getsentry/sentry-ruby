@@ -244,8 +244,6 @@ module Sentry
     end
 
     def get_trace_propagation_headers
-      return nil unless configuration.propagate_traces
-
       headers = {}
 
       traceparent = get_traceparent

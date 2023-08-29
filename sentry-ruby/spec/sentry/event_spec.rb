@@ -30,6 +30,7 @@ RSpec.describe Sentry::Event do
       expect(event.environment).to eq("test")
       expect(event.release).to eq("721e41770371db95eee98ca2707686226b993eda")
       expect(event.sdk).to eq("name" => "sentry.ruby", "version" => Sentry::VERSION)
+      expect(event.dynamic_sampling_context).to eq(nil)
     end
   end
 
