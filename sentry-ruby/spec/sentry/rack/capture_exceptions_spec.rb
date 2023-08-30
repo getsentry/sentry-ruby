@@ -565,6 +565,32 @@ RSpec.describe Sentry::Rack::CaptureExceptions, rack: true do
     end
   end
 
+  describe "tracing without performance" do
+    let(:incoming_prop_context) { Sentry::PropagationContext.new(Sentry::Scope.new) }
+    let(:env) do
+      {
+        "HTTP_SENTRY_TRACE" => incoming_prop_context.get_traceparent,
+        "HTTP_BAGGAGE" => incoming_prop_context.get_baggage.serialize
+      }
+    end
+
+    let(:stack) do
+      app = ->(_e) { raise exception }
+      described_class.new(app)
+    end
+
+    it "captures exception with correct DSC and trace context" do
+      expect { stack.call(env) }.to raise_error(ZeroDivisionError)
+
+      trace_context = last_sentry_event.contexts[:trace]
+      expect(trace_context[:trace_id]).to eq(incoming_prop_context.trace_id)
+      expect(trace_context[:parent_span_id]).to eq(incoming_prop_context.span_id)
+      expect(trace_context[:span_id].length).to eq(16)
+
+      expect(last_sentry_event.dynamic_sampling_context).to eq(incoming_prop_context.get_dynamic_sampling_context)
+    end
+  end
+
   describe "session capturing" do
     context "when auto_session_tracking is false" do
       before do
