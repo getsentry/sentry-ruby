@@ -138,7 +138,7 @@ RSpec.describe Sentry::Net::HTTP do
         "sentry-user_id=Am%C3%A9lie,  "\
         "other-vendor-value-2=foo;bar;"
 
-      transaction = Sentry::Transaction.from_sentry_trace(sentry_trace, baggage: baggage)
+      transaction = Sentry.continue_trace({ "sentry-trace" => sentry_trace, "baggage" => baggage })
       Sentry.get_current_scope.set_span(transaction)
 
       response = http.request(request)
@@ -190,7 +190,7 @@ RSpec.describe Sentry::Net::HTTP do
           "sentry-user_id=Am%C3%A9lie,  "\
           "other-vendor-value-2=foo;bar;"
 
-        transaction = Sentry::Transaction.from_sentry_trace(sentry_trace, baggage: baggage)
+        transaction = Sentry.continue_trace({ "sentry-trace" => sentry_trace, "baggage" => baggage })
         Sentry.get_current_scope.set_span(transaction)
 
         response = http.request(request)

@@ -331,18 +331,18 @@ RSpec.describe Sentry do
         unsampled_trace = "d298e6b033f84659928a2267c3879aaa-2a35b8e9a1b974f4-0"
         not_sampled_trace = "d298e6b033f84659928a2267c3879aaa-2a35b8e9a1b974f4-"
 
-        transaction = Sentry::Transaction.from_sentry_trace(sampled_trace, op: "rack.request", name: "/payment")
+        transaction = Sentry.continue_trace({ "sentry-trace" => sampled_trace }, op: "rack.request", name: "/payment")
         described_class.start_transaction(transaction: transaction)
 
         expect(transaction.sampled).to eq(true)
 
-        transaction = Sentry::Transaction.from_sentry_trace(unsampled_trace, op: "rack.request", name: "/payment")
+        transaction = Sentry.continue_trace({ "sentry-trace" => unsampled_trace }, op: "rack.request", name: "/payment")
         described_class.start_transaction(transaction: transaction)
 
         expect(transaction.sampled).to eq(false)
 
         allow(Random).to receive(:rand).and_return(0.4)
-        transaction = Sentry::Transaction.from_sentry_trace(not_sampled_trace, op: "rack.request", name: "/payment")
+        transaction = Sentry.continue_trace({ "sentry-trace" => not_sampled_trace }, op: "rack.request", name: "/payment")
         described_class.start_transaction(transaction: transaction)
 
         expect(transaction.sampled).to eq(true)
@@ -672,7 +672,7 @@ RSpec.describe Sentry do
       traceparent = described_class.get_traceparent
       propagation_context = described_class.get_current_scope.propagation_context
 
-      expect(traceparent).to match(Sentry::Transaction::SENTRY_TRACE_REGEXP)
+      expect(traceparent).to match(Sentry::PropagationContext::SENTRY_TRACE_REGEXP)
       expect(traceparent).to eq("#{propagation_context.trace_id}-#{propagation_context.span_id}")
     end
 
@@ -683,7 +683,7 @@ RSpec.describe Sentry do
 
       traceparent = described_class.get_traceparent
 
-      expect(traceparent).to match(Sentry::Transaction::SENTRY_TRACE_REGEXP)
+      expect(traceparent).to match(Sentry::PropagationContext::SENTRY_TRACE_REGEXP)
       expect(traceparent).to eq("#{span.trace_id}-#{span.span_id}-1")
     end
   end
@@ -713,6 +713,69 @@ RSpec.describe Sentry do
         "sentry-trace" => described_class.get_traceparent,
         "baggage" => described_class.get_baggage
       })
+    end
+  end
+
+  describe ".continue_trace" do
+
+    context "without incoming sentry trace" do
+      let(:env) { { "HTTP_FOO" => "bar" } }
+
+      it "returns nil with tracing disabled" do
+        expect(described_class.continue_trace(env)).to eq(nil)
+      end
+
+      it "returns nil with tracing enabled" do
+        Sentry.configuration.traces_sample_rate = 1.0
+        expect(described_class.continue_trace(env)).to eq(nil)
+      end
+
+      it "sets new propagation context on scope" do
+        expect(Sentry.get_current_scope).to receive(:generate_propagation_context).and_call_original
+        described_class.continue_trace(env)
+
+        propagation_context = Sentry.get_current_scope.propagation_context
+        expect(propagation_context.incoming_trace).to eq(false)
+      end
+    end
+
+    context "with incoming sentry trace" do
+      let(:incoming_prop_context) { Sentry::PropagationContext.new(Sentry::Scope.new) }
+      let(:env) do
+        {
+          "HTTP_SENTRY_TRACE" => incoming_prop_context.get_traceparent,
+          "HTTP_BAGGAGE" => incoming_prop_context.get_baggage.serialize
+        }
+      end
+
+      it "returns nil with tracing disabled" do
+        expect(described_class.continue_trace(env)).to eq(nil)
+      end
+
+      it "sets new propagation context from env on scope" do
+        expect(Sentry.get_current_scope).to receive(:generate_propagation_context).and_call_original
+        described_class.continue_trace(env)
+
+        propagation_context = Sentry.get_current_scope.propagation_context
+        expect(propagation_context.incoming_trace).to eq(true)
+        expect(propagation_context.trace_id).to eq(incoming_prop_context.trace_id)
+        expect(propagation_context.parent_span_id).to eq(incoming_prop_context.span_id)
+        expect(propagation_context.parent_sampled).to eq(nil)
+        expect(propagation_context.baggage.items).to eq(incoming_prop_context.get_baggage.items)
+        expect(propagation_context.baggage.mutable).to eq(false)
+      end
+
+      it "returns new Transaction with tracing enabled" do
+        Sentry.configuration.traces_sample_rate = 1.0
+
+        transaction = described_class.continue_trace(env, name: "foobar")
+        expect(transaction).to be_a(Sentry::Transaction)
+        expect(transaction.name).to eq("foobar")
+        expect(transaction.trace_id).to eq(incoming_prop_context.trace_id)
+        expect(transaction.parent_span_id).to eq(incoming_prop_context.span_id)
+        expect(transaction.baggage.items).to eq(incoming_prop_context.get_baggage.items)
+        expect(transaction.baggage.mutable).to eq(false)
+      end
     end
   end
 

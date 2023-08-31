@@ -311,4 +311,17 @@ RSpec.describe Sentry::Scope do
       end
     end
   end
+
+  describe "#generate_propagation_context" do
+    it "initializes new propagation context without env" do
+      expect(Sentry::PropagationContext).to receive(:new).with(subject, nil)
+      subject.generate_propagation_context
+    end
+
+    it "initializes new propagation context without env" do
+      env = { foo: 42 }
+      expect(Sentry::PropagationContext).to receive(:new).with(subject, env)
+      subject.generate_propagation_context(env)
+    end
+  end
 end
