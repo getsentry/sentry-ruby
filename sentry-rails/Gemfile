@@ -47,7 +47,12 @@ gem "rake", "~> 12.0"
 
 if RUBY_VERSION.to_f >= 2.6
   gem "debug", github: "ruby/debug", platform: :ruby
-  gem "irb"
+
+  if rails_version == Gem::Version.new("6.0.0") && RUBY_VERSION.to_f == 2.7
+    gem "irb", "~> 1.7.4"   # irb 1.8 adds psych via rdoc that causes CI to fail
+  else
+    gem "irb"
+  end
 end
 
 gem "pry"
