@@ -110,7 +110,6 @@ RSpec.describe Sentry::PropagationContext do
       perform_basic_setup do |config|
         config.environment = "test"
         config.release = "foobar"
-        config.traces_sample_rate = 0.5
       end
     end
 
@@ -120,7 +119,6 @@ RSpec.describe Sentry::PropagationContext do
       expect(baggage.mutable).to eq(false)
       expect(baggage.items).to eq({
         "trace_id" => subject.trace_id,
-        "sample_rate" => "0.5",
         "environment" => "test",
         "release" => "foobar",
         "public_key" => Sentry.configuration.dsn.public_key
