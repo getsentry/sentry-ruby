@@ -579,6 +579,8 @@ RSpec.describe Sentry::Rack::CaptureExceptions, rack: true do
       described_class.new(app)
     end
 
+    before { perform_basic_setup }
+
     it "captures exception with correct DSC and trace context" do
       expect { stack.call(env) }.to raise_error(ZeroDivisionError)
 
