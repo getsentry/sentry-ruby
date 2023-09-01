@@ -2,16 +2,13 @@
 
 require "sentry/baggage"
 require "sentry/profiler"
+require "sentry/propagation_context"
 
 module Sentry
   class Transaction < Span
-    SENTRY_TRACE_REGEXP = Regexp.new(
-      "^[ \t]*" +  # whitespace
-      "([0-9a-f]{32})?" +  # trace_id
-      "-?([0-9a-f]{16})?" +  # span_id
-      "-?([01])?" +  # sampled
-      "[ \t]*$"  # whitespace
-    )
+    # @deprecated Use Sentry::PropagationContext::SENTRY_TRACE_REGEXP instead.
+    SENTRY_TRACE_REGEXP = PropagationContext::SENTRY_TRACE_REGEXP
+
     UNLABELD_NAME = "<unlabeled transaction>".freeze
     MESSAGE_PREFIX = "[Tracing]"
 
@@ -92,6 +89,8 @@ module Sentry
       init_span_recorder
     end
 
+    # @deprecated use Sentry.continue_trace instead.
+    #
     # Initalizes a Transaction instance with a Sentry trace string from another transaction (usually from an external request).
     #
     # The original transaction will become the parent of the new Transaction instance. And they will share the same `trace_id`.
@@ -132,18 +131,10 @@ module Sentry
       )
     end
 
-    # Extract the trace_id, parent_span_id and parent_sampled values from a sentry-trace header.
-    #
-    # @param sentry_trace [String] the sentry-trace header value from the previous transaction.
+    # @deprecated Use Sentry::PropagationContext.extract_sentry_trace instead.
     # @return [Array, nil]
     def self.extract_sentry_trace(sentry_trace)
-      match = SENTRY_TRACE_REGEXP.match(sentry_trace)
-      return nil if match.nil?
-
-      trace_id, parent_span_id, sampled_flag = match[1..3]
-      parent_sampled = sampled_flag.nil? ? nil : sampled_flag != "0"
-
-      [trace_id, parent_span_id, parent_sampled]
+      PropagationContext.extract_sentry_trace(sentry_trace)
     end
 
     # @return [Hash]

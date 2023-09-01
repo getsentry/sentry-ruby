@@ -489,6 +489,42 @@ module Sentry
       Scope.add_global_event_processor(&block)
     end
 
+    # Returns the traceparent (sentry-trace) header for distributed tracing.
+    # Can be either from the currently active span or the propagation context.
+    #
+    # @return [String, nil]
+    def get_traceparent
+      return nil unless initialized?
+      get_current_hub.get_traceparent
+    end
+
+    # Returns the baggage header for distributed tracing.
+    # Can be either from the currently active span or the propagation context.
+    #
+    # @return [String, nil]
+    def get_baggage
+      return nil unless initialized?
+      get_current_hub.get_baggage
+    end
+
+    # Returns the a Hash containing sentry-trace and baggage.
+    # Can be either from the currently active span or the propagation context.
+    #
+    # @return [Hash, nil]
+    def get_trace_propagation_headers
+      return nil unless initialized?
+      get_current_hub.get_trace_propagation_headers
+    end
+
+    # Continue an incoming trace from a rack env like hash.
+    #
+    # @param env [Hash]
+    # @return [Transaction, nil]
+    def continue_trace(env, **options)
+      return nil unless initialized?
+      get_current_hub.continue_trace(env, **options)
+    end
+
     ##### Helpers #####
 
     # @!visibility private

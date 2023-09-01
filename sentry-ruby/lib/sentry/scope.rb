@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require "sentry/breadcrumb_buffer"
+require "sentry/propagation_context"
 require "etc"
 
 module Sentry
@@ -20,7 +21,8 @@ module Sentry
       :event_processors,
       :rack_env,
       :span,
-      :session
+      :session,
+      :propagation_context
     ]
 
     attr_reader(*ATTRIBUTES)
@@ -50,7 +52,10 @@ module Sentry
       event.transaction_info = { source: transaction_source } if transaction_source
 
       if span
-        event.contexts[:trace] = span.get_trace_context
+        event.contexts[:trace] ||= span.get_trace_context
+      else
+        event.contexts[:trace] ||= propagation_context.get_trace_context
+        event.dynamic_sampling_context ||= propagation_context.get_dynamic_sampling_context
       end
 
       event.fingerprint = fingerprint
@@ -95,6 +100,7 @@ module Sentry
       copy.fingerprint = fingerprint.deep_dup
       copy.span = span.deep_dup
       copy.session = session.deep_dup
+      copy.propagation_context = propagation_context.deep_dup
       copy
     end
 
@@ -111,6 +117,7 @@ module Sentry
       self.transaction_sources = scope.transaction_sources
       self.fingerprint = scope.fingerprint
       self.span = scope.span
+      self.propagation_context = scope.propagation_context
     end
 
     # Updates the scope's data from the given options.
@@ -272,6 +279,13 @@ module Sentry
       @event_processors << block
     end
 
+    # Generate a new propagation context either from the incoming env headers or from scratch.
+    # @param env [Hash, nil]
+    # @return [void]
+    def generate_propagation_context(env = nil)
+      @propagation_context = PropagationContext.new(self, env)
+    end
+
     protected
 
     # for duplicating scopes internally
@@ -292,6 +306,7 @@ module Sentry
       @rack_env = {}
       @span = nil
       @session = nil
+      generate_propagation_context
       set_new_breadcrumb_buffer
     end
 

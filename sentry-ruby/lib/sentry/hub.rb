@@ -229,6 +229,50 @@ module Sentry
       end_session
     end
 
+    def get_traceparent
+      return nil unless current_scope
+
+      current_scope.get_span&.to_sentry_trace ||
+        current_scope.propagation_context.get_traceparent
+    end
+
+    def get_baggage
+      return nil unless current_scope
+
+      current_scope.get_span&.to_baggage ||
+        current_scope.propagation_context.get_baggage&.serialize
+    end
+
+    def get_trace_propagation_headers
+      headers = {}
+
+      traceparent = get_traceparent
+      headers[SENTRY_TRACE_HEADER_NAME] = traceparent if traceparent
+
+      baggage = get_baggage
+      headers[BAGGAGE_HEADER_NAME] = baggage if baggage && !baggage.empty?
+
+      headers
+    end
+
+    def continue_trace(env, **options)
+      configure_scope { |s| s.generate_propagation_context(env) }
+
+      return nil unless configuration.tracing_enabled?
+
+      propagation_context = current_scope.propagation_context
+      return nil unless propagation_context.incoming_trace
+
+      Transaction.new(
+        hub: self,
+        trace_id: propagation_context.trace_id,
+        parent_span_id: propagation_context.parent_span_id,
+        parent_sampled: propagation_context.parent_sampled,
+        baggage: propagation_context.baggage,
+        **options
+      )
+    end
+
     private
 
     def current_layer

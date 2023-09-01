@@ -77,7 +77,7 @@ RSpec.describe Sentry::Span do
       sentry_trace = subject.to_sentry_trace
 
       expect(sentry_trace).to eq("#{subject.trace_id}-#{subject.span_id}-1")
-      expect(sentry_trace).to match(Sentry::Transaction::SENTRY_TRACE_REGEXP)
+      expect(sentry_trace).to match(Sentry::PropagationContext::SENTRY_TRACE_REGEXP)
     end
 
     context "without sampled value" do
@@ -87,7 +87,7 @@ RSpec.describe Sentry::Span do
         sentry_trace = subject.to_sentry_trace
 
         expect(sentry_trace).to eq("#{subject.trace_id}-#{subject.span_id}-")
-        expect(sentry_trace).to match(Sentry::Transaction::SENTRY_TRACE_REGEXP)
+        expect(sentry_trace).to match(Sentry::PropagationContext::SENTRY_TRACE_REGEXP)
       end
     end
   end

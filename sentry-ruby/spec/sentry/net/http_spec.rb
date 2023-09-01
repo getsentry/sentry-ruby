@@ -97,9 +97,6 @@ RSpec.describe Sentry::Net::HTTP do
       response = http.request(request)
 
       expect(response.code).to eq("200")
-      expect(string_io.string).to match(
-        /\[Tracing\] Adding sentry-trace header to outgoing request:/
-      )
     end
 
     it "adds baggage header to the request header as head SDK when no incoming trace" do
@@ -115,10 +112,6 @@ RSpec.describe Sentry::Net::HTTP do
       response = http.request(request)
 
       expect(response.code).to eq("200")
-      expect(string_io.string).to match(
-        /\[Tracing\] Adding baggage header to outgoing request:/
-      )
-
       request_span = transaction.span_recorder.spans.last
       expect(request["baggage"]).to eq(request_span.to_baggage)
       expect(request["baggage"]).to eq(
@@ -145,16 +138,12 @@ RSpec.describe Sentry::Net::HTTP do
         "sentry-user_id=Am%C3%A9lie,  "\
         "other-vendor-value-2=foo;bar;"
 
-      transaction = Sentry::Transaction.from_sentry_trace(sentry_trace, baggage: baggage)
+      transaction = Sentry.continue_trace({ "sentry-trace" => sentry_trace, "baggage" => baggage })
       Sentry.get_current_scope.set_span(transaction)
 
       response = http.request(request)
 
       expect(response.code).to eq("200")
-      expect(string_io.string).to match(
-        /\[Tracing\] Adding baggage header to outgoing request:/
-      )
-
       request_span = transaction.span_recorder.spans.last
       expect(request["baggage"]).to eq(request_span.to_baggage)
       expect(request["baggage"]).to eq(
@@ -165,7 +154,7 @@ RSpec.describe Sentry::Net::HTTP do
       )
     end
 
-    context "with config.propagate_trace = false" do
+    context "with config.propagate_traces = false" do
       before do
         Sentry.configuration.propagate_traces = false
       end
@@ -183,9 +172,6 @@ RSpec.describe Sentry::Net::HTTP do
         response = http.request(request)
 
         expect(response.code).to eq("200")
-        expect(string_io.string).not_to match(
-          /Adding sentry-trace header to outgoing request:/
-        )
         expect(request.key?("sentry-trace")).to eq(false)
       end
 
@@ -204,15 +190,12 @@ RSpec.describe Sentry::Net::HTTP do
           "sentry-user_id=Am%C3%A9lie,  "\
           "other-vendor-value-2=foo;bar;"
 
-        transaction = Sentry::Transaction.from_sentry_trace(sentry_trace, baggage: baggage)
+        transaction = Sentry.continue_trace({ "sentry-trace" => sentry_trace, "baggage" => baggage })
         Sentry.get_current_scope.set_span(transaction)
 
         response = http.request(request)
 
         expect(response.code).to eq("200")
-        expect(string_io.string).not_to match(
-          /Adding baggage header to outgoing request:/
-        )
         expect(request.key?("baggage")).to eq(false)
       end
     end
@@ -390,7 +373,20 @@ RSpec.describe Sentry::Net::HTTP do
       perform_basic_setup
     end
 
-    it "doesn't affect the HTTP lib anything" do
+    it "adds sentry-trace and baggage headers for tracing without performance" do
+      stub_normal_response
+
+      uri = URI("http://example.com/path")
+      http = Net::HTTP.new(uri.host, uri.port)
+      request = Net::HTTP::Get.new(uri.request_uri)
+      response = http.request(request)
+
+      expect(request["sentry-trace"]).to eq(Sentry.get_traceparent)
+      expect(request["baggage"]).to eq(Sentry.get_baggage)
+      expect(response.code).to eq("200")
+    end
+
+    it "doesn't create transaction or breadcrumbs" do
       stub_normal_response
 
       response = Net::HTTP.get_response(URI("http://example.com/path"))
