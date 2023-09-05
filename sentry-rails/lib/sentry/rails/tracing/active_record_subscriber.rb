@@ -33,8 +33,8 @@ module Sentry
                             connection.pool.spec.config
                           end
 
-              span.set_data(Span::DataConventions::DB_NAME, db_config[:database]) if db_config[:database]
               span.set_data(Span::DataConventions::DB_SYSTEM, db_config[:adapter]) if db_config[:adapter]
+              span.set_data(Span::DataConventions::DB_NAME, db_config[:database]) if db_config[:database]
               span.set_data(Span::DataConventions::SERVER_ADDRESS, db_config[:host]) if db_config[:host]
               span.set_data(Span::DataConventions::SERVER_PORT, db_config[:port]) if db_config[:port]
               span.set_data(Span::DataConventions::SERVER_SOCKET_ADDRESS, db_config[:socket]) if db_config[:socket]
