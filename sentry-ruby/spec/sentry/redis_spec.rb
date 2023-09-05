@@ -27,7 +27,12 @@ RSpec.describe Sentry::Redis do
           expect(request_span.timestamp).not_to be_nil
           expect(request_span.start_timestamp).not_to eq(request_span.timestamp)
           expect(request_span.description).to eq("SET key value")
-          expect(request_span.data).to eq({ server: "127.0.0.1:6379/0" })
+          expect(request_span.data).to eq({
+            "db.name" => 0,
+            "db.system" => "redis",
+            "server.address" => "127.0.0.1",
+            "server.port" => 6379
+          })
         end
 
         it "removes bad encoding keys and arguments gracefully" do

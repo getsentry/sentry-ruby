@@ -6,11 +6,39 @@ module Sentry
   class Span
 
     # We will try to be consistent with OpenTelemetry on this front going forward.
+    # https://develop.sentry.dev/sdk/performance/span-data-conventions/
     module DataConventions
       URL = "url"
       HTTP_STATUS_CODE = "http.response.status_code"
       HTTP_QUERY = "http.query"
       HTTP_METHOD = "http.method"
+
+      # An identifier for the database management system (DBMS) product being used.
+      # Example: postgresql
+      DB_SYSTEM = "db.system"
+
+      # The name of the database being accessed.
+      # For commands that switch the database, this should be set to the target database
+      # (even if the command fails).
+      # Example: myDatabase
+      DB_NAME = "db.name"
+
+      # Name of the database host.
+      # Example: example.com
+      SERVER_ADDRESS = "server.address"
+
+      # Logical server port number
+      # Example: 80; 8080; 443
+      SERVER_PORT = "server.port"
+
+      # Physical server IP address or Unix socket address.
+      # Example: 10.5.3.2
+      SERVER_SOCKET_ADDRESS = "server.socket.address"
+
+      # Physical server port.
+      # Recommended: If different than server.port.
+      # Example: 16456
+      SERVER_SOCKET_PORT = "server.socket.port"
     end
 
     STATUS_MAP = {

@@ -19,7 +19,10 @@ module Sentry
 
           if span
             span.set_description(commands_description)
-            span.set_data(:server, server_description)
+            span.set_data(Span::DataConventions::DB_SYSTEM, "redis")
+            span.set_data(Span::DataConventions::DB_NAME, db)
+            span.set_data(Span::DataConventions::SERVER_ADDRESS, host)
+            span.set_data(Span::DataConventions::SERVER_PORT, port)
           end
         end
       end
