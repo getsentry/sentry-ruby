@@ -24,6 +24,7 @@ if rails_version > Gem::Version.new("7.0.0")
   gem "rails", github: "rails/rails"
 else
   gem "rails", "~> #{rails_version}"
+  gem "psych", "~> 3.0.0"
 end
 
 gem "mini_magick"
