@@ -18,7 +18,8 @@ module Sentry
       :network_error,
       :sample_rate,
       :before_send,
-      :event_processor
+      :event_processor,
+      :insufficient_data
     ]
 
     include LoggingHelper
@@ -185,7 +186,7 @@ module Sentry
         reason, type = key
 
         # 'event' has to be mapped to 'error'
-        category = type == 'transaction' ? 'transaction' : 'error'
+        category = type == 'event' ? 'error' : type
 
         { reason: reason, category: category, quantity: val }
       end
