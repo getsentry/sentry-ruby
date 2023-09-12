@@ -1,3 +1,9 @@
+## Unreleased
+
+### Bug Fixes
+
+- Rename `http.method` to `http.request.method` in `Span::DataConventions` [#2106](https://github.com/getsentry/sentry-ruby/pull/2106)
+
 ## 5.11.0
 
 ### Features

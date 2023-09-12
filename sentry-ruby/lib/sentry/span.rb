@@ -11,7 +11,7 @@ module Sentry
       URL = "url"
       HTTP_STATUS_CODE = "http.response.status_code"
       HTTP_QUERY = "http.query"
-      HTTP_METHOD = "http.method"
+      HTTP_METHOD = "http.request.method"
 
       # An identifier for the database management system (DBMS) product being used.
       # Example: postgresql

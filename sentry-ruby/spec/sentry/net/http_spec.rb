@@ -45,7 +45,7 @@ RSpec.describe Sentry::Net::HTTP do
         expect(request_span.data).to eq({
           "http.response.status_code" => 200,
           "url" => "http://example.com/path",
-          "http.method" => "GET",
+          "http.request.method" => "GET",
           "http.query" => "foo=bar"
         })
       end
@@ -76,7 +76,7 @@ RSpec.describe Sentry::Net::HTTP do
         expect(request_span.data).to eq({
           "http.response.status_code" => 200,
           "url" => "http://example.com/path",
-          "http.method" => "GET",
+          "http.request.method" => "GET",
         })
       end
     end
@@ -303,7 +303,7 @@ RSpec.describe Sentry::Net::HTTP do
         expect(request_span.data).to eq({
           "http.response.status_code" => 200,
           "url" => "http://example.com/path",
-          "http.method" => "GET",
+          "http.request.method" => "GET",
         })
 
         request_span = transaction.span_recorder.spans[2]
@@ -315,7 +315,7 @@ RSpec.describe Sentry::Net::HTTP do
         expect(request_span.data).to eq({
           "http.response.status_code" => 404,
           "url" => "http://example.com/path",
-          "http.method" => "GET",
+          "http.request.method" => "GET",
         })
       end
 
