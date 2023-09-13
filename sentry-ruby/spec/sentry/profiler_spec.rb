@@ -14,6 +14,28 @@ RSpec.describe Sentry::Profiler do
 
   let(:subject) { described_class.new(Sentry.configuration) }
 
+  # profiled with following code
+  # module Bar
+  #   module Foo
+  #     def self.foo
+  #       1e6.to_i.times { 2**2 }
+  #     end
+  #   end
+
+  #   def self.bar
+  #     Foo.foo
+  #     sleep 0.1
+  #   end
+  # end
+  #
+  # Bar.bar
+  let(:stackprof_results) do
+    data = StackProf::Report.from_file('spec/support/stackprof_results.json').data
+    # relative dir differs on each machine
+    data[:frames].each { |_id, fra| fra[:file].gsub!(/<dir>/, Dir.pwd) }
+    data
+  end
+
   describe '#start' do
     context 'without sampling decision' do
       it 'does not start StackProf' do
@@ -129,9 +151,19 @@ RSpec.describe Sentry::Profiler do
   end
 
   describe '#to_hash' do
-    it 'returns nil unless sampled' do
-      subject.set_initial_sample_decision(false)
-      expect(subject.to_hash).to eq({})
+    let (:transport) { Sentry.get_current_client.transport }
+
+    context 'when not sampled' do
+      before { subject.set_initial_sample_decision(false) }
+
+      it 'returns nil' do
+        expect(subject.to_hash).to eq({})
+      end
+
+      it 'records lost event' do
+        expect(transport).to receive(:record_lost_event).with(:sample_rate, 'profile')
+        subject.to_hash
+      end
     end
 
     it 'returns nil unless started' do
@@ -139,38 +171,50 @@ RSpec.describe Sentry::Profiler do
       expect(subject.to_hash).to eq({})
     end
 
-    it 'returns nil if empty results' do
-      subject.set_initial_sample_decision(true)
-      subject.start
-      subject.stop
+    context 'with empty results' do
+      before do
+        subject.set_initial_sample_decision(true)
+        subject.start
+        subject.stop
+      end
 
-      expect(StackProf).to receive(:results).and_call_original
-      expect(subject.to_hash).to eq({})
+      it 'returns empty' do
+        expect(StackProf).to receive(:results).and_call_original
+        expect(subject.to_hash).to eq({})
+      end
+
+      it 'records lost event' do
+        expect(transport).to receive(:record_lost_event).with(:insufficient_data, 'profile')
+        subject.to_hash
+      end
+    end
+
+    context 'with insufficient samples' do
+      let(:truncated_results) do
+        results = stackprof_results
+        frame = stackprof_results[:frames].keys.first
+        results[:raw] = [1, frame, 2] # 2 samples with single frame
+        results
+      end
+
+      before do
+        allow(StackProf).to receive(:results).and_return(truncated_results)
+        subject.set_initial_sample_decision(true)
+        subject.start
+        subject.stop
+      end
+
+      it 'returns empty' do
+        expect(subject.to_hash).to eq({})
+      end
+
+      it 'records lost event' do
+        expect(transport).to receive(:record_lost_event).with(:insufficient_data, 'profile')
+        subject.to_hash
+      end
     end
 
     context 'with profiled code' do
-      # profiled with following code
-      # module Bar
-      #   module Foo
-      #     def self.foo
-      #       1e6.to_i.times { 2**2 }
-      #     end
-      #   end
-
-      #   def self.bar
-      #     Foo.foo
-      #     sleep 0.1
-      #   end
-      # end
-      #
-      # Bar.bar
-      let(:stackprof_results) do
-        data = StackProf::Report.from_file('spec/support/stackprof_results.json').data
-        # relative dir differs on each machine
-        data[:frames].each { |_id, fra| fra[:file].gsub!(/<dir>/, Dir.pwd) }
-        data
-      end
-
       before do
         allow(StackProf).to receive(:results).and_return(stackprof_results)
         subject.set_initial_sample_decision(true)

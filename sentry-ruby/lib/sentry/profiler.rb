@@ -9,6 +9,7 @@ module Sentry
     # 101 Hz in microseconds
     DEFAULT_INTERVAL = 1e6 / 101
     MICRO_TO_NANO_SECONDS = 1e3
+    MIN_SAMPLES_REQUIRED = 2
 
     attr_reader :sampled, :started, :event_id
 
@@ -73,14 +74,19 @@ module Sentry
     end
 
     def to_hash
-      return {} unless @sampled
+      unless @sampled
+        record_lost_event(:sample_rate)
+        return {}
+      end
+
       return {} unless @started
 
       results = StackProf.results
-      return {} unless results
-      return {} if results.empty?
-      return {} if results[:samples] == 0
-      return {} unless results[:raw]
+
+      if !results || results.empty? || results[:samples] == 0 || !results[:raw]
+        record_lost_event(:insufficient_data)
+        return {}
+      end
 
       frame_map = {}
 
@@ -157,8 +163,9 @@ module Sentry
 
       log('Some samples thrown away') if samples.size != results[:samples]
 
-      if samples.size <= 2
+      if samples.size <= MIN_SAMPLES_REQUIRED
         log('Not enough samples, discarding profiler')
+        record_lost_event(:insufficient_data)
         return {}
       end
 
@@ -217,6 +224,10 @@ module Sentry
       mod = i ? name[0...i] : nil
 
       [function, mod]
+    end
+
+    def record_lost_event(reason)
+      Sentry.get_current_client&.transport&.record_lost_event(reason, 'profile')
     end
   end
 end

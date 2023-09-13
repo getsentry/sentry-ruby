@@ -1,5 +1,9 @@
 ## Unreleased
 
+### Features
+
+- Record client reports for profiles [#2107](https://github.com/getsentry/sentry-ruby/pull/2107)
+
 ### Bug Fixes
 
 - Rename `http.method` to `http.request.method` in `Span::DataConventions` [#2106](https://github.com/getsentry/sentry-ruby/pull/2106)
