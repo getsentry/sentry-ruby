@@ -177,8 +177,8 @@ RSpec.describe Sentry::Transport do
         let(:envelope) { subject.envelope_from_event(event) }
 
         before do
-          event.breadcrumbs = Sentry::BreadcrumbBuffer.new(100)
-          100.times do |i|
+          event.breadcrumbs = Sentry::BreadcrumbBuffer.new(1000)
+          1000.times do |i|
             event.breadcrumbs.record Sentry::Breadcrumb.new(category: i.to_s, message: "x" * Sentry::Event::MAX_MESSAGE_SIZE_IN_BYTES)
           end
           serialized_result = JSON.generate(event.to_hash)
@@ -197,7 +197,7 @@ RSpec.describe Sentry::Transport do
 
         context "if it's still oversized" do
           before do
-            100.times do |i|
+            1000.times do |i|
               event.contexts["context_#{i}"] = "s" * Sentry::Event::MAX_MESSAGE_SIZE_IN_BYTES
             end
           end
@@ -206,7 +206,7 @@ RSpec.describe Sentry::Transport do
             data, _ = subject.serialize_envelope(envelope)
             expect(data).to be_nil
             expect(io.string).not_to match(/Sending envelope with items \[event\]/)
-            expect(io.string).to match(/tags: 2, contexts: 820791, extra: 2/)
+            expect(io.string).to match(/tags: 2, contexts: 8208891, extra: 2/)
           end
         end
       end
@@ -220,7 +220,7 @@ RSpec.describe Sentry::Transport do
           Regexp.new("^(#{project_root}/)?#{Sentry::Backtrace::APP_DIRS_PATTERN}")
         end
         let(:frame_list_limit) { 500 }
-        let(:frame_list_size) { frame_list_limit * 4 }
+        let(:frame_list_size) { frame_list_limit * 20 }
 
         before do
           single_exception = event.exception.values[0]
@@ -270,7 +270,7 @@ RSpec.describe Sentry::Transport do
 
         context "if it's still oversized" do
           before do
-            100.times do |i|
+            1000.times do |i|
               event.contexts["context_#{i}"] = "s" * Sentry::Event::MAX_MESSAGE_SIZE_IN_BYTES
             end
           end
@@ -279,7 +279,7 @@ RSpec.describe Sentry::Transport do
             data, _ = subject.serialize_envelope(envelope)
             expect(data).to be_nil
             expect(io.string).not_to match(/Sending envelope with items \[event\]/)
-            expect(io.string).to match(/tags: 2, contexts: 820791, extra: 2/)
+            expect(io.string).to match(/tags: 2, contexts: 8208891, extra: 2/)
           end
         end
       end
@@ -340,8 +340,8 @@ RSpec.describe Sentry::Transport do
       let(:envelope) { subject.envelope_from_event(event) }
 
       before do
-        event.breadcrumbs = Sentry::BreadcrumbBuffer.new(100)
-        100.times do |i|
+        event.breadcrumbs = Sentry::BreadcrumbBuffer.new(1000)
+        1000.times do |i|
           event.breadcrumbs.record Sentry::Breadcrumb.new(category: i.to_s, message: "x" * Sentry::Event::MAX_MESSAGE_SIZE_IN_BYTES)
         end
         serialized_result = JSON.generate(event.to_hash)
@@ -370,7 +370,7 @@ RSpec.describe Sentry::Transport do
 
       context "if it's still oversized" do
         before do
-          100.times do |i|
+          1000.times do |i|
             event.contexts["context_#{i}"] = "s" * Sentry::Event::MAX_MESSAGE_SIZE_IN_BYTES
           end
         end
@@ -380,7 +380,7 @@ RSpec.describe Sentry::Transport do
 
           subject.send_envelope(envelope)
 
-          expect(io.string).to match(/tags: 2, contexts: 820791, extra: 2/)
+          expect(io.string).to match(/tags: 2, contexts: 8208891, extra: 2/)
           expect(io.string).not_to match(/Sending envelope with items \[event\]/)
         end
 
