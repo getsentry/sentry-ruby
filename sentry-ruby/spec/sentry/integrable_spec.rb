@@ -59,7 +59,7 @@ RSpec.describe Sentry::Integrable do
       expect(hint).to eq({ additional_hint: "foo", integration: "fake_integration", exception: exception })
     end
 
-    it "generates Sentry::FakeIntegration.capture_exception" do
+    it "generates Sentry::FakeIntegration.capture_message" do
       hint = nil
 
       Sentry.configuration.before_send = lambda do |event, h|
@@ -70,6 +70,19 @@ RSpec.describe Sentry::Integrable do
       Sentry::FakeIntegration.capture_message(message, hint: { additional_hint: "foo" })
 
       expect(hint).to eq({ additional_hint: "foo", integration: "fake_integration", message: message })
+    end
+
+    it "generates Sentry::FakeIntegration.capture_check_in" do
+      hint = nil
+
+      Sentry.configuration.before_send = lambda do |event, h|
+        hint = h
+        event
+      end
+
+      Sentry::FakeIntegration.capture_check_in("test_slug", :ok, hint: { additional_hint: "foo" })
+
+      expect(hint).to eq({ additional_hint: "foo", integration: "fake_integration", slug: "test_slug" })
     end
 
     it "sets correct meta when the event is captured by integration helpers" do

@@ -15,6 +15,7 @@ require "sentry/logger"
 require "sentry/event"
 require "sentry/error_event"
 require "sentry/transaction_event"
+require "sentry/check_in_event"
 require "sentry/span"
 require "sentry/transaction"
 require "sentry/hub"
@@ -428,6 +429,24 @@ module Sentry
     def capture_event(event)
       return unless initialized?
       get_current_hub.capture_event(event)
+    end
+
+    # Captures a check-in and sends it to Sentry via the currently active hub.
+    #
+    # @param slug [String] identifier of this monitor
+    # @param status [Symbol] status of this check-in, one of {CheckInEvent::VALID_STATUSES}
+    #
+    # @param [Hash] options extra check-in options
+    # @option options [String] check_in_id for updating the status of an existing monitor
+    # @option options [Integer] duration seconds elapsed since this monitor started
+    # @option options [Cron::MonitorConfig] monitor_config configuration for this monitor
+    #
+    # @yieldparam scope [Scope]
+    #
+    # @return [String, nil] The {CheckInEvent#check_in_id} to use for later updates on the same slug
+    def capture_check_in(slug, status, **options, &block)
+      return unless initialized?
+      get_current_hub.capture_check_in(slug, status, **options, &block)
     end
 
     # Takes or initializes a new Sentry::Transaction and makes a sampling decision for it.
