@@ -1,4 +1,4 @@
 codecov:
   disable_default_path_fixes: true
 ignore:
-  - **/spec
+  - "**/spec"
