@@ -10,6 +10,7 @@
 - Increase `Envelope::Item::MAX_SERIALIZED_PAYLOAD_SIZE` to 1MB [#2108](https://github.com/getsentry/sentry-ruby/pull/2108)
 - Fix `db_config` begin `nil` in `ActiveRecordSubscriber` [#2111](https://github.com/getsentry/sentry-ruby/pull/2111)
   - Fixes [#2109](https://github.com/getsentry/sentry-ruby/issues/2109)
+- Always send envelope trace header from dynamic sampling context [#2113](https://github.com/getsentry/sentry-ruby/pull/2113)
 
 ## 5.11.0
 
