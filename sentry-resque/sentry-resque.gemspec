@@ -24,6 +24,4 @@ Gem::Specification.new do |spec|
 
   spec.add_dependency "sentry-ruby", "~> 5.11.0"
   spec.add_dependency "resque", ">= 1.24"
-
-  spec.add_development_dependency "resque-retry", "~> 1.8"
 end

@@ -14,6 +14,8 @@ gem 'simplecov'
 gem "simplecov-cobertura", "~> 1.4"
 gem "rexml"
 
+gem "resque-retry", "~> 1.8"
+
 if RUBY_VERSION.to_f >= 2.6
   gem "debug", github: "ruby/debug", platform: :ruby
   gem "irb"
