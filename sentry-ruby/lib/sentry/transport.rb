@@ -144,7 +144,7 @@ module Sentry
         sent_at: Sentry.utc_now.iso8601
       }
 
-      if event.is_a?(TransactionEvent) && event.dynamic_sampling_context
+      if event.is_a?(Event) && event.dynamic_sampling_context
         envelope_headers[:trace] = event.dynamic_sampling_context
       end
 

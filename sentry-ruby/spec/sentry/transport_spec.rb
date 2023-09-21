@@ -16,23 +16,40 @@ RSpec.describe Sentry::Transport do
     Sentry::Hub.new(client, Sentry::Scope.new)
   end
 
+  let(:dynamic_sampling_context) do
+    {
+      "sample_rate" => "0.01337",
+      "public_key" => "49d0f7386ad645858ae85020e393bef3",
+      "trace_id" => "771a43a4192642f0b136d5159a501700",
+      "user_id" => "Amélie"
+    }
+  end
+
   subject { client.transport }
 
   describe "#serialize_envelope" do
     context "normal event" do
-      let(:event) { client.event_from_exception(ZeroDivisionError.new("divided by 0")) }
+      let(:event) do
+        event = client.event_from_exception(ZeroDivisionError.new("divided by 0"))
+        event.dynamic_sampling_context = dynamic_sampling_context
+        event
+      end
+
       let(:envelope) { subject.envelope_from_event(event) }
 
       it "generates correct envelope content" do
         result, _ = subject.serialize_envelope(envelope)
 
         envelope_header, item_header, item = result.split("\n")
+        envelope_header_parsed = JSON.parse(envelope_header)
 
-        expect(envelope_header).to eq(
-          <<~ENVELOPE_HEADER.chomp
-            {"event_id":"#{event.event_id}","dsn":"#{Sentry::TestHelper::DUMMY_DSN}","sdk":#{Sentry.sdk_meta.to_json},"sent_at":"#{Time.now.utc.iso8601}"}
-          ENVELOPE_HEADER
-        )
+        expect(envelope_header_parsed).to eq({
+          "event_id" => event.event_id,
+          "dsn" => Sentry::TestHelper::DUMMY_DSN,
+          "sdk" => Sentry.sdk_meta,
+          "sent_at" => Time.now.utc.iso8601,
+          "trace" => dynamic_sampling_context
+        })
 
         expect(item_header).to eq(
           '{"type":"event","content_type":"application/json"}'
@@ -45,15 +62,6 @@ RSpec.describe Sentry::Transport do
     context "transaction event" do
       let(:transaction) do
         Sentry::Transaction.new(name: "test transaction", op: "rack.request", hub: hub)
-      end
-
-      let(:dynamic_sampling_context) do
-        {
-          "sample_rate" => "0.01337",
-          "public_key" => "49d0f7386ad645858ae85020e393bef3",
-          "trace_id" => "771a43a4192642f0b136d5159a501700",
-          "user_id" => "Amélie"
-        }
       end
 
       let(:event) do
