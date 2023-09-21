@@ -49,7 +49,7 @@ RSpec.describe Sentry::Sidekiq do
     end
   end
 
-  it "captues exception raised in the worker" do
+  it "captures exception raised in the worker" do
     expect { execute_worker(processor, SadWorker) }.to change { transport.events.size }.by(1)
 
     event = transport.events.last.to_hash
