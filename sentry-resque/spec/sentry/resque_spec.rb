@@ -7,7 +7,6 @@ end
 RSpec.describe Sentry::Resque do
   before do
     perform_basic_setup
-    Resque.redis.flushall
   end
 
   class FailedJob
