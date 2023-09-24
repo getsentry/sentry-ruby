@@ -21,9 +21,15 @@ gem "simplecov-cobertura", "~> 1.4"
 gem "rexml"
 gem "stackprof" unless RUBY_PLATFORM == "java"
 
-if RUBY_VERSION.to_f >= 2.6
+ruby_version = Gem::Version.new(RUBY_VERSION)
+
+if ruby_version >= Gem::Version.new("2.6.0")
   gem "debug", github: "ruby/debug", platform: :ruby
   gem "irb"
+
+  if ruby_version >= Gem::Version.new("3.0.0")
+    gem "ruby-lsp-rspec"
+  end
 end
 
 gem "pry"

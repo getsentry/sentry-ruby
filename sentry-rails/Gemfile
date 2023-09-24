@@ -40,16 +40,24 @@ gem 'simplecov'
 gem "simplecov-cobertura", "~> 1.4"
 gem "rexml"
 
-# https://github.com/flavorjones/loofah/pull/267
-# loofah changed the required ruby version in a patch so we need to explicitly pin it
-gem "loofah", "2.20.0" if RUBY_VERSION.to_f < 2.5
+ruby_version = Gem::Version.new(RUBY_VERSION)
 
-gem "rake", "~> 12.0"
+if ruby_version < Gem::Version.new("2.5.0")
+  # https://github.com/flavorjones/loofah/pull/267
+  # loofah changed the required ruby version in a patch so we need to explicitly pin it
+  gem "loofah", "2.20.0"
+end
 
-if RUBY_VERSION.to_f >= 2.6
+if ruby_version >= Gem::Version.new("2.6.0")
   gem "debug", github: "ruby/debug", platform: :ruby
   gem "irb"
+
+  if ruby_version >= Gem::Version.new("3.0.0")
+    gem "ruby-lsp-rspec"
+  end
 end
+
+gem "rake", "~> 12.0"
 
 gem "pry"
 
