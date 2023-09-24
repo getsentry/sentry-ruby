@@ -11,6 +11,8 @@
 - Fix `db_config` begin `nil` in `ActiveRecordSubscriber` [#2111](https://github.com/getsentry/sentry-ruby/pull/2111)
   - Fixes [#2109](https://github.com/getsentry/sentry-ruby/issues/2109)
 - Always send envelope trace header from dynamic sampling context [#2113](https://github.com/getsentry/sentry-ruby/pull/2113)
+- Improve `TestHelper`'s setup/teardown helpers ([#2116](https://github.com/getsentry/sentry-ruby/pull/2116))
+  - Fixes [#2103](https://github.com/getsentry/sentry-ruby/issues/2103)
 
 ## 5.11.0
 
@@ -31,7 +33,7 @@
   - Implement `PropagationContext` on `Scope` and add `Sentry.get_trace_propagation_headers` API [#2084](https://github.com/getsentry/sentry-ruby/pull/2084)
   - Implement `Sentry.continue_trace` API [#2089](https://github.com/getsentry/sentry-ruby/pull/2089)
 
-  The SDK now supports connecting arbitrary events (Errors / Transactions / Replays) across distributed services and not just Transactions.  
+  The SDK now supports connecting arbitrary events (Errors / Transactions / Replays) across distributed services and not just Transactions.
   To continue an incoming trace starting with this version of the SDK, use `Sentry.continue_trace` as follows.
 
   ```rb
