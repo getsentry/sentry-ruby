@@ -118,5 +118,16 @@ RSpec.describe Sentry::TestHelper do
 
       expect(Sentry.get_current_scope.tags).to eq({})
     end
+
+    context "when the configuration is mutated" do
+      it "rolls back client changes" do
+        Sentry.configuration.environment = "quack"
+        expect(Sentry.configuration.environment).to eq("quack")
+
+        teardown_sentry_test
+
+        expect(Sentry.configuration.environment).to eq("test")
+      end
+    end
   end
 end
