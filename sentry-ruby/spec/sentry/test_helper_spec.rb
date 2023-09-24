@@ -16,11 +16,11 @@ RSpec.describe Sentry::TestHelper do
     expect(Sentry.get_current_client.transport).to be_a(Sentry::HTTPTransport)
   end
 
-  after do
-    teardown_sentry_test
-  end
-
   describe "#setup_sentry_test" do
+    after do
+      teardown_sentry_test
+    end
+
     it "raises error when the SDK is not initialized" do
       allow(Sentry).to receive(:initialized?).and_return(false)
 
@@ -51,6 +51,10 @@ RSpec.describe Sentry::TestHelper do
       setup_sentry_test
     end
 
+    after do
+      teardown_sentry_test
+    end
+
     it "returns the last sent event" do
       Sentry.capture_message("foobar")
       Sentry.capture_message("barbaz")
@@ -64,6 +68,10 @@ RSpec.describe Sentry::TestHelper do
   describe "#extract_sentry_exceptions" do
     before do
       setup_sentry_test
+    end
+
+    after do
+      teardown_sentry_test
     end
 
     it "extracts exceptions from an ErrorEvent" do
