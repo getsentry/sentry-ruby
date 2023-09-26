@@ -14,24 +14,28 @@ module Sentry
     # @return [void]
     def setup_sentry_test(&block)
       raise "please make sure the SDK is initialized for testing" unless Sentry.initialized?
-      copied_config = Sentry.configuration.dup
+      dummy_config = Sentry.configuration.dup
       # configure dummy DSN, so the events will not be sent to the actual service
-      copied_config.dsn = DUMMY_DSN
+      dummy_config.dsn = DUMMY_DSN
       # set transport to DummyTransport, so we can easily intercept the captured events
-      copied_config.transport.transport_class = Sentry::DummyTransport
+      dummy_config.transport.transport_class = Sentry::DummyTransport
       # make sure SDK allows sending under the current environment
-      copied_config.enabled_environments << copied_config.environment unless copied_config.enabled_environments.include?(copied_config.environment)
+      dummy_config.enabled_environments << dummy_config.environment unless dummy_config.enabled_environments.include?(dummy_config.environment)
       # disble async event sending
-      copied_config.background_worker_threads = 0
+      dummy_config.background_worker_threads = 0
 
       # user can overwrite some of the configs, with a few exceptions like:
       # - include_local_variables
       # - auto_session_tracking
-      block&.call(copied_config)
+      block&.call(dummy_config)
 
-      test_client = Sentry::Client.new(copied_config)
+      # the base layer's client should already use the dummy config so nothing will be sent by accident
+      base_client = Sentry::Client.new(dummy_config)
+      Sentry.get_current_hub.bind_client(base_client)
+      # create a new layer so mutations made to the testing scope or configuration could be simply popped later
+      Sentry.get_current_hub.push_scope
+      test_client = Sentry::Client.new(dummy_config.dup)
       Sentry.get_current_hub.bind_client(test_client)
-      Sentry.get_current_scope.clear
     end
 
     # Clears all stored events and envelopes.
@@ -40,9 +44,12 @@ module Sentry
     def teardown_sentry_test
       return unless Sentry.initialized?
 
-      sentry_transport.events = []
-      sentry_transport.envelopes = []
-      Sentry.get_current_scope.clear
+      # pop testing layer created by `setup_sentry_test`
+      # but keep the base layer to avoid nil-pointer errors
+      # TODO: find a way to notify users if they somehow popped the test layer before calling this method
+      if Sentry.get_current_hub.instance_variable_get(:@stack).size > 1
+        Sentry.get_current_hub.pop_scope
+      end
     end
 
     # @return [Transport]
@@ -75,4 +82,3 @@ module Sentry
     end
   end
 end
-
