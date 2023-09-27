@@ -14,6 +14,8 @@
 - Improve `TestHelper`'s setup/teardown helpers ([#2116](https://github.com/getsentry/sentry-ruby/pull/2116))
   - Fixes [#2103](https://github.com/getsentry/sentry-ruby/issues/2103)
 - Fix Sidekiq tracing headers not being overwritten in case of schedules and retries [#2118](https://github.com/getsentry/sentry-ruby/pull/2118)
+- Fix exception event sending failed due to source sequence is illegal/malformed utf-8 [#2083](https://github.com/getsentry/sentry-ruby/pull/2083)
+  - Fixes [#2082](https://github.com/getsentry/sentry-ruby/issues/2082)
 
 ## 5.11.0
 
