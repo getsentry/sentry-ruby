@@ -13,6 +13,7 @@
 - Always send envelope trace header from dynamic sampling context [#2113](https://github.com/getsentry/sentry-ruby/pull/2113)
 - Improve `TestHelper`'s setup/teardown helpers ([#2116](https://github.com/getsentry/sentry-ruby/pull/2116))
   - Fixes [#2103](https://github.com/getsentry/sentry-ruby/issues/2103)
+- Fix Sidekiq tracing headers not being overwritten in case of schedules and retries [#2118](https://github.com/getsentry/sentry-ruby/pull/2118)
 
 ## 5.11.0
 
