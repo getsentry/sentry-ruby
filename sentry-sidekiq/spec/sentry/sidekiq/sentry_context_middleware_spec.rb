@@ -129,5 +129,24 @@ RSpec.describe Sentry::Sidekiq::SentryContextClientMiddleware do
       expect(headers["sentry-trace"]).to eq(transaction.to_sentry_trace)
       expect(headers["baggage"]).to eq(transaction.to_baggage)
     end
+
+    # sidekiq pushes the same job to the queue again from the server for schedules and retries
+    it "keeps the same trace_propagation_headers linked to the transaction when queued multiple times" do
+      client.push('queue' => 'default', 'class' => HappyWorker, 'args' => [])
+
+      # push without span transaction to simulate pushing on the server
+      Sentry.get_current_scope.clear
+      client.push(queue.first.item)
+
+      q = queue.to_a
+      expect(q.size).to be(2)
+      first_headers = q.first["trace_propagation_headers"]
+      expect(first_headers["sentry-trace"]).to eq(transaction.to_sentry_trace)
+      expect(first_headers["baggage"]).to eq(transaction.to_baggage)
+
+      second_headers = q.second["trace_propagation_headers"]
+      expect(second_headers["sentry-trace"]).to eq(transaction.to_sentry_trace)
+      expect(second_headers["baggage"]).to eq(transaction.to_baggage)
+    end
   end
 end
