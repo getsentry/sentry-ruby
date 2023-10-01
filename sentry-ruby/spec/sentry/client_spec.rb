@@ -448,6 +448,66 @@ RSpec.describe Sentry::Client do
         end
       end
     end
+
+    describe "bad encoding character handling" do
+      context "if exception message contains illegal/malformed encoding characters" do
+        let(:exception) do
+          begin
+            raise "#{message}\x1F\xE6"
+          rescue => e
+            e
+          end
+        end
+
+        it "scrub bad encoding error message" do
+          expect { event.to_json_compatible }.not_to raise_error
+          version = Gem::Version.new(RUBY_VERSION)
+          if version >= Gem::Version.new("3.2")
+            expect(hash[:exception][:values][0][:value]).to eq("#{message}\x1F\uFFFD (RuntimeError)")
+          else
+            expect(hash[:exception][:values][0][:value]).to eq("#{message}\x1F\uFFFD")
+          end
+        end
+      end
+
+      context "if local variable contains illegal/malformed encoding characters" do
+        before do
+          perform_basic_setup do |config|
+            config.include_local_variables = true
+          end
+        end
+
+        after do
+          Sentry.exception_locals_tp.disable
+        end
+
+        let(:exception) do
+          begin
+            long = "*" * 1022 + "\x1F\xE6" + "*" * 1000
+            foo = "local variable \x1F\xE6"
+            raise message
+          rescue => e
+            e
+          end
+        end
+
+        it "scrub bad encoding characters" do
+          expect { event.to_json_compatible }.not_to raise_error
+          version = Gem::Version.new(RUBY_VERSION)
+          if version >= Gem::Version.new("3.2")
+            expect(hash[:exception][:values][0][:value]).to eq("#{message} (RuntimeError)")
+            frames = hash[:exception][:values][0][:stacktrace][:frames]
+            expect(frames[-1][:vars][:long]).to eq("*" * 1022 + "\x1F\uFFFD" + "...")
+            expect(frames[-1][:vars][:foo]).to eq "local variable \x1F\uFFFD"
+          else
+            expect(hash[:exception][:values][0][:value]).to eq(message)
+            frames = hash[:exception][:values][0][:stacktrace][:frames]
+            expect(frames[-1][:vars][:long]).to eq("*" * 1022 + "\x1F\uFFFD" + "...")
+            expect(frames[-1][:vars][:foo]).to eq "local variable \x1F\uFFFD"
+          end
+        end
+      end
+    end
   end
 
   describe "#generate_sentry_trace" do

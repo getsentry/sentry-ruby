@@ -23,7 +23,7 @@ module Sentry
           exception.message || ""
         end
 
-      @value = exception_message.byteslice(0..Event::MAX_MESSAGE_SIZE_IN_BYTES)
+      @value = Utils::EncodingHelper.encode_to_utf_8(exception_message.byteslice(0..Event::MAX_MESSAGE_SIZE_IN_BYTES))
 
       @module = exception.class.to_s.split('::')[0...-1].join('::')
       @thread_id = Thread.current.object_id
@@ -51,7 +51,7 @@ module Sentry
                 v = v.byteslice(0..MAX_LOCAL_BYTES - 1) + OMISSION_MARK
               end
 
-              v
+              Utils::EncodingHelper.encode_to_utf_8(v)
             rescue StandardError
               PROBLEMATIC_LOCAL_VALUE_REPLACEMENT
             end
