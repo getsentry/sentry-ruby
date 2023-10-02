@@ -3,6 +3,7 @@
 ### Features
 
 - Record client reports for profiles [#2107](https://github.com/getsentry/sentry-ruby/pull/2107)
+- Adopt Rails 7.1's new BroadcastLogger [#2120](https://github.com/getsentry/sentry-ruby/pull/2120)
 
 ### Bug Fixes
 

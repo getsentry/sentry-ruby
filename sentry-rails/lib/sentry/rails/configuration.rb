@@ -12,7 +12,12 @@ module Sentry
       @excluded_exceptions = @excluded_exceptions.concat(Sentry::Rails::IGNORE_DEFAULT)
 
       if ::Rails.logger
-        @logger = ::Rails.logger.dup
+        if ::Rails.logger.respond_to?(:broadcasts)
+          dupped_broadcasts = ::Rails.logger.broadcasts.map(&:dup)
+          @logger = ::ActiveSupport::BroadcastLogger.new(*dupped_broadcasts)
+        else
+          @logger = ::Rails.logger.dup
+        end
       else
         @logger.warn(Sentry::LOGGER_PROGNAME) do
           <<~MSG

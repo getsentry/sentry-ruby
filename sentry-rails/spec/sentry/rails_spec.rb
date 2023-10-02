@@ -14,6 +14,12 @@ RSpec.describe Sentry::Rails, type: :request do
       make_basic_app
     end
 
+    after do
+      # We need to cleanup Rails.logger because after https://github.com/rails/rails/pull/49417
+      # Rails.logger could get recreated with the previous logger value and become deeply nested broadcast logger
+      Rails.logger = nil
+    end
+
     it "has version set" do
       expect(described_class::VERSION).to be_a(String)
     end
@@ -36,11 +42,24 @@ RSpec.describe Sentry::Rails, type: :request do
 
     describe "logger detection" do
       it "sets a duplicated Rails logger as the SDK's logger" do
-        expect(Sentry.configuration.logger).to be_a(ActiveSupport::Logger)
-        Sentry.configuration.logger.level = ::Logger::WARN
-        # Configuring the SDK's logger should not affect the Rails logger
-        expect(Rails.logger.level).to eq(::Logger::DEBUG)
-        expect(Sentry.configuration.logger.level).to eq(::Logger::WARN)
+        if Gem::Version.new(Rails.version) > Gem::Version.new("7.1.0.beta")
+          expect(Sentry.configuration.logger).to be_a(ActiveSupport::BroadcastLogger)
+
+          Sentry.configuration.logger.level = ::Logger::WARN
+
+          # Configuring the SDK's logger should not affect the Rails logger
+          expect(Rails.logger.broadcasts.first).to be_a(ActiveSupport::Logger)
+          expect(Rails.logger.broadcasts.first.level).to eq(::Logger::DEBUG)
+          expect(Sentry.configuration.logger.level).to eq(::Logger::WARN)
+        else
+          expect(Sentry.configuration.logger).to be_a(ActiveSupport::Logger)
+
+          Sentry.configuration.logger.level = ::Logger::WARN
+
+          # Configuring the SDK's logger should not affect the Rails logger
+          expect(Rails.logger.level).to eq(::Logger::DEBUG)
+          expect(Sentry.configuration.logger.level).to eq(::Logger::WARN)
+        end
       end
 
       it "respects the logger set by user" do
