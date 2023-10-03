@@ -129,6 +129,16 @@ class SadWorker
   end
 end
 
+class HappyWorkerWithCron < HappyWorker
+  include Sentry::Cron::MonitorCheckIns
+  sentry_monitor_check_ins
+end
+
+class SadWorkerWithCron < SadWorker
+  include Sentry::Cron::MonitorCheckIns
+  sentry_monitor_check_ins slug: "failed_job", monitor_config: Sentry::Cron::MonitorConfig.from_crontab("5 * * * *")
+end
+
 class VerySadWorker
   include Sidekiq::Worker
 

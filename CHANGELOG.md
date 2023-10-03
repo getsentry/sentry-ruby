@@ -4,15 +4,56 @@
 
 - Record client reports for profiles [#2107](https://github.com/getsentry/sentry-ruby/pull/2107)
 - Adopt Rails 7.1's new BroadcastLogger [#2120](https://github.com/getsentry/sentry-ruby/pull/2120)
-- Add `Sentry.capture_check_in` API for Cron Monitoring [#2117](https://github.com/getsentry/sentry-ruby/pull/2117)
+- Add [Cron Monitoring](https://docs.sentry.io/product/crons/) support
+  - Add `Sentry.capture_check_in` API for Cron Monitoring [#2117](https://github.com/getsentry/sentry-ruby/pull/2117)
 
-  You can now track progress of long running scheduled jobs.
+    You can now track progress of long running scheduled jobs.
 
-  ```rb
-  check_in_id = Sentry.capture_check_in('job_name', :in_progress)
-  # do job stuff
-  Sentry.capture_check_in('job_name', :ok, check_in_id: check_in_id)
-  ```
+    ```rb
+    check_in_id = Sentry.capture_check_in('job_name', :in_progress)
+    # do job stuff
+    Sentry.capture_check_in('job_name', :ok, check_in_id: check_in_id)
+    ```
+  - Add `Sentry::Cron::MonitorCheckIns` module for automatic monitoring of jobs [#2130](https://github.com/getsentry/sentry-ruby/pull/2130)
+
+    Standard job frameworks such as `ActiveJob` and `Sidekiq` can now use this module to automatically capture check ins.
+
+    ```rb
+    class ExampleJob < ApplicationJob
+      include Sentry::Cron::MonitorCheckIns
+
+      sentry_monitor_check_ins
+
+      def perform(*args)
+        # do stuff
+      end
+    end
+    ```
+
+    ```rb
+    class SidekiqJob
+      include Sidekiq::Job
+      include Sentry::Cron::MonitorCheckIns
+
+      sentry_monitor_check_ins
+
+      def perform(*args)
+        # do stuff
+      end
+    end
+    ```
+
+    You can pass in optional attributes to `sentry_monitor_check_ins` as follows.
+    ```rb
+    # slug defaults to the job class name
+    sentry_monitor_check_ins slug: 'custom_slug'
+
+    # define the monitor config with an interval
+    sentry_monitor_check_ins monitor_config: Sentry::Cron::MonitorConfig.from_interval(1, :minute)
+
+    # define the monitor config with a crontab
+    sentry_monitor_check_ins monitor_config: Sentry::Cron::MonitorConfig.from_crontab('5 * * * *')
+    ```
 
 ### Bug Fixes
 
