@@ -11,4 +11,5 @@ targets:
         'gem:sentry-sidekiq':
         'gem:sentry-delayed_job':
         'gem:sentry-opentelemetry':
+        'gem:sentry-resque':
     - name: github
