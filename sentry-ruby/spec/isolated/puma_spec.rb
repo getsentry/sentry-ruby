@@ -4,6 +4,8 @@ require_relative "../spec_helper"
 # Because puma doesn't have any dependency, if Rack is not installed the entire test won't work
 return if ENV["RACK_VERSION"] == "0"
 
+SimpleCov.command_name "RSpecIsolated"
+
 RSpec.describe Puma::Server do
   class TestServer
     def initialize(app, options)
