@@ -11,7 +11,7 @@
 
 
 [![Gem Version](https://img.shields.io/gem/v/sentry-delayed_job.svg)](https://rubygems.org/gems/sentry-delayed_job)
-![Build Status](https://github.com/getsentry/sentry-ruby/workflows/sentry-delayed_job%20Test/badge.svg)
+![Build Status](https://github.com/getsentry/sentry-ruby/actions/workflows/sentry_delayed_job_test.yml/badge.svg)
 [![Coverage Status](https://img.shields.io/codecov/c/github/getsentry/sentry-ruby/master?logo=codecov)](https://codecov.io/gh/getsentry/sentry-ruby/branch/master)
 [![Gem](https://img.shields.io/gem/dt/sentry-delayed_job.svg)](https://rubygems.org/gems/sentry-delayed_job/)
 [![SemVer](https://api.dependabot.com/badges/compatibility_score?dependency-name=sentry-delayed_job&package-manager=bundler&version-scheme=semver)](https://dependabot.com/compatibility-score.html?dependency-name=sentry-delayed_job&package-manager=bundler&version-scheme=semver)
