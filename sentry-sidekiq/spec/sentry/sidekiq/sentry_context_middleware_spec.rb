@@ -140,11 +140,11 @@ RSpec.describe Sentry::Sidekiq::SentryContextClientMiddleware do
 
       q = queue.to_a
       expect(q.size).to be(2)
-      first_headers = q.first["trace_propagation_headers"]
+      first_headers = q[0]["trace_propagation_headers"]
       expect(first_headers["sentry-trace"]).to eq(transaction.to_sentry_trace)
       expect(first_headers["baggage"]).to eq(transaction.to_baggage)
 
-      second_headers = q.second["trace_propagation_headers"]
+      second_headers = q[1]["trace_propagation_headers"]
       expect(second_headers["sentry-trace"]).to eq(transaction.to_sentry_trace)
       expect(second_headers["baggage"]).to eq(transaction.to_baggage)
     end

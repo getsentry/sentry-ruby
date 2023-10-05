@@ -29,6 +29,10 @@ module Sentry
         scope&.clear
       end
 
+      def arity
+        method(:call).arity
+      end
+
       private
 
       def retryable?(context)

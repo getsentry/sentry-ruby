@@ -16,15 +16,20 @@ gem "rexml"
 gem "loofah", "2.20.0" if RUBY_VERSION.to_f < 2.5
 
 sidekiq_version = ENV["SIDEKIQ_VERSION"]
-sidekiq_version = "6.0" if sidekiq_version.nil?
+sidekiq_version = "7.0" if sidekiq_version.nil?
 
 gem "sidekiq", "~> #{sidekiq_version}"
 gem "rails"
 
-if RUBY_VERSION.to_f >= 2.6
+ruby_version = Gem::Version.new(RUBY_VERSION)
+
+if ruby_version >= Gem::Version.new("2.6.0")
   gem "debug", github: "ruby/debug", platform: :ruby
   gem "irb"
+
+  if ruby_version >= Gem::Version.new("3.0.0")
+    gem "ruby-lsp-rspec"
+  end
 end
 
 gem "pry"
-
