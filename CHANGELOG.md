@@ -4,6 +4,15 @@
 
 - Record client reports for profiles [#2107](https://github.com/getsentry/sentry-ruby/pull/2107)
 - Adopt Rails 7.1's new BroadcastLogger [#2120](https://github.com/getsentry/sentry-ruby/pull/2120)
+- Add `Sentry.capture_check_in` API for Cron Monitoring [#2117](https://github.com/getsentry/sentry-ruby/pull/2117)
+
+  You can now track progress of long running scheduled jobs.
+
+  ```rb
+  check_in_id = Sentry.capture_check_in('job_name', :in_progress)
+  # do job stuff
+  Sentry.capture_check_in('job_name', :ok, check_in_id: check_in_id)
+  ```
 
 ### Bug Fixes
 

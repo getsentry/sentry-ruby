@@ -510,6 +510,59 @@ RSpec.describe Sentry::Client do
     end
   end
 
+  describe "#event_from_check_in" do
+    let(:slug) { "test_slug" }
+    let(:status) { :ok }
+
+    it 'returns an event' do
+      event = subject.event_from_check_in(slug, status)
+      expect(event).to be_a(Sentry::CheckInEvent)
+
+      hash = event.to_hash
+      expect(hash[:monitor_slug]).to eq(slug)
+      expect(hash[:status]).to eq(status)
+      expect(hash[:check_in_id].length).to eq(32)
+    end
+
+    it 'returns an event with correct optional attributes from crontab config' do
+      event = subject.event_from_check_in(
+        slug,
+        status,
+        duration: 30,
+        check_in_id: "xxx-yyy",
+        monitor_config: Sentry::Cron::MonitorConfig.from_crontab("* * * * *")
+      )
+
+      expect(event).to be_a(Sentry::CheckInEvent)
+
+      hash = event.to_hash
+      expect(hash[:monitor_slug]).to eq(slug)
+      expect(hash[:status]).to eq(status)
+      expect(hash[:check_in_id]).to eq("xxx-yyy")
+      expect(hash[:duration]).to eq(30)
+      expect(hash[:monitor_config]).to eq({ schedule: { type: :crontab, value: "* * * * *" } })
+    end
+
+    it 'returns an event with correct optional attributes from interval config' do
+      event = subject.event_from_check_in(
+        slug,
+        status,
+        duration: 30,
+        check_in_id: "xxx-yyy",
+        monitor_config: Sentry::Cron::MonitorConfig.from_interval(30, :minute)
+      )
+
+      expect(event).to be_a(Sentry::CheckInEvent)
+
+      hash = event.to_hash
+      expect(hash[:monitor_slug]).to eq(slug)
+      expect(hash[:status]).to eq(status)
+      expect(hash[:check_in_id]).to eq("xxx-yyy")
+      expect(hash[:duration]).to eq(30)
+      expect(hash[:monitor_config]).to eq({ schedule: { type: :interval, value: 30, unit: :minute } })
+    end
+  end
+
   describe "#generate_sentry_trace" do
     let(:string_io) { StringIO.new }
     let(:logger) do

@@ -9,5 +9,11 @@ module Sentry
         raise ArgumentError, "expect the argument to be a #{expected_types.join(' or ')}, got #{argument.class} (#{argument.inspect})"
       end
     end
+
+    def check_argument_includes!(argument, values)
+      unless values.include?(argument)
+        raise ArgumentError, "expect the argument to be one of #{values.map(&:inspect).join(' or ')}, got #{argument.inspect}"
+      end
+    end
   end
 end

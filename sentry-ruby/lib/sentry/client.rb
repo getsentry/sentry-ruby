@@ -104,6 +104,37 @@ module Sentry
       event
     end
 
+    # Initializes a CheckInEvent object with the given options.
+    #
+    # @param slug [String] identifier of this monitor
+    # @param status [Symbol] status of this check-in, one of {CheckInEvent::VALID_STATUSES}
+    # @param hint [Hash] the hint data that'll be passed to `before_send` callback and the scope's event processors.
+    # @param duration [Integer, nil] seconds elapsed since this monitor started
+    # @param monitor_config [Cron::MonitorConfig, nil] configuration for this monitor
+    # @param check_in_id [String, nil] for updating the status of an existing monitor
+    #
+    # @return [Event]
+    def event_from_check_in(
+      slug,
+      status,
+      hint = {},
+      duration: nil,
+      monitor_config: nil,
+      check_in_id: nil
+    )
+      return unless configuration.sending_allowed?
+
+      CheckInEvent.new(
+        configuration: configuration,
+        integration_meta: Sentry.integrations[hint[:integration]],
+        slug: slug,
+        status: status,
+        duration: duration,
+        monitor_config: monitor_config,
+        check_in_id: check_in_id
+      )
+    end
+
     # Initializes an Event object with the given Transaction object.
     # @param transaction [Transaction] the transaction to be recorded.
     # @return [TransactionEvent]

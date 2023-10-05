@@ -156,6 +156,30 @@ module Sentry
       capture_event(event, **options, &block)
     end
 
+    def capture_check_in(slug, status, **options, &block)
+      check_argument_type!(slug, ::String)
+      check_argument_includes!(status, Sentry::CheckInEvent::VALID_STATUSES)
+
+      return unless current_client
+
+      options[:hint] ||= {}
+      options[:hint][:slug] = slug
+
+      event = current_client.event_from_check_in(
+        slug,
+        status,
+        options[:hint],
+        duration: options.delete(:duration),
+        monitor_config: options.delete(:monitor_config),
+        check_in_id: options.delete(:check_in_id)
+      )
+
+      return unless event
+
+      capture_event(event, **options, &block)
+      event.check_in_id
+    end
+
     def capture_event(event, **options, &block)
       check_argument_type!(event, Sentry::Event)
 
@@ -178,7 +202,7 @@ module Sentry
         configuration.log_debug(event.to_json_compatible)
       end
 
-      @last_event_id = event&.event_id unless event.is_a?(Sentry::TransactionEvent)
+      @last_event_id = event&.event_id if event.is_a?(Sentry::ErrorEvent)
       event
     end
 
