@@ -11,7 +11,7 @@ platform :jruby do
 end
 
 rails_version = ENV["RAILS_VERSION"]
-rails_version = "7.0.0" if rails_version.nil?
+rails_version = "7.1.0" if rails_version.nil?
 rails_version = Gem::Version.new(rails_version)
 
 if rails_version < Gem::Version.new("6.0.0")
@@ -20,8 +20,10 @@ else
   gem "sqlite3", platform: :ruby
 end
 
-if rails_version > Gem::Version.new("7.0.0")
+if rails_version >= Gem::Version.new("7.2.0.alpha")
   gem "rails", github: "rails/rails"
+elsif rails_version >= Gem::Version.new("7.1.0")
+  gem "rails", "~> #{rails_version}"
 else
   gem "rails", "~> #{rails_version}"
   gem "psych", "~> 3.0.0"
