@@ -59,7 +59,4 @@ jobs:
 
     - name: Upload Coverage
       if: ${{ matrix.options.codecov }}
-      run: |
-        curl -Os https://uploader.codecov.io/latest/linux/codecov
-        chmod +x codecov
-        ./codecov -t ${CODECOV_TOKEN} -R `pwd` -f coverage/coverage.xml
+      uses: codecov/codecov-action@eaaf4bedf32dbdc6b720b63067d99c4d77d6047d

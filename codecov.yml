@@ -2,3 +2,25 @@ codecov:
   disable_default_path_fixes: true
 ignore:
   - "**/spec"
+comment:
+  layout: "header, diff, flags, components, tree"
+component_management:
+  individual_components:
+    - component_id: "sentry-ruby"
+      paths:
+        - "sentry-ruby/"
+    - component_id: "sentry-rails"
+      paths:
+        - "sentry-rails/"
+    - component_id: "sentry-sidekiq"
+      paths:
+        - "sentry-sidekiq/"
+    - component_id: "sentry-resque"
+      paths:
+        - "sentry-resque/"
+    - component_id: "sentry-delayed_job"
+      paths:
+        - "sentry-delayed_job/"
+    - component_id: "sentry-opentelemetry"
+      paths:
+        - "sentry-opentelemetry/"
