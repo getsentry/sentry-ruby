@@ -17,9 +17,16 @@ gem "loofah", "2.20.0" if RUBY_VERSION.to_f < 2.5
 
 sidekiq_version = ENV["SIDEKIQ_VERSION"]
 sidekiq_version = "6.0" if sidekiq_version.nil?
+sidekiq_version = Gem::Version.new(sidekiq_version)
 
-gem "sidekiq", "~> #{sidekiq_version}"
-gem "rails"
+if sidekiq_version >= Gem::Version.new("7.0")
+  # This is for a unreleased fix for sidekiq 7
+  # https://github.com/sidekiq/sidekiq/commit/b7236f814ccb61d3b1e6fc5251ed3d3ac7428eb3
+  gem "sidekiq", github: "sidekiq/sidekiq"
+else
+  gem "sidekiq", "~> #{sidekiq_version}"
+end
+gem "rails", "> 5.0.0", "< 7.1.0"
 
 if RUBY_VERSION.to_f >= 2.6
   gem "debug", github: "ruby/debug", platform: :ruby
@@ -27,4 +34,3 @@ if RUBY_VERSION.to_f >= 2.6
 end
 
 gem "pry"
-

@@ -14,12 +14,6 @@ RSpec.describe Sentry::Rails, type: :request do
       make_basic_app
     end
 
-    after do
-      # We need to cleanup Rails.logger because after https://github.com/rails/rails/pull/49417
-      # Rails.logger could get recreated with the previous logger value and become deeply nested broadcast logger
-      Rails.logger = nil
-    end
-
     it "has version set" do
       expect(described_class::VERSION).to be_a(String)
     end
