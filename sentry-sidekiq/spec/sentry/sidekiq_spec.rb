@@ -255,5 +255,59 @@ RSpec.describe Sentry::Sidekiq do
       end
     end
   end
-end
 
+  context "cron monitoring" do
+    it "records check ins" do
+      execute_worker(processor, HappyWorkerWithCron)
+
+      expect(transport.events.size).to eq(2)
+
+      first = transport.events[0]
+      check_in_id = first.check_in_id
+      expect(first).to be_a(Sentry::CheckInEvent)
+      expect(first.to_hash).to include(
+        type: 'check_in',
+        check_in_id: check_in_id,
+        monitor_slug: "HappyWorkerWithCron",
+        status: :in_progress
+      )
+
+      second = transport.events[1]
+      expect(second).to be_a(Sentry::CheckInEvent)
+      expect(second.to_hash).to include(
+        :duration,
+        type: 'check_in',
+        check_in_id: check_in_id,
+        monitor_slug: "HappyWorkerWithCron",
+        status: :ok
+      )
+    end
+
+    it "records check ins with error" do
+      execute_worker(processor, SadWorkerWithCron)
+      expect(transport.events.size).to eq(3)
+
+      first = transport.events[0]
+      check_in_id = first.check_in_id
+      expect(first).to be_a(Sentry::CheckInEvent)
+      expect(first.to_hash).to include(
+        type: 'check_in',
+        check_in_id: check_in_id,
+        monitor_slug: "failed_job",
+        status: :in_progress,
+        monitor_config: { schedule: { type: :crontab, value: "5 * * * *" } }
+      )
+
+      second = transport.events[1]
+      expect(second).to be_a(Sentry::CheckInEvent)
+      expect(second.to_hash).to include(
+        :duration,
+        type: 'check_in',
+        check_in_id: check_in_id,
+        monitor_slug: "failed_job",
+        status: :error,
+        monitor_config: { schedule: { type: :crontab, value: "5 * * * *" } }
+      )
+    end
+  end
+end
