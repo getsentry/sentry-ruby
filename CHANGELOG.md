@@ -4,6 +4,7 @@
 
 - Record client reports for profiles [#2107](https://github.com/getsentry/sentry-ruby/pull/2107)
 - Adopt Rails 7.1's new BroadcastLogger [#2120](https://github.com/getsentry/sentry-ruby/pull/2120)
+- Support sending events after all retries were performed (sentry-resque) [#2087](https://github.com/getsentry/sentry-ruby/pull/2087)
 - Add [Cron Monitoring](https://docs.sentry.io/product/crons/) support
   - Add `Sentry.capture_check_in` API for Cron Monitoring [#2117](https://github.com/getsentry/sentry-ruby/pull/2117)
 

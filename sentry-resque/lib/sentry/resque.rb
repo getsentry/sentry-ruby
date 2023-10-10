@@ -32,6 +32,13 @@ module Sentry
 
               finish_transaction(transaction, 200)
             rescue Exception => exception
+              klass = payload['class'].constantize
+
+              raise if Sentry.configuration.resque.report_after_job_retries &&
+                       defined?(::Resque::Plugins::Retry) == 'constant' &&
+                       klass.is_a?(::Resque::Plugins::Retry) &&
+                       !klass.retry_limit_reached?
+
               ::Sentry::Resque.capture_exception(exception, hint: { background: false })
               finish_transaction(transaction, 500)
               raise
