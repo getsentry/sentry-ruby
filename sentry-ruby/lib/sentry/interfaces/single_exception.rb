@@ -22,6 +22,7 @@ module Sentry
         else
           exception.message || ""
         end
+      exception_message = exception_message.inspect unless exception_message.is_a?(String)
 
       @value = Utils::EncodingHelper.encode_to_utf_8(exception_message.byteslice(0..Event::MAX_MESSAGE_SIZE_IN_BYTES))
 

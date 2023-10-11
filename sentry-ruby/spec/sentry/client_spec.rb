@@ -209,6 +209,18 @@ RSpec.describe Sentry::Client do
           expect(hash[:exception][:values][0][:value]).to eq("undefined method `[]' for nil:NilClass")
         end
       end
+
+      it "converts non-string error message" do
+        NonStringMessageError = Class.new(StandardError) do
+          def detailed_message(*)
+            { foo: "bar" }
+          end
+        end
+
+        event = subject.event_from_exception(NonStringMessageError.new)
+        expect(event).to be_a(Sentry::ErrorEvent)
+        expect(Sentry::Event.get_message_from_exception(event.to_hash)).to match("NonStringMessageError: {:foo=>\"bar\"}")
+      end
     end
 
     it "sets threads interface without stacktrace" do
