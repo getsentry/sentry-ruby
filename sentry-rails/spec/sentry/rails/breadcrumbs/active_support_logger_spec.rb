@@ -65,6 +65,27 @@ RSpec.describe "Sentry::Breadcrumbs::ActiveSupportLogger", type: :request do
 
       expect(breadcrumb_buffer.count).to be_zero
     end
+
+    it "breadcrumb data only contains parameters setted by rails config" do
+      Sentry.configuration.rails.active_support_logger_subscription_items["process_action.action_controller"].delete(:controller)
+
+      get "/exception"
+
+      breadcrumbs = event.dig("breadcrumbs", "values")
+      breadcrumb = breadcrumbs.detect { |b| b["category"] == "process_action.action_controller" }
+
+      expect(breadcrumb["data"]).to include(
+        {
+          "action" => "exception",
+          "params" => { "controller" => "hello", "action" => "exception" },
+          "format" => "html",
+          "method" => "GET", "path" => "/exception",
+        }
+      )
+      expect(breadcrumb["data"].keys).not_to include("controller")
+
+      Sentry.configuration.rails.active_support_logger_subscription_items["process_action.action_controller"] << :controller
+    end
   end
 
   context "with tracing" do
