@@ -1,3 +1,14 @@
+## Unreleased
+
+### Features
+
+- Add new `config.rails.active_support_logger_subscription_items` to allow customization breadcrumb data of active support logger
+  ```rb
+    config.rails.active_support_logger_subscription_items["sql.active_record"] << :type_casted_binds
+    config.rails.active_support_logger_subscription_items.delete("sql.active_record")
+    config.rails.active_support_logger_subscription_items["foo"] = :bar
+  ```
+
 ## 5.12.0
 
 ### Features
