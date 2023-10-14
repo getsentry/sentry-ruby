@@ -1,3 +1,9 @@
+## Unreleased
+
+### Bug Fixes
+
+- Fix puma integration for versions before v5 ([#2141](https://github.com/getsentry/sentry-ruby/pull/2141))
+
 ## 5.12.0
 
 ### Features

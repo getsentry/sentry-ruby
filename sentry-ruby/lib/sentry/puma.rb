@@ -1,10 +1,19 @@
 # frozen_string_literal: true
 
+return unless defined?(Puma::Server)
+
 module Sentry
   module Puma
     module Server
+      PUMA_4_AND_PRIOR = Gem::Version.new(::Puma::Const::PUMA_VERSION) < Gem::Version.new("5.0.0")
+
       def lowlevel_error(e, env, status=500)
-        result = super
+        result =
+          if PUMA_4_AND_PRIOR
+            super(e, env)
+          else
+            super
+          end
 
         begin
           Sentry.capture_exception(e) do |scope|
@@ -20,6 +29,4 @@ module Sentry
   end
 end
 
-if defined?(Puma::Server)
-  Sentry.register_patch(Sentry::Puma::Server, Puma::Server)
-end
+Sentry.register_patch(Sentry::Puma::Server, Puma::Server)
