@@ -1,4 +1,4 @@
-# frozen_string_literal
+# frozen_string_literal: true
 
 require 'sentry/cron/monitor_schedule'
 
