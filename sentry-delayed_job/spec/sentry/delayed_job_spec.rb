@@ -264,6 +264,17 @@ RSpec.describe Sentry::DelayedJob do
         expect(transaction.contexts.dig(:trace, :status)).to eq("ok")
       end
 
+      it "passes job context into the sampling context" do
+        expect_any_instance_of(Sentry::Transaction).to receive(:set_initial_sample_decision) do |**args|
+          expect(args.dig(:sampling_context, Sentry::DelayedJob::Plugin::DELAYED_JOB_CONTEXT_KEY, :priority)).to eq(7)
+          expect(args.dig(:sampling_context, Sentry::DelayedJob::Plugin::ACTIVE_JOB_CONTEXT_KEY, :job_class)).to eq('ReportingJob')
+        end
+        ReportingJob.set(priority: 7).perform_later
+
+        enqueued_job = Delayed::Backend::ActiveRecord::Job.last
+        enqueued_job.invoke_job
+      end
+
       it "records transaction with exception" do
         FailedJob.perform_later
         enqueued_job = Delayed::Backend::ActiveRecord::Job.last
