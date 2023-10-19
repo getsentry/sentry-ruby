@@ -1,5 +1,9 @@
 ## Unreleased
 
+### Features
+
+- Make additional job context available to traces_sampler for determining sample rate (sentry-delayed_job) [#2148](https://github.com/getsentry/sentry-ruby/pull/2148)
+
 ### Bug Fixes
 
 - Fix puma integration for versions before v5 ([#2141](https://github.com/getsentry/sentry-ruby/pull/2141))
