@@ -6,6 +6,9 @@ gemspec
 gem "sentry-ruby", path: "../sentry-ruby"
 gem "sentry-rails", path: "../sentry-rails"
 
+# For https://github.com/ruby/psych/issues/655
+gem "psych", "5.1.0"
+
 gem "rake", "~> 12.0"
 gem "rspec", "~> 3.0"
 gem 'simplecov'
