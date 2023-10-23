@@ -141,6 +141,8 @@ module Sentry
       # ```
       attr_accessor :assets_regexp
 
+      # Hash of subscription items that will be shown in breadcrumbs active support logger.
+      # @return [Hash<String, Array<Symbol>>]
       attr_accessor :active_support_logger_subscription_items
 
       def initialize
