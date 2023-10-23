@@ -7,10 +7,8 @@ module Sentry
             # skip Rails' internal events
             return if name.start_with?("!")
 
-            allowed_keys = Sentry.configuration.rails.active_support_logger_subscription_items[name]
-
             if data.is_a?(Hash)
-              data = data.slice(*allowed_keys)
+              data = data.slice(*@allowed_keys[name])
             end
 
             crumb = Sentry::Breadcrumb.new(
@@ -21,7 +19,9 @@ module Sentry
             Sentry.add_breadcrumb(crumb)
           end
 
-          def inject
+          def inject(allowed_keys)
+            @allowed_keys = allowed_keys
+
             @subscriber = ::ActiveSupport::Notifications.subscribe(/.*/) do |name, started, finished, unique_id, data|
               # we only record events that has a started timestamp
               if started.is_a?(Time)

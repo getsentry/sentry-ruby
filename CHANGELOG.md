@@ -2,7 +2,7 @@
 
 ### Features
 
-- Add new `config.rails.active_support_logger_subscription_items` to allow customization breadcrumb data of active support logger
+- Add new `config.rails.active_support_logger_subscription_items` to allow customization breadcrumb data of active support logger [#2139](https://github.com/getsentry/sentry-ruby/pull/2139)
 
   ```rb
     config.rails.active_support_logger_subscription_items["sql.active_record"] << :type_casted_binds

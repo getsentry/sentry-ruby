@@ -89,7 +89,7 @@ module Sentry
     def inject_breadcrumbs_logger
       if Sentry.configuration.breadcrumbs_logger.include?(:active_support_logger)
         require 'sentry/rails/breadcrumb/active_support_logger'
-        Sentry::Rails::Breadcrumb::ActiveSupportLogger.inject
+        Sentry::Rails::Breadcrumb::ActiveSupportLogger.inject(Sentry.configuration.rails.active_support_logger_subscription_items)
       end
 
       if Sentry.configuration.breadcrumbs_logger.include?(:monotonic_active_support_logger)
