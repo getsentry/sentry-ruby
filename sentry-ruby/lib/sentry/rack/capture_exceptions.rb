@@ -18,7 +18,7 @@ module Sentry
         Sentry.with_scope do |scope|
           Sentry.with_session_tracking do
             scope.clear_breadcrumbs
-            scope.set_transaction_name(env["PATH_INFO"]) if env["PATH_INFO"]
+            scope.set_transaction_name(env["PATH_INFO"], source: :url) if env["PATH_INFO"]
             scope.set_rack_env(env)
 
             transaction = start_transaction(env, scope)
@@ -52,7 +52,7 @@ module Sentry
       end
 
       def transaction_op
-        "rack.request".freeze
+        "http.server".freeze
       end
 
       def capture_exception(exception, env)
@@ -62,9 +62,8 @@ module Sentry
       end
 
       def start_transaction(env, scope)
-        sentry_trace = env["HTTP_SENTRY_TRACE"]
-        options = { name: scope.transaction_name, op: transaction_op }
-        transaction = Sentry::Transaction.from_sentry_trace(sentry_trace, **options) if sentry_trace
+        options = { name: scope.transaction_name, source: scope.transaction_source, op: transaction_op }
+        transaction = Sentry.continue_trace(env, **options)
         Sentry.start_transaction(transaction: transaction, custom_sampling_context: { env: env }, **options)
       end
 

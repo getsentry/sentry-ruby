@@ -15,6 +15,21 @@ RSpec.describe Sentry::Resque do
     end
   end
 
+  class FailedRetriableJob
+    extend Resque::Plugins::Retry
+
+    @queue = :default
+    @retry_limit = 3
+
+    def self.perform
+      1/0
+    end
+  end
+
+  class FailedZeroRetriesJob < FailedRetriableJob
+    @retry_limit = 0
+  end
+
   class TaggedFailedJob
     def self.perform
       Sentry.set_tags(number: 1)
@@ -122,6 +137,74 @@ RSpec.describe Sentry::Resque do
       expect(event[:tags]).to eq({ "resque.queue" => "default" })
       expect(Sentry.get_current_scope.extra).to eq({})
       expect(Sentry.get_current_scope.tags).to eq({})
+    end
+  end
+
+  context "with ResqueRetry" do
+    context "when report_after_job_retries is true" do
+      before do
+        Sentry.configuration.resque.report_after_job_retries = true
+      end
+
+      it "reports exception only on the last run" do
+        expect do
+          Resque::Job.create(:default, FailedRetriableJob)
+          process_job(worker)
+        end.to change { Resque::Stat.get("failed") }.by(1)
+           .and change { transport.events.count }.by(0)
+
+        expect do
+          3.times do
+            process_job(worker)
+          end
+        end.to change { transport.events.count }.by(1)
+
+        event = transport.events.last.to_hash
+
+        expect(event[:sdk]).to eq({ name: "sentry.ruby.resque", version: described_class::VERSION })
+        expect(event.dig(:exception, :values, 0, :type)).to eq("ZeroDivisionError")
+        expect(event[:tags]).to eq({ "resque.queue" => "default" })
+      end
+
+      it "reports exception on first run when retry_count is 0" do
+        expect do
+          Resque::Job.create(:default, FailedZeroRetriesJob)
+          process_job(worker)
+        end.to change { Resque::Stat.get("failed") }.by(1)
+           .and change { transport.events.count }.by(1)
+
+        event = transport.events.last.to_hash
+
+        expect(event[:sdk]).to eq({ name: "sentry.ruby.resque", version: described_class::VERSION })
+        expect(event.dig(:exception, :values, 0, :type)).to eq("ZeroDivisionError")
+        expect(event[:tags]).to eq({ "resque.queue" => "default" })
+      end
+    end
+
+    context "when report_after_job_retries is false" do
+      before do
+        Sentry.configuration.resque.report_after_job_retries = false
+      end
+
+      it "reports exeception all the runs" do
+        expect do
+          Resque::Job.create(:default, FailedRetriableJob)
+          process_job(worker)
+        end.to change { Resque::Stat.get("failed") }.by(1)
+           .and change { transport.events.count }.by(1)
+
+        expect do
+          3.times do
+            process_job(worker)
+          end
+        end.to change { transport.events.count }.by(3)
+
+        event = transport.events.last.to_hash
+
+        expect(event[:sdk]).to eq({ name: "sentry.ruby.resque", version: described_class::VERSION })
+        expect(event.dig(:exception, :values, 0, :type)).to eq("ZeroDivisionError")
+        expect(event[:tags]).to eq({ "resque.queue" => "default" })
+      end
     end
   end
 

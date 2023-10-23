@@ -1,9 +1,7 @@
 require "spec_helper"
 
 RSpec.describe :redis_logger do
-  let(:redis) do
-    Redis.new
-  end
+  let(:redis) { Redis.new(host: "127.0.0.1") }
 
   before do
     perform_basic_setup do |config|
@@ -19,7 +17,7 @@ RSpec.describe :redis_logger do
 
       expect(result).to eq("OK")
       expect(Sentry.get_current_scope.breadcrumbs.peek).to have_attributes(
-        category: "db.redis.command",
+        category: "db.redis",
         data: { commands: [{ command: "SET", key: "key" }], server: "127.0.0.1:6379/0" }
       )
     end
@@ -33,7 +31,7 @@ RSpec.describe :redis_logger do
 
       expect(result).to eq("OK")
       expect(Sentry.get_current_scope.breadcrumbs.peek).to have_attributes(
-        category: "db.redis.command",
+        category: "db.redis",
         data: { commands: [{ command: "SET", key: "key", arguments: "value" }], server: "127.0.0.1:6379/0" }
       )
     end
@@ -59,9 +57,9 @@ RSpec.describe :redis_logger do
     let(:result) { redis.info }
 
     it "doesn't cause an error" do
-      expect(result).to include("uptime_in_days" => 0)
+      expect(result.key?("uptime_in_days")).to eq(true)
       expect(Sentry.get_current_scope.breadcrumbs.peek).to have_attributes(
-        category: "db.redis.command",
+        category: "db.redis",
         data: { commands: [{ command: "INFO", key: nil }], server: "127.0.0.1:6379/0" }
       )
     end
@@ -80,7 +78,7 @@ RSpec.describe :redis_logger do
 
       expect(result).to contain_exactly("OK", kind_of(Numeric))
       expect(Sentry.get_current_scope.breadcrumbs.peek).to have_attributes(
-        category: "db.redis.command",
+        category: "db.redis",
         data: {
           commands: [
             { command: "MULTI", key: nil },
@@ -104,7 +102,7 @@ RSpec.describe :redis_logger do
 
       expect(result).to eq("OK")
       expect(Sentry.get_current_scope.breadcrumbs.peek).to have_attributes(
-        category: "db.redis.command",
+        category: "db.redis",
         data: { commands: [{ command: "SET", key: "key" }], server: "127.0.0.1:6379/0" }
       )
     end

@@ -35,8 +35,25 @@ RSpec.describe Sentry::Rails, type: :request do
     end
 
     describe "logger detection" do
-      it "sets Sentry.configuration.logger correctly" do
-        expect(Sentry.configuration.logger).to eq(Rails.logger)
+      it "sets a duplicated Rails logger as the SDK's logger" do
+        if Gem::Version.new(Rails.version) > Gem::Version.new("7.1.0.beta")
+          expect(Sentry.configuration.logger).to be_a(ActiveSupport::BroadcastLogger)
+
+          Sentry.configuration.logger.level = ::Logger::WARN
+
+          # Configuring the SDK's logger should not affect the Rails logger
+          expect(Rails.logger.broadcasts.first).to be_a(ActiveSupport::Logger)
+          expect(Rails.logger.broadcasts.first.level).to eq(::Logger::DEBUG)
+          expect(Sentry.configuration.logger.level).to eq(::Logger::WARN)
+        else
+          expect(Sentry.configuration.logger).to be_a(ActiveSupport::Logger)
+
+          Sentry.configuration.logger.level = ::Logger::WARN
+
+          # Configuring the SDK's logger should not affect the Rails logger
+          expect(Rails.logger.level).to eq(::Logger::DEBUG)
+          expect(Sentry.configuration.logger.level).to eq(::Logger::WARN)
+        end
       end
 
       it "respects the logger set by user" do
@@ -66,14 +83,16 @@ RSpec.describe Sentry::Rails, type: :request do
       expect(Sentry.configuration.release).to eq('beta')
     end
 
-    it "sets transaction to ControllerName#method" do
+    it "sets transaction to ControllerName#method and sets correct source" do
       get "/exception"
 
       expect(transport.events.last.transaction).to eq("HelloController#exception")
+      expect(transport.events.last.transaction_info).to eq({ source: :view })
 
       get "/posts"
 
       expect(transport.events.last.transaction).to eq("PostsController#index")
+      expect(transport.events.last.transaction_info).to eq({ source: :view })
     end
 
     it "sets correct request url" do
@@ -89,6 +108,51 @@ RSpec.describe Sentry::Rails, type: :request do
     end
   end
 
+  context "at exit" do
+    before do
+      make_basic_app
+      Rails.application.load_runner
+    end
+
+    def capture_in_separate_process(exit_code:)
+      pipe_in, pipe_out = IO.pipe
+
+      fork do
+        pipe_in.close
+
+        allow(Sentry::Rails).to receive(:capture_exception) do |event|
+          pipe_out.puts event
+        end
+
+        # silence process
+        $stderr.reopen('/dev/null', 'w')
+        $stdout.reopen('/dev/null', 'w')
+
+        exit exit_code
+      end
+
+      pipe_out.close
+      captured_messages = pipe_in.read
+      pipe_in.close
+      # sometimes the at_exit hook was registered multiple times
+      captured_messages.split("\n").last
+    end
+
+    it "captures exception if exit code is non-zero" do
+      skip('fork not supported in jruby') if RUBY_PLATFORM == 'java'
+      captured_message = capture_in_separate_process(exit_code: 1)
+
+      expect(captured_message).to eq('exit')
+    end
+
+    it "does not capture exception if exit code is zero" do
+      skip('fork not supported in jruby') if RUBY_PLATFORM == 'java'
+      captured_message = capture_in_separate_process(exit_code: 0)
+
+      expect(captured_message).to be_nil
+    end
+  end
+
   RSpec.shared_examples "report_rescued_exceptions" do
     context "with report_rescued_exceptions = true" do
       before do
@@ -101,7 +165,7 @@ RSpec.describe Sentry::Rails, type: :request do
         expect(response.status).to eq(500)
 
         expect(event["exception"]["values"][0]["type"]).to eq("RuntimeError")
-        expect(event["exception"]["values"][0]["value"]).to eq("An unhandled exception!")
+        expect(event["exception"]["values"][0]["value"]).to match("An unhandled exception!")
       end
     end
 
@@ -157,7 +221,7 @@ RSpec.describe Sentry::Rails, type: :request do
       expect(response.status).to eq(500)
 
       expect(event["exception"]["values"][0]["type"]).to eq("RuntimeError")
-      expect(event["exception"]["values"][0]["value"]).to eq("An unhandled exception!")
+      expect(event["exception"]["values"][0]["value"]).to match("An unhandled exception!")
       expect(event["sdk"]).to eq("name" => "sentry.ruby.rails", "version" => Sentry::Rails::VERSION)
     end
 
@@ -196,11 +260,13 @@ RSpec.describe Sentry::Rails, type: :request do
         expect(transport.events.count).to eq(1)
         last_event = transport.events.last
         expect(last_event.transaction).to eq("HelloController#exception")
+        expect(transport.events.last.transaction_info).to eq({ source: :view })
         expect(response.body).to match(last_event.event_id)
 
         get "/posts"
 
         expect(transport.events.last.transaction).to eq("PostsController#index")
+        expect(transport.events.last.transaction_info).to eq({ source: :view })
       end
 
       it "sets correct request url" do

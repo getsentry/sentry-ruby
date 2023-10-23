@@ -23,14 +23,22 @@ module Sentry
               scope.set_contexts(**contexts)
               scope.set_tags("resque.queue" => queue)
 
-              scope.set_transaction_name(contexts.dig(:"Active-Job", :job_class) || contexts.dig(:"Resque", :job_class))
-              transaction = Sentry.start_transaction(name: scope.transaction_name, op: "resque")
+              name = contexts.dig(:"Active-Job", :job_class) || contexts.dig(:"Resque", :job_class)
+              scope.set_transaction_name(name, source: :task)
+              transaction = Sentry.start_transaction(name: scope.transaction_name, source: scope.transaction_source, op: "queue.resque")
               scope.set_span(transaction) if transaction
 
               yield
 
               finish_transaction(transaction, 200)
             rescue Exception => exception
+              klass = payload['class'].constantize
+
+              raise if Sentry.configuration.resque.report_after_job_retries &&
+                       defined?(::Resque::Plugins::Retry) == 'constant' &&
+                       klass.is_a?(::Resque::Plugins::Retry) &&
+                       !klass.retry_limit_reached?
+
               ::Sentry::Resque.capture_exception(exception, hint: { background: false })
               finish_transaction(transaction, 500)
               raise

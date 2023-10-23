@@ -18,7 +18,7 @@ module Sentry
       event_id level timestamp
       release environment server_name modules
       message user tags contexts extra
-      fingerprint breadcrumbs transaction
+      fingerprint breadcrumbs transaction transaction_info
       platform sdk type
     )
 
@@ -37,6 +37,11 @@ module Sentry
     # @return [RequestInterface]
     attr_reader :request
 
+    # Dynamic Sampling Context (DSC) that gets attached
+    # as the trace envelope header in the transport.
+    # @return [Hash, nil]
+    attr_accessor :dynamic_sampling_context
+
     # @param configuration [Configuration]
     # @param integration_meta [Hash, nil]
     # @param message [String, nil]
@@ -54,6 +59,7 @@ module Sentry
       @tags          = {}
 
       @fingerprint = []
+      @dynamic_sampling_context = nil
 
       # configuration data that's directly used by events
       @server_name = configuration.server_name

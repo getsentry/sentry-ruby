@@ -4,6 +4,335 @@
 
 - Include `Delayed::Job` instance in hint [#1861](https://github.com/getsentry/sentry-ruby/pull/1861)
 
+### Bug Fixes
+
+- Fix puma integration for versions before v5 ([#2141](https://github.com/getsentry/sentry-ruby/pull/2141))
+
+## 5.12.0
+
+### Features
+
+- Record client reports for profiles [#2107](https://github.com/getsentry/sentry-ruby/pull/2107)
+- Adopt Rails 7.1's new BroadcastLogger [#2120](https://github.com/getsentry/sentry-ruby/pull/2120)
+- Support sending events after all retries were performed (sentry-resque) [#2087](https://github.com/getsentry/sentry-ruby/pull/2087)
+- Add [Cron Monitoring](https://docs.sentry.io/product/crons/) support
+  - Add `Sentry.capture_check_in` API for Cron Monitoring [#2117](https://github.com/getsentry/sentry-ruby/pull/2117)
+
+    You can now track progress of long running scheduled jobs.
+
+    ```rb
+    check_in_id = Sentry.capture_check_in('job_name', :in_progress)
+    # do job stuff
+    Sentry.capture_check_in('job_name', :ok, check_in_id: check_in_id)
+    ```
+  - Add `Sentry::Cron::MonitorCheckIns` module for automatic monitoring of jobs [#2130](https://github.com/getsentry/sentry-ruby/pull/2130)
+
+    Standard job frameworks such as `ActiveJob` and `Sidekiq` can now use this module to automatically capture check ins.
+
+    ```rb
+    class ExampleJob < ApplicationJob
+      include Sentry::Cron::MonitorCheckIns
+
+      sentry_monitor_check_ins
+
+      def perform(*args)
+        # do stuff
+      end
+    end
+    ```
+
+    ```rb
+    class SidekiqJob
+      include Sidekiq::Job
+      include Sentry::Cron::MonitorCheckIns
+
+      sentry_monitor_check_ins
+
+      def perform(*args)
+        # do stuff
+      end
+    end
+    ```
+
+    You can pass in optional attributes to `sentry_monitor_check_ins` as follows.
+    ```rb
+    # slug defaults to the job class name
+    sentry_monitor_check_ins slug: 'custom_slug'
+
+    # define the monitor config with an interval
+    sentry_monitor_check_ins monitor_config: Sentry::Cron::MonitorConfig.from_interval(1, :minute)
+
+    # define the monitor config with a crontab
+    sentry_monitor_check_ins monitor_config: Sentry::Cron::MonitorConfig.from_crontab('5 * * * *')
+    ```
+
+### Bug Fixes
+
+- Rename `http.method` to `http.request.method` in `Span::DataConventions` [#2106](https://github.com/getsentry/sentry-ruby/pull/2106)
+- Increase `Envelope::Item::MAX_SERIALIZED_PAYLOAD_SIZE` to 1MB [#2108](https://github.com/getsentry/sentry-ruby/pull/2108)
+- Fix `db_config` begin `nil` in `ActiveRecordSubscriber` [#2111](https://github.com/getsentry/sentry-ruby/pull/2111)
+  - Fixes [#2109](https://github.com/getsentry/sentry-ruby/issues/2109)
+- Always send envelope trace header from dynamic sampling context [#2113](https://github.com/getsentry/sentry-ruby/pull/2113)
+- Improve `TestHelper`'s setup/teardown helpers ([#2116](https://github.com/getsentry/sentry-ruby/pull/2116))
+  - Fixes [#2103](https://github.com/getsentry/sentry-ruby/issues/2103)
+- Fix Sidekiq tracing headers not being overwritten in case of schedules and retries [#2118](https://github.com/getsentry/sentry-ruby/pull/2118)
+- Fix exception event sending failed due to source sequence is illegal/malformed utf-8 [#2083](https://github.com/getsentry/sentry-ruby/pull/2083)
+  - Fixes [#2082](https://github.com/getsentry/sentry-ruby/issues/2082)
+
+## 5.11.0
+
+### Features
+
+- Make `:value` in `SingleExceptionInterface` writable, so that it can be modified in `before_send` under `event.exception.values[n].value` [#2072](https://github.com/getsentry/sentry-ruby/pull/2072)
+- Add `sampled` field to `dynamic_sampling_context` [#2092](https://github.com/getsentry/sentry-ruby/pull/2092)
+- Consolidate HTTP span data conventions with OpenTelemetry with `Sentry::Span::DataConventions`  [#2093](https://github.com/getsentry/sentry-ruby/pull/2093)
+- Consolidate database span data conventions with OpenTelemetry for ActiveRecord and Redis [#2100](https://github.com/getsentry/sentry-ruby/pull/2100)
+- Add new `config.trace_propagation_targets` option to set targets for which headers are propagated in outgoing HTTP requests [#2079](https://github.com/getsentry/sentry-ruby/pull/2079)
+
+  ```rb
+  # takes an array of strings or regexps
+  config.trace_propagation_targets = [/.*/]  # default is to all targets
+  config.trace_propagation_targets = [/example.com/, 'foobar.org/api/v2']
+  ```
+- Tracing without Performance
+  - Implement `PropagationContext` on `Scope` and add `Sentry.get_trace_propagation_headers` API [#2084](https://github.com/getsentry/sentry-ruby/pull/2084)
+  - Implement `Sentry.continue_trace` API [#2089](https://github.com/getsentry/sentry-ruby/pull/2089)
+
+  The SDK now supports connecting arbitrary events (Errors / Transactions / Replays) across distributed services and not just Transactions.
+  To continue an incoming trace starting with this version of the SDK, use `Sentry.continue_trace` as follows.
+
+  ```rb
+  # rack application
+  def call(env)
+    transaction = Sentry.continue_trace(env, name: 'transaction', op: 'op')
+    Sentry.start_transaction(transaction: transaction)
+  end
+  ```
+
+  To inject headers into outgoing requests, use `Sentry.get_trace_propagation_headers` to get a hash of headers to add to your request.
+
+### Bug Fixes
+
+- Duplicate `Rails.logger` before assigning it to the SDK ([#2086](https://github.com/getsentry/sentry-ruby/pull/2086))
+
+## 5.10.0
+
+### Features
+
+- Move `http.query` to span data in net/http integration [#2039](https://github.com/getsentry/sentry-ruby/pull/2039)
+- Validate `release` is a `String` during configuration [#2040](https://github.com/getsentry/sentry-ruby/pull/2040)
+- Allow JRuby Java exceptions to be captured [#2043](https://github.com/getsentry/sentry-ruby/pull/2043)
+- Improved error handling around `traces_sample_rate`/`profiles_sample_rate` [#2036](https://github.com/getsentry/sentry-ruby/pull/2036)
+
+### Bug Fixes
+
+- Support Rails 7.1's show exception check [#2049](https://github.com/getsentry/sentry-ruby/pull/2049)
+- Fix uninitialzed race condition in Redis integration [#2057](https://github.com/getsentry/sentry-ruby/pull/2057)
+  - Fixes [#2054](https://github.com/getsentry/sentry-ruby/issues/2054)
+- Ignore low-level Puma exceptions by default [#2055](https://github.com/getsentry/sentry-ruby/pull/2055)
+- Use allowlist to filter `ActiveSupport` breadcrumbs' data [#2048](https://github.com/getsentry/sentry-ruby/pull/2048)
+- ErrorHandler should cleanup the scope ([#2059](https://github.com/getsentry/sentry-ruby/pull/2059))
+
+
+## 5.9.0
+
+### Features
+
+- Add new boolean option `config.enable_tracing` to simplify enabling performance tracing [#2005](https://github.com/getsentry/sentry-ruby/pull/2005)
+  - `config.enable_tracing = true` will set `traces_sample_rate` to `1.0` if not set already
+  - `config.enable_tracing = false` will turn off tracing even if `traces_sample_rate/traces_sampler` is set
+  - `config.enable_tracing = nil` (default) will keep the current behaviour
+- Allow ignoring `excluded_exceptions` when manually capturing exceptions [#2007](https://github.com/getsentry/sentry-ruby/pull/2007)
+
+  Users can now ignore the SDK's `excluded_exceptions` by passing `ignore_exclusions` hint when using `Sentry.capture_exception`.
+
+  ```rb
+  # assume ignored_exception.class is included in config.excluded_exception
+  Sentry.capture_exception(ignored_exception) # won't be sent to Sentry
+  Sentry.capture_exception(ignored_exception, hint: { ignore_exclusions: true }) # will be sent to Sentry
+  ```
+- Support capturing low-level errors propagated to Puma [#2026](https://github.com/getsentry/sentry-ruby/pull/2026)
+
+- Add `spec` to `Backtrace::APP_DIRS_PATTERN` [#2029](https://github.com/getsentry/sentry-ruby/pull/2029)
+- Forward all `baggage` header items that are prefixed with `sentry-` [#2025](https://github.com/getsentry/sentry-ruby/pull/2025)
+- Add `stackprof` based profiler [#2024](https://github.com/getsentry/sentry-ruby/pull/2024)
+
+  The SDK now supports sending profiles taken by the [`stackprof` gem](https://github.com/tmm1/stackprof) and viewing them in the [Profiling](https://docs.sentry.io/product/profiling/) section.
+
+  To use it, first add `stackprof` to your `Gemfile` and make sure it is loaded before `sentry-ruby`.
+
+  ```ruby
+  # Gemfile
+
+  gem 'stackprof'
+  gem 'sentry-ruby'
+  ```
+
+  Then, make sure both `traces_sample_rate` and `profiles_sample_rate` are set and non-zero in your sentry initializer.
+
+  ```ruby
+  # config/initializers/sentry.rb
+
+  Sentry.init do |config|
+    config.dsn = "<dsn>"
+    config.traces_sample_rate = 1.0
+    config.profiles_sample_rate = 1.0
+  end
+  ```
+
+  Some implementation caveats:
+  - Profiles are sampled **relative** to traces, so if both rates are 0.5, we will capture 0.25 of all requests.
+  - Profiles are only captured for code running within a transaction.
+  - Profiles for multi-threaded servers like `puma` might not capture frames correctly when async I/O is happening. This is a `stackprof` limitation.
+
+  <br />
+
+  > **Warning**
+  > Profiling is currently in beta. Beta features are still in-progress and may have bugs. We recognize the irony.
+  > If you have any questions or feedback, please email us at profiling@sentry.io, reach out via Discord (#profiling), or open an issue.
+
+### Bug Fixes
+
+- Validate that contexts set in `set_contexts` are also Hash instances [#2022](https://github.com/getsentry/sentry-ruby/pull/2022/files)
+  - Fixes [#2021](https://github.com/getsentry/sentry-ruby/issues/2021)
+
+## 5.8.0
+
+### Features
+
+- Allow [tags](https://docs.sentry.io/platforms/ruby/enriching-events/tags/) to be passed via the context hash when reporting errors using ActiveSupport::ErrorReporter and Sentry::Rails::ErrorSubscriber in `sentry-rails` [#1932](https://github.com/getsentry/sentry-ruby/pull/1932)
+- Pass a `cached: true` tag for SQL query spans that utilized the ActiveRecord QueryCache when using ActiveRecordSubscriber in `sentry-rails` [#1968](https://github.com/getsentry/sentry-ruby/pull/1968)
+- Add `Sentry.add_global_event_processor` API [#1976](https://github.com/getsentry/sentry-ruby/pull/1976)
+
+    Users can now configure global event processors without configuring scope as well.
+
+    ```rb
+    Sentry.add_global_event_processor do |event, hint|
+      event.tags = { foo: 42 }
+      event
+    end
+    ```
+
+- Add global event processor in OpenTelemetry `SpanProcessor` to link errors with transactions [#1983](https://github.com/getsentry/sentry-ruby/pull/1983)
+- Fix some inconsistencies in setting name/op/status in OpenTelemetry `SpanProcessor` [#1987](https://github.com/getsentry/sentry-ruby/pull/1987)
+- Add `config.before_send_transaction` hook [#1989](https://github.com/getsentry/sentry-ruby/pull/1989)
+
+    Users can now configure a `before_send_transaction` callback that runs similar to `before_send` but for transaction events.
+
+    ```rb
+    config.before_send_transaction = lambda do |event, hint|
+      # skip unimportant transactions or strip sensitive data
+      if event.transaction == "/healthcheck/route"
+        nil
+      else
+        event
+      end
+    end
+    ```
+
+- Support `Sentry::Transaction#set_measurement` [#1838](https://github.com/getsentry/sentry-ruby/pull/1838)
+
+    Usage:
+
+    ```rb
+    transaction = Sentry.get_current_scope.get_transaction
+    transaction.set_measurement("metrics.foo", 0.5, "millisecond")
+    ```
+
+### Bug Fixes
+
+- Support redis-rb 5.0+ [#1963](https://github.com/getsentry/sentry-ruby/pull/1963)
+  - Fixes [#1932](https://github.com/getsentry/sentry-ruby/pull/1932)
+- Skip private _config context in Sidekiq 7+ [#1967](https://github.com/getsentry/sentry-ruby/pull/1967)
+  - Fixes [#1956](https://github.com/getsentry/sentry-ruby/issues/1956)
+- Return value from `perform_action` in ActionCable::Channel instances when initialized [#1966](https://github.com/getsentry/sentry-ruby/pull/1966)
+- `Span#with_child_span` should finish the span even with exception raised [#1982](https://github.com/getsentry/sentry-ruby/pull/1982)
+- Fix sentry-rails' controller span nesting [#1973](https://github.com/getsentry/sentry-ruby/pull/1973)
+  - Fixes [#1899](https://github.com/getsentry/sentry-ruby/issues/1899)
+- Do not report exceptions when a Rails runner exits with `exit 0` [#1988](https://github.com/getsentry/sentry-ruby/pull/1988)
+- Ignore redis key if not UTF8 [#1997](https://github.com/getsentry/sentry-ruby/pull/1997)
+  - Fixes [#1992](https://github.com/getsentry/sentry-ruby/issues/1992)
+
+### Miscellaneous
+
+- Deprecate `capture_exception_frame_locals` in favor of `include_local_variables` [#1993](https://github.com/getsentry/sentry-ruby/pull/1993)
+
+## 5.7.0
+
+### Features
+
+- Expose `span_id` in `Span` constructor [#1945](https://github.com/getsentry/sentry-ruby/pull/1945)
+- Expose `end_timestamp` in `Span#finish` and `Transaction#finish` [#1946](https://github.com/getsentry/sentry-ruby/pull/1946)
+- Add `Transaction#set_context` api [#1947](https://github.com/getsentry/sentry-ruby/pull/1947)
+- Add OpenTelemetry support with new `sentry-opentelemetry` gem
+  - Add `config.instrumenter` to switch between `:sentry` and `:otel` instrumentation [#1944](https://github.com/getsentry/sentry-ruby/pull/1944)
+
+    The new `sentry-opentelemetry` gem adds support to automatically integrate OpenTelemetry performance tracing with Sentry. [Give it a try](https://github.com/getsentry/sentry-ruby/tree/master/sentry-opentelemetry#getting-started) and let us know if you have any feedback or problems with using it.
+
+## 5.6.0
+
+### Features
+
+- Allow users to configure their asset-skipping pattern [#1915](https://github.com/getsentry/sentry-ruby/pull/1915)
+
+    Users can now configure their own pattern to skip asset requests' transactions
+
+    ```rb
+    Sentry.init do |config|
+      config.rails.assets_regexp = /my_regexp/
+    end
+    ```
+
+- Use `Sentry.with_child_span` in redis and net/http instead of `span.start_child` [#1920](https://github.com/getsentry/sentry-ruby/pull/1920)
+    - This might change the nesting of some spans and make it more accurate
+    - Followup fix to set the sentry-trace header in the correct place [#1922](https://github.com/getsentry/sentry-ruby/pull/1922)
+
+- Use `Exception#detailed_message` when generating exception message if applicable [#1924](https://github.com/getsentry/sentry-ruby/pull/1924)
+- Make `sentry-sidekiq` compatible with Sidekiq 7 [#1930](https://github.com/getsentry/sentry-ruby/pull/1930)
+
+### Bug Fixes
+
+- `Sentry::BackgroundWorker` will release `ActiveRecord` connection pool only when the `ActiveRecord` connection is established
+-  Remove bad encoding arguments in redis span descriptions [#1914](https://github.com/getsentry/sentry-ruby/pull/1914)
+    - Fixes [#1911](https://github.com/getsentry/sentry-ruby/issues/1911)
+- Add missing `initialized?` checks to `sentry-rails` [#1919](https://github.com/getsentry/sentry-ruby/pull/1919)
+    - Fixes [#1885](https://github.com/getsentry/sentry-ruby/issues/1885)
+- Update Tracing Span's op names [#1923](https://github.com/getsentry/sentry-ruby/pull/1923)
+
+    Currently, Ruby integrations' Span op names aren't aligned with the core specification's convention, so we decided to update them altogether in this PR.
+    **If you rely on Span op names for fine-grained event filtering, this may affect the data your app sends to Sentry.**
+    **Also make sure to update your [`traces_sampler`](https://docs.sentry.io/platforms/ruby/configuration/sampling/#setting-a-sampling-function) if you rely on the `op` for filtering some requests.**
+
+### Refactoring
+
+- Make transaction a required argument of Span [#1921](https://github.com/getsentry/sentry-ruby/pull/1921)
+
+## 5.5.0
+
+### Features
+
+- Support rack 3 [#1884](https://github.com/getsentry/sentry-ruby/pull/1884)
+  - We no longer need the `HTTP_VERSION` check for ignoring the header
+
+- Add [Dynamic Sampling](https://docs.sentry.io/product/sentry-basics/sampling/) support
+  The SDK now supports Sentry's Dynamic Sampling product.
+
+  Note that this is not supported for users still using the `config.async` option.
+
+  - Parse incoming [W3C Baggage Headers](https://www.w3.org/TR/baggage/) and propagate them to continue traces [#1869](https://github.com/getsentry/sentry-ruby/pull/1869)
+    - in all outgoing requests in our net/http patch
+    - in Sentry transactions as [Dynamic Sampling Context](https://develop.sentry.dev/sdk/performance/dynamic-sampling-context/)
+  - Create new Baggage entries as Head SDK (originator of trace) [#1898](https://github.com/getsentry/sentry-ruby/pull/1898)
+  - Add Transaction source annotations to classify low quality (high cardinality) transaction names [#1902](https://github.com/getsentry/sentry-ruby/pull/1902)
+
+### Bug Fixes
+
+- Memoize session.aggregation_key [#1892](https://github.com/getsentry/sentry-ruby/pull/1892)
+  - Fixes [#1891](https://github.com/getsentry/sentry-ruby/issues/1891)
+- Execute `with_scope`'s block even when SDK is not initialized [#1897](https://github.com/getsentry/sentry-ruby/pull/1897)
+  - Fixes [#1896](https://github.com/getsentry/sentry-ruby/issues/1896)
+- Make sure test helper clears the current scope before/after a test [#1900](https://github.com/getsentry/sentry-ruby/pull/1900)
+
 ## 5.4.2
 
 ### Bug Fixes

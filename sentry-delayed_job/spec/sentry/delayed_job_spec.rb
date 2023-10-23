@@ -248,7 +248,7 @@ RSpec.describe Sentry::DelayedJob do
           config.rails.skippable_job_adapters << "ActiveJob::QueueAdapters::DelayedJobAdapter"
         end
       end
-  
+
       it "records transaction" do
         ReportingJob.perform_later
 
@@ -257,13 +257,13 @@ RSpec.describe Sentry::DelayedJob do
 
         expect(transport.events.count).to eq(2)
         transaction = transport.events.last
-  
+
         expect(transaction.transaction).to eq("ReportingJob")
         expect(transaction.contexts.dig(:trace, :trace_id)).to be_a(String)
         expect(transaction.contexts.dig(:trace, :span_id)).to be_a(String)
         expect(transaction.contexts.dig(:trace, :status)).to eq("ok")
       end
-  
+
       it "records transaction with exception" do
         FailedJob.perform_later
         enqueued_job = Delayed::Backend::ActiveRecord::Job.last
@@ -272,17 +272,41 @@ RSpec.describe Sentry::DelayedJob do
         rescue ZeroDivisionError
           nil
         end
-  
+
         expect(transport.events.count).to eq(2)
         transaction = transport.events.last
-  
+
         expect(transaction.transaction).to eq("FailedJob")
         expect(transaction.contexts.dig(:trace, :trace_id)).to be_a(String)
         expect(transaction.contexts.dig(:trace, :span_id)).to be_a(String)
         expect(transaction.contexts.dig(:trace, :status)).to eq("internal_error")
-  
+
         event = transport.events.last
         expect(event.contexts.dig(:trace, :trace_id)).to eq(transaction.contexts.dig(:trace, :trace_id))
+      end
+
+      context "with instrumenter :otel" do
+        before do
+          perform_basic_setup do |config|
+            config.traces_sample_rate = 1.0
+            config.instrumenter = :otel
+            config.rails.skippable_job_adapters << "ActiveJob::QueueAdapters::DelayedJobAdapter"
+          end
+        end
+
+        it "does not record transaction" do
+          FailedJob.perform_later
+          enqueued_job = Delayed::Backend::ActiveRecord::Job.last
+          begin
+            enqueued_job.invoke_job
+          rescue ZeroDivisionError
+            nil
+          end
+
+          expect(transport.events.count).to eq(1)
+          event = transport.events.last
+          expect(event).to be_a(Sentry::ErrorEvent)
+        end
       end
     end
   end
@@ -325,9 +349,11 @@ RSpec.describe Sentry::DelayedJob do
       transaction = transport.events.last
 
       expect(transaction.transaction).to eq("Post#do_nothing")
+      expect(transaction.transaction_info).to eq({ source: :task })
       expect(transaction.contexts.dig(:trace, :trace_id)).to be_a(String)
       expect(transaction.contexts.dig(:trace, :span_id)).to be_a(String)
       expect(transaction.contexts.dig(:trace, :status)).to eq("ok")
+      expect(transaction.contexts.dig(:trace, :op)).to eq("queue.delayed_job")
     end
 
     it "records transaction with exception" do
@@ -343,6 +369,7 @@ RSpec.describe Sentry::DelayedJob do
       transaction = transport.events.last
 
       expect(transaction.transaction).to eq("Post#raise_error")
+      expect(transaction.transaction_info).to eq({ source: :task })
       expect(transaction.contexts.dig(:trace, :trace_id)).to be_a(String)
       expect(transaction.contexts.dig(:trace, :span_id)).to be_a(String)
       expect(transaction.contexts.dig(:trace, :status)).to eq("internal_error")

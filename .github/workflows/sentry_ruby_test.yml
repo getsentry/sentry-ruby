@@ -7,45 +7,77 @@ on:
       - master
       - \d+-\d+
   pull_request:
+# Cancel in progress workflows on pull_requests.
+# https://docs.github.com/en/actions/using-jobs/using-concurrency#example-using-a-fallback-value
+concurrency:
+  group: ${{ github.workflow }}-${{ github.head_ref || github.run_id }}
+  cancel-in-progress: true
 jobs:
   test:
     defaults:
       run:
         working-directory: sentry-ruby
-    name: Ruby ${{ matrix.ruby_version }}, options - ${{ toJson(matrix.options) }}
+    name: Ruby ${{ matrix.ruby_version }} & Rack ${{ matrix.rack_version }}, options - ${{ toJson(matrix.options) }}
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
+        ruby_version: [2.4, 2.5, 2.6, 2.7, '3.0', '3.1', '3.2', jruby]
+        rack_version: [2.0, 3.0]
+        redis_rb_version: [4.0]
+        os: [ubuntu-latest]
         include:
-          - { os: ubuntu-latest, ruby_version: 2.4 }
-          - { os: ubuntu-latest, ruby_version: 2.5 }
-          - { os: ubuntu-latest, ruby_version: 2.6 }
-          - { os: ubuntu-latest, ruby_version: 2.7 }
-          - { os: ubuntu-latest, ruby_version: '3.0' }
-          - { os: ubuntu-latest, ruby_version: jruby }
-          - { os: ubuntu-latest, ruby_version: '3.1', options: { rubyopt: "--enable-frozen-string-literal --debug=frozen-string-literal" } }
-          - { os: ubuntu-latest, ruby_version: '3.1', options: { without_rack: 1 } }
-          - { os: ubuntu-latest, ruby_version: '3.1', options: { codecov: 1 } }
+          - {
+              os: ubuntu-latest,
+              ruby_version: 3.2,
+              rack_version: 0,
+              redis_rb_version: 5.0,
+            }
+          - {
+              os: ubuntu-latest,
+              ruby_version: 3.2,
+              rack_version: 2.0,
+              redis_rb_version: 5.0,
+            }
+          - {
+              os: ubuntu-latest,
+              ruby_version: 3.2,
+              rack_version: 3.0,
+              redis_rb_version: 5.0,
+              options:
+                {
+                  rubyopt: "--enable-frozen-string-literal --debug=frozen-string-literal",
+                },
+            }
+          - {
+              os: ubuntu-latest,
+              ruby_version: 3.2,
+              rack_version: 3.0,
+              redis_rb_version: 5.0,
+              options: { codecov: 1 },
+            }
     steps:
-    - uses: actions/checkout@v1
+      - uses: actions/checkout@v1
 
-    - name: Set up Ruby ${{ matrix.ruby_version }}
-      uses: ruby/setup-ruby@v1
-      with:
-        bundler: 1
-        ruby-version: ${{ matrix.ruby_version }}
+      - name: Set up Ruby ${{ matrix.ruby_version }}
+        uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: ${{ matrix.ruby_version }}
+          bundler: "2.3"
 
-    - name: Run specs
-      env:
-        RUBYOPT: ${{ matrix.options.rubyopt }}
-        WITHOUT_RACK: ${{ matrix.options.without_rack }}
-      run: |
-        bundle install --jobs 4 --retry 3
-        bundle exec rake
+      - name: Start Redis
+        uses: supercharge/redis-github-action@c169aa53af4cd5d9321e9114669dbd11be08d307
+        with:
+          redis-version: 6
 
-    - name: Upload Coverage
-      if: ${{ matrix.options.codecov }}
-      run: |
-        curl -Os https://uploader.codecov.io/latest/linux/codecov 
-        chmod +x codecov
-        ./codecov -t ${CODECOV_TOKEN} -R `pwd` -f coverage/coverage.xml
+      - name: Run specs with Rack ${{ matrix.rack_version }} and redis-rb ${{ matrix.redis_rb_version }}
+        env:
+          RUBYOPT: ${{ matrix.options.rubyopt }}
+          RACK_VERSION: ${{ matrix.rack_version }}
+          REDIS_RB_VERSION: ${{ matrix.redis_rb_version }}
+        run: |
+          bundle install --jobs 4 --retry 3
+          bundle exec rake
+
+      - name: Upload Coverage
+        if: ${{ matrix.options.codecov }}
+        uses: codecov/codecov-action@eaaf4bedf32dbdc6b720b63067d99c4d77d6047d

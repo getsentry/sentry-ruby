@@ -3,13 +3,15 @@ require 'sentry/sidekiq/context_filter'
 module Sentry
   module Sidekiq
     class ErrorHandler
+      WITH_SIDEKIQ_7 = ::Gem::Version.new(::Sidekiq::VERSION) >= ::Gem::Version.new("7.0")
+
       def call(ex, context)
         return unless Sentry.initialized?
 
         context_filter = Sentry::Sidekiq::ContextFilter.new(context)
 
         scope = Sentry.get_current_scope
-        scope.set_transaction_name(context_filter.transaction_name) unless scope.transaction_name
+        scope.set_transaction_name(context_filter.transaction_name, source: :task) unless scope.transaction_name
 
         if Sentry.configuration.sidekiq.report_after_job_retries && retryable?(context)
           retry_count = context.dig(:job, "retry_count")
@@ -23,6 +25,8 @@ module Sentry
           contexts: { sidekiq: context_filter.filtered },
           hint: { background: false }
         )
+      ensure
+        scope&.clear
       end
 
       private
@@ -40,7 +44,13 @@ module Sentry
         when Integer
           limit
         when TrueClass
-          ::Sidekiq.options[:max_retries] || 25
+          max_retries =
+            if WITH_SIDEKIQ_7
+              ::Sidekiq.default_configuration[:max_retries]
+            else
+              ::Sidekiq.options[:max_retries]
+            end
+          max_retries || 25
         else
           0
         end

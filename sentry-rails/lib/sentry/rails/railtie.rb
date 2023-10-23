@@ -56,7 +56,9 @@ module Sentry
 
       at_exit do
         # TODO: Add a condition for Rails 7.1 to avoid confliction with https://github.com/rails/rails/pull/44999
-        Sentry::Rails.capture_exception($ERROR_INFO, tags: { source: "runner" }) if $ERROR_INFO
+        if $ERROR_INFO && !($ERROR_INFO.is_a?(SystemExit) && $ERROR_INFO.success?)
+          Sentry::Rails.capture_exception($ERROR_INFO, tags: { source: "runner" })
+        end
       end
     end
 
@@ -115,7 +117,7 @@ module Sentry
     end
 
     def activate_tracing
-      if Sentry.configuration.tracing_enabled?
+      if Sentry.configuration.tracing_enabled? && Sentry.configuration.instrumenter == :sentry
         subscribers = Sentry.configuration.rails.tracing_subscribers
         Sentry::Rails::Tracing.register_subscribers(subscribers)
         Sentry::Rails::Tracing.subscribe_tracing_events

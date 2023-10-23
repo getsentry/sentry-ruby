@@ -1,5 +1,5 @@
 require "bundler/setup"
-require "debug" if RUBY_VERSION.to_f >= 2.6
+require "debug" if RUBY_VERSION.to_f >= 2.6 && RUBY_ENGINE == "ruby"
 require "pry"
 
 require "sentry-ruby"

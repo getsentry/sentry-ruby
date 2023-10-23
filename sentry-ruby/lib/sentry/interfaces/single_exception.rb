@@ -11,11 +11,20 @@ module Sentry
     OMISSION_MARK = "...".freeze
     MAX_LOCAL_BYTES = 1024
 
-    attr_reader :type, :value, :module, :thread_id, :stacktrace
+    attr_reader :type, :module, :thread_id, :stacktrace
+    attr_accessor :value
 
     def initialize(exception:, stacktrace: nil)
       @type = exception.class.to_s
-      @value = (exception.message || "").byteslice(0..Event::MAX_MESSAGE_SIZE_IN_BYTES)
+      exception_message =
+        if exception.respond_to?(:detailed_message)
+          exception.detailed_message(highlight: false)
+        else
+          exception.message || ""
+        end
+
+      @value = Utils::EncodingHelper.encode_to_utf_8(exception_message.byteslice(0..Event::MAX_MESSAGE_SIZE_IN_BYTES))
+
       @module = exception.class.to_s.split('::')[0...-1].join('::')
       @thread_id = Thread.current.object_id
       @stacktrace = stacktrace
@@ -42,7 +51,7 @@ module Sentry
                 v = v.byteslice(0..MAX_LOCAL_BYTES - 1) + OMISSION_MARK
               end
 
-              v
+              Utils::EncodingHelper.encode_to_utf_8(v)
             rescue StandardError
               PROBLEMATIC_LOCAL_VALUE_REPLACEMENT
             end

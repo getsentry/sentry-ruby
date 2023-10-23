@@ -16,13 +16,15 @@ RSpec.describe Sentry::Scope do
   describe "#initialize" do
     it "contains correct defaults" do
       expect(subject.breadcrumbs).to be_a(Sentry::BreadcrumbBuffer)
-      expect(subject.contexts[:os].keys).to match_array([:name, :version, :build, :kernel_version])
+      expect(subject.contexts[:os].keys).to match_array([:name, :version, :build, :kernel_version, :machine])
       expect(subject.contexts.dig(:runtime, :version)).to match(/ruby/)
       expect(subject.extra).to eq({})
       expect(subject.tags).to eq({})
       expect(subject.user).to eq({})
       expect(subject.fingerprint).to eq([])
       expect(subject.transaction_names).to eq([])
+      expect(subject.transaction_sources).to eq([])
+      expect(subject.propagation_context).to be_a(Sentry::PropagationContext)
     end
 
     it "allows setting breadcrumb buffer's size limit" do
@@ -41,16 +43,18 @@ RSpec.describe Sentry::Scope do
       copy.tags.merge!(foo: "bar")
       copy.user.merge!(foo: "bar")
       copy.transaction_names << "foo"
+      copy.transaction_sources << :url
       copy.fingerprint << "bar"
 
       expect(subject.breadcrumbs.to_hash).to eq({ values: [] })
-      expect(subject.contexts[:os].keys).to match_array([:name, :version, :build, :kernel_version])
+      expect(subject.contexts[:os].keys).to match_array([:name, :version, :build, :kernel_version, :machine])
       expect(subject.contexts.dig(:runtime, :version)).to match(/ruby/)
       expect(subject.extra).to eq({})
       expect(subject.tags).to eq({})
       expect(subject.user).to eq({})
       expect(subject.fingerprint).to eq([])
       expect(subject.transaction_names).to eq([])
+      expect(subject.transaction_sources).to eq([])
       expect(subject.span).to eq(nil)
     end
 
@@ -107,32 +111,40 @@ RSpec.describe Sentry::Scope do
     end
   end
 
-  describe "#clear" do
-    subject do
-      scope = described_class.new
-      scope.set_tags({foo: "bar"})
-      scope.set_extras({additional_info: "hello"})
-      scope.set_user({id: 1})
-      scope.set_transaction_name("WelcomeController#index")
-      scope.set_span(Sentry::Span.new)
-      scope.set_fingerprint(["foo"])
-      scope
-    end
+  describe ".add_global_event_processor" do
+    after { described_class.global_event_processors.clear }
 
+    it "adds the global processor to the scope" do
+      expect(described_class.global_event_processors.count).to eq(0)
+
+      expect do
+        described_class.add_global_event_processor { |e| e }
+      end.to change { described_class.global_event_processors.count }.by(1)
+    end
+  end
+
+  describe "#clear" do
     it "resets the scope's data" do
+      subject.set_tags({foo: "bar"})
+      subject.set_extras({additional_info: "hello"})
+      subject.set_user({id: 1})
+      subject.set_transaction_name("WelcomeController#index")
+      subject.set_span(Sentry::Transaction.new(op: "foo", hub: hub))
+      subject.set_fingerprint(["foo"])
       scope_id = subject.object_id
 
       subject.clear
 
       expect(subject.object_id).to eq(scope_id)
       expect(subject.breadcrumbs).to be_a(Sentry::BreadcrumbBuffer)
-      expect(subject.contexts[:os].keys).to match_array([:name, :version, :build, :kernel_version])
+      expect(subject.contexts[:os].keys).to match_array([:name, :version, :build, :kernel_version, :machine])
       expect(subject.contexts.dig(:runtime, :version)).to match(/ruby/)
       expect(subject.extra).to eq({})
       expect(subject.tags).to eq({})
       expect(subject.user).to eq({})
       expect(subject.fingerprint).to eq([])
       expect(subject.transaction_names).to eq([])
+      expect(subject.transaction_sources).to eq([])
       expect(subject.span).to eq(nil)
     end
   end
@@ -188,7 +200,7 @@ RSpec.describe Sentry::Scope do
       scope.set_tags({foo: "bar"})
       scope.set_extras({additional_info: "hello"})
       scope.set_user({id: 1})
-      scope.set_transaction_name("WelcomeController#index")
+      scope.set_transaction_name("WelcomeController#index", source: :view)
       scope.set_fingerprint(["foo"])
       scope
     end
@@ -203,9 +215,10 @@ RSpec.describe Sentry::Scope do
       expect(event.user).to eq({id: 1})
       expect(event.extra).to eq({additional_info: "hello"})
       expect(event.transaction).to eq("WelcomeController#index")
+      expect(event.transaction_info).to eq({ source: :view })
       expect(event.breadcrumbs).to be_a(Sentry::BreadcrumbBuffer)
       expect(event.fingerprint).to eq(["foo"])
-      expect(event.contexts[:os].keys).to match_array([:name, :version, :build, :kernel_version])
+      expect(event.contexts[:os].keys).to match_array([:name, :version, :build, :kernel_version, :machine])
       expect(event.contexts.dig(:runtime, :version)).to match(/ruby/)
     end
 
@@ -235,14 +248,49 @@ RSpec.describe Sentry::Scope do
       expect(event.extra).to eq({ foo: "bar" })
     end
 
-    it "sets trace context if there's a span" do
-      span = Sentry::Span.new(op: "foo")
-      subject.set_span(span)
+    context "with global event processor" do
+      before do
+        described_class.add_global_event_processor do |event, hint|
+          event.tags = { bar: 99 }
+          event.extra = hint
+          event
+        end
+      end
+
+      after { described_class.global_event_processors.clear }
+
+      it "applies global event processors to the event" do
+        subject.apply_to_event(event, { foo: 42 })
+
+        expect(event.tags).to eq({ bar: 99 })
+        expect(event.extra).to eq({ foo: 42 })
+      end
+
+      it "scope event processors take precedence over global event processors" do
+        subject.add_event_processor do |event, hint|
+          event.tags = { foo: 42 }
+          event
+        end
+
+        subject.apply_to_event(event)
+        expect(event.tags).to eq({ foo: 42 })
+      end
+    end
+
+    it "sets trace context from span if there's a span" do
+      transaction = Sentry::Transaction.new(op: "foo", hub: hub)
+      subject.set_span(transaction)
 
       subject.apply_to_event(event)
 
-      expect(event.contexts[:trace]).to eq(span.get_trace_context)
+      expect(event.contexts[:trace]).to eq(transaction.get_trace_context)
       expect(event.contexts.dig(:trace, :op)).to eq("foo")
+    end
+
+    it "sets trace context and dynamic_sampling_context from propagation context if there's no span" do
+      subject.apply_to_event(event)
+      expect(event.contexts[:trace]).to eq(subject.propagation_context.get_trace_context)
+      expect(event.dynamic_sampling_context).to eq(subject.propagation_context.get_dynamic_sampling_context)
     end
 
     context "with Rack", rack: true do
@@ -261,6 +309,19 @@ RSpec.describe Sentry::Scope do
 
         expect(event.to_hash.dig(:request, :url)).to eq("http://example.org/test")
       end
+    end
+  end
+
+  describe "#generate_propagation_context" do
+    it "initializes new propagation context without env" do
+      expect(Sentry::PropagationContext).to receive(:new).with(subject, nil)
+      subject.generate_propagation_context
+    end
+
+    it "initializes new propagation context without env" do
+      env = { foo: 42 }
+      expect(Sentry::PropagationContext).to receive(:new).with(subject, env)
+      subject.generate_propagation_context(env)
     end
   end
 end

@@ -76,7 +76,10 @@ module Sentry
     # @param hint [Hash] the hint data that'll be passed to `before_send` callback and the scope's event processors.
     # @return [Event, nil]
     def event_from_exception(exception, hint = {})
-      return unless @configuration.sending_allowed? && @configuration.exception_class_allowed?(exception)
+      return unless @configuration.sending_allowed?
+
+      ignore_exclusions = hint.delete(:ignore_exclusions) { false }
+      return if !ignore_exclusions && !@configuration.exception_class_allowed?(exception)
 
       integration_meta = Sentry.integrations[hint[:integration]]
 
@@ -101,20 +104,42 @@ module Sentry
       event
     end
 
+    # Initializes a CheckInEvent object with the given options.
+    #
+    # @param slug [String] identifier of this monitor
+    # @param status [Symbol] status of this check-in, one of {CheckInEvent::VALID_STATUSES}
+    # @param hint [Hash] the hint data that'll be passed to `before_send` callback and the scope's event processors.
+    # @param duration [Integer, nil] seconds elapsed since this monitor started
+    # @param monitor_config [Cron::MonitorConfig, nil] configuration for this monitor
+    # @param check_in_id [String, nil] for updating the status of an existing monitor
+    #
+    # @return [Event]
+    def event_from_check_in(
+      slug,
+      status,
+      hint = {},
+      duration: nil,
+      monitor_config: nil,
+      check_in_id: nil
+    )
+      return unless configuration.sending_allowed?
+
+      CheckInEvent.new(
+        configuration: configuration,
+        integration_meta: Sentry.integrations[hint[:integration]],
+        slug: slug,
+        status: status,
+        duration: duration,
+        monitor_config: monitor_config,
+        check_in_id: check_in_id
+      )
+    end
+
     # Initializes an Event object with the given Transaction object.
     # @param transaction [Transaction] the transaction to be recorded.
     # @return [TransactionEvent]
     def event_from_transaction(transaction)
-      TransactionEvent.new(configuration: configuration).tap do |event|
-        event.transaction = transaction.name
-        event.contexts.merge!(trace: transaction.get_trace_context)
-        event.timestamp = transaction.timestamp
-        event.start_timestamp = transaction.start_timestamp
-        event.tags = transaction.tags
-
-        finished_spans = transaction.span_recorder.spans.select { |span| span.timestamp && span != transaction }
-        event.spans = finished_spans.map(&:to_hash)
-      end
+      TransactionEvent.new(configuration: configuration, transaction: transaction)
     end
 
     # @!macro send_event
@@ -127,6 +152,16 @@ module Sentry
         if event.nil?
           log_info("Discarded event because before_send returned nil")
           transport.record_lost_event(:before_send, 'event')
+          return
+        end
+      end
+
+      if event_type == TransactionEvent::TYPE && configuration.before_send_transaction
+        event = configuration.before_send_transaction.call(event, hint)
+
+        if event.nil?
+          log_info("Discarded event because before_send_transaction returned nil")
+          transport.record_lost_event(:before_send, 'transaction')
           return
         end
       end
@@ -144,6 +179,8 @@ module Sentry
       raise
     end
 
+    # @deprecated use Sentry.get_traceparent instead.
+    #
     # Generates a Sentry trace for distribted tracing from the given Span.
     # Returns `nil` if `config.propagate_traces` is `false`.
     # @param span [Span] the span to generate trace from.
@@ -154,6 +191,24 @@ module Sentry
       trace = span.to_sentry_trace
       log_debug("[Tracing] Adding #{SENTRY_TRACE_HEADER_NAME} header to outgoing request: #{trace}")
       trace
+    end
+
+    # @deprecated Use Sentry.get_baggage instead.
+    #
+    # Generates a W3C Baggage header for distributed tracing from the given Span.
+    # Returns `nil` if `config.propagate_traces` is `false`.
+    # @param span [Span] the span to generate trace from.
+    # @return [String, nil]
+    def generate_baggage(span)
+      return unless configuration.propagate_traces
+
+      baggage = span.to_baggage
+
+      if baggage && !baggage.empty?
+        log_debug("[Tracing] Adding #{BAGGAGE_HEADER_NAME} header to outgoing request: #{baggage}")
+      end
+
+      baggage
     end
 
     private

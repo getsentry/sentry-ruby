@@ -30,11 +30,17 @@ RSpec.describe Sentry::Sidekiq::ErrorHandler do
   end
 
   it "captures exceptions raised during events" do
-    Sidekiq.options[:lifecycle_events][:startup] = [proc { raise "Uhoh!" }]
-    processor.fire_event(:startup)
+    if WITH_SIDEKIQ_7
+      config = Sidekiq.instance_variable_get(:@config)
+      config[:lifecycle_events][:startup] = [proc { raise "Uhoh!" }]
+      Sidekiq::Embedded.new(config).fire_event(:startup)
+    else
+      Sidekiq.options[:lifecycle_events][:startup] = [proc { raise "Uhoh!" }]
+      processor.fire_event(:startup)
+    end
 
     event = transport.events.last.to_hash
-    expect(Sentry::Event.get_message_from_exception(event)).to eq("RuntimeError: Uhoh!")
+    expect(Sentry::Event.get_message_from_exception(event)).to match("RuntimeError: Uhoh!")
     expect(event[:transaction]).to eq "Sidekiq/startup"
   end
 

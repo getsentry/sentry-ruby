@@ -1,10 +1,11 @@
 require "bundler/setup"
-require "debug" if RUBY_VERSION.to_f >= 2.6
+require "debug" if RUBY_VERSION.to_f >= 2.6 && RUBY_ENGINE == "ruby"
 require "pry"
 require "timecop"
 require "simplecov"
 require "rspec/retry"
-require "fakeredis/rspec"
+require "redis"
+require "stackprof" unless RUBY_PLATFORM == "java"
 
 SimpleCov.start do
   project_name "sentry-ruby"

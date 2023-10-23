@@ -36,17 +36,32 @@ RSpec.describe Sentry::Sidekiq do
   end
 
   it "registers error handlers and middlewares" do
-    expect(Sidekiq.error_handlers).to include(described_class::ErrorHandler)
-    expect(Sidekiq.server_middleware.entries.first.klass).to eq(described_class::SentryContextServerMiddleware)
-    expect(Sidekiq.client_middleware.entries.first.klass).to eq(described_class::SentryContextClientMiddleware)
+    if WITH_SIDEKIQ_7
+      config = Sidekiq.instance_variable_get(:@config)
+
+      expect(config.error_handlers).to include(described_class::ErrorHandler)
+      expect(config.server_middleware.entries.map(&:klass)).to include(described_class::SentryContextServerMiddleware)
+      expect(config.client_middleware.entries.map(&:klass)).to include(described_class::SentryContextClientMiddleware)
+    else
+      expect(Sidekiq.error_handlers).to include(described_class::ErrorHandler)
+      expect(Sidekiq.server_middleware.entries.first.klass).to eq(described_class::SentryContextServerMiddleware)
+      expect(Sidekiq.client_middleware.entries.first.klass).to eq(described_class::SentryContextClientMiddleware)
+    end
   end
 
-  it "captues exception raised in the worker" do
+  it "captures exception raised in the worker" do
     expect { execute_worker(processor, SadWorker) }.to change { transport.events.size }.by(1)
 
     event = transport.events.last.to_hash
     expect(event[:sdk]).to eq({ name: "sentry.ruby.sidekiq", version: described_class::VERSION })
-    expect(Sentry::Event.get_message_from_exception(event)).to eq("RuntimeError: I'm sad!")
+    expect(Sentry::Event.get_message_from_exception(event)).to match("RuntimeError: I'm sad!")
+  end
+
+  it "doesn't store the private `_config` context", skip: !WITH_SIDEKIQ_7 do
+    expect { execute_worker(processor, SadWorker) }.to change { transport.events.size }.by(1)
+
+    event = transport.events.last.to_hash
+    expect(event[:contexts][:sidekiq].keys.map(&:to_s)).not_to include("_config")
   end
 
   describe "context cleanup" do
@@ -60,6 +75,7 @@ RSpec.describe Sentry::Sidekiq do
       expect(event["tags"]).to eq("queue" => "default", "jid" => "123123", "mood" => "sad")
       expect(event["transaction"]).to eq("Sidekiq/SadWorker")
       expect(event["breadcrumbs"]["values"][0]["message"]).to eq("I'm sad!")
+      expect(Sentry.get_current_scope.tags).to be_empty
     end
 
     it "cleans up context from failed jobs" do
@@ -71,6 +87,7 @@ RSpec.describe Sentry::Sidekiq do
 
       expect(event["tags"]).to eq("queue" => "default", "jid" => "123123", "mood" => "very sad")
       expect(event["breadcrumbs"]["values"][0]["message"]).to eq("I'm very sad!")
+      expect(Sentry.get_current_scope.tags).to be_empty
     end
   end
 
@@ -163,7 +180,11 @@ RSpec.describe Sentry::Sidekiq do
 
       context "when Sidekiq.options[:max_retries] is set" do
         it "respects the set limit" do
-          Sidekiq.options[:max_retries] = 5
+          if WITH_SIDEKIQ_7
+            Sidekiq.default_configuration[:max_retries] = 5
+          else
+            Sidekiq.options[:max_retries] = 5
+          end
 
           execute_worker(processor, SadWorker)
           expect(transport.events.count).to eq(0)
@@ -195,9 +216,11 @@ RSpec.describe Sentry::Sidekiq do
       transaction = transport.events.first
 
       expect(transaction.transaction).to eq("Sidekiq/HappyWorker")
+      expect(transaction.transaction_info).to eq({ source: :task })
       expect(transaction.contexts.dig(:trace, :trace_id)).to be_a(String)
       expect(transaction.contexts.dig(:trace, :span_id)).to be_a(String)
       expect(transaction.contexts.dig(:trace, :status)).to eq("ok")
+      expect(transaction.contexts.dig(:trace, :op)).to eq("queue.sidekiq")
     end
 
     it "records transaction with exception" do
@@ -207,6 +230,7 @@ RSpec.describe Sentry::Sidekiq do
       transaction = transport.events.first
 
       expect(transaction.transaction).to eq("Sidekiq/SadWorker")
+      expect(transaction.transaction_info).to eq({ source: :task })
       expect(transaction.contexts.dig(:trace, :trace_id)).to be_a(String)
       expect(transaction.contexts.dig(:trace, :span_id)).to be_a(String)
       expect(transaction.contexts.dig(:trace, :status)).to eq("internal_error")
@@ -214,6 +238,76 @@ RSpec.describe Sentry::Sidekiq do
       event = transport.events.last
       expect(event.contexts.dig(:trace, :trace_id)).to eq(transaction.contexts.dig(:trace, :trace_id))
     end
+
+    context "with instrumenter :otel" do
+      before do
+        perform_basic_setup do |config|
+          config.traces_sample_rate = 1.0
+          config.instrumenter = :otel
+        end
+      end
+
+      it "does not record transaction" do
+        execute_worker(processor, SadWorker)
+        expect(transport.events.count).to eq(1)
+        event = transport.events.first
+        expect(event).to be_a(Sentry::ErrorEvent)
+      end
+    end
+  end
+
+  context "cron monitoring" do
+    it "records check ins" do
+      execute_worker(processor, HappyWorkerWithCron)
+
+      expect(transport.events.size).to eq(2)
+
+      first = transport.events[0]
+      check_in_id = first.check_in_id
+      expect(first).to be_a(Sentry::CheckInEvent)
+      expect(first.to_hash).to include(
+        type: 'check_in',
+        check_in_id: check_in_id,
+        monitor_slug: "HappyWorkerWithCron",
+        status: :in_progress
+      )
+
+      second = transport.events[1]
+      expect(second).to be_a(Sentry::CheckInEvent)
+      expect(second.to_hash).to include(
+        :duration,
+        type: 'check_in',
+        check_in_id: check_in_id,
+        monitor_slug: "HappyWorkerWithCron",
+        status: :ok
+      )
+    end
+
+    it "records check ins with error" do
+      execute_worker(processor, SadWorkerWithCron)
+      expect(transport.events.size).to eq(3)
+
+      first = transport.events[0]
+      check_in_id = first.check_in_id
+      expect(first).to be_a(Sentry::CheckInEvent)
+      expect(first.to_hash).to include(
+        type: 'check_in',
+        check_in_id: check_in_id,
+        monitor_slug: "failed_job",
+        status: :in_progress,
+        monitor_config: { schedule: { type: :crontab, value: "5 * * * *" } }
+      )
+
+      second = transport.events[1]
+      expect(second).to be_a(Sentry::CheckInEvent)
+      expect(second.to_hash).to include(
+        :duration,
+        type: 'check_in',
+        check_in_id: check_in_id,
+        monitor_slug: "failed_job",
+        status: :error,
+        monitor_config: { schedule: { type: :crontab, value: "5 * * * *" } }
+      )
+    end
   end
 end
-

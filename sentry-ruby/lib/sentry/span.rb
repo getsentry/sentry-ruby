@@ -4,6 +4,43 @@ require "securerandom"
 
 module Sentry
   class Span
+
+    # We will try to be consistent with OpenTelemetry on this front going forward.
+    # https://develop.sentry.dev/sdk/performance/span-data-conventions/
+    module DataConventions
+      URL = "url"
+      HTTP_STATUS_CODE = "http.response.status_code"
+      HTTP_QUERY = "http.query"
+      HTTP_METHOD = "http.request.method"
+
+      # An identifier for the database management system (DBMS) product being used.
+      # Example: postgresql
+      DB_SYSTEM = "db.system"
+
+      # The name of the database being accessed.
+      # For commands that switch the database, this should be set to the target database
+      # (even if the command fails).
+      # Example: myDatabase
+      DB_NAME = "db.name"
+
+      # Name of the database host.
+      # Example: example.com
+      SERVER_ADDRESS = "server.address"
+
+      # Logical server port number
+      # Example: 80; 8080; 443
+      SERVER_PORT = "server.port"
+
+      # Physical server IP address or Unix socket address.
+      # Example: 10.5.3.2
+      SERVER_SOCKET_ADDRESS = "server.socket.address"
+
+      # Physical server port.
+      # Recommended: If different than server.port.
+      # Example: 16456
+      SERVER_SOCKET_PORT = "server.socket.port"
+    end
+
     STATUS_MAP = {
       400 => "invalid_argument",
       401 => "unauthenticated",
@@ -60,25 +97,28 @@ module Sentry
     # The Transaction object the Span belongs to.
     # Every span needs to be attached to a Transaction and their child spans will also inherit the same transaction.
     # @return [Transaction]
-    attr_accessor :transaction
+    attr_reader :transaction
 
     def initialize(
+      transaction:,
       description: nil,
       op: nil,
       status: nil,
       trace_id: nil,
+      span_id: nil,
       parent_span_id: nil,
       sampled: nil,
       start_timestamp: nil,
       timestamp: nil
     )
       @trace_id = trace_id || SecureRandom.uuid.delete("-")
-      @span_id = SecureRandom.hex(8)
+      @span_id = span_id || SecureRandom.uuid.delete("-").slice(0, 16)
       @parent_span_id = parent_span_id
       @sampled = sampled
       @start_timestamp = start_timestamp || Sentry.utc_now.to_f
       @timestamp = timestamp
       @description = description
+      @transaction = transaction
       @op = op
       @status = status
       @data = {}
@@ -87,11 +127,8 @@ module Sentry
 
     # Finishes the span by adding a timestamp.
     # @return [self]
-    def finish
-      # already finished
-      return if @timestamp
-
-      @timestamp = Sentry.utc_now.to_f
+    def finish(end_timestamp: nil)
+      @timestamp = end_timestamp || @timestamp || Sentry.utc_now.to_f
       self
     end
 
@@ -102,6 +139,13 @@ module Sentry
       sampled_flag = @sampled ? 1 : 0 unless @sampled.nil?
 
       "#{@trace_id}-#{@span_id}-#{sampled_flag}"
+    end
+
+    # Generates a W3C Baggage header string for distributed tracing
+    # from the incoming baggage stored on the transaction.
+    # @return [String, nil]
+    def to_baggage
+      transaction.get_baggage&.serialize
     end
 
     # @return [Hash]
@@ -136,9 +180,8 @@ module Sentry
     # Starts a child span with given attributes.
     # @param attributes [Hash] the attributes for the child span.
     def start_child(**attributes)
-      attributes = attributes.dup.merge(trace_id: @trace_id, parent_span_id: @span_id, sampled: @sampled)
+      attributes = attributes.dup.merge(transaction: @transaction, trace_id: @trace_id, parent_span_id: @span_id, sampled: @sampled)
       new_span = Span.new(**attributes)
-      new_span.transaction = transaction
       new_span.span_recorder = span_recorder
 
       if span_recorder
@@ -163,6 +206,10 @@ module Sentry
       yield(child_span)
 
       child_span.finish
+    rescue
+      child_span.set_http_status(500)
+      child_span.finish
+      raise
     end
 
     def deep_dup
@@ -198,7 +245,7 @@ module Sentry
     # @param status_code [String] example: "500".
     def set_http_status(status_code)
       status_code = status_code.to_i
-      set_data("status_code", status_code)
+      set_data(DataConventions::HTTP_STATUS_CODE, status_code)
 
       status =
         if status_code >= 200 && status_code < 299

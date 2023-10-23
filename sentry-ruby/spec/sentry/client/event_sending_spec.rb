@@ -224,6 +224,15 @@ RSpec.describe Sentry::Client do
           expect(event["tags"]["called"]).to eq(true)
         end
       end
+
+      it "doesn't apply before_send_transaction to Event" do
+        dbl = double("before_send_transaction")
+        allow(dbl).to receive(:call)
+        configuration.before_send_transaction = dbl
+
+        expect(dbl).not_to receive(:call)
+        subject.send_event(event)
+      end
     end
 
     it_behaves_like "Event in send_event" do
@@ -245,6 +254,26 @@ RSpec.describe Sentry::Client do
         end
 
         subject.send_event(event)
+      end
+
+      it "applies before_send_transaction callback before sending the event" do
+        configuration.before_send_transaction = lambda do |event, _hint|
+          if event.is_a?(Sentry::TransactionEvent)
+            event.tags[:called] = true
+          else
+            event["tags"]["called"] = true
+          end
+
+          event
+        end
+
+        subject.send_event(event)
+
+        if event.is_a?(Sentry::Event)
+          expect(event.tags[:called]).to eq(true)
+        else
+          expect(event["tags"]["called"]).to eq(true)
+        end
       end
     end
 
@@ -449,6 +478,20 @@ RSpec.describe Sentry::Client do
         it "records lost event" do
           subject.send_event(event)
           expect(subject.transport).to have_recorded_lost_event(:before_send, 'event')
+        end
+      end
+
+      context "before_send_transaction returns nil" do
+        before do
+          configuration.before_send_transaction = lambda do |_event, _hint|
+            nil
+          end
+        end
+
+        it "records lost event" do
+          transaction_event = subject.event_from_transaction(Sentry::Transaction.new(hub: hub))
+          subject.send_event(transaction_event)
+          expect(subject.transport).to have_recorded_lost_event(:before_send, 'transaction')
         end
       end
     end

@@ -2,6 +2,8 @@ module Sentry
   module Rails
     module ActionCableExtensions
       class ErrorHandler
+        OP_NAME = "websocket.server".freeze
+
         class << self
           def capture(connection, transaction_name:, extra_context: nil, &block)
             return block.call unless Sentry.initialized?
@@ -13,13 +15,14 @@ module Sentry
             Sentry.with_scope do |scope|
               scope.set_rack_env(env)
               scope.set_context("action_cable", extra_context) if extra_context
-              scope.set_transaction_name(transaction_name)
-              transaction = start_transaction(env, scope.transaction_name)
+              scope.set_transaction_name(transaction_name, source: :view)
+              transaction = start_transaction(env, scope)
               scope.set_span(transaction) if transaction
 
               begin
-                block.call
+                result = block.call
                 finish_transaction(transaction, 200)
+                result
               rescue Exception => e # rubocop:disable Lint/RescueException
                 Sentry::Rails.capture_exception(e)
                 finish_transaction(transaction, 500)
@@ -29,10 +32,9 @@ module Sentry
             end
           end
 
-          def start_transaction(env, transaction_name)
-            sentry_trace = env["HTTP_SENTRY_TRACE"]
-            options = { name: transaction_name, op: "rails.action_cable".freeze }
-            transaction = Sentry::Transaction.from_sentry_trace(sentry_trace, **options) if sentry_trace
+          def start_transaction(env, scope)
+            options = { name: scope.transaction_name, source: scope.transaction_source, op: OP_NAME }
+            transaction = Sentry.continue_trace(env, **options)
             Sentry.start_transaction(transaction: transaction, **options)
           end
 

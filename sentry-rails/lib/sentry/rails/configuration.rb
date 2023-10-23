@@ -12,7 +12,12 @@ module Sentry
       @excluded_exceptions = @excluded_exceptions.concat(Sentry::Rails::IGNORE_DEFAULT)
 
       if ::Rails.logger
-        @logger = ::Rails.logger
+        if ::Rails.logger.respond_to?(:broadcasts)
+          dupped_broadcasts = ::Rails.logger.broadcasts.map(&:dup)
+          @logger = ::ActiveSupport::BroadcastLogger.new(*dupped_broadcasts)
+        else
+          @logger = ::Rails.logger.dup
+        end
       else
         @logger.warn(Sentry::LOGGER_PROGNAME) do
           <<~MSG
@@ -60,12 +65,29 @@ module Sentry
 
       attr_accessor :tracing_subscribers
 
+      # sentry-rails by default skips asset request' transactions by checking if the path matches
+      #
+      # ```rb
+      # %r(\A/{0,2}#{::Rails.application.config.assets.prefix})
+      # ```
+      #
+      # If you want to use a different pattern, you can configure the `assets_regexp` option like:
+      #
+      # ```rb
+      # Sentry.init do |config|
+      #   config.rails.assets_regexp = /my_regexp/
+      # end
+      # ```
+      attr_accessor :assets_regexp
+
       def initialize
         @register_error_subscriber = false
         @report_rescued_exceptions = true
         @skippable_job_adapters = []
+        @assets_regexp = if defined?(::Sprockets::Rails)
+          %r(\A/{0,2}#{::Rails.application.config.assets.prefix})
+        end
         @tracing_subscribers = Set.new([
-          Sentry::Rails::Tracing::ActionControllerSubscriber,
           Sentry::Rails::Tracing::ActionViewSubscriber,
           Sentry::Rails::Tracing::ActiveRecordSubscriber,
           Sentry::Rails::Tracing::ActiveStorageSubscriber

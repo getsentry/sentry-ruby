@@ -33,7 +33,7 @@ RSpec.shared_context "with request mock" do
     stub_request(build_fake_response("400", body: { data: "bad sentry DSN public key" }))
   end
 
-  def stub_normal_response(code: "200")
-    stub_request(build_fake_response(code))
+  def stub_normal_response(code: "200", &block)
+    stub_request(build_fake_response(code), &block)
   end
 end

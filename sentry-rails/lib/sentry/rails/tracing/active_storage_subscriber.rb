@@ -21,7 +21,7 @@ module Sentry
 
         def self.subscribe!
           subscribe_to_event(EVENT_NAMES) do |event_name, duration, payload|
-            record_on_current_span(op: event_name, start_timestamp: payload[START_TIMESTAMP_NAME], description: payload[:service], duration: duration) do |span|
+            record_on_current_span(op: "file.#{event_name}".freeze, start_timestamp: payload[START_TIMESTAMP_NAME], description: payload[:service], duration: duration) do |span|
               payload.each do |key, value|
                 span.set_data(key, value) unless key == START_TIMESTAMP_NAME
               end

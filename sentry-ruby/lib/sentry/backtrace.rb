@@ -76,7 +76,7 @@ module Sentry
       end
     end
 
-    APP_DIRS_PATTERN = /(bin|exe|app|config|lib|test)/.freeze
+    APP_DIRS_PATTERN = /(bin|exe|app|config|lib|test|spec)/.freeze
 
     # holder for an Array of Backtrace::Line instances
     attr_reader :lines

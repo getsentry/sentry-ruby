@@ -10,6 +10,12 @@ if defined?(ActionCable) && ActionCable.version >= Gem::Version.new('6.0.0')
     end
   end
 
+  class ContentChannel < ::ActionCable::Channel::Base
+    def content
+      "value"
+    end
+  end
+
   class AppearanceChannel < ::ActionCable::Channel::Base
     def appear
       raise "foo"
@@ -44,6 +50,18 @@ if defined?(ActionCable) && ActionCable.version >= Gem::Version.new('6.0.0')
         expect { subscribe }.to raise_error('foo')
       end
     end
+
+    describe ContentChannel, type: :channel do
+      let(:connection) do
+        env = Rack::MockRequest.env_for "/test", "HTTP_CONNECTION" => "upgrade", "HTTP_UPGRADE" => "websocket",
+          "HTTP_HOST" => "localhost", "HTTP_ORIGIN" => "http://rubyonrails.com"
+        described_class.new(spy, env)
+      end
+
+      it "perform_action returns content" do
+        expect(connection.perform_action({ "action" => "content" })).to eq("value")
+      end
+    end
   end
 
   RSpec.describe "Sentry::Rails::ActionCableExtensions", type: :channel do
@@ -76,6 +94,7 @@ if defined?(ActionCable) && ActionCable.version >= Gem::Version.new('6.0.0')
 
           event = transport.events.last.to_json_compatible
           expect(event["transaction"]).to eq("FailToOpenConnection#connect")
+          expect(event["transaction_info"]).to eq({ "source" => "view" })
         end
       end
 
@@ -89,6 +108,7 @@ if defined?(ActionCable) && ActionCable.version >= Gem::Version.new('6.0.0')
 
           event = transport.events.last.to_json_compatible
           expect(event["transaction"]).to eq("FailToCloseConnection#disconnect")
+          expect(event["transaction_info"]).to eq({ "source" => "view" })
         end
       end
     end
@@ -105,7 +125,16 @@ if defined?(ActionCable) && ActionCable.version >= Gem::Version.new('6.0.0')
 
           event = transport.events.last.to_json_compatible
           expect(event["transaction"]).to eq("ChatChannel#subscribed")
+          expect(event["transaction_info"]).to eq({ "source" => "view" })
           expect(event["contexts"]).to include("action_cable" => { "params" => { "room_id" => 42 } })
+        end
+      end
+
+      describe ContentChannel do
+        before { subscribe }
+        
+        it "perform_action returns content" do
+          expect(perform :content, foo: 'bar').to eq("value")
         end
       end
 
@@ -119,6 +148,7 @@ if defined?(ActionCable) && ActionCable.version >= Gem::Version.new('6.0.0')
           event = transport.events.last.to_json_compatible
 
           expect(event["transaction"]).to eq("AppearanceChannel#appear")
+          expect(event["transaction_info"]).to eq({ "source" => "view" })
           expect(event["contexts"]).to include(
             "action_cable" => {
               "params" => { "room_id" => 42 },
@@ -134,6 +164,7 @@ if defined?(ActionCable) && ActionCable.version >= Gem::Version.new('6.0.0')
           event = transport.events.last.to_json_compatible
 
           expect(event["transaction"]).to eq("AppearanceChannel#unsubscribed")
+          expect(event["transaction_info"]).to eq({ "source" => "view" })
           expect(event["contexts"]).to include(
             "action_cable" => {
               "params" => { "room_id" => 42 }
@@ -164,6 +195,7 @@ if defined?(ActionCable) && ActionCable.version >= Gem::Version.new('6.0.0')
 
           expect(transaction["type"]).to eq("transaction")
           expect(transaction["transaction"]).to eq("ChatChannel#subscribed")
+          expect(transaction["transaction_info"]).to eq({ "source" => "view" })
           expect(transaction["contexts"]).to include(
             "action_cable" => {
               "params" => { "room_id" => 42 }
@@ -171,7 +203,7 @@ if defined?(ActionCable) && ActionCable.version >= Gem::Version.new('6.0.0')
           )
           expect(transaction["contexts"]).to include(
             "trace" => hash_including(
-              "op" => "rails.action_cable",
+              "op" => "websocket.server",
               "status" => "internal_error"
             )
           )
@@ -189,6 +221,7 @@ if defined?(ActionCable) && ActionCable.version >= Gem::Version.new('6.0.0')
 
           expect(subscription_transaction["type"]).to eq("transaction")
           expect(subscription_transaction["transaction"]).to eq("AppearanceChannel#subscribed")
+          expect(subscription_transaction["transaction_info"]).to eq({ "source" => "view" })
           expect(subscription_transaction["contexts"]).to include(
             "action_cable" => {
               "params" => { "room_id" => 42 }
@@ -196,7 +229,7 @@ if defined?(ActionCable) && ActionCable.version >= Gem::Version.new('6.0.0')
           )
           expect(subscription_transaction["contexts"]).to include(
             "trace" => hash_including(
-              "op" => "rails.action_cable",
+              "op" => "websocket.server",
               "status" => "ok"
             )
           )
@@ -204,6 +237,7 @@ if defined?(ActionCable) && ActionCable.version >= Gem::Version.new('6.0.0')
           event = transport.events[1].to_json_compatible
 
           expect(event["transaction"]).to eq("AppearanceChannel#appear")
+          expect(event["transaction_info"]).to eq({ "source" => "view" })
           expect(event["contexts"]).to include(
             "action_cable" => {
               "params" => { "room_id" => 42 },
@@ -215,6 +249,7 @@ if defined?(ActionCable) && ActionCable.version >= Gem::Version.new('6.0.0')
 
           expect(action_transaction["type"]).to eq("transaction")
           expect(action_transaction["transaction"]).to eq("AppearanceChannel#appear")
+          expect(action_transaction["transaction_info"]).to eq({ "source" => "view" })
           expect(action_transaction["contexts"]).to include(
             "action_cable" => {
               "params" => { "room_id" => 42 },
@@ -223,7 +258,7 @@ if defined?(ActionCable) && ActionCable.version >= Gem::Version.new('6.0.0')
           )
           expect(action_transaction["contexts"]).to include(
             "trace" => hash_including(
-              "op" => "rails.action_cable",
+              "op" => "websocket.server",
               "status" => "internal_error"
             )
           )
@@ -237,6 +272,7 @@ if defined?(ActionCable) && ActionCable.version >= Gem::Version.new('6.0.0')
 
           expect(subscription_transaction["type"]).to eq("transaction")
           expect(subscription_transaction["transaction"]).to eq("AppearanceChannel#subscribed")
+          expect(subscription_transaction["transaction_info"]).to eq({ "source" => "view" })
           expect(subscription_transaction["contexts"]).to include(
             "action_cable" => {
               "params" => { "room_id" => 42 }
@@ -244,7 +280,7 @@ if defined?(ActionCable) && ActionCable.version >= Gem::Version.new('6.0.0')
           )
           expect(subscription_transaction["contexts"]).to include(
             "trace" => hash_including(
-              "op" => "rails.action_cable",
+              "op" => "websocket.server",
               "status" => "ok"
             )
           )
@@ -252,6 +288,7 @@ if defined?(ActionCable) && ActionCable.version >= Gem::Version.new('6.0.0')
           event = transport.events[1].to_json_compatible
 
           expect(event["transaction"]).to eq("AppearanceChannel#unsubscribed")
+          expect(event["transaction_info"]).to eq({ "source" => "view" })
           expect(event["contexts"]).to include(
             "action_cable" => {
               "params" => { "room_id" => 42 }
@@ -262,6 +299,7 @@ if defined?(ActionCable) && ActionCable.version >= Gem::Version.new('6.0.0')
 
           expect(transaction["type"]).to eq("transaction")
           expect(transaction["transaction"]).to eq("AppearanceChannel#unsubscribed")
+          expect(transaction["transaction_info"]).to eq({ "source" => "view" })
           expect(transaction["contexts"]).to include(
             "action_cable" => {
               "params" => { "room_id" => 42 }
@@ -269,7 +307,7 @@ if defined?(ActionCable) && ActionCable.version >= Gem::Version.new('6.0.0')
           )
           expect(transaction["contexts"]).to include(
             "trace" => hash_including(
-              "op" => "rails.action_cable",
+              "op" => "websocket.server",
               "status" => "internal_error"
             )
           )

@@ -1,7 +1,7 @@
 name: Bug report
 description: "Report an SDK issue"
 labels: bug
-assignees: st0012
+assignees: sl0thentr0py
 body:
 - type: textarea
   attributes:

@@ -22,5 +22,11 @@ module Sentry
       options[:hint][:integration] = integration_name
       Sentry.capture_message(message, **options, &block)
     end
+
+    def capture_check_in(slug, status, **options, &block)
+      options[:hint] ||= {}
+      options[:hint][:integration] = integration_name
+      Sentry.capture_check_in(slug, status, **options, &block)
+    end
   end
 end

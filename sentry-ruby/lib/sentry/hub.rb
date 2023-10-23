@@ -76,8 +76,9 @@ module Sentry
       @stack.pop
     end
 
-    def start_transaction(transaction: nil, custom_sampling_context: {}, **options)
+    def start_transaction(transaction: nil, custom_sampling_context: {}, instrumenter: :sentry, **options)
       return unless configuration.tracing_enabled?
+      return unless instrumenter == configuration.instrumenter
 
       transaction ||= Transaction.new(**options.merge(hub: self))
 
@@ -87,13 +88,39 @@ module Sentry
       }
 
       sampling_context.merge!(custom_sampling_context)
-
       transaction.set_initial_sample_decision(sampling_context: sampling_context)
+
+      transaction.start_profiler!
+
       transaction
     end
 
+    def with_child_span(instrumenter: :sentry, **attributes, &block)
+      return yield(nil) unless instrumenter == configuration.instrumenter
+
+      current_span = current_scope.get_span
+      return yield(nil) unless current_span
+
+      result = nil
+
+      begin
+        current_span.with_child_span(**attributes) do |child_span|
+          current_scope.set_span(child_span)
+          result = yield(child_span)
+        end
+      ensure
+        current_scope.set_span(current_span)
+      end
+
+      result
+    end
+
     def capture_exception(exception, **options, &block)
-      check_argument_type!(exception, ::Exception)
+      if RUBY_PLATFORM == "java"
+        check_argument_type!(exception, ::Exception, ::Java::JavaLang::Throwable)
+      else
+        check_argument_type!(exception, ::Exception)
+      end
 
       return if Sentry.exception_captured?(exception)
 
@@ -101,6 +128,7 @@ module Sentry
 
       options[:hint] ||= {}
       options[:hint][:exception] = exception
+
       event = current_client.event_from_exception(exception, options[:hint])
 
       return unless event
@@ -128,6 +156,30 @@ module Sentry
       capture_event(event, **options, &block)
     end
 
+    def capture_check_in(slug, status, **options, &block)
+      check_argument_type!(slug, ::String)
+      check_argument_includes!(status, Sentry::CheckInEvent::VALID_STATUSES)
+
+      return unless current_client
+
+      options[:hint] ||= {}
+      options[:hint][:slug] = slug
+
+      event = current_client.event_from_check_in(
+        slug,
+        status,
+        options[:hint],
+        duration: options.delete(:duration),
+        monitor_config: options.delete(:monitor_config),
+        check_in_id: options.delete(:check_in_id)
+      )
+
+      return unless event
+
+      capture_event(event, **options, &block)
+      event.check_in_id
+    end
+
     def capture_event(event, **options, &block)
       check_argument_type!(event, Sentry::Event)
 
@@ -150,7 +202,7 @@ module Sentry
         configuration.log_debug(event.to_json_compatible)
       end
 
-      @last_event_id = event&.event_id unless event.is_a?(Sentry::TransactionEvent)
+      @last_event_id = event&.event_id if event.is_a?(Sentry::ErrorEvent)
       event
     end
 
@@ -199,6 +251,50 @@ module Sentry
       yield
     ensure
       end_session
+    end
+
+    def get_traceparent
+      return nil unless current_scope
+
+      current_scope.get_span&.to_sentry_trace ||
+        current_scope.propagation_context.get_traceparent
+    end
+
+    def get_baggage
+      return nil unless current_scope
+
+      current_scope.get_span&.to_baggage ||
+        current_scope.propagation_context.get_baggage&.serialize
+    end
+
+    def get_trace_propagation_headers
+      headers = {}
+
+      traceparent = get_traceparent
+      headers[SENTRY_TRACE_HEADER_NAME] = traceparent if traceparent
+
+      baggage = get_baggage
+      headers[BAGGAGE_HEADER_NAME] = baggage if baggage && !baggage.empty?
+
+      headers
+    end
+
+    def continue_trace(env, **options)
+      configure_scope { |s| s.generate_propagation_context(env) }
+
+      return nil unless configuration.tracing_enabled?
+
+      propagation_context = current_scope.propagation_context
+      return nil unless propagation_context.incoming_trace
+
+      Transaction.new(
+        hub: self,
+        trace_id: propagation_context.trace_id,
+        parent_span_id: propagation_context.parent_span_id,
+        parent_sampled: propagation_context.parent_sampled,
+        baggage: propagation_context.baggage,
+        **options
+      )
     end
 
     private

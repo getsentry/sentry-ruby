@@ -31,22 +31,24 @@ RSpec.describe Sentry::Rails::Tracing, type: :request do
       expect(event.dig(:contexts, :trace, :trace_id)).to eq(transaction.dig(:contexts, :trace, :trace_id))
 
       expect(transaction[:type]).to eq("transaction")
-      expect(transaction.dig(:contexts, :trace, :op)).to eq("rails.request")
+      expect(transaction.dig(:contexts, :trace, :op)).to eq("http.server")
       parent_span_id = transaction.dig(:contexts, :trace, :span_id)
       expect(transaction[:spans].count).to eq(2)
 
       first_span = transaction[:spans][0]
-      expect(first_span[:op]).to eq("db.sql.active_record")
-      expect(first_span[:description]).to eq("SELECT \"posts\".* FROM \"posts\"")
+      expect(first_span[:op]).to eq("view.process_action.action_controller")
+      expect(first_span[:description]).to eq("PostsController#index")
       expect(first_span[:parent_span_id]).to eq(parent_span_id)
-
-      # this is to make sure we calculate the timestamp in the correct scale (second instead of millisecond)
-      expect(first_span[:timestamp] - first_span[:start_timestamp]).to be_between(10.0 / 1_000_000, 10.0 / 1000)
+      expect(first_span[:status]).to eq("internal_error")
+      expect(first_span[:data].keys).to match_array(["http.response.status_code", :format, :method, :path, :params])
 
       second_span = transaction[:spans][1]
-      expect(second_span[:op]).to eq("process_action.action_controller")
-      expect(second_span[:description]).to eq("PostsController#index")
-      expect(second_span[:parent_span_id]).to eq(parent_span_id)
+      expect(second_span[:op]).to eq("db.sql.active_record")
+      expect(second_span[:description]).to eq("SELECT \"posts\".* FROM \"posts\"")
+      expect(second_span[:parent_span_id]).to eq(first_span[:span_id])
+
+      # this is to make sure we calculate the timestamp in the correct scale (second instead of millisecond)
+      expect(second_span[:timestamp] - second_span[:start_timestamp]).to be_between(10.0 / 1_000_000, 10.0 / 1000)
     end
 
     it "records transaction alone" do
@@ -60,27 +62,32 @@ RSpec.describe Sentry::Rails::Tracing, type: :request do
       transaction = transport.events.last.to_hash
 
       expect(transaction[:type]).to eq("transaction")
-      expect(transaction.dig(:contexts, :trace, :op)).to eq("rails.request")
+      expect(transaction.dig(:contexts, :trace, :op)).to eq("http.server")
       parent_span_id = transaction.dig(:contexts, :trace, :span_id)
       expect(transaction[:spans].count).to eq(3)
 
       first_span = transaction[:spans][0]
-      expect(first_span[:op]).to eq("db.sql.active_record")
-      expect(first_span[:description].squeeze("\s")).to eq(
+      expect(first_span[:data].keys).to match_array(["http.response.status_code", :format, :method, :path, :params])
+      expect(first_span[:op]).to eq("view.process_action.action_controller")
+      expect(first_span[:description]).to eq("PostsController#show")
+      expect(first_span[:parent_span_id]).to eq(parent_span_id)
+      expect(first_span[:status]).to eq("ok")
+
+
+      second_span = transaction[:spans][1]
+      expect(second_span[:op]).to eq("db.sql.active_record")
+      expect(second_span[:description].squeeze("\s")).to eq(
         'SELECT "posts".* FROM "posts" WHERE "posts"."id" = ? LIMIT ?'
       )
-      expect(first_span[:parent_span_id]).to eq(parent_span_id)
+      expect(second_span[:parent_span_id]).to eq(first_span[:span_id])
 
       # this is to make sure we calculate the timestamp in the correct scale (second instead of millisecond)
-      expect(first_span[:timestamp] - first_span[:start_timestamp]).to be_between(10.0 / 1_000_000, 10.0 / 1000)
+      expect(second_span[:timestamp] - second_span[:start_timestamp]).to be_between(10.0 / 1_000_000, 10.0 / 1000)
 
-      last_span = transaction[:spans][2]
-      expect(last_span[:data][:payload].keys).not_to include(:headers)
-      expect(last_span[:data][:payload].keys).not_to include(:request)
-      expect(last_span[:data][:payload].keys).not_to include(:response)
-      expect(last_span[:op]).to eq("process_action.action_controller")
-      expect(last_span[:description]).to eq("PostsController#show")
-      expect(last_span[:parent_span_id]).to eq(parent_span_id)
+      third_span = transaction[:spans][2]
+      expect(third_span[:op]).to eq("template.render_template.action_view")
+      expect(third_span[:description].squeeze("\s")).to eq("text template")
+      expect(third_span[:parent_span_id]).to eq(first_span[:span_id])
     end
 
     it "doesn't mess with custom instrumentations" do
@@ -91,28 +98,73 @@ RSpec.describe Sentry::Rails::Tracing, type: :request do
     end
   end
 
+  context "with instrumenter :otel" do
+    before do
+      make_basic_app do |config|
+        config.traces_sample_rate = 1.0
+        config.instrumenter = :otel
+      end
+    end
+
+    it "doesn't do any tracing" do
+      p = Post.create!
+      get "/posts/#{p.id}"
+
+      expect(response).to have_http_status(:ok)
+      expect(transport.events.count).to eq(0)
+    end
+  end
+
   context "with sprockets-rails" do
     let(:string_io) { StringIO.new }
     let(:logger) do
       ::Logger.new(string_io)
     end
 
-    before do
-      require "sprockets/railtie"
+    context "with default setup" do
+      before do
+        require "sprockets/railtie"
 
-      make_basic_app do |config, app|
-        app.config.public_file_server.enabled = true
-        config.traces_sample_rate = 1.0
-        config.logger = logger
+        make_basic_app do |config, app|
+          app.config.public_file_server.enabled = true
+          config.traces_sample_rate = 1.0
+          config.logger = logger
+        end
+      end
+
+      it "doesn't record requests for asset files" do
+        get "/assets/application-ad022df6f1289ec07a560bb6c9a227ecf7bdd5a5cace5e9a8cdbd50b454931fb.css"
+
+        expect(response).to have_http_status(:not_found)
+        expect(transport.events).to be_empty
+        expect(string_io.string).not_to match(/\[Tracing\] Starting <rails\.request>/)
       end
     end
 
-    it "doesn't record requests for asset files" do
-      get "/assets/application-ad022df6f1289ec07a560bb6c9a227ecf7bdd5a5cace5e9a8cdbd50b454931fb.css"
+    context "with custom assets_regexp config" do
+      before do
+        require "sprockets/railtie"
 
-      expect(response).to have_http_status(:not_found)
-      expect(transport.events).to be_empty
-      expect(string_io.string).not_to match(/\[Tracing\] Starting <rails\.request>/)
+        make_basic_app do |config, app|
+          app.config.public_file_server.enabled = true
+          config.traces_sample_rate = 1.0
+          config.logger = logger
+          config.rails.assets_regexp = %r(/foo/)
+        end
+      end
+
+      it "accepts customized asset path patterns" do
+        get "/foo/application-ad022df6f1289ec07a560bb6c9a227ecf7bdd5a5cace5e9a8cdbd50b454931fb.css"
+
+        expect(response).to have_http_status(:not_found)
+        expect(transport.events).to be_empty
+        expect(string_io.string).not_to match(/\[Tracing\] Starting <rails\.request>/)
+
+        get "/assets/application-ad022df6f1289ec07a560bb6c9a227ecf7bdd5a5cace5e9a8cdbd50b454931fb.css"
+
+        expect(response).to have_http_status(:not_found)
+        expect(transport.events.count).to eq(1)
+      end
     end
   end
 
@@ -152,11 +204,11 @@ RSpec.describe Sentry::Rails::Tracing, type: :request do
 
       expect(transaction[:type]).to eq("transaction")
       expect(transaction[:transaction]).to eq("PostsController#show")
-      second_span = transaction[:spans][2]
-      expect(second_span[:description]).to eq("PostsController#show")
+      first_span = transaction[:spans][0]
+      expect(first_span[:description]).to eq("PostsController#show")
     end
 
-    context "with sentry-trace header" do
+    context "with sentry-trace and baggage headers" do
       let(:external_transaction) do
         Sentry::Transaction.new(
           op: "pageload",
@@ -167,22 +219,40 @@ RSpec.describe Sentry::Rails::Tracing, type: :request do
         )
       end
 
+      let(:baggage) do
+        "other-vendor-value-1=foo;bar;baz, "\
+          "sentry-trace_id=771a43a4192642f0b136d5159a501700, "\
+          "sentry-public_key=49d0f7386ad645858ae85020e393bef3, "\
+          "sentry-sample_rate=0.01337, "\
+          "sentry-user_id=Am%C3%A9lie,  "\
+          "other-vendor-value-2=foo;bar;"
+      end
+
       it "inherits trace info from the transaction" do
         p = Post.create!
 
-        get "/posts/#{p.id}", headers: { "sentry-trace" => external_transaction.to_sentry_trace }
+        headers = { "sentry-trace" => external_transaction.to_sentry_trace, baggage: baggage }
+        get "/posts/#{p.id}", headers: headers
 
         transaction = transport.events.last
         expect(transaction.type).to eq("transaction")
         expect(transaction.timestamp).not_to be_nil
         expect(transaction.contexts.dig(:trace, :status)).to eq("ok")
-        expect(transaction.contexts.dig(:trace, :op)).to eq("rails.request")
+        expect(transaction.contexts.dig(:trace, :op)).to eq("http.server")
         expect(transaction.spans.count).to eq(3)
 
         # should inherit information from the external_transaction
         expect(transaction.contexts.dig(:trace, :trace_id)).to eq(external_transaction.trace_id)
         expect(transaction.contexts.dig(:trace, :parent_span_id)).to eq(external_transaction.span_id)
         expect(transaction.contexts.dig(:trace, :span_id)).not_to eq(external_transaction.span_id)
+
+        # should have baggage converted to DSC
+        expect(transaction.dynamic_sampling_context).to eq({
+          "sample_rate" => "0.01337",
+          "public_key" => "49d0f7386ad645858ae85020e393bef3",
+          "trace_id" => "771a43a4192642f0b136d5159a501700",
+          "user_id" => "Amélie"
+        })
       end
     end
   end

@@ -30,6 +30,7 @@ RSpec.describe Sentry::Event do
       expect(event.environment).to eq("test")
       expect(event.release).to eq("721e41770371db95eee98ca2707686226b993eda")
       expect(event.sdk).to eq("name" => "sentry.ruby", "version" => Sentry::VERSION)
+      expect(event.dynamic_sampling_context).to eq(nil)
     end
   end
 
@@ -224,8 +225,8 @@ RSpec.describe Sentry::Event do
       end
 
       it "returns the exception's message" do
-        expect(described_class.get_log_message(subject.to_hash)).to eq("Exception: error!")
-        expect(described_class.get_log_message(subject.to_json_compatible)).to eq("Exception: error!")
+        expect(described_class.get_log_message(subject.to_hash)).to include("Exception: error!")
+        expect(described_class.get_log_message(subject.to_json_compatible)).to match("Exception: error!")
       end
     end
     context "with message event" do

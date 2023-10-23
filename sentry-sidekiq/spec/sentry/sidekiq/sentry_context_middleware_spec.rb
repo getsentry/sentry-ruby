@@ -22,7 +22,7 @@ RSpec.describe Sentry::Sidekiq::SentryContextServerMiddleware do
     execute_worker(processor, SadWorker)
 
     expect(transport.events.count).to eq(1)
-    event = transport.events.first
+    event = transport.events[0]
     expect(event.user).to eq(user)
   end
 
@@ -36,7 +36,7 @@ RSpec.describe Sentry::Sidekiq::SentryContextServerMiddleware do
       execute_worker(processor, HappyWorker)
 
       expect(transport.events.count).to eq(1)
-      transaction = transport.events.first
+      transaction = transport.events[0]
       expect(transaction).not_to be_nil
       expect(transaction.user).to eq(user)
     end
@@ -45,7 +45,7 @@ RSpec.describe Sentry::Sidekiq::SentryContextServerMiddleware do
       execute_worker(processor, SadWorker)
 
       expect(transport.events.count).to eq(2)
-      transaction = transport.events.first
+      transaction = transport.events[0]
       expect(transaction.user).to eq(user)
       event = transport.events.last
       expect(event.user).to eq(user)
@@ -57,14 +57,15 @@ RSpec.describe Sentry::Sidekiq::SentryContextServerMiddleware do
       expect(event.tags.keys).to include(:"sidekiq.marvel", :"sidekiq.dc")
     end
 
-    context "with sentry_trace" do
+    context "with trace_propagation_headers" do
       let(:parent_transaction) { Sentry.start_transaction(op: "sidekiq") }
 
       it "starts the transaction from it" do
-        execute_worker(processor, HappyWorker, sentry_trace: parent_transaction.to_sentry_trace)
+        trace_propagation_headers = { "sentry-trace" => parent_transaction.to_sentry_trace }
+        execute_worker(processor, HappyWorker, trace_propagation_headers: trace_propagation_headers)
 
         expect(transport.events.count).to eq(1)
-        transaction = transport.events.first
+        transaction = transport.events[0]
         expect(transaction).not_to be_nil
         expect(transaction.contexts.dig(:trace, :trace_id)).to eq(parent_transaction.trace_id)
       end
@@ -93,12 +94,11 @@ RSpec.describe Sentry::Sidekiq::SentryContextClientMiddleware do
     end
   end
 
-  it "does not add user or sentry_trace to the job if they're absence in the current scope" do
+  it "does not add user to the job if they're absent in the current scope" do
     client.push('queue' => 'default', 'class' => HappyWorker, 'args' => [])
 
     expect(queue.size).to be(1)
     expect(queue.first["sentry_user"]).to be_nil
-    expect(queue.first["sentry_trace"]).to be_nil
   end
 
   describe "with user" do
@@ -121,11 +121,32 @@ RSpec.describe Sentry::Sidekiq::SentryContextClientMiddleware do
       Sentry.get_current_scope.set_span(transaction)
     end
 
-    it "sets user of the current scope to the job" do
+    it "sets the correct trace_propagation_headers linked to the transaction" do
       client.push('queue' => 'default', 'class' => HappyWorker, 'args' => [])
 
       expect(queue.size).to be(1)
-      expect(queue.first["sentry_trace"]).to eq(transaction.to_sentry_trace)
+      headers = queue.first["trace_propagation_headers"]
+      expect(headers["sentry-trace"]).to eq(transaction.to_sentry_trace)
+      expect(headers["baggage"]).to eq(transaction.to_baggage)
+    end
+
+    # sidekiq pushes the same job to the queue again from the server for schedules and retries
+    it "keeps the same trace_propagation_headers linked to the transaction when queued multiple times" do
+      client.push('queue' => 'default', 'class' => HappyWorker, 'args' => [])
+
+      # push without span transaction to simulate pushing on the server
+      Sentry.get_current_scope.clear
+      client.push(queue.first.item)
+
+      q = queue.to_a
+      expect(q.size).to be(2)
+      first_headers = q[0]["trace_propagation_headers"]
+      expect(first_headers["sentry-trace"]).to eq(transaction.to_sentry_trace)
+      expect(first_headers["baggage"]).to eq(transaction.to_baggage)
+
+      second_headers = q[1]["trace_propagation_headers"]
+      expect(second_headers["sentry-trace"]).to eq(transaction.to_sentry_trace)
+      expect(second_headers["baggage"]).to eq(transaction.to_baggage)
     end
   end
 end

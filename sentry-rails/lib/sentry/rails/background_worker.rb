@@ -3,8 +3,11 @@ module Sentry
     def _perform(&block)
       block.call
     ensure
-      # make sure the background worker returns AR connection if it accidentally acquire one during serialization
-      ActiveRecord::Base.connection_pool.release_connection
+      # some applications have partial or even no AR connection
+      if ActiveRecord::Base.connected?
+        # make sure the background worker returns AR connection if it accidentally acquire one during serialization
+        ActiveRecord::Base.connection_pool.release_connection
+      end
     end
   end
 end

@@ -16,16 +16,18 @@ module Sentry
       end
 
       class SentryReporter
+        OP_NAME = "queue.active_job".freeze
+
         class << self
           def record(job, &block)
             Sentry.with_scope do |scope|
               begin
-                scope.set_transaction_name(job.class.name)
+                scope.set_transaction_name(job.class.name, source: :task)
                 transaction =
                   if job.is_a?(::Sentry::SendEventJob)
                     nil
                   else
-                    Sentry.start_transaction(name: scope.transaction_name, op: "active_job")
+                    Sentry.start_transaction(name: scope.transaction_name, source: scope.transaction_source, op: OP_NAME)
                   end
 
                 scope.set_span(transaction) if transaction

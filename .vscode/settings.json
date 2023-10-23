@@ -1,0 +1,8 @@
+{
+  "[ruby]": {
+    "editor.tabSize": 2,
+    "editor.insertSpaces": true,
+    // ruby-lsp's formatOnSave uses syntax-tree's rules, which may not be the rules we want
+    "editor.formatOnSave": false,
+  },
+}

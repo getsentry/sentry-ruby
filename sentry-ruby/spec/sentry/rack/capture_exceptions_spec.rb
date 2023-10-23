@@ -1,6 +1,6 @@
-return unless defined?(Rack)
-
 require 'spec_helper'
+
+return unless defined?(Rack)
 
 RSpec.describe Sentry::Rack::CaptureExceptions, rack: true do
   let(:exception) { ZeroDivisionError.new("divided by 0") }
@@ -74,7 +74,7 @@ RSpec.describe Sentry::Rack::CaptureExceptions, rack: true do
 
     it 'passes rack/lint' do
       app = proc do
-        [200, { 'Content-Type' => 'text/plain' }, ['OK']]
+        [200, { 'content-type' => 'text/plain' }, ['OK']]
       end
 
       stack = described_class.new(Rack::Lint.new(app))
@@ -82,10 +82,10 @@ RSpec.describe Sentry::Rack::CaptureExceptions, rack: true do
       expect(env.key?("sentry.error_event_id")).to eq(false)
     end
 
-    context "with config.capture_exception_frame_locals = true" do
+    context "with config.include_local_variables = true" do
       before do
         perform_basic_setup do |config|
-          config.capture_exception_frame_locals = true
+          config.include_local_variables = true
         end
       end
 
@@ -237,6 +237,7 @@ RSpec.describe Sentry::Rack::CaptureExceptions, rack: true do
           hub: Sentry.get_current_hub
         )
       end
+
       let(:stack) do
         described_class.new(
           ->(_) do
@@ -247,9 +248,11 @@ RSpec.describe Sentry::Rack::CaptureExceptions, rack: true do
 
       def verify_transaction_attributes(transaction)
         expect(transaction.type).to eq("transaction")
+        expect(transaction.transaction).to eq("/test")
+        expect(transaction.transaction_info).to eq({ source: :url })
         expect(transaction.timestamp).not_to be_nil
         expect(transaction.contexts.dig(:trace, :status)).to eq("ok")
-        expect(transaction.contexts.dig(:trace, :op)).to eq("rack.request")
+        expect(transaction.contexts.dig(:trace, :op)).to eq("http.server")
         expect(transaction.spans.count).to eq(0)
       end
 
@@ -381,6 +384,36 @@ RSpec.describe Sentry::Rack::CaptureExceptions, rack: true do
           expect(sampling_context_env).to eq(env)
         end
       end
+
+      context "when the baggage header is sent" do
+        let(:trace) do
+          "#{external_transaction.trace_id}-#{external_transaction.span_id}-1"
+        end
+
+        before do
+          env["HTTP_BAGGAGE"] = "other-vendor-value-1=foo;bar;baz, "\
+            "sentry-trace_id=771a43a4192642f0b136d5159a501700, "\
+            "sentry-public_key=49d0f7386ad645858ae85020e393bef3, "\
+            "sentry-sample_rate=0.01337, "\
+            "sentry-user_id=Am%C3%A9lie,  "\
+            "other-vendor-value-2=foo;bar;"
+        end
+
+        it "has the dynamic_sampling_context on the TransactionEvent" do
+          expect(Sentry::Transaction).to receive(:new).
+            with(hash_including(:baggage)).
+            and_call_original
+
+          stack.call(env)
+
+          expect(transaction.dynamic_sampling_context).to eq({
+            "sample_rate" => "0.01337",
+            "public_key" => "49d0f7386ad645858ae85020e393bef3",
+            "trace_id" => "771a43a4192642f0b136d5159a501700",
+            "user_id" => "Amélie"
+          })
+        end
+      end
     end
 
     context "when the transaction is sampled" do
@@ -399,9 +432,11 @@ RSpec.describe Sentry::Rack::CaptureExceptions, rack: true do
 
         transaction = last_sentry_event
         expect(transaction.type).to eq("transaction")
+        expect(transaction.transaction).to eq("/test")
+        expect(transaction.transaction_info).to eq({ source: :url })
         expect(transaction.timestamp).not_to be_nil
         expect(transaction.contexts.dig(:trace, :status)).to eq("ok")
-        expect(transaction.contexts.dig(:trace, :op)).to eq("rack.request")
+        expect(transaction.contexts.dig(:trace, :op)).to eq("http.server")
         expect(transaction.spans.count).to eq(0)
       end
 
@@ -422,8 +457,10 @@ RSpec.describe Sentry::Rack::CaptureExceptions, rack: true do
           transaction = last_sentry_event
           expect(transaction.type).to eq("transaction")
           expect(transaction.timestamp).not_to be_nil
+          expect(transaction.transaction).to eq("/test")
+          expect(transaction.transaction_info).to eq({ source: :url })
           expect(transaction.contexts.dig(:trace, :status)).to eq("ok")
-          expect(transaction.contexts.dig(:trace, :op)).to eq("rack.request")
+          expect(transaction.contexts.dig(:trace, :op)).to eq("http.server")
           expect(transaction.spans.count).to eq(2)
 
           first_span = transaction.spans.first
@@ -481,7 +518,7 @@ RSpec.describe Sentry::Rack::CaptureExceptions, rack: true do
         expect(transaction.type).to eq("transaction")
         expect(transaction.timestamp).not_to be_nil
         expect(transaction.contexts.dig(:trace, :status)).to eq("internal_error")
-        expect(transaction.contexts.dig(:trace, :op)).to eq("rack.request")
+        expect(transaction.contexts.dig(:trace, :op)).to eq("http.server")
         expect(transaction.spans.count).to eq(0)
       end
     end
@@ -525,6 +562,34 @@ RSpec.describe Sentry::Rack::CaptureExceptions, rack: true do
           expect(sentry_events).to be_empty
         end
       end
+    end
+  end
+
+  describe "tracing without performance" do
+    let(:incoming_prop_context) { Sentry::PropagationContext.new(Sentry::Scope.new) }
+    let(:env) do
+      {
+        "HTTP_SENTRY_TRACE" => incoming_prop_context.get_traceparent,
+        "HTTP_BAGGAGE" => incoming_prop_context.get_baggage.serialize
+      }
+    end
+
+    let(:stack) do
+      app = ->(_e) { raise exception }
+      described_class.new(app)
+    end
+
+    before { perform_basic_setup }
+
+    it "captures exception with correct DSC and trace context" do
+      expect { stack.call(env) }.to raise_error(ZeroDivisionError)
+
+      trace_context = last_sentry_event.contexts[:trace]
+      expect(trace_context[:trace_id]).to eq(incoming_prop_context.trace_id)
+      expect(trace_context[:parent_span_id]).to eq(incoming_prop_context.span_id)
+      expect(trace_context[:span_id].length).to eq(16)
+
+      expect(last_sentry_event.dynamic_sampling_context).to eq(incoming_prop_context.get_dynamic_sampling_context)
     end
   end
 
@@ -599,6 +664,77 @@ RSpec.describe Sentry::Rack::CaptureExceptions, rack: true do
           expect(item.type).to eq('sessions')
           expect(item.payload[:attrs]).to eq({ release: 'test-release', environment: 'test' })
           expect(item.payload[:aggregates].first).to eq({ exited: 10, errored: 2, started: now_bucket.iso8601 })
+        end
+      end
+    end
+  end
+
+  if defined?(StackProf)
+    describe "profiling" do
+      context "when profiling is enabled" do
+        before do
+          perform_basic_setup do |config|
+            config.traces_sample_rate = 1.0
+            config.profiles_sample_rate = 1.0
+            config.release = "test-release"
+          end
+        end
+
+        let(:stackprof_results) do
+          data = StackProf::Report.from_file('spec/support/stackprof_results.json').data
+          # relative dir differs on each machine
+          data[:frames].each { |_id, fra| fra[:file].gsub!(/<dir>/, Dir.pwd) }
+          data
+        end
+
+        before do
+          StackProf.stop
+          allow(StackProf).to receive(:results).and_return(stackprof_results)
+        end
+
+        it "collects a profile" do
+          app = ->(_) do
+            [200, {}, "ok"]
+          end
+
+          stack = described_class.new(app)
+          stack.call(env)
+          event = last_sentry_event
+
+          profile = event.profile
+          expect(profile).not_to be_nil
+
+          expect(profile[:event_id]).not_to be_nil
+          expect(profile[:platform]).to eq("ruby")
+          expect(profile[:version]).to eq("1")
+          expect(profile[:environment]).to eq("development")
+          expect(profile[:release]).to eq("test-release")
+          expect { Time.parse(profile[:timestamp]) }.not_to raise_error
+
+          expect(profile[:device]).to include(:architecture)
+          expect(profile[:os]).to include(:name, :version)
+          expect(profile[:runtime]).to include(:name, :version)
+
+          expect(profile[:transaction]).to include(:id, :name, :trace_id, :active_thead_id)
+          expect(profile[:transaction][:id]).to eq(event.event_id)
+          expect(profile[:transaction][:name]).to eq(event.transaction)
+          expect(profile[:transaction][:trace_id]).to eq(event.contexts[:trace][:trace_id])
+          expect(profile[:transaction][:active_thead_id]).to eq("0")
+
+          # detailed checking of content is done in profiler_spec,
+          # just check basic structure here
+          frames = profile[:profile][:frames]
+          expect(frames).to be_a(Array)
+          expect(frames.first).to include(:function, :filename, :abs_path, :in_app)
+
+          stacks = profile[:profile][:stacks]
+          expect(stacks).to be_a(Array)
+          expect(stacks.first).to be_a(Array)
+          expect(stacks.first.first).to be_a(Integer)
+
+          samples = profile[:profile][:samples]
+          expect(samples).to be_a(Array)
+          expect(samples.first).to include(:stack_id, :thread_id, :elapsed_since_start_ns)
         end
       end
     end

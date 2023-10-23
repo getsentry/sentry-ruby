@@ -3,7 +3,7 @@
 module Sentry
   # @api private
   class Redis
-    OP_NAME = "db.redis.command"
+    OP_NAME = "db.redis"
     LOGGER_NAME = :redis_logger
 
     def initialize(commands, host, port, db)
@@ -13,9 +13,17 @@ module Sentry
     def instrument
       return yield unless Sentry.initialized?
 
-      record_span do
+      Sentry.with_child_span(op: OP_NAME, start_timestamp: Sentry.utc_now.to_f) do |span|
         yield.tap do
           record_breadcrumb
+
+          if span
+            span.set_description(commands_description)
+            span.set_data(Span::DataConventions::DB_SYSTEM, "redis")
+            span.set_data(Span::DataConventions::DB_NAME, db)
+            span.set_data(Span::DataConventions::SERVER_ADDRESS, host)
+            span.set_data(Span::DataConventions::SERVER_PORT, port)
+          end
         end
       end
     end
@@ -24,19 +32,8 @@ module Sentry
 
     attr_reader :commands, :host, :port, :db
 
-    def record_span
-      return yield unless (transaction = Sentry.get_current_scope.get_transaction) && transaction.sampled
-
-      sentry_span = transaction.start_child(op: OP_NAME, start_timestamp: Sentry.utc_now.to_f)
-
-      yield.tap do
-        sentry_span.set_description(commands_description)
-        sentry_span.set_data(:server, server_description)
-        sentry_span.set_timestamp(Sentry.utc_now.to_f)
-      end
-    end
-
     def record_breadcrumb
+      return unless Sentry.initialized?
       return unless Sentry.configuration.breadcrumbs_logger.include?(LOGGER_NAME)
 
       Sentry.add_breadcrumb(
@@ -61,10 +58,16 @@ module Sentry
     def parsed_commands
       commands.map do |statement|
         command, key, *arguments = statement
+        command_set = { command: command.to_s.upcase }
+        command_set[:key] = key if Utils::EncodingHelper.valid_utf_8?(key)
 
-        { command: command.to_s.upcase, key: key }.tap do |command_set|
-          command_set[:arguments] = arguments.join(" ") if Sentry.configuration.send_default_pii
+        if Sentry.configuration.send_default_pii
+          command_set[:arguments] = arguments
+                                    .select { |a| Utils::EncodingHelper.valid_utf_8?(a) }
+                                    .join(" ")
         end
+
+        command_set
       end
     end
 
@@ -72,19 +75,32 @@ module Sentry
       "#{host}:#{port}/#{db}"
     end
 
-    module Client
+    module OldClientPatch
       def logging(commands, &block)
-        Sentry::Redis.new(commands, host, port, db).instrument do
-          super
-        end
+        Sentry::Redis.new(commands, host, port, db).instrument { super }
+      end
+    end
+
+    module GlobalRedisInstrumentation
+      def call(command, redis_config)
+        Sentry::Redis
+          .new([command], redis_config.host, redis_config.port, redis_config.db)
+          .instrument { super }
+      end
+
+      def call_pipelined(commands, redis_config)
+        Sentry::Redis
+          .new(commands, redis_config.host, redis_config.port, redis_config.db)
+          .instrument { super }
       end
     end
   end
 end
 
 if defined?(::Redis::Client)
-  Sentry.register_patch do
-    patch = Sentry::Redis::Client
-    Redis::Client.prepend(patch) unless Redis::Client.ancestors.include?(patch)
+  if Gem::Version.new(::Redis::VERSION) < Gem::Version.new("5.0")
+    Sentry.register_patch(Sentry::Redis::OldClientPatch, ::Redis::Client)
+  elsif defined?(RedisClient)
+    RedisClient.register(Sentry::Redis::GlobalRedisInstrumentation)
   end
 end

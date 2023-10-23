@@ -5,7 +5,7 @@ module Sentry
   class Envelope
     class Item
       STACKTRACE_FRAME_LIMIT_ON_OVERSIZED_PAYLOAD = 500
-      MAX_SERIALIZED_PAYLOAD_SIZE = 1024 * 200
+      MAX_SERIALIZED_PAYLOAD_SIZE = 1024 * 1000
 
       attr_accessor :headers, :payload
 
@@ -19,10 +19,7 @@ module Sentry
       end
 
       def to_s
-        <<~ITEM
-          #{JSON.generate(@headers)}
-          #{JSON.generate(@payload)}
-        ITEM
+        [JSON.generate(@headers), JSON.generate(@payload)].join("\n")
       end
 
       def serialize

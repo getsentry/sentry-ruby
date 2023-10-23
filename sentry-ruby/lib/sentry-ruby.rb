@@ -8,17 +8,20 @@ require "sentry/version"
 require "sentry/exceptions"
 require "sentry/core_ext/object/deep_dup"
 require "sentry/utils/argument_checking_helper"
+require "sentry/utils/encoding_helper"
 require "sentry/utils/logging_helper"
 require "sentry/configuration"
 require "sentry/logger"
 require "sentry/event"
 require "sentry/error_event"
 require "sentry/transaction_event"
+require "sentry/check_in_event"
 require "sentry/span"
 require "sentry/transaction"
 require "sentry/hub"
 require "sentry/background_worker"
 require "sentry/session_flusher"
+require "sentry/cron/monitor_check_ins"
 
 [
   "sentry/rake",
@@ -38,6 +41,8 @@ module Sentry
   LOGGER_PROGNAME = "sentry".freeze
 
   SENTRY_TRACE_HEADER_NAME = "sentry-trace".freeze
+
+  BAGGAGE_HEADER_NAME = "baggage".freeze
 
   THREAD_LOCAL = :sentry_hub
 
@@ -70,8 +75,18 @@ module Sentry
     ##### Patch Registration #####
 
     # @!visibility private
-    def register_patch(&block)
-      registered_patches << block
+    def register_patch(patch = nil, target = nil, &block)
+      if patch && block
+        raise ArgumentError.new("Please provide either a patch and its target OR a block, but not both")
+      end
+
+      if block
+        registered_patches << block
+      else
+        registered_patches << proc do
+          target.send(:prepend, patch) unless target.ancestors.include?(patch)
+        end
+      end
     end
 
     # @!visibility private
@@ -209,7 +224,7 @@ module Sentry
                            nil
                          end
 
-      if config.capture_exception_frame_locals
+      if config.include_local_variables
         exception_locals_tp.enable
       end
 
@@ -231,7 +246,7 @@ module Sentry
         @session_flusher = nil
       end
 
-      if configuration&.capture_exception_frame_locals
+      if configuration&.include_local_variables
         exception_locals_tp.disable
       end
 
@@ -348,7 +363,7 @@ module Sentry
     # @yieldparam scope [Scope]
     # @return [void]
     def with_scope(&block)
-      return unless initialized?
+      return yield unless initialized?
       get_current_hub.with_scope(&block)
     end
 
@@ -417,6 +432,24 @@ module Sentry
       get_current_hub.capture_event(event)
     end
 
+    # Captures a check-in and sends it to Sentry via the currently active hub.
+    #
+    # @param slug [String] identifier of this monitor
+    # @param status [Symbol] status of this check-in, one of {CheckInEvent::VALID_STATUSES}
+    #
+    # @param [Hash] options extra check-in options
+    # @option options [String] check_in_id for updating the status of an existing monitor
+    # @option options [Integer] duration seconds elapsed since this monitor started
+    # @option options [Cron::MonitorConfig] monitor_config configuration for this monitor
+    #
+    # @yieldparam scope [Scope]
+    #
+    # @return [String, nil] The {CheckInEvent#check_in_id} to use for later updates on the same slug
+    def capture_check_in(slug, status, **options, &block)
+      return unless initialized?
+      get_current_hub.capture_check_in(slug, status, **options, &block)
+    end
+
     # Takes or initializes a new Sentry::Transaction and makes a sampling decision for it.
     #
     # @return [Transaction, nil]
@@ -439,22 +472,8 @@ module Sentry
     #   end
     #
     def with_child_span(**attributes, &block)
-      if Sentry.initialized? && current_span = get_current_scope.get_span
-        result = nil
-
-        begin
-          current_span.with_child_span(**attributes) do |child_span|
-            get_current_scope.set_span(child_span)
-            result = yield(child_span)
-          end
-        ensure
-          get_current_scope.set_span(current_span)
-        end
-
-        result
-      else
-        yield(nil)
-      end
+      return yield(nil) unless Sentry.initialized?
+      get_current_hub.with_child_span(**attributes, &block)
     end
 
     # Returns the id of the lastly reported Sentry::Event.
@@ -471,6 +490,59 @@ module Sentry
     def exception_captured?(exc)
       return false unless initialized?
       !!exc.instance_variable_get(CAPTURED_SIGNATURE)
+    end
+
+    # Add a global event processor [Proc].
+    # These run before scope event processors.
+    #
+    # @yieldparam event [Event]
+    # @yieldparam hint [Hash, nil]
+    # @return [void]
+    #
+    # @example
+    #   Sentry.add_global_event_processor do |event, hint|
+    #     event.tags = { foo: 42 }
+    #     event
+    #   end
+    #
+    def add_global_event_processor(&block)
+      Scope.add_global_event_processor(&block)
+    end
+
+    # Returns the traceparent (sentry-trace) header for distributed tracing.
+    # Can be either from the currently active span or the propagation context.
+    #
+    # @return [String, nil]
+    def get_traceparent
+      return nil unless initialized?
+      get_current_hub.get_traceparent
+    end
+
+    # Returns the baggage header for distributed tracing.
+    # Can be either from the currently active span or the propagation context.
+    #
+    # @return [String, nil]
+    def get_baggage
+      return nil unless initialized?
+      get_current_hub.get_baggage
+    end
+
+    # Returns the a Hash containing sentry-trace and baggage.
+    # Can be either from the currently active span or the propagation context.
+    #
+    # @return [Hash, nil]
+    def get_trace_propagation_headers
+      return nil unless initialized?
+      get_current_hub.get_trace_propagation_headers
+    end
+
+    # Continue an incoming trace from a rack env like hash.
+    #
+    # @param env [Hash]
+    # @return [Transaction, nil]
+    def continue_trace(env, **options)
+      return nil unless initialized?
+      get_current_hub.continue_trace(env, **options)
     end
 
     ##### Helpers #####
@@ -503,3 +575,4 @@ end
 # patches
 require "sentry/net/http"
 require "sentry/redis"
+require "sentry/puma"

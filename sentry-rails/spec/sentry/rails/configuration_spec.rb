@@ -23,12 +23,12 @@ RSpec.describe Sentry::Rails::Configuration do
     class MySubscriber; end
 
     it "returns the default subscribers" do
-      expect(subject.tracing_subscribers.size).to eq(4)
+      expect(subject.tracing_subscribers.size).to eq(3)
     end
 
     it "is customizable" do
       subject.tracing_subscribers << MySubscriber
-      expect(subject.tracing_subscribers.size).to eq(5)
+      expect(subject.tracing_subscribers.size).to eq(4)
     end
 
     it "is replaceable" do

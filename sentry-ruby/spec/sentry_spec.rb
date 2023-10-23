@@ -1,3 +1,5 @@
+require "spec_helper"
+
 RSpec.describe Sentry do
   before do
     perform_basic_setup
@@ -190,12 +192,20 @@ RSpec.describe Sentry do
     it "doesn't do anything if the exception is excluded" do
       Sentry.get_current_client.configuration.excluded_exceptions = ["ZeroDivisionError"]
 
-      result = described_class.capture_exception(exception)
-
-      expect(result).to eq(nil)
+      expect do
+        described_class.capture_exception(exception)
+      end.to change { sentry_events.count }.by(0)
     end
 
-    context "with capture_exception_frame_locals = false (default)" do
+    it "passes ignore_exclusions hint" do
+      Sentry.get_current_client.configuration.excluded_exceptions = ["ZeroDivisionError"]
+
+      expect do
+        described_class.capture_exception(exception, hint: { ignore_exclusions: true })
+      end.to change { sentry_events.count }.by(1)
+    end
+
+    context "with include_local_variables = false (default)" do
       it "doens't capture local variables" do
         begin
           1/0
@@ -209,10 +219,10 @@ RSpec.describe Sentry do
       end
     end
 
-    context "with capture_exception_frame_locals = true" do
+    context "with include_local_variables = true" do
       before do
         perform_basic_setup do |config|
-          config.capture_exception_frame_locals = true
+          config.include_local_variables = true
         end
       end
 
@@ -274,6 +284,7 @@ RSpec.describe Sentry do
     end
   end
 
+
   describe ".start_transaction" do
     describe "sampler example" do
       before do
@@ -320,18 +331,18 @@ RSpec.describe Sentry do
         unsampled_trace = "d298e6b033f84659928a2267c3879aaa-2a35b8e9a1b974f4-0"
         not_sampled_trace = "d298e6b033f84659928a2267c3879aaa-2a35b8e9a1b974f4-"
 
-        transaction = Sentry::Transaction.from_sentry_trace(sampled_trace, op: "rack.request", name: "/payment")
+        transaction = Sentry.continue_trace({ "sentry-trace" => sampled_trace }, op: "rack.request", name: "/payment")
         described_class.start_transaction(transaction: transaction)
 
         expect(transaction.sampled).to eq(true)
 
-        transaction = Sentry::Transaction.from_sentry_trace(unsampled_trace, op: "rack.request", name: "/payment")
+        transaction = Sentry.continue_trace({ "sentry-trace" => unsampled_trace }, op: "rack.request", name: "/payment")
         described_class.start_transaction(transaction: transaction)
 
         expect(transaction.sampled).to eq(false)
 
         allow(Random).to receive(:rand).and_return(0.4)
-        transaction = Sentry::Transaction.from_sentry_trace(not_sampled_trace, op: "rack.request", name: "/payment")
+        transaction = Sentry.continue_trace({ "sentry-trace" => not_sampled_trace }, op: "rack.request", name: "/payment")
         described_class.start_transaction(transaction: transaction)
 
         expect(transaction.sampled).to eq(true)
@@ -469,6 +480,24 @@ RSpec.describe Sentry do
         expect(described_class.start_transaction(op: "foo")).to eq(nil)
       end
     end
+
+    context "when instrumenter is not :sentry" do
+      before do
+        perform_basic_setup do |config|
+          config.traces_sample_rate = 1.0
+          config.instrumenter = :otel
+        end
+      end
+
+      it "noops without explicit instrumenter" do
+        expect(described_class.start_transaction(op: "foo")).to eq(nil)
+      end
+
+      it "creates transaction with explicit instrumenter" do
+        transaction = described_class.start_transaction(op: "foo", instrumenter: :otel)
+        expect(transaction).to be_a(Sentry::Transaction)
+      end
+    end
   end
 
   describe ".with_child_span" do
@@ -494,7 +523,10 @@ RSpec.describe Sentry do
     end
 
     context "when the current span is present" do
-      let(:parent_span) { Sentry::Span.new(op: "parent") }
+      let(:parent_span) do
+        transaction = Sentry::Transaction.new(op: "foo", hub: Sentry.get_current_hub)
+        Sentry::Span.new(op: "parent", transaction: transaction)
+      end
 
       before do
         described_class.get_current_scope.set_span(parent_span)
@@ -511,6 +543,45 @@ RSpec.describe Sentry do
         expect(result).to eq("foobar")
         expect(child_span.parent_span_id).to eq(parent_span.span_id)
         expect(child_span.timestamp).to be_a(Float)
+      end
+
+      context "when instrumenter is not :sentry" do
+        before do
+          perform_basic_setup do |config|
+            config.traces_sample_rate = 1.0
+            config.instrumenter = :otel
+          end
+
+          described_class.get_current_scope.set_span(parent_span)
+        end
+
+        it "yields block with nil without explicit instrumenter" do
+          span = nil
+          executed = false
+
+          result = described_class.with_child_span do |child_span|
+            span = child_span
+            executed = true
+            "foobar"
+          end
+
+          expect(result).to eq("foobar")
+          expect(span).to eq(nil)
+          expect(executed).to eq(true)
+        end
+
+        it "records the child span with explicit instrumenter" do
+          child_span = nil
+
+          result = described_class.with_child_span(instrumenter: :otel, op: "child") do |span|
+            child_span = span
+            "foobar"
+          end
+
+          expect(result).to eq("foobar")
+          expect(child_span.parent_span_id).to eq(parent_span.span_id)
+          expect(child_span.timestamp).to be_a(Float)
+        end
       end
     end
   end
@@ -593,6 +664,118 @@ RSpec.describe Sentry do
       described_class.capture_exception(exception)
 
       expect(described_class.exception_captured?(exception)).to eq(true)
+    end
+  end
+
+  describe ".get_traceparent" do
+    it "returns a valid traceparent header from scope propagation context" do
+      traceparent = described_class.get_traceparent
+      propagation_context = described_class.get_current_scope.propagation_context
+
+      expect(traceparent).to match(Sentry::PropagationContext::SENTRY_TRACE_REGEXP)
+      expect(traceparent).to eq("#{propagation_context.trace_id}-#{propagation_context.span_id}")
+    end
+
+    it "returns a valid traceparent header from scope current span" do
+      transaction = Sentry::Transaction.new(op: "foo", hub: Sentry.get_current_hub, sampled: true)
+      span = transaction.start_child(op: "parent")
+      described_class.get_current_scope.set_span(span)
+
+      traceparent = described_class.get_traceparent
+
+      expect(traceparent).to match(Sentry::PropagationContext::SENTRY_TRACE_REGEXP)
+      expect(traceparent).to eq("#{span.trace_id}-#{span.span_id}-1")
+    end
+  end
+
+  describe ".get_baggage" do
+    it "returns a valid baggage header from scope propagation context" do
+      baggage = described_class.get_baggage
+      propagation_context = described_class.get_current_scope.propagation_context
+
+      expect(baggage).to eq("sentry-trace_id=#{propagation_context.trace_id},sentry-environment=development,sentry-public_key=12345")
+    end
+
+    it "returns a valid baggage header from scope current span" do
+      transaction = Sentry::Transaction.new(op: "foo", hub: Sentry.get_current_hub, sampled: true)
+      span = transaction.start_child(op: "parent")
+      described_class.get_current_scope.set_span(span)
+
+      baggage = described_class.get_baggage
+
+      expect(baggage).to eq("sentry-trace_id=#{span.trace_id},sentry-sampled=true,sentry-environment=development,sentry-public_key=12345")
+    end
+  end
+
+  describe ".get_trace_propagation_headers" do
+    it "returns a Hash of sentry-trace and baggage" do
+      expect(described_class.get_trace_propagation_headers).to eq({
+        "sentry-trace" => described_class.get_traceparent,
+        "baggage" => described_class.get_baggage
+      })
+    end
+  end
+
+  describe ".continue_trace" do
+
+    context "without incoming sentry trace" do
+      let(:env) { { "HTTP_FOO" => "bar" } }
+
+      it "returns nil with tracing disabled" do
+        expect(described_class.continue_trace(env)).to eq(nil)
+      end
+
+      it "returns nil with tracing enabled" do
+        Sentry.configuration.traces_sample_rate = 1.0
+        expect(described_class.continue_trace(env)).to eq(nil)
+      end
+
+      it "sets new propagation context on scope" do
+        expect(Sentry.get_current_scope).to receive(:generate_propagation_context).and_call_original
+        described_class.continue_trace(env)
+
+        propagation_context = Sentry.get_current_scope.propagation_context
+        expect(propagation_context.incoming_trace).to eq(false)
+      end
+    end
+
+    context "with incoming sentry trace" do
+      let(:incoming_prop_context) { Sentry::PropagationContext.new(Sentry::Scope.new) }
+      let(:env) do
+        {
+          "HTTP_SENTRY_TRACE" => incoming_prop_context.get_traceparent,
+          "HTTP_BAGGAGE" => incoming_prop_context.get_baggage.serialize
+        }
+      end
+
+      it "returns nil with tracing disabled" do
+        expect(described_class.continue_trace(env)).to eq(nil)
+      end
+
+      it "sets new propagation context from env on scope" do
+        expect(Sentry.get_current_scope).to receive(:generate_propagation_context).and_call_original
+        described_class.continue_trace(env)
+
+        propagation_context = Sentry.get_current_scope.propagation_context
+        expect(propagation_context.incoming_trace).to eq(true)
+        expect(propagation_context.trace_id).to eq(incoming_prop_context.trace_id)
+        expect(propagation_context.parent_span_id).to eq(incoming_prop_context.span_id)
+        expect(propagation_context.parent_sampled).to eq(nil)
+        expect(propagation_context.baggage.items).to eq(incoming_prop_context.get_baggage.items)
+        expect(propagation_context.baggage.mutable).to eq(false)
+      end
+
+      it "returns new Transaction with tracing enabled" do
+        Sentry.configuration.traces_sample_rate = 1.0
+
+        transaction = described_class.continue_trace(env, name: "foobar")
+        expect(transaction).to be_a(Sentry::Transaction)
+        expect(transaction.name).to eq("foobar")
+        expect(transaction.trace_id).to eq(incoming_prop_context.trace_id)
+        expect(transaction.parent_span_id).to eq(incoming_prop_context.span_id)
+        expect(transaction.baggage.items).to eq(incoming_prop_context.get_baggage.items)
+        expect(transaction.baggage.mutable).to eq(false)
+      end
     end
   end
 
@@ -815,7 +998,7 @@ RSpec.describe Sentry do
 
       it "disables Tracepoint" do
         perform_basic_setup do |config|
-          config.capture_exception_frame_locals = true
+          config.include_local_variables = true
         end
 
         expect(described_class.exception_locals_tp).to receive(:disable).and_call_original

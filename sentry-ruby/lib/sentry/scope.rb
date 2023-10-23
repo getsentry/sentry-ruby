@@ -1,13 +1,29 @@
 # frozen_string_literal: true
 
 require "sentry/breadcrumb_buffer"
+require "sentry/propagation_context"
 require "etc"
 
 module Sentry
   class Scope
     include ArgumentCheckingHelper
 
-    ATTRIBUTES = [:transaction_names, :contexts, :extra, :tags, :user, :level, :breadcrumbs, :fingerprint, :event_processors, :rack_env, :span, :session]
+    ATTRIBUTES = [
+      :transaction_names,
+      :transaction_sources,
+      :contexts,
+      :extra,
+      :tags,
+      :user,
+      :level,
+      :breadcrumbs,
+      :fingerprint,
+      :event_processors,
+      :rack_env,
+      :span,
+      :session,
+      :propagation_context
+    ]
 
     attr_reader(*ATTRIBUTES)
 
@@ -33,9 +49,13 @@ module Sentry
       event.extra = extra.merge(event.extra)
       event.contexts = contexts.merge(event.contexts)
       event.transaction = transaction_name if transaction_name
+      event.transaction_info = { source: transaction_source } if transaction_source
 
       if span
-        event.contexts[:trace] = span.get_trace_context
+        event.contexts[:trace] ||= span.get_trace_context
+      else
+        event.contexts[:trace] ||= propagation_context.get_trace_context
+        event.dynamic_sampling_context ||= propagation_context.get_dynamic_sampling_context
       end
 
       event.fingerprint = fingerprint
@@ -43,8 +63,10 @@ module Sentry
       event.breadcrumbs = breadcrumbs
       event.rack_env = rack_env if rack_env
 
-      unless @event_processors.empty?
-        @event_processors.each do |processor_block|
+      all_event_processors = self.class.global_event_processors + @event_processors
+
+      unless all_event_processors.empty?
+        all_event_processors.each do |processor_block|
           event = processor_block.call(event, hint)
         end
       end
@@ -73,10 +95,12 @@ module Sentry
       copy.extra = extra.deep_dup
       copy.tags = tags.deep_dup
       copy.user = user.deep_dup
-      copy.transaction_names = transaction_names.deep_dup
+      copy.transaction_names = transaction_names.dup
+      copy.transaction_sources = transaction_sources.dup
       copy.fingerprint = fingerprint.deep_dup
       copy.span = span.deep_dup
       copy.session = session.deep_dup
+      copy.propagation_context = propagation_context.deep_dup
       copy
     end
 
@@ -90,8 +114,10 @@ module Sentry
       self.tags = scope.tags
       self.user = scope.user
       self.transaction_names = scope.transaction_names
+      self.transaction_sources = scope.transaction_sources
       self.fingerprint = scope.fingerprint
       self.span = scope.span
+      self.propagation_context = scope.propagation_context
     end
 
     # Updates the scope's data from the given options.
@@ -173,6 +199,10 @@ module Sentry
     # @return [Hash]
     def set_contexts(contexts_hash)
       check_argument_type!(contexts_hash, Hash)
+      contexts_hash.values.each do |val|
+        check_argument_type!(val, Hash)
+      end
+
       @contexts.merge!(contexts_hash) do |key, old, new|
         old.merge(new)
       end
@@ -195,8 +225,9 @@ module Sentry
     # The "transaction" here does not refer to `Transaction` objects.
     # @param transaction_name [String]
     # @return [void]
-    def set_transaction_name(transaction_name)
+    def set_transaction_name(transaction_name, source: :custom)
       @transaction_names << transaction_name
+      @transaction_sources << source
     end
 
     # Sets the currently active session on the scope.
@@ -211,6 +242,13 @@ module Sentry
     # @return [String, nil]
     def transaction_name
       @transaction_names.last
+    end
+
+    # Returns current transaction source.
+    # The "transaction" here does not refer to `Transaction` objects.
+    # @return [String, nil]
+    def transaction_source
+      @transaction_sources.last
     end
 
     # Returns the associated Transaction object.
@@ -241,6 +279,13 @@ module Sentry
       @event_processors << block
     end
 
+    # Generate a new propagation context either from the incoming env headers or from scratch.
+    # @param env [Hash, nil]
+    # @return [void]
+    def generate_propagation_context(env = nil)
+      @propagation_context = PropagationContext.new(self, env)
+    end
+
     protected
 
     # for duplicating scopes internally
@@ -256,10 +301,12 @@ module Sentry
       @level = :error
       @fingerprint = []
       @transaction_names = []
+      @transaction_sources = []
       @event_processors = []
       @rack_env = {}
       @span = nil
       @session = nil
+      generate_propagation_context
       set_new_breadcrumb_buffer
     end
 
@@ -277,7 +324,8 @@ module Sentry
               name: uname[:sysname] || RbConfig::CONFIG["host_os"],
               version: uname[:version],
               build: uname[:release],
-              kernel_version: uname[:version]
+              kernel_version: uname[:version],
+              machine: uname[:machine]
             }
           end
       end
@@ -288,6 +336,22 @@ module Sentry
           name: RbConfig::CONFIG["ruby_install_name"],
           version: RUBY_DESCRIPTION || Sentry.sys_command("ruby -v")
         }
+      end
+
+      # Returns the global event processors array.
+      # @return [Array<Proc>]
+      def global_event_processors
+        @global_event_processors ||= []
+      end
+
+      # Adds a new global event processor [Proc].
+      # Sometimes we need a global event processor without needing to configure scope.
+      # These run before scope event processors.
+      #
+      # @param block [Proc]
+      # @return [void]
+      def add_global_event_processor(&block)
+        global_event_processors << block
       end
     end
 

@@ -1,8 +1,22 @@
 require "spec_helper"
 
 RSpec.describe Sentry::Span do
+  let(:hub) do
+    client = Sentry::Client.new(Sentry::Configuration.new)
+    Sentry::Hub.new(client, Sentry::Scope.new)
+  end
+
+  let(:transaction) do
+    Sentry::Transaction.new(
+      name: "test transaction",
+      hub: hub,
+      sampled: true
+    )
+  end
+
   subject do
     described_class.new(
+      transaction: transaction,
       op: "sql.query",
       description: "SELECT * FROM users;",
       status: "ok",
@@ -63,18 +77,47 @@ RSpec.describe Sentry::Span do
       sentry_trace = subject.to_sentry_trace
 
       expect(sentry_trace).to eq("#{subject.trace_id}-#{subject.span_id}-1")
-      expect(sentry_trace).to match(Sentry::Transaction::SENTRY_TRACE_REGEXP)
+      expect(sentry_trace).to match(Sentry::PropagationContext::SENTRY_TRACE_REGEXP)
     end
 
     context "without sampled value" do
-      subject { described_class.new }
+      subject { described_class.new(transaction: transaction) }
 
       it "doesn't contain the sampled flag" do
         sentry_trace = subject.to_sentry_trace
 
         expect(sentry_trace).to eq("#{subject.trace_id}-#{subject.span_id}-")
-        expect(sentry_trace).to match(Sentry::Transaction::SENTRY_TRACE_REGEXP)
+        expect(sentry_trace).to match(Sentry::PropagationContext::SENTRY_TRACE_REGEXP)
       end
+    end
+  end
+
+  describe "#to_baggage" do
+    before do
+      # because initializing transactions requires an active hub
+      perform_basic_setup
+    end
+
+    subject do
+      baggage = Sentry::Baggage.from_incoming_header(
+        "other-vendor-value-1=foo;bar;baz, "\
+        "sentry-trace_id=771a43a4192642f0b136d5159a501700, "\
+        "sentry-public_key=49d0f7386ad645858ae85020e393bef3, "\
+        "sentry-sample_rate=0.01337, "\
+        "sentry-user_id=Am%C3%A9lie,  "\
+        "other-vendor-value-2=foo;bar;"
+      )
+
+      Sentry::Transaction.new(hub: Sentry.get_current_hub, baggage: baggage).start_child
+    end
+
+    it "propagates sentry baggage values" do
+      expect(subject.to_baggage).to eq(
+        "sentry-trace_id=771a43a4192642f0b136d5159a501700,"\
+        "sentry-public_key=49d0f7386ad645858ae85020e393bef3,"\
+        "sentry-sample_rate=0.01337,"\
+        "sentry-user_id=Am%C3%A9lie"
+      )
     end
   end
 
@@ -100,6 +143,24 @@ RSpec.describe Sentry::Span do
       expect(new_span.sampled).to eq(true)
     end
 
+    it "gives the child span its transaction" do
+      span_1 = subject.start_child
+
+      expect(span_1.transaction).to eq(subject.transaction)
+
+      span_2 = span_1.start_child
+
+      expect(span_2.transaction).to eq(subject.transaction)
+    end
+
+    it "initializes a new child Span with explicit span id" do
+      span_id = SecureRandom.hex(8)
+      new_span = subject.start_child(op: "foo", span_id: span_id)
+
+      expect(new_span.op).to eq("foo")
+      expect(new_span.span_id).to eq(span_id)
+    end
+
     context "when the parent span has a span_recorder" do
       subject do
         # inherits the span recorder from the transaction
@@ -121,22 +182,6 @@ RSpec.describe Sentry::Span do
         expect(subject.span_recorder.spans.count).to eq(4)
       end
     end
-
-    context "when the parent span has a transaction" do
-      before do
-        subject.transaction = Sentry::Transaction.new(hub: Sentry.get_current_hub)
-      end
-
-      it "gives the child span its transaction" do
-        span_1 = subject.start_child
-
-        expect(span_1.transaction).to eq(subject.transaction)
-
-        span_2 = span_1.start_child
-
-        expect(span_2.transaction).to eq(subject.transaction)
-      end
-    end
   end
 
   describe "#with_child_span" do
@@ -152,6 +197,20 @@ RSpec.describe Sentry::Span do
       expect(new_span.parent_span_id).to eq(subject.span_id)
       expect(new_span.start_timestamp).not_to eq(subject.start_timestamp)
       expect(new_span.timestamp).not_to be(nil)
+    end
+
+    it "finishes the span even when exception occurs" do
+      child_span = nil
+
+      expect do
+        subject.with_child_span(op: "sql.query") do |span|
+          child_span = span
+          1/0
+        end
+      end.to raise_error(ZeroDivisionError)
+
+      expect(child_span.timestamp).to be_a(Float)
+      expect(child_span.status).to eq("internal_error")
     end
   end
 
@@ -206,7 +265,7 @@ RSpec.describe Sentry::Span do
       it "adds status_code (#{status_code}) to data and sets correct status (#{status})" do
         subject.set_http_status(status_code)
 
-        expect(subject.data["status_code"]).to eq(status_code)
+        expect(subject.data["http.response.status_code"]).to eq(status_code)
         expect(subject.status).to eq(status)
       end
     end
