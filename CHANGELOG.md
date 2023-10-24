@@ -1,5 +1,15 @@
 ## Unreleased
 
+### Features
+
+- Add new `config.rails.active_support_logger_subscription_items` to allow customization breadcrumb data of active support logger [#2139](https://github.com/getsentry/sentry-ruby/pull/2139)
+
+  ```rb
+    config.rails.active_support_logger_subscription_items["sql.active_record"] << :type_casted_binds
+    config.rails.active_support_logger_subscription_items.delete("sql.active_record")
+    config.rails.active_support_logger_subscription_items["foo"] = :bar
+  ```
+
 ### Bug Fixes
 
 - Fix puma integration for versions before v5 [#2141](https://github.com/getsentry/sentry-ruby/pull/2141)
