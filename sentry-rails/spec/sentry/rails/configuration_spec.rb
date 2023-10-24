@@ -36,4 +36,25 @@ RSpec.describe Sentry::Rails::Configuration do
       expect(subject.tracing_subscribers.size).to eq(1)
     end
   end
+
+  describe "#active_support_logger_subscription_items" do
+    it "returns the default active support logger subscription items" do
+      expect(subject.active_support_logger_subscription_items.keys.size).to eq(47)
+    end
+
+    it "is customizable" do
+      subject.active_support_logger_subscription_items["foo"] = %i[bar]
+      expect(subject.active_support_logger_subscription_items.keys.size).to eq(48)
+
+      subject.active_support_logger_subscription_items["process_action.action_controller"] << :bar
+      expect(subject.active_support_logger_subscription_items["process_action.action_controller"]).to include(:bar)
+    end
+
+    it "is replaceable" do
+      subject.active_support_logger_subscription_items = { "foo" => %i[bar] }
+
+      expect(subject.active_support_logger_subscription_items.keys.size).to eq(1)
+      expect(subject.active_support_logger_subscription_items["foo"]).to include(:bar)
+    end
+  end
 end

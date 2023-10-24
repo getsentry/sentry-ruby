@@ -3,10 +3,19 @@
 ### Features
 
 - Make additional job context available to traces_sampler for determining sample rate (sentry-delayed_job) [#2148](https://github.com/getsentry/sentry-ruby/pull/2148)
+- Add new `config.rails.active_support_logger_subscription_items` to allow customization breadcrumb data of active support logger [#2139](https://github.com/getsentry/sentry-ruby/pull/2139)
+
+  ```rb
+    config.rails.active_support_logger_subscription_items["sql.active_record"] << :type_casted_binds
+    config.rails.active_support_logger_subscription_items.delete("sql.active_record")
+    config.rails.active_support_logger_subscription_items["foo"] = :bar
+  ```
 
 ### Bug Fixes
 
-- Fix puma integration for versions before v5 ([#2141](https://github.com/getsentry/sentry-ruby/pull/2141))
+- Fix puma integration for versions before v5 [#2141](https://github.com/getsentry/sentry-ruby/pull/2141)
+- Fix breadcrumbs with `warn` level not being ingested [#2150](https://github.com/getsentry/sentry-ruby/pull/2150)
+  - Fixes [#2145](https://github.com/getsentry/sentry-ruby/issues/2145)
 
 ## 5.12.0
 
