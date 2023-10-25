@@ -75,15 +75,15 @@ module Sentry
     ##### Patch Registration #####
 
     # @!visibility private
-    def register_patch(patch = nil, target = nil, &block)
+    def register_patch(key, patch = nil, target = nil, &block)
       if patch && block
         raise ArgumentError.new("Please provide either a patch and its target OR a block, but not both")
       end
 
       if block
-        registered_patches << block
+        registered_patches[key] = block
       else
-        registered_patches << proc do
+        registered_patches[key] = proc do
           target.send(:prepend, patch) unless target.ancestors.include?(patch)
         end
       end
@@ -91,14 +91,14 @@ module Sentry
 
     # @!visibility private
     def apply_patches(config)
-      registered_patches.each do |patch|
-        patch.call(config)
+      registered_patches.each do |key, patch|
+        patch.call(config) if config.enabled_patches.include?(key)
       end
     end
 
     # @!visibility private
     def registered_patches
-      @registered_patches ||= []
+      @registered_patches ||= {}
     end
 
     ##### Integrations #####

@@ -10,6 +10,7 @@
     config.rails.active_support_logger_subscription_items.delete("sql.active_record")
     config.rails.active_support_logger_subscription_items["foo"] = :bar
   ```
+- Enable opting out of patches [#2151](https://github.com/getsentry/sentry-ruby/pull/2151)
 
 ### Bug Fixes
 
