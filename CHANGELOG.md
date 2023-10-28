@@ -2,6 +2,7 @@
 
 ### Features
 
+- Make additional job context available to traces_sampler for determining sample rate (sentry-delayed_job) [#2148](https://github.com/getsentry/sentry-ruby/pull/2148)
 - Add new `config.rails.active_support_logger_subscription_items` to allow customization breadcrumb data of active support logger [#2139](https://github.com/getsentry/sentry-ruby/pull/2139)
 
   ```rb

@@ -20,7 +20,12 @@ module Sentry
             scope.set_contexts(**contexts)
             scope.set_tags("delayed_job.queue" => job.queue, "delayed_job.id" => job.id.to_s)
 
-            transaction = Sentry.start_transaction(name: scope.transaction_name, source: scope.transaction_source, op: OP_NAME)
+            transaction = Sentry.start_transaction(
+              name: scope.transaction_name,
+              source: scope.transaction_source,
+              op: OP_NAME,
+              custom_sampling_context: contexts
+            )
             scope.set_span(transaction) if transaction
 
             begin
