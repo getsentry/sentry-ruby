@@ -542,4 +542,15 @@ RSpec.describe Sentry::Configuration do
       expect(subject.instrumenter).to eq(:sentry)
     end
   end
+
+  describe "#enabled_patches" do
+    it "sets default patches" do
+      expect(subject.enabled_patches).to eq(%i(redis puma http))
+    end
+
+    it "can override" do
+      subject.enabled_patches.delete(:puma)
+      expect(subject.enabled_patches).to eq(%i(redis http))
+    end
+  end
 end

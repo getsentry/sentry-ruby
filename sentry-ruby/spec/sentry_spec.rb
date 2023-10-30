@@ -1032,4 +1032,56 @@ RSpec.describe Sentry do
       end.to change { new_transport.events.count }.by(1)
     end
   end
+
+  describe "patching" do
+    let(:target_class) { Class.new }
+
+    let(:module_patch) do
+      Module.new do
+        def foo; end
+      end
+    end
+
+    context "with target and patch to prepend" do
+      before do
+        described_class.register_patch(:module_patch, module_patch, target_class)
+      end
+
+      it "does not prepend patch if not in enabled_patches" do
+        perform_basic_setup
+        expect(target_class.ancestors).not_to include(module_patch)
+        expect(target_class.instance_methods).not_to include(:foo)
+      end
+
+      it "prepends patch if in enabled_patches" do
+        expect(target_class).to receive(:prepend).with(module_patch).and_call_original
+        perform_basic_setup  { |c| c.enabled_patches = %i(module_patch) }
+
+        expect(target_class.ancestors.first).to eq(module_patch)
+        expect(target_class.instance_methods).to include(:foo)
+      end
+    end
+
+    context "with block" do
+      before do
+        described_class.register_patch(:block_patch) do
+          target_class.send(:prepend, module_patch)
+        end
+      end
+
+      it "does not call block if not in enabled_patches" do
+        perform_basic_setup
+        expect(target_class.ancestors).not_to include(module_patch)
+        expect(target_class.instance_methods).not_to include(:foo)
+      end
+
+      it "calls block if in enabled_patches" do
+        expect(target_class).to receive(:prepend).with(module_patch).and_call_original
+        perform_basic_setup  { |c| c.enabled_patches = %i(block_patch) }
+
+        expect(target_class.ancestors.first).to eq(module_patch)
+        expect(target_class.instance_methods).to include(:foo)
+      end
+    end
+  end
 end

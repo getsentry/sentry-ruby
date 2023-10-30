@@ -29,4 +29,4 @@ module Sentry
   end
 end
 
-Sentry.register_patch(Sentry::Puma::Server, Puma::Server)
+Sentry.register_patch(:puma, Sentry::Puma::Server, Puma::Server)

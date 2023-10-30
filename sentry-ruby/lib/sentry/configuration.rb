@@ -258,6 +258,11 @@ module Sentry
     # @return [Float, nil]
     attr_reader :profiles_sample_rate
 
+    # Array of patches to apply.
+    # Default is {DEFAULT_PATCHES}
+    # @return [Array<Symbol>]
+    attr_accessor :enabled_patches
+
     # these are not config options
     # @!visibility private
     attr_reader :errors, :gem_specs
@@ -296,6 +301,8 @@ module Sentry
     INSTRUMENTERS = [:sentry, :otel]
 
     PROPAGATION_TARGETS_MATCH_ALL = /.*/.freeze
+
+    DEFAULT_PATCHES = %i(redis puma http).freeze
 
     class << self
       # Post initialization callbacks are called at the end of initialization process
@@ -340,6 +347,7 @@ module Sentry
       self.server_name = server_name_from_env
       self.instrumenter = :sentry
       self.trace_propagation_targets = [PROPAGATION_TARGETS_MATCH_ALL]
+      self.enabled_patches = DEFAULT_PATCHES.dup
 
       self.before_send = nil
       self.before_send_transaction = nil
