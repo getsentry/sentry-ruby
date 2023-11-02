@@ -17,6 +17,7 @@
 - Fix puma integration for versions before v5 [#2141](https://github.com/getsentry/sentry-ruby/pull/2141)
 - Fix breadcrumbs with `warn` level not being ingested [#2150](https://github.com/getsentry/sentry-ruby/pull/2150)
   - Fixes [#2145](https://github.com/getsentry/sentry-ruby/issues/2145)
+- Don't send negative line numbers in profiles [#2158](https://github.com/getsentry/sentry-ruby/pull/2158)
 
 ## 5.12.0
 
