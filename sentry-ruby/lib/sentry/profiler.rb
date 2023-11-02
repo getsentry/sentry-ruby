@@ -109,7 +109,7 @@ module Sentry
         }
 
         frame_hash[:module] = mod if mod
-        frame_hash[:lineno] = frame_data[:line] if frame_data[:line]
+        frame_hash[:lineno] = frame_data[:line] if frame_data[:line] && frame_data[:line] >= 0
 
         frame_hash
       end
