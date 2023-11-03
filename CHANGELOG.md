@@ -18,6 +18,7 @@
 - Fix breadcrumbs with `warn` level not being ingested [#2150](https://github.com/getsentry/sentry-ruby/pull/2150)
   - Fixes [#2145](https://github.com/getsentry/sentry-ruby/issues/2145)
 - Don't send negative line numbers in profiles [#2158](https://github.com/getsentry/sentry-ruby/pull/2158)
+- Fixed a deprecation in `sidekiq-ruby` error handler [#2160](https://github.com/getsentry/sentry-ruby/pull/2160)
 
 ## 5.12.0
 

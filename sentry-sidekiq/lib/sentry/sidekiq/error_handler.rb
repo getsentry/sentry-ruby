@@ -5,7 +5,13 @@ module Sentry
     class ErrorHandler
       WITH_SIDEKIQ_7 = ::Gem::Version.new(::Sidekiq::VERSION) >= ::Gem::Version.new("7.0")
 
-      def call(ex, context)
+      # @param ex [Exception] the exception / error that occured
+      # @param context [Hash or Array] Sidekiq error context
+      # @param sidekiq_config [Sidekiq::Config] Sidekiq configuration,
+      #   defaults to Sidekiq's default configuration `Sidekiq.default_configuration`
+      #   Sidekiq will pass the config in starting Sidekiq 7.1.5, see
+      #   https://github.com/sidekiq/sidekiq/pull/6051
+      def call(ex, context, sidekiq_config = ::Sidekiq.default_configuration)
         return unless Sentry.initialized?
 
         context_filter = Sentry::Sidekiq::ContextFilter.new(context)

@@ -19,8 +19,15 @@ And if you have any questions, please feel free to reach out on [Discord].
 
 ## Contribute To Individual Gems
 
+- Install the dependencies of a specific gem by running `bundle` in it's subdirectory. I.e:
+  ```bash
+  cd sentry-sidekiq
+  bundle install
+  ```
+- Install any additional dependencies. `sentry-sidekiq` assumes you have `redis` running.
 - Use `bundle exec rake` to run tests.
-  - In `sentry-rails`, you can use `RAILS_VERSION=version` to specify the Rails version to test against. Default is `6.1`
+  - In `sentry-rails`, you can use `RAILS_VERSION=version` to specify the Rails version to test against. Default is `7.0`
+  - In `sentry-sidekiq`, you can use `SIDEKIQ_VERSION=version` to specify what version of Sidekiq to install when you run `bundle install`. Default is `7.0`
 - Use example apps under the `example` or `examples` folder to test the change. (Remember to change the DSN first)
 - To learn more about `sentry-ruby`'s structure, you can read the [Sentry SDK spec]
 
