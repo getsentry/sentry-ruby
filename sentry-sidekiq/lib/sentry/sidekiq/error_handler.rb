@@ -7,11 +7,11 @@ module Sentry
 
       # @param ex [Exception] the exception / error that occured
       # @param context [Hash or Array] Sidekiq error context
-      # @param sidekiq_config [Sidekiq::Config] Sidekiq configuration,
-      #   defaults to Sidekiq's default configuration `Sidekiq.default_configuration`
+      # @param sidekiq_config [Sidekiq::Config, Hash] Sidekiq configuration,
+      #   Defaults to nil.
       #   Sidekiq will pass the config in starting Sidekiq 7.1.5, see
       #   https://github.com/sidekiq/sidekiq/pull/6051
-      def call(ex, context, sidekiq_config = ::Sidekiq.default_configuration)
+      def call(ex, context, sidekiq_config = nil)
         return unless Sentry.initialized?
 
         context_filter = Sentry::Sidekiq::ContextFilter.new(context)
@@ -19,9 +19,12 @@ module Sentry
         scope = Sentry.get_current_scope
         scope.set_transaction_name(context_filter.transaction_name, source: :task) unless scope.transaction_name
 
+        # If Sentry is configured to only report an error _after_ all retries have been exhausted,
+        # and if the job is retryable, and have not exceeded the retry_limit,
+        # return early.
         if Sentry.configuration.sidekiq.report_after_job_retries && retryable?(context)
           retry_count = context.dig(:job, "retry_count")
-          if retry_count.nil? || retry_count < retry_limit(context) - 1
+          if retry_count.nil? || retry_count < retry_limit(context, sidekiq_config) - 1
             return
           end
         end
@@ -43,7 +46,10 @@ module Sentry
         retry_option == true || (retry_option.is_a?(Integer) && retry_option.positive?)
       end
 
-      def retry_limit(context)
+      # @return [Integer] the number of retries allowed for the job
+      # Tries to fetch the retry limit from the job config first,
+      # then falls back to Sidekiq's configuration.
+      def retry_limit(context, sidekiq_config)
         limit = context.dig(:job, "retry")
 
         case limit
@@ -52,7 +58,11 @@ module Sentry
         when TrueClass
           max_retries =
             if WITH_SIDEKIQ_7
-              ::Sidekiq.default_configuration[:max_retries]
+              # Sidekiq 7.1.5+ passes the config to the error handler, so we should use that.
+              # Sidekiq 7.0 -> 7.1.5 provides ::Sidekiq.default_configuration.
+              sidekiq_config.is_a?(::Sidekiq::Config) ?
+                sidekiq_config[:max_retries] :
+                ::Sidekiq.default_configuration[:max_retries]
             else
               ::Sidekiq.options[:max_retries]
             end
