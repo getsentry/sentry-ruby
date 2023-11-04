@@ -130,18 +130,20 @@ RSpec.describe Sentry::HTTPTransport do
     end
 
     it "accepts a proxy from ENV[HTTP_PROXY]" do
-      ENV["http_proxy"] = "https://stan:foobar@example.com:8080"
-
-      stub_request(fake_response) do |_, http_obj|
-        expect(http_obj.proxy_address).to eq("example.com")
-        expect(http_obj.proxy_user).to eq("stan")
-        expect(http_obj.proxy_pass).to eq("foobar")
-        expect(http_obj.proxy_port).to eq(8080)
+      begin
+        ENV["http_proxy"] = "https://stan:foobar@example.com:8080"
+  
+        stub_request(fake_response) do |_, http_obj|
+          expect(http_obj.proxy_address).to eq("example.com")
+          expect(http_obj.proxy_user).to eq("stan")
+          expect(http_obj.proxy_pass).to eq("foobar")
+          expect(http_obj.proxy_port).to eq(8080)
+        end
+  
+        subject.send_data(data)
+      ensure
+        ENV["http_proxy"] = nil
       end
-
-      subject.send_data(data)
-
-      ENV["http_proxy"] = nil 
     end
 
     it "accepts custom timeout" do
