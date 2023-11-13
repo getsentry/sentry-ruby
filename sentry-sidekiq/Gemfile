@@ -19,7 +19,7 @@ gem "loofah", "2.20.0" if RUBY_VERSION.to_f < 2.5
 gem "psych", "5.1.0"
 
 sidekiq_version = ENV["SIDEKIQ_VERSION"]
-sidekiq_version = "6.0" if sidekiq_version.nil?
+sidekiq_version = "7.0" if sidekiq_version.nil?
 sidekiq_version = Gem::Version.new(sidekiq_version)
 
 gem "sidekiq", "~> #{sidekiq_version}"

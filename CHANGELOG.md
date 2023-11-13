@@ -1,3 +1,9 @@
+## Unreleased
+
+### Bug Fixes
+
+- Fixed a deprecation in `sidekiq-ruby` error handler [#2160](https://github.com/getsentry/sentry-ruby/pull/2160)
+
 ## 5.13.0
 
 ### Features
