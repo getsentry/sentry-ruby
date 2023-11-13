@@ -3,6 +3,7 @@
 ### Bug Fixes
 
 - Fixed a deprecation in `sidekiq-ruby` error handler [#2160](https://github.com/getsentry/sentry-ruby/pull/2160)
+- Avoid instantiating `BroadcastLogger` in `sidekiq-ruby` if class not defined [#2169](https://github.com/getsentry/sentry-ruby/pull/2169)
 
 ## 5.13.0
 
