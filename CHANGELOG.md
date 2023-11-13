@@ -1,5 +1,9 @@
 ## Unreleased
 
+### Features
+
+- Improve default slug generation for Crons [#2168](https://github.com/getsentry/sentry-ruby/pull/2168)
+
 ### Bug Fixes
 
 - Fixed a deprecation in `sidekiq-ruby` error handler [#2160](https://github.com/getsentry/sentry-ruby/pull/2160)

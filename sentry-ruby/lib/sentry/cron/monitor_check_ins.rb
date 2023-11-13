@@ -1,9 +1,11 @@
 module Sentry
   module Cron
     module MonitorCheckIns
+      MAX_SLUG_LENGTH = 50
+
       module Patch
         def perform(*args)
-          slug = self.class.sentry_monitor_slug || self.class.name
+          slug = self.class.sentry_monitor_slug
           monitor_config = self.class.sentry_monitor_config
 
           check_in_id = Sentry.capture_check_in(slug,
@@ -43,7 +45,10 @@ module Sentry
         end
 
         def sentry_monitor_slug
-          @sentry_monitor_slug
+          @sentry_monitor_slug ||= begin
+            slug = name.gsub('::', '-').downcase
+            slug[-MAX_SLUG_LENGTH..-1] || slug
+          end
         end
 
         def sentry_monitor_config
