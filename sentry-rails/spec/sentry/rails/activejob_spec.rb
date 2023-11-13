@@ -340,7 +340,7 @@ RSpec.describe "ActiveJob integration" do
         expect(first.to_hash).to include(
           type: 'check_in',
           check_in_id: check_in_id,
-          monitor_slug: "NormalJobWithCron",
+          monitor_slug: "normaljobwithcron",
           status: :in_progress
         )
 
@@ -350,7 +350,7 @@ RSpec.describe "ActiveJob integration" do
           :duration,
           type: 'check_in',
           check_in_id: check_in_id,
-          monitor_slug: "NormalJobWithCron",
+          monitor_slug: "normaljobwithcron",
           status: :ok
         )
       end

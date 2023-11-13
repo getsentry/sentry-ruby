@@ -104,18 +104,43 @@ RSpec.describe Sentry::Cron::MonitorCheckIns do
 
       it 'calls capture_check_in twice' do
         expect(Sentry).to receive(:capture_check_in).with(
-          'Job',
+          'job',
           :in_progress,
           hash_including(monitor_config: nil)
         ).ordered.and_call_original
 
         expect(Sentry).to receive(:capture_check_in).with(
-          'Job',
+          'job',
           :ok,
           hash_including(:check_in_id, monitor_config: nil, duration: 0)
         ).ordered.and_call_original
 
         job.perform(1)
+      end
+    end
+
+    context 'with very long class name' do
+      before do
+        mod = described_class
+
+        job_class = Class.new do
+          include mod
+
+          sentry_monitor_check_ins
+
+          def work(a, b, c); end
+
+          def perform(a, b = 42, c: 99)
+            work(a, b, c)
+          end
+        end
+
+        stub_const('VeryLongOuterModule::VeryVeryVeryVeryLongInnerModule::Job', job_class)
+      end
+
+      it 'truncates from the beginning and parameterizes slug' do
+        slug = VeryLongOuterModule::VeryVeryVeryVeryLongInnerModule::Job.sentry_monitor_slug
+        expect(slug).to eq('ongoutermodule-veryveryveryverylonginnermodule-job')
       end
     end
 
