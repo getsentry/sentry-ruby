@@ -8,9 +8,8 @@ require "sidekiq/cli"
 WITH_SIDEKIQ_7 = Gem::Version.new(Sidekiq::VERSION) >= Gem::Version.new("7.0")
 WITH_SIDEKIQ_6 = Gem::Version.new(Sidekiq::VERSION) >= Gem::Version.new("6.0") && !WITH_SIDEKIQ_7
 
-if WITH_SIDEKIQ_7
-  require "sidekiq/embedded"
-end
+require "sidekiq/embedded" if WITH_SIDEKIQ_7
+require 'sidekiq-cron' if RUBY_VERSION.to_f >= 2.7 && WITH_SIDEKIQ_6 || WITH_SIDEKIQ_7
 
 require "sentry-ruby"
 
@@ -128,6 +127,8 @@ class SadWorker
     raise "I'm sad!"
   end
 end
+
+class HappyWorkerDup < HappyWorker; end
 
 class HappyWorkerWithCron < HappyWorker
   include Sentry::Cron::MonitorCheckIns
