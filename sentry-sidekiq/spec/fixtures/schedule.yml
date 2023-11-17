@@ -1,0 +1,11 @@
+happy:
+  cron: "* * * * *"
+  class: "HappyWorkerDup"
+
+manual:
+  cron: "* * * * *"
+  class: "SadWorkerWithCron"
+
+invalid_cron:
+  cron: "not a crontab"
+  class: "ReportingWorker"

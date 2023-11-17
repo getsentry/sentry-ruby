@@ -3,6 +3,14 @@
 ### Features
 
 - Improve default slug generation for Crons [#2168](https://github.com/getsentry/sentry-ruby/pull/2168)
+- Automatic Crons support for scheduling gems
+  - Add support for [`sidekiq-cron`](https://github.com/sidekiq-cron/sidekiq-cron) [#2170](https://github.com/getsentry/sentry-ruby/pull/2170)
+
+    You can opt in to the `sidekiq-cron` patch and we will automatically monitor check-ins for all jobs listed in your `config/schedule.yml` file.
+
+    ```rb
+    config.enabled_patches += [:sidekiq_cron]
+    ```
 
 ### Bug Fixes
 
