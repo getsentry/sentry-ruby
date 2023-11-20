@@ -9,7 +9,23 @@ RSpec.describe Sentry::SidekiqScheduler::Scheduler do
 
   before do
     schedule_file = 'spec/fixtures/sidekiq-scheduler-schedule.yml'
-    sidekiq_config = ::Sidekiq::Config.new({scheduler: YAML.load_file(schedule_file)})
+    config_options = {scheduler: YAML.load_file(schedule_file)}
+
+    # Sidekiq 7 has a Config class, but for Sidekiq 6, we'll mock it.
+    sidekiq_config = if WITH_SIDEKIQ_7
+      ::Sidekiq::Config.new(config_options)
+    else
+      class SidekiqConfigMock
+        include ::Sidekiq
+        attr_accessor :options
+        delegate :fetch, :[], to: :options
+        
+        def initialize(options = {})
+          @options = DEFAULTS.merge(options)
+        end
+      end
+      SidekiqConfigMock.new(config_options)
+    end
     
     # Sidekiq::Scheduler merges it's config with Sidekiq.
     # To grab a config for it to start, we need to pass sidekiq configuration 
