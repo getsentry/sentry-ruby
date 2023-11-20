@@ -24,6 +24,7 @@ sidekiq_version = Gem::Version.new(sidekiq_version)
 
 gem "sidekiq", "~> #{sidekiq_version}"
 gem "sidekiq-cron" if sidekiq_version >= Gem::Version.new("6.0")
+gem "sidekiq-scheduler" if sidekiq_version >= Gem::Version.new("6.0")
 
 gem "rails", "> 5.0.0", "< 7.1.0"
 

@@ -1,0 +1,9 @@
+enabled: true
+dynamic: true
+:schedule:
+  happy:
+    cron: "* * * * *"
+    class: "HappyWorkerDup"
+  manual:
+    cron: "* * * * *"
+    class: "SadWorkerWithCron"

@@ -42,3 +42,4 @@ end
 
 # patches
 require "sentry/sidekiq/cron/job"
+require "sentry/sidekiq/sidekiq-scheduler/scheduler"
