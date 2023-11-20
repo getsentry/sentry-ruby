@@ -40,5 +40,17 @@ RSpec.describe Sentry::SidekiqScheduler::Scheduler do
     expect(SadWorkerWithCron.sentry_monitor_config.schedule).to be_a(Sentry::Cron::MonitorSchedule::Crontab)
     expect(SadWorkerWithCron.sentry_monitor_config.schedule.value).to eq('5 * * * *')
   end
+
+  it "sets correct monitor config based on `every` schedule" do
+    expect(EveryHappyWorker.ancestors).to include(Sentry::Cron::MonitorCheckIns)
+    expect(EveryHappyWorker.sentry_monitor_slug).to eq('regularly_happy')
+    expect(EveryHappyWorker.sentry_monitor_config).to be_a(Sentry::Cron::MonitorConfig)
+    expect(EveryHappyWorker.sentry_monitor_config.schedule).to be_a(Sentry::Cron::MonitorSchedule::Interval)
+    expect(EveryHappyWorker.sentry_monitor_config.schedule.to_hash).to eq({value: 10.0, type: :interval, unit: :minute})
+  end
+
+  it "does not add monitors for a one-off job" do
+    expect(ReportingWorker.ancestors).not_to include(Sentry::Cron::MonitorCheckIns)
+  end 
 end
 

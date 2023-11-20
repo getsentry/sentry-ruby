@@ -10,9 +10,6 @@ WITH_SIDEKIQ_6 = Gem::Version.new(Sidekiq::VERSION) >= Gem::Version.new("6.0") &
 
 require "sidekiq/embedded" if WITH_SIDEKIQ_7
 require 'sidekiq-cron' if RUBY_VERSION.to_f >= 2.7 && WITH_SIDEKIQ_6 || WITH_SIDEKIQ_7
-
-# TODO: Make this requirement optional?
-# TODO: Verify sidekiq-schedule works on Ruby 2.7
 require 'sidekiq-scheduler' if RUBY_VERSION.to_f >= 2.7 && WITH_SIDEKIQ_6 || WITH_SIDEKIQ_7
 
 require "sentry-ruby"
@@ -133,6 +130,7 @@ class SadWorker
 end
 
 class HappyWorkerDup < HappyWorker; end
+class EveryHappyWorker < HappyWorker; end
 
 class HappyWorkerWithCron < HappyWorker
   include Sentry::Cron::MonitorCheckIns

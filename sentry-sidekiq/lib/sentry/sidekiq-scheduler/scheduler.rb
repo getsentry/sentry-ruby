@@ -10,7 +10,7 @@ module Sentry
         # SidekiqScheduler does not validate schedules
         # It will fail with an error if the schedule in the config is invalid.
         # If this errors out, let it fall through.
-        rufus_job = super(name, interval_type, config, schedule, options)
+        rufus_job = super
 
         # Constantize the job class, and fail gracefully if it could not be found
         klass_const =
@@ -20,7 +20,20 @@ module Sentry
           return rufus_job
         end
 
-        monitor_config = Sentry::Cron::MonitorConfig.from_crontab(schedule)
+        # For cron, every, or interval jobs — grab their schedule.
+        # Rufus::Scheduler::EveryJob stores it's frequency in seconds, 
+        # so we convert it to minutes before passing in to the monitor.
+        monitor_config = case interval_type
+          when "cron"
+            Sentry::Cron::MonitorConfig.from_crontab(schedule)
+          when "every", "interval" 
+            Sentry::Cron::MonitorConfig.from_interval(rufus_job.frequency.to_f / 60.0, :minute)
+        end
+
+        # If we couldn't build a monitor config, it's either an error, or
+        # it's a one-time job (interval_type is in, or at), in which case
+        # we should not make a monitof for it automaticaly.
+        return rufus_job if monitor_config.nil?
 
         # only patch if not explicitly included in job by user
         unless klass_const.send(:ancestors).include?(Sentry::Cron::MonitorCheckIns)
