@@ -15,6 +15,7 @@
 ### Bug Fixes
 
 - Fixed a deprecation in `sidekiq-ruby` error handler [#2160](https://github.com/getsentry/sentry-ruby/pull/2160)
+- Avoid invoking ActiveSupport::BroadcastLogger if not defined [#2169](https://github.com/getsentry/sentry-ruby/pull/2169)
 
 ## 5.13.0
 
