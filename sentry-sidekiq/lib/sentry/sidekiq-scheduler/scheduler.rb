@@ -1,5 +1,14 @@
 # frozen_string_literal: true
 
+# Try to require sidekiq-scheduler to make sure it's loaded before the integration.
+begin
+  require "sidekiq-scheduler"
+rescue LoadError
+  return
+end
+
+# If we've loaded sidekiq-scheduler, but the API changed,
+# and the Scheduler class is not there, fail gracefully.
 return unless defined?(::SidekiqScheduler::Scheduler)
 
 module Sentry
@@ -45,7 +54,7 @@ module Sentry
           ::Sidekiq.logger.info "Injected Sentry Crons monitor checkins into #{config.fetch("class")}"
         end
 
-        return rufus_job
+        rufus_job
       end
     end
   end
