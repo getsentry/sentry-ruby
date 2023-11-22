@@ -28,7 +28,7 @@ module Sentry
       end
 
       def detect_release_from_git
-        Sentry.sys_command("git rev-parse --short HEAD") if File.directory?(".git")
+        Sentry.sys_command("git rev-parse HEAD") if File.directory?(".git")
       end
 
       def detect_release_from_env
