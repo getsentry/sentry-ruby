@@ -1,6 +1,12 @@
 # frozen_string_literal: true
 
-return unless defined?(::Sidekiq::Cron::Job)
+# Try requiring sidekiq-cron to ensure it's loaded before the integration.
+# If sidekiq-cron is not available, do nothing.
+begin
+  require "sidekiq-cron"
+rescue LoadError
+  return
+end
 
 module Sentry
   module Sidekiq
