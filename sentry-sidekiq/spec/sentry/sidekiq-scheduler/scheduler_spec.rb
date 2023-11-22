@@ -18,10 +18,17 @@ RSpec.describe Sentry::SidekiqScheduler::Scheduler do
       class SidekiqConfigMock
         include ::Sidekiq
         attr_accessor :options
-        delegate :fetch, :[], to: :options
         
         def initialize(options = {})
           @options = DEFAULTS.merge(options)
+        end
+
+        def fetch(key, default = nil)
+          options.fetch(key, default)
+        end
+
+        def [](key)
+          options[key]
         end
       end
       SidekiqConfigMock.new(config_options)
