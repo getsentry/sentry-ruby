@@ -24,6 +24,7 @@
 
 - Fixed a deprecation in `sidekiq-ruby` error handler [#2160](https://github.com/getsentry/sentry-ruby/pull/2160)
 - Avoid invoking ActiveSupport::BroadcastLogger if not defined [#2169](https://github.com/getsentry/sentry-ruby/pull/2169)
+- Respect custom `Delayed::Job.max_attempts` if it's defined [#2176](https://github.com/getsentry/sentry-ruby/pull/2176)
 
 ## 5.13.0
 

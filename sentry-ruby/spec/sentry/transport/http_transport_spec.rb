@@ -275,7 +275,6 @@ RSpec.describe Sentry::HTTPTransport do
         stub_request(error_response)
 
         expect { subject.send_data(data) }.to raise_error(Sentry::ExternalError, /error_in_header/)
-
       end
     end
   end
