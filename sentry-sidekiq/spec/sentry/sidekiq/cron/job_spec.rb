@@ -10,7 +10,10 @@ RSpec.describe Sentry::Sidekiq::Cron::Job do
   before do
     schedule_file = 'spec/fixtures/schedule.yml'
     schedule = Sidekiq::Cron::Support.load_yaml(ERB.new(IO.read(schedule_file)).result)
-    Sidekiq::Cron::Job.load_from_hash!(schedule, source: 'schedule')
+    # sidekiq-cron 2.0+ accepts second argument to `load_from_hash!` with options,
+    # such as {source: 'schedule'}, but sidekiq-cron 1.9.1 (last version to support Ruby 2.6) does not.
+    # Since we're not using the source option in our code anyway, it's safe to not pass the 2nd arg.
+    Sidekiq::Cron::Job.load_from_hash!(schedule)
   end
 
   it 'patches class' do
