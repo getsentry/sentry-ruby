@@ -14,6 +14,13 @@ module Sentry
     RATE_LIMIT_HEADER = "x-sentry-rate-limits"
     USER_AGENT = "sentry-ruby/#{Sentry::VERSION}"
 
+    NET_HTTP_ERRORS = [
+      Errno::EINVAL, Errno::ECONNRESET, Errno::ECONNREFUSED,
+      Errno::ETIMEDOUT, Errno::EHOSTUNREACH, Errno::ENETUNREACH,
+      Timeout::Error,
+      ::Net::HTTPBadResponse, ::Net::HTTPHeaderSyntaxError, ::Net::ProtocolError
+    ]
+
     def initialize(*args)
       super
       @endpoint = @dsn.envelope_endpoint
@@ -58,8 +65,8 @@ module Sentry
 
         raise Sentry::ExternalError, error_info
       end
-    rescue SocketError => e
-      raise Sentry::ExternalError.new(e.message)
+    rescue SocketError, *NET_HTTP_ERRORS => e
+      raise Sentry::ExternalError.new(e&.message)
     end
 
     private
