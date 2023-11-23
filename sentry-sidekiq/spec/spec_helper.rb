@@ -5,12 +5,16 @@ require "debug" if RUBY_VERSION.to_f >= 2.6 && RUBY_ENGINE == "ruby"
 # this enables sidekiq's server mode
 require "sidekiq/cli"
 
+MIN_SIDEKIQ_6 = Gem::Version.new(Sidekiq::VERSION) >= Gem::Version.new("6.0")
 WITH_SIDEKIQ_7 = Gem::Version.new(Sidekiq::VERSION) >= Gem::Version.new("7.0")
-WITH_SIDEKIQ_6 = Gem::Version.new(Sidekiq::VERSION) >= Gem::Version.new("6.0") && !WITH_SIDEKIQ_7
+WITH_SIDEKIQ_6 = MIN_SIDEKIQ_6 && !WITH_SIDEKIQ_7
 
 require "sidekiq/embedded" if WITH_SIDEKIQ_7
-require 'sidekiq-cron' if RUBY_VERSION.to_f >= 2.7 && WITH_SIDEKIQ_6 || WITH_SIDEKIQ_7
-require 'sidekiq-scheduler' if RUBY_VERSION.to_f >= 2.7 && WITH_SIDEKIQ_6 || WITH_SIDEKIQ_7
+
+if RUBY_VERSION.to_f >= 2.7 && MIN_SIDEKIQ_6
+  require 'sidekiq-cron'
+  require 'sidekiq-scheduler'
+end
 
 require "sentry-ruby"
 
