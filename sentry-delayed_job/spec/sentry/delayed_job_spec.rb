@@ -150,7 +150,7 @@ RSpec.describe Sentry::DelayedJob do
       # custom job-level max_attempts is reached.
       # See https://github.com/collectiveidea/delayed_job#custom-jobs
       it "reports exception after the job's custom max_attempts" do
-        enqueued_job.update(attempts:2)
+        enqueued_job.update(attempts: 2)
         allow(enqueued_job).to receive(:max_attempts).and_return(3)
 
         expect do
