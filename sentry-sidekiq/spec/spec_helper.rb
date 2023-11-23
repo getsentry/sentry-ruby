@@ -133,7 +133,8 @@ class SadWorker
   end
 end
 
-class HappyWorkerDup < HappyWorker; end
+class HappyWorkerForCron < HappyWorker; end
+class HappyWorkerForScheduler < HappyWorker; end
 class EveryHappyWorker < HappyWorker; end
 
 class HappyWorkerWithCron < HappyWorker
@@ -188,6 +189,28 @@ def new_processor
     end
 
   manager.workers.first
+end
+
+class SidekiqConfigMock
+  include ::Sidekiq
+  attr_accessor :options
+
+  def initialize(options = {})
+    @options = DEFAULTS.merge(options)
+  end
+
+  def fetch(key, default = nil)
+    options.fetch(key, default)
+  end
+
+  def [](key)
+    options[key]
+  end
+end
+
+# Sidekiq 7 has a Config class, but for Sidekiq 6, we'll mock it.
+def sidekiq_config(opts)
+  WITH_SIDEKIQ_7 ? ::Sidekiq::Config.new(opts) : SidekiqConfigMock.new(opts)
 end
 
 def execute_worker(processor, klass, **options)

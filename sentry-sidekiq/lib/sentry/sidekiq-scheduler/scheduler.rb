@@ -21,22 +21,25 @@ module Sentry
         # If this errors out, let it fall through.
         rufus_job = super
 
+        klass = config.fetch("class")
+        return rufus_job unless klass
+
         # Constantize the job class, and fail gracefully if it could not be found
         klass_const =
-        begin
-          config.fetch("class").constantize
-        rescue NameError
-          return rufus_job
-        end
+          begin
+            Object.const_get(klass)
+          rescue NameError
+            return rufus_job
+          end
 
         # For cron, every, or interval jobs — grab their schedule.
-        # Rufus::Scheduler::EveryJob stores it's frequency in seconds, 
+        # Rufus::Scheduler::EveryJob stores it's frequency in seconds,
         # so we convert it to minutes before passing in to the monitor.
         monitor_config = case interval_type
           when "cron"
             Sentry::Cron::MonitorConfig.from_crontab(schedule)
-          when "every", "interval" 
-            Sentry::Cron::MonitorConfig.from_interval(rufus_job.frequency.to_f / 60.0, :minute)
+          when "every", "interval"
+            Sentry::Cron::MonitorConfig.from_interval(rufus_job.frequency.to_i / 60, :minute)
         end
 
         # If we couldn't build a monitor config, it's either an error, or
@@ -48,10 +51,10 @@ module Sentry
         unless klass_const.send(:ancestors).include?(Sentry::Cron::MonitorCheckIns)
           klass_const.send(:include, Sentry::Cron::MonitorCheckIns)
           klass_const.send(:sentry_monitor_check_ins,
-                            slug: name,
-                            monitor_config: monitor_config)
-          
-          ::Sidekiq.logger.info "Injected Sentry Crons monitor checkins into #{config.fetch("class")}"
+                           slug: name,
+                           monitor_config: monitor_config)
+
+          ::Sidekiq.logger.info "Injected Sentry Crons monitor checkins into #{klass}"
         end
 
         rufus_job

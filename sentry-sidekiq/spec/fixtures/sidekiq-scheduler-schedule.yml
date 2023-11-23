@@ -1,7 +1,7 @@
 :schedule:
   happy:
     cron: "* * * * *"
-    class: "HappyWorkerDup"
+    class: "HappyWorkerForScheduler"
   manual:
     cron: "* * * * *"
     class: "SadWorkerWithCron"
