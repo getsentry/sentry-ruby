@@ -135,9 +135,12 @@ RSpec.describe Sentry::HTTPTransport do
   
         stub_request(fake_response) do |_, http_obj|
           expect(http_obj.proxy_address).to eq("example.com")
-          expect(http_obj.proxy_user).to eq("stan")
-          expect(http_obj.proxy_pass).to eq("foobar")
           expect(http_obj.proxy_port).to eq(8080)
+
+          if Gem::Version.new(RUBY_VERSION) >= Gem::Version.new("2.5")
+            expect(http_obj.proxy_user).to eq("stan")
+            expect(http_obj.proxy_pass).to eq("foobar")
+          end
         end
   
         subject.send_data(data)
@@ -152,7 +155,7 @@ RSpec.describe Sentry::HTTPTransport do
       stub_request(fake_response) do |_, http_obj|
         expect(http_obj.read_timeout).to eq(10)
 
-        if RUBY_VERSION >= "2.6"
+        if Gem::Version.new(RUBY_VERSION) >= Gem::Version.new("2.6")
           expect(http_obj.write_timeout).to eq(10)
         end
       end
