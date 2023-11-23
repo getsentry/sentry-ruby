@@ -844,7 +844,7 @@ RSpec.describe Sentry do
         allow(File).to receive(:directory?).with(".git").and_return(true)
       end
       it 'gets release from git' do
-        allow(Sentry).to receive(:`).with("git rev-parse --short HEAD 2>&1").and_return("COMMIT_SHA")
+        allow(Sentry).to receive(:`).with("git rev-parse HEAD 2>&1").and_return("COMMIT_SHA")
 
         described_class.init
         expect(described_class.configuration.release).to eq('COMMIT_SHA')

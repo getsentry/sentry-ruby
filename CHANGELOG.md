@@ -3,6 +3,7 @@
 ### Features
 
 - Improve default slug generation for Crons [#2168](https://github.com/getsentry/sentry-ruby/pull/2168)
+- Change release name generator to use full SHA commit hash and align with `sentry-cli` and other Sentry SDKs [#2174](https://github.com/getsentry/sentry-ruby/pull/2174)
 - Automatic Crons support for scheduling gems
   - Add support for [`sidekiq-cron`](https://github.com/sidekiq-cron/sidekiq-cron) [#2170](https://github.com/getsentry/sentry-ruby/pull/2170)
 
