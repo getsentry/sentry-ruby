@@ -24,13 +24,13 @@
 
 - Fixed a deprecation in `sidekiq-ruby` error handler [#2160](https://github.com/getsentry/sentry-ruby/pull/2160)
 - Avoid invoking ActiveSupport::BroadcastLogger if not defined [#2169](https://github.com/getsentry/sentry-ruby/pull/2169)
+<<<<<<< HEAD
 - Respect custom `Delayed::Job.max_attempts` if it's defined [#2176](https://github.com/getsentry/sentry-ruby/pull/2176)
 <<<<<<< HEAD
 - Fixed a bug where `Net::HTTP` instrumentation won't work for some IPv6 addresses [#2180](https://github.com/getsentry/sentry-ruby/pull/2180)
 - Allow non-string error message to be reported to sentry ([#2137](https://github.com/getsentry/sentry-ruby/pull/2137))
-=======
 - Network errors raised in `Sentry::HTTPTransport` will no longer be reported to Sentry [#2177](https://github.com/getsentry/sentry-ruby/pull/2177)
->>>>>>> 468e4e21 (Don't report network errors to Sentry)
+- Respect custom `Delayed::Job.max_attempts` if it's defined [#2177](https://github.com/getsentry/sentry-ruby/pull/2177)
 
 ## 5.13.0
 
