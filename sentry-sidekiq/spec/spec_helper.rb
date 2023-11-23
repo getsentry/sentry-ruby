@@ -5,11 +5,16 @@ require "debug" if RUBY_VERSION.to_f >= 2.6 && RUBY_ENGINE == "ruby"
 # this enables sidekiq's server mode
 require "sidekiq/cli"
 
+MIN_SIDEKIQ_6 = Gem::Version.new(Sidekiq::VERSION) >= Gem::Version.new("6.0")
 WITH_SIDEKIQ_7 = Gem::Version.new(Sidekiq::VERSION) >= Gem::Version.new("7.0")
-WITH_SIDEKIQ_6 = Gem::Version.new(Sidekiq::VERSION) >= Gem::Version.new("6.0") && !WITH_SIDEKIQ_7
+WITH_SIDEKIQ_6 = MIN_SIDEKIQ_6 && !WITH_SIDEKIQ_7
 
 require "sidekiq/embedded" if WITH_SIDEKIQ_7
-require 'sidekiq-cron' if RUBY_VERSION.to_f >= 2.7 && WITH_SIDEKIQ_6 || WITH_SIDEKIQ_7
+
+if RUBY_VERSION.to_f >= 2.7 && MIN_SIDEKIQ_6
+  require 'sidekiq-cron'
+  require 'sidekiq-scheduler'
+end
 
 require "sentry-ruby"
 
@@ -128,7 +133,9 @@ class SadWorker
   end
 end
 
-class HappyWorkerDup < HappyWorker; end
+class HappyWorkerForCron < HappyWorker; end
+class HappyWorkerForScheduler < HappyWorker; end
+class EveryHappyWorker < HappyWorker; end
 
 class HappyWorkerWithCron < HappyWorker
   include Sentry::Cron::MonitorCheckIns
@@ -182,6 +189,28 @@ def new_processor
     end
 
   manager.workers.first
+end
+
+class SidekiqConfigMock
+  include ::Sidekiq
+  attr_accessor :options
+
+  def initialize(options = {})
+    @options = DEFAULTS.merge(options)
+  end
+
+  def fetch(key, default = nil)
+    options.fetch(key, default)
+  end
+
+  def [](key)
+    options[key]
+  end
+end
+
+# Sidekiq 7 has a Config class, but for Sidekiq 6, we'll mock it.
+def sidekiq_config(opts)
+  WITH_SIDEKIQ_7 ? ::Sidekiq::Config.new(opts) : SidekiqConfigMock.new(opts)
 end
 
 def execute_worker(processor, klass, **options)

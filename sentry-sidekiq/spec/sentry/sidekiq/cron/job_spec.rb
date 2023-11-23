@@ -8,7 +8,7 @@ RSpec.describe Sentry::Sidekiq::Cron::Job do
   end
 
   before do
-    schedule_file = 'spec/fixtures/schedule.yml'
+    schedule_file = 'spec/fixtures/sidekiq-cron-schedule.yml'
     schedule = Sidekiq::Cron::Support.load_yaml(ERB.new(IO.read(schedule_file)).result)
     # sidekiq-cron 2.0+ accepts second argument to `load_from_hash!` with options,
     # such as {source: 'schedule'}, but sidekiq-cron 1.9.1 (last version to support Ruby 2.6) does not.
@@ -40,12 +40,12 @@ RSpec.describe Sentry::Sidekiq::Cron::Job do
     end.not_to raise_error
   end
 
-  it 'patches HappyWorker' do
-    expect(HappyWorkerDup.ancestors).to include(Sentry::Cron::MonitorCheckIns)
-    expect(HappyWorkerDup.sentry_monitor_slug).to eq('happy')
-    expect(HappyWorkerDup.sentry_monitor_config).to be_a(Sentry::Cron::MonitorConfig)
-    expect(HappyWorkerDup.sentry_monitor_config.schedule).to be_a(Sentry::Cron::MonitorSchedule::Crontab)
-    expect(HappyWorkerDup.sentry_monitor_config.schedule.value).to eq('* * * * *')
+  it 'patches HappyWorkerForCron' do
+    expect(HappyWorkerForCron.ancestors).to include(Sentry::Cron::MonitorCheckIns)
+    expect(HappyWorkerForCron.sentry_monitor_slug).to eq('happy')
+    expect(HappyWorkerForCron.sentry_monitor_config).to be_a(Sentry::Cron::MonitorConfig)
+    expect(HappyWorkerForCron.sentry_monitor_config.schedule).to be_a(Sentry::Cron::MonitorSchedule::Crontab)
+    expect(HappyWorkerForCron.sentry_monitor_config.schedule.value).to eq('* * * * *')
   end
 
   it 'does not override SadWorkerWithCron manually set values' do

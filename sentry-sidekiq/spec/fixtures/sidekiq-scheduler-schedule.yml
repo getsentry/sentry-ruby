@@ -1,0 +1,14 @@
+:schedule:
+  happy:
+    cron: "* * * * *"
+    class: "HappyWorkerForScheduler"
+  manual:
+    cron: "* * * * *"
+    class: "SadWorkerWithCron"
+  regularly_happy:
+    every: "10 minutes"
+    class: "EveryHappyWorker"
+  reports:
+    in: "2 hours"
+    class: "ReportingWorker"
+

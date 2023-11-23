@@ -1,6 +1,6 @@
 happy:
   cron: "* * * * *"
-  class: "HappyWorkerDup"
+  class: "HappyWorkerForCron"
 
 manual:
   cron: "* * * * *"
