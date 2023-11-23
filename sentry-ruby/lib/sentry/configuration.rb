@@ -7,6 +7,7 @@ require 'sentry/utils/custom_inspection'
 require "sentry/dsn"
 require "sentry/release_detector"
 require "sentry/transport/configuration"
+require "sentry/spotlight/configuration"
 require "sentry/linecache"
 require "sentry/interfaces/stacktrace_builder"
 
@@ -234,6 +235,10 @@ module Sentry
     # @return [Boolean, nil]
     attr_reader :enable_tracing
 
+    # Returns the Spotlight::Configuration object
+    # @return [Spotlight::Configuration]
+    attr_reader :spotlight
+
     # Send diagnostic client reports about dropped events, true by default
     # tries to attach to an existing envelope max once every 30s
     # @return [Boolean]
@@ -357,6 +362,8 @@ module Sentry
 
       @transport = Transport::Configuration.new
       @gem_specs = Hash[Gem::Specification.map { |spec| [spec.name, spec.version.to_s] }] if Gem::Specification.respond_to?(:map)
+
+      @spotlight = Spotlight::Configuration.new
 
       run_post_initialization_callbacks
     end

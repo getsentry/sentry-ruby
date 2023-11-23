@@ -256,6 +256,14 @@ RSpec.describe Sentry::Configuration do
     end
   end
 
+  describe "#spotlight" do
+    it "returns initialized Spotlight config by default" do
+      spotlight_config = subject.spotlight
+      expect(spotlight_config.enabled).to eq(false)
+      expect(spotlight_config.sidecar_url).to eq("http://localhost:8969/stream")
+    end
+  end
+
   context 'configuring for async' do
     it 'should be configurable to send events async' do
       subject.async = ->(_e) { :ok }

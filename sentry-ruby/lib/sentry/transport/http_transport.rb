@@ -29,9 +29,15 @@ module Sentry
       @endpoint = @dsn.envelope_endpoint
 
       log_debug("Sentry HTTP Transport will connect to #{@dsn.server}")
+
+      if @spotlight_configuration.enabled?
+        @spotlight_transport = Sentry::Spotlight::Transport.new(@transport_configuration)
+      end
     end
 
     def send_data(data)
+      @spotlight_transport.send_data(data) unless @spotlight_transport.nil?
+
       encoding = ""
 
       if should_compress?(data)

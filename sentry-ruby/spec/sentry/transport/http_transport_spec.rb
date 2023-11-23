@@ -321,4 +321,33 @@ RSpec.describe Sentry::HTTPTransport do
       end
     end
   end
+
+  describe "Spotlight integration" do
+    let(:fake_response) { build_fake_response("200") }
+    context "when spotlight is enabled" do
+      let(:spotlight_transport) { Sentry::Spotlight::Transport.new(configuration.spotlight) }
+
+      it "calls @spotlight_transport.send_data(data)" do
+        configuration.spotlight.enabled = true
+
+        stub_request(fake_response)
+
+        subject.instance_variable_set(:@spotlight_transport, spotlight_transport)
+        expect( spotlight_transport ).to receive(:send_data).with(data)
+        subject.send_data(data)
+      end
+    end
+
+    context "when spotlight integration is disabled" do
+      let(:spotlight_transport) { nil } 
+      it "does not call @spotlight_transport.send_data(data)" do
+        configuration.spotlight.enabled = false
+
+        stub_request(fake_response)
+
+        expect( spotlight_transport ).not_to receive(:send_data).with(data)
+        subject.send_data(data)
+      end
+    end
+  end
 end

@@ -32,6 +32,7 @@ module Sentry
     def initialize(configuration)
       @logger = configuration.logger
       @transport_configuration = configuration.transport
+      @spotlight_configuration = configuration.spotlight
       @dsn = configuration.dsn
       @rate_limits = {}
       @send_client_reports = configuration.send_client_reports
