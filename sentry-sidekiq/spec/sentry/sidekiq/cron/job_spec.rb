@@ -16,8 +16,28 @@ RSpec.describe Sentry::Sidekiq::Cron::Job do
     Sidekiq::Cron::Job.load_from_hash!(schedule)
   end
 
+  before do
+    stub_const('Job', Class.new { def perform; end })
+  end
+
   it 'patches class' do
     expect(Sidekiq::Cron::Job.ancestors).to include(described_class)
+  end
+
+  it 'preserves return value' do
+    job = Sidekiq::Cron::Job.new(name: 'test', cron: '* * * * *', class: 'Job')
+    expect(job.save).to eq(true)
+  end
+
+  it 'preserves return value in invalid case' do
+    job = Sidekiq::Cron::Job.new(name: 'test', cron: 'not a crontab', class: 'Job')
+    expect(job.save).to eq(false)
+  end
+
+  it 'does not raise error on invalid class' do
+    expect do
+      Sidekiq::Cron::Job.create(name: 'invalid_class', cron: '* * * * *', class: 'UndefinedClass')
+    end.not_to raise_error
   end
 
   it 'patches HappyWorker' do
@@ -39,11 +59,4 @@ RSpec.describe Sentry::Sidekiq::Cron::Job do
   it 'does not patch ReportingWorker because of invalid schedule' do
     expect(ReportingWorker.ancestors).not_to include(Sentry::Cron::MonitorSchedule)
   end
-
-  it 'does not raise error on invalid class' do
-    expect do
-      Sidekiq::Cron::Job.create(name: 'invalid_class', cron: '* * * * *', class: 'UndefinedClass')
-    end.not_to raise_error
-  end
-
 end
