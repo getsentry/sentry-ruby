@@ -31,6 +31,8 @@ module Sentry
                              slug: name,
                              monitor_config: Sentry::Cron::MonitorConfig.from_crontab(cron))
           end
+
+          true
         end
       end
     end
