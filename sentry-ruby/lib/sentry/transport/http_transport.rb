@@ -128,12 +128,15 @@ module Sentry
 
     def conn
       server = URI(@dsn.server)
-
+      
+      # connection respects proxy setting from @transport_configuration, or environment variables (HTTP_PROXY, HTTPS_PROXY, NO_PROXY)
+      # Net::HTTP will automatically read the env vars.
+      # See https://ruby-doc.org/3.2.2/stdlibs/net/Net/HTTP.html#class-Net::HTTP-label-Proxies
       connection =
         if proxy = normalize_proxy(@transport_configuration.proxy)
           ::Net::HTTP.new(server.hostname, server.port, proxy[:uri].hostname, proxy[:uri].port, proxy[:user], proxy[:password])
         else
-          ::Net::HTTP.new(server.hostname, server.port, nil)
+          ::Net::HTTP.new(server.hostname, server.port)
         end
 
       connection.use_ssl = server.scheme == "https"
@@ -148,6 +151,9 @@ module Sentry
       connection
     end
 
+    # @param proxy [String, URI, Hash] Proxy config value passed into `config.transport`.
+    #   Accepts either a URI formatted string, URI, or a hash with the `uri`, `user`, and `password` keys.
+    # @return [Hash] Normalized proxy config that will be passed into `Net::HTTP`
     def normalize_proxy(proxy)
       return proxy unless proxy
 

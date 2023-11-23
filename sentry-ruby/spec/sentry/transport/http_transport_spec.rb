@@ -63,7 +63,7 @@ RSpec.describe Sentry::HTTPTransport do
         expect(subject.send(:conn).port).to eq(80)
       end
     end
-    context "with http DSN" do
+    context "with https DSN" do
       let(:dsn) { "https://12345:67890@sentry.localdomain/sentry/42" }
 
       it "sets port to 443" do
@@ -129,13 +129,33 @@ RSpec.describe Sentry::HTTPTransport do
       subject.send_data(data)
     end
 
+    it "accepts a proxy from ENV[HTTP_PROXY]" do
+      begin
+        ENV["http_proxy"] = "https://stan:foobar@example.com:8080"
+  
+        stub_request(fake_response) do |_, http_obj|
+          expect(http_obj.proxy_address).to eq("example.com")
+          expect(http_obj.proxy_port).to eq(8080)
+
+          if Gem::Version.new(RUBY_VERSION) >= Gem::Version.new("2.5")
+            expect(http_obj.proxy_user).to eq("stan")
+            expect(http_obj.proxy_pass).to eq("foobar")
+          end
+        end
+  
+        subject.send_data(data)
+      ensure
+        ENV["http_proxy"] = nil
+      end
+    end
+
     it "accepts custom timeout" do
       configuration.transport.timeout = 10
 
       stub_request(fake_response) do |_, http_obj|
         expect(http_obj.read_timeout).to eq(10)
 
-        if RUBY_VERSION >= "2.6"
+        if Gem::Version.new(RUBY_VERSION) >= Gem::Version.new("2.6")
           expect(http_obj.write_timeout).to eq(10)
         end
       end
