@@ -143,6 +143,22 @@ RSpec.describe Sentry::DelayedJob do
         expect(transport.events.count).to eq(1)
       end
 
+      # Default max_attemps is defined on Delayed::Worker.max_attempts == 25.
+      # However, users can customize max_attempts on the job class, and DelayedJob
+      # will respect that.
+      # Sentry needs to report an exception if report_after_retries is true and
+      # custom job-level max_attempts is reached.
+      # See https://github.com/collectiveidea/delayed_job#custom-jobs
+      it "reports exception after the job's custom max_attempts" do
+        enqueued_job.update(attempts:2)
+        allow(enqueued_job).to receive(:max_attempts).and_return(3)
+
+        expect do
+          enqueued_job.invoke_job
+        end.to raise_error(ZeroDivisionError)
+        expect(transport.events.count).to eq(1)
+      end
+
       it "skips report if not on the last retry" do
         enqueued_job.update(attempts: 0)
 

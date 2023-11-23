@@ -87,7 +87,8 @@ module Sentry
 
         # We use the predecessor because the job's attempts haven't been increased to the new
         # count at this point.
-        job.attempts >= Delayed::Worker.max_attempts.pred
+        max_attempts = job&.max_attempts&.pred || Delayed::Worker.max_attempts.pred
+        job.attempts >= max_attempts
       end
 
       def self.finish_transaction(transaction, status)
