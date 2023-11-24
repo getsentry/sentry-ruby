@@ -19,6 +19,7 @@
     ```rb
     config.enabled_patches += [:sidekiq_scheduler]
     ```
+- Passing a distributed trace ID in SENTRY_TRACE and baggage in SENTRY_BAGGAGE environment variables is now supported [#2179](https://github.com/getsentry/sentry-ruby/pull/2179)
 
 ### Bug Fixes
 
