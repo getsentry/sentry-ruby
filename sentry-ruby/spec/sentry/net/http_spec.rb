@@ -9,6 +9,21 @@ RSpec.describe Sentry::Net::HTTP do
     ::Logger.new(string_io)
   end
 
+  context "with IPv6 addresses" do
+    before do
+      perform_basic_setup
+    end
+
+    it "correctly parses the short-hand IPv6 addresses" do
+      stub_normal_response
+
+      conn = Net::HTTP.new('::1', 8080)
+      expect do
+        conn.request_post('/path', 'foo=1')
+      end.not_to raise_error
+    end
+  end
+
   context "with tracing enabled" do
     before do
       perform_basic_setup do |config|
