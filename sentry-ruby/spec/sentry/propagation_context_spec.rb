@@ -73,46 +73,50 @@ RSpec.describe Sentry::PropagationContext do
     end
 
     it "generates correct attributes when reading from ENV['SENTRY_TRACE'] and ENV['SENTRY_BAGGAGE]" do
-      ENV["SENTRY_TRACE"] = "771a43a4192642f0b136d5159a501700-7c51afd529da4a2a"
-      ENV["SENTRY_BAGGAGE"] = "other-vendor-value-1=foo;bar;baz, "\
-                          "sentry-trace_id=771a43a4192642f0b136d5159a501700, "\
-                          "sentry-public_key=49d0f7386ad645858ae85020e393bef3, "\
-                          "sentry-sample_rate=0.01337, "\
-                          "sentry-user_id=Am%C3%A9lie,  "\
-                          "other-vendor-value-2=foo;bar;"
+      begin
+        ENV["SENTRY_TRACE"] = "771a43a4192642f0b136d5159a501700-7c51afd529da4a2a"
+        ENV["SENTRY_BAGGAGE"] = "other-vendor-value-1=foo;bar;baz, "\
+                            "sentry-trace_id=771a43a4192642f0b136d5159a501700, "\
+                            "sentry-public_key=49d0f7386ad645858ae85020e393bef3, "\
+                            "sentry-sample_rate=0.01337, "\
+                            "sentry-user_id=Am%C3%A9lie,  "\
+                            "other-vendor-value-2=foo;bar;"
 
-      subject = described_class.new(scope)
-      expect(subject.trace_id).to eq("771a43a4192642f0b136d5159a501700")
-      expect(subject.span_id.length).to eq(16)
-      expect(subject.parent_span_id).to eq("7c51afd529da4a2a")
-      expect(subject.parent_sampled).to eq(nil)
-      expect(subject.incoming_trace).to eq(true)
-      expect(subject.baggage).to be_a(Sentry::Baggage)
-      expect(subject.baggage.mutable).to eq(false)
-      expect(subject.baggage.items).to eq({
-        "public_key"=>"49d0f7386ad645858ae85020e393bef3",
-        "sample_rate"=>"0.01337",
-        "trace_id"=>"771a43a4192642f0b136d5159a501700",
-        "user_id"=>"Amélie"
-      })
-    ensure
-      ENV.delete("SENTRY_TRACE")
-      ENV.delete("SENTRY_BAGGAGE")
+        subject = described_class.new(scope)
+        expect(subject.trace_id).to eq("771a43a4192642f0b136d5159a501700")
+        expect(subject.span_id.length).to eq(16)
+        expect(subject.parent_span_id).to eq("7c51afd529da4a2a")
+        expect(subject.parent_sampled).to eq(nil)
+        expect(subject.incoming_trace).to eq(true)
+        expect(subject.baggage).to be_a(Sentry::Baggage)
+        expect(subject.baggage.mutable).to eq(false)
+        expect(subject.baggage.items).to eq({
+          "public_key"=>"49d0f7386ad645858ae85020e393bef3",
+          "sample_rate"=>"0.01337",
+          "trace_id"=>"771a43a4192642f0b136d5159a501700",
+          "user_id"=>"Amélie"
+        })
+      ensure
+        ENV.delete("SENTRY_TRACE")
+        ENV.delete("SENTRY_BAGGAGE")
+      end
     end
 
     it "generates correct new trace_id when ENV values are malformed" do
-      ENV["SENTRY_TRACE"] = "I am borked lol"
-      ENV["SENTRY_BAGGAGE"] = "that's not it chief"
+      begin
+        ENV["SENTRY_TRACE"] = "I am borked lol"
+        ENV["SENTRY_BAGGAGE"] = "that's not it chief"
 
-      subject = described_class.new(scope)
-      expect(subject.trace_id.length).to eq(32)
-      expect(subject.span_id.length).to eq(16)
-      expect(subject.parent_sampled).to eq(nil)
-      expect(subject.incoming_trace).to eq(false)
-      expect(subject.baggage).to eq(nil)
-    ensure
-      ENV.delete("SENTRY_TRACE")
-      ENV.delete("SENTRY_BAGGAGE") 
+        subject = described_class.new(scope)
+        expect(subject.trace_id.length).to eq(32)
+        expect(subject.span_id.length).to eq(16)
+        expect(subject.parent_sampled).to eq(nil)
+        expect(subject.incoming_trace).to eq(false)
+        expect(subject.baggage).to eq(nil)
+      ensure
+        ENV.delete("SENTRY_TRACE")
+        ENV.delete("SENTRY_BAGGAGE") 
+      end
     end
 
     it "generates correct attributes when incoming sentry-trace only (from older SDKs)" do
