@@ -40,31 +40,37 @@ module Sentry
       @baggage = nil
       @incoming_trace = false
 
-      if env
-        sentry_trace_header = env["HTTP_SENTRY_TRACE"] || env[SENTRY_TRACE_HEADER_NAME]
-        baggage_header = env["HTTP_BAGGAGE"] || env[BAGGAGE_HEADER_NAME]
+      # Invoking code could pass a nil env, so let's ||= it so it's easier to work with.
+      env ||= {}
 
-        if sentry_trace_header
-          sentry_trace_data = self.class.extract_sentry_trace(sentry_trace_header)
+      # Trace string could be passed from the invoking code,
+      # or via the environment variable.
+      sentry_trace_string = env["HTTP_SENTRY_TRACE"] || env[SENTRY_TRACE_HEADER_NAME] || ENV["SENTRY_TRACE"]
 
-          if sentry_trace_data
-            @trace_id, @parent_span_id, @parent_sampled = sentry_trace_data
+      # Baggage string could be in the HTTP header (env), or it could be exposed in an ENV variable.
+      baggage_string = env["HTTP_BAGGAGE"] || env[BAGGAGE_HEADER_NAME] || ENV["SENTRY_BAGGAGE"]
 
-            @baggage = if baggage_header && !baggage_header.empty?
-                        Baggage.from_incoming_header(baggage_header)
-                      else
-                        # If there's an incoming sentry-trace but no incoming baggage header,
-                        # for instance in traces coming from older SDKs,
-                        # baggage will be empty and frozen and won't be populated as head SDK.
-                        Baggage.new({})
-                      end
+      if sentry_trace_string
+        sentry_trace_data = self.class.extract_sentry_trace(sentry_trace_string)
 
-            @baggage.freeze!
-            @incoming_trace = true
-          end
+        if sentry_trace_data
+          @trace_id, @parent_span_id, @parent_sampled = sentry_trace_data
+
+          @baggage = if baggage_string && !baggage_string.empty?
+                      Baggage.from_baggage_string(baggage_string)
+                    else
+                      # If there's an incoming sentry-trace but no incoming baggage header,
+                      # for instance in traces coming from older SDKs,
+                      # baggage will be empty and frozen and won't be populated as head SDK.
+                      Baggage.new({})
+                    end
+
+          @baggage.freeze!
+          @incoming_trace = true
         end
       end
 
+      # If the trace_id was not provided, generate a new one.
       @trace_id ||= SecureRandom.uuid.delete("-")
       @span_id = SecureRandom.uuid.delete("-").slice(0, 16)
     end

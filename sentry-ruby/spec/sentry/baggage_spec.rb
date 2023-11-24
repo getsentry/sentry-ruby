@@ -17,21 +17,21 @@ RSpec.describe Sentry::Baggage do
   describe "#dynamic_sampling_context" do
     context "when malformed baggage" do
       it "is empty" do
-        baggage = described_class.from_incoming_header(malformed_baggage)
+        baggage = described_class.from_baggage_string(malformed_baggage)
         expect(baggage.dynamic_sampling_context).to eq({})
       end
     end
 
     context "when only third party baggage" do
       it "is empty" do
-        baggage = described_class.from_incoming_header(third_party_baggage)
+        baggage = described_class.from_baggage_string(third_party_baggage)
         expect(baggage.dynamic_sampling_context).to eq({})
       end
     end
 
     context "when mixed baggage" do
       it "populates DSC" do
-        baggage = described_class.from_incoming_header(mixed_baggage)
+        baggage = described_class.from_baggage_string(mixed_baggage)
 
         expect(baggage.dynamic_sampling_context).to eq({
           "sample_rate" => "0.01337",
@@ -48,21 +48,21 @@ RSpec.describe Sentry::Baggage do
     context "default args (without third party)" do
       context "when malformed baggage" do
         it "is empty string" do
-          baggage = described_class.from_incoming_header(malformed_baggage)
+          baggage = described_class.from_baggage_string(malformed_baggage)
           expect(baggage.serialize).to eq("")
         end
       end
 
       context "when only third party baggage" do
         it "is empty" do
-          baggage = described_class.from_incoming_header(third_party_baggage)
+          baggage = described_class.from_baggage_string(third_party_baggage)
           expect(baggage.serialize).to eq("")
         end
       end
 
       context "when mixed baggage" do
         it "populates DSC" do
-          baggage = described_class.from_incoming_header(mixed_baggage)
+          baggage = described_class.from_baggage_string(mixed_baggage)
 
           expect(baggage.serialize).to eq(
             "sentry-trace_id=771a43a4192642f0b136d5159a501700,"\
@@ -79,14 +79,14 @@ RSpec.describe Sentry::Baggage do
   describe "#mutable" do
     context "when only third party baggage" do
       it "is mutable" do
-        baggage = described_class.from_incoming_header(third_party_baggage)
+        baggage = described_class.from_baggage_string(third_party_baggage)
         expect(baggage.mutable).to eq(true)
       end
     end
 
     context "when has sentry baggage" do
       it "is immutable" do
-        baggage = described_class.from_incoming_header(mixed_baggage)
+        baggage = described_class.from_baggage_string(mixed_baggage)
         expect(baggage.mutable).to eq(false)
       end
     end
@@ -94,7 +94,7 @@ RSpec.describe Sentry::Baggage do
 
   describe "#freeze!" do
     it "makes it immutable" do
-      baggage = described_class.from_incoming_header(third_party_baggage)
+      baggage = described_class.from_baggage_string(third_party_baggage)
       expect(baggage.mutable).to eq(true)
       baggage.freeze!
       expect(baggage.mutable).to eq(false)

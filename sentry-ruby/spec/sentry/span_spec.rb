@@ -99,7 +99,7 @@ RSpec.describe Sentry::Span do
     end
 
     subject do
-      baggage = Sentry::Baggage.from_incoming_header(
+      baggage = Sentry::Baggage.from_baggage_string(
         "other-vendor-value-1=foo;bar;baz, "\
         "sentry-trace_id=771a43a4192642f0b136d5159a501700, "\
         "sentry-public_key=49d0f7386ad645858ae85020e393bef3, "\

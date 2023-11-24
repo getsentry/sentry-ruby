@@ -52,7 +52,7 @@ module Sentry
         baggage_header = getter.get(carrier, BAGGAGE_HEADER_NAME)
 
         baggage = if baggage_header && !baggage_header.empty?
-                    Baggage.from_incoming_header(baggage_header)
+                    Baggage.from_baggage_string(baggage_header)
                   else
                     # If there's an incoming sentry-trace but no incoming baggage header,
                     # for instance in traces coming from older SDKs,

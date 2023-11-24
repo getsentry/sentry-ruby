@@ -26,11 +26,11 @@ module Sentry
     #
     # @param header [String] The incoming Baggage header string.
     # @return [Baggage, nil]
-    def self.from_incoming_header(header)
+    def self.from_baggage_string(baggage_string)
       items = {}
       mutable = true
 
-      header.split(',').each do |item|
+      baggage_string.split(',').each do |item|
         item = item.strip
         key, val = item.split('=')
 

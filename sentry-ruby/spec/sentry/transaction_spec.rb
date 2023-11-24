@@ -566,7 +566,7 @@ RSpec.describe Sentry::Transaction do
 
     context "when incoming baggage with sentry items" do
       let(:incoming_baggage) do
-        Sentry::Baggage.from_incoming_header("sentry-trace_id=12345,foo=bar")
+        Sentry::Baggage.from_baggage_string("sentry-trace_id=12345,foo=bar")
       end
 
       it "does not populate new baggage" do
@@ -580,7 +580,7 @@ RSpec.describe Sentry::Transaction do
 
     context "when incoming baggage with no sentry items" do
       let(:incoming_baggage) do
-        Sentry::Baggage.from_incoming_header("foo=bar")
+        Sentry::Baggage.from_baggage_string("foo=bar")
       end
 
       it "populates sentry baggage" do

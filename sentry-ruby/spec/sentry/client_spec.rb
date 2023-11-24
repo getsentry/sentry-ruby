@@ -129,7 +129,7 @@ RSpec.describe Sentry::Client do
     end
 
     it "correct dynamic_sampling_context when incoming baggage header" do
-      baggage = Sentry::Baggage.from_incoming_header(
+      baggage = Sentry::Baggage.from_baggage_string(
         "other-vendor-value-1=foo;bar;baz, "\
         "sentry-trace_id=771a43a4192642f0b136d5159a501700, "\
         "sentry-public_key=49d0f7386ad645858ae85020e393bef3, "\
@@ -599,7 +599,7 @@ RSpec.describe Sentry::Client do
     let(:string_io) { StringIO.new }
     let(:logger) { ::Logger.new(string_io) }
     let(:baggage) do
-      Sentry::Baggage.from_incoming_header(
+      Sentry::Baggage.from_baggage_string(
         "other-vendor-value-1=foo;bar;baz, sentry-trace_id=771a43a4192642f0b136d5159a501700, "\
         "sentry-public_key=49d0f7386ad645858ae85020e393bef3, sentry-sample_rate=0.01337, "\
         "sentry-user_id=Am%C3%A9lie, other-vendor-value-2=foo;bar;"
