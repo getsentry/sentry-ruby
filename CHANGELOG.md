@@ -26,6 +26,7 @@
 - Avoid invoking ActiveSupport::BroadcastLogger if not defined [#2169](https://github.com/getsentry/sentry-ruby/pull/2169)
 - Respect custom `Delayed::Job.max_attempts` if it's defined [#2176](https://github.com/getsentry/sentry-ruby/pull/2176)
 - Fixed a bug where `Net::HTTP` instrumentation won't work for some IPv6 addresses [#2180](https://github.com/getsentry/sentry-ruby/pull/2180)
+- Allow non-string error message to be reported to sentry ([#2137](https://github.com/getsentry/sentry-ruby/pull/2137))
 
 ## 5.13.0
 
