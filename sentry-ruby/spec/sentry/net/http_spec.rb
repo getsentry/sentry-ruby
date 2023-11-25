@@ -17,10 +17,17 @@ RSpec.describe Sentry::Net::HTTP do
     it "correctly parses the short-hand IPv6 addresses" do
       stub_normal_response
 
-      conn = Net::HTTP.new('::1', 8080)
-      expect do
-        conn.request_post('/path', 'foo=1')
-      end.not_to raise_error
+      transaction = Sentry.start_transaction
+      Sentry.get_current_scope.set_span(transaction)
+
+      _ = Net::HTTP.get("::1", "/path", 8080)
+
+      expect(transaction.span_recorder.spans.count).to eq(2)
+
+      request_span = transaction.span_recorder.spans.last
+      expect(request_span.data).to eq(
+        { "url" => "http://[::1]/path", "http.request.method" => "GET", "http.response.status_code" => 200 }
+      )
     end
   end
 
