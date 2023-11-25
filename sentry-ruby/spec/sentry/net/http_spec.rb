@@ -11,7 +11,9 @@ RSpec.describe Sentry::Net::HTTP do
 
   context "with IPv6 addresses" do
     before do
-      perform_basic_setup
+      perform_basic_setup do |config|
+        config.traces_sample_rate = 1.0
+      end
     end
 
     it "correctly parses the short-hand IPv6 addresses" do
