@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require "net/http"
+require "resolv"
 
 module Sentry
   # @api private
@@ -77,7 +78,10 @@ module Sentry
       end
 
       def extract_request_info(req)
-        uri = req.uri || URI.parse("#{use_ssl? ? 'https' : 'http'}://#{address}#{req.path}")
+        # IPv6 url could look like '::1/path', and that won't parse without
+        # wrapping it in square brackets.
+        hostname = address =~ Resolv::IPv6::Regex ? "[#{address}]" : address
+        uri = req.uri || URI.parse("#{use_ssl? ? 'https' : 'http'}://#{hostname}#{req.path}")
         url = "#{uri.scheme}://#{uri.host}#{uri.path}" rescue uri.to_s
 
         result = { method: req.method, url: url }

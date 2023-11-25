@@ -9,6 +9,30 @@ RSpec.describe Sentry::Net::HTTP do
     ::Logger.new(string_io)
   end
 
+  context "with IPv6 addresses" do
+    before do
+      perform_basic_setup do |config|
+        config.traces_sample_rate = 1.0
+      end
+    end
+
+    it "correctly parses the short-hand IPv6 addresses" do
+      stub_normal_response
+
+      transaction = Sentry.start_transaction
+      Sentry.get_current_scope.set_span(transaction)
+
+      _ = Net::HTTP.get("::1", "/path", 8080)
+
+      expect(transaction.span_recorder.spans.count).to eq(2)
+
+      request_span = transaction.span_recorder.spans.last
+      expect(request_span.data).to eq(
+        { "url" => "http://[::1]/path", "http.request.method" => "GET", "http.response.status_code" => 200 }
+      )
+    end
+  end
+
   context "with tracing enabled" do
     before do
       perform_basic_setup do |config|
