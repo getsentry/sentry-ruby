@@ -4,6 +4,7 @@ module Sentry
   module Rack
     class CaptureExceptions
       ERROR_EVENT_ID_KEY = "sentry.error_event_id"
+      IGNORED_HTTP_METHODS = ["HEAD", "OPTIONS"].freeze
 
       def initialize(app)
         @app = app
@@ -62,7 +63,17 @@ module Sentry
       end
 
       def start_transaction(env, scope)
-        options = { name: scope.transaction_name, source: scope.transaction_source, op: transaction_op }
+        options = {
+          name: scope.transaction_name,
+          source: scope.transaction_source, 
+          op: transaction_op
+        }
+        
+        # Tell Sentry to not sample this transaction if this is an HTTP OPTIONS or HEAD request.
+        if IGNORED_HTTP_METHODS.include?(env["REQUEST_METHOD"])
+          options.merge!(sampled: false)
+        end
+
         transaction = Sentry.continue_trace(env, **options)
         Sentry.start_transaction(transaction: transaction, custom_sampling_context: { env: env }, **options)
       end

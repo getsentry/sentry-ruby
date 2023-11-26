@@ -178,6 +178,7 @@ RSpec.describe Sentry::Rack::CaptureExceptions, rack: true do
         expect(event.breadcrumbs.count).to eq(1)
         expect(event.breadcrumbs.peek.message).to eq("request breadcrumb")
       end
+
       it "doesn't pollute the top-level scope" do
         request_1 = lambda do |e|
           Sentry.configure_scope { |s| s.set_tags({tag_1: "foo"}) }
@@ -192,6 +193,7 @@ RSpec.describe Sentry::Rack::CaptureExceptions, rack: true do
         expect(event.tags).to eq(tag_1: "foo")
         expect(Sentry.get_current_scope.tags).to eq(tag_1: "don't change me")
       end
+
       it "doesn't pollute other request's scope" do
         request_1 = lambda do |e|
           Sentry.configure_scope { |s| s.set_tags({tag_1: "foo"}) }

@@ -87,6 +87,7 @@
     ```rb
     config.enabled_patches += [:sidekiq_scheduler]
     ```
+- Sentry will not record traces of HTTP OPTIONS and HEAD requests in Rack and Rails apps [#2181](https://github.com/getsentry/sentry-ruby/pull/2181)
 
 ### Bug Fixes
 
