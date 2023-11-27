@@ -1,3 +1,11 @@
+## Unreleased
+
+### Features
+
+### Bug Fixes
+
+- Network errors raised in `Sentry::HTTPTransport` will no longer be reported to Sentry [#2178](https://github.com/getsentry/sentry-ruby/pull/2178)
+
 ## 5.14.0
 
 ### Features

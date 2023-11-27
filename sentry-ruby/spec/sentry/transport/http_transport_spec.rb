@@ -265,11 +265,34 @@ RSpec.describe Sentry::HTTPTransport do
     end
   end
 
+  describe "failed to perform the network request" do
+    it "does not report Net::HTTP errors to Sentry" do
+      allow(::Net::HTTP).to receive(:new).and_raise(Errno::ECONNREFUSED)
+      expect do
+        subject.send_data(data)
+      end.to raise_error(Sentry::ExternalError)
+    end
+
+    it "does not report SocketError errors to Sentry" do
+      allow(::Net::HTTP).to receive(:new).and_raise(SocketError.new("socket error"))
+      expect do
+        subject.send_data(data)
+      end.to raise_error(Sentry::ExternalError) 
+    end
+
+    it "reports other errors to Sentry if they are not recognized" do
+      allow(::Net::HTTP).to receive(:new).and_raise(StandardError.new("Booboo"))
+      expect do
+        subject.send_data(data)
+      end.to raise_error(StandardError, /Booboo/)
+    end
+  end
+
   describe "failed request handling" do
     context "receive 4xx responses" do
       let(:fake_response) { build_fake_response("404") }
 
-      it 'raises an error' do
+      it "raises an error" do
         stub_request(fake_response)
 
         expect { subject.send_data(data) }.to raise_error(Sentry::ExternalError, /the server responded with status 404/)
@@ -279,7 +302,7 @@ RSpec.describe Sentry::HTTPTransport do
     context "receive 5xx responses" do
       let(:fake_response) { build_fake_response("500") }
 
-      it 'raises an error' do
+      it "raises an error" do
         stub_request(fake_response)
 
         expect { subject.send_data(data) }.to raise_error(Sentry::ExternalError, /the server responded with status 500/)
@@ -291,7 +314,7 @@ RSpec.describe Sentry::HTTPTransport do
         build_fake_response("500", headers: { 'x-sentry-error' => 'error_in_header' })
       end
 
-      it 'raises an error with header' do
+      it "raises an error with header" do
         stub_request(error_response)
 
         expect { subject.send_data(data) }.to raise_error(Sentry::ExternalError, /error_in_header/)
