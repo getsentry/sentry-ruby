@@ -23,20 +23,21 @@ module Sentry
       Zlib::BufError, Errno::EHOSTUNREACH, Errno::ECONNREFUSED
     ].freeze
 
-
     def initialize(*args)
       super
       @endpoint = @dsn.envelope_endpoint
 
       log_debug("Sentry HTTP Transport will connect to #{@dsn.server}")
 
-      if @spotlight_configuration.enabled?
-        @spotlight_transport = Sentry::Spotlight::Transport.new(@transport_configuration)
+      if @spotlight
+        @spotlight_transport = Sentry::Spotlight.new(@spotlight)
       end
     end
 
     def send_data(data)
-      @spotlight_transport.send_data(data) unless @spotlight_transport.nil?
+      if should_send_to_spotlight?
+        @spotlight_transport.send_data(data)
+      end
 
       encoding = ""
 
@@ -140,6 +141,10 @@ module Sentry
 
     def should_compress?(data)
       @transport_configuration.encoding == GZIP_ENCODING && data.bytesize >= GZIP_THRESHOLD
+    end
+
+    def should_send_to_spotlight?
+      !@spotlight_transport.nil?
     end
 
     def conn

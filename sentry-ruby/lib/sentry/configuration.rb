@@ -7,7 +7,6 @@ require 'sentry/utils/custom_inspection'
 require "sentry/dsn"
 require "sentry/release_detector"
 require "sentry/transport/configuration"
-require "sentry/spotlight/configuration"
 require "sentry/linecache"
 require "sentry/interfaces/stacktrace_builder"
 
@@ -142,6 +141,14 @@ module Sentry
     # Whether to capture local variables from the raised exception's frame. Default is false.
     # @return [Boolean]
     attr_accessor :include_local_variables
+    
+    # Whether to capture events and traces into Spotlight. Default is false.
+    # If you set this to true, Sentry will send events and traces to the local
+    # Sidecar proxy at http://localhost:8969/stream.
+    # If you want to use a different Sidecar proxy address, set this to String
+    # with the proxy URL.
+    # @return [Boolean, String]
+    attr_accessor :spotlight
 
     # @deprecated Use {#include_local_variables} instead.
     alias_method :capture_exception_frame_locals, :include_local_variables
@@ -360,10 +367,10 @@ module Sentry
       self.traces_sampler = nil
       self.enable_tracing = nil
 
+      self.spotlight = false
+
       @transport = Transport::Configuration.new
       @gem_specs = Hash[Gem::Specification.map { |spec| [spec.name, spec.version.to_s] }] if Gem::Specification.respond_to?(:map)
-
-      @spotlight = Spotlight::Configuration.new
 
       run_post_initialization_callbacks
     end
