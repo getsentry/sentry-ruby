@@ -1,4 +1,4 @@
-## Unreleased
+## 5.14.0
 
 ### Features
 
@@ -13,7 +13,7 @@
     config.enabled_patches += [:sidekiq_cron]
     ```
   - Add support for [`sidekiq-scheduler`](https://github.com/sidekiq-scheduler/sidekiq-scheduler) [#2172](https://github.com/getsentry/sentry-ruby/pull/2172)
-    
+
     You can opt in to the `sidekiq-scheduler` patch and we will automatically monitor check-ins for all repeating jobs (i.e. `cron`, `every`, and `interval`) specified in the config.
 
     ```rb
