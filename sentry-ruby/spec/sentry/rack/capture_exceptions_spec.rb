@@ -297,6 +297,20 @@ RSpec.describe Sentry::Rack::CaptureExceptions, rack: true do
           verify_transaction_attributes(transaction)
           verify_transaction_inherits_external_transaction(transaction, external_transaction)
         end
+
+        context "performing an HTTP OPTIONS request" do
+          let(:additional_headers) do
+            { method: "OPTIONS" }
+          end
+
+          it "doesn't sample transaction" do
+            wont_be_sampled_by_sdk
+
+            stack.call(env)
+
+            expect(transaction).to be_nil
+          end
+        end
       end
 
       context "with unsampled trace" do
