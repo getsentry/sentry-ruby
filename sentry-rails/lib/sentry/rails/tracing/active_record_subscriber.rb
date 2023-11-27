@@ -31,6 +31,10 @@ module Sentry
                             connection.pool.db_config.configuration_hash
                           elsif connection.pool.respond_to?(:spec)
                             connection.pool.spec.config
+                          # CockroachDB pool shows up as NullPool, but we can grab
+                          # it's configuration from the instance variable.
+                          elsif connection.instance_variable_defined?(:@config)
+                            connection.instance_variable_get(:@config)
                           end
 
               next unless db_config
