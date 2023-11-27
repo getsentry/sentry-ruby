@@ -21,7 +21,7 @@ module Sentry
     # HTTPTransport will call this if config.spotlight is truthy, and pass it here.
     # so sidecar_url arg can either be true, or a string with the sidecar URL.
     def initialize(sidecar_url)
-      @sidecar_url = sidecar_url.is_a?(String) ? sidecar_url : "http://localhost:8769/stream"
+      @sidecar_url = sidecar_url.is_a?(String) ? sidecar_url : "http://localhost:8969/stream"
     end
 
     def send_data(data)
@@ -32,7 +32,7 @@ module Sentry
       }
 
       response = conn.start do |http|
-        request = ::Net::HTTP::Post.new(@sidecar_url, headers)
+        request = ::Net::HTTP::Post.new("/stream", headers)
         request.body = data
         http.request(request)
       end
@@ -45,7 +45,6 @@ module Sentry
         raise Sentry::ExternalError, error_info
       end
 
-    # TODO: We might want to rescue the other HTTP_ERRORS like in HTTPTransport
     rescue SocketError, * Sentry::HTTPTransport::HTTP_ERRORS => e
       raise Sentry::ExternalError.new(e.message)
     end
