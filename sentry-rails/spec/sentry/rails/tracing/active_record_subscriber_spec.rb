@@ -64,6 +64,38 @@ RSpec.describe Sentry::Rails::Tracing::ActiveRecordSubscriber, :subscriber do
       expect(data["db.name"]).to include("db")
       expect(data["db.system"]).to eq("sqlite3")
     end
+
+    it "records database configuration if connection.pool is not available" do
+      # Some adapters (like CockroachDB) don't provide ConnectionPool,
+      # so we have to grab the configuration off the Connection itself.
+      # See https://github.com/getsentry/sentry-ruby/issues/2110
+      config = { adapter: "sqlite3", database: "dummy-database" }
+      allow_any_instance_of(ActiveRecord::ConnectionAdapters::SQLite3Adapter).to receive(:pool).and_return(nil)
+      allow_any_instance_of(ActiveRecord::ConnectionAdapters::SQLite3Adapter).to receive(:instance_variable_get).with(:@config).and_return(config)
+
+      transaction = Sentry::Transaction.new(sampled: true, hub: Sentry.get_current_hub)
+      Sentry.get_current_scope.set_span(transaction)
+
+      Post.all.to_a
+
+      transaction.finish
+
+      expect(transport.events.count).to eq(1)
+
+      transaction = transport.events.first.to_hash
+      expect(transaction[:type]).to eq("transaction")
+      expect(transaction[:spans].count).to eq(1)
+
+      span = transaction[:spans][0]
+      expect(span[:op]).to eq("db.sql.active_record")
+      expect(span[:description]).to eq("SELECT \"posts\".* FROM \"posts\"")
+      expect(span[:tags].key?(:cached)).to eq(false)
+      expect(span[:trace_id]).to eq(transaction.dig(:contexts, :trace, :trace_id))
+
+      data = span[:data]
+      expect(data["db.name"]).to eq("dummy-database")
+      expect(data["db.system"]).to eq("sqlite3")
+    end
   end
 
   context "when transaction is not sampled" do
