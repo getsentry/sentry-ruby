@@ -14,12 +14,15 @@ module Sentry
     RATE_LIMIT_HEADER = "x-sentry-rate-limits"
     USER_AGENT = "sentry-ruby/#{Sentry::VERSION}"
 
-    NET_HTTP_ERRORS = [
-      Errno::EINVAL, Errno::ECONNRESET, Errno::ECONNREFUSED,
-      Errno::ETIMEDOUT, Errno::EHOSTUNREACH, Errno::ENETUNREACH,
-      Timeout::Error,
-      ::Net::HTTPBadResponse, ::Net::HTTPHeaderSyntaxError, ::Net::ProtocolError
-    ]
+    # The list of errors ::Net::HTTP is known to raise
+    # See https://github.com/ruby/ruby/blob/b0c639f249165d759596f9579fa985cb30533de6/lib/bundler/fetcher.rb#L281-L286
+    HTTP_ERRORS = [
+      Timeout::Error, EOFError, SocketError, Errno::ENETDOWN, Errno::ENETUNREACH,
+      Errno::EINVAL, Errno::ECONNRESET, Errno::ETIMEDOUT, Errno::EAGAIN,
+      Net::HTTPBadResponse, Net::HTTPHeaderSyntaxError, Net::ProtocolError,
+      Zlib::BufError, Errno::EHOSTUNREACH, Errno::ECONNREFUSED
+    ].freeze
+
 
     def initialize(*args)
       super
@@ -65,7 +68,7 @@ module Sentry
 
         raise Sentry::ExternalError, error_info
       end
-    rescue SocketError, *NET_HTTP_ERRORS => e
+    rescue SocketError, *HTTP_ERRORS => e
       raise Sentry::ExternalError.new(e&.message)
     end
 
