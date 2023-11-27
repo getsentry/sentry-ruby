@@ -5,6 +5,7 @@
 ### Bug Fixes
 
 - Network errors raised in `Sentry::HTTPTransport` will no longer be reported to Sentry [#2178](https://github.com/getsentry/sentry-ruby/pull/2178)
+- `sentry-rails` will now capture Cockroach DB adapter config into spans data [#2182](https://github.com/getsentry/sentry-ruby/pull/2182)
 
 ## 5.14.0
 
@@ -35,7 +36,6 @@
 - Respect custom `Delayed::Job.max_attempts` if it's defined [#2176](https://github.com/getsentry/sentry-ruby/pull/2176)
 - Fixed a bug where `Net::HTTP` instrumentation won't work for some IPv6 addresses [#2180](https://github.com/getsentry/sentry-ruby/pull/2180)
 - Allow non-string error message to be reported to sentry ([#2137](https://github.com/getsentry/sentry-ruby/pull/2137))
-- `sentry-rails` will now capture Cockroach DB adapter config into spans data [#2182](https://github.com/getsentry/sentry-ruby/pull/2182)
 
 ## 5.13.0
 
