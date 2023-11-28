@@ -2,6 +2,8 @@
 
 ### Features
 
+- You can now use [Spotlight](https://spotlightjs.com) with your apps that use sentry-ruby! [#2175](https://github.com/getsentry/sentry-ruby/pulls/2175) 
+
 ### Bug Fixes
 
 - Network errors raised in `Sentry::HTTPTransport` will no longer be reported to Sentry [#2178](https://github.com/getsentry/sentry-ruby/pull/2178)
