@@ -50,8 +50,9 @@ module Sentry
         # only patch if not explicitly included in job by user
         unless klass_const.send(:ancestors).include?(Sentry::Cron::MonitorCheckIns)
           klass_const.send(:include, Sentry::Cron::MonitorCheckIns)
+          slug = klass_const.send(:sentry_monitor_slug, name: name)
           klass_const.send(:sentry_monitor_check_ins,
-                           slug: name,
+                           slug: slug,
                            monitor_config: monitor_config)
 
           ::Sidekiq.logger.info "Injected Sentry Crons monitor checkins into #{klass}"
