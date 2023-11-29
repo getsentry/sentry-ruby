@@ -258,6 +258,12 @@ module Sentry
     # @return [Boolean]
     attr_accessor :auto_session_tracking
 
+    # Whether to downsample transactions automatically because of backpressure.
+    # Starts a new monitor thread to check health of the SDK every 10 seconds.
+    # Default is false
+    # @return [Boolean]
+    attr_accessor :enable_backpressure_handling
+
     # Allowlist of outgoing request targets to which sentry-trace and baggage headers are attached.
     # Default is all (/.*/)
     # @return [Array<String, Regexp>]
@@ -358,6 +364,7 @@ module Sentry
       self.skip_rake_integration = false
       self.send_client_reports = true
       self.auto_session_tracking = true
+      self.enable_backpressure_handling = false
       self.trusted_proxies = []
       self.dsn = ENV['SENTRY_DSN']
       self.spotlight = false

@@ -65,6 +65,11 @@ module Sentry
       @shutdown_callback&.call
     end
 
+    def full?
+      @executor.is_a?(Concurrent::ThreadPoolExecutor) &&
+        @executor.remaining_capacity == 0
+    end
+
     private
 
     def _perform(&block)

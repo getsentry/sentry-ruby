@@ -119,6 +119,10 @@ module Sentry
       !!delay && delay > Time.now
     end
 
+    def any_rate_limited?
+      @rate_limits.values.any? { |t| t && t > Time.now }
+    end
+
     def envelope_from_event(event)
       # Convert to hash
       event_payload = event.to_hash

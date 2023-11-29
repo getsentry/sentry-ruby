@@ -21,6 +21,7 @@ require "sentry/transaction"
 require "sentry/hub"
 require "sentry/background_worker"
 require "sentry/session_flusher"
+require "sentry/backpressure_monitor"
 require "sentry/cron/monitor_check_ins"
 
 [
@@ -71,6 +72,10 @@ module Sentry
     # @!attribute [r] session_flusher
     #   @return [SessionFlusher, nil]
     attr_reader :session_flusher
+
+    # @!attribute [r] backpressure_monitor
+    #   @return [BackpressureMonitor, nil]
+    attr_reader :backpressure_monitor
 
     ##### Patch Registration #####
 
@@ -217,17 +222,9 @@ module Sentry
       Thread.current.thread_variable_set(THREAD_LOCAL, hub)
       @main_hub = hub
       @background_worker = Sentry::BackgroundWorker.new(config)
-
-      @session_flusher = if config.auto_session_tracking
-                           Sentry::SessionFlusher.new(config, client)
-                         else
-                           nil
-                         end
-
-      if config.include_local_variables
-        exception_locals_tp.enable
-      end
-
+      @session_flusher = config.auto_session_tracking ? Sentry::SessionFlusher.new(config, client) : nil
+      @backpressure_monitor = config.enable_backpressure_handling ? Sentry::BackpressureMonitor.new(config, client) : nil
+      exception_locals_tp.enable if config.include_local_variables
       at_exit { close }
     end
 
@@ -244,6 +241,11 @@ module Sentry
       if @session_flusher
         @session_flusher.kill
         @session_flusher = nil
+      end
+
+      if @backpressure_monitor
+        @backpressure_monitor.kill
+        @backpressure_monitor = nil
       end
 
       if configuration&.include_local_variables
