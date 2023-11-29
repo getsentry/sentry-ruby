@@ -2,6 +2,8 @@
 
 ### Features
 
+- Improve default slug generation for `sidekiq-scheduler` [#2184](https://github.com/getsentry/sentry-ruby/pull/2184)
+
 ### Bug Fixes
 
 - Network errors raised in `Sentry::HTTPTransport` will no longer be reported to Sentry [#2178](https://github.com/getsentry/sentry-ruby/pull/2178)

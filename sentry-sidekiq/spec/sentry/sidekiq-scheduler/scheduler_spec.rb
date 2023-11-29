@@ -49,8 +49,12 @@ RSpec.describe Sentry::SidekiqScheduler::Scheduler do
     expect(EveryHappyWorker.sentry_monitor_config.schedule.to_hash).to eq({value: 10, type: :interval, unit: :minute})
   end
 
-  it "does not add monitors for a one-off job" do
-    expect(ReportingWorker.ancestors).not_to include(Sentry::Cron::MonitorCheckIns)
-  end
+ it 'truncates from the beginning and parameterizes slug' do
+    expect(VeryLongOuterModule::VeryVeryVeryVeryLongInnerModule::Job.ancestors).to include(Sentry::Cron::MonitorCheckIns)
+    expect(VeryLongOuterModule::VeryVeryVeryVeryLongInnerModule::Job.sentry_monitor_slug).to eq('ongoutermodule-veryveryveryverylonginnermodule-job')
+    expect(VeryLongOuterModule::VeryVeryVeryVeryLongInnerModule::Job.sentry_monitor_config).to be_a(Sentry::Cron::MonitorConfig)
+    expect(VeryLongOuterModule::VeryVeryVeryVeryLongInnerModule::Job.sentry_monitor_config.schedule).to be_a(Sentry::Cron::MonitorSchedule::Crontab)
+    expect(VeryLongOuterModule::VeryVeryVeryVeryLongInnerModule::Job.sentry_monitor_config.schedule.value).to eq('* * * * *')
+ end
 end
 

@@ -44,7 +44,7 @@ module Sentry
           prepend Patch
         end
 
-        def sentry_monitor_slug
+        def sentry_monitor_slug(name: self.name)
           @sentry_monitor_slug ||= begin
             slug = name.gsub('::', '-').downcase
             slug[-MAX_SLUG_LENGTH..-1] || slug
