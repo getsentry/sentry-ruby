@@ -11,4 +11,6 @@
   reports:
     in: "2 hours"
     class: "ReportingWorker"
+  VeryLongOuterModule::VeryVeryVeryVeryLongInnerModule::Job:
+    cron: "* * * * *"
 

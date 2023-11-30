@@ -208,6 +208,13 @@ class SidekiqConfigMock
   end
 end
 
+module VeryLongOuterModule
+  module VeryVeryVeryVeryLongInnerModule
+    class Job
+    end
+  end
+end
+
 # Sidekiq 7 has a Config class, but for Sidekiq 6, we'll mock it.
 def sidekiq_config(opts)
   WITH_SIDEKIQ_7 ? ::Sidekiq::Config.new(opts) : SidekiqConfigMock.new(opts)
