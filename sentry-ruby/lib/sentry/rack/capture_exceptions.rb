@@ -63,16 +63,17 @@ module Sentry
       end
 
       def start_transaction(env, scope)
+        # Tell Sentry to not sample this transaction if this is an HTTP OPTIONS or HEAD request.
+        # Return early to avoid extra work that's not useful anyway, because this
+        # transaction won't be sampled.
+        # If we return nil here, it'll be passed to `finish_transaction` later, which is safe.
+        return nil if IGNORED_HTTP_METHODS.include?(env["REQUEST_METHOD"])
+                
         options = {
           name: scope.transaction_name,
           source: scope.transaction_source, 
           op: transaction_op
         }
-        
-        # Tell Sentry to not sample this transaction if this is an HTTP OPTIONS or HEAD request.
-        if IGNORED_HTTP_METHODS.include?(env["REQUEST_METHOD"])
-          options.merge!(sampled: false)
-        end
 
         transaction = Sentry.continue_trace(env, **options)
         Sentry.start_transaction(transaction: transaction, custom_sampling_context: { env: env }, **options)
