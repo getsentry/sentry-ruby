@@ -141,7 +141,7 @@ module Sentry
     # Whether to capture local variables from the raised exception's frame. Default is false.
     # @return [Boolean]
     attr_accessor :include_local_variables
-    
+
     # Whether to capture events and traces into Spotlight. Default is false.
     # If you set this to true, Sentry will send events and traces to the local
     # Sidecar proxy at http://localhost:8969/stream.
@@ -241,10 +241,6 @@ module Sentry
     # If set to true, will set traces_sample_rate to 1.0
     # @return [Boolean, nil]
     attr_reader :enable_tracing
-
-    # Returns the Spotlight::Configuration object
-    # @return [Spotlight::Configuration]
-    attr_reader :spotlight
 
     # Send diagnostic client reports about dropped events, true by default
     # tries to attach to an existing envelope max once every 30s
@@ -356,6 +352,7 @@ module Sentry
       self.auto_session_tracking = true
       self.trusted_proxies = []
       self.dsn = ENV['SENTRY_DSN']
+      self.spotlight = false
       self.server_name = server_name_from_env
       self.instrumenter = :sentry
       self.trace_propagation_targets = [PROPAGATION_TARGETS_MATCH_ALL]
@@ -366,8 +363,6 @@ module Sentry
       self.rack_env_whitelist = RACK_ENV_WHITELIST_DEFAULT
       self.traces_sampler = nil
       self.enable_tracing = nil
-
-      self.spotlight = false
 
       @transport = Transport::Configuration.new
       @gem_specs = Hash[Gem::Specification.map { |spec| [spec.name, spec.version.to_s] }] if Gem::Specification.respond_to?(:map)
@@ -465,7 +460,7 @@ module Sentry
     def sending_allowed?
       @errors = []
 
-      valid? && capture_in_environment?
+      spotlight || (valid? && capture_in_environment?)
     end
 
     def sample_allowed?

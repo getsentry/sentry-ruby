@@ -12,6 +12,7 @@ RSpec.describe Sentry::HTTPTransport do
   end
   let(:client) { Sentry::Client.new(configuration) }
   let(:event) { client.event_from_message("foobarbaz") }
+  let(:fake_time) { Time.now }
   let(:data) do
     subject.serialize_envelope(subject.envelope_from_event(event.to_hash)).first
   end
@@ -322,28 +323,21 @@ RSpec.describe Sentry::HTTPTransport do
     end
   end
 
-  describe "Spotlight integration" do
-    let(:fake_response) { build_fake_response("200") }
-
-    context "when spotlight is enabled" do
-      it "calls @spotlight_transport.send_data(data)" do
-        configuration.spotlight = true
-
-        stub_request(fake_response)
-
-        expect( subject.instance_variable_get(:@spotlight_transport) ).to receive(:send_data).with(data)
-        subject.send_data(data)
-      end
+  describe "#generate_auth_header" do
+    it "generates an auth header" do
+      expect(subject.send(:generate_auth_header)).to eq(
+        "Sentry sentry_version=7, sentry_client=sentry-ruby/#{Sentry::VERSION}, sentry_timestamp=#{fake_time.to_i}, " \
+        "sentry_key=12345, sentry_secret=67890"
+      )
     end
 
-    context "when spotlight integration is disabled" do
-      let(:spotlight_transport) { nil } 
-      it "does not call @spotlight_transport.send_data(data)" do
-        stub_request(fake_response)
+    it "generates an auth header without a secret (Sentry 9)" do
+      configuration.server = "https://66260460f09b5940498e24bb7ce093a0@sentry.io/42"
 
-        expect( subject.instance_variable_get(:@spotlight_transport) ).not_to receive(:send_data).with(data)
-        subject.send_data(data)
-      end
+      expect(subject.send(:generate_auth_header)).to eq(
+        "Sentry sentry_version=7, sentry_client=sentry-ruby/#{Sentry::VERSION}, sentry_timestamp=#{fake_time.to_i}, " \
+        "sentry_key=66260460f09b5940498e24bb7ce093a0"
+      )
     end
   end
 end

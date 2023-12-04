@@ -10,6 +10,10 @@ module Sentry
     # @return [Transport]
     attr_reader :transport
 
+    # The Transport object that'll send events for the client.
+    # @return [SpotlightTransport, nil]
+    attr_reader :spotlight_transport
+
     # @!macro configuration
     attr_reader :configuration
 
@@ -32,6 +36,8 @@ module Sentry
             DummyTransport.new(configuration)
           end
       end
+
+      @spotlight_transport = SpotlightTransport.new(configuration) if configuration.spotlight
     end
 
     # Applies the given scope's data to the event and sends it to Sentry.
@@ -167,6 +173,7 @@ module Sentry
       end
 
       transport.send_event(event)
+      spotlight_transport&.send_event(event)
 
       event
     rescue => e

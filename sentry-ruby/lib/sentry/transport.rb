@@ -32,7 +32,6 @@ module Sentry
     def initialize(configuration)
       @logger = configuration.logger
       @transport_configuration = configuration.transport
-      @spotlight = configuration.spotlight
       @dsn = configuration.dsn
       @rate_limits = {}
       @send_client_reports = configuration.send_client_reports
@@ -118,18 +117,6 @@ module Sentry
         end
 
       !!delay && delay > Time.now
-    end
-
-    def generate_auth_header
-      now = Sentry.utc_now.to_i
-      fields = {
-        'sentry_version' => PROTOCOL_VERSION,
-        'sentry_client' => USER_AGENT,
-        'sentry_timestamp' => now,
-        'sentry_key' => @dsn.public_key
-      }
-      fields['sentry_secret'] = @dsn.secret_key if @dsn.secret_key
-      'Sentry ' + fields.map { |key, value| "#{key}=#{value}" }.join(', ')
     end
 
     def envelope_from_event(event)
@@ -221,3 +208,4 @@ end
 
 require "sentry/transport/dummy_transport"
 require "sentry/transport/http_transport"
+require "sentry/transport/spotlight_transport"
