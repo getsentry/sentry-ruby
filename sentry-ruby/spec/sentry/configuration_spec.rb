@@ -257,8 +257,15 @@ RSpec.describe Sentry::Configuration do
   end
 
   describe "#spotlight" do
-    it "returns initialized Spotlight config by default" do
+    it "false by default" do
       expect(subject.spotlight).to eq(false)
+    end
+  end
+
+  describe "#sending_allowed?" do
+    it "true when spotlight" do
+      subject.spotlight = true
+      expect(subject.sending_allowed?).to eq(true)
     end
   end
 

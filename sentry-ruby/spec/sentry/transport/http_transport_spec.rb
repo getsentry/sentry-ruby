@@ -133,7 +133,7 @@ RSpec.describe Sentry::HTTPTransport do
     it "accepts a proxy from ENV[HTTP_PROXY]" do
       begin
         ENV["http_proxy"] = "https://stan:foobar@example.com:8080"
-  
+
         stub_request(fake_response) do |_, http_obj|
           expect(http_obj.proxy_address).to eq("example.com")
           expect(http_obj.proxy_port).to eq(8080)
@@ -143,7 +143,7 @@ RSpec.describe Sentry::HTTPTransport do
             expect(http_obj.proxy_pass).to eq("foobar")
           end
         end
-  
+
         subject.send_data(data)
       ensure
         ENV["http_proxy"] = nil
@@ -278,7 +278,7 @@ RSpec.describe Sentry::HTTPTransport do
       allow(::Net::HTTP).to receive(:new).and_raise(SocketError.new("socket error"))
       expect do
         subject.send_data(data)
-      end.to raise_error(Sentry::ExternalError) 
+      end.to raise_error(Sentry::ExternalError)
     end
 
     it "reports other errors to Sentry if they are not recognized" do
@@ -338,6 +338,20 @@ RSpec.describe Sentry::HTTPTransport do
         "Sentry sentry_version=7, sentry_client=sentry-ruby/#{Sentry::VERSION}, sentry_timestamp=#{fake_time.to_i}, " \
         "sentry_key=66260460f09b5940498e24bb7ce093a0"
       )
+    end
+  end
+
+  describe "#endpoint" do
+    it "returns correct endpoint" do
+      expect(subject.endpoint).to eq("/sentry/api/42/envelope/")
+    end
+  end
+
+  describe "#conn" do
+    it "returns a connection" do
+      expect(subject.conn).to be_a(Net::HTTP)
+      expect(subject.conn.address).to eq("sentry.localdomain")
+      expect(subject.conn.use_ssl?).to eq(false)
     end
   end
 end
