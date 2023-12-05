@@ -1,8 +1,8 @@
-## Unreleased
+## 5.15.0
 
 ### Features
 
-- You can now use [Spotlight](https://spotlightjs.com) with your apps that use sentry-ruby! [#2175](https://github.com/getsentry/sentry-ruby/pulls/2175) 
+- You can now use [Spotlight](https://spotlightjs.com) with your apps that use sentry-ruby! [#2175](https://github.com/getsentry/sentry-ruby/pulls/2175)
 - Improve default slug generation for `sidekiq-scheduler` [#2184](https://github.com/getsentry/sentry-ruby/pull/2184)
 
 ### Bug Fixes
