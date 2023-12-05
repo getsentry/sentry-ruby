@@ -69,6 +69,7 @@ module Sentry
         raise Sentry::ExternalError, error_info
       end
     rescue SocketError, *HTTP_ERRORS => e
+      on_error if respond_to?(:on_error)
       raise Sentry::ExternalError.new(e&.message)
     end
 
