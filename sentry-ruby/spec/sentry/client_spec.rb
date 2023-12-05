@@ -67,6 +67,34 @@ RSpec.describe Sentry::Client do
     end
   end
 
+  describe "#spotlight_transport" do
+    it "nil by default" do
+      expect(subject.spotlight_transport).to eq(nil)
+    end
+
+    it "nil when false" do
+      configuration.spotlight = false
+      expect(subject.spotlight_transport).to eq(nil)
+    end
+
+    it "has a transport when true" do
+      configuration.spotlight = true
+      expect(described_class.new(configuration).spotlight_transport).to be_a(Sentry::SpotlightTransport)
+    end
+  end
+
+  describe "#send_event" do
+    context "with spotlight enabled" do
+      before { configuration.spotlight = true }
+
+      it "calls spotlight transport" do
+        event = subject.event_from_message('test')
+        expect(subject.spotlight_transport).to receive(:send_event).with(event)
+        subject.send_event(event)
+      end
+    end
+  end
+
   describe '#event_from_message' do
     let(:message) { 'This is a message' }
 

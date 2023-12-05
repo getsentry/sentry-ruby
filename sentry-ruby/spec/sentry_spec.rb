@@ -1,6 +1,9 @@
 require "spec_helper"
+require 'contexts/with_request_mock'
 
 RSpec.describe Sentry do
+  include_context "with request mock"
+
   before do
     perform_basic_setup
   end
@@ -144,6 +147,21 @@ RSpec.describe Sentry do
       expect(sentry_events.count).to eq(1)
       event = last_sentry_event
       expect(event.tags[:hint][:foo]).to eq("bar")
+    end
+
+    context "with spotlight" do
+      before { perform_basic_setup { |c| c.spotlight = true } }
+
+      it "sends the event to spotlight too" do
+        stub_request(build_fake_response("200")) do |request, http_obj|
+          expect(request["Content-Type"]).to eq("application/x-sentry-envelope")
+          expect(request["Content-Encoding"]).to eq("gzip")
+          expect(http_obj.address).to eq("localhost")
+          expect(http_obj.port).to eq(8969)
+        end
+
+        described_class.send_event(event)
+      end
     end
   end
 

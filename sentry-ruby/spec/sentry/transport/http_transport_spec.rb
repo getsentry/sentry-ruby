@@ -12,6 +12,7 @@ RSpec.describe Sentry::HTTPTransport do
   end
   let(:client) { Sentry::Client.new(configuration) }
   let(:event) { client.event_from_message("foobarbaz") }
+  let(:fake_time) { Time.now }
   let(:data) do
     subject.serialize_envelope(subject.envelope_from_event(event.to_hash)).first
   end
@@ -132,7 +133,7 @@ RSpec.describe Sentry::HTTPTransport do
     it "accepts a proxy from ENV[HTTP_PROXY]" do
       begin
         ENV["http_proxy"] = "https://stan:foobar@example.com:8080"
-  
+
         stub_request(fake_response) do |_, http_obj|
           expect(http_obj.proxy_address).to eq("example.com")
           expect(http_obj.proxy_port).to eq(8080)
@@ -142,7 +143,7 @@ RSpec.describe Sentry::HTTPTransport do
             expect(http_obj.proxy_pass).to eq("foobar")
           end
         end
-  
+
         subject.send_data(data)
       ensure
         ENV["http_proxy"] = nil
@@ -277,7 +278,7 @@ RSpec.describe Sentry::HTTPTransport do
       allow(::Net::HTTP).to receive(:new).and_raise(SocketError.new("socket error"))
       expect do
         subject.send_data(data)
-      end.to raise_error(Sentry::ExternalError) 
+      end.to raise_error(Sentry::ExternalError)
     end
 
     it "reports other errors to Sentry if they are not recognized" do
@@ -319,6 +320,38 @@ RSpec.describe Sentry::HTTPTransport do
 
         expect { subject.send_data(data) }.to raise_error(Sentry::ExternalError, /error_in_header/)
       end
+    end
+  end
+
+  describe "#generate_auth_header" do
+    it "generates an auth header" do
+      expect(subject.send(:generate_auth_header)).to eq(
+        "Sentry sentry_version=7, sentry_client=sentry-ruby/#{Sentry::VERSION}, sentry_timestamp=#{fake_time.to_i}, " \
+        "sentry_key=12345, sentry_secret=67890"
+      )
+    end
+
+    it "generates an auth header without a secret (Sentry 9)" do
+      configuration.server = "https://66260460f09b5940498e24bb7ce093a0@sentry.io/42"
+
+      expect(subject.send(:generate_auth_header)).to eq(
+        "Sentry sentry_version=7, sentry_client=sentry-ruby/#{Sentry::VERSION}, sentry_timestamp=#{fake_time.to_i}, " \
+        "sentry_key=66260460f09b5940498e24bb7ce093a0"
+      )
+    end
+  end
+
+  describe "#endpoint" do
+    it "returns correct endpoint" do
+      expect(subject.endpoint).to eq("/sentry/api/42/envelope/")
+    end
+  end
+
+  describe "#conn" do
+    it "returns a connection" do
+      expect(subject.conn).to be_a(Net::HTTP)
+      expect(subject.conn.address).to eq("sentry.localdomain")
+      expect(subject.conn.use_ssl?).to eq(false)
     end
   end
 end

@@ -9,7 +9,6 @@ RSpec.describe Sentry::Transport do
       config.logger = logger
     end
   end
-  let(:fake_time) { Time.now }
 
   let(:client) { Sentry::Client.new(configuration) }
   let(:hub) do
@@ -473,24 +472,6 @@ RSpec.describe Sentry::Transport do
         subject.send_event(event)
         expect(subject).to have_recorded_lost_event(:ratelimit_backoff, 'event')
       end
-    end
-  end
-
-  describe "#generate_auth_header" do
-    it "generates an auth header" do
-      expect(subject.send(:generate_auth_header)).to eq(
-        "Sentry sentry_version=7, sentry_client=sentry-ruby/#{Sentry::VERSION}, sentry_timestamp=#{fake_time.to_i}, " \
-        "sentry_key=12345, sentry_secret=67890"
-      )
-    end
-
-    it "generates an auth header without a secret (Sentry 9)" do
-      configuration.server = "https://66260460f09b5940498e24bb7ce093a0@sentry.io/42"
-
-      expect(subject.send(:generate_auth_header)).to eq(
-        "Sentry sentry_version=7, sentry_client=sentry-ruby/#{Sentry::VERSION}, sentry_timestamp=#{fake_time.to_i}, " \
-        "sentry_key=66260460f09b5940498e24bb7ce093a0"
-      )
     end
   end
 end

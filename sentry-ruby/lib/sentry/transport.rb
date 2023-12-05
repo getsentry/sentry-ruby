@@ -119,18 +119,6 @@ module Sentry
       !!delay && delay > Time.now
     end
 
-    def generate_auth_header
-      now = Sentry.utc_now.to_i
-      fields = {
-        'sentry_version' => PROTOCOL_VERSION,
-        'sentry_client' => USER_AGENT,
-        'sentry_timestamp' => now,
-        'sentry_key' => @dsn.public_key
-      }
-      fields['sentry_secret'] = @dsn.secret_key if @dsn.secret_key
-      'Sentry ' + fields.map { |key, value| "#{key}=#{value}" }.join(', ')
-    end
-
     def envelope_from_event(event)
       # Convert to hash
       event_payload = event.to_hash
@@ -220,3 +208,4 @@ end
 
 require "sentry/transport/dummy_transport"
 require "sentry/transport/http_transport"
+require "sentry/transport/spotlight_transport"

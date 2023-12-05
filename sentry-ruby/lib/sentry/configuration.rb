@@ -142,6 +142,14 @@ module Sentry
     # @return [Boolean]
     attr_accessor :include_local_variables
 
+    # Whether to capture events and traces into Spotlight. Default is false.
+    # If you set this to true, Sentry will send events and traces to the local
+    # Sidecar proxy at http://localhost:8969/stream.
+    # If you want to use a different Sidecar proxy address, set this to String
+    # with the proxy URL.
+    # @return [Boolean, String]
+    attr_accessor :spotlight
+
     # @deprecated Use {#include_local_variables} instead.
     alias_method :capture_exception_frame_locals, :include_local_variables
 
@@ -344,6 +352,7 @@ module Sentry
       self.auto_session_tracking = true
       self.trusted_proxies = []
       self.dsn = ENV['SENTRY_DSN']
+      self.spotlight = false
       self.server_name = server_name_from_env
       self.instrumenter = :sentry
       self.trace_propagation_targets = [PROPAGATION_TARGETS_MATCH_ALL]
@@ -451,7 +460,7 @@ module Sentry
     def sending_allowed?
       @errors = []
 
-      valid? && capture_in_environment?
+      spotlight || (valid? && capture_in_environment?)
     end
 
     def sample_allowed?
