@@ -35,12 +35,7 @@ gem "sprockets-rails"
 
 gem "sidekiq"
 
-gem "rspec", "~> 3.0"
-gem "rspec-retry"
 gem "rspec-rails", "~> 4.0"
-gem 'simplecov'
-gem "simplecov-cobertura", "~> 1.4"
-gem "rexml"
 
 ruby_version = Gem::Version.new(RUBY_VERSION)
 
@@ -50,20 +45,9 @@ if ruby_version < Gem::Version.new("2.5.0")
   gem "loofah", "2.20.0"
 end
 
-if ruby_version >= Gem::Version.new("2.6.0")
-  gem "debug", github: "ruby/debug", platform: :ruby
-  gem "irb"
-
-  if ruby_version >= Gem::Version.new("3.0.0")
-    gem "ruby-lsp-rspec"
-  end
-end
-
-gem "rake", "~> 12.0"
-
-gem "pry"
-
 gem "benchmark-ips"
 gem "benchmark_driver"
 gem "benchmark-ipsa"
 gem "benchmark-memory"
+
+eval_gemfile File.expand_path("../Gemfile", __dir__)

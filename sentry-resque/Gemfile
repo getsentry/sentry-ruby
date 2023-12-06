@@ -8,20 +8,9 @@ gem "sentry-rails", path: "../sentry-rails"
 
 gem "rails"
 
-gem "rake", "~> 12.0"
-gem "rspec", "~> 3.0"
-gem 'simplecov'
-gem "simplecov-cobertura", "~> 1.4"
-gem "rexml"
-
 # For https://github.com/ruby/psych/issues/655
 gem "psych", "5.1.0"
 
 gem "resque-retry", "~> 1.8"
 
-if RUBY_VERSION.to_f >= 2.6
-  gem "debug", github: "ruby/debug", platform: :ruby
-  gem "irb"
-end
-
-gem "pry"
+eval_gemfile File.expand_path("../Gemfile", __dir__)

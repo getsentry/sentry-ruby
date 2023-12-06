@@ -12,27 +12,8 @@ gem "redis", "~> #{redis_rb_version}"
 
 gem "puma"
 
-gem "rake", "~> 12.0"
-gem "rspec", "~> 3.0"
-gem "rspec-retry"
 gem "timecop"
-gem "simplecov"
-gem "simplecov-cobertura", "~> 1.4"
-gem "rexml"
 gem "stackprof" unless RUBY_PLATFORM == "java"
-
-ruby_version = Gem::Version.new(RUBY_VERSION)
-
-if ruby_version >= Gem::Version.new("2.6.0")
-  gem "debug", github: "ruby/debug", platform: :ruby
-  gem "irb"
-
-  if ruby_version >= Gem::Version.new("3.0.0")
-    gem "ruby-lsp-rspec"
-  end
-end
-
-gem "pry"
 
 gem "benchmark-ips"
 gem "benchmark_driver"
@@ -41,3 +22,5 @@ gem "benchmark-memory"
 
 gem "yard", github: "lsegal/yard"
 gem "webrick"
+
+eval_gemfile File.expand_path("../Gemfile", __dir__)
