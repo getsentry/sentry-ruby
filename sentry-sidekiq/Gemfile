@@ -6,11 +6,6 @@ gemspec
 gem "sentry-ruby", path: "../sentry-ruby"
 gem "sentry-rails", path: "../sentry-rails"
 
-gem "rake", "~> 12.0"
-gem "rspec", "~> 3.0"
-gem 'simplecov'
-gem "simplecov-cobertura", "~> 1.4"
-gem "rexml"
 # https://github.com/flavorjones/loofah/pull/267
 # loofah changed the required ruby version in a patch so we need to explicitly pin it
 gem "loofah", "2.20.0" if RUBY_VERSION.to_f < 2.5
@@ -31,9 +26,4 @@ end
 
 gem "rails", "> 5.0.0", "< 7.1.0"
 
-if RUBY_VERSION.to_f >= 2.6
-  gem "debug", github: "ruby/debug", platform: :ruby
-  gem "irb"
-end
-
-gem "pry"
+eval_gemfile File.expand_path("../Gemfile", __dir__)
