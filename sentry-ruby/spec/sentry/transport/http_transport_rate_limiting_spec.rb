@@ -19,10 +19,6 @@ RSpec.describe "rate limiting" do
   subject { Sentry::HTTPTransport.new(configuration) }
 
   describe "#is_rate_limited?" do
-    let(:transaction_event) do
-      client.event_from_transaction(Sentry::Transaction.new)
-    end
-
     context "with only category limits" do
       it "returns true for still limited category" do
         subject.rate_limits.merge!("error" => Time.now + 60,
@@ -82,6 +78,27 @@ RSpec.describe "rate limiting" do
 
         expect(subject.is_rate_limited?("event")).to eq(true)
       end
+    end
+  end
+
+  describe "#any_rate_limited?" do
+    it "returns false without any limits" do
+      expect(subject.any_rate_limited?).to eq(false)
+    end
+
+    it "returns true for category limits" do
+      subject.rate_limits.merge!("error" => Time.now + 60)
+      expect(subject.any_rate_limited?).to eq(true)
+    end
+
+    it "returns true for universal limits" do
+      subject.rate_limits.merge!(nil => Time.now + 60)
+      expect(subject.any_rate_limited?).to eq(true)
+    end
+
+    it "returns false for expired limits" do
+      subject.rate_limits.merge!("error" => Time.now - 60)
+      expect(subject.any_rate_limited?).to eq(false)
     end
   end
 

@@ -19,7 +19,8 @@ module Sentry
       :sample_rate,
       :before_send,
       :event_processor,
-      :insufficient_data
+      :insufficient_data,
+      :backpressure
     ]
 
     include LoggingHelper
