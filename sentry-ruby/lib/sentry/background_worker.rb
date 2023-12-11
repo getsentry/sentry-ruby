@@ -13,10 +13,12 @@ module Sentry
     attr_reader :logger
     attr_accessor :shutdown_timeout
 
+    DEFAULT_MAX_QUEUE = 30
+
     def initialize(configuration)
-      @max_queue = 30
       @shutdown_timeout = 1
       @number_of_threads = configuration.background_worker_threads
+      @max_queue = configuration.background_worker_max_queue
       @logger = configuration.logger
       @debug = configuration.debug
       @shutdown_callback = nil
