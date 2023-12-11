@@ -40,6 +40,13 @@ module Sentry
     # @return [Integer]
     attr_accessor :background_worker_threads
 
+    # The maximum queue size for the background worker.
+    # Jobs will be rejected above this limit.
+    #
+    # Default is {BackgroundWorker::DEFAULT_MAX_QUEUE}.
+    # @return [Integer]
+    attr_accessor :background_worker_max_queue
+
     # a proc/lambda that takes an array of stack traces
     # it'll be used to silence (reduce) backtrace of the exception
     #
@@ -329,6 +336,7 @@ module Sentry
       self.app_dirs_pattern = nil
       self.debug = false
       self.background_worker_threads = Concurrent.processor_count
+      self.background_worker_max_queue = BackgroundWorker::DEFAULT_MAX_QUEUE
       self.backtrace_cleanup_callback = nil
       self.max_breadcrumbs = BreadcrumbBuffer::DEFAULT_SIZE
       self.breadcrumbs_logger = []

@@ -1,3 +1,9 @@
+## Unreleased
+
+### Features
+
+- Expose `configuration.background_worker_max_queue` to control thread pool queue size [#2195](https://github.com/getsentry/sentry-ruby/pull/2195)
+
 ## 5.15.0
 
 ### Features
