@@ -1,8 +1,13 @@
-## Unreleased
+## 5.15.1
 
 ### Features
 
 - Expose `configuration.background_worker_max_queue` to control thread pool queue size [#2195](https://github.com/getsentry/sentry-ruby/pull/2195)
+
+### Bug Fixes
+
+- Fix `Sentry::Cron::MonitorCheckIns` monkeypatch keyword arguments [#2199](https://github.com/getsentry/sentry-ruby/pull/2199)
+  - Fixes [#2198](https://github.com/getsentry/sentry-ruby/issues/2198)
 
 ## 5.15.0
 

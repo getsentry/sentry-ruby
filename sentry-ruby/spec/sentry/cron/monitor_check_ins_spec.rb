@@ -3,10 +3,22 @@ require 'spec_helper'
 RSpec.describe Sentry::Cron::MonitorCheckIns do
   before { perform_basic_setup }
 
+  shared_examples 'original_job' do
+    it 'does the work' do
+      expect(job).to receive(:work).with(1, 42, 99).and_call_original
+      expect(job.perform(1)).to eq(142)
+    end
+
+    it 'does the work with args' do
+      expect(job).to receive(:work).with(1, 43, 100).and_call_original
+      expect(job.perform(1, 43, c: 100)).to eq(144)
+    end
+  end
+
   context 'without including mixin' do
     before do
       job_class = Class.new do
-        def work(a, b, c); end
+        def work(a, b, c); a + b + c end
 
         def perform(a, b = 42, c: 99)
           work(a, b, c)
@@ -18,10 +30,7 @@ RSpec.describe Sentry::Cron::MonitorCheckIns do
 
     let(:job) { Job.new }
 
-    it 'does the work' do
-      expect(job).to receive(:work).with(1, 42, 99)
-      job.perform(1)
-    end
+    it_behaves_like 'original_job'
 
     it 'does not call capture_check_in' do
       expect(Sentry).not_to receive(:capture_check_in)
@@ -37,7 +46,7 @@ RSpec.describe Sentry::Cron::MonitorCheckIns do
         job_class = Class.new do
           include mod
 
-          def work(a, b, c); end
+          def work(a, b, c); a + b + c end
 
           def perform(a, b = 42, c: 99)
             work(a, b, c)
@@ -49,10 +58,7 @@ RSpec.describe Sentry::Cron::MonitorCheckIns do
 
       let(:job) { Job.new }
 
-      it 'does the work' do
-        expect(job).to receive(:work).with(1, 42, 99)
-        job.perform(1)
-      end
+      it_behaves_like 'original_job'
 
       it 'does not prepend the patch' do
         expect(Job.ancestors.first).not_to eq(described_class::Patch)
@@ -81,7 +87,7 @@ RSpec.describe Sentry::Cron::MonitorCheckIns do
 
           sentry_monitor_check_ins
 
-          def work(a, b, c); end
+          def work(a, b, c); a + b + c end
 
           def perform(a, b = 42, c: 99)
             work(a, b, c)
@@ -93,13 +99,53 @@ RSpec.describe Sentry::Cron::MonitorCheckIns do
 
       let(:job) { Job.new }
 
-      it 'does the work' do
-        expect(job).to receive(:work).with(1, 42, 99)
-        job.perform(1)
-      end
+      it_behaves_like 'original_job'
 
       it 'prepends the patch' do
         expect(Job.ancestors.first).to eq(described_class::Patch)
+      end
+
+      it 'calls capture_check_in twice' do
+        expect(Sentry).to receive(:capture_check_in).with(
+          'job',
+          :in_progress,
+          hash_including(monitor_config: nil)
+        ).ordered.and_call_original
+
+        expect(Sentry).to receive(:capture_check_in).with(
+          'job',
+          :ok,
+          hash_including(:check_in_id, monitor_config: nil, duration: 0)
+        ).ordered.and_call_original
+
+        job.perform(1)
+      end
+    end
+
+    context 'patched perform with arity 0 with default options' do
+      before do
+        mod = described_class
+
+        job_class = Class.new do
+          include mod
+          sentry_monitor_check_ins
+
+          def work; 42 end
+          def perform; work end
+        end
+
+        stub_const('Job', job_class)
+      end
+
+      let(:job) { Job.new }
+
+      it 'prepends the patch' do
+        expect(Job.ancestors.first).to eq(described_class::Patch)
+      end
+
+      it 'does the work' do
+        expect(job).to receive(:work).and_call_original
+        expect(job.perform).to eq(42)
       end
 
       it 'calls capture_check_in twice' do
@@ -128,7 +174,7 @@ RSpec.describe Sentry::Cron::MonitorCheckIns do
 
           sentry_monitor_check_ins
 
-          def work(a, b, c); end
+          def work(a, b, c); a + b + c end
 
           def perform(a, b = 42, c: 99)
             work(a, b, c)
@@ -156,7 +202,7 @@ RSpec.describe Sentry::Cron::MonitorCheckIns do
 
           sentry_monitor_check_ins slug: 'custom_slug', monitor_config: conf
 
-          def work(a, b, c); end
+          def work(a, b, c); a + b + c end
 
           def perform(a, b = 42, c: 99)
             work(a, b, c)
@@ -168,10 +214,7 @@ RSpec.describe Sentry::Cron::MonitorCheckIns do
 
       let(:job) { Job.new }
 
-      it 'does the work' do
-        expect(job).to receive(:work).with(1, 42, 99)
-        job.perform(1)
-      end
+      it_behaves_like 'original_job'
 
       it 'prepends the patch' do
         expect(Job.ancestors.first).to eq(described_class::Patch)
@@ -226,8 +269,13 @@ RSpec.describe Sentry::Cron::MonitorCheckIns do
       let(:job) { Job.new }
 
       it 'does the work' do
-        expect(job).to receive(:work).with(1, 42, 99)
-        job.perform(1)
+        expect(job).to receive(:work).with(1, 42, 99).and_call_original
+        expect { job.perform(1) }.to raise_error(ZeroDivisionError)
+      end
+
+      it 'does the work with args' do
+        expect(job).to receive(:work).with(1, 43, 100).and_call_original
+        expect { job.perform(1, 43, c: 100) }.to raise_error(ZeroDivisionError)
       end
 
       it 'prepends the patch' do

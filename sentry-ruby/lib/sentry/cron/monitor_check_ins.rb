@@ -4,7 +4,7 @@ module Sentry
       MAX_SLUG_LENGTH = 50
 
       module Patch
-        def perform(*args)
+        def perform(*args, **opts)
           slug = self.class.sentry_monitor_slug
           monitor_config = self.class.sentry_monitor_config
 
@@ -13,7 +13,8 @@ module Sentry
                                                 monitor_config: monitor_config)
 
           start = Sentry.utc_now.to_i
-          ret = super
+          # need to do this on ruby <= 2.6 sadly
+          ret = method(:perform).super_method.arity == 0 ? super() : super
           duration = Sentry.utc_now.to_i - start
 
           Sentry.capture_check_in(slug,
