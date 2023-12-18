@@ -1,3 +1,10 @@
+## 5.15.2
+
+### Bug Fixes
+
+- Fix `sample_rate` applying to check-in events [#2203](https://github.com/getsentry/sentry-ruby/pull/2203)
+  - Fixes [#2202](https://github.com/getsentry/sentry-ruby/issues/2202)
+
 ## 5.15.1
 
 ### Features
