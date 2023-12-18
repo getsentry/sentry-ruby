@@ -34,6 +34,7 @@ jobs:
       uses: ruby/setup-ruby@8ddb7b3348b3951590db24c346e94ebafdabc926
       with:
         ruby-version: ${{ matrix.ruby_version }}
+        bundler: "2.3"
 
     - name: Run specs
       env:

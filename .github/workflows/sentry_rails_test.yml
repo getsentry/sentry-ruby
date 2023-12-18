@@ -73,7 +73,9 @@ jobs:
       with:
         ruby-version: ${{ matrix.ruby_version }}
         bundler: "2.3"
-        rubygems: ${{ matrix.rails_version == '7.1.0' && 'latest' || 'default' }}
+        # rails 7.1.0 requires latest rubygems
+        # but 3.5.0 dropped ruby 2.7 so we need to pin to something that works for all our shit
+        rubygems: ${{ matrix.rails_version == '7.1.0' && '3.4.22' || 'default' }}
 
     - name: Build with Rails ${{ matrix.rails_version }}
       env:
