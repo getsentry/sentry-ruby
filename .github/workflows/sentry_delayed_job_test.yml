@@ -21,33 +21,40 @@ jobs:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        ruby_version: [2.4, 2.5, 2.6, 2.7, '3.0', '3.1', '3.2', jruby]
+        ruby_version: [2.4, 2.5, 2.6, 2.7, "3.0", "3.1", "3.2", jruby]
         os: [ubuntu-latest]
         include:
-          - { os: ubuntu-latest, ruby_version: '3.2', options: { rubyopt: "--enable-frozen-string-literal --debug=frozen-string-literal" } }
-          - { os: ubuntu-latest, ruby_version: '3.2', options: { codecov: 1 } }
+          - {
+              os: ubuntu-latest,
+              ruby_version: "3.2",
+              options:
+                {
+                  rubyopt: "--enable-frozen-string-literal --debug=frozen-string-literal",
+                },
+            }
+          - { os: ubuntu-latest, ruby_version: "3.2", options: { codecov: 1 } }
     steps:
-    - uses: actions/checkout@v1
-    - name: Install sqlite
-      run: |
-        # See https://github.community/t5/GitHub-Actions/ubuntu-latest-Apt-repository-list-issues/td-p/41122/page/2
-        for apt_file in `grep -lr microsoft /etc/apt/sources.list.d/`; do sudo rm $apt_file; done
-        sudo apt-get update
-        sudo apt-get install libsqlite3-dev
+      - uses: actions/checkout@v1
+      - name: Install sqlite
+        run: |
+          # See https://github.community/t5/GitHub-Actions/ubuntu-latest-Apt-repository-list-issues/td-p/41122/page/2
+          for apt_file in `grep -lr microsoft /etc/apt/sources.list.d/`; do sudo rm $apt_file; done
+          sudo apt-get update
+          sudo apt-get install libsqlite3-dev
 
-    - name: Set up Ruby ${{ matrix.ruby_version }}
-      uses: ruby/setup-ruby@v1
-      with:
-        ruby-version: ${{ matrix.ruby_version }}
-        bundler: "2.3"
+      - name: Set up Ruby ${{ matrix.ruby_version }}
+        uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: ${{ matrix.ruby_version }}
+          bundler-cache: true
 
-    - name: Run specs
-      env:
-        RUBYOPT: ${{ matrix.options.rubyopt }}
-      run: |
-        bundle install --jobs 4 --retry 3
-        bundle exec rake
+      - name: Run specs
+        env:
+          RUBYOPT: ${{ matrix.options.rubyopt }}
+        run: |
+          bundle install --jobs 4 --retry 3
+          bundle exec rake
 
-    - name: Upload Coverage
-      if: ${{ matrix.options.codecov }}
-      uses: codecov/codecov-action@eaaf4bedf32dbdc6b720b63067d99c4d77d6047d
+      - name: Upload Coverage
+        if: ${{ matrix.options.codecov }}
+        uses: codecov/codecov-action@eaaf4bedf32dbdc6b720b63067d99c4d77d6047d
