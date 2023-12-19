@@ -107,9 +107,9 @@ RSpec.describe Sentry::BackgroundWorker do
       worker = described_class.new(configuration)
       expect(worker.full?).to eq(false)
 
-      5.times { worker.perform { 2 * 2 } }
+      2.times { worker.perform { sleep 0.1 } }
       expect(worker.full?).to eq(true)
-      sleep 1
+      sleep 0.2
       expect(worker.full?).to eq(false)
     end
   end
