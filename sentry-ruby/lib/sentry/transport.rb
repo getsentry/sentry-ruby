@@ -168,11 +168,20 @@ module Sentry
       @discarded_events[[reason, item_type]] += 1
     end
 
+    def flush
+      client_report_headers, client_report_payload = fetch_pending_client_report(force: true)
+      return unless client_report_headers
+
+      envelope = Envelope.new
+      envelope.add_item(client_report_headers, client_report_payload)
+      send_envelope(envelope)
+    end
+
     private
 
-    def fetch_pending_client_report
+    def fetch_pending_client_report(force: false)
       return nil unless @send_client_reports
-      return nil if @last_client_report_sent > Time.now - CLIENT_REPORT_INTERVAL
+      return nil if !force && @last_client_report_sent > Time.now - CLIENT_REPORT_INTERVAL
       return nil if @discarded_events.empty?
 
       discarded_events_hash = @discarded_events.map do |key, val|

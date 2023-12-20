@@ -66,7 +66,7 @@ module Sentry
     end
 
     # @!attribute [rw] background_worker
-    #   @return [BackgroundWorker, nil]
+    #   @return [BackgroundWorker]
     attr_accessor :background_worker
 
     # @!attribute [r] session_flusher
@@ -233,10 +233,11 @@ module Sentry
     #
     # @return [void]
     def close
-      if @background_worker
-        @background_worker.shutdown
-        @background_worker = nil
-      end
+      @background_worker.perform { get_current_client&.transport&.flush }
+      # session_flusher internally queues to the background worker too
+      @session_flusher&.flush
+
+      @background_worker.shutdown
 
       if @session_flusher
         @session_flusher.kill

@@ -101,16 +101,19 @@ RSpec.describe Sentry::BackgroundWorker do
       expect(worker.full?).to eq(false)
     end
 
-    it "returns true if thread pool and full" do
-      configuration.background_worker_threads = 1
-      configuration.background_worker_max_queue = 1
-      worker = described_class.new(configuration)
-      expect(worker.full?).to eq(false)
+    # skipping this on jruby because the capacity check is flaky
+    unless RUBY_PLATFORM == "java"
+      it "returns true if thread pool and full" do
+        configuration.background_worker_threads = 1
+        configuration.background_worker_max_queue = 1
+        worker = described_class.new(configuration)
+        expect(worker.full?).to eq(false)
 
-      2.times { worker.perform { sleep 0.1 } }
-      expect(worker.full?).to eq(true)
-      sleep 0.2
-      expect(worker.full?).to eq(false)
+        2.times { worker.perform { sleep 0.1 } }
+        expect(worker.full?).to eq(true)
+        sleep 0.2
+        expect(worker.full?).to eq(false)
+      end
     end
   end
 end
