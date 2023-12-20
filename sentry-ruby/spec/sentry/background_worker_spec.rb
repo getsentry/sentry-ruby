@@ -93,4 +93,24 @@ RSpec.describe Sentry::BackgroundWorker do
       expect(string_io.string).to match(/Shutting down background worker/)
     end
   end
+
+  describe "#full?" do
+    it "returns false if not a thread pool" do
+      configuration.background_worker_threads = 0
+      worker = described_class.new(configuration)
+      expect(worker.full?).to eq(false)
+    end
+
+    it "returns true if thread pool and full" do
+      configuration.background_worker_threads = 1
+      configuration.background_worker_max_queue = 1
+      worker = described_class.new(configuration)
+      expect(worker.full?).to eq(false)
+
+      2.times { worker.perform { sleep 0.1 } }
+      expect(worker.full?).to eq(true)
+      sleep 0.2
+      expect(worker.full?).to eq(false)
+    end
+  end
 end

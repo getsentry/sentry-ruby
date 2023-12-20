@@ -19,7 +19,8 @@ module Sentry
       :sample_rate,
       :before_send,
       :event_processor,
-      :insufficient_data
+      :insufficient_data,
+      :backpressure
     ]
 
     include LoggingHelper
@@ -117,6 +118,10 @@ module Sentry
         end
 
       !!delay && delay > Time.now
+    end
+
+    def any_rate_limited?
+      @rate_limits.values.any? { |t| t && t > Time.now }
     end
 
     def envelope_from_event(event)

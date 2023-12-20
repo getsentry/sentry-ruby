@@ -370,6 +370,23 @@ RSpec.describe Sentry::Transaction do
           )
         end
       end
+
+      context "when backpressure handling is enabled" do
+        before do
+          perform_basic_setup do |config|
+            config.traces_sample_rate = 1.0
+            config.enable_backpressure_handling = true
+          end
+        end
+
+        it "uses downsampled rate to sample" do
+          expect(Sentry.get_current_client.transport).to receive(:any_rate_limited?).and_return(true)
+          Sentry.backpressure_monitor.run
+
+          subject.set_initial_sample_decision(sampling_context: {})
+          expect(subject.effective_sample_rate).to eq(0.5)
+        end
+      end
     end
   end
 
@@ -474,9 +491,29 @@ RSpec.describe Sentry::Transaction do
         expect(events.count).to eq(0)
       end
 
-      it "records lost event" do
+      it "records lost event with reason sample_rate" do
         subject.finish
         expect(Sentry.get_current_client.transport).to have_recorded_lost_event(:sample_rate, 'transaction')
+      end
+    end
+
+    context "when backpressure handling is enabled and transaction is not sampled" do
+      before do
+        perform_basic_setup do |config|
+          config.traces_sample_rate = 1.0
+          config.enable_backpressure_handling = true
+        end
+      end
+
+      subject { described_class.new(hub: Sentry.get_current_hub) }
+
+      it "records lost event with reason backpressure" do
+        expect(Sentry.get_current_client.transport).to receive(:any_rate_limited?).and_return(true)
+        Sentry.backpressure_monitor.run
+        allow(Random).to receive(:rand).and_return(0.6)
+
+        subject.finish
+        expect(Sentry.get_current_client.transport).to have_recorded_lost_event(:backpressure, 'transaction')
       end
     end
 

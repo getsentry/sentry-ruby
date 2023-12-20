@@ -1022,6 +1022,13 @@ RSpec.describe Sentry do
         expect(described_class.exception_locals_tp).to receive(:disable).and_call_original
         described_class.close
       end
+
+      it "kills backpressure monitor" do
+        perform_basic_setup { |c| c.enable_backpressure_handling = true }
+        expect(described_class.backpressure_monitor).to receive(:kill)
+        described_class.close
+        expect(described_class.backpressure_monitor).to eq(nil)
+      end
     end
 
     it "can reinitialize closed SDK" do

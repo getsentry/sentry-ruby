@@ -218,7 +218,12 @@ module Sentry
       if sample_rate == true
         @sampled = true
       else
-        @sampled = Random.rand < sample_rate
+        if Sentry.backpressure_monitor
+          factor = Sentry.backpressure_monitor.downsample_factor
+          @effective_sample_rate /= 2**factor
+        end
+
+        @sampled = Random.rand < @effective_sample_rate
       end
 
       if @sampled
@@ -257,7 +262,9 @@ module Sentry
         event = hub.current_client.event_from_transaction(self)
         hub.capture_event(event)
       else
-        hub.current_client.transport.record_lost_event(:sample_rate, 'transaction')
+        is_backpressure = Sentry.backpressure_monitor&.downsample_factor&.positive?
+        reason = is_backpressure ? :backpressure : :sample_rate
+        hub.current_client.transport.record_lost_event(reason, 'transaction')
       end
     end
 

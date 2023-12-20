@@ -1,3 +1,26 @@
+## Unreleased
+
+### Features
+
+- Enable backpressure handling by default [#2185](https://github.com/getsentry/sentry-ruby/pull/2185)
+
+    The SDK can now dynamically downsamples transactions to reduce backpressure in high
+    throughput systems. It starts a new `BackpressureMonitor` thread to perform some health checks
+    which decide to downsample (halved each time) in 10 second intervals till the system
+    is healthy again.
+
+    To enable this behavior, use:
+
+    ```ruby
+    Sentry.init do |config|
+      # ...
+      config.traces_sample_rate = 1.0
+      config.enable_backpressure_handling = true
+    end
+    ```
+
+    If your system serves heavy load, please let us know how this feature works for you!
+
 ## 5.15.2
 
 ### Bug Fixes
