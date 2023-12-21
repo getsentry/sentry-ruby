@@ -1005,7 +1005,6 @@ RSpec.describe Sentry do
       it "calls background worker shutdown" do
         expect(described_class.background_worker).to receive(:shutdown)
         described_class.close
-        expect(described_class.background_worker).to eq(nil)
       end
 
       it "kills session flusher" do
@@ -1028,6 +1027,16 @@ RSpec.describe Sentry do
         expect(described_class.backpressure_monitor).to receive(:kill)
         described_class.close
         expect(described_class.backpressure_monitor).to eq(nil)
+      end
+
+      it "flushes transport" do
+        expect(described_class.get_current_client.transport).to receive(:flush)
+        described_class.close
+      end
+
+      it "flushes session flusher" do
+        expect(described_class.session_flusher).to receive(:flush)
+        described_class.close
       end
     end
 

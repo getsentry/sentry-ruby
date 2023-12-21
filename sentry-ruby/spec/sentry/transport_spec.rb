@@ -474,4 +474,20 @@ RSpec.describe Sentry::Transport do
       end
     end
   end
+
+  describe "#flush" do
+    it "does not do anything without pending client reports" do
+      expect(subject).not_to receive(:send_envelope)
+      subject.flush
+    end
+
+    it "sends pending client reports" do
+      5.times { subject.record_lost_event(:ratelimit_backoff, 'error') }
+      3.times { subject.record_lost_event(:queue_overflow, 'transaction') }
+
+      expect(subject).to receive(:send_data)
+      subject.flush
+      expect(io.string).to match(/Sending envelope with items \[client_report\]/)
+    end
+  end
 end
