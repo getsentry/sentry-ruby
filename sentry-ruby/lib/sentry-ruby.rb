@@ -233,13 +233,8 @@ module Sentry
     #
     # @return [void]
     def close
-      @background_worker.perform { get_current_client&.transport&.flush }
-      # session_flusher internally queues to the background worker too
-      @session_flusher&.flush
-
-      @background_worker.shutdown
-
       if @session_flusher
+        @session_flusher.flush
         @session_flusher.kill
         @session_flusher = nil
       end
@@ -249,9 +244,15 @@ module Sentry
         @backpressure_monitor = nil
       end
 
-      if configuration&.include_local_variables
-        exception_locals_tp.disable
+      if client = get_current_client
+        client.transport.flush
+
+        if client.configuration.include_local_variables
+          exception_locals_tp.disable
+        end
       end
+
+      @background_worker.shutdown
 
       @main_hub = nil
       Thread.current.thread_variable_set(THREAD_LOCAL, nil)
