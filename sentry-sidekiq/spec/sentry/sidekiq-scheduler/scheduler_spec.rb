@@ -33,6 +33,15 @@ RSpec.describe Sentry::SidekiqScheduler::Scheduler do
     expect(HappyWorkerForScheduler.sentry_monitor_config.schedule.value).to eq('* * * * *')
   end
 
+  it 'patches HappyWorkerForSchedulerWithTimezoneWithTimezone' do
+    expect(HappyWorkerForSchedulerWithTimezone.ancestors).to include(Sentry::Cron::MonitorCheckIns)
+    expect(HappyWorkerForSchedulerWithTimezone.sentry_monitor_slug).to eq('happy_timezone')
+    expect(HappyWorkerForSchedulerWithTimezone.sentry_monitor_config).to be_a(Sentry::Cron::MonitorConfig)
+    expect(HappyWorkerForSchedulerWithTimezone.sentry_monitor_config.schedule).to be_a(Sentry::Cron::MonitorSchedule::Crontab)
+    expect(HappyWorkerForSchedulerWithTimezone.sentry_monitor_config.schedule.value).to eq('* * * * *')
+    expect(HappyWorkerForSchedulerWithTimezone.sentry_monitor_config.timezone).to eq('Europe/Vienna')
+  end
+
   it 'does not override SadWorkerWithCron manually set values' do
     expect(SadWorkerWithCron.ancestors).to include(Sentry::Cron::MonitorCheckIns)
     expect(SadWorkerWithCron.sentry_monitor_slug).to eq('failed_job')

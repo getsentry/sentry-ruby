@@ -22,6 +22,9 @@
     If your system serves heavy load, please let us know how this feature works for you!
 
 - Implement proper flushing logic on ``close`` for Client Reports and Sessions [#2206](https://github.com/getsentry/sentry-ruby/pull/2206)
+- Support cron with timezone for `sidekiq-scheduler` patch [#2209](https://github.com/getsentry/sentry-ruby/pull/2209)
+  - Fixes [#2187](https://github.com/getsentry/sentry-ruby/issues/2187)
+
 ## 5.15.2
 
 ### Bug Fixes
