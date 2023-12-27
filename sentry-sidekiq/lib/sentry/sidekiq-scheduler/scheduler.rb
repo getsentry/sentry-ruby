@@ -37,7 +37,18 @@ module Sentry
         # so we convert it to minutes before passing in to the monitor.
         monitor_config = case interval_type
           when "cron"
-            Sentry::Cron::MonitorConfig.from_crontab(schedule)
+            parsed_cron = ::Fugit.parse_cron(schedule)
+            timezone = parsed_cron.timezone
+
+            # fugit supports having the timezone part of the cron string,
+            # so we need to pull that with some hacky stuff
+            if timezone
+              parsed_cron.instance_variable_set(:@timezone, nil)
+              cron_without_timezone = parsed_cron.to_cron_s
+              Sentry::Cron::MonitorConfig.from_crontab(cron_without_timezone, timezone: timezone.name)
+            else
+              Sentry::Cron::MonitorConfig.from_crontab(schedule)
+            end
           when "every", "interval"
             Sentry::Cron::MonitorConfig.from_interval(rufus_job.frequency.to_i / 60, :minute)
         end
