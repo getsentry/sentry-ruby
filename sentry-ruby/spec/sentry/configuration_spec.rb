@@ -256,6 +256,15 @@ RSpec.describe Sentry::Configuration do
     end
   end
 
+  describe "#cron" do
+    it "returns an initialized Cron::Configuration object" do
+      expect(subject.cron).to be_a(Sentry::Cron::Configuration)
+      expect(subject.cron.default_checkin_margin).to eq(nil)
+      expect(subject.cron.default_max_runtime).to eq(nil)
+      expect(subject.cron.default_timezone).to eq(nil)
+    end
+  end
+
   describe "#spotlight" do
     it "false by default" do
       expect(subject.spotlight).to eq(false)

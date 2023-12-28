@@ -24,6 +24,17 @@
 - Implement proper flushing logic on ``close`` for Client Reports and Sessions [#2206](https://github.com/getsentry/sentry-ruby/pull/2206)
 - Support cron with timezone for `sidekiq-scheduler` patch [#2209](https://github.com/getsentry/sentry-ruby/pull/2209)
   - Fixes [#2187](https://github.com/getsentry/sentry-ruby/issues/2187)
+- Add `Cron::Configuration` object that holds defaults for all ``MonitorConfig`` objects [#2210](https://github.com/getsentry/sentry-ruby/pull/2210)
+
+    ```ruby
+    Sentry.init do |config|
+      # ...
+      config.cron.default_checkin_margin = 1
+      config.cron.default_max_runtime = 30
+      config.cron.default_timezone = 'America/New_York'
+    end
+    ```
+
 
 ## 5.15.2
 
