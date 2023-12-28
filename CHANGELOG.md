@@ -2,7 +2,7 @@
 
 ### Features
 
-- Enable backpressure handling by default [#2185](https://github.com/getsentry/sentry-ruby/pull/2185)
+- Enable backpressure handling by default ([#2185](https://github.com/getsentry/sentry-ruby/pull/2185))
 
     The SDK can now dynamically downsamples transactions to reduce backpressure in high
     throughput systems. It starts a new `BackpressureMonitor` thread to perform some health checks
@@ -21,10 +21,10 @@
 
     If your system serves heavy load, please let us know how this feature works for you!
 
-- Implement proper flushing logic on ``close`` for Client Reports and Sessions [#2206](https://github.com/getsentry/sentry-ruby/pull/2206)
-- Support cron with timezone for `sidekiq-scheduler` patch [#2209](https://github.com/getsentry/sentry-ruby/pull/2209)
-  - Fixes [#2187](https://github.com/getsentry/sentry-ruby/issues/2187)
-- Add `Cron::Configuration` object that holds defaults for all ``MonitorConfig`` objects [#2210](https://github.com/getsentry/sentry-ruby/pull/2210)
+- Implement proper flushing logic on ``close`` for Client Reports and Sessions ([#2206](https://github.com/getsentry/sentry-ruby/pull/2206))
+- Support cron with timezone for `sidekiq-scheduler` patch ([#2209](https://github.com/getsentry/sentry-ruby/pull/2209))
+  - Fixes ([#2187](https://github.com/getsentry/sentry-ruby/issues/2187))
+- Add `Cron::Configuration` object that holds defaults for all ``MonitorConfig`` objects ([#2210](https://github.com/getsentry/sentry-ruby/pull/2210))
 
     ```ruby
     Sentry.init do |config|
@@ -34,7 +34,6 @@
       config.cron.default_timezone = 'America/New_York'
     end
     ```
-
 
 ## 5.15.2
 
