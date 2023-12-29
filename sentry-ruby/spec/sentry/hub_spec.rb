@@ -217,8 +217,9 @@ RSpec.describe Sentry::Hub do
         status: :ok,
         check_in_id: "xxx-yyy",
         duration: 30,
-        monitor_config: { schedule: { type: :crontab, value: "* * * * *" } }
       )
+
+      expect(event[:monitor_config]).to include({ schedule: { type: :crontab, value: "* * * * *" } })
     end
 
     it_behaves_like "capture_helper" do
