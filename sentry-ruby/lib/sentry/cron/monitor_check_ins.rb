@@ -13,27 +13,30 @@ module Sentry
                                                 monitor_config: monitor_config)
 
           start = Sentry.utc_now.to_i
-          # need to do this on ruby <= 2.6 sadly
-          ret = method(:perform).super_method.arity == 0 ? super() : super
-          duration = Sentry.utc_now.to_i - start
 
-          Sentry.capture_check_in(slug,
-                                  :ok,
-                                  check_in_id: check_in_id,
-                                  duration: duration,
-                                  monitor_config: monitor_config)
+          begin
+            # need to do this on ruby <= 2.6 sadly
+            ret = method(:perform).super_method.arity == 0 ? super() : super
+            duration = Sentry.utc_now.to_i - start
 
-          ret
-        rescue Exception
-          duration = Sentry.utc_now.to_i - start
+            Sentry.capture_check_in(slug,
+                                    :ok,
+                                    check_in_id: check_in_id,
+                                    duration: duration,
+                                    monitor_config: monitor_config)
 
-          Sentry.capture_check_in(slug,
-                                  :error,
-                                  check_in_id: check_in_id,
-                                  duration: duration,
-                                  monitor_config: monitor_config)
+            ret
+          rescue Exception
+            duration = Sentry.utc_now.to_i - start
 
-          raise
+            Sentry.capture_check_in(slug,
+                                    :error,
+                                    check_in_id: check_in_id,
+                                    duration: duration,
+                                    monitor_config: monitor_config)
+
+            raise
+          end
         end
       end
 
