@@ -67,8 +67,6 @@ module Sentry
         end
       end
 
-      extend ClassMethods
-
       def self.included(base)
         base.extend(ClassMethods)
       end
