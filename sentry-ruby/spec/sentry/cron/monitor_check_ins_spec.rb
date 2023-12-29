@@ -229,12 +229,78 @@ RSpec.describe Sentry::Cron::MonitorCheckIns do
         expect(in_progress_event.monitor_slug).to eq('custom_slug')
         expect(in_progress_event.status).to eq(:in_progress)
         expect(in_progress_event.monitor_config).to eq(monitor_config)
+        expect(in_progress_event.monitor_config.checkin_margin).to eq(nil)
+        expect(in_progress_event.monitor_config.max_runtime).to eq(nil)
+        expect(in_progress_event.monitor_config.timezone).to eq(nil)
 
         ok_event = sentry_events.last
 
         expect(ok_event.monitor_slug).to eq('custom_slug')
         expect(ok_event.status).to eq(:ok)
         expect(ok_event.monitor_config).to eq(monitor_config)
+      end
+    end
+
+    context 'with custom monitor config object and cron configs' do
+      let(:monitor_config) { Sentry::Cron::MonitorConfig::from_interval(1, :minute) }
+
+      before do
+        perform_basic_setup do |config|
+          config.cron.default_checkin_margin = 10
+          config.cron.default_max_runtime = 20
+          config.cron.default_timezone = 'Europe/Vienna'
+        end
+
+        mod = described_class
+        config = monitor_config
+
+        job_class = Class.new do
+          include mod
+
+          sentry_monitor_check_ins slug: 'custom_slug', monitor_config: config
+
+          def work(a, b, c); a + b + c end
+
+          def perform(a, b = 42, c: 99)
+            work(a, b, c)
+          end
+        end
+
+        stub_const('Job', job_class)
+      end
+
+      let(:job) { Job.new }
+
+      it_behaves_like 'original_job'
+
+      it 'prepends the patch' do
+        expect(Job.ancestors.first).to eq(described_class::Patch)
+      end
+
+      it 'has correct custom options' do
+        expect(Job.sentry_monitor_slug).to eq('custom_slug')
+        expect(Job.sentry_monitor_config).to eq(monitor_config)
+      end
+
+      it 'records 2 check-in events' do
+        job.perform(1)
+
+        expect(sentry_events.count).to eq(2)
+        in_progress_event = sentry_events.first
+
+        expect(in_progress_event.monitor_slug).to eq('custom_slug')
+        expect(in_progress_event.status).to eq(:in_progress)
+        expect(in_progress_event.monitor_config.checkin_margin).to eq(10)
+        expect(in_progress_event.monitor_config.max_runtime).to eq(20)
+        expect(in_progress_event.monitor_config.timezone).to eq('Europe/Vienna')
+
+        ok_event = sentry_events.last
+
+        expect(ok_event.monitor_slug).to eq('custom_slug')
+        expect(ok_event.status).to eq(:ok)
+        expect(ok_event.monitor_config.checkin_margin).to eq(10)
+        expect(ok_event.monitor_config.max_runtime).to eq(20)
+        expect(ok_event.monitor_config.timezone).to eq('Europe/Vienna')
       end
     end
 

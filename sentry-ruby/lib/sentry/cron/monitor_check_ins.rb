@@ -39,6 +39,13 @@ module Sentry
 
       module ClassMethods
         def sentry_monitor_check_ins(slug: nil, monitor_config: nil)
+          if monitor_config && Sentry.configuration
+            cron_config = Sentry.configuration.cron
+            monitor_config.checkin_margin ||= cron_config.default_checkin_margin
+            monitor_config.max_runtime ||= cron_config.default_max_runtime
+            monitor_config.timezone ||= cron_config.default_timezone
+          end
+
           @sentry_monitor_slug = slug
           @sentry_monitor_config = monitor_config
 

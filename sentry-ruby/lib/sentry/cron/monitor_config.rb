@@ -25,9 +25,9 @@ module Sentry
 
       def initialize(schedule, checkin_margin: nil, max_runtime: nil, timezone: nil)
         @schedule = schedule
-        @checkin_margin = checkin_margin || Sentry.configuration&.cron&.default_checkin_margin
-        @max_runtime = max_runtime || Sentry.configuration&.cron&.default_max_runtime
-        @timezone = timezone || Sentry.configuration&.cron&.default_timezone
+        @checkin_margin = checkin_margin
+        @max_runtime = max_runtime
+        @timezone = timezone
       end
 
       def self.from_crontab(crontab, **options)
