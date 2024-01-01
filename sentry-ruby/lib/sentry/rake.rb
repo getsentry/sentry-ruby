@@ -17,15 +17,6 @@ module Sentry
         super
       end
     end
-
-    module Task
-      # @api private
-      def execute(args=nil)
-        return super unless Sentry.initialized? && Sentry.get_current_hub
-
-        super
-      end
-    end
   end
 end
 
@@ -33,9 +24,5 @@ end
 module Rake
   class Application
     prepend(Sentry::Rake::Application)
-  end
-
-  class Task
-    prepend(Sentry::Rake::Task)
   end
 end
