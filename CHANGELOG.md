@@ -2,9 +2,9 @@
 
 ### Features
 
-- Enable backpressure handling by default [#2185](https://github.com/getsentry/sentry-ruby/pull/2185)
+- Add backpressure handling for transactions [#2185](https://github.com/getsentry/sentry-ruby/pull/2185)
 
-    The SDK can now dynamically downsamples transactions to reduce backpressure in high
+    The SDK can now dynamically downsample transactions to reduce backpressure in high
     throughput systems. It starts a new `BackpressureMonitor` thread to perform some health checks
     which decide to downsample (halved each time) in 10 second intervals till the system
     is healthy again.
@@ -35,8 +35,7 @@
     end
     ```
 - Clean up logging [#2216](https://github.com/getsentry/sentry-ruby/pull/2216)
-
-- Pick up config.cron.default_timezone from Rails config ([#2213](https://github.com/getsentry/sentry-ruby/pull/2213))
+- Pick up config.cron.default_timezone from Rails config [#2213](https://github.com/getsentry/sentry-ruby/pull/2213)
 
 ## 5.15.2
 
