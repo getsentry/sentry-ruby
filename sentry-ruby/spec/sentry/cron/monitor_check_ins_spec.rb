@@ -33,8 +33,9 @@ RSpec.describe Sentry::Cron::MonitorCheckIns do
     it_behaves_like 'original_job'
 
     it 'does not call capture_check_in' do
-      expect(Sentry).not_to receive(:capture_check_in)
       job.perform(1)
+
+      expect(sentry_events.count).to eq(0)
     end
   end
 
@@ -105,20 +106,21 @@ RSpec.describe Sentry::Cron::MonitorCheckIns do
         expect(Job.ancestors.first).to eq(described_class::Patch)
       end
 
-      it 'calls capture_check_in twice' do
-        expect(Sentry).to receive(:capture_check_in).with(
-          'job',
-          :in_progress,
-          hash_including(monitor_config: nil)
-        ).ordered.and_call_original
-
-        expect(Sentry).to receive(:capture_check_in).with(
-          'job',
-          :ok,
-          hash_including(:check_in_id, monitor_config: nil, duration: 0)
-        ).ordered.and_call_original
-
+      it 'records 2 check-in events' do
         job.perform(1)
+
+        expect(sentry_events.count).to eq(2)
+        in_progress_event = sentry_events.first
+
+        expect(in_progress_event.monitor_slug).to eq('job')
+        expect(in_progress_event.status).to eq(:in_progress)
+        expect(in_progress_event.monitor_config).to be_nil
+
+        ok_event = sentry_events.last
+
+        expect(ok_event.monitor_slug).to eq('job')
+        expect(ok_event.status).to eq(:ok)
+        expect(ok_event.monitor_config).to be_nil
       end
     end
 
@@ -143,25 +145,21 @@ RSpec.describe Sentry::Cron::MonitorCheckIns do
         expect(Job.ancestors.first).to eq(described_class::Patch)
       end
 
-      it 'does the work' do
-        expect(job).to receive(:work).and_call_original
-        expect(job.perform).to eq(42)
-      end
+      it 'records 2 check-in events' do
+        expect(job.perform(1)).to eq(42)
 
-      it 'calls capture_check_in twice' do
-        expect(Sentry).to receive(:capture_check_in).with(
-          'job',
-          :in_progress,
-          hash_including(monitor_config: nil)
-        ).ordered.and_call_original
+        expect(sentry_events.count).to eq(2)
+        in_progress_event = sentry_events.first
 
-        expect(Sentry).to receive(:capture_check_in).with(
-          'job',
-          :ok,
-          hash_including(:check_in_id, monitor_config: nil, duration: 0)
-        ).ordered.and_call_original
+        expect(in_progress_event.monitor_slug).to eq('job')
+        expect(in_progress_event.status).to eq(:in_progress)
+        expect(in_progress_event.monitor_config).to be_nil
 
-        job.perform(1)
+        ok_event = sentry_events.last
+
+        expect(ok_event.monitor_slug).to eq('job')
+        expect(ok_event.status).to eq(:ok)
+        expect(ok_event.monitor_config).to be_nil
       end
     end
 
@@ -174,10 +172,7 @@ RSpec.describe Sentry::Cron::MonitorCheckIns do
 
           sentry_monitor_check_ins
 
-          def work(a, b, c); a + b + c end
-
-          def perform(a, b = 42, c: 99)
-            work(a, b, c)
+          def perform
           end
         end
 
@@ -190,17 +185,17 @@ RSpec.describe Sentry::Cron::MonitorCheckIns do
       end
     end
 
-    context 'patched with custom options' do
-      let(:config) { Sentry::Cron::MonitorConfig::from_interval(1, :minute) }
+    context 'patched with monitor config' do
+      let(:monitor_config) { Sentry::Cron::MonitorConfig::from_interval(1, :minute) }
 
       before do
         mod = described_class
-        conf = config
+        config = monitor_config
 
         job_class = Class.new do
           include mod
 
-          sentry_monitor_check_ins slug: 'custom_slug', monitor_config: conf
+          sentry_monitor_check_ins slug: 'custom_slug', monitor_config: config
 
           def work(a, b, c); a + b + c end
 
@@ -222,37 +217,104 @@ RSpec.describe Sentry::Cron::MonitorCheckIns do
 
       it 'has correct custom options' do
         expect(Job.sentry_monitor_slug).to eq('custom_slug')
-        expect(Job.sentry_monitor_config).to eq(config)
+        expect(Job.sentry_monitor_config).to eq(monitor_config)
       end
 
-      it 'calls capture_check_in twice' do
-        expect(Sentry).to receive(:capture_check_in).with(
-          'custom_slug',
-          :in_progress,
-          hash_including(monitor_config: config)
-        ).ordered.and_call_original
-
-        expect(Sentry).to receive(:capture_check_in).with(
-          'custom_slug',
-          :ok,
-          hash_including(:check_in_id, monitor_config: config, duration: 0)
-        ).ordered.and_call_original
-
+      it 'records 2 check-in events' do
         job.perform(1)
+
+        expect(sentry_events.count).to eq(2)
+        in_progress_event = sentry_events.first
+
+        expect(in_progress_event.monitor_slug).to eq('custom_slug')
+        expect(in_progress_event.status).to eq(:in_progress)
+        expect(in_progress_event.monitor_config).to eq(monitor_config)
+        expect(in_progress_event.monitor_config.checkin_margin).to eq(nil)
+        expect(in_progress_event.monitor_config.max_runtime).to eq(nil)
+        expect(in_progress_event.monitor_config.timezone).to eq(nil)
+
+        ok_event = sentry_events.last
+
+        expect(ok_event.monitor_slug).to eq('custom_slug')
+        expect(ok_event.status).to eq(:ok)
+        expect(ok_event.monitor_config).to eq(monitor_config)
       end
     end
 
-    context 'patched with custom options with exception' do
-      let(:config) { Sentry::Cron::MonitorConfig::from_crontab('5 * * * *') }
+    context 'with custom monitor config object and cron configs' do
+      let(:monitor_config) { Sentry::Cron::MonitorConfig::from_interval(1, :minute) }
 
       before do
+        perform_basic_setup do |config|
+          config.cron.default_checkin_margin = 10
+          config.cron.default_max_runtime = 20
+          config.cron.default_timezone = 'Europe/Vienna'
+        end
+
         mod = described_class
-        conf = config
+        config = monitor_config
 
         job_class = Class.new do
           include mod
 
-          sentry_monitor_check_ins slug: 'custom_slug', monitor_config: conf
+          sentry_monitor_check_ins slug: 'custom_slug', monitor_config: config
+
+          def work(a, b, c); a + b + c end
+
+          def perform(a, b = 42, c: 99)
+            work(a, b, c)
+          end
+        end
+
+        stub_const('Job', job_class)
+      end
+
+      let(:job) { Job.new }
+
+      it_behaves_like 'original_job'
+
+      it 'prepends the patch' do
+        expect(Job.ancestors.first).to eq(described_class::Patch)
+      end
+
+      it 'has correct custom options' do
+        expect(Job.sentry_monitor_slug).to eq('custom_slug')
+        expect(Job.sentry_monitor_config).to eq(monitor_config)
+      end
+
+      it 'records 2 check-in events' do
+        job.perform(1)
+
+        expect(sentry_events.count).to eq(2)
+        in_progress_event = sentry_events.first
+
+        expect(in_progress_event.monitor_slug).to eq('custom_slug')
+        expect(in_progress_event.status).to eq(:in_progress)
+        expect(in_progress_event.monitor_config.checkin_margin).to eq(10)
+        expect(in_progress_event.monitor_config.max_runtime).to eq(20)
+        expect(in_progress_event.monitor_config.timezone).to eq('Europe/Vienna')
+
+        ok_event = sentry_events.last
+
+        expect(ok_event.monitor_slug).to eq('custom_slug')
+        expect(ok_event.status).to eq(:ok)
+        expect(ok_event.monitor_config.checkin_margin).to eq(10)
+        expect(ok_event.monitor_config.max_runtime).to eq(20)
+        expect(ok_event.monitor_config.timezone).to eq('Europe/Vienna')
+      end
+    end
+
+    context 'patched with custom options with exception' do
+      let(:monitor_config) { Sentry::Cron::MonitorConfig::from_crontab('5 * * * *') }
+
+      before do
+        mod = described_class
+        config = monitor_config
+
+        job_class = Class.new do
+          include mod
+
+          sentry_monitor_check_ins slug: 'custom_slug', monitor_config: config
 
           def work(a, b, c);
             1 / 0
@@ -284,23 +346,24 @@ RSpec.describe Sentry::Cron::MonitorCheckIns do
 
       it 'has correct custom options' do
         expect(Job.sentry_monitor_slug).to eq('custom_slug')
-        expect(Job.sentry_monitor_config).to eq(config)
+        expect(Job.sentry_monitor_config).to eq(monitor_config)
       end
 
       it 'calls capture_check_in twice with error status and re-raises exception' do
-        expect(Sentry).to receive(:capture_check_in).with(
-          'custom_slug',
-          :in_progress,
-          hash_including(monitor_config: config)
-        ).ordered.and_call_original
-
-        expect(Sentry).to receive(:capture_check_in).with(
-          'custom_slug',
-          :error,
-          hash_including(:check_in_id, monitor_config: config, duration: 0)
-        ).ordered.and_call_original
-
         expect { job.perform(1) }.to raise_error(ZeroDivisionError)
+
+        expect(sentry_events.count).to eq(2)
+        in_progress_event = sentry_events.first
+
+        expect(in_progress_event.monitor_slug).to eq('custom_slug')
+        expect(in_progress_event.status).to eq(:in_progress)
+        expect(in_progress_event.monitor_config).to eq(monitor_config)
+
+        error_event = sentry_events.last
+
+        expect(error_event.monitor_slug).to eq('custom_slug')
+        expect(error_event.status).to eq(:error)
+        expect(error_event.monitor_config).to eq(monitor_config)
       end
     end
   end
