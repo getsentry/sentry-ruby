@@ -34,6 +34,7 @@
       config.cron.default_timezone = 'America/New_York'
     end
     ```
+- Clean up logging [#2216](https://github.com/getsentry/sentry-ruby/pull/2216)
 
 - Pick up config.cron.default_timezone from Rails config ([#2213](https://github.com/getsentry/sentry-ruby/pull/2213))
 

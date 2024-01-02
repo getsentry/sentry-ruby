@@ -57,7 +57,7 @@ module Sentry
       event = scope.apply_to_event(event, hint)
 
       if event.nil?
-        log_info("Discarded event because one of the event processors returned nil")
+        log_debug("Discarded event because one of the event processors returned nil")
         transport.record_lost_event(:event_processor, event_type)
         return
       end
@@ -156,7 +156,7 @@ module Sentry
         event = configuration.before_send.call(event, hint)
 
         if event.nil?
-          log_info("Discarded event because before_send returned nil")
+          log_debug("Discarded event because before_send returned nil")
           transport.record_lost_event(:before_send, 'event')
           return
         end
@@ -166,7 +166,7 @@ module Sentry
         event = configuration.before_send_transaction.call(event, hint)
 
         if event.nil?
-          log_info("Discarded event because before_send_transaction returned nil")
+          log_debug("Discarded event because before_send_transaction returned nil")
           transport.record_lost_event(:before_send, 'transaction')
           return
         end
@@ -177,11 +177,7 @@ module Sentry
 
       event
     rescue => e
-      loggable_event_type = event_type.capitalize
-      log_error("#{loggable_event_type} sending failed", e, debug: configuration.debug)
-
-      event_info = Event.get_log_message(event.to_hash)
-      log_info("Unreported #{loggable_event_type}: #{event_info}")
+      log_error("Event sending failed", e, debug: configuration.debug)
       transport.record_lost_event(:network_error, event_type)
       raise
     end

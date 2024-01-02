@@ -75,7 +75,7 @@ module Sentry
         result, oversized = item.serialize
 
         if oversized
-          log_info("Envelope item [#{item.type}] is still oversized after size reduction: {#{item.size_breakdown}}")
+          log_debug("Envelope item [#{item.type}] is still oversized after size reduction: {#{item.size_breakdown}}")
 
           next
         end
@@ -208,7 +208,7 @@ module Sentry
     def reject_rate_limited_items(envelope)
       envelope.items.reject! do |item|
         if is_rate_limited?(item.type)
-          log_info("[Transport] Envelope item [#{item.type}] not sent: rate limiting")
+          log_debug("[Transport] Envelope item [#{item.type}] not sent: rate limiting")
           record_lost_event(:ratelimit_backoff, item.type)
 
           true
