@@ -40,6 +40,7 @@ module Sentry
 
       configure_project_root
       configure_trusted_proxies
+      configure_cron_timezone
       extend_controller_methods if defined?(ActionController)
       patch_background_worker if defined?(ActiveRecord)
       override_streaming_reporter if defined?(ActionView)
@@ -68,6 +69,11 @@ module Sentry
 
     def configure_trusted_proxies
       Sentry.configuration.trusted_proxies += Array(::Rails.application.config.action_dispatch.trusted_proxies)
+    end
+
+    def configure_cron_timezone
+      tz_info = ::ActiveSupport::TimeZone.find_tzinfo(::Rails.application.config.time_zone)
+      Sentry.configuration.cron.default_timezone = tz_info.name
     end
 
     def extend_controller_methods

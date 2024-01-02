@@ -35,6 +35,8 @@
     end
     ```
 
+- Pick up config.cron.default_timezone from Rails config ([#2213](https://github.com/getsentry/sentry-ruby/pull/2213))
+
 ## 5.15.2
 
 ### Bug Fixes
