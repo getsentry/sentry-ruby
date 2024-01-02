@@ -134,7 +134,6 @@ class SadWorker
 end
 
 class HappyWorkerForCron < HappyWorker; end
-class HappyWorkerForCron < HappyWorker; end
 class HappyWorkerForScheduler < HappyWorker; end
 class HappyWorkerForSchedulerWithTimezone < HappyWorker; end
 class EveryHappyWorker < HappyWorker; end

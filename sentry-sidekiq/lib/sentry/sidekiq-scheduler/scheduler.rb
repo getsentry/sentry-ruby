@@ -37,6 +37,7 @@ module Sentry
         # so we convert it to minutes before passing in to the monitor.
         monitor_config = case interval_type
           when "cron"
+            # fugit is a second order dependency of sidekiq-scheduler via rufus-scheduler
             parsed_cron = ::Fugit.parse_cron(schedule)
             timezone = parsed_cron.timezone
 
