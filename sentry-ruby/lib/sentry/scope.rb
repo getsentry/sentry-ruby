@@ -44,12 +44,18 @@ module Sentry
     # @param hint [Hash] the hint data that'll be passed to event processors.
     # @return [Event]
     def apply_to_event(event, hint = nil)
-      event.tags = tags.merge(event.tags)
-      event.user = user.merge(event.user)
-      event.extra = extra.merge(event.extra)
-      event.contexts = contexts.merge(event.contexts)
-      event.transaction = transaction_name if transaction_name
-      event.transaction_info = { source: transaction_source } if transaction_source
+      unless event.is_a?(CheckInEvent)
+        event.tags = tags.merge(event.tags)
+        event.user = user.merge(event.user)
+        event.extra = extra.merge(event.extra)
+        event.contexts = contexts.merge(event.contexts)
+        event.transaction = transaction_name if transaction_name
+        event.transaction_info = { source: transaction_source } if transaction_source
+        event.fingerprint = fingerprint
+        event.level = level
+        event.breadcrumbs = breadcrumbs
+        event.rack_env = rack_env if rack_env
+      end
 
       if span
         event.contexts[:trace] ||= span.get_trace_context
@@ -57,11 +63,6 @@ module Sentry
         event.contexts[:trace] ||= propagation_context.get_trace_context
         event.dynamic_sampling_context ||= propagation_context.get_dynamic_sampling_context
       end
-
-      event.fingerprint = fingerprint
-      event.level = level
-      event.breadcrumbs = breadcrumbs
-      event.rack_env = rack_env if rack_env
 
       all_event_processors = self.class.global_event_processors + @event_processors
 

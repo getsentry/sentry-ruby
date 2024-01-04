@@ -205,9 +205,8 @@ RSpec.describe Sentry::Scope do
       scope
     end
 
-    let(:event) do
-      client.event_from_message("test message")
-    end
+    let(:event) { client.event_from_message("test message") }
+    let(:check_in_event) { client.event_from_check_in("test_slug", :ok) }
 
     it "applies the contextual data to event" do
       subject.apply_to_event(event)
@@ -218,8 +217,21 @@ RSpec.describe Sentry::Scope do
       expect(event.transaction_info).to eq({ source: :view })
       expect(event.breadcrumbs).to be_a(Sentry::BreadcrumbBuffer)
       expect(event.fingerprint).to eq(["foo"])
+      expect(event.contexts).to include(:trace)
       expect(event.contexts[:os].keys).to match_array([:name, :version, :build, :kernel_version, :machine])
       expect(event.contexts.dig(:runtime, :version)).to match(/ruby/)
+    end
+
+    it "does not apply the contextual data to a check-in event" do
+      subject.apply_to_event(check_in_event)
+      expect(check_in_event.tags).to eq({})
+      expect(check_in_event.user).to eq({})
+      expect(check_in_event.extra).to eq({})
+      expect(check_in_event.transaction).to eq(nil)
+      expect(check_in_event.transaction_info).to eq(nil)
+      expect(check_in_event.breadcrumbs).to eq(nil)
+      expect(check_in_event.fingerprint).to eq([])
+      expect(check_in_event.contexts).to include(:trace)
     end
 
     it "doesn't override event's pre-existing data" do

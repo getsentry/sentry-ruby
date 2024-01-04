@@ -222,9 +222,16 @@ RSpec.describe Sentry::Hub do
       expect(event[:monitor_config]).to include({ schedule: { type: :crontab, value: "* * * * *" } })
     end
 
-    it_behaves_like "capture_helper" do
-      let(:capture_helper) { :capture_check_in }
-      let(:capture_subject) { [slug, :ok] }
+    context "with sending not allowed" do
+      before do
+        expect(configuration).to receive(:sending_allowed?).and_return(false)
+      end
+
+      it "doesn't send the event nor assign last_event_id" do
+        subject.capture_check_in(slug, :ok)
+        expect(transport.events).to be_empty
+        expect(subject.last_event_id).to eq(nil)
+      end
     end
   end
 
