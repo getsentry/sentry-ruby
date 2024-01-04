@@ -474,7 +474,7 @@ module Sentry
 
     def profiles_sample_rate=(profiles_sample_rate)
       raise ArgumentError, "profiles_sample_rate must be a Numeric or nil" unless is_numeric_or_nil?(profiles_sample_rate)
-      log_info("Please make sure to include the 'stackprof' gem in your Gemfile to use Profiling with Sentry.") unless defined?(StackProf)
+      log_warn("Please make sure to include the 'stackprof' gem in your Gemfile to use Profiling with Sentry.") unless defined?(StackProf)
       @profiles_sample_rate = profiles_sample_rate
     end
 

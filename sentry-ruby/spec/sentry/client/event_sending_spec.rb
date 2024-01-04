@@ -362,7 +362,6 @@ RSpec.describe Sentry::Client do
 
           expect(subject.transport).to have_recorded_lost_event(:network_error, 'event')
           expect(string_io.string).to match(/Event sending failed: Failed to open TCP connection/)
-          expect(string_io.string).to match(/Unreported Event: Test message/)
           expect(string_io.string).to match(/Event capturing failed: Failed to open TCP connection/)
         end
 
@@ -372,7 +371,6 @@ RSpec.describe Sentry::Client do
           expect(subject.capture_event(event, scope)).to be_nil
 
           expect(string_io.string).to match(/Event sending failed: TypeError/)
-          expect(string_io.string).to match(/Unreported Event: Test message/)
         end
       end
 
@@ -387,7 +385,6 @@ RSpec.describe Sentry::Client do
 
           expect(subject.transport).to have_recorded_lost_event(:network_error, 'event')
           expect(string_io.string).to match(/Event sending failed: Failed to open TCP connection/)
-          expect(string_io.string).to match(/Unreported Event: Test message/)
         end
 
         it "swallows and logs errors caused by the user (like in before_send)" do
@@ -397,7 +394,6 @@ RSpec.describe Sentry::Client do
           sleep(0.2)
 
           expect(string_io.string).to match(/Event sending failed: TypeError/)
-          expect(string_io.string).to match(/Unreported Event: Test message/)
         end
       end
 
@@ -432,7 +428,6 @@ RSpec.describe Sentry::Client do
           end.to raise_error(Sentry::ExternalError)
 
           expect(string_io.string).to match(/Event sending failed: Failed to open TCP connection/)
-          expect(string_io.string).to match(/Unreported Event: Test message/)
         end
       end
 
@@ -449,7 +444,6 @@ RSpec.describe Sentry::Client do
           end.to raise_error(TypeError)
 
           expect(string_io.string).to match(/Event sending failed: TypeError/)
-          expect(string_io.string).to match(/Unreported Event: Test message/)
         end
 
         context "with config.debug = true" do

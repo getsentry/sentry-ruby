@@ -76,34 +76,6 @@ module Sentry
       @message = (message || "").byteslice(0..MAX_MESSAGE_SIZE_IN_BYTES)
     end
 
-    class << self
-      # @!visibility private
-      def get_log_message(event_hash)
-        message = event_hash[:message] || event_hash['message']
-
-        return message unless message.nil? || message.empty?
-
-        message = get_message_from_exception(event_hash)
-
-        return message unless message.nil? || message.empty?
-
-        message = event_hash[:transaction] || event_hash["transaction"]
-
-        return message unless message.nil? || message.empty?
-
-        '<no message value>'
-      end
-
-      # @!visibility private
-      def get_message_from_exception(event_hash)
-        if exception = event_hash.dig(:exception, :values, 0)
-          "#{exception[:type]}: #{exception[:value]}"
-        elsif exception = event_hash.dig("exception", "values", 0)
-          "#{exception["type"]}: #{exception["value"]}"
-        end
-      end
-    end
-
     # @deprecated This method will be removed in v5.0.0. Please just use Sentry.configuration
     # @return [Configuration]
     def configuration

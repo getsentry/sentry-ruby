@@ -246,8 +246,9 @@ RSpec.describe Sentry::Client do
         end
 
         event = subject.event_from_exception(NonStringMessageError.new)
+        hash = event.to_hash
         expect(event).to be_a(Sentry::ErrorEvent)
-        expect(Sentry::Event.get_message_from_exception(event.to_hash)).to match("NonStringMessageError: {:foo=>\"bar\"}")
+        expect(hash[:exception][:values][0][:value]).to eq("{:foo=>\"bar\"}")
       end
     end
 
@@ -282,7 +283,9 @@ RSpec.describe Sentry::Client do
     it 'returns an event' do
       event = subject.event_from_exception(ZeroDivisionError.new("divided by 0"))
       expect(event).to be_a(Sentry::ErrorEvent)
-      expect(Sentry::Event.get_message_from_exception(event.to_hash)).to match("ZeroDivisionError: divided by 0")
+      hash = event.to_hash
+      expect(hash[:exception][:values][0][:type]).to match("ZeroDivisionError")
+      expect(hash[:exception][:values][0][:value]).to match("divided by 0")
     end
 
     context 'for a nested exception type' do

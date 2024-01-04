@@ -54,7 +54,8 @@ RSpec.describe Sentry::Sidekiq do
 
     event = transport.events.last.to_hash
     expect(event[:sdk]).to eq({ name: "sentry.ruby.sidekiq", version: described_class::VERSION })
-    expect(Sentry::Event.get_message_from_exception(event)).to match("RuntimeError: I'm sad!")
+    expect(event[:exception][:values][0][:type]).to eq("RuntimeError")
+    expect(event[:exception][:values][0][:value]).to match("I'm sad!")
   end
 
   it "doesn't store the private `_config` context", skip: !WITH_SIDEKIQ_7 do

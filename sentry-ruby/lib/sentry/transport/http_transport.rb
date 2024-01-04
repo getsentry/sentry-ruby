@@ -53,18 +53,14 @@ module Sentry
       end
 
       if response.code.match?(/\A2\d{2}/)
-        if has_rate_limited_header?(response)
-          handle_rate_limited_response(response)
-        end
+        handle_rate_limited_response(response) if has_rate_limited_header?(response)
+      elsif response.code == "429"
+        log_debug("the server responded with status 429")
+        handle_rate_limited_response(response)
       else
         error_info = "the server responded with status #{response.code}"
-
-        if response.code == "429"
-          handle_rate_limited_response(response)
-        else
-          error_info += "\nbody: #{response.body}"
-          error_info += " Error in headers is: #{response['x-sentry-error']}" if response['x-sentry-error']
-        end
+        error_info += "\nbody: #{response.body}"
+        error_info += " Error in headers is: #{response['x-sentry-error']}" if response['x-sentry-error']
 
         raise Sentry::ExternalError, error_info
       end
