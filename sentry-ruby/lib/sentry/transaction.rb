@@ -188,8 +188,6 @@ module Sentry
         return
       end
 
-      # This block would return either true / false (if parent was sampled or not)
-      # or the sample rate from the configuration, presumably between 0 and 1.
       sample_rate =
         if @traces_sampler.is_a?(Proc)
           @traces_sampler.call(sampling_context)
