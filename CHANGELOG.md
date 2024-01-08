@@ -36,6 +36,7 @@
     ```
 - Clean up logging [#2216](https://github.com/getsentry/sentry-ruby/pull/2216)
 - Pick up config.cron.default_timezone from Rails config [#2213](https://github.com/getsentry/sentry-ruby/pull/2213)
+- Don't add most scope data (tags/extra/breadcrumbs) to `CheckInEvent` [#2217](https://github.com/getsentry/sentry-ruby/pull/2217)
 
 ## 5.15.2
 

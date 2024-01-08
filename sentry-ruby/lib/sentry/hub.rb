@@ -156,7 +156,7 @@ module Sentry
       capture_event(event, **options, &block)
     end
 
-    def capture_check_in(slug, status, **options, &block)
+    def capture_check_in(slug, status, **options)
       check_argument_type!(slug, ::String)
       check_argument_includes!(status, Sentry::CheckInEvent::VALID_STATUSES)
 
@@ -176,7 +176,7 @@ module Sentry
 
       return unless event
 
-      capture_event(event, **options, &block)
+      capture_event(event, **options)
       event.check_in_id
     end
 

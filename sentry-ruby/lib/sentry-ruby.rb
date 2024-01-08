@@ -446,12 +446,10 @@ module Sentry
     # @option options [Integer] duration seconds elapsed since this monitor started
     # @option options [Cron::MonitorConfig] monitor_config configuration for this monitor
     #
-    # @yieldparam scope [Scope]
-    #
     # @return [String, nil] The {CheckInEvent#check_in_id} to use for later updates on the same slug
-    def capture_check_in(slug, status, **options, &block)
+    def capture_check_in(slug, status, **options)
       return unless initialized?
-      get_current_hub.capture_check_in(slug, status, **options, &block)
+      get_current_hub.capture_check_in(slug, status, **options)
     end
 
     # Takes or initializes a new Sentry::Transaction and makes a sampling decision for it.
