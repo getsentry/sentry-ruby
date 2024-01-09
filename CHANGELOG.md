@@ -1,3 +1,9 @@
+## 5.16.1
+
+### Bug Fixes
+
+- Pin `sqlite3` gem for building because of failed release [#2222](https://github.com/getsentry/sentry-ruby/pull/2222)
+
 ## 5.16.0
 
 ### Features
