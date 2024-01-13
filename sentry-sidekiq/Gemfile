@@ -24,6 +24,6 @@ if RUBY_VERSION.to_f >= 2.7 && sidekiq_version >= Gem::Version.new("6.0")
   gem "sidekiq-scheduler"
 end
 
-gem "rails", "> 5.0.0", "< 7.1.0"
+gem "rails", "> 5.0.0"
 
 eval_gemfile File.expand_path("../Gemfile", __dir__)
