@@ -37,6 +37,11 @@ jobs:
                 },
             }
           - { ruby_version: "3.2", options: { codecov: 1 } }
+        exclude:
+          # Because Rails 7.0 currently doesn't work with Ruby head
+          # LoadError:
+          #  cannot load such file -- mutex_m
+          - { ruby_version: "head" }
     steps:
       - uses: actions/checkout@v1
       - name: Install sqlite
