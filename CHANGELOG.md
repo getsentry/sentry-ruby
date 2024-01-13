@@ -1,3 +1,7 @@
+## Unreleased
+
+- Fix warning about default gems on Ruby 3.3.0 ([#2225](https://github.com/getsentry/sentry-ruby/pull/2225))
+
 ## 5.16.1
 
 ### Bug Fixes
