@@ -24,28 +24,16 @@ jobs:
       run:
         working-directory: sentry-ruby
     name: Ruby ${{ matrix.ruby_version }} & Rack ${{ matrix.rack_version }}, options - ${{ toJson(matrix.options) }}
-    runs-on: ${{ matrix.os }}
+    runs-on: ubuntu-latest
     strategy:
       matrix:
         ruby_version: ${{ fromJson(needs.ruby-versions.outputs.versions) }}
         rack_version: [2.0, 3.0]
         redis_rb_version: [4.0]
-        os: [ubuntu-latest]
         include:
+          - { ruby_version: 3.2, rack_version: 0, redis_rb_version: 5.0 }
+          - { ruby_version: 3.2, rack_version: 2.0, redis_rb_version: 5.0 }
           - {
-              os: ubuntu-latest,
-              ruby_version: 3.2,
-              rack_version: 0,
-              redis_rb_version: 5.0,
-            }
-          - {
-              os: ubuntu-latest,
-              ruby_version: 3.2,
-              rack_version: 2.0,
-              redis_rb_version: 5.0,
-            }
-          - {
-              os: ubuntu-latest,
               ruby_version: 3.2,
               rack_version: 3.0,
               redis_rb_version: 5.0,
@@ -55,7 +43,6 @@ jobs:
                 },
             }
           - {
-              os: ubuntu-latest,
               ruby_version: 3.2,
               rack_version: 3.0,
               redis_rb_version: 5.0,
