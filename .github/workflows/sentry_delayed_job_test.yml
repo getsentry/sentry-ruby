@@ -39,6 +39,8 @@ jobs:
                 },
             }
           - { os: ubuntu-latest, ruby_version: "3.2", options: { codecov: 1 } }
+        exclude:
+          - { os: ubuntu-latest, ruby_version: "jruby-head" }
     steps:
       - uses: actions/checkout@v1
       - name: Install sqlite
