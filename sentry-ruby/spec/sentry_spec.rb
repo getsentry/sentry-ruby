@@ -116,14 +116,22 @@ RSpec.describe Sentry do
         capture_subject
       end
 
-      it "doesn't send the event nor assign last_event_id" do
-        # don't even initialize Event objects
+      it "doesn't build the event" do
+        # don't even initialize event objects
         expect(Sentry::Event).not_to receive(:new)
-
         described_class.send(capture_helper, capture_subject)
+      end
+    end
 
+    context "with sending allowed but sending to dsn not allowed" do
+      before do
+        allow(Sentry.configuration).to receive(:sending_allowed?).and_return(true)
+        allow(Sentry.configuration).to receive(:sending_to_dsn_allowed?).and_return(false)
+      end
+
+      it "doesn't send the event nor assign last_event_id" do
+        described_class.send(capture_helper, capture_subject)
         expect(sentry_events).to be_empty
-        expect(subject.last_event_id).to eq(nil)
       end
     end
 

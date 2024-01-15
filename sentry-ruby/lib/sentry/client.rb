@@ -172,8 +172,8 @@ module Sentry
         end
       end
 
-      transport.send_event(event)
-      spotlight_transport&.send_event(event)
+      transport.send_event(event) if configuration.sending_to_dsn_allowed?
+      spotlight_transport.send_event(event) if spotlight_transport
 
       event
     rescue => e
