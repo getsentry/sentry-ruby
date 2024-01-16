@@ -7,8 +7,8 @@ on:
       - master
   pull_request:
     paths:
-      - 'sentry-raven/**'
-      - '.github/workflows/sentry_raven_test.yml'
+      - "sentry-raven/**"
+      - ".github/workflows/sentry_raven_test.yml"
 # Cancel in progress workflows on pull_requests.
 # https://docs.github.com/en/actions/using-jobs/using-concurrency#example-using-a-fallback-value
 concurrency:
@@ -20,14 +20,13 @@ jobs:
       run:
         working-directory: sentry-raven
     name: Test on ruby ${{ matrix.ruby_version }} and rails ${{ matrix.rails_version }}
-    runs-on: ${{ matrix.os }}
+    runs-on: ubuntu-latest
     strategy:
       matrix:
         rails_version: [0, 4.2, 5.2, 6.0.0]
-        ruby_version: [2.3, 2.4, 2.5, 2.6, 2.7, '3.0', jruby-9.3]
-        os: [ubuntu-latest]
+        ruby_version: [2.3, 2.4, 2.5, 2.6, 2.7, "3.0", jruby-9.3]
         include:
-          - ruby_version: '3.0'
+          - ruby_version: "3.0"
             rails_version: 0
           - ruby_version: 2.7
             rails_version: 6.0.0
@@ -41,30 +40,30 @@ jobs:
             rails_version: 4.2
           - ruby_version: jruby-9.3
             rails_version: 4.2
-          - ruby_version: '3.0'
+          - ruby_version: "3.0"
             rails_version: 4.2
-          - ruby_version: '3.0'
+          - ruby_version: "3.0"
             rails_version: 5.2
-          - ruby_version: '3.0'
+          - ruby_version: "3.0"
             rails_version: 6.0.0
 
     steps:
-    - uses: actions/checkout@v1
+      - uses: actions/checkout@v1
 
-    - name: Set up Ruby ${{ matrix.ruby_version }}
-      uses: ruby/setup-ruby@v1
-      with:
-        bundler: 1
-        ruby-version: ${{ matrix.ruby_version }}
+      - name: Set up Ruby ${{ matrix.ruby_version }}
+        uses: ruby/setup-ruby@v1
+        with:
+          bundler: 1
+          ruby-version: ${{ matrix.ruby_version }}
 
-    - name: Start Redis
-      uses: supercharge/redis-github-action@1.1.0
-      with:
-        redis-version: 5
+      - name: Start Redis
+        uses: supercharge/redis-github-action@1.1.0
+        with:
+          redis-version: 5
 
-    - name: Build with Rails ${{ matrix.rails_version }}
-      env:
-        RAILS_VERSION: ${{ matrix.rails_version }}
-      run: |
-        bundle install --jobs 4 --retry 3
-        bundle exec rake
+      - name: Build with Rails ${{ matrix.rails_version }}
+        env:
+          RAILS_VERSION: ${{ matrix.rails_version }}
+        run: |
+          bundle install --jobs 4 --retry 3
+          bundle exec rake

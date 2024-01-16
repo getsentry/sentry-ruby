@@ -24,21 +24,24 @@ jobs:
       run:
         working-directory: sentry-delayed_job
     name: Ruby ${{ matrix.ruby_version }}, options - ${{ toJson(matrix.options) }}
-    runs-on: ${{ matrix.os }}
+    runs-on: ubuntu-latest
     strategy:
       matrix:
         ruby_version: ${{ fromJson(needs.ruby-versions.outputs.versions) }}
-        os: [ubuntu-latest]
         include:
           - {
-              os: ubuntu-latest,
               ruby_version: "3.2",
               options:
                 {
                   rubyopt: "--enable-frozen-string-literal --debug=frozen-string-literal",
                 },
             }
-          - { os: ubuntu-latest, ruby_version: "3.2", options: { codecov: 1 } }
+          - { ruby_version: "3.2", options: { codecov: 1 } }
+        exclude:
+          # Because Rails 7.0 currently doesn't work with Ruby head
+          # LoadError:
+          #  cannot load such file -- mutex_m
+          - { ruby_version: "head" }
     steps:
       - uses: actions/checkout@v1
       - name: Install sqlite
