@@ -10,7 +10,12 @@ module Sentry
       OP_NAME = "queue.delayed_job".freeze
 
       callbacks do |lifecycle|
+        lifecycle.before(:enqueue) do |job, *args, &block|
+          inject_trace_data(job) if Sentry.initialized?
+        end
+
         lifecycle.around(:invoke_job) do |job, *args, &block|
+          env = extract_trace_data(job)
           next block.call(job, *args) unless Sentry.initialized?
 
           Sentry.with_scope do |scope|
@@ -20,12 +25,7 @@ module Sentry
             scope.set_contexts(**contexts)
             scope.set_tags("delayed_job.queue" => job.queue, "delayed_job.id" => job.id.to_s)
 
-            transaction = Sentry.start_transaction(
-              name: scope.transaction_name,
-              source: scope.transaction_source,
-              op: OP_NAME,
-              custom_sampling_context: contexts
-            )
+            transaction = start_transaction(scope, env, contexts)
             scope.set_span(transaction) if transaction
 
             begin
@@ -70,7 +70,7 @@ module Sentry
       end
 
       def self.compute_job_class(payload_object)
-        if payload_object.is_a? Delayed::PerformableMethod
+        if payload_object.is_a?(Delayed::PerformableMethod)
           klass = payload_object.object.is_a?(Class) ? payload_object.object.name : payload_object.object.class.name
           "#{klass}##{payload_object.method_name}"
         else
@@ -91,11 +91,41 @@ module Sentry
         job.attempts >= max_attempts
       end
 
+      def self.start_transaction(scope, env, contexts)
+        options = { name: scope.transaction_name, source: scope.transaction_source, op: OP_NAME }
+        transaction = Sentry.continue_trace(env, **options)
+        Sentry.start_transaction(transaction: transaction, custom_sampling_context: contexts, **options)
+      end
+
       def self.finish_transaction(transaction, status)
         return unless transaction
 
         transaction.set_http_status(status)
         transaction.finish
+      end
+
+      def self.inject_trace_data(job)
+        # active job style is handled in the sentry-rails/active_job extension more generally
+        # if someone enqueues manually with some other job class, we cannot make assumptions unfortunately
+        payload_object = job.payload_object
+        return unless payload_object.is_a?(Delayed::PerformableMethod)
+
+        # we will add the trace data to args and remove it again
+        # this is hacky but it's the only reliable way to survive the YAML serialization/deserialization
+        payload_object.args << { sentry: Sentry.get_trace_propagation_headers }
+        job.payload_object = payload_object
+      end
+
+      def self.extract_trace_data(job)
+        payload_object = job.payload_object
+        return nil unless payload_object.is_a?(Delayed::PerformableMethod)
+
+        ind = payload_object.args.index { |a| a.is_a?(Hash) && a.key?(:sentry) }
+        return nil unless ind
+
+        env = payload_object.args[ind][:sentry]
+        payload_object.args.delete_at(ind)
+        env
       end
     end
   end
