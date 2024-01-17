@@ -19,7 +19,13 @@ module Sentry
           tags.merge!(context.delete(:tags))
         end
 
-        Sentry::Rails.capture_exception(error, level: severity, contexts: { "rails.error" => context }, tags: tags)
+        hint = {}
+        if context[:hint].is_a?(Hash)
+          context = context.dup
+          hint.merge!(context.delete(:hint))
+        end
+
+        Sentry::Rails.capture_exception(error, level: severity, contexts: { "rails.error" => context }, tags: tags, hint: hint)
       end
     end
   end
