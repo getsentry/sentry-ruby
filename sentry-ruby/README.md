@@ -90,7 +90,7 @@ To learn more about sampling transactions, please visit the [official documentat
 - [Sidekiq](https://docs.sentry.io/platforms/ruby/guides/sidekiq/)
 - [DelayedJob](https://docs.sentry.io/platforms/ruby/guides/delayed_job/)
 - [Resque](https://docs.sentry.io/platforms/ruby/guides/resque/)
-- [OpenTemeletry](https://docs.sentry.io/platforms/ruby/performance/instrumentation/opentelemetry/)
+- [OpenTelemetry](https://docs.sentry.io/platforms/ruby/performance/instrumentation/opentelemetry/)
 
 ### Enriching Events
 
