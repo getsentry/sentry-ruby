@@ -120,12 +120,10 @@ module Sentry
         payload_object = job.payload_object
         return nil unless payload_object.is_a?(Delayed::PerformableMethod)
 
-        ind = payload_object.args.index { |a| a.is_a?(Hash) && a.key?(:sentry) }
-        return nil unless ind
-
-        env = payload_object.args[ind][:sentry]
-        payload_object.args.delete_at(ind)
-        env
+        target_payload = payload_object.args.find { |a| a.is_a?(Hash) && a.key?(:sentry) }
+        return nil unless target_payload
+        payload_object.args.delete(target_payload)
+        target_payload[:sentry]
       end
     end
   end
