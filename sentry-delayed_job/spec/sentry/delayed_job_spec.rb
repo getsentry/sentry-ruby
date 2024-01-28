@@ -33,6 +33,9 @@ RSpec.describe Sentry::DelayedJob do
 
     def self.class_do_nothing
     end
+
+    def do_nothing_with_args(a)
+    end
   end
 
   it "sets correct extra/tags context for each job" do
@@ -403,6 +406,46 @@ RSpec.describe Sentry::DelayedJob do
 
       event = transport.events.last
       expect(event.contexts.dig(:trace, :trace_id)).to eq(transaction.contexts.dig(:trace, :trace_id))
+    end
+
+    context "with upstream trace" do
+      before do
+        transaction = Sentry.start_transaction
+        Sentry.get_current_scope.set_span(transaction)
+
+        Post.new.delay.do_nothing_with_args(1)
+      end
+
+      let(:parent_transaction) { Sentry.get_current_scope.span }
+      let(:enqueued_job) { Delayed::Backend::ActiveRecord::Job.last }
+
+      it "injects the trace propagation headers to args for PerformableMethod" do
+        payload_object = enqueued_job.payload_object
+        expect(payload_object).to be_a(Delayed::PerformableMethod)
+        expect(payload_object.args.last).to include(:sentry)
+        expect(payload_object.args.last[:sentry]["sentry-trace"]).to eq(parent_transaction.to_sentry_trace)
+        expect(payload_object.args.last[:sentry]["baggage"]).to eq(parent_transaction.to_baggage)
+      end
+
+      it "invokes the job with correct args" do
+        payload_object = enqueued_job.payload_object
+        expect(payload_object.object).to be_a(Post)
+        expect(payload_object.object).to receive(:do_nothing_with_args).with(1)
+
+        enqueued_job.invoke_job
+      end
+
+      it "continues the trace" do
+        enqueued_job.invoke_job
+
+        expect(transport.events.count).to eq(1)
+        transaction = transport.events.last
+
+        expect(transaction.transaction).to eq("Post#do_nothing_with_args")
+        expect(transaction.contexts.dig(:trace, :trace_id)).to eq(parent_transaction.trace_id)
+        expect(transaction.contexts.dig(:trace, :parent_span_id)).to eq(parent_transaction.span_id)
+        expect(transaction.dynamic_sampling_context).to eq(parent_transaction.get_baggage.dynamic_sampling_context)
+      end
     end
   end
 end
