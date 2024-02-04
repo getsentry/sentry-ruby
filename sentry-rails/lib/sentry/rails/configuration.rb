@@ -104,7 +104,7 @@ module Sentry
       "service_url.active_storage" => %i[service key url],
       "service_update_metadata.active_storage" => %i[service key],
       "preview.active_storage" => %i[key],
-      "analyze.active_storage" => %i[analyzer],
+      "analyze.active_storage" => %i[analyzer]
     }.freeze
 
     class Configuration

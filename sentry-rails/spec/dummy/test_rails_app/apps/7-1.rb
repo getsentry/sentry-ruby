@@ -89,7 +89,7 @@ class HelloController < ActionController::Base
   end
 
   def world
-    render :plain => "Hello World!"
+    render plain: "Hello World!"
   end
 
   def with_custom_instrumentation

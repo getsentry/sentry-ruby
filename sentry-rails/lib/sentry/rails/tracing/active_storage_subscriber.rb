@@ -4,7 +4,7 @@ module Sentry
   module Rails
     module Tracing
       class ActiveStorageSubscriber < AbstractSubscriber
-        EVENT_NAMES = %w(
+        EVENT_NAMES = %w[
           service_upload.active_storage
           service_download.active_storage
           service_streaming_download.active_storage
@@ -17,7 +17,7 @@ module Sentry
           service_update_metadata.active_storage
           preview.active_storage
           analyze.active_storage
-        ).freeze
+        ].freeze
 
         def self.subscribe!
           subscribe_to_event(EVENT_NAMES) do |event_name, duration, payload|

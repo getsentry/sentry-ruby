@@ -42,7 +42,7 @@ class WelcomeController < ApplicationController
 
   def report_demo
     # @sentry_event_id = Raven.last_event_id
-    render(:status => 500)
+    render(status: 500)
   end
 
   private

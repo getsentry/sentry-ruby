@@ -13,7 +13,7 @@ RSpec.describe Sentry::Rails::ControllerMethods do
   end
 
   let(:options) do
-    { tags: { new_tag: true }}
+    { tags: { new_tag: true } }
   end
 
   let(:transport) do

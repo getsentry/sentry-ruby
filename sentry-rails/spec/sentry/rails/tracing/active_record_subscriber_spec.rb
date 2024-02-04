@@ -58,7 +58,7 @@ RSpec.describe Sentry::Rails::Tracing::ActiveRecordSubscriber, :subscriber do
       cached_query_span = transaction[:spans][1]
       expect(cached_query_span[:op]).to eq("db.sql.active_record")
       expect(cached_query_span[:description]).to eq("SELECT \"posts\".* FROM \"posts\"")
-      expect(cached_query_span[:tags]).to include({cached: true})
+      expect(cached_query_span[:tags]).to include({ cached: true })
 
       data = cached_query_span[:data]
       expect(data["db.name"]).to include("db")

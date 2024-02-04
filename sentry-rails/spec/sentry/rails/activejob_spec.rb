@@ -132,7 +132,7 @@ RSpec.describe "ActiveJob integration" do
         [
           {
             "integer" => 1,
-            "post" => post.to_s,
+            "post" => post.to_s
           }
         ]
       )

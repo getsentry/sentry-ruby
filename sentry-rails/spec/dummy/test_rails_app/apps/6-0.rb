@@ -61,7 +61,7 @@ class PostsController < ActionController::Base
 
     attach_params = {
       io: File.open(File.join(Rails.root, 'public', 'sentry-logo.png')),
-      filename: 'sentry-logo.png',
+      filename: 'sentry-logo.png'
     }
 
     p.cover.attach(attach_params)
@@ -88,7 +88,7 @@ class HelloController < ActionController::Base
   end
 
   def world
-    render :plain => "Hello World!"
+    render plain: "Hello World!"
   end
 
   def with_custom_instrumentation

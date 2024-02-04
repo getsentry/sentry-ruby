@@ -9,4 +9,3 @@ end
 def configure_app(app)
   app.config.active_storage.service = :test
 end
-
