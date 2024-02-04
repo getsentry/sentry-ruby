@@ -10,5 +10,4 @@ gem 'puma', '~> 3.11'
 
 gem 'sentry-ruby', path: "../../"
 
-gem 'pry'
 gem "debug", github: "ruby/debug"

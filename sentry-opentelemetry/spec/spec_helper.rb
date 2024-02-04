@@ -1,7 +1,6 @@
 # frozen_string_literal: true
 
 require "bundler/setup"
-require "pry"
 require "debug" if RUBY_VERSION.to_f >= 2.6 && RUBY_ENGINE == "ruby"
 
 require 'simplecov'
