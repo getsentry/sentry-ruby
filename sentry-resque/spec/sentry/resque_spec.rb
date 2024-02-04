@@ -123,7 +123,7 @@ RSpec.describe Sentry::Resque do
       expect(transport.events.count).to eq(1)
       event = transport.events.last.to_hash
 
-      expect(event[:tags]).to eq({ "resque.queue" => "default", number: 1})
+      expect(event[:tags]).to eq({ "resque.queue" => "default", number: 1 })
       expect(Sentry.get_current_scope.extra).to eq({})
       expect(Sentry.get_current_scope.tags).to eq({})
 
