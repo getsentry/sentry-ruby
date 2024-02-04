@@ -20,6 +20,8 @@ end
 # For RSpec
 gem "rspec", "~> 3.0"
 gem "rspec-retry"
-gem 'simplecov'
+gem "simplecov"
 gem "simplecov-cobertura", "~> 1.4"
 gem "rexml"
+
+gem "rubocop-rails-omakase"
