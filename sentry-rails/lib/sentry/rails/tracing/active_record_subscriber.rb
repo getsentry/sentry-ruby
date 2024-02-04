@@ -27,11 +27,12 @@ module Sentry
 
               next unless connection
 
-              db_config = if connection.pool.respond_to?(:db_config)
-                            connection.pool.db_config.configuration_hash
-              elsif connection.pool.respond_to?(:spec)
-                            connection.pool.spec.config
-              end
+              db_config =
+                if connection.pool.respond_to?(:db_config)
+                  connection.pool.db_config.configuration_hash
+                elsif connection.pool.respond_to?(:spec)
+                  connection.pool.spec.config
+                end
 
               next unless db_config
 
