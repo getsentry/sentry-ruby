@@ -3,7 +3,6 @@
 module Sentry
   module OpenTelemetry
     class Propagator
-
       FIELDS = [SENTRY_TRACE_HEADER_NAME, BAGGAGE_HEADER_NAME].freeze
 
       SENTRY_TRACE_KEY = ::OpenTelemetry::Context.create_key('sentry-trace')
@@ -53,12 +52,12 @@ module Sentry
 
         baggage = if baggage_header && !baggage_header.empty?
                     Baggage.from_incoming_header(baggage_header)
-                  else
+        else
                     # If there's an incoming sentry-trace but no incoming baggage header,
                     # for instance in traces coming from older SDKs,
                     # baggage will be empty and frozen and won't be populated as head SDK.
                     Baggage.new({})
-                  end
+        end
 
         baggage.freeze!
         context = context.set_value(SENTRY_BAGGAGE_KEY, baggage)
