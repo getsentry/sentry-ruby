@@ -52,12 +52,12 @@ module Sentry
 
             @baggage = if baggage_header && !baggage_header.empty?
                         Baggage.from_incoming_header(baggage_header)
-                      else
+            else
                         # If there's an incoming sentry-trace but no incoming baggage header,
                         # for instance in traces coming from older SDKs,
                         # baggage will be empty and frozen and won't be populated as head SDK.
                         Baggage.new({})
-                      end
+            end
 
             @baggage.freeze!
             @incoming_trace = true

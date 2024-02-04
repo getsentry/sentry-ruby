@@ -14,16 +14,16 @@ module Sentry
   class Event
     TYPE = "event"
     # These are readable attributes.
-    SERIALIZEABLE_ATTRIBUTES = %i(
+    SERIALIZEABLE_ATTRIBUTES = %i[
       event_id level timestamp
       release environment server_name modules
       message user tags contexts extra
       fingerprint breadcrumbs transaction transaction_info
       platform sdk type
-    )
+    ]
 
     # These are writable attributes.
-    WRITER_ATTRIBUTES = SERIALIZEABLE_ATTRIBUTES - %i(type timestamp level)
+    WRITER_ATTRIBUTES = SERIALIZEABLE_ATTRIBUTES - %i[type timestamp level]
 
     MAX_MESSAGE_SIZE_IN_BYTES = 1024 * 8
 
@@ -145,11 +145,11 @@ module Sentry
     # REMOTE_ADDR to determine the Event IP, and must use other headers instead.
     def calculate_real_ip_from_rack(env)
       Utils::RealIp.new(
-        :remote_addr => env["REMOTE_ADDR"],
-        :client_ip => env["HTTP_CLIENT_IP"],
-        :real_ip => env["HTTP_X_REAL_IP"],
-        :forwarded_for => env["HTTP_X_FORWARDED_FOR"],
-        :trusted_proxies => @trusted_proxies
+        remote_addr: env["REMOTE_ADDR"],
+        client_ip: env["HTTP_CLIENT_IP"],
+        real_ip: env["HTTP_X_REAL_IP"],
+        forwarded_for: env["HTTP_X_FORWARDED_FOR"],
+        trusted_proxies: @trusted_proxies
       ).calculate_ip
     end
   end

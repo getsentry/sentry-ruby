@@ -23,7 +23,7 @@ RSpec.describe Sentry::RequestInterface do
     end
 
     context "with provided whitelist" do
-      let(:rack_env_whitelist) { %w(random_param query_string) }
+      let(:rack_env_whitelist) { %w[random_param query_string] }
 
       it 'formats rack env according to the provided whitelist' do
         expect(subject.env).to eq(additional_env)
@@ -61,7 +61,7 @@ RSpec.describe Sentry::RequestInterface do
       it "doesn't cause any issue" do
         json = JSON.generate(subject.to_hash)
 
-        expect(JSON.parse(json)["headers"]).to eq({"Content-Length"=>"0", "Foo"=>"Tekirda�"})
+        expect(JSON.parse(json)["headers"]).to eq({ "Content-Length"=>"0", "Foo"=>"Tekirda�" })
       end
     end
 

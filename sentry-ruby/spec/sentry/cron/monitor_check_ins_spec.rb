@@ -186,7 +186,7 @@ RSpec.describe Sentry::Cron::MonitorCheckIns do
     end
 
     context 'patched with monitor config' do
-      let(:monitor_config) { Sentry::Cron::MonitorConfig::from_interval(1, :minute) }
+      let(:monitor_config) { Sentry::Cron::MonitorConfig.from_interval(1, :minute) }
 
       before do
         mod = described_class
@@ -242,7 +242,7 @@ RSpec.describe Sentry::Cron::MonitorCheckIns do
     end
 
     context 'with custom monitor config object and cron configs' do
-      let(:monitor_config) { Sentry::Cron::MonitorConfig::from_interval(1, :minute) }
+      let(:monitor_config) { Sentry::Cron::MonitorConfig.from_interval(1, :minute) }
 
       before do
         perform_basic_setup do |config|
@@ -305,7 +305,7 @@ RSpec.describe Sentry::Cron::MonitorCheckIns do
     end
 
     context 'patched with custom options with exception' do
-      let(:monitor_config) { Sentry::Cron::MonitorConfig::from_crontab('5 * * * *') }
+      let(:monitor_config) { Sentry::Cron::MonitorConfig.from_crontab('5 * * * *') }
 
       before do
         mod = described_class
@@ -316,7 +316,7 @@ RSpec.describe Sentry::Cron::MonitorCheckIns do
 
           sentry_monitor_check_ins slug: 'custom_slug', monitor_config: config
 
-          def work(a, b, c);
+          def work(a, b, c)
             1 / 0
           end
 

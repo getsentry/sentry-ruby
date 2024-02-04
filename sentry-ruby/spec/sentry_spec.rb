@@ -735,7 +735,6 @@ RSpec.describe Sentry do
   end
 
   describe ".continue_trace" do
-
     context "without incoming sentry trace" do
       let(:env) { { "HTTP_FOO" => "bar" } }
 
@@ -999,7 +998,6 @@ RSpec.describe Sentry do
         expect(Thread.current.thread_variable_get(described_class::THREAD_LOCAL)).to be_a(Sentry::Hub)
         described_class.close
         expect(Thread.current.thread_variable_get(described_class::THREAD_LOCAL)).to eq(nil)
-
       end
 
       it "calls background worker shutdown" do
@@ -1089,7 +1087,7 @@ RSpec.describe Sentry do
 
       it "prepends patch if in enabled_patches" do
         expect(target_class).to receive(:prepend).with(module_patch).and_call_original
-        perform_basic_setup  { |c| c.enabled_patches = %i(module_patch) }
+        perform_basic_setup  { |c| c.enabled_patches = %i[module_patch] }
 
         expect(target_class.ancestors.first).to eq(module_patch)
         expect(target_class.instance_methods).to include(:foo)
@@ -1111,7 +1109,7 @@ RSpec.describe Sentry do
 
       it "calls block if in enabled_patches" do
         expect(target_class).to receive(:prepend).with(module_patch).and_call_original
-        perform_basic_setup  { |c| c.enabled_patches = %i(block_patch) }
+        perform_basic_setup  { |c| c.enabled_patches = %i[block_patch] }
 
         expect(target_class.ancestors.first).to eq(module_patch)
         expect(target_class.instance_methods).to include(:foo)

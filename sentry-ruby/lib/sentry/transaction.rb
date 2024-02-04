@@ -13,7 +13,7 @@ module Sentry
     MESSAGE_PREFIX = "[Tracing]"
 
     # https://develop.sentry.dev/sdk/event-payloads/transaction/#transaction-annotations
-    SOURCES = %i(custom url route view component task)
+    SOURCES = %i[custom url route view component task]
 
     include LoggingHelper
 
@@ -112,12 +112,12 @@ module Sentry
 
       baggage = if baggage && !baggage.empty?
                   Baggage.from_incoming_header(baggage)
-                else
+      else
                   # If there's an incoming sentry-trace but no incoming baggage header,
                   # for instance in traces coming from older SDKs,
                   # baggage will be empty and frozen and won't be populated as head SDK.
                   Baggage.new({})
-                end
+      end
 
       baggage.freeze!
 

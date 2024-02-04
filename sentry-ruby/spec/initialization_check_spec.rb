@@ -41,4 +41,3 @@ RSpec.describe "with uninitialized SDK" do
     expect(result).to eq("foo")
   end
 end
-

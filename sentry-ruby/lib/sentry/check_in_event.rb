@@ -27,7 +27,7 @@ module Sentry
     # @return [Symbol]
     attr_accessor :status
 
-    VALID_STATUSES = %i(ok in_progress error)
+    VALID_STATUSES = %i[ok in_progress error]
 
     def initialize(
       slug:,

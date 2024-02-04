@@ -291,25 +291,25 @@ RSpec.describe Sentry::Configuration do
   end
 
   it 'raises error when setting async to anything other than callable or nil' do
-    subject.async = -> {}
+    subject.async = -> { }
     subject.async = nil
     expect { subject.async = true }.to raise_error(ArgumentError, "async must be callable (or nil to disable)")
   end
 
   it 'raises error when setting before_send to anything other than callable or nil' do
-    subject.before_send = -> {}
+    subject.before_send = -> { }
     subject.before_send = nil
     expect { subject.before_send = true }.to raise_error(ArgumentError, "before_send must be callable (or nil to disable)")
   end
 
   it 'raises error when setting before_send_transaction to anything other than callable or nil' do
-    subject.before_send_transaction = -> {}
+    subject.before_send_transaction = -> { }
     subject.before_send_transaction = nil
     expect { subject.before_send_transaction = true }.to raise_error(ArgumentError, "before_send_transaction must be callable (or nil to disable)")
   end
 
   it 'raises error when setting before_breadcrumb to anything other than callable or nil' do
-    subject.before_breadcrumb = -> {}
+    subject.before_breadcrumb = -> { }
     subject.before_breadcrumb = nil
     expect { subject.before_breadcrumb = true }.to raise_error(ArgumentError, "before_breadcrumb must be callable (or nil to disable)")
   end
@@ -321,14 +321,14 @@ RSpec.describe Sentry::Configuration do
     end
 
     it 'should send events if test is whitelisted' do
-      subject.enabled_environments = %w(test)
+      subject.enabled_environments = %w[test]
       subject.sending_allowed?
       puts subject.errors
       expect(subject.sending_allowed?).to eq(true)
     end
 
     it 'should not send events if test is not whitelisted' do
-      subject.enabled_environments = %w(not_test)
+      subject.enabled_environments = %w[not_test]
       expect(subject.sending_allowed?).to eq(false)
       expect(subject.errors).to eq(["Not configured to send/capture in environment 'test'"])
     end
@@ -386,7 +386,7 @@ RSpec.describe Sentry::Configuration do
     end
 
     it "takes a proc and store it" do
-      subject.backtrace_cleanup_callback = proc {}
+      subject.backtrace_cleanup_callback = proc { }
 
       expect(subject.backtrace_cleanup_callback).to be_a(Proc)
     end
@@ -567,12 +567,12 @@ RSpec.describe Sentry::Configuration do
 
   describe "#enabled_patches" do
     it "sets default patches" do
-      expect(subject.enabled_patches).to eq(%i(redis puma http))
+      expect(subject.enabled_patches).to eq(%i[redis puma http])
     end
 
     it "can override" do
       subject.enabled_patches.delete(:puma)
-      expect(subject.enabled_patches).to eq(%i(redis http))
+      expect(subject.enabled_patches).to eq(%i[redis http])
     end
   end
 end

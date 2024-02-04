@@ -15,7 +15,7 @@ module Sentry
         "fc00::/7",       # private IPv6 range fc00::/7
         "10.0.0.0/8",     # private IPv4 range 10.x.x.x
         "172.16.0.0/12",  # private IPv4 range 172.16.0.0 .. 172.31.255.255
-        "192.168.0.0/16", # private IPv4 range 192.168.x.x
+        "192.168.0.0/16" # private IPv4 range 192.168.x.x
       ]
 
       attr_reader :ip

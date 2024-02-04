@@ -5,8 +5,8 @@ module Sentry
     attr_reader :started, :status, :aggregation_key
 
     # TODO-neel add :crashed after adding handled mechanism
-    STATUSES = %i(ok errored exited)
-    AGGREGATE_STATUSES = %i(errored exited)
+    STATUSES = %i[ok errored exited]
+    AGGREGATE_STATUSES = %i[errored exited]
 
     def initialize
       @started = Sentry.utc_now

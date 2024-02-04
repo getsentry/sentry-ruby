@@ -161,7 +161,7 @@ RSpec.describe Sentry::Transaction do
         {
           "metric.foo" => { value: 0.1, unit: "second" },
           "metric.bar" => { value: 1.0, unit: "minute" },
-          "metric.baz" => { value: 1.0, unit: "" },
+          "metric.baz" => { value: 1.0, unit: "" }
         }
       )
 
@@ -171,7 +171,7 @@ RSpec.describe Sentry::Transaction do
         {
           "metric.foo" => { value: 2, unit: "second" },
           "metric.bar" => { value: 1.0, unit: "minute" },
-          "metric.baz" => { value: 1.0, unit: "" },
+          "metric.baz" => { value: 1.0, unit: "" }
         }
       )
     end
@@ -290,7 +290,7 @@ RSpec.describe Sentry::Transaction do
       context "when traces_sampler is provided" do
         it "prioritizes traces_sampler over traces_sample_rate" do
           Sentry.configuration.traces_sample_rate = 1.0
-          Sentry.configuration.traces_sampler = -> (_) { false }
+          Sentry.configuration.traces_sampler = ->(_) { false }
 
           subject.set_initial_sample_decision(sampling_context: {})
           expect(subject.sampled).to eq(false)
@@ -298,7 +298,7 @@ RSpec.describe Sentry::Transaction do
         end
 
         it "prioritizes traces_sampler over inherited decision" do
-          Sentry.configuration.traces_sampler = -> (_) { false }
+          Sentry.configuration.traces_sampler = ->(_) { false }
 
           subject.set_initial_sample_decision(sampling_context: { parent_sampled: true })
           expect(subject.sampled).to eq(false)
@@ -314,7 +314,7 @@ RSpec.describe Sentry::Transaction do
         end
 
         it "discards the transaction if generated sample rate is not valid" do
-          Sentry.configuration.traces_sampler = -> (_) { "foo" }
+          Sentry.configuration.traces_sampler = ->(_) { "foo" }
           subject.set_initial_sample_decision(sampling_context: {})
 
           expect(subject.sampled).to eq(false)
@@ -327,19 +327,19 @@ RSpec.describe Sentry::Transaction do
         it "uses the genereted rate for sampling (positive)" do
           expect(Sentry.configuration.logger).to receive(:debug).exactly(3).and_call_original
 
-          Sentry.configuration.traces_sampler = -> (_) { true }
+          Sentry.configuration.traces_sampler = ->(_) { true }
           subject = described_class.new(hub: Sentry.get_current_hub)
           subject.set_initial_sample_decision(sampling_context: {})
           expect(subject.sampled).to eq(true)
           expect(subject.effective_sample_rate).to eq(1.0)
 
-          Sentry.configuration.traces_sampler = -> (_) { 1.0 }
+          Sentry.configuration.traces_sampler = ->(_) { 1.0 }
           subject = described_class.new(hub: Sentry.get_current_hub)
           subject.set_initial_sample_decision(sampling_context: {})
           expect(subject.sampled).to eq(true)
           expect(subject.effective_sample_rate).to eq(1.0)
 
-          Sentry.configuration.traces_sampler = -> (_) { 1 }
+          Sentry.configuration.traces_sampler = ->(_) { 1 }
           subject = described_class.new(hub: Sentry.get_current_hub)
           subject.set_initial_sample_decision(sampling_context: {})
           expect(subject.sampled).to eq(true)
@@ -353,13 +353,13 @@ RSpec.describe Sentry::Transaction do
         it "uses the genereted rate for sampling (negative)" do
           expect(Sentry.configuration.logger).to receive(:debug).exactly(2).and_call_original
 
-          Sentry.configuration.traces_sampler = -> (_) { false }
+          Sentry.configuration.traces_sampler = ->(_) { false }
           subject = described_class.new(hub: Sentry.get_current_hub)
           subject.set_initial_sample_decision(sampling_context: {})
           expect(subject.sampled).to eq(false)
           expect(subject.effective_sample_rate).to eq(0.0)
 
-          Sentry.configuration.traces_sampler = -> (_) { 0.0 }
+          Sentry.configuration.traces_sampler = ->(_) { 0.0 }
           subject = described_class.new(hub: Sentry.get_current_hub)
           subject.set_initial_sample_decision(sampling_context: {})
           expect(subject.sampled).to eq(false)

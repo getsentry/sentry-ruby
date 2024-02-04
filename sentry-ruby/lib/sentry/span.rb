@@ -4,7 +4,6 @@ require "securerandom"
 
 module Sentry
   class Span
-
     # We will try to be consistent with OpenTelemetry on this front going forward.
     # https://develop.sentry.dev/sdk/performance/span-data-conventions/
     module DataConventions

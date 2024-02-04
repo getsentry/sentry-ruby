@@ -21,7 +21,7 @@ RSpec.describe Puma::Server do
     end
 
     def new_connection
-      TCPSocket.new(@host, @port).tap {|sock| @ios << sock}
+      TCPSocket.new(@host, @port).tap { |sock| @ios << sock }
     end
 
     def close

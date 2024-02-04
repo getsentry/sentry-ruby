@@ -58,7 +58,7 @@ task :heartbeat do
   # This will tell Sentry that this cron run was successful.
   Sentry.capture_check_in(
     "rake-task-example",
-    :ok, 
+    :ok,
     monitor_config: monitor_config
   )
 end
@@ -72,7 +72,7 @@ task :raise_exception do
 
   puts "rake task is running"
 
-  # If you raise an error within the job, Sentry will report it and link 
+  # If you raise an error within the job, Sentry will report it and link
   # the issue to the cron job. But the job itself will be marked as "in progress"
   # until either your job sends another check-in, or it timeouts.
   raise "This job errored out"
