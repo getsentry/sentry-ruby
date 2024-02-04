@@ -1,4 +1,3 @@
-require "pry"
 require "active_job"
 require "resque"
 require "sentry-resque"
@@ -40,5 +39,3 @@ begin
 rescue => e
   puts("inline job failed because of \"#{e.message}\"")
 end
-
-

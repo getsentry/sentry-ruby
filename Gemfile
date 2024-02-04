@@ -17,8 +17,6 @@ if ruby_version >= Gem::Version.new("2.7.0")
   end
 end
 
-gem "pry"
-
 # For RSpec
 gem "rspec", "~> 3.0"
 gem "rspec-retry"
