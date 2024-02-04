@@ -36,7 +36,7 @@ module Sentry
         # Rufus::Scheduler::EveryJob stores it's frequency in seconds,
         # so we convert it to minutes before passing in to the monitor.
         monitor_config = case interval_type
-          when "cron"
+        when "cron"
             # fugit is a second order dependency of sidekiq-scheduler via rufus-scheduler
             parsed_cron = ::Fugit.parse_cron(schedule)
             timezone = parsed_cron.timezone
@@ -50,7 +50,7 @@ module Sentry
             else
               Sentry::Cron::MonitorConfig.from_crontab(schedule)
             end
-          when "every", "interval"
+        when "every", "interval"
             Sentry::Cron::MonitorConfig.from_interval(rufus_job.frequency.to_i / 60, :minute)
         end
 

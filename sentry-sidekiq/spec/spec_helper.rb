@@ -126,7 +126,7 @@ class SadWorker
   def perform
     crumb = Sentry::Breadcrumb.new(message: "I'm sad!")
     Sentry.add_breadcrumb(crumb)
-    Sentry.set_tags :mood => 'sad'
+    Sentry.set_tags mood: 'sad'
 
     raise "I'm sad!"
   end
@@ -153,7 +153,7 @@ class VerySadWorker
   def perform
     crumb = Sentry::Breadcrumb.new(message: "I'm very sad!")
     Sentry.add_breadcrumb(crumb)
-    Sentry.set_tags :mood => 'very sad'
+    Sentry.set_tags mood: 'very sad'
 
     raise "I'm very sad!"
   end
