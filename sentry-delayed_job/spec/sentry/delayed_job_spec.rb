@@ -357,7 +357,6 @@ RSpec.describe Sentry::DelayedJob do
     end
 
     it 'returns the class name for anything else' do
-
       expect(Sentry::DelayedJob::Plugin.compute_job_class("something")).to eq("String")
       expect(Sentry::DelayedJob::Plugin.compute_job_class(Sentry::DelayedJob::Plugin)).to eq("Class")
     end
