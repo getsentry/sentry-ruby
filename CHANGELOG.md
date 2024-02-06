@@ -80,6 +80,7 @@
 ### Bug Fixes
 
 - Network errors raised in `Sentry::HTTPTransport` will no longer be reported to Sentry [#2178](https://github.com/getsentry/sentry-ruby/pull/2178)
+- `sentry-rails` will now capture Cockroach DB adapter config into spans data [#2182](https://github.com/getsentry/sentry-ruby/pull/2182)
 
 ## 5.14.0
 
