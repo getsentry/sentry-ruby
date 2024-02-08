@@ -5,4 +5,4 @@ RSpec::Core::RakeTask.new(:spec).tap do |task|
   task.rspec_opts = "--order rand"
 end
 
-task :default => :spec
+task default: :spec

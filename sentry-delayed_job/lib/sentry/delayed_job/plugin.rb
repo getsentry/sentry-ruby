@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 require "delayed_job"
 
 module Sentry
@@ -55,7 +56,7 @@ module Sentry
           created_at: job.created_at,
           last_error: job.last_error&.byteslice(0..1000),
           handler: job.handler&.byteslice(0..1000),
-          job_class: compute_job_class(job.payload_object),
+          job_class: compute_job_class(job.payload_object)
         }
 
         if job.payload_object.respond_to?(:job_data)

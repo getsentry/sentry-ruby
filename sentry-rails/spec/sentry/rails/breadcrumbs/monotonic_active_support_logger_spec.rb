@@ -56,7 +56,7 @@ RSpec.describe "Sentry::Breadcrumbs::MonotonicActiveSupportLogger", type: :reque
             "action" => "exception",
             "params" => { "controller" => "hello", "action" => "exception" },
             "format" => "html",
-            "method" => "GET", "path" => "/exception",
+            "method" => "GET", "path" => "/exception"
           }
         )
         expect(breadcrumb["data"].keys).not_to include("headers")
@@ -117,7 +117,7 @@ RSpec.describe "Sentry::Breadcrumbs::MonotonicActiveSupportLogger", type: :reque
             "action" => "show",
             "params" => { "controller" => "posts", "action" => "show", "id" => p.id.to_s },
             "format" => "html",
-            "method" => "GET", "path" => "/posts/#{p.id}",
+            "method" => "GET", "path" => "/posts/#{p.id}"
           }
         )
         expect(breadcrumb["data"].keys).not_to include("headers")

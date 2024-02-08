@@ -6,7 +6,7 @@ RSpec.describe Sentry::Sidekiq::ContextFilter do
 
     context "filters out ActiveJob keys from context" do
       let(:context) do
-        { :_aj_globalid => "gid://app/model/id", :key => "value" }
+        { _aj_globalid: "gid://app/model/id", key: "value" }
       end
 
       it "removes reserved keys" do
@@ -17,8 +17,8 @@ RSpec.describe Sentry::Sidekiq::ContextFilter do
     context "filters out ActiveJob keys from nested context" do
       let(:context) do
         {
-          :_aj_globalid => "gid://app/model/id",
-          :arguments => { :key => "value", :_aj_symbol_keys => ["key"] }
+          _aj_globalid: "gid://app/model/id",
+          arguments: { key: "value", _aj_symbol_keys: ["key"] }
         }
       end
       let(:expected_context) do

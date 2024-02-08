@@ -26,7 +26,7 @@ module Sentry
         # @return [Symbol]
         attr_accessor :unit
 
-        VALID_UNITS = %i(year month week day hour minute)
+        VALID_UNITS = %i[year month week day hour minute]
 
         def initialize(value, unit)
           @value = value

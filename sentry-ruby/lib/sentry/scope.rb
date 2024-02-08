@@ -295,7 +295,7 @@ module Sentry
     private
 
     def set_default_value
-      @contexts = { :os => self.class.os_context, :runtime => self.class.runtime_context }
+      @contexts = { os: self.class.os_context, runtime: self.class.runtime_context }
       @extra = {}
       @tags = {}
       @user = {}
@@ -355,6 +355,5 @@ module Sentry
         global_event_processors << block
       end
     end
-
   end
 end

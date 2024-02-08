@@ -344,7 +344,7 @@ RSpec.describe Sentry::Rails, type: :request do
         end
 
         expect(event.level).to eq(:info)
-        expect(event.contexts).to include({ "rails.error" => { foo: "bar" }})
+        expect(event.contexts).to include({ "rails.error" => { foo: "bar" } })
       end
 
       it "skips cache storage sources", skip: Rails.version.to_f < 7.1 do

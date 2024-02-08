@@ -3,7 +3,6 @@
 module Sentry
   class Transport
     class Configuration
-
       # The timeout in seconds to open a connection to Sentry, in seconds.
       # Default value is 2.
       #

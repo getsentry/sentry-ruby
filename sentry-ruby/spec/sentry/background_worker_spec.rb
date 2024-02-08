@@ -12,7 +12,7 @@ RSpec.describe Sentry::BackgroundWorker do
   describe "#initialize" do
     context "when config.async is set" do
       before do
-        configuration.async = proc {}
+        configuration.async = proc { }
       end
 
       it "initializes a background_worker with ImmediateExecutor" do

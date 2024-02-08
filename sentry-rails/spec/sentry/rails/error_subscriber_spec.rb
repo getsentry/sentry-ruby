@@ -103,6 +103,5 @@ RSpec.describe Sentry::Rails::ErrorSubscriber, skip: Rails.version.to_f < 7.0 ? 
         end
       end
     end
-
   end
 end

@@ -31,4 +31,3 @@ else
     class SendEventJob; end
   end
 end
-

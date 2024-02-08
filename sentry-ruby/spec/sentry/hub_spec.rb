@@ -54,14 +54,14 @@ RSpec.describe Sentry::Hub do
 
       it "merges the contexts/tags/extrac with what the scope already has" do
         scope.set_tags(old_tag: true)
-        scope.set_contexts({ character: { name: "John", age: 25 }})
+        scope.set_contexts({ character: { name: "John", age: 25 } })
         scope.set_extras(old_extra: true)
 
         subject.send(
           capture_helper,
           *capture_subject,
           tags: { new_tag: true },
-          contexts: { another_character: { name: "Jane", age: 20 }},
+          contexts: { another_character: { name: "Jane", age: 20 } },
           extra: { new_extra: true }
         )
 
@@ -76,7 +76,7 @@ RSpec.describe Sentry::Hub do
         expect(event.extra).to eq({ new_extra: true, old_extra: true })
 
         expect(scope.tags).to eq(old_tag: true)
-        expect(scope.contexts).to include({ character: { name: "John", age: 25 }})
+        expect(scope.contexts).to include({ character: { name: "John", age: 25 } })
         expect(scope.extra).to eq(old_extra: true)
       end
     end
@@ -116,17 +116,17 @@ RSpec.describe Sentry::Hub do
         hint = nil
         configuration.before_send = ->(event, h) { hint = h }
 
-        subject.send(capture_helper, *capture_subject, hint: {foo: "bar"})
+        subject.send(capture_helper, *capture_subject, hint: { foo: "bar" })
 
         case capture_subject
         when String
-          expect(hint).to eq({message: capture_subject, foo: "bar"})
+          expect(hint).to eq({ message: capture_subject, foo: "bar" })
         when Exception
-          expect(hint).to eq({exception: capture_subject, foo: "bar"})
+          expect(hint).to eq({ exception: capture_subject, foo: "bar" })
         when Array
-          expect(hint).to eq({slug: capture_subject.first, foo: "bar"})
+          expect(hint).to eq({ slug: capture_subject.first, foo: "bar" })
         else
-          expect(hint).to eq({foo: "bar"})
+          expect(hint).to eq({ foo: "bar" })
         end
       end
     end
@@ -610,7 +610,7 @@ RSpec.describe Sentry::Hub do
     end
 
     it "doesn't interfere events outside of the block" do
-      subject.with_background_worker_disabled {}
+      subject.with_background_worker_disabled { }
 
       subject.capture_message("foo")
       expect(transport.events.count).to eq(0)

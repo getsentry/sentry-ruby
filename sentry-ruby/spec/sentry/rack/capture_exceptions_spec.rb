@@ -180,7 +180,7 @@ RSpec.describe Sentry::Rack::CaptureExceptions, rack: true do
       end
       it "doesn't pollute the top-level scope" do
         request_1 = lambda do |e|
-          Sentry.configure_scope { |s| s.set_tags({tag_1: "foo"}) }
+          Sentry.configure_scope { |s| s.set_tags({ tag_1: "foo" }) }
           Sentry.capture_message("test")
           [200, {}, ["ok"]]
         end
@@ -194,7 +194,7 @@ RSpec.describe Sentry::Rack::CaptureExceptions, rack: true do
       end
       it "doesn't pollute other request's scope" do
         request_1 = lambda do |e|
-          Sentry.configure_scope { |s| s.set_tags({tag_1: "foo"}) }
+          Sentry.configure_scope { |s| s.set_tags({ tag_1: "foo" }) }
           e['rack.exception'] = Exception.new
           [200, {}, ["ok"]]
         end
@@ -206,7 +206,7 @@ RSpec.describe Sentry::Rack::CaptureExceptions, rack: true do
         expect(Sentry.get_current_scope.tags).to eq(tag_1: "don't change me")
 
         request_2 = proc do |e|
-          Sentry.configure_scope { |s| s.set_tags({tag_2: "bar"}) }
+          Sentry.configure_scope { |s| s.set_tags({ tag_2: "bar" }) }
           e['rack.exception'] = Exception.new
           [200, {}, ["ok"]]
         end

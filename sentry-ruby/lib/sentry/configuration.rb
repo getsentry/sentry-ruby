@@ -311,11 +311,11 @@ module Sentry
       'Sinatra::NotFound'
     ].freeze
 
-    RACK_ENV_WHITELIST_DEFAULT = %w(
+    RACK_ENV_WHITELIST_DEFAULT = %w[
       REMOTE_ADDR
       SERVER_NAME
       SERVER_PORT
-    ).freeze
+    ].freeze
 
     HEROKU_DYNO_METADATA_MESSAGE = "You are running on Heroku but haven't enabled Dyno Metadata. For Sentry's "\
     "release detection to work correctly, please run `heroku labs:enable runtime-dyno-metadata`".freeze
@@ -328,7 +328,7 @@ module Sentry
 
     PROPAGATION_TARGETS_MATCH_ALL = /.*/.freeze
 
-    DEFAULT_PATCHES = %i(redis puma http).freeze
+    DEFAULT_PATCHES = %i[redis puma http].freeze
 
     class << self
       # Post initialization callbacks are called at the end of initialization process
@@ -337,7 +337,7 @@ module Sentry
         @post_initialization_callbacks ||= []
       end
 
-    # allow extensions to add their hooks to the Configuration class
+      # allow extensions to add their hooks to the Configuration class
       def add_post_initialization_callback(&block)
         post_initialization_callbacks << block
       end

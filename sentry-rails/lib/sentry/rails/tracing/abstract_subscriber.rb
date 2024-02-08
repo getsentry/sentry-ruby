@@ -2,7 +2,6 @@ module Sentry
   module Rails
     module Tracing
       class AbstractSubscriber
-
         class << self
           def subscribe!
             raise NotImplementedError

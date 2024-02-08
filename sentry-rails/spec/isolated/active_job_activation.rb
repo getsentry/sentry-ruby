@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 # for https://github.com/getsentry/sentry-ruby/issues/1249
 require "active_job/railtie"
 require "active_support/all"

@@ -7,7 +7,7 @@ module Sentry
     module Server
       PUMA_4_AND_PRIOR = Gem::Version.new(::Puma::Const::PUMA_VERSION) < Gem::Version.new("5.0.0")
 
-      def lowlevel_error(e, env, status=500)
+      def lowlevel_error(e, env, status = 500)
         result =
           if PUMA_4_AND_PRIOR
             super(e, env)

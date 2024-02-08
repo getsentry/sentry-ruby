@@ -17,4 +17,4 @@ task :isolated_specs do
   end
 end
 
-task :default => [:spec, :isolated_specs]
+task default: [:spec, :isolated_specs]

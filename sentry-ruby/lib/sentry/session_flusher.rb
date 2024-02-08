@@ -85,6 +85,5 @@ module Sentry
         end
       end
     end
-
   end
 end

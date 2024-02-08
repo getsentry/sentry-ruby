@@ -188,11 +188,11 @@ RSpec.describe "rate limiting" do
             header: "48", expected_limits: { nil => now + 48 }
           },
           {
-            header: "invalid", expected_limits: { nil => now + 60}
+            header: "invalid", expected_limits: { nil => now + 60 }
           },
           {
-            header: "", expected_limits: { nil => now + 60}
-          },
+            header: "", expected_limits: { nil => now + 60 }
+          }
         ].each do |pair|
           context "with header value: '#{pair[:header]}'" do
             let(:headers) do

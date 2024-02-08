@@ -366,7 +366,7 @@ RSpec.describe Sentry::Client do
         end
 
         it "swallows and logs errors caused by the user (like in before_send)" do
-          configuration.before_send = -> (_, _) { raise TypeError }
+          configuration.before_send = ->(_, _) { raise TypeError }
 
           expect(subject.capture_event(event, scope)).to be_nil
 
@@ -388,7 +388,7 @@ RSpec.describe Sentry::Client do
         end
 
         it "swallows and logs errors caused by the user (like in before_send)" do
-          configuration.before_send = -> (_, _) { raise TypeError }
+          configuration.before_send = ->(_, _) { raise TypeError }
 
           expect(subject.capture_event(event, scope)).to be_a(Sentry::ErrorEvent)
           sleep(0.2)
@@ -403,7 +403,7 @@ RSpec.describe Sentry::Client do
         end
 
         it "swallows Redis related error and send the event synchronizely" do
-          configuration.async = -> (_, _) { raise Redis::ConnectionError }
+          configuration.async = ->(_, _) { raise Redis::ConnectionError }
 
           subject.capture_event(event, scope)
 
@@ -411,7 +411,7 @@ RSpec.describe Sentry::Client do
         end
 
         it "swallows and logs the exception" do
-          configuration.async = -> (_, _) { raise TypeError }
+          configuration.async = ->(_, _) { raise TypeError }
 
           subject.capture_event(event, scope)
 

@@ -125,9 +125,9 @@ RSpec.describe Sentry::Scope do
 
   describe "#clear" do
     it "resets the scope's data" do
-      subject.set_tags({foo: "bar"})
-      subject.set_extras({additional_info: "hello"})
-      subject.set_user({id: 1})
+      subject.set_tags({ foo: "bar" })
+      subject.set_extras({ additional_info: "hello" })
+      subject.set_user({ id: 1 })
       subject.set_transaction_name("WelcomeController#index")
       subject.set_span(Sentry::Transaction.new(op: "foo", hub: hub))
       subject.set_fingerprint(["foo"])
@@ -197,9 +197,9 @@ RSpec.describe Sentry::Scope do
 
     subject do
       scope = described_class.new
-      scope.set_tags({foo: "bar"})
-      scope.set_extras({additional_info: "hello"})
-      scope.set_user({id: 1})
+      scope.set_tags({ foo: "bar" })
+      scope.set_extras({ additional_info: "hello" })
+      scope.set_user({ id: 1 })
       scope.set_transaction_name("WelcomeController#index", source: :view)
       scope.set_fingerprint(["foo"])
       scope
@@ -210,9 +210,9 @@ RSpec.describe Sentry::Scope do
 
     it "applies the contextual data to event" do
       subject.apply_to_event(event)
-      expect(event.tags).to eq({foo: "bar"})
-      expect(event.user).to eq({id: 1})
-      expect(event.extra).to eq({additional_info: "hello"})
+      expect(event.tags).to eq({ foo: "bar" })
+      expect(event.user).to eq({ id: 1 })
+      expect(event.extra).to eq({ additional_info: "hello" })
       expect(event.transaction).to eq("WelcomeController#index")
       expect(event.transaction_info).to eq({ source: :view })
       expect(event.breadcrumbs).to be_a(Sentry::BreadcrumbBuffer)
@@ -235,14 +235,14 @@ RSpec.describe Sentry::Scope do
     end
 
     it "doesn't override event's pre-existing data" do
-      event.tags = {foo: "baz"}
-      event.user = {id: 2}
-      event.extra = {additional_info: "nothing"}
-      event.contexts = {os: nil}
+      event.tags = { foo: "baz" }
+      event.user = { id: 2 }
+      event.extra = { additional_info: "nothing" }
+      event.contexts = { os: nil }
 
       subject.apply_to_event(event)
-      expect(event.tags).to eq({foo: "baz"})
-      expect(event.user).to eq({id: 2})
+      expect(event.tags).to eq({ foo: "baz" })
+      expect(event.user).to eq({ id: 2 })
       expect(event.extra[:additional_info]).to eq("nothing")
       expect(event.contexts[:os]).to eq(nil)
     end

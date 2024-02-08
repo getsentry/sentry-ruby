@@ -50,14 +50,15 @@ module Sentry
           if sentry_trace_data
             @trace_id, @parent_span_id, @parent_sampled = sentry_trace_data
 
-            @baggage = if baggage_header && !baggage_header.empty?
-                        Baggage.from_incoming_header(baggage_header)
-                      else
-                        # If there's an incoming sentry-trace but no incoming baggage header,
-                        # for instance in traces coming from older SDKs,
-                        # baggage will be empty and frozen and won't be populated as head SDK.
-                        Baggage.new({})
-                      end
+            @baggage =
+              if baggage_header && !baggage_header.empty?
+                Baggage.from_incoming_header(baggage_header)
+              else
+                # If there's an incoming sentry-trace but no incoming baggage header,
+                # for instance in traces coming from older SDKs,
+                # baggage will be empty and frozen and won't be populated as head SDK.
+                Baggage.new({})
+              end
 
             @baggage.freeze!
             @incoming_trace = true

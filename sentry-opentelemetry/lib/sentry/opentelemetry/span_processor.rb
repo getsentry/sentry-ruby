@@ -10,7 +10,7 @@ module Sentry
       include Singleton
 
       SEMANTIC_CONVENTIONS = ::OpenTelemetry::SemanticConventions::Trace
-      INTERNAL_SPAN_KINDS = %i(client internal)
+      INTERNAL_SPAN_KINDS = %i[client internal]
 
       # The mapping from otel span ids to sentry spans
       # @return [Hash]
