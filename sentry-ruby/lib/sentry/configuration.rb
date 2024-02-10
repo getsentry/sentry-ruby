@@ -490,6 +490,10 @@ module Sentry
       Random.rand < sample_rate
     end
 
+    def session_tracking?
+      auto_session_tracking && enabled_in_current_env?
+    end
+
     def exception_class_allowed?(exc)
       if exc.is_a?(Sentry::Error)
         # Try to prevent error reporting loops

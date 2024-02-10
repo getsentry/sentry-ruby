@@ -533,6 +533,43 @@ RSpec.describe Sentry::Configuration do
     end
   end
 
+  describe "session_tracking?" do
+    before do
+      subject.enabled_environments = %w[production]
+    end
+
+    context "when auto_session_tracking is true" do
+      before do
+        subject.auto_session_tracking = true
+      end
+
+      it "returns true when in enabled_environments" do
+        subject.environment = "production"
+        expect(subject.session_tracking?).to eq(true)
+      end
+
+      it "returns false when not in enabled_environments" do
+        subject.environment = "test"
+        expect(subject.session_tracking?).to eq(false)
+      end
+    end
+
+    context "when auto_session_tracking is false" do
+      before do
+        subject.auto_session_tracking = false
+      end
+      it "returns false when in enabled_environments" do
+        subject.environment = "production"
+        expect(subject.session_tracking?).to eq(false)
+      end
+
+      it "returns false when not in enabled_environments" do
+        subject.environment = "test"
+        expect(subject.session_tracking?).to eq(false)
+      end
+    end
+  end
+
   describe "#trace_propagation_targets" do
     it "returns match all by default" do
       expect(subject.trace_propagation_targets).to eq([/.*/])
