@@ -47,6 +47,27 @@ RSpec.describe Sentry do
       current_scope = described_class.get_current_scope
       expect(current_scope.breadcrumbs.buffer.size).to eq(1)
     end
+
+    context "with config.auto_session_tracking = true" do
+      it "initializes session flusher" do
+        described_class.init do |config|
+          config.auto_session_tracking = true
+        end
+
+        expect(described_class.session_flusher).to be_a(Sentry::SessionFlusher)
+      end
+
+      context "when it's not under the enabled environment" do
+        it "doesn't initialize any session flusher" do
+          described_class.init do |config|
+            config.auto_session_tracking = true
+            config.enabled_environments = ["production"]
+          end
+
+          expect(described_class.session_flusher).to be_nil
+        end
+      end
+    end
   end
 
   describe "#clone_hub_to_current_thread" do

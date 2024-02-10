@@ -222,7 +222,7 @@ module Sentry
       Thread.current.thread_variable_set(THREAD_LOCAL, hub)
       @main_hub = hub
       @background_worker = Sentry::BackgroundWorker.new(config)
-      @session_flusher = config.auto_session_tracking ? Sentry::SessionFlusher.new(config, client) : nil
+      @session_flusher = config.session_tracking? ? Sentry::SessionFlusher.new(config, client) : nil
       @backpressure_monitor = config.enable_backpressure_handling ? Sentry::BackpressureMonitor.new(config, client) : nil
       exception_locals_tp.enable if config.include_local_variables
       at_exit { close }
