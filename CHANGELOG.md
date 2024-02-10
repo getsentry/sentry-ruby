@@ -6,6 +6,11 @@
 - Fix warning about default gems on Ruby 3.3.0 ([#2225](https://github.com/getsentry/sentry-ruby/pull/2225))
 - Add `hint:` support to `Sentry::Rails::ErrorSubscriber` [#2235](https://github.com/getsentry/sentry-ruby/pull/2235)
 
+### Bug Fixes
+
+- Only instantiate SessionFlusher when the SDK is enabled under the current env [#2245](https://github.com/getsentry/sentry-ruby/pull/2245)
+  - Fixes [#2234](https://github.com/getsentry/sentry-ruby/issues/2234)
+
 ## 5.16.1
 
 ### Bug Fixes
