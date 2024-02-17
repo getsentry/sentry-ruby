@@ -4,9 +4,6 @@ git_source(:github) { |name| "https://github.com/#{name}.git" }
 # Specify your gem's dependencies in sentry-ruby.gemspec
 gemspec
 gem "sentry-ruby", path: "../sentry-ruby"
-gem "sentry-rails", path: "../sentry-rails"
-
-gem "rails"
 
 # For https://github.com/ruby/psych/issues/655
 gem "psych", "5.1.0"

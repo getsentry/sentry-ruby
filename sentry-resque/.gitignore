@@ -3,6 +3,7 @@
 /_yardoc/
 /coverage/
 /doc/
+Gemfile_with_rails.rb.lock
 /pkg/
 /spec/reports/
 /tmp/
