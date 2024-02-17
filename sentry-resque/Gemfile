@@ -5,9 +5,6 @@ git_source(:github) { |name| "https://github.com/#{name}.git" }
 gemspec
 gem "sentry-ruby", path: "../sentry-ruby"
 
-# For https://github.com/ruby/psych/issues/655
-gem "psych", "5.1.0"
-
 gem "resque-retry", "~> 1.8"
 
 eval_gemfile File.expand_path("../Gemfile", __dir__)
