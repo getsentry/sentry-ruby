@@ -57,6 +57,14 @@ jobs:
           bundle install --jobs 4 --retry 3
           bundle exec rake
 
+      - name: Run specs with Rails
+        env:
+          BUNDLE_GEMFILE: Gemfile_with_rails.rb
+          RUBYOPT: ${{ matrix.options.rubyopt }}
+        run: |
+          bundle install --jobs 4 --retry 3
+          bundle exec rake
+
       - name: Upload Coverage
         if: ${{ matrix.options.codecov }}
         uses: codecov/codecov-action@eaaf4bedf32dbdc6b720b63067d99c4d77d6047d

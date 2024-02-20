@@ -208,11 +208,16 @@ RSpec.describe Sentry::Resque do
     end
   end
 
-  context "with ActiveJob" do
+  rails_gems = begin
     require "rails"
     require "active_job"
     require "sentry-rails"
+    true
+  rescue LoadError
+    false
+  end
 
+  context "with ActiveJob" do
     class AJMessageJob < ActiveJob::Base
       self.queue_adapter = :resque
 
@@ -290,7 +295,7 @@ RSpec.describe Sentry::Resque do
         expect(event[:contexts][:"Active-Job"][:job_class]).to eq("AJFailedJob")
       end
     end
-  end
+  end if rails_gems
 end
 
 
