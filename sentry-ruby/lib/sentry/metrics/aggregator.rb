@@ -18,8 +18,7 @@ module Sentry
       def initialize(configuration, client)
         @client = client
         @logger = configuration.logger
-        @release = configuration.release
-        @environment = configuration.environment
+        @default_tags = { 'release' => configuration.release, 'environment' => configuration.environment }
 
         @thread = nil
         @exited = false
@@ -36,7 +35,7 @@ module Sentry
               key,
               value,
               unit,
-              tags: nil,
+              tags: {},
               timestamp: nil)
         return unless ensure_thread
 
@@ -47,7 +46,7 @@ module Sentry
         # and buckets into 10 second intervals
         bucket_timestamp = (timestamp / ROLLUP_IN_SECONDS) * ROLLUP_IN_SECONDS
 
-        serialized_tags = serialize_tags(tags)
+        serialized_tags = serialize_tags(tags.merge(@default_tags))
         bucket_key = [type, key, unit, serialized_tags]
 
         @mutex.synchronize do
@@ -61,7 +60,7 @@ module Sentry
         end
       end
 
-      def flush
+      def flush(force: false)
         @mutex.synchronize do
           log_debug("[Metrics::Aggregator] current bucket state: #{@buckets}")
           # TODO
@@ -96,17 +95,15 @@ module Sentry
         false
       end
 
+      # important to sort for key consistency
       def serialize_tags(tags)
-        return [] unless tags
-
-        # important to sort for key consistency
-        tags.map do |k, v|
+        tags.flat_map do |k, v|
           if v.is_a?(Array)
             v.map { |x| [k.to_s, x.to_s] }
           else
-            [k.to_s, v.to_s]
+            [[k.to_s, v.to_s]]
           end
-        end.flatten.sort
+        end.sort
       end
     end
   end

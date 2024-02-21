@@ -254,6 +254,12 @@ module Sentry
     # @return [Boolean, nil]
     attr_reader :enable_tracing
 
+    # Enable metrics usage
+    # Starts a new {Sentry::Metrics::Aggregator} instance to aggregate metrics
+    # and a thread to aggregate flush every 5 seconds.
+    # @return [Boolean]
+    attr_accessor :enable_metrics
+
     # Send diagnostic client reports about dropped events, true by default
     # tries to attach to an existing envelope max once every 30s
     # @return [Boolean]
@@ -383,6 +389,7 @@ module Sentry
       self.rack_env_whitelist = RACK_ENV_WHITELIST_DEFAULT
       self.traces_sampler = nil
       self.enable_tracing = nil
+      self.enable_metrics = false
 
       @transport = Transport::Configuration.new
       @cron = Cron::Configuration.new
