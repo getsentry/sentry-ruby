@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+require "rubygems"
+
 module Sentry
   # @api private
   class Backtrace
@@ -10,7 +12,7 @@ module Sentry
       RUBY_INPUT_FORMAT = /
         ^ \s* (?: [a-zA-Z]: | uri:classloader: )? ([^:]+ | <.*>):
         (\d+)
-        (?: :in \s `([^']+)')?$
+        (?: :in\s('|`)([^']+)')?$
       /x.freeze
 
       # org.jruby.runtime.callsite.CachingCallSite.call(CachingCallSite.java:170)
@@ -36,7 +38,7 @@ module Sentry
       def self.parse(unparsed_line, in_app_pattern)
         ruby_match = unparsed_line.match(RUBY_INPUT_FORMAT)
         if ruby_match
-          _, file, number, method = ruby_match.to_a
+          _, file, number, _, method = ruby_match.to_a
           file.sub!(/\.class$/, RB_EXTENSION)
           module_name = nil
         else

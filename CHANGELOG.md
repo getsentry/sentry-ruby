@@ -11,6 +11,7 @@
 - Fix undefined method 'constantize' issue in `sentry-resque` ([#2248](https://github.com/getsentry/sentry-ruby/pull/2248))
 - Only instantiate SessionFlusher when the SDK is enabled under the current env [#2245](https://github.com/getsentry/sentry-ruby/pull/2245)
   - Fixes [#2234](https://github.com/getsentry/sentry-ruby/issues/2234)
+- Update backtrace parsing regexp to support Ruby 3.4 ([#2252](https://github.com/getsentry/sentry-ruby/pull/2252))
 
 ## 5.16.1
 
