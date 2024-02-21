@@ -221,6 +221,10 @@ RSpec.describe Sentry::Client do
         version = Gem::Version.new(RUBY_VERSION)
 
         case
+        when version >= Gem::Version.new("3.4.0-dev")
+          expect(hash[:exception][:values][0][:value]).to eq(
+            "undefined method '[]' for nil (NoMethodError)\n\n          {}[:foo][:bar]\n                  ^^^^^^"
+          )
         when version >= Gem::Version.new("3.3.0-dev")
           expect(hash[:exception][:values][0][:value]).to eq(
             "undefined method `[]' for nil (NoMethodError)\n\n          {}[:foo][:bar]\n                  ^^^^^^"
