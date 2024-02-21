@@ -8,6 +8,13 @@ module Sentry
       FLUSH_INTERVAL = 5
       ROLLUP_IN_SECONDS = 10
 
+      METRIC_TYPES = {
+        c: CounterMetric,
+        d: DistributionMetric,
+        g: GaugeMetric,
+        s: SetMetric
+      }
+
       def initialize(configuration, client)
         @client = client
         @logger = configuration.logger
@@ -16,8 +23,13 @@ module Sentry
 
         @thread = nil
         @exited = false
+        @mutex = Mutex.new
 
+        # buckets are a nested hash of timestamp -> bucket keys -> Metric instance
         @buckets = {}
+
+        # the flush interval needs to be shifted once per startup to create jittering
+        @flush_shift = Random.rand * ROLLUP_IN_SECONDS
       end
 
       def add(type,
@@ -34,19 +46,30 @@ module Sentry
         # this is integer division and thus takes the floor of the division
         # and buckets into 10 second intervals
         bucket_timestamp = (timestamp / ROLLUP_IN_SECONDS) * ROLLUP_IN_SECONDS
+
         serialized_tags = serialize_tags(tags)
         bucket_key = [type, key, unit, serialized_tags]
 
-        # TODO lock and add to bucket
-        42
+        @mutex.synchronize do
+          @buckets[bucket_timestamp] ||= {}
+
+          if @buckets[bucket_timestamp][bucket_key]
+            @buckets[bucket_timestamp][bucket_key].add(value)
+          else
+            @buckets[bucket_timestamp][bucket_key] = METRIC_TYPES[type].new(value)
+          end
+        end
       end
 
       def flush
-        # TODO
+        @mutex.synchronize do
+          log_debug("[Metrics::Aggregator] current bucket state: #{@buckets}")
+          # TODO
+        end
       end
 
       def kill
-        log_debug("[Metrics::Aggregator] killing thread")
+        log_debug('[Metrics::Aggregator] killing thread')
 
         @exited = true
         @thread&.kill
@@ -68,15 +91,22 @@ module Sentry
 
         true
       rescue ThreadError
-        log_debug("[Metrics::Aggregator] thread creation failed")
+        log_debug('[Metrics::Aggregator] thread creation failed')
         @exited = true
         false
       end
 
       def serialize_tags(tags)
-        # TODO support array tags
         return [] unless tags
-        tags.map { |k, v| [k.to_s, v.to_s] }
+
+        # important to sort for key consistency
+        tags.map do |k, v|
+          if v.is_a?(Array)
+            v.map { |x| [k.to_s, x.to_s] }
+          else
+            [k.to_s, v.to_s]
+          end
+        end.flatten.sort
       end
     end
   end
