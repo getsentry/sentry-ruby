@@ -70,8 +70,19 @@ module Sentry
         return if flushable_buckets.empty?
 
         payload = serialize_buckets(flushable_buckets)
+        envelope = Envelope.new
+        envelope.add_item(
+          { type: 'statsd', length: payload.bytesize },
+          payload,
+          is_json: false
+        )
+
         log_debug("[Metrics::Aggregator] flushing buckets: #{flushable_buckets}")
         log_debug("[Metrics::Aggregator] payload: #{payload}")
+
+        Sentry.background_worker.perform do
+          @client.transport.send_envelope(envelope)
+        end
       end
 
       def kill
@@ -136,7 +147,7 @@ module Sentry
           timestamp_buckets.map do |metric_key, metric|
             type, key, unit, tags = metric_key
             values = metric.serialize.join(':')
-            sanitized_tags = tags.map { |k, v| "#{sanitize_key(k)}:#{sanitize_value(v)}"}.join(',')
+            sanitized_tags = tags.map { |k, v| "#{sanitize_key(k)}:#{sanitize_value(v)}" }.join(',')
 
             "#{sanitize_key(key)}@#{unit}:#{values}|#{type}|\##{sanitized_tags}|T#{timestamp}"
           end
