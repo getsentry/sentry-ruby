@@ -251,7 +251,6 @@ module Sentry
       end
 
       if @metrics_aggregator
-        # TODO-neel-metrics force flush?
         @metrics_aggregator.flush(force: true)
         @metrics_aggregator.kill
         @metrics_aggregator = nil

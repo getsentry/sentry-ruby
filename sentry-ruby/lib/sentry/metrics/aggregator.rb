@@ -8,6 +8,9 @@ module Sentry
       FLUSH_INTERVAL = 5
       ROLLUP_IN_SECONDS = 10
 
+      KEY_SANITIZATION_REGEX = /[^a-zA-Z0-9_\/.-]+/
+      VALUE_SANITIZATION_REGEX = /[^[[:word:]][[:digit:]][[:space:]]_:\/@\.{}\[\]$-]+/
+
       METRIC_TYPES = {
         c: CounterMetric,
         d: DistributionMetric,
@@ -61,10 +64,14 @@ module Sentry
       end
 
       def flush(force: false)
-        @mutex.synchronize do
-          log_debug("[Metrics::Aggregator] current bucket state: #{@buckets}")
-          # TODO
-        end
+        log_debug("[Metrics::Aggregator] current bucket state: #{@buckets}")
+
+        flushable_buckets = get_flushable_buckets!(force)
+        return if flushable_buckets.empty?
+
+        payload = serialize_buckets(flushable_buckets)
+        log_debug("[Metrics::Aggregator] flushing buckets: #{flushable_buckets}")
+        log_debug("[Metrics::Aggregator] payload: #{payload}")
       end
 
       def kill
@@ -104,6 +111,44 @@ module Sentry
             [[k.to_s, v.to_s]]
           end
         end.sort
+      end
+
+      def get_flushable_buckets!(force)
+        @mutex.synchronize do
+          flushable_buckets = {}
+
+          if force
+            flushable_buckets = @buckets
+            @buckets = {}
+          else
+            cutoff = Sentry.utc_now.to_i - ROLLUP_IN_SECONDS - @flush_shift
+            flushable_buckets = @buckets.select { |k, _| k <= cutoff }
+            @buckets.reject! { |k, _| k <= cutoff }
+          end
+
+          flushable_buckets
+        end
+      end
+
+      # serialize buckets to statsd format
+      def serialize_buckets(buckets)
+        buckets.map do |timestamp, timestamp_buckets|
+          timestamp_buckets.map do |metric_key, metric|
+            type, key, unit, tags = metric_key
+            values = metric.serialize.join(':')
+            sanitized_tags = tags.map { |k, v| "#{sanitize_key(k)}:#{sanitize_value(v)}"}.join(',')
+
+            "#{sanitize_key(key)}@#{unit}:#{values}|#{type}|\##{sanitized_tags}|T#{timestamp}"
+          end
+        end.flatten.join("\n")
+      end
+
+      def sanitize_key(key)
+        key.gsub(KEY_SANITIZATION_REGEX, '_')
+      end
+
+      def sanitize_value(value)
+        value.gsub(VALUE_SANITIZATION_REGEX, '')
       end
     end
   end
