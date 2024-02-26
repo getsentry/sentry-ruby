@@ -9,7 +9,7 @@ module Sentry
       attr_reader :value
 
       def initialize(value)
-        @value = Set[value.to_f]
+        @value = Set[value]
       end
 
       def add(value)
@@ -17,9 +17,7 @@ module Sentry
       end
 
       def serialize
-        value.map do |v|
-          x.is_a?(String) ? Zlib.crc32(x) : x.to_i
-        end
+        value.map { |x| x.is_a?(String) ? Zlib.crc32(x) : x.to_i }
       end
 
       def weight
