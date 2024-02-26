@@ -49,7 +49,7 @@ module Sentry
         # and buckets into 10 second intervals
         bucket_timestamp = (timestamp / ROLLUP_IN_SECONDS) * ROLLUP_IN_SECONDS
 
-        serialized_tags = serialize_tags(tags.merge(@default_tags))
+        serialized_tags = serialize_tags(get_updated_tags(tags))
         bucket_key = [type, key, unit, serialized_tags]
 
         @mutex.synchronize do
@@ -160,6 +160,23 @@ module Sentry
 
       def sanitize_value(value)
         value.gsub(VALUE_SANITIZATION_REGEX, '')
+      end
+
+      def get_transaction_name
+        transaction = Sentry.get_current_scope&.get_transaction
+        return nil unless transaction
+        return nil if transaction.source_low_quality?
+
+        transaction.name
+      end
+
+      def get_updated_tags(tags)
+        updated_tags = @default_tags.merge(tags)
+
+        transaction_name = get_transaction_name
+        updated_tags['transaction'] = transaction_name if transaction_name
+
+        updated_tags
       end
     end
   end

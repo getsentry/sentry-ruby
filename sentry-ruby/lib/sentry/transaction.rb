@@ -302,6 +302,11 @@ module Sentry
       profiler.start
     end
 
+    # These are high cardinality and thus bad
+    def source_low_quality?
+      source == :url
+    end
+
     protected
 
     def init_span_recorder(limit = 1000)
@@ -335,11 +340,6 @@ module Sentry
 
       items.compact!
       @baggage = Baggage.new(items, mutable: false)
-    end
-
-    # These are high cardinality and thus bad
-    def source_low_quality?
-      source == :url
     end
 
     class SpanRecorder
