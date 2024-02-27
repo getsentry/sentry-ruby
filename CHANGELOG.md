@@ -5,6 +5,38 @@
 - Add support for distributed tracing in `sentry-delayed_job` [#2233](https://github.com/getsentry/sentry-ruby/pull/2233)
 - Fix warning about default gems on Ruby 3.3.0 ([#2225](https://github.com/getsentry/sentry-ruby/pull/2225))
 - Add `hint:` support to `Sentry::Rails::ErrorSubscriber` [#2235](https://github.com/getsentry/sentry-ruby/pull/2235)
+- Add [Metrics](https://docs.sentry.io/product/metrics/) support
+  - Add main APIs and `Aggregator` thread [#2247](https://github.com/getsentry/sentry-ruby/pull/2247)
+
+    The SDK now supports recording and aggregating metrics. A new thread will be started
+    for aggregation and will flush the pending data to Sentry every 5 seconds.
+
+    To enable this behavior, use:
+
+    ```ruby
+    Sentry.init do |config|
+      # ...
+      config.enable_metrics = true
+    end
+    ```
+
+    And then in your application code, collect metrics as follows:
+
+    ```ruby
+    # increment a simple counter
+    Sentry::Metrics.incr('button_click')
+    # set a value, unit and tags
+    Sentry::Metrics.incr('time', 5, 'second', tags: { browser:' firefox' })
+
+    # distribution - get statistical aggregates from an array of observations
+    Sentry::Metrics.distribution('page_load', 15.0, 'millisecond')
+
+    # gauge - record statistical aggregates directly on the SDK, more space efficient
+    Sentry::Metrics.gauge('page_load', 15.0, 'millisecond')
+
+    # set - get unique counts of elements
+    Sentry::Metrics.set('user_view', 'jane')
+    ```
 
 ### Bug Fixes
 
