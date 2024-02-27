@@ -18,10 +18,16 @@ module Sentry
         s: SetMetric
       }
 
+      # exposed only for testing
+      attr_reader :thread, :buckets, :flush_shift
+
       def initialize(configuration, client)
         @client = client
         @logger = configuration.logger
-        @default_tags = { 'release' => configuration.release, 'environment' => configuration.environment }
+
+        @default_tags = {}
+        @default_tags['release'] = configuration.release if configuration.release
+        @default_tags['environment'] = configuration.environment if configuration.environment
 
         @thread = nil
         @exited = false
@@ -37,10 +43,11 @@ module Sentry
       def add(type,
               key,
               value,
-              unit,
+              unit: 'none',
               tags: {},
               timestamp: nil)
         return unless ensure_thread
+        return unless METRIC_TYPES.keys.include?(type)
 
         timestamp = timestamp.to_i if timestamp.is_a?(Time)
         timestamp ||= Sentry.utc_now.to_i
@@ -64,8 +71,6 @@ module Sentry
       end
 
       def flush(force: false)
-        log_debug("[Metrics::Aggregator] current bucket state: #{@buckets}")
-
         flushable_buckets = get_flushable_buckets!(force)
         return if flushable_buckets.empty?
 
@@ -76,9 +81,6 @@ module Sentry
           payload,
           is_json: false
         )
-
-        log_debug("[Metrics::Aggregator] flushing buckets: #{flushable_buckets}")
-        log_debug("[Metrics::Aggregator] payload: #{payload}")
 
         Sentry.background_worker.perform do
           @client.transport.send_envelope(envelope)
@@ -100,7 +102,7 @@ module Sentry
 
         @thread = Thread.new do
           loop do
-            # TODO use event for force flush later
+            # TODO-neel-metrics use event for force flush later
             sleep(FLUSH_INTERVAL)
             flush
           end

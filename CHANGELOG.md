@@ -26,13 +26,13 @@
     # increment a simple counter
     Sentry::Metrics.incr('button_click')
     # set a value, unit and tags
-    Sentry::Metrics.incr('time', 5, 'second', tags: { browser:' firefox' })
+    Sentry::Metrics.incr('time', 5, unit: 'second', tags: { browser:' firefox' })
 
     # distribution - get statistical aggregates from an array of observations
-    Sentry::Metrics.distribution('page_load', 15.0, 'millisecond')
+    Sentry::Metrics.distribution('page_load', 15.0, unit: 'millisecond')
 
     # gauge - record statistical aggregates directly on the SDK, more space efficient
-    Sentry::Metrics.gauge('page_load', 15.0, 'millisecond')
+    Sentry::Metrics.gauge('page_load', 15.0, unit: 'millisecond')
 
     # set - get unique counts of elements
     Sentry::Metrics.set('user_view', 'jane')
