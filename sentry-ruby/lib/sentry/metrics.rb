@@ -10,7 +10,7 @@ require 'sentry/metrics/aggregator'
 module Sentry
   module Metrics
     class << self
-      def incr(key, value = 1.0, unit: 'none', tags: {}, timestamp: nil)
+      def increment(key, value = 1.0, unit: 'none', tags: {}, timestamp: nil)
         Sentry.metrics_aggregator&.add(:c, key, value, unit: unit, tags: tags, timestamp: timestamp)
       end
 

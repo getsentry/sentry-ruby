@@ -24,9 +24,9 @@
 
     ```ruby
     # increment a simple counter
-    Sentry::Metrics.incr('button_click')
+    Sentry::Metrics.increment('button_click')
     # set a value, unit and tags
-    Sentry::Metrics.incr('time', 5, unit: 'second', tags: { browser:' firefox' })
+    Sentry::Metrics.increment('time', 5, unit: 'second', tags: { browser:' firefox' })
 
     # distribution - get statistical aggregates from an array of observations
     Sentry::Metrics.distribution('page_load', 15.0, unit: 'millisecond')

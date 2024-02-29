@@ -10,7 +10,7 @@ RSpec.describe Sentry::Metrics do
   let(:aggregator) { Sentry.metrics_aggregator }
   let(:fake_time) { Time.new(2024, 1, 1, 1, 1, 3) }
 
-  describe '.incr' do
+  describe '.increment' do
     it 'passes default value of 1.0 with only key' do
       expect(aggregator).to receive(:add).with(
         :c,
@@ -21,7 +21,7 @@ RSpec.describe Sentry::Metrics do
         timestamp: nil
       )
 
-      described_class.incr('foo')
+      described_class.increment('foo')
     end
 
     it 'passes through args to aggregator' do
@@ -34,7 +34,7 @@ RSpec.describe Sentry::Metrics do
         timestamp: fake_time
       )
 
-      described_class.incr('foo', 5.0, unit: 'second', tags: { fortytwo: 42 }, timestamp: fake_time)
+      described_class.increment('foo', 5.0, unit: 'second', tags: { fortytwo: 42 }, timestamp: fake_time)
     end
   end
 
