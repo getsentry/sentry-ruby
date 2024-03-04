@@ -7,6 +7,7 @@
 - Add `hint:` support to `Sentry::Rails::ErrorSubscriber` [#2235](https://github.com/getsentry/sentry-ruby/pull/2235)
 - Add [Metrics](https://docs.sentry.io/product/metrics/) support
   - Add main APIs and `Aggregator` thread [#2247](https://github.com/getsentry/sentry-ruby/pull/2247)
+  - Add `Sentry::Metrics.timing` API for measuring block duration [#2254](https://github.com/getsentry/sentry-ruby/pull/2254)
 
     The SDK now supports recording and aggregating metrics. A new thread will be started
     for aggregation and will flush the pending data to Sentry every 5 seconds.
@@ -36,6 +37,11 @@
 
     # set - get unique counts of elements
     Sentry::Metrics.set('user_view', 'jane')
+
+    # timing - measure duration of code block, defaults to seconds
+    Sentry::Metrics.timing('how_long') { sleep(1) }
+    # timing - measure duration of code block in other duraton units
+    Sentry::Metrics.timing('how_long_ms', unit: 'millisecond') { sleep(0.5) }
     ```
 
 ### Bug Fixes
