@@ -252,6 +252,12 @@ module Sentry
       @transaction_sources.last
     end
 
+    # These are high cardinality and thus bad.
+    # @return [Boolean]
+    def transaction_source_low_quality?
+      transaction_source == :url
+    end
+
     # Returns the associated Transaction object.
     # @return [Transaction, nil]
     def get_transaction

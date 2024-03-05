@@ -165,11 +165,11 @@ module Sentry
       end
 
       def get_transaction_name
-        transaction = Sentry.get_current_scope&.get_transaction
-        return nil unless transaction
-        return nil if transaction.source_low_quality?
+        scope = Sentry.get_current_scope
+        return nil unless scope && scope.transaction_name
+        return nil if scope.transaction_source_low_quality?
 
-        transaction.name
+        scope.transaction_name
       end
 
       def get_updated_tags(tags)

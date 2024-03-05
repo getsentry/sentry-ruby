@@ -124,17 +124,15 @@ RSpec.describe Sentry::Metrics::Aggregator do
     end
 
     context 'with running transaction' do
-      let(:transaction) { Sentry.start_transaction(name: 'foo', source: :view) }
-      before { Sentry.get_current_scope.set_span(transaction) }
-
       it 'has the transaction name in tags serialized in the bucket metric key' do
+        Sentry.get_current_scope.set_transaction_name('foo')
         subject.add(:c, 'incr', 1)
         _, _, _, tags = subject.buckets.values.first.keys.first
         expect(tags).to include(['transaction', 'foo'])
       end
 
       it 'does not has the low quality transaction name in tags serialized in the bucket metric key' do
-        transaction.set_name('foo', source: :url)
+        Sentry.get_current_scope.set_transaction_name('foo', source: :url)
         subject.add(:c, 'incr', 1)
         _, _, _, tags = subject.buckets.values.first.keys.first
         expect(tags).not_to include(['transaction', 'foo'])
