@@ -229,7 +229,7 @@ module Sentry
       @background_worker = Sentry::BackgroundWorker.new(config)
       @session_flusher = config.session_tracking? ? Sentry::SessionFlusher.new(config, client) : nil
       @backpressure_monitor = config.enable_backpressure_handling ? Sentry::BackpressureMonitor.new(config, client) : nil
-      @metrics_aggregator = config.enable_metrics ? Sentry::Metrics::Aggregator.new(config, client) : nil
+      @metrics_aggregator = config.metrics.enabled ? Sentry::Metrics::Aggregator.new(config, client) : nil
       exception_locals_tp.enable if config.include_local_variables
       at_exit { close }
     end

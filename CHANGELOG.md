@@ -16,7 +16,7 @@
     ```ruby
     Sentry.init do |config|
       # ...
-      config.enable_metrics = true
+      config.metrics.enabled = true
     end
     ```
 

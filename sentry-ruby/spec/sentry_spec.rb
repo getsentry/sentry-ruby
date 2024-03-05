@@ -1049,7 +1049,7 @@ RSpec.describe Sentry do
       end
 
       it "flushes and kills metrics aggregator" do
-        perform_basic_setup { |c| c.enable_metrics = true }
+        perform_basic_setup { |c| c.metrics.enabled = true }
         expect(described_class.metrics_aggregator).to receive(:flush).with(force: true)
         expect(described_class.metrics_aggregator).to receive(:kill)
         described_class.close

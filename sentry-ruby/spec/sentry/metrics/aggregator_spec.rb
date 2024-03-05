@@ -8,7 +8,7 @@ RSpec.describe Sentry::Metrics::Aggregator do
 
   before do
     perform_basic_setup do |config|
-      config.enable_metrics = true
+      config.metrics.enabled = true
       config.enable_tracing = true
       config.release = 'test-release'
       config.environment = 'test'

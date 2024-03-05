@@ -8,6 +8,7 @@ require "sentry/dsn"
 require "sentry/release_detector"
 require "sentry/transport/configuration"
 require "sentry/cron/configuration"
+require "sentry/metrics/configuration"
 require "sentry/linecache"
 require "sentry/interfaces/stacktrace_builder"
 
@@ -235,6 +236,10 @@ module Sentry
     # @return [Cron::Configuration]
     attr_reader :cron
 
+    # Metrics related configuration.
+    # @return [Metrics::Configuration]
+    attr_reader :metrics
+
     # Take a float between 0.0 and 1.0 as the sample rate for tracing events (transactions).
     # @return [Float, nil]
     attr_reader :traces_sample_rate
@@ -253,12 +258,6 @@ module Sentry
     # If set to true, will set traces_sample_rate to 1.0
     # @return [Boolean, nil]
     attr_reader :enable_tracing
-
-    # Enable metrics usage
-    # Starts a new {Sentry::Metrics::Aggregator} instance to aggregate metrics
-    # and a thread to aggregate flush every 5 seconds.
-    # @return [Boolean]
-    attr_accessor :enable_metrics
 
     # Send diagnostic client reports about dropped events, true by default
     # tries to attach to an existing envelope max once every 30s
@@ -389,10 +388,10 @@ module Sentry
       self.rack_env_whitelist = RACK_ENV_WHITELIST_DEFAULT
       self.traces_sampler = nil
       self.enable_tracing = nil
-      self.enable_metrics = false
 
       @transport = Transport::Configuration.new
       @cron = Cron::Configuration.new
+      @metrics = Metrics::Configuration.new
       @gem_specs = Hash[Gem::Specification.map { |spec| [spec.name, spec.version.to_s] }] if Gem::Specification.respond_to?(:map)
 
       run_post_initialization_callbacks

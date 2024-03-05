@@ -3,7 +3,7 @@ require 'spec_helper'
 RSpec.describe Sentry::Metrics do
   before do
     perform_basic_setup do |config|
-      config.enable_metrics = true
+      config.metrics.enabled = true
     end
   end
 
