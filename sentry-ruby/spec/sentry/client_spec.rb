@@ -195,6 +195,16 @@ RSpec.describe Sentry::Client do
       event = subject.event_from_transaction(transaction)
       expect(event.contexts).to include({ foo: { bar: 42 } })
     end
+
+    it 'adds metric summary on transaction if any' do
+      key = [:c, 'incr', 'none', []]
+      transaction.metrics_local_aggregator.add(key, 10)
+      hash = subject.event_from_transaction(transaction).to_hash
+
+      expect(hash[:_metrics_summary]).to eq({
+        'c:incr@none' => { count: 1, max: 10.0, min: 10.0, sum: 10.0, tags: {} }
+      })
+    end
   end
 
   describe "#event_from_exception" do

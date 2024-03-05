@@ -187,6 +187,57 @@ RSpec.describe Sentry::Metrics::Aggregator do
       expect(metric).to be_a(Sentry::Metrics::SetMetric)
       expect(metric.value).to eq(Set[1])
     end
+
+    describe 'local aggregation for span metric summaries' do
+      it 'does nothing without an active scope span' do
+        expect_any_instance_of(Sentry::Metrics::LocalAggregator).not_to receive(:add)
+        subject.add(:c, 'incr', 1)
+      end
+
+      context 'with running transaction and active span' do
+        let(:span) { Sentry.start_transaction }
+
+        before do
+          Sentry.get_current_scope.set_span(span)
+          Sentry.get_current_scope.set_transaction_name('metric', source: :view)
+        end
+
+        it 'does nothing if transaction name is low quality' do
+          expect_any_instance_of(Sentry::Metrics::LocalAggregator).not_to receive(:add)
+
+          Sentry.get_current_scope.set_transaction_name('/123', source: :url)
+          subject.add(:c, 'incr', 1)
+        end
+
+        it 'proxies bucket key and value to local aggregator' do
+          expect(span.metrics_local_aggregator).to receive(:add).with(
+            array_including(:c, 'incr', 'none'),
+            1
+          )
+          subject.add(:c, 'incr', 1)
+        end
+
+        context 'for set metrics' do
+          before { subject.add(:s, 'set', 'foo') }
+
+          it 'proxies bucket key and value 0 when existing element' do
+            expect(span.metrics_local_aggregator).to receive(:add).with(
+              array_including(:s, 'set', 'none'),
+              0
+            )
+            subject.add(:s, 'set', 'foo')
+          end
+
+          it 'proxies bucket key and value 1 when new element' do
+            expect(span.metrics_local_aggregator).to receive(:add).with(
+              array_including(:s, 'set', 'none'),
+              1
+            )
+            subject.add(:s, 'set', 'bar')
+          end
+        end
+      end
+    end
   end
 
   describe '#flush' do

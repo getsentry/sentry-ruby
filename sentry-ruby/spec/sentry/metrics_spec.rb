@@ -106,5 +106,30 @@ RSpec.describe Sentry::Metrics do
 
       described_class.timing('foo', unit: 'millisecond', tags: { fortytwo: 42 }, timestamp: fake_time) { sleep(0.1) }
     end
+
+    context 'with running transaction' do
+      let(:transaction) { transaction = Sentry.start_transaction(name: 'metrics') }
+
+      before do
+        perform_basic_setup do |config|
+          config.enable_tracing = true
+          config.metrics.enabled = true
+        end
+
+        Sentry.get_current_scope.set_span(transaction)
+      end
+
+      it 'starts a span' do
+        expect(Sentry).to receive(:with_child_span).with(op: Sentry::Metrics::OP_NAME, description: 'foo').and_call_original
+
+        described_class.timing('foo') { sleep(0.1) }
+      end
+
+      it 'has the correct tags on the new span' do
+        described_class.timing('foo', tags: { a: 42, b: [1, 2] }) { sleep(0.1) }
+        span = transaction.span_recorder.spans.last
+        expect(span.tags).to eq(a: '42', b: '1, 2')
+      end
+    end
   end
 end
