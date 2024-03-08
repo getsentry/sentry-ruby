@@ -1,26 +1,26 @@
 require 'spec_helper'
 
 RSpec.describe Sentry::StacktraceBuilder do
+  let(:fixture_root) { File.join(Dir.pwd, "spec", "support") }
+  let(:fixture_file) { File.join(fixture_root, "stacktrace_test_fixture.rb") }
+  let(:configuration) do
+    Sentry::Configuration.new.tap do |config|
+      config.project_root = fixture_root
+    end
+  end
+
+  let(:backtrace) do
+    [
+      "#{fixture_file}:6:in `bar'",
+      "#{fixture_file}:2:in `foo'"
+    ]
+  end
+
+  subject do
+    configuration.stacktrace_builder
+  end
+
   describe "#build" do
-    let(:fixture_root) { File.join(Dir.pwd, "spec", "support") }
-    let(:fixture_file) { File.join(fixture_root, "stacktrace_test_fixture.rb") }
-    let(:configuration) do
-      Sentry::Configuration.new.tap do |config|
-        config.project_root = fixture_root
-      end
-    end
-
-    let(:backtrace) do
-      [
-        "#{fixture_file}:6:in `bar'",
-        "#{fixture_file}:2:in `foo'"
-      ]
-    end
-
-    subject do
-      configuration.stacktrace_builder
-    end
-
     it "ignores frames without filename" do
       interface = subject.build(backtrace: [":6:in `foo'"])
       expect(interface.frames).to be_empty
@@ -80,6 +80,19 @@ RSpec.describe Sentry::StacktraceBuilder do
         expect(second_frame.lineno).to eq(6)
         expect(second_frame.vars).to eq({ foo: "bar" })
       end
+    end
+  end
+
+  describe '#metrics_code_location' do
+    it 'builds metrics code location hash for line' do
+      hash = subject.metrics_code_location(backtrace.first)
+
+      expect(hash[:filename]).to match(/stacktrace_test_fixture.rb/)
+      expect(hash[:function]).to eq("bar")
+      expect(hash[:lineno]).to eq(6)
+      expect(hash[:pre_context]).to eq(["end\n", "\n", "def bar\n"])
+      expect(hash[:context_line]).to eq("  baz\n")
+      expect(hash[:post_context]).to eq(["end\n", nil, nil])
     end
   end
 end

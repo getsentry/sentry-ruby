@@ -5,11 +5,17 @@ module Sentry
     class Configuration
       include ArgumentCheckingHelper
 
-      # Enable metrics usage
+      # Enable metrics usage.
       # Starts a new {Sentry::Metrics::Aggregator} instance to aggregate metrics
       # and a thread to aggregate flush every 5 seconds.
       # @return [Boolean]
       attr_accessor :enabled
+
+      # Enable code location reporting.
+      # Will be sent once per day.
+      # True by default.
+      # @return [Boolean]
+      attr_accessor :enable_code_locations
 
       # Optional Proc, called before emitting a metric to the aggregator.
       # Use it to filter keys (return false/nil) or update tags.
@@ -28,6 +34,7 @@ module Sentry
 
       def initialize
         @enabled = false
+        @enable_code_locations = true
       end
 
       def before_emit=(value)
