@@ -9,8 +9,6 @@ ruby_version = Gem::Version.new(RUBY_VERSION)
 if ruby_version >= Gem::Version.new("2.7.0")
   gem "debug", github: "ruby/debug", platform: :ruby
   gem "irb"
-  # new release breaks on jruby
-  gem "io-console", "0.6.0"
 
   if ruby_version >= Gem::Version.new("3.0.0")
     gem "ruby-lsp-rspec"
