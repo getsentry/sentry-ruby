@@ -188,8 +188,7 @@ RSpec.describe Sentry::Transport do
         envelope = Sentry::Envelope.new
         envelope.add_item(
           { type: 'statsd', length: payload.bytesize },
-          payload,
-          is_json: false
+          payload
         )
         envelope
       end

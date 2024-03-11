@@ -78,8 +78,7 @@ module Sentry
         envelope = Envelope.new
         envelope.add_item(
           { type: 'statsd', length: payload.bytesize },
-          payload,
-          is_json: false
+          payload
         )
 
         Sentry.background_worker.perform do

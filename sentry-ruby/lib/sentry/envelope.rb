@@ -7,12 +7,11 @@ module Sentry
       STACKTRACE_FRAME_LIMIT_ON_OVERSIZED_PAYLOAD = 500
       MAX_SERIALIZED_PAYLOAD_SIZE = 1024 * 1000
 
-      attr_accessor :headers, :payload, :is_json
+      attr_accessor :headers, :payload
 
-      def initialize(headers, payload, is_json: true)
+      def initialize(headers, payload)
         @headers = headers
         @payload = payload
-        @is_json = is_json
       end
 
       def type
@@ -20,7 +19,7 @@ module Sentry
       end
 
       def to_s
-        [JSON.generate(@headers), @is_json ? JSON.generate(@payload) : @payload].join("\n")
+        [JSON.generate(@headers), @payload.is_a?(String) ? @payload : JSON.generate(@payload)].join("\n")
       end
 
       def serialize
@@ -79,8 +78,8 @@ module Sentry
       @items = []
     end
 
-    def add_item(headers, payload, is_json: true)
-      @items << Item.new(headers, payload, is_json: is_json)
+    def add_item(headers, payload)
+      @items << Item.new(headers, payload)
     end
 
     def item_types

@@ -241,7 +241,6 @@ RSpec.describe Sentry::Metrics::Aggregator do
 
           item = envelope.items.first
           expect(item.headers).to eq({ type: 'statsd', length: item.payload.bytesize })
-          expect(item.is_json).to eq(false)
 
           incr, dist = item.payload.split("\n")
           expect(incr).to eq("incr@none:10.0|c|#environment:test,release:test-release|T#{fake_time.to_i - 3}")
@@ -270,7 +269,6 @@ RSpec.describe Sentry::Metrics::Aggregator do
 
           item = envelope.items.first
           expect(item.headers).to eq({ type: 'statsd', length: item.payload.bytesize })
-          expect(item.is_json).to eq(false)
 
           incr1, dist1, incr2, dist2 = item.payload.split("\n")
           expect(incr1).to eq("incr@none:10.0|c|#environment:test,release:test-release|T#{fake_time.to_i - 3}")
