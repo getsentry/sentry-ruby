@@ -82,4 +82,29 @@ RSpec.describe Sentry::Metrics do
       described_class.gauge('foo', 5.0, unit: 'second', tags: { fortytwo: 42 }, timestamp: fake_time)
     end
   end
+
+  describe '.timing' do
+    it 'does nothing without a block' do
+      expect(aggregator).not_to receive(:add)
+      described_class.timing('foo')
+    end
+
+    it 'does nothing with a non-duration unit' do
+      expect(aggregator).not_to receive(:add)
+      described_class.timing('foo', unit: 'ratio') { }
+    end
+
+    it 'measures time taken as distribution and passes through args to aggregator' do
+      expect(aggregator).to receive(:add).with(
+        :d,
+        'foo',
+        an_instance_of(Integer),
+        unit: 'millisecond',
+        tags: { fortytwo: 42 },
+        timestamp: fake_time
+      )
+
+      described_class.timing('foo', unit: 'millisecond', tags: { fortytwo: 42 }, timestamp: fake_time) { sleep(0.1) }
+    end
+  end
 end
