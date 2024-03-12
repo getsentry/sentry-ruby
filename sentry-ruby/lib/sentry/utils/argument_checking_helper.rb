@@ -15,5 +15,11 @@ module Sentry
         raise ArgumentError, "expect the argument to be one of #{values.map(&:inspect).join(' or ')}, got #{argument.inspect}"
       end
     end
+
+    def check_callable!(name, value)
+      unless value == nil || value.respond_to?(:call)
+        raise ArgumentError, "#{name} must be callable (or nil to disable)"
+      end
+    end
   end
 end

@@ -188,6 +188,38 @@ RSpec.describe Sentry::Metrics::Aggregator do
       expect(metric.value).to eq(Set[1])
     end
 
+    describe 'with before_emit callback' do
+      before do
+        perform_basic_setup do |config|
+          config.metrics.enabled = true
+          config.enable_tracing = true
+          config.release = 'test-release'
+          config.environment = 'test'
+          config.logger = Logger.new(string_io)
+
+          config.metrics.before_emit = lambda do |key, tags|
+            return nil if key == 'foo'
+            tags[:add_tag] = 42
+            tags.delete(:remove_tag)
+            true
+          end
+        end
+      end
+
+      it 'does not emit metric with filtered key' do
+        expect(Sentry::Metrics::CounterMetric).not_to receive(:new)
+        subject.add(:c, 'foo', 1)
+        expect(subject.buckets).to eq({})
+      end
+
+      it 'updates the tags according to the callback' do
+        subject.add(:c, 'bar', 1, tags: { remove_tag: 99 })
+        _, _, _, tags = subject.buckets.values.first.keys.first
+        expect(tags).not_to include(['remove_tag', '99'])
+        expect(tags).to include(['add_tag', '42'])
+      end
+    end
+
     describe 'local aggregation for span metric summaries' do
       it 'does nothing without an active scope span' do
         expect_any_instance_of(Sentry::Metrics::LocalAggregator).not_to receive(:add)

@@ -576,12 +576,6 @@ module Sentry
 
     private
 
-    def check_callable!(name, value)
-      unless value == nil || value.respond_to?(:call)
-        raise ArgumentError, "#{name} must be callable (or nil to disable)"
-      end
-    end
-
     def init_dsn(dsn_string)
       return if dsn_string.nil? || dsn_string.empty?
 

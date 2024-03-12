@@ -24,6 +24,7 @@ module Sentry
       def initialize(configuration, client)
         @client = client
         @logger = configuration.logger
+        @before_emit = configuration.metrics.before_emit
 
         @default_tags = {}
         @default_tags['release'] = configuration.release if configuration.release
@@ -55,8 +56,11 @@ module Sentry
         # this is integer division and thus takes the floor of the division
         # and buckets into 10 second intervals
         bucket_timestamp = (timestamp / ROLLUP_IN_SECONDS) * ROLLUP_IN_SECONDS
+        updated_tags = get_updated_tags(tags)
 
-        serialized_tags = serialize_tags(get_updated_tags(tags))
+        return if @before_emit && !@before_emit.call(key, updated_tags)
+
+        serialized_tags = serialize_tags(updated_tags)
         bucket_key = [type, key, unit, serialized_tags]
 
         added = @mutex.synchronize do
