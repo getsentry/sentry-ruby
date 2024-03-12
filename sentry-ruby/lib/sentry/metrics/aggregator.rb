@@ -24,6 +24,7 @@ module Sentry
       def initialize(configuration, client)
         @client = client
         @logger = configuration.logger
+        @before_emit = configuration.metrics.before_emit
 
         @default_tags = {}
         @default_tags['release'] = configuration.release if configuration.release
@@ -55,19 +56,30 @@ module Sentry
         # this is integer division and thus takes the floor of the division
         # and buckets into 10 second intervals
         bucket_timestamp = (timestamp / ROLLUP_IN_SECONDS) * ROLLUP_IN_SECONDS
+        updated_tags = get_updated_tags(tags)
 
-        serialized_tags = serialize_tags(get_updated_tags(tags))
+        return if @before_emit && !@before_emit.call(key, updated_tags)
+
+        serialized_tags = serialize_tags(updated_tags)
         bucket_key = [type, key, unit, serialized_tags]
 
-        @mutex.synchronize do
+        added = @mutex.synchronize do
           @buckets[bucket_timestamp] ||= {}
 
-          if @buckets[bucket_timestamp][bucket_key]
-            @buckets[bucket_timestamp][bucket_key].add(value)
+          if (metric = @buckets[bucket_timestamp][bucket_key])
+            old_weight = metric.weight
+            metric.add(value)
+            metric.weight - old_weight
           else
-            @buckets[bucket_timestamp][bucket_key] = METRIC_TYPES[type].new(value)
+            metric = METRIC_TYPES[type].new(value)
+            @buckets[bucket_timestamp][bucket_key] = metric
+            metric.weight
           end
         end
+
+        # for sets, we pass on if there was a new entry to the local gauge
+        local_value = type == :s ? added : value
+        process_span_aggregator(bucket_key, local_value)
       end
 
       def flush(force: false)
@@ -178,6 +190,14 @@ module Sentry
         updated_tags['transaction'] = transaction_name if transaction_name
 
         updated_tags
+      end
+
+      def process_span_aggregator(key, value)
+        scope = Sentry.get_current_scope
+        return nil unless scope && scope.span
+        return nil if scope.transaction_source_low_quality?
+
+        scope.span.metrics_local_aggregator.add(key, value)
       end
     end
   end

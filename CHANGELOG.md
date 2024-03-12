@@ -8,6 +8,8 @@
 - Add [Metrics](https://docs.sentry.io/product/metrics/) support
   - Add main APIs and `Aggregator` thread [#2247](https://github.com/getsentry/sentry-ruby/pull/2247)
   - Add `Sentry::Metrics.timing` API for measuring block duration [#2254](https://github.com/getsentry/sentry-ruby/pull/2254)
+  - Add metric summaries on spans [#2255](https://github.com/getsentry/sentry-ruby/pull/2255)
+  - Add `config.metrics.before_emit` callback [#2258](https://github.com/getsentry/sentry-ruby/pull/2258)
 
     The SDK now supports recording and aggregating metrics. A new thread will be started
     for aggregation and will flush the pending data to Sentry every 5 seconds.
@@ -39,9 +41,22 @@
     Sentry::Metrics.set('user_view', 'jane')
 
     # timing - measure duration of code block, defaults to seconds
+    # will also automatically create a `metric.timing` span
     Sentry::Metrics.timing('how_long') { sleep(1) }
     # timing - measure duration of code block in other duraton units
     Sentry::Metrics.timing('how_long_ms', unit: 'millisecond') { sleep(0.5) }
+
+    # add a before_emit callback to filter keys or update tags
+    Sentry.init do |config|
+      # ...
+      config.metrics.enabled = true
+      config.metrics.before_emit = lambda do |key, tags|
+        return nil if key == 'foo'
+        tags[:bar] = 42
+        tags.delete(:baz)
+        true
+      end
+    end
     ```
 
 ### Bug Fixes

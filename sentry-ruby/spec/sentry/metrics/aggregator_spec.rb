@@ -187,6 +187,89 @@ RSpec.describe Sentry::Metrics::Aggregator do
       expect(metric).to be_a(Sentry::Metrics::SetMetric)
       expect(metric.value).to eq(Set[1])
     end
+
+    describe 'with before_emit callback' do
+      before do
+        perform_basic_setup do |config|
+          config.metrics.enabled = true
+          config.enable_tracing = true
+          config.release = 'test-release'
+          config.environment = 'test'
+          config.logger = Logger.new(string_io)
+
+          config.metrics.before_emit = lambda do |key, tags|
+            return nil if key == 'foo'
+            tags[:add_tag] = 42
+            tags.delete(:remove_tag)
+            true
+          end
+        end
+      end
+
+      it 'does not emit metric with filtered key' do
+        expect(Sentry::Metrics::CounterMetric).not_to receive(:new)
+        subject.add(:c, 'foo', 1)
+        expect(subject.buckets).to eq({})
+      end
+
+      it 'updates the tags according to the callback' do
+        subject.add(:c, 'bar', 1, tags: { remove_tag: 99 })
+        _, _, _, tags = subject.buckets.values.first.keys.first
+        expect(tags).not_to include(['remove_tag', '99'])
+        expect(tags).to include(['add_tag', '42'])
+      end
+    end
+
+    describe 'local aggregation for span metric summaries' do
+      it 'does nothing without an active scope span' do
+        expect_any_instance_of(Sentry::Metrics::LocalAggregator).not_to receive(:add)
+        subject.add(:c, 'incr', 1)
+      end
+
+      context 'with running transaction and active span' do
+        let(:span) { Sentry.start_transaction }
+
+        before do
+          Sentry.get_current_scope.set_span(span)
+          Sentry.get_current_scope.set_transaction_name('metric', source: :view)
+        end
+
+        it 'does nothing if transaction name is low quality' do
+          expect_any_instance_of(Sentry::Metrics::LocalAggregator).not_to receive(:add)
+
+          Sentry.get_current_scope.set_transaction_name('/123', source: :url)
+          subject.add(:c, 'incr', 1)
+        end
+
+        it 'proxies bucket key and value to local aggregator' do
+          expect(span.metrics_local_aggregator).to receive(:add).with(
+            array_including(:c, 'incr', 'none'),
+            1
+          )
+          subject.add(:c, 'incr', 1)
+        end
+
+        context 'for set metrics' do
+          before { subject.add(:s, 'set', 'foo') }
+
+          it 'proxies bucket key and value 0 when existing element' do
+            expect(span.metrics_local_aggregator).to receive(:add).with(
+              array_including(:s, 'set', 'none'),
+              0
+            )
+            subject.add(:s, 'set', 'foo')
+          end
+
+          it 'proxies bucket key and value 1 when new element' do
+            expect(span.metrics_local_aggregator).to receive(:add).with(
+              array_including(:s, 'set', 'none'),
+              1
+            )
+            subject.add(:s, 'set', 'bar')
+          end
+        end
+      end
+    end
   end
 
   describe '#flush' do

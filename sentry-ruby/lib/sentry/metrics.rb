@@ -14,6 +14,8 @@ module Sentry
     INFORMATION_UNITS = %w[bit byte kilobyte kibibyte megabyte mebibyte gigabyte gibibyte terabyte tebibyte petabyte pebibyte exabyte exbibyte]
     FRACTIONAL_UNITS = %w[ratio percent]
 
+    OP_NAME = 'metric.timing'
+
     class << self
       def increment(key, value = 1.0, unit: 'none', tags: {}, timestamp: nil)
         Sentry.metrics_aggregator&.add(:c, key, value, unit: unit, tags: tags, timestamp: timestamp)
@@ -32,15 +34,18 @@ module Sentry
       end
 
       def timing(key, unit: 'second', tags: {}, timestamp: nil, &block)
-        return unless Sentry.metrics_aggregator
         return unless block_given?
         return unless DURATION_UNITS.include?(unit)
 
-        start = Timing.send(unit.to_sym)
-        yield
-        value = Timing.send(unit.to_sym) - start
+        Sentry.with_child_span(op: OP_NAME, description: key) do |span|
+          tags.each { |k, v| span.set_tag(k, v.is_a?(Array) ? v.join(', ') : v.to_s) } if span
 
-        Sentry.metrics_aggregator.add(:d, key, value, unit: unit, tags: tags, timestamp: timestamp)
+          start = Timing.send(unit.to_sym)
+          yield
+          value = Timing.send(unit.to_sym) - start
+
+          Sentry.metrics_aggregator&.add(:d, key, value, unit: unit, tags: tags, timestamp: timestamp)
+        end
       end
     end
   end
