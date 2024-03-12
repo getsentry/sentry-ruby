@@ -651,4 +651,16 @@ RSpec.describe Sentry::Transaction do
       expect(subject.contexts).to eq({ foo: { bar: 42 } })
     end
   end
+
+  describe "#source_low_quality?" do
+    it "returns true when :url" do
+      subject.set_name('foo', source: :url)
+      expect(subject.source_low_quality?).to eq(true)
+    end
+
+    it "returns false otherwise" do
+      subject.set_name('foo', source: :view)
+      expect(subject.source_low_quality?).to eq(false)
+    end
+  end
 end

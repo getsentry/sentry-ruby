@@ -8,6 +8,7 @@ require "sentry/dsn"
 require "sentry/release_detector"
 require "sentry/transport/configuration"
 require "sentry/cron/configuration"
+require "sentry/metrics/configuration"
 require "sentry/linecache"
 require "sentry/interfaces/stacktrace_builder"
 
@@ -235,6 +236,10 @@ module Sentry
     # @return [Cron::Configuration]
     attr_reader :cron
 
+    # Metrics related configuration.
+    # @return [Metrics::Configuration]
+    attr_reader :metrics
+
     # Take a float between 0.0 and 1.0 as the sample rate for tracing events (transactions).
     # @return [Float, nil]
     attr_reader :traces_sample_rate
@@ -386,6 +391,7 @@ module Sentry
 
       @transport = Transport::Configuration.new
       @cron = Cron::Configuration.new
+      @metrics = Metrics::Configuration.new
       @gem_specs = Hash[Gem::Specification.map { |spec| [spec.name, spec.version.to_s] }] if Gem::Specification.respond_to?(:map)
 
       run_post_initialization_callbacks
