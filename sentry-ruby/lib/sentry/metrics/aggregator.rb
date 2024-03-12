@@ -23,7 +23,7 @@ module Sentry
       }
 
       # exposed only for testing
-      attr_reader :thread, :buckets, :flush_shift
+      attr_reader :thread, :buckets, :flush_shift, :code_locations
 
       def initialize(configuration, client)
         @client = client
@@ -55,7 +55,8 @@ module Sentry
               value,
               unit: 'none',
               tags: {},
-              timestamp: nil)
+              timestamp: nil,
+              stacklevel: nil)
         return unless ensure_thread
         return unless METRIC_TYPES.keys.include?(type)
 
@@ -72,7 +73,7 @@ module Sentry
         bucket_key = [type, key, unit, serialized_tags]
 
         added = @mutex.synchronize do
-          record_code_location(type, key, unit, timestamp) if @enable_code_locations
+          record_code_location(type, key, unit, timestamp, stacklevel: stacklevel) if @enable_code_locations
           process_bucket(bucket_timestamp, bucket_key, type, value)
         end
 
@@ -247,13 +248,12 @@ module Sentry
         end
       end
 
-      # TODO-neel-metrics stacklevel
-      def record_code_location(type, key, unit, timestamp)
+      def record_code_location(type, key, unit, timestamp, stacklevel: nil)
         meta_key =  [type, key, unit]
         start_of_day = Time.utc(timestamp.year, timestamp.month, timestamp.day).to_i
 
         @code_locations[start_of_day] ||= {}
-        @code_locations[start_of_day][meta_key] ||= @stacktrace_builder.metrics_code_location(caller[DEFAULT_STACKLEVEL])
+        @code_locations[start_of_day][meta_key] ||= @stacktrace_builder.metrics_code_location(caller[stacklevel || DEFAULT_STACKLEVEL])
       end
     end
   end

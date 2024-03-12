@@ -10,6 +10,7 @@
   - Add `Sentry::Metrics.timing` API for measuring block duration [#2254](https://github.com/getsentry/sentry-ruby/pull/2254)
   - Add metric summaries on spans [#2255](https://github.com/getsentry/sentry-ruby/pull/2255)
   - Add `config.metrics.before_emit` callback [#2258](https://github.com/getsentry/sentry-ruby/pull/2258)
+  - Add code locations for metrics [#2263](https://github.com/getsentry/sentry-ruby/pull/2263)
 
     The SDK now supports recording and aggregating metrics. A new thread will be started
     for aggregation and will flush the pending data to Sentry every 5 seconds.
@@ -45,17 +46,30 @@
     Sentry::Metrics.timing('how_long') { sleep(1) }
     # timing - measure duration of code block in other duraton units
     Sentry::Metrics.timing('how_long_ms', unit: 'millisecond') { sleep(0.5) }
+    ```
 
-    # add a before_emit callback to filter keys or update tags
+    You can filter some keys or update tags on the fly with the `before_emit` callback, which will be triggered before a metric is aggregated.
+
+    ```ruby
     Sentry.init do |config|
       # ...
-      config.metrics.enabled = true
+      # the 'foo' metric will be filtered and the tags will be updated to add :bar and remove :baz
       config.metrics.before_emit = lambda do |key, tags|
         return nil if key == 'foo'
         tags[:bar] = 42
         tags.delete(:baz)
         true
       end
+    end
+    ```
+
+    By default, the SDK will send code locations for unique metrics (defined by type, key and unit) once a day and with every startup/shutdown of your application.
+    You can turn this off with the following:
+
+    ```ruby
+    Sentry.init do |config|
+      # ...
+      config.metrics.enable_code_locations = false
     end
     ```
 

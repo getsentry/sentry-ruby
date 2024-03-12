@@ -35,17 +35,20 @@ module Sentry
 
       def timing(key, unit: 'second', tags: {}, timestamp: nil, &block)
         return unless block_given?
-        return unless DURATION_UNITS.include?(unit)
+        return yield unless DURATION_UNITS.include?(unit)
 
-        Sentry.with_child_span(op: OP_NAME, description: key) do |span|
+        result, value = Sentry.with_child_span(op: OP_NAME, description: key) do |span|
           tags.each { |k, v| span.set_tag(k, v.is_a?(Array) ? v.join(', ') : v.to_s) } if span
 
           start = Timing.send(unit.to_sym)
-          yield
+          result = yield
           value = Timing.send(unit.to_sym) - start
 
-          Sentry.metrics_aggregator&.add(:d, key, value, unit: unit, tags: tags, timestamp: timestamp)
+          [result, value]
         end
+
+        Sentry.metrics_aggregator&.add(:d, key, value, unit: unit, tags: tags, timestamp: timestamp)
+        result
       end
     end
   end

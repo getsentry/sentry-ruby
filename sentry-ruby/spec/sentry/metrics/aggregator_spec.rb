@@ -270,10 +270,58 @@ RSpec.describe Sentry::Metrics::Aggregator do
         end
       end
     end
+
+    describe 'code location reporting' do
+      it 'does not record location if off' do
+        perform_basic_setup do |config|
+          config.metrics.enabled = true
+          config.metrics.enable_code_locations = false
+        end
+
+        subject.add(:c, 'incr', 1)
+        expect(subject.code_locations).to eq({})
+      end
+
+      it 'records the code location with a timestamp for the day' do
+        subject.add(:c, 'incr', 1, unit: 'second', stacklevel: 3)
+
+        timestamp = Time.now.utc
+        start_of_day = Time.utc(timestamp.year, timestamp.month, timestamp.day).to_i
+        expect(subject.code_locations.keys.first).to eq(start_of_day)
+      end
+
+      it 'has the code location keyed with mri (metric resource identifier) from type/key/unit'  do
+        subject.add(:c, 'incr', 1, unit: 'second', stacklevel: 3)
+        mri = subject.code_locations.values.first.keys.first
+        expect(mri).to eq([:c, 'incr', 'second'])
+      end
+
+      it 'has the code location information in the hash' do
+        subject.add(:c, 'incr', 1, unit: 'second', stacklevel: 3)
+
+        location = subject.code_locations.values.first.values.first
+        expect(location).to include(:abs_path, :filename, :pre_context, :context_line, :post_context, :lineno)
+        expect(location[:abs_path]).to match(/aggregator_spec.rb/)
+        expect(location[:filename]).to match(/aggregator_spec.rb/)
+        expect(location[:context_line]).to include("subject.add(:c, 'incr', 1, unit: 'second', stacklevel: 3)")
+      end
+
+      it 'does not add code location for the same mri twice' do
+        subject.add(:c, 'incr', 1, unit: 'second', stacklevel: 3)
+        subject.add(:c, 'incr', 1, unit: 'second', stacklevel: 3)
+        expect(subject.code_locations.values.first.size).to eq(1)
+      end
+
+      it 'adds code location for different mris twice' do
+        subject.add(:c, 'incr', 1, unit: 'second', stacklevel: 3)
+        subject.add(:c, 'incr', 1, unit: 'none', stacklevel: 3)
+        expect(subject.code_locations.values.first.size).to eq(2)
+      end
+    end
   end
 
   describe '#flush' do
-    context 'with empty buckets' do
+    context 'with empty buckets and empty locations' do
       it 'returns early and does nothing' do
         expect(sentry_envelopes.count).to eq(0)
         subject.flush
@@ -289,11 +337,11 @@ RSpec.describe Sentry::Metrics::Aggregator do
       before do
         allow(Time).to receive(:now).and_return(fake_time)
         10.times { subject.add(:c, 'incr', 1) }
-        5.times { |i| subject.add(:d, 'dist', i, unit: 'second', tags: { "foö$-bar" => "snöwmän% 23{}" }) }
+        5.times { |i| subject.add(:d, 'disöt', i, unit: 'second', tags: { "foö$-bar" => "snöwmän% 23{}" }) }
 
         allow(Time).to receive(:now).and_return(fake_time + 9)
         5.times { subject.add(:c, 'incr', 1) }
-        5.times { |i| subject.add(:d, 'dist', i + 5, unit: 'second', tags: { "foö$-bar" => "snöwmän% 23{}" }) }
+        5.times { |i| subject.add(:d, 'disöt', i + 5, unit: 'second', tags: { "foö$-bar" => "snöwmän% 23{}" }) }
 
         expect(subject.buckets.keys).to eq([fake_time.to_i - 3, fake_time.to_i + 7])
         expect(subject.buckets.values[0].length).to eq(2)
@@ -309,6 +357,11 @@ RSpec.describe Sentry::Metrics::Aggregator do
 
           expect(subject.buckets.keys).to eq([fake_time.to_i + 7])
           expect(subject.buckets.values[0].length).to eq(2)
+        end
+
+        it 'empties the pending code locations in place' do
+          subject.flush
+          expect(subject.code_locations).to eq({})
         end
 
         it 'calls the background worker' do
@@ -327,9 +380,31 @@ RSpec.describe Sentry::Metrics::Aggregator do
 
           incr, dist = item.payload.split("\n")
           expect(incr).to eq("incr@none:10.0|c|#environment:test,release:test-release|T#{fake_time.to_i - 3}")
-          expect(dist).to eq("dist@second:0.0:1.0:2.0:3.0:4.0|d|" +
+          expect(dist).to eq("dis_t@second:0.0:1.0:2.0:3.0:4.0|d|" +
                              "#environment:test,fo_-bar:snöwmän 23{},release:test-release|" +
                              "T#{fake_time.to_i - 3}")
+        end
+
+        it 'sends the pending code locations in metric_meta envelope item with correct payload' do
+          subject.flush
+
+          envelope = sentry_envelopes.first
+          expect(envelope.headers).to eq({})
+
+          item = envelope.items.last
+          expect(item.headers).to eq({ type: 'metric_meta', content_type: 'application/json' })
+          expect(item.payload[:timestamp]).to be_a(Integer)
+
+          mapping = item.payload[:mapping]
+          expect(mapping.keys).to eq(['c:incr@none', 'd:dis_t@second'])
+
+          location_1 = mapping['c:incr@none'].first
+          expect(location_1[:type]).to eq('location')
+          expect(location_1).to include(:abs_path, :filename, :lineno)
+
+          location_2 = mapping['d:dis_t@second'].first
+          expect(location_2[:type]).to eq('location')
+          expect(location_2).to include(:abs_path, :filename, :lineno)
         end
       end
 
@@ -355,11 +430,11 @@ RSpec.describe Sentry::Metrics::Aggregator do
 
           incr1, dist1, incr2, dist2 = item.payload.split("\n")
           expect(incr1).to eq("incr@none:10.0|c|#environment:test,release:test-release|T#{fake_time.to_i - 3}")
-          expect(dist1).to eq("dist@second:0.0:1.0:2.0:3.0:4.0|d|" +
+          expect(dist1).to eq("dis_t@second:0.0:1.0:2.0:3.0:4.0|d|" +
                              "#environment:test,fo_-bar:snöwmän 23{},release:test-release|" +
                              "T#{fake_time.to_i - 3}")
           expect(incr2).to eq("incr@none:5.0|c|#environment:test,release:test-release|T#{fake_time.to_i + 7}")
-          expect(dist2).to eq("dist@second:5.0:6.0:7.0:8.0:9.0|d|" +
+          expect(dist2).to eq("dis_t@second:5.0:6.0:7.0:8.0:9.0|d|" +
                              "#environment:test,fo_-bar:snöwmän 23{},release:test-release|" +
                              "T#{fake_time.to_i + 7}")
         end

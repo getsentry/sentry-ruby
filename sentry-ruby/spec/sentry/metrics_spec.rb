@@ -91,7 +91,8 @@ RSpec.describe Sentry::Metrics do
 
     it 'does nothing with a non-duration unit' do
       expect(aggregator).not_to receive(:add)
-      described_class.timing('foo', unit: 'ratio') { }
+      result = described_class.timing('foo', unit: 'ratio') { 42 }
+      expect(result).to eq(42)
     end
 
     it 'measures time taken as distribution and passes through args to aggregator' do
@@ -104,7 +105,8 @@ RSpec.describe Sentry::Metrics do
         timestamp: fake_time
       )
 
-      described_class.timing('foo', unit: 'millisecond', tags: { fortytwo: 42 }, timestamp: fake_time) { sleep(0.1) }
+      result = described_class.timing('foo', unit: 'millisecond', tags: { fortytwo: 42 }, timestamp: fake_time) { sleep(0.1); 42 }
+      expect(result).to eq(42)
     end
 
     context 'with running transaction' do
