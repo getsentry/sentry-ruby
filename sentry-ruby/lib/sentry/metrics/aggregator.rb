@@ -8,6 +8,10 @@ module Sentry
       FLUSH_INTERVAL = 5
       ROLLUP_IN_SECONDS = 10
 
+      # this is how far removed from user code in the backtrace we are
+      # when we record code locations
+      DEFAULT_STACKLEVEL = 4
+
       KEY_SANITIZATION_REGEX = /[^a-zA-Z0-9_\/.-]+/
       VALUE_SANITIZATION_REGEX = /[^[[:word:]][[:digit:]][[:space:]]_:\/@\.{}\[\]$-]+/
 
@@ -19,12 +23,14 @@ module Sentry
       }
 
       # exposed only for testing
-      attr_reader :thread, :buckets, :flush_shift
+      attr_reader :thread, :buckets, :flush_shift, :code_locations
 
       def initialize(configuration, client)
         @client = client
         @logger = configuration.logger
         @before_emit = configuration.metrics.before_emit
+        @enable_code_locations = configuration.metrics.enable_code_locations
+        @stacktrace_builder = configuration.stacktrace_builder
 
         @default_tags = {}
         @default_tags['release'] = configuration.release if configuration.release
@@ -34,11 +40,14 @@ module Sentry
         @exited = false
         @mutex = Mutex.new
 
-        # buckets are a nested hash of timestamp -> bucket keys -> Metric instance
+        # a nested hash of timestamp -> bucket keys -> Metric instance
         @buckets = {}
 
         # the flush interval needs to be shifted once per startup to create jittering
         @flush_shift = Random.rand * ROLLUP_IN_SECONDS
+
+        # a nested hash of timestamp (start of day) -> meta keys -> frame
+        @code_locations = {}
       end
 
       def add(type,
@@ -46,35 +55,26 @@ module Sentry
               value,
               unit: 'none',
               tags: {},
-              timestamp: nil)
+              timestamp: nil,
+              stacklevel: nil)
         return unless ensure_thread
         return unless METRIC_TYPES.keys.include?(type)
 
-        timestamp = timestamp.to_i if timestamp.is_a?(Time)
-        timestamp ||= Sentry.utc_now.to_i
+        updated_tags = get_updated_tags(tags)
+        return if @before_emit && !@before_emit.call(key, updated_tags)
+
+        timestamp ||= Sentry.utc_now
 
         # this is integer division and thus takes the floor of the division
         # and buckets into 10 second intervals
-        bucket_timestamp = (timestamp / ROLLUP_IN_SECONDS) * ROLLUP_IN_SECONDS
-        updated_tags = get_updated_tags(tags)
-
-        return if @before_emit && !@before_emit.call(key, updated_tags)
+        bucket_timestamp = (timestamp.to_i / ROLLUP_IN_SECONDS) * ROLLUP_IN_SECONDS
 
         serialized_tags = serialize_tags(updated_tags)
         bucket_key = [type, key, unit, serialized_tags]
 
         added = @mutex.synchronize do
-          @buckets[bucket_timestamp] ||= {}
-
-          if (metric = @buckets[bucket_timestamp][bucket_key])
-            old_weight = metric.weight
-            metric.add(value)
-            metric.weight - old_weight
-          else
-            metric = METRIC_TYPES[type].new(value)
-            @buckets[bucket_timestamp][bucket_key] = metric
-            metric.weight
-          end
+          record_code_location(type, key, unit, timestamp, stacklevel: stacklevel) if @enable_code_locations
+          process_bucket(bucket_timestamp, bucket_key, type, value)
         end
 
         # for sets, we pass on if there was a new entry to the local gauge
@@ -84,14 +84,28 @@ module Sentry
 
       def flush(force: false)
         flushable_buckets = get_flushable_buckets!(force)
-        return if flushable_buckets.empty?
+        code_locations = get_code_locations!
+        return if flushable_buckets.empty? && code_locations.empty?
 
-        payload = serialize_buckets(flushable_buckets)
         envelope = Envelope.new
-        envelope.add_item(
-          { type: 'statsd', length: payload.bytesize },
-          payload
-        )
+
+        unless flushable_buckets.empty?
+          payload = serialize_buckets(flushable_buckets)
+          envelope.add_item(
+            { type: 'statsd', length: payload.bytesize },
+            payload
+          )
+        end
+
+        unless code_locations.empty?
+          code_locations.each do |timestamp, locations|
+            payload = serialize_locations(timestamp, locations)
+            envelope.add_item(
+              { type: 'metric_meta', content_type: 'application/json' },
+              payload
+            )
+          end
+        end
 
         Sentry.background_worker.perform do
           @client.transport.send_envelope(envelope)
@@ -154,6 +168,14 @@ module Sentry
         end
       end
 
+      def get_code_locations!
+        @mutex.synchronize do
+          code_locations = @code_locations
+          @code_locations = {}
+          code_locations
+        end
+      end
+
       # serialize buckets to statsd format
       def serialize_buckets(buckets)
         buckets.map do |timestamp, timestamp_buckets|
@@ -165,6 +187,18 @@ module Sentry
             "#{sanitize_key(key)}@#{unit}:#{values}|#{type}|\##{sanitized_tags}|T#{timestamp}"
           end
         end.flatten.join("\n")
+      end
+
+      def serialize_locations(timestamp, locations)
+        mapping = locations.map do |meta_key, location|
+          type, key, unit = meta_key
+          mri = "#{type}:#{sanitize_key(key)}@#{unit}"
+
+          # note this needs to be an array but it really doesn't serve a purpose right now
+          [mri, [location.merge(type: 'location')]]
+        end.to_h
+
+        { timestamp: timestamp, mapping: mapping }
       end
 
       def sanitize_key(key)
@@ -198,6 +232,28 @@ module Sentry
         return nil if scope.transaction_source_low_quality?
 
         scope.span.metrics_local_aggregator.add(key, value)
+      end
+
+      def process_bucket(timestamp, key, type, value)
+        @buckets[timestamp] ||= {}
+
+        if (metric = @buckets[timestamp][key])
+          old_weight = metric.weight
+          metric.add(value)
+          metric.weight - old_weight
+        else
+          metric = METRIC_TYPES[type].new(value)
+          @buckets[timestamp][key] = metric
+          metric.weight
+        end
+      end
+
+      def record_code_location(type, key, unit, timestamp, stacklevel: nil)
+        meta_key =  [type, key, unit]
+        start_of_day = Time.utc(timestamp.year, timestamp.month, timestamp.day).to_i
+
+        @code_locations[start_of_day] ||= {}
+        @code_locations[start_of_day][meta_key] ||= @stacktrace_builder.metrics_code_location(caller[stacklevel || DEFAULT_STACKLEVEL])
       end
     end
   end

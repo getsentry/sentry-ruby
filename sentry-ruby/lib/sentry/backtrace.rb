@@ -35,7 +35,7 @@ module Sentry
       # Parses a single line of a given backtrace
       # @param [String] unparsed_line The raw line from +caller+ or some backtrace
       # @return [Line] The parsed backtrace line
-      def self.parse(unparsed_line, in_app_pattern)
+      def self.parse(unparsed_line, in_app_pattern = nil)
         ruby_match = unparsed_line.match(RUBY_INPUT_FORMAT)
         if ruby_match
           _, file, number, _, method = ruby_match.to_a
@@ -57,6 +57,8 @@ module Sentry
       end
 
       def in_app
+        return false unless in_app_pattern
+
         if file =~ in_app_pattern
           true
         else
