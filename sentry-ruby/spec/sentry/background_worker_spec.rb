@@ -62,7 +62,7 @@ RSpec.describe Sentry::BackgroundWorker do
         expect(worker.number_of_threads).to eq(5)
 
         expect(string_io.string).to match(
-          /Initializing the background worker with 5 threads/
+          /Initializing the Sentry background worker with 5 threads/
         )
       end
     end

@@ -31,7 +31,7 @@ module Sentry
           log_debug("config.background_worker_threads is set to 0, all events will be sent synchronously")
           Concurrent::ImmediateExecutor.new
         else
-          log_debug("Initializing the background worker with #{@number_of_threads} threads")
+          log_debug("Initializing the Sentry background worker with #{@number_of_threads} threads")
 
           executor = Concurrent::ThreadPoolExecutor.new(
             min_threads: 0,
