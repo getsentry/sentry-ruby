@@ -485,9 +485,13 @@ module Sentry
     end
 
     def sending_allowed?
+      spotlight || sending_to_dsn_allowed?
+    end
+
+    def sending_to_dsn_allowed?
       @errors = []
 
-      spotlight || (valid? && capture_in_environment?)
+      valid? && capture_in_environment?
     end
 
     def sample_allowed?

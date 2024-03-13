@@ -276,6 +276,17 @@ RSpec.describe Sentry::Configuration do
       subject.spotlight = true
       expect(subject.sending_allowed?).to eq(true)
     end
+
+    it "true when sending to dsn allowed" do
+      allow(subject).to receive(:sending_to_dsn_allowed?).and_return(true)
+      expect(subject.sending_allowed?).to eq(true)
+    end
+
+    it "false when no spotlight and sending to dsn not allowed" do
+      allow(subject).to receive(:sending_to_dsn_allowed?).and_return(false)
+      subject.spotlight = false
+      expect(subject.sending_allowed?).to eq(false)
+    end
   end
 
   context 'configuring for async' do

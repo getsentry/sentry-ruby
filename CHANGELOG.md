@@ -79,6 +79,8 @@
 - Only instantiate SessionFlusher when the SDK is enabled under the current env [#2245](https://github.com/getsentry/sentry-ruby/pull/2245)
   - Fixes [#2234](https://github.com/getsentry/sentry-ruby/issues/2234)
 - Update backtrace parsing regexp to support Ruby 3.4 ([#2252](https://github.com/getsentry/sentry-ruby/pull/2252))
+- Make sure ``sending_allowed?`` is respected irrespective of spotlight configuration ([#2231](https://github.com/getsentry/sentry-ruby/pull/2231))
+  - Fixes [#2226](https://github.com/getsentry/sentry-ruby/issues/2226)
 
 ## 5.16.1
 
