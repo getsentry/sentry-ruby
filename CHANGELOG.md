@@ -73,6 +73,10 @@
     end
     ```
 
+### Features
+
+- Include `Delayed::Job` instance in hint [#1861](https://github.com/getsentry/sentry-ruby/pull/1861)
+
 ### Bug Fixes
 
 - Fix undefined method 'constantize' issue in `sentry-resque` ([#2248](https://github.com/getsentry/sentry-ruby/pull/2248))
