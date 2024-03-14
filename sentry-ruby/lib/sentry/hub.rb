@@ -245,7 +245,7 @@ module Sentry
     end
 
     def with_session_tracking(&block)
-      return yield unless configuration.auto_session_tracking
+      return yield unless configuration.session_tracking?
 
       start_session
       yield
