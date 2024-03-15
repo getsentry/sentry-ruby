@@ -1,4 +1,6 @@
-## Unreleased
+## 5.17.1
+
+### Bug Fixes
 
 - Fix NoMethodError / Make session_tracking check consistent ([#2269](https://github.com/getsentry/sentry-ruby/pull/2269))
 
