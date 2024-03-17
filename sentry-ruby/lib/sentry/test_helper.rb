@@ -20,7 +20,7 @@ module Sentry
       # set transport to DummyTransport, so we can easily intercept the captured events
       dummy_config.transport.transport_class = Sentry::DummyTransport
       # make sure SDK allows sending under the current environment
-      dummy_config.enabled_environments << dummy_config.environment unless dummy_config.enabled_environments.include?(dummy_config.environment)
+      dummy_config.enabled_environments |= [dummy_config.environment] unless dummy_config.enabled_environments.include?(dummy_config.environment)
       # disble async event sending
       dummy_config.background_worker_threads = 0
 

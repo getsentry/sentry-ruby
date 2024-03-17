@@ -3,6 +3,7 @@
 ### Bug Fixes
 
 - Don't instantiate connection in `ActiveRecordSubscriber` ([#2278](https://github.com/getsentry/sentry-ruby/pull/2278))
+- Don't mutate original `enabled_environments` when using test helpers ([#2275](https://github.com/getsentry/sentry-ruby/pull/2275))
 
 ## 5.17.1
 
