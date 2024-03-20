@@ -1,3 +1,9 @@
+## Unreleased
+
+### Bug Fixes
+
+- Don't instantiate connection in `ActiveRecordSubscriber` ([#2278](https://github.com/getsentry/sentry-ruby/pull/2278))
+
 ## 5.17.1
 
 ### Bug Fixes
