@@ -21,8 +21,7 @@ module Sentry
                 span.set_data(:connection_id, payload[:connection_id])
 
                 # we fallback to the base connection on rails < 6.0.0 since the payload doesn't have it
-                base_connection = ActiveRecord::Base.connection
-                connection ||= base_connection if payload[:connection_id] == base_connection.object_id
+                connection ||= ActiveRecord::Base.connection_pool.connections.find { |conn| conn.object_id == payload[:connection_id] }
               end
 
               next unless connection
