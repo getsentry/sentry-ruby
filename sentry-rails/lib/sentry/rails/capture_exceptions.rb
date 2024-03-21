@@ -2,6 +2,7 @@ module Sentry
   module Rails
     class CaptureExceptions < Sentry::Rack::CaptureExceptions
       RAILS_7_1 = Gem::Version.new(::Rails.version) >= Gem::Version.new("7.1.0.alpha")
+      IGNORED_HTTP_METHODS = ["HEAD", "OPTIONS"].freeze
 
       def initialize(_)
         super
@@ -32,6 +33,8 @@ module Sentry
       end
 
       def start_transaction(env, scope)
+        return nil if IGNORED_HTTP_METHODS.include?(env["REQUEST_METHOD"])
+
         options = { name: scope.transaction_name, source: scope.transaction_source, op: transaction_op }
 
         if @assets_regexp && scope.transaction_name.match?(@assets_regexp)

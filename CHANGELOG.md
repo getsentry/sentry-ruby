@@ -140,6 +140,10 @@
 - Pick up config.cron.default_timezone from Rails config [#2213](https://github.com/getsentry/sentry-ruby/pull/2213)
 - Don't add most scope data (tags/extra/breadcrumbs) to `CheckInEvent` [#2217](https://github.com/getsentry/sentry-ruby/pull/2217)
 
+### Bug Fixes
+
+- Sentry will not record traces of HTTP OPTIONS and HEAD requests in Rack and Rails apps [#2181](https://github.com/getsentry/sentry-ruby/pull/2181)
+
 ## 5.15.2
 
 ### Bug Fixes

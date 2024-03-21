@@ -3,6 +3,7 @@ module Sentry
     module ActionCableExtensions
       class ErrorHandler
         OP_NAME = "websocket.server".freeze
+        IGNORED_HTTP_METHODS = ["HEAD", "OPTIONS"].freeze
 
         class << self
           def capture(connection, transaction_name:, extra_context: nil, &block)
@@ -33,6 +34,8 @@ module Sentry
           end
 
           def start_transaction(env, scope)
+            return nil if IGNORED_HTTP_METHODS.include?(env["REQUEST_METHOD"])
+
             options = { name: scope.transaction_name, source: scope.transaction_source, op: OP_NAME }
             transaction = Sentry.continue_trace(env, **options)
             Sentry.start_transaction(transaction: transaction, **options)
