@@ -72,8 +72,8 @@ module Sentry
     end
 
     def configure_cron_timezone
-      tz_info = ::ActiveSupport::TimeZone.find_tzinfo(::Rails.application.config.time_zone)
-      Sentry.configuration.cron.default_timezone = tz_info.name
+      tz_info = ::ActiveSupport::TimeZone.find_tzinfo(::Rails.application.config.time_zone.name)
+      Sentry.configuration.cron.default_timezone = tz_info
     end
 
     def extend_controller_methods
