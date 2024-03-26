@@ -27,12 +27,12 @@ module Sentry
     end
 
     # @!visibility private
-    def add_exception_interface(exception)
+    def add_exception_interface(exception, mechanism:)
       if exception.respond_to?(:sentry_context)
         @extra.merge!(exception.sentry_context)
       end
 
-      @exception = Sentry::ExceptionInterface.build(exception: exception, stacktrace_builder: @stacktrace_builder)
+      @exception = Sentry::ExceptionInterface.build(exception: exception, stacktrace_builder: @stacktrace_builder, mechanism: mechanism)
     end
   end
 end

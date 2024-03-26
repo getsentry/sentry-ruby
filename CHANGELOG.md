@@ -1,5 +1,9 @@
 ## Unreleased
 
+### Features
+
+- Add `Mechanism` interface and default to unhandled for integration exceptions [#2280](https://github.com/getsentry/sentry-ruby/pull/2280)
+
 ### Bug Fixes
 
 - Don't instantiate connection in `ActiveRecordSubscriber` ([#2278](https://github.com/getsentry/sentry-ruby/pull/2278))

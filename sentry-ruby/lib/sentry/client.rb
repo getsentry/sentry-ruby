@@ -80,8 +80,9 @@ module Sentry
     # Initializes an Event object with the given exception. Returns `nil` if the exception's class is excluded from reporting.
     # @param exception [Exception] the exception to be reported.
     # @param hint [Hash] the hint data that'll be passed to `before_send` callback and the scope's event processors.
+    # @param mechanism [Mechanism] the mechanism that holds a type and whether the exception was handled or not.
     # @return [Event, nil]
-    def event_from_exception(exception, hint = {})
+    def event_from_exception(exception, hint = {}, mechanism = nil)
       return unless @configuration.sending_allowed?
 
       ignore_exclusions = hint.delete(:ignore_exclusions) { false }
@@ -90,7 +91,7 @@ module Sentry
       integration_meta = Sentry.integrations[hint[:integration]]
 
       ErrorEvent.new(configuration: configuration, integration_meta: integration_meta).tap do |event|
-        event.add_exception_interface(exception)
+        event.add_exception_interface(exception, mechanism: mechanism || Mechanism.new)
         event.add_threads_interface(crashed: true)
         event.level = :error
       end
