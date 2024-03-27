@@ -4,9 +4,8 @@ module Sentry
   class Session
     attr_reader :started, :status, :aggregation_key
 
-    # TODO-neel add :crashed after adding handled mechanism
-    STATUSES = %i[ok errored exited]
-    AGGREGATE_STATUSES = %i[errored exited]
+    STATUSES = %i[ok errored crashed exited]
+    AGGREGATE_STATUSES = %i[errored crashed exited]
 
     def initialize
       @started = Sentry.utc_now
@@ -17,9 +16,11 @@ module Sentry
       @aggregation_key = Time.utc(@started.year, @started.month, @started.day, @started.hour, @started.min)
     end
 
-    # TODO-neel add :crashed after adding handled mechanism
-    def update_from_exception(_exception = nil)
-      @status = :errored
+    def update_from_error_event(event)
+      return unless event.is_a?(ErrorEvent) && event.exception
+
+      crashed = event.exception.values.any? { |e| e.mechanism.handled == false }
+      @status = crashed ? :crashed : :errored
     end
 
     def close

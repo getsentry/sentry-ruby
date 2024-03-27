@@ -640,8 +640,16 @@ RSpec.describe Sentry::Rack::CaptureExceptions, rack: true do
           case req.path_info
           when /success/
             [200, {}, ['ok']]
-          when /error/
+          when /crash/
             1 / 0
+          when /error/
+            begin
+              1 / 0
+            rescue => e
+              Sentry.capture_exception(e)
+            end
+
+            [200, {}, ['error']]
           end
         end
 
@@ -658,12 +666,17 @@ RSpec.describe Sentry::Rack::CaptureExceptions, rack: true do
             stack.call(env)
           end
 
-          2.times do
-            env = Rack::MockRequest.env_for('/error')
+          3.times do
+            env = Rack::MockRequest.env_for('/crash')
             expect { stack.call(env) }.to raise_error(ZeroDivisionError)
           end
 
-          expect(sentry_events.count).to eq(2)
+          2.times do
+            env = Rack::MockRequest.env_for('/error')
+            stack.call(env)
+          end
+
+          expect(sentry_events.count).to eq(5)
 
           Sentry.session_flusher.flush
 
@@ -674,7 +687,7 @@ RSpec.describe Sentry::Rack::CaptureExceptions, rack: true do
           item = envelope.items.first
           expect(item.type).to eq('sessions')
           expect(item.payload[:attrs]).to eq({ release: 'test-release', environment: 'test' })
-          expect(item.payload[:aggregates].first).to eq({ exited: 10, errored: 2, started: now_bucket.iso8601 })
+          expect(item.payload[:aggregates].first).to eq({ exited: 10, errored: 2, crashed: 3, started: now_bucket.iso8601 })
         end
       end
     end

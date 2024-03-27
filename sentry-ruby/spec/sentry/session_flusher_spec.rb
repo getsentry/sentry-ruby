@@ -5,6 +5,7 @@ RSpec.describe Sentry::SessionFlusher do
 
   let(:configuration) do
     Sentry::Configuration.new.tap do |config|
+      config.dsn = Sentry::TestHelper::DUMMY_DSN
       config.release = 'test-release'
       config.environment = 'test'
       config.transport.transport_class = Sentry::DummyTransport
@@ -50,6 +51,18 @@ RSpec.describe Sentry::SessionFlusher do
         Time.utc(time.year, time.month, time.day, time.hour, time.min)
       end
 
+      let(:handled_event) do
+        exception = Exception.new('test')
+        mech = Sentry::Mechanism.new(type: 'custom', handled: true)
+        client.event_from_exception(exception, {}, mech)
+      end
+
+      let(:unhandled_event) do
+        exception = Exception.new('test')
+        mech = Sentry::Mechanism.new(type: 'custom', handled: false)
+        client.event_from_exception(exception, {}, mech)
+      end
+
       before do
         Timecop.freeze(now) do
           10.times do
@@ -60,7 +73,14 @@ RSpec.describe Sentry::SessionFlusher do
 
           5.times do
             session = Sentry::Session.new
-            session.update_from_exception
+            session.update_from_error_event(handled_event)
+            session.close
+            subject.add_session(session)
+          end
+
+          2.times do
+            session = Sentry::Session.new
+            session.update_from_error_event(unhandled_event)
             session.close
             subject.add_session(session)
           end
@@ -77,7 +97,12 @@ RSpec.describe Sentry::SessionFlusher do
         item = envelope.items.first
         expect(item.type).to eq('sessions')
         expect(item.payload[:attrs]).to eq({ release: 'test-release', environment: 'test' })
-        expect(item.payload[:aggregates].first).to eq({ exited: 10, errored: 5, started: now.iso8601 })
+        expect(item.payload[:aggregates].first).to eq({
+          started: now.iso8601,
+          exited: 10,
+          errored: 5,
+          crashed: 2
+        })
       end
     end
   end
@@ -124,7 +149,7 @@ RSpec.describe Sentry::SessionFlusher do
       subject.add_session(session)
       pending_aggregates = subject.instance_variable_get(:@pending_aggregates)
       expect(pending_aggregates.keys.first).to be_a(Time)
-      expect(pending_aggregates.values.first).to include({ errored: 0, exited: 1 })
+      expect(pending_aggregates.values.first).to include({ errored: 0, crashed: 0, exited: 1 })
     end
 
     context "when thread creation fails" do

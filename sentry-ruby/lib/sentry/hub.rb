@@ -134,7 +134,7 @@ module Sentry
 
       return unless event
 
-      current_scope.session&.update_from_exception(event.exception)
+      current_scope.session&.update_from_error_event(event)
 
       capture_event(event, **options, &block).tap do
         # mark the exception as captured so we can use this information to avoid duplicated capturing

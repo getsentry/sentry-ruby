@@ -3,6 +3,7 @@
 ### Features
 
 - Add `Mechanism` interface and default to unhandled for integration exceptions [#2280](https://github.com/getsentry/sentry-ruby/pull/2280)
+- Use `mechanism` to track crashed sessions for unhandled exceptions [#2281](https://github.com/getsentry/sentry-ruby/pull/2281)
 
 ### Bug Fixes
 
