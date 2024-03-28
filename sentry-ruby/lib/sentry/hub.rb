@@ -128,8 +128,9 @@ module Sentry
 
       options[:hint] ||= {}
       options[:hint][:exception] = exception
+      mechanism = options.delete(:mechanism)
 
-      event = current_client.event_from_exception(exception, options[:hint])
+      event = current_client.event_from_exception(exception, options[:hint], mechanism)
 
       return unless event
 

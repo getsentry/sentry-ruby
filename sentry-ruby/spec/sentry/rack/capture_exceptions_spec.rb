@@ -25,6 +25,17 @@ RSpec.describe Sentry::Rack::CaptureExceptions, rack: true do
       expect(last_frame[:vars]).to eq(nil)
     end
 
+    it 'has the correct mechanism' do
+      app = ->(_e) { raise exception }
+      stack = described_class.new(app)
+
+      expect { stack.call(env) }.to raise_error(ZeroDivisionError)
+
+      event = last_sentry_event.to_hash
+      mechanism = event.dig(:exception, :values, 0, :mechanism)
+      expect(mechanism).to eq({ type: 'rack', handled: false })
+    end
+
     it 'captures the exception from rack.exception' do
       app = lambda do |e|
         e['rack.exception'] = exception

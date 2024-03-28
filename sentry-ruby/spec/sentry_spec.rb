@@ -252,6 +252,25 @@ RSpec.describe Sentry do
       end.to change { sentry_events.count }.by(1)
     end
 
+    describe 'mechanism' do
+      it 'has default mechanism' do
+        event = described_class.capture_exception(exception)
+        mechanism = event.exception.values.first.mechanism
+        expect(mechanism).to be_a(Sentry::Mechanism)
+        expect(mechanism.type).to eq('generic')
+        expect(mechanism.handled).to eq(true)
+      end
+
+      it 'has custom mechanism if passed' do
+        mech = Sentry::Mechanism.new(type: 'custom', handled: false)
+        event = described_class.capture_exception(exception, mechanism: mech)
+        mechanism = event.exception.values.first.mechanism
+        expect(mechanism).to be_a(Sentry::Mechanism)
+        expect(mechanism.type).to eq('custom')
+        expect(mechanism.handled).to eq(false)
+      end
+    end
+
     context "with include_local_variables = false (default)" do
       it "doens't capture local variables" do
         begin
