@@ -53,7 +53,6 @@ jobs:
         with:
           ruby-version: ${{ matrix.ruby_version }}
           bundler-cache: true
-          cache-version: 1
 
       - name: Start Redis
         uses: supercharge/redis-github-action@1.1.0
