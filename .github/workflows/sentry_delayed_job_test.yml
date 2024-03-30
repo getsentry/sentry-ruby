@@ -61,7 +61,6 @@ jobs:
         env:
           RUBYOPT: ${{ matrix.options.rubyopt }}
         run: |
-          bundle install --jobs 4 --retry 3
           bundle exec rake
 
       - name: Upload Coverage
