@@ -55,7 +55,6 @@ jobs:
         uses: ruby/setup-ruby@v1
         with:
           ruby-version: ${{ matrix.ruby_version }}
-          bundler-cache: true
 
       - name: Run specs
         env:
