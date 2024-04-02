@@ -263,7 +263,7 @@ RSpec.describe Sentry do
 
       it 'has custom mechanism if passed' do
         mech = Sentry::Mechanism.new(type: 'custom', handled: false)
-        event = described_class.capture_exception(exception, mechanism: mech)
+        event = described_class.capture_exception(exception, hint: { mechanism: mech })
         mechanism = event.exception.values.first.mechanism
         expect(mechanism).to be_a(Sentry::Mechanism)
         expect(mechanism.type).to eq('custom')

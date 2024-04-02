@@ -16,7 +16,7 @@ module Sentry
       options[:hint][:integration] = integration_name
 
       # within an integration, we usually intercept uncaught exceptions so we set handled to false.
-      options[:mechanism] ||= Sentry::Mechanism.new(type: integration_name, handled: false)
+      options[:hint][:mechanism] ||= Sentry::Mechanism.new(type: integration_name, handled: false)
 
       Sentry.capture_exception(exception, **options, &block)
     end

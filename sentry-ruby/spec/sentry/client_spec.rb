@@ -574,7 +574,7 @@ RSpec.describe Sentry::Client do
 
       it 'has correct custom mechanism when passed' do
         mech = Sentry::Mechanism.new(type: 'custom', handled: false)
-        event = subject.event_from_exception(exception, {}, mech)
+        event = subject.event_from_exception(exception, mechanism: mech)
         hash = event.to_hash
         mechanism = hash[:exception][:values][0][:mechanism]
         expect(mechanism).to eq({ type: 'custom', handled: false })
