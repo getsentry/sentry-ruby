@@ -88,9 +88,10 @@ module Sentry
       return if !ignore_exclusions && !@configuration.exception_class_allowed?(exception)
 
       integration_meta = Sentry.integrations[hint[:integration]]
+      mechanism = hint.delete(:mechanism) { Mechanism.new }
 
       ErrorEvent.new(configuration: configuration, integration_meta: integration_meta).tap do |event|
-        event.add_exception_interface(exception)
+        event.add_exception_interface(exception, mechanism: mechanism)
         event.add_threads_interface(crashed: true)
         event.level = :error
       end

@@ -8,7 +8,9 @@ module Sentry
     module Application
       # @api private
       def display_error_message(ex)
-        Sentry.capture_exception(ex) do |scope|
+        mechanism = Sentry::Mechanism.new(type: 'rake', handled: false)
+
+        Sentry.capture_exception(ex, hint: { mechanism: mechanism }) do |scope|
           task_name = top_level_tasks.join(' ')
           scope.set_transaction_name(task_name, source: :task)
           scope.set_tag("rake_task", task_name)

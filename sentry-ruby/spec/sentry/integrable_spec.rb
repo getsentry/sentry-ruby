@@ -48,15 +48,21 @@ RSpec.describe Sentry::Integrable do
 
     it "generates Sentry::FakeIntegration.capture_exception" do
       hint = nil
+      event = nil
 
-      Sentry.configuration.before_send = lambda do |event, h|
+      Sentry.configuration.before_send = lambda do |e, h|
         hint = h
+        event = e
         event
       end
 
       Sentry::FakeIntegration.capture_exception(exception, hint: { additional_hint: "foo" })
 
       expect(hint).to eq({ additional_hint: "foo", integration: "fake_integration", exception: exception })
+
+      mechanism = event.exception.values.first.mechanism
+      expect(mechanism.type).to eq('fake_integration')
+      expect(mechanism.handled).to eq(false)
     end
 
     it "generates Sentry::FakeIntegration.capture_message" do

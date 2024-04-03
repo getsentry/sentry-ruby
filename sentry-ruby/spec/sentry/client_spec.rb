@@ -395,7 +395,7 @@ RSpec.describe Sentry::Client do
         context "when exclusions overridden with :ignore_exclusions" do
           it 'returns Sentry::ErrorEvent' do
             config.excluded_exceptions << Sentry::Test::BaseExc
-            expect(subject.event_from_exception(Sentry::Test::BaseExc.new, ignore_exclusions: true)).to be_a(Sentry::ErrorEvent)
+            expect(subject.event_from_exception(Sentry::Test::BaseExc.new, { ignore_exclusions: true })).to be_a(Sentry::ErrorEvent)
           end
         end
       end
@@ -563,6 +563,21 @@ RSpec.describe Sentry::Client do
             expect(frames[-1][:vars][:foo]).to eq "local variable \x1F\uFFFD"
           end
         end
+      end
+    end
+
+    describe 'mechanism' do
+      it 'has type generic and handled true by default' do
+        mechanism = hash[:exception][:values][0][:mechanism]
+        expect(mechanism).to eq({ type: 'generic', handled: true })
+      end
+
+      it 'has correct custom mechanism when passed' do
+        mech = Sentry::Mechanism.new(type: 'custom', handled: false)
+        event = subject.event_from_exception(exception, mechanism: mech)
+        hash = event.to_hash
+        mechanism = hash[:exception][:values][0][:mechanism]
+        expect(mechanism).to eq({ type: 'custom', handled: false })
       end
     end
   end
