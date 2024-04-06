@@ -1,7 +1,6 @@
 # frozen_string_literal: true
 
 require "fileutils"
-require "spec_helper"
 require "rails/generators/test_case"
 require "generators/sentry_generator"
 
