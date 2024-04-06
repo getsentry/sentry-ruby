@@ -1,3 +1,11 @@
+## Unreleased
+
+### Features
+
+- Add generator for initializer generation ([#2286](https://github.com/getsentry/sentry-ruby/pull/2286))
+
+  Rails users will be able to use `bin/rails generate sentry` to generate their `config/initializers/sentry.rb` file.
+
 ## 5.17.3
 
 ### Features
