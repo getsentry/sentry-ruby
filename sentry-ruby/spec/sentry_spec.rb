@@ -1084,7 +1084,7 @@ RSpec.describe Sentry do
       end
 
       it "flushes transport" do
-        expect(described_class.get_current_client.transport).to receive(:flush)
+        expect(described_class.get_current_client).to receive(:flush)
         described_class.close
       end
 

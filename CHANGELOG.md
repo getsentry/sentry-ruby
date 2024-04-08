@@ -1,3 +1,10 @@
+## Unreleased
+
+### Bug Fixes
+
+- Make sure isolated envelopes respect `config.enabled_environments` [#2291](https://github.com/getsentry/sentry-ruby/pull/2291)
+  - Fixes [#2287](https://github.com/getsentry/sentry-ruby/issues/2287)
+
 ## 5.17.2
 
 ### Features

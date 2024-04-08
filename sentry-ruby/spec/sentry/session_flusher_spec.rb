@@ -5,6 +5,7 @@ RSpec.describe Sentry::SessionFlusher do
 
   let(:configuration) do
     Sentry::Configuration.new.tap do |config|
+      config.dsn = Sentry::TestHelper::DUMMY_DSN
       config.release = 'test-release'
       config.environment = 'test'
       config.transport.transport_class = Sentry::DummyTransport

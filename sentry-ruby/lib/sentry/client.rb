@@ -77,6 +77,20 @@ module Sentry
       nil
     end
 
+    # Capture an envelope directly.
+    # @param envelope [Envelope] the envelope to be captured.
+    # @return [void]
+    def capture_envelope(envelope)
+      Sentry.background_worker.perform { send_envelope(envelope) }
+    end
+
+    # Flush pending events to Sentry.
+    # @return [void]
+    def flush
+      transport.flush if configuration.sending_to_dsn_allowed?
+      spotlight_transport.flush if spotlight_transport
+    end
+
     # Initializes an Event object with the given exception. Returns `nil` if the exception's class is excluded from reporting.
     # @param exception [Exception] the exception to be reported.
     # @param hint [Hash] the hint data that'll be passed to `before_send` callback and the scope's event processors.
@@ -180,6 +194,19 @@ module Sentry
     rescue => e
       log_error("Event sending failed", e, debug: configuration.debug)
       transport.record_lost_event(:network_error, event_type)
+      raise
+    end
+
+    # Send an envelope directly to Sentry.
+    # @param envelope [Envelope] the envelope to be sent.
+    # @return [void]
+    def send_envelope(envelope)
+      transport.send_envelope(envelope) if configuration.sending_to_dsn_allowed?
+      spotlight_transport.send_envelope(envelope) if spotlight_transport
+    rescue => e
+      # note that we don't record client reports for direct envelope types
+      # such as metrics, sessions etc
+      log_error("Envelope sending failed", e, debug: configuration.debug)
       raise
     end
 

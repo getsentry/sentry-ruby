@@ -364,8 +364,8 @@ RSpec.describe Sentry::Metrics::Aggregator do
           expect(subject.code_locations).to eq({})
         end
 
-        it 'calls the background worker' do
-          expect(Sentry.background_worker).to receive(:perform)
+        it 'captures the envelope' do
+          expect(subject.client).to receive(:capture_envelope)
           subject.flush
         end
 
@@ -414,7 +414,7 @@ RSpec.describe Sentry::Metrics::Aggregator do
           expect(subject.buckets).to eq({})
         end
 
-        it 'calls the background worker' do
+        it 'captures the envelope' do
           expect(Sentry.background_worker).to receive(:perform)
           subject.flush(force: true)
         end
