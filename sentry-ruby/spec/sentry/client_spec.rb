@@ -95,6 +95,67 @@ RSpec.describe Sentry::Client do
     end
   end
 
+  describe '#send_envelope' do
+    let(:envelope) do
+      envelope = Sentry::Envelope.new({ env_header: 1 })
+      envelope.add_item({ item_header: 42 }, { payload: 'test' })
+      envelope
+    end
+
+    it 'does not send envelope to either transport if disabled' do
+      configuration.dsn = nil
+
+      expect(subject.spotlight_transport).not_to receive(:send_envelope)
+      expect(subject.transport).not_to receive(:send_envelope)
+      subject.send_envelope(envelope)
+    end
+
+    it 'sends envelope to main transport if enabled' do
+      expect(subject.transport).to receive(:send_envelope).with(envelope)
+      subject.send_envelope(envelope)
+    end
+
+    it 'sends envelope with spotlight transport if enabled' do
+      configuration.spotlight = true
+
+      expect(subject.spotlight_transport).to receive(:send_envelope).with(envelope)
+      subject.send_envelope(envelope)
+    end
+
+    it 'logs error when transport failure' do
+      string_io = StringIO.new
+      configuration.debug = true
+      configuration.logger = ::Logger.new(string_io)
+      expect(subject.transport).to receive(:send_envelope).and_raise(Sentry::ExternalError.new("networking error"))
+
+      expect do
+        subject.send_envelope(envelope)
+      end.to raise_error(Sentry::ExternalError)
+
+      expect(string_io.string).to match(/Envelope sending failed: networking error/)
+      expect(string_io.string).to match(__FILE__)
+    end
+  end
+
+  describe '#capture_envelope' do
+    let(:envelope) do
+      envelope = Sentry::Envelope.new({ env_header: 1 })
+      envelope.add_item({ item_header: 42 }, { payload: 'test' })
+      envelope
+    end
+
+    before do
+      configuration.background_worker_threads = 0
+      Sentry.background_worker = Sentry::BackgroundWorker.new(configuration)
+    end
+
+    it 'queues envelope to background worker' do
+      expect(Sentry.background_worker).to receive(:perform).and_call_original
+      expect(subject).to receive(:send_envelope).with(envelope)
+      subject.capture_envelope(envelope)
+    end
+  end
+
   describe '#event_from_message' do
     let(:message) { 'This is a message' }
 

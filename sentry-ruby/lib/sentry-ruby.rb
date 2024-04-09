@@ -257,7 +257,7 @@ module Sentry
       end
 
       if client = get_current_client
-        client.transport.flush
+        client.flush
 
         if client.configuration.include_local_variables
           exception_locals_tp.disable

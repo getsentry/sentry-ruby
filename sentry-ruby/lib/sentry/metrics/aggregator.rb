@@ -23,7 +23,7 @@ module Sentry
       }
 
       # exposed only for testing
-      attr_reader :thread, :buckets, :flush_shift, :code_locations
+      attr_reader :client, :thread, :buckets, :flush_shift, :code_locations
 
       def initialize(configuration, client)
         @client = client
@@ -107,9 +107,7 @@ module Sentry
           end
         end
 
-        Sentry.background_worker.perform do
-          @client.transport.send_envelope(envelope)
-        end
+        @client.capture_envelope(envelope)
       end
 
       def kill
