@@ -1,5 +1,9 @@
 ## Unreleased
 
+### Features
+
+- Update key, unit and tags sanitization logic for metrics [#2292](https://github.com/getsentry/sentry-ruby/pull/2292)
+
 ### Bug Fixes
 
 - Make sure isolated envelopes respect `config.enabled_environments` [#2291](https://github.com/getsentry/sentry-ruby/pull/2291)
