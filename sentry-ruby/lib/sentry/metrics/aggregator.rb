@@ -12,8 +12,18 @@ module Sentry
       # when we record code locations
       DEFAULT_STACKLEVEL = 4
 
-      KEY_SANITIZATION_REGEX = /[^a-zA-Z0-9_\/.-]+/
-      VALUE_SANITIZATION_REGEX = /[^[[:word:]][[:digit:]][[:space:]]_:\/@\.{}\[\]$-]+/
+      KEY_SANITIZATION_REGEX = /[^a-zA-Z0-9_\-.]+/
+      UNIT_SANITIZATION_REGEX = /[^a-zA-Z0-9_]+/
+      TAG_KEY_SANITIZATION_REGEX = /[^a-zA-Z0-9_\-.\/]+/
+
+      TAG_VALUE_SANITIZATION_MAP = {
+        "\n" => "\\n",
+        "\r" => "\\r",
+        "\t" => "\\t",
+        "\\" => "\\\\",
+        "|" => "\\u{7c}",
+        "," => "\\u{2c}"
+      }
 
       METRIC_TYPES = {
         c: CounterMetric,
@@ -180,9 +190,9 @@ module Sentry
           timestamp_buckets.map do |metric_key, metric|
             type, key, unit, tags = metric_key
             values = metric.serialize.join(':')
-            sanitized_tags = tags.map { |k, v| "#{sanitize_key(k)}:#{sanitize_value(v)}" }.join(',')
+            sanitized_tags = tags.map { |k, v| "#{sanitize_tag_key(k)}:#{sanitize_tag_value(v)}" }.join(',')
 
-            "#{sanitize_key(key)}@#{unit}:#{values}|#{type}|\##{sanitized_tags}|T#{timestamp}"
+            "#{sanitize_key(key)}@#{sanitize_unit(unit)}:#{values}|#{type}|\##{sanitized_tags}|T#{timestamp}"
           end
         end.flatten.join("\n")
       end
@@ -190,7 +200,7 @@ module Sentry
       def serialize_locations(timestamp, locations)
         mapping = locations.map do |meta_key, location|
           type, key, unit = meta_key
-          mri = "#{type}:#{sanitize_key(key)}@#{unit}"
+          mri = "#{type}:#{sanitize_key(key)}@#{sanitize_unit(unit)}"
 
           # note this needs to be an array but it really doesn't serve a purpose right now
           [mri, [location.merge(type: 'location')]]
@@ -203,8 +213,16 @@ module Sentry
         key.gsub(KEY_SANITIZATION_REGEX, '_')
       end
 
-      def sanitize_value(value)
-        value.gsub(VALUE_SANITIZATION_REGEX, '')
+      def sanitize_unit(unit)
+        unit.gsub(UNIT_SANITIZATION_REGEX, '')
+      end
+
+      def sanitize_tag_key(key)
+        key.gsub(TAG_KEY_SANITIZATION_REGEX, '')
+      end
+
+      def sanitize_tag_value(value)
+        value.chars.map { |c| TAG_VALUE_SANITIZATION_MAP[c] || c }.join
       end
 
       def get_transaction_name

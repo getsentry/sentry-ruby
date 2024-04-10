@@ -381,7 +381,7 @@ RSpec.describe Sentry::Metrics::Aggregator do
           incr, dist = item.payload.split("\n")
           expect(incr).to eq("incr@none:10.0|c|#environment:test,release:test-release|T#{fake_time.to_i - 3}")
           expect(dist).to eq("dis_t@second:0.0:1.0:2.0:3.0:4.0|d|" +
-                             "#environment:test,fo_-bar:snöwmän 23{},release:test-release|" +
+                             "#environment:test,fo-bar:snöwmän% 23{},release:test-release|" +
                              "T#{fake_time.to_i - 3}")
         end
 
@@ -431,13 +431,45 @@ RSpec.describe Sentry::Metrics::Aggregator do
           incr1, dist1, incr2, dist2 = item.payload.split("\n")
           expect(incr1).to eq("incr@none:10.0|c|#environment:test,release:test-release|T#{fake_time.to_i - 3}")
           expect(dist1).to eq("dis_t@second:0.0:1.0:2.0:3.0:4.0|d|" +
-                             "#environment:test,fo_-bar:snöwmän 23{},release:test-release|" +
+                             "#environment:test,fo-bar:snöwmän% 23{},release:test-release|" +
                              "T#{fake_time.to_i - 3}")
           expect(incr2).to eq("incr@none:5.0|c|#environment:test,release:test-release|T#{fake_time.to_i + 7}")
           expect(dist2).to eq("dis_t@second:5.0:6.0:7.0:8.0:9.0|d|" +
-                             "#environment:test,fo_-bar:snöwmän 23{},release:test-release|" +
+                             "#environment:test,fo-bar:snöwmän% 23{},release:test-release|" +
                              "T#{fake_time.to_i + 7}")
         end
+      end
+    end
+
+    context 'sanitization' do
+      it 'sanitizes the metric key' do
+        subject.add(:c, 'foo.disöt_12-bar', 1)
+        subject.flush(force: true)
+
+        sanitized_key = 'foo.dis_t_12-bar'
+        statsd, metrics_meta = sentry_envelopes.first.items.map(&:payload)
+        expect(statsd).to include(sanitized_key)
+        expect(metrics_meta[:mapping].keys.first).to include(sanitized_key)
+      end
+
+      it 'sanitizes the metric unit' do
+        subject.add(:c, 'incr', 1, unit: 'disöt_12-/.test')
+        subject.flush(force: true)
+
+        sanitized_unit = '@dist_12test'
+        statsd, metrics_meta = sentry_envelopes.first.items.map(&:payload)
+        expect(statsd).to include(sanitized_unit)
+        expect(metrics_meta[:mapping].keys.first).to include(sanitized_unit)
+      end
+
+      it 'sanitizes tag keys and values' do
+        tags = { "get.foö-$bar/12" => "hello!\n\r\t\\ 42 this | or , that" }
+        subject.add(:c, 'incr', 1, tags: tags)
+        subject.flush(force: true)
+
+        sanitized_tags = "get.fo-bar/12:hello!\\n\\r\\t\\\\ 42 this \\u{7c} or \\u{2c} that"
+        statsd = sentry_envelopes.first.items.first.payload
+        expect(statsd).to include(sanitized_tags)
       end
     end
   end
