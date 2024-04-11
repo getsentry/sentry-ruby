@@ -49,16 +49,17 @@ module Sentry
       return unless configuration.sending_allowed?
 
       if event.is_a?(ErrorEvent) && !configuration.sample_allowed?
-        transport.record_lost_event(:sample_rate, 'event')
+        transport.record_lost_event(:sample_rate, 'error')
         return
       end
 
       event_type = event.is_a?(Event) ? event.type : event["type"]
+      data_category = Envelope::Item.data_category(event_type)
       event = scope.apply_to_event(event, hint)
 
       if event.nil?
         log_debug("Discarded event because one of the event processors returned nil")
-        transport.record_lost_event(:event_processor, event_type)
+        transport.record_lost_event(:event_processor, data_category)
         return
       end
 
@@ -66,7 +67,7 @@ module Sentry
         dispatch_async_event(async_block, event, hint)
       elsif configuration.background_worker_threads != 0 && hint.fetch(:background, true)
         queued = dispatch_background_event(event, hint)
-        transport.record_lost_event(:queue_overflow, event_type) unless queued
+        transport.record_lost_event(:queue_overflow, data_category) unless queued
       else
         send_event(event, hint)
       end
@@ -166,13 +167,14 @@ module Sentry
     # @!macro send_event
     def send_event(event, hint = nil)
       event_type = event.is_a?(Event) ? event.type : event["type"]
+      data_category = Envelope::Item.data_category(event_type)
 
       if event_type != TransactionEvent::TYPE && configuration.before_send
         event = configuration.before_send.call(event, hint)
 
         if event.nil?
           log_debug("Discarded event because before_send returned nil")
-          transport.record_lost_event(:before_send, 'event')
+          transport.record_lost_event(:before_send, data_category)
           return
         end
       end
@@ -182,7 +184,7 @@ module Sentry
 
         if event.nil?
           log_debug("Discarded event because before_send_transaction returned nil")
-          transport.record_lost_event(:before_send, 'transaction')
+          transport.record_lost_event(:before_send, data_category)
           return
         end
       end
@@ -193,7 +195,7 @@ module Sentry
       event
     rescue => e
       log_error("Event sending failed", e, debug: configuration.debug)
-      transport.record_lost_event(:network_error, event_type)
+      transport.record_lost_event(:network_error, data_category)
       raise
     end
 

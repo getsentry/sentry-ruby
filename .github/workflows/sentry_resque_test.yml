@@ -69,4 +69,4 @@ jobs:
         if: ${{ matrix.options.codecov }}
         uses: codecov/codecov-action@v4
         with:
-          token: ${{ secrets.CODECOV_TOKEN }
+          token: ${{ secrets.CODECOV_TOKEN }}

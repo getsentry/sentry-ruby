@@ -26,9 +26,9 @@ RSpec.describe "rate limiting" do
                                    "transaction" => Time.now + 60,
                                    "session" => Time.now + 60)
 
-        expect(subject.is_rate_limited?("event")).to eq(true)
+        expect(subject.is_rate_limited?("error")).to eq(true)
         expect(subject.is_rate_limited?("transaction")).to eq(true)
-        expect(subject.is_rate_limited?("sessions")).to eq(true)
+        expect(subject.is_rate_limited?("session")).to eq(true)
       end
 
       it "returns false for passed limited category" do
@@ -36,16 +36,16 @@ RSpec.describe "rate limiting" do
                                    "transaction" => Time.now - 10,
                                    "session" => Time.now - 10)
 
-        expect(subject.is_rate_limited?("event")).to eq(false)
+        expect(subject.is_rate_limited?("error")).to eq(false)
         expect(subject.is_rate_limited?("transaction")).to eq(false)
-        expect(subject.is_rate_limited?("sessions")).to eq(false)
+        expect(subject.is_rate_limited?("session")).to eq(false)
       end
 
       it "returns false for not listed category" do
         subject.rate_limits.merge!("transaction" => Time.now + 10)
 
-        expect(subject.is_rate_limited?("event")).to eq(false)
-        expect(subject.is_rate_limited?("sessions")).to eq(false)
+        expect(subject.is_rate_limited?("error")).to eq(false)
+        expect(subject.is_rate_limited?("session")).to eq(false)
       end
     end
 
@@ -53,13 +53,13 @@ RSpec.describe "rate limiting" do
       it "returns true when still limited" do
         subject.rate_limits.merge!(nil => Time.now + 60)
 
-        expect(subject.is_rate_limited?("event")).to eq(true)
+        expect(subject.is_rate_limited?("error")).to eq(true)
       end
 
       it "returns false when passed limit" do
         subject.rate_limits.merge!(nil => Time.now - 10)
 
-        expect(subject.is_rate_limited?("event")).to eq(false)
+        expect(subject.is_rate_limited?("error")).to eq(false)
       end
     end
 
@@ -70,14 +70,14 @@ RSpec.describe "rate limiting" do
           nil => Time.now - 10
         )
 
-        expect(subject.is_rate_limited?("event")).to eq(true)
+        expect(subject.is_rate_limited?("error")).to eq(true)
 
         subject.rate_limits.merge!(
           "error" => Time.now - 60,
           nil => Time.now + 10
         )
 
-        expect(subject.is_rate_limited?("event")).to eq(true)
+        expect(subject.is_rate_limited?("error")).to eq(true)
       end
     end
   end
