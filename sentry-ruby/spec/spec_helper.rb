@@ -50,9 +50,9 @@ RSpec.configure do |config|
     skip("skip rack related tests") unless defined?(Rack)
   end
 
-  RSpec::Matchers.define :have_recorded_lost_event do |reason, type|
+  RSpec::Matchers.define :have_recorded_lost_event do |reason, data_category|
     match do |transport|
-      expect(transport.discarded_events[[reason, type]]).to be > 0
+      expect(transport.discarded_events[[reason, data_category]]).to be > 0
     end
   end
 end

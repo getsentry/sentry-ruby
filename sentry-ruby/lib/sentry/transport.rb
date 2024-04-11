@@ -88,18 +88,9 @@ module Sentry
       [data, serialized_items]
     end
 
-    def is_rate_limited?(item_type)
+    def is_rate_limited?(data_category)
       # check category-specific limit
-      category_delay =
-        case item_type
-        when "transaction"
-          @rate_limits["transaction"]
-        when "sessions"
-          @rate_limits["session"]
-        else
-          @rate_limits["error"]
-        end
-
+      category_delay = @rate_limits[data_category]
       # check universal limit if not category limit
       universal_delay = @rate_limits[nil]
 
@@ -160,11 +151,11 @@ module Sentry
       envelope
     end
 
-    def record_lost_event(reason, item_type)
+    def record_lost_event(reason, data_category)
       return unless @send_client_reports
       return unless CLIENT_REPORT_REASONS.include?(reason)
 
-      @discarded_events[[reason, item_type]] += 1
+      @discarded_events[[reason, data_category]] += 1
     end
 
     def flush
@@ -184,11 +175,7 @@ module Sentry
       return nil if @discarded_events.empty?
 
       discarded_events_hash = @discarded_events.map do |key, val|
-        reason, type = key
-
-        # 'event' has to be mapped to 'error'
-        category = type == 'event' ? 'error' : type
-
+        reason, category = key
         { reason: reason, category: category, quantity: val }
       end
 
@@ -206,9 +193,9 @@ module Sentry
 
     def reject_rate_limited_items(envelope)
       envelope.items.reject! do |item|
-        if is_rate_limited?(item.type)
+        if is_rate_limited?(item.data_category)
           log_debug("[Transport] Envelope item [#{item.type}] not sent: rate limiting")
-          record_lost_event(:ratelimit_backoff, item.type)
+          record_lost_event(:ratelimit_backoff, item.data_category)
 
           true
         else
