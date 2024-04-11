@@ -4,6 +4,7 @@
 
 - Update key, unit and tags sanitization logic for metrics [#2292](https://github.com/getsentry/sentry-ruby/pull/2292)
 - Consolidate client report and rate limit handling with data categories [#2294](https://github.com/getsentry/sentry-ruby/pull/2294)
+- Record `:network_error` client reports for `send_envelope` [#2295](https://github.com/getsentry/sentry-ruby/pull/2295)
 
 ### Bug Fixes
 
