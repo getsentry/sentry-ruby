@@ -98,7 +98,9 @@ RSpec.describe Sentry::Client do
   describe '#send_envelope' do
     let(:envelope) do
       envelope = Sentry::Envelope.new({ env_header: 1 })
-      envelope.add_item({ item_header: 42 }, { payload: 'test' })
+      envelope.add_item({ type: 'event' }, { payload: 'test' })
+      envelope.add_item({ type: 'statsd' }, { payload: 'test2' })
+      envelope.add_item({ type: 'transaction' }, { payload: 'test3' })
       envelope
     end
 
@@ -122,18 +124,34 @@ RSpec.describe Sentry::Client do
       subject.send_envelope(envelope)
     end
 
-    it 'logs error when transport failure' do
-      string_io = StringIO.new
-      configuration.debug = true
-      configuration.logger = ::Logger.new(string_io)
-      expect(subject.transport).to receive(:send_envelope).and_raise(Sentry::ExternalError.new("networking error"))
+    context 'when transport failure' do
+      let(:string_io) { StringIO.new }
 
-      expect do
-        subject.send_envelope(envelope)
-      end.to raise_error(Sentry::ExternalError)
+      before do
+        configuration.debug = true
+        configuration.logger = ::Logger.new(string_io)
 
-      expect(string_io.string).to match(/Envelope sending failed: networking error/)
-      expect(string_io.string).to match(__FILE__)
+        allow(subject.transport).to receive(:send_envelope).and_raise(Sentry::ExternalError.new("networking error"))
+      end
+
+      it 'logs error' do
+        expect do
+          subject.send_envelope(envelope)
+        end.to raise_error(Sentry::ExternalError)
+
+        expect(string_io.string).to match(/Envelope sending failed: networking error/)
+        expect(string_io.string).to match(__FILE__)
+      end
+
+      it 'records client reports for network errors' do
+        expect do
+          subject.send_envelope(envelope)
+        end.to raise_error(Sentry::ExternalError)
+
+        expect(subject.transport).to have_recorded_lost_event(:network_error, 'error')
+        expect(subject.transport).to have_recorded_lost_event(:network_error, 'metric_bucket')
+        expect(subject.transport).to have_recorded_lost_event(:network_error, 'transaction')
+      end
     end
   end
 
