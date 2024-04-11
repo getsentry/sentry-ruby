@@ -206,9 +206,12 @@ module Sentry
       transport.send_envelope(envelope) if configuration.sending_to_dsn_allowed?
       spotlight_transport.send_envelope(envelope) if spotlight_transport
     rescue => e
-      # note that we don't record client reports for direct envelope types
-      # such as metrics, sessions etc
       log_error("Envelope sending failed", e, debug: configuration.debug)
+
+      envelope.items.map(&:data_category).each do |data_category|
+        transport.record_lost_event(:network_error, data_category)
+      end
+
       raise
     end
 
