@@ -8,7 +8,7 @@
 
 ## 5.17.3
 
-### Features
+### Internal
 
 - Update key, unit and tags sanitization logic for metrics [#2292](https://github.com/getsentry/sentry-ruby/pull/2292)
 - Consolidate client report and rate limit handling with data categories [#2294](https://github.com/getsentry/sentry-ruby/pull/2294)
@@ -21,7 +21,7 @@
 
 ## 5.17.2
 
-### Features
+### Internal
 
 - Add `Mechanism` interface and default to unhandled for integration exceptions [#2280](https://github.com/getsentry/sentry-ruby/pull/2280)
 
