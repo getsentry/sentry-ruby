@@ -336,4 +336,30 @@ RSpec.describe Sentry::Scope do
       subject.generate_propagation_context(env)
     end
   end
+
+  describe '#update_from_options' do
+    it 'updates data from arguments' do
+      subject.update_from_options(
+        contexts: { context: 1 },
+        extra: { foo: 42 },
+        tags: { tag: 2 },
+        user: { name: 'jane' },
+        level: :info,
+        fingerprint: 'ABCD'
+      )
+
+      expect(subject.contexts).to include(context: 1)
+      expect(subject.extra).to eq({ foo: 42 })
+      expect(subject.tags).to eq({ tag: 2 })
+      expect(subject.user).to eq({ name: 'jane' })
+      expect(subject.level).to eq(:info)
+      expect(subject.fingerprint).to eq('ABCD')
+    end
+
+    it 'does not throw when arbitrary options passed' do
+      expect do
+        subject.update_from_options(foo: 42)
+      end.not_to raise_error
+    end
+  end
 end

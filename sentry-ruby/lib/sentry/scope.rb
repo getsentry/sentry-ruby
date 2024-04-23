@@ -135,7 +135,8 @@ module Sentry
       tags: nil,
       user: nil,
       level: nil,
-      fingerprint: nil
+      fingerprint: nil,
+      **options
     )
       self.contexts.merge!(contexts) if contexts
       self.extra.merge!(extra) if extra
