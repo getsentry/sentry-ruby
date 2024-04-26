@@ -4,6 +4,7 @@ module Sentry
   module Rack
     class CaptureExceptions
       ERROR_EVENT_ID_KEY = "sentry.error_event_id"
+      MECHANISM_TYPE = "rack"
 
       def initialize(app)
         @app = app
@@ -56,17 +57,14 @@ module Sentry
       end
 
       def capture_exception(exception, env)
-        Sentry.capture_exception(exception).tap do |event|
+        Sentry.capture_exception(exception, hint: { mechanism: mechanism }).tap do |event|
           env[ERROR_EVENT_ID_KEY] = event.event_id if event
         end
       end
 
       def start_transaction(env, scope)
-        sentry_trace = env["HTTP_SENTRY_TRACE"]
-        baggage = env["HTTP_BAGGAGE"]
-
         options = { name: scope.transaction_name, source: scope.transaction_source, op: transaction_op }
-        transaction = Sentry::Transaction.from_sentry_trace(sentry_trace, baggage: baggage, **options) if sentry_trace
+        transaction = Sentry.continue_trace(env, **options)
         Sentry.start_transaction(transaction: transaction, custom_sampling_context: { env: env }, **options)
       end
 
@@ -76,6 +74,10 @@ module Sentry
 
         transaction.set_http_status(status_code)
         transaction.finish
+      end
+
+      def mechanism
+        Sentry::Mechanism.new(type: MECHANISM_TYPE, handled: false)
       end
     end
   end

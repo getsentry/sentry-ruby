@@ -10,6 +10,10 @@ module Sentry
     # @return [Transport]
     attr_reader :transport
 
+    # The Transport object that'll send events for the client.
+    # @return [SpotlightTransport, nil]
+    attr_reader :spotlight_transport
+
     # @!macro configuration
     attr_reader :configuration
 
@@ -32,6 +36,8 @@ module Sentry
             DummyTransport.new(configuration)
           end
       end
+
+      @spotlight_transport = SpotlightTransport.new(configuration) if configuration.spotlight
     end
 
     # Applies the given scope's data to the event and sends it to Sentry.
@@ -42,23 +48,24 @@ module Sentry
     def capture_event(event, scope, hint = {})
       return unless configuration.sending_allowed?
 
-      unless event.is_a?(TransactionEvent) || configuration.sample_allowed?
-        transport.record_lost_event(:sample_rate, 'event')
+      if event.is_a?(ErrorEvent) && !configuration.sample_allowed?
+        transport.record_lost_event(:sample_rate, 'error')
         return
       end
 
       event_type = event.is_a?(Event) ? event.type : event["type"]
+      data_category = Envelope::Item.data_category(event_type)
       event = scope.apply_to_event(event, hint)
 
       if event.nil?
-        log_info("Discarded event because one of the event processors returned nil")
-        transport.record_lost_event(:event_processor, event_type)
+        log_debug("Discarded event because one of the event processors returned nil")
+        transport.record_lost_event(:event_processor, data_category)
         return
       end
 
       if configuration.background_worker_threads != 0 && hint.fetch(:background, true)
         queued = dispatch_background_event(event, hint)
-        transport.record_lost_event(:queue_overflow, event_type) unless queued
+        transport.record_lost_event(:queue_overflow, data_category) unless queued
       else
         send_event(event, hint)
       end
@@ -69,17 +76,35 @@ module Sentry
       nil
     end
 
+    # Capture an envelope directly.
+    # @param envelope [Envelope] the envelope to be captured.
+    # @return [void]
+    def capture_envelope(envelope)
+      Sentry.background_worker.perform { send_envelope(envelope) }
+    end
+
+    # Flush pending events to Sentry.
+    # @return [void]
+    def flush
+      transport.flush if configuration.sending_to_dsn_allowed?
+      spotlight_transport.flush if spotlight_transport
+    end
+
     # Initializes an Event object with the given exception. Returns `nil` if the exception's class is excluded from reporting.
     # @param exception [Exception] the exception to be reported.
     # @param hint [Hash] the hint data that'll be passed to `before_send` callback and the scope's event processors.
     # @return [Event, nil]
     def event_from_exception(exception, hint = {})
-      return unless @configuration.sending_allowed? && @configuration.exception_class_allowed?(exception)
+      return unless @configuration.sending_allowed?
+
+      ignore_exclusions = hint.delete(:ignore_exclusions) { false }
+      return if !ignore_exclusions && !@configuration.exception_class_allowed?(exception)
 
       integration_meta = Sentry.integrations[hint[:integration]]
+      mechanism = hint.delete(:mechanism) { Mechanism.new }
 
       ErrorEvent.new(configuration: configuration, integration_meta: integration_meta).tap do |event|
-        event.add_exception_interface(exception)
+        event.add_exception_interface(exception, mechanism: mechanism)
         event.add_threads_interface(crashed: true)
         event.level = :error
       end
@@ -99,6 +124,37 @@ module Sentry
       event
     end
 
+    # Initializes a CheckInEvent object with the given options.
+    #
+    # @param slug [String] identifier of this monitor
+    # @param status [Symbol] status of this check-in, one of {CheckInEvent::VALID_STATUSES}
+    # @param hint [Hash] the hint data that'll be passed to `before_send` callback and the scope's event processors.
+    # @param duration [Integer, nil] seconds elapsed since this monitor started
+    # @param monitor_config [Cron::MonitorConfig, nil] configuration for this monitor
+    # @param check_in_id [String, nil] for updating the status of an existing monitor
+    #
+    # @return [Event]
+    def event_from_check_in(
+      slug,
+      status,
+      hint = {},
+      duration: nil,
+      monitor_config: nil,
+      check_in_id: nil
+    )
+      return unless configuration.sending_allowed?
+
+      CheckInEvent.new(
+        configuration: configuration,
+        integration_meta: Sentry.integrations[hint[:integration]],
+        slug: slug,
+        status: status,
+        duration: duration,
+        monitor_config: monitor_config,
+        check_in_id: check_in_id
+      )
+    end
+
     # Initializes an Event object with the given Transaction object.
     # @param transaction [Transaction] the transaction to be recorded.
     # @return [TransactionEvent]
@@ -109,13 +165,14 @@ module Sentry
     # @!macro send_event
     def send_event(event, hint = nil)
       event_type = event.is_a?(Event) ? event.type : event["type"]
+      data_category = Envelope::Item.data_category(event_type)
 
       if event_type != TransactionEvent::TYPE && configuration.before_send
         event = configuration.before_send.call(event, hint)
 
         if event.nil?
-          log_info("Discarded event because before_send returned nil")
-          transport.record_lost_event(:before_send, 'event')
+          log_debug("Discarded event because before_send returned nil")
+          transport.record_lost_event(:before_send, data_category)
           return
         end
       end
@@ -124,25 +181,40 @@ module Sentry
         event = configuration.before_send_transaction.call(event, hint)
 
         if event.nil?
-          log_info("Discarded event because before_send_transaction returned nil")
-          transport.record_lost_event(:before_send, 'transaction')
+          log_debug("Discarded event because before_send_transaction returned nil")
+          transport.record_lost_event(:before_send, data_category)
           return
         end
       end
 
-      transport.send_event(event)
+      transport.send_event(event) if configuration.sending_to_dsn_allowed?
+      spotlight_transport.send_event(event) if spotlight_transport
 
       event
     rescue => e
-      loggable_event_type = event_type.capitalize
-      log_error("#{loggable_event_type} sending failed", e, debug: configuration.debug)
-
-      event_info = Event.get_log_message(event.to_hash)
-      log_info("Unreported #{loggable_event_type}: #{event_info}")
-      transport.record_lost_event(:network_error, event_type)
+      log_error("Event sending failed", e, debug: configuration.debug)
+      transport.record_lost_event(:network_error, data_category)
       raise
     end
 
+    # Send an envelope directly to Sentry.
+    # @param envelope [Envelope] the envelope to be sent.
+    # @return [void]
+    def send_envelope(envelope)
+      transport.send_envelope(envelope) if configuration.sending_to_dsn_allowed?
+      spotlight_transport.send_envelope(envelope) if spotlight_transport
+    rescue => e
+      log_error("Envelope sending failed", e, debug: configuration.debug)
+
+      envelope.items.map(&:data_category).each do |data_category|
+        transport.record_lost_event(:network_error, data_category)
+      end
+
+      raise
+    end
+
+    # @deprecated use Sentry.get_traceparent instead.
+    #
     # Generates a Sentry trace for distribted tracing from the given Span.
     # Returns `nil` if `config.propagate_traces` is `false`.
     # @param span [Span] the span to generate trace from.
@@ -155,7 +227,9 @@ module Sentry
       trace
     end
 
-    # Generates a W3C Baggage header for distribted tracing from the given Span.
+    # @deprecated Use Sentry.get_baggage instead.
+    #
+    # Generates a W3C Baggage header for distributed tracing from the given Span.
     # Returns `nil` if `config.propagate_traces` is `false`.
     # @param span [Span] the span to generate trace from.
     # @return [String, nil]

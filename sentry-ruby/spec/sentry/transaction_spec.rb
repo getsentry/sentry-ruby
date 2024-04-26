@@ -161,7 +161,7 @@ RSpec.describe Sentry::Transaction do
         {
           "metric.foo" => { value: 0.1, unit: "second" },
           "metric.bar" => { value: 1.0, unit: "minute" },
-          "metric.baz" => { value: 1.0, unit: "" },
+          "metric.baz" => { value: 1.0, unit: "" }
         }
       )
 
@@ -171,7 +171,7 @@ RSpec.describe Sentry::Transaction do
         {
           "metric.foo" => { value: 2, unit: "second" },
           "metric.bar" => { value: 1.0, unit: "minute" },
-          "metric.baz" => { value: 1.0, unit: "" },
+          "metric.baz" => { value: 1.0, unit: "" }
         }
       )
     end
@@ -290,7 +290,7 @@ RSpec.describe Sentry::Transaction do
       context "when traces_sampler is provided" do
         it "prioritizes traces_sampler over traces_sample_rate" do
           Sentry.configuration.traces_sample_rate = 1.0
-          Sentry.configuration.traces_sampler = -> (_) { false }
+          Sentry.configuration.traces_sampler = ->(_) { false }
 
           subject.set_initial_sample_decision(sampling_context: {})
           expect(subject.sampled).to eq(false)
@@ -298,7 +298,7 @@ RSpec.describe Sentry::Transaction do
         end
 
         it "prioritizes traces_sampler over inherited decision" do
-          Sentry.configuration.traces_sampler = -> (_) { false }
+          Sentry.configuration.traces_sampler = ->(_) { false }
 
           subject.set_initial_sample_decision(sampling_context: { parent_sampled: true })
           expect(subject.sampled).to eq(false)
@@ -314,7 +314,7 @@ RSpec.describe Sentry::Transaction do
         end
 
         it "discards the transaction if generated sample rate is not valid" do
-          Sentry.configuration.traces_sampler = -> (_) { "foo" }
+          Sentry.configuration.traces_sampler = ->(_) { "foo" }
           subject.set_initial_sample_decision(sampling_context: {})
 
           expect(subject.sampled).to eq(false)
@@ -327,19 +327,19 @@ RSpec.describe Sentry::Transaction do
         it "uses the genereted rate for sampling (positive)" do
           expect(Sentry.configuration.logger).to receive(:debug).exactly(3).and_call_original
 
-          Sentry.configuration.traces_sampler = -> (_) { true }
+          Sentry.configuration.traces_sampler = ->(_) { true }
           subject = described_class.new(hub: Sentry.get_current_hub)
           subject.set_initial_sample_decision(sampling_context: {})
           expect(subject.sampled).to eq(true)
           expect(subject.effective_sample_rate).to eq(1.0)
 
-          Sentry.configuration.traces_sampler = -> (_) { 1.0 }
+          Sentry.configuration.traces_sampler = ->(_) { 1.0 }
           subject = described_class.new(hub: Sentry.get_current_hub)
           subject.set_initial_sample_decision(sampling_context: {})
           expect(subject.sampled).to eq(true)
           expect(subject.effective_sample_rate).to eq(1.0)
 
-          Sentry.configuration.traces_sampler = -> (_) { 1 }
+          Sentry.configuration.traces_sampler = ->(_) { 1 }
           subject = described_class.new(hub: Sentry.get_current_hub)
           subject.set_initial_sample_decision(sampling_context: {})
           expect(subject.sampled).to eq(true)
@@ -353,13 +353,13 @@ RSpec.describe Sentry::Transaction do
         it "uses the genereted rate for sampling (negative)" do
           expect(Sentry.configuration.logger).to receive(:debug).exactly(2).and_call_original
 
-          Sentry.configuration.traces_sampler = -> (_) { false }
+          Sentry.configuration.traces_sampler = ->(_) { false }
           subject = described_class.new(hub: Sentry.get_current_hub)
           subject.set_initial_sample_decision(sampling_context: {})
           expect(subject.sampled).to eq(false)
           expect(subject.effective_sample_rate).to eq(0.0)
 
-          Sentry.configuration.traces_sampler = -> (_) { 0.0 }
+          Sentry.configuration.traces_sampler = ->(_) { 0.0 }
           subject = described_class.new(hub: Sentry.get_current_hub)
           subject.set_initial_sample_decision(sampling_context: {})
           expect(subject.sampled).to eq(false)
@@ -368,6 +368,23 @@ RSpec.describe Sentry::Transaction do
           expect(string_io.string).to include(
             "[Tracing] Discarding transaction because traces_sampler returned 0 or false"
           )
+        end
+      end
+
+      context "when backpressure handling is enabled" do
+        before do
+          perform_basic_setup do |config|
+            config.traces_sample_rate = 1.0
+            config.enable_backpressure_handling = true
+          end
+        end
+
+        it "uses downsampled rate to sample" do
+          expect(Sentry.get_current_client.transport).to receive(:any_rate_limited?).and_return(true)
+          Sentry.backpressure_monitor.run
+
+          subject.set_initial_sample_decision(sampling_context: {})
+          expect(subject.effective_sample_rate).to eq(0.5)
         end
       end
     end
@@ -474,9 +491,29 @@ RSpec.describe Sentry::Transaction do
         expect(events.count).to eq(0)
       end
 
-      it "records lost event" do
+      it "records lost event with reason sample_rate" do
         subject.finish
         expect(Sentry.get_current_client.transport).to have_recorded_lost_event(:sample_rate, 'transaction')
+      end
+    end
+
+    context "when backpressure handling is enabled and transaction is not sampled" do
+      before do
+        perform_basic_setup do |config|
+          config.traces_sample_rate = 1.0
+          config.enable_backpressure_handling = true
+        end
+      end
+
+      subject { described_class.new(hub: Sentry.get_current_hub) }
+
+      it "records lost event with reason backpressure" do
+        expect(Sentry.get_current_client.transport).to receive(:any_rate_limited?).and_return(true)
+        Sentry.backpressure_monitor.run
+        allow(Random).to receive(:rand).and_return(0.6)
+
+        subject.finish
+        expect(Sentry.get_current_client.transport).to have_recorded_lost_event(:backpressure, 'transaction')
       end
     end
 
@@ -537,7 +574,8 @@ RSpec.describe Sentry::Transaction do
           "public_key" => "12345",
           "trace_id" => subject.trace_id,
           "transaction"=>"foo",
-          "sample_rate" => "1.0"
+          "sample_rate" => "1.0",
+          "sampled" => "true"
         })
       end
 
@@ -592,7 +630,8 @@ RSpec.describe Sentry::Transaction do
           "public_key" => "12345",
           "trace_id" => subject.trace_id,
           "transaction"=>"foo",
-          "sample_rate" => "1.0"
+          "sample_rate" => "1.0",
+          "sampled" => "true"
         })
       end
     end
@@ -610,6 +649,18 @@ RSpec.describe Sentry::Transaction do
     it "sets arbitrary context" do
       subject.set_context(:foo, { bar: 42 })
       expect(subject.contexts).to eq({ foo: { bar: 42 } })
+    end
+  end
+
+  describe "#source_low_quality?" do
+    it "returns true when :url" do
+      subject.set_name('foo', source: :url)
+      expect(subject.source_low_quality?).to eq(true)
+    end
+
+    it "returns false otherwise" do
+      subject.set_name('foo', source: :view)
+      expect(subject.source_low_quality?).to eq(false)
     end
   end
 end

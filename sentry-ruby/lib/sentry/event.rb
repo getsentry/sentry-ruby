@@ -14,16 +14,16 @@ module Sentry
   class Event
     TYPE = "event"
     # These are readable attributes.
-    SERIALIZEABLE_ATTRIBUTES = %i(
+    SERIALIZEABLE_ATTRIBUTES = %i[
       event_id level timestamp
       release environment server_name modules
       message user tags contexts extra
       fingerprint breadcrumbs transaction transaction_info
       platform sdk type
-    )
+    ]
 
     # These are writable attributes.
-    WRITER_ATTRIBUTES = SERIALIZEABLE_ATTRIBUTES - %i(type timestamp level)
+    WRITER_ATTRIBUTES = SERIALIZEABLE_ATTRIBUTES - %i[type timestamp level]
 
     MAX_MESSAGE_SIZE_IN_BYTES = 1024 * 8
 
@@ -36,6 +36,11 @@ module Sentry
 
     # @return [RequestInterface]
     attr_reader :request
+
+    # Dynamic Sampling Context (DSC) that gets attached
+    # as the trace envelope header in the transport.
+    # @return [Hash, nil]
+    attr_accessor :dynamic_sampling_context
 
     # @param configuration [Configuration]
     # @param integration_meta [Hash, nil]
@@ -54,6 +59,7 @@ module Sentry
       @tags          = {}
 
       @fingerprint = []
+      @dynamic_sampling_context = nil
 
       # configuration data that's directly used by events
       @server_name = configuration.server_name
@@ -68,34 +74,6 @@ module Sentry
       @rack_env_whitelist = configuration.rack_env_whitelist
 
       @message = (message || "").byteslice(0..MAX_MESSAGE_SIZE_IN_BYTES)
-    end
-
-    class << self
-      # @!visibility private
-      def get_log_message(event_hash)
-        message = event_hash[:message] || event_hash['message']
-
-        return message unless message.nil? || message.empty?
-
-        message = get_message_from_exception(event_hash)
-
-        return message unless message.nil? || message.empty?
-
-        message = event_hash[:transaction] || event_hash["transaction"]
-
-        return message unless message.nil? || message.empty?
-
-        '<no message value>'
-      end
-
-      # @!visibility private
-      def get_message_from_exception(event_hash)
-        if exception = event_hash.dig(:exception, :values, 0)
-          "#{exception[:type]}: #{exception[:value]}"
-        elsif exception = event_hash.dig("exception", "values", 0)
-          "#{exception["type"]}: #{exception["value"]}"
-        end
-      end
     end
 
     # @deprecated This method will be removed in v5.0.0. Please just use Sentry.configuration
@@ -167,11 +145,11 @@ module Sentry
     # REMOTE_ADDR to determine the Event IP, and must use other headers instead.
     def calculate_real_ip_from_rack(env)
       Utils::RealIp.new(
-        :remote_addr => env["REMOTE_ADDR"],
-        :client_ip => env["HTTP_CLIENT_IP"],
-        :real_ip => env["HTTP_X_REAL_IP"],
-        :forwarded_for => env["HTTP_X_FORWARDED_FOR"],
-        :trusted_proxies => @trusted_proxies
+        remote_addr: env["REMOTE_ADDR"],
+        client_ip: env["HTTP_CLIENT_IP"],
+        real_ip: env["HTTP_X_REAL_IP"],
+        forwarded_for: env["HTTP_X_FORWARDED_FOR"],
+        trusted_proxies: @trusted_proxies
       ).calculate_ip
     end
   end

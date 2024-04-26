@@ -17,7 +17,7 @@ RSpec.describe Sentry::DSN do
     expect(subject.port).to       eq(3000)
     expect(subject.path).to       eq("/sentry")
 
-    expect(subject.to_s).to     eq("http://12345:67890@sentry.localdomain:3000/sentry/42")
+    expect(subject.to_s).to eq("http://12345:67890@sentry.localdomain:3000/sentry/42")
   end
 
   describe "#envelope_endpoint" do

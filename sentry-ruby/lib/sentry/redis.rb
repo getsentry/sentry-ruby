@@ -19,7 +19,10 @@ module Sentry
 
           if span
             span.set_description(commands_description)
-            span.set_data(:server, server_description)
+            span.set_data(Span::DataConventions::DB_SYSTEM, "redis")
+            span.set_data(Span::DataConventions::DB_NAME, db)
+            span.set_data(Span::DataConventions::SERVER_ADDRESS, host)
+            span.set_data(Span::DataConventions::SERVER_PORT, port)
           end
         end
       end
@@ -30,6 +33,7 @@ module Sentry
     attr_reader :commands, :host, :port, :db
 
     def record_breadcrumb
+      return unless Sentry.initialized?
       return unless Sentry.configuration.breadcrumbs_logger.include?(LOGGER_NAME)
 
       Sentry.add_breadcrumb(
@@ -95,13 +99,10 @@ end
 
 if defined?(::Redis::Client)
   if Gem::Version.new(::Redis::VERSION) < Gem::Version.new("5.0")
-    Sentry.register_patch do
-      patch = Sentry::Redis::OldClientPatch
-      unless Redis::Client.ancestors.include?(patch)
-        Redis::Client.prepend(patch)
-      end
-    end
+    Sentry.register_patch(:redis, Sentry::Redis::OldClientPatch, ::Redis::Client)
   elsif defined?(RedisClient)
-    RedisClient.register(Sentry::Redis::GlobalRedisInstrumentation)
+    Sentry.register_patch(:redis) do
+      RedisClient.register(Sentry::Redis::GlobalRedisInstrumentation)
+    end
   end
 end

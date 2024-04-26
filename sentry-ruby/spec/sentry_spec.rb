@@ -1,4 +1,9 @@
+require "spec_helper"
+require 'contexts/with_request_mock'
+
 RSpec.describe Sentry do
+  include_context "with request mock"
+
   before do
     perform_basic_setup
   end
@@ -41,6 +46,27 @@ RSpec.describe Sentry do
 
       current_scope = described_class.get_current_scope
       expect(current_scope.breadcrumbs.buffer.size).to eq(1)
+    end
+
+    context "with config.auto_session_tracking = true" do
+      it "initializes session flusher" do
+        described_class.init do |config|
+          config.auto_session_tracking = true
+        end
+
+        expect(described_class.session_flusher).to be_a(Sentry::SessionFlusher)
+      end
+
+      context "when it's not under the enabled environment" do
+        it "doesn't initialize any session flusher" do
+          described_class.init do |config|
+            config.auto_session_tracking = true
+            config.enabled_environments = ["production"]
+          end
+
+          expect(described_class.session_flusher).to be_nil
+        end
+      end
     end
   end
 
@@ -90,14 +116,22 @@ RSpec.describe Sentry do
         capture_subject
       end
 
-      it "doesn't send the event nor assign last_event_id" do
-        # don't even initialize Event objects
+      it "doesn't build the event" do
+        # don't even initialize event objects
         expect(Sentry::Event).not_to receive(:new)
-
         described_class.send(capture_helper, capture_subject)
+      end
+    end
 
+    context "with sending allowed but sending to dsn not allowed" do
+      before do
+        allow(Sentry.configuration).to receive(:sending_allowed?).and_return(true)
+        allow(Sentry.configuration).to receive(:sending_to_dsn_allowed?).and_return(false)
+      end
+
+      it "doesn't send the event nor assign last_event_id" do
+        described_class.send(capture_helper, capture_subject)
         expect(sentry_events).to be_empty
-        expect(subject.last_event_id).to eq(nil)
       end
     end
 
@@ -142,6 +176,21 @@ RSpec.describe Sentry do
       expect(sentry_events.count).to eq(1)
       event = last_sentry_event
       expect(event.tags[:hint][:foo]).to eq("bar")
+    end
+
+    context "with spotlight" do
+      before { perform_basic_setup { |c| c.spotlight = true } }
+
+      it "sends the event to spotlight too" do
+        stub_request(build_fake_response("200")) do |request, http_obj|
+          expect(request["Content-Type"]).to eq("application/x-sentry-envelope")
+          expect(request["Content-Encoding"]).to eq("gzip")
+          expect(http_obj.address).to eq("localhost")
+          expect(http_obj.port).to eq(8969)
+        end
+
+        described_class.send_event(event)
+      end
     end
   end
 
@@ -190,9 +239,36 @@ RSpec.describe Sentry do
     it "doesn't do anything if the exception is excluded" do
       Sentry.get_current_client.configuration.excluded_exceptions = ["ZeroDivisionError"]
 
-      result = described_class.capture_exception(exception)
+      expect do
+        described_class.capture_exception(exception)
+      end.to change { sentry_events.count }.by(0)
+    end
 
-      expect(result).to eq(nil)
+    it "passes ignore_exclusions hint" do
+      Sentry.get_current_client.configuration.excluded_exceptions = ["ZeroDivisionError"]
+
+      expect do
+        described_class.capture_exception(exception, hint: { ignore_exclusions: true })
+      end.to change { sentry_events.count }.by(1)
+    end
+
+    describe 'mechanism' do
+      it 'has default mechanism' do
+        event = described_class.capture_exception(exception)
+        mechanism = event.exception.values.first.mechanism
+        expect(mechanism).to be_a(Sentry::Mechanism)
+        expect(mechanism.type).to eq('generic')
+        expect(mechanism.handled).to eq(true)
+      end
+
+      it 'has custom mechanism if passed' do
+        mech = Sentry::Mechanism.new(type: 'custom', handled: false)
+        event = described_class.capture_exception(exception, hint: { mechanism: mech })
+        mechanism = event.exception.values.first.mechanism
+        expect(mechanism).to be_a(Sentry::Mechanism)
+        expect(mechanism.type).to eq('custom')
+        expect(mechanism.handled).to eq(false)
+      end
     end
 
     context "with include_local_variables = false (default)" do
@@ -321,18 +397,18 @@ RSpec.describe Sentry do
         unsampled_trace = "d298e6b033f84659928a2267c3879aaa-2a35b8e9a1b974f4-0"
         not_sampled_trace = "d298e6b033f84659928a2267c3879aaa-2a35b8e9a1b974f4-"
 
-        transaction = Sentry::Transaction.from_sentry_trace(sampled_trace, op: "rack.request", name: "/payment")
+        transaction = Sentry.continue_trace({ "sentry-trace" => sampled_trace }, op: "rack.request", name: "/payment")
         described_class.start_transaction(transaction: transaction)
 
         expect(transaction.sampled).to eq(true)
 
-        transaction = Sentry::Transaction.from_sentry_trace(unsampled_trace, op: "rack.request", name: "/payment")
+        transaction = Sentry.continue_trace({ "sentry-trace" => unsampled_trace }, op: "rack.request", name: "/payment")
         described_class.start_transaction(transaction: transaction)
 
         expect(transaction.sampled).to eq(false)
 
         allow(Random).to receive(:rand).and_return(0.4)
-        transaction = Sentry::Transaction.from_sentry_trace(not_sampled_trace, op: "rack.request", name: "/payment")
+        transaction = Sentry.continue_trace({ "sentry-trace" => not_sampled_trace }, op: "rack.request", name: "/payment")
         described_class.start_transaction(transaction: transaction)
 
         expect(transaction.sampled).to eq(true)
@@ -657,6 +733,117 @@ RSpec.describe Sentry do
     end
   end
 
+  describe ".get_traceparent" do
+    it "returns a valid traceparent header from scope propagation context" do
+      traceparent = described_class.get_traceparent
+      propagation_context = described_class.get_current_scope.propagation_context
+
+      expect(traceparent).to match(Sentry::PropagationContext::SENTRY_TRACE_REGEXP)
+      expect(traceparent).to eq("#{propagation_context.trace_id}-#{propagation_context.span_id}")
+    end
+
+    it "returns a valid traceparent header from scope current span" do
+      transaction = Sentry::Transaction.new(op: "foo", hub: Sentry.get_current_hub, sampled: true)
+      span = transaction.start_child(op: "parent")
+      described_class.get_current_scope.set_span(span)
+
+      traceparent = described_class.get_traceparent
+
+      expect(traceparent).to match(Sentry::PropagationContext::SENTRY_TRACE_REGEXP)
+      expect(traceparent).to eq("#{span.trace_id}-#{span.span_id}-1")
+    end
+  end
+
+  describe ".get_baggage" do
+    it "returns a valid baggage header from scope propagation context" do
+      baggage = described_class.get_baggage
+      propagation_context = described_class.get_current_scope.propagation_context
+
+      expect(baggage).to eq("sentry-trace_id=#{propagation_context.trace_id},sentry-environment=development,sentry-public_key=12345")
+    end
+
+    it "returns a valid baggage header from scope current span" do
+      transaction = Sentry::Transaction.new(op: "foo", hub: Sentry.get_current_hub, sampled: true)
+      span = transaction.start_child(op: "parent")
+      described_class.get_current_scope.set_span(span)
+
+      baggage = described_class.get_baggage
+
+      expect(baggage).to eq("sentry-trace_id=#{span.trace_id},sentry-sampled=true,sentry-environment=development,sentry-public_key=12345")
+    end
+  end
+
+  describe ".get_trace_propagation_headers" do
+    it "returns a Hash of sentry-trace and baggage" do
+      expect(described_class.get_trace_propagation_headers).to eq({
+        "sentry-trace" => described_class.get_traceparent,
+        "baggage" => described_class.get_baggage
+      })
+    end
+  end
+
+  describe ".continue_trace" do
+    context "without incoming sentry trace" do
+      let(:env) { { "HTTP_FOO" => "bar" } }
+
+      it "returns nil with tracing disabled" do
+        expect(described_class.continue_trace(env)).to eq(nil)
+      end
+
+      it "returns nil with tracing enabled" do
+        Sentry.configuration.traces_sample_rate = 1.0
+        expect(described_class.continue_trace(env)).to eq(nil)
+      end
+
+      it "sets new propagation context on scope" do
+        expect(Sentry.get_current_scope).to receive(:generate_propagation_context).and_call_original
+        described_class.continue_trace(env)
+
+        propagation_context = Sentry.get_current_scope.propagation_context
+        expect(propagation_context.incoming_trace).to eq(false)
+      end
+    end
+
+    context "with incoming sentry trace" do
+      let(:incoming_prop_context) { Sentry::PropagationContext.new(Sentry::Scope.new) }
+      let(:env) do
+        {
+          "HTTP_SENTRY_TRACE" => incoming_prop_context.get_traceparent,
+          "HTTP_BAGGAGE" => incoming_prop_context.get_baggage.serialize
+        }
+      end
+
+      it "returns nil with tracing disabled" do
+        expect(described_class.continue_trace(env)).to eq(nil)
+      end
+
+      it "sets new propagation context from env on scope" do
+        expect(Sentry.get_current_scope).to receive(:generate_propagation_context).and_call_original
+        described_class.continue_trace(env)
+
+        propagation_context = Sentry.get_current_scope.propagation_context
+        expect(propagation_context.incoming_trace).to eq(true)
+        expect(propagation_context.trace_id).to eq(incoming_prop_context.trace_id)
+        expect(propagation_context.parent_span_id).to eq(incoming_prop_context.span_id)
+        expect(propagation_context.parent_sampled).to eq(nil)
+        expect(propagation_context.baggage.items).to eq(incoming_prop_context.get_baggage.items)
+        expect(propagation_context.baggage.mutable).to eq(false)
+      end
+
+      it "returns new Transaction with tracing enabled" do
+        Sentry.configuration.traces_sample_rate = 1.0
+
+        transaction = described_class.continue_trace(env, name: "foobar")
+        expect(transaction).to be_a(Sentry::Transaction)
+        expect(transaction.name).to eq("foobar")
+        expect(transaction.trace_id).to eq(incoming_prop_context.trace_id)
+        expect(transaction.parent_span_id).to eq(incoming_prop_context.span_id)
+        expect(transaction.baggage.items).to eq(incoming_prop_context.get_baggage.items)
+        expect(transaction.baggage.mutable).to eq(false)
+      end
+    end
+  end
+
   describe 'release detection' do
     let(:fake_root) { "/tmp/sentry/" }
 
@@ -722,7 +909,7 @@ RSpec.describe Sentry do
         allow(File).to receive(:directory?).with(".git").and_return(true)
       end
       it 'gets release from git' do
-        allow(Sentry).to receive(:`).with("git rev-parse --short HEAD 2>&1").and_return("COMMIT_SHA")
+        allow(Sentry).to receive(:`).with("git rev-parse HEAD 2>&1").and_return("COMMIT_SHA")
 
         described_class.init
         expect(described_class.configuration.release).to eq('COMMIT_SHA')
@@ -859,13 +1046,11 @@ RSpec.describe Sentry do
         expect(Thread.current.thread_variable_get(described_class::THREAD_LOCAL)).to be_a(Sentry::Hub)
         described_class.close
         expect(Thread.current.thread_variable_get(described_class::THREAD_LOCAL)).to eq(nil)
-
       end
 
       it "calls background worker shutdown" do
         expect(described_class.background_worker).to receive(:shutdown)
         described_class.close
-        expect(described_class.background_worker).to eq(nil)
       end
 
       it "kills session flusher" do
@@ -880,6 +1065,31 @@ RSpec.describe Sentry do
         end
 
         expect(described_class.exception_locals_tp).to receive(:disable).and_call_original
+        described_class.close
+      end
+
+      it "kills backpressure monitor" do
+        perform_basic_setup { |c| c.enable_backpressure_handling = true }
+        expect(described_class.backpressure_monitor).to receive(:kill)
+        described_class.close
+        expect(described_class.backpressure_monitor).to eq(nil)
+      end
+
+      it "flushes and kills metrics aggregator" do
+        perform_basic_setup { |c| c.metrics.enabled = true }
+        expect(described_class.metrics_aggregator).to receive(:flush).with(force: true)
+        expect(described_class.metrics_aggregator).to receive(:kill)
+        described_class.close
+        expect(described_class.metrics_aggregator).to eq(nil)
+      end
+
+      it "flushes transport" do
+        expect(described_class.get_current_client).to receive(:flush)
+        described_class.close
+      end
+
+      it "flushes session flusher" do
+        expect(described_class.session_flusher).to receive(:flush)
         described_class.close
       end
     end
@@ -908,6 +1118,58 @@ RSpec.describe Sentry do
       expect do
         described_class.capture_event(event)
       end.to change { new_transport.events.count }.by(1)
+    end
+  end
+
+  describe "patching" do
+    let(:target_class) { Class.new }
+
+    let(:module_patch) do
+      Module.new do
+        def foo; end
+      end
+    end
+
+    context "with target and patch to prepend" do
+      before do
+        described_class.register_patch(:module_patch, module_patch, target_class)
+      end
+
+      it "does not prepend patch if not in enabled_patches" do
+        perform_basic_setup
+        expect(target_class.ancestors).not_to include(module_patch)
+        expect(target_class.instance_methods).not_to include(:foo)
+      end
+
+      it "prepends patch if in enabled_patches" do
+        expect(target_class).to receive(:prepend).with(module_patch).and_call_original
+        perform_basic_setup  { |c| c.enabled_patches = %i[module_patch] }
+
+        expect(target_class.ancestors.first).to eq(module_patch)
+        expect(target_class.instance_methods).to include(:foo)
+      end
+    end
+
+    context "with block" do
+      before do
+        described_class.register_patch(:block_patch) do
+          target_class.send(:prepend, module_patch)
+        end
+      end
+
+      it "does not call block if not in enabled_patches" do
+        perform_basic_setup
+        expect(target_class.ancestors).not_to include(module_patch)
+        expect(target_class.instance_methods).not_to include(:foo)
+      end
+
+      it "calls block if in enabled_patches" do
+        expect(target_class).to receive(:prepend).with(module_patch).and_call_original
+        perform_basic_setup  { |c| c.enabled_patches = %i[block_patch] }
+
+        expect(target_class.ancestors.first).to eq(module_patch)
+        expect(target_class.instance_methods).to include(:foo)
+      end
     end
   end
 end

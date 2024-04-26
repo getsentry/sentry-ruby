@@ -1,7 +1,6 @@
 # frozen_string_literal: true
 
 require "json"
-require "base64"
 require "sentry/envelope"
 
 module Sentry
@@ -18,7 +17,9 @@ module Sentry
       :network_error,
       :sample_rate,
       :before_send,
-      :event_processor
+      :event_processor,
+      :insufficient_data,
+      :backpressure
     ]
 
     include LoggingHelper
@@ -73,7 +74,7 @@ module Sentry
         result, oversized = item.serialize
 
         if oversized
-          log_info("Envelope item [#{item.type}] is still oversized after size reduction: {#{item.size_breakdown}}")
+          log_debug("Envelope item [#{item.type}] is still oversized after size reduction: {#{item.size_breakdown}}")
 
           next
         end
@@ -87,18 +88,9 @@ module Sentry
       [data, serialized_items]
     end
 
-    def is_rate_limited?(item_type)
+    def is_rate_limited?(data_category)
       # check category-specific limit
-      category_delay =
-        case item_type
-        when "transaction"
-          @rate_limits["transaction"]
-        when "sessions"
-          @rate_limits["session"]
-        else
-          @rate_limits["error"]
-        end
-
+      category_delay = @rate_limits[data_category]
       # check universal limit if not category limit
       universal_delay = @rate_limits[nil]
 
@@ -118,16 +110,8 @@ module Sentry
       !!delay && delay > Time.now
     end
 
-    def generate_auth_header
-      now = Sentry.utc_now.to_i
-      fields = {
-        'sentry_version' => PROTOCOL_VERSION,
-        'sentry_client' => USER_AGENT,
-        'sentry_timestamp' => now,
-        'sentry_key' => @dsn.public_key
-      }
-      fields['sentry_secret'] = @dsn.secret_key if @dsn.secret_key
-      'Sentry ' + fields.map { |key, value| "#{key}=#{value}" }.join(', ')
+    def any_rate_limited?
+      @rate_limits.values.any? { |t| t && t > Time.now }
     end
 
     def envelope_from_event(event)
@@ -143,7 +127,7 @@ module Sentry
         sent_at: Sentry.utc_now.iso8601
       }
 
-      if event.is_a?(TransactionEvent) && event.dynamic_sampling_context
+      if event.is_a?(Event) && event.dynamic_sampling_context
         envelope_headers[:trace] = event.dynamic_sampling_context
       end
 
@@ -154,32 +138,44 @@ module Sentry
         event_payload
       )
 
+      if event.is_a?(TransactionEvent) && event.profile
+        envelope.add_item(
+          { type: 'profile', content_type: 'application/json' },
+          event.profile
+        )
+      end
+
       client_report_headers, client_report_payload = fetch_pending_client_report
       envelope.add_item(client_report_headers, client_report_payload) if client_report_headers
 
       envelope
     end
 
-    def record_lost_event(reason, item_type)
+    def record_lost_event(reason, data_category)
       return unless @send_client_reports
       return unless CLIENT_REPORT_REASONS.include?(reason)
 
-      @discarded_events[[reason, item_type]] += 1
+      @discarded_events[[reason, data_category]] += 1
+    end
+
+    def flush
+      client_report_headers, client_report_payload = fetch_pending_client_report(force: true)
+      return unless client_report_headers
+
+      envelope = Envelope.new
+      envelope.add_item(client_report_headers, client_report_payload)
+      send_envelope(envelope)
     end
 
     private
 
-    def fetch_pending_client_report
+    def fetch_pending_client_report(force: false)
       return nil unless @send_client_reports
-      return nil if @last_client_report_sent > Time.now - CLIENT_REPORT_INTERVAL
+      return nil if !force && @last_client_report_sent > Time.now - CLIENT_REPORT_INTERVAL
       return nil if @discarded_events.empty?
 
       discarded_events_hash = @discarded_events.map do |key, val|
-        reason, type = key
-
-        # 'event' has to be mapped to 'error'
-        category = type == 'transaction' ? 'transaction' : 'error'
-
+        reason, category = key
         { reason: reason, category: category, quantity: val }
       end
 
@@ -197,9 +193,9 @@ module Sentry
 
     def reject_rate_limited_items(envelope)
       envelope.items.reject! do |item|
-        if is_rate_limited?(item.type)
-          log_info("[Transport] Envelope item [#{item.type}] not sent: rate limiting")
-          record_lost_event(:ratelimit_backoff, item.type)
+        if is_rate_limited?(item.data_category)
+          log_debug("[Transport] Envelope item [#{item.type}] not sent: rate limiting")
+          record_lost_event(:ratelimit_backoff, item.data_category)
 
           true
         else
@@ -212,3 +208,4 @@ end
 
 require "sentry/transport/dummy_transport"
 require "sentry/transport/http_transport"
+require "sentry/transport/spotlight_transport"

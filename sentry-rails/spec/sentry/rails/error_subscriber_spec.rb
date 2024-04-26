@@ -68,5 +68,40 @@ RSpec.describe Sentry::Rails::ErrorSubscriber, skip: Rails.version.to_f < 7.0 ? 
         end
       end
     end
+
+    context 'when passed a context with hint key' do
+      context 'when hint is a Hash' do
+        it 'merges the hint into the event' do
+          expect(Sentry::Rails).to receive(:capture_exception) do |_, hint:, **_|
+            expect(hint[:foo]).to eq('bar')
+          end
+          described_class.new.report(StandardError.new, handled: true, severity: :error, context: { hint: { foo: 'bar' } })
+        end
+
+        it 'does not pass the hint to the context' do
+          expect(Sentry::Rails).to receive(:capture_exception) do |_, contexts:, **_|
+            expect(contexts["rails.error"]).not_to have_key(:hint)
+          end
+          described_class.new.report(StandardError.new, handled: true, severity: :error, context: { hint: { foo: 'bar' } })
+        end
+      end
+
+
+      context 'when hint is not a Hash' do
+        it 'does not merge the hint into the event' do
+          expect(Sentry::Rails).to receive(:capture_exception) do |_, hint:, **_|
+            expect(hint).not_to have_key(:foo)
+          end
+          described_class.new.report(StandardError.new, handled: true, severity: :error, context: { hint: 'foo' })
+        end
+
+        it 'passes the hint to the context' do
+          expect(Sentry::Rails).to receive(:capture_exception) do |_, contexts:, **_|
+            expect(contexts["rails.error"][:hint]).to eq('foo')
+          end
+          described_class.new.report(StandardError.new, handled: true, severity: :error, context: { hint: 'foo' })
+        end
+      end
+    end
   end
 end

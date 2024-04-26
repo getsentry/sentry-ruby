@@ -7,10 +7,8 @@ gemfile(true) do
   ruby '> 2.6'
   gem 'sentry-rails', path: "../../"
   gem 'railties', '~> 6.0.0'
-  gem "pry"
 end
 
-require "pry"
 require "action_view/railtie"
 require "action_controller/railtie"
 require 'sentry-rails'

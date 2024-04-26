@@ -1,6 +1,8 @@
 require "bundler/setup"
-require "pry"
-
+begin
+  require "debug/prelude"
+rescue LoadError
+end
 require "active_record"
 require "delayed_job"
 require "delayed_job_active_record"

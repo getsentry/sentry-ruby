@@ -39,3 +39,7 @@ Sidekiq.configure_client do |config|
     chain.add Sentry::Sidekiq::SentryContextClientMiddleware
   end
 end
+
+# patches
+require "sentry/sidekiq/cron/job"
+require "sentry/sidekiq-scheduler/scheduler"

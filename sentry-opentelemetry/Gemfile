@@ -4,21 +4,9 @@ git_source(:github) { |name| "https://github.com/#{name}.git" }
 # Specify your gem's dependencies in sentry-ruby.gemspec
 gemspec
 
-gem "rake", "~> 12.0"
-gem "rspec", "~> 3.0"
-gem 'simplecov'
-gem "simplecov-cobertura", "~> 1.4"
-gem "rexml"
-
-# opentelemetry_version = ENV["OPENTELEMETRY_VERSION"]
-# opentelemetry_version = "1.2.0" if opentelemetry_version.nil?
-# gem "opentelemetry-sdk", "~> #{opentelemetry_version}"
-
 gem "opentelemetry-sdk"
 gem "opentelemetry-instrumentation-rails"
 
 gem "sentry-ruby", path: "../sentry-ruby"
 
-gem "object_tracer"
-gem "debug", github: "ruby/debug", platform: :ruby if RUBY_VERSION.to_f >= 2.6
-gem "pry"
+eval_gemfile File.expand_path("../Gemfile", __dir__)

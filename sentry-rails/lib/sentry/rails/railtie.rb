@@ -40,6 +40,7 @@ module Sentry
 
       configure_project_root
       configure_trusted_proxies
+      configure_cron_timezone
       extend_controller_methods if defined?(ActionController)
       patch_background_worker if defined?(ActiveRecord)
       override_streaming_reporter if defined?(ActionView)
@@ -70,6 +71,11 @@ module Sentry
       Sentry.configuration.trusted_proxies += Array(::Rails.application.config.action_dispatch.trusted_proxies)
     end
 
+    def configure_cron_timezone
+      tz_info = ::ActiveSupport::TimeZone.find_tzinfo(::Rails.application.config.time_zone)
+      Sentry.configuration.cron.default_timezone = tz_info.name
+    end
+
     def extend_controller_methods
       require "sentry/rails/controller_methods"
       require "sentry/rails/controller_transaction"
@@ -89,7 +95,7 @@ module Sentry
     def inject_breadcrumbs_logger
       if Sentry.configuration.breadcrumbs_logger.include?(:active_support_logger)
         require 'sentry/rails/breadcrumb/active_support_logger'
-        Sentry::Rails::Breadcrumb::ActiveSupportLogger.inject
+        Sentry::Rails::Breadcrumb::ActiveSupportLogger.inject(Sentry.configuration.rails.active_support_logger_subscription_items)
       end
 
       if Sentry.configuration.breadcrumbs_logger.include?(:monotonic_active_support_logger)

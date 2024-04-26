@@ -11,7 +11,7 @@
 
 
 [![Gem Version](https://img.shields.io/gem/v/sentry-resque.svg)](https://rubygems.org/gems/sentry-resque)
-![Build Status](https://github.com/getsentry/sentry-ruby/workflows/sentry-resque%20Test/badge.svg)
+![Build Status](https://github.com/getsentry/sentry-ruby/actions/workflows/sentry_resque_test.yml/badge.svg)
 [![Coverage Status](https://img.shields.io/codecov/c/github/getsentry/sentry-ruby/master?logo=codecov)](https://codecov.io/gh/getsentry/sentry-ruby/branch/master)
 [![Gem](https://img.shields.io/gem/dt/sentry-resque.svg)](https://rubygems.org/gems/sentry-resque/)
 [![SemVer](https://api.dependabot.com/badges/compatibility_score?dependency-name=sentry-resque&package-manager=bundler&version-scheme=semver)](https://dependabot.com/compatibility-score.html?dependency-name=sentry-resque&package-manager=bundler&version-scheme=semver)

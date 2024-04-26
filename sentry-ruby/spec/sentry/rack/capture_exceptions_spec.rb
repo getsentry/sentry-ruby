@@ -1,6 +1,6 @@
-return unless defined?(Rack)
-
 require 'spec_helper'
+
+return unless defined?(Rack)
 
 RSpec.describe Sentry::Rack::CaptureExceptions, rack: true do
   let(:exception) { ZeroDivisionError.new("divided by 0") }
@@ -23,6 +23,17 @@ RSpec.describe Sentry::Rack::CaptureExceptions, rack: true do
       expect(env["sentry.error_event_id"]).to eq(event[:event_id])
       last_frame = event.dig(:exception, :values, 0, :stacktrace, :frames).last
       expect(last_frame[:vars]).to eq(nil)
+    end
+
+    it 'has the correct mechanism' do
+      app = ->(_e) { raise exception }
+      stack = described_class.new(app)
+
+      expect { stack.call(env) }.to raise_error(ZeroDivisionError)
+
+      event = last_sentry_event.to_hash
+      mechanism = event.dig(:exception, :values, 0, :mechanism)
+      expect(mechanism).to eq({ type: 'rack', handled: false })
     end
 
     it 'captures the exception from rack.exception' do
@@ -180,7 +191,7 @@ RSpec.describe Sentry::Rack::CaptureExceptions, rack: true do
       end
       it "doesn't pollute the top-level scope" do
         request_1 = lambda do |e|
-          Sentry.configure_scope { |s| s.set_tags({tag_1: "foo"}) }
+          Sentry.configure_scope { |s| s.set_tags({ tag_1: "foo" }) }
           Sentry.capture_message("test")
           [200, {}, ["ok"]]
         end
@@ -194,7 +205,7 @@ RSpec.describe Sentry::Rack::CaptureExceptions, rack: true do
       end
       it "doesn't pollute other request's scope" do
         request_1 = lambda do |e|
-          Sentry.configure_scope { |s| s.set_tags({tag_1: "foo"}) }
+          Sentry.configure_scope { |s| s.set_tags({ tag_1: "foo" }) }
           e['rack.exception'] = Exception.new
           [200, {}, ["ok"]]
         end
@@ -206,7 +217,7 @@ RSpec.describe Sentry::Rack::CaptureExceptions, rack: true do
         expect(Sentry.get_current_scope.tags).to eq(tag_1: "don't change me")
 
         request_2 = proc do |e|
-          Sentry.configure_scope { |s| s.set_tags({tag_2: "bar"}) }
+          Sentry.configure_scope { |s| s.set_tags({ tag_2: "bar" }) }
           e['rack.exception'] = Exception.new
           [200, {}, ["ok"]]
         end
@@ -565,6 +576,34 @@ RSpec.describe Sentry::Rack::CaptureExceptions, rack: true do
     end
   end
 
+  describe "tracing without performance" do
+    let(:incoming_prop_context) { Sentry::PropagationContext.new(Sentry::Scope.new) }
+    let(:env) do
+      {
+        "HTTP_SENTRY_TRACE" => incoming_prop_context.get_traceparent,
+        "HTTP_BAGGAGE" => incoming_prop_context.get_baggage.serialize
+      }
+    end
+
+    let(:stack) do
+      app = ->(_e) { raise exception }
+      described_class.new(app)
+    end
+
+    before { perform_basic_setup }
+
+    it "captures exception with correct DSC and trace context" do
+      expect { stack.call(env) }.to raise_error(ZeroDivisionError)
+
+      trace_context = last_sentry_event.contexts[:trace]
+      expect(trace_context[:trace_id]).to eq(incoming_prop_context.trace_id)
+      expect(trace_context[:parent_span_id]).to eq(incoming_prop_context.span_id)
+      expect(trace_context[:span_id].length).to eq(16)
+
+      expect(last_sentry_event.dynamic_sampling_context).to eq(incoming_prop_context.get_dynamic_sampling_context)
+    end
+  end
+
   describe "session capturing" do
     context "when auto_session_tracking is false" do
       before do
@@ -636,6 +675,77 @@ RSpec.describe Sentry::Rack::CaptureExceptions, rack: true do
           expect(item.type).to eq('sessions')
           expect(item.payload[:attrs]).to eq({ release: 'test-release', environment: 'test' })
           expect(item.payload[:aggregates].first).to eq({ exited: 10, errored: 2, started: now_bucket.iso8601 })
+        end
+      end
+    end
+  end
+
+  if defined?(StackProf)
+    describe "profiling" do
+      context "when profiling is enabled" do
+        before do
+          perform_basic_setup do |config|
+            config.traces_sample_rate = 1.0
+            config.profiles_sample_rate = 1.0
+            config.release = "test-release"
+          end
+        end
+
+        let(:stackprof_results) do
+          data = StackProf::Report.from_file('spec/support/stackprof_results.json').data
+          # relative dir differs on each machine
+          data[:frames].each { |_id, fra| fra[:file].gsub!(/<dir>/, Dir.pwd) }
+          data
+        end
+
+        before do
+          StackProf.stop
+          allow(StackProf).to receive(:results).and_return(stackprof_results)
+        end
+
+        it "collects a profile" do
+          app = ->(_) do
+            [200, {}, "ok"]
+          end
+
+          stack = described_class.new(app)
+          stack.call(env)
+          event = last_sentry_event
+
+          profile = event.profile
+          expect(profile).not_to be_nil
+
+          expect(profile[:event_id]).not_to be_nil
+          expect(profile[:platform]).to eq("ruby")
+          expect(profile[:version]).to eq("1")
+          expect(profile[:environment]).to eq("development")
+          expect(profile[:release]).to eq("test-release")
+          expect { Time.parse(profile[:timestamp]) }.not_to raise_error
+
+          expect(profile[:device]).to include(:architecture)
+          expect(profile[:os]).to include(:name, :version)
+          expect(profile[:runtime]).to include(:name, :version)
+
+          expect(profile[:transaction]).to include(:id, :name, :trace_id, :active_thead_id)
+          expect(profile[:transaction][:id]).to eq(event.event_id)
+          expect(profile[:transaction][:name]).to eq(event.transaction)
+          expect(profile[:transaction][:trace_id]).to eq(event.contexts[:trace][:trace_id])
+          expect(profile[:transaction][:active_thead_id]).to eq("0")
+
+          # detailed checking of content is done in profiler_spec,
+          # just check basic structure here
+          frames = profile[:profile][:frames]
+          expect(frames).to be_a(Array)
+          expect(frames.first).to include(:function, :filename, :abs_path, :in_app)
+
+          stacks = profile[:profile][:stacks]
+          expect(stacks).to be_a(Array)
+          expect(stacks.first).to be_a(Array)
+          expect(stacks.first.first).to be_a(Integer)
+
+          samples = profile[:profile][:samples]
+          expect(samples).to be_a(Array)
+          expect(samples.first).to include(:stack_id, :thread_id, :elapsed_since_start_ns)
         end
       end
     end

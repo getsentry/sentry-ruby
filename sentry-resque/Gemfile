@@ -3,17 +3,8 @@ git_source(:github) { |name| "https://github.com/#{name}.git" }
 
 # Specify your gem's dependencies in sentry-ruby.gemspec
 gemspec
-
-gem "rake", "~> 12.0"
-gem "rspec", "~> 3.0"
-gem 'simplecov'
-gem "simplecov-cobertura", "~> 1.4"
-gem "rexml"
-
-gem "rails", "< 7.0"
-
 gem "sentry-ruby", path: "../sentry-ruby"
-gem "sentry-rails", path: "../sentry-rails"
 
-gem "pry"
-gem "debug", github: "ruby/debug", platform: :ruby if RUBY_VERSION.to_f >= 2.6
+gem "resque-retry", "~> 1.8"
+
+eval_gemfile File.expand_path("../Gemfile", __dir__)

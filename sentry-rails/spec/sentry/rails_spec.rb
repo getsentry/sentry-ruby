@@ -26,6 +26,11 @@ RSpec.describe Sentry::Rails, type: :request do
       expect(app.middleware.find_index(Sentry::Rails::RescuedExceptionInterceptor)).to eq(index_of_debug_exceptions + 1)
     end
 
+    it "propagates timezone to cron config" do
+      # cron.default_timezone is set to nil by default
+      expect(Sentry.configuration.cron.default_timezone).to eq("Etc/UTC")
+    end
+
     it "inserts a callback to disable background_worker for the runner mode" do
       Sentry.configuration.background_worker_threads = 10
 
@@ -35,8 +40,25 @@ RSpec.describe Sentry::Rails, type: :request do
     end
 
     describe "logger detection" do
-      it "sets Sentry.configuration.logger correctly" do
-        expect(Sentry.configuration.logger).to eq(Rails.logger)
+      it "sets a duplicated Rails logger as the SDK's logger" do
+        if Gem::Version.new(Rails.version) > Gem::Version.new("7.1.0.beta")
+          expect(Sentry.configuration.logger).to be_a(ActiveSupport::BroadcastLogger)
+
+          Sentry.configuration.logger.level = ::Logger::WARN
+
+          # Configuring the SDK's logger should not affect the Rails logger
+          expect(Rails.logger.broadcasts.first).to be_a(ActiveSupport::Logger)
+          expect(Rails.logger.broadcasts.first.level).to eq(::Logger::DEBUG)
+          expect(Sentry.configuration.logger.level).to eq(::Logger::WARN)
+        else
+          expect(Sentry.configuration.logger).to be_a(ActiveSupport::Logger)
+
+          Sentry.configuration.logger.level = ::Logger::WARN
+
+          # Configuring the SDK's logger should not affect the Rails logger
+          expect(Rails.logger.level).to eq(::Logger::DEBUG)
+          expect(Sentry.configuration.logger.level).to eq(::Logger::WARN)
+        end
       end
 
       it "respects the logger set by user" do
@@ -322,7 +344,7 @@ RSpec.describe Sentry::Rails, type: :request do
         end
 
         expect(event.level).to eq(:info)
-        expect(event.contexts).to include({ "rails.error" => { foo: "bar" }})
+        expect(event.contexts).to include({ "rails.error" => { foo: "bar" } })
       end
 
       it "skips cache storage sources", skip: Rails.version.to_f < 7.1 do

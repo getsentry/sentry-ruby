@@ -24,17 +24,17 @@ v7_1 = Gem::Version.new("7.1.alpha")
 
 FILE_NAME =
   case Gem::Version.new(Rails.version)
-  when -> (v) { v < v5_2 }
+  when ->(v) { v < v5_2 }
     "5-0"
-  when -> (v) { v.between?(v5_2, v6_0) }
+  when ->(v) { v.between?(v5_2, v6_0) }
     "5-2"
-  when -> (v) { v.between?(v6_0, v6_1) }
+  when ->(v) { v.between?(v6_0, v6_1) }
     "6-0"
-  when -> (v) { v.between?(v6_1, v7_0) }
+  when ->(v) { v.between?(v6_1, v7_0) }
     "6-1"
-  when -> (v) { v > v7_0 && v < v7_1 }
+  when ->(v) { v > v7_0 && v < v7_1 }
     "7-0"
-  when -> (v) { v >= v7_1 }
+  when ->(v) { v >= v7_1 }
     "7-1"
   end
 
@@ -53,17 +53,17 @@ def make_basic_app(&block)
   app.config.action_controller.view_paths = "spec/dummy/test_rails_app"
   app.config.hosts = nil
   app.config.secret_key_base = "test"
-  app.config.logger = Logger.new(nil)
+  app.config.logger = ActiveSupport::Logger.new(nil)
   app.config.eager_load = true
   app.config.active_job.queue_adapter = :test
 
   configure_app(app)
 
   app.routes.append do
-    get "/exception", :to => "hello#exception"
-    get "/view_exception", :to => "hello#view_exception"
-    get "/view", :to => "hello#view"
-    get "/not_found", :to => "hello#not_found"
+    get "/exception", to: "hello#exception"
+    get "/view_exception", to: "hello#view_exception"
+    get "/view", to: "hello#view"
+    get "/not_found", to: "hello#not_found"
     get "/world", to: "hello#world"
     get "/with_custom_instrumentation", to: "hello#with_custom_instrumentation"
     resources :posts, only: [:index, :show] do
@@ -72,7 +72,7 @@ def make_basic_app(&block)
       end
     end
     get "500", to: "hello#reporting"
-    root :to => "hello#world"
+    root to: "hello#world"
   end
 
   app.initializer :configure_sentry do

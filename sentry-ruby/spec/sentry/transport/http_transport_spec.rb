@@ -12,6 +12,7 @@ RSpec.describe Sentry::HTTPTransport do
   end
   let(:client) { Sentry::Client.new(configuration) }
   let(:event) { client.event_from_message("foobarbaz") }
+  let(:fake_time) { Time.now }
   let(:data) do
     subject.serialize_envelope(subject.envelope_from_event(event.to_hash)).first
   end
@@ -63,7 +64,7 @@ RSpec.describe Sentry::HTTPTransport do
         expect(subject.send(:conn).port).to eq(80)
       end
     end
-    context "with http DSN" do
+    context "with https DSN" do
       let(:dsn) { "https://12345:67890@sentry.localdomain/sentry/42" }
 
       it "sets port to 443" do
@@ -129,13 +130,33 @@ RSpec.describe Sentry::HTTPTransport do
       subject.send_data(data)
     end
 
+    it "accepts a proxy from ENV[HTTP_PROXY]" do
+      begin
+        ENV["http_proxy"] = "https://stan:foobar@example.com:8080"
+
+        stub_request(fake_response) do |_, http_obj|
+          expect(http_obj.proxy_address).to eq("example.com")
+          expect(http_obj.proxy_port).to eq(8080)
+
+          if Gem::Version.new(RUBY_VERSION) >= Gem::Version.new("2.5")
+            expect(http_obj.proxy_user).to eq("stan")
+            expect(http_obj.proxy_pass).to eq("foobar")
+          end
+        end
+
+        subject.send_data(data)
+      ensure
+        ENV["http_proxy"] = nil
+      end
+    end
+
     it "accepts custom timeout" do
       configuration.transport.timeout = 10
 
       stub_request(fake_response) do |_, http_obj|
         expect(http_obj.read_timeout).to eq(10)
 
-        if RUBY_VERSION >= "2.6"
+        if Gem::Version.new(RUBY_VERSION) >= Gem::Version.new("2.6")
           expect(http_obj.write_timeout).to eq(10)
         end
       end
@@ -245,11 +266,34 @@ RSpec.describe Sentry::HTTPTransport do
     end
   end
 
+  describe "failed to perform the network request" do
+    it "does not report Net::HTTP errors to Sentry" do
+      allow(::Net::HTTP).to receive(:new).and_raise(Errno::ECONNREFUSED)
+      expect do
+        subject.send_data(data)
+      end.to raise_error(Sentry::ExternalError)
+    end
+
+    it "does not report SocketError errors to Sentry" do
+      allow(::Net::HTTP).to receive(:new).and_raise(SocketError.new("socket error"))
+      expect do
+        subject.send_data(data)
+      end.to raise_error(Sentry::ExternalError)
+    end
+
+    it "reports other errors to Sentry if they are not recognized" do
+      allow(::Net::HTTP).to receive(:new).and_raise(StandardError.new("Booboo"))
+      expect do
+        subject.send_data(data)
+      end.to raise_error(StandardError, /Booboo/)
+    end
+  end
+
   describe "failed request handling" do
     context "receive 4xx responses" do
       let(:fake_response) { build_fake_response("404") }
 
-      it 'raises an error' do
+      it "raises an error" do
         stub_request(fake_response)
 
         expect { subject.send_data(data) }.to raise_error(Sentry::ExternalError, /the server responded with status 404/)
@@ -259,7 +303,7 @@ RSpec.describe Sentry::HTTPTransport do
     context "receive 5xx responses" do
       let(:fake_response) { build_fake_response("500") }
 
-      it 'raises an error' do
+      it "raises an error" do
         stub_request(fake_response)
 
         expect { subject.send_data(data) }.to raise_error(Sentry::ExternalError, /the server responded with status 500/)
@@ -271,12 +315,43 @@ RSpec.describe Sentry::HTTPTransport do
         build_fake_response("500", headers: { 'x-sentry-error' => 'error_in_header' })
       end
 
-      it 'raises an error with header' do
+      it "raises an error with header" do
         stub_request(error_response)
 
         expect { subject.send_data(data) }.to raise_error(Sentry::ExternalError, /error_in_header/)
-
       end
+    end
+  end
+
+  describe "#generate_auth_header" do
+    it "generates an auth header" do
+      expect(subject.send(:generate_auth_header)).to eq(
+        "Sentry sentry_version=7, sentry_client=sentry-ruby/#{Sentry::VERSION}, sentry_timestamp=#{fake_time.to_i}, " \
+        "sentry_key=12345, sentry_secret=67890"
+      )
+    end
+
+    it "generates an auth header without a secret (Sentry 9)" do
+      configuration.server = "https://66260460f09b5940498e24bb7ce093a0@sentry.io/42"
+
+      expect(subject.send(:generate_auth_header)).to eq(
+        "Sentry sentry_version=7, sentry_client=sentry-ruby/#{Sentry::VERSION}, sentry_timestamp=#{fake_time.to_i}, " \
+        "sentry_key=66260460f09b5940498e24bb7ce093a0"
+      )
+    end
+  end
+
+  describe "#endpoint" do
+    it "returns correct endpoint" do
+      expect(subject.endpoint).to eq("/sentry/api/42/envelope/")
+    end
+  end
+
+  describe "#conn" do
+    it "returns a connection" do
+      expect(subject.conn).to be_a(Net::HTTP)
+      expect(subject.conn.address).to eq("sentry.localdomain")
+      expect(subject.conn.use_ssl?).to eq(false)
     end
   end
 end

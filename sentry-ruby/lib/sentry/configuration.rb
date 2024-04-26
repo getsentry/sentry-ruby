@@ -7,6 +7,8 @@ require 'sentry/utils/custom_inspection'
 require "sentry/dsn"
 require "sentry/release_detector"
 require "sentry/transport/configuration"
+require "sentry/cron/configuration"
+require "sentry/metrics/configuration"
 require "sentry/linecache"
 require "sentry/interfaces/stacktrace_builder"
 
@@ -14,6 +16,8 @@ module Sentry
   class Configuration
     include CustomInspection
     include LoggingHelper
+    include ArgumentCheckingHelper
+
     # Directories to be recognized as part of your app. e.g. if you
     # have an `engines` dir at the root of your project, you may want
     # to set this to something like /(app|config|engines|lib)/
@@ -30,6 +34,13 @@ module Sentry
     # E.g.: config.background_worker_threads = 0
     # @return [Integer]
     attr_accessor :background_worker_threads
+
+    # The maximum queue size for the background worker.
+    # Jobs will be rejected above this limit.
+    #
+    # Default is {BackgroundWorker::DEFAULT_MAX_QUEUE}.
+    # @return [Integer]
+    attr_accessor :background_worker_max_queue
 
     # a proc/lambda that takes an array of stack traces
     # it'll be used to silence (reduce) backtrace of the exception
@@ -132,6 +143,14 @@ module Sentry
     # @return [Boolean]
     attr_accessor :include_local_variables
 
+    # Whether to capture events and traces into Spotlight. Default is false.
+    # If you set this to true, Sentry will send events and traces to the local
+    # Sidecar proxy at http://localhost:8969/stream.
+    # If you want to use a different Sidecar proxy address, set this to String
+    # with the proxy URL.
+    # @return [Boolean, String]
+    attr_accessor :spotlight
+
     # @deprecated Use {#include_local_variables} instead.
     alias_method :capture_exception_frame_locals, :include_local_variables
 
@@ -171,7 +190,7 @@ module Sentry
     # Release tag to be passed with every event sent to Sentry.
     # We automatically try to set this to a git SHA or Capistrano release.
     # @return [String]
-    attr_accessor :release
+    attr_reader :release
 
     # The sampling factor to apply to events. A value of 0.0 will not send
     # any events, and a value of 1.0 will send 100% of events.
@@ -201,13 +220,21 @@ module Sentry
     # @return [String]
     attr_accessor :server_name
 
-    # Return a Transport::Configuration object for transport-related configurations.
-    # @return [Transport]
+    # Transport related configuration.
+    # @return [Transport::Configuration]
     attr_reader :transport
 
+    # Cron related configuration.
+    # @return [Cron::Configuration]
+    attr_reader :cron
+
+    # Metrics related configuration.
+    # @return [Metrics::Configuration]
+    attr_reader :metrics
+
     # Take a float between 0.0 and 1.0 as the sample rate for tracing events (transactions).
-    # @return [Float]
-    attr_accessor :traces_sample_rate
+    # @return [Float, nil]
+    attr_reader :traces_sample_rate
 
     # Take a Proc that controls the sample rate for every tracing event, e.g.
     # @example
@@ -219,6 +246,11 @@ module Sentry
     # @return [Proc]
     attr_accessor :traces_sampler
 
+    # Easier way to use performance tracing
+    # If set to true, will set traces_sample_rate to 1.0
+    # @return [Boolean, nil]
+    attr_reader :enable_tracing
+
     # Send diagnostic client reports about dropped events, true by default
     # tries to attach to an existing envelope max once every 30s
     # @return [Boolean]
@@ -228,13 +260,44 @@ module Sentry
     # @return [Boolean]
     attr_accessor :auto_session_tracking
 
+    # Whether to downsample transactions automatically because of backpressure.
+    # Starts a new monitor thread to check health of the SDK every 10 seconds.
+    # Default is false
+    # @return [Boolean]
+    attr_accessor :enable_backpressure_handling
+
+    # Allowlist of outgoing request targets to which sentry-trace and baggage headers are attached.
+    # Default is all (/.*/)
+    # @return [Array<String, Regexp>]
+    attr_accessor :trace_propagation_targets
+
     # The instrumenter to use, :sentry or :otel
     # @return [Symbol]
     attr_reader :instrumenter
 
+    # Take a float between 0.0 and 1.0 as the sample rate for capturing profiles.
+    # Note that this rate is relative to traces_sample_rate / traces_sampler,
+    # i.e. the profile is sampled by this rate after the transaction is sampled.
+    # @return [Float, nil]
+    attr_reader :profiles_sample_rate
+
+    # Array of patches to apply.
+    # Default is {DEFAULT_PATCHES}
+    # @return [Array<Symbol>]
+    attr_accessor :enabled_patches
+
     # these are not config options
     # @!visibility private
     attr_reader :errors, :gem_specs
+
+    # These exceptions could enter Puma's `lowlevel_error_handler` callback and the SDK's Puma integration
+    # But they are mostly considered as noise and should be ignored by default
+    # Please see https://github.com/getsentry/sentry-ruby/pull/2026 for more information
+    PUMA_IGNORE_DEFAULT = [
+      'Puma::MiniSSL::SSLError',
+      'Puma::HttpParserError',
+      'Puma::HttpParserError501'
+    ].freeze
 
     # Most of these errors generate 4XX responses. In general, Sentry clients
     # only automatically report 5xx responses.
@@ -245,11 +308,11 @@ module Sentry
       'Sinatra::NotFound'
     ].freeze
 
-    RACK_ENV_WHITELIST_DEFAULT = %w(
+    RACK_ENV_WHITELIST_DEFAULT = %w[
       REMOTE_ADDR
       SERVER_NAME
       SERVER_PORT
-    ).freeze
+    ].freeze
 
     HEROKU_DYNO_METADATA_MESSAGE = "You are running on Heroku but haven't enabled Dyno Metadata. For Sentry's "\
     "release detection to work correctly, please run `heroku labs:enable runtime-dyno-metadata`".freeze
@@ -260,6 +323,10 @@ module Sentry
 
     INSTRUMENTERS = [:sentry, :otel]
 
+    PROPAGATION_TARGETS_MATCH_ALL = /.*/.freeze
+
+    DEFAULT_PATCHES = %i[redis puma http].freeze
+
     class << self
       # Post initialization callbacks are called at the end of initialization process
       # allowing extending the configuration of sentry-ruby by multiple extensions
@@ -267,7 +334,7 @@ module Sentry
         @post_initialization_callbacks ||= []
       end
 
-    # allow extensions to add their hooks to the Configuration class
+      # allow extensions to add their hooks to the Configuration class
       def add_post_initialization_callback(&block)
         post_initialization_callbacks << block
       end
@@ -277,6 +344,7 @@ module Sentry
       self.app_dirs_pattern = nil
       self.debug = false
       self.background_worker_threads = Concurrent.processor_count
+      self.background_worker_max_queue = BackgroundWorker::DEFAULT_MAX_QUEUE
       self.backtrace_cleanup_callback = nil
       self.max_breadcrumbs = BreadcrumbBuffer::DEFAULT_SIZE
       self.breadcrumbs_logger = []
@@ -285,7 +353,7 @@ module Sentry
       self.environment = environment_from_env
       self.enabled_environments = []
       self.exclude_loggers = []
-      self.excluded_exceptions = IGNORE_DEFAULT.dup
+      self.excluded_exceptions = IGNORE_DEFAULT + PUMA_IGNORE_DEFAULT
       self.inspect_exception_causes_for_exclusion = true
       self.linecache = ::Sentry::LineCache.new
       self.logger = ::Sentry::Logger.new(STDOUT)
@@ -298,18 +366,24 @@ module Sentry
       self.skip_rake_integration = false
       self.send_client_reports = true
       self.auto_session_tracking = true
+      self.enable_backpressure_handling = false
       self.trusted_proxies = []
       self.dsn = ENV['SENTRY_DSN']
+      self.spotlight = false
       self.server_name = server_name_from_env
       self.instrumenter = :sentry
+      self.trace_propagation_targets = [PROPAGATION_TARGETS_MATCH_ALL]
+      self.enabled_patches = DEFAULT_PATCHES.dup
 
       self.before_send = nil
       self.before_send_transaction = nil
       self.rack_env_whitelist = RACK_ENV_WHITELIST_DEFAULT
-      self.traces_sample_rate = nil
       self.traces_sampler = nil
+      self.enable_tracing = nil
 
       @transport = Transport::Configuration.new
+      @cron = Cron::Configuration.new
+      @metrics = Metrics::Configuration.new
       @gem_specs = Hash[Gem::Specification.map { |spec| [spec.name, spec.version.to_s] }] if Gem::Specification.respond_to?(:map)
 
       run_post_initialization_callbacks
@@ -320,6 +394,12 @@ module Sentry
     end
 
     alias server= dsn=
+
+    def release=(value)
+      check_argument_type!(value, String, NilClass)
+
+      @release = value
+    end
 
     def breadcrumbs_logger=(logger)
       loggers =
@@ -360,7 +440,31 @@ module Sentry
       @instrumenter = INSTRUMENTERS.include?(instrumenter) ? instrumenter : :sentry
     end
 
+    def enable_tracing=(enable_tracing)
+      @enable_tracing = enable_tracing
+      @traces_sample_rate ||= 1.0 if enable_tracing
+    end
+
+    def is_numeric_or_nil?(value)
+      value.is_a?(Numeric) || value.nil?
+    end
+
+    def traces_sample_rate=(traces_sample_rate)
+      raise ArgumentError, "traces_sample_rate must be a Numeric or nil" unless is_numeric_or_nil?(traces_sample_rate)
+      @traces_sample_rate = traces_sample_rate
+    end
+
+    def profiles_sample_rate=(profiles_sample_rate)
+      raise ArgumentError, "profiles_sample_rate must be a Numeric or nil" unless is_numeric_or_nil?(profiles_sample_rate)
+      log_warn("Please make sure to include the 'stackprof' gem in your Gemfile to use Profiling with Sentry.") unless defined?(StackProf)
+      @profiles_sample_rate = profiles_sample_rate
+    end
+
     def sending_allowed?
+      spotlight || sending_to_dsn_allowed?
+    end
+
+    def sending_to_dsn_allowed?
       @errors = []
 
       valid? && capture_in_environment?
@@ -370,6 +474,10 @@ module Sentry
       return true if sample_rate == 1.0
 
       Random.rand < sample_rate
+    end
+
+    def session_tracking?
+      auto_session_tracking && enabled_in_current_env?
     end
 
     def exception_class_allowed?(exc)
@@ -389,8 +497,21 @@ module Sentry
       enabled_environments.empty? || enabled_environments.include?(environment)
     end
 
+    def valid_sample_rate?(sample_rate)
+      return false unless sample_rate.is_a?(Numeric)
+      sample_rate >= 0.0 && sample_rate <= 1.0
+    end
+
     def tracing_enabled?
-      !!((@traces_sample_rate && @traces_sample_rate >= 0.0 && @traces_sample_rate <= 1.0) || @traces_sampler) && sending_allowed?
+      valid_sampler = !!((valid_sample_rate?(@traces_sample_rate)) || @traces_sampler)
+
+      (@enable_tracing != false) && valid_sampler && sending_allowed?
+    end
+
+    def profiling_enabled?
+      valid_sampler = !!(valid_sample_rate?(@profiles_sample_rate))
+
+      tracing_enabled? && valid_sampler && sending_allowed?
     end
 
     # @return [String, nil]
@@ -418,7 +539,7 @@ module Sentry
     def detect_release
       return unless sending_allowed?
 
-      self.release ||= ReleaseDetector.detect_release(project_root: project_root, running_on_heroku: running_on_heroku?)
+      @release ||= ReleaseDetector.detect_release(project_root: project_root, running_on_heroku: running_on_heroku?)
 
       if running_on_heroku? && release.nil?
         log_warn(HEROKU_DYNO_METADATA_MESSAGE)
@@ -434,12 +555,6 @@ module Sentry
     end
 
     private
-
-    def check_callable!(name, value)
-      unless value == nil || value.respond_to?(:call)
-        raise ArgumentError, "#{name} must be callable (or nil to disable)"
-      end
-    end
 
     def init_dsn(dsn_string)
       return if dsn_string.nil? || dsn_string.empty?

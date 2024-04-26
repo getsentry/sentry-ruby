@@ -30,6 +30,7 @@ RSpec.describe Sentry::Event do
       expect(event.environment).to eq("test")
       expect(event.release).to eq("721e41770371db95eee98ca2707686226b993eda")
       expect(event.sdk).to eq("name" => "sentry.ruby", "version" => Sentry::VERSION)
+      expect(event.dynamic_sampling_context).to eq(nil)
     end
   end
 
@@ -149,7 +150,7 @@ RSpec.describe Sentry::Event do
           Sentry.get_current_scope.apply_to_event(event)
 
           expect(event.to_hash[:request]).to eq(
-            :data=>{"foo"=>"bar"},
+            data: { "foo"=>"bar" },
             env: { 'SERVER_NAME' => 'localhost', 'SERVER_PORT' => '80', "REMOTE_ADDR" => "192.168.1.1" },
             headers: { 'Host' => 'localhost', "X-Forwarded-For" => "1.1.1.1, 2.2.2.2", "X-Request-Id" => "abcd-1234-abcd-1234" },
             method: 'POST',
@@ -182,61 +183,6 @@ RSpec.describe Sentry::Event do
       expect(json["extra"]['my_custom_variable']).to eq('value')
       expect(json["extra"]['date']).to be_a(String)
       expect(json["extra"]['anonymous_module']).not_to be_a(Class)
-    end
-  end
-
-  describe ".get_log_message" do
-    let(:client) do
-      Sentry::Client.new(configuration)
-    end
-
-    let(:hub) do
-      Sentry::Hub.new(client, Sentry::Scope.new)
-    end
-
-    context "with adnormal event" do
-      subject do
-        Sentry::Event.new(configuration: configuration)
-      end
-
-      it "returns placeholder message" do
-        expect(described_class.get_log_message(subject.to_hash)).to eq('<no message value>')
-        expect(described_class.get_log_message(subject.to_json_compatible)).to eq('<no message value>')
-      end
-    end
-    context "with transaction event" do
-      let(:transaction) do
-        Sentry::Transaction.new(name: "test transaction", op: "sql.active_record", hub: hub, sampled: true)
-      end
-
-      subject do
-        client.event_from_transaction(transaction)
-      end
-
-      it "returns the transaction's name" do
-        expect(described_class.get_log_message(subject.to_hash)).to eq("test transaction")
-        expect(described_class.get_log_message(subject.to_json_compatible)).to eq("test transaction")
-      end
-    end
-    context "with exception event" do
-      subject do
-        client.event_from_exception(Exception.new("error!"))
-      end
-
-      it "returns the exception's message" do
-        expect(described_class.get_log_message(subject.to_hash)).to include("Exception: error!")
-        expect(described_class.get_log_message(subject.to_json_compatible)).to match("Exception: error!")
-      end
-    end
-    context "with message event" do
-      subject do
-        client.event_from_message("test")
-      end
-
-      it "returns the event's message" do
-        expect(described_class.get_log_message(subject.to_hash)).to eq("test")
-        expect(described_class.get_log_message(subject.to_json_compatible)).to eq("test")
-      end
     end
   end
 end

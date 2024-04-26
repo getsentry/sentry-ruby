@@ -33,6 +33,9 @@ RSpec.describe Sentry::DelayedJob do
 
     def self.class_do_nothing
     end
+
+    def do_nothing_with_args(a)
+    end
   end
 
   it "sets correct extra/tags context for each job" do
@@ -140,6 +143,22 @@ RSpec.describe Sentry::DelayedJob do
           enqueued_job.invoke_job
         end.to raise_error(ZeroDivisionError)
 
+        expect(transport.events.count).to eq(1)
+      end
+
+      # Default max_attemps is defined on Delayed::Worker.max_attempts == 25.
+      # However, users can customize max_attempts on the job class, and DelayedJob
+      # will respect that.
+      # Sentry needs to report an exception if report_after_retries is true and
+      # custom job-level max_attempts is reached.
+      # See https://github.com/collectiveidea/delayed_job#custom-jobs
+      it "reports exception after the job's custom max_attempts" do
+        enqueued_job.update(attempts: 2)
+        allow(enqueued_job).to receive(:max_attempts).and_return(3)
+
+        expect do
+          enqueued_job.invoke_job
+        end.to raise_error(ZeroDivisionError)
         expect(transport.events.count).to eq(1)
       end
 
@@ -264,6 +283,17 @@ RSpec.describe Sentry::DelayedJob do
         expect(transaction.contexts.dig(:trace, :status)).to eq("ok")
       end
 
+      it "passes job context into the sampling context" do
+        expect_any_instance_of(Sentry::Transaction).to receive(:set_initial_sample_decision) do |**args|
+          expect(args.dig(:sampling_context, Sentry::DelayedJob::Plugin::DELAYED_JOB_CONTEXT_KEY, :priority)).to eq(7)
+          expect(args.dig(:sampling_context, Sentry::DelayedJob::Plugin::ACTIVE_JOB_CONTEXT_KEY, :job_class)).to eq('ReportingJob')
+        end
+        ReportingJob.set(priority: 7).perform_later
+
+        enqueued_job = Delayed::Backend::ActiveRecord::Job.last
+        enqueued_job.invoke_job
+      end
+
       it "records transaction with exception" do
         FailedJob.perform_later
         enqueued_job = Delayed::Backend::ActiveRecord::Job.last
@@ -327,7 +357,6 @@ RSpec.describe Sentry::DelayedJob do
     end
 
     it 'returns the class name for anything else' do
-
       expect(Sentry::DelayedJob::Plugin.compute_job_class("something")).to eq("String")
       expect(Sentry::DelayedJob::Plugin.compute_job_class(Sentry::DelayedJob::Plugin)).to eq("Class")
     end
@@ -376,6 +405,46 @@ RSpec.describe Sentry::DelayedJob do
 
       event = transport.events.last
       expect(event.contexts.dig(:trace, :trace_id)).to eq(transaction.contexts.dig(:trace, :trace_id))
+    end
+
+    context "with upstream trace" do
+      before do
+        transaction = Sentry.start_transaction
+        Sentry.get_current_scope.set_span(transaction)
+
+        Post.new.delay.do_nothing_with_args(1)
+      end
+
+      let(:parent_transaction) { Sentry.get_current_scope.span }
+      let(:enqueued_job) { Delayed::Backend::ActiveRecord::Job.last }
+
+      it "injects the trace propagation headers to args for PerformableMethod" do
+        payload_object = enqueued_job.payload_object
+        expect(payload_object).to be_a(Delayed::PerformableMethod)
+        expect(payload_object.args.last).to include(:sentry)
+        expect(payload_object.args.last[:sentry]["sentry-trace"]).to eq(parent_transaction.to_sentry_trace)
+        expect(payload_object.args.last[:sentry]["baggage"]).to eq(parent_transaction.to_baggage)
+      end
+
+      it "invokes the job with correct args" do
+        payload_object = enqueued_job.payload_object
+        expect(payload_object.object).to be_a(Post)
+        expect(payload_object.object).to receive(:do_nothing_with_args).with(1)
+
+        enqueued_job.invoke_job
+      end
+
+      it "continues the trace" do
+        enqueued_job.invoke_job
+
+        expect(transport.events.count).to eq(1)
+        transaction = transport.events.last
+
+        expect(transaction.transaction).to eq("Post#do_nothing_with_args")
+        expect(transaction.contexts.dig(:trace, :trace_id)).to eq(parent_transaction.trace_id)
+        expect(transaction.contexts.dig(:trace, :parent_span_id)).to eq(parent_transaction.span_id)
+        expect(transaction.dynamic_sampling_context).to eq(parent_transaction.get_baggage.dynamic_sampling_context)
+      end
     end
   end
 end

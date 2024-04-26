@@ -30,7 +30,7 @@ RSpec.describe Sentry::Hub do
       end
 
       it "doesn't send the event nor assign last_event_id" do
-        subject.send(capture_helper, capture_subject)
+        subject.send(capture_helper, *capture_subject)
 
         expect(transport.events).to be_empty
         expect(subject.last_event_id).to eq(nil)
@@ -39,14 +39,14 @@ RSpec.describe Sentry::Hub do
 
     context "with custom attributes" do
       it "updates the event with custom attributes" do
-        subject.send(capture_helper, capture_subject, tags: { foo: "bar" })
+        subject.send(capture_helper, *capture_subject, tags: { foo: "bar" })
 
         event = transport.events.last
         expect(event.tags).to eq({ foo: "bar" })
       end
 
       it "accepts custom level" do
-        subject.send(capture_helper, capture_subject, level: :info)
+        subject.send(capture_helper, *capture_subject, level: :info)
 
         event = transport.events.last
         expect(event.level).to eq(:info)
@@ -54,14 +54,14 @@ RSpec.describe Sentry::Hub do
 
       it "merges the contexts/tags/extrac with what the scope already has" do
         scope.set_tags(old_tag: true)
-        scope.set_contexts({ character: { name: "John", age: 25 }})
+        scope.set_contexts({ character: { name: "John", age: 25 } })
         scope.set_extras(old_extra: true)
 
         subject.send(
           capture_helper,
-          capture_subject,
+          *capture_subject,
           tags: { new_tag: true },
-          contexts: { another_character: { name: "Jane", age: 20 }},
+          contexts: { another_character: { name: "Jane", age: 20 } },
           extra: { new_extra: true }
         )
 
@@ -76,7 +76,7 @@ RSpec.describe Sentry::Hub do
         expect(event.extra).to eq({ new_extra: true, old_extra: true })
 
         expect(scope.tags).to eq(old_tag: true)
-        expect(scope.contexts).to include({ character: { name: "John", age: 25 }})
+        expect(scope.contexts).to include({ character: { name: "John", age: 25 } })
         expect(scope.extra).to eq(old_extra: true)
       end
     end
@@ -89,7 +89,7 @@ RSpec.describe Sentry::Hub do
       end
 
       it "accepts a custom scope" do
-        subject.send(capture_helper, capture_subject, scope: new_scope)
+        subject.send(capture_helper, *capture_subject, scope: new_scope)
 
         event = transport.events.last
         expect(event.tags).to eq({ custom_scope: true })
@@ -102,7 +102,7 @@ RSpec.describe Sentry::Hub do
       end
 
       it 'yields the scope to a passed block' do
-        subject.send(capture_helper, capture_subject) do |scope|
+        subject.send(capture_helper, *capture_subject) do |scope|
           scope.set_tags({ temporary_scope: true })
         end
 
@@ -116,15 +116,17 @@ RSpec.describe Sentry::Hub do
         hint = nil
         configuration.before_send = ->(event, h) { hint = h }
 
-        subject.send(capture_helper, capture_subject, hint: {foo: "bar"})
+        subject.send(capture_helper, *capture_subject, hint: { foo: "bar" })
 
         case capture_subject
         when String
-          expect(hint).to eq({message: capture_subject, foo: "bar"})
+          expect(hint).to eq({ message: capture_subject, foo: "bar" })
         when Exception
-          expect(hint).to eq({exception: capture_subject, foo: "bar"})
+          expect(hint).to eq({ exception: capture_subject, foo: "bar" })
+        when Array
+          expect(hint).to eq({ slug: capture_subject.first, foo: "bar" })
         else
-          expect(hint).to eq({foo: "bar"})
+          expect(hint).to eq({ foo: "bar" })
         end
       end
     end
@@ -167,6 +169,72 @@ RSpec.describe Sentry::Hub do
     end
   end
 
+  describe '#capture_check_in' do
+    let(:slug) { "test_slug" }
+
+    it "raises error when passing a non-string slug" do
+      expect do
+        subject.capture_check_in(1, :ok)
+      end.to raise_error(ArgumentError, 'expect the argument to be a String, got Integer (1)')
+    end
+
+    it "raises error when passing an invalid status" do
+      expect do
+        subject.capture_check_in(slug, "bla")
+      end.to raise_error(ArgumentError, 'expect the argument to be one of :ok or :in_progress or :error, got "bla"')
+    end
+
+    it "raises error when passing an invalid status symbol" do
+      expect do
+        subject.capture_check_in(slug, :bla)
+      end.to raise_error(ArgumentError, 'expect the argument to be one of :ok or :in_progress or :error, got :bla')
+    end
+
+    it "returns a check_in id" do
+      check_in_id = subject.capture_check_in(slug, :ok)
+      expect(check_in_id).to be_a(String)
+      expect(check_in_id.length).to eq(32)
+    end
+
+    it "initializes an Event, and sends it via the Client" do
+      expect do
+        subject.capture_check_in(slug, :ok)
+      end.to change { transport.events.count }.by(1)
+    end
+
+    it "populates the event hash correctly" do
+      subject.capture_check_in(
+        slug,
+        :ok,
+        duration: 30,
+        check_in_id: "xxx-yyy",
+        monitor_config: Sentry::Cron::MonitorConfig.from_crontab("* * * * *")
+      )
+
+      event = transport.events.last.to_hash
+      expect(event).to include(
+        monitor_slug: slug,
+        status: :ok,
+        check_in_id: "xxx-yyy",
+        duration: 30,
+      )
+
+      expect(event[:monitor_config]).to include({ schedule: { type: :crontab, value: "* * * * *" } })
+    end
+
+    context "with sending not allowed" do
+      before do
+        expect(configuration).to receive(:sending_allowed?).and_return(false)
+      end
+
+      it "doesn't send the event nor assign last_event_id" do
+        subject.capture_check_in(slug, :ok)
+        expect(transport.events).to be_empty
+        expect(subject.last_event_id).to eq(nil)
+      end
+    end
+  end
+
   describe '#capture_exception' do
     let(:exception) { ZeroDivisionError.new("divided by 0") }
 
@@ -180,10 +248,35 @@ RSpec.describe Sentry::Hub do
       end.to change { transport.events.count }.by(1)
     end
 
-    it "raises error when passing a non-exception object" do
-      expect do
-        subject.capture_exception("String")
-      end.to raise_error(ArgumentError, 'expect the argument to be a Exception, got String ("String")')
+    if RUBY_PLATFORM == "java"
+      context 'when called under jRuby' do
+        let(:exception) do
+          begin
+            raise java.lang.OutOfMemoryError, "A Java error"
+          rescue Exception => exception
+            exception
+          end
+        end
+
+
+      it "raises error when passing a non-exception object" do
+        expect do
+          subject.capture_exception("String")
+        end.to raise_error(ArgumentError, 'expect the argument to be a Exception or Java::JavaLang::Throwable, got String ("String")')
+      end
+
+        it 'allows a java error object to be passed' do
+          expect do
+            subject.capture_exception(exception)
+          end.not_to raise_error
+        end
+      end
+    else
+      it "raises error when passing a non-exception object" do
+        expect do
+          subject.capture_exception("String")
+        end.to raise_error(ArgumentError, 'expect the argument to be a Exception, got String ("String")')
+      end
     end
 
     # see https://github.com/getsentry/sentry-ruby/issues/1323
@@ -192,6 +285,14 @@ RSpec.describe Sentry::Hub do
 
       expect do
         subject.capture_exception(exception)
+      end.to change { transport.events.count }.by(1)
+    end
+
+    it "takes ignore_exclusions hint" do
+      configuration.excluded_exceptions << exception.class
+
+      expect do
+        subject.capture_exception(exception, hint: { ignore_exclusions: true })
       end.to change { transport.events.count }.by(1)
     end
 
@@ -470,12 +571,15 @@ RSpec.describe Sentry::Hub do
 
       error_event = client.event_from_exception(exception)
       transaction_event = client.event_from_transaction(transaction)
+      check_in_event = client.event_from_check_in("test_slug", :ok)
 
       subject.capture_event(error_event)
       subject.capture_event(transaction_event)
+      subject.capture_event(check_in_event)
 
       expect(subject.last_event_id).to eq(error_event.event_id)
       expect(subject.last_event_id).not_to eq(transaction_event.event_id)
+      expect(subject.last_event_id).not_to eq(check_in_event.event_id)
     end
   end
 
@@ -506,7 +610,7 @@ RSpec.describe Sentry::Hub do
     end
 
     it "doesn't interfere events outside of the block" do
-      subject.with_background_worker_disabled {}
+      subject.with_background_worker_disabled { }
 
       subject.capture_message("foo")
       expect(transport.events.count).to eq(0)

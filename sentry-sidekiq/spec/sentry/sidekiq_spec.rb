@@ -49,12 +49,13 @@ RSpec.describe Sentry::Sidekiq do
     end
   end
 
-  it "captues exception raised in the worker" do
+  it "captures exception raised in the worker" do
     expect { execute_worker(processor, SadWorker) }.to change { transport.events.size }.by(1)
 
     event = transport.events.last.to_hash
     expect(event[:sdk]).to eq({ name: "sentry.ruby.sidekiq", version: described_class::VERSION })
-    expect(Sentry::Event.get_message_from_exception(event)).to match("RuntimeError: I'm sad!")
+    expect(event[:exception][:values][0][:type]).to eq("RuntimeError")
+    expect(event[:exception][:values][0][:value]).to match("I'm sad!")
   end
 
   it "doesn't store the private `_config` context", skip: !WITH_SIDEKIQ_7 do
@@ -75,6 +76,7 @@ RSpec.describe Sentry::Sidekiq do
       expect(event["tags"]).to eq("queue" => "default", "jid" => "123123", "mood" => "sad")
       expect(event["transaction"]).to eq("Sidekiq/SadWorker")
       expect(event["breadcrumbs"]["values"][0]["message"]).to eq("I'm sad!")
+      expect(Sentry.get_current_scope.tags).to be_empty
     end
 
     it "cleans up context from failed jobs" do
@@ -86,6 +88,7 @@ RSpec.describe Sentry::Sidekiq do
 
       expect(event["tags"]).to eq("queue" => "default", "jid" => "123123", "mood" => "very sad")
       expect(event["breadcrumbs"]["values"][0]["message"]).to eq("I'm very sad!")
+      expect(Sentry.get_current_scope.tags).to be_empty
     end
   end
 
@@ -95,7 +98,7 @@ RSpec.describe Sentry::Sidekiq do
     event = transport.events.last.to_json_compatible
 
     expect(event["message"]).to eq "I have something to say!"
-    expect(event["contexts"]["sidekiq"]).to eq("args" => [], "class" => "ReportingWorker", "jid" => "123123", "queue" => "default")
+    expect(event["contexts"]["sidekiq"]).to include("args" => [], "class" => "ReportingWorker", "jid" => "123123", "queue" => "default")
   end
 
   it "adds the failed job to the retry queue" do
@@ -253,5 +256,59 @@ RSpec.describe Sentry::Sidekiq do
       end
     end
   end
-end
 
+  context "cron monitoring" do
+    it "records check ins" do
+      execute_worker(processor, HappyWorkerWithCron)
+
+      expect(transport.events.size).to eq(2)
+
+      first = transport.events[0]
+      check_in_id = first.check_in_id
+      expect(first).to be_a(Sentry::CheckInEvent)
+      expect(first.to_hash).to include(
+        type: 'check_in',
+        check_in_id: check_in_id,
+        monitor_slug: "happyworkerwithcron",
+        status: :in_progress
+      )
+
+      second = transport.events[1]
+      expect(second).to be_a(Sentry::CheckInEvent)
+      expect(second.to_hash).to include(
+        :duration,
+        type: 'check_in',
+        check_in_id: check_in_id,
+        monitor_slug: "happyworkerwithcron",
+        status: :ok
+      )
+    end
+
+    it "records check ins with error" do
+      execute_worker(processor, SadWorkerWithCron)
+      expect(transport.events.size).to eq(3)
+
+      first = transport.events[0]
+      check_in_id = first.check_in_id
+      expect(first).to be_a(Sentry::CheckInEvent)
+      expect(first.to_hash).to include(
+        type: 'check_in',
+        check_in_id: check_in_id,
+        monitor_slug: "failed_job",
+        status: :in_progress,
+        monitor_config: { schedule: { type: :crontab, value: "5 * * * *" } }
+      )
+
+      second = transport.events[1]
+      expect(second).to be_a(Sentry::CheckInEvent)
+      expect(second.to_hash).to include(
+        :duration,
+        type: 'check_in',
+        check_in_id: check_in_id,
+        monitor_slug: "failed_job",
+        status: :error,
+        monitor_config: { schedule: { type: :crontab, value: "5 * * * *" } }
+      )
+    end
+  end
+end

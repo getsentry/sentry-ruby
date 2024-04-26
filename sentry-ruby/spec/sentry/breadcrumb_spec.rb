@@ -23,6 +23,11 @@ RSpec.describe Sentry::Breadcrumb do
       crumb = described_class.new(message: long_message)
       expect(crumb.message.length).to eq(Sentry::Event::MAX_MESSAGE_SIZE_IN_BYTES + 1)
     end
+
+    it "sets the level to warning if warn" do
+      crumb = described_class.new(level: "warn")
+      expect(crumb.level).to eq("warning")
+    end
   end
 
   describe "#message=" do
@@ -32,6 +37,20 @@ RSpec.describe Sentry::Breadcrumb do
       crumb = described_class.new
       crumb.message = long_message
       expect(crumb.message.length).to eq(Sentry::Event::MAX_MESSAGE_SIZE_IN_BYTES + 1)
+    end
+  end
+
+  describe "#level=" do
+    it "sets the level" do
+      crumb = described_class.new
+      crumb.level = "error"
+      expect(crumb.level).to eq("error")
+    end
+
+    it "sets the level to warning if warn" do
+      crumb = described_class.new
+      crumb.level = "warn"
+      expect(crumb.level).to eq("warning")
     end
   end
 

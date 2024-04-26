@@ -18,47 +18,57 @@ jobs:
       run:
         working-directory: sentry-sidekiq
     name: Ruby ${{ matrix.ruby_version }} & Sidekiq ${{ matrix.sidekiq_version }}, options - ${{ toJson(matrix.options) }}
-    runs-on: ${{ matrix.os }}
+    runs-on: ubuntu-latest
     strategy:
       matrix:
-        sidekiq_version: ['5.0', '6.0', '7.0']
-        ruby_version: ['2.7', '3.0', '3.1', '3.2', head, jruby]
-        os: [ubuntu-latest]
+        sidekiq_version: ["5.0", "6.5", "7.0"]
+        ruby_version: ["2.7", "3.0", "3.1", "3.2", "3.3", jruby]
         include:
-          - { os: ubuntu-latest, ruby_version: 2.4, sidekiq_version: 5.0 }
-          - { os: ubuntu-latest, ruby_version: 2.5, sidekiq_version: 5.0 }
-          - { os: ubuntu-latest, ruby_version: 2.5, sidekiq_version: 6.0 }
-          - { os: ubuntu-latest, ruby_version: 2.6, sidekiq_version: 5.0 }
-          - { os: ubuntu-latest, ruby_version: 2.6, sidekiq_version: 6.0 }
-          - { os: ubuntu-latest, ruby_version: jruby, sidekiq_version: 5.0 }
-          - { os: ubuntu-latest, ruby_version: jruby, sidekiq_version: 6.0 }
-          - { os: ubuntu-latest, ruby_version: '3.1', sidekiq_version: 6.0, options: { rubyopt: "--enable-frozen-string-literal --debug=frozen-string-literal" } }
-          - { os: ubuntu-latest, ruby_version: '3.1', sidekiq_version: 6.0, options: { codecov: 1 } }
+          - { ruby_version: 2.4, sidekiq_version: 5.0 }
+          - { ruby_version: 2.5, sidekiq_version: 5.0 }
+          - { ruby_version: 2.5, sidekiq_version: 6.0 }
+          - { ruby_version: 2.6, sidekiq_version: 5.0 }
+          - { ruby_version: 2.6, sidekiq_version: 6.0 }
+          - { ruby_version: jruby, sidekiq_version: 5.0 }
+          - { ruby_version: jruby, sidekiq_version: 6.0 }
+          - { ruby_version: jruby, sidekiq_version: 7.0 }
+          - {
+              ruby_version: "3.2",
+              sidekiq_version: 7.0,
+              options:
+                {
+                  rubyopt: "--enable-frozen-string-literal --debug=frozen-string-literal",
+                },
+            }
+          - {
+              ruby_version: "3.2",
+              sidekiq_version: 7.0,
+              options: { codecov: 1 },
+            }
     steps:
-    - uses: actions/checkout@v1
+      - uses: actions/checkout@v1
 
-    - name: Set up Ruby ${{ matrix.ruby_version }}
-      uses: ruby/setup-ruby@v1
-      with:
-        ruby-version: ${{ matrix.ruby_version }}
-        bundler: "2.3"
+      - name: Set up Ruby ${{ matrix.ruby_version }}
+        uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: ${{ matrix.ruby_version }}
+          bundler-cache: true
 
-    - name: Start Redis
-      uses: supercharge/redis-github-action@1.1.0
-      with:
-        redis-version: ${{ matrix.sidekiq_version == '7.0' && 6 || 5 }}
+      - name: Start Redis
+        uses: supercharge/redis-github-action@1.1.0
+        with:
+          redis-version: ${{ matrix.sidekiq_version == '7.0' && 6 || 5 }}
 
-    - name: Run specs with Sidekiq ${{ matrix.sidekiq_version }}
-      env:
-        SIDEKIQ_VERSION: ${{ matrix.sidekiq_version }}
-        RUBYOPT: ${{ matrix.options.rubyopt }}
-      run: |
-        bundle install --jobs 4 --retry 3
-        make test
+      - name: Run specs with Sidekiq ${{ matrix.sidekiq_version }}
+        env:
+          SIDEKIQ_VERSION: ${{ matrix.sidekiq_version }}
+          RUBYOPT: ${{ matrix.options.rubyopt }}
+        run: |
+          bundle install --jobs 4 --retry 3
+          make test
 
-    - name: Upload Coverage
-      if: ${{ matrix.options.codecov }}
-      run: |
-        curl -Os https://uploader.codecov.io/latest/linux/codecov
-        chmod +x codecov
-        ./codecov -t ${CODECOV_TOKEN} -R `pwd` -f coverage/coverage.xml
+      - name: Upload Coverage
+        if: ${{ matrix.options.codecov }}
+        uses: codecov/codecov-action@v4
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}

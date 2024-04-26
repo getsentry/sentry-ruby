@@ -5,12 +5,13 @@ RSpec.describe "rate limiting" do
   include_context "with request mock"
 
   before do
-    perform_basic_setup
+    perform_basic_setup do |config|
+      config.logger = Logger.new(string_io)
+    end
   end
 
-  let(:configuration) do
-    Sentry.configuration
-  end
+  let(:string_io) { StringIO.new }
+  let(:configuration) { Sentry.configuration }
   let(:client) { Sentry.get_current_client }
   let(:data) do
     subject.envelope_from_event(client.event_from_message("foobarbaz").to_hash).to_s
@@ -19,19 +20,15 @@ RSpec.describe "rate limiting" do
   subject { Sentry::HTTPTransport.new(configuration) }
 
   describe "#is_rate_limited?" do
-    let(:transaction_event) do
-      client.event_from_transaction(Sentry::Transaction.new)
-    end
-
     context "with only category limits" do
       it "returns true for still limited category" do
         subject.rate_limits.merge!("error" => Time.now + 60,
                                    "transaction" => Time.now + 60,
                                    "session" => Time.now + 60)
 
-        expect(subject.is_rate_limited?("event")).to eq(true)
+        expect(subject.is_rate_limited?("error")).to eq(true)
         expect(subject.is_rate_limited?("transaction")).to eq(true)
-        expect(subject.is_rate_limited?("sessions")).to eq(true)
+        expect(subject.is_rate_limited?("session")).to eq(true)
       end
 
       it "returns false for passed limited category" do
@@ -39,16 +36,16 @@ RSpec.describe "rate limiting" do
                                    "transaction" => Time.now - 10,
                                    "session" => Time.now - 10)
 
-        expect(subject.is_rate_limited?("event")).to eq(false)
+        expect(subject.is_rate_limited?("error")).to eq(false)
         expect(subject.is_rate_limited?("transaction")).to eq(false)
-        expect(subject.is_rate_limited?("sessions")).to eq(false)
+        expect(subject.is_rate_limited?("session")).to eq(false)
       end
 
       it "returns false for not listed category" do
         subject.rate_limits.merge!("transaction" => Time.now + 10)
 
-        expect(subject.is_rate_limited?("event")).to eq(false)
-        expect(subject.is_rate_limited?("sessions")).to eq(false)
+        expect(subject.is_rate_limited?("error")).to eq(false)
+        expect(subject.is_rate_limited?("session")).to eq(false)
       end
     end
 
@@ -56,13 +53,13 @@ RSpec.describe "rate limiting" do
       it "returns true when still limited" do
         subject.rate_limits.merge!(nil => Time.now + 60)
 
-        expect(subject.is_rate_limited?("event")).to eq(true)
+        expect(subject.is_rate_limited?("error")).to eq(true)
       end
 
       it "returns false when passed limit" do
         subject.rate_limits.merge!(nil => Time.now - 10)
 
-        expect(subject.is_rate_limited?("event")).to eq(false)
+        expect(subject.is_rate_limited?("error")).to eq(false)
       end
     end
 
@@ -73,15 +70,36 @@ RSpec.describe "rate limiting" do
           nil => Time.now - 10
         )
 
-        expect(subject.is_rate_limited?("event")).to eq(true)
+        expect(subject.is_rate_limited?("error")).to eq(true)
 
         subject.rate_limits.merge!(
           "error" => Time.now - 60,
           nil => Time.now + 10
         )
 
-        expect(subject.is_rate_limited?("event")).to eq(true)
+        expect(subject.is_rate_limited?("error")).to eq(true)
       end
+    end
+  end
+
+  describe "#any_rate_limited?" do
+    it "returns false without any limits" do
+      expect(subject.any_rate_limited?).to eq(false)
+    end
+
+    it "returns true for category limits" do
+      subject.rate_limits.merge!("error" => Time.now + 60)
+      expect(subject.any_rate_limited?).to eq(true)
+    end
+
+    it "returns true for universal limits" do
+      subject.rate_limits.merge!(nil => Time.now + 60)
+      expect(subject.any_rate_limited?).to eq(true)
+    end
+
+    it "returns false for expired limits" do
+      subject.rate_limits.merge!("error" => Time.now - 60)
+      expect(subject.any_rate_limited?).to eq(false)
     end
   end
 
@@ -170,11 +188,11 @@ RSpec.describe "rate limiting" do
             header: "48", expected_limits: { nil => now + 48 }
           },
           {
-            header: "invalid", expected_limits: { nil => now + 60}
+            header: "invalid", expected_limits: { nil => now + 60 }
           },
           {
-            header: "", expected_limits: { nil => now + 60}
-          },
+            header: "", expected_limits: { nil => now + 60 }
+          }
         ].each do |pair|
           context "with header value: '#{pair[:header]}'" do
             let(:headers) do
@@ -235,9 +253,8 @@ RSpec.describe "rate limiting" do
 
       it_behaves_like "rate limiting headers handling" do
         def send_data_and_verify_response(time)
-          Timecop.freeze(time) do
-            expect { subject.send_data(data) }.to raise_error(Sentry::ExternalError, /the server responded with status 429/)
-          end
+          Timecop.freeze(time) { subject.send_data(data) }
+          expect(string_io.string).to match(/the server responded with status 429/)
         end
       end
 
@@ -249,9 +266,8 @@ RSpec.describe "rate limiting" do
         it "adds default limits" do
           now = Time.now
 
-          Timecop.freeze(now) do
-            expect { subject.send_data(data) }.to raise_error(Sentry::ExternalError, /the server responded with status 429/)
-          end
+          Timecop.freeze(now) { subject.send_data(data) }
+          expect(string_io.string).to match(/the server responded with status 429/)
           expect(subject.rate_limits).to eq({ nil => now + 60 })
         end
       end

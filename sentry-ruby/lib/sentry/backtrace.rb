@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+require "rubygems"
+
 module Sentry
   # @api private
   class Backtrace
@@ -10,7 +12,7 @@ module Sentry
       RUBY_INPUT_FORMAT = /
         ^ \s* (?: [a-zA-Z]: | uri:classloader: )? ([^:]+ | <.*>):
         (\d+)
-        (?: :in \s `([^']+)')?$
+        (?: :in\s('|`)([^']+)')?$
       /x.freeze
 
       # org.jruby.runtime.callsite.CachingCallSite.call(CachingCallSite.java:170)
@@ -33,10 +35,10 @@ module Sentry
       # Parses a single line of a given backtrace
       # @param [String] unparsed_line The raw line from +caller+ or some backtrace
       # @return [Line] The parsed backtrace line
-      def self.parse(unparsed_line, in_app_pattern)
+      def self.parse(unparsed_line, in_app_pattern = nil)
         ruby_match = unparsed_line.match(RUBY_INPUT_FORMAT)
         if ruby_match
-          _, file, number, method = ruby_match.to_a
+          _, file, number, _, method = ruby_match.to_a
           file.sub!(/\.class$/, RB_EXTENSION)
           module_name = nil
         else
@@ -55,6 +57,8 @@ module Sentry
       end
 
       def in_app
+        return false unless in_app_pattern
+
         if file =~ in_app_pattern
           true
         else
@@ -76,7 +80,7 @@ module Sentry
       end
     end
 
-    APP_DIRS_PATTERN = /(bin|exe|app|config|lib|test)/.freeze
+    APP_DIRS_PATTERN = /(bin|exe|app|config|lib|test|spec)/.freeze
 
     # holder for an Array of Backtrace::Line instances
     attr_reader :lines

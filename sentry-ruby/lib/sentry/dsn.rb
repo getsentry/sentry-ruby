@@ -5,7 +5,7 @@ require "uri"
 module Sentry
   class DSN
     PORT_MAP = { 'http' => 80, 'https' => 443 }.freeze
-    REQUIRED_ATTRIBUTES = %w(host path public_key project_id).freeze
+    REQUIRED_ATTRIBUTES = %w[host path public_key project_id].freeze
 
     attr_reader :scheme, :secret_key, :port, *REQUIRED_ATTRIBUTES
 

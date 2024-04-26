@@ -2,8 +2,8 @@
 
 module Sentry
   class RequestInterface < Interface
-    REQUEST_ID_HEADERS = %w(action_dispatch.request_id HTTP_X_REQUEST_ID).freeze
-    CONTENT_HEADERS = %w(CONTENT_TYPE CONTENT_LENGTH).freeze
+    REQUEST_ID_HEADERS = %w[action_dispatch.request_id HTTP_X_REQUEST_ID].freeze
+    CONTENT_HEADERS = %w[CONTENT_TYPE CONTENT_LENGTH].freeze
     IP_HEADERS = [
       "REMOTE_ADDR",
       "HTTP_CLIENT_IP",

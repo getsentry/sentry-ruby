@@ -9,7 +9,7 @@ module Sentry
     # @return [Hash, nil]
     attr_accessor :data
     # @return [String, nil]
-    attr_accessor :level
+    attr_reader :level
     # @return [Time, Integer, nil]
     attr_accessor :timestamp
     # @return [String, nil]
@@ -26,10 +26,10 @@ module Sentry
     def initialize(category: nil, data: nil, message: nil, timestamp: nil, level: nil, type: nil)
       @category = category
       @data = data || {}
-      @level = level
       @timestamp = timestamp || Sentry.utc_now.to_i
       @type = type
       self.message = message
+      self.level = level
     end
 
     # @return [Hash]
@@ -48,6 +48,12 @@ module Sentry
     # @return [void]
     def message=(message)
       @message = (message || "").byteslice(0..Event::MAX_MESSAGE_SIZE_IN_BYTES)
+    end
+
+    # @param level [String]
+    # @return [void]
+    def level=(level) # needed to meet the Sentry spec
+      @level = level == "warn" ? "warning" : level
     end
 
     private

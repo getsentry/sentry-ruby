@@ -10,17 +10,10 @@ gem "rack", "~> #{Gem::Version.new(rack_version)}" unless rack_version == "0"
 redis_rb_version = ENV.fetch("REDIS_RB_VERSION", "5.0")
 gem "redis", "~> #{redis_rb_version}"
 
-gem "rake", "~> 12.0"
-gem "rspec", "~> 3.0"
-gem "rspec-retry"
-gem "timecop"
-gem "simplecov"
-gem "simplecov-cobertura", "~> 1.4"
-gem "rexml"
+gem "puma"
 
-gem "object_tracer"
-gem "debug", github: "ruby/debug", platform: :ruby if RUBY_VERSION.to_f >= 2.6
-gem "pry"
+gem "timecop"
+gem "stackprof" unless RUBY_PLATFORM == "java"
 
 gem "benchmark-ips"
 gem "benchmark_driver"
@@ -29,3 +22,5 @@ gem "benchmark-memory"
 
 gem "yard", github: "lsegal/yard"
 gem "webrick"
+
+eval_gemfile File.expand_path("../Gemfile", __dir__)

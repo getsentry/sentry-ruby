@@ -8,17 +8,6 @@ module Sentry
     SENTRY_PREFIX = 'sentry-'
     SENTRY_PREFIX_REGEX = /^sentry-/.freeze
 
-    DSC_KEYS = %w(
-      trace_id
-      public_key
-      sample_rate
-      release
-      environment
-      transaction
-      user_id
-      user_segment
-    ).freeze
-
     # @return [Hash]
     attr_reader :items
 
@@ -68,7 +57,7 @@ module Sentry
     # hash to be used in the trace envelope header.
     # @return [Hash]
     def dynamic_sampling_context
-      @items.select { |k, _v| DSC_KEYS.include?(k) }
+      @items
     end
 
     # Serialize the Baggage object back to a string.

@@ -14,6 +14,10 @@ module Sentry
     def capture_exception(exception, **options, &block)
       options[:hint] ||= {}
       options[:hint][:integration] = integration_name
+
+      # within an integration, we usually intercept uncaught exceptions so we set handled to false.
+      options[:hint][:mechanism] ||= Sentry::Mechanism.new(type: integration_name, handled: false)
+
       Sentry.capture_exception(exception, **options, &block)
     end
 
@@ -21,6 +25,12 @@ module Sentry
       options[:hint] ||= {}
       options[:hint][:integration] = integration_name
       Sentry.capture_message(message, **options, &block)
+    end
+
+    def capture_check_in(slug, status, **options, &block)
+      options[:hint] ||= {}
+      options[:hint][:integration] = integration_name
+      Sentry.capture_check_in(slug, status, **options, &block)
     end
   end
 end

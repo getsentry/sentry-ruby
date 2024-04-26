@@ -9,30 +9,46 @@ RSpec.describe Sentry::Transport do
       config.logger = logger
     end
   end
-  let(:fake_time) { Time.now }
 
   let(:client) { Sentry::Client.new(configuration) }
   let(:hub) do
     Sentry::Hub.new(client, Sentry::Scope.new)
   end
 
+  let(:dynamic_sampling_context) do
+    {
+      "sample_rate" => "0.01337",
+      "public_key" => "49d0f7386ad645858ae85020e393bef3",
+      "trace_id" => "771a43a4192642f0b136d5159a501700",
+      "user_id" => "Amélie"
+    }
+  end
+
   subject { client.transport }
 
   describe "#serialize_envelope" do
     context "normal event" do
-      let(:event) { client.event_from_exception(ZeroDivisionError.new("divided by 0")) }
+      let(:event) do
+        event = client.event_from_exception(ZeroDivisionError.new("divided by 0"))
+        event.dynamic_sampling_context = dynamic_sampling_context
+        event
+      end
+
       let(:envelope) { subject.envelope_from_event(event) }
 
       it "generates correct envelope content" do
         result, _ = subject.serialize_envelope(envelope)
 
         envelope_header, item_header, item = result.split("\n")
+        envelope_header_parsed = JSON.parse(envelope_header)
 
-        expect(envelope_header).to eq(
-          <<~ENVELOPE_HEADER.chomp
-            {"event_id":"#{event.event_id}","dsn":"#{Sentry::TestHelper::DUMMY_DSN}","sdk":#{Sentry.sdk_meta.to_json},"sent_at":"#{Time.now.utc.iso8601}"}
-          ENVELOPE_HEADER
-        )
+        expect(envelope_header_parsed).to eq({
+          "event_id" => event.event_id,
+          "dsn" => Sentry::TestHelper::DUMMY_DSN,
+          "sdk" => Sentry.sdk_meta,
+          "sent_at" => Time.now.utc.iso8601,
+          "trace" => dynamic_sampling_context
+        })
 
         expect(item_header).to eq(
           '{"type":"event","content_type":"application/json"}'
@@ -45,15 +61,6 @@ RSpec.describe Sentry::Transport do
     context "transaction event" do
       let(:transaction) do
         Sentry::Transaction.new(name: "test transaction", op: "rack.request", hub: hub)
-      end
-
-      let(:dynamic_sampling_context) do
-        {
-          "sample_rate" => "0.01337",
-          "public_key" => "49d0f7386ad645858ae85020e393bef3",
-          "trace_id" => "771a43a4192642f0b136d5159a501700",
-          "user_id" => "Amélie"
-        }
       end
 
       let(:event) do
@@ -83,6 +90,60 @@ RSpec.describe Sentry::Transport do
         )
 
         expect(item).to eq(event.to_hash.to_json)
+      end
+
+      context "with profiling on transaction" do
+        let(:profile) do
+          frames = [
+            { function: "foo" },
+            { function: "bar" },
+            { function: "baz" }
+          ]
+
+          stacks = [
+            [0, 1],
+            [0, 2],
+            [1, 2],
+            [0, 1, 2]
+          ]
+
+          samples = [
+            { stack_id: 0, elapsed_since_start_ns: 10000 },
+            { stack_id: 0, elapsed_since_start_ns: 20000 },
+            { stack_id: 1, elapsed_since_start_ns: 30000 },
+            { stack_id: 2, elapsed_since_start_ns: 40000 },
+            { stack_id: 3, elapsed_since_start_ns: 50000 }
+          ]
+
+          {
+            environment: "test",
+            release: "release",
+            profile: {
+              frames: frames,
+              stacks: stacks,
+              samples: samples
+            }
+          }
+        end
+
+        let(:event_with_profile) do
+          event.profile = profile
+          event
+        end
+
+        let(:envelope) { subject.envelope_from_event(event_with_profile) }
+
+        it "adds profile item to envelope" do
+          result, _ = subject.serialize_envelope(envelope)
+
+          profile_header, profile_payload = result.split("\n").last(2)
+
+          expect(profile_header).to eq(
+            '{"type":"profile","content_type":"application/json"}'
+          )
+
+          expect(profile_payload).to eq(profile.to_json)
+        end
       end
     end
 
@@ -117,14 +178,38 @@ RSpec.describe Sentry::Transport do
       end
     end
 
+    context "metrics/statsd item" do
+      let(:payload) do
+        "foo@none:10.0|c|#tag1:42,tag2:bar|T1709042970\n" +
+          "bar@second:0.3:0.1:0.9:49.8:100|g|#|T1709042980"
+      end
+
+      let(:envelope) do
+        envelope = Sentry::Envelope.new
+        envelope.add_item(
+          { type: 'statsd', length: payload.bytesize },
+          payload
+        )
+        envelope
+      end
+
+      it "adds raw payload to envelope item" do
+        result, _ = subject.serialize_envelope(envelope)
+        item = result.split("\n", 2).last
+        item_header, item_payload = item.split("\n", 2)
+        expect(JSON.parse(item_header)).to eq({ 'type' => 'statsd', 'length' => 93 })
+        expect(item_payload).to eq(payload)
+      end
+    end
+
     context "oversized event" do
       context "due to breadcrumb" do
         let(:event) { client.event_from_message("foo") }
         let(:envelope) { subject.envelope_from_event(event) }
 
         before do
-          event.breadcrumbs = Sentry::BreadcrumbBuffer.new(100)
-          100.times do |i|
+          event.breadcrumbs = Sentry::BreadcrumbBuffer.new(1000)
+          1000.times do |i|
             event.breadcrumbs.record Sentry::Breadcrumb.new(category: i.to_s, message: "x" * Sentry::Event::MAX_MESSAGE_SIZE_IN_BYTES)
           end
           serialized_result = JSON.generate(event.to_hash)
@@ -143,7 +228,7 @@ RSpec.describe Sentry::Transport do
 
         context "if it's still oversized" do
           before do
-            100.times do |i|
+            1000.times do |i|
               event.contexts["context_#{i}"] = "s" * Sentry::Event::MAX_MESSAGE_SIZE_IN_BYTES
             end
           end
@@ -152,7 +237,7 @@ RSpec.describe Sentry::Transport do
             data, _ = subject.serialize_envelope(envelope)
             expect(data).to be_nil
             expect(io.string).not_to match(/Sending envelope with items \[event\]/)
-            expect(io.string).to match(/tags: 2, contexts: 820791, extra: 2/)
+            expect(io.string).to match(/tags: 2, contexts: 8208891, extra: 2/)
           end
         end
       end
@@ -166,7 +251,7 @@ RSpec.describe Sentry::Transport do
           Regexp.new("^(#{project_root}/)?#{Sentry::Backtrace::APP_DIRS_PATTERN}")
         end
         let(:frame_list_limit) { 500 }
-        let(:frame_list_size) { frame_list_limit * 4 }
+        let(:frame_list_size) { frame_list_limit * 20 }
 
         before do
           single_exception = event.exception.values[0]
@@ -216,7 +301,7 @@ RSpec.describe Sentry::Transport do
 
         context "if it's still oversized" do
           before do
-            100.times do |i|
+            1000.times do |i|
               event.contexts["context_#{i}"] = "s" * Sentry::Event::MAX_MESSAGE_SIZE_IN_BYTES
             end
           end
@@ -225,7 +310,7 @@ RSpec.describe Sentry::Transport do
             data, _ = subject.serialize_envelope(envelope)
             expect(data).to be_nil
             expect(io.string).not_to match(/Sending envelope with items \[event\]/)
-            expect(io.string).to match(/tags: 2, contexts: 820791, extra: 2/)
+            expect(io.string).to match(/tags: 2, contexts: 8208891, extra: 2/)
           end
         end
       end
@@ -286,8 +371,8 @@ RSpec.describe Sentry::Transport do
       let(:envelope) { subject.envelope_from_event(event) }
 
       before do
-        event.breadcrumbs = Sentry::BreadcrumbBuffer.new(100)
-        100.times do |i|
+        event.breadcrumbs = Sentry::BreadcrumbBuffer.new(1000)
+        1000.times do |i|
           event.breadcrumbs.record Sentry::Breadcrumb.new(category: i.to_s, message: "x" * Sentry::Event::MAX_MESSAGE_SIZE_IN_BYTES)
         end
         serialized_result = JSON.generate(event.to_hash)
@@ -316,7 +401,7 @@ RSpec.describe Sentry::Transport do
 
       context "if it's still oversized" do
         before do
-          100.times do |i|
+          1000.times do |i|
             event.contexts["context_#{i}"] = "s" * Sentry::Event::MAX_MESSAGE_SIZE_IN_BYTES
           end
         end
@@ -326,7 +411,7 @@ RSpec.describe Sentry::Transport do
 
           subject.send_envelope(envelope)
 
-          expect(io.string).to match(/tags: 2, contexts: 820791, extra: 2/)
+          expect(io.string).to match(/tags: 2, contexts: 8208891, extra: 2/)
           expect(io.string).not_to match(/Sending envelope with items \[event\]/)
         end
 
@@ -409,26 +494,24 @@ RSpec.describe Sentry::Transport do
 
       it "records lost event" do
         subject.send_event(event)
-        expect(subject).to have_recorded_lost_event(:ratelimit_backoff, 'event')
+        expect(subject).to have_recorded_lost_event(:ratelimit_backoff, 'error')
       end
     end
   end
 
-  describe "#generate_auth_header" do
-    it "generates an auth header" do
-      expect(subject.send(:generate_auth_header)).to eq(
-        "Sentry sentry_version=7, sentry_client=sentry-ruby/#{Sentry::VERSION}, sentry_timestamp=#{fake_time.to_i}, " \
-        "sentry_key=12345, sentry_secret=67890"
-      )
+  describe "#flush" do
+    it "does not do anything without pending client reports" do
+      expect(subject).not_to receive(:send_envelope)
+      subject.flush
     end
 
-    it "generates an auth header without a secret (Sentry 9)" do
-      configuration.server = "https://66260460f09b5940498e24bb7ce093a0@sentry.io/42"
+    it "sends pending client reports" do
+      5.times { subject.record_lost_event(:ratelimit_backoff, 'error') }
+      3.times { subject.record_lost_event(:queue_overflow, 'transaction') }
 
-      expect(subject.send(:generate_auth_header)).to eq(
-        "Sentry sentry_version=7, sentry_client=sentry-ruby/#{Sentry::VERSION}, sentry_timestamp=#{fake_time.to_i}, " \
-        "sentry_key=66260460f09b5940498e24bb7ce093a0"
-      )
+      expect(subject).to receive(:send_data)
+      subject.flush
+      expect(io.string).to match(/Sending envelope with items \[client_report\]/)
     end
   end
 end

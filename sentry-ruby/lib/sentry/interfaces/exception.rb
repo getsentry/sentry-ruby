@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 require "set"
 
 module Sentry
@@ -23,17 +24,18 @@ module Sentry
     # @param stacktrace_builder [StacktraceBuilder]
     # @see SingleExceptionInterface#build_with_stacktrace
     # @see SingleExceptionInterface#initialize
+    # @param mechanism [Mechanism]
     # @return [ExceptionInterface]
-    def self.build(exception:, stacktrace_builder:)
+    def self.build(exception:, stacktrace_builder:, mechanism:)
       exceptions = Sentry::Utils::ExceptionCauseChain.exception_to_array(exception).reverse
       processed_backtrace_ids = Set.new
 
       exceptions = exceptions.map do |e|
         if e.backtrace && !processed_backtrace_ids.include?(e.backtrace.object_id)
           processed_backtrace_ids << e.backtrace.object_id
-          SingleExceptionInterface.build_with_stacktrace(exception: e, stacktrace_builder: stacktrace_builder)
+          SingleExceptionInterface.build_with_stacktrace(exception: e, stacktrace_builder: stacktrace_builder, mechanism: mechanism)
         else
-          SingleExceptionInterface.new(exception: exception)
+          SingleExceptionInterface.new(exception: exception, mechanism: mechanism)
         end
       end
 

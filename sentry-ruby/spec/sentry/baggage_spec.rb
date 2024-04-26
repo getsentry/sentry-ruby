@@ -10,6 +10,7 @@ RSpec.describe Sentry::Baggage do
     "sentry-public_key=49d0f7386ad645858ae85020e393bef3, "\
     "sentry-sample_rate=0.01337, "\
     "sentry-user_id=Am%C3%A9lie, "\
+    "sentry-foo=bar, "\
     "other-vendor-value-2=foo;bar;"
   end
 
@@ -36,7 +37,8 @@ RSpec.describe Sentry::Baggage do
           "sample_rate" => "0.01337",
           "public_key" => "49d0f7386ad645858ae85020e393bef3",
           "trace_id" => "771a43a4192642f0b136d5159a501700",
-          "user_id" => "Amélie"
+          "user_id" => "Amélie",
+          "foo" => "bar"
         })
       end
     end
@@ -66,7 +68,8 @@ RSpec.describe Sentry::Baggage do
             "sentry-trace_id=771a43a4192642f0b136d5159a501700,"\
             "sentry-public_key=49d0f7386ad645858ae85020e393bef3,"\
             "sentry-sample_rate=0.01337,"\
-            "sentry-user_id=Am%C3%A9lie"
+            "sentry-user_id=Am%C3%A9lie,"\
+            "sentry-foo=bar"
           )
         end
       end

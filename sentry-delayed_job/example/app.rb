@@ -1,4 +1,3 @@
-require "pry"
 require "active_job"
 require "active_record"
 require "delayed_job"
@@ -64,5 +63,3 @@ begin
 rescue => e
   puts("inline job failed because of \"#{e.message}\"")
 end
-
-

@@ -1,9 +1,46 @@
 # frozen_string_literal: true
 
 require "securerandom"
+require "sentry/metrics/local_aggregator"
 
 module Sentry
   class Span
+    # We will try to be consistent with OpenTelemetry on this front going forward.
+    # https://develop.sentry.dev/sdk/performance/span-data-conventions/
+    module DataConventions
+      URL = "url"
+      HTTP_STATUS_CODE = "http.response.status_code"
+      HTTP_QUERY = "http.query"
+      HTTP_METHOD = "http.request.method"
+
+      # An identifier for the database management system (DBMS) product being used.
+      # Example: postgresql
+      DB_SYSTEM = "db.system"
+
+      # The name of the database being accessed.
+      # For commands that switch the database, this should be set to the target database
+      # (even if the command fails).
+      # Example: myDatabase
+      DB_NAME = "db.name"
+
+      # Name of the database host.
+      # Example: example.com
+      SERVER_ADDRESS = "server.address"
+
+      # Logical server port number
+      # Example: 80; 8080; 443
+      SERVER_PORT = "server.port"
+
+      # Physical server IP address or Unix socket address.
+      # Example: 10.5.3.2
+      SERVER_SOCKET_ADDRESS = "server.socket.address"
+
+      # Physical server port.
+      # Recommended: If different than server.port.
+      # Example: 16456
+      SERVER_SOCKET_PORT = "server.socket.port"
+    end
+
     STATUS_MAP = {
       400 => "invalid_argument",
       401 => "unauthenticated",
@@ -75,7 +112,7 @@ module Sentry
       timestamp: nil
     )
       @trace_id = trace_id || SecureRandom.uuid.delete("-")
-      @span_id = span_id || SecureRandom.hex(8)
+      @span_id = span_id || SecureRandom.uuid.delete("-").slice(0, 16)
       @parent_span_id = parent_span_id
       @sampled = sampled
       @start_timestamp = start_timestamp || Sentry.utc_now.to_f
@@ -113,7 +150,7 @@ module Sentry
 
     # @return [Hash]
     def to_hash
-      {
+      hash = {
         trace_id: @trace_id,
         span_id: @span_id,
         parent_span_id: @parent_span_id,
@@ -125,6 +162,11 @@ module Sentry
         tags: @tags,
         data: @data
       }
+
+      summary = metrics_summary
+      hash[:_metrics_summary] = summary if summary
+
+      hash
     end
 
     # Returns the span's context that can be used to embed in an Event.
@@ -208,7 +250,7 @@ module Sentry
     # @param status_code [String] example: "500".
     def set_http_status(status_code)
       status_code = status_code.to_i
-      set_data("status_code", status_code)
+      set_data(DataConventions::HTTP_STATUS_CODE, status_code)
 
       status =
         if status_code >= 200 && status_code < 299
@@ -231,6 +273,15 @@ module Sentry
     # @param value [String]
     def set_tag(key, value)
       @tags[key] = value
+    end
+
+    # Collects gauge metrics on the span for metric summaries.
+    def metrics_local_aggregator
+      @metrics_local_aggregator ||= Sentry::Metrics::LocalAggregator.new
+    end
+
+    def metrics_summary
+      @metrics_local_aggregator&.to_hash
     end
   end
 end

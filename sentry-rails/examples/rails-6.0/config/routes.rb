@@ -2,7 +2,7 @@ require "resque/server"
 
 Rails.application.routes.draw do
   resources :posts
-  get '500', :to => 'welcome#report_demo'
+  get '500', to: 'welcome#report_demo'
   root to: "welcome#index"
 
   get 'appearance', to: 'welcome#appearance'
@@ -16,5 +16,5 @@ Rails.application.routes.draw do
   require 'sidekiq/web'
 
   mount Sidekiq::Web => '/sidekiq'
-  mount Resque::Server.new, :at => "/resque"
+  mount Resque::Server.new, at: "/resque"
 end

@@ -43,7 +43,6 @@ gem "daemons"
 gem 'bootsnap', '>= 1.4.2', require: false
 
 group :development, :test do
-  gem 'pry'
   gem "debug", github: "ruby/debug", require: false
 end
 

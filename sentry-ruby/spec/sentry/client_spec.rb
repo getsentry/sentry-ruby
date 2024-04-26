@@ -67,6 +67,113 @@ RSpec.describe Sentry::Client do
     end
   end
 
+  describe "#spotlight_transport" do
+    it "nil by default" do
+      expect(subject.spotlight_transport).to eq(nil)
+    end
+
+    it "nil when false" do
+      configuration.spotlight = false
+      expect(subject.spotlight_transport).to eq(nil)
+    end
+
+    it "has a transport when true" do
+      configuration.spotlight = true
+      expect(described_class.new(configuration).spotlight_transport).to be_a(Sentry::SpotlightTransport)
+    end
+  end
+
+  describe "#send_event" do
+    context "with spotlight enabled" do
+      before { configuration.spotlight = true }
+
+      it "calls spotlight transport" do
+        event = subject.event_from_message('test')
+        expect(subject.spotlight_transport).to receive(:send_event).with(event)
+        subject.send_event(event)
+      end
+    end
+  end
+
+  describe '#send_envelope' do
+    let(:envelope) do
+      envelope = Sentry::Envelope.new({ env_header: 1 })
+      envelope.add_item({ type: 'event' }, { payload: 'test' })
+      envelope.add_item({ type: 'statsd' }, { payload: 'test2' })
+      envelope.add_item({ type: 'transaction' }, { payload: 'test3' })
+      envelope
+    end
+
+    it 'does not send envelope to either transport if disabled' do
+      configuration.dsn = nil
+
+      expect(subject.spotlight_transport).not_to receive(:send_envelope)
+      expect(subject.transport).not_to receive(:send_envelope)
+      subject.send_envelope(envelope)
+    end
+
+    it 'sends envelope to main transport if enabled' do
+      expect(subject.transport).to receive(:send_envelope).with(envelope)
+      subject.send_envelope(envelope)
+    end
+
+    it 'sends envelope with spotlight transport if enabled' do
+      configuration.spotlight = true
+
+      expect(subject.spotlight_transport).to receive(:send_envelope).with(envelope)
+      subject.send_envelope(envelope)
+    end
+
+    context 'when transport failure' do
+      let(:string_io) { StringIO.new }
+
+      before do
+        configuration.debug = true
+        configuration.logger = ::Logger.new(string_io)
+
+        allow(subject.transport).to receive(:send_envelope).and_raise(Sentry::ExternalError.new("networking error"))
+      end
+
+      it 'logs error' do
+        expect do
+          subject.send_envelope(envelope)
+        end.to raise_error(Sentry::ExternalError)
+
+        expect(string_io.string).to match(/Envelope sending failed: networking error/)
+        expect(string_io.string).to match(__FILE__)
+      end
+
+      it 'records client reports for network errors' do
+        expect do
+          subject.send_envelope(envelope)
+        end.to raise_error(Sentry::ExternalError)
+
+        expect(subject.transport).to have_recorded_lost_event(:network_error, 'error')
+        expect(subject.transport).to have_recorded_lost_event(:network_error, 'metric_bucket')
+        expect(subject.transport).to have_recorded_lost_event(:network_error, 'transaction')
+      end
+    end
+  end
+
+  describe '#capture_envelope' do
+    let(:envelope) do
+      envelope = Sentry::Envelope.new({ env_header: 1 })
+      envelope.add_item({ item_header: 42 }, { payload: 'test' })
+      envelope
+    end
+
+    before do
+      configuration.background_worker_threads = 0
+      Sentry.background_worker = Sentry::BackgroundWorker.new(configuration)
+    end
+
+    it 'queues envelope to background worker' do
+      expect(Sentry.background_worker).to receive(:perform).and_call_original
+      expect(subject).to receive(:send_envelope).with(envelope)
+      subject.capture_envelope(envelope)
+    end
+  end
+
   describe '#event_from_message' do
     let(:message) { 'This is a message' }
 
@@ -156,6 +263,7 @@ RSpec.describe Sentry::Client do
         "environment" => "development",
         "public_key" => "12345",
         "sample_rate" => "1.0",
+        "sampled" => "true",
         "transaction" => "test transaction",
         "trace_id" => transaction.trace_id
       })
@@ -165,6 +273,16 @@ RSpec.describe Sentry::Client do
       transaction.set_context(:foo, { bar: 42 })
       event = subject.event_from_transaction(transaction)
       expect(event.contexts).to include({ foo: { bar: 42 } })
+    end
+
+    it 'adds metric summary on transaction if any' do
+      key = [:c, 'incr', 'none', []]
+      transaction.metrics_local_aggregator.add(key, 10)
+      hash = subject.event_from_transaction(transaction).to_hash
+
+      expect(hash[:_metrics_summary]).to eq({
+        'c:incr@none' => { count: 1, max: 10.0, min: 10.0, sum: 10.0, tags: {} }
+      })
     end
   end
 
@@ -191,17 +309,39 @@ RSpec.describe Sentry::Client do
       it "sets correct exception message based on Ruby version" do
         version = Gem::Version.new(RUBY_VERSION)
 
-        if version >= Gem::Version.new("3.2.0-dev")
+        case
+        when version >= Gem::Version.new("3.4.0-dev")
+          expect(hash[:exception][:values][0][:value]).to eq(
+            "undefined method '[]' for nil (NoMethodError)\n\n          {}[:foo][:bar]\n                  ^^^^^^"
+          )
+        when version >= Gem::Version.new("3.3.0-dev")
+          expect(hash[:exception][:values][0][:value]).to eq(
+            "undefined method `[]' for nil (NoMethodError)\n\n          {}[:foo][:bar]\n                  ^^^^^^"
+          )
+        when version >= Gem::Version.new("3.2")
           expect(hash[:exception][:values][0][:value]).to eq(
             "undefined method `[]' for nil:NilClass (NoMethodError)\n\n          {}[:foo][:bar]\n                  ^^^^^^"
           )
-        elsif version >= Gem::Version.new("3.1") && RUBY_ENGINE == "ruby"
+        when version >= Gem::Version.new("3.1") && RUBY_ENGINE == "ruby"
           expect(hash[:exception][:values][0][:value]).to eq(
             "undefined method `[]' for nil:NilClass\n\n          {}[:foo][:bar]\n                  ^^^^^^"
           )
         else
           expect(hash[:exception][:values][0][:value]).to eq("undefined method `[]' for nil:NilClass")
         end
+      end
+
+      it "converts non-string error message" do
+        NonStringMessageError = Class.new(StandardError) do
+          def detailed_message(*)
+            { foo: "bar" }
+          end
+        end
+
+        event = subject.event_from_exception(NonStringMessageError.new)
+        hash = event.to_hash
+        expect(event).to be_a(Sentry::ErrorEvent)
+        expect(hash[:exception][:values][0][:value]).to eq("{:foo=>\"bar\"}")
       end
     end
 
@@ -236,7 +376,9 @@ RSpec.describe Sentry::Client do
     it 'returns an event' do
       event = subject.event_from_exception(ZeroDivisionError.new("divided by 0"))
       expect(event).to be_a(Sentry::ErrorEvent)
-      expect(Sentry::Event.get_message_from_exception(event.to_hash)).to match("ZeroDivisionError: divided by 0")
+      hash = event.to_hash
+      expect(hash[:exception][:values][0][:type]).to match("ZeroDivisionError")
+      expect(hash[:exception][:values][0][:value]).to match("divided by 0")
     end
 
     context 'for a nested exception type' do
@@ -326,6 +468,13 @@ RSpec.describe Sentry::Client do
           it 'returns nil for a tagged class match' do
             config.excluded_exceptions << Sentry::Test::ExcTag
             expect(subject.event_from_exception(Sentry::Test::SubExc.new.tap { |x| x.extend(Sentry::Test::ExcTag) })).to be_nil
+          end
+        end
+
+        context "when exclusions overridden with :ignore_exclusions" do
+          it 'returns Sentry::ErrorEvent' do
+            config.excluded_exceptions << Sentry::Test::BaseExc
+            expect(subject.event_from_exception(Sentry::Test::BaseExc.new, { ignore_exclusions: true })).to be_a(Sentry::ErrorEvent)
           end
         end
       end
@@ -434,6 +583,134 @@ RSpec.describe Sentry::Client do
           expect(hash[:extra][:foo]).to eq('bar')
         end
       end
+    end
+
+    describe "bad encoding character handling" do
+      context "if exception message contains illegal/malformed encoding characters" do
+        let(:exception) do
+          begin
+            raise "#{message}\x1F\xE6"
+          rescue => e
+            e
+          end
+        end
+
+        it "scrub bad encoding error message" do
+          expect { event.to_json_compatible }.not_to raise_error
+          version = Gem::Version.new(RUBY_VERSION)
+          if version >= Gem::Version.new("3.2")
+            expect(hash[:exception][:values][0][:value]).to eq("#{message}\x1F\uFFFD (RuntimeError)")
+          else
+            expect(hash[:exception][:values][0][:value]).to eq("#{message}\x1F\uFFFD")
+          end
+        end
+      end
+
+      context "if local variable contains illegal/malformed encoding characters" do
+        before do
+          perform_basic_setup do |config|
+            config.include_local_variables = true
+          end
+        end
+
+        after do
+          Sentry.exception_locals_tp.disable
+        end
+
+        let(:exception) do
+          begin
+            long = "*" * 1022 + "\x1F\xE6" + "*" * 1000
+            foo = "local variable \x1F\xE6"
+            raise message
+          rescue => e
+            e
+          end
+        end
+
+        it "scrub bad encoding characters" do
+          expect { event.to_json_compatible }.not_to raise_error
+          version = Gem::Version.new(RUBY_VERSION)
+          if version >= Gem::Version.new("3.2")
+            expect(hash[:exception][:values][0][:value]).to eq("#{message} (RuntimeError)")
+            frames = hash[:exception][:values][0][:stacktrace][:frames]
+            expect(frames[-1][:vars][:long]).to eq("*" * 1022 + "\x1F\uFFFD" + "...")
+            expect(frames[-1][:vars][:foo]).to eq "local variable \x1F\uFFFD"
+          else
+            expect(hash[:exception][:values][0][:value]).to eq(message)
+            frames = hash[:exception][:values][0][:stacktrace][:frames]
+            expect(frames[-1][:vars][:long]).to eq("*" * 1022 + "\x1F\uFFFD" + "...")
+            expect(frames[-1][:vars][:foo]).to eq "local variable \x1F\uFFFD"
+          end
+        end
+      end
+    end
+
+    describe 'mechanism' do
+      it 'has type generic and handled true by default' do
+        mechanism = hash[:exception][:values][0][:mechanism]
+        expect(mechanism).to eq({ type: 'generic', handled: true })
+      end
+
+      it 'has correct custom mechanism when passed' do
+        mech = Sentry::Mechanism.new(type: 'custom', handled: false)
+        event = subject.event_from_exception(exception, mechanism: mech)
+        hash = event.to_hash
+        mechanism = hash[:exception][:values][0][:mechanism]
+        expect(mechanism).to eq({ type: 'custom', handled: false })
+      end
+    end
+  end
+
+  describe "#event_from_check_in" do
+    let(:slug) { "test_slug" }
+    let(:status) { :ok }
+
+    it 'returns an event' do
+      event = subject.event_from_check_in(slug, status)
+      expect(event).to be_a(Sentry::CheckInEvent)
+
+      hash = event.to_hash
+      expect(hash[:monitor_slug]).to eq(slug)
+      expect(hash[:status]).to eq(status)
+      expect(hash[:check_in_id].length).to eq(32)
+    end
+
+    it 'returns an event with correct optional attributes from crontab config' do
+      event = subject.event_from_check_in(
+        slug,
+        status,
+        duration: 30,
+        check_in_id: "xxx-yyy",
+        monitor_config: Sentry::Cron::MonitorConfig.from_crontab("* * * * *")
+      )
+
+      expect(event).to be_a(Sentry::CheckInEvent)
+
+      hash = event.to_hash
+      expect(hash[:monitor_slug]).to eq(slug)
+      expect(hash[:status]).to eq(status)
+      expect(hash[:check_in_id]).to eq("xxx-yyy")
+      expect(hash[:duration]).to eq(30)
+      expect(hash[:monitor_config]).to eq({ schedule: { type: :crontab, value: "* * * * *" } })
+    end
+
+    it 'returns an event with correct optional attributes from interval config' do
+      event = subject.event_from_check_in(
+        slug,
+        status,
+        duration: 30,
+        check_in_id: "xxx-yyy",
+        monitor_config: Sentry::Cron::MonitorConfig.from_interval(30, :minute)
+      )
+
+      expect(event).to be_a(Sentry::CheckInEvent)
+
+      hash = event.to_hash
+      expect(hash[:monitor_slug]).to eq(slug)
+      expect(hash[:status]).to eq(status)
+      expect(hash[:check_in_id]).to eq("xxx-yyy")
+      expect(hash[:duration]).to eq(30)
+      expect(hash[:monitor_config]).to eq({ schedule: { type: :interval, value: 30, unit: :minute } })
     end
   end
 

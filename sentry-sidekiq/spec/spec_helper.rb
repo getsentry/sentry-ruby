@@ -1,15 +1,21 @@
 require "bundler/setup"
-require "pry"
-require "debug" if RUBY_VERSION.to_f >= 2.6 && RUBY_ENGINE == "ruby"
+begin
+  require "debug/prelude"
+rescue LoadError
+end
 
 # this enables sidekiq's server mode
 require "sidekiq/cli"
 
+MIN_SIDEKIQ_6 = Gem::Version.new(Sidekiq::VERSION) >= Gem::Version.new("6.0")
 WITH_SIDEKIQ_7 = Gem::Version.new(Sidekiq::VERSION) >= Gem::Version.new("7.0")
-WITH_SIDEKIQ_6 = Gem::Version.new(Sidekiq::VERSION) >= Gem::Version.new("6.0") && !WITH_SIDEKIQ_7
+WITH_SIDEKIQ_6 = MIN_SIDEKIQ_6 && !WITH_SIDEKIQ_7
 
-if WITH_SIDEKIQ_7
-  require "sidekiq/embedded"
+require "sidekiq/embedded" if WITH_SIDEKIQ_7
+
+if RUBY_VERSION.to_f >= 2.7 && MIN_SIDEKIQ_6
+  require 'sidekiq-cron'
+  require 'sidekiq-scheduler'
 end
 
 require "sentry-ruby"
@@ -123,10 +129,25 @@ class SadWorker
   def perform
     crumb = Sentry::Breadcrumb.new(message: "I'm sad!")
     Sentry.add_breadcrumb(crumb)
-    Sentry.set_tags :mood => 'sad'
+    Sentry.set_tags mood: 'sad'
 
     raise "I'm sad!"
   end
+end
+
+class HappyWorkerForCron < HappyWorker; end
+class HappyWorkerForScheduler < HappyWorker; end
+class HappyWorkerForSchedulerWithTimezone < HappyWorker; end
+class EveryHappyWorker < HappyWorker; end
+
+class HappyWorkerWithCron < HappyWorker
+  include Sentry::Cron::MonitorCheckIns
+  sentry_monitor_check_ins
+end
+
+class SadWorkerWithCron < SadWorker
+  include Sentry::Cron::MonitorCheckIns
+  sentry_monitor_check_ins slug: "failed_job", monitor_config: Sentry::Cron::MonitorConfig.from_crontab("5 * * * *")
 end
 
 class VerySadWorker
@@ -135,7 +156,7 @@ class VerySadWorker
   def perform
     crumb = Sentry::Breadcrumb.new(message: "I'm very sad!")
     Sentry.add_breadcrumb(crumb)
-    Sentry.set_tags :mood => 'very sad'
+    Sentry.set_tags mood: 'very sad'
 
     raise "I'm very sad!"
   end
@@ -171,6 +192,35 @@ def new_processor
     end
 
   manager.workers.first
+end
+
+class SidekiqConfigMock
+  include ::Sidekiq
+  attr_accessor :options
+
+  def initialize(options = {})
+    @options = DEFAULTS.merge(options)
+  end
+
+  def fetch(key, default = nil)
+    options.fetch(key, default)
+  end
+
+  def [](key)
+    options[key]
+  end
+end
+
+module VeryLongOuterModule
+  module VeryVeryVeryVeryLongInnerModule
+    class Job
+    end
+  end
+end
+
+# Sidekiq 7 has a Config class, but for Sidekiq 6, we'll mock it.
+def sidekiq_config(opts)
+  WITH_SIDEKIQ_7 ? ::Sidekiq::Config.new(opts) : SidekiqConfigMock.new(opts)
 end
 
 def execute_worker(processor, klass, **options)

@@ -1,6 +1,8 @@
 require "bundler/setup"
-require "debug" if RUBY_VERSION.to_f >= 2.6 && RUBY_ENGINE == "ruby"
-require "pry"
+begin
+  require "debug/prelude"
+rescue LoadError
+end
 
 require "sentry-ruby"
 require 'rspec/retry'

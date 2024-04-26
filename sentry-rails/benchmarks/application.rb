@@ -10,4 +10,3 @@ def create_app(&block)
   session.extend(app.routes.url_helpers)
   session.extend(app.routes.mounted_helpers)
 end
-

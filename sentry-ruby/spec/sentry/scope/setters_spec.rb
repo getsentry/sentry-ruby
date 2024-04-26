@@ -59,13 +59,13 @@ RSpec.describe Sentry::Scope do
     end
 
     it "sets the user" do
-      subject.set_user({id: 1, name: "Jack"})
+      subject.set_user({ id: 1, name: "Jack" })
 
-      expect(subject.user).to eq({id: 1, name: "Jack"})
+      expect(subject.user).to eq({ id: 1, name: "Jack" })
     end
 
     it "unsets user when given empty data" do
-      subject.set_user({id: 1, name: "Jack"})
+      subject.set_user({ id: 1, name: "Jack" })
 
       subject.set_user({})
 
@@ -81,21 +81,21 @@ RSpec.describe Sentry::Scope do
     end
 
     it "merges the extras" do
-      subject.set_extras({bar: "baz"})
-      expect(subject.extra).to eq({bar: "baz"})
+      subject.set_extras({ bar: "baz" })
+      expect(subject.extra).to eq({ bar: "baz" })
 
-      subject.set_extras({foo: "bar"})
-      expect(subject.extra).to eq({bar: "baz", foo: "bar"})
+      subject.set_extras({ foo: "bar" })
+      expect(subject.extra).to eq({ bar: "baz", foo: "bar" })
     end
   end
 
   describe "#set_extra" do
     it "merges the key value with existing extra" do
-      subject.set_extras({bar: "baz"})
+      subject.set_extras({ bar: "baz" })
 
       subject.set_extra(:foo, "bar")
 
-      expect(subject.extra).to eq({foo: "bar", bar: "baz"})
+      expect(subject.extra).to eq({ foo: "bar", bar: "baz" })
     end
   end
 
@@ -106,26 +106,32 @@ RSpec.describe Sentry::Scope do
       end.to raise_error(ArgumentError)
     end
 
-    it "merges the context hash" do
-      subject.set_contexts({ character: { name: "John" }})
-      expect(subject.contexts).to include({ character: { name: "John" }})
+    it "raises error when passed non-hash context value" do
+      expect do
+        subject.set_contexts({ character: "John" })
+      end.to raise_error(ArgumentError)
+    end
 
-      subject.set_contexts({ character: { name: "John", age: 25 }})
-      subject.set_contexts({ another_character: { name: "Jane", age: 20 }})
-      expect(subject.contexts).to include({ character: { name: "John", age: 25 }})
-      expect(subject.contexts).to include({ another_character: { name: "Jane", age: 20 }})
+    it "merges the context hash" do
+      subject.set_contexts({ character: { name: "John" } })
+      expect(subject.contexts).to include({ character: { name: "John" } })
+
+      subject.set_contexts({ character: { name: "John", age: 25 } })
+      subject.set_contexts({ another_character: { name: "Jane", age: 20 } })
+      expect(subject.contexts).to include({ character: { name: "John", age: 25 } })
+      expect(subject.contexts).to include({ another_character: { name: "Jane", age: 20 } })
     end
 
     it "merges context with the same key" do
-      subject.set_contexts({ character: { name: "John" }})
-      subject.set_contexts({ character: { age: 25 }})
-      expect(subject.contexts).to include({ character: { name: "John", age: 25 }})
+      subject.set_contexts({ character: { name: "John" } })
+      subject.set_contexts({ character: { age: 25 } })
+      expect(subject.contexts).to include({ character: { name: "John", age: 25 } })
     end
 
     it "allows overwriting old values" do
-      subject.set_contexts({ character: { name: "John" }})
-      subject.set_contexts({ character: { name: "Jimmy" }})
-      expect(subject.contexts).to include({ character: { name: "Jimmy" }})
+      subject.set_contexts({ character: { name: "John" } })
+      subject.set_contexts({ character: { name: "Jimmy" } })
+      expect(subject.contexts).to include({ character: { name: "Jimmy" } })
     end
   end
 
@@ -138,10 +144,10 @@ RSpec.describe Sentry::Scope do
 
     it "merges the key value with existing context" do
       subject.set_context(:character, { name: "John" })
-      expect(subject.contexts).to include({ character: { name: "John" }})
+      expect(subject.contexts).to include({ character: { name: "John" } })
 
       subject.set_context(:character, { name: "John", age: 25 })
-      expect(subject.contexts).to include({ character: { name: "John", age: 25 }})
+      expect(subject.contexts).to include({ character: { name: "John", age: 25 } })
 
       subject.set_context(:another_character, { name: "Jane", age: 20 })
       expect(subject.contexts).to include(
@@ -155,13 +161,13 @@ RSpec.describe Sentry::Scope do
     it "merges context with the same key" do
       subject.set_context(:character, { name: "John" })
       subject.set_context(:character, { age: 25 })
-      expect(subject.contexts).to include({ character: { name: "John", age: 25 }})
+      expect(subject.contexts).to include({ character: { name: "John", age: 25 } })
     end
 
     it "allows overwriting old values" do
       subject.set_context(:character, { name: "John" })
       subject.set_context(:character, { name: "Jimmy" })
-      expect(subject.contexts).to include({ character: { name: "Jimmy" }})
+      expect(subject.contexts).to include({ character: { name: "Jimmy" } })
     end
   end
 
@@ -173,21 +179,21 @@ RSpec.describe Sentry::Scope do
     end
 
     it "merges tags" do
-      subject.set_tags({bar: "baz"})
-      expect(subject.tags).to eq({bar: "baz"})
+      subject.set_tags({ bar: "baz" })
+      expect(subject.tags).to eq({ bar: "baz" })
 
-      subject.set_tags({foo: "bar"})
-      expect(subject.tags).to eq({bar: "baz", foo: "bar"})
+      subject.set_tags({ foo: "bar" })
+      expect(subject.tags).to eq({ bar: "baz", foo: "bar" })
     end
   end
 
   describe "#set_tag" do
     it "merges the key value with existing tag" do
-      subject.set_tags({bar: "baz"})
+      subject.set_tags({ bar: "baz" })
 
       subject.set_tag(:foo, "bar")
 
-      expect(subject.tags).to eq({foo: "bar", bar: "baz"})
+      expect(subject.tags).to eq({ foo: "bar", bar: "baz" })
     end
   end
 

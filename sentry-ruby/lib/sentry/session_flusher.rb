@@ -20,12 +20,8 @@ module Sentry
 
     def flush
       return if @pending_aggregates.empty?
-      envelope = pending_envelope
 
-      Sentry.background_worker.perform do
-        @client.transport.send_envelope(envelope)
-      end
-
+      @client.capture_envelope(pending_envelope)
       @pending_aggregates = {}
     end
 
@@ -85,6 +81,5 @@ module Sentry
         end
       end
     end
-
   end
 end

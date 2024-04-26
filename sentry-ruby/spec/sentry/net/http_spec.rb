@@ -9,6 +9,30 @@ RSpec.describe Sentry::Net::HTTP do
     ::Logger.new(string_io)
   end
 
+  context "with IPv6 addresses" do
+    before do
+      perform_basic_setup do |config|
+        config.traces_sample_rate = 1.0
+      end
+    end
+
+    it "correctly parses the short-hand IPv6 addresses" do
+      stub_normal_response
+
+      transaction = Sentry.start_transaction
+      Sentry.get_current_scope.set_span(transaction)
+
+      _ = Net::HTTP.get("::1", "/path", 8080)
+
+      expect(transaction.span_recorder.spans.count).to eq(2)
+
+      request_span = transaction.span_recorder.spans.last
+      expect(request_span.data).to eq(
+        { "url" => "http://[::1]/path", "http.request.method" => "GET", "http.response.status_code" => 200 }
+      )
+    end
+  end
+
   context "with tracing enabled" do
     before do
       perform_basic_setup do |config|
@@ -25,33 +49,7 @@ RSpec.describe Sentry::Net::HTTP do
         Sentry.configuration.send_default_pii = true
       end
 
-      it "records the request's span with query string" do
-        stub_normal_response
-
-        transaction = Sentry.start_transaction
-        Sentry.get_current_scope.set_span(transaction)
-
-        response = Net::HTTP.get_response(URI("http://example.com/path?foo=bar"))
-
-        expect(response.code).to eq("200")
-        expect(transaction.span_recorder.spans.count).to eq(2)
-
-        request_span = transaction.span_recorder.spans.last
-        expect(request_span.op).to eq("http.client")
-        expect(request_span.start_timestamp).not_to be_nil
-        expect(request_span.timestamp).not_to be_nil
-        expect(request_span.start_timestamp).not_to eq(request_span.timestamp)
-        expect(request_span.description).to eq("GET http://example.com/path?foo=bar")
-        expect(request_span.data).to eq({ status: 200 })
-      end
-    end
-
-    context "with config.send_default_pii = true" do
-      before do
-        Sentry.configuration.send_default_pii = false
-      end
-
-      it "records the request's span with query string" do
+      it "records the request's span with query string in data" do
         stub_normal_response
 
         transaction = Sentry.start_transaction
@@ -68,7 +66,42 @@ RSpec.describe Sentry::Net::HTTP do
         expect(request_span.timestamp).not_to be_nil
         expect(request_span.start_timestamp).not_to eq(request_span.timestamp)
         expect(request_span.description).to eq("GET http://example.com/path")
-        expect(request_span.data).to eq({ status: 200 })
+        expect(request_span.data).to eq({
+          "http.response.status_code" => 200,
+          "url" => "http://example.com/path",
+          "http.request.method" => "GET",
+          "http.query" => "foo=bar"
+        })
+      end
+    end
+
+    context "with config.send_default_pii = false" do
+      before do
+        Sentry.configuration.send_default_pii = false
+      end
+
+      it "records the request's span without query string" do
+        stub_normal_response
+
+        transaction = Sentry.start_transaction
+        Sentry.get_current_scope.set_span(transaction)
+
+        response = Net::HTTP.get_response(URI("http://example.com/path?foo=bar"))
+
+        expect(response.code).to eq("200")
+        expect(transaction.span_recorder.spans.count).to eq(2)
+
+        request_span = transaction.span_recorder.spans.last
+        expect(request_span.op).to eq("http.client")
+        expect(request_span.start_timestamp).not_to be_nil
+        expect(request_span.timestamp).not_to be_nil
+        expect(request_span.start_timestamp).not_to eq(request_span.timestamp)
+        expect(request_span.description).to eq("GET http://example.com/path")
+        expect(request_span.data).to eq({
+          "http.response.status_code" => 200,
+          "url" => "http://example.com/path",
+          "http.request.method" => "GET"
+        })
       end
     end
 
@@ -88,9 +121,6 @@ RSpec.describe Sentry::Net::HTTP do
       response = http.request(request)
 
       expect(response.code).to eq("200")
-      expect(string_io.string).to match(
-        /\[Tracing\] Adding sentry-trace header to outgoing request:/
-      )
     end
 
     it "adds baggage header to the request header as head SDK when no incoming trace" do
@@ -106,15 +136,12 @@ RSpec.describe Sentry::Net::HTTP do
       response = http.request(request)
 
       expect(response.code).to eq("200")
-      expect(string_io.string).to match(
-        /\[Tracing\] Adding baggage header to outgoing request:/
-      )
-
       request_span = transaction.span_recorder.spans.last
       expect(request["baggage"]).to eq(request_span.to_baggage)
       expect(request["baggage"]).to eq(
         "sentry-trace_id=#{transaction.trace_id},"\
         "sentry-sample_rate=1.0,"\
+        "sentry-sampled=true,"\
         "sentry-environment=development,"\
         "sentry-public_key=foobarbaz"
       )
@@ -135,16 +162,12 @@ RSpec.describe Sentry::Net::HTTP do
         "sentry-user_id=Am%C3%A9lie,  "\
         "other-vendor-value-2=foo;bar;"
 
-      transaction = Sentry::Transaction.from_sentry_trace(sentry_trace, baggage: baggage)
+      transaction = Sentry.continue_trace({ "sentry-trace" => sentry_trace, "baggage" => baggage })
       Sentry.get_current_scope.set_span(transaction)
 
       response = http.request(request)
 
       expect(response.code).to eq("200")
-      expect(string_io.string).to match(
-        /\[Tracing\] Adding baggage header to outgoing request:/
-      )
-
       request_span = transaction.span_recorder.spans.last
       expect(request["baggage"]).to eq(request_span.to_baggage)
       expect(request["baggage"]).to eq(
@@ -155,7 +178,7 @@ RSpec.describe Sentry::Net::HTTP do
       )
     end
 
-    context "with config.propagate_trace = false" do
+    context "with config.propagate_traces = false" do
       before do
         Sentry.configuration.propagate_traces = false
       end
@@ -173,9 +196,6 @@ RSpec.describe Sentry::Net::HTTP do
         response = http.request(request)
 
         expect(response.code).to eq("200")
-        expect(string_io.string).not_to match(
-          /Adding sentry-trace header to outgoing request:/
-        )
         expect(request.key?("sentry-trace")).to eq(false)
       end
 
@@ -194,16 +214,83 @@ RSpec.describe Sentry::Net::HTTP do
           "sentry-user_id=Am%C3%A9lie,  "\
           "other-vendor-value-2=foo;bar;"
 
-        transaction = Sentry::Transaction.from_sentry_trace(sentry_trace, baggage: baggage)
+        transaction = Sentry.continue_trace({ "sentry-trace" => sentry_trace, "baggage" => baggage })
         Sentry.get_current_scope.set_span(transaction)
 
         response = http.request(request)
 
         expect(response.code).to eq("200")
-        expect(string_io.string).not_to match(
-          /Adding baggage header to outgoing request:/
-        )
         expect(request.key?("baggage")).to eq(false)
+      end
+    end
+
+    context "with custom trace_propagation_targets" do
+      before do
+        Sentry.configuration.trace_propagation_targets = ["example.com", /foobar.org\/api\/v2/]
+      end
+
+      it "doesn't add sentry headers to outgoing requests to different target" do
+        stub_normal_response
+
+        uri = URI("http://google.com/path")
+        http = Net::HTTP.new(uri.host, uri.port)
+        request = Net::HTTP::Get.new(uri.request_uri)
+
+        transaction = Sentry.start_transaction
+        Sentry.get_current_scope.set_span(transaction)
+
+        http.request(request)
+
+        expect(request.key?("sentry-trace")).to eq(false)
+        expect(request.key?("baggage")).to eq(false)
+      end
+
+      it "doesn't add sentry headers to outgoing requests to different target path" do
+        stub_normal_response
+
+        uri = URI("http://foobar.org/api/v1/path")
+        http = Net::HTTP.new(uri.host, uri.port)
+        request = Net::HTTP::Get.new(uri.request_uri)
+
+        transaction = Sentry.start_transaction
+        Sentry.get_current_scope.set_span(transaction)
+
+        http.request(request)
+
+        expect(request.key?("sentry-trace")).to eq(false)
+        expect(request.key?("baggage")).to eq(false)
+      end
+
+      it "adds sentry headers to outgoing requests matching string" do
+        stub_normal_response
+
+        uri = URI("http://example.com/path")
+        http = Net::HTTP.new(uri.host, uri.port)
+        request = Net::HTTP::Get.new(uri.request_uri)
+
+        transaction = Sentry.start_transaction
+        Sentry.get_current_scope.set_span(transaction)
+
+        http.request(request)
+
+        expect(request.key?("sentry-trace")).to eq(true)
+        expect(request.key?("baggage")).to eq(true)
+      end
+
+      it "adds sentry headers to outgoing requests matching regexp" do
+        stub_normal_response
+
+        uri = URI("http://foobar.org/api/v2/path")
+        http = Net::HTTP.new(uri.host, uri.port)
+        request = Net::HTTP::Get.new(uri.request_uri)
+
+        transaction = Sentry.start_transaction
+        Sentry.get_current_scope.set_span(transaction)
+
+        http.request(request)
+
+        expect(request.key?("sentry-trace")).to eq(true)
+        expect(request.key?("baggage")).to eq(true)
       end
     end
 
@@ -237,7 +324,11 @@ RSpec.describe Sentry::Net::HTTP do
         expect(request_span.timestamp).not_to be_nil
         expect(request_span.start_timestamp).not_to eq(request_span.timestamp)
         expect(request_span.description).to eq("GET http://example.com/path")
-        expect(request_span.data).to eq({ status: 200 })
+        expect(request_span.data).to eq({
+          "http.response.status_code" => 200,
+          "url" => "http://example.com/path",
+          "http.request.method" => "GET"
+        })
 
         request_span = transaction.span_recorder.spans[2]
         expect(request_span.op).to eq("http.client")
@@ -245,7 +336,11 @@ RSpec.describe Sentry::Net::HTTP do
         expect(request_span.timestamp).not_to be_nil
         expect(request_span.start_timestamp).not_to eq(request_span.timestamp)
         expect(request_span.description).to eq("GET http://example.com/path")
-        expect(request_span.data).to eq({ status: 404 })
+        expect(request_span.data).to eq({
+          "http.response.status_code" => 404,
+          "url" => "http://example.com/path",
+          "http.request.method" => "GET"
+        })
       end
 
       it "doesn't mess different requests' data together" do
@@ -302,7 +397,20 @@ RSpec.describe Sentry::Net::HTTP do
       perform_basic_setup
     end
 
-    it "doesn't affect the HTTP lib anything" do
+    it "adds sentry-trace and baggage headers for tracing without performance" do
+      stub_normal_response
+
+      uri = URI("http://example.com/path")
+      http = Net::HTTP.new(uri.host, uri.port)
+      request = Net::HTTP::Get.new(uri.request_uri)
+      response = http.request(request)
+
+      expect(request["sentry-trace"]).to eq(Sentry.get_traceparent)
+      expect(request["baggage"]).to eq(Sentry.get_baggage)
+      expect(response.code).to eq("200")
+    end
+
+    it "doesn't create transaction or breadcrumbs" do
       stub_normal_response
 
       response = Net::HTTP.get_response(URI("http://example.com/path"))

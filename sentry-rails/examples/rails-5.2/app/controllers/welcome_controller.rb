@@ -4,6 +4,6 @@ class WelcomeController < ApplicationController
   end
 
   def report_demo
-    render(:status => 500)
+    render(status: 500)
   end
 end

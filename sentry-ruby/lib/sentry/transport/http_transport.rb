@@ -14,11 +14,19 @@ module Sentry
     RATE_LIMIT_HEADER = "x-sentry-rate-limits"
     USER_AGENT = "sentry-ruby/#{Sentry::VERSION}"
 
+    # The list of errors ::Net::HTTP is known to raise
+    # See https://github.com/ruby/ruby/blob/b0c639f249165d759596f9579fa985cb30533de6/lib/bundler/fetcher.rb#L281-L286
+    HTTP_ERRORS = [
+      Timeout::Error, EOFError, SocketError, Errno::ENETDOWN, Errno::ENETUNREACH,
+      Errno::EINVAL, Errno::ECONNRESET, Errno::ETIMEDOUT, Errno::EAGAIN,
+      Net::HTTPBadResponse, Net::HTTPHeaderSyntaxError, Net::ProtocolError,
+      Zlib::BufError, Errno::EHOSTUNREACH, Errno::ECONNREFUSED
+    ].freeze
+
+
     def initialize(*args)
       super
-      @endpoint = @dsn.envelope_endpoint
-
-      log_debug("Sentry HTTP Transport will connect to #{@dsn.server}")
+      log_debug("Sentry HTTP Transport will connect to #{@dsn.server}") if @dsn
     end
 
     def send_data(data)
@@ -32,34 +40,76 @@ module Sentry
       headers = {
         'Content-Type' => CONTENT_TYPE,
         'Content-Encoding' => encoding,
-        'X-Sentry-Auth' => generate_auth_header,
         'User-Agent' => USER_AGENT
       }
 
+      auth_header = generate_auth_header
+      headers['X-Sentry-Auth'] = auth_header if auth_header
+
       response = conn.start do |http|
-        request = ::Net::HTTP::Post.new(@endpoint, headers)
+        request = ::Net::HTTP::Post.new(endpoint, headers)
         request.body = data
         http.request(request)
       end
 
       if response.code.match?(/\A2\d{2}/)
-        if has_rate_limited_header?(response)
-          handle_rate_limited_response(response)
-        end
+        handle_rate_limited_response(response) if has_rate_limited_header?(response)
+      elsif response.code == "429"
+        log_debug("the server responded with status 429")
+        handle_rate_limited_response(response)
       else
         error_info = "the server responded with status #{response.code}"
-
-        if response.code == "429"
-          handle_rate_limited_response(response)
-        else
-          error_info += "\nbody: #{response.body}"
-          error_info += " Error in headers is: #{response['x-sentry-error']}" if response['x-sentry-error']
-        end
+        error_info += "\nbody: #{response.body}"
+        error_info += " Error in headers is: #{response['x-sentry-error']}" if response['x-sentry-error']
 
         raise Sentry::ExternalError, error_info
       end
-    rescue SocketError => e
-      raise Sentry::ExternalError.new(e.message)
+    rescue SocketError, *HTTP_ERRORS => e
+      on_error if respond_to?(:on_error)
+      raise Sentry::ExternalError.new(e&.message)
+    end
+
+    def endpoint
+      @dsn.envelope_endpoint
+    end
+
+    def generate_auth_header
+      return nil unless @dsn
+
+      now = Sentry.utc_now.to_i
+      fields = {
+        'sentry_version' => PROTOCOL_VERSION,
+        'sentry_client' => USER_AGENT,
+        'sentry_timestamp' => now,
+        'sentry_key' => @dsn.public_key
+      }
+      fields['sentry_secret'] = @dsn.secret_key if @dsn.secret_key
+      'Sentry ' + fields.map { |key, value| "#{key}=#{value}" }.join(', ')
+    end
+
+    def conn
+      server = URI(@dsn.server)
+
+      # connection respects proxy setting from @transport_configuration, or environment variables (HTTP_PROXY, HTTPS_PROXY, NO_PROXY)
+      # Net::HTTP will automatically read the env vars.
+      # See https://ruby-doc.org/3.2.2/stdlibs/net/Net/HTTP.html#class-Net::HTTP-label-Proxies
+      connection =
+        if proxy = normalize_proxy(@transport_configuration.proxy)
+          ::Net::HTTP.new(server.hostname, server.port, proxy[:uri].hostname, proxy[:uri].port, proxy[:user], proxy[:password])
+        else
+          ::Net::HTTP.new(server.hostname, server.port)
+        end
+
+      connection.use_ssl = server.scheme == "https"
+      connection.read_timeout = @transport_configuration.timeout
+      connection.write_timeout = @transport_configuration.timeout if connection.respond_to?(:write_timeout)
+      connection.open_timeout = @transport_configuration.open_timeout
+
+      ssl_configuration.each do |key, value|
+        connection.send("#{key}=", value)
+      end
+
+      connection
     end
 
     private
@@ -126,28 +176,9 @@ module Sentry
       @transport_configuration.encoding == GZIP_ENCODING && data.bytesize >= GZIP_THRESHOLD
     end
 
-    def conn
-      server = URI(@dsn.server)
-
-      connection =
-        if proxy = normalize_proxy(@transport_configuration.proxy)
-          ::Net::HTTP.new(server.hostname, server.port, proxy[:uri].hostname, proxy[:uri].port, proxy[:user], proxy[:password])
-        else
-          ::Net::HTTP.new(server.hostname, server.port, nil)
-        end
-
-      connection.use_ssl = server.scheme == "https"
-      connection.read_timeout = @transport_configuration.timeout
-      connection.write_timeout = @transport_configuration.timeout if connection.respond_to?(:write_timeout)
-      connection.open_timeout = @transport_configuration.open_timeout
-
-      ssl_configuration.each do |key, value|
-        connection.send("#{key}=", value)
-      end
-
-      connection
-    end
-
+    # @param proxy [String, URI, Hash] Proxy config value passed into `config.transport`.
+    #   Accepts either a URI formatted string, URI, or a hash with the `uri`, `user`, and `password` keys.
+    # @return [Hash] Normalized proxy config that will be passed into `Net::HTTP`
     def normalize_proxy(proxy)
       return proxy unless proxy
 

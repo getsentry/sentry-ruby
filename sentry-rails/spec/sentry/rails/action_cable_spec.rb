@@ -132,7 +132,7 @@ if defined?(ActionCable) && ActionCable.version >= Gem::Version.new('6.0.0')
 
       describe ContentChannel do
         before { subscribe }
-        
+
         it "perform_action returns content" do
           expect(perform :content, foo: 'bar').to eq("value")
         end

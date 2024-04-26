@@ -32,7 +32,7 @@ RSpec.describe :http_logger do
       expect(response.code).to eq("200")
       crumb = Sentry.get_current_scope.breadcrumbs.peek
       expect(crumb.category).to eq("net.http")
-      expect(crumb.data).to eq({ status: 200, method: "GET", url: "http://example.com/path?foo=bar", body: nil })
+      expect(crumb.data).to eq({ status: 200, method: "GET", url: "http://example.com/path", query: "foo=bar", body: nil })
 
       http = Net::HTTP.new("example.com")
       request = Net::HTTP::Get.new("/path?foo=bar")
@@ -41,7 +41,7 @@ RSpec.describe :http_logger do
       expect(response.code).to eq("200")
       crumb = Sentry.get_current_scope.breadcrumbs.peek
       expect(crumb.category).to eq("net.http")
-      expect(crumb.data).to eq({ status: 200, method: "GET", url: "http://example.com/path?foo=bar", body: nil })
+      expect(crumb.data).to eq({ status: 200, method: "GET", url: "http://example.com/path", query: "foo=bar", body: nil })
 
       request = Net::HTTP::Post.new("/path?foo=bar")
       request.body = 'quz=qux'
@@ -51,7 +51,7 @@ RSpec.describe :http_logger do
       crumb = Sentry.get_current_scope.breadcrumbs.peek
       expect(crumb.category).to eq("net.http")
       expect(crumb.data).to eq(
-        { status: 200, method: "POST", url: "http://example.com/path?foo=bar", body: 'quz=qux' }
+        { status: 200, method: "POST", url: "http://example.com/path", query: "foo=bar", body: 'quz=qux' }
       )
     end
   end

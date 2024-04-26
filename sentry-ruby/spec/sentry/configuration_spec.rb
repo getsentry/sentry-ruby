@@ -57,6 +57,29 @@ RSpec.describe Sentry::Configuration do
     end
   end
 
+  describe "#traces_sample_rate" do
+    it "returns nil by default" do
+      expect(subject.traces_sample_rate).to eq(nil)
+    end
+
+    it "accepts Numeric values" do
+      subject.traces_sample_rate = 1
+      expect(subject.traces_sample_rate).to eq(1)
+      subject.traces_sample_rate = 1.0
+      expect(subject.traces_sample_rate).to eq(1.0)
+    end
+
+    it "accepts nil value" do
+      subject.traces_sample_rate = 1
+      subject.traces_sample_rate = nil
+      expect(subject.traces_sample_rate).to eq(nil)
+    end
+
+    it "raises ArgumentError when the value is not Numeric nor nil" do
+      expect { subject.traces_sample_rate = "foobar" }.to raise_error(ArgumentError)
+    end
+  end
+
   describe "#tracing_enabled?" do
     context "when sending not allowed" do
       before do
@@ -78,7 +101,16 @@ RSpec.describe Sentry::Configuration do
           expect(subject.tracing_enabled?).to eq(false)
         end
       end
+
+      context "when enable_tracing is set" do
+        it "returns false" do
+          subject.enable_tracing = true
+
+          expect(subject.tracing_enabled?).to eq(false)
+        end
+      end
     end
+
     context "when sending allowed" do
       before do
         allow(subject).to receive(:sending_allowed?).and_return(true)
@@ -119,6 +151,99 @@ RSpec.describe Sentry::Configuration do
           expect(subject.tracing_enabled?).to eq(true)
         end
       end
+
+      context "when enable_tracing is true" do
+        it "returns true" do
+          subject.enable_tracing = true
+
+          expect(subject.tracing_enabled?).to eq(true)
+        end
+      end
+
+      context "when enable_tracing is false" do
+        it "returns false" do
+          subject.enable_tracing = false
+
+          expect(subject.tracing_enabled?).to eq(false)
+        end
+
+        it "returns false even with explicit traces_sample_rate" do
+          subject.traces_sample_rate = 1.0
+          subject.enable_tracing = false
+
+          expect(subject.tracing_enabled?).to eq(false)
+        end
+      end
+    end
+  end
+
+  describe "#profiles_sample_rate" do
+    it "returns nil by default" do
+      expect(subject.profiles_sample_rate).to eq(nil)
+    end
+
+    it "accepts Numeric values" do
+      subject.profiles_sample_rate = 1
+      expect(subject.profiles_sample_rate).to eq(1)
+      subject.profiles_sample_rate = 1.0
+      expect(subject.profiles_sample_rate).to eq(1.0)
+    end
+
+    it "accepts nil value" do
+      subject.profiles_sample_rate = 1
+      subject.profiles_sample_rate = nil
+      expect(subject.profiles_sample_rate).to eq(nil)
+    end
+
+    it "raises ArgumentError when the value is not Numeric nor nil" do
+      expect { subject.profiles_sample_rate = "foobar" }.to raise_error(ArgumentError)
+    end
+  end
+
+  describe "#profiling_enabled?" do
+    it "returns false unless tracing enabled" do
+      subject.enable_tracing = false
+      expect(subject.profiling_enabled?).to eq(false)
+    end
+
+    it "returns false unless sending enabled" do
+      subject.enable_tracing = true
+      subject.profiles_sample_rate = 1.0
+      allow(subject).to receive(:sending_allowed?).and_return(false)
+      expect(subject.profiling_enabled?).to eq(false)
+    end
+
+    context 'when tracing and sending enabled' do
+      before { subject.enable_tracing = true }
+      before { allow(subject).to receive(:sending_allowed?).and_return(true) }
+
+      it "returns false if nil sample rate" do
+        subject.profiles_sample_rate = nil
+        expect(subject.profiling_enabled?).to eq(false)
+      end
+
+      it "returns false if invalid sample rate" do
+        subject.profiles_sample_rate = 5.0
+        expect(subject.profiling_enabled?).to eq(false)
+      end
+
+      it "returns true if valid sample rate" do
+        subject.profiles_sample_rate = 0.5
+        expect(subject.profiling_enabled?).to eq(true)
+      end
+    end
+  end
+
+  describe "#enable_tracing=" do
+    it "sets traces_sample_rate to 1.0 automatically" do
+      subject.enable_tracing = true
+      expect(subject.traces_sample_rate).to eq(1.0)
+    end
+
+    it "doesn't override existing traces_sample_rate" do
+      subject.traces_sample_rate = 0.5
+      subject.enable_tracing = true
+      expect(subject.traces_sample_rate).to eq(0.5)
     end
   end
 
@@ -131,20 +256,58 @@ RSpec.describe Sentry::Configuration do
     end
   end
 
+  describe "#cron" do
+    it "returns an initialized Cron::Configuration object" do
+      expect(subject.cron).to be_a(Sentry::Cron::Configuration)
+      expect(subject.cron.default_checkin_margin).to eq(nil)
+      expect(subject.cron.default_max_runtime).to eq(nil)
+      expect(subject.cron.default_timezone).to eq(nil)
+    end
+  end
+
+  describe "#spotlight" do
+    it "false by default" do
+      expect(subject.spotlight).to eq(false)
+    end
+  end
+
+  describe "#sending_allowed?" do
+    it "true when spotlight" do
+      subject.spotlight = true
+      expect(subject.sending_allowed?).to eq(true)
+    end
+
+    it "true when sending to dsn allowed" do
+      allow(subject).to receive(:sending_to_dsn_allowed?).and_return(true)
+      expect(subject.sending_allowed?).to eq(true)
+    end
+
+    it "false when no spotlight and sending to dsn not allowed" do
+      allow(subject).to receive(:sending_to_dsn_allowed?).and_return(false)
+      subject.spotlight = false
+      expect(subject.sending_allowed?).to eq(false)
+    end
+  end
+
+  it 'raises error when setting release to anything other than String' do
+    subject.release = "foo"
+    expect { subject.release = 42 }.to raise_error(ArgumentError, "expect the argument to be a String or NilClass, got Integer (42)")
+  end
+
   it 'raises error when setting before_send to anything other than callable or nil' do
-    subject.before_send = -> {}
+    subject.before_send = -> { }
     subject.before_send = nil
     expect { subject.before_send = true }.to raise_error(ArgumentError, "before_send must be callable (or nil to disable)")
   end
 
   it 'raises error when setting before_send_transaction to anything other than callable or nil' do
-    subject.before_send_transaction = -> {}
+    subject.before_send_transaction = -> { }
     subject.before_send_transaction = nil
     expect { subject.before_send_transaction = true }.to raise_error(ArgumentError, "before_send_transaction must be callable (or nil to disable)")
   end
 
   it 'raises error when setting before_breadcrumb to anything other than callable or nil' do
-    subject.before_breadcrumb = -> {}
+    subject.before_breadcrumb = -> { }
     subject.before_breadcrumb = nil
     expect { subject.before_breadcrumb = true }.to raise_error(ArgumentError, "before_breadcrumb must be callable (or nil to disable)")
   end
@@ -156,14 +319,14 @@ RSpec.describe Sentry::Configuration do
     end
 
     it 'should send events if test is whitelisted' do
-      subject.enabled_environments = %w(test)
+      subject.enabled_environments = %w[test]
       subject.sending_allowed?
       puts subject.errors
       expect(subject.sending_allowed?).to eq(true)
     end
 
     it 'should not send events if test is not whitelisted' do
-      subject.enabled_environments = %w(not_test)
+      subject.enabled_environments = %w[not_test]
       expect(subject.sending_allowed?).to eq(false)
       expect(subject.errors).to eq(["Not configured to send/capture in environment 'test'"])
     end
@@ -221,7 +384,7 @@ RSpec.describe Sentry::Configuration do
     end
 
     it "takes a proc and store it" do
-      subject.backtrace_cleanup_callback = proc {}
+      subject.backtrace_cleanup_callback = proc { }
 
       expect(subject.backtrace_cleanup_callback).to be_a(Proc)
     end
@@ -368,6 +531,54 @@ RSpec.describe Sentry::Configuration do
     end
   end
 
+  describe "session_tracking?" do
+    before do
+      subject.enabled_environments = %w[production]
+    end
+
+    context "when auto_session_tracking is true" do
+      before do
+        subject.auto_session_tracking = true
+      end
+
+      it "returns true when in enabled_environments" do
+        subject.environment = "production"
+        expect(subject.session_tracking?).to eq(true)
+      end
+
+      it "returns false when not in enabled_environments" do
+        subject.environment = "test"
+        expect(subject.session_tracking?).to eq(false)
+      end
+    end
+
+    context "when auto_session_tracking is false" do
+      before do
+        subject.auto_session_tracking = false
+      end
+      it "returns false when in enabled_environments" do
+        subject.environment = "production"
+        expect(subject.session_tracking?).to eq(false)
+      end
+
+      it "returns false when not in enabled_environments" do
+        subject.environment = "test"
+        expect(subject.session_tracking?).to eq(false)
+      end
+    end
+  end
+
+  describe "#trace_propagation_targets" do
+    it "returns match all by default" do
+      expect(subject.trace_propagation_targets).to eq([/.*/])
+    end
+
+    it "accepts array of strings or regexps" do
+      subject.trace_propagation_targets = ["example.com", /foobar.org\/api\/v2/]
+      expect(subject.trace_propagation_targets).to eq(["example.com", /foobar.org\/api\/v2/])
+    end
+  end
+
   describe "#instrumenter" do
     it "returns :sentry by default" do
       expect(subject.instrumenter).to eq(:sentry)
@@ -386,6 +597,17 @@ RSpec.describe Sentry::Configuration do
     it "defaults to :sentry if invalid" do
       subject.instrumenter = :foo
       expect(subject.instrumenter).to eq(:sentry)
+    end
+  end
+
+  describe "#enabled_patches" do
+    it "sets default patches" do
+      expect(subject.enabled_patches).to eq(%i[redis puma http])
+    end
+
+    it "can override" do
+      subject.enabled_patches.delete(:puma)
+      expect(subject.enabled_patches).to eq(%i[redis http])
     end
   end
 end
