@@ -61,84 +61,6 @@ RSpec.describe Sentry::Client do
       end
     end
 
-    context 'with config.async set' do
-      let(:async_block) do
-        lambda do |event|
-          client.send_event(event)
-        end
-      end
-
-      around do |example|
-        prior_async = configuration.async
-        configuration.async = async_block
-        example.run
-        configuration.async = prior_async
-      end
-
-      it "executes the given block" do
-        expect(async_block).to receive(:call).and_call_original
-
-        returned = client.capture_event(event, scope)
-
-        expect(returned).to be_a(Sentry::ErrorEvent)
-        expect(client.transport.events.first).to eq(event.to_json_compatible)
-      end
-
-      it "doesn't call the async block if not allow sending events" do
-        allow(configuration).to receive(:sending_allowed?).and_return(false)
-
-        expect(async_block).not_to receive(:call)
-
-        returned = client.capture_event(event, scope)
-
-        expect(returned).to eq(nil)
-      end
-
-      context "with to json conversion failed" do
-        let(:logger) { ::Logger.new(string_io) }
-        let(:string_io) { StringIO.new }
-        let(:event) { client.event_from_message("Bad data '\x80\xF8'") }
-
-        it "does not mask the exception" do
-          configuration.sdk_logger = logger
-
-          client.capture_event(event, scope)
-
-          expect(string_io.string).to match(/Converting event \(#{event.event_id}\) to JSON compatible hash failed:.*illegal\/malformed utf-8/i)
-        end
-      end
-
-      context "with nil as value (the legacy way to disable it)" do
-        let(:async_block) { nil }
-
-        it "doesn't cause any issue" do
-          returned = client.capture_event(event, scope, { background: false })
-
-          expect(returned).to be_a(Sentry::ErrorEvent)
-          expect(client.transport.events.first).to eq(event)
-        end
-      end
-
-      context "with 2 arity block" do
-        let(:async_block) do
-          lambda do |event, hint|
-            event["tags"]["hint"] = hint
-            client.send_event(event)
-          end
-        end
-
-        it "serializes hint and supplies it as the second argument" do
-          expect(configuration.async).to receive(:call).and_call_original
-
-          returned = client.capture_event(event, scope, { foo: "bar" })
-
-          expect(returned).to be_a(Sentry::ErrorEvent)
-          event = client.transport.events.first
-          expect(event.dig("tags", "hint")).to eq({ "foo" => "bar" })
-        end
-      end
-    end
-
     context "with background_worker enabled (default)" do
       before do
         Sentry.background_worker = Sentry::BackgroundWorker.new(configuration)
@@ -225,22 +147,12 @@ RSpec.describe Sentry::Client do
 
       it "applies before_send callback before sending the event" do
         configuration.before_send = lambda do |event, _hint|
-          if event.is_a?(Sentry::Event)
-            event.tags[:called] = true
-          else
-            event["tags"]["called"] = true
-          end
-
+          event.tags[:called] = true
           event
         end
 
         client.send_event(event)
-
-        if event.is_a?(Sentry::Event)
-          expect(event.tags[:called]).to eq(true)
-        else
-          expect(event["tags"]["called"]).to eq(true)
-        end
+        expect(event.tags[:called]).to eq(true)
       end
 
       context "for check in events" do
@@ -307,10 +219,6 @@ RSpec.describe Sentry::Client do
       let(:event) { event_object }
     end
 
-    it_behaves_like "Event in send_event" do
-      let(:event) { event_object.to_json_compatible }
-    end
-
     shared_examples "TransactionEvent in send_event" do
       it "sends data through the transport" do
         client.send_event(event)
@@ -326,22 +234,12 @@ RSpec.describe Sentry::Client do
 
       it "applies before_send_transaction callback before sending the event" do
         configuration.before_send_transaction = lambda do |event, _hint|
-          if event.is_a?(Sentry::TransactionEvent)
-            event.tags[:called] = true
-          else
-            event["tags"]["called"] = true
-          end
-
+          event.tags[:called] = true
           event
         end
 
         client.send_event(event)
-
-        if event.is_a?(Sentry::Event)
-          expect(event.tags[:called]).to eq(true)
-        else
-          expect(event["tags"]["called"]).to eq(true)
-        end
+        expect(event.tags[:called]).to eq(true)
       end
 
       it "warns if before_send_transaction returns nil" do
@@ -374,10 +272,6 @@ RSpec.describe Sentry::Client do
     it_behaves_like "TransactionEvent in send_event" do
       let(:event) { transaction_event }
     end
-
-    it_behaves_like "TransactionEvent in send_event" do
-      let(:event) { transaction_event.to_json_compatible }
-    end
   end
 
   describe "integrated error handling testing with HTTPTransport" do
@@ -397,12 +291,6 @@ RSpec.describe Sentry::Client do
     let(:event) { client.event_from_message(message) }
 
     describe "#capture_event" do
-      around do |example|
-        prior_async = configuration.async
-        example.run
-        configuration.async = prior_async
-      end
-
       context "when scope.apply_to_event returns nil" do
         before do
           scope.add_event_processor do |event, hint|
@@ -540,28 +428,6 @@ RSpec.describe Sentry::Client do
           sleep(0.2)
           expect(client.transport).to have_recorded_lost_event(:network_error, 'transaction')
           expect(client.transport).to have_recorded_lost_event(:network_error, 'span', num: 6)
-        end
-      end
-
-      context "when config.async causes error" do
-        before do
-          expect(client).to receive(:send_event)
-        end
-
-        it "swallows Redis related error and send the event synchronizely" do
-          configuration.async = ->(_, _) { raise Redis::ConnectionError }
-
-          client.capture_event(event, scope)
-
-          expect(string_io.string).to match(/Async event sending failed: Redis::ConnectionError/)
-        end
-
-        it "swallows and logs the exception" do
-          configuration.async = ->(_, _) { raise TypeError }
-
-          client.capture_event(event, scope)
-
-          expect(string_io.string).to match(/Async event sending failed: TypeError/)
         end
       end
     end

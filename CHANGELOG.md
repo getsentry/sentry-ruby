@@ -1,3 +1,9 @@
+## Unreleased (6.0.0)
+
+### Breaking Changes
+
+- Remove `config.async` [#1894](https://github.com/getsentry/sentry-ruby/pull/1894)
+
 ## Unreleased
 
 ### Bug Fixes
