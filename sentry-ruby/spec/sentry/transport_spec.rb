@@ -422,18 +422,6 @@ RSpec.describe Sentry::Transport do
         expect(io.string).to match(/Sending envelope with items \[event\]/)
       end
 
-      context "when the event hash has string keys" do
-        let(:envelope) { subject.envelope_from_event(event.to_json_compatible) }
-
-        it "deletes the event's breadcrumbs and sends it" do
-          expect(subject).to receive(:send_data)
-
-          subject.send_envelope(envelope)
-
-          expect(io.string).to match(/Sending envelope with items \[event\]/)
-        end
-      end
-
       context "if it's still oversized" do
         before do
           1000.times do |i|
@@ -501,12 +489,6 @@ RSpec.describe Sentry::Transport do
         expect(subject).not_to receive(:failed_send)
 
         expect(subject.send_event(event)).to eq(event)
-      end
-
-      it "sends Event hash" do
-        expect(subject).not_to receive(:failed_send)
-
-        expect(subject.send_event(event.to_json_compatible)).to eq(event.to_json_compatible)
       end
 
       it "logs correct message" do
