@@ -53,8 +53,7 @@ module Sentry
         return
       end
 
-      event_type = event.is_a?(Event) ? event.type : event["type"]
-      data_category = Envelope::Item.data_category(event_type)
+      data_category = Envelope::Item.data_category(event.type)
       event = scope.apply_to_event(event, hint)
 
       if event.nil?
@@ -63,9 +62,7 @@ module Sentry
         return
       end
 
-      if async_block = configuration.async
-        dispatch_async_event(async_block, event, hint)
-      elsif configuration.background_worker_threads != 0 && hint.fetch(:background, true)
+      if configuration.background_worker_threads != 0 && hint.fetch(:background, true)
         queued = dispatch_background_event(event, hint)
         transport.record_lost_event(:queue_overflow, data_category) unless queued
       else
@@ -166,10 +163,9 @@ module Sentry
 
     # @!macro send_event
     def send_event(event, hint = nil)
-      event_type = event.is_a?(Event) ? event.type : event["type"]
-      data_category = Envelope::Item.data_category(event_type)
+      data_category = Envelope::Item.data_category(event.type)
 
-      if event_type != TransactionEvent::TYPE && configuration.before_send
+      if event.type != TransactionEvent::TYPE && configuration.before_send
         event = configuration.before_send.call(event, hint)
 
         if event.nil?
@@ -179,7 +175,7 @@ module Sentry
         end
       end
 
-      if event_type == TransactionEvent::TYPE && configuration.before_send_transaction
+      if event.type == TransactionEvent::TYPE && configuration.before_send_transaction
         event = configuration.before_send_transaction.call(event, hint)
 
         if event.nil?
@@ -253,29 +249,6 @@ module Sentry
       Sentry.background_worker.perform do
         send_event(event, hint)
       end
-    end
-
-    def dispatch_async_event(async_block, event, hint)
-      # We have to convert to a JSON-like hash, because background job
-      # processors (esp ActiveJob) may not like weird types in the event hash
-
-      event_hash =
-        begin
-          event.to_json_compatible
-        rescue => e
-          log_error("Converting #{event.type} (#{event.event_id}) to JSON compatible hash failed", e, debug: configuration.debug)
-          return
-        end
-
-      if async_block.arity == 2
-        hint = JSON.parse(JSON.generate(hint))
-        async_block.call(event_hash, hint)
-      else
-        async_block.call(event_hash)
-      end
-    rescue => e
-      log_error("Async #{event_hash["type"]} sending failed", e, debug: configuration.debug)
-      send_event(event, hint)
     end
   end
 end

@@ -14,7 +14,7 @@ RSpec.describe Sentry::HTTPTransport do
   let(:event) { client.event_from_message("foobarbaz") }
   let(:fake_time) { Time.now }
   let(:data) do
-    subject.serialize_envelope(subject.envelope_from_event(event.to_hash)).first
+    subject.serialize_envelope(subject.envelope_from_event(event)).first
   end
 
   subject { client.transport }

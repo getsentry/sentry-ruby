@@ -25,13 +25,6 @@ module Sentry
     # @return [Regexp, nil]
     attr_accessor :app_dirs_pattern
 
-    # Provide an object that responds to `call` to send events asynchronously.
-    # E.g.: lambda { |event| Thread.new { Sentry.send_event(event) } }
-    #
-    # @deprecated It will be removed in the next major release. Please read https://github.com/getsentry/sentry-ruby/issues/1522 for more information
-    # @return [Proc, nil]
-    attr_reader :async
-
     # to send events in a non-blocking way, sentry-ruby has its own background worker
     # by default, the worker holds a thread pool that has [the number of processors] threads
     # but you can configure it with this configuration option
@@ -73,7 +66,6 @@ module Sentry
     # @example
     #   config.before_send = lambda do |event, hint|
     #     # skip ZeroDivisionError exceptions
-    #     # note: hint[:exception] would be a String if you use async callback
     #     if hint[:exception].is_a?(ZeroDivisionError)
     #       nil
     #     else
@@ -407,22 +399,6 @@ module Sentry
       check_argument_type!(value, String, NilClass)
 
       @release = value
-    end
-
-    def async=(value)
-      check_callable!("async", value)
-
-      log_warn <<~MSG
-
-        sentry-ruby now sends events asynchronously by default with its background worker (supported since 4.1.0).
-        The `config.async` callback has become redundant while continuing to cause issues.
-        (The problems of `async` are detailed in https://github.com/getsentry/sentry-ruby/issues/1522)
-
-        Therefore, we encourage you to remove it and let the background worker take care of async job sending.
-      It's deprecation is planned in the next major release (6.0), which is scheduled around the 3rd quarter of 2022.
-      MSG
-
-      @async = value
     end
 
     def breadcrumbs_logger=(logger)

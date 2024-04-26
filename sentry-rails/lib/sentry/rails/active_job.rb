@@ -23,12 +23,7 @@ module Sentry
             Sentry.with_scope do |scope|
               begin
                 scope.set_transaction_name(job.class.name, source: :task)
-                transaction =
-                  if job.is_a?(::Sentry::SendEventJob)
-                    nil
-                  else
-                    Sentry.start_transaction(name: scope.transaction_name, source: scope.transaction_source, op: OP_NAME)
-                  end
+                transaction = Sentry.start_transaction(name: scope.transaction_name, source: scope.transaction_source, op: OP_NAME)
 
                 scope.set_span(transaction) if transaction
 
