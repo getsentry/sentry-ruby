@@ -53,8 +53,7 @@ module Sentry
         return
       end
 
-      event_type = event.is_a?(Event) ? event.type : event["type"]
-      data_category = Envelope::Item.data_category(event_type)
+      data_category = Envelope::Item.data_category(event.type)
       event = scope.apply_to_event(event, hint)
 
       if event.nil?
@@ -164,10 +163,9 @@ module Sentry
 
     # @!macro send_event
     def send_event(event, hint = nil)
-      event_type = event.is_a?(Event) ? event.type : event["type"]
-      data_category = Envelope::Item.data_category(event_type)
+      data_category = Envelope::Item.data_category(event.type)
 
-      if event_type != TransactionEvent::TYPE && configuration.before_send
+      if event.type != TransactionEvent::TYPE && configuration.before_send
         event = configuration.before_send.call(event, hint)
 
         if event.nil?
@@ -177,7 +175,7 @@ module Sentry
         end
       end
 
-      if event_type == TransactionEvent::TYPE && configuration.before_send_transaction
+      if event.type == TransactionEvent::TYPE && configuration.before_send_transaction
         event = configuration.before_send_transaction.call(event, hint)
 
         if event.nil?

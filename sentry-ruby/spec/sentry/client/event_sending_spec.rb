@@ -129,22 +129,12 @@ RSpec.describe Sentry::Client do
 
       it "applies before_send callback before sending the event" do
         configuration.before_send = lambda do |event, _hint|
-          if event.is_a?(Sentry::Event)
-            event.tags[:called] = true
-          else
-            event["tags"]["called"] = true
-          end
-
+          event.tags[:called] = true
           event
         end
 
         subject.send_event(event)
-
-        if event.is_a?(Sentry::Event)
-          expect(event.tags[:called]).to eq(true)
-        else
-          expect(event["tags"]["called"]).to eq(true)
-        end
+        expect(event.tags[:called]).to eq(true)
       end
 
       it "doesn't apply before_send_transaction to Event" do
@@ -159,10 +149,6 @@ RSpec.describe Sentry::Client do
 
     it_behaves_like "Event in send_event" do
       let(:event) { event_object }
-    end
-
-    it_behaves_like "Event in send_event" do
-      let(:event) { event_object.to_json_compatible }
     end
 
     shared_examples "TransactionEvent in send_event" do
@@ -180,31 +166,17 @@ RSpec.describe Sentry::Client do
 
       it "applies before_send_transaction callback before sending the event" do
         configuration.before_send_transaction = lambda do |event, _hint|
-          if event.is_a?(Sentry::TransactionEvent)
-            event.tags[:called] = true
-          else
-            event["tags"]["called"] = true
-          end
-
+          event.tags[:called] = true
           event
         end
 
         subject.send_event(event)
-
-        if event.is_a?(Sentry::Event)
-          expect(event.tags[:called]).to eq(true)
-        else
-          expect(event["tags"]["called"]).to eq(true)
-        end
+        expect(event.tags[:called]).to eq(true)
       end
     end
 
     it_behaves_like "TransactionEvent in send_event" do
       let(:event) { transaction_event_object }
-    end
-
-    it_behaves_like "TransactionEvent in send_event" do
-      let(:event) { transaction_event_object.to_json_compatible }
     end
   end
 
