@@ -193,7 +193,12 @@ module Sentry
       elsif custom_scope = options[:scope]
         scope.update_from_scope(custom_scope)
       elsif !options.empty?
-        scope.update_from_options(**options)
+        unsupported_option_keys = scope.update_from_options(**options)
+
+        configuration.log_debug <<~MSG
+          Options #{unsupported_option_keys} are not supported and will not be applied to the event.
+          You may want to set them under the `extra` option.
+        MSG
       end
 
       event = current_client.capture_event(event, scope, hint)

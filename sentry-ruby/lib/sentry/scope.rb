@@ -128,7 +128,7 @@ module Sentry
     # @param user [Hash]
     # @param level [String, Symbol]
     # @param fingerprint [Array]
-    # @return [void]
+    # @return [Array]
     def update_from_options(
       contexts: nil,
       extra: nil,
@@ -144,6 +144,9 @@ module Sentry
       self.user = user if user
       self.level = level if level
       self.fingerprint = fingerprint if fingerprint
+
+      # Returns unsupported option keys so we can notify users.
+      options.keys
     end
 
     # Sets the scope's rack_env attribute.

@@ -6,6 +6,8 @@
 
   Rails users will be able to use `bin/rails generate sentry` to generate their `config/initializers/sentry.rb` file.
 
+- Notify users when their custom options are discarded ([#2303](https://github.com/getsentry/sentry-ruby/pull/2303))
+
 ### Bug Fixes
 
 - Don't throw error on arbitrary arguments being passed to `capture_event` options [#2301](https://github.com/getsentry/sentry-ruby/pull/2301)

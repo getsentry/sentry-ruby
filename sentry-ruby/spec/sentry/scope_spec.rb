@@ -339,7 +339,7 @@ RSpec.describe Sentry::Scope do
 
   describe '#update_from_options' do
     it 'updates data from arguments' do
-      subject.update_from_options(
+      result = subject.update_from_options(
         contexts: { context: 1 },
         extra: { foo: 42 },
         tags: { tag: 2 },
@@ -354,12 +354,12 @@ RSpec.describe Sentry::Scope do
       expect(subject.user).to eq({ name: 'jane' })
       expect(subject.level).to eq(:info)
       expect(subject.fingerprint).to eq('ABCD')
+      expect(result).to eq([])
     end
 
-    it 'does not throw when arbitrary options passed' do
-      expect do
-        subject.update_from_options(foo: 42)
-      end.not_to raise_error
+    it 'returns unsupported option keys' do
+      result = subject.update_from_options(foo: 42, bar: 43)
+      expect(result).to eq([:foo, :bar])
     end
   end
 end
