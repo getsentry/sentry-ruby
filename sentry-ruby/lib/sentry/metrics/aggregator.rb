@@ -2,9 +2,7 @@
 
 module Sentry
   module Metrics
-    class Aggregator
-      include LoggingHelper
-
+    class Aggregator < ThreadedPeriodicWorker
       FLUSH_INTERVAL = 5
       ROLLUP_IN_SECONDS = 10
 
@@ -36,8 +34,8 @@ module Sentry
       attr_reader :client, :thread, :buckets, :flush_shift, :code_locations
 
       def initialize(configuration, client)
+        super(configuration.logger, FLUSH_INTERVAL)
         @client = client
-        @logger = configuration.logger
         @before_emit = configuration.metrics.before_emit
         @enable_code_locations = configuration.metrics.enable_code_locations
         @stacktrace_builder = configuration.stacktrace_builder
@@ -46,8 +44,6 @@ module Sentry
         @default_tags['release'] = configuration.release if configuration.release
         @default_tags['environment'] = configuration.environment if configuration.environment
 
-        @thread = nil
-        @exited = false
         @mutex = Mutex.new
 
         # a nested hash of timestamp -> bucket keys -> Metric instance
@@ -120,33 +116,9 @@ module Sentry
         @client.capture_envelope(envelope)
       end
 
-      def kill
-        log_debug('[Metrics::Aggregator] killing thread')
-
-        @exited = true
-        @thread&.kill
-      end
+      alias_method :run, :flush
 
       private
-
-      def ensure_thread
-        return false if @exited
-        return true if @thread&.alive?
-
-        @thread = Thread.new do
-          loop do
-            # TODO-neel-metrics use event for force flush later
-            sleep(FLUSH_INTERVAL)
-            flush
-          end
-        end
-
-        true
-      rescue ThreadError
-        log_debug('[Metrics::Aggregator] thread creation failed')
-        @exited = true
-        false
-      end
 
       # important to sort for key consistency
       def serialize_tags(tags)

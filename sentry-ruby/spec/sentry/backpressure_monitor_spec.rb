@@ -55,7 +55,7 @@ RSpec.describe Sentry::BackpressureMonitor do
 
       it 'logs error' do
         subject.healthy?
-        expect(string_io.string).to match(/\[BackpressureMonitor\] Thread creation failed/)
+        expect(string_io.string).to include("[#{described_class.name}] thread creation failed")
       end
     end
 
@@ -111,7 +111,7 @@ RSpec.describe Sentry::BackpressureMonitor do
       subject.healthy?
       expect(subject.instance_variable_get(:@thread)).to receive(:kill)
       subject.kill
-      expect(string_io.string).to match(/\[BackpressureMonitor\] killing monitor/)
+      expect(string_io.string).to include("[#{described_class.name}] thread killed")
     end
   end
 end
