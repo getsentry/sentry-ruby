@@ -1,19 +1,13 @@
 # frozen_string_literal: true
 
 module Sentry
-  class BackpressureMonitor
-    include LoggingHelper
-
+  class BackpressureMonitor < ThreadedPeriodicWorker
     DEFAULT_INTERVAL = 10
     MAX_DOWNSAMPLE_FACTOR = 10
 
     def initialize(configuration, client, interval: DEFAULT_INTERVAL)
-      @interval = interval
+      super(configuration.logger, interval)
       @client = client
-      @logger = configuration.logger
-
-      @thread = nil
-      @exited = false
 
       @healthy = true
       @downsample_factor = 0
@@ -46,30 +40,6 @@ module Sentry
         @downsample_factor += 1 if @downsample_factor < MAX_DOWNSAMPLE_FACTOR
         log_debug("[BackpressureMonitor] health check negative, downsampling with a factor of #{@downsample_factor}")
       end
-    end
-
-    def kill
-      log_debug("[BackpressureMonitor] killing monitor")
-
-      @exited = true
-      @thread&.kill
-    end
-
-    private
-
-    def ensure_thread
-      return if @exited
-      return if @thread&.alive?
-
-      @thread = Thread.new do
-        loop do
-          sleep(@interval)
-          run
-        end
-      end
-    rescue ThreadError
-      log_debug("[BackpressureMonitor] Thread creation failed")
-      @exited = true
     end
   end
 end

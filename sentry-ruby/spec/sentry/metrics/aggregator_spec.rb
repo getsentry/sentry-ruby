@@ -47,7 +47,7 @@ RSpec.describe Sentry::Metrics::Aggregator do
 
       it 'logs error' do
         subject.add(:c, 'incr', 1)
-        expect(string_io.string).to match(/\[Metrics::Aggregator\] thread creation failed/)
+        expect(string_io.string).to include("[#{described_class.name}] thread creation failed")
       end
     end
 
@@ -479,7 +479,7 @@ RSpec.describe Sentry::Metrics::Aggregator do
     it 'logs message when killing the thread' do
       expect(subject.thread).to receive(:kill)
       subject.kill
-      expect(string_io.string).to match(/\[Metrics::Aggregator\] killing thread/)
+      expect(string_io.string).to include("[#{described_class.name}] thread killed")
     end
   end
 end
