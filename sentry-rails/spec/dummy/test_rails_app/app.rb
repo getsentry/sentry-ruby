@@ -82,7 +82,7 @@ def make_basic_app(&block)
       config.transport.transport_class = Sentry::DummyTransport
       # for sending events synchronously
       config.background_worker_threads = 0
-      config.capture_exception_frame_locals = true
+      config.include_local_variables = true
       yield(config, app) if block_given?
     end
   end
