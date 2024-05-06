@@ -12,6 +12,8 @@
 
 - Don't throw error on arbitrary arguments being passed to `capture_event` options [#2301](https://github.com/getsentry/sentry-ruby/pull/2301)
   - Fixes [#2299](https://github.com/getsentry/sentry-ruby/issues/2299)
+- Decrease the default number of background worker threads by half ([#2305](https://github.com/getsentry/sentry-ruby/pull/2305))
+  - Fixes [#2297](https://github.com/getsentry/sentry-ruby/issues/2297)
 
 ## 5.17.3
 
