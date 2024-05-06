@@ -2,7 +2,8 @@
 
 ### Breaking Changes
 
-- Remove `config.async` [#1894](https://github.com/getsentry/sentry-ruby/pull/1894)
+- Remove `config.async` ([#1894](https://github.com/getsentry/sentry-ruby/pull/1894))
+- Remove `config.capture_exception_frame_locals` ([#2306](https://github.com/getsentry/sentry-ruby/pull/2306))
 
 ## Unreleased
 
