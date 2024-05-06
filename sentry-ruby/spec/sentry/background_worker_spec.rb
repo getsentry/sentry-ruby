@@ -28,10 +28,11 @@ RSpec.describe Sentry::BackgroundWorker do
 
     context "when config.background_worker_threads is set" do
       it "initializes a background worker with correct number of threads and queue size" do
+        configuration.background_worker_threads = 4
         worker = described_class.new(configuration)
 
         expect(worker.max_queue).to eq(30)
-        expect(worker.number_of_threads).to eq(Concurrent.processor_count)
+        expect(worker.number_of_threads).to eq(4)
       end
     end
 

@@ -351,7 +351,7 @@ module Sentry
     def initialize
       self.app_dirs_pattern = nil
       self.debug = false
-      self.background_worker_threads = Concurrent.processor_count
+      self.background_worker_threads = (Concurrent.processor_count / 2.0).ceil
       self.background_worker_max_queue = BackgroundWorker::DEFAULT_MAX_QUEUE
       self.backtrace_cleanup_callback = nil
       self.max_breadcrumbs = BreadcrumbBuffer::DEFAULT_SIZE
