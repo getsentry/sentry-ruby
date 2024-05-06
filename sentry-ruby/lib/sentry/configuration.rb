@@ -151,18 +151,6 @@ module Sentry
     # @return [Boolean, String]
     attr_accessor :spotlight
 
-    # @deprecated Use {#include_local_variables} instead.
-    alias_method :capture_exception_frame_locals, :include_local_variables
-
-    # @deprecated Use {#include_local_variables=} instead.
-    def capture_exception_frame_locals=(value)
-      log_warn <<~MSG
-        `capture_exception_frame_locals` is now deprecated in favor of `include_local_variables`.
-      MSG
-
-      self.include_local_variables = value
-    end
-
     # You may provide your own LineCache for matching paths with source files.
     # This may be useful if you need to get source code from places other than the disk.
     # @see LineCache
