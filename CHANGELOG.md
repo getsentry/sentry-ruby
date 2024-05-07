@@ -7,6 +7,16 @@
   Rails users will be able to use `bin/rails generate sentry` to generate their `config/initializers/sentry.rb` file.
 
 - Notify users when their custom options are discarded ([#2303](https://github.com/getsentry/sentry-ruby/pull/2303))
+- Add a new `:graphql` patch to automatically enable instrumenting GraphQL spans ([#2308](https://github.com/getsentry/sentry-ruby/pull/2308))
+
+    Usage:
+
+    ```rb
+    Sentry.init do |config|
+      # ...
+      config.enabled_patches += [:graphql]
+    end
+    ```
 
 ### Bug Fixes
 

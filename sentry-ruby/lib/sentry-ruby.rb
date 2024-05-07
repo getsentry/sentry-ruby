@@ -591,3 +591,4 @@ end
 require "sentry/net/http"
 require "sentry/redis"
 require "sentry/puma"
+require "sentry/graphql"

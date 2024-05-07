@@ -15,6 +15,8 @@ gem "puma"
 gem "timecop"
 gem "stackprof" unless RUBY_PLATFORM == "java"
 
+gem "graphql", ">= 2.2.6" if RUBY_VERSION.to_f >= 2.7
+
 gem "benchmark-ips"
 gem "benchmark_driver"
 gem "benchmark-ipsa"

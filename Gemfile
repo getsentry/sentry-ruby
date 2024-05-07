@@ -15,6 +15,9 @@ if ruby_version >= Gem::Version.new("2.7.0")
   end
 end
 
+# temp pin till https://github.com/socketry/nio4r/issues/315 is fixed
+gem "nio4r", "2.7.1" if RUBY_PLATFORM == "java"
+
 # For RSpec
 gem "rspec", "~> 3.0"
 gem "rspec-retry"
