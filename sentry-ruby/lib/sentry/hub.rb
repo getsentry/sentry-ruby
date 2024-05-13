@@ -265,6 +265,13 @@ module Sentry
         current_scope.propagation_context.get_traceparent
     end
 
+    def get_w3c_traceparent
+      return nil unless current_scope
+
+      current_scope.get_span&.get_w3c_traceparent ||
+        current_scope.propagation_context.get_w3c_traceparent
+    end
+
     def get_baggage
       return nil unless current_scope
 
@@ -277,6 +284,9 @@ module Sentry
 
       traceparent = get_traceparent
       headers[SENTRY_TRACE_HEADER_NAME] = traceparent if traceparent
+
+      w3c_traceparent = get_w3c_traceparent
+      headers[W3C_TRACEPARENT_HEADER_NAME] = w3c_traceparent if w3c_traceparent
 
       baggage = get_baggage
       headers[BAGGAGE_HEADER_NAME] = baggage if baggage && !baggage.empty?

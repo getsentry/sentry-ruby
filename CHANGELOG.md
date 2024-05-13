@@ -17,6 +17,9 @@
       config.enabled_patches += [:graphql]
     end
     ```
+- Add [W3C traceparent header](https://www.w3.org/TR/trace-context/#traceparent-header) support ([#2310](https://github.com/getsentry/sentry-ruby/pull/2310))
+
+  The SDK now also propagates and accepts incoming W3C `traceparent` headers along with the currently implemented `sentry-trace` and `baggage` headers.
 
 ### Bug Fixes
 

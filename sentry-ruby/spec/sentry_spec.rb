@@ -777,7 +777,8 @@ RSpec.describe Sentry do
     it "returns a Hash of sentry-trace and baggage" do
       expect(described_class.get_trace_propagation_headers).to eq({
         "sentry-trace" => described_class.get_traceparent,
-        "baggage" => described_class.get_baggage
+        "baggage" => described_class.get_baggage,
+        "traceparent" => described_class.get_w3c_traceparent
       })
     end
   end

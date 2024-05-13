@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require "securerandom"
+require "sentry/propagation_context"
 require "sentry/metrics/local_aggregator"
 
 module Sentry
@@ -139,6 +140,13 @@ module Sentry
       sampled_flag = @sampled ? 1 : 0 unless @sampled.nil?
 
       "#{@trace_id}-#{@span_id}-#{sampled_flag}"
+    end
+
+    # Generates a w3c traceparent header that can be used to connect other transactions.
+    # @return [String]
+    def get_w3c_traceparent
+      trace_flags = @sampled ? '01' : '00'
+      "#{PropagationContext::W3C_TRACEPARENT_VERSION}-#{@trace_id}-#{@span_id}-#{trace_flags}"
     end
 
     # Generates a W3C Baggage header string for distributed tracing

@@ -44,7 +44,7 @@ module Sentry
   LOGGER_PROGNAME = "sentry".freeze
 
   SENTRY_TRACE_HEADER_NAME = "sentry-trace".freeze
-
+  W3C_TRACEPARENT_HEADER_NAME = "traceparent".freeze
   BAGGAGE_HEADER_NAME = "baggage".freeze
 
   THREAD_LOCAL = :sentry_hub
@@ -531,6 +531,17 @@ module Sentry
     def get_traceparent
       return nil unless initialized?
       get_current_hub.get_traceparent
+    end
+
+    # Returns the W3C traceparent header for distributed tracing.
+    # Can be either from the currently active span or the propagation context.
+    #
+    # @see https://www.w3.org/TR/trace-context/#traceparent-header W3C Traceparent specification
+    #
+    # @return [String, nil]
+    def get_w3c_traceparent
+      return nil unless initialized?
+      get_current_hub.get_w3c_traceparent
     end
 
     # Returns the baggage header for distributed tracing.

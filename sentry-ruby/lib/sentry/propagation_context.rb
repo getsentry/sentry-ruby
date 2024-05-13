@@ -13,6 +13,17 @@ module Sentry
       "[ \t]*$"  # whitespace
     )
 
+    W3C_TRACEPARENT_REGEX = Regexp.new(
+      "^[ \t]*" +  # whitespace
+      "([0-9a-f]{2})?" +  # version
+      "-?([0-9a-f]{32})?" +  # trace_id
+      "-?([0-9a-f]{16})?" +  # parent_span_id
+      "-?([0-9a-f]{2})?" +  # trace_flags
+      "[ \t]*$"  # whitespace
+    )
+
+    W3C_TRACEPARENT_VERSION = '00'
+
     # An uuid that can be used to identify a trace.
     # @return [String]
     attr_reader :trace_id
@@ -42,6 +53,7 @@ module Sentry
 
       if env
         sentry_trace_header = env["HTTP_SENTRY_TRACE"] || env[SENTRY_TRACE_HEADER_NAME]
+        w3c_traceparent_header = env["HTTP_TRACEPARENT"] || env[W3C_TRACEPARENT_HEADER_NAME]
         baggage_header = env["HTTP_BAGGAGE"] || env[BAGGAGE_HEADER_NAME]
 
         if sentry_trace_header
@@ -49,20 +61,29 @@ module Sentry
 
           if sentry_trace_data
             @trace_id, @parent_span_id, @parent_sampled = sentry_trace_data
-
-            @baggage =
-              if baggage_header && !baggage_header.empty?
-                Baggage.from_incoming_header(baggage_header)
-              else
-                # If there's an incoming sentry-trace but no incoming baggage header,
-                # for instance in traces coming from older SDKs,
-                # baggage will be empty and frozen and won't be populated as head SDK.
-                Baggage.new({})
-              end
-
-            @baggage.freeze!
             @incoming_trace = true
           end
+        elsif w3c_traceparent_header
+          traceparent_data = self.class.extract_w3c_traceparent(w3c_traceparent_header)
+
+          if traceparent_data
+            @trace_id, @parent_span_id, @parent_sampled = traceparent_data
+            @incoming_trace = true
+          end
+        end
+
+        if @incoming_trace
+          @baggage =
+            if baggage_header && !baggage_header.empty?
+              Baggage.from_incoming_header(baggage_header)
+            else
+              # If there's an incoming sentry-trace but no incoming baggage header,
+              # for instance in traces coming from older SDKs,
+              # baggage will be empty and frozen and won't be populated as head SDK.
+              Baggage.new({})
+            end
+
+          @baggage.freeze!
         end
       end
 
@@ -84,6 +105,20 @@ module Sentry
       [trace_id, parent_span_id, parent_sampled]
     end
 
+    # Extract the trace_id, parent_span_id and parent_sampled values from a W3C traceparent header.
+    #
+    # @param traceparent [String] the traceparent header value from the previous transaction.
+    # @return [Array, nil]
+    def self.extract_w3c_traceparent(traceparent)
+      match = W3C_TRACEPARENT_REGEX.match(traceparent)
+      return nil if match.nil?
+
+      trace_id, parent_span_id, trace_flags = match[2..4]
+      parent_sampled = (trace_flags.hex & 0x01) == 0x01
+
+      [version, trace_id, parent_span_id, parent_sampled]
+    end
+
     # Returns the trace context that can be used to embed in an Event.
     # @return [Hash]
     def get_trace_context
@@ -98,6 +133,12 @@ module Sentry
     # @return [String]
     def get_traceparent
       "#{trace_id}-#{span_id}"
+    end
+
+    # Returns the w3c traceparent header from the propagation context.
+    # @return [String]
+    def get_w3c_traceparent
+      "#{W3C_TRACEPARENT_VERSION}-#{trace_id}-#{span_id}-00"
     end
 
     # Returns the Baggage from the propagation context or populates as head SDK if empty.
