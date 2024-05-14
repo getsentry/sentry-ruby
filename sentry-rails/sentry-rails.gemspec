@@ -13,12 +13,15 @@ Gem::Specification.new do |spec|
   spec.extra_rdoc_files = ["README.md", "LICENSE.txt"]
   spec.files = `git ls-files | grep -Ev '^(spec|benchmarks|examples)'`.split("\n")
 
-  spec.homepage = "https://github.com/getsentry/sentry-ruby/tree/#{spec.version}/#{spec.name}"
+  github_root_uri = 'https://github.com/getsentry/sentry-ruby'
+  spec.homepage = "#{github_root_uri}/tree/#{spec.version}/#{spec.name}"
 
   spec.metadata = {
     "homepage_uri" => spec.homepage,
     "source_code_uri" => spec.homepage,
-    "changelog_uri" => "#{spec.homepage.replace('/tree/', '/blob/')}/CHANGELOG.md"
+    "changelog_uri" => "#{spec.homepage.replace('/tree/', '/blob/')}/CHANGELOG.md",
+    "bug_tracker_uri" => "#{github_root_uri}/issues",
+    "documentation_uri" => "http://www.rubydoc.info/gems/#{spec.name}/#{spec.version}"
   }
 
   spec.bindir        = "exe"
