@@ -7,16 +7,17 @@ Gem::Specification.new do |spec|
   spec.description = spec.summary = "A gem that provides Rails integration for the Sentry error logger"
   spec.email = "accounts@sentry.io"
   spec.license = 'MIT'
-  spec.homepage = "https://github.com/getsentry/sentry-ruby"
 
   spec.platform = Gem::Platform::RUBY
   spec.required_ruby_version = '>= 2.4'
   spec.extra_rdoc_files = ["README.md", "LICENSE.txt"]
   spec.files = `git ls-files | grep -Ev '^(spec|benchmarks|examples)'`.split("\n")
 
+  spec.homepage = "https://github.com/getsentry/sentry-ruby/tree/#{spec.version}/#{spec.name}"
+
   spec.metadata["homepage_uri"] = spec.homepage
   spec.metadata["source_code_uri"] = spec.homepage
-  spec.metadata["changelog_uri"] = "#{spec.homepage}/blob/master/CHANGELOG.md"
+  spec.metadata["changelog_uri"] = "#{spec.homepage.replace('/tree/', '/blob/')}/CHANGELOG.md"
 
   spec.bindir        = "exe"
   spec.executables   = spec.files.grep(%r{^exe/}) { |f| File.basename(f) }
