@@ -15,9 +15,11 @@ Gem::Specification.new do |spec|
 
   spec.homepage = "https://github.com/getsentry/sentry-ruby/tree/#{spec.version}/#{spec.name}"
 
-  spec.metadata["homepage_uri"] = spec.homepage
-  spec.metadata["source_code_uri"] = spec.homepage
-  spec.metadata["changelog_uri"] = "#{spec.homepage.replace('/tree/', '/blob/')}/CHANGELOG.md"
+  spec.metadata = {
+    "homepage_uri" => spec.homepage,
+    "source_code_uri" => spec.homepage,
+    "changelog_uri" => "#{spec.homepage.replace('/tree/', '/blob/')}/CHANGELOG.md"
+  }
 
   spec.bindir        = "exe"
   spec.executables   = spec.files.grep(%r{^exe/}) { |f| File.basename(f) }
