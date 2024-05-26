@@ -22,6 +22,8 @@ module Sentry
 
         class << self
           def subscribe!
+            record_query_source = SUPPORT_SOURCE_LOCATION && Sentry.configuration.rails.enable_db_query_source
+
             subscribe_to_event(EVENT_NAMES) do |event_name, duration, payload|
               next if EXCLUDED_EVENTS.include? payload[:name]
 
@@ -54,7 +56,7 @@ module Sentry
                 span.set_data(Span::DataConventions::SERVER_PORT, db_config[:port]) if db_config[:port]
                 span.set_data(Span::DataConventions::SERVER_SOCKET_ADDRESS, db_config[:socket]) if db_config[:socket]
 
-                next unless SUPPORT_SOURCE_LOCATION
+                next unless record_query_source
 
                 source_location = query_source_location
 

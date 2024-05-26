@@ -6,10 +6,13 @@ RSpec.describe Sentry::Rails::Tracing::ActiveRecordSubscriber, :subscriber do
   end
 
   context "when transaction is sampled" do
+    let(:enable_db_query_source) { true }
+
     before do
       make_basic_app do |config|
         config.traces_sample_rate = 1.0
         config.rails.tracing_subscribers = [described_class]
+        config.rails.enable_db_query_source = enable_db_query_source
       end
     end
 
@@ -38,30 +41,53 @@ RSpec.describe Sentry::Rails::Tracing::ActiveRecordSubscriber, :subscriber do
       expect(data["db.system"]).to eq("sqlite3")
     end
 
-    it "records query's source location", skip: RUBY_VERSION.to_f < 3.2 || Rails.version.to_f < 7.1 do
-      transaction = Sentry::Transaction.new(sampled: true, hub: Sentry.get_current_hub)
-      Sentry.get_current_scope.set_span(transaction)
-
+    context "when query source location is avaialble", skip: RUBY_VERSION.to_f < 3.2 || Rails.version.to_f < 7.1 do
       def foo
         Post.all.to_a
       end
       query_line = __LINE__ - 2
 
-      foo
+      before do
+        transaction = Sentry::Transaction.new(sampled: true, hub: Sentry.get_current_hub)
+        Sentry.get_current_scope.set_span(transaction)
 
-      transaction.finish
+        foo
 
-      expect(transport.events.count).to eq(1)
+        transaction.finish
+      end
 
-      transaction = transport.events.first.to_hash
-      expect(transaction[:type]).to eq("transaction")
-      expect(transaction[:spans].count).to eq(1)
+      it "records query's source location" do
+        expect(transport.events.count).to eq(1)
 
-      span = transaction[:spans][0]
-      data = span[:data]
-      expect(data["code.filepath"]).to eq(__FILE__)
-      expect(data["code.lineno"]).to eq(query_line)
-      expect(data["code.function"]).to eq("foo")
+        transaction = transport.events.first.to_hash
+        expect(transaction[:type]).to eq("transaction")
+        expect(transaction[:spans].count).to eq(1)
+
+        span = transaction[:spans][0]
+        data = span[:data]
+        expect(data["code.filepath"]).to eq(__FILE__)
+        expect(data["code.lineno"]).to eq(query_line)
+        expect(data["code.function"]).to eq("foo")
+      end
+
+      context "when config.rails.enable_db_query_source is false" do
+        let(:enable_db_query_source) { false }
+
+        it "doesn't record query's source location" do
+          expect(transport.events.count).to eq(1)
+
+          transaction = transport.events.first.to_hash
+          expect(transaction[:type]).to eq("transaction")
+          expect(transaction[:spans].count).to eq(1)
+
+          span = transaction[:spans][0]
+          data = span[:data]
+          expect(data["db.name"]).to include("db")
+          expect(data["code.filepath"]).to eq(nil)
+          expect(data["code.lineno"]).to eq(nil)
+          expect(data["code.function"]).to eq(nil)
+        end
+      end
     end
 
     it "records database cached query events", skip: Rails.version.to_f < 5.1 do
