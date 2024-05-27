@@ -782,6 +782,17 @@ RSpec.describe Sentry do
     end
   end
 
+  describe ".get_trace_propagation_meta" do
+    it "returns meta tags for sentry-trace and baggage" do
+      meta = <<~META
+      <meta name="sentry-trace" content="#{described_class.get_traceparent}">
+      <meta name="baggage" content="#{described_class.get_baggage}">
+      META
+
+      expect(described_class.get_trace_propagation_meta).to eq(meta.chomp)
+    end
+  end
+
   describe ".continue_trace" do
     context "without incoming sentry trace" do
       let(:env) { { "HTTP_FOO" => "bar" } }

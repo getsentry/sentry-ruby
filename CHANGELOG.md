@@ -17,6 +17,7 @@
       config.enabled_patches += [:graphql]
     end
     ```
+- Add `Sentry.get_trace_propagation_meta` helper for injecting meta tags into views ([#2314](https://github.com/getsentry/sentry-ruby/pull/2314))
 
 ### Bug Fixes
 
