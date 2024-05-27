@@ -17,7 +17,11 @@
       config.enabled_patches += [:graphql]
     end
     ```
+
 - Add `Sentry.get_trace_propagation_meta` helper for injecting meta tags into views ([#2314](https://github.com/getsentry/sentry-ruby/pull/2314))
+- Add query source support to `sentry-rails` ([#2313](https://github.com/getsentry/sentry-ruby/pull/2313))
+
+  The feature is only activated in apps that use Ruby 3.2+ and Rails 7.1+. By default only queries that take longer than 100ms will have source recorded, which can be adjusted by updating the value of `config.rails.db_query_source_threshold_ms`.
 
 ### Bug Fixes
 
