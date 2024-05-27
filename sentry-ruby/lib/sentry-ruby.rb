@@ -551,6 +551,15 @@ module Sentry
       get_current_hub.get_trace_propagation_headers
     end
 
+    # Returns the a Hash containing sentry-trace and baggage.
+    # Can be either from the currently active span or the propagation context.
+    #
+    # @return [String]
+    def get_trace_propagation_meta
+      return '' unless initialized?
+      get_current_hub.get_trace_propagation_meta
+    end
+
     # Continue an incoming trace from a rack env like hash.
     #
     # @param env [Hash]

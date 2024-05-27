@@ -284,6 +284,12 @@ module Sentry
       headers
     end
 
+    def get_trace_propagation_meta
+      get_trace_propagation_headers.map do |k, v|
+        "<meta name=\"#{k}\" content=\"#{v}\">"
+      end.join("\n")
+    end
+
     def continue_trace(env, **options)
       configure_scope { |s| s.generate_propagation_context(env) }
 
