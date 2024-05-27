@@ -7,12 +7,14 @@ RSpec.describe Sentry::Rails::Tracing::ActiveRecordSubscriber, :subscriber do
 
   context "when transaction is sampled" do
     let(:enable_db_query_source) { true }
+    let(:db_query_source_threshold_ms) { 0 }
 
     before do
       make_basic_app do |config|
         config.traces_sample_rate = 1.0
         config.rails.tracing_subscribers = [described_class]
         config.rails.enable_db_query_source = enable_db_query_source
+        config.rails.db_query_source_threshold_ms = db_query_source_threshold_ms
       end
     end
 
@@ -56,22 +58,45 @@ RSpec.describe Sentry::Rails::Tracing::ActiveRecordSubscriber, :subscriber do
         transaction.finish
       end
 
-      it "records query's source location" do
-        expect(transport.events.count).to eq(1)
-
-        transaction = transport.events.first.to_hash
-        expect(transaction[:type]).to eq("transaction")
-        expect(transaction[:spans].count).to eq(1)
-
-        span = transaction[:spans][0]
-        data = span[:data]
-        expect(data["code.filepath"]).to eq(__FILE__)
-        expect(data["code.lineno"]).to eq(query_line)
-        expect(data["code.function"]).to eq("foo")
-      end
-
       context "when config.rails.enable_db_query_source is false" do
         let(:enable_db_query_source) { false }
+
+        it "doesn't record query's source location" do
+          expect(transport.events.count).to eq(1)
+
+          transaction = transport.events.first.to_hash
+          expect(transaction[:type]).to eq("transaction")
+          expect(transaction[:spans].count).to eq(1)
+
+          span = transaction[:spans][0]
+          data = span[:data]
+          expect(data["db.name"]).to include("db")
+          expect(data["code.filepath"]).to eq(nil)
+          expect(data["code.lineno"]).to eq(nil)
+          expect(data["code.function"]).to eq(nil)
+        end
+      end
+
+      context "when the query takes longer than the threshold" do
+        let(:db_query_source_threshold_ms) { 0 }
+
+        it "records query's source location" do
+          expect(transport.events.count).to eq(1)
+
+          transaction = transport.events.first.to_hash
+          expect(transaction[:type]).to eq("transaction")
+          expect(transaction[:spans].count).to eq(1)
+
+          span = transaction[:spans][0]
+          data = span[:data]
+          expect(data["code.filepath"]).to eq(__FILE__)
+          expect(data["code.lineno"]).to eq(query_line)
+          expect(data["code.function"]).to eq("foo")
+        end
+      end
+
+      context "when the query takes shorter than the threshold" do
+        let(:db_query_source_threshold_ms) { 1000 }
 
         it "doesn't record query's source location" do
           expect(transport.events.count).to eq(1)
