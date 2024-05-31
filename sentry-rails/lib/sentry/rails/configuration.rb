@@ -126,6 +126,14 @@ module Sentry
 
       attr_accessor :tracing_subscribers
 
+      # When the ActiveRecordSubscriber is enabled, capture the source location of the query in the span data.
+      # This is enabled by default, but can be disabled by setting this to false.
+      attr_accessor :enable_db_query_source
+
+      # The threshold in milliseconds for the ActiveRecordSubscriber to capture the source location of the query
+      # in the span data. Default is 100ms.
+      attr_accessor :db_query_source_threshold_ms
+
       # sentry-rails by default skips asset request' transactions by checking if the path matches
       #
       # ```rb
@@ -157,6 +165,8 @@ module Sentry
           Sentry::Rails::Tracing::ActiveRecordSubscriber,
           Sentry::Rails::Tracing::ActiveStorageSubscriber
         ])
+        @enable_db_query_source = true
+        @db_query_source_threshold_ms = 100
         @active_support_logger_subscription_items = Sentry::Rails::ACTIVE_SUPPORT_LOGGER_SUBSCRIPTION_ITEMS_DEFAULT.dup
       end
     end

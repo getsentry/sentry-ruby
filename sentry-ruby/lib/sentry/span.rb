@@ -39,6 +39,11 @@ module Sentry
       # Recommended: If different than server.port.
       # Example: 16456
       SERVER_SOCKET_PORT = "server.socket.port"
+
+      FILEPATH = "code.filepath"
+      LINENO = "code.lineno"
+      FUNCTION = "code.function"
+      NAMESPACE = "code.namespace"
     end
 
     STATUS_MAP = {
