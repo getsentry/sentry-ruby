@@ -92,6 +92,7 @@ RSpec.describe Sentry::OpenTelemetry::SpanProcessor do
           expect(event.contexts).to include(:trace)
           expect(event.contexts[:trace][:trace_id]).to eq(root_span.context.hex_trace_id)
           expect(event.contexts[:trace][:span_id]).to eq(root_span.context.hex_span_id)
+          expect(event.contexts[:trace][:origin]).to eq('auto.otel')
         end
       end
     end
@@ -134,6 +135,7 @@ RSpec.describe Sentry::OpenTelemetry::SpanProcessor do
       expect(transaction.span_id).to eq(span_id)
       expect(transaction.trace_id).to eq(trace_id)
       expect(transaction.start_timestamp).to eq(root_span.start_timestamp / 1e9)
+      expect(transaction.origin).to eq('auto.otel')
 
       expect(transaction.parent_span_id).to eq(nil)
       expect(transaction.parent_sampled).to eq(nil)
@@ -168,6 +170,7 @@ RSpec.describe Sentry::OpenTelemetry::SpanProcessor do
         expect(sentry_span.trace_id).to eq(trace_id)
         expect(sentry_span.description).to eq(child_db_span.name)
         expect(sentry_span.start_timestamp).to eq(child_db_span.start_timestamp / 1e9)
+        expect(sentry_span.origin).to eq('auto.otel')
       end
     end
   end
@@ -215,6 +218,7 @@ RSpec.describe Sentry::OpenTelemetry::SpanProcessor do
       subject.on_finish(finished_db_span)
 
       expect(sentry_span.op).to eq('db')
+      expect(sentry_span.origin).to eq('auto.otel')
       expect(sentry_span.description).to eq(finished_db_span.attributes['db.statement'])
       expect(sentry_span.data).to include(finished_db_span.attributes)
       expect(sentry_span.data).to include({ 'otel.kind' => finished_db_span.kind })
@@ -235,6 +239,7 @@ RSpec.describe Sentry::OpenTelemetry::SpanProcessor do
       subject.on_finish(finished_http_span)
 
       expect(sentry_span.op).to eq('http.client')
+      expect(sentry_span.origin).to eq('auto.otel')
       expect(sentry_span.description).to eq('GET www.google.com/search')
       expect(sentry_span.data).to include(finished_http_span.attributes)
       expect(sentry_span.data).to include({ 'otel.kind' => finished_http_span.kind })
@@ -259,6 +264,7 @@ RSpec.describe Sentry::OpenTelemetry::SpanProcessor do
       subject.on_finish(finished_root_span)
 
       expect(transaction.op).to eq('http.server')
+      expect(transaction.origin).to eq('auto.otel')
       expect(transaction.name).to eq(finished_root_span.name)
       expect(transaction.status).to eq('ok')
       expect(transaction.contexts[:otel]).to eq({

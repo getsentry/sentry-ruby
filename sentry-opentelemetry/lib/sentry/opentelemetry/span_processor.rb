@@ -11,6 +11,7 @@ module Sentry
 
       SEMANTIC_CONVENTIONS = ::OpenTelemetry::SemanticConventions::Trace
       INTERNAL_SPAN_KINDS = %i[client internal]
+      SPAN_ORIGIN = "auto.otel"
 
       # The mapping from otel span ids to sentry spans
       # @return [Hash]
@@ -34,7 +35,8 @@ module Sentry
           sentry_parent_span.start_child(
             span_id: trace_data.span_id,
             description: otel_span.name,
-            start_timestamp: otel_span.start_timestamp / 1e9
+            start_timestamp: otel_span.start_timestamp / 1e9,
+            origin: SPAN_ORIGIN
           )
         else
           options = {
@@ -45,7 +47,8 @@ module Sentry
             parent_span_id: trace_data.parent_span_id,
             parent_sampled: trace_data.parent_sampled,
             baggage: trace_data.baggage,
-            start_timestamp: otel_span.start_timestamp / 1e9
+            start_timestamp: otel_span.start_timestamp / 1e9,
+            origin: SPAN_ORIGIN
           }
 
           Sentry.start_transaction(**options)
