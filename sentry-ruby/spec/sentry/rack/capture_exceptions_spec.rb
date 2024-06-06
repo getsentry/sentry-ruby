@@ -264,6 +264,7 @@ RSpec.describe Sentry::Rack::CaptureExceptions, rack: true do
         expect(transaction.timestamp).not_to be_nil
         expect(transaction.contexts.dig(:trace, :status)).to eq("ok")
         expect(transaction.contexts.dig(:trace, :op)).to eq("http.server")
+        expect(transaction.contexts.dig(:trace, :origin)).to eq("auto.http.rack")
         expect(transaction.spans.count).to eq(0)
       end
 
