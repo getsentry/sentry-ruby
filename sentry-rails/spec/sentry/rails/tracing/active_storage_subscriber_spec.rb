@@ -29,10 +29,13 @@ RSpec.describe Sentry::Rails::Tracing::ActiveStorageSubscriber, :subscriber, typ
       if Rails.version.to_f > 6.1
         expect(analysis_transaction[:spans].count).to eq(2)
         expect(analysis_transaction[:spans][0][:op]).to eq("file.service_streaming_download.active_storage")
+        expect(analysis_transaction[:spans][0][:origin]).to eq("auto.file.rails")
         expect(analysis_transaction[:spans][1][:op]).to eq("file.analyze.active_storage")
+        expect(analysis_transaction[:spans][1][:origin]).to eq("auto.file.rails")
       else
         expect(analysis_transaction[:spans].count).to eq(1)
         expect(analysis_transaction[:spans][0][:op]).to eq("file.service_streaming_download.active_storage")
+        expect(analysis_transaction[:spans][0][:origin]).to eq("auto.file.rails")
       end
 
       request_transaction = transport.events.last.to_hash
@@ -41,6 +44,7 @@ RSpec.describe Sentry::Rails::Tracing::ActiveStorageSubscriber, :subscriber, typ
 
       span = request_transaction[:spans][1]
       expect(span[:op]).to eq("file.service_upload.active_storage")
+      expect(span[:origin]).to eq("auto.file.rails")
       expect(span[:description]).to eq("Disk")
       expect(span.dig(:data, :key)).to eq(p.cover.key)
       expect(span[:trace_id]).to eq(request_transaction.dig(:contexts, :trace, :trace_id))

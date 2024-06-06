@@ -32,11 +32,13 @@ RSpec.describe Sentry::Rails::Tracing, type: :request do
 
       expect(transaction[:type]).to eq("transaction")
       expect(transaction.dig(:contexts, :trace, :op)).to eq("http.server")
+      expect(transaction.dig(:contexts, :trace, :origin)).to eq("auto.http.rails")
       parent_span_id = transaction.dig(:contexts, :trace, :span_id)
       expect(transaction[:spans].count).to eq(2)
 
       first_span = transaction[:spans][0]
       expect(first_span[:op]).to eq("view.process_action.action_controller")
+      expect(first_span[:origin]).to eq("auto.view.rails")
       expect(first_span[:description]).to eq("PostsController#index")
       expect(first_span[:parent_span_id]).to eq(parent_span_id)
       expect(first_span[:status]).to eq("internal_error")
@@ -44,6 +46,7 @@ RSpec.describe Sentry::Rails::Tracing, type: :request do
 
       second_span = transaction[:spans][1]
       expect(second_span[:op]).to eq("db.sql.active_record")
+      expect(second_span[:origin]).to eq("auto.db.rails")
       expect(second_span[:description]).to eq("SELECT \"posts\".* FROM \"posts\"")
       expect(second_span[:parent_span_id]).to eq(first_span[:span_id])
 
@@ -63,19 +66,21 @@ RSpec.describe Sentry::Rails::Tracing, type: :request do
 
       expect(transaction[:type]).to eq("transaction")
       expect(transaction.dig(:contexts, :trace, :op)).to eq("http.server")
+      expect(transaction.dig(:contexts, :trace, :origin)).to eq("auto.http.rails")
       parent_span_id = transaction.dig(:contexts, :trace, :span_id)
       expect(transaction[:spans].count).to eq(3)
 
       first_span = transaction[:spans][0]
       expect(first_span[:data].keys).to match_array(["http.response.status_code", :format, :method, :path, :params])
       expect(first_span[:op]).to eq("view.process_action.action_controller")
+      expect(first_span[:origin]).to eq("auto.view.rails")
       expect(first_span[:description]).to eq("PostsController#show")
       expect(first_span[:parent_span_id]).to eq(parent_span_id)
       expect(first_span[:status]).to eq("ok")
 
-
       second_span = transaction[:spans][1]
       expect(second_span[:op]).to eq("db.sql.active_record")
+      expect(second_span[:origin]).to eq("auto.db.rails")
       expect(second_span[:description].squeeze("\s")).to eq(
         'SELECT "posts".* FROM "posts" WHERE "posts"."id" = ? LIMIT ?'
       )
@@ -86,6 +91,7 @@ RSpec.describe Sentry::Rails::Tracing, type: :request do
 
       third_span = transaction[:spans][2]
       expect(third_span[:op]).to eq("template.render_template.action_view")
+      expect(third_span[:origin]).to eq("auto.template.rails")
       expect(third_span[:description].squeeze("\s")).to eq("text template")
       expect(third_span[:parent_span_id]).to eq(first_span[:span_id])
     end
@@ -239,6 +245,7 @@ RSpec.describe Sentry::Rails::Tracing, type: :request do
         expect(transaction.timestamp).not_to be_nil
         expect(transaction.contexts.dig(:trace, :status)).to eq("ok")
         expect(transaction.contexts.dig(:trace, :op)).to eq("http.server")
+        expect(transaction.contexts.dig(:trace, :origin)).to eq("auto.http.rails")
         expect(transaction.spans.count).to eq(3)
 
         # should inherit information from the external_transaction

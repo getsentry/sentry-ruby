@@ -30,6 +30,10 @@
 - Decrease the default number of background worker threads by half ([#2305](https://github.com/getsentry/sentry-ruby/pull/2305))
   - Fixes [#2297](https://github.com/getsentry/sentry-ruby/issues/2297)
 
+### Internal
+
+- Add `origin` to spans and transactions to track integration sources for instrumentation ([#2319](https://github.com/getsentry/sentry-ruby/pull/2319))
+
 ## 5.17.3
 
 ### Internal

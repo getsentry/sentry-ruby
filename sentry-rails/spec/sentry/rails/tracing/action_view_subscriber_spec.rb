@@ -25,6 +25,7 @@ RSpec.describe Sentry::Rails::Tracing::ActionViewSubscriber, :subscriber, type: 
       # ignore the first span, which is for controller action
       span = transaction[:spans][1]
       expect(span[:op]).to eq("template.render_template.action_view")
+      expect(span[:origin]).to eq("auto.template.rails")
       expect(span[:description]).to match(/test_template\.html\.erb/)
       expect(span[:trace_id]).to eq(transaction.dig(:contexts, :trace, :trace_id))
     end

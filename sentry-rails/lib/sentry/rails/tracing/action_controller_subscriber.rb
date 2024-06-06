@@ -9,6 +9,7 @@ module Sentry
 
         EVENT_NAMES = ["process_action.action_controller"].freeze
         OP_NAME = "view.process_action.action_controller".freeze
+        SPAN_ORIGIN = "auto.view.rails".freeze
 
         def self.subscribe!
           Sentry.logger.warn <<~MSG
@@ -22,6 +23,7 @@ module Sentry
 
             record_on_current_span(
               op: OP_NAME,
+              origin: SPAN_ORIGIN,
               start_timestamp: payload[START_TIMESTAMP_NAME],
               description: "#{controller}##{action}",
               duration: duration

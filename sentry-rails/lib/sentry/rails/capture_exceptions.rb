@@ -2,6 +2,7 @@ module Sentry
   module Rails
     class CaptureExceptions < Sentry::Rack::CaptureExceptions
       RAILS_7_1 = Gem::Version.new(::Rails.version) >= Gem::Version.new("7.1.0.alpha")
+      SPAN_ORIGIN = 'auto.http.rails'.freeze
 
       def initialize(_)
         super
@@ -32,7 +33,12 @@ module Sentry
       end
 
       def start_transaction(env, scope)
-        options = { name: scope.transaction_name, source: scope.transaction_source, op: transaction_op }
+        options = {
+          name: scope.transaction_name,
+          source: scope.transaction_source,
+          op: transaction_op,
+          origin: SPAN_ORIGIN
+        }
 
         if @assets_regexp && scope.transaction_name.match?(@assets_regexp)
           options.merge!(sampled: false)

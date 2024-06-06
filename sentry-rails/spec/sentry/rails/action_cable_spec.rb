@@ -204,7 +204,8 @@ if defined?(ActionCable) && ActionCable.version >= Gem::Version.new('6.0.0')
           expect(transaction["contexts"]).to include(
             "trace" => hash_including(
               "op" => "websocket.server",
-              "status" => "internal_error"
+              "status" => "internal_error",
+              "origin" => "auto.http.rails.actioncable"
             )
           )
         end
@@ -230,7 +231,8 @@ if defined?(ActionCable) && ActionCable.version >= Gem::Version.new('6.0.0')
           expect(subscription_transaction["contexts"]).to include(
             "trace" => hash_including(
               "op" => "websocket.server",
-              "status" => "ok"
+              "status" => "ok",
+              "origin" => "auto.http.rails.actioncable"
             )
           )
 
@@ -259,7 +261,8 @@ if defined?(ActionCable) && ActionCable.version >= Gem::Version.new('6.0.0')
           expect(action_transaction["contexts"]).to include(
             "trace" => hash_including(
               "op" => "websocket.server",
-              "status" => "internal_error"
+              "status" => "internal_error",
+              "origin" => "auto.http.rails.actioncable"
             )
           )
         end
@@ -281,7 +284,8 @@ if defined?(ActionCable) && ActionCable.version >= Gem::Version.new('6.0.0')
           expect(subscription_transaction["contexts"]).to include(
             "trace" => hash_including(
               "op" => "websocket.server",
-              "status" => "ok"
+              "status" => "ok",
+              "origin" => "auto.http.rails.actioncable"
             )
           )
 
@@ -308,7 +312,8 @@ if defined?(ActionCable) && ActionCable.version >= Gem::Version.new('6.0.0')
           expect(transaction["contexts"]).to include(
             "trace" => hash_including(
               "op" => "websocket.server",
-              "status" => "internal_error"
+              "status" => "internal_error",
+              "origin" => "auto.http.rails.actioncable"
             )
           )
         end
