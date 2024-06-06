@@ -8,7 +8,7 @@ module Sentry
       # need to symbolize strings as keyword arguments in Ruby 2.4~2.6
       DELAYED_JOB_CONTEXT_KEY = :"Delayed-Job"
       ACTIVE_JOB_CONTEXT_KEY = :"Active-Job"
-      OP_NAME = "queue.delayed_job".freeze
+      OP_NAME = "queue.delayed_job"
       SPAN_ORIGIN = "auto.queue.delayed_job"
 
       callbacks do |lifecycle|
