@@ -62,6 +62,7 @@ RSpec.describe Sentry::Net::HTTP do
 
         request_span = transaction.span_recorder.spans.last
         expect(request_span.op).to eq("http.client")
+        expect(request_span.origin).to eq("auto.http.net_http")
         expect(request_span.start_timestamp).not_to be_nil
         expect(request_span.timestamp).not_to be_nil
         expect(request_span.start_timestamp).not_to eq(request_span.timestamp)
@@ -93,6 +94,7 @@ RSpec.describe Sentry::Net::HTTP do
 
         request_span = transaction.span_recorder.spans.last
         expect(request_span.op).to eq("http.client")
+        expect(request_span.origin).to eq("auto.http.net_http")
         expect(request_span.start_timestamp).not_to be_nil
         expect(request_span.timestamp).not_to be_nil
         expect(request_span.start_timestamp).not_to eq(request_span.timestamp)
@@ -320,6 +322,7 @@ RSpec.describe Sentry::Net::HTTP do
 
         request_span = transaction.span_recorder.spans[1]
         expect(request_span.op).to eq("http.client")
+        expect(request_span.origin).to eq("auto.http.net_http")
         expect(request_span.start_timestamp).not_to be_nil
         expect(request_span.timestamp).not_to be_nil
         expect(request_span.start_timestamp).not_to eq(request_span.timestamp)
@@ -332,6 +335,7 @@ RSpec.describe Sentry::Net::HTTP do
 
         request_span = transaction.span_recorder.spans[2]
         expect(request_span.op).to eq("http.client")
+        expect(request_span.origin).to eq("auto.http.net_http")
         expect(request_span.start_timestamp).not_to be_nil
         expect(request_span.timestamp).not_to be_nil
         expect(request_span.start_timestamp).not_to eq(request_span.timestamp)
