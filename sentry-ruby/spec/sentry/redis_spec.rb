@@ -23,6 +23,7 @@ RSpec.describe Sentry::Redis do
           expect(result).to eq("OK")
           request_span = transaction.span_recorder.spans.last
           expect(request_span.op).to eq("db.redis")
+          expect(request_span.origin).to eq("auto.db.redis")
           expect(request_span.start_timestamp).not_to be_nil
           expect(request_span.timestamp).not_to be_nil
           expect(request_span.start_timestamp).not_to eq(request_span.timestamp)
