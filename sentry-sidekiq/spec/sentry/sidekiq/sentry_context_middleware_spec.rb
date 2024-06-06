@@ -57,6 +57,12 @@ RSpec.describe Sentry::Sidekiq::SentryContextServerMiddleware do
       expect(event.tags.keys).to include(:"sidekiq.marvel", :"sidekiq.dc")
     end
 
+    it "has the correct origin" do
+      execute_worker(processor, TagsWorker)
+      transaction = transport.events.last
+      expect(transaction.contexts.dig(:trace, :origin)).to eq('auto.queue.sidekiq')
+    end
+
     context "with trace_propagation_headers" do
       let(:parent_transaction) { Sentry.start_transaction(op: "sidekiq") }
 

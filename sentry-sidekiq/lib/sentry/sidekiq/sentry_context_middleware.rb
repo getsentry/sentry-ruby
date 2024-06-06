@@ -1,9 +1,12 @@
+# frozen_string_literal: true
+
 require 'sentry/sidekiq/context_filter'
 
 module Sentry
   module Sidekiq
     class SentryContextServerMiddleware
-      OP_NAME = "queue.sidekiq".freeze
+      OP_NAME = "queue.sidekiq"
+      SPAN_ORIGIN = "auto.queue.sidekiq"
 
       def call(_worker, job, queue)
         return yield unless Sentry.initialized?
@@ -40,7 +43,13 @@ module Sentry
       end
 
       def start_transaction(scope, env)
-        options = { name: scope.transaction_name, source: scope.transaction_source, op: OP_NAME }
+        options = {
+          name: scope.transaction_name,
+          source: scope.transaction_source,
+          op: OP_NAME,
+          origin: SPAN_ORIGIN
+        }
+
         transaction = Sentry.continue_trace(env, **options)
         Sentry.start_transaction(transaction: transaction, **options)
       end
