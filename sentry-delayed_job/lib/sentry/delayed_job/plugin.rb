@@ -9,6 +9,7 @@ module Sentry
       DELAYED_JOB_CONTEXT_KEY = :"Delayed-Job"
       ACTIVE_JOB_CONTEXT_KEY = :"Active-Job"
       OP_NAME = "queue.delayed_job".freeze
+      SPAN_ORIGIN = "auto.queue.delayed_job"
 
       callbacks do |lifecycle|
         lifecycle.before(:enqueue) do |job, *args, &block|
@@ -93,7 +94,13 @@ module Sentry
       end
 
       def self.start_transaction(scope, env, contexts)
-        options = { name: scope.transaction_name, source: scope.transaction_source, op: OP_NAME }
+        options = {
+          name: scope.transaction_name,
+          source: scope.transaction_source,
+          op: OP_NAME,
+          origin: SPAN_ORIGIN
+        }
+
         transaction = Sentry.continue_trace(env, **options)
         Sentry.start_transaction(transaction: transaction, custom_sampling_context: contexts, **options)
       end
