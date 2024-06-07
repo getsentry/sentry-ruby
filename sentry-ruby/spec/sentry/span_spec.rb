@@ -33,6 +33,7 @@ RSpec.describe Sentry::Span do
       expect(context[:status]).to eq("ok")
       expect(context[:trace_id].length).to eq(32)
       expect(context[:span_id].length).to eq(16)
+      expect(context[:origin]).to eq('manual')
     end
   end
 
@@ -69,6 +70,7 @@ RSpec.describe Sentry::Span do
       expect(hash[:tags]).to eq({ "foo" => "bar" })
       expect(hash[:trace_id].length).to eq(32)
       expect(hash[:span_id].length).to eq(16)
+      expect(hash[:origin]).to eq('manual')
     end
 
     it 'has metric summary if present' do
@@ -294,6 +296,14 @@ RSpec.describe Sentry::Span do
       subject.set_tag(:foo, "bar")
 
       expect(subject.tags).to eq({ foo: "bar" })
+    end
+  end
+
+  describe "#set_origin" do
+    it "sets origin" do
+      subject.set_origin('auto.http')
+
+      expect(subject.origin).to eq('auto.http')
     end
   end
 end

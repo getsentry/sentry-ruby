@@ -42,6 +42,7 @@ RSpec.describe Sentry::Resque do
     expect(tracing_event[:type]).to eq("transaction")
     expect(tracing_event.dig(:contexts, :trace, :status)).to eq("ok")
     expect(tracing_event.dig(:contexts, :trace, :op)).to eq("queue.resque")
+    expect(tracing_event.dig(:contexts, :trace, :origin)).to eq("auto.queue.resque")
   end
 
   it "records tracing events with exceptions" do
@@ -59,6 +60,7 @@ RSpec.describe Sentry::Resque do
     expect(tracing_event[:type]).to eq("transaction")
     expect(tracing_event.dig(:contexts, :trace, :status)).to eq("internal_error")
     expect(tracing_event.dig(:contexts, :trace, :op)).to eq("queue.resque")
+    expect(tracing_event.dig(:contexts, :trace, :origin)).to eq("auto.queue.resque")
   end
 
   context "with instrumenter :otel" do

@@ -4,6 +4,7 @@ module Sentry
   # @api private
   class Redis
     OP_NAME = "db.redis"
+    SPAN_ORIGIN = "auto.db.redis"
     LOGGER_NAME = :redis_logger
 
     def initialize(commands, host, port, db)
@@ -13,7 +14,7 @@ module Sentry
     def instrument
       return yield unless Sentry.initialized?
 
-      Sentry.with_child_span(op: OP_NAME, start_timestamp: Sentry.utc_now.to_f) do |span|
+      Sentry.with_child_span(op: OP_NAME, start_timestamp: Sentry.utc_now.to_f, origin: SPAN_ORIGIN) do |span|
         yield.tap do
           record_breadcrumb
 

@@ -31,6 +31,10 @@
   - Fixes [#2297](https://github.com/getsentry/sentry-ruby/issues/2297)
 - Don't mutate `enabled_environments` when using `Sentry::TestHelper` ([#2317](https://github.com/getsentry/sentry-ruby/pull/2317))
 
+### Internal
+
+- Add `origin` to spans and transactions to track integration sources for instrumentation ([#2319](https://github.com/getsentry/sentry-ruby/pull/2319))
+
 ## 5.17.3
 
 ### Internal

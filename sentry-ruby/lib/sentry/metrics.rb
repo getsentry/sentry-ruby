@@ -15,6 +15,7 @@ module Sentry
     FRACTIONAL_UNITS = %w[ratio percent]
 
     OP_NAME = 'metric.timing'
+    SPAN_ORIGIN = 'auto.metric.timing'
 
     class << self
       def increment(key, value = 1.0, unit: 'none', tags: {}, timestamp: nil)
@@ -37,7 +38,7 @@ module Sentry
         return unless block_given?
         return yield unless DURATION_UNITS.include?(unit)
 
-        result, value = Sentry.with_child_span(op: OP_NAME, description: key) do |span|
+        result, value = Sentry.with_child_span(op: OP_NAME, description: key, origin: SPAN_ORIGIN) do |span|
           tags.each { |k, v| span.set_tag(k, v.is_a?(Array) ? v.join(', ') : v.to_s) } if span
 
           start = Timing.send(unit.to_sym)

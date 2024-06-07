@@ -60,6 +60,8 @@ module Sentry
       504 => "deadline_exceeded"
     }
 
+    DEFAULT_SPAN_ORIGIN = "manual"
+
     # An uuid that can be used to identify a trace.
     # @return [String]
     attr_reader :trace_id
@@ -93,6 +95,9 @@ module Sentry
     # Span data
     # @return [Hash]
     attr_reader :data
+    # Span origin that tracks what kind of instrumentation created a span
+    # @return [String]
+    attr_reader :origin
 
     # The SpanRecorder the current span belongs to.
     # SpanRecorder holds all spans under the same Transaction object (including the Transaction itself).
@@ -114,7 +119,8 @@ module Sentry
       parent_span_id: nil,
       sampled: nil,
       start_timestamp: nil,
-      timestamp: nil
+      timestamp: nil,
+      origin: nil
     )
       @trace_id = trace_id || SecureRandom.uuid.delete("-")
       @span_id = span_id || SecureRandom.uuid.delete("-").slice(0, 16)
@@ -128,6 +134,7 @@ module Sentry
       @status = status
       @data = {}
       @tags = {}
+      @origin = origin || DEFAULT_SPAN_ORIGIN
     end
 
     # Finishes the span by adding a timestamp.
@@ -165,7 +172,8 @@ module Sentry
         op: @op,
         status: @status,
         tags: @tags,
-        data: @data
+        data: @data,
+        origin: @origin
       }
 
       summary = metrics_summary
@@ -183,7 +191,8 @@ module Sentry
         parent_span_id: @parent_span_id,
         description: @description,
         op: @op,
-        status: @status
+        status: @status,
+        origin: @origin
       }
     end
 
@@ -278,6 +287,12 @@ module Sentry
     # @param value [String]
     def set_tag(key, value)
       @tags[key] = value
+    end
+
+    # Sets the origin of the span.
+    # @param origin [String]
+    def set_origin(origin)
+      @origin = origin
     end
 
     # Collects gauge metrics on the span for metric summaries.

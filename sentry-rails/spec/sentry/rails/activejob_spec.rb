@@ -182,6 +182,7 @@ RSpec.describe "ActiveJob integration" do
       expect(transaction.contexts.dig(:trace, :span_id)).to be_present
       expect(transaction.contexts.dig(:trace, :status)).to eq("ok")
       expect(transaction.contexts.dig(:trace, :op)).to eq("queue.active_job")
+      expect(transaction.contexts.dig(:trace, :origin)).to eq("auto.queue.active_job")
 
       expect(transaction.spans.count).to eq(1)
       expect(transaction.spans.first[:op]).to eq("db.sql.active_record")
@@ -199,6 +200,7 @@ RSpec.describe "ActiveJob integration" do
         expect(transaction.contexts.dig(:trace, :trace_id)).to be_present
         expect(transaction.contexts.dig(:trace, :span_id)).to be_present
         expect(transaction.contexts.dig(:trace, :status)).to eq("internal_error")
+        expect(transaction.contexts.dig(:trace, :origin)).to eq("auto.queue.active_job")
 
         event = transport.events.last
         expect(event.transaction).to eq("FailedWithExtraJob")

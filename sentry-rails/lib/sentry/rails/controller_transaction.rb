@@ -1,6 +1,8 @@
 module Sentry
   module Rails
     module ControllerTransaction
+      SPAN_ORIGIN = 'auto.view.rails'.freeze
+
       def self.included(base)
         base.prepend_around_action(:sentry_around_action)
       end
@@ -11,7 +13,7 @@ module Sentry
         if Sentry.initialized?
           transaction_name = "#{self.class}##{action_name}"
           Sentry.get_current_scope.set_transaction_name(transaction_name, source: :view)
-          Sentry.with_child_span(op: "view.process_action.action_controller", description: transaction_name) do |child_span|
+          Sentry.with_child_span(op: "view.process_action.action_controller", description: transaction_name, origin: SPAN_ORIGIN) do |child_span|
             if child_span
               begin
                 result = yield

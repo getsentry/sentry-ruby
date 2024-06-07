@@ -122,7 +122,7 @@ RSpec.describe Sentry::Metrics do
       end
 
       it 'starts a span' do
-        expect(Sentry).to receive(:with_child_span).with(op: Sentry::Metrics::OP_NAME, description: 'foo').and_call_original
+        expect(Sentry).to receive(:with_child_span).with(op: Sentry::Metrics::OP_NAME, description: 'foo', origin: Sentry::Metrics::SPAN_ORIGIN).and_call_original
 
         described_class.timing('foo') { sleep(0.1) }
       end

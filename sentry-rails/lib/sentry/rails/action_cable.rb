@@ -3,6 +3,7 @@ module Sentry
     module ActionCableExtensions
       class ErrorHandler
         OP_NAME = "websocket.server".freeze
+        SPAN_ORIGIN = "auto.http.rails.actioncable"
 
         class << self
           def capture(connection, transaction_name:, extra_context: nil, &block)
@@ -33,7 +34,13 @@ module Sentry
           end
 
           def start_transaction(env, scope)
-            options = { name: scope.transaction_name, source: scope.transaction_source, op: OP_NAME }
+            options = {
+              name: scope.transaction_name,
+              source: scope.transaction_source,
+              op: OP_NAME,
+              origin: SPAN_ORIGIN
+            }
+
             transaction = Sentry.continue_trace(env, **options)
             Sentry.start_transaction(transaction: transaction, **options)
           end

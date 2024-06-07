@@ -8,6 +8,7 @@ module Sentry
   module Net
     module HTTP
       OP_NAME = "http.client"
+      SPAN_ORIGIN = "auto.http.net_http"
       BREADCRUMB_CATEGORY = "net.http"
 
       # To explain how the entire thing works, we need to know how the original Net::HTTP#request works
@@ -30,7 +31,7 @@ module Sentry
         return super unless started? && Sentry.initialized?
         return super if from_sentry_sdk?
 
-        Sentry.with_child_span(op: OP_NAME, start_timestamp: Sentry.utc_now.to_f) do |sentry_span|
+        Sentry.with_child_span(op: OP_NAME, start_timestamp: Sentry.utc_now.to_f, origin: SPAN_ORIGIN) do |sentry_span|
           request_info = extract_request_info(req)
 
           if propagate_trace?(request_info[:url], Sentry.configuration)

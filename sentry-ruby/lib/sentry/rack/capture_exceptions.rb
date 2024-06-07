@@ -5,6 +5,7 @@ module Sentry
     class CaptureExceptions
       ERROR_EVENT_ID_KEY = "sentry.error_event_id"
       MECHANISM_TYPE = "rack"
+      SPAN_ORIGIN = "auto.http.rack"
 
       def initialize(app)
         @app = app
@@ -63,7 +64,13 @@ module Sentry
       end
 
       def start_transaction(env, scope)
-        options = { name: scope.transaction_name, source: scope.transaction_source, op: transaction_op }
+        options = {
+          name: scope.transaction_name,
+          source: scope.transaction_source,
+          op: transaction_op,
+          origin: SPAN_ORIGIN
+        }
+
         transaction = Sentry.continue_trace(env, **options)
         Sentry.start_transaction(transaction: transaction, custom_sampling_context: { env: env }, **options)
       end

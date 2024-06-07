@@ -6,6 +6,7 @@ module Sentry
       class ActiveRecordSubscriber < AbstractSubscriber
         EVENT_NAMES = ["sql.active_record"].freeze
         SPAN_PREFIX = "db.".freeze
+        SPAN_ORIGIN = "auto.db.rails".freeze
         EXCLUDED_EVENTS = ["SCHEMA", "TRANSACTION"].freeze
 
         SUPPORT_SOURCE_LOCATION = ActiveSupport::BacktraceCleaner.method_defined?(:clean_frame)
@@ -28,7 +29,13 @@ module Sentry
             subscribe_to_event(EVENT_NAMES) do |event_name, duration, payload|
               next if EXCLUDED_EVENTS.include? payload[:name]
 
-              record_on_current_span(op: SPAN_PREFIX + event_name, start_timestamp: payload[START_TIMESTAMP_NAME], description: payload[:sql], duration: duration) do |span|
+              record_on_current_span(
+                op: SPAN_PREFIX + event_name,
+                origin: SPAN_ORIGIN,
+                start_timestamp: payload[START_TIMESTAMP_NAME],
+                description: payload[:sql],
+                duration: duration
+              ) do |span|
                 span.set_tag(:cached, true) if payload.fetch(:cached, false) # cached key is only set for hits in the QueryCache, from Rails 5.1
 
                 connection = payload[:connection]

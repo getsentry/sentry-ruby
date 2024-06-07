@@ -17,6 +17,7 @@ module Sentry
 
       class SentryReporter
         OP_NAME = "queue.active_job".freeze
+        SPAN_ORIGIN = "auto.queue.active_job".freeze
 
         class << self
           def record(job, &block)
@@ -27,7 +28,12 @@ module Sentry
                   if job.is_a?(::Sentry::SendEventJob)
                     nil
                   else
-                    Sentry.start_transaction(name: scope.transaction_name, source: scope.transaction_source, op: OP_NAME)
+                    Sentry.start_transaction(
+                      name: scope.transaction_name,
+                      source: scope.transaction_source,
+                      op: OP_NAME,
+                      origin: SPAN_ORIGIN
+                    )
                   end
 
                 scope.set_span(transaction) if transaction

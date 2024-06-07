@@ -383,6 +383,7 @@ RSpec.describe Sentry::DelayedJob do
       expect(transaction.contexts.dig(:trace, :span_id)).to be_a(String)
       expect(transaction.contexts.dig(:trace, :status)).to eq("ok")
       expect(transaction.contexts.dig(:trace, :op)).to eq("queue.delayed_job")
+      expect(transaction.contexts.dig(:trace, :origin)).to eq("auto.queue.delayed_job")
     end
 
     it "records transaction with exception" do
