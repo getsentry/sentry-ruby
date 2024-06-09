@@ -61,7 +61,7 @@ module Sentry
       data, serialized_items = serialize_envelope(envelope)
 
       if data
-        log_info("[Transport] Sending envelope with items [#{serialized_items.map(&:type).join(', ')}] #{envelope.event_id} to Sentry")
+        log_debug("[Transport] Sending envelope with items [#{serialized_items.map(&:type).join(', ')}] #{envelope.event_id} to Sentry")
         send_data(data)
       end
     end
