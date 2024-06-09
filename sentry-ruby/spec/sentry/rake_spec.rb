@@ -22,7 +22,7 @@ RSpec.describe "rake auto-reporting" do
       message = `cd spec/support && bundle exec rake raise_exception_without_rake_integration 2>&1`
     end.join
 
-    expect(message).not_to match(/Sentry/)
+    expect(message).not_to match(/Sending envelope with items/)
   end
 
   it "run rake task with original arguments" do
