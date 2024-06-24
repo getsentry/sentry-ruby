@@ -9,8 +9,8 @@ module Sentry
     include ArgumentCheckingHelper
 
     ATTRIBUTES = [
-      :transaction_names,
-      :transaction_sources,
+      :transaction_name,
+      :transaction_source,
       :contexts,
       :extra,
       :tags,
@@ -96,8 +96,8 @@ module Sentry
       copy.extra = extra.deep_dup
       copy.tags = tags.deep_dup
       copy.user = user.deep_dup
-      copy.transaction_names = transaction_names.dup
-      copy.transaction_sources = transaction_sources.dup
+      copy.transaction_name = transaction_name.dup
+      copy.transaction_source = transaction_source.dup
       copy.fingerprint = fingerprint.deep_dup
       copy.span = span.deep_dup
       copy.session = session.deep_dup
@@ -114,8 +114,8 @@ module Sentry
       self.extra = scope.extra
       self.tags = scope.tags
       self.user = scope.user
-      self.transaction_names = scope.transaction_names
-      self.transaction_sources = scope.transaction_sources
+      self.transaction_name = scope.transaction_name
+      self.transaction_source = scope.transaction_source
       self.fingerprint = scope.fingerprint
       self.span = scope.span
       self.propagation_context = scope.propagation_context
@@ -231,8 +231,8 @@ module Sentry
     # @param transaction_name [String]
     # @return [void]
     def set_transaction_name(transaction_name, source: :custom)
-      @transaction_names << transaction_name
-      @transaction_sources << source
+      @transaction_name = transaction_name
+      @transaction_source = source
     end
 
     # Sets the currently active session on the scope.
@@ -240,20 +240,6 @@ module Sentry
     # @return [void]
     def set_session(session)
       @session = session
-    end
-
-    # Returns current transaction name.
-    # The "transaction" here does not refer to `Transaction` objects.
-    # @return [String, nil]
-    def transaction_name
-      @transaction_names.last
-    end
-
-    # Returns current transaction source.
-    # The "transaction" here does not refer to `Transaction` objects.
-    # @return [String, nil]
-    def transaction_source
-      @transaction_sources.last
     end
 
     # These are high cardinality and thus bad.
@@ -311,8 +297,8 @@ module Sentry
       @user = {}
       @level = :error
       @fingerprint = []
-      @transaction_names = []
-      @transaction_sources = []
+      @transaction_name = nil
+      @transaction_source = nil
       @event_processors = []
       @rack_env = {}
       @span = nil

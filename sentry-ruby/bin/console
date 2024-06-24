@@ -1,6 +1,7 @@
 #!/usr/bin/env ruby
 
 require "bundler/setup"
+require "debug"
 require "sentry-ruby"
 
 # You can add fixtures and/or initialization code here to make experimenting

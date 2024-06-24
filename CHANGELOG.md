@@ -31,6 +31,8 @@
 - Decrease the default number of background worker threads by half ([#2305](https://github.com/getsentry/sentry-ruby/pull/2305))
   - Fixes [#2297](https://github.com/getsentry/sentry-ruby/issues/2297)
 - Don't mutate `enabled_environments` when using `Sentry::TestHelper` ([#2317](https://github.com/getsentry/sentry-ruby/pull/2317))
+- Don't use array for transaction names and sources on scope ([#2324](https://github.com/getsentry/sentry-ruby/pull/2324))
+  - Fixes [#2257](https://github.com/getsentry/sentry-ruby/issues/2257)
 
 ### Internal
 
