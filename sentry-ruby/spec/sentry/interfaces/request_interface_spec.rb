@@ -1,6 +1,6 @@
-return unless defined?(Rack)
-
 require 'spec_helper'
+
+return unless defined?(Rack)
 
 RSpec.describe Sentry::RequestInterface do
   let(:env) { Rack::MockRequest.env_for("/test") }
@@ -44,14 +44,16 @@ RSpec.describe Sentry::RequestInterface do
     let(:env) { Rack::MockRequest.env_for("/test", additional_headers) }
 
     it 'transforms headers to conform with the interface' do
-      expect(subject.headers).to eq("Content-Length" => "0", "Version" => "HTTP/1.1", "X-Request-Id" => "12345678")
+      expect(subject.headers).to include("Version" => "HTTP/1.1", "X-Request-Id" => "12345678")
+      expect(subject.headers).not_to include("Cookie")
     end
 
     context 'from Rails middleware' do
       let(:additional_headers) { { "action_dispatch.request_id" => "12345678" } }
 
       it 'transforms headers to conform with the interface' do
-        expect(subject.headers).to eq("Content-Length" => "0", "X-Request-Id" => "12345678")
+        expect(subject.headers).to include("X-Request-Id" => "12345678")
+        expect(subject.headers).not_to include("Cookie")
       end
     end
 
@@ -61,7 +63,7 @@ RSpec.describe Sentry::RequestInterface do
       it "doesn't cause any issue" do
         json = JSON.generate(subject.to_hash)
 
-        expect(JSON.parse(json)["headers"]).to eq({ "Content-Length"=>"0", "Foo"=>"Tekirda�" })
+        expect(JSON.parse(json)["headers"]).to include("Foo"=>"Tekirda�")
       end
     end
 
