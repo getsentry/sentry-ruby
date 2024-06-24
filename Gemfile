@@ -9,10 +9,7 @@ ruby_version = Gem::Version.new(RUBY_VERSION)
 if ruby_version >= Gem::Version.new("2.7.0")
   gem "debug", github: "ruby/debug", platform: :ruby
   gem "irb"
-
-  if ruby_version >= Gem::Version.new("3.0.0")
-    gem "ruby-lsp-rspec"
-  end
+  gem "ruby-lsp-rspec" if ruby_version >= Gem::Version.new("3.0.0") && RUBY_PLATFORM != "java"
 end
 
 # For RSpec
