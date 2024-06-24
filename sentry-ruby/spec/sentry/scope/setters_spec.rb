@@ -206,7 +206,7 @@ RSpec.describe Sentry::Scope do
   end
 
   describe "#set_transaction_name" do
-    it "pushes the transaction_name to transaction_names stack" do
+    it "sets the transaction name" do
       subject.set_transaction_name("WelcomeController#home")
 
       expect(subject.transaction_name).to eq("WelcomeController#home")

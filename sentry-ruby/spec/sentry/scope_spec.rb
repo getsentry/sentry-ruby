@@ -22,8 +22,8 @@ RSpec.describe Sentry::Scope do
       expect(subject.tags).to eq({})
       expect(subject.user).to eq({})
       expect(subject.fingerprint).to eq([])
-      expect(subject.transaction_names).to eq([])
-      expect(subject.transaction_sources).to eq([])
+      expect(subject.transaction_name).to eq(nil)
+      expect(subject.transaction_source).to eq(nil)
       expect(subject.propagation_context).to be_a(Sentry::PropagationContext)
     end
 
@@ -42,8 +42,7 @@ RSpec.describe Sentry::Scope do
       copy.extra.merge!(foo: "bar")
       copy.tags.merge!(foo: "bar")
       copy.user.merge!(foo: "bar")
-      copy.transaction_names << "foo"
-      copy.transaction_sources << :url
+      copy.set_transaction_name("foo", source: :url)
       copy.fingerprint << "bar"
 
       expect(subject.breadcrumbs.to_hash).to eq({ values: [] })
@@ -53,8 +52,8 @@ RSpec.describe Sentry::Scope do
       expect(subject.tags).to eq({})
       expect(subject.user).to eq({})
       expect(subject.fingerprint).to eq([])
-      expect(subject.transaction_names).to eq([])
-      expect(subject.transaction_sources).to eq([])
+      expect(subject.transaction_name).to eq(nil)
+      expect(subject.transaction_source).to eq(nil)
       expect(subject.span).to eq(nil)
     end
 
@@ -143,8 +142,8 @@ RSpec.describe Sentry::Scope do
       expect(subject.tags).to eq({})
       expect(subject.user).to eq({})
       expect(subject.fingerprint).to eq([])
-      expect(subject.transaction_names).to eq([])
-      expect(subject.transaction_sources).to eq([])
+      expect(subject.transaction_name).to eq(nil)
+      expect(subject.transaction_source).to eq(nil)
       expect(subject.span).to eq(nil)
     end
   end
