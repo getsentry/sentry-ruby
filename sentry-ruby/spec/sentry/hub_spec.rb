@@ -375,6 +375,32 @@ RSpec.describe Sentry::Hub do
     end
   end
 
+  describe '#status_code_for_exception' do
+    subject(:status_code_for_exception) { described_class.new(client, scope).status_code_for_exception(exception) }
+
+    let(:exception) { Exception.new }
+
+    context 'when configuration exception_status_code is a number' do
+      before do
+        configuration.exception_status_code = 400
+      end
+
+      it { is_expected.to eq(400) }
+    end
+
+    context 'when configuration exception_status_code is a proc' do
+      before do
+        configuration.exception_status_code = ->(exception) { 355 }
+      end
+
+      it { is_expected.to eq(355) }
+    end
+
+    context 'when configuration exception_status_code is blank' do
+      it { is_expected.to eq(500) }
+    end
+  end
+
   describe "#with_scope" do
     it "builds a temporary scope" do
       inner_event = nil

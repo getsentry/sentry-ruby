@@ -95,6 +95,17 @@ module Sentry
       transaction
     end
 
+    def status_code_for_exception(exception)
+      case configuration.exception_status_code
+      when Numeric
+        configuration.exception_status_code
+      when Proc
+        configuration.exception_status_code.call(exception)
+      else
+        500
+      end
+    end
+
     def with_child_span(instrumenter: :sentry, **attributes, &block)
       return yield(nil) unless instrumenter == configuration.instrumenter
 

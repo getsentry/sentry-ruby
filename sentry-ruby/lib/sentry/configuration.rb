@@ -268,6 +268,17 @@ module Sentry
     # @return [Boolean]
     attr_accessor :auto_session_tracking
 
+    # Take a Proc that controls the status code for various exceptions, e.g.
+    # @example
+    #   config.exception_status_code =  lambda do |exception|
+    #     # exception is the captured exception instance
+    #     # return 404 if exception.is_a?(ActiveRecord::RecordNotFound)
+    #
+    #     500 # default behavior
+    #   end
+    # @return [Proc]
+    attr_accessor :exception_status_code
+
     # Whether to downsample transactions automatically because of backpressure.
     # Starts a new monitor thread to check health of the SDK every 10 seconds.
     # Default is false
@@ -387,6 +398,7 @@ module Sentry
       self.before_send_transaction = nil
       self.rack_env_whitelist = RACK_ENV_WHITELIST_DEFAULT
       self.traces_sampler = nil
+      self.exception_status_code = nil
       self.enable_tracing = nil
 
       @transport = Transport::Configuration.new
