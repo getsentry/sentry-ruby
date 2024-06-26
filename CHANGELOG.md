@@ -33,6 +33,7 @@
 - Don't mutate `enabled_environments` when using `Sentry::TestHelper` ([#2317](https://github.com/getsentry/sentry-ruby/pull/2317))
 - Don't use array for transaction names and sources on scope ([#2324](https://github.com/getsentry/sentry-ruby/pull/2324))
   - Fixes [#2257](https://github.com/getsentry/sentry-ruby/issues/2257)
+  - **BREAKING** This removes the internal `scope.transaction_names` method, please use `scope.transaction_name` instead
 
 ### Internal
 
