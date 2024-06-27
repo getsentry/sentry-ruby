@@ -24,6 +24,8 @@
   The feature is only activated in apps that use Ruby 3.2+ and Rails 7.1+. By default only queries that take longer than 100ms will have source recorded, which can be adjusted by updating the value of `config.rails.db_query_source_threshold_ms`.
 - Log envelope delivery message with debug instead of info ([#2320](https://github.com/getsentry/sentry-ruby/pull/2320))
 
+- Add `exception_status_code` configuration option that allows to specify which transaction status code should be used for exceptions ([#2333](https://github.com/getsentry/sentry-ruby/issues/2333))
+
 ### Bug Fixes
 
 - Don't throw error on arbitrary arguments being passed to `capture_event` options [#2301](https://github.com/getsentry/sentry-ruby/pull/2301)
