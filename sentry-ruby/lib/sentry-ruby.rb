@@ -473,6 +473,13 @@ module Sentry
       get_current_hub.start_transaction(**options)
     end
 
+    # Takes or initializes a new Sentry::Transaction and makes a sampling decision for it.
+    #
+    # @return [Transaction, nil]
+    def status_code_for_exception(exception)
+      get_current_hub.status_code_for_exception(exception)
+    end
+
     # Records the block's execution as a child of the current span.
     # If the current scope doesn't have a span, the block would still be executed but the yield param will be nil.
     # @param attributes [Hash] attributes for the child span.

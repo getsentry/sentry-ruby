@@ -33,7 +33,8 @@ module Sentry
               raise # Don't capture Sentry errors
             rescue Exception => e
               capture_exception(e, env)
-              finish_transaction(transaction, 500)
+
+              finish_transaction(transaction, exception_status_code(e))
               raise
             end
 
@@ -48,6 +49,10 @@ module Sentry
       end
 
       private
+
+      def exception_status_code(exception)
+        Sentry.status_code_for_exception(exception)
+      end
 
       def collect_exception(env)
         env['rack.exception'] || env['sinatra.error']

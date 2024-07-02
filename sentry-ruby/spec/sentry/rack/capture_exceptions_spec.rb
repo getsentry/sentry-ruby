@@ -93,6 +93,23 @@ RSpec.describe Sentry::Rack::CaptureExceptions, rack: true do
       expect(env.key?("sentry.error_event_id")).to eq(false)
     end
 
+    context 'with a custom exception status code config' do
+      before do
+        Sentry.configuration.enable_tracing = true
+        allow(Sentry).to receive(:status_code_for_exception).and_return(404)
+      end
+
+      it 'uses the custom status code' do
+        app = ->(_e) { raise exception }
+        stack = described_class.new(app)
+
+        expect { stack.call(env) }.to raise_error(ZeroDivisionError)
+
+        event = last_sentry_event.contexts
+        expect(event.dig(:trace, :status)).to eq('not_found')
+      end
+    end
+
     context "with config.include_local_variables = true" do
       before do
         perform_basic_setup do |config|
