@@ -1,3 +1,9 @@
+## Unreleased
+
+### Bug Fixes
+
+- Drop `Gem::Specification`'s usage so it doesn't break bundler standalone ([#2335](https://github.com/getsentry/sentry-ruby/pull/2335))
+
 ## 5.18.0
 
 ### Features
