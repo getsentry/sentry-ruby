@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 require "sentry/rails/tracing/abstract_subscriber"
 
 module Sentry
@@ -5,19 +7,15 @@ module Sentry
     module Tracing
       class ActiveRecordSubscriber < AbstractSubscriber
         EVENT_NAMES = ["sql.active_record"].freeze
-        SPAN_PREFIX = "db.".freeze
-        SPAN_ORIGIN = "auto.db.rails".freeze
+        SPAN_PREFIX = "db."
+        SPAN_ORIGIN = "auto.db.rails"
         EXCLUDED_EVENTS = ["SCHEMA", "TRANSACTION"].freeze
 
         SUPPORT_SOURCE_LOCATION = ActiveSupport::BacktraceCleaner.method_defined?(:clean_frame)
 
         if SUPPORT_SOURCE_LOCATION
-          # Need to be specific down to the lib path so queries generated in specs don't get ignored
-          SENTRY_RUBY_PATH = File.join(Gem::Specification.find_by_name("sentry-ruby").full_gem_path, "lib")
-          SENTRY_RAILS_PATH = File.join(Gem::Specification.find_by_name("sentry-rails").full_gem_path, "lib")
-
           class_attribute :backtrace_cleaner, default: (ActiveSupport::BacktraceCleaner.new.tap do |cleaner|
-            cleaner.add_silencer { |line| line.include?(SENTRY_RUBY_PATH) || line.include?(SENTRY_RAILS_PATH) }
+            cleaner.add_silencer { |line| line.include?("sentry-ruby/lib") || line.include?("sentry-rails/lib") }
           end)
         end
 

@@ -13,7 +13,7 @@ jobs:
     - name: Set up Ruby
       uses: ruby/setup-ruby@v1
       with:
-        ruby-version: 2.7
+        ruby-version: 3.3
     - name: Build gem source
       run:  ruby .scripts/batch_build.rb
     - name: Archive Artifacts
