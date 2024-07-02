@@ -20,7 +20,10 @@ platform :jruby do
   gem "jdbc-sqlite3"
 end
 
-# 1.7.0 dropped support for ruby < 3.0, remove later after upgrading craft setup
-gem "sqlite3", "1.6.9", platform: :ruby
+if Gem::Version.new(RUBY_VERSION) < Gem::Version.new("2.5.0")
+  gem "sqlite3", "~> 1.3.0", platform: :ruby
+else
+  gem "sqlite3", "~> 1.6.9", platform: :ruby
+end
 
 eval_gemfile File.expand_path("../Gemfile", __dir__)
