@@ -15,6 +15,12 @@ RSpec.describe Sentry::Sidekiq::Configuration do
     expect(config.excluded_exceptions).to include("Sidekiq::JobRetry::Skip")
   end
 
+  it "adds Sidekiq::JobRetry::Handled to the ignore list" do
+    config = Sentry::Configuration.new
+
+    expect(config.excluded_exceptions).to include("Sidekiq::JobRetry::Handled")
+  end
+
   describe "#report_after_job_retries" do
     it "has correct default value" do
       expect(subject.report_after_job_retries).to eq(false)
