@@ -11,7 +11,7 @@ module Sentry
   module Sidekiq
     IGNORE_DEFAULT = [
       "Sidekiq::JobRetry::Skip",
-      "Sidekiq::JobRetry::Handled",
+      "Sidekiq::JobRetry::Handled"
     ]
 
     class Configuration
