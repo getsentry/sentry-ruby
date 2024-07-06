@@ -351,7 +351,7 @@ module Sentry
     def initialize
       self.app_dirs_pattern = nil
       self.debug = false
-      self.background_worker_threads = (Concurrent.processor_count / 2.0).ceil
+      self.background_worker_threads = (processor_count / 2.0).ceil
       self.background_worker_max_queue = BackgroundWorker::DEFAULT_MAX_QUEUE
       self.backtrace_cleanup_callback = nil
       self.max_breadcrumbs = BreadcrumbBuffer::DEFAULT_SIZE
@@ -652,6 +652,14 @@ module Sentry
     def run_post_initialization_callbacks
       self.class.post_initialization_callbacks.each do |hook|
         instance_eval(&hook)
+      end
+    end
+
+    def processor_count
+      if Concurrent.respond_to?(:usable_processor_count)
+        Concurrent.usable_processor_count
+      else
+        Concurrent.processor_count
       end
     end
   end
