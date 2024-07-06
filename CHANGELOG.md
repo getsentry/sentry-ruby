@@ -1,3 +1,9 @@
+## Unreleased
+
+### Internal
+
+- Use Concurrent.usable_processor_count when it is available ([#2339](https://github.com/getsentry/sentry-ruby/pull/2339))
+
 ## 5.18.1
 
 ### Bug Fixes
