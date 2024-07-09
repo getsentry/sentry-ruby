@@ -26,12 +26,12 @@ RSpec.describe Sentry::Configuration do
 
   describe "#background_worker_threads" do
     it "sets to have of the processors count" do
-      allow(Concurrent).to receive(:processor_count).and_return(8)
+      allow_any_instance_of(Sentry::Configuration).to receive(:processor_count).and_return(8)
       expect(subject.background_worker_threads).to eq(4)
     end
 
     it "sets to 1 with only 1 processor" do
-      allow(Concurrent).to receive(:processor_count).and_return(1)
+      allow_any_instance_of(Sentry::Configuration).to receive(:processor_count).and_return(1)
       expect(subject.background_worker_threads).to eq(1)
     end
   end
