@@ -21,7 +21,7 @@ Gem::Specification.new do |spec|
   spec.metadata = {
     "homepage_uri" => spec.homepage,
     "source_code_uri" => spec.homepage,
-    "changelog_uri" => "#{spec.homepage.replace('/tree/', '/blob/')}/CHANGELOG.md",
+    "changelog_uri" => "#{github_root_uri}/blob/#{spec.version}/CHANGELOG.md",
     "bug_tracker_uri" => "#{github_root_uri}/issues",
     "documentation_uri" => "http://www.rubydoc.info/gems/#{spec.name}/#{spec.version}"
   }
