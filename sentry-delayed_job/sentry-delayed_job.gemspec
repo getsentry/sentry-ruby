@@ -7,16 +7,22 @@ Gem::Specification.new do |spec|
   spec.description = spec.summary = "A gem that provides DelayedJob integration for the Sentry error logger"
   spec.email = "accounts@sentry.io"
   spec.license = 'MIT'
-  spec.homepage = "https://github.com/getsentry/sentry-ruby"
 
   spec.platform = Gem::Platform::RUBY
   spec.required_ruby_version = '>= 2.4'
   spec.extra_rdoc_files = ["README.md", "LICENSE.txt"]
   spec.files = `git ls-files | grep -Ev '^(spec|benchmarks|examples)'`.split("\n")
 
-  spec.metadata["homepage_uri"] = spec.homepage
-  spec.metadata["source_code_uri"] = spec.homepage
-  spec.metadata["changelog_uri"] = "#{spec.homepage}/blob/master/CHANGELOG.md"
+  github_root_uri = 'https://github.com/getsentry/sentry-ruby'
+  spec.homepage = "#{github_root_uri}/tree/#{spec.version}/#{spec.name}"
+
+  spec.metadata = {
+    "homepage_uri" => spec.homepage,
+    "source_code_uri" => spec.homepage,
+    "changelog_uri" => "#{github_root_uri}/blob/#{spec.version}/CHANGELOG.md",
+    "bug_tracker_uri" => "#{github_root_uri}/issues",
+    "documentation_uri" => "http://www.rubydoc.info/gems/#{spec.name}/#{spec.version}"
+  }
 
   spec.bindir        = "exe"
   spec.executables   = spec.files.grep(%r{^exe/}) { |f| File.basename(f) }
