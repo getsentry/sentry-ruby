@@ -4,6 +4,10 @@
 
 - Use Concurrent.usable_processor_count when it is available ([#2339](https://github.com/getsentry/sentry-ruby/pull/2339))
 
+### Bug Fixes
+
+- `teardown_sentry_test` helper should clear global even processors too ([#2342](https://github.com/getsentry/sentry-ruby/pull/2342))
+
 ## 5.18.1
 
 ### Bug Fixes
