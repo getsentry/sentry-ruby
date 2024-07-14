@@ -50,6 +50,7 @@ module Sentry
       if Sentry.get_current_hub.instance_variable_get(:@stack).size > 1
         Sentry.get_current_hub.pop_scope
       end
+      Sentry::Scope.global_event_processors.clear
     end
 
     # @return [Transport]
