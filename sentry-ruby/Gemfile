@@ -24,5 +24,6 @@ gem "benchmark-memory"
 
 gem "yard", github: "lsegal/yard"
 gem "webrick"
+gem "faraday"
 
 eval_gemfile File.expand_path("../Gemfile", __dir__)
