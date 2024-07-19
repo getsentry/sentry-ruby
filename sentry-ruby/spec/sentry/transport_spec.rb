@@ -153,6 +153,7 @@ RSpec.describe Sentry::Transport do
       before do
         5.times { subject.record_lost_event(:ratelimit_backoff, 'error') }
         3.times { subject.record_lost_event(:queue_overflow, 'transaction') }
+        2.times { subject.record_lost_event(:network_error, 'span', num: 5) }
       end
 
       it "incudes client report in envelope" do
@@ -170,7 +171,8 @@ RSpec.describe Sentry::Transport do
               timestamp: Time.now.utc.iso8601,
               discarded_events: [
                 { reason: :ratelimit_backoff, category: 'error', quantity: 5 },
-                { reason: :queue_overflow, category: 'transaction', quantity: 3 }
+                { reason: :queue_overflow, category: 'transaction', quantity: 3 },
+                { reason: :network_error, category: 'span', quantity: 10 }
               ]
             }.to_json
           )
