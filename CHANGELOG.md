@@ -1,5 +1,10 @@
 ## Unreleased
 
+### Bug Fixes
+
+- Don't overwrite `ip_address` if already set on `user` [#2350](https://github.com/getsentry/sentry-ruby/pull/2350)
+  - Fixes [#2347](https://github.com/getsentry/sentry-ruby/issues/2347)
+
 ### Internal
 
 - Use Concurrent.usable_processor_count when it is available ([#2339](https://github.com/getsentry/sentry-ruby/pull/2339))
