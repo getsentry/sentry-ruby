@@ -350,6 +350,14 @@ RSpec.describe Sentry::Hub do
       expect(string_io.string).to include("Options [:unsupported] are not supported and will not be applied to the event.")
     end
 
+    it "does not warn about unsupported options if all passed options are supported" do
+      expect do
+        subject.capture_event(event, level: 'DEBUG')
+      end.not_to raise_error
+
+      expect(string_io.string).not_to include("Options [] are not supported and will not be applied to the event.")
+    end
+
     context "when event is a transaction" do
       it "transaction.set_context merges and takes precedence over scope.set_context" do
         scope.set_context(:foo, { val: 42 })

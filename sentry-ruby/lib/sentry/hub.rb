@@ -195,10 +195,12 @@ module Sentry
       elsif !options.empty?
         unsupported_option_keys = scope.update_from_options(**options)
 
-        configuration.log_debug <<~MSG
-          Options #{unsupported_option_keys} are not supported and will not be applied to the event.
-          You may want to set them under the `extra` option.
-        MSG
+        unless unsupported_option_keys.empty?
+          configuration.log_debug <<~MSG
+            Options #{unsupported_option_keys} are not supported and will not be applied to the event.
+            You may want to set them under the `extra` option.
+          MSG
+        end
       end
 
       event = current_client.capture_event(event, scope, hint)
