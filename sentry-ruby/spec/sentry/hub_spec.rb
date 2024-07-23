@@ -350,7 +350,7 @@ RSpec.describe Sentry::Hub do
       expect(string_io.string).to include("Options [:unsupported] are not supported and will not be applied to the event.")
     end
 
-    it "should not show the unsupported options notice even if it has a special parameter" do
+    it "does not warn about unsupported options if all passed options are supported" do
       expect do
         subject.capture_event(event, level: 'DEBUG')
       end.not_to raise_error
