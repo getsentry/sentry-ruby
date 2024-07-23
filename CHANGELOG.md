@@ -6,6 +6,7 @@
 
 ### Bug Fixes
 
+- `teardown_sentry_test` helper should clear global even processors too ([#2342](https://github.com/getsentry/sentry-ruby/pull/2342))
 - Suppress the unnecessary “unsupported options notice” ([#2349](https://github.com/getsentry/sentry-ruby/pull/2349))
 
 ## 5.18.1

@@ -127,6 +127,12 @@ RSpec.describe Sentry::TestHelper do
       expect(Sentry.get_current_scope.tags).to eq({})
     end
 
+    it "clears global processors" do
+      Sentry.add_global_event_processor { |event| event }
+      teardown_sentry_test
+      expect(Sentry::Scope.global_event_processors).to eq([])
+    end
+
     context "when the configuration is mutated" do
       it "rolls back client changes" do
         Sentry.configuration.environment = "quack"
