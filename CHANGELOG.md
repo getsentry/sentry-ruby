@@ -1,19 +1,16 @@
-## Unreleased
+## 5.18.2
 
 ### Bug Fixes
 
 - Don't overwrite `ip_address` if already set on `user` [#2350](https://github.com/getsentry/sentry-ruby/pull/2350)
   - Fixes [#2347](https://github.com/getsentry/sentry-ruby/issues/2347)
+- `teardown_sentry_test` helper should clear global even processors too ([#2342](https://github.com/getsentry/sentry-ruby/pull/2342))
+- Suppress the unnecessary “unsupported options notice” ([#2349](https://github.com/getsentry/sentry-ruby/pull/2349))
 
 ### Internal
 
 - Use `Concurrent.usable_processor_count` when it is available ([#2339](https://github.com/getsentry/sentry-ruby/pull/2339))
 - Report dropped spans in Client Reports ([#2346](https://github.com/getsentry/sentry-ruby/pull/2346))
-
-### Bug Fixes
-
-- `teardown_sentry_test` helper should clear global even processors too ([#2342](https://github.com/getsentry/sentry-ruby/pull/2342))
-- Suppress the unnecessary “unsupported options notice” ([#2349](https://github.com/getsentry/sentry-ruby/pull/2349))
 
 ## 5.18.1
 
