@@ -10,6 +10,6 @@ RSpec.describe Sentry::Interface do
     interface = TestInterface.new
     interface.some_attr = "test"
 
-    expect(interface.to_hash).to eq(some_attr: "test")
+    expect(interface.to_h).to eq(some_attr: "test")
   end
 end

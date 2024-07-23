@@ -48,9 +48,9 @@ module Sentry
     end
 
     # @return [Hash]
-    def to_hash
+    def to_h
       {
-        values: members.map(&:to_hash)
+        values: members.map(&:to_h)
       }
     end
 

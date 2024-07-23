@@ -39,7 +39,7 @@ RSpec.describe Sentry::Sidekiq::ErrorHandler do
       processor.fire_event(:startup)
     end
 
-    event = transport.events.last.to_hash
+    event = transport.events.last.to_h
     expect(event[:exception][:values][0][:type]).to eq("RuntimeError")
     expect(event[:exception][:values][0][:value]).to match("Uhoh!")
     expect(event[:transaction]).to eq "Sidekiq/startup"
@@ -51,7 +51,7 @@ RSpec.describe Sentry::Sidekiq::ErrorHandler do
     subject.call(exception, context)
 
     expect(transport.events.count).to eq(1)
-    event = transport.events.first.to_hash
+    event = transport.events.first.to_h
     expect(event[:contexts][:sidekiq]).to eq(context)
   end
 
@@ -67,7 +67,7 @@ RSpec.describe Sentry::Sidekiq::ErrorHandler do
     subject.call(exception, aj_context)
 
     expect(transport.events.count).to eq(1)
-    event = transport.events.first.to_hash
+    event = transport.events.first.to_h
     expect(event[:contexts][:sidekiq]).to eq(expected_context)
   end
 
@@ -80,7 +80,7 @@ RSpec.describe Sentry::Sidekiq::ErrorHandler do
       subject.call(exception, context)
 
       expect(transport.events.count).to eq(1)
-      event = transport.events.first.to_hash
+      event = transport.events.first.to_h
       expect(event[:transaction]).to eq("Sidekiq/HardWorker")
     end
   end

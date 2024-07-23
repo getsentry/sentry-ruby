@@ -24,8 +24,8 @@ RSpec.describe Sentry::Rails::Tracing, type: :request do
       expect(response).to have_http_status(:internal_server_error)
       expect(transport.events.count).to eq(2)
 
-      event = transport.events.first.to_hash
-      transaction = transport.events.last.to_hash
+      event = transport.events.first.to_h
+      transaction = transport.events.last.to_h
 
       expect(event.dig(:contexts, :trace, :trace_id).length).to eq(32)
       expect(event.dig(:contexts, :trace, :trace_id)).to eq(transaction.dig(:contexts, :trace, :trace_id))
@@ -62,7 +62,7 @@ RSpec.describe Sentry::Rails::Tracing, type: :request do
       expect(response).to have_http_status(:ok)
       expect(transport.events.count).to eq(1)
 
-      transaction = transport.events.last.to_hash
+      transaction = transport.events.last.to_h
 
       expect(transaction[:type]).to eq("transaction")
       expect(transaction.dig(:contexts, :trace, :op)).to eq("http.server")
@@ -206,7 +206,7 @@ RSpec.describe Sentry::Rails::Tracing, type: :request do
 
       expect(transport.events.count).to eq(3)
 
-      transaction = transport.events.last.to_hash
+      transaction = transport.events.last.to_h
 
       expect(transaction[:type]).to eq("transaction")
       expect(transaction[:transaction]).to eq("PostsController#show")

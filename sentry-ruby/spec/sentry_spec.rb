@@ -279,7 +279,7 @@ RSpec.describe Sentry do
           described_class.capture_exception(e)
         end
 
-        event = last_sentry_event.to_hash
+        event = last_sentry_event.to_h
         last_frame = event.dig(:exception, :values, 0, :stacktrace, :frames).last
         expect(last_frame[:vars]).to eq(nil)
       end
@@ -305,7 +305,7 @@ RSpec.describe Sentry do
           described_class.capture_exception(e)
         end
 
-        event = last_sentry_event.to_hash
+        event = last_sentry_event.to_h
         last_frame = event.dig(:exception, :values, 0, :stacktrace, :frames).last
         expect(last_frame[:vars]).to include({ a: "1", b: "0" })
       end

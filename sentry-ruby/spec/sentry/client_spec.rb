@@ -179,7 +179,7 @@ RSpec.describe Sentry::Client do
 
     it 'returns an event' do
       event = subject.event_from_message(message)
-      hash = event.to_hash
+      hash = event.to_h
 
       expect(event).to be_a(Sentry::ErrorEvent)
       expect(hash[:message]).to eq(message)
@@ -195,7 +195,7 @@ RSpec.describe Sentry::Client do
 
       t.name = "Thread 1"
       t.join
-      hash = event.to_hash
+      hash = event.to_h
 
       thread = hash[:threads][:values][0]
       expect(thread[:id]).to eq(t.object_id)
@@ -223,7 +223,7 @@ RSpec.describe Sentry::Client do
 
     it "initializes a correct event for the transaction" do
       event = subject.event_from_transaction(transaction)
-      event_hash = event.to_hash
+      event_hash = event.to_h
 
       expect(event_hash[:type]).to eq("transaction")
       expect(event_hash[:contexts][:trace]).to eq(transaction.get_trace_context)
@@ -278,7 +278,7 @@ RSpec.describe Sentry::Client do
     it 'adds metric summary on transaction if any' do
       key = [:c, 'incr', 'none', []]
       transaction.metrics_local_aggregator.add(key, 10)
-      hash = subject.event_from_transaction(transaction).to_hash
+      hash = subject.event_from_transaction(transaction).to_h
 
       expect(hash[:_metrics_summary]).to eq({
         'c:incr@none' => { count: 1, max: 10.0, min: 10.0, sum: 10.0, tags: {} }
@@ -290,7 +290,7 @@ RSpec.describe Sentry::Client do
     let(:message) { 'This is a message' }
     let(:exception) { Exception.new(message) }
     let(:event) { subject.event_from_exception(exception) }
-    let(:hash) { event.to_hash }
+    let(:hash) { event.to_h }
 
     it "sets the message to the exception's value and type" do
       expect(hash[:exception][:values][0][:type]).to eq("Exception")
@@ -339,7 +339,7 @@ RSpec.describe Sentry::Client do
         end
 
         event = subject.event_from_exception(NonStringMessageError.new)
-        hash = event.to_hash
+        hash = event.to_h
         expect(event).to be_a(Sentry::ErrorEvent)
         expect(hash[:exception][:values][0][:value]).to eq("{:foo=>\"bar\"}")
       end
@@ -355,7 +355,7 @@ RSpec.describe Sentry::Client do
       t.name = "Thread 1"
       t.join
 
-      event_hash = event.to_hash
+      event_hash = event.to_h
       thread = event_hash[:threads][:values][0]
 
       expect(thread[:id]).to eq(t.object_id)
@@ -376,7 +376,7 @@ RSpec.describe Sentry::Client do
     it 'returns an event' do
       event = subject.event_from_exception(ZeroDivisionError.new("divided by 0"))
       expect(event).to be_a(Sentry::ErrorEvent)
-      hash = event.to_hash
+      hash = event.to_h
       expect(hash[:exception][:values][0][:type]).to match("ZeroDivisionError")
       expect(hash[:exception][:values][0][:value]).to match("divided by 0")
     end
@@ -576,7 +576,7 @@ RSpec.describe Sentry::Client do
       context 'when the exception responds to sentry_context' do
         let(:hash) do
           event = subject.event_from_exception(ExceptionWithContext.new)
-          event.to_hash
+          event.to_h
         end
 
         it "merges the context into event's extra" do
@@ -654,7 +654,7 @@ RSpec.describe Sentry::Client do
       it 'has correct custom mechanism when passed' do
         mech = Sentry::Mechanism.new(type: 'custom', handled: false)
         event = subject.event_from_exception(exception, mechanism: mech)
-        hash = event.to_hash
+        hash = event.to_h
         mechanism = hash[:exception][:values][0][:mechanism]
         expect(mechanism).to eq({ type: 'custom', handled: false })
       end
@@ -669,7 +669,7 @@ RSpec.describe Sentry::Client do
       event = subject.event_from_check_in(slug, status)
       expect(event).to be_a(Sentry::CheckInEvent)
 
-      hash = event.to_hash
+      hash = event.to_h
       expect(hash[:monitor_slug]).to eq(slug)
       expect(hash[:status]).to eq(status)
       expect(hash[:check_in_id].length).to eq(32)
@@ -686,7 +686,7 @@ RSpec.describe Sentry::Client do
 
       expect(event).to be_a(Sentry::CheckInEvent)
 
-      hash = event.to_hash
+      hash = event.to_h
       expect(hash[:monitor_slug]).to eq(slug)
       expect(hash[:status]).to eq(status)
       expect(hash[:check_in_id]).to eq("xxx-yyy")
@@ -705,7 +705,7 @@ RSpec.describe Sentry::Client do
 
       expect(event).to be_a(Sentry::CheckInEvent)
 
-      hash = event.to_hash
+      hash = event.to_h
       expect(hash[:monitor_slug]).to eq(slug)
       expect(hash[:status]).to eq(status)
       expect(hash[:check_in_id]).to eq("xxx-yyy")

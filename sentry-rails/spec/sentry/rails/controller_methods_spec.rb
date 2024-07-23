@@ -35,7 +35,7 @@ RSpec.describe Sentry::Rails::ControllerMethods do
       event = transport.events.last
       expect(event.message).to eq("foo")
       expect(event.tags).to eq({ new_tag: true })
-      expect(event.to_hash.dig(:request, :url)).to eq("http://example.org/test")
+      expect(event.to_h.dig(:request, :url)).to eq("http://example.org/test")
     end
   end
 
@@ -47,8 +47,8 @@ RSpec.describe Sentry::Rails::ControllerMethods do
 
       event = transport.events.last
       expect(event.tags).to eq({ new_tag: true })
-      expect(event.to_hash.dig(:exception, :values, 0, :type)).to eq("ZeroDivisionError")
-      expect(event.to_hash.dig(:request, :url)).to eq("http://example.org/test")
+      expect(event.to_h.dig(:exception, :values, 0, :type)).to eq("ZeroDivisionError")
+      expect(event.to_h.dig(:request, :url)).to eq("http://example.org/test")
     end
   end
 end

@@ -54,7 +54,7 @@ RSpec.describe Sentry::Transport do
           '{"type":"event","content_type":"application/json"}'
         )
 
-        expect(item).to eq(event.to_hash.to_json)
+        expect(item).to eq(event.to_h.to_json)
       end
     end
 
@@ -89,7 +89,7 @@ RSpec.describe Sentry::Transport do
           '{"type":"transaction","content_type":"application/json"}'
         )
 
-        expect(item).to eq(event.to_hash.to_json)
+        expect(item).to eq(event.to_h.to_json)
       end
 
       context "with profiling on transaction" do
@@ -212,7 +212,7 @@ RSpec.describe Sentry::Transport do
           1000.times do |i|
             event.breadcrumbs.record Sentry::Breadcrumb.new(category: i.to_s, message: "x" * Sentry::Event::MAX_MESSAGE_SIZE_IN_BYTES)
           end
-          serialized_result = JSON.generate(event.to_hash)
+          serialized_result = JSON.generate(event.to_h)
           expect(serialized_result.bytesize).to be > Sentry::Envelope::Item::MAX_SERIALIZED_PAYLOAD_SIZE
         end
 
@@ -265,7 +265,7 @@ RSpec.describe Sentry::Transport do
           )
           single_exception.instance_variable_set(:@stacktrace, new_stacktrace)
 
-          serialized_result = JSON.generate(event.to_hash)
+          serialized_result = JSON.generate(event.to_h)
           expect(serialized_result.bytesize).to be > Sentry::Envelope::Item::MAX_SERIALIZED_PAYLOAD_SIZE
         end
 
@@ -375,7 +375,7 @@ RSpec.describe Sentry::Transport do
         1000.times do |i|
           event.breadcrumbs.record Sentry::Breadcrumb.new(category: i.to_s, message: "x" * Sentry::Event::MAX_MESSAGE_SIZE_IN_BYTES)
         end
-        serialized_result = JSON.generate(event.to_hash)
+        serialized_result = JSON.generate(event.to_h)
         expect(serialized_result.bytesize).to be > Sentry::Envelope::Item::MAX_SERIALIZED_PAYLOAD_SIZE
       end
 

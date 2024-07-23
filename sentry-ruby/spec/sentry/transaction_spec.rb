@@ -390,9 +390,9 @@ RSpec.describe Sentry::Transaction do
     end
   end
 
-  describe "#to_hash" do
+  describe "#to_h" do
     it "returns correct data" do
-      hash = subject.to_hash
+      hash = subject.to_h
 
       expect(hash[:op]).to eq("sql.query")
       expect(hash[:description]).to eq("SELECT * FROM users;")
@@ -419,7 +419,7 @@ RSpec.describe Sentry::Transaction do
       subject.finish
 
       expect(events.count).to eq(1)
-      event = events.last.to_hash
+      event = events.last.to_h
 
       # don't contain itself
       expect(event[:spans]).to be_empty
@@ -429,7 +429,7 @@ RSpec.describe Sentry::Transaction do
       subject.finish
 
       expect(events.count).to eq(1)
-      event = events.last.to_hash
+      event = events.last.to_h
 
       expect(event[:transaction]).to eq("foo")
     end
@@ -439,7 +439,7 @@ RSpec.describe Sentry::Transaction do
       subject.finish(end_timestamp: timestamp)
 
       expect(events.count).to eq(1)
-      event = events.last.to_hash
+      event = events.last.to_h
 
       expect(event[:timestamp]).to eq(timestamp)
     end
@@ -452,7 +452,7 @@ RSpec.describe Sentry::Transaction do
       subject.finish
 
       expect(events.count).to eq(1)
-      event = events.last.to_hash
+      event = events.last.to_h
 
       expect(event[:tags]).to eq({ foo: 'bar', name: "apple" })
     end
@@ -532,7 +532,7 @@ RSpec.describe Sentry::Transaction do
         subject.set_measurement("metric.foo", 0.5, "second")
         subject.finish
 
-        transaction = events.last.to_hash
+        transaction = events.last.to_h
         expect(transaction[:measurements]).to eq(
           { "metric.foo" => { value: 0.5, unit: "second" } }
         )

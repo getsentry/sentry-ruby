@@ -64,7 +64,7 @@ RSpec.describe Sentry::Resque do
     process_job(worker)
 
     expect(transport.events.count).to eq(1)
-    event = transport.events.last.to_hash
+    event = transport.events.last.to_h
     expect(event[:message]).to eq("report")
     expect(event[:tags]).to eq({ "resque.queue" => "default" })
     expect(event[:contexts][:"Resque"]).to include({ job_class: "MessageJob", arguments: ["report"], queue: "default" })
@@ -86,7 +86,7 @@ RSpec.describe Sentry::Resque do
     process_job(worker)
 
     expect(transport.events.count).to eq(1)
-    event = transport.events.last.to_hash
+    event = transport.events.last.to_h
     expect(event[:message]).to eq("tagged report")
     expect(event[:tags]).to include({ number: 1 })
 
@@ -95,7 +95,7 @@ RSpec.describe Sentry::Resque do
     process_job(worker)
 
     expect(transport.events.count).to eq(2)
-    event = transport.events.last.to_hash
+    event = transport.events.last.to_h
     expect(event[:tags]).to eq({ "resque.queue" => "default" })
   end
 
@@ -107,7 +107,7 @@ RSpec.describe Sentry::Resque do
       end.to change { Resque::Stat.get("failed") }.by(1)
 
       expect(transport.events.count).to eq(1)
-      event = transport.events.last.to_hash
+      event = transport.events.last.to_h
 
       expect(event[:sdk]).to eq({ name: "sentry.ruby.resque", version: described_class::VERSION })
       expect(event.dig(:exception, :values, 0, :type)).to eq("ZeroDivisionError")
@@ -121,7 +121,7 @@ RSpec.describe Sentry::Resque do
       end.to change { Resque::Stat.get("failed") }.by(1)
 
       expect(transport.events.count).to eq(1)
-      event = transport.events.last.to_hash
+      event = transport.events.last.to_h
 
       expect(event[:tags]).to eq({ "resque.queue" => "default", number: 1 })
       expect(Sentry.get_current_scope.extra).to eq({})
@@ -133,7 +133,7 @@ RSpec.describe Sentry::Resque do
       end.to change { Resque::Stat.get("failed") }.by(1)
 
       expect(transport.events.count).to eq(2)
-      event = transport.events.last.to_hash
+      event = transport.events.last.to_h
       expect(event[:tags]).to eq({ "resque.queue" => "default" })
       expect(Sentry.get_current_scope.extra).to eq({})
       expect(Sentry.get_current_scope.tags).to eq({})
@@ -159,7 +159,7 @@ RSpec.describe Sentry::Resque do
           end
         end.to change { transport.events.count }.by(1)
 
-        event = transport.events.last.to_hash
+        event = transport.events.last.to_h
 
         expect(event[:sdk]).to eq({ name: "sentry.ruby.resque", version: described_class::VERSION })
         expect(event.dig(:exception, :values, 0, :type)).to eq("ZeroDivisionError")
@@ -173,7 +173,7 @@ RSpec.describe Sentry::Resque do
         end.to change { Resque::Stat.get("failed") }.by(1)
            .and change { transport.events.count }.by(1)
 
-        event = transport.events.last.to_hash
+        event = transport.events.last.to_h
 
         expect(event[:sdk]).to eq({ name: "sentry.ruby.resque", version: described_class::VERSION })
         expect(event.dig(:exception, :values, 0, :type)).to eq("ZeroDivisionError")
@@ -199,7 +199,7 @@ RSpec.describe Sentry::Resque do
           end
         end.to change { transport.events.count }.by(3)
 
-        event = transport.events.last.to_hash
+        event = transport.events.last.to_h
 
         expect(event[:sdk]).to eq({ name: "sentry.ruby.resque", version: described_class::VERSION })
         expect(event.dig(:exception, :values, 0, :type)).to eq("ZeroDivisionError")
@@ -264,7 +264,7 @@ RSpec.describe Sentry::Resque do
       it "injects ActiveJob information to the event" do
         expect(transport.events.count).to eq(1)
 
-        event = transport.events.last.to_hash
+        event = transport.events.last.to_h
         expect(event[:message]).to eq("report from ActiveJob")
         expect(event[:tags]).to match({ "resque.queue" => "default", number: 1 })
         expect(event[:contexts][:"Active-Job"][:job_class]).to eq("AJMessageJob")
@@ -289,7 +289,7 @@ RSpec.describe Sentry::Resque do
       it "injects ActiveJob information to the event" do
         expect(transport.events.count).to eq(1)
 
-        event = transport.events.last.to_hash
+        event = transport.events.last.to_h
         expect(event.dig(:exception, :values, 0, :type)).to eq("ZeroDivisionError")
         expect(event[:tags]).to match({ "resque.queue" => "default", number: 2 })
         expect(event[:contexts][:"Active-Job"][:job_class]).to eq("AJFailedJob")

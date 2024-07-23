@@ -132,7 +132,7 @@ RSpec.describe "Sentry::Breadcrumbs::MonotonicActiveSupportLogger", type: :reque
 
         expect(transport.events.count).to eq(1)
 
-        transaction = transport.events.last.to_hash
+        transaction = transport.events.last.to_h
         breadcrumbs = transaction[:breadcrumbs][:values]
         process_action_crumb = breadcrumbs.last
         expect(process_action_crumb[:category]).to eq("process_action.action_controller")

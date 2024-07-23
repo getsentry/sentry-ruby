@@ -161,7 +161,7 @@ module Sentry
     end
 
     # @return [Hash]
-    def to_hash
+    def to_h
       hash = {
         trace_id: @trace_id,
         span_id: @span_id,
@@ -301,7 +301,7 @@ module Sentry
     end
 
     def metrics_summary
-      @metrics_local_aggregator&.to_hash
+      @metrics_local_aggregator&.to_h
     end
   end
 end
