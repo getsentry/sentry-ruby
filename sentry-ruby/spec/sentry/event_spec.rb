@@ -141,6 +141,12 @@ RSpec.describe Sentry::Event do
         expect(event.to_hash[:user][:ip_address]).to eq("2.2.2.2")
       end
 
+      it "doesn't overwrite already set ip address" do
+        Sentry.set_user({ ip_address: "3.3.3.3" })
+        Sentry.get_current_scope.apply_to_event(event)
+        expect(event.to_hash[:user][:ip_address]).to eq("3.3.3.3")
+      end
+
       context "with config.trusted_proxies = [\"2.2.2.2\"]" do
         before do
           Sentry.configuration.trusted_proxies = ["2.2.2.2"]

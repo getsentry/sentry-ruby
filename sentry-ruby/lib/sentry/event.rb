@@ -104,9 +104,7 @@ module Sentry
       unless request || env.empty?
         add_request_interface(env)
 
-        if @send_default_pii
-          user[:ip_address] = calculate_real_ip_from_rack(env)
-        end
+        user[:ip_address] ||= calculate_real_ip_from_rack(env) if @send_default_pii
 
         if request_id = Utils::RequestId.read_from(env)
           tags[:request_id] = request_id
