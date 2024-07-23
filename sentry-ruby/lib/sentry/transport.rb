@@ -151,11 +151,11 @@ module Sentry
       envelope
     end
 
-    def record_lost_event(reason, data_category)
+    def record_lost_event(reason, data_category, num: 1)
       return unless @send_client_reports
       return unless CLIENT_REPORT_REASONS.include?(reason)
 
-      @discarded_events[[reason, data_category]] += 1
+      @discarded_events[[reason, data_category]] += num
     end
 
     def flush

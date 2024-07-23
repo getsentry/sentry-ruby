@@ -7,6 +7,7 @@ RSpec.describe Sentry::Envelope::Item do
       ['sessions', 'session'],
       ['attachment', 'attachment'],
       ['transaction', 'transaction'],
+      ['span', 'span'],
       ['profile', 'profile'],
       ['check_in', 'monitor'],
       ['statsd', 'metric_bucket'],

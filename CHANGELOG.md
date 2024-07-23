@@ -7,7 +7,8 @@
 
 ### Internal
 
-- Use Concurrent.usable_processor_count when it is available ([#2339](https://github.com/getsentry/sentry-ruby/pull/2339))
+- Use `Concurrent.usable_processor_count` when it is available ([#2339](https://github.com/getsentry/sentry-ruby/pull/2339))
+- Report dropped spans in Client Reports ([#2346](https://github.com/getsentry/sentry-ruby/pull/2346))
 
 ### Bug Fixes
 
