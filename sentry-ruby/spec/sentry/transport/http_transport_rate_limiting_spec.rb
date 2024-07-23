@@ -14,7 +14,7 @@ RSpec.describe "rate limiting" do
   let(:configuration) { Sentry.configuration }
   let(:client) { Sentry.get_current_client }
   let(:data) do
-    subject.envelope_from_event(client.event_from_message("foobarbaz").to_hash).to_s
+    subject.envelope_from_event(client.event_from_message("foobarbaz")).to_s
   end
 
   subject { Sentry::HTTPTransport.new(configuration) }
