@@ -1,5 +1,9 @@
 ## 5.18.2
 
+### Features
+
+- Include `Delayed::Job` instance in hint [#1861](https://github.com/getsentry/sentry-ruby/pull/1861)
+
 ### Bug Fixes
 
 - Don't overwrite `ip_address` if already set on `user` [#2350](https://github.com/getsentry/sentry-ruby/pull/2350)
