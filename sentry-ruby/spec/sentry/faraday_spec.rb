@@ -1,6 +1,5 @@
-require "spec_helper"
-require "sentry/faraday"
 require "faraday"
+require_relative "../spec_helper"
 
 RSpec.describe Sentry::Faraday do
   before(:all) do

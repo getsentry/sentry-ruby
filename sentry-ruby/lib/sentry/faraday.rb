@@ -1,7 +1,5 @@
 # frozen_string_literal: true
 
-require "faraday"
-
 module Sentry
   module Faraday
     OP_NAME = "http.client"
@@ -29,10 +27,6 @@ module Sentry
           end
         end
       end
-    end
-
-    Sentry.register_patch(:faraday) do
-      ::Faraday::Connection.extend(Connection)
     end
 
     class Instrumenter
@@ -112,5 +106,11 @@ module Sentry
         Sentry.get_trace_propagation_headers&.each { |k, v| headers[k] = v }
       end
     end
+  end
+end
+
+Sentry.register_patch(:faraday) do
+  if defined?(::Faraday)
+    ::Faraday::Connection.extend(Sentry::Faraday::Connection)
   end
 end
