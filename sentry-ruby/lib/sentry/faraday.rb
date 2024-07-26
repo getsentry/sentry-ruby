@@ -17,14 +17,9 @@ module Sentry
         # Ensure that we attach instrumentation only if the adapter is not net/http
         # because if is is, then the net/http instrumentation will take care of it
         if builder.adapter.name != "Faraday::Adapter::NetHttp"
-          request :instrumentation, name: OP_NAME, instrumenter: Instrumenter.new
-
           # Make sure that it's going to be the first middleware so that it can capture
           # the entire request processing involving other middlewares
-          handlers = builder.handlers
-          instrumentation = handlers.pop
-
-          handlers.unshift(instrumentation)
+          builder.insert(0, ::Faraday::Request::Instrumentation, name: OP_NAME, instrumenter: Instrumenter.new)
         end
       end
     end
