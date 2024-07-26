@@ -250,6 +250,8 @@ RSpec.describe Sentry::Faraday do
 
       expect(request_span.op).to eq("http.client")
       expect(request_span.origin).to eq("auto.http.net_http")
+
+      expect(transaction.span_recorder.spans.map(&:origin)).not_to include("auto.http.faraday")
     end
   end
 end
