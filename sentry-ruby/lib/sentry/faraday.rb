@@ -11,20 +11,20 @@ module Sentry
       # by default, we need to extend the connection constructor and do it there
       #
       # @see https://lostisland.github.io/faraday/#/customization/index?id=configuration
-      def new(url = nil, options = nil)
-        super.tap do |connection|
-          # Ensure that we attach instrumentation only if the adapter is not net/http
-          # because if is is, then the net/http instrumentation will take care of it
-          if connection.builder.adapter.name != "Faraday::Adapter::NetHttp"
-            connection.request :instrumentation, name: OP_NAME, instrumenter: Instrumenter.new
+      def initialize(url = nil, options = nil)
+        super
 
-            # Make sure that it's going to be the first middleware so that it can capture
-            # the entire request processing involving other middlewares
-            handlers = connection.builder.handlers
-            instrumentation = handlers.pop
+        # Ensure that we attach instrumentation only if the adapter is not net/http
+        # because if is is, then the net/http instrumentation will take care of it
+        if builder.adapter.name != "Faraday::Adapter::NetHttp"
+          request :instrumentation, name: OP_NAME, instrumenter: Instrumenter.new
 
-            handlers.unshift(instrumentation)
-          end
+          # Make sure that it's going to be the first middleware so that it can capture
+          # the entire request processing involving other middlewares
+          handlers = builder.handlers
+          instrumentation = handlers.pop
+
+          handlers.unshift(instrumentation)
         end
       end
     end
@@ -111,6 +111,6 @@ end
 
 Sentry.register_patch(:faraday) do
   if defined?(::Faraday)
-    ::Faraday::Connection.extend(Sentry::Faraday::Connection)
+    ::Faraday::Connection.prepend(Sentry::Faraday::Connection)
   end
 end
