@@ -45,7 +45,7 @@ RSpec.describe Sentry::Scope do
       copy.set_transaction_name("foo", source: :url)
       copy.fingerprint << "bar"
 
-      expect(subject.breadcrumbs.to_hash).to eq({ values: [] })
+      expect(subject.breadcrumbs.to_h).to eq({ values: [] })
       expect(subject.contexts[:os].keys).to match_array([:name, :version, :build, :kernel_version, :machine])
       expect(subject.contexts.dig(:runtime, :version)).to match(/ruby/)
       expect(subject.extra).to eq({})
@@ -351,7 +351,7 @@ RSpec.describe Sentry::Scope do
       it "sets the request info the Event" do
         subject.apply_to_event(event)
 
-        expect(event.to_hash.dig(:request, :url)).to eq("http://example.org/test")
+        expect(event.to_h.dig(:request, :url)).to eq("http://example.org/test")
       end
     end
   end

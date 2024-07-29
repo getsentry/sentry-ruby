@@ -30,7 +30,7 @@ RSpec.describe Sentry::Rails::Tracing::ActiveRecordSubscriber, :subscriber do
 
       expect(transport.events.count).to eq(1)
 
-      transaction = transport.events.first.to_hash
+      transaction = transport.events.first.to_h
       expect(transaction[:type]).to eq("transaction")
       expect(transaction[:spans].count).to eq(1)
 
@@ -68,7 +68,7 @@ RSpec.describe Sentry::Rails::Tracing::ActiveRecordSubscriber, :subscriber do
         it "doesn't record query's source location" do
           expect(transport.events.count).to eq(1)
 
-          transaction = transport.events.first.to_hash
+          transaction = transport.events.first.to_h
           expect(transaction[:type]).to eq("transaction")
           expect(transaction[:spans].count).to eq(1)
 
@@ -87,7 +87,7 @@ RSpec.describe Sentry::Rails::Tracing::ActiveRecordSubscriber, :subscriber do
         it "records query's source location" do
           expect(transport.events.count).to eq(1)
 
-          transaction = transport.events.first.to_hash
+          transaction = transport.events.first.to_h
           expect(transaction[:type]).to eq("transaction")
           expect(transaction[:spans].count).to eq(1)
 
@@ -106,7 +106,7 @@ RSpec.describe Sentry::Rails::Tracing::ActiveRecordSubscriber, :subscriber do
         it "doesn't record query's source location" do
           expect(transport.events.count).to eq(1)
 
-          transaction = transport.events.first.to_hash
+          transaction = transport.events.first.to_h
           expect(transaction[:type]).to eq("transaction")
           expect(transaction[:spans].count).to eq(1)
 
@@ -133,7 +133,7 @@ RSpec.describe Sentry::Rails::Tracing::ActiveRecordSubscriber, :subscriber do
 
       expect(transport.events.count).to eq(1)
 
-      transaction = transport.events.first.to_hash
+      transaction = transport.events.first.to_h
       expect(transaction[:type]).to eq("transaction")
       expect(transaction[:spans].count).to eq(2)
 

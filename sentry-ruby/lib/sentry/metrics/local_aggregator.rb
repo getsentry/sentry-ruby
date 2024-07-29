@@ -18,7 +18,7 @@ module Sentry
         end
       end
 
-      def to_hash
+      def to_h
         return nil if @buckets.empty?
 
         @buckets.map do |bucket_key, metric|

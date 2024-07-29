@@ -34,7 +34,7 @@ module Sentry
     end
 
     # @return [Hash]
-    def to_hash
+    def to_h
       {
         category: @category,
         data: serialized_data,

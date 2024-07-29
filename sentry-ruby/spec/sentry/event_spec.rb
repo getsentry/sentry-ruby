@@ -97,14 +97,14 @@ RSpec.describe Sentry::Event do
       it "filters out pii data" do
         scope.apply_to_event(event)
 
-        expect(event.to_hash[:request]).to eq(
+        expect(event.to_h[:request]).to eq(
           env: { 'SERVER_NAME' => 'localhost', 'SERVER_PORT' => '80' },
           headers: { 'Host' => 'localhost', 'X-Request-Id' => 'abcd-1234-abcd-1234' },
           method: 'POST',
           url: 'http://localhost/lol',
         )
-        expect(event.to_hash[:tags][:request_id]).to eq("abcd-1234-abcd-1234")
-        expect(event.to_hash[:user][:ip_address]).to eq(nil)
+        expect(event.to_h[:tags][:request_id]).to eq("abcd-1234-abcd-1234")
+        expect(event.to_h[:user][:ip_address]).to eq(nil)
       end
 
       it "removes ip address headers" do
@@ -127,7 +127,7 @@ RSpec.describe Sentry::Event do
       it "adds correct data" do
         Sentry.get_current_scope.apply_to_event(event)
 
-        expect(event.to_hash[:request]).to eq(
+        expect(event.to_h[:request]).to eq(
           data: { 'foo' => 'bar' },
           env: { 'SERVER_NAME' => 'localhost', 'SERVER_PORT' => '80', "REMOTE_ADDR" => "192.168.1.1" },
           headers: { 'Host' => 'localhost', "X-Forwarded-For" => "1.1.1.1, 2.2.2.2", "X-Request-Id" => "abcd-1234-abcd-1234" },
@@ -137,8 +137,8 @@ RSpec.describe Sentry::Event do
           cookies: {}
         )
 
-        expect(event.to_hash[:tags][:request_id]).to eq("abcd-1234-abcd-1234")
-        expect(event.to_hash[:user][:ip_address]).to eq("2.2.2.2")
+        expect(event.to_h[:tags][:request_id]).to eq("abcd-1234-abcd-1234")
+        expect(event.to_h[:user][:ip_address]).to eq("2.2.2.2")
       end
 
       it "doesn't overwrite already set ip address" do
@@ -155,7 +155,7 @@ RSpec.describe Sentry::Event do
         it "calculates the correct ip address" do
           Sentry.get_current_scope.apply_to_event(event)
 
-          expect(event.to_hash[:request]).to eq(
+          expect(event.to_h[:request]).to eq(
             data: { "foo"=>"bar" },
             env: { 'SERVER_NAME' => 'localhost', 'SERVER_PORT' => '80', "REMOTE_ADDR" => "192.168.1.1" },
             headers: { 'Host' => 'localhost', "X-Forwarded-For" => "1.1.1.1, 2.2.2.2", "X-Request-Id" => "abcd-1234-abcd-1234" },
@@ -165,8 +165,8 @@ RSpec.describe Sentry::Event do
             cookies: {}
           )
 
-          expect(event.to_hash[:tags][:request_id]).to eq("abcd-1234-abcd-1234")
-          expect(event.to_hash[:user][:ip_address]).to eq("1.1.1.1")
+          expect(event.to_h[:tags][:request_id]).to eq("abcd-1234-abcd-1234")
+          expect(event.to_h[:user][:ip_address]).to eq("1.1.1.1")
         end
       end
     end
