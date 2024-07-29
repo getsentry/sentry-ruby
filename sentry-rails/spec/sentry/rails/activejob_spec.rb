@@ -254,7 +254,7 @@ RSpec.describe "ActiveJob integration" do
         expect(transport.events.size).to eq(1)
 
         event = transport.events.first
-        exceptions_data = event.exception.to_hash[:values]
+        exceptions_data = event.exception.to_h[:values]
 
         expect(exceptions_data.count).to eq(2)
         expect(exceptions_data[0][:type]).to eq("FailedJob::TestError")
@@ -293,7 +293,7 @@ RSpec.describe "ActiveJob integration" do
         first = transport.events[0]
         check_in_id = first.check_in_id
         expect(first).to be_a(Sentry::CheckInEvent)
-        expect(first.to_hash).to include(
+        expect(first.to_h).to include(
           type: 'check_in',
           check_in_id: check_in_id,
           monitor_slug: "normaljobwithcron",
@@ -302,7 +302,7 @@ RSpec.describe "ActiveJob integration" do
 
         second = transport.events[1]
         expect(second).to be_a(Sentry::CheckInEvent)
-        expect(second.to_hash).to include(
+        expect(second.to_h).to include(
           :duration,
           type: 'check_in',
           check_in_id: check_in_id,
@@ -321,7 +321,7 @@ RSpec.describe "ActiveJob integration" do
         first = transport.events[0]
         check_in_id = first.check_in_id
         expect(first).to be_a(Sentry::CheckInEvent)
-        expect(first.to_hash).to include(
+        expect(first.to_h).to include(
           type: 'check_in',
           check_in_id: check_in_id,
           monitor_slug: "failed_job",
@@ -331,7 +331,7 @@ RSpec.describe "ActiveJob integration" do
 
         second = transport.events[1]
         expect(second).to be_a(Sentry::CheckInEvent)
-        expect(second.to_hash).to include(
+        expect(second.to_h).to include(
           :duration,
           type: 'check_in',
           check_in_id: check_in_id,

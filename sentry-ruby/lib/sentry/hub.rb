@@ -89,7 +89,7 @@ module Sentry
       transaction ||= Transaction.new(**options.merge(hub: self))
 
       sampling_context = {
-        transaction_context: transaction.to_hash,
+        transaction_context: transaction.to_h,
         parent_sampled: transaction.parent_sampled
       }
 

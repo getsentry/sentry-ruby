@@ -54,7 +54,7 @@ RSpec.describe Sentry::Sidekiq do
   it "captures exception raised in the worker" do
     expect { execute_worker(processor, SadWorker) }.to change { transport.events.size }.by(1)
 
-    event = transport.events.last.to_hash
+    event = transport.events.last.to_h
     expect(event[:sdk]).to eq({ name: "sentry.ruby.sidekiq", version: described_class::VERSION })
     expect(event[:exception][:values][0][:type]).to eq("RuntimeError")
     expect(event[:exception][:values][0][:value]).to match("I'm sad!")
@@ -63,7 +63,7 @@ RSpec.describe Sentry::Sidekiq do
   it "doesn't store the private `_config` context", skip: !WITH_SIDEKIQ_7 do
     expect { execute_worker(processor, SadWorker) }.to change { transport.events.size }.by(1)
 
-    event = transport.events.last.to_hash
+    event = transport.events.last.to_h
     expect(event[:contexts][:sidekiq].keys.map(&:to_s)).not_to include("_config")
   end
 
@@ -268,7 +268,7 @@ RSpec.describe Sentry::Sidekiq do
       first = transport.events[0]
       check_in_id = first.check_in_id
       expect(first).to be_a(Sentry::CheckInEvent)
-      expect(first.to_hash).to include(
+      expect(first.to_h).to include(
         type: 'check_in',
         check_in_id: check_in_id,
         monitor_slug: "happyworkerwithcron",
@@ -277,7 +277,7 @@ RSpec.describe Sentry::Sidekiq do
 
       second = transport.events[1]
       expect(second).to be_a(Sentry::CheckInEvent)
-      expect(second.to_hash).to include(
+      expect(second.to_h).to include(
         :duration,
         type: 'check_in',
         check_in_id: check_in_id,
@@ -293,7 +293,7 @@ RSpec.describe Sentry::Sidekiq do
       first = transport.events[0]
       check_in_id = first.check_in_id
       expect(first).to be_a(Sentry::CheckInEvent)
-      expect(first.to_hash).to include(
+      expect(first.to_h).to include(
         type: 'check_in',
         check_in_id: check_in_id,
         monitor_slug: "failed_job",
@@ -303,7 +303,7 @@ RSpec.describe Sentry::Sidekiq do
 
       second = transport.events[1]
       expect(second).to be_a(Sentry::CheckInEvent)
-      expect(second.to_hash).to include(
+      expect(second.to_h).to include(
         :duration,
         type: 'check_in',
         check_in_id: check_in_id,

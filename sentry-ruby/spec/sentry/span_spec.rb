@@ -59,14 +59,14 @@ RSpec.describe Sentry::Span do
     end
   end
 
-  describe "#to_hash" do
+  describe "#to_h" do
     before do
       subject.set_data("controller", "WelcomeController")
       subject.set_tag("foo", "bar")
     end
 
     it "returns correct data" do
-      hash = subject.to_hash
+      hash = subject.to_h
 
       expect(hash[:op]).to eq("sql.query")
       expect(hash[:description]).to eq("SELECT * FROM users;")
@@ -82,7 +82,7 @@ RSpec.describe Sentry::Span do
       key = [:c, 'incr', 'none', []]
       subject.metrics_local_aggregator.add(key, 10)
 
-      hash = subject.to_hash
+      hash = subject.to_h
       expect(hash[:_metrics_summary]).to eq({
         'c:incr@none' => { count: 1, max: 10.0, min: 10.0, sum: 10.0, tags: {} }
       })

@@ -150,25 +150,25 @@ RSpec.describe Sentry::Profiler, when: :stack_prof_installed? do
     end
   end
 
-  describe '#to_hash' do
+  describe '#to_h' do
     let (:transport) { Sentry.get_current_client.transport }
 
     context 'when not sampled' do
       before { subject.set_initial_sample_decision(false) }
 
       it 'returns nil' do
-        expect(subject.to_hash).to eq({})
+        expect(subject.to_h).to eq({})
       end
 
       it 'records lost event' do
         expect(transport).to receive(:record_lost_event).with(:sample_rate, 'profile')
-        subject.to_hash
+        subject.to_h
       end
     end
 
     it 'returns nil unless started' do
       subject.set_initial_sample_decision(true)
-      expect(subject.to_hash).to eq({})
+      expect(subject.to_h).to eq({})
     end
 
     context 'with empty results' do
@@ -186,7 +186,7 @@ RSpec.describe Sentry::Profiler, when: :stack_prof_installed? do
 
       it 'records lost event' do
         expect(transport).to receive(:record_lost_event).with(:insufficient_data, 'profile')
-        subject.to_hash
+        subject.to_h
       end
     end
 
@@ -206,12 +206,12 @@ RSpec.describe Sentry::Profiler, when: :stack_prof_installed? do
       end
 
       it 'returns empty' do
-        expect(subject.to_hash).to eq({})
+        expect(subject.to_h).to eq({})
       end
 
       it 'records lost event' do
         expect(transport).to receive(:record_lost_event).with(:insufficient_data, 'profile')
-        subject.to_hash
+        subject.to_h
       end
     end
 
@@ -224,7 +224,7 @@ RSpec.describe Sentry::Profiler, when: :stack_prof_installed? do
       end
 
       it 'has correct attributes' do
-        hash = subject.to_hash
+        hash = subject.to_h
 
         expect(hash[:event_id]).to eq(subject.event_id)
         expect(hash[:platform]).to eq('ruby')
@@ -233,7 +233,7 @@ RSpec.describe Sentry::Profiler, when: :stack_prof_installed? do
       end
 
       it 'has correct frames' do
-        frames = subject.to_hash[:profile][:frames]
+        frames = subject.to_h[:profile][:frames]
 
         foo_frame = frames.find { |f| f[:function] =~ /foo/ }
         expect(foo_frame[:function]).to eq('Foo.foo')
@@ -269,7 +269,7 @@ RSpec.describe Sentry::Profiler, when: :stack_prof_installed? do
       end
 
       it 'has correct stacks' do
-        profile = subject.to_hash[:profile]
+        profile = subject.to_h[:profile]
         frames = profile[:frames]
         stacks = profile[:stacks]
 
@@ -283,7 +283,7 @@ RSpec.describe Sentry::Profiler, when: :stack_prof_installed? do
       end
 
       it 'has correct samples' do
-        profile = subject.to_hash[:profile]
+        profile = subject.to_h[:profile]
         num_stacks = profile[:stacks].size
         samples = profile[:samples]
         last_elapsed = 0

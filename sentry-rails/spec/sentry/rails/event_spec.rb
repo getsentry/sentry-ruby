@@ -8,7 +8,7 @@ RSpec.describe Sentry::Event do
   end
 
   it "sets right SDK information" do
-    event_hash = Sentry::Rails.capture_message("foo").to_hash
+    event_hash = Sentry::Rails.capture_message("foo").to_h
 
     expect(event_hash[:sdk]).to eq(name: "sentry.ruby.rails", version: Sentry::Rails::VERSION)
   end
@@ -27,7 +27,7 @@ RSpec.describe Sentry::Event do
       e
     end
 
-    let(:hash) { Sentry::Rails.capture_exception(exception).to_hash }
+    let(:hash) { Sentry::Rails.capture_exception(exception).to_h }
 
     it 'marks in_app correctly' do
       frames = hash[:exception][:values][0][:stacktrace][:frames]
