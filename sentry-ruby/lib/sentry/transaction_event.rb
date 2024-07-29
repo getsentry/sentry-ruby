@@ -35,7 +35,7 @@ module Sentry
       self.metrics_summary = transaction.metrics_summary
 
       finished_spans = transaction.span_recorder.spans.select { |span| span.timestamp && span != transaction }
-      self.spans = finished_spans.map(&:to_hash)
+      self.spans = finished_spans.map(&:to_h)
 
       populate_profile(transaction)
     end
@@ -48,9 +48,9 @@ module Sentry
     end
 
     # @return [Hash]
-    def to_hash
+    def to_h
       data = super
-      data[:spans] = @spans.map(&:to_hash) if @spans
+      data[:spans] = @spans.map(&:to_h) if @spans
       data[:start_timestamp] = @start_timestamp
       data[:measurements] = @measurements
       data[:_metrics_summary] = @metrics_summary if @metrics_summary
@@ -62,7 +62,7 @@ module Sentry
     EMPTY_PROFILE = {}.freeze
 
     def populate_profile(transaction)
-      profile_hash = transaction.profiler&.to_hash || EMPTY_PROFILE
+      profile_hash = transaction.profiler&.to_h || EMPTY_PROFILE
 
       return if profile_hash.empty?
 

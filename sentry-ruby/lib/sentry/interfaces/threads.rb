@@ -13,7 +13,7 @@ module Sentry
     end
 
     # @return [Hash]
-    def to_hash
+    def to_h
       {
         values: [
           {
@@ -21,7 +21,7 @@ module Sentry
             name: @name,
             crashed: @crashed,
             current: @current,
-            stacktrace: @stacktrace&.to_hash
+            stacktrace: @stacktrace&.to_h
           }
         ]
       }

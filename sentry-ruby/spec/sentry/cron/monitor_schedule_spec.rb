@@ -9,9 +9,9 @@ RSpec.describe Sentry::Cron::MonitorSchedule::Crontab do
     end
   end
 
-  describe '#to_hash' do
+  describe '#to_h' do
     it 'has correct attributes' do
-      expect(subject.to_hash).to eq({ type: :crontab, value: subject.value })
+      expect(subject.to_h).to eq({ type: :crontab, value: subject.value })
     end
   end
 end
@@ -31,9 +31,9 @@ RSpec.describe Sentry::Cron::MonitorSchedule::Interval do
     end
   end
 
-  describe '#to_hash' do
+  describe '#to_h' do
     it 'has correct attributes' do
-      expect(subject.to_hash).to eq({ type: :interval, value: subject.value, unit: subject.unit })
+      expect(subject.to_h).to eq({ type: :interval, value: subject.value, unit: subject.unit })
     end
   end
 end

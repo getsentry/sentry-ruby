@@ -192,7 +192,7 @@ RSpec.describe Sentry::LogEvent do
         origin: "auto.db.rails"
       )
 
-      hash = event.to_hash
+      hash = event.to_h
 
       expect(hash[:attributes]["sentry.origin"]).to eq({ value: "auto.db.rails", type: "string" })
     end
@@ -204,7 +204,7 @@ RSpec.describe Sentry::LogEvent do
         body: "Manual log message"
       )
 
-      hash = event.to_hash
+      hash = event.to_h
 
       expect(hash[:attributes]).not_to have_key("sentry.origin")
     end

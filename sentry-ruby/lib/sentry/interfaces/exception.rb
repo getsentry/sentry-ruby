@@ -13,9 +13,9 @@ module Sentry
     end
 
     # @return [Hash]
-    def to_hash
+    def to_h
       data = super
-      data[:values] = data[:values].map(&:to_hash) if data[:values]
+      data[:values] = data[:values].map(&:to_h) if data[:values]
       data
     end
 

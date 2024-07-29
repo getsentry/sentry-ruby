@@ -61,7 +61,7 @@ RSpec.describe Sentry::RequestInterface do
       let(:additional_headers) { { "HTTP_FOO" => "Tekirda\xC4" } }
 
       it "doesn't cause any issue" do
-        json = JSON.generate(subject.to_hash)
+        json = JSON.generate(subject.to_h)
 
         expect(JSON.parse(json)["headers"]).to include("Foo"=>"Tekirda�")
       end
@@ -192,7 +192,7 @@ RSpec.describe Sentry::RequestInterface do
       env.merge!(::Rack::RACK_INPUT => StringIO.new("あ"))
 
       expect do
-        JSON.generate(subject.to_hash)
+        JSON.generate(subject.to_h)
       end.not_to raise_error
     end
 

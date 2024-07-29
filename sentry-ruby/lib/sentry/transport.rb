@@ -113,7 +113,7 @@ module Sentry
 
     def envelope_from_event(event)
       # Convert to hash
-      event_payload = event.to_hash
+      event_payload = event.to_h
       event_id = event_payload[:event_id] || event_payload["event_id"]
       item_type = event_payload[:type] || event_payload["type"]
 

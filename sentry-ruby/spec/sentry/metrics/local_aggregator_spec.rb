@@ -37,9 +37,9 @@ RSpec.describe Sentry::Metrics::LocalAggregator do
     end
   end
 
-  describe '#to_hash' do
+  describe '#to_h' do
     it 'returns nil if empty buckets' do
-      expect(subject.to_hash).to eq(nil)
+      expect(subject.to_h).to eq(nil)
     end
 
     context 'with filled buckets' do
@@ -50,28 +50,28 @@ RSpec.describe Sentry::Metrics::LocalAggregator do
       end
 
       it 'has the correct payload keys in the hash' do
-        expect(subject.to_hash.keys).to eq([
+        expect(subject.to_h.keys).to eq([
           'c:incr@second',
           's:set@none'
         ])
       end
 
       it 'has the tags deserialized correctly with array values' do
-        expect(subject.to_hash['c:incr@second'][:tags]).to eq({
+        expect(subject.to_h['c:incr@second'][:tags]).to eq({
           'foo' => [1, 2],
           'bar' => 'baz'
         })
       end
 
       it 'has the correct gauge metric values' do
-        expect(subject.to_hash['c:incr@second']).to include({
+        expect(subject.to_h['c:incr@second']).to include({
           min: 10.0,
           max: 20.0,
           count: 2,
           sum: 30.0
         })
 
-        expect(subject.to_hash['s:set@none']).to include({
+        expect(subject.to_h['s:set@none']).to include({
           min: 1.0,
           max: 1.0,
           count: 1,
