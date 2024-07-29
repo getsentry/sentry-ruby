@@ -57,6 +57,14 @@ RSpec.configure do |config|
   end
 end
 
+def fixtures_root
+  @fixtures_root ||= Pathname(__dir__).join("fixtures")
+end
+
+def fixture_path(name)
+  fixtures_root.join(name).realpath
+end
+
 def build_exception_with_cause(cause = "exception a")
   begin
     raise cause

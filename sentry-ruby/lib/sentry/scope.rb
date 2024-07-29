@@ -2,6 +2,7 @@
 
 require "sentry/breadcrumb_buffer"
 require "sentry/propagation_context"
+require "sentry/attachment"
 require "etc"
 
 module Sentry
@@ -22,6 +23,7 @@ module Sentry
       :rack_env,
       :span,
       :session,
+      :attachments,
       :propagation_context
     ]
 
@@ -55,6 +57,7 @@ module Sentry
         event.level = level
         event.breadcrumbs = breadcrumbs
         event.rack_env = rack_env if rack_env
+        event.attachments = attachments
       end
 
       if span
@@ -283,6 +286,12 @@ module Sentry
       @propagation_context = PropagationContext.new(self, env)
     end
 
+    # Add a new attachment to the scope.
+    def add_attachment(**opts)
+      attachments << (attachment = Attachment.new(**opts))
+      attachment
+    end
+
     protected
 
     # for duplicating scopes internally
@@ -303,6 +312,7 @@ module Sentry
       @rack_env = {}
       @span = nil
       @session = nil
+      @attachments = []
       generate_propagation_context
       set_new_breadcrumb_buffer
     end

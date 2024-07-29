@@ -211,6 +211,13 @@ module Sentry
       get_current_scope.set_context(*args)
     end
 
+    # @!method add_attachment
+    #   @!macro add_attachment
+    def add_attachment(**opts)
+      return unless initialized?
+      get_current_scope.add_attachment(**opts)
+    end
+
     ##### Main APIs #####
 
     # Initializes the SDK with given configuration.

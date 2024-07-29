@@ -201,6 +201,7 @@ RSpec.describe Sentry::Scope do
       scope.set_user({ id: 1 })
       scope.set_transaction_name("WelcomeController#index", source: :view)
       scope.set_fingerprint(["foo"])
+      scope.add_attachment(bytes: "file-data", filename: "test.txt")
       scope
     end
 
@@ -219,6 +220,10 @@ RSpec.describe Sentry::Scope do
       expect(event.contexts).to include(:trace)
       expect(event.contexts[:os].keys).to match_array([:name, :version, :build, :kernel_version, :machine])
       expect(event.contexts.dig(:runtime, :version)).to match(/ruby/)
+
+      attachment = event.attachments.first
+      expect(attachment.filename).to eql("test.txt")
+      expect(attachment.bytes).to eql("file-data")
     end
 
     it "does not apply the contextual data to a check-in event" do
@@ -359,6 +364,25 @@ RSpec.describe Sentry::Scope do
     it 'returns unsupported option keys' do
       result = subject.update_from_options(foo: 42, bar: 43)
       expect(result).to eq([:foo, :bar])
+    end
+  end
+
+  describe "#add_attachment" do
+    before { perform_basic_setup }
+
+    let(:opts) do
+      { bytes: "file-data", filename: "test.txt" }
+    end
+
+    subject do
+      described_class.new
+    end
+
+    it "adds a new attachment" do
+      attachment = subject.add_attachment(**opts)
+
+      expect(attachment.bytes).to eq("file-data")
+      expect(attachment.filename).to eq("test.txt")
     end
   end
 end
