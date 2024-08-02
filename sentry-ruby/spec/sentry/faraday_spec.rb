@@ -254,4 +254,26 @@ RSpec.describe Sentry::Faraday do
       expect(transaction.span_recorder.spans.map(&:origin)).not_to include("auto.http.faraday")
     end
   end
+
+  context "when Sentry is not initialized" do
+    let(:http) do
+      Faraday.new(url) do |f|
+        f.adapter Faraday::Adapter::Test do |stub|
+          stub.get("/test") do
+            [200, { "Content-Type" => "text/html" }, "<h1>hello world</h1>"]
+          end
+        end
+      end
+    end
+
+    let(:url) { "http://example.com" }
+
+    it "skips instrumentation" do
+      allow(Sentry).to receive(:initialized?).and_return(false)
+
+      response = http.get("/test")
+
+      expect(response.status).to eq(200)
+    end
+  end
 end

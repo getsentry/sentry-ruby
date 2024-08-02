@@ -29,7 +29,7 @@ module Sentry
       include Utils::HttpTracing
 
       def instrument(op_name, env, &block)
-        return unless Sentry.initialized?
+        return block.call unless Sentry.initialized?
 
         Sentry.with_child_span(op: op_name, start_timestamp: Sentry.utc_now.to_f, origin: SPAN_ORIGIN) do |sentry_span|
           request_info = extract_request_info(env)
