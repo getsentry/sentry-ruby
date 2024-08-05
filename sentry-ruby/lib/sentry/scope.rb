@@ -105,6 +105,7 @@ module Sentry
       copy.span = span.deep_dup
       copy.session = session.deep_dup
       copy.propagation_context = propagation_context.deep_dup
+      copy.attachments = attachments.dup
       copy
     end
 
@@ -122,6 +123,7 @@ module Sentry
       self.fingerprint = scope.fingerprint
       self.span = scope.span
       self.propagation_context = scope.propagation_context
+      self.attachments = scope.attachments
     end
 
     # Updates the scope's data from the given options.
@@ -131,6 +133,7 @@ module Sentry
     # @param user [Hash]
     # @param level [String, Symbol]
     # @param fingerprint [Array]
+    # @param attachments [Array<Attachment>]
     # @return [Array]
     def update_from_options(
       contexts: nil,
@@ -139,6 +142,7 @@ module Sentry
       user: nil,
       level: nil,
       fingerprint: nil,
+      attachments: nil,
       **options
     )
       self.contexts.merge!(contexts) if contexts
