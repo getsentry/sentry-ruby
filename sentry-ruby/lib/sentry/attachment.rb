@@ -14,7 +14,7 @@ module Sentry
     end
 
     def to_envelope_headers
-      { type: 'attachment', filename: filename }
+      { type: 'attachment', filename: filename, length: payload.bytesize }
     end
 
     def payload
