@@ -735,12 +735,13 @@ RSpec.describe Sentry do
     end
 
     it "adds a new attachment to the current scope favoring bytes over path" do
-      described_class.add_attachment(path: fixture_path("attachment.txt"), bytes: "test")
+      described_class.add_attachment(path: fixture_path("attachment.txt"), bytes: "test", content_type: "text/plain")
 
       expect(described_class.get_current_scope.attachments.size).to be(1)
 
       attachment = described_class.get_current_scope.attachments.first
       expect(attachment.filename).to eq("attachment.txt")
+      expect(attachment.content_type).to eq("text/plain")
       expect(attachment.payload).to eq("test")
     end
 
