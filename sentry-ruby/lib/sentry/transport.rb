@@ -145,6 +145,12 @@ module Sentry
         )
       end
 
+      if event.is_a?(Event) && event.attachments.any?
+        event.attachments.each do |attachment|
+          envelope.add_item(attachment.to_envelope_headers, attachment.payload)
+        end
+      end
+
       client_report_headers, client_report_payload = fetch_pending_client_report
       envelope.add_item(client_report_headers, client_report_payload) if client_report_headers
 

@@ -435,6 +435,24 @@ RSpec.describe Sentry::Transport do
         end
       end
     end
+
+    context "event with attachments" do
+      let(:event) { client.event_from_exception(ZeroDivisionError.new("divided by 0")) }
+      let(:envelope) { subject.envelope_from_event(event) }
+
+      before do
+        event.attachments << Sentry::Attachment.new(filename: "test-1.txt", bytes: "test")
+        event.attachments << Sentry::Attachment.new(path: fixture_path("attachment.txt"))
+      end
+
+      it "sends the event and logs the action" do
+        expect(subject).to receive(:send_data)
+
+        subject.send_envelope(envelope)
+
+        expect(io.string).to match(/Sending envelope with items \[event, attachment, attachment\]/)
+      end
+    end
   end
 
   describe "#send_event" do

@@ -42,6 +42,9 @@ module Sentry
     # @return [Hash, nil]
     attr_accessor :dynamic_sampling_context
 
+    # @return [Array<Attachment>]
+    attr_accessor :attachments
+
     # @param configuration [Configuration]
     # @param integration_meta [Hash, nil]
     # @param message [String, nil]
@@ -57,6 +60,7 @@ module Sentry
       @extra         = {}
       @contexts      = {}
       @tags          = {}
+      @attachments   = []
 
       @fingerprint = []
       @dynamic_sampling_context = nil

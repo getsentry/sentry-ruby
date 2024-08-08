@@ -713,6 +713,57 @@ RSpec.describe Sentry do
     end
   end
 
+  describe ".add_attachment" do
+    it "adds a new attachment to the current scope with provided filename and bytes" do
+      described_class.add_attachment(filename: "test.txt", bytes: "test")
+
+      expect(described_class.get_current_scope.attachments.size).to be(1)
+
+      attachment = described_class.get_current_scope.attachments.first
+      expect(attachment.filename).to eq("test.txt")
+      expect(attachment.bytes).to eq("test")
+    end
+
+    it "adds a new attachment to the current scope with provided path to a file" do
+      described_class.add_attachment(path: fixture_path("attachment.txt"))
+
+      expect(described_class.get_current_scope.attachments.size).to be(1)
+
+      attachment = described_class.get_current_scope.attachments.first
+      expect(attachment.filename).to eq("attachment.txt")
+      expect(attachment.payload).to eq("hello world\n")
+    end
+
+    it "adds a new attachment to the current scope favoring bytes over path" do
+      described_class.add_attachment(path: fixture_path("attachment.txt"), bytes: "test", content_type: "text/plain")
+
+      expect(described_class.get_current_scope.attachments.size).to be(1)
+
+      attachment = described_class.get_current_scope.attachments.first
+      expect(attachment.filename).to eq("attachment.txt")
+      expect(attachment.content_type).to eq("text/plain")
+      expect(attachment.payload).to eq("test")
+    end
+
+    it "raises meaningful error when path is invalid" do
+      described_class.add_attachment(path: "/not-here/oops")
+
+      expect(described_class.get_current_scope.attachments.size).to be(1)
+
+      attachment = described_class.get_current_scope.attachments.first
+
+      expect { attachment.payload }
+        .to raise_error(
+          Sentry::Attachment::PathNotFoundError,
+            "Failed to read attachment file, file not found: /not-here/oops"
+          )
+    end
+
+    it "requires either filename or path" do
+      expect { described_class.add_attachment(bytes: "test") }.to raise_error(ArgumentError, "filename or path is required")
+    end
+  end
+
   describe ".csp_report_uri" do
     it "returns the csp_report_uri generated from the main Configuration" do
       expect(Sentry.configuration).to receive(:csp_report_uri).and_call_original
