@@ -64,6 +64,18 @@ RSpec.describe Sentry::OpenTelemetry::SpanProcessor do
     tracer.start_span('HTTP POST', with_parent: root_parent_context, attributes: attributes, kind: :client)
   end
 
+  let(:child_internal_span_connect) do
+    attributes = {
+      'http.method' => 'POST',
+      'http.scheme' => 'https',
+      'http.target' => '/api/5434472/envelope/',
+      'net.peer.name' => 'sentry.localdomain',
+      'net.peer.port' => 443
+    }
+
+    tracer.start_span('connect', with_parent: root_parent_context, attributes: attributes, kind: :internal)
+  end
+
   before do
     perform_basic_setup
     perform_otel_setup
@@ -151,6 +163,11 @@ RSpec.describe Sentry::OpenTelemetry::SpanProcessor do
       it 'noops on internal sentry sdk requests' do
         expect(transaction).not_to receive(:start_child)
         subject.on_start(child_internal_span, root_parent_context)
+      end
+
+      it 'noops on `connect` requests' do
+        expect(transaction).not_to receive(:start_child)
+        subject.on_start(child_internal_span_connect, root_parent_context)
       end
 
       it 'starts a sentry child span on otel child span' do
