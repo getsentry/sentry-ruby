@@ -8,6 +8,10 @@
 - Transaction data are now included in the context ([#2365](https://github.com/getsentry/sentry-ruby/pull/2365))
   - Closes [#2364](https://github.com/getsentry/sentry-ruby/issues/2363)
 
+### Bug Fixes
+
+- Fix skipping `connect` spans in open-telemetry [#2364](https://github.com/getsentry/sentry-ruby/pull/2364)
+
 ## 5.18.2
 
 ### Bug Fixes

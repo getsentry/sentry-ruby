@@ -83,7 +83,7 @@ module Sentry
         dsn = Sentry.configuration.dsn
         return false unless dsn
 
-        if otel_span.name.start_with?("HTTP")
+        if otel_span.name.start_with?("HTTP") || otel_span.name == "connect"
           # only check client requests, connects are sometimes internal
           return false unless INTERNAL_SPAN_KINDS.include?(otel_span.kind)
 
