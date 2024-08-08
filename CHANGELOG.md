@@ -6,6 +6,10 @@
   - Closes [#1795](https://github.com/getsentry/sentry-ruby/issues/1795)
   - Please note that the Faraday instrumentation has some limitations in case of async requests: https://github.com/lostisland/faraday/issues/1381
 
+### Bug Fixes
+
+- Fix skipping `connect` spans in open-telemetry [#2364](https://github.com/getsentry/sentry-ruby/pull/2364)
+
 ## 5.18.2
 
 ### Bug Fixes
