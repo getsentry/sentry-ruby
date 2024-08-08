@@ -28,12 +28,15 @@ RSpec.describe Sentry::Span do
     it "returns correct context data" do
       context = subject.get_trace_context
 
+      subject.set_data(:foo, "bar")
+
       expect(context[:op]).to eq("sql.query")
       expect(context[:description]).to eq("SELECT * FROM users;")
       expect(context[:status]).to eq("ok")
       expect(context[:trace_id].length).to eq(32)
       expect(context[:span_id].length).to eq(16)
       expect(context[:origin]).to eq('manual')
+      expect(context[:data]).to eq(foo: "bar")
     end
   end
 
