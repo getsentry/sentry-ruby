@@ -5,6 +5,8 @@
 - Support for tracing Faraday requests ([#2345](https://github.com/getsentry/sentry-ruby/pull/2345))
   - Closes [#1795](https://github.com/getsentry/sentry-ruby/issues/1795)
   - Please note that the Faraday instrumentation has some limitations in case of async requests: https://github.com/lostisland/faraday/issues/1381
+- Transaction data are now included in the context ([#2365](https://github.com/getsentry/sentry-ruby/pull/2365))
+  - Closes [#2364](https://github.com/getsentry/sentry-ruby/issues/2363)
 
 ## 5.18.2
 
