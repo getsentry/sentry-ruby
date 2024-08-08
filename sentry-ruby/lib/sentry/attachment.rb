@@ -4,14 +4,13 @@ module Sentry
   class Attachment
     PathNotFoundError = Class.new(StandardError)
 
-    attr_reader :bytes, :filename, :path, :content_type, :add_to_transactions
+    attr_reader :bytes, :filename, :path, :content_type
 
-    def initialize(bytes: nil, filename: nil, content_type: nil, path: nil, add_to_transactions: false)
+    def initialize(bytes: nil, filename: nil, content_type: nil, path: nil)
       @bytes = bytes
       @filename = infer_filename(filename, path)
       @path = path
       @content_type = content_type
-      @add_to_transactions = add_to_transactions
     end
 
     def to_envelope_headers
