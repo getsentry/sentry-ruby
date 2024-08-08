@@ -192,7 +192,8 @@ module Sentry
         description: @description,
         op: @op,
         status: @status,
-        origin: @origin
+        origin: @origin,
+        data: @data
       }
     end
 
