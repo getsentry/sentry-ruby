@@ -656,11 +656,8 @@ module Sentry
     end
 
     def processor_count
-      if Concurrent.respond_to?(:usable_processor_count)
-        Concurrent.usable_processor_count
-      else
-        Concurrent.processor_count
-      end
+      available_processor_count = Concurrent.available_processor_count if Concurrent.respond_to?(:available_processor_count)
+      available_processor_count || Concurrent.processor_count
     end
   end
 end

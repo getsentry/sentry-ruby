@@ -2,6 +2,8 @@
 
 ### Features
 
+- Use `Concurrent.available_processor_count` instead of `Concurrent.usable_processor_count` ([#2358](https://github.com/getsentry/sentry-ruby/pull/2358))
+
 - Support for tracing Faraday requests ([#2345](https://github.com/getsentry/sentry-ruby/pull/2345))
   - Closes [#1795](https://github.com/getsentry/sentry-ruby/issues/1795)
   - Please note that the Faraday instrumentation has some limitations in case of async requests: https://github.com/lostisland/faraday/issues/1381
