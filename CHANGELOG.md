@@ -1,4 +1,4 @@
-## Unreleased
+## 5.19.0
 
 ### Features
 
@@ -18,7 +18,12 @@
 - Transaction data are now included in the context ([#2365](https://github.com/getsentry/sentry-ruby/pull/2365))
   - Closes [#2364](https://github.com/getsentry/sentry-ruby/issues/2363)
 
-- Include Sentry meta tag in the layout automatically ([#2369](https://github.com/getsentry/sentry-ruby/pull/2369))
+- Inject Sentry meta tags in the Rails application layout automatically in the generator ([#2369](https://github.com/getsentry/sentry-ruby/pull/2369))
+
+  To turn this behavior off, use
+  ```bash
+  bin/rails generate sentry --inject-meta false
+  ```
 
 ### Bug Fixes
 
