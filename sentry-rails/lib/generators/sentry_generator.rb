@@ -16,4 +16,10 @@ class SentryGenerator < ::Rails::Generators::Base
       end
     RUBY
   end
+
+  def inject_code_into_layout
+    inject_into_file "app/views/layouts/application.html.erb", before: "</head>\n" do
+      "  <%= Sentry.get_trace_propagation_meta.html_safe %>\n  "
+    end
+  end
 end
