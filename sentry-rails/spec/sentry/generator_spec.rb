@@ -62,6 +62,14 @@ RSpec.describe SentryGenerator do
     expect(content).to include("Sentry.get_trace_propagation_meta.html_safe")
   end
 
+  it "doesn't inject meta tag when it's disabled" do
+    run_generator %w[--inject-meta false]
+
+    content = File.read(layout_file)
+
+    expect(content).not_to include("Sentry.get_trace_propagation_meta.html_safe")
+  end
+
   context "with a DSN option" do
     it "creates a initializer file with the DSN" do
       run_generator %w[--dsn foobarbaz]
