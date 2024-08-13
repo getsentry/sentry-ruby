@@ -4,6 +4,8 @@ require "rails"
 require "sentry-rails"
 require "spec_helper"
 
+require "action_controller/railtie"
+
 class TestApp < Rails::Application
 end
 
