@@ -291,6 +291,10 @@ module Sentry
     # @return [Symbol]
     attr_reader :instrumenter
 
+    # The profiler class
+    # @return [Class]
+    attr_accessor :profiler
+
     # Take a float between 0.0 and 1.0 as the sample rate for capturing profiles.
     # Note that this rate is relative to traces_sample_rate / traces_sampler,
     # i.e. the profile is sampled by this rate after the transaction is sampled.
@@ -402,6 +406,8 @@ module Sentry
       self.rack_env_whitelist = RACK_ENV_WHITELIST_DEFAULT
       self.traces_sampler = nil
       self.enable_tracing = nil
+
+      self.profiler = Sentry::Profiler
 
       @transport = Transport::Configuration.new
       @cron = Cron::Configuration.new

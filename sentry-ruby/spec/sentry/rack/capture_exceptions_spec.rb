@@ -679,74 +679,100 @@ RSpec.describe 'Sentry::Rack::CaptureExceptions', when: :rack_available? do
     end
   end
 
-  if defined?(StackProf)
-    describe "profiling" do
-      context "when profiling is enabled" do
-        before do
-          perform_basic_setup do |config|
-            config.traces_sample_rate = 1.0
-            config.profiles_sample_rate = 1.0
-            config.release = "test-release"
-          end
-        end
+  shared_examples "a profiled transaction" do
+    it "collects a profile", retry: 3 do
+      stack = Sentry::Rack::CaptureExceptions.new(app)
+      stack.call(env)
+      event = last_sentry_event
 
-        let(:stackprof_results) do
-          data = StackProf::Report.from_file('spec/support/stackprof_results.json').data
-          # relative dir differs on each machine
-          data[:frames].each { |_id, fra| fra[:file].gsub!(/<dir>/, Dir.pwd) }
-          data
-        end
+      profile = event.profile
+      expect(profile).not_to be_nil
 
-        before do
-          StackProf.stop
-          allow(StackProf).to receive(:results).and_return(stackprof_results)
-        end
+      expect(profile[:event_id]).not_to be_nil
+      expect(profile[:platform]).to eq("ruby")
+      expect(profile[:version]).to eq("1")
+      expect(profile[:environment]).to eq("development")
+      expect(profile[:release]).to eq("test-release")
+      expect { Time.parse(profile[:timestamp]) }.not_to raise_error
 
-        it "collects a profile" do
-          app = ->(_) do
-            [200, {}, "ok"]
-          end
+      expect(profile[:device]).to include(:architecture)
+      expect(profile[:os]).to include(:name, :version)
+      expect(profile[:runtime]).to include(:name, :version)
 
-          stack = Sentry::Rack::CaptureExceptions.new(app)
-          stack.call(env)
-          event = last_sentry_event
+      expect(profile[:transaction]).to include(:id, :name, :trace_id, :active_thread_id)
+      expect(profile[:transaction][:id]).to eq(event.event_id)
+      expect(profile[:transaction][:name]).to eq(event.transaction)
+      expect(profile[:transaction][:trace_id]).to eq(event.contexts[:trace][:trace_id])
+      expect(profile[:transaction][:active_thread_id]).to eq(Thread.current.object_id.to_s)
 
-          profile = event.profile
-          expect(profile).not_to be_nil
+      # detailed checking of content is done in profiler_spec,
+      # just check basic structure here
+      frames = profile[:profile][:frames]
+      expect(frames).to be_a(Array)
+      expect(frames.first).to include(:function, :filename, :abs_path, :in_app)
 
-          expect(profile[:event_id]).not_to be_nil
-          expect(profile[:platform]).to eq("ruby")
-          expect(profile[:version]).to eq("1")
-          expect(profile[:environment]).to eq("development")
-          expect(profile[:release]).to eq("test-release")
-          expect { Time.parse(profile[:timestamp]) }.not_to raise_error
+      stacks = profile[:profile][:stacks]
+      expect(stacks).to be_a(Array)
+      expect(stacks.first).to be_a(Array)
+      expect(stacks.first.first).to be_a(Integer)
 
-          expect(profile[:device]).to include(:architecture)
-          expect(profile[:os]).to include(:name, :version)
-          expect(profile[:runtime]).to include(:name, :version)
+      samples = profile[:profile][:samples]
+      expect(samples).to be_a(Array)
+      expect(samples.first).to include(:stack_id, :thread_id, :elapsed_since_start_ns)
+    end
+  end
 
-          expect(profile[:transaction]).to include(:id, :name, :trace_id, :active_thead_id)
-          expect(profile[:transaction][:id]).to eq(event.event_id)
-          expect(profile[:transaction][:name]).to eq(event.transaction)
-          expect(profile[:transaction][:trace_id]).to eq(event.contexts[:trace][:trace_id])
-          expect(profile[:transaction][:active_thead_id]).to eq("0")
-
-          # detailed checking of content is done in profiler_spec,
-          # just check basic structure here
-          frames = profile[:profile][:frames]
-          expect(frames).to be_a(Array)
-          expect(frames.first).to include(:function, :filename, :abs_path, :in_app)
-
-          stacks = profile[:profile][:stacks]
-          expect(stacks).to be_a(Array)
-          expect(stacks.first).to be_a(Array)
-          expect(stacks.first.first).to be_a(Integer)
-
-          samples = profile[:profile][:samples]
-          expect(samples).to be_a(Array)
-          expect(samples.first).to include(:stack_id, :thread_id, :elapsed_since_start_ns)
+  describe "profiling with StackProf", when: :stack_prof_installed? do
+    context "when profiling is enabled" do
+      let(:app) do
+         ->(_) do
+          [200, {}, "ok"]
         end
       end
+
+      let(:stackprof_results) do
+        data = StackProf::Report.from_file('spec/support/stackprof_results.json').data
+        # relative dir differs on each machine
+        data[:frames].each { |_id, fra| fra[:file].gsub!(/<dir>/, Dir.pwd) }
+        data
+      end
+
+      before do
+        perform_basic_setup do |config|
+          config.traces_sample_rate = 1.0
+          config.profiles_sample_rate = 1.0
+          config.release = "test-release"
+        end
+
+        StackProf.stop
+
+        allow(StackProf).to receive(:results).and_return(stackprof_results)
+      end
+
+      include_examples "a profiled transaction"
+    end
+  end
+
+  describe "profiling with vernier", when: :vernier_installed? do
+    context "when profiling is enabled" do
+      let(:app) do
+         ->(_) do
+          ProfilerTest::Bar.bar
+          [200, {}, "ok"]
+        end
+      end
+
+      before do
+        perform_basic_setup do |config|
+          config.traces_sample_rate = 1.0
+          config.profiles_sample_rate = 1.0
+          config.release = "test-release"
+          config.profiler = Sentry::Vernier::Profiler
+          config.project_root = Dir.pwd
+        end
+      end
+
+      include_examples "a profiled transaction"
     end
   end
 end
