@@ -4,6 +4,7 @@ require "concurrent/utility/processor_counter"
 
 require "sentry/utils/exception_cause_chain"
 require 'sentry/utils/custom_inspection'
+require 'sentry/utils/env_helper'
 require "sentry/dsn"
 require "sentry/release_detector"
 require "sentry/transport/configuration"
