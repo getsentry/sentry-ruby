@@ -380,7 +380,7 @@ module Sentry
       self.dsn = ENV['SENTRY_DSN']
 
       spotlight_env = ENV['SENTRY_SPOTLIGHT']
-      spotlight_bool = env_to_bool(spotlight_env, true)
+      spotlight_bool = env_to_bool(spotlight_env, strict: true)
       self.spotlight = spotlight_bool.ni? ? spotlight_env : spotlight_bool
       self.server_name = server_name_from_env
       self.instrumenter = :sentry
