@@ -381,7 +381,7 @@ module Sentry
 
       spotlight_env = ENV['SENTRY_SPOTLIGHT']
       spotlight_bool = Sentry::Utils::EnvHelper.env_to_bool(spotlight_env, strict: true)
-      self.spotlight = spotlight_bool.nil? ? spotlight_env : spotlight_bool
+      self.spotlight = spotlight_bool.nil? ? (spotlight_env || false) : spotlight_bool
       self.server_name = server_name_from_env
       self.instrumenter = :sentry
       self.trace_propagation_targets = [PROPAGATION_TARGETS_MATCH_ALL]
