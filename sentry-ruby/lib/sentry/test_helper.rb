@@ -1,6 +1,6 @@
 module Sentry
   module TestHelper
-    DUMMY_DSN = 'http://12345:67890@sentry.localdomain/sentry/42'
+    DUMMY_DSN = "http://12345:67890@sentry.localdomain/sentry/42"
 
     # Alters the existing SDK configuration with test-suitable options. Mainly:
     # - Sets a dummy DSN instead of `nil` or an actual DSN.

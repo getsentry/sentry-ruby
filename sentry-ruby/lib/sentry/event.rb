@@ -1,12 +1,12 @@
 # frozen_string_literal: true
 
-require 'socket'
-require 'securerandom'
-require 'sentry/interface'
-require 'sentry/backtrace'
-require 'sentry/utils/real_ip'
-require 'sentry/utils/request_id'
-require 'sentry/utils/custom_inspection'
+require "socket"
+require "securerandom"
+require "sentry/interface"
+require "sentry/backtrace"
+require "sentry/utils/real_ip"
+require "sentry/utils/request_id"
+require "sentry/utils/custom_inspection"
 
 module Sentry
   # This is an abstract class that defines the shared attributes of an event.

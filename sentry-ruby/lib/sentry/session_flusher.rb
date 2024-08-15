@@ -44,7 +44,7 @@ module Sentry
     def pending_envelope
       envelope = Envelope.new
 
-      header = { type: 'sessions' }
+      header = { type: "sessions" }
       payload = { attrs: attrs, aggregates: @pending_aggregates.values }
 
       envelope.add_item(header, payload)

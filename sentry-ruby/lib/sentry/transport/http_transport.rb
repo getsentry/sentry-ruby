@@ -7,7 +7,7 @@ module Sentry
   class HTTPTransport < Transport
     GZIP_ENCODING = "gzip"
     GZIP_THRESHOLD = 1024 * 30
-    CONTENT_TYPE = 'application/x-sentry-envelope'
+    CONTENT_TYPE = "application/x-sentry-envelope"
 
     DEFAULT_DELAY = 60
     RETRY_AFTER_HEADER = "retry-after"
@@ -38,13 +38,13 @@ module Sentry
       end
 
       headers = {
-        'Content-Type' => CONTENT_TYPE,
-        'Content-Encoding' => encoding,
-        'User-Agent' => USER_AGENT
+        "Content-Type" => CONTENT_TYPE,
+        "Content-Encoding" => encoding,
+        "User-Agent" => USER_AGENT
       }
 
       auth_header = generate_auth_header
-      headers['X-Sentry-Auth'] = auth_header if auth_header
+      headers["X-Sentry-Auth"] = auth_header if auth_header
 
       response = conn.start do |http|
         request = ::Net::HTTP::Post.new(endpoint, headers)
@@ -60,7 +60,7 @@ module Sentry
       else
         error_info = "the server responded with status #{response.code}"
         error_info += "\nbody: #{response.body}"
-        error_info += " Error in headers is: #{response['x-sentry-error']}" if response['x-sentry-error']
+        error_info += " Error in headers is: #{response['x-sentry-error']}" if response["x-sentry-error"]
 
         raise Sentry::ExternalError, error_info
       end
@@ -78,13 +78,13 @@ module Sentry
 
       now = Sentry.utc_now.to_i
       fields = {
-        'sentry_version' => PROTOCOL_VERSION,
-        'sentry_client' => USER_AGENT,
-        'sentry_timestamp' => now,
-        'sentry_key' => @dsn.public_key
+        "sentry_version" => PROTOCOL_VERSION,
+        "sentry_client" => USER_AGENT,
+        "sentry_timestamp" => now,
+        "sentry_key" => @dsn.public_key
       }
-      fields['sentry_secret'] = @dsn.secret_key if @dsn.secret_key
-      'Sentry ' + fields.map { |key, value| "#{key}=#{value}" }.join(', ')
+      fields["sentry_secret"] = @dsn.secret_key if @dsn.secret_key
+      "Sentry " + fields.map { |key, value| "#{key}=#{value}" }.join(", ")
     end
 
     def conn

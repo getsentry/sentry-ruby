@@ -41,8 +41,8 @@ module Sentry
         @stacktrace_builder = configuration.stacktrace_builder
 
         @default_tags = {}
-        @default_tags['release'] = configuration.release if configuration.release
-        @default_tags['environment'] = configuration.environment if configuration.environment
+        @default_tags["release"] = configuration.release if configuration.release
+        @default_tags["environment"] = configuration.environment if configuration.environment
 
         @mutex = Mutex.new
 
@@ -59,7 +59,7 @@ module Sentry
       def add(type,
               key,
               value,
-              unit: 'none',
+              unit: "none",
               tags: {},
               timestamp: nil,
               stacklevel: nil)
@@ -98,7 +98,7 @@ module Sentry
         unless flushable_buckets.empty?
           payload = serialize_buckets(flushable_buckets)
           envelope.add_item(
-            { type: 'statsd', length: payload.bytesize },
+            { type: "statsd", length: payload.bytesize },
             payload
           )
         end
@@ -107,7 +107,7 @@ module Sentry
           code_locations.each do |timestamp, locations|
             payload = serialize_locations(timestamp, locations)
             envelope.add_item(
-              { type: 'metric_meta', content_type: 'application/json' },
+              { type: "metric_meta", content_type: "application/json" },
               payload
             )
           end
@@ -161,8 +161,8 @@ module Sentry
         buckets.map do |timestamp, timestamp_buckets|
           timestamp_buckets.map do |metric_key, metric|
             type, key, unit, tags = metric_key
-            values = metric.serialize.join(':')
-            sanitized_tags = tags.map { |k, v| "#{sanitize_tag_key(k)}:#{sanitize_tag_value(v)}" }.join(',')
+            values = metric.serialize.join(":")
+            sanitized_tags = tags.map { |k, v| "#{sanitize_tag_key(k)}:#{sanitize_tag_value(v)}" }.join(",")
 
             "#{sanitize_key(key)}@#{sanitize_unit(unit)}:#{values}|#{type}|\##{sanitized_tags}|T#{timestamp}"
           end
@@ -175,22 +175,22 @@ module Sentry
           mri = "#{type}:#{sanitize_key(key)}@#{sanitize_unit(unit)}"
 
           # note this needs to be an array but it really doesn't serve a purpose right now
-          [mri, [location.merge(type: 'location')]]
+          [mri, [location.merge(type: "location")]]
         end.to_h
 
         { timestamp: timestamp, mapping: mapping }
       end
 
       def sanitize_key(key)
-        key.gsub(KEY_SANITIZATION_REGEX, '_')
+        key.gsub(KEY_SANITIZATION_REGEX, "_")
       end
 
       def sanitize_unit(unit)
-        unit.gsub(UNIT_SANITIZATION_REGEX, '')
+        unit.gsub(UNIT_SANITIZATION_REGEX, "")
       end
 
       def sanitize_tag_key(key)
-        key.gsub(TAG_KEY_SANITIZATION_REGEX, '')
+        key.gsub(TAG_KEY_SANITIZATION_REGEX, "")
       end
 
       def sanitize_tag_value(value)
@@ -209,7 +209,7 @@ module Sentry
         updated_tags = @default_tags.merge(tags)
 
         transaction_name = get_transaction_name
-        updated_tags['transaction'] = transaction_name if transaction_name
+        updated_tags["transaction"] = transaction_name if transaction_name
 
         updated_tags
       end

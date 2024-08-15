@@ -30,7 +30,7 @@ module Sentry
       else
         @transport =
           case configuration.dsn&.scheme
-          when 'http', 'https'
+          when "http", "https"
             HTTPTransport.new(configuration)
           else
             DummyTransport.new(configuration)
@@ -49,7 +49,7 @@ module Sentry
       return unless configuration.sending_allowed?
 
       if event.is_a?(ErrorEvent) && !configuration.sample_allowed?
-        transport.record_lost_event(:sample_rate, 'error')
+        transport.record_lost_event(:sample_rate, "error")
         return
       end
 
@@ -64,11 +64,11 @@ module Sentry
       if event.nil?
         log_debug("Discarded event because one of the event processors returned nil")
         transport.record_lost_event(:event_processor, data_category)
-        transport.record_lost_event(:event_processor, 'span', num: spans_before + 1) if is_transaction
+        transport.record_lost_event(:event_processor, "span", num: spans_before + 1) if is_transaction
         return
       elsif is_transaction
         spans_delta = spans_before - event.spans.size
-        transport.record_lost_event(:event_processor, 'span', num: spans_delta) if spans_delta > 0
+        transport.record_lost_event(:event_processor, "span", num: spans_delta) if spans_delta > 0
       end
 
       if async_block = configuration.async
@@ -76,7 +76,7 @@ module Sentry
       elsif configuration.background_worker_threads != 0 && hint.fetch(:background, true)
         unless dispatch_background_event(event, hint)
           transport.record_lost_event(:queue_overflow, data_category)
-          transport.record_lost_event(:queue_overflow, 'span', num: spans_before + 1) if is_transaction
+          transport.record_lost_event(:queue_overflow, "span", num: spans_before + 1) if is_transaction
         end
       else
         send_event(event, hint)
@@ -195,13 +195,13 @@ module Sentry
 
         if event.nil?
           log_debug("Discarded event because before_send_transaction returned nil")
-          transport.record_lost_event(:before_send, 'transaction')
-          transport.record_lost_event(:before_send, 'span', num: spans_before + 1)
+          transport.record_lost_event(:before_send, "transaction")
+          transport.record_lost_event(:before_send, "span", num: spans_before + 1)
           return
         else
           spans_after = event.is_a?(TransactionEvent) ? event.spans.size : 0
           spans_delta = spans_before - spans_after
-          transport.record_lost_event(:before_send, 'span', num: spans_delta) if spans_delta > 0
+          transport.record_lost_event(:before_send, "span", num: spans_delta) if spans_delta > 0
         end
       end
 
@@ -212,7 +212,7 @@ module Sentry
     rescue => e
       log_error("Event sending failed", e, debug: configuration.debug)
       transport.record_lost_event(:network_error, data_category)
-      transport.record_lost_event(:network_error, 'span', num: spans_before + 1) if event.is_a?(TransactionEvent)
+      transport.record_lost_event(:network_error, "span", num: spans_before + 1) if event.is_a?(TransactionEvent)
       raise
     end
 
