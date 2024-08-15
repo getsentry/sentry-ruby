@@ -1,3 +1,7 @@
+## Unreleased
+
+- Support for `$SENTRY_DEBUG` and `$SENTRY_SPOTLIGHT` env variables
+
 ## 5.19.0
 
 ### Features
@@ -6,7 +10,7 @@
 
 - Support for tracing Faraday requests ([#2345](https://github.com/getsentry/sentry-ruby/pull/2345))
   - Closes [#1795](https://github.com/getsentry/sentry-ruby/issues/1795)
-  - Please note that the Faraday instrumentation has some limitations in case of async requests: https://github.com/lostisland/faraday/issues/1381
+  - Please note that the Faraday instrumentation has some limitations in case of async requests: <https://github.com/lostisland/faraday/issues/1381>
 
   Usage:
 
@@ -32,6 +36,7 @@
 - Inject Sentry meta tags in the Rails application layout automatically in the generator ([#2369](https://github.com/getsentry/sentry-ruby/pull/2369))
 
   To turn this behavior off, use
+
   ```bash
   bin/rails generate sentry --inject-meta false
   ```
@@ -256,6 +261,7 @@
       config.cron.default_timezone = 'America/New_York'
     end
     ```
+
 - Clean up logging [#2216](https://github.com/getsentry/sentry-ruby/pull/2216)
 - Pick up config.cron.default_timezone from Rails config [#2213](https://github.com/getsentry/sentry-ruby/pull/2213)
 - Don't add most scope data (tags/extra/breadcrumbs) to `CheckInEvent` [#2217](https://github.com/getsentry/sentry-ruby/pull/2217)
@@ -303,6 +309,7 @@
     ```rb
     config.enabled_patches += [:sidekiq_cron]
     ```
+
   - Add support for [`sidekiq-scheduler`](https://github.com/sidekiq-scheduler/sidekiq-scheduler) [#2172](https://github.com/getsentry/sentry-ruby/pull/2172)
 
     You can opt in to the `sidekiq-scheduler` patch and we will automatically monitor check-ins for all repeating jobs (i.e. `cron`, `every`, and `interval`) specified in the config.
@@ -331,6 +338,7 @@
     config.rails.active_support_logger_subscription_items.delete("sql.active_record")
     config.rails.active_support_logger_subscription_items["foo"] = :bar
   ```
+
 - Enable opting out of patches [#2151](https://github.com/getsentry/sentry-ruby/pull/2151)
 
 ### Bug Fixes
@@ -358,6 +366,7 @@
     # do job stuff
     Sentry.capture_check_in('job_name', :ok, check_in_id: check_in_id)
     ```
+
   - Add `Sentry::Cron::MonitorCheckIns` module for automatic monitoring of jobs [#2130](https://github.com/getsentry/sentry-ruby/pull/2130)
 
     Standard job frameworks such as `ActiveJob` and `Sidekiq` can now use this module to automatically capture check ins.
@@ -388,6 +397,7 @@
     ```
 
     You can pass in optional attributes to `sentry_monitor_check_ins` as follows.
+
     ```rb
     # slug defaults to the job class name
     sentry_monitor_check_ins slug: 'custom_slug'
@@ -427,6 +437,7 @@
   config.trace_propagation_targets = [/.*/]  # default is to all targets
   config.trace_propagation_targets = [/example.com/, 'foobar.org/api/v2']
   ```
+
 - Tracing without Performance
   - Implement `PropagationContext` on `Scope` and add `Sentry.get_trace_propagation_headers` API [#2084](https://github.com/getsentry/sentry-ruby/pull/2084)
   - Implement `Sentry.continue_trace` API [#2089](https://github.com/getsentry/sentry-ruby/pull/2089)
@@ -466,7 +477,6 @@
 - Use allowlist to filter `ActiveSupport` breadcrumbs' data [#2048](https://github.com/getsentry/sentry-ruby/pull/2048)
 - ErrorHandler should cleanup the scope ([#2059](https://github.com/getsentry/sentry-ruby/pull/2059))
 
-
 ## 5.9.0
 
 ### Features
@@ -484,6 +494,7 @@
   Sentry.capture_exception(ignored_exception) # won't be sent to Sentry
   Sentry.capture_exception(ignored_exception, hint: { ignore_exclusions: true }) # will be sent to Sentry
   ```
+
 - Support capturing low-level errors propagated to Puma [#2026](https://github.com/getsentry/sentry-ruby/pull/2026)
 
 - Add `spec` to `Backtrace::APP_DIRS_PATTERN` [#2029](https://github.com/getsentry/sentry-ruby/pull/2029)
@@ -522,7 +533,7 @@
 
   > **Warning**
   > Profiling is currently in beta. Beta features are still in-progress and may have bugs. We recognize the irony.
-  > If you have any questions or feedback, please email us at profiling@sentry.io, reach out via Discord (#profiling), or open an issue.
+  > If you have any questions or feedback, please email us at <profiling@sentry.io>, reach out via Discord (#profiling), or open an issue.
 
 ### Bug Fixes
 
@@ -617,8 +628,8 @@
     ```
 
 - Use `Sentry.with_child_span` in redis and net/http instead of `span.start_child` [#1920](https://github.com/getsentry/sentry-ruby/pull/1920)
-    - This might change the nesting of some spans and make it more accurate
-    - Followup fix to set the sentry-trace header in the correct place [#1922](https://github.com/getsentry/sentry-ruby/pull/1922)
+  - This might change the nesting of some spans and make it more accurate
+  - Followup fix to set the sentry-trace header in the correct place [#1922](https://github.com/getsentry/sentry-ruby/pull/1922)
 
 - Use `Exception#detailed_message` when generating exception message if applicable [#1924](https://github.com/getsentry/sentry-ruby/pull/1924)
 - Make `sentry-sidekiq` compatible with Sidekiq 7 [#1930](https://github.com/getsentry/sentry-ruby/pull/1930)
@@ -626,10 +637,10 @@
 ### Bug Fixes
 
 - `Sentry::BackgroundWorker` will release `ActiveRecord` connection pool only when the `ActiveRecord` connection is established
--  Remove bad encoding arguments in redis span descriptions [#1914](https://github.com/getsentry/sentry-ruby/pull/1914)
-    - Fixes [#1911](https://github.com/getsentry/sentry-ruby/issues/1911)
+- Remove bad encoding arguments in redis span descriptions [#1914](https://github.com/getsentry/sentry-ruby/pull/1914)
+  - Fixes [#1911](https://github.com/getsentry/sentry-ruby/issues/1911)
 - Add missing `initialized?` checks to `sentry-rails` [#1919](https://github.com/getsentry/sentry-ruby/pull/1919)
-    - Fixes [#1885](https://github.com/getsentry/sentry-ruby/issues/1885)
+  - Fixes [#1885](https://github.com/getsentry/sentry-ruby/issues/1885)
 - Update Tracing Span's op names [#1923](https://github.com/getsentry/sentry-ruby/pull/1923)
 
     Currently, Ruby integrations' Span op names aren't aligned with the core specification's convention, so we decided to update them altogether in this PR.
@@ -706,6 +717,7 @@
      1/0 #=> ZeroDivisionError will be reported and re-raised
     end
     ```
+
 - Prepare for Rails 7.1's error reporter API change [#1834](https://github.com/getsentry/sentry-ruby/pull/1834)
 - Set `sentry.error_event_id` in request env if the middleware captures errors [#1849](https://github.com/getsentry/sentry-ruby/pull/1849)
 
@@ -858,7 +870,6 @@ end
 
   This will help users report size-related issues in the future.
 
-
 - Automatic session tracking [#1715](https://github.com/getsentry/sentry-ruby/pull/1715)
 
   **Example**:
@@ -877,7 +888,6 @@ end
 
   To disable this feature, set `config.auto_session_tracking` to `false`.
 
-
 ### Bug Fixes
 
 - Require set library [#1753](https://github.com/getsentry/sentry-ruby/pull/1753)
@@ -891,7 +901,6 @@ end
   - Fixes [#1722](https://github.com/getsentry/sentry-ruby/issues/1722)
 - Avoid duplicated capturing on the same exception object [#1738](https://github.com/getsentry/sentry-ruby/pull/1738)
   - Fixes [#1731](https://github.com/getsentry/sentry-ruby/issues/1731)
-
 
 ### Refactoring
 
@@ -957,7 +966,6 @@ end
 
 This version removes the dependency of [faraday](https://github.com/lostisland/faraday) and replaces related implementation with the `Net::HTTP` standard library.
 
-
 #### Why?
 
 Since the old `sentry-raven` SDK, we've been using `faraday` as the HTTP client for years (see [HTTPTransport](https://github.com/getsentry/sentry-ruby/blob/4-9/sentry-ruby/lib/sentry/transport/http_transport.rb)). It's an amazing tool that saved us many work and allowed us to focus on SDK features.
@@ -972,9 +980,7 @@ And with the release of [faraday 2.0](https://github.com/lostisland/faraday/rele
 
 So we think it's time to say goodbye to it with this release.
 
-
 #### What's changed?
-
 
 By default, the SDK used `faraday`'s `net_http` adapter, which is also built on top of `Net::HTTP`. So this change shouldn't impact most of the users.
 
@@ -1075,7 +1081,6 @@ end
 ```
 
 2. Set `config.transport.transport = FaradayTransport`
-
 
 **Please keep in mind that this may not work in the future when the SDK changes its `HTTPTransport` implementation.**
 
@@ -1216,7 +1221,6 @@ When `config.send_default_pii` is set as `true`, `:http_logger` will include que
 
 - Start Testing Against Rails 7.0 [#1581](https://github.com/getsentry/sentry-ruby/pull/1581)
 
-
 ## 4.7.3
 
 - Avoid leaking tracing timestamp to breadcrumbs [#1575](https://github.com/getsentry/sentry-ruby/pull/1575)
@@ -1235,6 +1239,7 @@ When `config.send_default_pii` is set as `true`, `:http_logger` will include que
 ## 4.7.1
 
 ### Bug Fixes
+
 - Send events when report_after_job_retries is true and a job is configured with retry: 0 [#1557](https://github.com/getsentry/sentry-ruby/pull/1557)
   - Fixes [#1556](https://github.com/getsentry/sentry-ruby/issues/1556)
 
