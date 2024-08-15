@@ -18,7 +18,6 @@ module Sentry
     include CustomInspection
     include LoggingHelper
     include ArgumentCheckingHelper
-    include EnvHelper
 
     # Directories to be recognized as part of your app. e.g. if you
     # have an `engines` dir at the root of your project, you may want
@@ -352,7 +351,7 @@ module Sentry
 
     def initialize
       self.app_dirs_pattern = nil
-      self.debug = env_to_bool(ENV["SENTRY_DEBUG"])
+      self.debug = Sentry::Utils::EnvHelper.env_to_bool(ENV["SENTRY_DEBUG"])
       self.background_worker_threads = (processor_count / 2.0).ceil
       self.background_worker_max_queue = BackgroundWorker::DEFAULT_MAX_QUEUE
       self.backtrace_cleanup_callback = nil
@@ -381,7 +380,7 @@ module Sentry
       self.dsn = ENV['SENTRY_DSN']
 
       spotlight_env = ENV['SENTRY_SPOTLIGHT']
-      spotlight_bool = env_to_bool(spotlight_env, strict: true)
+      spotlight_bool = Sentry::Utils::EnvHelper.env_to_bool(spotlight_env, strict: true)
       self.spotlight = spotlight_bool.ni? ? spotlight_env : spotlight_bool
       self.server_name = server_name_from_env
       self.instrumenter = :sentry
