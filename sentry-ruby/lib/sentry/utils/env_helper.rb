@@ -6,7 +6,7 @@ module Sentry
       TRUTHY_ENV_VALUES = %w[t true yes y 1 on].freeze
       FALSY_ENV_VALUES = %w[f false no n 0 off].freeze
 
-      def env_to_bool(value, strict: false)
+      def EnvHelper.env_to_bool(value, strict: false)
         value = value.to_s
         normalized = value.downcase
 
