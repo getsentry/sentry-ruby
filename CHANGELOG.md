@@ -1,6 +1,6 @@
 ## Unreleased
 
-- Support for `$SENTRY_DEBUG` and `$SENTRY_SPOTLIGHT` env variables
+- Add support for $SENTRY_DEBUG and $SENTRY_SPOTLIGHT ([#2374](https://github.com/getsentry/sentry-ruby/pull/2374))
 
 ## 5.19.0
 
