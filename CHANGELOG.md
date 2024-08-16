@@ -36,6 +36,10 @@
   bin/rails generate sentry --inject-meta false
   ```
 
+### Features
+
+- Include `Delayed::Job` instance in hint [#1861](https://github.com/getsentry/sentry-ruby/pull/1861)
+
 ### Bug Fixes
 
 - Fix skipping `connect` spans in open-telemetry [#2364](https://github.com/getsentry/sentry-ruby/pull/2364)
