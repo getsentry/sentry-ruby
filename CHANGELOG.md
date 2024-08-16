@@ -27,7 +27,7 @@
   ```
 
 - Transaction data are now included in the context ([#2365](https://github.com/getsentry/sentry-ruby/pull/2365))
-  - Closes [#2364](https://github.com/getsentry/sentry-ruby/issues/2363)
+  - Closes [#2363](https://github.com/getsentry/sentry-ruby/issues/2363)
 
 - Inject Sentry meta tags in the Rails application layout automatically in the generator ([#2369](https://github.com/getsentry/sentry-ruby/pull/2369))
 
