@@ -6,7 +6,7 @@ gemspec
 gem "sentry-ruby", path: "../sentry-ruby"
 
 platform :jruby do
-  gem 'activerecord-jdbcmysql-adapter'
+  gem "activerecord-jdbcmysql-adapter"
   gem "jdbc-sqlite3"
 end
 

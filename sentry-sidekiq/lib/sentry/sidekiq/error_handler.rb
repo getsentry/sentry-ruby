@@ -1,4 +1,4 @@
-require 'sentry/sidekiq/context_filter'
+require "sentry/sidekiq/context_filter"
 
 module Sentry
   module Sidekiq

@@ -31,20 +31,20 @@ module Sentry
 
   module Rails
     IGNORE_DEFAULT = [
-      'AbstractController::ActionNotFound',
-      'ActionController::BadRequest',
-      'ActionController::InvalidAuthenticityToken',
-      'ActionController::InvalidCrossOriginRequest',
-      'ActionController::MethodNotAllowed',
-      'ActionController::NotImplemented',
-      'ActionController::ParameterMissing',
-      'ActionController::RoutingError',
-      'ActionController::UnknownAction',
-      'ActionController::UnknownFormat',
-      'ActionDispatch::Http::MimeNegotiation::InvalidType',
-      'ActionController::UnknownHttpMethod',
-      'ActionDispatch::Http::Parameters::ParseError',
-      'ActiveRecord::RecordNotFound'
+      "AbstractController::ActionNotFound",
+      "ActionController::BadRequest",
+      "ActionController::InvalidAuthenticityToken",
+      "ActionController::InvalidCrossOriginRequest",
+      "ActionController::MethodNotAllowed",
+      "ActionController::NotImplemented",
+      "ActionController::ParameterMissing",
+      "ActionController::RoutingError",
+      "ActionController::UnknownAction",
+      "ActionController::UnknownFormat",
+      "ActionDispatch::Http::MimeNegotiation::InvalidType",
+      "ActionController::UnknownHttpMethod",
+      "ActionDispatch::Http::Parameters::ParseError",
+      "ActiveRecord::RecordNotFound"
     ].freeze
 
     ACTIVE_SUPPORT_LOGGER_SUBSCRIPTION_ITEMS_DEFAULT = {

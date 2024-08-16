@@ -6,4 +6,5 @@ Layout/SpaceInsideArrayLiteralBrackets:
 
 AllCops:
   Exclude:
-    - 'sentry-raven/**/*'
+    - "sentry-raven/**/*"
+    - "sentry-*/tmp/**/*"
