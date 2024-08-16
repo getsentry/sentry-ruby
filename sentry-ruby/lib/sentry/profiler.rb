@@ -1,11 +1,11 @@
 # frozen_string_literal: true
 
-require 'securerandom'
+require "securerandom"
 
 module Sentry
   class Profiler
-    VERSION = '1'
-    PLATFORM = 'ruby'
+    VERSION = "1"
+    PLATFORM = "ruby"
     # 101 Hz in microseconds
     DEFAULT_INTERVAL = 1e6 / 101
     MICRO_TO_NANO_SECONDS = 1e3
@@ -14,7 +14,7 @@ module Sentry
     attr_reader :sampled, :started, :event_id
 
     def initialize(configuration)
-      @event_id = SecureRandom.uuid.delete('-')
+      @event_id = SecureRandom.uuid.delete("-")
       @started = false
       @sampled = nil
 
@@ -33,7 +33,7 @@ module Sentry
                                  raw: true,
                                  aggregate: false)
 
-      @started ? log('Started') : log('Not started since running elsewhere')
+      @started ? log("Started") : log("Not started since running elsewhere")
     end
 
     def stop
@@ -41,7 +41,7 @@ module Sentry
       return unless @started
 
       StackProf.stop
-      log('Stopped')
+      log("Stopped")
     end
 
     # Sets initial sampling decision of the profile.
@@ -54,14 +54,14 @@ module Sentry
 
       unless transaction_sampled
         @sampled = false
-        log('Discarding profile because transaction not sampled')
+        log("Discarding profile because transaction not sampled")
         return
       end
 
       case @profiles_sample_rate
       when 0.0
         @sampled = false
-        log('Discarding profile because sample_rate is 0')
+        log("Discarding profile because sample_rate is 0")
         return
       when 1.0
         @sampled = true
@@ -70,7 +70,7 @@ module Sentry
         @sampled = Random.rand < @profiles_sample_rate
       end
 
-      log('Discarding profile due to sampling decision') unless @sampled
+      log("Discarding profile due to sampling decision") unless @sampled
     end
 
     def to_hash
@@ -130,7 +130,7 @@ module Sentry
         num_seen << results[:raw][idx + len]
         idx += len + 1
 
-        log('Unknown frame in stack') if stack.size != len
+        log("Unknown frame in stack") if stack.size != len
       end
 
       idx = 0
@@ -155,16 +155,16 @@ module Sentry
             # Till then, on multi-threaded servers like puma, we will get frames from other active threads when the one
             # we're profiling is idle/sleeping/waiting for IO etc.
             # https://bugs.ruby-lang.org/issues/10602
-            thread_id: '0',
+            thread_id: "0",
             elapsed_since_start_ns: elapsed_since_start_ns.to_s
           }
         end
       end
 
-      log('Some samples thrown away') if samples.size != results[:samples]
+      log("Some samples thrown away") if samples.size != results[:samples]
 
       if samples.size <= MIN_SAMPLES_REQUIRED
-        log('Not enough samples, discarding profiler')
+        log("Not enough samples, discarding profiler")
         record_lost_event(:insufficient_data)
         return {}
       end
@@ -219,7 +219,7 @@ module Sentry
 
     def split_module(name)
       # last module plus class/instance method
-      i = name.rindex('::')
+      i = name.rindex("::")
       function = i ? name[(i + 2)..-1] : name
       mod = i ? name[0...i] : nil
 
@@ -227,7 +227,7 @@ module Sentry
     end
 
     def record_lost_event(reason)
-      Sentry.get_current_client&.transport&.record_lost_event(reason, 'profile')
+      Sentry.get_current_client&.transport&.record_lost_event(reason, "profile")
     end
   end
 end

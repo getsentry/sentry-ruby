@@ -26,7 +26,7 @@ module Sentry
 
       @value = Utils::EncodingHelper.encode_to_utf_8(exception_message.byteslice(0..Event::MAX_MESSAGE_SIZE_IN_BYTES))
 
-      @module = exception.class.to_s.split('::')[0...-1].join('::')
+      @module = exception.class.to_s.split("::")[0...-1].join("::")
       @thread_id = Thread.current.object_id
       @stacktrace = stacktrace
       @mechanism = mechanism

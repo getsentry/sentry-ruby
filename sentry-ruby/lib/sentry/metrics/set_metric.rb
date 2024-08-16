@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
-require 'set'
-require 'zlib'
+require "set"
+require "zlib"
 
 module Sentry
   module Metrics

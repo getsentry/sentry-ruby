@@ -50,7 +50,7 @@ module Sentry
       private
 
       def collect_exception(env)
-        env['rack.exception'] || env['sinatra.error']
+        env["rack.exception"] || env["sinatra.error"]
       end
 
       def transaction_op

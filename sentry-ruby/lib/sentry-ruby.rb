@@ -563,7 +563,7 @@ module Sentry
     #
     # @return [String]
     def get_trace_propagation_meta
-      return '' unless initialized?
+      return "" unless initialized?
       get_current_hub.get_trace_propagation_meta
     end
 

@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-require 'sentry/cron/monitor_schedule'
+require "sentry/cron/monitor_schedule"
 
 module Sentry
   module Cron

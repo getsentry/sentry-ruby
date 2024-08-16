@@ -13,12 +13,12 @@ module Sentry
 
       def detect_release_from_heroku(running_on_heroku)
         return unless running_on_heroku
-        ENV['HEROKU_SLUG_COMMIT']
+        ENV["HEROKU_SLUG_COMMIT"]
       end
 
       def detect_release_from_capistrano(project_root)
-        revision_file = File.join(project_root, 'REVISION')
-        revision_log = File.join(project_root, '..', 'revisions.log')
+        revision_file = File.join(project_root, "REVISION")
+        revision_log = File.join(project_root, "..", "revisions.log")
 
         if File.exist?(revision_file)
           File.read(revision_file).strip
@@ -32,7 +32,7 @@ module Sentry
       end
 
       def detect_release_from_env
-        ENV['SENTRY_RELEASE']
+        ENV["SENTRY_RELEASE"]
       end
     end
   end
