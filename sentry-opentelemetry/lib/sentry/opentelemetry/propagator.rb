@@ -5,8 +5,8 @@ module Sentry
     class Propagator
       FIELDS = [SENTRY_TRACE_HEADER_NAME, BAGGAGE_HEADER_NAME].freeze
 
-      SENTRY_TRACE_KEY = ::OpenTelemetry::Context.create_key('sentry-trace')
-      SENTRY_BAGGAGE_KEY = ::OpenTelemetry::Context.create_key('sentry-baggage')
+      SENTRY_TRACE_KEY = ::OpenTelemetry::Context.create_key("sentry-trace")
+      SENTRY_BAGGAGE_KEY = ::OpenTelemetry::Context.create_key("sentry-baggage")
 
       def inject(
         carrier,
@@ -41,8 +41,8 @@ module Sentry
         trace_id, span_id, _parent_sampled = sentry_trace_data
 
         span_context = ::OpenTelemetry::Trace::SpanContext.new(
-          trace_id: [trace_id].pack('H*'),
-          span_id: [span_id].pack('H*'),
+          trace_id: [trace_id].pack("H*"),
+          span_id: [span_id].pack("H*"),
           # we simulate a sampled trace on the otel side and leave the sampling to sentry
           trace_flags: ::OpenTelemetry::Trace::TraceFlags::SAMPLED,
           remote: true
