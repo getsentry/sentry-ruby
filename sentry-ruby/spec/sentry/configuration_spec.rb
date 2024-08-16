@@ -278,8 +278,66 @@ RSpec.describe Sentry::Configuration do
   end
 
   describe "#spotlight" do
+    before do
+      ENV.delete('SENTRY_SPOTLIGHT')
+    end
+
+    after do
+      ENV.delete('SENTRY_SPOTLIGHT')
+    end
+
     it "false by default" do
       expect(subject.spotlight).to eq(false)
+    end
+
+    it 'uses `SENTRY_SPOTLIGHT` env variable for truthy' do
+      ENV['SENTRY_SPOTLIGHT'] = 'on'
+
+      expect(subject.spotlight).to eq(true)
+    end
+
+    it 'uses `SENTRY_SPOTLIGHT` env variable for falsy' do
+      ENV['SENTRY_SPOTLIGHT'] = '0'
+
+      expect(subject.spotlight).to eq(false)
+    end
+
+    it 'uses `SENTRY_SPOTLIGHT` env variable for custom value' do
+      ENV['SENTRY_SPOTLIGHT'] = 'https://my.remote.server:8080/stream'
+
+      expect(subject.spotlight).to eq('https://my.remote.server:8080/stream')
+    end
+  end
+
+  describe "#debug" do
+    before do
+      ENV.delete('SENTRY_DEBUG')
+    end
+
+    after do
+      ENV.delete('SENTRY_DEBUG')
+    end
+
+    it "false by default" do
+      expect(subject.debug).to eq(false)
+    end
+
+    it 'uses `SENTRY_DEBUG` env variable for truthy' do
+      ENV['SENTRY_DEBUG'] = 'on'
+
+      expect(subject.debug).to eq(true)
+    end
+
+    it 'uses `SENTRY_DEBUG` env variable for falsy' do
+      ENV['SENTRY_DEBUG'] = '0'
+
+      expect(subject.debug).to eq(false)
+    end
+
+    it 'uses `SENTRY_DEBUG` env variable to turn on random value' do
+      ENV['SENTRY_DEBUG'] = 'yabadabadoo'
+
+      expect(subject.debug).to eq(true)
     end
   end
 

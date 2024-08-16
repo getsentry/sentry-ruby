@@ -3,7 +3,8 @@
 require "concurrent/utility/processor_counter"
 
 require "sentry/utils/exception_cause_chain"
-require "sentry/utils/custom_inspection"
+require 'sentry/utils/custom_inspection'
+require 'sentry/utils/env_helper'
 require "sentry/dsn"
 require "sentry/release_detector"
 require "sentry/transport/configuration"
@@ -350,7 +351,7 @@ module Sentry
 
     def initialize
       self.app_dirs_pattern = nil
-      self.debug = false
+      self.debug = Sentry::Utils::EnvHelper.env_to_bool(ENV["SENTRY_DEBUG"])
       self.background_worker_threads = (processor_count / 2.0).ceil
       self.background_worker_max_queue = BackgroundWorker::DEFAULT_MAX_QUEUE
       self.backtrace_cleanup_callback = nil
@@ -376,8 +377,11 @@ module Sentry
       self.auto_session_tracking = true
       self.enable_backpressure_handling = false
       self.trusted_proxies = []
-      self.dsn = ENV["SENTRY_DSN"]
-      self.spotlight = false
+      self.dsn = ENV['SENTRY_DSN']
+
+      spotlight_env = ENV['SENTRY_SPOTLIGHT']
+      spotlight_bool = Sentry::Utils::EnvHelper.env_to_bool(spotlight_env, strict: true)
+      self.spotlight = spotlight_bool.nil? ? (spotlight_env || false) : spotlight_bool
       self.server_name = server_name_from_env
       self.instrumenter = :sentry
       self.trace_propagation_targets = [PROPAGATION_TARGETS_MATCH_ALL]
