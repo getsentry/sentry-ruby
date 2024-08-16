@@ -59,7 +59,7 @@ module Sentry
         self.query_string = request.query_string
       end
 
-      self.url = request.scheme && request.url.split('?').first
+      self.url = request.scheme && request.url.split("?").first
       self.method = request.request_method
 
       self.headers = filter_and_format_headers(env, send_default_pii)
@@ -85,14 +85,14 @@ module Sentry
       env.each_with_object({}) do |(key, value), memo|
         begin
           key = key.to_s # rack env can contain symbols
-          next memo['X-Request-Id'] ||= Utils::RequestId.read_from(env) if Utils::RequestId::REQUEST_ID_HEADERS.include?(key)
+          next memo["X-Request-Id"] ||= Utils::RequestId.read_from(env) if Utils::RequestId::REQUEST_ID_HEADERS.include?(key)
           next if is_server_protocol?(key, value, env["SERVER_PROTOCOL"])
           next if is_skippable_header?(key)
           next if key == "HTTP_AUTHORIZATION" && !send_default_pii
 
           # Rack stores headers as HTTP_WHAT_EVER, we need What-Ever
           key = key.sub(/^HTTP_/, "")
-          key = key.split('_').map(&:capitalize).join('-')
+          key = key.split("_").map(&:capitalize).join("-")
 
           memo[key] = Utils::EncodingHelper.encode_to_utf_8(value.to_s)
         rescue StandardError => e
@@ -108,7 +108,7 @@ module Sentry
     def is_skippable_header?(key)
       key.upcase != key || # lower-case envs aren't real http headers
         key == "HTTP_COOKIE" || # Cookies don't go here, they go somewhere else
-        !(key.start_with?('HTTP_') || CONTENT_HEADERS.include?(key))
+        !(key.start_with?("HTTP_") || CONTENT_HEADERS.include?(key))
     end
 
     # In versions < 3, Rack adds in an incorrect HTTP_VERSION key, which causes downstream
@@ -120,7 +120,7 @@ module Sentry
       rack_version = Gem::Version.new(::Rack.release)
       return false if rack_version >= Gem::Version.new("3.0")
 
-      key == 'HTTP_VERSION' && value == protocol_version
+      key == "HTTP_VERSION" && value == protocol_version
     end
 
     def filter_and_format_env(env, rack_env_whitelist)

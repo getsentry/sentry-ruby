@@ -5,7 +5,7 @@ require "sentry/envelope"
 
 module Sentry
   class Transport
-    PROTOCOL_VERSION = '7'
+    PROTOCOL_VERSION = "7"
     USER_AGENT = "sentry-ruby/#{Sentry::VERSION}"
     CLIENT_REPORT_INTERVAL = 30
 
@@ -134,13 +134,13 @@ module Sentry
       envelope = Envelope.new(envelope_headers)
 
       envelope.add_item(
-        { type: item_type, content_type: 'application/json' },
+        { type: item_type, content_type: "application/json" },
         event_payload
       )
 
       if event.is_a?(TransactionEvent) && event.profile
         envelope.add_item(
-          { type: 'profile', content_type: 'application/json' },
+          { type: "profile", content_type: "application/json" },
           event.profile
         )
       end
@@ -185,7 +185,7 @@ module Sentry
         { reason: reason, category: category, quantity: val }
       end
 
-      item_header = { type: 'client_report' }
+      item_header = { type: "client_report" }
       item_payload = {
         timestamp: Sentry.utc_now.iso8601,
         discarded_events: discarded_events_hash

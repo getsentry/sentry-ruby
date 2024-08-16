@@ -265,8 +265,8 @@ module Sentry
       else
         is_backpressure = Sentry.backpressure_monitor&.downsample_factor&.positive?
         reason = is_backpressure ? :backpressure : :sample_rate
-        hub.current_client.transport.record_lost_event(reason, 'transaction')
-        hub.current_client.transport.record_lost_event(reason, 'span')
+        hub.current_client.transport.record_lost_event(reason, "transaction")
+        hub.current_client.transport.record_lost_event(reason, "span")
       end
     end
 

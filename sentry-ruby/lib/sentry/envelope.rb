@@ -15,19 +15,19 @@ module Sentry
       end
 
       def type
-        @headers[:type] || 'event'
+        @headers[:type] || "event"
       end
 
       # rate limits and client reports use the data_category rather than envelope item type
       def self.data_category(type)
         case type
-        when 'session', 'attachment', 'transaction', 'profile', 'span' then type
-        when 'sessions' then 'session'
-        when 'check_in' then 'monitor'
-        when 'statsd', 'metric_meta' then 'metric_bucket'
-        when 'event' then 'error'
-        when 'client_report' then 'internal'
-        else 'default'
+        when "session", "attachment", "transaction", "profile", "span" then type
+        when "sessions" then "session"
+        when "check_in" then "monitor"
+        when "statsd", "metric_meta" then "metric_bucket"
+        when "event" then "error"
+        when "client_report" then "internal"
+        else "default"
         end
       end
 

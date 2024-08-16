@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-require 'logger'
+require "logger"
 
 module Sentry
   class Logger < ::Logger

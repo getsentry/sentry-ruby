@@ -3,7 +3,7 @@
 require "concurrent/utility/processor_counter"
 
 require "sentry/utils/exception_cause_chain"
-require 'sentry/utils/custom_inspection'
+require "sentry/utils/custom_inspection"
 require "sentry/dsn"
 require "sentry/release_detector"
 require "sentry/transport/configuration"
@@ -302,18 +302,18 @@ module Sentry
     # But they are mostly considered as noise and should be ignored by default
     # Please see https://github.com/getsentry/sentry-ruby/pull/2026 for more information
     PUMA_IGNORE_DEFAULT = [
-      'Puma::MiniSSL::SSLError',
-      'Puma::HttpParserError',
-      'Puma::HttpParserError501'
+      "Puma::MiniSSL::SSLError",
+      "Puma::HttpParserError",
+      "Puma::HttpParserError501"
     ].freeze
 
     # Most of these errors generate 4XX responses. In general, Sentry clients
     # only automatically report 5xx responses.
     IGNORE_DEFAULT = [
-      'Mongoid::Errors::DocumentNotFound',
-      'Rack::QueryParser::InvalidParameterError',
-      'Rack::QueryParser::ParameterTypeError',
-      'Sinatra::NotFound'
+      "Mongoid::Errors::DocumentNotFound",
+      "Rack::QueryParser::InvalidParameterError",
+      "Rack::QueryParser::ParameterTypeError",
+      "Sinatra::NotFound"
     ].freeze
 
     RACK_ENV_WHITELIST_DEFAULT = %w[
@@ -376,7 +376,7 @@ module Sentry
       self.auto_session_tracking = true
       self.enable_backpressure_handling = false
       self.trusted_proxies = []
-      self.dsn = ENV['SENTRY_DSN']
+      self.dsn = ENV["SENTRY_DSN"]
       self.spotlight = false
       self.server_name = server_name_from_env
       self.instrumenter = :sentry
@@ -632,12 +632,12 @@ module Sentry
     end
 
     def environment_from_env
-      ENV['SENTRY_CURRENT_ENV'] || ENV['SENTRY_ENVIRONMENT'] || ENV['RAILS_ENV'] || ENV['RACK_ENV'] || 'development'
+      ENV["SENTRY_CURRENT_ENV"] || ENV["SENTRY_ENVIRONMENT"] || ENV["RAILS_ENV"] || ENV["RACK_ENV"] || "development"
     end
 
     def server_name_from_env
       if running_on_heroku?
-        ENV['DYNO']
+        ENV["DYNO"]
       else
         # Try to resolve the hostname to an FQDN, but fall back to whatever
         # the load name is.

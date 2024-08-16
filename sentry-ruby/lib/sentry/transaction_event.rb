@@ -75,7 +75,7 @@ module Sentry
           name: transaction.name,
           trace_id: transaction.trace_id,
           # TODO-neel-profiler stubbed for now, see thread_id note in profiler.rb
-          active_thead_id: '0'
+          active_thead_id: "0"
         }
       )
 

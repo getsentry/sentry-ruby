@@ -12,7 +12,7 @@ module Sentry
     # @return [Boolean]
     attr_accessor :handled
 
-    def initialize(type: 'generic', handled: true)
+    def initialize(type: "generic", handled: true)
       @type = type
       @handled = handled
     end
