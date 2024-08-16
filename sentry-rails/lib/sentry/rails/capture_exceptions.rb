@@ -2,7 +2,7 @@ module Sentry
   module Rails
     class CaptureExceptions < Sentry::Rack::CaptureExceptions
       RAILS_7_1 = Gem::Version.new(::Rails.version) >= Gem::Version.new("7.1.0.alpha")
-      SPAN_ORIGIN = 'auto.http.rails'.freeze
+      SPAN_ORIGIN = "auto.http.rails".freeze
 
       def initialize(_)
         super
