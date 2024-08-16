@@ -40,14 +40,14 @@ module Sentry
 
               finish_transaction(transaction, 200)
             rescue Exception => exception
-              klass = if payload['class'].respond_to?(:constantize)
-                payload['class'].constantize
+              klass = if payload["class"].respond_to?(:constantize)
+                payload["class"].constantize
               else
-                Object.const_get(payload['class'])
+                Object.const_get(payload["class"])
               end
 
               raise if Sentry.configuration.resque.report_after_job_retries &&
-                       defined?(::Resque::Plugins::Retry) == 'constant' &&
+                       defined?(::Resque::Plugins::Retry) == "constant" &&
                        klass.is_a?(::Resque::Plugins::Retry) &&
                        !klass.retry_limit_reached?
 
