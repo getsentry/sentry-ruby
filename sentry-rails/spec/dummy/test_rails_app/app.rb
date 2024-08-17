@@ -9,7 +9,6 @@ require "action_controller/railtie"
 
 require 'sentry/rails'
 
-ActiveSupport::Deprecation.silenced = true if ActiveSupport::Deprecation.respond_to?(:silenced)
 ActiveRecord::Base.logger = Logger.new(nil)
 ActiveRecord::Base.establish_connection(adapter: "sqlite3", database: "db")
 
@@ -50,6 +49,7 @@ def make_basic_app(&block)
     end
   end
 
+  app.config.active_support.deprecation = :silence
   app.config.action_controller.view_paths = "spec/dummy/test_rails_app"
   app.config.hosts = nil
   app.config.secret_key_base = "test"
