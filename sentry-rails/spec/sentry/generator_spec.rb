@@ -4,8 +4,14 @@ require "fileutils"
 require "rails/generators/test_case"
 require "generators/sentry_generator"
 
+behavior_module = if defined?(Rails::Generators::Testing::Behaviour)
+  Rails::Generators::Testing::Behaviour
+else
+  Rails::Generators::Testing::Behavior
+end
+
 RSpec.describe SentryGenerator do
-  include ::Rails::Generators::Testing::Behaviour
+  include behavior_module
   include FileUtils
   self.destination File.expand_path('../../tmp', __dir__)
   self.generator_class = described_class

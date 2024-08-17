@@ -24,11 +24,14 @@ else
   end
 end
 
-if rails_version >= Gem::Version.new("7.2.0.alpha")
+if rails_version >= Gem::Version.new("8.0.0.alpha")
   gem "rails", github: "rails/rails"
+  gem "rspec-rails"
 elsif rails_version >= Gem::Version.new("7.1.0")
   gem "rails", "~> #{rails_version}"
+  gem "rspec-rails"
 else
+  gem "rspec-rails", "~> 4.0"
   gem "rails", "~> #{rails_version}"
   gem "psych", "~> 3.0.0"
 end
@@ -39,7 +42,6 @@ gem "sprockets-rails"
 
 gem "sidekiq"
 
-gem "rspec-rails", "~> 4.0"
 
 ruby_version = Gem::Version.new(RUBY_VERSION)
 
