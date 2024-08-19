@@ -9,7 +9,6 @@ require "action_controller/railtie"
 
 require 'sentry/rails'
 
-ActiveSupport::Deprecation.silenced = true
 ActiveRecord::Base.logger = Logger.new(nil)
 ActiveRecord::Base.establish_connection(adapter: "sqlite3", database: "db")
 
@@ -50,12 +49,20 @@ def make_basic_app(&block)
     end
   end
 
+  app.config.active_support.deprecation = :silence
   app.config.action_controller.view_paths = "spec/dummy/test_rails_app"
   app.config.hosts = nil
   app.config.secret_key_base = "test"
   app.config.logger = ActiveSupport::Logger.new(nil)
   app.config.eager_load = true
   app.config.active_job.queue_adapter = :test
+
+  # Eager load namespaces can be accumulated after repeated initializations and make initialization
+  # slower after each run
+  # This is especially obvious in Rails 7.2, because of https://github.com/rails/rails/pull/49987, but other constants's
+  # accumulation can also cause slowdown
+  # Because this is not necessary for the test, we can simply clear it here
+  app.config.eager_load_namespaces.clear
 
   configure_app(app)
 

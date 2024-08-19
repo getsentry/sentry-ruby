@@ -2,6 +2,8 @@
 
 # for https://github.com/getsentry/sentry-ruby/issues/1249
 require "active_job/railtie"
+# Rails 7.2 added HealthCheckController, which requires ActionController
+require "action_controller/railtie"
 require "active_support/all"
 require "sentry/rails"
 require "minitest/autorun"
