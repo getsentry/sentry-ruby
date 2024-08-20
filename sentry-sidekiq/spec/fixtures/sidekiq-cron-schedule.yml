@@ -6,6 +6,10 @@ manual:
   cron: "* * * * *"
   class: "SadWorkerWithCron"
 
+human_readable_cron:
+  cron: "every 5 minutes"
+  class: HappyWorkerWithHumanReadableCron
+
 invalid_cron:
   cron: "not a crontab"
   class: "ReportingWorker"
