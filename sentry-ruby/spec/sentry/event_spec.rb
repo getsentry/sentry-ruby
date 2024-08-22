@@ -66,7 +66,7 @@ RSpec.describe Sentry::Event do
     end
   end
 
-  context 'rack context specified', rack: true do
+  context 'rack context specified', when: :rack_available? do
     require 'stringio'
 
     before do
