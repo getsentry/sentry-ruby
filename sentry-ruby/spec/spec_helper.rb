@@ -47,9 +47,9 @@ RSpec.configure do |config|
   end
 
   config.before(:each, when: true) do |example|
-    meth = example.metadata[:when]
+    meth, *args = example.metadata[:when]
 
-    skip("Skipping because `when: #{meth}` returned false") unless TestHelpers.public_send(meth, example)
+    skip("Skipping because `#{meth}(#{args.join(", ")})` returned false") unless TestHelpers.public_send(meth, *args)
   end
 
   RSpec::Matchers.define :have_recorded_lost_event do |reason, data_category, num: 1|
@@ -60,12 +60,16 @@ RSpec.configure do |config|
 end
 
 module TestHelpers
-  def self.stack_prof_installed?(_example)
+  def self.stack_prof_installed?
     defined?(StackProf)
   end
 
-  def self.rack_available?(_example)
+  def self.rack_available?
     defined?(Rack)
+  end
+
+  def self.ruby_version?(op, version)
+    RUBY_VERSION.public_send(op, version)
   end
 end
 
