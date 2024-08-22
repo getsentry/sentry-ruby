@@ -7,7 +7,7 @@ RSpec.describe Sentry::Scope do
     new_breadcrumb
   end
 
-  describe "#set_rack_env", rack: true do
+  describe "#set_rack_env", when: :rack_available? do
     let(:env) do
       Rack::MockRequest.env_for("/test", {})
     end

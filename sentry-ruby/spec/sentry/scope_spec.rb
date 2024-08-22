@@ -309,7 +309,7 @@ RSpec.describe Sentry::Scope do
       expect(event.dynamic_sampling_context).to eq(subject.propagation_context.get_dynamic_sampling_context)
     end
 
-    context "with Rack", rack: true do
+    context "with Rack", when: :rack_available? do
       let(:env) do
         Rack::MockRequest.env_for("/test", {})
       end

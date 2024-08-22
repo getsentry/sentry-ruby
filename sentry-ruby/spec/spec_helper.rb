@@ -46,14 +46,26 @@ RSpec.configure do |config|
     ENV.delete('RACK_ENV')
   end
 
-  config.before(:each, rack: true) do
-    skip("skip rack related tests") unless defined?(Rack)
+  config.before(:each, when: true) do |example|
+    meth = example.metadata[:when]
+
+    skip("Skipping because `when: #{meth}` returned false") unless TestHelpers.public_send(meth, example)
   end
 
   RSpec::Matchers.define :have_recorded_lost_event do |reason, data_category, num: 1|
     match do |transport|
       expect(transport.discarded_events[[reason, data_category]]).to eq(num)
     end
+  end
+end
+
+module TestHelpers
+  def self.stack_prof_installed?(_example)
+    defined?(StackProf)
+  end
+
+  def self.rack_available?(_example)
+    defined?(Rack)
   end
 end
 

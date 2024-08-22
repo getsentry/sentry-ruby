@@ -1,8 +1,6 @@
 require "spec_helper"
 
-return unless defined?(StackProf)
-
-RSpec.describe Sentry::Profiler do
+RSpec.describe Sentry::Profiler, when: :stack_prof_installed? do
   before do
     perform_basic_setup do |config|
       config.traces_sample_rate = 1.0
