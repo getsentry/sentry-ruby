@@ -12,5 +12,6 @@ Gemfile.lock
 .ruby-gemset
 .idea
 *.rdb
+.yardoc/
 
 examples/**/node_modules
