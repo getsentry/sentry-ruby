@@ -12,6 +12,7 @@ RSpec.describe Sentry::Vernier::Profiler, when: [:ruby_version?, :>=, "3.2.1"] d
     perform_basic_setup do |config|
       config.traces_sample_rate = traces_sample_rate
       config.profiles_sample_rate = profiles_sample_rate
+      config.app_dirs_pattern = %r{spec/support}
     end
   end
 
