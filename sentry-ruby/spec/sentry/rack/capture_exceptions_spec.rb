@@ -1,6 +1,6 @@
 require 'spec_helper'
 
-RSpec.describe Sentry::Rack::CaptureExceptions, when: :rack_available? do
+RSpec.describe 'Sentry::Rack::CaptureExceptions', when: :rack_available? do
   let(:exception) { ZeroDivisionError.new("divided by 0") }
   let(:additional_headers) { {} }
   let(:env) { Rack::MockRequest.env_for("/test", additional_headers) }
@@ -12,7 +12,7 @@ RSpec.describe Sentry::Rack::CaptureExceptions, when: :rack_available? do
 
     it 'captures the exception from direct raise' do
       app = ->(_e) { raise exception }
-      stack = described_class.new(app)
+      stack = Sentry::Rack::CaptureExceptions.new(app)
 
       expect { stack.call(env) }.to raise_error(ZeroDivisionError)
 
@@ -25,7 +25,7 @@ RSpec.describe Sentry::Rack::CaptureExceptions, when: :rack_available? do
 
     it 'has the correct mechanism' do
       app = ->(_e) { raise exception }
-      stack = described_class.new(app)
+      stack = Sentry::Rack::CaptureExceptions.new(app)
 
       expect { stack.call(env) }.to raise_error(ZeroDivisionError)
 
@@ -39,7 +39,7 @@ RSpec.describe Sentry::Rack::CaptureExceptions, when: :rack_available? do
         e['rack.exception'] = exception
         [200, {}, ['okay']]
       end
-      stack = described_class.new(app)
+      stack = Sentry::Rack::CaptureExceptions.new(app)
 
       expect do
         stack.call(env)
@@ -55,7 +55,7 @@ RSpec.describe Sentry::Rack::CaptureExceptions, when: :rack_available? do
         e['sinatra.error'] = exception
         [200, {}, ['okay']]
       end
-      stack = described_class.new(app)
+      stack = Sentry::Rack::CaptureExceptions.new(app)
 
       expect do
         stack.call(env)
@@ -70,7 +70,7 @@ RSpec.describe Sentry::Rack::CaptureExceptions, when: :rack_available? do
         e['rack.exception'] = exception
         [200, {}, ['okay']]
       end
-      stack = described_class.new(app)
+      stack = Sentry::Rack::CaptureExceptions.new(app)
 
       stack.call(env)
 
@@ -86,7 +86,7 @@ RSpec.describe Sentry::Rack::CaptureExceptions, when: :rack_available? do
         [200, { 'content-type' => 'text/plain' }, ['OK']]
       end
 
-      stack = described_class.new(Rack::Lint.new(app))
+      stack = Sentry::Rack::CaptureExceptions.new(Rack::Lint.new(app))
       expect { stack.call(env) }.to_not raise_error
       expect(env.key?("sentry.error_event_id")).to eq(false)
     end
@@ -109,7 +109,7 @@ RSpec.describe Sentry::Rack::CaptureExceptions, when: :rack_available? do
           a / b
         end
 
-        stack = described_class.new(app)
+        stack = Sentry::Rack::CaptureExceptions.new(app)
 
         expect { stack.call(env) }.to raise_error(ZeroDivisionError)
 
@@ -133,7 +133,7 @@ RSpec.describe Sentry::Rack::CaptureExceptions, when: :rack_available? do
           a / b
         end
 
-        stack = described_class.new(app)
+        stack = Sentry::Rack::CaptureExceptions.new(app)
 
         expect { stack.call(env) }.to raise_error(ZeroDivisionError)
 
@@ -151,7 +151,7 @@ RSpec.describe Sentry::Rack::CaptureExceptions, when: :rack_available? do
           a / b
         end
 
-        stack = described_class.new(app)
+        stack = Sentry::Rack::CaptureExceptions.new(app)
 
         expect { stack.call(env) }.to raise_error(ZeroDivisionError)
 
@@ -179,7 +179,7 @@ RSpec.describe Sentry::Rack::CaptureExceptions, when: :rack_available? do
           [200, {}, ["ok"]]
         end
 
-        app_1 = described_class.new(request_1)
+        app_1 = Sentry::Rack::CaptureExceptions.new(request_1)
 
         app_1.call(env)
 
@@ -193,7 +193,7 @@ RSpec.describe Sentry::Rack::CaptureExceptions, when: :rack_available? do
           Sentry.capture_message("test")
           [200, {}, ["ok"]]
         end
-        app_1 = described_class.new(request_1)
+        app_1 = Sentry::Rack::CaptureExceptions.new(request_1)
 
         app_1.call(env)
 
@@ -207,7 +207,7 @@ RSpec.describe Sentry::Rack::CaptureExceptions, when: :rack_available? do
           e['rack.exception'] = Exception.new
           [200, {}, ["ok"]]
         end
-        app_1 = described_class.new(request_1)
+        app_1 = Sentry::Rack::CaptureExceptions.new(request_1)
         app_1.call(env)
 
         event = last_sentry_event
@@ -219,7 +219,7 @@ RSpec.describe Sentry::Rack::CaptureExceptions, when: :rack_available? do
           e['rack.exception'] = Exception.new
           [200, {}, ["ok"]]
         end
-        app_2 = described_class.new(request_2)
+        app_2 = Sentry::Rack::CaptureExceptions.new(request_2)
         app_2.call(env)
 
         event = last_sentry_event
@@ -248,7 +248,7 @@ RSpec.describe Sentry::Rack::CaptureExceptions, when: :rack_available? do
       end
 
       let(:stack) do
-        described_class.new(
+        Sentry::Rack::CaptureExceptions.new(
           ->(_) do
             [200, {}, ["ok"]]
           end
@@ -436,7 +436,7 @@ RSpec.describe Sentry::Rack::CaptureExceptions, when: :rack_available? do
           [200, {}, ["ok"]]
         end
 
-        stack = described_class.new(app)
+        stack = Sentry::Rack::CaptureExceptions.new(app)
 
         stack.call(env)
 
@@ -460,7 +460,7 @@ RSpec.describe Sentry::Rack::CaptureExceptions, when: :rack_available? do
             end
           end
 
-          stack = described_class.new(app)
+          stack = Sentry::Rack::CaptureExceptions.new(app)
 
           stack.call(env)
 
@@ -494,7 +494,7 @@ RSpec.describe Sentry::Rack::CaptureExceptions, when: :rack_available? do
           [200, {}, ["ok"]]
         end
 
-        stack = described_class.new(app)
+        stack = Sentry::Rack::CaptureExceptions.new(app)
 
         stack.call(env)
 
@@ -512,7 +512,7 @@ RSpec.describe Sentry::Rack::CaptureExceptions, when: :rack_available? do
           raise "foo"
         end
 
-        stack = described_class.new(app)
+        stack = Sentry::Rack::CaptureExceptions.new(app)
 
         expect do
           stack.call(env)
@@ -539,7 +539,7 @@ RSpec.describe Sentry::Rack::CaptureExceptions, when: :rack_available? do
       end
 
       let(:stack) do
-        described_class.new(
+        Sentry::Rack::CaptureExceptions.new(
           ->(_) do
             [200, {}, ["ok"]]
           end
@@ -586,7 +586,7 @@ RSpec.describe Sentry::Rack::CaptureExceptions, when: :rack_available? do
 
     let(:stack) do
       app = ->(_e) { raise exception }
-      described_class.new(app)
+      Sentry::Rack::CaptureExceptions.new(app)
     end
 
     before { perform_basic_setup }
@@ -618,7 +618,7 @@ RSpec.describe Sentry::Rack::CaptureExceptions, when: :rack_available? do
 
         expect_any_instance_of(Sentry::Hub).not_to receive(:start_session)
         expect(Sentry.session_flusher).to be_nil
-        stack = described_class.new(app)
+        stack = Sentry::Rack::CaptureExceptions.new(app)
         stack.call(env)
 
         expect(sentry_envelopes.count).to eq(0)
@@ -644,7 +644,7 @@ RSpec.describe Sentry::Rack::CaptureExceptions, when: :rack_available? do
           end
         end
 
-        stack = described_class.new(app)
+        stack = Sentry::Rack::CaptureExceptions.new(app)
 
         expect(Sentry.session_flusher).not_to be_nil
 
@@ -707,7 +707,7 @@ RSpec.describe Sentry::Rack::CaptureExceptions, when: :rack_available? do
             [200, {}, "ok"]
           end
 
-          stack = described_class.new(app)
+          stack = Sentry::Rack::CaptureExceptions.new(app)
           stack.call(env)
           event = last_sentry_event
 
