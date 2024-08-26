@@ -69,6 +69,7 @@ jobs:
           RACK_VERSION: ${{ matrix.rack_version }}
           REDIS_RB_VERSION: ${{ matrix.redis_rb_version }}
         run: |
+          bundle config set without 'rubocop'
           bundle install --jobs 4 --retry 3
           bundle exec rake
 
