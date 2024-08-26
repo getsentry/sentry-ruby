@@ -29,7 +29,7 @@ jobs:
       fail-fast: false
       matrix:
         ruby_version: ${{ fromJson(needs.ruby-versions.outputs.versions) }}
-        rack_version: [2.0, 3.0]
+        rack_version: [2.0, 3.0, 3.1]
         redis_rb_version: [4.0]
         include:
           - { ruby_version: 3.2, rack_version: 0, redis_rb_version: 5.0 }
@@ -49,8 +49,8 @@ jobs:
             }
           - {
               ruby_version: 3.3,
-              rack_version: 3.0,
-              redis_rb_version: 5.0,
+              rack_version: 3.1,
+              redis_rb_version: 5.3,
               options: { codecov: 1 },
             }
     steps:
