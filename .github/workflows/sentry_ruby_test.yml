@@ -45,6 +45,10 @@ jobs:
             }
           - {
               ruby_version: 3.2,
+              rack_version: 3.0
+            }
+          - {
+              ruby_version: 3.3,
               rack_version: 3.0,
               redis_rb_version: 5.0,
               options: { codecov: 1 },
