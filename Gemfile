@@ -19,5 +19,7 @@ gem "simplecov"
 gem "simplecov-cobertura", "~> 1.4"
 gem "rexml"
 
-gem "rubocop-rails-omakase"
-gem "rubocop-packaging"
+group :rubocop do
+  gem "rubocop-rails-omakase"
+  gem "rubocop-packaging"
+end
