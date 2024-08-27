@@ -139,6 +139,8 @@ class HappyWorkerForCron < HappyWorker; end
 class HappyWorkerForScheduler < HappyWorker; end
 class HappyWorkerForSchedulerWithTimezone < HappyWorker; end
 class EveryHappyWorker < HappyWorker; end
+class HappyWorkerWithHumanReadableCron < HappyWorker; end
+class HappyWorkerWithSymbolName < HappyWorker; end
 
 class HappyWorkerWithCron < HappyWorker
   include Sentry::Cron::MonitorCheckIns

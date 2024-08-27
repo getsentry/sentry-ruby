@@ -10,6 +10,7 @@ RSpec.describe Sentry::Sidekiq::Cron::Job do
   before do
     schedule_file = 'spec/fixtures/sidekiq-cron-schedule.yml'
     schedule = Sidekiq::Cron::Support.load_yaml(ERB.new(IO.read(schedule_file)).result)
+    schedule = schedule.merge(symbol_name: { cron: '* * * * *', class: HappyWorkerWithSymbolName })
     # sidekiq-cron 2.0+ accepts second argument to `load_from_hash!` with options,
     # such as {source: 'schedule'}, but sidekiq-cron 1.9.1 (last version to support Ruby 2.6) does not.
     # Since we're not using the source option in our code anyway, it's safe to not pass the 2nd arg.
@@ -47,6 +48,23 @@ RSpec.describe Sentry::Sidekiq::Cron::Job do
     expect(HappyWorkerForCron.sentry_monitor_config.schedule).to be_a(Sentry::Cron::MonitorSchedule::Crontab)
     expect(HappyWorkerForCron.sentry_monitor_config.schedule.value).to eq('* * * * *')
   end
+
+  it 'patches HappyWorkerWithHumanReadableCron' do
+    expect(HappyWorkerWithHumanReadableCron.ancestors).to include(Sentry::Cron::MonitorCheckIns)
+    expect(HappyWorkerWithHumanReadableCron.sentry_monitor_slug).to eq('human_readable_cron')
+    expect(HappyWorkerWithHumanReadableCron.sentry_monitor_config).to be_a(Sentry::Cron::MonitorConfig)
+    expect(HappyWorkerWithHumanReadableCron.sentry_monitor_config.schedule).to be_a(Sentry::Cron::MonitorSchedule::Crontab)
+    expect(HappyWorkerWithHumanReadableCron.sentry_monitor_config.schedule.value).to eq('*/5 * * * *')
+  end
+
+  it 'patches HappyWorkerWithSymbolName' do
+    expect(HappyWorkerWithSymbolName.ancestors).to include(Sentry::Cron::MonitorCheckIns)
+    expect(HappyWorkerWithSymbolName.sentry_monitor_slug).to eq('symbol_name')
+    expect(HappyWorkerWithSymbolName.sentry_monitor_config).to be_a(Sentry::Cron::MonitorConfig)
+    expect(HappyWorkerWithSymbolName.sentry_monitor_config.schedule).to be_a(Sentry::Cron::MonitorSchedule::Crontab)
+    expect(HappyWorkerWithSymbolName.sentry_monitor_config.schedule.value).to eq('* * * * *')
+  end
+
 
   it 'does not override SadWorkerWithCron manually set values' do
     expect(SadWorkerWithCron.ancestors).to include(Sentry::Cron::MonitorCheckIns)

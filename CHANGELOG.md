@@ -1,6 +1,9 @@
 ## Unreleased
 
+### Features
+
 - Add support for $SENTRY_DEBUG and $SENTRY_SPOTLIGHT ([#2374](https://github.com/getsentry/sentry-ruby/pull/2374))
+- Support human readable intervals in `sidekiq-cron` ([#2387](https://github.com/getsentry/sentry-ruby/pull/2387))
 
 ## 5.19.0
 
