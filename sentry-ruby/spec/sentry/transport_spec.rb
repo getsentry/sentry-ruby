@@ -250,7 +250,7 @@ RSpec.describe Sentry::Transport do
 
         let(:in_app_pattern) do
           project_root = "/fake/project_root"
-          Regexp.new("^(#{project_root}/)?#{Sentry::Backtrace::APP_DIRS_PATTERN}")
+          Regexp.new("^(#{project_root}/)?#{Sentry::Configuration::APP_DIRS_PATTERN}")
         end
         let(:frame_list_limit) { 500 }
         let(:frame_list_size) { frame_list_limit * 20 }
