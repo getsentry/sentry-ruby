@@ -767,7 +767,7 @@ RSpec.describe 'Sentry::Rack::CaptureExceptions', when: :rack_available? do
           config.traces_sample_rate = 1.0
           config.profiles_sample_rate = 1.0
           config.release = "test-release"
-          config.profiler = Sentry::Vernier::Profiler
+          config.profiler_class = Sentry::Vernier::Profiler
           config.project_root = Dir.pwd
         end
       end

@@ -3,8 +3,8 @@
 require "concurrent/utility/processor_counter"
 
 require "sentry/utils/exception_cause_chain"
-require 'sentry/utils/custom_inspection'
-require 'sentry/utils/env_helper'
+require "sentry/utils/custom_inspection"
+require "sentry/utils/env_helper"
 require "sentry/dsn"
 require "sentry/release_detector"
 require "sentry/transport/configuration"
@@ -293,7 +293,7 @@ module Sentry
 
     # The profiler class
     # @return [Class]
-    attr_accessor :profiler
+    attr_accessor :profiler_class
 
     # Take a float between 0.0 and 1.0 as the sample rate for capturing profiles.
     # Note that this rate is relative to traces_sample_rate / traces_sampler,
@@ -391,9 +391,9 @@ module Sentry
       self.auto_session_tracking = true
       self.enable_backpressure_handling = false
       self.trusted_proxies = []
-      self.dsn = ENV['SENTRY_DSN']
+      self.dsn = ENV["SENTRY_DSN"]
 
-      spotlight_env = ENV['SENTRY_SPOTLIGHT']
+      spotlight_env = ENV["SENTRY_SPOTLIGHT"]
       spotlight_bool = Sentry::Utils::EnvHelper.env_to_bool(spotlight_env, strict: true)
       self.spotlight = spotlight_bool.nil? ? (spotlight_env || false) : spotlight_bool
       self.server_name = server_name_from_env
@@ -407,7 +407,7 @@ module Sentry
       self.traces_sampler = nil
       self.enable_tracing = nil
 
-      self.profiler = Sentry::Profiler
+      self.profiler_class = Sentry::Profiler
 
       @transport = Transport::Configuration.new
       @cron = Cron::Configuration.new
