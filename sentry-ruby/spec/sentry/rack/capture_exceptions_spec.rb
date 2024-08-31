@@ -1,4 +1,5 @@
 require 'spec_helper'
+require 'sentry/vernier/profiler'
 
 RSpec.describe 'Sentry::Rack::CaptureExceptions', when: :rack_available? do
   let(:exception) { ZeroDivisionError.new("divided by 0") }
@@ -703,7 +704,13 @@ RSpec.describe 'Sentry::Rack::CaptureExceptions', when: :rack_available? do
       expect(profile[:transaction][:id]).to eq(event.event_id)
       expect(profile[:transaction][:name]).to eq(event.transaction)
       expect(profile[:transaction][:trace_id]).to eq(event.contexts[:trace][:trace_id])
-      expect(profile[:transaction][:active_thread_id]).to eq(Thread.current.object_id.to_s)
+
+      thread_id_mapping = {
+        Sentry::Profiler => "0",
+        Sentry::Vernier::Profiler => Thread.current.object_id.to_s
+      }
+
+      expect(profile[:transaction][:active_thread_id]).to eq(thread_id_mapping[Sentry.configuration.profiler_class])
 
       # detailed checking of content is done in profiler_spec,
       # just check basic structure here

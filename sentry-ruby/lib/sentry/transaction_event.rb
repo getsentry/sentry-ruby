@@ -74,7 +74,7 @@ module Sentry
           id: event_id,
           name: transaction.name,
           trace_id: transaction.trace_id,
-          active_thread_id: Thread.current.object_id.to_s
+          active_thread_id: transaction.profiler.active_thread_id.to_s
         }
       )
 

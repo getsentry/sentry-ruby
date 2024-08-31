@@ -84,6 +84,10 @@ module Sentry
         log("Stopped")
       end
 
+      def active_thread_id
+        Thread.current.object_id
+      end
+
       def to_hash
         return EMPTY_RESULT unless @started
 

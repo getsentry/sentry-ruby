@@ -47,6 +47,10 @@ module Sentry
       log("Stopped")
     end
 
+    def active_thread_id
+      "0"
+    end
+
     # Sets initial sampling decision of the profile.
     # @return [void]
     def set_initial_sample_decision(transaction_sampled)
