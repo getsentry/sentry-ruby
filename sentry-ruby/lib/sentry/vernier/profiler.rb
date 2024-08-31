@@ -57,7 +57,8 @@ module Sentry
       end
 
       def start
-        return unless @sampled && !@started
+        return unless @sampled
+        return if !@started
 
         ::Vernier.start_profile
         @started = true
