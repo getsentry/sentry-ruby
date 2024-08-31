@@ -57,7 +57,7 @@ module Sentry
         funcs = stack_table_hash[:frame_table].fetch(:func)
         lines = stack_table_hash[:func_table].fetch(:first_line)
 
-        funcs.map { |idx|
+        funcs.map do |idx|
           function, mod = split_module(stack_table_hash[:func_table][:name][idx])
 
           abs_path = stack_table_hash[:func_table][:filename][idx]
@@ -72,7 +72,7 @@ module Sentry
             lineno: (lineno = lines[idx]) > 0 ? lineno : nil,
             in_app: in_app
           }.compact
-        }
+        end
       end
 
       def stacks
