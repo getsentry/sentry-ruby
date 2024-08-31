@@ -92,12 +92,12 @@ RSpec.describe Sentry::Vernier::Profiler, when: [:ruby_version?, :>=, "3.2.1"] d
     end
 
     context "when Vernier crashes" do
-      it "logs the error and re-raises" do
+      it "logs the error and does not raise" do
         profiler.set_initial_sample_decision(true)
 
         expect(Vernier).to receive(:start_profile).and_raise("boom")
 
-        expect { profiler.start }.to raise_error("boom")
+        expect { profiler.start }.to_not raise_error("boom")
       end
 
       it "doesn't start if Vernier raises that it already started" do

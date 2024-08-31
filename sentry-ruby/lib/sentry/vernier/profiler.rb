@@ -58,7 +58,7 @@ module Sentry
 
       def start
         return unless @sampled
-        return if !@started
+        return if @started
 
         ::Vernier.start_profile
         @started = true
@@ -72,7 +72,6 @@ module Sentry
           log("Not started since running elsewhere")
         else
           log("Failed to start: #{e.message}")
-          raise e
         end
       end
 
