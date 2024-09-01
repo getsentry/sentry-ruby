@@ -21,7 +21,7 @@ module Sentry
       @profiling_enabled = defined?(StackProf) && configuration.profiling_enabled?
       @profiles_sample_rate = configuration.profiles_sample_rate
       @project_root = configuration.project_root
-      @app_dirs_pattern = configuration.app_dirs_pattern || Backtrace::APP_DIRS_PATTERN
+      @app_dirs_pattern = configuration.app_dirs_pattern
       @in_app_pattern = Regexp.new("^(#{@project_root}/)?#{@app_dirs_pattern}")
     end
 

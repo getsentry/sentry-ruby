@@ -23,6 +23,8 @@ module Sentry
     # have an `engines` dir at the root of your project, you may want
     # to set this to something like /(app|config|engines|lib)/
     #
+    # The default is value is /(bin|exe|app|config|lib|test|spec)/
+    #
     # @return [Regexp, nil]
     attr_accessor :app_dirs_pattern
 
@@ -336,6 +338,8 @@ module Sentry
 
     DEFAULT_PATCHES = %i[redis puma http].freeze
 
+    APP_DIRS_PATTERN = /(bin|exe|app|config|lib|test|spec)/.freeze
+
     class << self
       # Post initialization callbacks are called at the end of initialization process
       # allowing extending the configuration of sentry-ruby by multiple extensions
@@ -350,7 +354,7 @@ module Sentry
     end
 
     def initialize
-      self.app_dirs_pattern = nil
+      self.app_dirs_pattern = APP_DIRS_PATTERN
       self.debug = Sentry::Utils::EnvHelper.env_to_bool(ENV["SENTRY_DEBUG"])
       self.background_worker_threads = (processor_count / 2.0).ceil
       self.background_worker_max_queue = BackgroundWorker::DEFAULT_MAX_QUEUE
