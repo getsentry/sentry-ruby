@@ -8,7 +8,7 @@ module Sentry
 
     def initialize(bytes: nil, filename: nil, content_type: nil, path: nil)
       @bytes = bytes
-      @filename = infer_filename(filename, path)
+      @filename = filename || infer_filename(path)
       @path = path
       @content_type = content_type
     end
@@ -29,9 +29,7 @@ module Sentry
 
     private
 
-    def infer_filename(filename, path)
-      return filename if filename
-
+    def infer_filename(path)
       if path
         File.basename(path)
       else
