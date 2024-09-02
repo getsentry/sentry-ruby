@@ -90,13 +90,12 @@ module Sentry
 
       frame_map = {}
 
-      frames = results[:frames].to_enum.with_index.map do |frame, idx|
-        frame_id, frame_data = frame
-
+      frames = results[:frames].map.with_index do |(frame_id, frame_data), idx|
         # need to map over stackprof frame ids to ours
         frame_map[frame_id] = idx
 
         file_path = frame_data[:file]
+        lineno = frame_data[:line]
         in_app = in_app?(file_path)
         filename = compute_filename(file_path, in_app)
         function, mod = split_module(frame_data[:name])
@@ -109,7 +108,7 @@ module Sentry
         }
 
         frame_hash[:module] = mod if mod
-        frame_hash[:lineno] = frame_data[:line] if frame_data[:line] && frame_data[:line] >= 0
+        frame_hash[:lineno] = lineno if lineno && lineno >= 0
 
         frame_hash
       end
