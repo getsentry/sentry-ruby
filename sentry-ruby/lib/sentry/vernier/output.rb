@@ -76,18 +76,9 @@ module Sentry
       end
 
       def stacks
-        sample_stacks = profile.threads.flat_map { |_, thread_info|
-          thread_info[:samples].map do |stack_id|
-            stack = profile.stack(stack_id)
-            [stack.idx, stack.frames.map(&:idx)]
-          end
-        }.to_h
-
-        stacks = profile._stack_table.stack_count.times.map do |stack_id|
-          (sample_stacks[stack_id] || profile.stack(stack_id).frames.map(&:idx))
+        profile._stack_table.stack_count.times.map do |stack_id|
+          profile.stack(stack_id).frames.map(&:idx)
         end
-
-        stacks
       end
 
       def stack_table_hash
