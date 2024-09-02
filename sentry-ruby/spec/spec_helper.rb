@@ -49,9 +49,20 @@ RSpec.configure do |config|
   end
 
   config.before(:each, when: true) do |example|
-    meth, *args = example.metadata[:when]
+    guards =
+      case value = example.metadata[:when]
+      when Symbol then [value]
+      when Array then value
+      when Hash then value.map { |k, v| [k, v].flatten }
+      else
+        raise ArgumentError, "Invalid `when` metadata: #{value.inspect}"
+      end
 
-    skip("Skipping because `#{meth}(#{args.join(", ")})` returned false") unless TestHelpers.public_send(meth, *args)
+    skip_examples = guards.any? do |meth, *args|
+      !TestHelpers.public_send(meth, *args)
+    end
+
+    skip("Skipping because one or more guards `#{guards.inspect}` returned false") if skip_examples
   end
 
   RSpec::Matchers.define :have_recorded_lost_event do |reason, data_category, num: 1|
