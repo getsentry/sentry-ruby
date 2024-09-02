@@ -248,7 +248,7 @@ module Sentry
 
       return unless session
       session.close
-      Sentry.session_flusher.add_session(session)
+      Sentry.session_flusher&.add_session(session)
     end
 
     def with_session_tracking(&block)
