@@ -255,7 +255,11 @@ module Sentry
 
       return unless session
       session.close
-      Sentry.session_flusher.add_session(session)
+
+      # NOTE: Under some circumstances, session_flusher nilified out of sync
+      #   See: https://github.com/getsentry/sentry-ruby/issues/2378
+      #   See: https://github.com/getsentry/sentry-ruby/pull/2396
+      Sentry.session_flusher&.add_session(session)
     end
 
     def with_session_tracking(&block)
