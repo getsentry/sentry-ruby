@@ -4,11 +4,7 @@ require "securerandom"
 require_relative "../profiler/helpers"
 require_relative "output"
 
-begin
-  require "vernier"
-rescue LoadError
-  return
-end
+begin; require "vernier"; rescue LoadError; return; end
 
 module Sentry
   module Vernier
