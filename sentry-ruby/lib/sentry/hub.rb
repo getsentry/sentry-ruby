@@ -73,7 +73,13 @@ module Sentry
     end
 
     def pop_scope
-      @stack.pop
+      if @stack.size > 1
+        @stack.pop
+      else
+        # We never want to enter a situation where we have no scope and no client
+        client = current_client
+        @stack = [Layer.new(client, Scope.new)]
+      end
     end
 
     def start_transaction(transaction: nil, custom_sampling_context: {}, instrumenter: :sentry, **options)
