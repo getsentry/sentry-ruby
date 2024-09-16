@@ -8,7 +8,7 @@ module Sentry
       OP_NAME = "queue.sidekiq"
       SPAN_ORIGIN = "auto.queue.sidekiq"
 
-      def call(_worker, job, queue)
+      def call(worker, job, queue)
         return yield unless Sentry.initialized?
 
         context_filter = Sentry::Sidekiq::ContextFilter.new(job)
@@ -26,8 +26,18 @@ module Sentry
         scope.set_span(transaction) if transaction
 
         begin
-          yield
-        rescue
+          Sentry.with_child_span(op: "queue.process", description: "Process #{worker.class.name}") do |span|
+            # Set span data
+            if span
+              span.set_data("messaging.message.id", job["jid"])
+              span.set_data("messaging.destination.name", queue)
+              span.set_data("messaging.message.receive.latency", ((Time.now.to_f - job["enqueued_at"]) * 1000).to_i)
+              span.set_data("messaging.message.retry.count", job["retry_count"] || 0)
+            end
+
+            yield
+          end
+        rescue => ex
           finish_transaction(transaction, 500)
           raise
         end
@@ -63,13 +73,22 @@ module Sentry
     end
 
     class SentryContextClientMiddleware
-      def call(_worker_class, job, _queue, _redis_pool)
+      def call(worker_class, job, queue, _redis_pool)
         return yield unless Sentry.initialized?
 
         user = Sentry.get_current_scope.user
         job["sentry_user"] = user unless user.empty?
         job["trace_propagation_headers"] ||= Sentry.get_trace_propagation_headers
-        yield
+
+        Sentry.with_child_span(op: "queue.publish", description: "Enqueue #{worker_class}") do |span|
+          # Set span data
+          if span
+            span.set_data("messaging.message.id", job["jid"])
+            span.set_data("messaging.destination.name", queue)
+          end
+
+          yield
+        end
       end
     end
   end
