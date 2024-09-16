@@ -5,6 +5,7 @@
 - Add support for $SENTRY_DEBUG and $SENTRY_SPOTLIGHT ([#2374](https://github.com/getsentry/sentry-ruby/pull/2374))
 - Support human readable intervals in `sidekiq-cron` ([#2387](https://github.com/getsentry/sentry-ruby/pull/2387))
 - Set default app dirs pattern ([#2390](https://github.com/getsentry/sentry-ruby/pull/2390))
+- Verifies presence of client before adding a breadcrumb ([#2394](https://github.com/getsentry/sentry-ruby/pull/2394))
 
 ## 5.19.0
 
