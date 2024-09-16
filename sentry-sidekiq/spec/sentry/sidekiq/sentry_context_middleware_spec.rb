@@ -73,6 +73,7 @@ RSpec.describe Sentry::Sidekiq::SentryContextServerMiddleware do
         execute_worker(processor, HappyWorker, trace_propagation_headers: trace_propagation_headers)
 
         expect(transport.events.count).to eq(1)
+
         transaction = transport.events[0]
         expect(transaction).not_to be_nil
         expect(transaction.contexts.dig(:trace, :trace_id)).to eq(parent_transaction.trace_id)
