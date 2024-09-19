@@ -7,6 +7,10 @@
 - Set default app dirs pattern ([#2390](https://github.com/getsentry/sentry-ruby/pull/2390))
 - Verifies presence of client before adding a breadcrumb ([#2394](https://github.com/getsentry/sentry-ruby/pull/2394))
 
+### Bug Fixes
+
+- Fix error events missing a DSC when there's an active span ([#2408](https://github.com/getsentry/sentry-ruby/pull/2408))
+
 ## 5.19.0
 
 ### Features
