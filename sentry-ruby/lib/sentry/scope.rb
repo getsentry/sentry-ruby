@@ -62,6 +62,7 @@ module Sentry
 
       if span
         event.contexts[:trace] ||= span.get_trace_context
+        event.dynamic_sampling_context ||= span.get_dynamic_sampling_context
       else
         event.contexts[:trace] ||= propagation_context.get_trace_context
         event.dynamic_sampling_context ||= propagation_context.get_dynamic_sampling_context

@@ -6,6 +6,10 @@
 - Support human readable intervals in `sidekiq-cron` ([#2387](https://github.com/getsentry/sentry-ruby/pull/2387))
 - Set default app dirs pattern ([#2390](https://github.com/getsentry/sentry-ruby/pull/2390))
 
+### Bug Fixes
+
+- Fix error events missing a DSC when there's an active span ([#2408](https://github.com/getsentry/sentry-ruby/pull/2408))
+
 ## 5.19.0
 
 ### Features

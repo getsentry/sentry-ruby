@@ -136,6 +136,35 @@ RSpec.describe Sentry::Span do
     end
   end
 
+  describe "#get_dynamic_sampling_context" do
+    before do
+      # because initializing transactions requires an active hub
+      perform_basic_setup
+    end
+
+    subject do
+      baggage = Sentry::Baggage.from_incoming_header(
+        "other-vendor-value-1=foo;bar;baz, "\
+        "sentry-trace_id=771a43a4192642f0b136d5159a501700, "\
+        "sentry-public_key=49d0f7386ad645858ae85020e393bef3, "\
+        "sentry-sample_rate=0.01337, "\
+        "sentry-user_id=Am%C3%A9lie,  "\
+        "other-vendor-value-2=foo;bar;"
+      )
+
+      Sentry::Transaction.new(hub: Sentry.get_current_hub, baggage: baggage).start_child
+    end
+
+    it "propagates sentry dynamic_sampling_context" do
+      expect(subject.get_dynamic_sampling_context).to eq({
+        "sample_rate" => "0.01337",
+        "public_key" => "49d0f7386ad645858ae85020e393bef3",
+        "trace_id" => "771a43a4192642f0b136d5159a501700",
+        "user_id" => "Amélie"
+      })
+    end
+  end
+
   describe "#start_child" do
     before do
       # because initializing transactions requires an active hub

@@ -108,7 +108,7 @@ module Sentry
     end
 
     # Returns the Dynamic Sampling Context from the baggage.
-    # @return [String, nil]
+    # @return [Hash, nil]
     def get_dynamic_sampling_context
       get_baggage&.dynamic_sampling_context
     end
