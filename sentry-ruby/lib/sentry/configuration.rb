@@ -190,6 +190,11 @@ module Sentry
     # @return [String]
     attr_accessor :project_root
 
+    # Whether to strip the load path while constructing the backtrace frame filename.
+    # Defaults to true.
+    # @return [Boolean]
+    attr_accessor :strip_backtrace_load_path
+
     # Insert sentry-trace to outgoing requests' headers
     # @return [Boolean]
     attr_accessor :propagate_traces
@@ -359,6 +364,7 @@ module Sentry
       self.background_worker_threads = (processor_count / 2.0).ceil
       self.background_worker_max_queue = BackgroundWorker::DEFAULT_MAX_QUEUE
       self.backtrace_cleanup_callback = nil
+      self.strip_backtrace_load_path = true
       self.max_breadcrumbs = BreadcrumbBuffer::DEFAULT_SIZE
       self.breadcrumbs_logger = []
       self.context_lines = 3
@@ -563,7 +569,8 @@ module Sentry
         app_dirs_pattern: @app_dirs_pattern,
         linecache: @linecache,
         context_lines: @context_lines,
-        backtrace_cleanup_callback: @backtrace_cleanup_callback
+        backtrace_cleanup_callback: @backtrace_cleanup_callback,
+        strip_backtrace_load_path: @strip_backtrace_load_path
       )
     end
 
