@@ -25,6 +25,7 @@ require "sentry/session_flusher"
 require "sentry/backpressure_monitor"
 require "sentry/cron/monitor_check_ins"
 require "sentry/metrics"
+require "sentry/vernier/profiler"
 
 [
   "sentry/rake",

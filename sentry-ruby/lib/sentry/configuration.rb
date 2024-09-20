@@ -293,7 +293,7 @@ module Sentry
 
     # The profiler class
     # @return [Class]
-    attr_accessor :profiler_class
+    attr_reader :profiler_class
 
     # Take a float between 0.0 and 1.0 as the sample rate for capturing profiles.
     # Note that this rate is relative to traces_sample_rate / traces_sampler,
@@ -502,6 +502,18 @@ module Sentry
       raise ArgumentError, "profiles_sample_rate must be a Numeric or nil" unless is_numeric_or_nil?(profiles_sample_rate)
       log_warn("Please make sure to include the 'stackprof' gem in your Gemfile to use Profiling with Sentry.") unless defined?(StackProf)
       @profiles_sample_rate = profiles_sample_rate
+    end
+
+    def profiler_class=(profiler_class)
+      if profiler_class == Sentry::Vernier::Profiler
+        begin
+          require "vernier"
+        rescue LoadError
+          raise ArgumentError, "Please add the 'vernier' gem to your Gemfile to use the Vernier profiler with Sentry."
+        end
+      end
+
+      @profiler_class = profiler_class
     end
 
     def sending_allowed?

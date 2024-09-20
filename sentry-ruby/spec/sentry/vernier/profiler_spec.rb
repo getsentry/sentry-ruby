@@ -2,8 +2,8 @@ require "spec_helper"
 
 require "sentry/vernier/profiler"
 
-RSpec.describe "Sentry::Vernier::Profiler", when: { ruby_version?: [:>=, "3.2.1"] } do
-  subject(:profiler) { Sentry::Vernier::Profiler.new(Sentry.configuration) }
+RSpec.describe Sentry::Vernier::Profiler, when: { ruby_version?: [:>=, "3.2.1"] } do
+  subject(:profiler) { described_class.new(Sentry.configuration) }
 
   before do
     # TODO: replace with some public API once available

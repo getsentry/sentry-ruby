@@ -706,12 +706,9 @@ RSpec.describe 'Sentry::Rack::CaptureExceptions', when: :rack_available? do
       expect(profile[:transaction][:trace_id]).to eq(event.contexts[:trace][:trace_id])
 
       thread_id_mapping = {
-        Sentry::Profiler => "0"
+        Sentry::Profiler => "0",
+        Sentry::Vernier::Profiler => Thread.current.object_id.to_s
       }
-
-      if defined?(Sentry::Vernier::Profiler)
-        thread_id_mapping[Sentry::Vernier::Profiler] = Thread.current.object_id.to_s
-      end
 
       expect(profile[:transaction][:active_thread_id]).to eq(thread_id_mapping[Sentry.configuration.profiler_class])
 
@@ -737,7 +734,7 @@ RSpec.describe 'Sentry::Rack::CaptureExceptions', when: :rack_available? do
       let(:app) do
          ->(_) do
           [200, {}, "ok"]
-         end
+        end
       end
 
       let(:stackprof_results) do

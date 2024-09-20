@@ -4,8 +4,6 @@ require "securerandom"
 require_relative "../profiler/helpers"
 require_relative "output"
 
-begin; require "vernier"; rescue LoadError; return; end
-
 module Sentry
   module Vernier
     class Profiler
@@ -19,7 +17,7 @@ module Sentry
         @started = false
         @sampled = nil
 
-        @profiling_enabled = configuration.profiling_enabled?
+        @profiling_enabled = defined?(Vernier) && configuration.profiling_enabled?
         @profiles_sample_rate = configuration.profiles_sample_rate
         @project_root = configuration.project_root
         @app_dirs_pattern = configuration.app_dirs_pattern
