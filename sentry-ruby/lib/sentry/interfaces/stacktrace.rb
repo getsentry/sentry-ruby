@@ -27,8 +27,9 @@ module Sentry
       attr_accessor :abs_path, :context_line, :function, :in_app, :filename,
                   :lineno, :module, :pre_context, :post_context, :vars
 
-      def initialize(project_root, line)
+      def initialize(project_root, line, strip_backtrace_load_path = true)
         @project_root = project_root
+        @strip_backtrace_load_path = strip_backtrace_load_path
 
         @abs_path = line.file
         @function = line.method if line.method
@@ -44,6 +45,7 @@ module Sentry
 
       def compute_filename
         return if abs_path.nil?
+        return abs_path unless @strip_backtrace_load_path
 
         prefix =
           if under_project_root? && in_app

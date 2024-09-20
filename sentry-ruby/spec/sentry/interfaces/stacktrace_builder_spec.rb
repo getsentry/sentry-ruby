@@ -51,6 +51,21 @@ RSpec.describe Sentry::StacktraceBuilder do
       expect(second_frame.post_context).to eq(["end\n", nil, nil])
     end
 
+    context "when strip_backtrace_load_path is false" do
+      let(:configuration) do
+        Sentry::Configuration.new.tap do |config|
+          config.project_root = fixture_root
+          config.strip_backtrace_load_path = false
+        end
+      end
+
+      it "does not strip load paths for filenames" do
+        interface = subject.build(backtrace: backtrace)
+        expect(interface.frames.first.filename).to eq(fixture_file)
+        expect(interface.frames.last.filename).to eq(fixture_file)
+      end
+    end
+
     context "with block argument" do
       it "removes the frame if it's evaluated as nil" do
         interface = subject.build(backtrace: backtrace) do |frame|
