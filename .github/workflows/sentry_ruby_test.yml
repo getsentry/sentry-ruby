@@ -25,6 +25,7 @@ jobs:
         working-directory: sentry-ruby
     name: Ruby ${{ matrix.ruby_version }} & Rack ${{ matrix.rack_version }}, options - ${{ toJson(matrix.options) }}
     runs-on: ubuntu-latest
+    timeout-minutes: 5
     strategy:
       fail-fast: false
       matrix:
