@@ -32,19 +32,19 @@ module Sentry
 
       module LangchainLLMPatch
         def chat(...)
-          wrap_with_sentry("chat") { super(...) }
+          wrap_with_sentry("chat_completions") { super(...) }
         end
 
         def complete(...)
-          wrap_with_sentry("complete") { super(...) }
+          wrap_with_sentry("chat_completions") { super(...) }
         end
 
         def embed(...)
-          wrap_with_sentry("embed") { super(...) }
+          wrap_with_sentry("embeddings") { super(...) }
         end
 
         def summarize(...)
-          wrap_with_sentry("summarize") { super(...) }
+          wrap_with_sentry("chat_completions") { super(...) }
         end
 
         private
@@ -61,7 +61,7 @@ module Sentry
               origin: "auto.ai.langchain"
             )
 
-            span.set_data("ai.model_id", "#{self.class.name}::#{@defaults[:chat_completion_model_name]}")
+            span.set_data("ai.model_id", @defaults[:chat_completion_model_name])
 
             # Add additional SPANDATA fields
             span.set_data("ai.frequency_penalty", @defaults[:frequency_penalty])
@@ -81,8 +81,6 @@ module Sentry
             span.set_data("ai.raw_prompting", @defaults[:raw_prompting])
             span.set_data("ai.seed", @defaults[:seed])
 
-            Sentry.capture_message("LLM span created for #{self.class.name}", level: 'info')
-
             begin
               result = yield
               response_text = result.respond_to?(:completion) ? result.completion : result.to_s
@@ -98,16 +96,13 @@ module Sentry
                 total_tokens: total_tokens
               )
 
-              Sentry.capture_message("LLM call completed successfully for #{self.class.name}", level: 'info')
               result
             rescue => e
               span.set_status("internal_error")
               Sentry.capture_exception(e, level: 'error')
-              Sentry.capture_message("Error in LLM call for #{self.class.name}: #{e.message}", level: 'error')
               raise
             ensure
               span.finish
-              Sentry.capture_message("LLM span finished for #{self.class.name}", level: 'info')
             end
           else
             Sentry.capture_message("No active transaction found for LLM call in #{self.class.name}", level: 'warning')

@@ -53,13 +53,16 @@ module Sentry
           ai_pipeline_name = Monitoring.ai_pipeline_name
           span.set_data("ai.pipeline.name", ai_pipeline_name) if ai_pipeline_name
           span.set_measurement("ai_prompt_tokens_used", value: prompt_tokens) if prompt_tokens
+          span.set_data("ai.prompt_tokens.used", value: prompt_tokens) if prompt_tokens
           span.set_measurement("ai_completion_tokens_used", value: completion_tokens) if completion_tokens
+          span.set_data("ai.completion_tokens.used", value: completion_tokens) if completion_tokens
 
           if total_tokens.nil? && prompt_tokens && completion_tokens
             total_tokens = prompt_tokens + completion_tokens
           end
 
           span.set_measurement("ai_total_tokens_used", value: total_tokens) if total_tokens
+          span.set_data("ai.total_tokens.used", value: total_tokens) if total_tokens
         end
 
         def ai_pipeline_name
