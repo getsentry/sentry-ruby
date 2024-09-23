@@ -25,6 +25,7 @@ require "sentry/session_flusher"
 require "sentry/backpressure_monitor"
 require "sentry/cron/monitor_check_ins"
 require "sentry/metrics"
+require "sentry/ai/monitoring"
 
 [
   "sentry/rake",
@@ -600,6 +601,11 @@ module Sentry
     def utc_now
       Time.now.utc
     end
+
+    # Add a new method to access AI monitoring functionality
+    def ai
+      Sentry::AI::Monitoring
+    end
   end
 end
 
@@ -609,3 +615,4 @@ require "sentry/redis"
 require "sentry/puma"
 require "sentry/graphql"
 require "sentry/faraday"
+require "sentry/langchain" if defined?(::Langchain)
