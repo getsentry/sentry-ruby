@@ -52,8 +52,6 @@ module Sentry
         def wrap_with_sentry(call_type)
           transaction = Sentry.get_current_scope.get_transaction
 
-          Sentry.capture_message("LangChain LLM #{call_type} call initiated for #{self.class.name}", level: 'info')
-
           if transaction
             span = transaction.start_child(
               op: "ai.#{call_type}.langchain",
