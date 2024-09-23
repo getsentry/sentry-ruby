@@ -1,5 +1,3 @@
-## Unreleased
-
 ### 5.20.0
 
 - Add support for `$SENTRY_DEBUG` and `$SENTRY_SPOTLIGHT` ([#2374](https://github.com/getsentry/sentry-ruby/pull/2374))
