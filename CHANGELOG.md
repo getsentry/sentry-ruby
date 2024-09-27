@@ -9,6 +9,7 @@
 
 - Fix error events missing a DSC when there's an active span ([#2408](https://github.com/getsentry/sentry-ruby/pull/2408))
 - Verifies presence of client before adding a breadcrumb ([#2394](https://github.com/getsentry/sentry-ruby/pull/2394))
+- Fix `Net:HTTP` integration for non-ASCII URI's ([#2417](https://github.com/getsentry/sentry-ruby/pull/2417))
 
 ## 5.19.0
 
