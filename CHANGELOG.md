@@ -1,3 +1,9 @@
+## 5.20.1
+
+### Bug Fixes
+
+- Skip `rubocop.yml` in `spec.files` ([#2420](https://github.com/getsentry/sentry-ruby/pull/2420))
+
 ## 5.20.0
 
 - Add support for `$SENTRY_DEBUG` and `$SENTRY_SPOTLIGHT` ([#2374](https://github.com/getsentry/sentry-ruby/pull/2374))
