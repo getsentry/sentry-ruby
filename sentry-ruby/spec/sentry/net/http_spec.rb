@@ -107,6 +107,22 @@ RSpec.describe Sentry::Net::HTTP do
       end
     end
 
+    it "supports non-ascii characters in the path" do
+      stub_normal_response
+
+      uri = URI('http://example.com')
+      http = Net::HTTP.new(uri.host, uri.port)
+      request = Net::HTTP::Get.new('/path?q=øgreyfoss&å=vær')
+
+      transaction = Sentry.start_transaction
+      Sentry.get_current_scope.set_span(transaction)
+
+
+      response = http.request(request)
+
+      expect(response.code).to eq("200")
+    end
+
     it "adds sentry-trace header to the request header" do
       uri = URI("http://example.com/path")
       http = Net::HTTP.new(uri.host, uri.port)
