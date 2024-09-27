@@ -28,6 +28,6 @@ Gem::Specification.new do |spec|
   spec.executables   = spec.files.grep(%r{^exe/}) { |f| File.basename(f) }
   spec.require_paths = ["lib"]
 
-  spec.add_dependency "sentry-ruby", "~> 5.20.0"
+  spec.add_dependency "sentry-ruby", "~> 5.20.1"
   spec.add_dependency "delayed_job", ">= 4.0"
 end
