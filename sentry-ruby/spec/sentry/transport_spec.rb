@@ -145,6 +145,37 @@ RSpec.describe Sentry::Transport do
           expect(profile_payload).to eq(profile.to_json)
         end
       end
+
+      context "allows bigger item size" do
+        let(:profile) do
+          {
+            environment: "test",
+            release: "release",
+            profile: {
+              frames: Array.new(10000) { |i| { function: "function_#{i}", filename: "file_#{i}", lineno: i } },
+              stacks: Array.new(10000) { |i| [i] },
+              samples: Array.new(10000) { |i| { stack_id: i, elapsed_since_start_ns: i * 1000, thread_id: i % 10 } }
+            }
+          }
+        end
+
+        let(:event_with_profile) do
+          event.profile = profile
+          event
+        end
+
+        let(:envelope) { subject.envelope_from_event(event_with_profile) }
+
+        it "adds profile item to envelope" do
+          result, _ = subject.serialize_envelope(envelope)
+
+          _profile_header, profile_payload_json = result.split("\n").last(2)
+
+          profile_payload = JSON.parse(profile_payload_json)
+
+          expect(profile_payload["profile"]).to_not be(nil)
+        end
+      end
     end
 
     context "client report" do

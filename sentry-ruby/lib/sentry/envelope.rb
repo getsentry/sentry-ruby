@@ -3,8 +3,6 @@
 module Sentry
   # @api private
   class Envelope
-    require_relative "envelope/item"
-
     attr_accessor :headers, :items
 
     def initialize(headers = {})
@@ -25,3 +23,5 @@ module Sentry
     end
   end
 end
+
+require_relative "envelope/item"
