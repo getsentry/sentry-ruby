@@ -6,16 +6,13 @@ module Sentry
     STACKTRACE_FRAME_LIMIT_ON_OVERSIZED_PAYLOAD = 500
     MAX_SERIALIZED_PAYLOAD_SIZE = 1024 * 1000
 
-    attr_reader :size_limit, :headers, :payload
+    attr_reader :size_limit, :headers, :payload, :type
 
     def initialize(headers, payload)
       @headers = headers
       @payload = payload
       @size_limit = MAX_SERIALIZED_PAYLOAD_SIZE
-    end
-
-    def type
-      @headers[:type] || "event"
+      @type = headers[:type] || "event"
     end
 
     # rate limits and client reports use the data_category rather than envelope item type
