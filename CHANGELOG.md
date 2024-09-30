@@ -1,3 +1,9 @@
+## Unreleased
+
+### Internal
+
+- Profile items have bigger size limit now ([#2421](https://github.com/getsentry/sentry-ruby/pull/2421))
+
 ## 5.20.1
 
 ### Bug Fixes
