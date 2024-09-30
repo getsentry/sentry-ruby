@@ -6,11 +6,14 @@ module Sentry
     STACKTRACE_FRAME_LIMIT_ON_OVERSIZED_PAYLOAD = 500
     MAX_SERIALIZED_PAYLOAD_SIZE = 1024 * 1000
 
+    attr_reader :size_limit
+
     attr_accessor :headers, :payload
 
     def initialize(headers, payload)
       @headers = headers
       @payload = payload
+      @size_limit = MAX_SERIALIZED_PAYLOAD_SIZE
     end
 
     def type
@@ -41,17 +44,17 @@ module Sentry
     def serialize
       result = to_s
 
-      if result.bytesize > MAX_SERIALIZED_PAYLOAD_SIZE
+      if result.bytesize > size_limit
         remove_breadcrumbs!
         result = to_s
       end
 
-      if result.bytesize > MAX_SERIALIZED_PAYLOAD_SIZE
+      if result.bytesize > size_limit
         reduce_stacktrace!
         result = to_s
       end
 
-      [result, result.bytesize > MAX_SERIALIZED_PAYLOAD_SIZE]
+      [result, result.bytesize > size_limit]
     end
 
     def size_breakdown
