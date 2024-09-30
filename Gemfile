@@ -2,6 +2,8 @@ source "https://rubygems.org"
 git_source(:github) { |name| "https://github.com/#{name}.git" }
 
 gem "rake", "~> 12.0"
+gem "concurrent-ruby", require: "concurrent"
+gem "langchainrb", "~> 0.16.0"
 
 ruby_version = Gem::Version.new(RUBY_VERSION)
 
