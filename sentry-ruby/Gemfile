@@ -14,6 +14,7 @@ gem "puma"
 
 gem "timecop"
 gem "stackprof" unless RUBY_PLATFORM == "java"
+gem "vernier", platforms: :ruby if RUBY_VERSION >= "3.2.1"
 
 gem "graphql", ">= 2.2.6" if RUBY_VERSION.to_f >= 2.7
 

@@ -85,7 +85,7 @@ module Sentry
       @effective_sample_rate = nil
       @contexts = {}
       @measurements = {}
-      @profiler = Profiler.new(@configuration)
+      @profiler = @configuration.profiler_class.new(@configuration)
       init_span_recorder
     end
 

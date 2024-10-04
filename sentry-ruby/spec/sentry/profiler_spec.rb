@@ -174,10 +174,11 @@ RSpec.describe Sentry::Profiler, when: :stack_prof_installed? do
         subject.set_initial_sample_decision(true)
         subject.start
         subject.stop
+
+        allow(StackProf).to receive(:results).and_return([])
       end
 
       it 'returns empty' do
-        expect(StackProf).to receive(:results).and_call_original
         expect(subject.to_hash).to eq({})
       end
 

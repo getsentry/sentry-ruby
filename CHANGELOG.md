@@ -1,5 +1,9 @@
 ## Unreleased
 
+### Features
+
+- Experimental support for multi-threaded profiling using Vernier ([#2372](https://github.com/getsentry/sentry-ruby/pull/2372))
+
 ### Internal
 
 - Profile items have bigger size limit now ([#2421](https://github.com/getsentry/sentry-ruby/pull/2421))

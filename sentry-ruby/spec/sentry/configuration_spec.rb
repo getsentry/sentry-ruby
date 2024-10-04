@@ -693,4 +693,21 @@ RSpec.describe Sentry::Configuration do
       expect(subject.enabled_patches).to eq(%i[redis http])
     end
   end
+
+  describe "#profiler_class=" do
+    it "sets the profiler class to Vernier when it's available", when: :vernier_installed? do
+      subject.profiler_class = Sentry::Vernier::Profiler
+      expect(subject.profiler_class).to eq(Sentry::Vernier::Profiler)
+    end
+
+    it "sets the profiler class to StackProf when Vernier is not available", when: { ruby_version?: [:<, "3.2"] } do
+      expect { subject.profiler_class = Sentry::Vernier::Profiler }
+        .to raise_error(
+          ArgumentError,
+          /Please add the 'vernier' gem to your Gemfile/
+        )
+
+      expect(subject.profiler_class).to eq(Sentry::Profiler)
+    end
+  end
 end

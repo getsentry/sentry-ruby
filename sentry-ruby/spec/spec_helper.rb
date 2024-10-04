@@ -8,6 +8,7 @@ require "simplecov"
 require "rspec/retry"
 require "redis"
 require "stackprof" unless RUBY_PLATFORM == "java"
+require "vernier" unless RUBY_PLATFORM == "java" || RUBY_VERSION < "3.2"
 
 SimpleCov.start do
   project_name "sentry-ruby"
@@ -22,6 +23,8 @@ end
 
 require "sentry-ruby"
 require "sentry/test_helper"
+
+Dir[Pathname(__dir__).join("support/**/*.rb")].sort.each { |f| require f }
 
 RSpec.configure do |config|
   # Enable flags like --only-failures and --next-failure
@@ -47,9 +50,20 @@ RSpec.configure do |config|
   end
 
   config.before(:each, when: true) do |example|
-    meth = example.metadata[:when]
+    guards =
+      case value = example.metadata[:when]
+      when Symbol then [value]
+      when Array then value
+      when Hash then value.map { |k, v| [k, v].flatten }
+      else
+        raise ArgumentError, "Invalid `when` metadata: #{value.inspect}"
+      end
 
-    skip("Skipping because `when: #{meth}` returned false") unless TestHelpers.public_send(meth, example)
+    skip_examples = guards.any? do |meth, *args|
+      !TestHelpers.public_send(meth, *args)
+    end
+
+    skip("Skipping because one or more guards `#{guards.inspect}` returned false") if skip_examples
   end
 
   RSpec::Matchers.define :have_recorded_lost_event do |reason, data_category, num: 1|
@@ -60,12 +74,21 @@ RSpec.configure do |config|
 end
 
 module TestHelpers
-  def self.stack_prof_installed?(_example)
+  def self.stack_prof_installed?
     defined?(StackProf)
   end
 
-  def self.rack_available?(_example)
+  def self.vernier_installed?
+    require "sentry/vernier/profiler"
+    defined?(::Vernier)
+  end
+
+  def self.rack_available?
     defined?(Rack)
+  end
+
+  def self.ruby_version?(op, version)
+    RUBY_VERSION.public_send(op, version)
   end
 end
 
