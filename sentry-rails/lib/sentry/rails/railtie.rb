@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 require "sentry/rails/capture_exceptions"
 require "sentry/rails/rescued_exception_interceptor"
 require "sentry/rails/backtrace_cleaner"

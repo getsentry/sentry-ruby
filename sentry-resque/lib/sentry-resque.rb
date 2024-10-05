@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 require "resque"
 require "sentry-ruby"
 require "sentry/integrable"

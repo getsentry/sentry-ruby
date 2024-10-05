@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 require "spec_helper"
 require 'sidekiq/manager'
 require 'sidekiq/api'

@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 require "sentry/sidekiq/context_filter"
 
 module Sentry

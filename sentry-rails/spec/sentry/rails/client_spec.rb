@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 require "spec_helper"
 
 RSpec.describe Sentry::Client, type: :request, retry: 3, skip: Gem::Version.new(Rails.version) < Gem::Version.new('5.1.0') do

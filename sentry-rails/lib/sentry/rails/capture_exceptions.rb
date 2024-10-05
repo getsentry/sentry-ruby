@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 module Sentry
   module Rails
     class CaptureExceptions < Sentry::Rack::CaptureExceptions

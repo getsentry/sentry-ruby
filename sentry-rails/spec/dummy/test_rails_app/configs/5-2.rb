@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 require "active_storage/engine"
 
 def run_pre_initialize_cleanup; end

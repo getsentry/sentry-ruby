@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 require "puma"
 require_relative "../spec_helper"
 

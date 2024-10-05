@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 return unless ENV["WITH_SENTRY_RAILS"]
 
 require "rails"

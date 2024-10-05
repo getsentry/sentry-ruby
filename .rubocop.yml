@@ -4,7 +4,14 @@ inherit_gem:
 Layout/SpaceInsideArrayLiteralBrackets:
   Enabled: false
 
+Layout/EmptyLineAfterMagicComment:
+  Enabled: true
+
+Style/FrozenStringLiteralComment:
+  Enabled: true
+
 AllCops:
   Exclude:
     - "sentry-raven/**/*"
     - "sentry-*/tmp/**/*"
+    - "sentry-*/examples/**/*"

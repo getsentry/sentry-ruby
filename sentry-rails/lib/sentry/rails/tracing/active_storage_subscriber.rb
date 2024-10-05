@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 require "sentry/rails/tracing/abstract_subscriber"
 
 module Sentry

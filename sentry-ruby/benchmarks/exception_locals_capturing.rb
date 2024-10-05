@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 require 'benchmark/ips'
 
 def raise_n_exceptions(n, with_sleep: false)

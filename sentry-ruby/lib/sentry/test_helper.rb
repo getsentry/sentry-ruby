@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 module Sentry
   module TestHelper
     DUMMY_DSN = "http://12345:67890@sentry.localdomain/sentry/42"
