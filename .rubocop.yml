@@ -10,6 +10,9 @@ Layout/EmptyLineAfterMagicComment:
 Style/FrozenStringLiteralComment:
   Enabled: true
 
+Style/RedundantFreeze:
+  Enabled: true
+
 AllCops:
   Exclude:
     - "sentry-raven/**/*"

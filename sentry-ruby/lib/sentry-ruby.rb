@@ -42,11 +42,11 @@ module Sentry
 
   CAPTURED_SIGNATURE = :@__sentry_captured
 
-  LOGGER_PROGNAME = "sentry".freeze
+  LOGGER_PROGNAME = "sentry"
 
-  SENTRY_TRACE_HEADER_NAME = "sentry-trace".freeze
+  SENTRY_TRACE_HEADER_NAME = "sentry-trace"
 
-  BAGGAGE_HEADER_NAME = "baggage".freeze
+  BAGGAGE_HEADER_NAME = "baggage"
 
   THREAD_LOCAL = :sentry_hub
 

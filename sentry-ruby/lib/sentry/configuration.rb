@@ -335,19 +335,19 @@ module Sentry
     ].freeze
 
     HEROKU_DYNO_METADATA_MESSAGE = "You are running on Heroku but haven't enabled Dyno Metadata. For Sentry's "\
-    "release detection to work correctly, please run `heroku labs:enable runtime-dyno-metadata`".freeze
+    "release detection to work correctly, please run `heroku labs:enable runtime-dyno-metadata`"
 
-    LOG_PREFIX = "** [Sentry] ".freeze
-    MODULE_SEPARATOR = "::".freeze
+    LOG_PREFIX = "** [Sentry] "
+    MODULE_SEPARATOR = "::"
     SKIP_INSPECTION_ATTRIBUTES = [:@linecache, :@stacktrace_builder]
 
     INSTRUMENTERS = [:sentry, :otel]
 
-    PROPAGATION_TARGETS_MATCH_ALL = /.*/.freeze
+    PROPAGATION_TARGETS_MATCH_ALL = /.*/
 
     DEFAULT_PATCHES = %i[redis puma http].freeze
 
-    APP_DIRS_PATTERN = /(bin|exe|app|config|lib|test|spec)/.freeze
+    APP_DIRS_PATTERN = /(bin|exe|app|config|lib|test|spec)/
 
     class << self
       # Post initialization callbacks are called at the end of initialization process

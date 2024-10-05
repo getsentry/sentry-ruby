@@ -10,8 +10,8 @@ module Sentry
         extend InstrumentPayloadCleanupHelper
 
         EVENT_NAMES = ["process_action.action_controller"].freeze
-        OP_NAME = "view.process_action.action_controller".freeze
-        SPAN_ORIGIN = "auto.view.rails".freeze
+        OP_NAME = "view.process_action.action_controller"
+        SPAN_ORIGIN = "auto.view.rails"
 
         def self.subscribe!
           Sentry.logger.warn <<~MSG

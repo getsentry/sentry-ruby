@@ -3,8 +3,8 @@
 module Sentry
   module Sidekiq
     class ContextFilter
-      ACTIVEJOB_RESERVED_PREFIX_REGEX = /^_aj_/.freeze
-      SIDEKIQ_NAME = "Sidekiq".freeze
+      ACTIVEJOB_RESERVED_PREFIX_REGEX = /^_aj_/
+      SIDEKIQ_NAME = "Sidekiq"
 
       attr_reader :context
 

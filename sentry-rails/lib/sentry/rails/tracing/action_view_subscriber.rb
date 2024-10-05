@@ -7,8 +7,8 @@ module Sentry
     module Tracing
       class ActionViewSubscriber < AbstractSubscriber
         EVENT_NAMES = ["render_template.action_view"].freeze
-        SPAN_PREFIX = "template.".freeze
-        SPAN_ORIGIN = "auto.template.rails".freeze
+        SPAN_PREFIX = "template."
+        SPAN_ORIGIN = "auto.template.rails"
 
         def self.subscribe!
           subscribe_to_event(EVENT_NAMES) do |event_name, duration, payload|

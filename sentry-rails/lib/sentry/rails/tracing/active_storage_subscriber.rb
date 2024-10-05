@@ -21,12 +21,12 @@ module Sentry
           analyze.active_storage
         ].freeze
 
-        SPAN_ORIGIN = "auto.file.rails".freeze
+        SPAN_ORIGIN = "auto.file.rails"
 
         def self.subscribe!
           subscribe_to_event(EVENT_NAMES) do |event_name, duration, payload|
             record_on_current_span(
-              op: "file.#{event_name}".freeze,
+              op: "file.#{event_name}",
               origin: SPAN_ORIGIN,
               start_timestamp: payload[START_TIMESTAMP_NAME],
               description: payload[:service],

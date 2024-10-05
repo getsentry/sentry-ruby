@@ -7,8 +7,8 @@ module Sentry
     include CustomInspection
 
     SKIP_INSPECTION_ATTRIBUTES = [:@stacktrace]
-    PROBLEMATIC_LOCAL_VALUE_REPLACEMENT = "[ignored due to error]".freeze
-    OMISSION_MARK = "...".freeze
+    PROBLEMATIC_LOCAL_VALUE_REPLACEMENT = "[ignored due to error]"
+    OMISSION_MARK = "..."
     MAX_LOCAL_BYTES = 1024
 
     attr_reader :type, :module, :thread_id, :stacktrace, :mechanism

@@ -18,8 +18,8 @@ module Sentry
       end
 
       class SentryReporter
-        OP_NAME = "queue.active_job".freeze
-        SPAN_ORIGIN = "auto.queue.active_job".freeze
+        OP_NAME = "queue.active_job"
+        SPAN_ORIGIN = "auto.queue.active_job"
 
         class << self
           def record(job, &block)
