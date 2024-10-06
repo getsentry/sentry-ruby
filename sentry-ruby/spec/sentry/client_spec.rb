@@ -343,7 +343,12 @@ RSpec.describe Sentry::Client do
         event = subject.event_from_exception(NonStringMessageError.new)
         hash = event.to_hash
         expect(event).to be_a(Sentry::ErrorEvent)
-        expect(hash[:exception][:values][0][:value]).to eq("{:foo=>\"bar\"}")
+
+        if RUBY_VERSION >= "3.4"
+          expect(hash[:exception][:values][0][:value]).to eq("{foo: \"bar\"}")
+        else
+          expect(hash[:exception][:values][0][:value]).to eq("{:foo=>\"bar\"}")
+        end
       end
     end
 
