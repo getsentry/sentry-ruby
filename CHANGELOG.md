@@ -1,8 +1,30 @@
-## Unreleased
+## 5.21.0
 
 ### Features
 
-- Experimental support for multi-threaded profiling using Vernier ([#2372](https://github.com/getsentry/sentry-ruby/pull/2372))
+- Experimental support for multi-threaded profiling using [Vernier](https://github.com/jhawthorn/vernier) ([#2372](https://github.com/getsentry/sentry-ruby/pull/2372))
+
+  You can have much better profiles if you're using multi-threaded servers like Puma now by leveraging Vernier.
+  To use it, first add `vernier` to your `Gemfile` and make sure it is loaded before `sentry-ruby`.
+
+  ```ruby
+  # Gemfile
+
+  gem 'vernier'
+  gem 'sentry-ruby'
+  ```
+
+  Then, set a `profiles_sample_rate` and the new `profiler_class` configuration in your sentry initializer to use the new profiler.
+
+  ```ruby
+  # config/initializers/sentry.rb
+
+  Sentry.init do |config|
+    # ...
+    config.profiles_sample_rate = 1.0
+    config.profiler_class = Sentry::Vernier::Profiler
+  end
+  ```
 
 ### Internal
 
