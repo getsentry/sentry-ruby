@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 module ProfilerTest
   module Bar
     module Foo

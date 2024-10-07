@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 require "spec_helper"
 
 RSpec.describe Sentry::Rails::Tracing::ActiveStorageSubscriber, :subscriber, type: :request, skip: Rails.version.to_f <= 5.2 do

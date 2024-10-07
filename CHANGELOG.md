@@ -7,6 +7,7 @@
 ### Internal
 
 - Profile items have bigger size limit now ([#2421](https://github.com/getsentry/sentry-ruby/pull/2421))
+- Consistent string freezing ([#2422](https://github.com/getsentry/sentry-ruby/pull/2422))
 
 ## 5.20.1
 

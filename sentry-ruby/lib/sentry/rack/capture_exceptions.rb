@@ -54,7 +54,7 @@ module Sentry
       end
 
       def transaction_op
-        "http.server".freeze
+        "http.server"
       end
 
       def capture_exception(exception, env)

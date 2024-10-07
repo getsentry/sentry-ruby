@@ -1,11 +1,13 @@
+# frozen_string_literal: true
+
 require "active_support/backtrace_cleaner"
 require "active_support/core_ext/string/access"
 
 module Sentry
   module Rails
     class BacktraceCleaner < ActiveSupport::BacktraceCleaner
-      APP_DIRS_PATTERN = /\A(?:\.\/)?(?:app|config|lib|test|\(\w*\))/.freeze
-      RENDER_TEMPLATE_PATTERN = /:in `.*_\w+_{2,3}\d+_\d+'/.freeze
+      APP_DIRS_PATTERN = /\A(?:\.\/)?(?:app|config|lib|test|\(\w*\))/
+      RENDER_TEMPLATE_PATTERN = /:in `.*_\w+_{2,3}\d+_\d+'/
 
       def initialize
         super

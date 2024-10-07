@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 # because our patch on Net::HTTP is relatively low-level, we need to stub methods on socket level
 # which is not supported by most of the http mocking library
 # so we need to put something together ourselves

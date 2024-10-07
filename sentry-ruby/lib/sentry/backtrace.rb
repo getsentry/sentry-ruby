@@ -13,10 +13,10 @@ module Sentry
         ^ \s* (?: [a-zA-Z]: | uri:classloader: )? ([^:]+ | <.*>):
         (\d+)
         (?: :in\s('|`)([^']+)')?$
-      /x.freeze
+      /x
 
       # org.jruby.runtime.callsite.CachingCallSite.call(CachingCallSite.java:170)
-      JAVA_INPUT_FORMAT = /^(.+)\.([^\.]+)\(([^\:]+)\:(\d+)\)$/.freeze
+      JAVA_INPUT_FORMAT = /^(.+)\.([^\.]+)\(([^\:]+)\:(\d+)\)$/
 
       # The file portion of the line (such as app/models/user.rb)
       attr_reader :file

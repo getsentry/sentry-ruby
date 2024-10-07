@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 require "spec_helper"
 
 require "sentry/vernier/profiler"
@@ -173,7 +175,7 @@ RSpec.describe Sentry::Vernier::Profiler, when: { ruby_version?: [:>=, "3.2.1"] 
           expect(foo_frame[:function]).to eq('Foo.foo')
           expect(foo_frame[:module]).to eq('ProfilerTest::Bar')
           expect(foo_frame[:in_app]).to eq(true)
-          expect(foo_frame[:lineno]).to eq(4)
+          expect(foo_frame[:lineno]).to eq(6)
           expect(foo_frame[:filename]).to eq('spec/support/profiler.rb')
           expect(foo_frame[:abs_path]).to include('sentry-ruby/sentry-ruby/spec/support/profiler.rb')
         end
@@ -259,7 +261,7 @@ RSpec.describe Sentry::Vernier::Profiler, when: { ruby_version?: [:>=, "3.2.1"] 
           expect(foo_frame[:function]).to eq('Foo.foo')
           expect(foo_frame[:module]).to eq('ProfilerTest::Bar')
           expect(foo_frame[:in_app]).to eq(true)
-          expect(foo_frame[:lineno]).to eq(4)
+          expect(foo_frame[:lineno]).to eq(6)
           expect(foo_frame[:filename]).to eq('spec/support/profiler.rb')
           expect(foo_frame[:abs_path]).to include('sentry-ruby/sentry-ruby/spec/support/profiler.rb')
         end

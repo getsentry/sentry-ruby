@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 require "bundler/setup"
 begin
   require "debug/prelude"

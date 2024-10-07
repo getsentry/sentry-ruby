@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 require "active_storage/engine"
 require "action_cable/engine"
 require "sentry/rails/error_subscriber"

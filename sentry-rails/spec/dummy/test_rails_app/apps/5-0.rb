@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 ActiveRecord::Schema.define do
   create_table :posts, force: true do |t|
   end

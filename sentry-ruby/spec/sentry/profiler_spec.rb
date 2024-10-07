@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 require "spec_helper"
 
 RSpec.describe Sentry::Profiler, when: :stack_prof_installed? do

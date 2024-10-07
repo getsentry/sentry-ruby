@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 module Sentry
   module Rails
     # This is not a user-facing class. You should use it with Rails 7.0's error reporter feature and its interfaces.

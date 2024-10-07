@@ -1,7 +1,9 @@
+# frozen_string_literal: true
+
 module Sentry
   module Rails
     module ControllerTransaction
-      SPAN_ORIGIN = "auto.view.rails".freeze
+      SPAN_ORIGIN = "auto.view.rails"
 
       def self.included(base)
         base.prepend_around_action(:sentry_around_action)
