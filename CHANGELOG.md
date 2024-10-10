@@ -1,3 +1,9 @@
+## Unreleased
+
+### Features 
+
+- Add support for Sentry Cache instrumentation, when using Rails.cache ([#2380](https://github.com/getsentry/sentry-ruby/pull/2380))
+
 ## 5.21.0
 
 ### Features
