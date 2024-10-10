@@ -7,6 +7,7 @@
 ### Bug Fixes
 
 - Fix Vernier profiler not stopping when already stopped [#2429](https://github.com/getsentry/sentry-ruby/pull/2429)
+- Fix `RescuedExceptionInterceptor` to handle an empty configuration [#2428](https://github.com/getsentry/sentry-ruby/pull/2428)
 
 ## 5.21.0
 
