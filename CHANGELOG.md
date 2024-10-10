@@ -12,6 +12,7 @@
 - Fix Vernier profiler not stopping when already stopped [#2429](https://github.com/getsentry/sentry-ruby/pull/2429)
 - Fix `send_default_pii` handling in rails controller spans [#2443](https://github.com/getsentry/sentry-ruby/pull/2443)
   - Fixes [#2438](https://github.com/getsentry/sentry-ruby/issues/2438)
+- Fix `RescuedExceptionInterceptor` to handle an empty configuration [#2428](https://github.com/getsentry/sentry-ruby/pull/2428)
 
 ## 5.21.0
 
