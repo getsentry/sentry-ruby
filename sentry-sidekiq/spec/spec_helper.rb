@@ -229,13 +229,12 @@ end
 
 def execute_worker(processor, klass, **options)
   klass_options = klass.sidekiq_options_hash || {}
-
   # for Ruby < 2.6
   klass_options.each do |k, v|
     options[k.to_sym] = v
   end
 
-  msg = Sidekiq.dump_json(jid: "123123", class: klass, args: [], **options)
+  msg = Sidekiq.dump_json(created_at: Time.now.to_f, jid: "123123", class: klass, args: [], **options)
   work = Sidekiq::BasicFetch::UnitOfWork.new('queue:default', msg)
   process_work(processor, work)
 end
