@@ -1,3 +1,9 @@
+## Unreleased
+
+### Features
+
+- Add `include_sentry_event` matcher for RSpec [#2424](https://github.com/getsentry/sentry-ruby/pull/2424)
+
 ## 5.21.0
 
 ### Features
