@@ -19,7 +19,10 @@ module Sentry
       end
 
       def report_rescued_exceptions?
-        Sentry.configuration.rails.report_rescued_exceptions
+        report_rescued_exceptions = Sentry.configuration&.rails&.report_rescued_exceptions
+        return report_rescued_exceptions unless report_rescued_exceptions.nil?
+        
+        true
       end
     end
   end
