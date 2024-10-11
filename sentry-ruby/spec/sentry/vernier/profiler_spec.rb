@@ -133,6 +133,20 @@ RSpec.describe Sentry::Vernier::Profiler, when: { ruby_version?: [:>=, "3.2.1"] 
       expect(Vernier).to receive(:stop_profile)
       profiler.stop
     end
+
+    it 'does not crash when Vernier was already stopped' do
+      profiler.set_initial_sample_decision(true)
+      profiler.start
+      Vernier.stop_profile
+      profiler.stop
+    end
+
+    it 'does not crash when stopping Vernier crashed' do
+      profiler.set_initial_sample_decision(true)
+      profiler.start
+      expect(Vernier).to receive(:stop_profile).and_raise(RuntimeError.new("Profile not started"))
+      profiler.stop
+    end
   end
 
   describe "#to_hash" do

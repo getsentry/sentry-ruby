@@ -55,8 +55,7 @@ module Sentry
         return unless @sampled
         return if @started
 
-        ::Vernier.start_profile
-        @started = true
+        @started = ::Vernier.start_profile
 
         log("Started")
 
@@ -77,6 +76,12 @@ module Sentry
         @result = ::Vernier.stop_profile
 
         log("Stopped")
+      rescue RuntimeError => e
+        if e.message.include?("Profile not started")
+          log("Not stopped since not started")
+        else
+          log("Failed to stop Vernier: #{e.message}")
+        end
       end
 
       def active_thread_id
