@@ -4,6 +4,10 @@
 
 - Add `include_sentry_event` matcher for RSpec [#2424](https://github.com/getsentry/sentry-ruby/pull/2424)
 
+### Bug Fixes
+
+- Fix Vernier profiler not stopping when already stopped [#2429](https://github.com/getsentry/sentry-ruby/pull/2429)
+
 ## 5.21.0
 
 ### Features
