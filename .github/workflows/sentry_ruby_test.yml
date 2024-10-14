@@ -57,8 +57,7 @@ jobs:
           - {
               ruby_version: 3.3,
               rack_version: 3.1,
-              redis_rb_version: 5.3,
-              options: { codecov: 1 },
+              redis_rb_version: 5.3
             }
     steps:
       - uses: actions/checkout@v1
@@ -78,7 +77,6 @@ jobs:
         run: bundle exec rake
 
       - name: Upload Coverage
-        if: ${{ matrix.options.codecov }}
         uses: codecov/codecov-action@v4
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
