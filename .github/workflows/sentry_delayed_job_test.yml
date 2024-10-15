@@ -25,6 +25,9 @@ jobs:
         working-directory: sentry-delayed_job
     name: Ruby ${{ matrix.ruby_version }}, options - ${{ toJson(matrix.options) }}
     runs-on: ubuntu-latest
+    env:
+      BUNDLE_GEMFILE: ${{ github.workspace }}/sentry-delayed_job/Gemfile
+      BUNDLE_WITHOUT: rubocop
     strategy:
       fail-fast: false
       matrix:
@@ -59,10 +62,7 @@ jobs:
       - name: Run specs
         env:
           RUBYOPT: ${{ matrix.options.rubyopt }}
-        run: |
-          bundle config set without 'rubocop'
-          bundle install --jobs 4 --retry 3
-          bundle exec rake
+        run: bundle exec rake
 
       - name: Upload Coverage
         if: ${{ matrix.options.codecov }}
