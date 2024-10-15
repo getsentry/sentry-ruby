@@ -27,7 +27,7 @@ jobs:
     runs-on: ubuntu-latest
     env:
       RUBYOPT: ${{ matrix.options.rubyopt }}
-      BUNDLE_GEMFILE: ${{ github.workspace }}/sentry-resque/Gemfile_with_rails.rb
+      BUNDLE_GEMFILE: ${{ github.workspace }}/sentry-resque/Gemfile
       BUNDLE_WITHOUT: rubocop
     strategy:
       fail-fast: false
@@ -55,12 +55,14 @@ jobs:
         with:
           redis-version: 5
 
-      - name: Run specs
+      - name: Run specs without Rails
         env:
           RUBYOPT: ${{ matrix.options.rubyopt }}
-        run: bundle exec rake
+        run: BUNDLE_WITHOUT="rubocop rails" bundle exec rake
 
       - name: Run specs with Rails
+        env:
+          RUBYOPT: ${{ matrix.options.rubyopt }}
         run: bundle exec rake
 
       - name: Upload Coverage
