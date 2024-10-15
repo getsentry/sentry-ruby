@@ -25,7 +25,12 @@ jobs:
         working-directory: sentry-resque
     name: Ruby ${{ matrix.ruby_version }}, options - ${{ toJson(matrix.options) }}
     runs-on: ubuntu-latest
+    env:
+      RUBYOPT: ${{ matrix.options.rubyopt }}
+      BUNDLE_GEMFILE: ${{ github.workspace }}/sentry-resque/Gemfile_with_rails.rb
+      BUNDLE_WITHOUT: rubocop
     strategy:
+      fail-fast: false
       matrix:
         ruby_version: ${{ fromJson(needs.ruby-versions.outputs.versions) }}
         include:
@@ -53,17 +58,10 @@ jobs:
       - name: Run specs
         env:
           RUBYOPT: ${{ matrix.options.rubyopt }}
-        run: |
-          bundle install --jobs 4 --retry 3
-          bundle exec rake
+        run: bundle exec rake
 
       - name: Run specs with Rails
-        env:
-          BUNDLE_GEMFILE: Gemfile_with_rails.rb
-          RUBYOPT: ${{ matrix.options.rubyopt }}
-        run: |
-          bundle install --jobs 4 --retry 3
-          bundle exec rake
+        run: bundle exec rake
 
       - name: Upload Coverage
         if: ${{ matrix.options.codecov }}

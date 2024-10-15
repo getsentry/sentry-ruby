@@ -25,7 +25,13 @@ jobs:
         working-directory: sentry-opentelemetry
     name: Ruby ${{ matrix.ruby_version }} & OpenTelemetry ${{ matrix.opentelemetry_version }}, options - ${{ toJson(matrix.options) }}
     runs-on: ubuntu-latest
+    env:
+      RUBYOPT: ${{ matrix.options.rubyopt }}
+      BUNDLE_GEMFILE: ${{ github.workspace }}/sentry-opentelemetry/Gemfile
+      BUNDLE_WITHOUT: rubocop
+      OPENTELEMETRY_VERSION: ${{ matrix.opentelemetry_version }}
     strategy:
+      fail-fast: false
       matrix:
         ruby_version: ${{ fromJson(needs.ruby-versions.outputs.versions) }}
         # opentelemetry_version: [1.2.0]
@@ -48,12 +54,7 @@ jobs:
           bundler-cache: true
 
       - name: Run specs
-        env:
-          RUBYOPT: ${{ matrix.options.rubyopt }}
-          OPENTELEMETRY_VERSION: ${{ matrix.opentelemetry_version }}
-        run: |
-          bundle install --jobs 4 --retry 3
-          bundle exec rake
+        run: bundle exec rake
 
       - name: Upload Coverage
         if: ${{ matrix.options.codecov }}
