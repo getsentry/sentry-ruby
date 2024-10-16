@@ -26,6 +26,12 @@ jobs:
     name: Ruby ${{ matrix.ruby_version }} & Rack ${{ matrix.rack_version }}, options - ${{ toJson(matrix.options) }}
     runs-on: ubuntu-latest
     timeout-minutes: 10
+    env:
+      RUBYOPT: ${{ matrix.options.rubyopt }}
+      BUNDLE_GEMFILE: ${{ github.workspace }}/sentry-ruby/Gemfile
+      BUNDLE_WITHOUT: rubocop
+      RACK_VERSION: ${{ matrix.rack_version }}
+      REDIS_RB_VERSION: ${{ matrix.redis_rb_version }}
     strategy:
       fail-fast: false
       matrix:
@@ -69,14 +75,7 @@ jobs:
           redis-version: 6
 
       - name: Run specs with Rack ${{ matrix.rack_version }} and redis-rb ${{ matrix.redis_rb_version }}
-        env:
-          RUBYOPT: ${{ matrix.options.rubyopt }}
-          RACK_VERSION: ${{ matrix.rack_version }}
-          REDIS_RB_VERSION: ${{ matrix.redis_rb_version }}
-        run: |
-          bundle config set without 'rubocop'
-          bundle install --jobs 4 --retry 3
-          bundle exec rake
+        run: bundle exec rake
 
       - name: Upload Coverage
         if: ${{ matrix.options.codecov }}

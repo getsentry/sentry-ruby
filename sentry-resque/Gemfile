@@ -10,3 +10,8 @@ gem "sentry-ruby", path: "../sentry-ruby"
 gem "resque-retry", "~> 1.8"
 
 eval_gemfile File.expand_path("../Gemfile", __dir__)
+
+group :rails do
+  gem "sentry-rails", path: "../sentry-rails"
+  gem "rails"
+end

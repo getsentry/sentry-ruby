@@ -19,6 +19,11 @@ jobs:
         working-directory: sentry-rails
     name: Ruby ${{ matrix.ruby_version }} & Rails ${{ matrix.rails_version }}, options - ${{ toJson(matrix.options) }}
     runs-on: ubuntu-latest
+    env:
+      RUBYOPT: ${{ matrix.options.rubyopt }}
+      BUNDLE_GEMFILE: ${{ github.workspace }}/sentry-rails/Gemfile
+      BUNDLE_WITHOUT: rubocop
+      RAILS_VERSION: ${{ matrix.rails_version }}
     strategy:
       fail-fast: false
       matrix:
@@ -75,12 +80,7 @@ jobs:
           bundler-cache: true
 
       - name: Build with Rails ${{ matrix.rails_version }}
-        env:
-          RAILS_VERSION: ${{ matrix.rails_version }}
-          RUBYOPT: ${{ matrix.options.rubyopt }}
-        run: |
-          bundle install --jobs 4 --retry 3
-          bundle exec rake
+        run: bundle exec rake
 
       - name: Upload Coverage
         if: ${{ matrix.options.codecov }}
