@@ -11,7 +11,6 @@ require "action_controller/railtie"
 
 require 'sentry/rails'
 require 'tempfile'
-require 'vernier'
 
 ActiveRecord::Base.logger = Logger.new(nil)
 ActiveRecord::Base.establish_connection(adapter: "sqlite3", database: "db")
