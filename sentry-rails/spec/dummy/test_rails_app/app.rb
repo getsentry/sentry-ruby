@@ -56,7 +56,7 @@ def make_basic_app(&block)
   app.config.hosts = nil
   app.config.secret_key_base = "test"
   app.config.logger = ActiveSupport::Logger.new(nil)
-  app.config.eager_load = true
+  app.config.eager_load = false
   app.config.active_job.queue_adapter = :test
 
   # Eager load namespaces can be accumulated after repeated initializations and make initialization
