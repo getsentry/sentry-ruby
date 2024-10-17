@@ -234,7 +234,9 @@ def execute_worker(processor, klass, **options)
     options[k.to_sym] = v
   end
 
-  msg = Sidekiq.dump_json(created_at: Time.now.to_f, jid: "123123", class: klass, args: [], **options)
+  jid = options.delete(:jid) || "123123"
+
+  msg = Sidekiq.dump_json(created_at: Time.now.to_f, enqueued_at: Time.now.to_f, jid: jid, class: klass, args: [], **options)
   work = Sidekiq::BasicFetch::UnitOfWork.new('queue:default', msg)
   process_work(processor, work)
 end
