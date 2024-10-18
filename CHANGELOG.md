@@ -8,6 +8,7 @@
 
 ### Bug Fixes
 
+- Ignore internal Sidekiq::JobRetry::Handled exception [#2337](https://github.com/getsentry/sentry-ruby/pull/2337)
 - Fix Vernier profiler not stopping when already stopped [#2429](https://github.com/getsentry/sentry-ruby/pull/2429)
 
 ## 5.21.0
