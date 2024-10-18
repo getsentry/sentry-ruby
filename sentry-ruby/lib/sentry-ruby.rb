@@ -50,6 +50,8 @@ module Sentry
 
   THREAD_LOCAL = :sentry_hub
 
+  MUTEX = Mutex.new
+
   class << self
     # @!visibility private
     def exception_locals_tp
@@ -275,8 +277,10 @@ module Sentry
 
       @background_worker.shutdown
 
-      @main_hub = nil
-      Thread.current.thread_variable_set(THREAD_LOCAL, nil)
+      MUTEX.synchronize do
+        @main_hub = nil
+        Thread.current.thread_variable_set(THREAD_LOCAL, nil)
+      end
     end
 
     # Returns true if the SDK is initialized.
@@ -303,7 +307,7 @@ module Sentry
     #
     # @return [Hub]
     def get_main_hub
-      @main_hub
+      MUTEX.synchronize { @main_hub }
     end
 
     # Takes an instance of Sentry::Breadcrumb and stores it to the current active scope.
