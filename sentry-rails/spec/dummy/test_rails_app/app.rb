@@ -58,6 +58,8 @@ def make_basic_app(&block)
   app.config.logger = ActiveSupport::Logger.new(nil)
   app.config.eager_load = false
   app.config.active_job.queue_adapter = :test
+  app.config.cache_store = :memory_store
+  app.config.action_controller.perform_caching = true
 
   # Eager load namespaces can be accumulated after repeated initializations and make initialization
   # slower after each run

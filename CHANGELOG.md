@@ -3,6 +3,8 @@
 ### Features
 
 - Add `include_sentry_event` matcher for RSpec [#2424](https://github.com/getsentry/sentry-ruby/pull/2424)
+- Add support for Sentry Cache instrumentation, when using Rails.cache ([#2380](https://github.com/getsentry/sentry-ruby/pull/2380)) (MemoryStore and FileStore require Rails 8.0+)
+
 
 ### Bug Fixes
 
