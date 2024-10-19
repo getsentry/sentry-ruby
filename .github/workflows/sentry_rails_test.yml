@@ -76,6 +76,7 @@ jobs:
         uses: ruby/setup-ruby@v1
         with:
           ruby-version: ${{ matrix.ruby_version }}
+          rubygems: latest
           bundler-cache: true
 
       - name: Build with Rails ${{ matrix.rails_version }}
