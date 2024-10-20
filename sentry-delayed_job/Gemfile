@@ -8,9 +8,6 @@ gemspec
 gem "sentry-ruby", path: "../sentry-ruby"
 gem "sentry-rails", path: "../sentry-rails"
 
-# For https://github.com/ruby/psych/issues/655
-gem "psych", "5.1.0"
-
 gem "delayed_job"
 gem "delayed_job_active_record"
 

@@ -12,9 +12,6 @@ gem "sentry-rails", path: "../sentry-rails"
 # loofah changed the required ruby version in a patch so we need to explicitly pin it
 gem "loofah", "2.20.0" if RUBY_VERSION.to_f < 2.5
 
-# For https://github.com/ruby/psych/issues/655
-gem "psych", "5.1.0"
-
 sidekiq_version = ENV["SIDEKIQ_VERSION"]
 sidekiq_version = "7.0" if sidekiq_version.nil?
 sidekiq_version = Gem::Version.new(sidekiq_version)
