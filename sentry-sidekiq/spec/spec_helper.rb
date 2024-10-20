@@ -6,8 +6,6 @@ begin
 rescue LoadError
 end
 
-require "sidekiq"
-
 # this enables sidekiq's server mode
 require "sidekiq/cli"
 
