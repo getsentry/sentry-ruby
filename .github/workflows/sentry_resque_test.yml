@@ -47,7 +47,6 @@ jobs:
         uses: ruby/setup-ruby@v1
         with:
           ruby-version: ${{ matrix.ruby_version }}
-          rubygems: latest
           bundler-cache: true
 
       - name: Start Redis
