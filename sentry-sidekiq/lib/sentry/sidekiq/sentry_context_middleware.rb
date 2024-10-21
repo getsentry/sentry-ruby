@@ -37,7 +37,7 @@ module Sentry
 
             yield
           end
-        rescue => ex
+        rescue
           finish_transaction(transaction, 500)
           raise
         end
