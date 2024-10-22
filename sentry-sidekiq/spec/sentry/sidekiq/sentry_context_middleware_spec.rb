@@ -73,17 +73,17 @@ RSpec.describe Sentry::Sidekiq::SentryContextServerMiddleware do
 
       transaction = transport.events[0]
       expect(transaction).not_to be_nil
-      expect(transaction.spans.count).to eq(1)
-      expect(transaction.spans[0][:data]['messaging.message.id']).to eq('123123') # Default defined in #execute_worker
-      expect(transaction.spans[0][:data]['messaging.destination.name']).to eq('default')
-      expect(transaction.spans[0][:data]['messaging.message.retry.count']).to eq(0)
+      expect(transaction.spans.count).to eq(0)
+      expect(transaction.contexts[:trace][:data]['messaging.message.id']).to eq('123123') # Default defined in #execute_worker
+      expect(transaction.contexts[:trace][:data]['messaging.destination.name']).to eq('default')
+      expect(transaction.contexts[:trace][:data]['messaging.message.retry.count']).to eq(0)
 
       transaction = transport.events[1]
       expect(transaction).not_to be_nil
-      expect(transaction.spans.count).to eq(1)
-      expect(transaction.spans[0][:data]['messaging.message.id']).to eq('123456') # Explicitly set above.
-      expect(transaction.spans[0][:data]['messaging.destination.name']).to eq('default')
-      expect(transaction.spans[0][:data]['messaging.message.retry.count']).to eq(0)
+      expect(transaction.spans.count).to eq(0)
+      expect(transaction.contexts[:trace][:data]['messaging.message.id']).to eq('123456') # Explicitly set above.
+      expect(transaction.contexts[:trace][:data]['messaging.destination.name']).to eq('default')
+      expect(transaction.contexts[:trace][:data]['messaging.message.retry.count']).to eq(0)
     end
 
     context "with trace_propagation_headers" do
