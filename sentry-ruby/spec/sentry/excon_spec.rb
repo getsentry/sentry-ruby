@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 require "spec_helper"
 require 'contexts/with_request_mock'
 require 'excon'

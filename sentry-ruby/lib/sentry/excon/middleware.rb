@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 module Sentry
   module Excon
     OP_NAME = "http.client"
