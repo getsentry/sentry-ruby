@@ -5,7 +5,7 @@ require "sentry/sidekiq/context_filter"
 module Sentry
   module Sidekiq
     class SentryContextServerMiddleware
-      OP_NAME = "queue.sidekiq"
+      OP_NAME = "queue.process"
       SPAN_ORIGIN = "auto.queue.sidekiq"
 
       def call(worker, job, queue)
@@ -23,20 +23,18 @@ module Sentry
         scope.set_contexts(sidekiq: job.merge("queue" => queue))
         scope.set_transaction_name(context_filter.transaction_name, source: :task)
         transaction = start_transaction(scope, job["trace_propagation_headers"])
-        scope.set_span(transaction) if transaction
+
+        if transaction
+          scope.set_span(transaction)
+
+          transaction.set_data("messaging.message.id", job["jid"])
+          transaction.set_data("messaging.destination.name", queue)
+          transaction.set_data("messaging.message.receive.latency", ((Time.now.to_f - job["enqueued_at"]) * 1000).to_i)
+          transaction.set_data("messaging.message.retry.count", job["retry_count"] || 0)
+        end
 
         begin
-          Sentry.with_child_span(op: "queue.process", description: "Process #{worker.class.name}") do |span|
-            # Set span data
-            if span
-              span.set_data("messaging.message.id", job["jid"])
-              span.set_data("messaging.destination.name", queue)
-              span.set_data("messaging.message.receive.latency", ((Time.now.to_f - job["enqueued_at"]) * 1000).to_i)
-              span.set_data("messaging.message.retry.count", job["retry_count"] || 0)
-            end
-
-            yield
-          end
+          yield
         rescue
           finish_transaction(transaction, 500)
           raise
