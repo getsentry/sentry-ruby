@@ -58,6 +58,7 @@ RSpec.describe "Sentry::Excon" do
     context "with config.send_default_pii = true" do
       before do
         Sentry.configuration.send_default_pii = true
+        Sentry.configuration.breadcrumbs_logger = [:http_logger]
       end
 
       it "records the request's span with query string in data" do
@@ -84,6 +85,26 @@ RSpec.describe "Sentry::Excon" do
           "http.request.method" => "GET",
           "http.query" => "foo=bar"
         })
+      end
+
+      it "records breadcrumbs" do
+        Excon.stub({}, { body: '', status: 200 })
+
+        transaction = Sentry.start_transaction
+        Sentry.get_current_scope.set_span(transaction)
+
+        _response = Excon.get(URI("http://example.com/path?foo=bar"), mock: true)
+
+        transaction.span_recorder.spans.last
+
+        crumb = Sentry.get_current_scope.breadcrumbs.peek
+
+        expect(crumb.category).to eq("http")
+        expect(crumb.data[:status]).to eq(200)
+        expect(crumb.data[:method]).to eq("GET")
+        expect(crumb.data[:url]).to eq("http://example.com/path")
+        expect(crumb.data[:query]).to eq("foo=bar")
+        expect(crumb.data[:body]).to be(nil)
       end
     end
 
