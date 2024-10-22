@@ -60,6 +60,7 @@ def make_basic_app(&block)
   app.config.active_job.queue_adapter = :test
   app.config.cache_store = :memory_store
   app.config.action_controller.perform_caching = true
+  app.config.filter_parameters += [:password, :secret]
 
   # Eager load namespaces can be accumulated after repeated initializations and make initialization
   # slower after each run
