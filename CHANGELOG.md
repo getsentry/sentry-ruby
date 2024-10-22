@@ -3,12 +3,15 @@
 ### Features
 
 - Add `include_sentry_event` matcher for RSpec [#2424](https://github.com/getsentry/sentry-ruby/pull/2424)
-- Add support for Sentry Cache instrumentation, when using Rails.cache ([#2380](https://github.com/getsentry/sentry-ruby/pull/2380)) (MemoryStore and FileStore require Rails 8.0+)
+- Add support for Sentry Cache instrumentation, when using Rails.cache [#2380](https://github.com/getsentry/sentry-ruby/pull/2380)
 
+    Note: MemoryStore and FileStore require Rails 8.0+
 
 ### Bug Fixes
 
 - Fix Vernier profiler not stopping when already stopped [#2429](https://github.com/getsentry/sentry-ruby/pull/2429)
+- Fix `send_default_pii` handling in rails controller spans [#2443](https://github.com/getsentry/sentry-ruby/pull/2443)
+  - Fixes [#2438](https://github.com/getsentry/sentry-ruby/issues/2438)
 
 ## 5.21.0
 
