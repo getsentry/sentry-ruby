@@ -69,7 +69,7 @@ RSpec.describe "Sentry::Excon" do
         transaction = Sentry.start_transaction
         Sentry.get_current_scope.set_span(transaction)
 
-        response = Excon.get(URI("http://example.com/path?foo=bar"), mock: true)
+        response = Excon.get("http://example.com/path?foo=bar", mock: true)
 
         expect(response.status).to eq(200)
         expect(transaction.span_recorder.spans.count).to eq(2)
@@ -95,7 +95,7 @@ RSpec.describe "Sentry::Excon" do
         transaction = Sentry.start_transaction
         Sentry.get_current_scope.set_span(transaction)
 
-        _response = Excon.get(URI("http://example.com/path?foo=bar"), mock: true)
+        _response = Excon.get("http://example.com/path?foo=bar", mock: true)
 
         transaction.span_recorder.spans.last
 
@@ -121,7 +121,7 @@ RSpec.describe "Sentry::Excon" do
         transaction = Sentry.start_transaction
         Sentry.get_current_scope.set_span(transaction)
 
-        response = Excon.get(URI("http://example.com/path?foo=bar"), mock: true)
+        response = Excon.get("http://example.com/path?foo=bar", mock: true)
 
         expect(response.status).to eq(200)
         expect(transaction.span_recorder.spans.count).to eq(2)
@@ -181,11 +181,11 @@ RSpec.describe "Sentry::Excon" do
 
       it "doesn't mess different requests' data together" do
         Excon.stub({}, { body: '', status: 200 })
-        response = Excon.get(URI("http://example.com/path?foo=bar"), mock: true)
+        response = Excon.get("http://example.com/path?foo=bar", mock: true)
         expect(response.status).to eq(200)
 
         Excon.stub({}, { body: '', status: 404 })
-        response = Excon.get(URI("http://example.com/path?foo=bar"), mock: true)
+        response = Excon.get("http://example.com/path?foo=bar", mock: true)
         expect(response.status).to eq(404)
 
         verify_spans(transaction)
@@ -200,7 +200,7 @@ RSpec.describe "Sentry::Excon" do
 
         it "attaches http spans to the span instead of top-level transaction" do
           Excon.stub({}, { body: '', status: 200 })
-          response = Excon.get(URI("http://example.com/path?foo=bar"), mock: true)
+          response = Excon.get("http://example.com/path?foo=bar", mock: true)
           expect(response.status).to eq(200)
 
           expect(transaction.span_recorder.spans.count).to eq(3)
@@ -216,7 +216,7 @@ RSpec.describe "Sentry::Excon" do
     it "doesn't affect the HTTP lib anything" do
       Excon.stub({}, { body: '', status: 200 })
 
-      response = Excon.get(URI("http://example.com/path"))
+      response = Excon.get("http://example.com/path")
       expect(response.status).to eq(200)
     end
   end
