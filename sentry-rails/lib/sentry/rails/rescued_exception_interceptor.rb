@@ -19,7 +19,16 @@ module Sentry
       end
 
       def report_rescued_exceptions?
-        Sentry.configuration.rails.report_rescued_exceptions
+        # In rare edge cases, `Sentry.configuration` might be `nil` here.
+        # Hence, we use a safe navigation and fallback to a reasonable default
+        # of `true` in case the configuration couldn't be loaded.
+        # See https://github.com/getsentry/sentry-ruby/issues/2386
+        report_rescued_exceptions = Sentry.configuration&.rails&.report_rescued_exceptions
+        return report_rescued_exceptions unless report_rescued_exceptions.nil?
+
+        # `true` is the default for `report_rescued_exceptions`, as specified in
+        # `sentry-rails/lib/sentry/rails/configuration.rb`.
+        true
       end
     end
   end
