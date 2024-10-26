@@ -309,21 +309,17 @@ RSpec.describe "ActiveJob integration" do
 
   context "when we are using an adapter which has a specific integration" do
     before do
-      Sentry.configuration.rails.skippable_job_adapters = ["ActiveJob::QueueAdapters::SidekiqAdapter"]
+      Sentry.configuration.rails.skippable_job_adapters = ["ActiveJob::QueueAdapters::TestAdapter"]
+    end
+
+    after do
+      Sentry.configuration.rails.skippable_job_adapters = []
     end
 
     it "does not trigger sentry and re-raises" do
-      begin
-        original_queue_adapter = FailedJob.queue_adapter
-        FailedJob.queue_adapter = :sidekiq
+      expect { FailedJob.perform_now }.to raise_error(FailedJob::TestError)
 
-        expect { FailedJob.perform_now }.to raise_error(FailedJob::TestError)
-
-        expect(transport.events.size).to eq(0)
-      ensure
-        # this doesn't affect test result, but we shouldn't change it anyway
-        FailedJob.queue_adapter = original_queue_adapter
-      end
+      expect(transport.events.size).to eq(0)
     end
   end
 
