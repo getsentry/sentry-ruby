@@ -4,7 +4,20 @@ require "sentry/sidekiq/context_filter"
 
 module Sentry
   module Sidekiq
+    module Helpers
+      def set_span_data(span, id:, queue:, latency: nil, retry_count: nil)
+        if span
+          span.set_data("messaging.message.id", id)
+          span.set_data("messaging.destination.name", queue)
+          span.set_data("messaging.message.receive.latency", latency) if latency
+          span.set_data("messaging.message.retry.count", retry_count) if retry_count
+        end
+      end
+    end
+
     class SentryContextServerMiddleware
+      include Sentry::Sidekiq::Helpers
+
       OP_NAME = "queue.process"
       SPAN_ORIGIN = "auto.queue.sidekiq"
 
@@ -27,10 +40,7 @@ module Sentry
         if transaction
           scope.set_span(transaction)
 
-          transaction.set_data("messaging.message.id", job["jid"])
-          transaction.set_data("messaging.destination.name", queue)
-          transaction.set_data("messaging.message.receive.latency", ((Time.now.to_f - job["enqueued_at"]) * 1000).to_i)
-          transaction.set_data("messaging.message.retry.count", job["retry_count"] || 0)
+          set_span_data(transaction, id: job["jid"], queue: queue, latency: ((Time.now.to_f - job["enqueued_at"]) * 1000).to_i, retry_count: job["retry_count"] || 0)
         end
 
         begin
@@ -71,6 +81,8 @@ module Sentry
     end
 
     class SentryContextClientMiddleware
+      include Sentry::Sidekiq::Helpers
+
       def call(worker_class, job, queue, _redis_pool)
         return yield unless Sentry.initialized?
 
@@ -78,12 +90,8 @@ module Sentry
         job["sentry_user"] = user unless user.empty?
         job["trace_propagation_headers"] ||= Sentry.get_trace_propagation_headers
 
-        Sentry.with_child_span(op: "queue.publish", description: "Enqueue #{worker_class}") do |span|
-          # Set span data
-          if span
-            span.set_data("messaging.message.id", job["jid"])
-            span.set_data("messaging.destination.name", queue)
-          end
+        Sentry.with_child_span(op: "queue.publish", description: worker_class.to_s) do |span|
+          set_span_data(span, id: job["jid"], queue: queue)
 
           yield
         end
