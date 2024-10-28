@@ -69,7 +69,7 @@ RSpec.describe Sentry::Sidekiq::SentryContextServerMiddleware do
     it "adds a queue.process spans" do
       Timecop.freeze do
         execute_worker(processor, HappyWorker)
-        execute_worker(processor, HappyWorker, jid: '123456', timecop_delay: Time.now + 1.days)
+        execute_worker(processor, HappyWorker, jid: '123456', timecop_delay: Time.now + 1.day)
 
         expect(transport.events.count).to eq(2)
 
@@ -86,7 +86,7 @@ RSpec.describe Sentry::Sidekiq::SentryContextServerMiddleware do
         expect(transaction.spans.count).to eq(0)
         expect(transaction.contexts[:trace][:data]['messaging.message.id']).to eq('123456') # Explicitly set above.
         expect(transaction.contexts[:trace][:data]['messaging.destination.name']).to eq('default')
-        expect(transaction.contexts[:trace][:data]['messaging.message.receive.latency']).to eq(1.days.to_i * 1000)
+        expect(transaction.contexts[:trace][:data]['messaging.message.receive.latency']).to eq(1.day.to_i * 1000)
       end
     end
 
