@@ -47,12 +47,11 @@ RSpec.describe Sentry::Rails::Tracing::ActiveSupportSubscriber, :subscriber, typ
       expect(transport.events.count).to eq(1)
       cache_transaction = transport.events.first.to_hash
       expect(cache_transaction[:type]).to eq("transaction")
-      expect(cache_transaction[:spans].count).to eq(2)
-      expect(cache_transaction[:spans][1][:op]).to eq("cache.put")
-      expect(cache_transaction[:spans][1][:origin]).to eq("auto.cache.rails")
+      expect(cache_transaction[:spans].count).to eq(1)
+      expect(cache_transaction[:spans][0][:op]).to eq("cache.put")
+      expect(cache_transaction[:spans][0][:origin]).to eq("auto.cache.rails")
     end
 
-    #
     it "tracks cache decrement" do
       skip("Tracks on Rails 8.0 for all Cache Stores; Until then only MemCached and Redis Stores.") if Rails.version.to_f < 8.0
 
@@ -67,9 +66,9 @@ RSpec.describe Sentry::Rails::Tracing::ActiveSupportSubscriber, :subscriber, typ
       expect(transport.events.count).to eq(1)
       cache_transaction = transport.events.first.to_hash
       expect(cache_transaction[:type]).to eq("transaction")
-      expect(cache_transaction[:spans].count).to eq(2)
-      expect(cache_transaction[:spans][1][:op]).to eq("cache.put")
-      expect(cache_transaction[:spans][1][:origin]).to eq("auto.cache.rails")
+      expect(cache_transaction[:spans].count).to eq(1)
+      expect(cache_transaction[:spans][0][:op]).to eq("cache.put")
+      expect(cache_transaction[:spans][0][:origin]).to eq("auto.cache.rails")
     end
 
     it "tracks cache read" do
