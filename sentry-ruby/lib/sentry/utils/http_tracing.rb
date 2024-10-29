@@ -36,6 +36,25 @@ module Sentry
           Sentry.configuration.propagate_traces &&
           Sentry.configuration.trace_propagation_targets.any? { |target| url.match?(target) }
       end
+
+      # Kindly borrowed from Rack::Utils
+      def build_nested_query(value, prefix = nil)
+        case value
+        when Array
+          value.map { |v|
+            build_nested_query(v, "#{prefix}[]")
+          }.join("&")
+        when Hash
+          value.map { |k, v|
+            build_nested_query(v, prefix ? "#{prefix}[#{k}]" : k)
+          }.delete_if(&:empty?).join("&")
+        when nil
+          URI.encode_www_form_component(prefix)
+        else
+          raise ArgumentError, "value must be a Hash" if prefix.nil?
+          "#{URI.encode_www_form_component(prefix)}=#{URI.encode_www_form_component(value)}"
+        end
+      end
     end
   end
 end

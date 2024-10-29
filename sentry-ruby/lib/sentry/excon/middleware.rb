@@ -65,7 +65,7 @@ module Sentry
           result[:query] = env[:query]
 
           # Handle excon 1.0.0+
-          result[:query] = ::Rack::Utils.build_nested_query(result[:query]) unless result[:query].is_a?(String)
+          result[:query] = build_nested_query(result[:query]) unless result[:query].is_a?(String)
 
           result[:body] = env[:body]
         end
