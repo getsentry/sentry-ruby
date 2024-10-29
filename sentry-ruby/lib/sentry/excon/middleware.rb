@@ -41,7 +41,7 @@ module Sentry
       end
 
       def finish_transaction(response)
-        return if @span.nil?
+        return unless @span
 
         response_status = response[:response][:status]
         request_info = extract_request_info(response)
