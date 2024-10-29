@@ -25,4 +25,6 @@ end
 
 gem "rails", "> 5.0.0"
 
+gem "timecop"
+
 eval_gemfile File.expand_path("../Gemfile", __dir__)
