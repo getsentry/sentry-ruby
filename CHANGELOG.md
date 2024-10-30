@@ -4,6 +4,7 @@
 
 - Remove `config.async` [#1894](https://github.com/getsentry/sentry-ruby/pull/1894)
 - Migrate from to_hash to to_h ([#2351](https://github.com/getsentry/sentry-ruby/pull/2351))
+- Query strings and form data in requests are no longer controlled by `send_default_pii` ([#2452](https://github.com/getsentry/sentry-ruby/pull/2452))
 
 ## Unreleased
 
