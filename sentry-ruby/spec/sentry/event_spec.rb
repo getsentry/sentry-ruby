@@ -104,6 +104,8 @@ RSpec.describe Sentry::Event do
           headers: { 'Host' => 'localhost', 'X-Request-Id' => 'abcd-1234-abcd-1234' },
           method: 'POST',
           url: 'http://localhost/lol',
+          query_string: 'biz=baz',
+          data: { 'foo' => 'bar' }
         )
         expect(event.to_h[:tags][:request_id]).to eq("abcd-1234-abcd-1234")
         expect(event.to_h[:user][:ip_address]).to eq(nil)

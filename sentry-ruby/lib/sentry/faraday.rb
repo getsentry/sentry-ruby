@@ -56,15 +56,12 @@ module Sentry
       private
 
       def extract_request_info(env)
-        url = env[:url].scheme + "://" + env[:url].host + env[:url].path
-        result = { method: env[:method].to_s.upcase, url: url }
-
-        if Sentry.configuration.send_default_pii
-          result[:query] = env[:url].query
-          result[:body] = env[:body]
-        end
-
-        result
+        {
+          method: env[:method].to_s.upcase,
+          url: env[:url].scheme + "://" + env[:url].host + env[:url].path,
+          query: env[:url].query,
+          body: env[:body]
+        }
       end
     end
   end

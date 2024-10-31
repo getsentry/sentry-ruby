@@ -21,76 +21,35 @@ RSpec.describe :http_logger do
     end
   end
 
-  context "with config.send_default_pii = true" do
-    before do
-      Sentry.configuration.send_default_pii = true
-    end
+  it "adds http breadcrumbs with query string & request body" do
+    stub_normal_response
 
-    it "adds http breadcrumbs with query string & request body" do
-      stub_normal_response
+    response = Net::HTTP.get_response(URI("http://example.com/path?foo=bar"))
 
-      response = Net::HTTP.get_response(URI("http://example.com/path?foo=bar"))
+    expect(response.code).to eq("200")
+    crumb = Sentry.get_current_scope.breadcrumbs.peek
+    expect(crumb.category).to eq("net.http")
+    expect(crumb.data).to eq({ status: 200, method: "GET", url: "http://example.com/path", query: "foo=bar" })
 
-      expect(response.code).to eq("200")
-      crumb = Sentry.get_current_scope.breadcrumbs.peek
-      expect(crumb.category).to eq("net.http")
-      expect(crumb.data).to eq({ status: 200, method: "GET", url: "http://example.com/path", query: "foo=bar", body: nil })
+    http = Net::HTTP.new("example.com")
+    request = Net::HTTP::Get.new("/path?foo=bar")
+    response = http.request(request)
 
-      http = Net::HTTP.new("example.com")
-      request = Net::HTTP::Get.new("/path?foo=bar")
-      response = http.request(request)
+    expect(response.code).to eq("200")
+    crumb = Sentry.get_current_scope.breadcrumbs.peek
+    expect(crumb.category).to eq("net.http")
+    expect(crumb.data).to eq({ status: 200, method: "GET", url: "http://example.com/path", query: "foo=bar" })
 
-      expect(response.code).to eq("200")
-      crumb = Sentry.get_current_scope.breadcrumbs.peek
-      expect(crumb.category).to eq("net.http")
-      expect(crumb.data).to eq({ status: 200, method: "GET", url: "http://example.com/path", query: "foo=bar", body: nil })
+    request = Net::HTTP::Post.new("/path?foo=bar")
+    request.body = 'quz=qux'
+    response = http.request(request)
 
-      request = Net::HTTP::Post.new("/path?foo=bar")
-      request.body = 'quz=qux'
-      response = http.request(request)
-
-      expect(response.code).to eq("200")
-      crumb = Sentry.get_current_scope.breadcrumbs.peek
-      expect(crumb.category).to eq("net.http")
-      expect(crumb.data).to eq(
-        { status: 200, method: "POST", url: "http://example.com/path", query: "foo=bar", body: 'quz=qux' }
-      )
-    end
-  end
-
-  context "with config.send_default_pii = false" do
-    before do
-      Sentry.configuration.send_default_pii = false
-    end
-
-    it "adds http breadcrumbs without query string & request body" do
-      stub_normal_response
-
-      response = Net::HTTP.get_response(URI("http://example.com/path?foo=bar"))
-
-      expect(response.code).to eq("200")
-      crumb = Sentry.get_current_scope.breadcrumbs.peek
-      expect(crumb.category).to eq("net.http")
-      expect(crumb.data).to eq({ status: 200, method: "GET", url: "http://example.com/path" })
-
-      http = Net::HTTP.new("example.com")
-      request = Net::HTTP::Get.new("/path?foo=bar")
-      response = http.request(request)
-
-      expect(response.code).to eq("200")
-      crumb = Sentry.get_current_scope.breadcrumbs.peek
-      expect(crumb.category).to eq("net.http")
-      expect(crumb.data).to eq({ status: 200, method: "GET", url: "http://example.com/path" })
-
-      request = Net::HTTP::Post.new("/path?foo=bar")
-      request.body = 'quz=qux'
-      response = http.request(request)
-
-      expect(response.code).to eq("200")
-      crumb = Sentry.get_current_scope.breadcrumbs.peek
-      expect(crumb.category).to eq("net.http")
-      expect(crumb.data).to eq({ status: 200, method: "POST", url: "http://example.com/path" })
-    end
+    expect(response.code).to eq("200")
+    crumb = Sentry.get_current_scope.breadcrumbs.peek
+    expect(crumb.category).to eq("net.http")
+    expect(crumb.data).to eq(
+      { status: 200, method: "POST", url: "http://example.com/path", query: "foo=bar", body: 'quz=qux' }
+    )
   end
 
   it "doesn't record breadcrumb for the SDK's request" do
@@ -115,7 +74,7 @@ RSpec.describe :http_logger do
       expect(response.code).to eq("200")
       crumb = Sentry.get_current_scope.breadcrumbs.peek
       expect(crumb.category).to eq("net.http")
-      expect(crumb.data).to eq({ status: 200, method: "GET", url: "http://example.com/path" })
+      expect(crumb.data).to eq({ status: 200, method: "GET", query: "foo=bar", url: "http://example.com/path" })
     end
   end
 end

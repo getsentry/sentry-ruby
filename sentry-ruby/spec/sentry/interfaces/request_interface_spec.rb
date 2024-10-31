@@ -139,22 +139,22 @@ RSpec.describe Sentry::RequestInterface do
     end
   end
 
-  it "doesn't store request body by default" do
-    env.merge!("REQUEST_METHOD" => "POST", ::Rack::RACK_INPUT => StringIO.new("data=ignore me"))
+  it "stores form data" do
+    env.merge!("REQUEST_METHOD" => "POST", ::Rack::RACK_INPUT => StringIO.new("data=catch me"))
 
-    expect(subject.data).to eq(nil)
+    expect(subject.data).to eq({ "data" => "catch me" })
   end
 
-  it "doesn't store request body by default" do
-    env.merge!(::Rack::RACK_INPUT => StringIO.new("ignore me"))
-
-    expect(subject.data).to eq(nil)
-  end
-
-  it "doesn't store query_string by default" do
+  it "stores query string" do
     env.merge!("QUERY_STRING" => "token=xxxx")
 
-    expect(subject.query_string).to eq(nil)
+    expect(subject.query_string).to eq("token=xxxx")
+  end
+
+  it "stores request body" do
+    env.merge!(::Rack::RACK_INPUT => StringIO.new("catch me"))
+
+    expect(subject.data).to eq("catch me")
   end
 
   context "with config.send_default_pii = true" do
@@ -164,24 +164,6 @@ RSpec.describe Sentry::RequestInterface do
       env.merge!(::Rack::RACK_REQUEST_COOKIE_HASH => "cookies!")
 
       expect(subject.cookies).to eq("cookies!")
-    end
-
-    it "stores form data" do
-      env.merge!("REQUEST_METHOD" => "POST", ::Rack::RACK_INPUT => StringIO.new("data=catch me"))
-
-      expect(subject.data).to eq({ "data" => "catch me" })
-    end
-
-    it "stores query string" do
-      env.merge!("QUERY_STRING" => "token=xxxx")
-
-      expect(subject.query_string).to eq("token=xxxx")
-    end
-
-    it "stores request body" do
-      env.merge!(::Rack::RACK_INPUT => StringIO.new("catch me"))
-
-      expect(subject.data).to eq("catch me")
     end
 
     it "stores Authorization header" do

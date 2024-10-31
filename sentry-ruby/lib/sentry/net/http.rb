@@ -69,14 +69,12 @@ module Sentry
         uri = req.uri || URI.parse(URI::DEFAULT_PARSER.escape("#{use_ssl? ? 'https' : 'http'}://#{hostname}#{req.path}"))
         url = "#{uri.scheme}://#{uri.host}#{uri.path}" rescue uri.to_s
 
-        result = { method: req.method, url: url }
-
-        if Sentry.configuration.send_default_pii
-          result[:query] = uri.query
-          result[:body] = req.body
-        end
-
-        result
+        {
+          method: req.method,
+          url: url,
+          query: uri.query,
+          body: req.body
+        }
       end
     end
   end

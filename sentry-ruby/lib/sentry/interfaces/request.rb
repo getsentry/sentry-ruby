@@ -53,14 +53,12 @@ module Sentry
 
       request = ::Rack::Request.new(env)
 
-      if send_default_pii
-        self.data = read_data_from(request)
-        self.cookies = request.cookies
-        self.query_string = request.query_string
-      end
-
       self.url = request.scheme && request.url.split("?").first
       self.method = request.request_method
+      self.data = read_data_from(request)
+      self.query_string = request.query_string
+
+      self.cookies = request.cookies if send_default_pii
 
       self.headers = filter_and_format_headers(env, send_default_pii)
       self.env     = filter_and_format_env(env, rack_env_whitelist)

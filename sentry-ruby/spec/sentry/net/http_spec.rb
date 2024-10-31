@@ -46,67 +46,30 @@ RSpec.describe Sentry::Net::HTTP do
       end
     end
 
-    context "with config.send_default_pii = true" do
-      before do
-        Sentry.configuration.send_default_pii = true
-      end
+    it "records the request's span with query string in data" do
+      stub_normal_response
 
-      it "records the request's span with query string in data" do
-        stub_normal_response
+      transaction = Sentry.start_transaction
+      Sentry.get_current_scope.set_span(transaction)
 
-        transaction = Sentry.start_transaction
-        Sentry.get_current_scope.set_span(transaction)
+      response = Net::HTTP.get_response(URI("http://example.com/path?foo=bar"))
 
-        response = Net::HTTP.get_response(URI("http://example.com/path?foo=bar"))
+      expect(response.code).to eq("200")
+      expect(transaction.span_recorder.spans.count).to eq(2)
 
-        expect(response.code).to eq("200")
-        expect(transaction.span_recorder.spans.count).to eq(2)
-
-        request_span = transaction.span_recorder.spans.last
-        expect(request_span.op).to eq("http.client")
-        expect(request_span.origin).to eq("auto.http.net_http")
-        expect(request_span.start_timestamp).not_to be_nil
-        expect(request_span.timestamp).not_to be_nil
-        expect(request_span.start_timestamp).not_to eq(request_span.timestamp)
-        expect(request_span.description).to eq("GET http://example.com/path")
-        expect(request_span.data).to eq({
-          "http.response.status_code" => 200,
-          "url" => "http://example.com/path",
-          "http.request.method" => "GET",
-          "http.query" => "foo=bar"
-        })
-      end
-    end
-
-    context "with config.send_default_pii = false" do
-      before do
-        Sentry.configuration.send_default_pii = false
-      end
-
-      it "records the request's span without query string" do
-        stub_normal_response
-
-        transaction = Sentry.start_transaction
-        Sentry.get_current_scope.set_span(transaction)
-
-        response = Net::HTTP.get_response(URI("http://example.com/path?foo=bar"))
-
-        expect(response.code).to eq("200")
-        expect(transaction.span_recorder.spans.count).to eq(2)
-
-        request_span = transaction.span_recorder.spans.last
-        expect(request_span.op).to eq("http.client")
-        expect(request_span.origin).to eq("auto.http.net_http")
-        expect(request_span.start_timestamp).not_to be_nil
-        expect(request_span.timestamp).not_to be_nil
-        expect(request_span.start_timestamp).not_to eq(request_span.timestamp)
-        expect(request_span.description).to eq("GET http://example.com/path")
-        expect(request_span.data).to eq({
-          "http.response.status_code" => 200,
-          "url" => "http://example.com/path",
-          "http.request.method" => "GET"
-        })
-      end
+      request_span = transaction.span_recorder.spans.last
+      expect(request_span.op).to eq("http.client")
+      expect(request_span.origin).to eq("auto.http.net_http")
+      expect(request_span.start_timestamp).not_to be_nil
+      expect(request_span.timestamp).not_to be_nil
+      expect(request_span.start_timestamp).not_to eq(request_span.timestamp)
+      expect(request_span.description).to eq("GET http://example.com/path")
+      expect(request_span.data).to eq({
+        "http.response.status_code" => 200,
+        "url" => "http://example.com/path",
+        "http.request.method" => "GET",
+        "http.query" => "foo=bar"
+      })
     end
 
     it "supports non-ascii characters in the path" do
@@ -348,7 +311,8 @@ RSpec.describe Sentry::Net::HTTP do
         expect(request_span.data).to eq({
           "http.response.status_code" => 200,
           "url" => "http://example.com/path",
-          "http.request.method" => "GET"
+          "http.request.method" => "GET",
+          "http.query" => "foo=bar"
         })
 
         request_span = transaction.span_recorder.spans[2]
@@ -361,7 +325,8 @@ RSpec.describe Sentry::Net::HTTP do
         expect(request_span.data).to eq({
           "http.response.status_code" => 404,
           "url" => "http://example.com/path",
-          "http.request.method" => "GET"
+          "http.request.method" => "GET",
+          "http.query" => "foo=bar"
         })
       end
 
