@@ -68,7 +68,7 @@ RSpec.describe Sentry::Rails::Tracing::ActiveStorageSubscriber, :subscriber, typ
         p = Post.create!
         get "/posts/#{p.id}/attach"
 
-        request_transaction = transport.events.last.to_hash
+        request_transaction = transport.events.last.to_h
         expect(request_transaction[:type]).to eq("transaction")
         expect(request_transaction[:spans].count).to eq(2)
 
