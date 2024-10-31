@@ -222,7 +222,7 @@ RSpec.describe Sentry::Resque do
           process_job(worker)
         end.not_to raise_error(TypeError)
 
-        event = transport.events.last.to_hash
+        event = transport.events.last.to_h
         expect(event.dig(:exception, :values, 0, :type)).to eq("ZeroDivisionError")
       end
     end

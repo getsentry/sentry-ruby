@@ -246,7 +246,7 @@ RSpec.describe Sentry::Scope do
 
         scope.apply_to_event(log_event)
 
-        log_hash = log_event.to_hash
+        log_hash = log_event.to_h
 
         expect(log_hash[:attributes]["user.id"]).to eq(123)
         expect(log_hash[:attributes]["user.name"]).to eq("john_doe")
@@ -257,7 +257,7 @@ RSpec.describe Sentry::Scope do
         scope = described_class.new
         scope.apply_to_event(log_event)
 
-        log_hash = log_event.to_hash
+        log_hash = log_event.to_h
 
         expect(log_hash[:attributes]).not_to have_key("user.id")
         expect(log_hash[:attributes]).not_to have_key("user.name")

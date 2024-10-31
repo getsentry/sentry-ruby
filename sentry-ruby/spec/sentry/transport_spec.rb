@@ -260,7 +260,7 @@ RSpec.describe Sentry::Transport do
             item_count: log_events.size,
             content_type: "application/vnd.sentry.items.log+json"
           },
-          { items: log_events.map(&:to_hash) }
+          { items: log_events.map(&:to_h) }
         )
 
         envelope
@@ -309,7 +309,7 @@ RSpec.describe Sentry::Transport do
 
       it "gracefully removes bad encoding breadcrumb message" do
         expect do
-          JSON.generate(event.to_hash)
+          JSON.generate(event.to_h)
         end.not_to raise_error
       end
     end
@@ -582,7 +582,7 @@ RSpec.describe Sentry::Transport do
             item_count: log_events.size,
             content_type: "application/vnd.sentry.items.log+json"
           },
-          { items: log_events.map(&:to_hash) }
+          { items: log_events.map(&:to_h) }
         )
 
         envelope

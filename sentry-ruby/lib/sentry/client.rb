@@ -286,7 +286,7 @@ module Sentry
           processed_log_event = configuration.before_send_log.call(log_event)
 
           if processed_log_event
-            envelope_items << processed_log_event.to_hash
+            envelope_items << processed_log_event.to_h
           else
             discarded_count += 1
           end
@@ -294,7 +294,7 @@ module Sentry
 
         envelope_items
       else
-        envelope_items = log_events.map(&:to_hash)
+        envelope_items = log_events.map(&:to_h)
       end
 
       envelope.add_item(

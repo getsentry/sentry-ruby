@@ -107,7 +107,7 @@ RSpec.describe Sentry::Breadcrumb do
     end
 
     it "rescues data serialization issue for extremely nested data and ditch the data" do
-      result = very_deep_crumb.to_hash
+      result = very_deep_crumb.to_h
 
       expect(result[:category]).to eq("cow")
       expect(result[:message]).to eq("I cause too much recursion")
