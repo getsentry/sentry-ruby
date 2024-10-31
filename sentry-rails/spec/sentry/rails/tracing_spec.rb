@@ -117,7 +117,7 @@ RSpec.describe Sentry::Rails::Tracing, type: :request do
 
       it "does not record sensitive params" do
         get "/posts?foo=bar&password=42&secret=baz"
-        transaction = transport.events.last.to_hash
+        transaction = transport.events.last.to_h
 
         params = transaction[:spans][0][:data][:params]
         expect(params["foo"]).to eq("bar")
@@ -139,7 +139,7 @@ RSpec.describe Sentry::Rails::Tracing, type: :request do
 
       it "records all params" do
         get "/posts?foo=bar&password=42&secret=baz"
-        transaction = transport.events.last.to_hash
+        transaction = transport.events.last.to_h
 
         params = transaction[:spans][0][:data][:params]
         expect(params["foo"]).to eq("bar")

@@ -88,7 +88,7 @@ module Sentry
         Thread.current.object_id
       end
 
-      def to_hash
+      def to_h
         return EMPTY_RESULT unless @started
 
         unless @sampled

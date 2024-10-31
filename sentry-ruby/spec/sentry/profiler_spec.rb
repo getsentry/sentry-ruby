@@ -181,7 +181,7 @@ RSpec.describe Sentry::Profiler, when: :stack_prof_installed? do
       end
 
       it 'returns empty' do
-        expect(subject.to_hash).to eq({})
+        expect(subject.to_h).to eq({})
       end
 
       it 'records lost event' do
