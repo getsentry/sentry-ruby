@@ -5,6 +5,7 @@
 - Add `include_sentry_event` matcher for RSpec [#2424](https://github.com/getsentry/sentry-ruby/pull/2424)
 - Add support for Sentry Cache instrumentation, when using Rails.cache ([#2380](https://github.com/getsentry/sentry-ruby/pull/2380))
 - Add support for Queue Instrumentation for Sidekiq. [#2403](https://github.com/getsentry/sentry-ruby/pull/2403)
+- Reset trace_id and add root transaction for sidekiq-cron [#2446](https://github.com/getsentry/sentry-ruby/pull/2446)
 
     Note: MemoryStore and FileStore require Rails 8.0+
 

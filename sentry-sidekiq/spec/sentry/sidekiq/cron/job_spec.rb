@@ -5,11 +5,24 @@ require 'spec_helper'
 return unless defined?(Sidekiq::Cron::Job)
 
 RSpec.describe Sentry::Sidekiq::Cron::Job do
-  before do
-    perform_basic_setup { |c| c.enabled_patches += [:sidekiq_cron] }
+  let(:processor) do
+    new_processor
+  end
+
+  let(:transport) do
+    Sentry.get_current_client.transport
   end
 
   before do
+    perform_basic_setup do |c|
+      c.enabled_patches += [:sidekiq_cron]
+      c.traces_sample_rate = 1.0
+    end
+  end
+
+  before do
+    Sidekiq::Cron::Job.destroy_all!
+    Sidekiq::Queue.all.each(&:clear)
     schedule_file = 'spec/fixtures/sidekiq-cron-schedule.yml'
     schedule = Sidekiq::Cron::Support.load_yaml(ERB.new(IO.read(schedule_file)).result)
     schedule = schedule.merge(symbol_name: { cron: '* * * * *', class: HappyWorkerWithSymbolName })
@@ -78,5 +91,38 @@ RSpec.describe Sentry::Sidekiq::Cron::Job do
 
   it 'does not patch ReportingWorker because of invalid schedule' do
     expect(ReportingWorker.ancestors).not_to include(Sentry::Cron::MonitorSchedule)
+  end
+
+  describe 'sidekiq-cron' do
+    it 'adds job to sidekiq within transaction' do
+      job = Sidekiq::Cron::Job.new(name: 'test', cron: 'not a crontab', class: 'HappyWorkerForCron')
+      job.send(Sentry::Sidekiq::Cron::Job.enqueueing_method)
+
+      expect(::Sidekiq::Queue.new.size).to eq(1)
+      expect(transport.events.count).to eq(1)
+      event = transport.events.last
+      expect(event.spans.count).to eq(1)
+      expect(event.spans[0][:op]).to eq("queue.publish")
+      expect(event.spans[0][:data]['messaging.destination.name']).to eq('default')
+    end
+
+    it 'adds job to sidekiq within transaction' do
+      job = Sidekiq::Cron::Job.new(name: 'test', cron: 'not a crontab', class: 'HappyWorkerForCron')
+      job.send(Sentry::Sidekiq::Cron::Job.enqueueing_method)
+      # Time passes.
+      job.send(Sentry::Sidekiq::Cron::Job.enqueueing_method)
+
+      expect(::Sidekiq::Queue.new.size).to eq(2)
+      expect(transport.events.count).to eq(2)
+      events = transport.events
+      expect(events[0].spans.count).to eq(1)
+      expect(events[0].spans[0][:op]).to eq("queue.publish")
+      expect(events[0].spans[0][:data]['messaging.destination.name']).to eq('default')
+      expect(events[1].spans.count).to eq(1)
+      expect(events[1].spans[0][:op]).to eq("queue.publish")
+      expect(events[1].spans[0][:data]['messaging.destination.name']).to eq('default')
+
+      expect(events[0].dynamic_sampling_context['trace_id']).to_not eq(events[1].dynamic_sampling_context['trace_id'])
+    end
   end
 end
