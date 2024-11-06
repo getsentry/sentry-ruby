@@ -47,13 +47,13 @@ module Sentry
     end
 
     # @return [Hash]
-    def to_hash
+    def to_h
       data = super
       data[:check_in_id] = check_in_id
       data[:monitor_slug] = monitor_slug
       data[:status] = status
       data[:duration] = duration if duration
-      data[:monitor_config] = monitor_config.to_hash if monitor_config
+      data[:monitor_config] = monitor_config.to_h if monitor_config
       data
     end
   end

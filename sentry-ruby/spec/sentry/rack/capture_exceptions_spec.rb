@@ -19,7 +19,7 @@ RSpec.describe 'Sentry::Rack::CaptureExceptions', when: :rack_available? do
 
       expect { stack.call(env) }.to raise_error(ZeroDivisionError)
 
-      event = last_sentry_event.to_hash
+      event = last_sentry_event.to_h
       expect(event.dig(:request, :url)).to eq("http://example.org/test")
       expect(env["sentry.error_event_id"]).to eq(event[:event_id])
       last_frame = event.dig(:exception, :values, 0, :stacktrace, :frames).last
@@ -32,7 +32,7 @@ RSpec.describe 'Sentry::Rack::CaptureExceptions', when: :rack_available? do
 
       expect { stack.call(env) }.to raise_error(ZeroDivisionError)
 
-      event = last_sentry_event.to_hash
+      event = last_sentry_event.to_h
       mechanism = event.dig(:exception, :values, 0, :mechanism)
       expect(mechanism).to eq({ type: 'rack', handled: false })
     end
@@ -50,7 +50,7 @@ RSpec.describe 'Sentry::Rack::CaptureExceptions', when: :rack_available? do
 
       event = last_sentry_event
       expect(env["sentry.error_event_id"]).to eq(event.event_id)
-      expect(event.to_hash.dig(:request, :url)).to eq("http://example.org/test")
+      expect(event.to_h.dig(:request, :url)).to eq("http://example.org/test")
     end
 
     it 'captures the exception from sinatra.error' do
@@ -65,7 +65,7 @@ RSpec.describe 'Sentry::Rack::CaptureExceptions', when: :rack_available? do
       end.to change { sentry_events.count }.by(1)
 
       event = last_sentry_event
-      expect(event.to_hash.dig(:request, :url)).to eq("http://example.org/test")
+      expect(event.to_h.dig(:request, :url)).to eq("http://example.org/test")
     end
 
     it 'sets the transaction and rack env' do
@@ -79,7 +79,7 @@ RSpec.describe 'Sentry::Rack::CaptureExceptions', when: :rack_available? do
 
       event = last_sentry_event
       expect(event.transaction).to eq("/test")
-      expect(event.to_hash.dig(:request, :url)).to eq("http://example.org/test")
+      expect(event.to_h.dig(:request, :url)).to eq("http://example.org/test")
       expect(Sentry.get_current_scope.transaction_name).to be_nil
       expect(Sentry.get_current_scope.rack_env).to eq({})
     end
@@ -116,7 +116,7 @@ RSpec.describe 'Sentry::Rack::CaptureExceptions', when: :rack_available? do
 
         expect { stack.call(env) }.to raise_error(ZeroDivisionError)
 
-        event = last_sentry_event.to_hash
+        event = last_sentry_event.to_h
         expect(event.dig(:request, :url)).to eq("http://example.org/test")
         last_frame = event.dig(:exception, :values, 0, :stacktrace, :frames).last
         expect(last_frame[:vars]).to include({ a: "1", b: "0" })
@@ -140,7 +140,7 @@ RSpec.describe 'Sentry::Rack::CaptureExceptions', when: :rack_available? do
 
         expect { stack.call(env) }.to raise_error(ZeroDivisionError)
 
-        event = last_sentry_event.to_hash
+        event = last_sentry_event.to_h
         expect(event.dig(:request, :url)).to eq("http://example.org/test")
         last_frame = event.dig(:exception, :values, 0, :stacktrace, :frames).last
         expect(last_frame[:vars]).to include({ a: "1", b: "0", f: "[ignored due to error]" })
@@ -158,7 +158,7 @@ RSpec.describe 'Sentry::Rack::CaptureExceptions', when: :rack_available? do
 
         expect { stack.call(env) }.to raise_error(ZeroDivisionError)
 
-        event = last_sentry_event.to_hash
+        event = last_sentry_event.to_h
         expect(event.dig(:request, :url)).to eq("http://example.org/test")
         last_frame = event.dig(:exception, :values, 0, :stacktrace, :frames).last
         expect(last_frame[:vars]).to include({ a: "1", b: "0", long: "*" * 1024 + "..." })

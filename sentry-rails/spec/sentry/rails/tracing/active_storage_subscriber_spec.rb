@@ -25,7 +25,7 @@ RSpec.describe Sentry::Rails::Tracing::ActiveStorageSubscriber, :subscriber, typ
       expect(response).to have_http_status(:ok)
       expect(transport.events.count).to eq(2)
 
-      analysis_transaction = transport.events.first.to_hash
+      analysis_transaction = transport.events.first.to_h
       expect(analysis_transaction[:type]).to eq("transaction")
 
       if Rails.version.to_f > 6.1
@@ -40,7 +40,7 @@ RSpec.describe Sentry::Rails::Tracing::ActiveStorageSubscriber, :subscriber, typ
         expect(analysis_transaction[:spans][0][:origin]).to eq("auto.file.rails")
       end
 
-      request_transaction = transport.events.last.to_hash
+      request_transaction = transport.events.last.to_h
       expect(request_transaction[:type]).to eq("transaction")
       expect(request_transaction[:spans].count).to eq(2)
 

@@ -14,11 +14,14 @@ gem "psych", "5.1.0"
 gem "delayed_job"
 gem "delayed_job_active_record"
 
-gem "rails", "> 5.0.0"
+if RUBY_PLATFORM == "java"
+  gem "rails", "> 5.0.0", "< 7.1.0"
+else
+  gem "rails", "> 5.0.0"
+end
 
 platform :jruby do
-  # See https://github.com/jruby/activerecord-jdbc-adapter/issues/1139
-  gem "activerecord-jdbcmysql-adapter", github: "jruby/activerecord-jdbc-adapter"
+  gem "activerecord-jdbcmysql-adapter"
   gem "jdbc-sqlite3"
 end
 
