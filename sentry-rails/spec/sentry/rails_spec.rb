@@ -356,6 +356,25 @@ RSpec.describe Sentry::Rails, type: :request do
 
         expect(transport.events.count).to eq(0)
       end
+
+      it "captures string messages through error reporter" do
+        Rails.error.report("Test message", severity: :info, context: { foo: "bar" })
+
+        expect(transport.events.count).to eq(1)
+        event = transport.events.first
+
+        expect(event.message).to eq("Test message")
+        expect(event.level).to eq(:info)
+        expect(event.contexts).to include({ "rails.error" => { foo: "bar" } })
+        expect(event.tags).to include({ handled: true })
+      end
+
+      it "crashes if the message is not a string or an exception" do
+        # Subscriber crashes are handled and logged as fatal, so this doesn't raise here
+        Rails.error.report(312, severity: :info, context: { foo: "bar" })
+
+        expect(transport.events.count).to eq(0)
+      end
     end
   end
 end
