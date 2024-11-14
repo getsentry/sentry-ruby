@@ -33,7 +33,7 @@ RSpec.describe Sentry::Sidekiq::Cron::Job do
   end
 
   before do
-    stub_const('Job', Class.new { def perform; end })
+    stub_const('Job', Class.new { include Sidekiq::Worker; def perform; end })
   end
 
   it 'patches class' do
