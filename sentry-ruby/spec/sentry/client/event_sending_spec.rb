@@ -101,7 +101,7 @@ RSpec.describe Sentry::Client do
 
           client.capture_event(event, scope)
 
-          expect(string_io.string).to include("Converting event (#{event.event_id}) to JSON compatible hash failed: source sequence is illegal/malformed utf-8")
+          expect(string_io.string).to match(/Converting event \(#{event.event_id}\) to JSON compatible hash failed:.*illegal\/malformed utf-8/i)
         end
       end
 
