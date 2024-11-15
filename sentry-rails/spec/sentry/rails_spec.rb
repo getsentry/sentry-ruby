@@ -358,7 +358,7 @@ RSpec.describe Sentry::Rails, type: :request do
       end
 
       it "captures string messages through error reporter" do
-        Rails.error.report("Test message", severity: :info, context: { foo: "bar" })
+        Rails.error.report("Test message", severity: :info, handled: true, context: { foo: "bar" })
 
         expect(transport.events.count).to eq(1)
         event = transport.events.first
@@ -377,7 +377,7 @@ RSpec.describe Sentry::Rails, type: :request do
 
           Sentry.logger.debug("Expected an Exception or a String, got: #{312.inspect}")
 
-          Rails.error.report(312, severity: :info, context: { foo: "bar" })
+          Rails.error.report(312, severity: :info, handled: true, context: { foo: "bar" })
         }.to output(/Expected an Exception or a String, got: 312/).to_stdout
 
         expect(transport.events.count).to eq(0)
