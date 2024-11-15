@@ -35,8 +35,12 @@ module Sentry
         when Exception
           Sentry::Rails.capture_exception(error, **options)
         else
-          raise ArgumentError, "Expected an Exception or a String, got: #{error.inspect}"
+          log_debug("Expected an Exception or a String, got: #{error.inspect}")
         end
+      end
+
+      def log_debug(message)
+        Sentry.configuration.logger.debug(message)
       end
     end
   end

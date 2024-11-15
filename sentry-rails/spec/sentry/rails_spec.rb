@@ -369,9 +369,16 @@ RSpec.describe Sentry::Rails, type: :request do
         expect(event.tags).to include({ handled: true })
       end
 
-      it "crashes if the message is not a string or an exception" do
-        # Subscriber crashes are handled and logged as fatal, so this doesn't raise here
-        Rails.error.report(312, severity: :info, context: { foo: "bar" })
+      it "skips non-string and non-exception errors" do
+        expect {
+          Sentry.init do |config|
+            config.logger = Logger.new($stdout)
+          end
+
+          Sentry.logger.debug("Expected an Exception or a String, got: #{312.inspect}")
+
+          Rails.error.report(312, severity: :info, context: { foo: "bar" })
+        }.to output(/Expected an Exception or a String, got: 312/).to_stdout
 
         expect(transport.events.count).to eq(0)
       end
