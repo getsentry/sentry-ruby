@@ -27,7 +27,20 @@ module Sentry
           hint.merge!(context.delete(:hint))
         end
 
-        Sentry::Rails.capture_exception(error, level: severity, contexts: { "rails.error" => context }, tags: tags, hint: hint)
+        options = { level: severity, contexts: { "rails.error" => context }, tags: tags, hint: hint }
+
+        case error
+        when String
+          Sentry::Rails.capture_message(error, **options)
+        when Exception
+          Sentry::Rails.capture_exception(error, **options)
+        else
+          log_debug("Expected an Exception or a String, got: #{error.inspect}")
+        end
+      end
+
+      def log_debug(message)
+        Sentry.configuration.logger.debug(message)
       end
     end
   end
