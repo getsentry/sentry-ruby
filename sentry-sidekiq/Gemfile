@@ -29,3 +29,7 @@ end
 gem "rails", "> 5.0.0"
 
 gem "timecop"
+
+if RUBY_VERSION >= "3.2.1"
+  gem "vernier"
+end
