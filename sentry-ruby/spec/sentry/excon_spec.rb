@@ -1,10 +1,11 @@
 # frozen_string_literal: true
 
 require "spec_helper"
-require 'contexts/with_request_mock'
-require 'excon'
+require "contexts/with_request_mock"
+require "excon"
 
 RSpec.describe "Sentry::Excon" do
+  include Sentry::Utils::HttpTracing
   include_context "with request mock"
 
   before do
@@ -29,7 +30,7 @@ RSpec.describe "Sentry::Excon" do
     end
 
     it "correctly parses the short-hand IPv6 addresses" do
-      Excon.stub({}, { body: '', status: 200 })
+      Excon.stub({}, { body: "", status: 200 })
 
       transaction = Sentry.start_transaction
       Sentry.get_current_scope.set_span(transaction)
@@ -52,7 +53,7 @@ RSpec.describe "Sentry::Excon" do
         config.transport.transport_class = Sentry::HTTPTransport
         config.logger = logger
         # the dsn needs to have a real host so we can make a real connection before sending a failed request
-        config.dsn = 'http://foobarbaz@o447951.ingest.sentry.io/5434472'
+        config.dsn = "http://foobarbaz@o447951.ingest.sentry.io/5434472"
         config.enabled_patches += [:excon] unless config.enabled_patches.include?(:excon)
       end
     end
@@ -64,7 +65,7 @@ RSpec.describe "Sentry::Excon" do
       end
 
       it "records the request's span with query string in data" do
-        Excon.stub({}, { body: '', status: 200 })
+        Excon.stub({}, { body: "", status: 200 })
 
         transaction = Sentry.start_transaction
         Sentry.get_current_scope.set_span(transaction)
@@ -90,13 +91,13 @@ RSpec.describe "Sentry::Excon" do
       end
 
       it "records the request's span with advanced query string in data" do
-        Excon.stub({}, { body: '', status: 200 })
+        Excon.stub({}, { body: "", status: 200 })
 
         transaction = Sentry.start_transaction
         Sentry.get_current_scope.set_span(transaction)
 
-        connection = Excon.new('http://example.com/path')
-        response = connection.get(mock: true, query: { foo: 'bar', baz: [1, 2], qux: { a: 1, b: 2 } })
+        connection = Excon.new("http://example.com/path")
+        response = connection.get(mock: true, query: build_nested_query({ foo: "bar", baz: [1, 2], qux: { a: 1, b: 2 } }))
 
         expect(response.status).to eq(200)
         expect(transaction.span_recorder.spans.count).to eq(2)
@@ -112,13 +113,12 @@ RSpec.describe "Sentry::Excon" do
           "http.response.status_code" => 200,
           "url" => "http://example.com/path",
           "http.request.method" => "GET",
-          # This equals: "foo=bar&baz[]=1&baz[]=2&qux[a]=1&qux[b]=2"
           "http.query" => "foo=bar&baz%5B%5D=1&baz%5B%5D=2&qux%5Ba%5D=1&qux%5Bb%5D=2"
         })
       end
 
       it "records breadcrumbs" do
-        Excon.stub({}, { body: '', status: 200 })
+        Excon.stub({}, { body: "", status: 200 })
 
         transaction = Sentry.start_transaction
         Sentry.get_current_scope.set_span(transaction)
@@ -144,7 +144,7 @@ RSpec.describe "Sentry::Excon" do
       end
 
       it "records the request's span without query string" do
-        Excon.stub({}, { body: '', status: 200 })
+        Excon.stub({}, { body: "", status: 200 })
 
         transaction = Sentry.start_transaction
         Sentry.get_current_scope.set_span(transaction)
@@ -208,11 +208,11 @@ RSpec.describe "Sentry::Excon" do
       end
 
       it "doesn't mess different requests' data together" do
-        Excon.stub({}, { body: '', status: 200 })
+        Excon.stub({}, { body: "", status: 200 })
         response = Excon.get("http://example.com/path?foo=bar", mock: true)
         expect(response.status).to eq(200)
 
-        Excon.stub({}, { body: '', status: 404 })
+        Excon.stub({}, { body: "", status: 404 })
         response = Excon.get("http://example.com/path?foo=bar", mock: true)
         expect(response.status).to eq(404)
 
@@ -227,7 +227,7 @@ RSpec.describe "Sentry::Excon" do
         end
 
         it "attaches http spans to the span instead of top-level transaction" do
-          Excon.stub({}, { body: '', status: 200 })
+          Excon.stub({}, { body: "", status: 200 })
           response = Excon.get("http://example.com/path?foo=bar", mock: true)
           expect(response.status).to eq(200)
 
@@ -242,7 +242,7 @@ RSpec.describe "Sentry::Excon" do
 
   context "without SDK" do
     it "doesn't affect the HTTP lib anything" do
-      Excon.stub({}, { body: '', status: 200 })
+      Excon.stub({}, { body: "", status: 200 })
 
       response = Excon.get("http://example.com/path")
       expect(response.status).to eq(200)

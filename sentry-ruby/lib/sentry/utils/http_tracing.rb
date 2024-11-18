@@ -19,7 +19,7 @@ module Sentry
         crumb = Sentry::Breadcrumb.new(
           level: :info,
           category: self.class::BREADCRUMB_CATEGORY,
-          type: :info,
+          type: "info",
           data: { status: response_status, **request_info }
         )
 
