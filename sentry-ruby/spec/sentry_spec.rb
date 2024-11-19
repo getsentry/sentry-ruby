@@ -1235,5 +1235,15 @@ RSpec.describe Sentry do
         expect(target_class.instance_methods).to include(:foo)
       end
     end
+
+    context "with patch and block" do
+      it "raises error" do
+        expect do
+          described_class.register_patch(:bad_patch, module_patch, target_class) do
+            target_class.send(:prepend, module_patch)
+          end
+        end.to raise_error(ArgumentError, "Please provide either a patch and its target OR a block, but not both")
+      end
+    end
   end
 end
