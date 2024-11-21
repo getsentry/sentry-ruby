@@ -17,6 +17,8 @@
 - Fix `send_default_pii` handling in rails controller spans [#2443](https://github.com/getsentry/sentry-ruby/pull/2443)
   - Fixes [#2438](https://github.com/getsentry/sentry-ruby/issues/2438)
 - Fix `RescuedExceptionInterceptor` to handle an empty configuration [#2428](https://github.com/getsentry/sentry-ruby/pull/2428)
+- Add mutex sync to `SessionFlusher` aggregates [#2469](https://github.com/getsentry/sentry-ruby/pull/2469)
+  - Fixes [#2468](https://github.com/getsentry/sentry-ruby/issues/2468)
 
 ## 5.21.0
 
