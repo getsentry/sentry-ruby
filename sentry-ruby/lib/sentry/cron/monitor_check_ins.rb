@@ -19,7 +19,7 @@ module Sentry
           begin
             # need to do this on ruby <= 2.6 sadly
             ret = method(:perform).super_method.arity == 0 ? super() : super
-            duration = Sentry.utc_now.to_i - start
+            duration = Sentry.utc_now.to_f - start
 
             Sentry.capture_check_in(slug,
                                     :ok,
@@ -29,7 +29,7 @@ module Sentry
 
             ret
           rescue Exception
-            duration = Sentry.utc_now.to_i - start
+            duration = Sentry.utc_now.to_f - start
 
             Sentry.capture_check_in(slug,
                                     :error,
