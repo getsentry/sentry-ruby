@@ -151,7 +151,7 @@ module Sentry
         if (http_status_code = otel_span.attributes[SEMANTIC_CONVENTIONS::HTTP_STATUS_CODE])
           sentry_span.set_http_status(http_status_code)
         elsif (status_code = otel_span.status.code)
-          status = [0, 1].include?(status_code) ? "ok" : "unknown_error"
+          status = [0, 1].include?(status_code) ? "ok" : "internal_error"
           sentry_span.set_status(status)
         end
       end
