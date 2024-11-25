@@ -31,32 +31,33 @@ module Sentry
         @project_root = project_root
         @strip_backtrace_load_path = strip_backtrace_load_path
 
-        @abs_path = line.file
+        @abs_path = line.abs_path
         @function = line.method if line.method
         @lineno = line.number
         @in_app = line.in_app
         @module = line.module_name if line.module_name
-        @filename = compute_filename
+
+        @filename = compute_filename(line.file)
       end
 
       def to_s
         "#{@filename}:#{@lineno}"
       end
 
-      def compute_filename
-        return if abs_path.nil?
-        return abs_path unless @strip_backtrace_load_path
+      def compute_filename(file)
+        return if file.nil?
+        return file unless @strip_backtrace_load_path
 
+        under_project_root = under_project_root?(file)
         prefix =
-          if under_project_root? && in_app
+          if under_project_root && in_app
             @project_root
-          elsif under_project_root?
-            longest_load_path || @project_root
           else
-            longest_load_path
+            longest_load_path = longest_load_path(file)
+            under_project_root ? longest_load_path || @project_root : longest_load_path
           end
 
-        prefix ? abs_path[prefix.to_s.chomp(File::SEPARATOR).length + 1..-1] : abs_path
+        prefix ? file[prefix.to_s.chomp(File::SEPARATOR).length + 1..-1] : file
       end
 
       def set_context(linecache, context_lines)
@@ -77,12 +78,12 @@ module Sentry
 
       private
 
-      def under_project_root?
-        @project_root && abs_path.start_with?(@project_root)
+      def under_project_root?(file)
+        @project_root && file.start_with?(@project_root)
       end
 
-      def longest_load_path
-        $LOAD_PATH.select { |path| abs_path.start_with?(path.to_s) }.max_by(&:size)
+      def longest_load_path(file)
+        $LOAD_PATH.select { |path| file.start_with?(path.to_s) }.max_by(&:size)
       end
     end
   end

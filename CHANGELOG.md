@@ -17,6 +17,8 @@
 - Fix `send_default_pii` handling in rails controller spans [#2443](https://github.com/getsentry/sentry-ruby/pull/2443)
   - Fixes [#2438](https://github.com/getsentry/sentry-ruby/issues/2438)
 - Fix `RescuedExceptionInterceptor` to handle an empty configuration [#2428](https://github.com/getsentry/sentry-ruby/pull/2428)
+- Don't let `backtrace_cleanup_callback` affect `abs_path` and separate filename handling ([#2474](https://github.com/getsentry/sentry-ruby/pull/2474))
+  - Fixes [#2472](https://github.com/getsentry/sentry-ruby/issues/2472)
 
 ## 5.21.0
 

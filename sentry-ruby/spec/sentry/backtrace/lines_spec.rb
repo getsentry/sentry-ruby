@@ -12,6 +12,9 @@ RSpec.describe Sentry::Backtrace::Line do
   let(:unparsed_gem_line) do
     "/PATH_TO_RUBY/gems/2.7.0/gems/sinatra-2.1.0/lib/sinatra/base.rb:1675:in `call'"
   end
+  let(:cleaned_gem_line) do
+    "sinatra (2.1.0) lib/sinatra/base.rb:1675:in `call'"
+  end
 
   let(:in_app_pattern) do
     project_root = Sentry.configuration.project_root&.to_s
@@ -22,6 +25,7 @@ RSpec.describe Sentry::Backtrace::Line do
     it "parses app backtrace correctly" do
       line = described_class.parse(unparsed_app_line, in_app_pattern)
 
+      expect(line.abs_path).to eq("app.rb")
       expect(line.file).to eq("app.rb")
       expect(line.number).to eq(12)
       expect(line.method).to eq("/")
@@ -33,8 +37,27 @@ RSpec.describe Sentry::Backtrace::Line do
     it "parses gem backtrace correctly" do
       line = described_class.parse(unparsed_gem_line, in_app_pattern)
 
+      expect(line.abs_path).to eq(
+        "/PATH_TO_RUBY/gems/2.7.0/gems/sinatra-2.1.0/lib/sinatra/base.rb"
+      )
       expect(line.file).to eq(
         "/PATH_TO_RUBY/gems/2.7.0/gems/sinatra-2.1.0/lib/sinatra/base.rb"
+      )
+      expect(line.number).to eq(1675)
+      expect(line.method).to eq("call")
+      expect(line.in_app_pattern).to eq(in_app_pattern)
+      expect(line.module_name).to eq(nil)
+      expect(line.in_app).to eq(false)
+    end
+
+    it "parses cleaned gem backtrace correctly" do
+      line = described_class.parse(unparsed_gem_line, in_app_pattern, cleaned_gem_line)
+
+      expect(line.abs_path).to eq(
+        "/PATH_TO_RUBY/gems/2.7.0/gems/sinatra-2.1.0/lib/sinatra/base.rb"
+      )
+      expect(line.file).to eq(
+        "sinatra (2.1.0) lib/sinatra/base.rb"
       )
       expect(line.number).to eq(1675)
       expect(line.method).to eq("call")
