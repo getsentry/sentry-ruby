@@ -19,6 +19,8 @@
 - Fix `RescuedExceptionInterceptor` to handle an empty configuration [#2428](https://github.com/getsentry/sentry-ruby/pull/2428)
 - Add mutex sync to `SessionFlusher` aggregates [#2469](https://github.com/getsentry/sentry-ruby/pull/2469)
   - Fixes [#2468](https://github.com/getsentry/sentry-ruby/issues/2468)
+- Fix sentry-rails' backtrace cleaner issues ([#2475](https://github.com/getsentry/sentry-ruby/pull/2475))
+  - Fixes [#2472](https://github.com/getsentry/sentry-ruby/issues/2472)
 
 ## 5.21.0
 
