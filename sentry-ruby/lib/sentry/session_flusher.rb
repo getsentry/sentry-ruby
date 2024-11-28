@@ -10,6 +10,7 @@ module Sentry
       @pending_aggregates = {}
       @release = configuration.release
       @environment = configuration.environment
+      @mutex = Mutex.new
 
       log_debug("[Sessions] Sessions won't be captured without a valid release") unless @release
     end
@@ -18,7 +19,6 @@ module Sentry
       return if @pending_aggregates.empty?
 
       @client.capture_envelope(pending_envelope)
-      @pending_aggregates = {}
     end
 
     alias_method :run, :flush
@@ -42,11 +42,15 @@ module Sentry
     end
 
     def pending_envelope
+      aggregates = @mutex.synchronize do
+        aggregates = @pending_aggregates.values
+        @pending_aggregates = {}
+        aggregates
+      end
+
       envelope = Envelope.new
-
       header = { type: "sessions" }
-      payload = { attrs: attrs, aggregates: @pending_aggregates.values }
-
+      payload = { attrs: attrs, aggregates: aggregates }
       envelope.add_item(header, payload)
       envelope
     end
