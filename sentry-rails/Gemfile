@@ -15,12 +15,12 @@ end
 ruby_version = Gem::Version.new(RUBY_VERSION)
 
 rails_version = ENV["RAILS_VERSION"]
-rails_version = "7.2.0" if rails_version.nil?
+rails_version = "8.0.0" if rails_version.nil?
 rails_version = Gem::Version.new(rails_version)
 
 gem "rails", "~> #{rails_version}"
 
-if rails_version >= Gem::Version.new("8.0.0.alpha")
+if rails_version >= Gem::Version.new("8.0.0")
   gem "rspec-rails"
   gem "sqlite3", platform: :ruby
 elsif rails_version >= Gem::Version.new("7.1.0")
