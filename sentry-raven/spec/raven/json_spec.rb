@@ -2,6 +2,7 @@
 # JSON impl we use handles it in the way that we expect.
 
 require 'spec_helper'
+require 'ostruct'
 
 RSpec.describe JSON do
   data = [
