@@ -1,7 +1,7 @@
 codecov:
   disable_default_path_fixes: true
 ignore:
-  - "**/spec"
+  - "**/spec/**"
 comment:
   layout: "header, diff, flags, components, tree"
 component_management:

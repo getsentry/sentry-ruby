@@ -1,8 +1,10 @@
+# frozen_string_literal: true
+
 module Sentry
   module Rails
     class CaptureExceptions < Sentry::Rack::CaptureExceptions
       RAILS_7_1 = Gem::Version.new(::Rails.version) >= Gem::Version.new("7.1.0.alpha")
-      SPAN_ORIGIN = 'auto.http.rails'.freeze
+      SPAN_ORIGIN = "auto.http.rails"
 
       def initialize(_)
         super
@@ -20,7 +22,7 @@ module Sentry
       end
 
       def transaction_op
-        "http.server".freeze
+        "http.server"
       end
 
       def capture_exception(exception, env)

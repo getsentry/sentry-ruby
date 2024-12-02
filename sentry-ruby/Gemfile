@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 source "https://rubygems.org"
 git_source(:github) { |name| "https://github.com/#{name}.git" }
 
@@ -14,6 +16,7 @@ gem "puma"
 
 gem "timecop"
 gem "stackprof" unless RUBY_PLATFORM == "java"
+gem "vernier", platforms: :ruby if RUBY_VERSION >= "3.2.1"
 
 gem "graphql", ">= 2.2.6" if RUBY_VERSION.to_f >= 2.7
 
@@ -24,5 +27,7 @@ gem "benchmark-memory"
 
 gem "yard", github: "lsegal/yard"
 gem "webrick"
+gem "faraday"
+gem "excon"
 
 eval_gemfile File.expand_path("../Gemfile", __dir__)

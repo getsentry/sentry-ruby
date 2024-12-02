@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 require_relative "lib/sentry/version"
 
 Gem::Specification.new do |spec|
@@ -12,7 +14,7 @@ Gem::Specification.new do |spec|
   spec.platform = Gem::Platform::RUBY
   spec.required_ruby_version = '>= 2.4'
   spec.extra_rdoc_files = ["README.md", "LICENSE.txt"]
-  spec.files = `git ls-files | grep -Ev '^(spec|benchmarks|examples)'`.split("\n")
+  spec.files = `git ls-files | grep -Ev '^(spec|benchmarks|examples|\.rubocop\.yml)'`.split("\n")
 
   spec.metadata["homepage_uri"] = spec.homepage
   spec.metadata["source_code_uri"] = spec.homepage

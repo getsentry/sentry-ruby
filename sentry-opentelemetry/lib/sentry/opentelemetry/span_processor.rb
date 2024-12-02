@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-require 'singleton'
+require "singleton"
 
 module Sentry
   module OpenTelemetry
@@ -83,7 +83,7 @@ module Sentry
         dsn = Sentry.configuration.dsn
         return false unless dsn
 
-        if otel_span.name.start_with?("HTTP")
+        if otel_span.name.start_with?("HTTP") || otel_span.name == "connect"
           # only check client requests, connects are sometimes internal
           return false unless INTERNAL_SPAN_KINDS.include?(otel_span.kind)
 
@@ -151,14 +151,14 @@ module Sentry
         if (http_status_code = otel_span.attributes[SEMANTIC_CONVENTIONS::HTTP_STATUS_CODE])
           sentry_span.set_http_status(http_status_code)
         elsif (status_code = otel_span.status.code)
-          status = [0, 1].include?(status_code) ? 'ok' : 'unknown_error'
+          status = [0, 1].include?(status_code) ? "ok" : "unknown_error"
           sentry_span.set_status(status)
         end
       end
 
       def update_span_with_otel_data(sentry_span, otel_span)
         update_span_status(sentry_span, otel_span)
-        sentry_span.set_data('otel.kind', otel_span.kind)
+        sentry_span.set_data("otel.kind", otel_span.kind)
         otel_span.attributes&.each { |k, v| sentry_span.set_data(k, v) }
 
         op, description = parse_span_description(otel_span)

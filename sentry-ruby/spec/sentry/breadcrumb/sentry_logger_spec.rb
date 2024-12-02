@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 require "spec_helper"
 
 RSpec.describe "Sentry::Breadcrumbs::SentryLogger" do
@@ -69,33 +71,35 @@ RSpec.describe "Sentry::Breadcrumbs::SentryLogger" do
     end
 
     # see https://github.com/getsentry/sentry-ruby/issues/1858
-    it "noops on thread with cloned hub" do
-      mutex = Mutex.new
-      cv = ConditionVariable.new
+    unless RUBY_PLATFORM == "java"
+      it "noops on thread with cloned hub" do
+        mutex = Mutex.new
+        cv = ConditionVariable.new
 
-      a = Thread.new do
-        expect(Sentry.get_current_hub).to be_a(Sentry::Hub)
+        a = Thread.new do
+          expect(Sentry.get_current_hub).to be_a(Sentry::Hub)
 
-        # close in another thread
-        b = Thread.new do
-          mutex.synchronize do
-            Sentry.close
-            cv.signal
+          # close in another thread
+          b = Thread.new do
+            mutex.synchronize do
+              Sentry.close
+              cv.signal
+            end
           end
+
+          mutex.synchronize do
+            # wait for other thread to close SDK
+            cv.wait(mutex)
+
+            expect(Sentry).not_to receive(:add_breadcrumb)
+            logger.info("foo")
+          end
+
+          b.join
         end
 
-        mutex.synchronize do
-          # wait for other thread to close SDK
-          cv.wait(mutex)
-
-          expect(Sentry).not_to receive(:add_breadcrumb)
-          logger.info("foo")
-        end
-
-        b.join
+        a.join
       end
-
-      a.join
     end
   end
 end

@@ -2,6 +2,7 @@
 
 require "sentry/breadcrumb_buffer"
 require "sentry/propagation_context"
+require "sentry/attachment"
 require "etc"
 
 module Sentry
@@ -22,6 +23,7 @@ module Sentry
       :rack_env,
       :span,
       :session,
+      :attachments,
       :propagation_context
     ]
 
@@ -55,10 +57,12 @@ module Sentry
         event.level = level
         event.breadcrumbs = breadcrumbs
         event.rack_env = rack_env if rack_env
+        event.attachments = attachments
       end
 
       if span
         event.contexts[:trace] ||= span.get_trace_context
+        event.dynamic_sampling_context ||= span.get_dynamic_sampling_context
       else
         event.contexts[:trace] ||= propagation_context.get_trace_context
         event.dynamic_sampling_context ||= propagation_context.get_dynamic_sampling_context
@@ -102,6 +106,7 @@ module Sentry
       copy.span = span.deep_dup
       copy.session = session.deep_dup
       copy.propagation_context = propagation_context.deep_dup
+      copy.attachments = attachments.dup
       copy
     end
 
@@ -119,6 +124,7 @@ module Sentry
       self.fingerprint = scope.fingerprint
       self.span = scope.span
       self.propagation_context = scope.propagation_context
+      self.attachments = scope.attachments
     end
 
     # Updates the scope's data from the given options.
@@ -128,6 +134,7 @@ module Sentry
     # @param user [Hash]
     # @param level [String, Symbol]
     # @param fingerprint [Array]
+    # @param attachments [Array<Attachment>]
     # @return [Array]
     def update_from_options(
       contexts: nil,
@@ -136,6 +143,7 @@ module Sentry
       user: nil,
       level: nil,
       fingerprint: nil,
+      attachments: nil,
       **options
     )
       self.contexts.merge!(contexts) if contexts
@@ -283,6 +291,12 @@ module Sentry
       @propagation_context = PropagationContext.new(self, env)
     end
 
+    # Add a new attachment to the scope.
+    def add_attachment(**opts)
+      attachments << (attachment = Attachment.new(**opts))
+      attachment
+    end
+
     protected
 
     # for duplicating scopes internally
@@ -303,6 +317,7 @@ module Sentry
       @rack_env = {}
       @span = nil
       @session = nil
+      @attachments = []
       generate_propagation_context
       set_new_breadcrumb_buffer
     end

@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 module Sentry
   module Cron
     module MonitorCheckIns
@@ -57,7 +59,7 @@ module Sentry
 
         def sentry_monitor_slug(name: self.name)
           @sentry_monitor_slug ||= begin
-            slug = name.gsub('::', '-').downcase
+            slug = name.gsub("::", "-").downcase
             slug[-MAX_SLUG_LENGTH..-1] || slug
           end
         end

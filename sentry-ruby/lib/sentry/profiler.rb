@@ -1,11 +1,14 @@
 # frozen_string_literal: true
 
-require 'securerandom'
+require "securerandom"
+require_relative "profiler/helpers"
 
 module Sentry
   class Profiler
-    VERSION = '1'
-    PLATFORM = 'ruby'
+    include Profiler::Helpers
+
+    VERSION = "1"
+    PLATFORM = "ruby"
     # 101 Hz in microseconds
     DEFAULT_INTERVAL = 1e6 / 101
     MICRO_TO_NANO_SECONDS = 1e3
@@ -14,14 +17,14 @@ module Sentry
     attr_reader :sampled, :started, :event_id
 
     def initialize(configuration)
-      @event_id = SecureRandom.uuid.delete('-')
+      @event_id = SecureRandom.uuid.delete("-")
       @started = false
       @sampled = nil
 
       @profiling_enabled = defined?(StackProf) && configuration.profiling_enabled?
       @profiles_sample_rate = configuration.profiles_sample_rate
       @project_root = configuration.project_root
-      @app_dirs_pattern = configuration.app_dirs_pattern || Backtrace::APP_DIRS_PATTERN
+      @app_dirs_pattern = configuration.app_dirs_pattern
       @in_app_pattern = Regexp.new("^(#{@project_root}/)?#{@app_dirs_pattern}")
     end
 
@@ -33,7 +36,7 @@ module Sentry
                                  raw: true,
                                  aggregate: false)
 
-      @started ? log('Started') : log('Not started since running elsewhere')
+      @started ? log("Started") : log("Not started since running elsewhere")
     end
 
     def stop
@@ -41,7 +44,11 @@ module Sentry
       return unless @started
 
       StackProf.stop
-      log('Stopped')
+      log("Stopped")
+    end
+
+    def active_thread_id
+      "0"
     end
 
     # Sets initial sampling decision of the profile.
@@ -54,14 +61,14 @@ module Sentry
 
       unless transaction_sampled
         @sampled = false
-        log('Discarding profile because transaction not sampled')
+        log("Discarding profile because transaction not sampled")
         return
       end
 
       case @profiles_sample_rate
       when 0.0
         @sampled = false
-        log('Discarding profile because sample_rate is 0')
+        log("Discarding profile because sample_rate is 0")
         return
       when 1.0
         @sampled = true
@@ -70,7 +77,7 @@ module Sentry
         @sampled = Random.rand < @profiles_sample_rate
       end
 
-      log('Discarding profile due to sampling decision') unless @sampled
+      log("Discarding profile due to sampling decision") unless @sampled
     end
 
     def to_hash
@@ -90,13 +97,12 @@ module Sentry
 
       frame_map = {}
 
-      frames = results[:frames].to_enum.with_index.map do |frame, idx|
-        frame_id, frame_data = frame
-
+      frames = results[:frames].map.with_index do |(frame_id, frame_data), idx|
         # need to map over stackprof frame ids to ours
         frame_map[frame_id] = idx
 
         file_path = frame_data[:file]
+        lineno = frame_data[:line]
         in_app = in_app?(file_path)
         filename = compute_filename(file_path, in_app)
         function, mod = split_module(frame_data[:name])
@@ -109,7 +115,7 @@ module Sentry
         }
 
         frame_hash[:module] = mod if mod
-        frame_hash[:lineno] = frame_data[:line] if frame_data[:line] && frame_data[:line] >= 0
+        frame_hash[:lineno] = lineno if lineno && lineno >= 0
 
         frame_hash
       end
@@ -130,7 +136,7 @@ module Sentry
         num_seen << results[:raw][idx + len]
         idx += len + 1
 
-        log('Unknown frame in stack') if stack.size != len
+        log("Unknown frame in stack") if stack.size != len
       end
 
       idx = 0
@@ -155,16 +161,16 @@ module Sentry
             # Till then, on multi-threaded servers like puma, we will get frames from other active threads when the one
             # we're profiling is idle/sleeping/waiting for IO etc.
             # https://bugs.ruby-lang.org/issues/10602
-            thread_id: '0',
+            thread_id: "0",
             elapsed_since_start_ns: elapsed_since_start_ns.to_s
           }
         end
       end
 
-      log('Some samples thrown away') if samples.size != results[:samples]
+      log("Some samples thrown away") if samples.size != results[:samples]
 
       if samples.size <= MIN_SAMPLES_REQUIRED
-        log('Not enough samples, discarding profiler')
+        log("Not enough samples, discarding profiler")
         record_lost_event(:insufficient_data)
         return {}
       end
@@ -189,45 +195,8 @@ module Sentry
       Sentry.logger.debug(LOGGER_PROGNAME) { "[Profiler] #{message}" }
     end
 
-    def in_app?(abs_path)
-      abs_path.match?(@in_app_pattern)
-    end
-
-    # copied from stacktrace.rb since I don't want to touch existing code
-    # TODO-neel-profiler try to fetch this from stackprof once we patch
-    # the native extension
-    def compute_filename(abs_path, in_app)
-      return nil if abs_path.nil?
-
-      under_project_root = @project_root && abs_path.start_with?(@project_root)
-
-      prefix =
-        if under_project_root && in_app
-          @project_root
-        else
-          longest_load_path = $LOAD_PATH.select { |path| abs_path.start_with?(path.to_s) }.max_by(&:size)
-
-          if under_project_root
-            longest_load_path || @project_root
-          else
-            longest_load_path
-          end
-        end
-
-      prefix ? abs_path[prefix.to_s.chomp(File::SEPARATOR).length + 1..-1] : abs_path
-    end
-
-    def split_module(name)
-      # last module plus class/instance method
-      i = name.rindex('::')
-      function = i ? name[(i + 2)..-1] : name
-      mod = i ? name[0...i] : nil
-
-      [function, mod]
-    end
-
     def record_lost_event(reason)
-      Sentry.get_current_client&.transport&.record_lost_event(reason, 'profile')
+      Sentry.get_current_client&.transport&.record_lost_event(reason, "profile")
     end
   end
 end

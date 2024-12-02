@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 require "sentry/rails/instrument_payload_cleanup_helper"
 
 module Sentry

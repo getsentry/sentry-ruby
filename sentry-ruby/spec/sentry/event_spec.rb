@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 require 'spec_helper'
 
 RSpec.describe Sentry::Event do
@@ -66,7 +68,7 @@ RSpec.describe Sentry::Event do
     end
   end
 
-  context 'rack context specified', rack: true do
+  context 'rack context specified', when: :rack_available? do
     require 'stringio'
 
     before do
@@ -139,6 +141,12 @@ RSpec.describe Sentry::Event do
 
         expect(event.to_hash[:tags][:request_id]).to eq("abcd-1234-abcd-1234")
         expect(event.to_hash[:user][:ip_address]).to eq("2.2.2.2")
+      end
+
+      it "doesn't overwrite already set ip address" do
+        Sentry.set_user({ ip_address: "3.3.3.3" })
+        Sentry.get_current_scope.apply_to_event(event)
+        expect(event.to_hash[:user][:ip_address]).to eq("3.3.3.3")
       end
 
       context "with config.trusted_proxies = [\"2.2.2.2\"]" do

@@ -1,12 +1,12 @@
 # frozen_string_literal: true
 
-require 'socket'
-require 'securerandom'
-require 'sentry/interface'
-require 'sentry/backtrace'
-require 'sentry/utils/real_ip'
-require 'sentry/utils/request_id'
-require 'sentry/utils/custom_inspection'
+require "socket"
+require "securerandom"
+require "sentry/interface"
+require "sentry/backtrace"
+require "sentry/utils/real_ip"
+require "sentry/utils/request_id"
+require "sentry/utils/custom_inspection"
 
 module Sentry
   # This is an abstract class that defines the shared attributes of an event.
@@ -42,6 +42,9 @@ module Sentry
     # @return [Hash, nil]
     attr_accessor :dynamic_sampling_context
 
+    # @return [Array<Attachment>]
+    attr_accessor :attachments
+
     # @param configuration [Configuration]
     # @param integration_meta [Hash, nil]
     # @param message [String, nil]
@@ -57,6 +60,7 @@ module Sentry
       @extra         = {}
       @contexts      = {}
       @tags          = {}
+      @attachments   = []
 
       @fingerprint = []
       @dynamic_sampling_context = nil
@@ -104,9 +108,7 @@ module Sentry
       unless request || env.empty?
         add_request_interface(env)
 
-        if @send_default_pii
-          user[:ip_address] = calculate_real_ip_from_rack(env)
-        end
+        user[:ip_address] ||= calculate_real_ip_from_rack(env) if @send_default_pii
 
         if request_id = Utils::RequestId.read_from(env)
           tags[:request_id] = request_id

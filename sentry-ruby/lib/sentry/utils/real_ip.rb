@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-require 'ipaddr'
+require "ipaddr"
 
 # Based on ActionDispatch::RemoteIp. All security-related precautions from that
 # middleware have been removed, because the Event IP just needs to be accurate,

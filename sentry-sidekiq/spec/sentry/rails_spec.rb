@@ -1,8 +1,12 @@
+# frozen_string_literal: true
+
 return unless ENV["WITH_SENTRY_RAILS"]
 
 require "rails"
 require "sentry-rails"
 require "spec_helper"
+
+require "action_controller/railtie"
 
 class TestApp < Rails::Application
 end

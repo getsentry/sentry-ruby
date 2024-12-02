@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 require "bundler/setup"
 begin
   require "debug/prelude"
@@ -139,6 +141,8 @@ class HappyWorkerForCron < HappyWorker; end
 class HappyWorkerForScheduler < HappyWorker; end
 class HappyWorkerForSchedulerWithTimezone < HappyWorker; end
 class EveryHappyWorker < HappyWorker; end
+class HappyWorkerWithHumanReadableCron < HappyWorker; end
+class HappyWorkerWithSymbolName < HappyWorker; end
 
 class HappyWorkerWithCron < HappyWorker
   include Sentry::Cron::MonitorCheckIns
@@ -225,15 +229,20 @@ end
 
 def execute_worker(processor, klass, **options)
   klass_options = klass.sidekiq_options_hash || {}
-
   # for Ruby < 2.6
   klass_options.each do |k, v|
     options[k.to_sym] = v
   end
 
-  msg = Sidekiq.dump_json(jid: "123123", class: klass, args: [], **options)
+  jid = options.delete(:jid) || "123123"
+  timecop_delay = options.delete(:timecop_delay)
+
+  msg = Sidekiq.dump_json(created_at: Time.now.to_f, enqueued_at: Time.now.to_f, jid: jid, class: klass, args: [], **options)
+  Timecop.freeze(timecop_delay) if timecop_delay
   work = Sidekiq::BasicFetch::UnitOfWork.new('queue:default', msg)
   process_work(processor, work)
+ensure
+  Timecop.return if timecop_delay
 end
 
 def process_work(processor, work)

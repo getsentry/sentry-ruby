@@ -7,8 +7,8 @@ module Sentry
     include CustomInspection
 
     SKIP_INSPECTION_ATTRIBUTES = [:@stacktrace]
-    PROBLEMATIC_LOCAL_VALUE_REPLACEMENT = "[ignored due to error]".freeze
-    OMISSION_MARK = "...".freeze
+    PROBLEMATIC_LOCAL_VALUE_REPLACEMENT = "[ignored due to error]"
+    OMISSION_MARK = "..."
     MAX_LOCAL_BYTES = 1024
 
     attr_reader :type, :module, :thread_id, :stacktrace, :mechanism
@@ -26,7 +26,7 @@ module Sentry
 
       @value = Utils::EncodingHelper.encode_to_utf_8(exception_message.byteslice(0..Event::MAX_MESSAGE_SIZE_IN_BYTES))
 
-      @module = exception.class.to_s.split('::')[0...-1].join('::')
+      @module = exception.class.to_s.split("::")[0...-1].join("::")
       @thread_id = Thread.current.object_id
       @stacktrace = stacktrace
       @mechanism = mechanism

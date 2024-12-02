@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 require "sentry/rails/capture_exceptions"
 require "sentry/rails/rescued_exception_interceptor"
 require "sentry/rails/backtrace_cleaner"
@@ -12,7 +14,7 @@ module Sentry
       app.config.middleware.insert_after ActionDispatch::DebugExceptions, Sentry::Rails::RescuedExceptionInterceptor
     end
 
-    # because the extension works by registering the around_perform callcack, it should always be ran
+    # because the extension works by registering the around_perform callback, it should always be run
     # before the application is eager-loaded (before user's jobs register their own callbacks)
     # See https://github.com/getsentry/sentry-ruby/issues/1249#issuecomment-853871871 for the detail explanation
     initializer "sentry.extend_active_job", before: :eager_load! do |app|
@@ -94,14 +96,14 @@ module Sentry
 
     def inject_breadcrumbs_logger
       if Sentry.configuration.breadcrumbs_logger.include?(:active_support_logger)
-        require 'sentry/rails/breadcrumb/active_support_logger'
+        require "sentry/rails/breadcrumb/active_support_logger"
         Sentry::Rails::Breadcrumb::ActiveSupportLogger.inject(Sentry.configuration.rails.active_support_logger_subscription_items)
       end
 
       if Sentry.configuration.breadcrumbs_logger.include?(:monotonic_active_support_logger)
         return warn "Usage of `monotonic_active_support_logger` require a version of Rails >= 6.1, please upgrade your Rails version or use another logger" if ::Rails.version.to_f < 6.1
 
-        require 'sentry/rails/breadcrumb/monotonic_active_support_logger'
+        require "sentry/rails/breadcrumb/monotonic_active_support_logger"
         Sentry::Rails::Breadcrumb::MonotonicActiveSupportLogger.inject
       end
     end

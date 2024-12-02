@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 require "sidekiq"
 require "sentry-ruby"
 require "sentry/integrable"

@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 require "spec_helper"
 require 'sidekiq/manager'
 require 'sidekiq/api'
@@ -221,7 +223,7 @@ RSpec.describe Sentry::Sidekiq do
       expect(transaction.contexts.dig(:trace, :trace_id)).to be_a(String)
       expect(transaction.contexts.dig(:trace, :span_id)).to be_a(String)
       expect(transaction.contexts.dig(:trace, :status)).to eq("ok")
-      expect(transaction.contexts.dig(:trace, :op)).to eq("queue.sidekiq")
+      expect(transaction.contexts.dig(:trace, :op)).to eq("queue.process")
     end
 
     it "records transaction with exception" do

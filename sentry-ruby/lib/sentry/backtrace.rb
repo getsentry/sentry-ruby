@@ -13,10 +13,10 @@ module Sentry
         ^ \s* (?: [a-zA-Z]: | uri:classloader: )? ([^:]+ | <.*>):
         (\d+)
         (?: :in\s('|`)([^']+)')?$
-      /x.freeze
+      /x
 
       # org.jruby.runtime.callsite.CachingCallSite.call(CachingCallSite.java:170)
-      JAVA_INPUT_FORMAT = /^(.+)\.([^\.]+)\(([^\:]+)\:(\d+)\)$/.freeze
+      JAVA_INPUT_FORMAT = /^(.+)\.([^\.]+)\(([^\:]+)\:(\d+)\)$/
 
       # The file portion of the line (such as app/models/user.rb)
       attr_reader :file
@@ -80,8 +80,6 @@ module Sentry
       end
     end
 
-    APP_DIRS_PATTERN = /(bin|exe|app|config|lib|test|spec)/.freeze
-
     # holder for an Array of Backtrace::Line instances
     attr_reader :lines
 
@@ -91,7 +89,7 @@ module Sentry
       ruby_lines = backtrace_cleanup_callback.call(ruby_lines) if backtrace_cleanup_callback
 
       in_app_pattern ||= begin
-        Regexp.new("^(#{project_root}/)?#{app_dirs_pattern || APP_DIRS_PATTERN}")
+        Regexp.new("^(#{project_root}/)?#{app_dirs_pattern}")
       end
 
       lines = ruby_lines.to_a.map do |unparsed_line|

@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 require 'spec_helper'
 
 RSpec.describe Sentry::Hub do
@@ -350,6 +352,14 @@ RSpec.describe Sentry::Hub do
       expect(string_io.string).to include("Options [:unsupported] are not supported and will not be applied to the event.")
     end
 
+    it "does not warn about unsupported options if all passed options are supported" do
+      expect do
+        subject.capture_event(event, level: 'DEBUG')
+      end.not_to raise_error
+
+      expect(string_io.string).not_to include("Options [] are not supported and will not be applied to the event.")
+    end
+
     context "when event is a transaction" do
       it "transaction.set_context merges and takes precedence over scope.set_context" do
         scope.set_context(:foo, { val: 42 })
@@ -537,9 +547,25 @@ RSpec.describe Sentry::Hub do
 
   describe "#pop_scope" do
     it "pops the current scope" do
+      prev_scope = subject.current_scope
+      subject.push_scope
+      scope = subject.current_scope
       expect(subject.current_scope).to eq(scope)
       subject.pop_scope
-      expect(subject.current_scope).to eq(nil)
+      expect(subject.current_scope).to eq(prev_scope)
+    end
+
+    it "doesn't pop the last layer" do
+      expect(subject.instance_variable_get(:@stack).count).to eq(1)
+
+      subject.pop_scope
+
+      expect(subject.instance_variable_get(:@stack).count).to eq(1)
+
+      # It should be a completely new scope
+      expect(subject.current_scope).not_to eq(scope)
+      # But it should be the same client
+      expect(subject.current_client).to eq(client)
     end
   end
 
@@ -560,21 +586,6 @@ RSpec.describe Sentry::Hub do
 
       expect(subject.current_scope).not_to eq(scope)
       expect(subject.current_scope.tags).to eq({ foo: "bar" })
-    end
-
-    context "when the current_scope is nil" do
-      before do
-        subject.pop_scope
-        expect(subject.current_scope).to eq(nil)
-      end
-      it "creates a new scope" do
-        scope.set_tags({ foo: "bar" })
-
-        subject.push_scope
-
-        expect(subject.current_scope).not_to eq(scope)
-        expect(subject.current_scope.tags).to eq({})
-      end
     end
   end
 

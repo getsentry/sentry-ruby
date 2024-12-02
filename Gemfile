@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 source "https://rubygems.org"
 git_source(:github) { |name| "https://github.com/#{name}.git" }
 
@@ -19,4 +21,7 @@ gem "simplecov"
 gem "simplecov-cobertura", "~> 1.4"
 gem "rexml"
 
-gem "rubocop-rails-omakase"
+group :rubocop do
+  gem "rubocop-rails-omakase"
+  gem "rubocop-packaging"
+end

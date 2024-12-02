@@ -25,10 +25,18 @@ jobs:
         working-directory: sentry-ruby
     name: Ruby ${{ matrix.ruby_version }} & Rack ${{ matrix.rack_version }}, options - ${{ toJson(matrix.options) }}
     runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      RUBYOPT: ${{ matrix.options.rubyopt }}
+      BUNDLE_GEMFILE: ${{ github.workspace }}/sentry-ruby/Gemfile
+      BUNDLE_WITHOUT: rubocop
+      RACK_VERSION: ${{ matrix.rack_version }}
+      REDIS_RB_VERSION: ${{ matrix.redis_rb_version }}
     strategy:
+      fail-fast: false
       matrix:
         ruby_version: ${{ fromJson(needs.ruby-versions.outputs.versions) }}
-        rack_version: [2.0, 3.0]
+        rack_version: [2.0, 3.0, 3.1]
         redis_rb_version: [4.0]
         include:
           - { ruby_version: 3.2, rack_version: 0, redis_rb_version: 5.0 }
@@ -44,9 +52,12 @@ jobs:
             }
           - {
               ruby_version: 3.2,
-              rack_version: 3.0,
-              redis_rb_version: 5.0,
-              options: { codecov: 1 },
+              rack_version: 3.0
+            }
+          - {
+              ruby_version: 3.3,
+              rack_version: 3.1,
+              redis_rb_version: 5.3
             }
     steps:
       - uses: actions/checkout@v1
@@ -63,16 +74,9 @@ jobs:
           redis-version: 6
 
       - name: Run specs with Rack ${{ matrix.rack_version }} and redis-rb ${{ matrix.redis_rb_version }}
-        env:
-          RUBYOPT: ${{ matrix.options.rubyopt }}
-          RACK_VERSION: ${{ matrix.rack_version }}
-          REDIS_RB_VERSION: ${{ matrix.redis_rb_version }}
-        run: |
-          bundle install --jobs 4 --retry 3
-          bundle exec rake
+        run: bundle exec rake
 
       - name: Upload Coverage
-        if: ${{ matrix.options.codecov }}
         uses: codecov/codecov-action@v4
         with:
           token: ${{ secrets.CODECOV_TOKEN }}

@@ -25,6 +25,7 @@ require "sentry/session_flusher"
 require "sentry/backpressure_monitor"
 require "sentry/cron/monitor_check_ins"
 require "sentry/metrics"
+require "sentry/vernier/profiler"
 
 [
   "sentry/rake",
@@ -41,13 +42,15 @@ module Sentry
 
   CAPTURED_SIGNATURE = :@__sentry_captured
 
-  LOGGER_PROGNAME = "sentry".freeze
+  LOGGER_PROGNAME = "sentry"
 
-  SENTRY_TRACE_HEADER_NAME = "sentry-trace".freeze
+  SENTRY_TRACE_HEADER_NAME = "sentry-trace"
 
-  BAGGAGE_HEADER_NAME = "baggage".freeze
+  BAGGAGE_HEADER_NAME = "baggage"
 
   THREAD_LOCAL = :sentry_hub
+
+  MUTEX = Mutex.new
 
   class << self
     # @!visibility private
@@ -211,6 +214,13 @@ module Sentry
       get_current_scope.set_context(*args)
     end
 
+    # @!method add_attachment
+    #   @!macro add_attachment
+    def add_attachment(**opts)
+      return unless initialized?
+      get_current_scope.add_attachment(**opts)
+    end
+
     ##### Main APIs #####
 
     # Initializes the SDK with given configuration.
@@ -267,8 +277,10 @@ module Sentry
 
       @background_worker.shutdown
 
-      @main_hub = nil
-      Thread.current.thread_variable_set(THREAD_LOCAL, nil)
+      MUTEX.synchronize do
+        @main_hub = nil
+        Thread.current.thread_variable_set(THREAD_LOCAL, nil)
+      end
     end
 
     # Returns true if the SDK is initialized.
@@ -295,7 +307,7 @@ module Sentry
     #
     # @return [Hub]
     def get_main_hub
-      @main_hub
+      MUTEX.synchronize { @main_hub }
     end
 
     # Takes an instance of Sentry::Breadcrumb and stores it to the current active scope.
@@ -563,7 +575,7 @@ module Sentry
     #
     # @return [String]
     def get_trace_propagation_meta
-      return '' unless initialized?
+      return "" unless initialized?
       get_current_hub.get_trace_propagation_meta
     end
 
@@ -608,3 +620,5 @@ require "sentry/net/http"
 require "sentry/redis"
 require "sentry/puma"
 require "sentry/graphql"
+require "sentry/faraday"
+require "sentry/excon"

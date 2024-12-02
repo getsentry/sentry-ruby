@@ -106,3 +106,13 @@ To learn more about sampling transactions, please visit the [official documentat
 * [![Discord Chat](https://img.shields.io/discord/621778831602221064?logo=discord&logoColor=ffffff&color=7389D8)](https://discord.gg/PXa5Apfe7K)
 * [![Stack Overflow](https://img.shields.io/badge/stack%20overflow-sentry-green.svg)](https://stackoverflow.com/questions/tagged/sentry)
 * [![Twitter Follow](https://img.shields.io/twitter/follow/getsentry?label=getsentry&style=social)](https://twitter.com/intent/follow?screen_name=getsentry)
+
+## Contributing to the SDK
+
+Please make sure to read the [CONTRIBUTING.md](https://github.com/getsentry/sentry-ruby/blob/master/CONTRIBUTING.md) before making a pull request.
+
+Thanks to everyone who has contributed to this project so far.
+
+<a href="https://github.com/getsentry/sentry-ruby/graphs/contributors">
+  <img src="https://contributors-img.web.app/image?repo=getsentry/sentry-ruby" />
+</a>

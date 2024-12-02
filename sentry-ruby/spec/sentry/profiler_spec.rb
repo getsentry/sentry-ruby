@@ -1,8 +1,8 @@
+# frozen_string_literal: true
+
 require "spec_helper"
 
-return unless defined?(StackProf)
-
-RSpec.describe Sentry::Profiler do
+RSpec.describe Sentry::Profiler, when: :stack_prof_installed? do
   before do
     perform_basic_setup do |config|
       config.traces_sample_rate = 1.0
@@ -176,10 +176,11 @@ RSpec.describe Sentry::Profiler do
         subject.set_initial_sample_decision(true)
         subject.start
         subject.stop
+
+        allow(StackProf).to receive(:results).and_return([])
       end
 
       it 'returns empty' do
-        expect(StackProf).to receive(:results).and_call_original
         expect(subject.to_hash).to eq({})
       end
 

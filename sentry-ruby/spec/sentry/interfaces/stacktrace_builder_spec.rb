@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 require 'spec_helper'
 
 RSpec.describe Sentry::StacktraceBuilder do
@@ -11,8 +13,8 @@ RSpec.describe Sentry::StacktraceBuilder do
 
   let(:backtrace) do
     [
-      "#{fixture_file}:6:in `bar'",
-      "#{fixture_file}:2:in `foo'"
+      "#{fixture_file}:8:in `bar'",
+      "#{fixture_file}:4:in `foo'"
     ]
   end
 
@@ -36,8 +38,8 @@ RSpec.describe Sentry::StacktraceBuilder do
 
       expect(first_frame.filename).to match(/stacktrace_test_fixture.rb/)
       expect(first_frame.function).to eq("foo")
-      expect(first_frame.lineno).to eq(2)
-      expect(first_frame.pre_context).to eq([nil, nil, "def foo\n"])
+      expect(first_frame.lineno).to eq(4)
+      expect(first_frame.pre_context).to eq(["# frozen_string_literal: true\n", "\n", "def foo\n"])
       expect(first_frame.context_line).to eq("  bar\n")
       expect(first_frame.post_context).to eq(["end\n", "\n", "def bar\n"])
 
@@ -45,10 +47,25 @@ RSpec.describe Sentry::StacktraceBuilder do
 
       expect(second_frame.filename).to match(/stacktrace_test_fixture.rb/)
       expect(second_frame.function).to eq("bar")
-      expect(second_frame.lineno).to eq(6)
+      expect(second_frame.lineno).to eq(8)
       expect(second_frame.pre_context).to eq(["end\n", "\n", "def bar\n"])
       expect(second_frame.context_line).to eq("  baz\n")
       expect(second_frame.post_context).to eq(["end\n", nil, nil])
+    end
+
+    context "when strip_backtrace_load_path is false" do
+      let(:configuration) do
+        Sentry::Configuration.new.tap do |config|
+          config.project_root = fixture_root
+          config.strip_backtrace_load_path = false
+        end
+      end
+
+      it "does not strip load paths for filenames" do
+        interface = subject.build(backtrace: backtrace)
+        expect(interface.frames.first.filename).to eq(fixture_file)
+        expect(interface.frames.last.filename).to eq(fixture_file)
+      end
     end
 
     context "with block argument" do
@@ -77,7 +94,7 @@ RSpec.describe Sentry::StacktraceBuilder do
 
         expect(second_frame.filename).to match(/stacktrace_test_fixture.rb/)
         expect(second_frame.function).to eq("bar")
-        expect(second_frame.lineno).to eq(6)
+        expect(second_frame.lineno).to eq(8)
         expect(second_frame.vars).to eq({ foo: "bar" })
       end
     end
@@ -89,7 +106,7 @@ RSpec.describe Sentry::StacktraceBuilder do
 
       expect(hash[:filename]).to match(/stacktrace_test_fixture.rb/)
       expect(hash[:function]).to eq("bar")
-      expect(hash[:lineno]).to eq(6)
+      expect(hash[:lineno]).to eq(8)
       expect(hash[:pre_context]).to eq(["end\n", "\n", "def bar\n"])
       expect(hash[:context_line]).to eq("  baz\n")
       expect(hash[:post_context]).to eq(["end\n", nil, nil])

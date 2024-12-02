@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 require "spec_helper"
 
 RSpec.describe Sentry::TestHelper do
@@ -125,6 +127,12 @@ RSpec.describe Sentry::TestHelper do
       teardown_sentry_test
 
       expect(Sentry.get_current_scope.tags).to eq({})
+    end
+
+    it "clears global processors" do
+      Sentry.add_global_event_processor { |event| event }
+      teardown_sentry_test
+      expect(Sentry::Scope.global_event_processors).to eq([])
     end
 
     context "when the configuration is mutated" do

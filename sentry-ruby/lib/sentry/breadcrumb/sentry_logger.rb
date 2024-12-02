@@ -1,16 +1,16 @@
 # frozen_string_literal: true
 
-require 'logger'
+require "logger"
 
 module Sentry
   class Breadcrumb
     module SentryLogger
       LEVELS = {
-        ::Logger::DEBUG => 'debug',
-        ::Logger::INFO => 'info',
-        ::Logger::WARN => 'warn',
-        ::Logger::ERROR => 'error',
-        ::Logger::FATAL => 'fatal'
+        ::Logger::DEBUG => "debug",
+        ::Logger::INFO => "info",
+        ::Logger::WARN => "warn",
+        ::Logger::ERROR => "error",
+        ::Logger::FATAL => "fatal"
       }.freeze
 
       def add(*args, &block)

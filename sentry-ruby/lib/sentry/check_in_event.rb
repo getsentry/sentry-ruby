@@ -1,11 +1,11 @@
 # frozen_string_literal: true
 
-require 'securerandom'
-require 'sentry/cron/monitor_config'
+require "securerandom"
+require "sentry/cron/monitor_config"
 
 module Sentry
   class CheckInEvent < Event
-    TYPE = 'check_in'
+    TYPE = "check_in"
 
     # uuid to identify this check-in.
     # @return [String]
@@ -43,7 +43,7 @@ module Sentry
       self.status = status
       self.duration = duration
       self.monitor_config = monitor_config
-      self.check_in_id = check_in_id || SecureRandom.uuid.delete('-')
+      self.check_in_id = check_in_id || SecureRandom.uuid.delete("-")
     end
 
     # @return [Hash]

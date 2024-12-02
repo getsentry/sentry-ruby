@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 require "spec_helper"
 
 RSpec.describe Sentry::Client, type: :request, retry: 3, skip: Gem::Version.new(Rails.version) < Gem::Version.new('5.1.0') do
@@ -5,8 +7,16 @@ RSpec.describe Sentry::Client, type: :request, retry: 3, skip: Gem::Version.new(
     Sentry.get_current_client.transport
   end
 
+  let(:expected_initial_active_record_connections_count) do
+    if Gem::Version.new(Rails.version) < Gem::Version.new('7.2.0')
+      1
+    else
+      0
+    end
+  end
+
   before do
-    expect(ActiveRecord::Base.connection_pool.stat[:busy]).to eq(1)
+    expect(ActiveRecord::Base.connection_pool.stat[:busy]).to eq(expected_initial_active_record_connections_count)
   end
 
   def send_events
@@ -35,7 +45,7 @@ RSpec.describe Sentry::Client, type: :request, retry: 3, skip: Gem::Version.new(
 
       expect(transport.events.count).to eq(5)
 
-      expect(ActiveRecord::Base.connection_pool.stat[:busy]).to eq(1)
+      expect(ActiveRecord::Base.connection_pool.stat[:busy]).to eq(expected_initial_active_record_connections_count)
     end
   end
 
@@ -53,7 +63,7 @@ RSpec.describe Sentry::Client, type: :request, retry: 3, skip: Gem::Version.new(
 
       expect(transport.events.count).to eq(5)
 
-      expect(ActiveRecord::Base.connection_pool.stat[:busy]).to eq(1)
+      expect(ActiveRecord::Base.connection_pool.stat[:busy]).to eq(expected_initial_active_record_connections_count)
     end
   end
 end

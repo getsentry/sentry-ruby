@@ -160,6 +160,12 @@ module Sentry
       transaction.get_baggage&.serialize
     end
 
+    # Returns the Dynamic Sampling Context from the transaction baggage.
+    # @return [Hash, nil]
+    def get_dynamic_sampling_context
+      transaction.get_baggage&.dynamic_sampling_context
+    end
+
     # @return [Hash]
     def to_hash
       hash = {
@@ -192,7 +198,8 @@ module Sentry
         description: @description,
         op: @op,
         status: @status,
-        origin: @origin
+        origin: @origin,
+        data: @data
       }
     end
 

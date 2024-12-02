@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 require 'spec_helper'
 
 RSpec.describe Sentry::Event do
@@ -30,6 +32,7 @@ RSpec.describe Sentry::Event do
     it 'marks in_app correctly' do
       frames = hash[:exception][:values][0][:stacktrace][:frames]
       expect(frames[0][:filename]).to eq("test/some/other/path")
+      expect(frames[0][:abs_path]).to eq("test/some/other/path")
       expect(frames[0][:in_app]).to eq(true)
       expect(frames[1][:filename]).to eq("/app/some/other/path")
       expect(frames[1][:in_app]).to eq(false)
@@ -39,7 +42,7 @@ RSpec.describe Sentry::Event do
       expect(frames[3][:in_app]).to eq(true)
       expect(frames[4][:filename]).to eq("vendor/bundle/some_gem.rb")
       expect(frames[4][:in_app]).to eq(false)
-      expect(frames[5][:filename]).to eq("vendor/bundle/cache/other_gem.rb")
+      expect(frames[5][:filename]).to eq("dummy/test_rails_app/vendor/bundle/cache/other_gem.rb")
       expect(frames[5][:in_app]).to eq(false)
     end
 
@@ -48,6 +51,7 @@ RSpec.describe Sentry::Event do
         $LOAD_PATH << "#{Rails.root}/app/models"
         frames = hash[:exception][:values][0][:stacktrace][:frames]
         expect(frames[3][:filename]).to eq("app/models/user.rb")
+        expect(frames[3][:abs_path]).to eq("#{Rails.root}/app/models/user.rb")
         $LOAD_PATH.delete("#{Rails.root}/app/models")
       end
     end
@@ -56,7 +60,8 @@ RSpec.describe Sentry::Event do
       it 'normalizes the filename using the load path' do
         $LOAD_PATH.push "vendor/bundle"
         frames = hash[:exception][:values][0][:stacktrace][:frames]
-        expect(frames[5][:filename]).to eq("cache/other_gem.rb")
+        expect(frames[5][:filename]).to eq("dummy/test_rails_app/vendor/bundle/cache/other_gem.rb")
+        expect(frames[5][:abs_path]).to eq("#{Rails.root}/vendor/bundle/cache/other_gem.rb")
         $LOAD_PATH.pop
       end
     end
@@ -64,7 +69,8 @@ RSpec.describe Sentry::Event do
     context "when a non-in_app path under project_root isn't on the load path" do
       it 'normalizes the filename using project_root' do
         frames = hash[:exception][:values][0][:stacktrace][:frames]
-        expect(frames[5][:filename]).to eq("vendor/bundle/cache/other_gem.rb")
+        expect(frames[5][:filename]).to eq("dummy/test_rails_app/vendor/bundle/cache/other_gem.rb")
+        expect(frames[5][:abs_path]).to eq("#{Rails.root}/vendor/bundle/cache/other_gem.rb")
       end
     end
   end

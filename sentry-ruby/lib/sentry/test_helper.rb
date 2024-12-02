@@ -1,6 +1,8 @@
+# frozen_string_literal: true
+
 module Sentry
   module TestHelper
-    DUMMY_DSN = 'http://12345:67890@sentry.localdomain/sentry/42'
+    DUMMY_DSN = "http://12345:67890@sentry.localdomain/sentry/42"
 
     # Alters the existing SDK configuration with test-suitable options. Mainly:
     # - Sets a dummy DSN instead of `nil` or an actual DSN.
@@ -50,6 +52,7 @@ module Sentry
       if Sentry.get_current_hub.instance_variable_get(:@stack).size > 1
         Sentry.get_current_hub.pop_scope
       end
+      Sentry::Scope.global_event_processors.clear
     end
 
     # @return [Transport]

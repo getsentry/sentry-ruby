@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 require "spec_helper"
 
 RSpec.describe Sentry::Rails::Tracing, type: :request do
@@ -101,6 +103,52 @@ RSpec.describe Sentry::Rails::Tracing, type: :request do
       expect(response).to have_http_status(:ok)
 
       expect(transport.events.count).to eq(1)
+    end
+  end
+
+  describe "filtering pii data" do
+    context "with send_default_pii = false" do
+      before do
+        make_basic_app do |config|
+          config.traces_sample_rate = 1.0
+          config.send_default_pii = false
+        end
+      end
+
+      it "does not record sensitive params" do
+        get "/posts?foo=bar&password=42&secret=baz"
+        transaction = transport.events.last.to_hash
+
+        params = transaction[:spans][0][:data][:params]
+        expect(params["foo"]).to eq("bar")
+        expect(params["password"]).to eq("[FILTERED]")
+        expect(params["secret"]).to eq("[FILTERED]")
+
+        path = transaction[:spans][0][:data][:path]
+        expect(path).to eq("/posts?foo=bar&password=[FILTERED]&secret=[FILTERED]")
+      end
+    end
+
+    context "with send_default_pii = true" do
+      before do
+        make_basic_app do |config|
+          config.traces_sample_rate = 1.0
+          config.send_default_pii = true
+        end
+      end
+
+      it "records all params" do
+        get "/posts?foo=bar&password=42&secret=baz"
+        transaction = transport.events.last.to_hash
+
+        params = transaction[:spans][0][:data][:params]
+        expect(params["foo"]).to eq("bar")
+        expect(params["password"]).to eq("42")
+        expect(params["secret"]).to eq("baz")
+
+        path = transaction[:spans][0][:data][:path]
+        expect(path).to eq("/posts?foo=bar&password=42&secret=baz")
+      end
     end
   end
 

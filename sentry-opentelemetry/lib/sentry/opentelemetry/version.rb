@@ -2,6 +2,6 @@
 
 module Sentry
   module OpenTelemetry
-    VERSION = "5.18.0"
+    VERSION = "5.21.0"
   end
 end

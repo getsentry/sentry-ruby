@@ -19,6 +19,11 @@ jobs:
         working-directory: sentry-rails
     name: Ruby ${{ matrix.ruby_version }} & Rails ${{ matrix.rails_version }}, options - ${{ toJson(matrix.options) }}
     runs-on: ubuntu-latest
+    env:
+      RUBYOPT: ${{ matrix.options.rubyopt }}
+      BUNDLE_GEMFILE: ${{ github.workspace }}/sentry-rails/Gemfile
+      BUNDLE_WITHOUT: rubocop
+      RAILS_VERSION: ${{ matrix.rails_version }}
     strategy:
       fail-fast: false
       matrix:
@@ -43,6 +48,11 @@ jobs:
           - { ruby_version: "2.7", rails_version: 5.2.0 }
           - { ruby_version: "2.7", rails_version: 6.0.0 }
           - { ruby_version: "2.7", rails_version: 6.1.0 }
+          - { ruby_version: "3.1", rails_version: 7.2.0 }
+          - { ruby_version: "3.2", rails_version: 7.2.0 }
+          - { ruby_version: "3.3", rails_version: 7.2.0 }
+          - { ruby_version: "3.2", rails_version: "8.0.0.rc1" }
+          - { ruby_version: "3.3", rails_version: "8.0.0.rc1" }
           - { ruby_version: "jruby", rails_version: 6.1.0 }
           - {
               ruby_version: "3.2",
@@ -54,8 +64,7 @@ jobs:
             }
           - {
               ruby_version: "3.2",
-              rails_version: 7.1.0,
-              options: { codecov: 1 },
+              rails_version: 7.1.0
             }
     steps:
       - uses: actions/checkout@v1
@@ -72,15 +81,9 @@ jobs:
           bundler-cache: true
 
       - name: Build with Rails ${{ matrix.rails_version }}
-        env:
-          RAILS_VERSION: ${{ matrix.rails_version }}
-          RUBYOPT: ${{ matrix.options.rubyopt }}
-        run: |
-          bundle install --jobs 4 --retry 3
-          bundle exec rake
+        run: bundle exec rake
 
       - name: Upload Coverage
-        if: ${{ matrix.options.codecov }}
         uses: codecov/codecov-action@v4
         with:
           token: ${{ secrets.CODECOV_TOKEN }}

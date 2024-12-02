@@ -1,8 +1,10 @@
+# frozen_string_literal: true
+
 module Sentry
   module Rails
     module ActionCableExtensions
       class ErrorHandler
-        OP_NAME = "websocket.server".freeze
+        OP_NAME = "websocket.server"
         SPAN_ORIGIN = "auto.http.rails.actioncable"
 
         class << self

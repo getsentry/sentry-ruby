@@ -5,7 +5,7 @@ require "sentry/envelope"
 
 module Sentry
   class Transport
-    PROTOCOL_VERSION = '7'
+    PROTOCOL_VERSION = "7"
     USER_AGENT = "sentry-ruby/#{Sentry::VERSION}"
     CLIENT_REPORT_INTERVAL = 30
 
@@ -134,15 +134,21 @@ module Sentry
       envelope = Envelope.new(envelope_headers)
 
       envelope.add_item(
-        { type: item_type, content_type: 'application/json' },
+        { type: item_type, content_type: "application/json" },
         event_payload
       )
 
       if event.is_a?(TransactionEvent) && event.profile
         envelope.add_item(
-          { type: 'profile', content_type: 'application/json' },
+          { type: "profile", content_type: "application/json" },
           event.profile
         )
+      end
+
+      if event.is_a?(Event) && event.attachments.any?
+        event.attachments.each do |attachment|
+          envelope.add_item(attachment.to_envelope_headers, attachment.payload)
+        end
       end
 
       client_report_headers, client_report_payload = fetch_pending_client_report
@@ -151,11 +157,11 @@ module Sentry
       envelope
     end
 
-    def record_lost_event(reason, data_category)
+    def record_lost_event(reason, data_category, num: 1)
       return unless @send_client_reports
       return unless CLIENT_REPORT_REASONS.include?(reason)
 
-      @discarded_events[[reason, data_category]] += 1
+      @discarded_events[[reason, data_category]] += num
     end
 
     def flush
@@ -179,7 +185,7 @@ module Sentry
         { reason: reason, category: category, quantity: val }
       end
 
-      item_header = { type: 'client_report' }
+      item_header = { type: "client_report" }
       item_payload = {
         timestamp: Sentry.utc_now.iso8601,
         discarded_events: discarded_events_hash

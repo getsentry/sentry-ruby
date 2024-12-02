@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 require 'benchmark/memory'
 require "sentry-ruby"
 require "sentry/benchmarks/benchmark_transport"

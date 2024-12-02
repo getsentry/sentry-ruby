@@ -1,7 +1,9 @@
+# frozen_string_literal: true
+
 module Sentry
   module Rails
     module ControllerTransaction
-      SPAN_ORIGIN = 'auto.view.rails'.freeze
+      SPAN_ORIGIN = "auto.view.rails"
 
       def self.included(base)
         base.prepend_around_action(:sentry_around_action)
@@ -21,8 +23,10 @@ module Sentry
                 child_span.set_http_status(response.status)
                 child_span.set_data(:format, request.format)
                 child_span.set_data(:method, request.method)
-                child_span.set_data(:path, request.path)
-                child_span.set_data(:params, request.params)
+
+                pii = Sentry.configuration.send_default_pii
+                child_span.set_data(:path, pii ? request.fullpath : request.filtered_path)
+                child_span.set_data(:params, pii ? request.params : request.filtered_parameters)
               end
 
               result

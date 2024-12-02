@@ -1,4 +1,7 @@
+# frozen_string_literal: true
+
 require "spec_helper"
+require "timecop"
 
 RSpec.shared_context "sidekiq", shared_context: :metadata do
   let(:user) { { "id" => rand(10_000) } }
@@ -63,6 +66,30 @@ RSpec.describe Sentry::Sidekiq::SentryContextServerMiddleware do
       expect(transaction.contexts.dig(:trace, :origin)).to eq('auto.queue.sidekiq')
     end
 
+    it "adds a queue.process spans" do
+      Timecop.freeze do
+        execute_worker(processor, HappyWorker)
+        execute_worker(processor, HappyWorker, jid: '123456', timecop_delay: Time.now + 86400)
+
+        expect(transport.events.count).to eq(2)
+
+        transaction = transport.events[0]
+        expect(transaction).not_to be_nil
+        expect(transaction.spans.count).to eq(0)
+        expect(transaction.contexts[:trace][:data]['messaging.message.id']).to eq('123123') # Default defined in #execute_worker
+        expect(transaction.contexts[:trace][:data]['messaging.destination.name']).to eq('default')
+        expect(transaction.contexts[:trace][:data]['messaging.message.retry.count']).to eq(0)
+        expect(transaction.contexts[:trace][:data]['messaging.message.receive.latency']).to eq(0)
+
+        transaction = transport.events[1]
+        expect(transaction).not_to be_nil
+        expect(transaction.spans.count).to eq(0)
+        expect(transaction.contexts[:trace][:data]['messaging.message.id']).to eq('123456') # Explicitly set above.
+        expect(transaction.contexts[:trace][:data]['messaging.destination.name']).to eq('default')
+        expect(transaction.contexts[:trace][:data]['messaging.message.receive.latency']).to eq(86400000)
+      end
+    end
+
     context "with trace_propagation_headers" do
       let(:parent_transaction) { Sentry.start_transaction(op: "sidekiq") }
 
@@ -71,6 +98,7 @@ RSpec.describe Sentry::Sidekiq::SentryContextServerMiddleware do
         execute_worker(processor, HappyWorker, trace_propagation_headers: trace_propagation_headers)
 
         expect(transport.events.count).to eq(1)
+
         transaction = transport.events[0]
         expect(transaction).not_to be_nil
         expect(transaction.contexts.dig(:trace, :trace_id)).to eq(parent_transaction.trace_id)
@@ -153,6 +181,19 @@ RSpec.describe Sentry::Sidekiq::SentryContextClientMiddleware do
       second_headers = q[1]["trace_propagation_headers"]
       expect(second_headers["sentry-trace"]).to eq(transaction.to_sentry_trace)
       expect(second_headers["baggage"]).to eq(transaction.to_baggage)
+    end
+
+    it "has a queue.publish span" do
+      message_id = client.push('queue' => 'default', 'class' => HappyWorker, 'args' => [])
+
+      transaction.finish
+
+      expect(transport.events.count).to eq(1)
+      event = transport.events.last
+      expect(event.spans.count).to eq(1)
+      expect(event.spans[0][:op]).to eq("queue.publish")
+      expect(event.spans[0][:data]['messaging.message.id']).to eq(message_id)
+      expect(event.spans[0][:data]['messaging.destination.name']).to eq('default')
     end
   end
 end

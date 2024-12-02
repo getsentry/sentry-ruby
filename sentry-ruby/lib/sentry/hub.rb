@@ -73,7 +73,13 @@ module Sentry
     end
 
     def pop_scope
-      @stack.pop
+      if @stack.size > 1
+        @stack.pop
+      else
+        # We never want to enter a situation where we have no scope and no client
+        client = current_client
+        @stack = [Layer.new(client, Scope.new)]
+      end
     end
 
     def start_transaction(transaction: nil, custom_sampling_context: {}, instrumenter: :sentry, **options)
@@ -206,10 +212,12 @@ module Sentry
       elsif !options.empty?
         unsupported_option_keys = scope.update_from_options(**options)
 
-        configuration.log_debug <<~MSG
-          Options #{unsupported_option_keys} are not supported and will not be applied to the event.
-          You may want to set them under the `extra` option.
-        MSG
+        unless unsupported_option_keys.empty?
+          configuration.log_debug <<~MSG
+            Options #{unsupported_option_keys} are not supported and will not be applied to the event.
+            You may want to set them under the `extra` option.
+          MSG
+        end
       end
 
       event = current_client.capture_event(event, scope, hint)
@@ -223,6 +231,7 @@ module Sentry
     end
 
     def add_breadcrumb(breadcrumb, hint: {})
+      return unless current_client
       return unless configuration.enabled_in_current_env?
 
       if before_breadcrumb = current_client.configuration.before_breadcrumb

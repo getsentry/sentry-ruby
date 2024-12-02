@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 if defined?(ActiveJob)
   module Sentry
     parent_job =

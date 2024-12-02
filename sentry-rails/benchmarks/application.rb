@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 require "active_support/all"
 require "action_controller"
 require_relative "../spec/support/test_rails_app/app"

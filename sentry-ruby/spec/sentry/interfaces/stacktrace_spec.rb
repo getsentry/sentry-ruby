@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 require 'spec_helper'
 
 RSpec.describe Sentry::StacktraceInterface::Frame do
@@ -27,6 +29,16 @@ RSpec.describe Sentry::StacktraceInterface::Frame do
       expect(second_frame.in_app).to eq(true)
       expect(second_frame.function).to eq("save_user")
       expect(second_frame.lineno).to eq(5)
+    end
+
+    it "does not strip load path when strip_backtrace_load_path is false" do
+      first_frame = Sentry::StacktraceInterface::Frame.new(configuration.project_root, lines.first, false)
+      expect(first_frame.filename).to eq(first_frame.abs_path)
+      expect(first_frame.filename).to eq(raw_lines.first.split(':').first)
+
+      second_frame = Sentry::StacktraceInterface::Frame.new(configuration.project_root, lines.last, false)
+      expect(second_frame.filename).to eq(second_frame.abs_path)
+      expect(second_frame.filename).to eq(raw_lines.last.split(':').first)
     end
   end
 end

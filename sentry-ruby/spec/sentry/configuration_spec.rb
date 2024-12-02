@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 require 'spec_helper'
 
 RSpec.describe Sentry::Configuration do
@@ -26,12 +28,12 @@ RSpec.describe Sentry::Configuration do
 
   describe "#background_worker_threads" do
     it "sets to have of the processors count" do
-      allow(Concurrent).to receive(:processor_count).and_return(8)
+      allow_any_instance_of(Sentry::Configuration).to receive(:processor_count).and_return(8)
       expect(subject.background_worker_threads).to eq(4)
     end
 
     it "sets to 1 with only 1 processor" do
-      allow(Concurrent).to receive(:processor_count).and_return(1)
+      allow_any_instance_of(Sentry::Configuration).to receive(:processor_count).and_return(1)
       expect(subject.background_worker_threads).to eq(1)
     end
   end
@@ -278,8 +280,66 @@ RSpec.describe Sentry::Configuration do
   end
 
   describe "#spotlight" do
+    before do
+      ENV.delete('SENTRY_SPOTLIGHT')
+    end
+
+    after do
+      ENV.delete('SENTRY_SPOTLIGHT')
+    end
+
     it "false by default" do
       expect(subject.spotlight).to eq(false)
+    end
+
+    it 'uses `SENTRY_SPOTLIGHT` env variable for truthy' do
+      ENV['SENTRY_SPOTLIGHT'] = 'on'
+
+      expect(subject.spotlight).to eq(true)
+    end
+
+    it 'uses `SENTRY_SPOTLIGHT` env variable for falsy' do
+      ENV['SENTRY_SPOTLIGHT'] = '0'
+
+      expect(subject.spotlight).to eq(false)
+    end
+
+    it 'uses `SENTRY_SPOTLIGHT` env variable for custom value' do
+      ENV['SENTRY_SPOTLIGHT'] = 'https://my.remote.server:8080/stream'
+
+      expect(subject.spotlight).to eq('https://my.remote.server:8080/stream')
+    end
+  end
+
+  describe "#debug" do
+    before do
+      ENV.delete('SENTRY_DEBUG')
+    end
+
+    after do
+      ENV.delete('SENTRY_DEBUG')
+    end
+
+    it "false by default" do
+      expect(subject.debug).to eq(false)
+    end
+
+    it 'uses `SENTRY_DEBUG` env variable for truthy' do
+      ENV['SENTRY_DEBUG'] = 'on'
+
+      expect(subject.debug).to eq(true)
+    end
+
+    it 'uses `SENTRY_DEBUG` env variable for falsy' do
+      ENV['SENTRY_DEBUG'] = '0'
+
+      expect(subject.debug).to eq(false)
+    end
+
+    it 'uses `SENTRY_DEBUG` env variable to turn on random value' do
+      ENV['SENTRY_DEBUG'] = 'yabadabadoo'
+
+      expect(subject.debug).to eq(true)
     end
   end
 
@@ -633,6 +693,23 @@ RSpec.describe Sentry::Configuration do
     it "can override" do
       subject.enabled_patches.delete(:puma)
       expect(subject.enabled_patches).to eq(%i[redis http])
+    end
+  end
+
+  describe "#profiler_class=" do
+    it "sets the profiler class to Vernier when it's available", when: :vernier_installed? do
+      subject.profiler_class = Sentry::Vernier::Profiler
+      expect(subject.profiler_class).to eq(Sentry::Vernier::Profiler)
+    end
+
+    it "sets the profiler class to StackProf when Vernier is not available", when: { ruby_version?: [:<, "3.2"] } do
+      expect { subject.profiler_class = Sentry::Vernier::Profiler }
+        .to raise_error(
+          ArgumentError,
+          /Please add the 'vernier' gem to your Gemfile/
+        )
+
+      expect(subject.profiler_class).to eq(Sentry::Profiler)
     end
   end
 end

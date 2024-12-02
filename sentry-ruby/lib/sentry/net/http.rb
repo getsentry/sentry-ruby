@@ -2,11 +2,14 @@
 
 require "net/http"
 require "resolv"
+require "sentry/utils/http_tracing"
 
 module Sentry
   # @api private
   module Net
     module HTTP
+      include Utils::HttpTracing
+
       OP_NAME = "http.client"
       SPAN_ORIGIN = "auto.http.net_http"
       BREADCRUMB_CATEGORY = "net.http"
@@ -21,8 +24,7 @@ module Sentry
       #       req['connection'] ||= 'close'
       #       return request(req, body, &block) # <- request will be called for the second time from the first call
       #     }
-      #   end
-      #   # .....
+      #   end # .....
       # end
       # ```
       #
@@ -34,44 +36,26 @@ module Sentry
         Sentry.with_child_span(op: OP_NAME, start_timestamp: Sentry.utc_now.to_f, origin: SPAN_ORIGIN) do |sentry_span|
           request_info = extract_request_info(req)
 
-          if propagate_trace?(request_info[:url], Sentry.configuration)
+          if propagate_trace?(request_info[:url])
             set_propagation_headers(req)
           end
 
-          super.tap do |res|
-            record_sentry_breadcrumb(request_info, res)
+          res = super
+          response_status = res.code.to_i
 
-            if sentry_span
-              sentry_span.set_description("#{request_info[:method]} #{request_info[:url]}")
-              sentry_span.set_data(Span::DataConventions::URL, request_info[:url])
-              sentry_span.set_data(Span::DataConventions::HTTP_METHOD, request_info[:method])
-              sentry_span.set_data(Span::DataConventions::HTTP_QUERY, request_info[:query]) if request_info[:query]
-              sentry_span.set_data(Span::DataConventions::HTTP_STATUS_CODE, res.code.to_i)
-            end
+          if record_sentry_breadcrumb?
+            record_sentry_breadcrumb(request_info, response_status)
           end
+
+          if sentry_span
+            set_span_info(sentry_span, request_info, response_status)
+          end
+
+          res
         end
       end
 
       private
-
-      def set_propagation_headers(req)
-        Sentry.get_trace_propagation_headers&.each { |k, v| req[k] = v }
-      end
-
-      def record_sentry_breadcrumb(request_info, res)
-        return unless Sentry.initialized? && Sentry.configuration.breadcrumbs_logger.include?(:http_logger)
-
-        crumb = Sentry::Breadcrumb.new(
-          level: :info,
-          category: BREADCRUMB_CATEGORY,
-          type: :info,
-          data: {
-            status: res.code.to_i,
-            **request_info
-          }
-        )
-        Sentry.add_breadcrumb(crumb)
-      end
 
       def from_sentry_sdk?
         dsn = Sentry.configuration.dsn
@@ -82,7 +66,7 @@ module Sentry
         # IPv6 url could look like '::1/path', and that won't parse without
         # wrapping it in square brackets.
         hostname = address =~ Resolv::IPv6::Regex ? "[#{address}]" : address
-        uri = req.uri || URI.parse("#{use_ssl? ? 'https' : 'http'}://#{hostname}#{req.path}")
+        uri = req.uri || URI.parse(URI::DEFAULT_PARSER.escape("#{use_ssl? ? 'https' : 'http'}://#{hostname}#{req.path}"))
         url = "#{uri.scheme}://#{uri.host}#{uri.path}" rescue uri.to_s
 
         result = { method: req.method, url: url }
@@ -93,12 +77,6 @@ module Sentry
         end
 
         result
-      end
-
-      def propagate_trace?(url, configuration)
-        url &&
-          configuration.propagate_traces &&
-          configuration.trace_propagation_targets.any? { |target| url.match?(target) }
       end
     end
   end

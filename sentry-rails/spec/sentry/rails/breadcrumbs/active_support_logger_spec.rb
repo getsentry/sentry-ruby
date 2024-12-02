@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 require "spec_helper"
 
 RSpec.describe "Sentry::Breadcrumbs::ActiveSupportLogger", type: :request do

@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 if defined?(ActionCable) && ActionCable.version >= Gem::Version.new('6.0.0')
   require "spec_helper"
   require "action_cable/engine"

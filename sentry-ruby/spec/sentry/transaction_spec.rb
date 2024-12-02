@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 require "spec_helper"
 
 RSpec.describe Sentry::Transaction do
@@ -494,6 +496,7 @@ RSpec.describe Sentry::Transaction do
       it "records lost event with reason sample_rate" do
         subject.finish
         expect(Sentry.get_current_client.transport).to have_recorded_lost_event(:sample_rate, 'transaction')
+        expect(Sentry.get_current_client.transport).to have_recorded_lost_event(:sample_rate, 'span')
       end
     end
 
@@ -514,6 +517,7 @@ RSpec.describe Sentry::Transaction do
 
         subject.finish
         expect(Sentry.get_current_client.transport).to have_recorded_lost_event(:backpressure, 'transaction')
+        expect(Sentry.get_current_client.transport).to have_recorded_lost_event(:backpressure, 'span')
       end
     end
 

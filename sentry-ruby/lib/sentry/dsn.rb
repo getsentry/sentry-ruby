@@ -4,7 +4,7 @@ require "uri"
 
 module Sentry
   class DSN
-    PORT_MAP = { 'http' => 80, 'https' => 443 }.freeze
+    PORT_MAP = { "http" => 80, "https" => 443 }.freeze
     REQUIRED_ATTRIBUTES = %w[host path public_key project_id].freeze
 
     attr_reader :scheme, :secret_key, :port, *REQUIRED_ATTRIBUTES
@@ -13,7 +13,7 @@ module Sentry
       @raw_value = dsn_string
 
       uri = URI.parse(dsn_string)
-      uri_path = uri.path.split('/')
+      uri_path = uri.path.split("/")
 
       if uri.user
         # DSN-style string
@@ -25,7 +25,7 @@ module Sentry
       @scheme = uri.scheme
       @host = uri.host
       @port = uri.port if uri.port
-      @path = uri_path.join('/')
+      @path = uri_path.join("/")
     end
 
     def valid?

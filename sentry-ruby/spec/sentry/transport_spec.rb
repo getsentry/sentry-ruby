@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 require 'spec_helper'
 
 RSpec.describe Sentry::Transport do
@@ -145,6 +147,37 @@ RSpec.describe Sentry::Transport do
           expect(profile_payload).to eq(profile.to_json)
         end
       end
+
+      context "allows bigger item size" do
+        let(:profile) do
+          {
+            environment: "test",
+            release: "release",
+            profile: {
+              frames: Array.new(10000) { |i| { function: "function_#{i}", filename: "file_#{i}", lineno: i } },
+              stacks: Array.new(10000) { |i| [i] },
+              samples: Array.new(10000) { |i| { stack_id: i, elapsed_since_start_ns: i * 1000, thread_id: i % 10 } }
+            }
+          }
+        end
+
+        let(:event_with_profile) do
+          event.profile = profile
+          event
+        end
+
+        let(:envelope) { subject.envelope_from_event(event_with_profile) }
+
+        it "adds profile item to envelope" do
+          result, _ = subject.serialize_envelope(envelope)
+
+          _profile_header, profile_payload_json = result.split("\n").last(2)
+
+          profile_payload = JSON.parse(profile_payload_json)
+
+          expect(profile_payload["profile"]).to_not be(nil)
+        end
+      end
     end
 
     context "client report" do
@@ -153,6 +186,7 @@ RSpec.describe Sentry::Transport do
       before do
         5.times { subject.record_lost_event(:ratelimit_backoff, 'error') }
         3.times { subject.record_lost_event(:queue_overflow, 'transaction') }
+        2.times { subject.record_lost_event(:network_error, 'span', num: 5) }
       end
 
       it "incudes client report in envelope" do
@@ -170,7 +204,8 @@ RSpec.describe Sentry::Transport do
               timestamp: Time.now.utc.iso8601,
               discarded_events: [
                 { reason: :ratelimit_backoff, category: 'error', quantity: 5 },
-                { reason: :queue_overflow, category: 'transaction', quantity: 3 }
+                { reason: :queue_overflow, category: 'transaction', quantity: 3 },
+                { reason: :network_error, category: 'span', quantity: 10 }
               ]
             }.to_json
           )
@@ -248,7 +283,7 @@ RSpec.describe Sentry::Transport do
 
         let(:in_app_pattern) do
           project_root = "/fake/project_root"
-          Regexp.new("^(#{project_root}/)?#{Sentry::Backtrace::APP_DIRS_PATTERN}")
+          Regexp.new("^(#{project_root}/)?#{Sentry::Configuration::APP_DIRS_PATTERN}")
         end
         let(:frame_list_limit) { 500 }
         let(:frame_list_size) { frame_list_limit * 20 }
@@ -431,6 +466,24 @@ RSpec.describe Sentry::Transport do
             end
           end
         end
+      end
+    end
+
+    context "event with attachments" do
+      let(:event) { client.event_from_exception(ZeroDivisionError.new("divided by 0")) }
+      let(:envelope) { subject.envelope_from_event(event) }
+
+      before do
+        event.attachments << Sentry::Attachment.new(filename: "test-1.txt", bytes: "test")
+        event.attachments << Sentry::Attachment.new(path: fixture_path("attachment.txt"))
+      end
+
+      it "sends the event and logs the action" do
+        expect(subject).to receive(:send_data)
+
+        subject.send_envelope(envelope)
+
+        expect(io.string).to match(/Sending envelope with items \[event, attachment, attachment\]/)
       end
     end
   end

@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 require 'benchmark/ipsa'
 require "sentry-ruby"
 require "sentry/benchmarks/benchmark_transport"

@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 require "spec_helper"
 
 RSpec.describe Sentry::Rails, type: :request do
@@ -240,6 +242,16 @@ RSpec.describe Sentry::Rails, type: :request do
       expect(traces.dig(-1, "function")).to be_nil
     end
 
+    it "makes sure BacktraceCleaner gem cleanup doesn't affect context lines population" do
+      get "/view_exception"
+
+      traces = event.dig("exception", "values", 0, "stacktrace", "frames")
+      gem_frame = traces.find { |t| t["abs_path"].match(/actionview/) }
+      expect(gem_frame["pre_context"]).not_to be_empty
+      expect(gem_frame["post_context"]).not_to be_empty
+      expect(gem_frame["context_line"]).not_to be_empty
+    end
+
     it "doesn't filters exception backtrace if backtrace_cleanup_callback is overridden" do
       make_basic_app do |config|
         config.backtrace_cleanup_callback = lambda { |backtrace| backtrace }
@@ -351,6 +363,32 @@ RSpec.describe Sentry::Rails, type: :request do
         Rails.error.handle(severity: :info, source: "mem_cache_store.active_support") do
           1/0
         end
+
+        expect(transport.events.count).to eq(0)
+      end
+
+      it "captures string messages through error reporter" do
+        Rails.error.report("Test message", severity: :info, handled: true, context: { foo: "bar" })
+
+        expect(transport.events.count).to eq(1)
+        event = transport.events.first
+
+        expect(event.message).to eq("Test message")
+        expect(event.level).to eq(:info)
+        expect(event.contexts).to include({ "rails.error" => { foo: "bar" } })
+        expect(event.tags).to include({ handled: true })
+      end
+
+      it "skips non-string and non-exception errors" do
+        expect {
+          Sentry.init do |config|
+            config.logger = Logger.new($stdout)
+          end
+
+          Sentry.logger.debug("Expected an Exception or a String, got: #{312.inspect}")
+
+          Rails.error.report(312, severity: :info, handled: true, context: { foo: "bar" })
+        }.to output(/Expected an Exception or a String, got: 312/).to_stdout
 
         expect(transport.events.count).to eq(0)
       end

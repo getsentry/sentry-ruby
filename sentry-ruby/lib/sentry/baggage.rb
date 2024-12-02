@@ -1,12 +1,12 @@
 # frozen_string_literal: true
 
-require 'cgi'
+require "cgi"
 
 module Sentry
   # A {https://www.w3.org/TR/baggage W3C Baggage Header} implementation.
   class Baggage
-    SENTRY_PREFIX = 'sentry-'
-    SENTRY_PREFIX_REGEX = /^sentry-/.freeze
+    SENTRY_PREFIX = "sentry-"
+    SENTRY_PREFIX_REGEX = /^sentry-/
 
     # @return [Hash]
     attr_reader :items
@@ -30,14 +30,14 @@ module Sentry
       items = {}
       mutable = true
 
-      header.split(',').each do |item|
+      header.split(",").each do |item|
         item = item.strip
-        key, val = item.split('=')
+        key, val = item.split("=")
 
         next unless key && val
         next unless key =~ SENTRY_PREFIX_REGEX
 
-        baggage_key = key.split('-')[1]
+        baggage_key = key.split("-")[1]
         next unless baggage_key
 
         items[CGI.unescape(baggage_key)] = CGI.unescape(val)
@@ -64,7 +64,7 @@ module Sentry
     # @return [String]
     def serialize
       items = @items.map { |k, v| "#{SENTRY_PREFIX}#{CGI.escape(k)}=#{CGI.escape(v)}" }
-      items.join(',')
+      items.join(",")
     end
   end
 end
