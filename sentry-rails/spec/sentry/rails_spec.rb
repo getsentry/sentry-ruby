@@ -242,6 +242,16 @@ RSpec.describe Sentry::Rails, type: :request do
       expect(traces.dig(-1, "function")).to be_nil
     end
 
+    it "makes sure BacktraceCleaner gem cleanup doesn't affect context lines population" do
+      get "/view_exception"
+
+      traces = event.dig("exception", "values", 0, "stacktrace", "frames")
+      gem_frame = traces.find { |t| t["abs_path"].match(/actionview/) }
+      expect(gem_frame["pre_context"]).not_to be_empty
+      expect(gem_frame["post_context"]).not_to be_empty
+      expect(gem_frame["context_line"]).not_to be_empty
+    end
+
     it "doesn't filters exception backtrace if backtrace_cleanup_callback is overridden" do
       make_basic_app do |config|
         config.backtrace_cleanup_callback = lambda { |backtrace| backtrace }

@@ -11,13 +11,11 @@ module Sentry
 
       def initialize
         super
-        # we don't want any default silencers because they're too aggressive
+        # We don't want any default silencers because they're too aggressive
         remove_silencers!
+        # We don't want any default filters because Rails 7.2 starts shortening the paths. See #2472
+        remove_filters!
 
-        @root = "#{Sentry.configuration.project_root}/"
-        add_filter do |line|
-          line.start_with?(@root) ? line.from(@root.size) : line
-        end
         add_filter do |line|
           if line =~ RENDER_TEMPLATE_PATTERN
             line.sub(RENDER_TEMPLATE_PATTERN, "")
