@@ -29,7 +29,7 @@ jobs:
     env:
       RUBYOPT: ${{ matrix.options.rubyopt }}
       BUNDLE_GEMFILE: ${{ github.workspace }}/sentry-ruby/Gemfile
-      BUNDLE_WITHOUT: rubocop
+      BUNDLE_WITHOUT: development
       RACK_VERSION: ${{ matrix.rack_version }}
       REDIS_RB_VERSION: ${{ matrix.redis_rb_version }}
     strategy:

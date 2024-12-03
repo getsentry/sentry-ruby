@@ -28,7 +28,7 @@ jobs:
     env:
       RUBYOPT: ${{ matrix.options.rubyopt }}
       BUNDLE_GEMFILE: ${{ github.workspace }}/sentry-delayed_job/Gemfile
-      BUNDLE_WITHOUT: rubocop
+      BUNDLE_WITHOUT: development
     strategy:
       fail-fast: false
       matrix:

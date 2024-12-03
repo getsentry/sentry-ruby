@@ -22,7 +22,7 @@ jobs:
     env:
       RUBYOPT: ${{ matrix.options.rubyopt }}
       BUNDLE_GEMFILE: ${{ github.workspace }}/sentry-rails/Gemfile
-      BUNDLE_WITHOUT: rubocop
+      BUNDLE_WITHOUT: development
       RAILS_VERSION: ${{ matrix.rails_version }}
     strategy:
       fail-fast: false

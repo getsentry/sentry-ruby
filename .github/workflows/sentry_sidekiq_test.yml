@@ -22,7 +22,7 @@ jobs:
     env:
       RUBYOPT: ${{ matrix.options.rubyopt }}
       BUNDLE_GEMFILE: ${{ github.workspace }}/sentry-sidekiq/Gemfile
-      BUNDLE_WITHOUT: rubocop
+      BUNDLE_WITHOUT: development
       SIDEKIQ_VERSION: ${{ matrix.sidekiq_version }}
     strategy:
       fail-fast: false

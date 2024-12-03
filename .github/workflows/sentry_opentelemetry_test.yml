@@ -28,7 +28,7 @@ jobs:
     env:
       RUBYOPT: ${{ matrix.options.rubyopt }}
       BUNDLE_GEMFILE: ${{ github.workspace }}/sentry-opentelemetry/Gemfile
-      BUNDLE_WITHOUT: rubocop
+      BUNDLE_WITHOUT: development
       OPENTELEMETRY_VERSION: ${{ matrix.opentelemetry_version }}
     strategy:
       fail-fast: false

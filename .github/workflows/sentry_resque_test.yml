@@ -28,7 +28,7 @@ jobs:
     env:
       RUBYOPT: ${{ matrix.options.rubyopt }}
       BUNDLE_GEMFILE: ${{ github.workspace }}/sentry-resque/Gemfile
-      BUNDLE_WITHOUT: rubocop
+      BUNDLE_WITHOUT: development
     strategy:
       fail-fast: false
       matrix:
@@ -57,7 +57,7 @@ jobs:
       - name: Run specs without Rails
         env:
           RUBYOPT: ${{ matrix.options.rubyopt }}
-        run: BUNDLE_WITHOUT="rubocop rails" bundle exec rake
+        run: BUNDLE_WITHOUT="development rails" bundle exec rake
 
       - name: Run specs with Rails
         env:
