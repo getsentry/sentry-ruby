@@ -8,6 +8,27 @@ RSpec.describe Sentry::OpenTelemetry::SpanProcessor do
   let(:tracer) { ::OpenTelemetry.tracer_provider.tracer('sentry', '1.0') }
   let(:empty_context) { ::OpenTelemetry::Context.empty }
   let(:invalid_span) { ::OpenTelemetry::SDK::Trace::Span::INVALID }
+  let(:error_span) do
+    attributes = {
+      'http.method' => 'GET',
+      'http.host' => 'sentry.io',
+      'http.scheme' => 'https'
+    }
+
+    tracer.start_root_span('HTTP GET', attributes: attributes, kind: :server).tap do |span|
+      span.status = OpenTelemetry::Trace::Status.error("not a success")
+    end
+  end
+  let(:http_error_span) do
+    attributes = {
+      'http.method' => 'GET',
+      'http.host' => 'sentry.io',
+      'http.scheme' => 'https',
+      'http.status_code' => '409'
+    }
+
+    tracer.start_root_span('HTTP GET', attributes: attributes, kind: :server)
+  end
 
   let(:root_span) do
     attributes = {
@@ -197,12 +218,16 @@ RSpec.describe Sentry::OpenTelemetry::SpanProcessor do
       subject.on_start(root_span, empty_context)
       subject.on_start(child_db_span, root_parent_context)
       subject.on_start(child_http_span, root_parent_context)
+      subject.on_start(error_span, empty_context)
+      subject.on_start(http_error_span, empty_context)
     end
 
     let(:finished_db_span) { child_db_span.finish }
     let(:finished_http_span) { child_http_span.finish }
     let(:finished_root_span) { root_span.finish }
     let(:finished_invalid_span) { invalid_span.finish }
+    let(:finished_error_span) { error_span.finish }
+    let(:finished_http_error_span) { http_error_span.finish }
 
     it 'noops when not initialized' do
       expect(Sentry).to receive(:initialized?).and_return(false)
@@ -224,6 +249,30 @@ RSpec.describe Sentry::OpenTelemetry::SpanProcessor do
       subject.on_finish(finished_invalid_span)
     end
 
+    it 'updates span status on error' do
+      expect(subject.span_map).to receive(:delete).and_call_original
+
+      span_id = finished_error_span.context.hex_span_id
+      sentry_span = subject.span_map[span_id]
+
+      expect(sentry_span).to receive(:finish).and_call_original
+      subject.on_finish(finished_error_span)
+
+      expect(sentry_span.status).to eq('internal_error')
+    end
+
+    it 'updates span status on HTTP error' do
+      expect(subject.span_map).to receive(:delete).and_call_original
+
+      span_id = finished_http_error_span.context.hex_span_id
+      sentry_span = subject.span_map[span_id]
+
+      expect(sentry_span).to receive(:finish).and_call_original
+      subject.on_finish(finished_http_error_span)
+
+      expect(sentry_span.status).to eq('already_exists')
+    end
+
     it 'finishes sentry child span on otel child db span finish' do
       expect(subject.span_map).to receive(:delete).and_call_original
 
@@ -241,7 +290,7 @@ RSpec.describe Sentry::OpenTelemetry::SpanProcessor do
       expect(sentry_span.data).to include({ 'otel.kind' => finished_db_span.kind })
       expect(sentry_span.timestamp).to eq(finished_db_span.end_timestamp / 1e9)
 
-      expect(subject.span_map.size).to eq(2)
+      expect(subject.span_map.size).to eq(4)
       expect(subject.span_map.keys).not_to include(span_id)
     end
 
@@ -263,13 +312,15 @@ RSpec.describe Sentry::OpenTelemetry::SpanProcessor do
       expect(sentry_span.timestamp).to eq(finished_http_span.end_timestamp / 1e9)
       expect(sentry_span.status).to eq('ok')
 
-      expect(subject.span_map.size).to eq(2)
+      expect(subject.span_map.size).to eq(4)
       expect(subject.span_map.keys).not_to include(span_id)
     end
 
     it 'finishes sentry transaction on otel root span finish' do
       subject.on_finish(finished_db_span)
       subject.on_finish(finished_http_span)
+      subject.on_finish(finished_error_span)
+      subject.on_finish(finished_http_error_span)
 
       expect(subject.span_map).to receive(:delete).and_call_original
 
