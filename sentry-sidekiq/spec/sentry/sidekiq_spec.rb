@@ -313,4 +313,46 @@ RSpec.describe Sentry::Sidekiq do
       )
     end
   end
+
+  if RUBY_VERSION >= "3.2.1"
+    context "when profiling is enabled with Vernier" do
+      before do
+        perform_basic_setup do |config|
+          config.traces_sample_rate = 1.0
+          config.profiles_sample_rate = 1.0
+          config.profiler_class = Sentry::Vernier::Profiler
+          config.release = "test-release"
+        end
+      end
+
+      it "captures meaningful profile data from worker with workload" do
+        execute_worker(processor, WorkloadWorker)
+
+        expect(transport.events.count).to eq(1)
+        event = transport.events.first
+
+        expect(event).to be_a(Sentry::TransactionEvent)
+        profile = event.profile
+
+        expect(profile).not_to be_nil
+        expect(profile[:event_id]).not_to be_nil
+        expect(profile[:platform]).to eq("ruby")
+        expect(profile[:version]).to eq("1")
+        expect(profile[:release]).to eq("test-release")
+
+        # Verify profile data structure
+        expect(profile[:profile]).to include(
+          :frames,
+          :stacks,
+          :samples,
+          :thread_metadata
+        )
+
+        # Verify we have meaningful samples
+        expect(profile[:profile][:samples].length).to be > 0
+        expect(profile[:profile][:frames].length).to be > 0
+        expect(profile[:profile][:stacks].length).to be > 0
+      end
+    end
+  end
 end

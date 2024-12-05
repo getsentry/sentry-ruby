@@ -182,6 +182,39 @@ class TagsWorker
   def perform; end
 end
 
+class WorkloadWorker
+  include Sidekiq::Worker
+
+  def perform
+    # Create some CPU work that should show up in the profile
+    calculate_fibonacci(25)
+    sleep_and_sort
+    generate_strings
+  end
+
+  private
+
+  def calculate_fibonacci(n)
+    return n if n <= 1
+    calculate_fibonacci(n - 1) + calculate_fibonacci(n - 2)
+  end
+
+  def sleep_and_sort
+    # Mix of CPU and IO work
+    sleep(0.01)
+    array = (1..1000).to_a.shuffle
+    array.sort
+  end
+
+  def generate_strings
+    # Memory and CPU work
+    100.times do |i|
+      "test string #{i}" * 100
+      Math.sqrt(i * 1000)
+    end
+  end
+end
+
 def new_processor
   manager =
     case
@@ -260,3 +293,4 @@ def perform_basic_setup
     yield config if block_given?
   end
 end
+
