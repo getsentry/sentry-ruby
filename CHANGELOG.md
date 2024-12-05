@@ -1,3 +1,9 @@
+## Unreleased
+
+### Bug Fixes
+
+- Safe-navigate to session flusher [#2396](https://github.com/getsentry/sentry-ruby/pull/2396)
+
 ## 5.22.0
 
 ### Features
