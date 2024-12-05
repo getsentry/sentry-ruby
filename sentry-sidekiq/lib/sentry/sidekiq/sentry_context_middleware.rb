@@ -6,12 +6,12 @@ module Sentry
   module Sidekiq
     module Helpers
       def set_span_data(span, id:, queue:, latency: nil, retry_count: nil)
-        if span
-          span.set_data("messaging.message.id", id)
-          span.set_data("messaging.destination.name", queue)
-          span.set_data("messaging.message.receive.latency", latency) if latency
-          span.set_data("messaging.message.retry.count", retry_count) if retry_count
-        end
+        return unless span
+
+        span.set_data(Span::DataConventions::MESSAGING_MESSAGE_ID, id)
+        span.set_data(Span::DataConventions::MESSAGING_DESTINATION_NAME, queue)
+        span.set_data(Span::DataConventions::MESSAGING_MESSAGE_RECEIVE_LATENCY, latency) if latency
+        span.set_data(Span::DataConventions::MESSAGING_MESSAGE_RETRY_COUNT, retry_count) if retry_count
       end
     end
 
@@ -40,7 +40,14 @@ module Sentry
         if transaction
           scope.set_span(transaction)
 
-          set_span_data(transaction, id: job["jid"], queue: queue, latency: ((Time.now.to_f - job["enqueued_at"]) * 1000).to_i, retry_count: job["retry_count"] || 0)
+          latency = ((Time.now.to_f - job["enqueued_at"]) * 1000).to_i if job["enqueued_at"]
+          set_span_data(
+            transaction,
+            id: job["jid"],
+            queue: queue,
+            latency: latency,
+            retry_count: job["retry_count"] || 0
+          )
         end
 
         begin

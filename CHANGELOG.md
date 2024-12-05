@@ -3,6 +3,8 @@
 ### Bug Fixes
 
 - Safe-navigate to session flusher [#2396](https://github.com/getsentry/sentry-ruby/pull/2396)
+- Fix latency related nil error for Sidekiq Queues Module span data [#2486](https://github.com/getsentry/sentry-ruby/pull/2486)
+  - Fixes [#2485](https://github.com/getsentry/sentry-ruby/issues/2485)
 
 ## 5.22.0
 
