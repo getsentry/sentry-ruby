@@ -56,6 +56,8 @@ RSpec.configure do |config|
     ENV.delete('RAILS_ENV')
     ENV.delete('RACK_ENV')
   end
+
+  config.include ActiveJob::TestHelper, type: :job
 end
 
 def reload_send_event_job
