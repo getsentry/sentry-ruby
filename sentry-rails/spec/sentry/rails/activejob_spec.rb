@@ -68,7 +68,7 @@ class FailedJobWithCron < FailedJob
 end
 
 
-RSpec.describe "without Sentry initialized" do
+RSpec.describe "without Sentry initialized", type: :job do
   it "runs job" do
     expect { FailedJob.perform_now }.to raise_error(FailedJob::TestError)
   end
@@ -78,7 +78,7 @@ RSpec.describe "without Sentry initialized" do
   end
 end
 
-RSpec.describe "ActiveJob integration" do
+RSpec.describe "ActiveJob integration", type: :job do
   before do
     make_basic_app
   end
