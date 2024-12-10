@@ -1,10 +1,7 @@
 ---
-name: Feature Request
-about: Propose a new feature of the Ruby SDK 
-title: ''
-labels: enhancement
-assignees: 
-
+name: 💡 Improvement
+about: Propose an improvement for existing functionality of the SDK
+type: Improvement
 ---
 
 **Describe the idea**
