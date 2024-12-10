@@ -44,6 +44,11 @@ module Sentry
       LINENO = "code.lineno"
       FUNCTION = "code.function"
       NAMESPACE = "code.namespace"
+
+      MESSAGING_MESSAGE_ID = "messaging.message.id"
+      MESSAGING_DESTINATION_NAME = "messaging.destination.name"
+      MESSAGING_MESSAGE_RECEIVE_LATENCY = "messaging.message.receive.latency"
+      MESSAGING_MESSAGE_RETRY_COUNT = "messaging.message.retry.count"
     end
 
     STATUS_MAP = {

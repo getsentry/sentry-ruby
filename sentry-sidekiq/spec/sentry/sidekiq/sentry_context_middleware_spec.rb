@@ -2,6 +2,7 @@
 
 require "spec_helper"
 require "timecop"
+require 'sidekiq/api'
 
 RSpec.shared_context "sidekiq", shared_context: :metadata do
   let(:user) { { "id" => rand(10_000) } }
@@ -66,27 +67,53 @@ RSpec.describe Sentry::Sidekiq::SentryContextServerMiddleware do
       expect(transaction.contexts.dig(:trace, :origin)).to eq('auto.queue.sidekiq')
     end
 
-    it "adds a queue.process spans" do
-      Timecop.freeze do
-        execute_worker(processor, HappyWorker)
-        execute_worker(processor, HappyWorker, jid: '123456', timecop_delay: Time.now + 86400)
+    context "span data for Queues module" do
+      it "adds a queue.process transaction with correct data" do
+        Timecop.freeze do
+          execute_worker(processor, HappyWorker)
+        end
 
-        expect(transport.events.count).to eq(2)
+        expect(transport.events.count).to eq(1)
 
         transaction = transport.events[0]
         expect(transaction).not_to be_nil
         expect(transaction.spans.count).to eq(0)
         expect(transaction.contexts[:trace][:data]['messaging.message.id']).to eq('123123') # Default defined in #execute_worker
         expect(transaction.contexts[:trace][:data]['messaging.destination.name']).to eq('default')
-        expect(transaction.contexts[:trace][:data]['messaging.message.retry.count']).to eq(0)
         expect(transaction.contexts[:trace][:data]['messaging.message.receive.latency']).to eq(0)
+        expect(transaction.contexts[:trace][:data]['messaging.message.retry.count']).to eq(0)
+      end
 
-        transaction = transport.events[1]
+      it "adds a queue.process transaction with correct latency data" do
+        Timecop.freeze do
+          execute_worker(processor, HappyWorker, jid: '123456', timecop_delay: Time.now + 86400)
+        end
+
+        expect(transport.events.count).to eq(1)
+
+        transaction = transport.events[0]
         expect(transaction).not_to be_nil
         expect(transaction.spans.count).to eq(0)
         expect(transaction.contexts[:trace][:data]['messaging.message.id']).to eq('123456') # Explicitly set above.
         expect(transaction.contexts[:trace][:data]['messaging.destination.name']).to eq('default')
         expect(transaction.contexts[:trace][:data]['messaging.message.receive.latency']).to eq(86400000)
+        expect(transaction.contexts[:trace][:data]['messaging.message.retry.count']).to eq(0)
+      end
+
+      if MIN_SIDEKIQ_6
+        it "does not fail for latency when performed inline" do
+          HappyWorker.perform_inline
+
+          expect(transport.events.count).to eq(1)
+
+          transaction = transport.events[0]
+          expect(transaction).not_to be_nil
+          expect(transaction.spans.count).to eq(0)
+          expect(transaction.contexts[:trace][:data]['messaging.message.id']).to be_a(String)
+          expect(transaction.contexts[:trace][:data]['messaging.destination.name']).to eq('default')
+          expect(transaction.contexts[:trace][:data]['messaging.message.receive.latency']).to be_nil
+          expect(transaction.contexts[:trace][:data]['messaging.message.retry.count']).to eq(0)
+        end
       end
     end
 
