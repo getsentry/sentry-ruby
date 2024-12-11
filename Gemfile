@@ -7,8 +7,6 @@ gem "rake", "~> 12.0"
 
 ruby_version = Gem::Version.new(RUBY_VERSION)
 
-gem "jar-dependencies", "0.4.1" if RUBY_PLATFORM == "java"
-
 # Development tools
 if ruby_version >= Gem::Version.new("2.7.0")
   gem "debug", github: "ruby/debug", platform: :ruby
