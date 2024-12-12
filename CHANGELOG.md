@@ -6,6 +6,10 @@
 - Fix latency related nil error for Sidekiq Queues Module span data [#2486](https://github.com/getsentry/sentry-ruby/pull/2486)
   - Fixes [#2485](https://github.com/getsentry/sentry-ruby/issues/2485)
 
+### Internal
+
+- Remove usage of user segment from baggage and dynamic sampling context propagation logic [#2493](https://github.com/getsentry/sentry-ruby/pull/2493) 
+
 ## 5.22.0
 
 ### Features
