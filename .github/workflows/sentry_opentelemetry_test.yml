@@ -43,6 +43,8 @@ jobs:
                   rubyopt: "--enable-frozen-string-literal --debug=frozen-string-literal",
                 },
             }
+        exclude:
+          - { ruby_version: 'jruby-head' }
     steps:
       - uses: actions/checkout@v1
 
