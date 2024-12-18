@@ -74,7 +74,7 @@ module Sentry
           end
 
           def retry_stopped_handler(*args)
-            return if already_supported_by_sentry_integration?
+            return if !Sentry.initialized? || already_supported_by_sentry_integration?
             return unless Sentry.configuration.active_job.report_after_job_retries
             event = ActiveSupport::Notifications::Event.new(*args)
             job = event.payload[:job]
