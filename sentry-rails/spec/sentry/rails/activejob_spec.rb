@@ -83,7 +83,7 @@ end
 
 RSpec.describe "ActiveJob integration" do
   include ActiveJob::TestHelper
-  include ActiveSupport::Testing::TaggedLogging
+  # include ActiveSupport::Testing::TaggedLogging
 
   before do
     make_basic_app
