@@ -46,17 +46,39 @@ module Sentry
               rescue Exception => e # rubocop:disable Lint/RescueException
                 finish_sentry_transaction(transaction, 500)
 
-                Sentry::Rails.capture_exception(
-                  e,
-                  extra: sentry_context(job),
-                  tags: {
-                    job_id: job.job_id,
-                    provider_job_id: job.provider_job_id
-                  }
-                )
+                unless Sentry.configuration.active_job.report_after_job_retries
+                  capture_exception(job, e)
+                end
+
                 raise
               end
             end
+          end
+
+          def capture_exception(job, e)
+            Sentry::Rails.capture_exception(
+              e,
+              extra: sentry_context(job),
+              tags: {
+                job_id: job.job_id,
+                provider_job_id: job.provider_job_id
+              }
+            )
+          end
+
+          def register_retry_stopped_subscriber
+            ActiveSupport::Notifications.subscribe("retry_stopped.active_job") do |*args|
+              retry_stopped_handler(*args)
+            end
+          end
+
+          def retry_stopped_handler(*args)
+            return unless Sentry.configuration.active_job.report_after_job_retries
+
+            event = ActiveSupport::Notifications::Event.new(*args)
+            job = event.payload[:job]
+            error = event.payload[:error]
+            capture_exception(job, error)
           end
 
           def finish_sentry_transaction(transaction, status)
