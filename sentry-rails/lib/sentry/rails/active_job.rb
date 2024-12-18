@@ -1,6 +1,5 @@
 # frozen_string_literal: true
 
-require "sentry/rails/active_job/configuration"
 module Sentry
   module Rails
     module ActiveJobExtensions
@@ -47,7 +46,7 @@ module Sentry
               rescue Exception => e # rubocop:disable Lint/RescueException
                 finish_sentry_transaction(transaction, 500)
 
-                unless Sentry.configuration.active_job.report_after_job_retries
+                unless Sentry.configuration.rails.active_job_report_after_job_retries
                   capture_exception(job, e)
                 end
 
@@ -75,7 +74,7 @@ module Sentry
 
           def retry_stopped_handler(*args)
             return if !Sentry.initialized? || already_supported_by_sentry_integration?
-            return unless Sentry.configuration.active_job.report_after_job_retries
+            return unless Sentry.configuration.rails.active_job_report_after_job_retries
             event = ActiveSupport::Notifications::Event.new(*args)
             job = event.payload[:job]
             error = event.payload[:error]
