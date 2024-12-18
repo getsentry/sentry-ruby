@@ -2,11 +2,15 @@
 
 Individual gem's changelog has been deprecated. Please check the [project changelog](https://github.com/getsentry/sentry-ruby/blob/master/CHANGELOG.md).
 
+## Unreleased
+
+- Support report_after_job_retries for activejob ([#2500](https://github.com/getsentry/sentry-ruby/pull/2500))
+
 ## 4.4.0
 
 ### Features
 
-- Make tracing subscribers configurable [#1344](https://github.com/getsentry/sentry-ruby/pull/1344) 
+- Make tracing subscribers configurable [#1344](https://github.com/getsentry/sentry-ruby/pull/1344)
 
 ```ruby
 # current default:
@@ -24,7 +28,7 @@ config.rails.tracing_subscribers = [MySubscriber]
 
 - Report exceptions from the interceptor middleware for exceptions app [#1379](https://github.com/getsentry/sentry-ruby/pull/1379)
   - Fixes [#1371](https://github.com/getsentry/sentry-ruby/issues/1371)
-- Re-position CaptureExceptions middleware to reduce tracing noise [#1405](https://github.com/getsentry/sentry-ruby/pull/1405) 
+- Re-position CaptureExceptions middleware to reduce tracing noise [#1405](https://github.com/getsentry/sentry-ruby/pull/1405)
 
 ## 4.3.4
 
