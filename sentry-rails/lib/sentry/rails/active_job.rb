@@ -1,5 +1,6 @@
 # frozen_string_literal: true
 
+require "sentry/rails/active_job/configuration"
 module Sentry
   module Rails
     module ActiveJobExtensions
