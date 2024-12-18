@@ -1,3 +1,7 @@
+## Unreleased
+
+- Support report_after_job_retries for activejob ([#2500](https://github.com/getsentry/sentry-ruby/pull/2500))
+
 ## 5.22.1
 
 ### Bug Fixes
