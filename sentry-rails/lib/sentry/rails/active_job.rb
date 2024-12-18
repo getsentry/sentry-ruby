@@ -20,7 +20,7 @@ module Sentry
       class SentryReporter
         OP_NAME = "queue.active_job"
         SPAN_ORIGIN = "auto.queue.active_job"
-
+        NOTIFICATION_NAME = "retry_stopped.active_job"
         class << self
           def record(job, &block)
             Sentry.with_scope do |scope|
@@ -67,17 +67,18 @@ module Sentry
           end
 
           def register_retry_stopped_subscriber
-            ActiveSupport::Notifications.subscribe("retry_stopped.active_job") do |*args|
+            ActiveSupport::Notifications.subscribe(NOTIFICATION_NAME) do |*args|
               retry_stopped_handler(*args)
             end
           end
 
           def retry_stopped_handler(*args)
-            return if !Sentry.initialized? || already_supported_by_sentry_integration?
-            return unless Sentry.configuration.rails.active_job_report_after_job_retries
             event = ActiveSupport::Notifications::Event.new(*args)
             job = event.payload[:job]
             error = event.payload[:error]
+
+            return if !Sentry.initialized? || job.already_supported_by_sentry_integration?
+            return unless Sentry.configuration.rails.active_job_report_after_job_retries
             capture_exception(job, error)
           end
 
