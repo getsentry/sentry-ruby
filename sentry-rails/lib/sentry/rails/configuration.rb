@@ -176,6 +176,7 @@ module Sentry
         @enable_db_query_source = true
         @db_query_source_threshold_ms = 100
         @active_support_logger_subscription_items = Sentry::Rails::ACTIVE_SUPPORT_LOGGER_SUBSCRIPTION_ITEMS_DEFAULT.dup
+        @active_job_report_after_job_retries = false
       end
     end
   end

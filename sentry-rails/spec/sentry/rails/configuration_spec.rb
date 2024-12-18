@@ -59,4 +59,10 @@ RSpec.describe Sentry::Rails::Configuration do
       expect(subject.active_support_logger_subscription_items["foo"]).to include(:bar)
     end
   end
+
+  describe "#active_job_report_after_job_retries" do
+    it "has correct default value" do
+      expect(subject.active_job_report_after_job_retries).to eq(false)
+    end
+  end
 end
