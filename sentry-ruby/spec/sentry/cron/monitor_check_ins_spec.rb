@@ -123,6 +123,7 @@ RSpec.describe Sentry::Cron::MonitorCheckIns do
         expect(ok_event.monitor_slug).to eq('job')
         expect(ok_event.status).to eq(:ok)
         expect(ok_event.monitor_config).to be_nil
+        expect(ok_event.duration).to be > 0
       end
     end
 
@@ -162,6 +163,7 @@ RSpec.describe Sentry::Cron::MonitorCheckIns do
         expect(ok_event.monitor_slug).to eq('job')
         expect(ok_event.status).to eq(:ok)
         expect(ok_event.monitor_config).to be_nil
+        expect(ok_event.duration).to be > 0
       end
     end
 
