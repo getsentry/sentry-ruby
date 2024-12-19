@@ -1,3 +1,9 @@
+## Unreleased
+
+### Features
+
+- Improve the accuracy of duration calculations in cron jobs monitoring ([#2471](https://github.com/getsentry/sentry-ruby/pull/2471))
+
 ## 5.22.1
 
 ### Bug Fixes
@@ -12,13 +18,11 @@
 
 - Add `include_sentry_event` matcher for RSpec [#2424](https://github.com/getsentry/sentry-ruby/pull/2424)
 - Add support for Sentry Cache instrumentation, when using Rails.cache [#2380](https://github.com/getsentry/sentry-ruby/pull/2380)
+  Note: MemoryStore and FileStore require Rails 8.0+
 - Add support for Queue Instrumentation for Sidekiq. [#2403](https://github.com/getsentry/sentry-ruby/pull/2403)
 - Add support for string errors in error reporter ([#2464](https://github.com/getsentry/sentry-ruby/pull/2464))
 - Reset `trace_id` and add root transaction for sidekiq-cron [#2446](https://github.com/getsentry/sentry-ruby/pull/2446)
 - Add support for Excon HTTP client instrumentation ([#2383](https://github.com/getsentry/sentry-ruby/pull/2383))
-- Improve the accuracy of duration calculations in cron jobs monitoring ([#2471](https://github.com/getsentry/sentry-ruby/pull/2471))
-
-    Note: MemoryStore and FileStore require Rails 8.0+
 
 ### Bug Fixes
 
