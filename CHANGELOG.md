@@ -1,3 +1,9 @@
+## Unreleased
+
+### Bug fixes
+
+- Default to `internal_error` error type for OpenTelemetry spans [#2473](https://github.com/getsentry/sentry-ruby/pull/2473)
+
 ## 5.22.1
 
 ### Bug Fixes
@@ -5,7 +11,6 @@
 - Safe-navigate to session flusher [#2396](https://github.com/getsentry/sentry-ruby/pull/2396)
 - Fix latency related nil error for Sidekiq Queues Module span data [#2486](https://github.com/getsentry/sentry-ruby/pull/2486)
   - Fixes [#2485](https://github.com/getsentry/sentry-ruby/issues/2485)
-- Default to `internal_error` error type for OpenTelemetry spans [#2473](https://github.com/getsentry/sentry-ruby/pull/2473)
 
 ## 5.22.0
 
