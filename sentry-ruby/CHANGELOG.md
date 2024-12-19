@@ -2,10 +2,6 @@
 
 Individual gem's changelog has been deprecated. Please check the [project changelog](https://github.com/getsentry/sentry-ruby/blob/master/CHANGELOG.md).
 
-## Unreleased
-
-- Improve the accuracy of duration calculations in cron jobs monitoring ([#2471](https://github.com/getsentry/sentry-ruby/pull/2471))
-
 ## 4.4.2
 
 - Fix NoMethodError when SDK's dsn is nil [#1433](https://github.com/getsentry/sentry-ruby/pull/1433)
