@@ -1,3 +1,9 @@
+## Unreleased
+
+### Bug fixes
+
+- Default to `internal_error` error type for OpenTelemetry spans [#2473](https://github.com/getsentry/sentry-ruby/pull/2473)
+
 ## 5.22.1
 
 ### Bug Fixes
