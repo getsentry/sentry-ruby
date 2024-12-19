@@ -37,6 +37,14 @@ module Sentry
         def week
           Sentry.utc_now.to_i / (3600.0 * 24.0 * 7.0)
         end
+
+        def duration_start
+          Process.clock_gettime(Process::CLOCK_MONOTONIC)
+        end
+
+        def duration_end(start)
+          Process.clock_gettime(Process::CLOCK_MONOTONIC) - start
+        end
       end
     end
   end
