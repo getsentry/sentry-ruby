@@ -3,6 +3,7 @@
 ### Features
 
 - Improve the accuracy of duration calculations in cron jobs monitoring ([#2471](https://github.com/getsentry/sentry-ruby/pull/2471))
+- Use attempt_threshold to skip reporting on first N attempts ([#2503](https://github.com/getsentry/sentry-ruby/pull/2503))
 
 ### Bug fixes
 
