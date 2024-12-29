@@ -183,8 +183,11 @@ module Sentry
       if event_type != TransactionEvent::TYPE && configuration.before_send
         event = configuration.before_send.call(event, hint)
 
-        if event.nil?
-          log_debug("Discarded event because before_send returned nil")
+        unless event.is_a?(ErrorEvent)
+          # Avoid serializing the event object in this case because we aren't sure what it is and what it contains
+          log_debug(<<~MSG)
+            Discarded event because before_send didn't return a Sentry::ErrorEvent object but an instance of #{event.class}
+          MSG
           transport.record_lost_event(:before_send, data_category)
           return
         end
@@ -193,15 +196,18 @@ module Sentry
       if event_type == TransactionEvent::TYPE && configuration.before_send_transaction
         event = configuration.before_send_transaction.call(event, hint)
 
-        if event.nil?
-          log_debug("Discarded event because before_send_transaction returned nil")
-          transport.record_lost_event(:before_send, "transaction")
-          transport.record_lost_event(:before_send, "span", num: spans_before + 1)
-          return
-        else
+        if event.is_a?(TransactionEvent)
           spans_after = event.is_a?(TransactionEvent) ? event.spans.size : 0
           spans_delta = spans_before - spans_after
           transport.record_lost_event(:before_send, "span", num: spans_delta) if spans_delta > 0
+        else
+          # Avoid seraliazing the event object in this case because we aren't sure what it is and what it contains
+          log_debug(<<~MSG)
+            Discarded event because before_send_transaction didn't return a Sentry::TransactionEvent object but an instance of #{event.class}
+          MSG
+          transport.record_lost_event(:before_send, "transaction")
+          transport.record_lost_event(:before_send, "span", num: spans_before + 1)
+          return
         end
       end
 
