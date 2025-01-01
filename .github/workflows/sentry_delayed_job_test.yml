@@ -49,7 +49,7 @@ jobs:
           - { ruby_version: "head" }
           - { ruby_version: 'jruby-head' }
     steps:
-      - uses: actions/checkout@v1
+      - uses: actions/checkout@v4
       - name: Install sqlite
         run: |
           # See https://github.community/t5/GitHub-Actions/ubuntu-latest-Apt-repository-list-issues/td-p/41122/page/2
@@ -68,6 +68,6 @@ jobs:
 
       - name: Upload Coverage
         if: ${{ matrix.options.codecov }}
-        uses: codecov/codecov-action@v4
+        uses: codecov/codecov-action@v5
         with:
           token: ${{ secrets.CODECOV_TOKEN }}

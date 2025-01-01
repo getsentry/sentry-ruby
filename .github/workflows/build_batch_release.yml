@@ -9,11 +9,11 @@ jobs:
     name: Build gems
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v4
     - name: Set up Ruby
       uses: ruby/setup-ruby@v1
       with:
-        ruby-version: 3.3
+        ruby-version: 3.4
     - name: Build gem source
       run:  ruby .scripts/batch_build.rb
     - name: Archive Artifacts
