@@ -71,6 +71,7 @@ module Sentry
 
                 if source_location
                   backtrace_line = Sentry::Backtrace::Line.parse(source_location)
+
                   span.set_data(Span::DataConventions::FILEPATH, backtrace_line.file) if backtrace_line.file
                   span.set_data(Span::DataConventions::LINENO, backtrace_line.number) if backtrace_line.number
                   span.set_data(Span::DataConventions::FUNCTION, backtrace_line.method) if backtrace_line.method
