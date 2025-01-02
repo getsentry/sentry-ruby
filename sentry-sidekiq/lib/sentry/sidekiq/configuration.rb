@@ -11,7 +11,10 @@ module Sentry
   end
 
   module Sidekiq
-    IGNORE_DEFAULT = ["Sidekiq::JobRetry::Skip"]
+    IGNORE_DEFAULT = [
+      "Sidekiq::JobRetry::Skip",
+      "Sidekiq::JobRetry::Handled"
+    ]
 
     class Configuration
       # Set this option to true if you want Sentry to only capture the last job
