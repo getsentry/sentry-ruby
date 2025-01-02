@@ -17,6 +17,11 @@ You can contribute to this project in the following ways:
 
 And if you have any questions, please feel free to reach out on [Discord].
 
+## Develop This Project With Multi-root Workspaces
+
+If you use editors that support [VS Code-style multi-root workspaces](https://code.visualstudio.com/docs/editor/multi-root-workspaces),
+such as VS Code, Cursor...etc., opening the editor with `sentry-ruby.code-workspace` file will provide a better development experience.
+
 ## Contribute To Individual Gems
 
 - Install the dependencies of a specific gem by running `bundle` in it's subdirectory. I.e:
