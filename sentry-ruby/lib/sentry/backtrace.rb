@@ -12,7 +12,7 @@ module Sentry
       RUBY_INPUT_FORMAT = /
         ^ \s* (?: [a-zA-Z]: | uri:classloader: )? ([^:]+ | <.*>):
         (\d+)
-        (?: :in\s('|`)([^']+)')?$
+        (?: :in\s('|`)(?:([\w:]+)\#)?([^']+)')?$
       /x
 
       # org.jruby.runtime.callsite.CachingCallSite.call(CachingCallSite.java:170)
@@ -37,10 +37,11 @@ module Sentry
       # @return [Line] The parsed backtrace line
       def self.parse(unparsed_line, in_app_pattern = nil)
         ruby_match = unparsed_line.match(RUBY_INPUT_FORMAT)
+
         if ruby_match
-          _, file, number, _, method = ruby_match.to_a
+          _, file, number, _, module_name, method = ruby_match.to_a
           file.sub!(/\.class$/, RB_EXTENSION)
-          module_name = nil
+          module_name = module_name
         else
           java_match = unparsed_line.match(JAVA_INPUT_FORMAT)
           _, module_name, method, file, number = java_match.to_a

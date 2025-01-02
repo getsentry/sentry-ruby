@@ -3,10 +3,17 @@
 ### Features
 
 - Improve the accuracy of duration calculations in cron jobs monitoring ([#2471](https://github.com/getsentry/sentry-ruby/pull/2471))
+- Support `code.namespace` for Ruby 3.4+ stacktraces ([#2506](https://github.com/getsentry/sentry-ruby/pull/2506))
+
 
 ### Bug fixes
 
 - Default to `internal_error` error type for OpenTelemetry spans [#2473](https://github.com/getsentry/sentry-ruby/pull/2473)
+
+### Internal
+
+- Test Ruby 3.4 in CI ([#2506](https://github.com/getsentry/sentry-ruby/pull/2506))
+- Upgrade actions workflows versions ([#2506](https://github.com/getsentry/sentry-ruby/pull/2506))
 
 ## 5.22.1
 
