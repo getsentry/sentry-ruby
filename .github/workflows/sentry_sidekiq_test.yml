@@ -30,25 +30,32 @@ jobs:
         sidekiq_version: ["5.0", "6.5", "7.0"]
         ruby_version: ["2.7", "3.0", "3.1", "3.2", "3.3", "3.4", jruby]
         include:
-          - { ruby_version: 2.4, sidekiq_version: 5.0 }
-          - { ruby_version: 2.5, sidekiq_version: 5.0 }
-          - { ruby_version: 2.5, sidekiq_version: 6.0 }
-          - { ruby_version: 2.6, sidekiq_version: 5.0 }
-          - { ruby_version: 2.6, sidekiq_version: 6.0 }
-          - { ruby_version: jruby, sidekiq_version: 5.0 }
-          - { ruby_version: jruby, sidekiq_version: 6.0 }
-          - { ruby_version: jruby, sidekiq_version: 7.0 }
-          - {
-              ruby_version: "3.2",
-              sidekiq_version: 7.0,
-              options:
-                {
-                  rubyopt: "--enable-frozen-string-literal --debug=frozen-string-literal",
-                },
-            }
-          - { ruby_version: "3.2", sidekiq_version: 7.0 }
-          - { ruby_version: "3.3", sidekiq_version: 7.0 }
-          - { ruby_version: "3.4", sidekiq_version: 7.0 }
+          - ruby_version: 2.4
+            sidekiq_version: 5.0
+          - ruby_version: 2.5
+            sidekiq_version: 5.0
+          - ruby_version: 2.5
+            sidekiq_version: 6.0
+          - ruby_version: 2.6
+            sidekiq_version: 5.0
+          - ruby_version: 2.6
+            sidekiq_version: 6.0
+          - ruby_version: jruby
+            sidekiq_version: 5.0
+          - ruby_version: jruby
+            sidekiq_version: 6.0
+          - ruby_version: jruby
+            sidekiq_version: 7.0
+          - ruby_version: "3.2"
+            sidekiq_version: 7.0
+            options:
+              rubyopt: "--enable-frozen-string-literal --debug=frozen-string-literal"
+          - ruby_version: "3.2"
+            sidekiq_version: 7.0
+          - ruby_version: "3.3"
+            sidekiq_version: 7.0
+          - ruby_version: "3.4"
+            sidekiq_version: 7.0
     steps:
       - uses: actions/checkout@v4
 
