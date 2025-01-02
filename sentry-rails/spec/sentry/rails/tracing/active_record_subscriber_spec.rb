@@ -51,6 +51,7 @@ RSpec.describe Sentry::Rails::Tracing::ActiveRecordSubscriber, :subscriber do
         Post.all.to_a
       end
       query_line = __LINE__ - 2
+      rspec_class = self.name # RSpec::ExampleGroups::[....]
 
       before do
         transaction = Sentry::Transaction.new(sampled: true, hub: Sentry.get_current_hub)
@@ -94,6 +95,7 @@ RSpec.describe Sentry::Rails::Tracing::ActiveRecordSubscriber, :subscriber do
           data = span[:data]
           expect(data["code.filepath"]).to eq(__FILE__)
           expect(data["code.lineno"]).to eq(query_line)
+          expect(data["code.namespace"]).to eq(rspec_class) if RUBY_VERSION.to_f >= 3.4
           expect(data["code.function"]).to eq("foo")
         end
       end

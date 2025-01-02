@@ -1,0 +1,30 @@
+{
+    "folders": [
+        {
+            "path": "sentry-ruby"
+        },
+        {
+            "path": "sentry-rails"
+        },
+        {
+            "path": "sentry-sidekiq"
+        },
+        {
+            "path": "sentry-delayed_job"
+        },
+        {
+            "path": "sentry-resque"
+        },
+        {
+            "path": "sentry-opentelemetry"
+        },
+        {
+            "path": ".github"
+        }
+    ],
+    "extensions": {
+        "recommendations": [
+            "Shopify.ruby-lsp"
+        ]
+    }
+}

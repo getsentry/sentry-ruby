@@ -44,7 +44,7 @@ jobs:
         exclude:
           - { ruby_version: 'jruby-head' }
     steps:
-      - uses: actions/checkout@v1
+      - uses: actions/checkout@v4
       - name: Set up Ruby ${{ matrix.ruby_version }}
         uses: ruby/setup-ruby@v1
         with:
@@ -67,6 +67,6 @@ jobs:
         run: bundle exec rake
 
       - name: Upload Coverage
-        uses: codecov/codecov-action@v4
+        uses: codecov/codecov-action@v5
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
