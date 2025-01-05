@@ -201,7 +201,7 @@ module Sentry
           spans_delta = spans_before - spans_after
           transport.record_lost_event(:before_send, "span", num: spans_delta) if spans_delta > 0
         else
-          # Avoid seraliazing the event object in this case because we aren't sure what it is and what it contains
+          # Avoid serializing the event object in this case because we aren't sure what it is and what it contains
           log_debug(<<~MSG)
             Discarded event because before_send_transaction didn't return a Sentry::TransactionEvent object but an instance of #{event.class}
           MSG
