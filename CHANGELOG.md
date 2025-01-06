@@ -9,6 +9,7 @@
 ### Bug fixes
 
 - Default to `internal_error` error type for OpenTelemetry spans [#2473](https://github.com/getsentry/sentry-ruby/pull/2473)
+- Improve `before_send` and `before_send_transaction`'s return value handling ([#2504](https://github.com/getsentry/sentry-ruby/pull/2504))
 
 ### Internal
 

@@ -26,7 +26,8 @@ end
 require "sentry-ruby"
 require "sentry/test_helper"
 
-Dir[Pathname(__dir__).join("support/**/*.rb")].sort.each { |f| require f }
+require "support/profiler"
+require "support/stacktrace_test_fixture"
 
 RSpec.configure do |config|
   # Enable flags like --only-failures and --next-failure

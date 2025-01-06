@@ -248,6 +248,30 @@ RSpec.describe Sentry::Client do
         expect(dbl).not_to receive(:call)
         client.send_event(event)
       end
+
+      it "warns if before_send returns nil" do
+        string_io = StringIO.new
+        logger = Logger.new(string_io, level: :debug)
+        configuration.logger = logger
+        configuration.before_send = lambda do |_event, _hint|
+          nil
+        end
+
+        client.send_event(event)
+        expect(string_io.string).to include("Discarded event because before_send didn't return a Sentry::ErrorEvent object but an instance of NilClass")
+      end
+
+      it "warns if before_send returns non-Event objects" do
+        string_io = StringIO.new
+        logger = Logger.new(string_io, level: :debug)
+        configuration.logger = logger
+        configuration.before_send = lambda do |_event, _hint|
+          123
+        end
+
+        client.send_event(event)
+        expect(string_io.string).to include("Discarded event because before_send didn't return a Sentry::ErrorEvent object but an instance of Integer")
+      end
     end
 
     it_behaves_like "Event in send_event" do
@@ -289,6 +313,18 @@ RSpec.describe Sentry::Client do
         else
           expect(event["tags"]["called"]).to eq(true)
         end
+      end
+
+      it "warns if before_send_transaction returns nil" do
+        string_io = StringIO.new
+        logger = Logger.new(string_io, level: :debug)
+        configuration.logger = logger
+        configuration.before_send_transaction = lambda do |_event, _hint|
+          nil
+        end
+
+        client.send_event(event)
+        expect(string_io.string).to include("Discarded event because before_send_transaction didn't return a Sentry::TransactionEvent object but an instance of NilClass")
       end
     end
 
