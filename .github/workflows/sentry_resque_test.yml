@@ -34,13 +34,9 @@ jobs:
       matrix:
         ruby_version: ${{ fromJson(needs.ruby-versions.outputs.versions) }}
         include:
-          - {
-              ruby_version: "3.2",
-              options:
-                {
-                  rubyopt: "--enable-frozen-string-literal --debug=frozen-string-literal",
-                },
-            }
+          - ruby_version: "3.2"
+            options:
+              rubyopt: "--enable-frozen-string-literal --debug=frozen-string-literal"
         exclude:
           - { ruby_version: 'jruby-head' }
     steps:
