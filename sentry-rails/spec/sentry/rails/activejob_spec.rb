@@ -389,7 +389,7 @@ RSpec.describe "ActiveJob integration", type: :job do
     end
   end
 
-  describe "active_job_report_after_job_retries" do
+  describe "active_job_report_after_job_retries", skip: Rails.version.to_f < 5.1 do
     before do
         allow(Sentry::Rails::ActiveJobExtensions::SentryReporter)
           .to receive(:capture_exception)
