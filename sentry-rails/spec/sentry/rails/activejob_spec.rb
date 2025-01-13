@@ -67,6 +67,12 @@ class FailedJobWithCron < FailedJob
   sentry_monitor_check_ins slug: "failed_job", monitor_config: Sentry::Cron::MonitorConfig.from_crontab("5 * * * *")
 end
 
+class FailedJobWithRetryOn < FailedJob
+  if respond_to? :retry_on
+    retry_on StandardError, attempts: 3, wait: 0
+  end
+end
+
 RSpec.describe "without Sentry initialized", type: :job do
   it "runs job" do
     expect { FailedJob.perform_now }.to raise_error(FailedJob::TestError)
@@ -386,10 +392,6 @@ RSpec.describe "ActiveJob integration", type: :job do
   end
 
   describe "active_job_report_after_job_retries", skip: Rails.version.to_f < 5.1 do
-    class FailedJobWithRetryOn < FailedJob
-      retry_on StandardError, attempts: 3, wait: 0
-    end
-
     before do
         allow(Sentry::Rails::ActiveJobExtensions::SentryReporter)
           .to receive(:capture_exception)
