@@ -10,6 +10,7 @@
 
 - Default to `internal_error` error type for OpenTelemetry spans [#2473](https://github.com/getsentry/sentry-ruby/pull/2473)
 - Improve `before_send` and `before_send_transaction`'s return value handling ([#2504](https://github.com/getsentry/sentry-ruby/pull/2504))
+- Use `URI::RFC2396_PARSER.escape` explicitly to remove warning logs to stderr ([#2509](https://github.com/getsentry/sentry-ruby/pull/2509))
 
 ### Internal
 
