@@ -22,6 +22,11 @@ end
 
 require "sentry-ruby"
 
+# Fixing crash:
+# activesupport-6.1.7.10/lib/active_support/logger_thread_safe_level.rb:16:in
+# . `<module:LoggerThreadSafeLevel>': uninitialized constant ActiveSupport::LoggerThreadSafeLevel::Logger (NameError)
+require "logger"
+
 require 'simplecov'
 
 SimpleCov.start do
