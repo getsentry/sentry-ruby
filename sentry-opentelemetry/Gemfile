@@ -6,6 +6,8 @@ git_source(:github) { |name| "https://github.com/#{name}.git" }
 # Specify your gem's dependencies in sentry-ruby.gemspec
 gemspec
 
+gem "ostruct" if RUBY_VERSION >= "3.4"
+
 gem "opentelemetry-sdk"
 gem "opentelemetry-instrumentation-rails"
 
