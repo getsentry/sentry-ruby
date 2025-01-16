@@ -93,6 +93,10 @@ module TestHelpers
   def self.ruby_version?(op, version)
     RUBY_VERSION.public_send(op, version)
   end
+
+  def self.ruby_engine?(engine)
+    RUBY_ENGINE == engine
+  end
 end
 
 def fixtures_root

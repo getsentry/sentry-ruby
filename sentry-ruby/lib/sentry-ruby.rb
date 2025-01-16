@@ -308,6 +308,9 @@ module Sentry
     # @return [Hub]
     def get_main_hub
       MUTEX.synchronize { @main_hub }
+    rescue ThreadError
+      # In some rare cases this may be called in a trap context so we need to handle it gracefully
+      @main_hub
     end
 
     # Takes an instance of Sentry::Breadcrumb and stores it to the current active scope.
