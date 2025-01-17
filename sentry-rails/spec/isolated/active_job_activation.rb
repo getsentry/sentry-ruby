@@ -1,5 +1,10 @@
 # frozen_string_literal: true
 
+# Fixing crash:
+# activesupport-6.1.7.10/lib/active_support/logger_thread_safe_level.rb:16:in
+# . `<module:LoggerThreadSafeLevel>': uninitialized constant ActiveSupport::LoggerThreadSafeLevel::Logger (NameError)
+require "logger"
+
 # for https://github.com/getsentry/sentry-ruby/issues/1249
 require "active_job/railtie"
 # Rails 7.2 added HealthCheckController, which requires ActionController
