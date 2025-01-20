@@ -13,6 +13,7 @@ module Sentry
       OP_NAME = "http.client"
       SPAN_ORIGIN = "auto.http.net_http"
       BREADCRUMB_CATEGORY = "net.http"
+      URI_PARSER = URI.const_defined?("RFC2396_PARSER") ? URI::RFC2396_PARSER : URI::DEFAULT_PARSER
 
       # To explain how the entire thing works, we need to know how the original Net::HTTP#request works
       # Here's part of its definition. As you can see, it usually calls itself inside a #start block
@@ -66,7 +67,7 @@ module Sentry
         # IPv6 url could look like '::1/path', and that won't parse without
         # wrapping it in square brackets.
         hostname = address =~ Resolv::IPv6::Regex ? "[#{address}]" : address
-        uri = req.uri || URI.parse(uri_parser.escape("#{use_ssl? ? 'https' : 'http'}://#{hostname}#{req.path}"))
+        uri = req.uri || URI.parse(URI_PARSER.escape("#{use_ssl? ? 'https' : 'http'}://#{hostname}#{req.path}"))
         url = "#{uri.scheme}://#{uri.host}#{uri.path}" rescue uri.to_s
 
         result = { method: req.method, url: url }
@@ -77,12 +78,6 @@ module Sentry
         end
 
         result
-      end
-
-      def uri_parser
-        URI::RFC2396_PARSER
-      rescue NameError
-        URI::DEFAULT_PARSER
       end
     end
   end
