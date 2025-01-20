@@ -66,7 +66,7 @@ module Sentry
         # IPv6 url could look like '::1/path', and that won't parse without
         # wrapping it in square brackets.
         hostname = address =~ Resolv::IPv6::Regex ? "[#{address}]" : address
-        uri = req.uri || URI.parse(URI::RFC2396_PARSER.escape("#{use_ssl? ? 'https' : 'http'}://#{hostname}#{req.path}"))
+        uri = req.uri || URI.parse(uri_parser.escape("#{use_ssl? ? 'https' : 'http'}://#{hostname}#{req.path}"))
         url = "#{uri.scheme}://#{uri.host}#{uri.path}" rescue uri.to_s
 
         result = { method: req.method, url: url }
@@ -77,6 +77,12 @@ module Sentry
         end
 
         result
+      end
+
+      def uri_parser
+        URI::RFC2396_PARSER
+      rescue NameError
+        URI::DEFAULT_PARSER
       end
     end
   end
