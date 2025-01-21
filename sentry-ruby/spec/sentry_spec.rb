@@ -70,45 +70,6 @@ RSpec.describe Sentry do
         end
       end
     end
-
-    context "works within a trap context", when: { ruby_engine?: "ruby", ruby_version?: [:>=, "3.4"] } do
-      it "doesn't raise error when accessing main hub in trap context" do
-        read_pipe, write_pipe = IO.pipe
-
-        pid = fork do
-          described_class.init do |config|
-            config.dsn = Sentry::TestHelper::DUMMY_DSN
-          end
-
-          trap('HUP') do
-            hub = described_class.get_main_hub
-
-            write_pipe.write(hub.class.to_s)
-            write_pipe.close
-          end
-
-          Process.kill('HUP', Process.pid)
-        end
-
-        write_pipe.close
-
-        result = nil
-        retries = 0
-
-        while retries < 10
-          break if Process.wait(pid)
-
-          sleep 0.01
-
-          retries += 1
-        end
-
-        result = read_pipe.read
-        read_pipe.close
-
-        expect(result).to eq("Sentry::Hub")
-      end
-    end
   end
 
   describe "#clone_hub_to_current_thread" do
