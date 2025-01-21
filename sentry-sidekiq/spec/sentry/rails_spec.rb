@@ -22,7 +22,7 @@ def make_basic_app
 
   app.config.hosts = nil
   app.config.secret_key_base = "test"
-  app.config.eager_load = true
+  app.config.eager_load = false
   app.initializer :configure_sentry do
     Sentry.init do |config|
       config.release = 'beta'
