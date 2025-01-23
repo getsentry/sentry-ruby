@@ -17,6 +17,7 @@
 
 - Test Ruby 3.4 in CI ([#2506](https://github.com/getsentry/sentry-ruby/pull/2506))
 - Upgrade actions workflows versions ([#2506](https://github.com/getsentry/sentry-ruby/pull/2506))
+- Stop relying on fugit ([#2519](https://github.com/getsentry/sentry-ruby/pull/2519))
 
 ## 5.22.1
 

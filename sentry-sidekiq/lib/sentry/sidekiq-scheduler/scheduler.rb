@@ -38,16 +38,14 @@ module Sentry
         monitor_config =
           case interval_type
           when "cron"
-            # fugit is a second order dependency of sidekiq-scheduler via rufus-scheduler
-            parsed_cron = ::Fugit.parse_cron(schedule)
-            timezone = parsed_cron.timezone
+            # Split schedule into cron and timezone parts (if timezone exists)
+            cron_parts = schedule.strip.split(" ")
 
-            # fugit supports having the timezone part of the cron string,
-            # so we need to pull that with some hacky stuff
-            if timezone
-              parsed_cron.instance_variable_set(:@timezone, nil)
-              cron_without_timezone = parsed_cron.to_cron_s
-              Sentry::Cron::MonitorConfig.from_crontab(cron_without_timezone, timezone: timezone.name)
+            if cron_parts.length > 5
+              timezone = cron_parts.pop
+              cron_without_timezone = cron_parts.join(" ")
+
+              Sentry::Cron::MonitorConfig.from_crontab(cron_without_timezone, timezone: timezone)
             else
               Sentry::Cron::MonitorConfig.from_crontab(schedule)
             end
