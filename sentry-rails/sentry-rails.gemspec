@@ -31,5 +31,5 @@ Gem::Specification.new do |spec|
   spec.require_paths = ["lib"]
 
   spec.add_dependency "railties", ">= 5.0"
-  spec.add_dependency "sentry-ruby", "~> 5.22.1"
+  spec.add_dependency "sentry-ruby", "~> 5.22.2"
 end
