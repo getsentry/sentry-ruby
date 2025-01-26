@@ -21,6 +21,10 @@
 
 ## 5.22.1
 
+### Features
+
+- Include `Delayed::Job` instance in hint [#1861](https://github.com/getsentry/sentry-ruby/pull/1861)
+
 ### Bug Fixes
 
 - Safe-navigate to session flusher [#2396](https://github.com/getsentry/sentry-ruby/pull/2396)
