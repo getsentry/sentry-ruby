@@ -29,6 +29,8 @@
 
 ## 5.22.0
 
+:warning: Support for Queues tracking for ActiveJob required changing `op` in transaction context from "queue.sidekiq" to "queue.process". If you rely on this value (e.g. for sampling as described [here](https://docs.sentry.io/platforms/ruby/guides/sidekiq/configuration/sampling/#setting-a-sampling-function)), then you need to update your configuration accordingly.
+
 ### Features
 
 - Add `include_sentry_event` matcher for RSpec [#2424](https://github.com/getsentry/sentry-ruby/pull/2424)
