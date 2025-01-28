@@ -74,6 +74,7 @@ module Sentry
         return unless @started
 
         @result = ::Vernier.stop_profile
+        @started = false
 
         log("Stopped")
       rescue RuntimeError => e
@@ -89,12 +90,12 @@ module Sentry
       end
 
       def to_hash
-        return EMPTY_RESULT unless @started
-
         unless @sampled
           record_lost_event(:sample_rate)
           return EMPTY_RESULT
         end
+
+        return EMPTY_RESULT unless result
 
         { **profile_meta, profile: output.to_h }
       end
