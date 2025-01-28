@@ -59,8 +59,11 @@ module Sentry
 
     private
 
+    EMPTY_PROFILE = {}.freeze
+
     def populate_profile(transaction)
-      profile_hash = transaction.profiler.to_hash
+      profile_hash = transaction.profiler&.to_hash || EMPTY_PROFILE
+
       return if profile_hash.empty?
 
       profile_hash.merge!(
