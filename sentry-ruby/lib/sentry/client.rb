@@ -183,10 +183,18 @@ module Sentry
       if event_type != TransactionEvent::TYPE && configuration.before_send
         event = configuration.before_send.call(event, hint)
 
-        unless event.is_a?(ErrorEvent) || event.is_a?(Hash)
+        case event
+        when ErrorEvent
+          # do nothing
+        when Hash
+          log_debug(<<~MSG)
+            Returning a Hash from before_send is deprecated and will be removed in the next major version.
+            Please return a Sentry::ErrorEvent object instead.
+          MSG
+        else
           # Avoid serializing the event object in this case because we aren't sure what it is and what it contains
           log_debug(<<~MSG)
-            Discarded event because before_send didn't return a Sentry::ErrorEvent or Hash object but an instance of #{event.class}
+            Discarded event because before_send didn't return a Sentry::ErrorEvent object but an instance of #{event.class}
           MSG
           transport.record_lost_event(:before_send, data_category)
           return
@@ -200,6 +208,13 @@ module Sentry
           spans_after = event.is_a?(TransactionEvent) ? event.spans.size : 0
           spans_delta = spans_before - spans_after
           transport.record_lost_event(:before_send, "span", num: spans_delta) if spans_delta > 0
+
+          if event.is_a?(Hash)
+            log_debug(<<~MSG)
+              Returning a Hash from before_send_transaction is deprecated and will be removed in the next major version.
+              Please return a Sentry::TransactionEvent object instead.
+            MSG
+          end
         else
           # Avoid serializing the event object in this case because we aren't sure what it is and what it contains
           log_debug(<<~MSG)

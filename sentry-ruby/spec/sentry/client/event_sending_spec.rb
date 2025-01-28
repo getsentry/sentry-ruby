@@ -269,20 +269,22 @@ RSpec.describe Sentry::Client do
           123
         end
 
-        client.send_event(event)
+        return_value = client.send_event(event)
         expect(string_io.string).to include("Discarded event because before_send didn't return a Sentry::ErrorEvent object but an instance of Integer")
+        expect(return_value).to eq(nil)
       end
 
-      it "doesn't warn if before_send returns a Hash" do
+      it "warns about Hash value's deprecation" do
         string_io = StringIO.new
         logger = Logger.new(string_io, level: :debug)
         configuration.logger = logger
         configuration.before_send = lambda do |_event, _hint|
-          {}
+          { foo: "bar" }
         end
 
-        client.send_event(event)
-        expect(string_io.string).not_to include("Discarded event because before_send didn't return a Sentry::ErrorEvent object")
+        return_value = client.send_event(event)
+        expect(string_io.string).to include("Returning a Hash from before_send is deprecated and will be removed in the next major version.")
+        expect(return_value).to eq({ foo: "bar" })
       end
     end
 
@@ -335,20 +337,22 @@ RSpec.describe Sentry::Client do
           nil
         end
 
-        client.send_event(event)
+        return_value = client.send_event(event)
         expect(string_io.string).to include("Discarded event because before_send_transaction didn't return a Sentry::TransactionEvent object but an instance of NilClass")
+        expect(return_value).to be_nil
       end
 
-      it "doesn't warn if before_send returns a Hash" do
+      it "warns about Hash value's deprecation" do
         string_io = StringIO.new
         logger = Logger.new(string_io, level: :debug)
         configuration.logger = logger
         configuration.before_send_transaction = lambda do |_event, _hint|
-          {}
+          { foo: "bar" }
         end
 
-        client.send_event(event)
-        expect(string_io.string).not_to include("Discarded event because before_send_transaction didn't return a Sentry::TransactionEvent object")
+        return_value = client.send_event(event)
+        expect(string_io.string).to include("Returning a Hash from before_send_transaction is deprecated and will be removed in the next major version.")
+        expect(return_value).to eq({ foo: "bar" })
       end
     end
 
