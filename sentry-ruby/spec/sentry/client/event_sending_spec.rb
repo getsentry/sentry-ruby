@@ -272,6 +272,18 @@ RSpec.describe Sentry::Client do
         client.send_event(event)
         expect(string_io.string).to include("Discarded event because before_send didn't return a Sentry::ErrorEvent object but an instance of Integer")
       end
+
+      it "doesn't warn if before_send returns a Hash" do
+        string_io = StringIO.new
+        logger = Logger.new(string_io, level: :debug)
+        configuration.logger = logger
+        configuration.before_send = lambda do |_event, _hint|
+          {}
+        end
+
+        client.send_event(event)
+        expect(string_io.string).not_to include("Discarded event because before_send didn't return a Sentry::ErrorEvent object")
+      end
     end
 
     it_behaves_like "Event in send_event" do
@@ -325,6 +337,18 @@ RSpec.describe Sentry::Client do
 
         client.send_event(event)
         expect(string_io.string).to include("Discarded event because before_send_transaction didn't return a Sentry::TransactionEvent object but an instance of NilClass")
+      end
+
+      it "doesn't warn if before_send returns a Hash" do
+        string_io = StringIO.new
+        logger = Logger.new(string_io, level: :debug)
+        configuration.logger = logger
+        configuration.before_send_transaction = lambda do |_event, _hint|
+          {}
+        end
+
+        client.send_event(event)
+        expect(string_io.string).not_to include("Discarded event because before_send_transaction didn't return a Sentry::TransactionEvent object")
       end
     end
 
