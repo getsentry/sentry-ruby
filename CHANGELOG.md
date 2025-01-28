@@ -1,3 +1,9 @@
+## Unreleased
+
+### Bug Fixes
+
+- Fix handling of cron with tz in Cron::Job ([#2530](https://github.com/getsentry/sentry-ruby/pull/2530))
+
 ## 5.22.3
 
 ### Bug Fixes
