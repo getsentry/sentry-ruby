@@ -4,6 +4,7 @@
 
 - Fix handling of cron with tz in Cron::Job ([#2530](https://github.com/getsentry/sentry-ruby/pull/2530))
 - Revert "[rails] support string errors in error reporter (#2464)" ([#2533](https://github.com/getsentry/sentry-ruby/pull/2533))
+- Prevent starting Vernier in nested transactions ([#2528](https://github.com/getsentry/sentry-ruby/pull/2528))
 
 ## 5.22.3
 
