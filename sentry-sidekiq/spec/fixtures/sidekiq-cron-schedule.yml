@@ -2,6 +2,10 @@ happy:
   cron: "* * * * *"
   class: "HappyWorkerForCron"
 
+happy_with_timezone:
+  cron: "* * * * * America/Los_Angeles"
+  class: "HappyWorkerForCronWithTimezone"
+
 manual:
   cron: "* * * * *"
   class: "SadWorkerWithCron"

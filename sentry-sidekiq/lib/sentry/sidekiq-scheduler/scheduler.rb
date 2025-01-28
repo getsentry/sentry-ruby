@@ -38,17 +38,7 @@ module Sentry
         monitor_config =
           case interval_type
           when "cron"
-            # Split schedule into cron and timezone parts (if timezone exists)
-            cron_parts = schedule.strip.split(" ")
-
-            if cron_parts.length > 5
-              timezone = cron_parts.pop
-              cron_without_timezone = cron_parts.join(" ")
-
-              Sentry::Cron::MonitorConfig.from_crontab(cron_without_timezone, timezone: timezone)
-            else
-              Sentry::Cron::MonitorConfig.from_crontab(schedule)
-            end
+            Sentry::Sidekiq::Cron::Helpers.monitor_config(schedule)
           when "every", "interval"
             Sentry::Cron::MonitorConfig.from_interval(rufus_job.frequency.to_i / 60, :minute)
           end
