@@ -16,7 +16,7 @@ jobs:
   ruby-versions:
     uses: ruby/actions/.github/workflows/ruby_versions.yml@master
     with:
-      engine: cruby-jruby
+      engine: cruby
       min_version: 2.4
   test:
     needs: ruby-versions
