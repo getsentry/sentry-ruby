@@ -8,12 +8,36 @@ module Sentry
   class Hub
     include ArgumentCheckingHelper
 
+    MUTEX = Mutex.new
+
     attr_reader :last_event_id
+
+    attr_reader :current_profiler
 
     def initialize(client, scope)
       first_layer = Layer.new(client, scope)
       @stack = [first_layer]
       @last_event_id = nil
+      @current_profiler = {}
+    end
+
+    def start_profiler!(transaction)
+      MUTEX.synchronize do
+        transaction.start_profiler!
+        @current_profiler[transaction.__id__] = transaction.profiler
+      end
+    end
+
+    def stop_profiler!(transaction)
+      MUTEX.synchronize do
+        @current_profiler.delete(transaction.__id__)&.stop
+      end
+    end
+
+    def profiler_running?
+      MUTEX.synchronize do
+        !@current_profiler.empty?
+      end
     end
 
     def new_from_top
@@ -96,7 +120,7 @@ module Sentry
       sampling_context.merge!(custom_sampling_context)
       transaction.set_initial_sample_decision(sampling_context: sampling_context)
 
-      transaction.start_profiler!
+      start_profiler!(transaction)
 
       transaction
     end
