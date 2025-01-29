@@ -64,6 +64,15 @@ RSpec.describe Sentry::Sidekiq::Cron::Job do
     expect(HappyWorkerForCron.sentry_monitor_config.schedule.value).to eq('* * * * *')
   end
 
+  it 'patches HappyWorkerForCronWithTimezone' do
+    expect(HappyWorkerForCronWithTimezone.ancestors).to include(Sentry::Cron::MonitorCheckIns)
+    expect(HappyWorkerForCronWithTimezone.sentry_monitor_slug).to eq('happy_with_timezone')
+    expect(HappyWorkerForCronWithTimezone.sentry_monitor_config).to be_a(Sentry::Cron::MonitorConfig)
+    expect(HappyWorkerForCronWithTimezone.sentry_monitor_config.timezone).to eq('America/Los_Angeles')
+    expect(HappyWorkerForCronWithTimezone.sentry_monitor_config.schedule).to be_a(Sentry::Cron::MonitorSchedule::Crontab)
+    expect(HappyWorkerForCronWithTimezone.sentry_monitor_config.schedule.value).to eq('* * * * *')
+  end
+
   it 'patches HappyWorkerWithHumanReadableCron' do
     expect(HappyWorkerWithHumanReadableCron.ancestors).to include(Sentry::Cron::MonitorCheckIns)
     expect(HappyWorkerWithHumanReadableCron.sentry_monitor_slug).to eq('human_readable_cron')

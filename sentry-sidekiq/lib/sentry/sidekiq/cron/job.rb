@@ -55,7 +55,7 @@ module Sentry
             klass_const.send(:include, Sentry::Cron::MonitorCheckIns)
             klass_const.send(:sentry_monitor_check_ins,
                              slug: name.to_s,
-                             monitor_config: Sentry::Cron::MonitorConfig.from_crontab(parsed_cron.original))
+                             monitor_config: Sentry::Sidekiq::Cron::Helpers.monitor_config(parsed_cron.original))
           end
 
           true

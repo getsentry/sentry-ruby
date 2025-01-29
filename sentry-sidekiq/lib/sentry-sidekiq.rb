@@ -43,5 +43,6 @@ Sidekiq.configure_client do |config|
 end
 
 # patches
+require "sentry/sidekiq/cron/helpers"
 require "sentry/sidekiq/cron/job"
 require "sentry/sidekiq-scheduler/scheduler"
