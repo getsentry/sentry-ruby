@@ -15,7 +15,7 @@ gem "rails", "> 5.0.0"
 
 platform :jruby do
   # See https://github.com/jruby/activerecord-jdbc-adapter/issues/1139
-  gem "activerecord-jdbcmysql-adapter", github: "jruby/activerecord-jdbc-adapter", ref: "6b3983bbbfda75ee2a1f5bc4c8d35efd7b71d84b"
+  gem "activerecord-jdbcmysql-adapter", "<71.0", github: "jruby/activerecord-jdbc-adapter", ref: "6b3983bbbfda75ee2a1f5bc4c8d35efd7b71d84b"
   gem "jdbc-sqlite3"
 end
 
