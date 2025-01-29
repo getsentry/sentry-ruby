@@ -1,3 +1,10 @@
+## Unreleased
+
+### Bug Fixes
+
+- Accept Hash in `before_send*` callbacks again ([#2529](https://github.com/getsentry/sentry-ruby/pull/2529))
+  - Fixes [#2526](https://github.com/getsentry/sentry-ruby/issues/2526)
+
 ## 5.22.2
 
 ### Features
@@ -6,7 +13,7 @@
 - Use attempt_threshold to skip reporting on first N attempts ([#2503](https://github.com/getsentry/sentry-ruby/pull/2503))
 - Support `code.namespace` for Ruby 3.4+ stacktraces ([#2506](https://github.com/getsentry/sentry-ruby/pull/2506))
 
-### Bug fixes
+### Bug Fixes
 
 - Default to `internal_error` error type for OpenTelemetry spans [#2473](https://github.com/getsentry/sentry-ruby/pull/2473)
 - Improve `before_send` and `before_send_transaction`'s return value handling ([#2504](https://github.com/getsentry/sentry-ruby/pull/2504))
