@@ -90,7 +90,8 @@ RSpec.describe Sentry::Configuration do
     end
 
     it "raises ArgumentError when the value is not Numeric nor nil" do
-      expect { subject.traces_sample_rate = "foobar" }.to raise_error(ArgumentError)
+      expect { Sentry.init { |config| config.traces_sample_rate = "foobar" } }
+        .to raise_error(ArgumentError)
     end
   end
 
@@ -210,7 +211,8 @@ RSpec.describe Sentry::Configuration do
     end
 
     it "raises ArgumentError when the value is not Numeric nor nil" do
-      expect { subject.profiles_sample_rate = "foobar" }.to raise_error(ArgumentError)
+      expect { Sentry.init { |config| config.profiles_sample_rate = "foobar" } }
+        .to raise_error(ArgumentError)
     end
   end
 

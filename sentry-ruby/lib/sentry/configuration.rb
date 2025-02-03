@@ -417,6 +417,24 @@ module Sentry
       run_post_initialization_callbacks
     end
 
+    def validate
+      if profiler_class == Sentry::Profiler && !defined?(StackProf)
+        log_warn("Please add the 'stackprof' gem to your Gemfile to use the StackProf profiler with Sentry.")
+      end
+
+      if profiler_class == Sentry::Vernier::Profiler && !defined?(Vernier)
+        log_warn("Please add the 'vernier' gem to your Gemfile to use the Vernier profiler with Sentry.")
+      end
+
+      unless is_numeric_or_nil?(profiles_sample_rate)
+        raise ArgumentError, "profiles_sample_rate must be a Numeric or nil"
+      end
+
+      unless is_numeric_or_nil?(traces_sample_rate)
+        raise ArgumentError, "traces_sample_rate must be a Numeric or nil"
+      end
+    end
+
     def dsn=(value)
       @dsn = init_dsn(value)
     end
@@ -494,13 +512,10 @@ module Sentry
     end
 
     def traces_sample_rate=(traces_sample_rate)
-      raise ArgumentError, "traces_sample_rate must be a Numeric or nil" unless is_numeric_or_nil?(traces_sample_rate)
       @traces_sample_rate = traces_sample_rate
     end
 
     def profiles_sample_rate=(profiles_sample_rate)
-      raise ArgumentError, "profiles_sample_rate must be a Numeric or nil" unless is_numeric_or_nil?(profiles_sample_rate)
-      log_warn("Please make sure to include the 'stackprof' gem in your Gemfile to use Profiling with Sentry.") unless defined?(StackProf)
       @profiles_sample_rate = profiles_sample_rate
     end
 
@@ -509,7 +524,6 @@ module Sentry
         begin
           require "vernier"
         rescue LoadError
-          raise ArgumentError, "Please add the 'vernier' gem to your Gemfile to use the Vernier profiler with Sentry."
         end
       end
 
