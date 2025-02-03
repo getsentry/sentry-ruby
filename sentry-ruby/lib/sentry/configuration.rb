@@ -360,7 +360,36 @@ module Sentry
       def add_post_initialization_callback(&block)
         post_initialization_callbacks << block
       end
+
+      def validations
+        @validations ||= {}
+      end
+
+      def validate(attribute, optional: false, type: nil)
+        validations[attribute] = {
+          optional: optional,
+          type: type,
+          proc: build_validation_proc(optional, type)
+        }
+      end
+
+      private
+
+      def build_validation_proc(optional, type)
+        case type
+        when :numeric
+          ->(value) do
+            return true if optional && value.nil?
+            value.is_a?(Numeric)
+          end
+        else
+          ->(value) { true }
+        end
+      end
     end
+
+    validate :traces_sample_rate, optional: true, type: :numeric
+    validate :profiles_sample_rate, optional: true, type: :numeric
 
     def initialize
       self.app_dirs_pattern = APP_DIRS_PATTERN
@@ -426,12 +455,14 @@ module Sentry
         log_warn("Please add the 'vernier' gem to your Gemfile to use the Vernier profiler with Sentry.")
       end
 
-      unless is_numeric_or_nil?(profiles_sample_rate)
-        raise ArgumentError, "profiles_sample_rate must be a Numeric or nil"
-      end
+      self.class.validations.each do |attribute, validation|
+        value = instance_variable_get("@#{attribute}")
 
-      unless is_numeric_or_nil?(traces_sample_rate)
-        raise ArgumentError, "traces_sample_rate must be a Numeric or nil"
+        next if validation[:proc].call(value)
+
+        type_name = validation[:type].to_s
+
+        raise ArgumentError, "#{attribute} must be a #{type_name.capitalize}#{validation[:optional] ? ' or nil' : ''}"
       end
     end
 
