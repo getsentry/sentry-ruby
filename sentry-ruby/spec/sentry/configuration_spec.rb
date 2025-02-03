@@ -123,6 +123,17 @@ RSpec.describe Sentry::Configuration do
 
           expect(subject.tracing_enabled?).to eq(false)
         end
+
+        it "prints deprecation message when being assigned" do
+          string_io = StringIO.new
+          subject.logger = Logger.new(string_io)
+
+          subject.enable_tracing = true
+
+          expect(string_io.string).to include(
+            "WARN -- sentry: `enable_tracing` is now deprecated in favor of `traces_sample_rate = 1.0`."
+          )
+        end
       end
     end
 

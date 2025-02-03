@@ -264,6 +264,7 @@ module Sentry
 
     # Easier way to use performance tracing
     # If set to true, will set traces_sample_rate to 1.0
+    # @deprecated It will be removed in the next major release.
     # @return [Boolean, nil]
     attr_reader :enable_tracing
 
@@ -542,6 +543,12 @@ module Sentry
     end
 
     def enable_tracing=(enable_tracing)
+      unless enable_tracing.nil?
+        log_warn <<~MSG
+          `enable_tracing` is now deprecated in favor of `traces_sample_rate = 1.0`.
+        MSG
+      end
+
       @enable_tracing = enable_tracing
       @traces_sample_rate ||= 1.0 if enable_tracing
     end

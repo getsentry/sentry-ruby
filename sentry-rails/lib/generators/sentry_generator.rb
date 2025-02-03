@@ -16,7 +16,7 @@ class SentryGenerator < ::Rails::Generators::Base
       Sentry.init do |config|
         config.breadcrumbs_logger = [:active_support_logger]
         config.dsn = #{dsn}
-        config.enable_tracing = true
+        config.traces_sample_rate = 1.0
       end
     RUBY
   end
