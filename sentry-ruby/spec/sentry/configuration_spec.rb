@@ -90,7 +90,8 @@ RSpec.describe Sentry::Configuration do
     end
 
     it "raises ArgumentError when the value is not Numeric nor nil" do
-      expect { subject.traces_sample_rate = "foobar" }.to raise_error(ArgumentError)
+      expect { Sentry.init { |config| config.traces_sample_rate = "foobar" } }
+        .to raise_error(ArgumentError, "must be a Numeric or nil")
     end
   end
 
@@ -210,7 +211,8 @@ RSpec.describe Sentry::Configuration do
     end
 
     it "raises ArgumentError when the value is not Numeric nor nil" do
-      expect { subject.profiles_sample_rate = "foobar" }.to raise_error(ArgumentError)
+      expect { Sentry.init { |config| config.profiles_sample_rate = "foobar" } }
+        .to raise_error(ArgumentError, "must be a Numeric or nil")
     end
   end
 
@@ -703,12 +705,6 @@ RSpec.describe Sentry::Configuration do
     end
 
     it "sets the profiler class to StackProf when Vernier is not available", when: { ruby_version?: [:<, "3.2"] } do
-      expect { subject.profiler_class = Sentry::Vernier::Profiler }
-        .to raise_error(
-          ArgumentError,
-          /Please add the 'vernier' gem to your Gemfile/
-        )
-
       expect(subject.profiler_class).to eq(Sentry::Profiler)
     end
   end

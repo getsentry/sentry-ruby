@@ -360,7 +360,46 @@ module Sentry
       def add_post_initialization_callback(&block)
         post_initialization_callbacks << block
       end
+
+      def validations
+        @validations ||= {}
+      end
+
+      def validate(attribute, optional: false, type: nil)
+        validations[attribute] = {
+          optional: optional,
+          type: type,
+          proc: build_validation_proc(optional, type)
+        }
+      end
+
+      private
+
+      def build_validation_proc(optional, type)
+        case type
+        when :numeric
+          ->(value) do
+            if optional && value.nil?
+              true
+            else
+              unless value.is_a?(Numeric)
+                message = "must be a Numeric"
+                message += " or nil" if optional
+
+                { error: message, value: value }
+              else
+                true
+              end
+            end
+          end
+        else
+          ->(value) { true }
+        end
+      end
     end
+
+    validate :traces_sample_rate, optional: true, type: :numeric
+    validate :profiles_sample_rate, optional: true, type: :numeric
 
     def initialize
       self.app_dirs_pattern = APP_DIRS_PATTERN
@@ -415,6 +454,24 @@ module Sentry
       @gem_specs = Hash[Gem::Specification.map { |spec| [spec.name, spec.version.to_s] }] if Gem::Specification.respond_to?(:map)
 
       run_post_initialization_callbacks
+    end
+
+    def validate
+      if profiler_class == Sentry::Profiler && !defined?(StackProf)
+        log_warn("Please add the 'stackprof' gem to your Gemfile to use the StackProf profiler with Sentry.")
+      end
+
+      if profiler_class == Sentry::Vernier::Profiler && !defined?(Vernier)
+        log_warn("Please add the 'vernier' gem to your Gemfile to use the Vernier profiler with Sentry.")
+      end
+
+      self.class.validations.each do |attribute, validation|
+        value = public_send(attribute)
+
+        next if (result = validation[:proc].call(value)) === true
+
+        raise ArgumentError, result[:error]
+      end
     end
 
     def dsn=(value)
@@ -489,18 +546,11 @@ module Sentry
       @traces_sample_rate ||= 1.0 if enable_tracing
     end
 
-    def is_numeric_or_nil?(value)
-      value.is_a?(Numeric) || value.nil?
-    end
-
     def traces_sample_rate=(traces_sample_rate)
-      raise ArgumentError, "traces_sample_rate must be a Numeric or nil" unless is_numeric_or_nil?(traces_sample_rate)
       @traces_sample_rate = traces_sample_rate
     end
 
     def profiles_sample_rate=(profiles_sample_rate)
-      raise ArgumentError, "profiles_sample_rate must be a Numeric or nil" unless is_numeric_or_nil?(profiles_sample_rate)
-      log_warn("Please make sure to include the 'stackprof' gem in your Gemfile to use Profiling with Sentry.") unless defined?(StackProf)
       @profiles_sample_rate = profiles_sample_rate
     end
 
@@ -509,7 +559,6 @@ module Sentry
         begin
           require "vernier"
         rescue LoadError
-          raise ArgumentError, "Please add the 'vernier' gem to your Gemfile to use the Vernier profiler with Sentry."
         end
       end
 
