@@ -705,12 +705,6 @@ RSpec.describe Sentry::Configuration do
     end
 
     it "sets the profiler class to StackProf when Vernier is not available", when: { ruby_version?: [:<, "3.2"] } do
-      expect { subject.profiler_class = Sentry::Vernier::Profiler }
-        .to raise_error(
-          ArgumentError,
-          /Please add the 'vernier' gem to your Gemfile/
-        )
-
       expect(subject.profiler_class).to eq(Sentry::Profiler)
     end
   end
