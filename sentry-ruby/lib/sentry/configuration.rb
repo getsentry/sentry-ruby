@@ -379,8 +379,18 @@ module Sentry
         case type
         when :numeric
           ->(value) do
-            return true if optional && value.nil?
-            value.is_a?(Numeric)
+            if optional && value.nil?
+              true
+            else
+              unless value.is_a?(Numeric)
+                message = "must be a Numeric"
+                message += " or nil" if optional
+
+                { error: message, value: value }
+              else
+                true
+              end
+            end
           end
         else
           ->(value) { true }
@@ -456,13 +466,11 @@ module Sentry
       end
 
       self.class.validations.each do |attribute, validation|
-        value = instance_variable_get("@#{attribute}")
+        value = public_send(attribute)
 
-        next if validation[:proc].call(value)
+        next if (result = validation[:proc].call(value)) === true
 
-        type_name = validation[:type].to_s
-
-        raise ArgumentError, "#{attribute} must be a #{type_name.capitalize}#{validation[:optional] ? ' or nil' : ''}"
+        raise ArgumentError, result[:error]
       end
     end
 
