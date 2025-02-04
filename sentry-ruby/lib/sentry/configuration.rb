@@ -538,10 +538,6 @@ module Sentry
       @traces_sample_rate ||= 1.0 if enable_tracing
     end
 
-    def is_numeric_or_nil?(value)
-      value.is_a?(Numeric) || value.nil?
-    end
-
     def traces_sample_rate=(traces_sample_rate)
       @traces_sample_rate = traces_sample_rate
     end
