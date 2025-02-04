@@ -245,6 +245,7 @@ module Sentry
     attr_reader :cron
 
     # Metrics related configuration.
+    # @deprecated It will be removed in the next major release.
     # @return [Metrics::Configuration]
     attr_reader :metrics
 
@@ -450,7 +451,7 @@ module Sentry
 
       @transport = Transport::Configuration.new
       @cron = Cron::Configuration.new
-      @metrics = Metrics::Configuration.new
+      @metrics = Metrics::Configuration.new(self.logger)
       @gem_specs = Hash[Gem::Specification.map { |spec| [spec.name, spec.version.to_s] }] if Gem::Specification.respond_to?(:map)
 
       run_post_initialization_callbacks
