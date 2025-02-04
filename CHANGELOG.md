@@ -6,6 +6,28 @@
 - Revert "[rails] support string errors in error reporter (#2464)" ([#2533](https://github.com/getsentry/sentry-ruby/pull/2533))
 - Removed unnecessary warning about missing `stackprof` when Vernier is configured as the profiler ([#2537](https://github.com/getsentry/sentry-ruby/pull/2537))
 
+### Miscellaneous
+
+- Deprecate all Metrics related APIs [#2539](https://github.com/getsentry/sentry-ruby/pull/2539)
+    
+    Sentry [no longer has the Metrics Beta offering](https://sentry.zendesk.com/hc/en-us/articles/26369339769883-Metrics-Beta-Ended-on-October-7th) so
+    all the following APIs linked to Metrics have been deprecated and will be removed in the next major.
+
+    ```ruby
+    Sentry.init do |config|
+      # ...
+      config.metrics.enabled = true
+      config.metrics.enable_code_locations = true
+      config.metrics.before_emit = lambda {}
+    end
+
+    Sentry::Metrics.increment('button_click')
+    Sentry::Metrics.distribution('page_load', 15.0, unit: 'millisecond')
+    Sentry::Metrics.gauge('page_load', 15.0, unit: 'millisecond')
+    Sentry::Metrics.set('user_view', 'jane')
+    Sentry::Metrics.timing('how_long') { sleep(1) }
+    ```
+
 ## 5.22.3
 
 ### Bug Fixes
