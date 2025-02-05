@@ -609,6 +609,11 @@ module Sentry
     def utc_now
       Time.now.utc
     end
+
+    # @!visibility private
+    def dependency_installed?(name)
+      Object.const_defined?(name)
+    end
   end
 end
 
