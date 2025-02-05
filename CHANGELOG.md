@@ -8,6 +8,11 @@
 - Fix regression with CheckInEvent in before_send ([#2541](https://github.com/getsentry/sentry-ruby/pull/2541))
   - Fixes [#2540](https://github.com/getsentry/sentry-ruby/issues/2540)
 
+### Internal
+
+- Introduced `Configuration#validate` to validate configuration in `Sentry.init` block ([#2538](https://github.com/getsentry/sentry-ruby/pull/2538))
+- Introduced `Sentry.dependency_installed?` to check if a 3rd party dependency is available ie `Sentry.dependency_installed?(:Vernier)` ([#2542](https://github.com/getsentry/sentry-ruby/pull/2542))
+
 ## 5.22.3
 
 ### Bug Fixes

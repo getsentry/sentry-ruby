@@ -457,11 +457,11 @@ module Sentry
     end
 
     def validate
-      if profiler_class == Sentry::Profiler && !defined?(StackProf)
+      if profiler_class == Sentry::Profiler && profiles_sample_rate && !Sentry.dependency_installed?(:StackProf)
         log_warn("Please add the 'stackprof' gem to your Gemfile to use the StackProf profiler with Sentry.")
       end
 
-      if profiler_class == Sentry::Vernier::Profiler && !defined?(Vernier)
+      if profiler_class == Sentry::Vernier::Profiler && profiles_sample_rate && !Sentry.dependency_installed?(:Vernier)
         log_warn("Please add the 'vernier' gem to your Gemfile to use the Vernier profiler with Sentry.")
       end
 

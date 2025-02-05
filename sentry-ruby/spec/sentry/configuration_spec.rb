@@ -708,4 +708,51 @@ RSpec.describe Sentry::Configuration do
       expect(subject.profiler_class).to eq(Sentry::Profiler)
     end
   end
+
+  describe "#validate" do
+    it "logs a warning if StackProf is not installed" do
+      allow(Sentry).to receive(:dependency_installed?).with(:StackProf).and_return(false)
+
+      expect {
+        Sentry.init do |config|
+          config.logger = Logger.new($stdout)
+          config.profiles_sample_rate = 1.0
+        end
+      }.to output(/Please add the 'stackprof' gem to your Gemfile/).to_stdout
+    end
+
+    it "doesn't log a warning when StackProf is not installed and profiles_sample_rate is not set" do
+      allow(Sentry).to receive(:dependency_installed?).with(:StackProf).and_return(false)
+
+      expect {
+        Sentry.init do |config|
+          config.logger = Logger.new($stdout)
+          config.profiles_sample_rate = nil
+        end
+      }.to_not output(/Please add the 'stackprof' gem to your Gemfile/).to_stdout
+    end
+
+    it "logs a warning if Vernier is not installed" do
+      allow(Sentry).to receive(:dependency_installed?).with(:Vernier).and_return(false)
+
+      expect {
+        Sentry.init do |config|
+          config.logger = Logger.new($stdout)
+          config.profiler_class = Sentry::Vernier::Profiler
+          config.profiles_sample_rate = 1.0
+        end
+      }.to output(/Please add the 'vernier' gem to your Gemfile/).to_stdout
+    end
+
+    it "doesn't log a warning when Vernier is not installed and profiles_sample_rate is not set" do
+      allow(Sentry).to receive(:dependency_installed?).with(:Vernier).and_return(false)
+
+      expect {
+        Sentry.init do |config|
+          config.logger = Logger.new($stdout)
+          config.profiles_sample_rate = nil
+        end
+      }.to_not output(/Please add the 'vernier' gem to your Gemfile/).to_stdout
+    end
+  end
 end
