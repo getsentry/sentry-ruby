@@ -6,6 +6,11 @@
 - Revert "[rails] support string errors in error reporter (#2464)" ([#2533](https://github.com/getsentry/sentry-ruby/pull/2533))
 - Removed unnecessary warning about missing `stackprof` when Vernier is configured as the profiler ([#2537](https://github.com/getsentry/sentry-ruby/pull/2537))
 
+### Internal
+
+- Introduced `Configuration#validate` to validate configuration in `Sentry.init` block ([#2538](https://github.com/getsentry/sentry-ruby/pull/2538))
+- Introduced `Sentry.dependency_installed?` to check if a 3rd party dependency is available ie `Sentry.dependency_installed?(:Vernier)` ([#2542](https://github.com/getsentry/sentry-ruby/pull/2542))
+
 ## 5.22.3
 
 ### Bug Fixes
