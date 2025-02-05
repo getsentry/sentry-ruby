@@ -184,7 +184,7 @@ module Sentry
         event = configuration.before_send.call(event, hint)
 
         case event
-        when ErrorEvent
+        when ErrorEvent, CheckInEvent
           # do nothing
         when Hash
           log_debug(<<~MSG)

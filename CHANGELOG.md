@@ -5,6 +5,8 @@
 - Fix handling of cron with tz in Cron::Job ([#2530](https://github.com/getsentry/sentry-ruby/pull/2530))
 - Revert "[rails] support string errors in error reporter (#2464)" ([#2533](https://github.com/getsentry/sentry-ruby/pull/2533))
 - Removed unnecessary warning about missing `stackprof` when Vernier is configured as the profiler ([#2537](https://github.com/getsentry/sentry-ruby/pull/2537))
+- Fix regression with CheckInEvent in before_send ([#2541](https://github.com/getsentry/sentry-ruby/pull/2541))
+  - Fixes [#2540](https://github.com/getsentry/sentry-ruby/issues/2540)
 
 ## 5.22.3
 

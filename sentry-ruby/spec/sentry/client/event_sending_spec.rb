@@ -240,6 +240,18 @@ RSpec.describe Sentry::Client do
         end
       end
 
+      context "for check in events" do
+        let(:event_object) { client.event_from_check_in("test_slug", :ok)  }
+
+        it "does not fail due to before_send" do
+          configuration.before_send = lambda { |e, _h| e }
+          client.send_event(event)
+
+          expect(client.transport).to receive(:send_event).with(event)
+          client.send_event(event)
+        end
+      end
+
       it "doesn't apply before_send_transaction to Event" do
         dbl = double("before_send_transaction")
         allow(dbl).to receive(:call)
