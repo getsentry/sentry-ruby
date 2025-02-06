@@ -80,7 +80,7 @@ module Sentry
           def sentry_serialize_arguments(argument)
             case argument
             when Range
-              if argument.first.is_a?(ActiveSupport::TimeWithZone)
+              if (argument.begin || argument.end).is_a?(ActiveSupport::TimeWithZone)
                 argument.to_s
               else
                 argument.map { |v| sentry_serialize_arguments(v) }

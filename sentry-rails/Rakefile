@@ -5,6 +5,7 @@ require "rspec/core/rake_task"
 
 RSpec::Core::RakeTask.new(:spec).tap do |task|
   task.rspec_opts = "--order rand"
+  task.pattern = "spec/sentry/**/*_spec.rb"
 end
 
 namespace :spec do
