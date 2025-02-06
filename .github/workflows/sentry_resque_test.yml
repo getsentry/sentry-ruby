@@ -16,7 +16,7 @@ jobs:
   ruby-versions:
     uses: ruby/actions/.github/workflows/ruby_versions.yml@master
     with:
-      engine: cruby-jruby
+      engine: cruby
       min_version: 2.4
   test:
     needs: ruby-versions
@@ -37,8 +37,6 @@ jobs:
           - ruby_version: "3.2"
             options:
               rubyopt: "--enable-frozen-string-literal --debug=frozen-string-literal"
-        exclude:
-          - { ruby_version: 'jruby-head' }
     steps:
       - uses: actions/checkout@v4
       - name: Set up Ruby ${{ matrix.ruby_version }}
