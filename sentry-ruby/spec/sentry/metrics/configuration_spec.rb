@@ -3,11 +3,18 @@
 require 'spec_helper'
 
 RSpec.describe Sentry::Metrics::Configuration do
-  describe '#before_emit=' do
-    it 'raises error when setting before_emit to anything other than callable or nil' do
-      subject.before_emit = -> { }
-      subject.before_emit = nil
-      expect { subject.before_emit = true }.to raise_error(ArgumentError, 'metrics.before_emit must be callable (or nil to disable)')
+  let(:stringio) { StringIO.new }
+  subject { described_class.new(::Logger.new(stringio)) }
+
+  %i[enabled enable_code_locations before_emit].each do |method|
+    describe "#{method}=" do
+      it 'logs deprecation warning' do
+        subject.send("#{method}=", true)
+
+        expect(stringio.string).to include(
+          "WARN -- sentry: `config.metrics` is now deprecated and will be removed in the next major."
+        )
+      end
     end
   end
 end

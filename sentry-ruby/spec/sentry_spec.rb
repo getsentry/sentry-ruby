@@ -1139,14 +1139,6 @@ RSpec.describe Sentry do
         expect(described_class.backpressure_monitor).to eq(nil)
       end
 
-      it "flushes and kills metrics aggregator" do
-        perform_basic_setup { |c| c.metrics.enabled = true }
-        expect(described_class.metrics_aggregator).to receive(:flush).with(force: true)
-        expect(described_class.metrics_aggregator).to receive(:kill)
-        described_class.close
-        expect(described_class.metrics_aggregator).to eq(nil)
-      end
-
       it "flushes transport" do
         expect(described_class.get_current_client).to receive(:flush)
         described_class.close

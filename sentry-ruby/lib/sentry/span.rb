@@ -1,7 +1,6 @@
 # frozen_string_literal: true
 
 require "securerandom"
-require "sentry/metrics/local_aggregator"
 
 module Sentry
   class Span
@@ -187,9 +186,6 @@ module Sentry
         origin: @origin
       }
 
-      summary = metrics_summary
-      hash[:_metrics_summary] = summary if summary
-
       hash
     end
 
@@ -305,15 +301,6 @@ module Sentry
     # @param origin [String]
     def set_origin(origin)
       @origin = origin
-    end
-
-    # Collects gauge metrics on the span for metric summaries.
-    def metrics_local_aggregator
-      @metrics_local_aggregator ||= Sentry::Metrics::LocalAggregator.new
-    end
-
-    def metrics_summary
-      @metrics_local_aggregator&.to_hash
     end
   end
 end

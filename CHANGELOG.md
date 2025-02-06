@@ -13,6 +13,28 @@
 - Introduced `Configuration#validate` to validate configuration in `Sentry.init` block ([#2538](https://github.com/getsentry/sentry-ruby/pull/2538))
 - Introduced `Sentry.dependency_installed?` to check if a 3rd party dependency is available ie `Sentry.dependency_installed?(:Vernier)` ([#2542](https://github.com/getsentry/sentry-ruby/pull/2542))
 
+### Miscellaneous
+
+- Deprecate all Metrics related APIs [#2539](https://github.com/getsentry/sentry-ruby/pull/2539)
+    
+    Sentry [no longer has the Metrics Beta offering](https://sentry.zendesk.com/hc/en-us/articles/26369339769883-Metrics-Beta-Ended-on-October-7th) so
+    all the following APIs linked to Metrics have been deprecated and will be removed in the next major.
+
+    ```ruby
+    Sentry.init do |config|
+      # ...
+      config.metrics.enabled = true
+      config.metrics.enable_code_locations = true
+      config.metrics.before_emit = lambda {}
+    end
+
+    Sentry::Metrics.increment('button_click')
+    Sentry::Metrics.distribution('page_load', 15.0, unit: 'millisecond')
+    Sentry::Metrics.gauge('page_load', 15.0, unit: 'millisecond')
+    Sentry::Metrics.set('user_view', 'jane')
+    Sentry::Metrics.timing('how_long') { sleep(1) }
+    ```
+
 ## 5.22.3
 
 ### Bug Fixes
