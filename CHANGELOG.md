@@ -1,4 +1,4 @@
-## Unreleased
+## 5.22.4
 
 ### Bug Fixes
 
