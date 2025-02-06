@@ -163,10 +163,14 @@ RSpec.describe "ActiveJob integration", type: :job do
 
     it "serializes range arguments gracefully when Range consists of ActiveSupport::TimeWithZone" do
       post = Post.create!
+
       range = 5.days.ago...1.day.ago
+      range_no_beginning = (..1.day.ago)
+      range_no_end = (5.days.ago..)
 
       expect do
-        JobWithArgument.perform_now("foo", { bar: Sentry }, integer: 1, post: post, range: range)
+        JobWithArgument.perform_now("foo", { bar: Sentry },
+          integer: 1, post: post, range: range, range_no_beginning: range_no_beginning, range_no_end: range_no_end)
       end.to raise_error(RuntimeError)
 
       event = transport.events.last.to_json_compatible
@@ -177,7 +181,9 @@ RSpec.describe "ActiveJob integration", type: :job do
           {
             "integer" => 1,
             "post" => "gid://rails-test-app/Post/#{post.id}",
-            "range" => "#{range.first}...#{range.last}"
+            "range" => "#{range.first}...#{range.last}",
+            "range_no_beginning" => "..#{range_no_beginning.last}",
+            "range_no_end" => "#{range_no_end.first}.."
           }
         ]
       )
