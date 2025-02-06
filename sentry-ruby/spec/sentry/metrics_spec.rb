@@ -116,7 +116,7 @@ RSpec.describe Sentry::Metrics do
 
       before do
         perform_basic_setup do |config|
-          config.enable_tracing = true
+          config.traces_sample_rate = 1.0
           config.metrics.enabled = true
         end
 

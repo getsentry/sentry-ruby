@@ -11,7 +11,7 @@ RSpec.describe Sentry::Metrics::Aggregator do
   before do
     perform_basic_setup do |config|
       config.metrics.enabled = true
-      config.enable_tracing = true
+      config.traces_sample_rate = 1.0
       config.release = 'test-release'
       config.environment = 'test'
       config.logger = Logger.new(string_io)
@@ -194,7 +194,7 @@ RSpec.describe Sentry::Metrics::Aggregator do
       before do
         perform_basic_setup do |config|
           config.metrics.enabled = true
-          config.enable_tracing = true
+          config.traces_sample_rate = 1.0
           config.release = 'test-release'
           config.environment = 'test'
           config.logger = Logger.new(string_io)

@@ -1,3 +1,9 @@
+## Unreleased
+
+### Miscellaneous
+
+- Deprecate `enable_tracing` in favor of `traces_sample_rate = 1.0` [#2535](https://github.com/getsentry/sentry-ruby/pull/2535)
+
 ## 5.22.4
 
 ### Bug Fixes
