@@ -79,6 +79,12 @@ module Sentry
 
           def sentry_serialize_arguments(argument)
             case argument
+            when Range
+              if argument.first.is_a?(ActiveSupport::TimeWithZone)
+                argument.to_s
+              else
+                argument.map { |v| sentry_serialize_arguments(v) }
+              end
             when Hash
               argument.transform_values { |v| sentry_serialize_arguments(v) }
             when Array, Enumerable
