@@ -1,5 +1,10 @@
 ## Unreleased
 
+
+### Bug Fixes
+
+- Fix argument serialization for ranges that consist of ActiveSupport::TimeWithZone ([#2548](https://github.com/getsentry/sentry-ruby/pull/2548))
+
 ### Miscellaneous
 
 - Deprecate `enable_tracing` in favor of `traces_sample_rate = 1.0` [#2535](https://github.com/getsentry/sentry-ruby/pull/2535)
