@@ -56,6 +56,17 @@ RSpec.describe :http_logger do
         { status: 200, method: "POST", url: "http://example.com/path", query: "foo=bar", body: 'quz=qux' }
       )
     end
+
+    { 200 => :info, 400 => :warning, 500 => :error }.each do |status, level|
+      it "has correct level #{level} for #{status}" do
+        stub_normal_response(code: status)
+        response = Net::HTTP.get_response(URI("http://example.com/path?foo=bar"))
+
+        crumb = Sentry.get_current_scope.breadcrumbs.peek
+        expect(crumb.level).to eq(level)
+        expect(crumb.data[:status]).to eq(status)
+      end
+    end
   end
 
   context "with config.send_default_pii = false" do

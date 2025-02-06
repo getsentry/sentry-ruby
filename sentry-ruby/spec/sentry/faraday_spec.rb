@@ -65,6 +65,18 @@ RSpec.describe Sentry::Faraday do
           stub.post("/test") do
             [200, { "Content-Type" => "application/json" }, { hello: "world" }.to_json]
           end
+
+          stub.get("/200") do
+            [200, { "Content-Type" => "text/html" }, "<h1>hello world</h1>"]
+          end
+
+          stub.get("/400") do
+            [400, { "Content-Type" => "text/html" }, "<h1>bad request</h1>"]
+          end
+
+          stub.get("/500") do
+            [500, { "Content-Type" => "text/html" }, "<h1>server error</h1>"]
+          end
         end
       end
     end
@@ -94,22 +106,39 @@ RSpec.describe Sentry::Faraday do
       })
     end
 
-    it "records breadcrumbs" do
-      transaction = Sentry.start_transaction
-      Sentry.get_current_scope.set_span(transaction)
+    context "breadcrumbs" do
+      it "records correct data in breadcrumbs" do
+        transaction = Sentry.start_transaction
+        Sentry.get_current_scope.set_span(transaction)
 
-      _response = http.get("/test?foo=bar")
+        _response = http.get("/test?foo=bar")
 
-      transaction.span_recorder.spans.last
+        transaction.span_recorder.spans.last
 
-      crumb = Sentry.get_current_scope.breadcrumbs.peek
+        crumb = Sentry.get_current_scope.breadcrumbs.peek
+        expect(crumb.category).to eq("http")
+        expect(crumb.level).to eq(:info)
+        expect(crumb.data[:status]).to eq(200)
+        expect(crumb.data[:method]).to eq("GET")
+        expect(crumb.data[:url]).to eq("http://example.com/test")
+        expect(crumb.data[:query]).to eq("foo=bar")
+        expect(crumb.data[:body]).to be(nil)
+      end
 
-      expect(crumb.category).to eq("http")
-      expect(crumb.data[:status]).to eq(200)
-      expect(crumb.data[:method]).to eq("GET")
-      expect(crumb.data[:url]).to eq("http://example.com/test")
-      expect(crumb.data[:query]).to eq("foo=bar")
-      expect(crumb.data[:body]).to be(nil)
+      { 200 => :info, 400 => :warning, 500 => :error }.each do |status, level|
+        it "has correct level #{level} for #{status}" do
+          transaction = Sentry.start_transaction
+          Sentry.get_current_scope.set_span(transaction)
+
+          _response = http.get("/#{status}")
+
+          transaction.span_recorder.spans.last
+
+          crumb = Sentry.get_current_scope.breadcrumbs.peek
+          expect(crumb.level).to eq(level)
+          expect(crumb.data[:status]).to eq(status)
+        end
+      end
     end
 
     it "records POST request body" do

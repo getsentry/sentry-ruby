@@ -117,24 +117,43 @@ RSpec.describe "Sentry::Excon" do
         })
       end
 
-      it "records breadcrumbs" do
-        Excon.stub({}, { body: "", status: 200 })
+      context "breadcrumbs" do
+        it "records correct data in breadcrumbs" do
+          Excon.stub({}, { body: "", status: 200 })
 
-        transaction = Sentry.start_transaction
-        Sentry.get_current_scope.set_span(transaction)
+          transaction = Sentry.start_transaction
+          Sentry.get_current_scope.set_span(transaction)
 
-        _response = Excon.get("http://example.com/path?foo=bar", mock: true)
+          _response = Excon.get("http://example.com/path?foo=bar", mock: true)
 
-        transaction.span_recorder.spans.last
+          transaction.span_recorder.spans.last
 
-        crumb = Sentry.get_current_scope.breadcrumbs.peek
+          crumb = Sentry.get_current_scope.breadcrumbs.peek
+          expect(crumb.category).to eq("http")
+          expect(crumb.level).to eq(:info)
+          expect(crumb.data[:status]).to eq(200)
+          expect(crumb.data[:method]).to eq("GET")
+          expect(crumb.data[:url]).to eq("http://example.com/path")
+          expect(crumb.data[:query]).to eq("foo=bar")
+          expect(crumb.data[:body]).to be(nil)
+        end
 
-        expect(crumb.category).to eq("http")
-        expect(crumb.data[:status]).to eq(200)
-        expect(crumb.data[:method]).to eq("GET")
-        expect(crumb.data[:url]).to eq("http://example.com/path")
-        expect(crumb.data[:query]).to eq("foo=bar")
-        expect(crumb.data[:body]).to be(nil)
+        { 200 => :info, 400 => :warning, 500 => :error }.each do |status, level|
+          it "has correct level #{level} for #{status}" do
+            Excon.stub({}, { body: "", status: status })
+
+            transaction = Sentry.start_transaction
+            Sentry.get_current_scope.set_span(transaction)
+
+            _response = Excon.get("http://example.com/path?foo=bar", mock: true)
+
+            transaction.span_recorder.spans.last
+
+            crumb = Sentry.get_current_scope.breadcrumbs.peek
+            expect(crumb.level).to eq(level)
+            expect(crumb.data[:status]).to eq(status)
+          end
+        end
       end
     end
 

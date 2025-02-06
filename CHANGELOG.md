@@ -1,5 +1,9 @@
 ## Unreleased
 
+### Features
+
+- Add correct breadcrumb levels for 4xx/5xx response codes ([#2549](https://github.com/getsentry/sentry-ruby/pull/2549))
+
 ### Miscellaneous
 
 - Deprecate `enable_tracing` in favor of `traces_sample_rate = 1.0` [#2535](https://github.com/getsentry/sentry-ruby/pull/2535)
