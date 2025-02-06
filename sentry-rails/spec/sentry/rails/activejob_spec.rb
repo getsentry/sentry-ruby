@@ -139,6 +139,27 @@ RSpec.describe "ActiveJob integration", type: :job do
         ]
       )
     end
+
+    it "serializes range arguments gracefully when Range#map is implemented" do
+      post = Post.create!
+
+      expect do
+        JobWithArgument.perform_now("foo", { bar: Sentry }, integer: 1, post: post, range: 1..3)
+      end.to raise_error(RuntimeError)
+
+      event = transport.events.last.to_json_compatible
+      expect(event.dig("extra", "arguments")).to eq(
+        [
+          "foo",
+          { "bar" => "Sentry" },
+          {
+            "integer" => 1,
+            "post" => "gid://rails-test-app/Post/#{post.id}",
+            "range" => [1, 2, 3]
+          }
+        ]
+      )
+    end
   end
 
   it "adds useful context to extra" do
