@@ -61,7 +61,13 @@ module Sentry
       def get_level(status)
         return :info unless status && status.is_a?(Integer)
 
-        status >= 500 ? :error : (status >= 400 ? :warning : :info)
+if status >= 500
+  :error
+elsif status >= 400
+  :warning
+else
+  :info
+end
       end
     end
   end
