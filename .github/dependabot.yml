@@ -1,74 +1,14 @@
 version: 2
-
 updates:
-  - directory: "sentry-delayed_job"
-    package-ecosystem: "bundler"
+  - package-ecosystem: "bundler"
     schedule:
       interval: "daily"
     allow:
       - dependency-type: "direct"
-    ignore:
-      - dependency-type: "all"
-        update-types: ["version-update:semver-patch"]
-      - patterns:
-        - "**/examples/**"
-
-  - directory: "sentry-opentelemetry"
-    package-ecosystem: "bundler"
-    schedule:
-      interval: "daily"
-    allow:
-      - dependency-type: "direct"
-    ignore:
-      - dependency-type: "all"
-        update-types: ["version-update:semver-patch"]
-      - patterns:
-        - "**/examples/**"
-
-  - directory: "sentry-rails"
-    package-ecosystem: "bundler"
-    schedule:
-      interval: "daily"
-    allow:
-      - dependency-type: "direct"
-    ignore:
-      - dependency-type: "all"
-        update-types: ["version-update:semver-patch"]
-      - patterns:
-        - "**/examples/**"
-
-  - directory: "sentry-ruby"
-    package-ecosystem: "bundler"
-    schedule:
-      interval: "daily"
-    allow:
-      - dependency-type: "direct"
-    ignore:
-      - dependency-type: "all"
-        update-types: ["version-update:semver-patch"]
-      - patterns:
-        - "**/examples/**"
-
-  - directory: "sentry-resque"
-    package-ecosystem: "bundler"
-    schedule:
-      interval: "daily"
-    allow:
-      - dependency-type: "direct"
-    ignore:
-      - dependency-type: "all"
-        update-types: ["version-update:semver-patch"]
-      - patterns:
-        - "**/examples/**"
-
-  - directory: "sentry-sidekiq"
-    package-ecosystem: "bundler"
-    schedule:
-      interval: "daily"
-    allow:
-      - dependency-type: "direct"
-    ignore:
-      - dependency-type: "all"
-        update-types: ["version-update:semver-patch"]
-      - patterns:
-        - "**/examples/**"
+    directories:
+      - "sentry-delayed_job"
+      - "sentry-opentelemetry"
+      - "sentry-rails"
+      - "sentry-ruby"
+      - "sentry-resque"
+      - "sentry-sidekiq"
