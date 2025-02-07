@@ -13,4 +13,4 @@ gem "opentelemetry-instrumentation-rails"
 
 gem "sentry-ruby", path: "../sentry-ruby"
 
-eval_gemfile File.expand_path("../Gemfile", __dir__)
+eval_gemfile "../Gemfile"

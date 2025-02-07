@@ -60,4 +60,4 @@ gem "benchmark_driver"
 gem "benchmark-ipsa"
 gem "benchmark-memory"
 
-eval_gemfile File.expand_path("../Gemfile", __dir__)
+eval_gemfile "../Gemfile"

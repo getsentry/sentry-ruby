@@ -31,4 +31,4 @@ elsif ruby_version >= Gem::Version.new("3.1.0")
   gem "sqlite3", "~> 2.2", platform: :ruby
 end
 
-eval_gemfile File.expand_path("../Gemfile", __dir__)
+eval_gemfile "../Gemfile"
