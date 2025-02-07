@@ -17,7 +17,7 @@ module Sentry
 
       def record_sentry_breadcrumb(request_info, response_status)
         crumb = Sentry::Breadcrumb.new(
-          level: :info,
+          level: get_level(response_status),
           category: self.class::BREADCRUMB_CATEGORY,
           type: "info",
           data: { status: response_status, **request_info }
@@ -54,6 +54,20 @@ module Sentry
           raise ArgumentError, "value must be a Hash" if prefix.nil?
           "#{URI.encode_www_form_component(prefix)}=#{URI.encode_www_form_component(value)}"
         end
+      end
+
+      private
+
+      def get_level(status)
+        return :info unless status && status.is_a?(Integer)
+
+if status >= 500
+  :error
+elsif status >= 400
+  :warning
+else
+  :info
+end
       end
     end
   end
