@@ -16,7 +16,7 @@ jobs:
   ruby-versions:
     uses: ruby/actions/.github/workflows/ruby_versions.yml@master
     with:
-      engine: cruby
+      engine: cruby-jruby
       min_version: 2.4
   test:
     needs: ruby-versions
@@ -58,6 +58,8 @@ jobs:
           - ruby_version: 3.4
             rack_version: 3.1
             redis_rb_version: 5.3
+        exclude:
+          - { ruby_version: 'jruby-head' }
     steps:
       - uses: actions/checkout@v4
 

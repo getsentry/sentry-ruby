@@ -45,6 +45,7 @@ jobs:
           # LoadError:
           #  cannot load such file -- mutex_m
           - { ruby_version: "head" }
+          - { ruby_version: 'jruby-head' }
     steps:
       - uses: actions/checkout@v4
       - name: Install sqlite
