@@ -1,0 +1,68 @@
+version: 2
+
+updates:
+  - directory: "sentry-delayed_job"
+    schedule:
+      interval: "daily"
+    allow:
+      - dependency-type: "direct"
+    ignore:
+      - dependency-type: "all"
+        update-types: ["version-update:semver-patch"]
+      - patterns:
+        - "**/examples/**"
+
+  - directory: "sentry-opentelemetry"
+    schedule:
+      interval: "daily"
+    allow:
+      - dependency-type: "direct"
+    ignore:
+      - dependency-type: "all"
+        update-types: ["version-update:semver-patch"]
+      - patterns:
+        - "**/examples/**"
+
+  - directory: "sentry-rails"
+    schedule:
+      interval: "daily"
+    allow:
+      - dependency-type: "direct"
+    ignore:
+      - dependency-type: "all"
+        update-types: ["version-update:semver-patch"]
+      - patterns:
+        - "**/examples/**"
+
+  - directory: "sentry-ruby"
+    schedule:
+      interval: "daily"
+    allow:
+      - dependency-type: "direct"
+    ignore:
+      - dependency-type: "all"
+        update-types: ["version-update:semver-patch"]
+      - patterns:
+        - "**/examples/**"
+
+  - directory: "sentry-resque"
+    schedule:
+      interval: "daily"
+    allow:
+      - dependency-type: "direct"
+    ignore:
+      - dependency-type: "all"
+        update-types: ["version-update:semver-patch"]
+      - patterns:
+        - "**/examples/**"
+
+  - directory: "sentry-sidekiq"
+    schedule:
+      interval: "daily"
+    allow:
+      - dependency-type: "direct"
+    ignore:
+      - dependency-type: "all"
+        update-types: ["version-update:semver-patch"]
+      - patterns:
+        - "**/examples/**"
