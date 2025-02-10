@@ -3,8 +3,11 @@
 source "https://rubygems.org"
 git_source(:github) { |name| "https://github.com/#{name}.git" }
 
+eval_gemfile "../Gemfile"
+
 # Specify your gem's dependencies in sentry-ruby.gemspec
 gemspec
+
 gem "sentry-ruby", path: "../sentry-ruby"
 gem "sentry-rails", path: "../sentry-rails"
 
@@ -26,5 +29,3 @@ end
 gem "rails", "> 5.0.0"
 
 gem "timecop"
-
-eval_gemfile "../Gemfile"

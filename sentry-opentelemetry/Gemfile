@@ -3,6 +3,8 @@
 source "https://rubygems.org"
 git_source(:github) { |name| "https://github.com/#{name}.git" }
 
+eval_gemfile "../Gemfile"
+
 # Specify your gem's dependencies in sentry-ruby.gemspec
 gemspec
 
@@ -12,5 +14,3 @@ gem "opentelemetry-sdk"
 gem "opentelemetry-instrumentation-rails"
 
 gem "sentry-ruby", path: "../sentry-ruby"
-
-eval_gemfile "../Gemfile"

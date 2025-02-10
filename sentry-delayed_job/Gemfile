@@ -3,6 +3,8 @@
 source "https://rubygems.org"
 git_source(:github) { |name| "https://github.com/#{name}.git" }
 
+eval_gemfile "../Gemfile"
+
 # Specify your gem's dependencies in sentry-ruby.gemspec
 gemspec
 gem "sentry-ruby", path: "../sentry-ruby"
@@ -14,8 +16,7 @@ gem "delayed_job_active_record"
 gem "rails", "> 5.0.0"
 
 platform :jruby do
-  # See https://github.com/jruby/activerecord-jdbc-adapter/issues/1139
-  gem "activerecord-jdbcmysql-adapter", "<71.0", github: "jruby/activerecord-jdbc-adapter", ref: "6b3983bbbfda75ee2a1f5bc4c8d35efd7b71d84b"
+  gem "activerecord-jdbcmysql-adapter"
   gem "jdbc-sqlite3"
 end
 
@@ -30,5 +31,3 @@ elsif ruby_version >= Gem::Version.new("3.0.0") && ruby_version < Gem::Version.n
 elsif ruby_version >= Gem::Version.new("3.1.0")
   gem "sqlite3", "~> 2.2", platform: :ruby
 end
-
-eval_gemfile "../Gemfile"
