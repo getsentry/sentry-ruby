@@ -19,7 +19,7 @@ end
 gem "rspec", "~> 3.0"
 gem "rspec-retry"
 gem "simplecov"
-gem "simplecov-cobertura", "~> 1.4"
+gem "simplecov-cobertura", "~> 2.1"
 gem "rexml"
 
 group :rubocop do
