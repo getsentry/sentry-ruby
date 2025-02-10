@@ -3,6 +3,8 @@
 source "https://rubygems.org"
 git_source(:github) { |name| "https://github.com/#{name}.git" }
 
+eval_gemfile "../Gemfile"
+
 # Specify your gem's dependencies in sentry-ruby.gemspec
 gemspec
 gem "sentry-ruby", path: "../sentry-ruby"
@@ -59,5 +61,3 @@ gem "benchmark-ips"
 gem "benchmark_driver"
 gem "benchmark-ipsa"
 gem "benchmark-memory"
-
-eval_gemfile File.expand_path("../Gemfile", __dir__)

@@ -3,7 +3,7 @@
 source "https://rubygems.org"
 git_source(:github) { |name| "https://github.com/#{name}.git" }
 
-eval_gemfile File.expand_path("../Gemfile", __dir__)
+eval_gemfile "../Gemfile"
 
 # Specify your gem's dependencies in sentry-ruby.gemspec
 gemspec

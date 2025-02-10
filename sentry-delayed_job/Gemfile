@@ -3,6 +3,8 @@
 source "https://rubygems.org"
 git_source(:github) { |name| "https://github.com/#{name}.git" }
 
+eval_gemfile "../Gemfile"
+
 # Specify your gem's dependencies in sentry-ruby.gemspec
 gemspec
 gem "sentry-ruby", path: "../sentry-ruby"
@@ -29,5 +31,3 @@ elsif ruby_version >= Gem::Version.new("3.0.0") && ruby_version < Gem::Version.n
 elsif ruby_version >= Gem::Version.new("3.1.0")
   gem "sqlite3", "~> 2.2", platform: :ruby
 end
-
-eval_gemfile File.expand_path("../Gemfile", __dir__)
