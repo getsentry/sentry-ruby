@@ -3,7 +3,7 @@
 source "https://rubygems.org"
 git_source(:github) { |name| "https://github.com/#{name}.git" }
 
-gem "jar-dependencies", "0.5.4" if RUBY_PLATFORM == "java"
+gem "jar-dependencies" if RUBY_PLATFORM == "java"
 gem "rake", "~> 12.0"
 
 ruby_version = Gem::Version.new(RUBY_VERSION)
