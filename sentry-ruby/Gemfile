@@ -32,4 +32,4 @@ gem "webrick"
 gem "faraday"
 gem "excon"
 
-eval_gemfile File.expand_path("../Gemfile", __dir__)
+eval_gemfile "../Gemfile"
