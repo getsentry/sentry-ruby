@@ -5,6 +5,24 @@ require "rspec/core/rake_task"
 
 RSpec::Core::RakeTask.new(:spec).tap do |task|
   task.rspec_opts = "--order rand"
+  task.pattern = "spec/sentry/**/*_spec.rb"
+end
+
+namespace :spec do
+  RSpec::Core::RakeTask.new(:versioned).tap do |task|
+    ruby_ver_dir = RUBY_VERSION.split(".")[0..1].join(".")
+    matching_dir = Dir["spec/versioned/*"].detect { |dir| File.basename(dir) <= ruby_ver_dir }
+
+    unless matching_dir
+      puts "No versioned specs found for ruby #{RUBY_VERSION}"
+      exit 0
+    end
+
+    puts "Running versioned specs from #{matching_dir} for ruby #{RUBY_VERSION}"
+
+    task.rspec_opts = "--order rand"
+    task.pattern = "#{matching_dir}/**/*_spec.rb"
+  end
 end
 
 task :isolated_specs do
@@ -13,4 +31,4 @@ task :isolated_specs do
   end
 end
 
-task default: [:spec, :isolated_specs]
+task default: [:spec, :"spec:versioned", :isolated_specs]
