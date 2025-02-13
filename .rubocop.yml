@@ -18,3 +18,4 @@ AllCops:
     - "sentry-raven/**/*"
     - "sentry-*/tmp/**/*"
     - "sentry-*/examples/**/*"
+    - "sentry-*/spec/versioned/2.7/**/*"
