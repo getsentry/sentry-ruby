@@ -6,6 +6,12 @@ require 'contexts/with_request_mock'
 RSpec.describe Sentry::Net::HTTP do
   include_context "with request mock"
 
+  around do |example|
+    WebMock.disable!
+    example.run
+    WebMock.enable!
+  end
+
   let(:string_io) { StringIO.new }
   let(:logger) do
     ::Logger.new(string_io)

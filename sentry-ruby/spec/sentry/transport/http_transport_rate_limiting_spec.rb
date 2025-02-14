@@ -6,6 +6,12 @@ require 'contexts/with_request_mock'
 RSpec.describe "rate limiting" do
   include_context "with request mock"
 
+  around do |example|
+    WebMock.disable!
+    example.run
+    WebMock.enable!
+  end
+
   before do
     perform_basic_setup do |config|
       config.logger = Logger.new(string_io)
@@ -107,7 +113,7 @@ RSpec.describe "rate limiting" do
 
   describe "rate limit header processing" do
     before do
-      stub_request(fake_response)
+      sentry_stub_request(fake_response)
     end
 
     shared_examples "rate limiting headers handling" do

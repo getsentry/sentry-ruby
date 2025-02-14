@@ -6,6 +6,12 @@ require 'contexts/with_request_mock'
 RSpec.describe Sentry::HTTPTransport do
   include_context "with request mock"
 
+  around do |example|
+    WebMock.disable!
+    example.run
+    WebMock.enable!
+  end
+
   let(:configuration) do
     Sentry::Configuration.new.tap do |config|
       config.dsn = Sentry::TestHelper::DUMMY_DSN
@@ -22,7 +28,7 @@ RSpec.describe Sentry::HTTPTransport do
   subject { client.transport }
 
   it "logs a debug message only during initialization" do
-    stub_request(build_fake_response("200"))
+    sentry_stub_request(build_fake_response("200"))
     string_io = StringIO.new
     configuration.logger = Logger.new(string_io)
 
@@ -39,7 +45,7 @@ RSpec.describe Sentry::HTTPTransport do
   end
 
   it "initializes new Net::HTTP instance for every request" do
-    stub_request(build_fake_response("200")) do |request|
+    sentry_stub_request(build_fake_response("200")) do |request|
       expect(request["User-Agent"]).to eq("sentry-ruby/#{Sentry::VERSION}")
     end
 
@@ -87,7 +93,7 @@ RSpec.describe Sentry::HTTPTransport do
     let(:fake_response) { build_fake_response("200") }
 
     it 'sets default User-Agent' do
-      stub_request(fake_response) do |request|
+      sentry_stub_request(fake_response) do |request|
         expect(request["User-Agent"]).to eq("sentry-ruby/#{Sentry::VERSION}")
       end
 
@@ -97,7 +103,7 @@ RSpec.describe Sentry::HTTPTransport do
     it "accepts custom proxy" do
       configuration.transport.proxy = { uri:  URI("https://example.com"), user: "stan", password: "foobar" }
 
-      stub_request(fake_response) do |_, http_obj|
+      sentry_stub_request(fake_response) do |_, http_obj|
         expect(http_obj.proxy_address).to eq("example.com")
         expect(http_obj.proxy_user).to eq("stan")
         expect(http_obj.proxy_pass).to eq("foobar")
@@ -109,7 +115,7 @@ RSpec.describe Sentry::HTTPTransport do
     it "accepts a custom proxy string" do
       configuration.transport.proxy = "https://stan:foobar@example.com:8080"
 
-      stub_request(fake_response) do |_, http_obj|
+      sentry_stub_request(fake_response) do |_, http_obj|
         expect(http_obj.proxy_address).to eq("example.com")
         expect(http_obj.proxy_user).to eq("stan")
         expect(http_obj.proxy_pass).to eq("foobar")
@@ -122,7 +128,7 @@ RSpec.describe Sentry::HTTPTransport do
     it "accepts a custom proxy URI" do
       configuration.transport.proxy = URI("https://stan:foobar@example.com:8080")
 
-      stub_request(fake_response) do |_, http_obj|
+      sentry_stub_request(fake_response) do |_, http_obj|
         expect(http_obj.proxy_address).to eq("example.com")
         expect(http_obj.proxy_user).to eq("stan")
         expect(http_obj.proxy_pass).to eq("foobar")
@@ -136,7 +142,7 @@ RSpec.describe Sentry::HTTPTransport do
       begin
         ENV["http_proxy"] = "https://stan:foobar@example.com:8080"
 
-        stub_request(fake_response) do |_, http_obj|
+        sentry_stub_request(fake_response) do |_, http_obj|
           expect(http_obj.proxy_address).to eq("example.com")
           expect(http_obj.proxy_port).to eq(8080)
 
@@ -155,7 +161,7 @@ RSpec.describe Sentry::HTTPTransport do
     it "accepts custom timeout" do
       configuration.transport.timeout = 10
 
-      stub_request(fake_response) do |_, http_obj|
+      sentry_stub_request(fake_response) do |_, http_obj|
         expect(http_obj.read_timeout).to eq(10)
 
         if Gem::Version.new(RUBY_VERSION) >= Gem::Version.new("2.6")
@@ -169,7 +175,7 @@ RSpec.describe Sentry::HTTPTransport do
     it "accepts custom open_timeout" do
       configuration.transport.open_timeout = 10
 
-      stub_request(fake_response) do |_, http_obj|
+      sentry_stub_request(fake_response) do |_, http_obj|
         expect(http_obj.open_timeout).to eq(10)
       end
 
@@ -178,7 +184,7 @@ RSpec.describe Sentry::HTTPTransport do
 
     describe "ssl configurations" do
       it "has the corrent default" do
-        stub_request(fake_response) do |_, http_obj|
+        sentry_stub_request(fake_response) do |_, http_obj|
           expect(http_obj.verify_mode).to eq(1)
           expect(http_obj.ca_file).to eq(nil)
         end
@@ -189,7 +195,7 @@ RSpec.describe Sentry::HTTPTransport do
       it "accepts custom ssl_verification configuration" do
         configuration.transport.ssl_verification = false
 
-        stub_request(fake_response) do |_, http_obj|
+        sentry_stub_request(fake_response) do |_, http_obj|
           expect(http_obj.verify_mode).to eq(0)
           expect(http_obj.ca_file).to eq(nil)
         end
@@ -200,7 +206,7 @@ RSpec.describe Sentry::HTTPTransport do
       it "accepts custom ssl_ca_file configuration" do
         configuration.transport.ssl_ca_file = "/tmp/foo"
 
-        stub_request(fake_response) do |_, http_obj|
+        sentry_stub_request(fake_response) do |_, http_obj|
           expect(http_obj.verify_mode).to eq(1)
           expect(http_obj.ca_file).to eq("/tmp/foo")
         end
@@ -211,7 +217,7 @@ RSpec.describe Sentry::HTTPTransport do
       it "accepts custom ssl configuration" do
         configuration.transport.ssl  = { verify: false, ca_file: "/tmp/foo" }
 
-        stub_request(fake_response) do |_, http_obj|
+        sentry_stub_request(fake_response) do |_, http_obj|
           expect(http_obj.verify_mode).to eq(0)
           expect(http_obj.ca_file).to eq("/tmp/foo")
         end
@@ -225,7 +231,7 @@ RSpec.describe Sentry::HTTPTransport do
     let(:fake_response) { build_fake_response("200") }
 
     it "compresses data by default" do
-      stub_request(fake_response) do |request|
+      sentry_stub_request(fake_response) do |request|
         expect(request["Content-Type"]).to eq("application/x-sentry-envelope")
         expect(request["Content-Encoding"]).to eq("gzip")
 
@@ -238,7 +244,7 @@ RSpec.describe Sentry::HTTPTransport do
     end
 
     it "doesn't compress small event" do
-      stub_request(fake_response) do |request|
+      sentry_stub_request(fake_response) do |request|
         expect(request["Content-Type"]).to eq("application/x-sentry-envelope")
         expect(request["Content-Encoding"]).to eq("")
 
@@ -255,7 +261,7 @@ RSpec.describe Sentry::HTTPTransport do
     it "doesn't compress data if the encoding is not gzip" do
       configuration.transport.encoding = "json"
 
-      stub_request(fake_response) do |request|
+      sentry_stub_request(fake_response) do |request|
         expect(request["Content-Type"]).to eq("application/x-sentry-envelope")
         expect(request["Content-Encoding"]).to eq("")
 
@@ -296,7 +302,7 @@ RSpec.describe Sentry::HTTPTransport do
       let(:fake_response) { build_fake_response("404") }
 
       it "raises an error" do
-        stub_request(fake_response)
+        sentry_stub_request(fake_response)
 
         expect { subject.send_data(data) }.to raise_error(Sentry::ExternalError, /the server responded with status 404/)
       end
@@ -306,7 +312,7 @@ RSpec.describe Sentry::HTTPTransport do
       let(:fake_response) { build_fake_response("500") }
 
       it "raises an error" do
-        stub_request(fake_response)
+        sentry_stub_request(fake_response)
 
         expect { subject.send_data(data) }.to raise_error(Sentry::ExternalError, /the server responded with status 500/)
       end
@@ -318,7 +324,7 @@ RSpec.describe Sentry::HTTPTransport do
       end
 
       it "raises an error with header" do
-        stub_request(error_response)
+        sentry_stub_request(error_response)
 
         expect { subject.send_data(data) }.to raise_error(Sentry::ExternalError, /error_in_header/)
       end
