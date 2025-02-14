@@ -85,7 +85,11 @@ module Sentry
       @effective_sample_rate = nil
       @contexts = {}
       @measurements = {}
-      @profiler = @configuration.profiler_class.new(@configuration)
+
+      unless @hub.profiler_running?
+        @profiler = @configuration.profiler_class.new(@configuration)
+      end
+
       init_span_recorder
     end
 
@@ -257,7 +261,7 @@ module Sentry
         @name = UNLABELD_NAME
       end
 
-      @profiler.stop
+      @hub.stop_profiler!(self)
 
       if @sampled
         event = hub.current_client.event_from_transaction(self)
@@ -299,6 +303,8 @@ module Sentry
     # Start the profiler.
     # @return [void]
     def start_profiler!
+      return unless profiler
+
       profiler.set_initial_sample_decision(sampled)
       profiler.start
     end
