@@ -25,6 +25,7 @@ end
 
 require "sentry-ruby"
 require "sentry/test_helper"
+require "webmock/rspec"
 
 require_relative "support/profiler"
 require_relative "support/stacktrace_test_fixture"
