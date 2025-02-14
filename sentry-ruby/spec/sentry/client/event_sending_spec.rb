@@ -10,6 +10,11 @@ RSpec.describe Sentry::Client do
       config.transport.transport_class = Sentry::DummyTransport
     end
   end
+
+  before do
+    stub_request(:post, Sentry::TestHelper::DUMMY_DSN)
+  end
+
   subject(:client) { Sentry::Client.new(configuration) }
 
   let(:hub) do
@@ -470,13 +475,16 @@ RSpec.describe Sentry::Client do
         before do
           configuration.background_worker_threads = 0
           Sentry.background_worker = Sentry::BackgroundWorker.new(configuration)
+
+          stub_request(:post, "http://sentry.localdomain/sentry/api/42/envelope/")
+            .to_raise(Timeout::Error)
         end
 
         it "swallows and logs Sentry::ExternalError (caused by transport's networking error)" do
           expect(client.capture_event(event, scope)).to be_nil
 
-          expect(string_io.string).to match(/Event sending failed: Failed to open TCP connection/)
-          expect(string_io.string).to match(/Event capturing failed: Failed to open TCP connection/)
+          expect(string_io.string).to match(/Event sending failed: Exception from WebMock/)
+          expect(string_io.string).to match(/Event capturing failed: Exception from WebMock/)
         end
 
         it "swallows and logs errors caused by the user (like in before_send)" do
@@ -502,13 +510,16 @@ RSpec.describe Sentry::Client do
       context "when sending events in background causes error", retry: 3 do
         before do
           Sentry.background_worker = Sentry::BackgroundWorker.new(configuration)
+
+          stub_request(:post, "http://sentry.localdomain/sentry/api/42/envelope/")
+            .to_raise(Timeout::Error)
         end
 
         it "swallows and logs Sentry::ExternalError (caused by transport's networking error)" do
           expect(client.capture_event(event, scope)).to be_a(Sentry::ErrorEvent)
           sleep(0.2)
 
-          expect(string_io.string).to match(/Event sending failed: Failed to open TCP connection/)
+          expect(string_io.string).to match(/Event sending failed: Exception from WebMock/)
         end
 
         it "swallows and logs errors caused by the user (like in before_send)" do
@@ -560,11 +571,14 @@ RSpec.describe Sentry::Client do
     describe "#send_event" do
       context "error happens when sending the event" do
         it "raises the error" do
+          stub_request(:post, "http://sentry.localdomain/sentry/api/42/envelope/")
+            .to_raise(Timeout::Error)
+
           expect do
             client.send_event(event)
           end.to raise_error(Sentry::ExternalError)
 
-          expect(string_io.string).to match(/Event sending failed: Failed to open TCP connection/)
+          expect(string_io.string).to match(/Event sending failed: Exception from WebMock/)
         end
       end
 
@@ -635,6 +649,9 @@ RSpec.describe Sentry::Client do
         end
 
         it "records lost span delta client reports" do
+          stub_request(:post, "http://sentry.localdomain/sentry/api/42/envelope/")
+            .to_raise(Timeout::Error)
+
           expect { client.send_event(transaction_event) }.to raise_error(Sentry::ExternalError)
           expect(client.transport).to have_recorded_lost_event(:before_send, 'span', num: 2)
         end
