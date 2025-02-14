@@ -537,7 +537,7 @@ RSpec.describe Sentry::Transport do
           to_raise(Timeout::Error)
         end
 
-        it "raises the error" do
+        it "raises Sentry::ExternalError" do
           expect { subject.send_event(event) }.to raise_error(Sentry::ExternalError)
         end
       end
