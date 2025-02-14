@@ -21,6 +21,8 @@ module Sentry
       @current_profiler = {}
     end
 
+    # This is an internal private method
+    # @api private
     def start_profiler!(transaction)
       MUTEX.synchronize do
         transaction.start_profiler!
@@ -28,12 +30,16 @@ module Sentry
       end
     end
 
+    # This is an internal private method
+    # @api private
     def stop_profiler!(transaction)
       MUTEX.synchronize do
         @current_profiler.delete(transaction.__id__)&.stop
       end
     end
 
+    # This is an internal private method
+    # @api private
     def profiler_running?
       MUTEX.synchronize do
         !@current_profiler.empty?
