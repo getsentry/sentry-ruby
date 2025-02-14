@@ -531,11 +531,14 @@ RSpec.describe Sentry::Transport do
         end
       end
 
-      context "with Faraday::Error" do
+      context "with an HTTP exception" do
+        before do
+          stub_request(:post, "http://sentry.localdomain:80/sentry/api/42/envelope/").
+          to_raise(Timeout::Error)
+        end
+
         it "raises the error" do
-          expect do
-            subject.send_event(event)
-          end.to raise_error(Sentry::ExternalError)
+          expect { subject.send_event(event) }.to raise_error(Sentry::ExternalError)
         end
       end
     end
