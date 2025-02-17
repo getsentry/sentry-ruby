@@ -12,6 +12,7 @@ RSpec.describe "Sentry RSpec Matchers" do
       config.dsn = 'https://2fb45f003d054a7ea47feb45898f7649@o447951.ingest.sentry.io/5434472'
       config.enabled_environments = ["production"]
       config.environment = :test
+      config.transport.transport_class = Sentry::DummyTransport
     end
 
     setup_sentry_test

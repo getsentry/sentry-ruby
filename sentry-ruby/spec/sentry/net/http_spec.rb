@@ -6,39 +6,9 @@ require 'contexts/with_request_mock'
 RSpec.describe Sentry::Net::HTTP do
   include_context "with request mock"
 
-  around do |example|
-    WebMock.disable!
-    example.run
-    WebMock.enable!
-  end
-
   let(:string_io) { StringIO.new }
   let(:logger) do
     ::Logger.new(string_io)
-  end
-
-  context "with IPv6 addresses" do
-    before do
-      perform_basic_setup do |config|
-        config.traces_sample_rate = 1.0
-      end
-    end
-
-    it "correctly parses the short-hand IPv6 addresses" do
-      stub_normal_response
-
-      transaction = Sentry.start_transaction
-      Sentry.get_current_scope.set_span(transaction)
-
-      _ = Net::HTTP.get("::1", "/path", 8080)
-
-      expect(transaction.span_recorder.spans.count).to eq(2)
-
-      request_span = transaction.span_recorder.spans.last
-      expect(request_span.data).to eq(
-        { "url" => "http://[::1]/path", "http.request.method" => "GET", "http.response.status_code" => 200 }
-      )
-    end
   end
 
   context "with tracing enabled" do
@@ -49,6 +19,24 @@ RSpec.describe Sentry::Net::HTTP do
         config.logger = logger
         # the dsn needs to have a real host so we can make a real connection before sending a failed request
         config.dsn = 'http://foobarbaz@o447951.ingest.sentry.io/5434472'
+      end
+    end
+
+    context "with IPv6 addresses" do
+      it "correctly parses the short-hand IPv6 addresses" do
+        stub_normal_response
+
+        transaction = Sentry.start_transaction
+        Sentry.get_current_scope.set_span(transaction)
+
+        _ = Net::HTTP.get("::1", "/path", 8080)
+
+        expect(transaction.span_recorder.spans.count).to eq(2)
+
+        request_span = transaction.span_recorder.spans.last
+        expect(request_span.data).to eq(
+          { "url" => "http://[::1]/path", "http.request.method" => "GET", "http.response.status_code" => 200 }
+        )
       end
     end
 
