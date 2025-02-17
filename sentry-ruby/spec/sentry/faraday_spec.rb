@@ -271,13 +271,7 @@ RSpec.describe Sentry::Faraday do
 
     let(:url) { "http://example.com" }
 
-    around do |example|
-      WebMock.disable!
-      example.run
-      WebMock.enable!
-    end
-
-    it "skips instrumentation" do
+    it "skips instrumentation", webmock: false do
       transaction = Sentry.start_transaction
       Sentry.get_current_scope.set_span(transaction)
 

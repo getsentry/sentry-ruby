@@ -70,6 +70,12 @@ RSpec.configure do |config|
     skip("Skipping because one or more guards `#{guards.inspect}` returned false") if skip_examples
   end
 
+  config.around(:each, webmock: false) do |example|
+    WebMock.disable!
+    example.run
+    WebMock.enable!
+  end
+
   RSpec::Matchers.define :have_recorded_lost_event do |reason, data_category, num: 1|
     match do |transport|
       expect(transport.discarded_events[[reason, data_category]]).to eq(num)

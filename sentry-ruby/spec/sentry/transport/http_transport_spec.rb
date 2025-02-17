@@ -6,12 +6,6 @@ require 'contexts/with_request_mock'
 RSpec.describe Sentry::HTTPTransport do
   include_context "with request mock"
 
-  around do |example|
-    WebMock.disable!
-    example.run
-    WebMock.enable!
-  end
-
   let(:configuration) do
     Sentry::Configuration.new.tap do |config|
       config.dsn = Sentry::TestHelper::DUMMY_DSN

@@ -12,6 +12,12 @@ RSpec.shared_context "with request mock" do
     allow(TCPSocket).to receive(:open).and_return(FakeSocket.new)
   end
 
+  around do |example|
+    WebMock.disable!
+    example.run
+    WebMock.enable!
+  end
+
   def sentry_stub_request(fake_response, &block)
     allow_any_instance_of(Net::HTTP).to receive(:connect)
     allow_any_instance_of(Net::HTTP).to receive(:transport_request) do |http_obj, request|
