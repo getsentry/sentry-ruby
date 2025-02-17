@@ -183,8 +183,8 @@ RSpec.describe Sentry do
     context "with spotlight" do
       before { perform_basic_setup { |c| c.spotlight = true } }
 
-      it "sends the event to spotlight too" do
-        stub_request(build_fake_response("200")) do |request, http_obj|
+      it "sends the event to spotlight too", webmock: false do
+        sentry_stub_request(build_fake_response("200")) do |request, http_obj|
           expect(request["Content-Type"]).to eq("application/x-sentry-envelope")
           expect(request["Content-Encoding"]).to eq("gzip")
           expect(http_obj.address).to eq("localhost")

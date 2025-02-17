@@ -23,7 +23,6 @@ module Sentry
       Zlib::BufError, Errno::EHOSTUNREACH, Errno::ECONNREFUSED
     ].freeze
 
-
     def initialize(*args)
       super
       log_debug("Sentry HTTP Transport will connect to #{@dsn.server}") if @dsn

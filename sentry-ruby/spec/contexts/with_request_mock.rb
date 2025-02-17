@@ -12,7 +12,13 @@ RSpec.shared_context "with request mock" do
     allow(TCPSocket).to receive(:open).and_return(FakeSocket.new)
   end
 
-  def stub_request(fake_response, &block)
+  around do |example|
+    WebMock.disable!
+    example.run
+    WebMock.enable!
+  end
+
+  def sentry_stub_request(fake_response, &block)
     allow_any_instance_of(Net::HTTP).to receive(:connect)
     allow_any_instance_of(Net::HTTP).to receive(:transport_request) do |http_obj, request|
       block.call(request, http_obj) if block
@@ -32,10 +38,10 @@ RSpec.shared_context "with request mock" do
 
   def stub_sentry_response
     # use bad request as an example is easier for verifying with error messages
-    stub_request(build_fake_response("400", body: { data: "bad sentry DSN public key" }))
+    sentry_stub_request(build_fake_response("400", body: { data: "bad sentry DSN public key" }))
   end
 
   def stub_normal_response(code: "200", &block)
-    stub_request(build_fake_response(code), &block)
+    sentry_stub_request(build_fake_response(code), &block)
   end
 end

@@ -107,7 +107,7 @@ RSpec.describe "rate limiting" do
 
   describe "rate limit header processing" do
     before do
-      stub_request(fake_response)
+      sentry_stub_request(fake_response)
     end
 
     shared_examples "rate limiting headers handling" do

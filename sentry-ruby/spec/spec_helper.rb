@@ -25,6 +25,7 @@ end
 
 require "sentry-ruby"
 require "sentry/test_helper"
+require "webmock/rspec"
 
 require_relative "support/profiler"
 require_relative "support/stacktrace_test_fixture"
@@ -67,6 +68,12 @@ RSpec.configure do |config|
     end
 
     skip("Skipping because one or more guards `#{guards.inspect}` returned false") if skip_examples
+  end
+
+  config.around(:each, webmock: false) do |example|
+    WebMock.disable!
+    example.run
+    WebMock.enable!
   end
 
   RSpec::Matchers.define :have_recorded_lost_event do |reason, data_category, num: 1|
