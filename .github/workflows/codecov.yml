@@ -1,0 +1,30 @@
+name: CodeCov
+
+on:
+  workflow_run:
+    workflows:
+      - "sentry-delayed_job Test"
+      - "sentry-opentelemetry Test"
+      - "sentry-rails Test"
+      - "sentry-raven Test"
+      - "sentry-resque Test"
+      - "sentry-ruby Test"
+      - "sentry-sidekiq Test"
+    types:
+      - completed
+    branches:
+      - master
+    pull_request:
+      branches:
+        - master
+
+jobs:
+  codecov:
+    runs-on: ubuntu-latest
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
+    steps:
+      - name: Codecov
+        uses: codecov/codecov-action@v5.3.1
+
+      - name: Trigger Codecov
+        run: codecovcli send-notifications
