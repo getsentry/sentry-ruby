@@ -15,13 +15,18 @@ gem "sentry-rails", path: "../sentry-rails"
 # loofah changed the required ruby version in a patch so we need to explicitly pin it
 gem "loofah", "2.20.0" if RUBY_VERSION.to_f < 2.5
 
-sidekiq_version = ENV["SIDEKIQ_VERSION"]
-sidekiq_version = "7.0" if sidekiq_version.nil?
-sidekiq_version = Gem::Version.new(sidekiq_version)
+if ENV["SIDEKIQ_MAIN"]
+  gem "sidekiq", github: "sidekiq/sidekiq", branch: "main"
+  sidekiq_version = "main"
+else
+  sidekiq_version = ENV["SIDEKIQ_VERSION"]
+  sidekiq_version = "7.0" if sidekiq_version.nil?
+  sidekiq_version = Gem::Version.new(sidekiq_version)
 
-gem "sidekiq", "~> #{sidekiq_version}"
+  gem "sidekiq", "~> #{sidekiq_version}"
+end
 
-if RUBY_VERSION.to_f >= 2.7 && sidekiq_version >= Gem::Version.new("6.0")
+if sidekiq_version == "main" || RUBY_VERSION.to_f >= 2.7 && sidekiq_version >= Gem::Version.new("6.0")
   gem "sidekiq-cron"
   gem "sidekiq-scheduler"
 end
