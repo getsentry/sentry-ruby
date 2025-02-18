@@ -2,24 +2,22 @@ name: sentry-delayed_job Test
 
 on:
   workflow_dispatch:
-  push:
-    branches:
-      - master
-      - \d+-\d+
-  pull_request:
+  workflow_call:
+    outputs:
+      matrix-result:
+        description: "Matrix job result"
+        value: ${{ jobs.test.outputs.matrix-result }}
+    inputs:
+      versions:
+        required: true
+        type: string
 # Cancel in progress workflows on pull_requests.
 # https://docs.github.com/en/actions/using-jobs/using-concurrency#example-using-a-fallback-value
 concurrency:
-  group: ${{ github.workflow }}-${{ github.head_ref || github.run_id }}
+  group: sentry-delayed-job-test-${{ github.head_ref || github.run_id }}
   cancel-in-progress: true
 jobs:
-  ruby-versions:
-    uses: ruby/actions/.github/workflows/ruby_versions.yml@master
-    with:
-      engine: cruby-jruby
-      min_version: 2.4
   test:
-    needs: ruby-versions
     defaults:
       run:
         working-directory: sentry-delayed_job
@@ -32,7 +30,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        ruby_version: ${{ fromJson(needs.ruby-versions.outputs.versions) }}
+        ruby_version: ${{ fromJson(inputs.versions) }}
         include:
           - ruby_version: "3.2"
             options:

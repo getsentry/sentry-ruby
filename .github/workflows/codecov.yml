@@ -21,10 +21,8 @@ on:
 jobs:
   codecov:
     runs-on: ubuntu-latest
-    if: ${{ github.event.workflow_run.conclusion == 'success' }}
+    # if: ${{ github.event.workflow_run.conclusion == 'success' }}
     steps:
       - name: Codecov
-        uses: codecov/codecov-action@v5.3.1
-
-      - name: Trigger Codecov
-        run: codecovcli send-notifications
+        uses: codecov/codecov-action@13ce06bfc6bbe3ecf90edbbf1bc32fe5978ca1d3
+        run_command: send-notifications
