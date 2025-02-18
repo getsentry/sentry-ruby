@@ -1,5 +1,7 @@
 codecov:
   disable_default_path_fixes: true
+  notify:
+    manual_trigger: true
 ignore:
   - "**/spec/**"
 comment:
