@@ -12,7 +12,7 @@ on:
 # Cancel in progress workflows on pull_requests.
 # https://docs.github.com/en/actions/using-jobs/using-concurrency#example-using-a-fallback-value
 concurrency:
-  group: ${{ github.workflow }}-${{ github.head_ref || github.run_id }}
+  group: sentry-raven-test-${{ github.head_ref || github.run_id }}
   cancel-in-progress: true
 jobs:
   test:

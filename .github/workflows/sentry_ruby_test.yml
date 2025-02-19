@@ -2,24 +2,18 @@ name: sentry-ruby Test
 
 on:
   workflow_dispatch:
-  push:
-    branches:
-      - master
-      - \d+-\d+
-  pull_request:
+  workflow_call:
+    inputs:
+      versions:
+        required: true
+        type: string
 # Cancel in progress workflows on pull_requests.
 # https://docs.github.com/en/actions/using-jobs/using-concurrency#example-using-a-fallback-value
 concurrency:
-  group: ${{ github.workflow }}-${{ github.head_ref || github.run_id }}
+  group: sentry-ruby-test-${{ github.head_ref || github.run_id }}
   cancel-in-progress: true
 jobs:
-  ruby-versions:
-    uses: ruby/actions/.github/workflows/ruby_versions.yml@master
-    with:
-      engine: cruby-jruby
-      min_version: 2.4
   test:
-    needs: ruby-versions
     defaults:
       run:
         working-directory: sentry-ruby
@@ -35,7 +29,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        ruby_version: ${{ fromJson(needs.ruby-versions.outputs.versions) }}
+        ruby_version: ${{ fromJson(inputs.versions) }}
         rack_version: [2.0, 3.0, 3.1]
         redis_rb_version: [4.0]
         include:
