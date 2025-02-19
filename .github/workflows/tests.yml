@@ -14,7 +14,7 @@ concurrency:
 
 jobs:
   ruby-versions:
-    uses: ruby/actions/.github/workflows/ruby_versions.yml@master
+    uses: ruby/actions/.github/workflows/ruby_versions.yml@6d15c16f6259d657961bcdccf2598d3d53e90635
     with:
       engine: cruby-jruby
       min_version: 2.7
