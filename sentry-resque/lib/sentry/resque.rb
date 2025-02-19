@@ -43,7 +43,7 @@ module Sentry
               klass = if payload["class"].respond_to?(:constantize)
                 payload["class"].constantize
               else
-                Object.const_get(payload["class"])
+                Object.const_get(payload["class"].to_s)
               end
 
               raise if Sentry.configuration.resque.report_after_job_retries &&

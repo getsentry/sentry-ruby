@@ -220,7 +220,10 @@ RSpec.describe Sentry::Resque do
         expect do
           Resque::Job.create(:default, FailedRetriableJob)
           process_job(worker)
-        end.not_to raise_error
+        end.not_to raise_error(TypeError)
+
+        event = transport.events.last.to_hash
+        expect(event.dig(:exception, :values, 0, :type)).to eq("ZeroDivisionError")
       end
     end
 
