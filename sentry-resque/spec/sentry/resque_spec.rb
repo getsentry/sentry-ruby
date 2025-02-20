@@ -226,7 +226,6 @@ RSpec.describe Sentry::Resque do
         expect(event.dig(:exception, :values, 0, :type)).to eq("ZeroDivisionError")
       end
     end
-
   end
 
   rails_gems = begin
