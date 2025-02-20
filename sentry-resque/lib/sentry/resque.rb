@@ -40,16 +40,7 @@ module Sentry
 
               finish_transaction(transaction, 200)
             rescue Exception => exception
-              klass = if payload["class"].respond_to?(:constantize)
-                payload["class"].constantize
-              else
-                Object.const_get(payload["class"].to_s)
-              end
-
-              raise if Sentry.configuration.resque.report_after_job_retries &&
-                       defined?(::Resque::Plugins::Retry) == "constant" &&
-                       klass.is_a?(::Resque::Plugins::Retry) &&
-                       !klass.retry_limit_reached?
+              raise_if_retries_remain(payload["class"], exception)
 
               ::Sentry::Resque.capture_exception(exception, hint: { background: false })
               finish_transaction(transaction, 500)
@@ -92,6 +83,17 @@ module Sentry
 
           transaction.set_http_status(status)
           transaction.finish
+        end
+
+        private
+
+        def raise_if_retries_remain(klass, exception)
+          return unless Sentry.configuration.resque.report_after_job_retries &&
+            defined?(::Resque::Plugins::Retry) == "constant"
+          klass = klass.constantize if klass.respond_to?(:constantize) # Needed for Ruby < 2.7 && Rails < 7.0
+          klass = Object.const_get(klass) unless klass.is_a?(Class)
+
+          raise exception if klass.is_a?(::Resque::Plugins::Retry) && !klass.retry_limit_reached?
         end
       end
     end
