@@ -8,6 +8,7 @@
 
 - Fix argument serialization for ranges that consist of ActiveSupport::TimeWithZone ([#2548](https://github.com/getsentry/sentry-ruby/pull/2548))
 - Prevent starting Vernier in nested transactions ([#2528](https://github.com/getsentry/sentry-ruby/pull/2528))
+- Fix TypeError when Resque.inline == true ([#2564] https://github.com/getsentry/sentry-ruby/pull/2564)
 
 ### Miscellaneous
 

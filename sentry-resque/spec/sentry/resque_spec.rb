@@ -208,6 +208,24 @@ RSpec.describe Sentry::Resque do
         expect(event[:tags]).to eq({ "resque.queue" => "default" })
       end
     end
+
+    context "with Resque.inline = true" do
+      around do |example|
+        Resque.inline = true
+        example.run
+        Resque.inline = false
+      end
+
+      it 'reports the class properly' do
+        expect do
+          Resque::Job.create(:default, FailedRetriableJob)
+          process_job(worker)
+        end.not_to raise_error(TypeError)
+
+        event = transport.events.last.to_hash
+        expect(event.dig(:exception, :values, 0, :type)).to eq("ZeroDivisionError")
+      end
+    end
   end
 
   rails_gems = begin
