@@ -65,6 +65,10 @@
 - Fix latency related nil error for Sidekiq Queues Module span data [#2486](https://github.com/getsentry/sentry-ruby/pull/2486)
   - Fixes [#2485](https://github.com/getsentry/sentry-ruby/issues/2485)
 
+### Internal
+
+- Remove usage of user segment from baggage and dynamic sampling context propagation logic [#2493](https://github.com/getsentry/sentry-ruby/pull/2493) 
+
 ## 5.22.0
 
 :warning: Support for Queues tracking for ActiveJob required changing `op` in transaction context from "queue.sidekiq" to "queue.process". If you rely on this value (e.g. for sampling as described [here](https://docs.sentry.io/platforms/ruby/guides/sidekiq/configuration/sampling/#setting-a-sampling-function)), then you need to update your configuration accordingly.

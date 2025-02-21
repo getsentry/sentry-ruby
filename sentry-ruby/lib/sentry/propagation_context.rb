@@ -125,7 +125,6 @@ module Sentry
         "environment" => configuration.environment,
         "release" => configuration.release,
         "public_key" => configuration.dsn&.public_key,
-        "user_segment" => @scope.user && @scope.user["segment"]
       }
 
       items.compact!
