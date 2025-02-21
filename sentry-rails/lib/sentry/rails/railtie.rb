@@ -51,6 +51,8 @@ module Sentry
       activate_tracing
 
       register_error_subscriber(app) if ::Rails.version.to_f >= 7.0 && Sentry.configuration.rails.register_error_subscriber
+
+      register_retry_stopped_subscriber if defined?(ActiveJob)
     end
 
     runner do
@@ -136,6 +138,10 @@ module Sentry
     def register_error_subscriber(app)
       require "sentry/rails/error_subscriber"
       app.executor.error_reporter.subscribe(Sentry::Rails::ErrorSubscriber.new)
+    end
+
+    def register_retry_stopped_subscriber
+      Sentry::Rails::ActiveJobExtensions::SentryReporter.register_retry_stopped_subscriber
     end
   end
 end
