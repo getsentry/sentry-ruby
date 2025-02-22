@@ -4,14 +4,6 @@
 # which is not supported by most of the http mocking library
 # so we need to put something together ourselves
 RSpec.shared_context "with request mock" do
-  class FakeSocket < StringIO
-    def setsockopt(*args); end
-  end
-
-  before do
-    allow(TCPSocket).to receive(:open).and_return(FakeSocket.new)
-  end
-
   around do |example|
     WebMock.disable!
     example.run
