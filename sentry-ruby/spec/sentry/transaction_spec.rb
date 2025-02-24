@@ -381,10 +381,6 @@ RSpec.describe Sentry::Transaction do
           end
         end
 
-        after do
-          Sentry.instance_variable_set(:@backpressure_monitor, nil)
-        end
-
         it "uses downsampled rate to sample" do
           expect(Sentry.get_current_client.transport).to receive(:any_rate_limited?).and_return(true)
           Sentry.backpressure_monitor.run

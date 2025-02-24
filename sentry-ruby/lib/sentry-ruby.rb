@@ -52,6 +52,14 @@ module Sentry
 
   MUTEX = Mutex.new
 
+  GLOBALS = %i[
+    main_hub
+    session_flusher
+    backpressure_monitor
+    metrics_aggregator
+    exception_locals_tp
+  ].freeze
+
   class << self
     # @!visibility private
     def exception_locals_tp
