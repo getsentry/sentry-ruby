@@ -17,6 +17,7 @@ Resque.redis = ENV["REDIS_URL"] if ENV.key?("REDIS_URL")
 Resque.logger = ::Logger.new(nil)
 
 require "sentry-ruby"
+require "sentry/test_helper"
 
 require 'simplecov'
 
@@ -60,6 +61,12 @@ RSpec.configure do |config|
     Resque.redis.del "queue:default"
     example.run
     ENV["FORK_PER_JOB"] = ''
+  end
+
+  config.include(Sentry::TestHelper)
+
+  config.after :each do
+    reset_sentry_globals!
   end
 end
 

@@ -34,6 +34,12 @@ RSpec.configure do |config|
   config.expect_with :rspec do |c|
     c.syntax = :expect
   end
+
+  config.include(Sentry::TestHelper)
+
+  config.after :each do
+    reset_sentry_globals!
+  end
 end
 
 def perform_basic_setup

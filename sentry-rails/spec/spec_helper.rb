@@ -7,6 +7,8 @@ rescue LoadError
 end
 
 require "sentry-ruby"
+require "sentry/test_helper"
+
 require 'rspec/retry'
 
 require 'simplecov'
@@ -43,10 +45,14 @@ RSpec.configure do |config|
     c.syntax = :expect
   end
 
+  config.include(Sentry::TestHelper)
+
   config.after :each do
     Sentry::Rails::Tracing.unsubscribe_tracing_events
     expect(Sentry::Rails::Tracing.subscribed_tracing_events).to be_empty
     Sentry::Rails::Tracing.remove_active_support_notifications_patch
+
+    reset_sentry_globals!
   end
 
   config.before :each do

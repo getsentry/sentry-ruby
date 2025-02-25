@@ -13,6 +13,7 @@ require "delayed_job"
 require "delayed_job_active_record"
 
 require "sentry-ruby"
+require "sentry/test_helper"
 
 require 'simplecov'
 
@@ -42,6 +43,8 @@ RSpec.configure do |config|
     c.syntax = :expect
   end
 
+  config.include(Sentry::TestHelper)
+
   config.before :each do
     # Make sure we reset the env in case something leaks in
     ENV.delete('SENTRY_DSN')
@@ -49,6 +52,10 @@ RSpec.configure do |config|
     ENV.delete('SENTRY_ENVIRONMENT')
     ENV.delete('SENTRY_RELEASE')
     ENV.delete('RACK_ENV')
+  end
+
+  config.after :each do
+    reset_sentry_globals!
   end
 end
 

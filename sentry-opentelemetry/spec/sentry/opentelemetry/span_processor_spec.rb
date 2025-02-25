@@ -133,7 +133,7 @@ RSpec.describe Sentry::OpenTelemetry::SpanProcessor do
 
   describe '#on_start' do
     it 'noops when not initialized' do
-      expect(Sentry).to receive(:initialized?).and_return(false)
+      allow(Sentry).to receive(:initialized?).and_return(false)
       subject.on_start(root_span, empty_context)
       expect(subject.span_map).to eq({})
     end
@@ -230,7 +230,7 @@ RSpec.describe Sentry::OpenTelemetry::SpanProcessor do
     let(:finished_http_error_span) { http_error_span.finish }
 
     it 'noops when not initialized' do
-      expect(Sentry).to receive(:initialized?).and_return(false)
+      allow(Sentry).to receive(:initialized?).and_return(false)
       expect(subject.span_map).not_to receive(:delete)
       subject.on_finish(finished_root_span)
     end
