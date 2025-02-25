@@ -77,15 +77,7 @@ RSpec.configure do |config|
   end
 
   config.after(:each) do
-    if Sentry.initialized?
-      Sentry::MUTEX.synchronize do
-        Sentry::GLOBALS.each do |var|
-          Sentry.instance_variable_set(:"@#{var}", nil)
-        end
-
-        Thread.current.thread_variable_set(Sentry::THREAD_LOCAL, nil)
-      end
-    end
+    reset_sentry_globals!
   end
 
   RSpec::Matchers.define :have_recorded_lost_event do |reason, data_category, num: 1|
