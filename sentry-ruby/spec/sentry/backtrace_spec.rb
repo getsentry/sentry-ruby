@@ -40,6 +40,38 @@ RSpec.describe Sentry::Backtrace do
       expect(second_line.method).to eq("bar")
       expect(second_line.number).to eq(6)
     end
+
+    context "with Java backtrace" do
+      let(:java_backtrace) do
+        [
+          "org.jruby.runtime.callsite.CachingCallSite.call(CachingCallSite.java:170)",
+          "org.jruby.runtime.callsite.CachingCallSite.callBlock(CachingCallSite.java:216)",
+          "com.example.package.LongClassName.someMethod(LongClassName.java:55)"
+        ]
+      end
+
+      let(:parsed_java_backtrace) do
+        described_class.parse(java_backtrace, fixture_root, configuration.app_dirs_pattern)
+      end
+
+      it "correctly parses Java stack traces" do
+        lines = parsed_java_backtrace.lines
+
+        expect(lines.count).to eq(3)
+
+        first_line = lines.first
+        expect(first_line.file).to eq("CachingCallSite.java")
+        expect(first_line.method).to eq("call")
+        expect(first_line.module_name).to eq("org.jruby.runtime.callsite.CachingCallSite")
+        expect(first_line.number).to eq(170)
+
+        last_line = lines.last
+        expect(last_line.file).to eq("LongClassName.java")
+        expect(last_line.method).to eq("someMethod")
+        expect(last_line.module_name).to eq("com.example.package.LongClassName")
+        expect(last_line.number).to eq(55)
+      end
+    end
   end
 
   it "calls backtrace_cleanup_callback if it's present in the configuration" do

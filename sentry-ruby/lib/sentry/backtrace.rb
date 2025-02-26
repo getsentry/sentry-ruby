@@ -16,7 +16,7 @@ module Sentry
       /x
 
       # org.jruby.runtime.callsite.CachingCallSite.call(CachingCallSite.java:170)
-      JAVA_INPUT_FORMAT = /^(.+)\.([^\.]+)\(([^\:]+)\:(\d+)\)$/
+      JAVA_INPUT_FORMAT = /^([\w$.]+)\.([\w$]+)\(([\w$.]+):(\d+)\)$/
 
       # The file portion of the line (such as app/models/user.rb)
       attr_reader :file
