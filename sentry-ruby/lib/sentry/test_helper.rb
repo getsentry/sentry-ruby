@@ -85,9 +85,9 @@ module Sentry
     end
 
     def reset_sentry_globals!
-      # Don't check initialized? because sometimes we stub it in tests
-      if Sentry.instance_variable_defined?(:@main_hub)
-        Sentry::MUTEX.synchronize do
+      Sentry::MUTEX.synchronize do
+        # Don't check initialized? because sometimes we stub it in tests
+        if Sentry.instance_variable_defined?(:@main_hub)
           Sentry::GLOBALS.each do |var|
             Sentry.instance_variable_set(:"@#{var}", nil)
           end
