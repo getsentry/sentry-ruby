@@ -13,6 +13,7 @@
 ### Internal
 
 - Use `File.open` in `LineCache` ([#2566](https://github.com/getsentry/sentry-ruby/pull/2566))
+- Update java backtrace regexp ([#2567](https://github.com/getsentry/sentry-ruby/pull/2567))
 
 ### Miscellaneous
 
