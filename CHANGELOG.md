@@ -10,6 +10,10 @@
 - Prevent starting Vernier in nested transactions ([#2528](https://github.com/getsentry/sentry-ruby/pull/2528))
 - Fix TypeError when Resque.inline == true ([#2564] https://github.com/getsentry/sentry-ruby/pull/2564)
 
+### Internal
+
+- Use `File.open` in `LineCache` ([#2566](https://github.com/getsentry/sentry-ruby/pull/2566))
+
 ### Miscellaneous
 
 - Deprecate `enable_tracing` in favor of `traces_sample_rate = 1.0` [#2535](https://github.com/getsentry/sentry-ruby/pull/2535)
