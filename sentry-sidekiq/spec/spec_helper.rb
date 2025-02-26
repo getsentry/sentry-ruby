@@ -21,6 +21,7 @@ if RUBY_VERSION.to_f >= 2.7 && MIN_SIDEKIQ_6
 end
 
 require "sentry-ruby"
+require "sentry/test_helper"
 
 # Fixing crash:
 # activesupport-6.1.7.10/lib/active_support/logger_thread_safe_level.rb:16:in
@@ -67,6 +68,12 @@ RSpec.configure do |config|
 
   config.before :all do
     silence_sidekiq
+  end
+
+  config.include(Sentry::TestHelper)
+
+  config.after :each do
+    reset_sentry_globals!
   end
 end
 

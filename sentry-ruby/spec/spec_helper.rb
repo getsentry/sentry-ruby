@@ -76,6 +76,10 @@ RSpec.configure do |config|
     WebMock.enable!
   end
 
+  config.after(:each) do
+    reset_sentry_globals!
+  end
+
   RSpec::Matchers.define :have_recorded_lost_event do |reason, data_category, num: 1|
     match do |transport|
       expect(transport.discarded_events[[reason, data_category]]).to eq(num)

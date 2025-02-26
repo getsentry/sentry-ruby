@@ -326,6 +326,10 @@ RSpec.describe Sentry::HTTPTransport do
   end
 
   describe "#generate_auth_header" do
+    before do
+      allow(Time).to receive(:now).and_return(fake_time)
+    end
+
     it "generates an auth header" do
       expect(subject.send(:generate_auth_header)).to eq(
         "Sentry sentry_version=7, sentry_client=sentry-ruby/#{Sentry::VERSION}, sentry_timestamp=#{fake_time.to_i}, " \

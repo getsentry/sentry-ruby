@@ -83,5 +83,18 @@ module Sentry
     def extract_sentry_exceptions(event)
       event&.exception&.values || []
     end
+
+    def reset_sentry_globals!
+      Sentry::MUTEX.synchronize do
+        # Don't check initialized? because sometimes we stub it in tests
+        if Sentry.instance_variable_defined?(:@main_hub)
+          Sentry::GLOBALS.each do |var|
+            Sentry.instance_variable_set(:"@#{var}", nil)
+          end
+
+          Thread.current.thread_variable_set(Sentry::THREAD_LOCAL, nil)
+        end
+      end
+    end
   end
 end
