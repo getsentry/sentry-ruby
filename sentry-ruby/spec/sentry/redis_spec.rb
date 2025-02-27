@@ -3,7 +3,7 @@
 require "spec_helper"
 
 RSpec.describe Sentry::Redis do
-  let(:redis) { Redis.new(host: "127.0.0.1") }
+  let(:redis) { Redis.new(host: REDIS_HOST) }
 
   context "with tracing enabled" do
     before do
@@ -33,7 +33,7 @@ RSpec.describe Sentry::Redis do
           expect(request_span.data).to eq({
             "db.name" => 0,
             "db.system" => "redis",
-            "server.address" => "127.0.0.1",
+            "server.address" => REDIS_HOST,
             "server.port" => 6379
           })
         end
