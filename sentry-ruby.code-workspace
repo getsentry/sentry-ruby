@@ -1,30 +1,40 @@
 {
-    "folders": [
-        {
-            "path": "sentry-ruby"
-        },
-        {
-            "path": "sentry-rails"
-        },
-        {
-            "path": "sentry-sidekiq"
-        },
-        {
-            "path": "sentry-delayed_job"
-        },
-        {
-            "path": "sentry-resque"
-        },
-        {
-            "path": "sentry-opentelemetry"
-        },
-        {
-            "path": ".github"
-        }
-    ],
-    "extensions": {
-        "recommendations": [
-            "Shopify.ruby-lsp"
-        ]
+  "folders": [
+    {
+      "path": ".devcontainer"
+    },
+    {
+      "path": ".github",
+    },
+    {
+      "path": ".",
+      "name": "root"
+    },
+    {
+      "path": "sentry-ruby"
+    },
+    {
+      "path": "sentry-rails"
+    },
+    {
+      "path": "sentry-sidekiq"
+    },
+    {
+      "path": "sentry-delayed_job"
+    },
+    {
+      "path": "sentry-resque"
+    },
+    {
+      "path": "sentry-opentelemetry"
+    },
+    {
+      "path": "sentry-raven"
     }
+  ],
+  "extensions": {
+    "recommendations": [
+      "Shopify.ruby-lsp"
+    ]
+  }
 }
