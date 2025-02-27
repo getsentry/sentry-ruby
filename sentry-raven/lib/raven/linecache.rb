@@ -26,9 +26,9 @@ module Raven
 
     def getlines(path)
       @cache[path] ||= begin
-        IO.readlines(path)
-                       rescue
-                         nil
+        File.open(path, "r", &:readlines)
+      rescue
+        nil
       end
     end
 
