@@ -13,6 +13,16 @@ module Sentry
         span.set_data(Span::DataConventions::MESSAGING_MESSAGE_RECEIVE_LATENCY, latency) if latency
         span.set_data(Span::DataConventions::MESSAGING_MESSAGE_RETRY_COUNT, retry_count) if retry_count
       end
+
+      if ::Gem::Version.new(::Sidekiq::VERSION) >= ::Gem::Version.new("8.0.0.beta")
+        def calculate_latency(job)
+          (Time.now.to_f * 1000).to_i - job["enqueued_at"] if job["enqueued_at"]
+        end
+      else
+        def calculate_latency(job)
+          ((Time.now.to_f - job["enqueued_at"]) * 1000).to_i if job["enqueued_at"]
+        end
+      end
     end
 
     class SentryContextServerMiddleware
@@ -40,7 +50,8 @@ module Sentry
         if transaction
           scope.set_span(transaction)
 
-          latency = ((Time.now.to_f - job["enqueued_at"]) * 1000).to_i if job["enqueued_at"]
+          latency = calculate_latency(job)
+
           set_span_data(
             transaction,
             id: job["jid"],
