@@ -3,7 +3,7 @@
 require "spec_helper"
 
 RSpec.describe :redis_logger do
-  let(:redis) { Redis.new(host: "127.0.0.1") }
+  let(:redis) { Redis.new(host: REDIS_HOST) }
 
   before do
     perform_basic_setup do |config|
@@ -20,7 +20,7 @@ RSpec.describe :redis_logger do
       expect(result).to eq("OK")
       expect(Sentry.get_current_scope.breadcrumbs.peek).to have_attributes(
         category: "db.redis",
-        data: { commands: [{ command: "SET", key: "key" }], server: "127.0.0.1:6379/0" }
+        data: { commands: [{ command: "SET", key: "key" }], server: "#{REDIS_HOST}:6379/0" }
       )
     end
   end
@@ -34,7 +34,7 @@ RSpec.describe :redis_logger do
       expect(result).to eq("OK")
       expect(Sentry.get_current_scope.breadcrumbs.peek).to have_attributes(
         category: "db.redis",
-        data: { commands: [{ command: "SET", key: "key", arguments: "value" }], server: "127.0.0.1:6379/0" }
+        data: { commands: [{ command: "SET", key: "key", arguments: "value" }], server: "#{REDIS_HOST}:6379/0" }
       )
     end
 
@@ -62,7 +62,7 @@ RSpec.describe :redis_logger do
       expect(result.key?("uptime_in_days")).to eq(true)
       expect(Sentry.get_current_scope.breadcrumbs.peek).to have_attributes(
         category: "db.redis",
-        data: { commands: [{ command: "INFO", key: nil }], server: "127.0.0.1:6379/0" }
+        data: { commands: [{ command: "INFO", key: nil }], server: "#{REDIS_HOST}:6379/0" }
       )
     end
   end
@@ -88,7 +88,7 @@ RSpec.describe :redis_logger do
             { command: "INCR",  key: "counter" },
             { command: "EXEC",  key: nil }
           ],
-          server: "127.0.0.1:6379/0"
+          server: "#{REDIS_HOST}:6379/0"
         }
       )
     end
@@ -105,7 +105,7 @@ RSpec.describe :redis_logger do
       expect(result).to eq("OK")
       expect(Sentry.get_current_scope.breadcrumbs.peek).to have_attributes(
         category: "db.redis",
-        data: { commands: [{ command: "SET", key: "key" }], server: "127.0.0.1:6379/0" }
+        data: { commands: [{ command: "SET", key: "key" }], server: "#{REDIS_HOST}:6379/0" }
       )
     end
   end
