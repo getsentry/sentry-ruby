@@ -57,6 +57,14 @@ RSpec.configure do |config|
     c.syntax = :expect
   end
 
+  config.before :suite do
+    if WITH_SIDEKIQ_8
+      puts "*" * 100
+      puts "Running with Sidekiq 8.0.0.beta"
+      puts "*" * 100
+    end
+  end
+
   config.before :each do
     # Make sure we reset the env in case something leaks in
     ENV.delete('SENTRY_DSN')
