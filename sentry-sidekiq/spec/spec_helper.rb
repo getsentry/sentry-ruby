@@ -259,7 +259,13 @@ def execute_worker(processor, klass, **options)
   jid = options.delete(:jid) || "123123"
   timecop_delay = options.delete(:timecop_delay)
 
-  msg = Sidekiq.dump_json(created_at: Time.now.to_f, enqueued_at: Time.now.to_f, jid: jid, class: klass, args: [], **options)
+  if WITH_SIDEKIQ_8
+    current_time_ms = (Time.now.to_f * 1000).to_i
+    msg = Sidekiq.dump_json(created_at: current_time_ms, enqueued_at: current_time_ms, jid: jid, class: klass, args: [], **options)
+  else
+    msg = Sidekiq.dump_json(created_at: Time.now.to_f, enqueued_at: Time.now.to_f, jid: jid, class: klass, args: [], **options)
+  end
+
   Timecop.freeze(timecop_delay) if timecop_delay
   work = Sidekiq::BasicFetch::UnitOfWork.new('queue:default', msg)
   process_work(processor, work)
