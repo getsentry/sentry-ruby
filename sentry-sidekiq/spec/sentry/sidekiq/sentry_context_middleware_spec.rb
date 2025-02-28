@@ -96,8 +96,13 @@ RSpec.describe Sentry::Sidekiq::SentryContextServerMiddleware do
         expect(transaction.spans.count).to eq(0)
         expect(transaction.contexts[:trace][:data]['messaging.message.id']).to eq('123456') # Explicitly set above.
         expect(transaction.contexts[:trace][:data]['messaging.destination.name']).to eq('default')
-        expect(transaction.contexts[:trace][:data]['messaging.message.receive.latency']).to eq(86400000)
         expect(transaction.contexts[:trace][:data]['messaging.message.retry.count']).to eq(0)
+
+        if WITH_SIDEKIQ_8
+          expect(transaction.contexts[:trace][:data]['messaging.message.receive.latency']).to eq(0)
+        else
+          expect(transaction.contexts[:trace][:data]['messaging.message.receive.latency']).to eq(86400000)
+        end
       end
 
       if MIN_SIDEKIQ_6

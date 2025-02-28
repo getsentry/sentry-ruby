@@ -249,6 +249,10 @@ def sidekiq_config(opts)
   WITH_SIDEKIQ_7 ? ::Sidekiq::Config.new(opts) : SidekiqConfigMock.new(opts)
 end
 
+def now_in_ms
+  ::Process.clock_gettime(::Process::CLOCK_REALTIME, :millisecond)
+end
+
 def execute_worker(processor, klass, **options)
   klass_options = klass.sidekiq_options_hash || {}
   # for Ruby < 2.6
@@ -260,7 +264,7 @@ def execute_worker(processor, klass, **options)
   timecop_delay = options.delete(:timecop_delay)
 
   if WITH_SIDEKIQ_8
-    current_time_ms = (Time.now.to_f * 1000).to_i
+    current_time_ms = now_in_ms
     msg = Sidekiq.dump_json(created_at: current_time_ms, enqueued_at: current_time_ms, jid: jid, class: klass, args: [], **options)
   else
     msg = Sidekiq.dump_json(created_at: Time.now.to_f, enqueued_at: Time.now.to_f, jid: jid, class: klass, args: [], **options)
