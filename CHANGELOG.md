@@ -12,8 +12,9 @@
 
 ### Internal
 
-- Use `File.open` in `LineCache` ([#2566](https://github.com/getsentry/sentry-ruby/pull/2566))
-- Update java backtrace regexp ([#2567](https://github.com/getsentry/sentry-ruby/pull/2567))
+- [sentry-ruby] Update java backtrace regexp ([#2567](https://github.com/getsentry/sentry-ruby/pull/2567))
+- [sentry-ruby]] Use `File.open` in `LineCache` ([#2566](https://github.com/getsentry/sentry-ruby/pull/2566))
+- [sentry-raven] Use `File.open` in `LineCache` ([#2571](https://github.com/getsentry/sentry-ruby/pull/2571))
 
 ### Miscellaneous
 
