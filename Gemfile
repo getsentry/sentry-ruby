@@ -16,10 +16,10 @@ if ruby_version >= Gem::Version.new("2.7.0")
 end
 
 # For RSpec
-gem "rspec", "~> 3.0"
-gem "rspec-retry"
+gem "rspec", "~> 3.13"
+gem "rspec-retry", "~> 0.6"
 gem "simplecov"
-gem "simplecov-cobertura", "~> 1.4"
+gem "simplecov-cobertura", "~> 2.1"
 gem "rexml"
 
 group :rubocop do
