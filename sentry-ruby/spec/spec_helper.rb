@@ -18,6 +18,8 @@ SimpleCov.start do
   coverage_dir File.join(__FILE__, "../../coverage")
 end
 
+REDIS_HOST = ENV.fetch("REDIS_HOST", "127.0.0.1")
+
 if ENV["CI"]
   require 'simplecov-cobertura'
   SimpleCov.formatter = SimpleCov::Formatter::CoberturaFormatter
