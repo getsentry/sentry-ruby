@@ -22,6 +22,18 @@ And if you have any questions, please feel free to reach out on [Discord].
 If you use editors that support [VS Code-style multi-root workspaces](https://code.visualstudio.com/docs/editor/multi-root-workspaces),
 such as VS Code, Cursor...etc., opening the editor with `sentry-ruby.code-workspace` file will provide a better development experience.
 
+## Working in a devcontainer
+
+If you use [Dev Containers](https://marketplace.visualstudio.com/items?itemName=ms-vscode-remote.remote-containers) extension, you can open the project with the devcontainer by running `Remote-Containers: Reopen in Container` command.
+
+The devcontainer is configured with `.devcontainer/.env` file, that you need to create:
+
+```bash
+cp .devcontainer/.env.example .devcontainer/.env
+```
+
+This file defines which specific image and Ruby version will be used to run the code. Edit it whenever you need to use a different image or Ruby version.
+
 ## Contribute To Individual Gems
 
 - Install the dependencies of a specific gem by running `bundle` in it's subdirectory. I.e:
