@@ -463,7 +463,7 @@ RSpec.describe "ActiveJob integration", type: :job do
         allow(Sentry::Rails::ActiveJobExtensions::SentryReporter)
           .to receive(:capture_exception).and_call_original
 
-        assert_performed_jobs 1 do
+        assert_performed_jobs 3 do
           FailedJobWithRetryOn.perform_later rescue nil
         end
 
