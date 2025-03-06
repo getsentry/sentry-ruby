@@ -52,7 +52,7 @@ RSpec.configure do |config|
     expect(Sentry::Rails::Tracing.subscribed_tracing_events).to be_empty
     Sentry::Rails::Tracing.remove_active_support_notifications_patch
 
-    if defined?(Sentry::Rails::ActiveJobExtensions::SentryReporter)
+    if defined?(Sentry::Rails::ActiveJobExtensions)
       Sentry::Rails::ActiveJobExtensions::SentryReporter.detach_retry_stopped_subscriber
     end
 
