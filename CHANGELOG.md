@@ -22,7 +22,7 @@
 ### Features
 
 - Add correct breadcrumb levels for 4xx/5xx response codes ([#2549](https://github.com/getsentry/sentry-ruby/pull/2549))
-- [sentry-rails] New configuration option called `report_after_job_retries` for ActiveJob which makes reporting exceptions only happen when the last retry attempt failed ([#2500](https://github.com/getsentry/sentry-ruby/pull/2500))
+- New configuration option called `report_after_job_retries` for ActiveJob which makes reporting exceptions only happen when the last retry attempt failed ([#2500](https://github.com/getsentry/sentry-ruby/pull/2500))
 
 ### Bug Fixes
 
