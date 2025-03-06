@@ -435,13 +435,11 @@ RSpec.describe "ActiveJob integration", type: :job do
   end
 
   describe "active_job_report_after_job_retries", skip: Rails.version.to_f < 5.1 do
-    before do
-        allow(Sentry::Rails::ActiveJobExtensions::SentryReporter)
-          .to receive(:capture_exception)
-          .and_call_original
-      end
     context "when active_job_report_after_job_retries is false" do
       it "reports 3 exceptions" do
+        allow(Sentry::Rails::ActiveJobExtensions::SentryReporter)
+          .to receive(:capture_exception).and_call_original
+
         assert_performed_jobs 3 do
           FailedJobWithRetryOn.perform_later rescue nil
         end
@@ -451,6 +449,7 @@ RSpec.describe "ActiveJob integration", type: :job do
           .exactly(3).times
       end
     end
+
     context "when active_job_report_after_job_retries is true" do
       before do
         Sentry.configuration.rails.active_job_report_after_job_retries = true
@@ -461,7 +460,10 @@ RSpec.describe "ActiveJob integration", type: :job do
       end
 
       it "reports 1 exception" do
-        assert_performed_jobs 3 do
+        allow(Sentry::Rails::ActiveJobExtensions::SentryReporter)
+          .to receive(:capture_exception).and_call_original
+
+        assert_performed_jobs 1 do
           FailedJobWithRetryOn.perform_later rescue nil
         end
 
