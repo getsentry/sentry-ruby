@@ -68,8 +68,17 @@ module Sentry
           end
 
           def register_retry_stopped_subscriber
-            ActiveSupport::Notifications.subscribe(NOTIFICATION_NAME) do |*args|
-              retry_stopped_handler(*args)
+            unless @retry_stopped_subscriber
+              @retry_stopped_subscriber = ActiveSupport::Notifications.subscribe(NOTIFICATION_NAME) do |*args|
+                retry_stopped_handler(*args)
+              end
+            end
+          end
+
+          def detach_retry_stopped_subscriber
+            if @retry_stopped_subscriber
+              ActiveSupport::Notifications.unsubscribe(@retry_stopped_subscriber)
+              @retry_stopped_subscriber = nil
             end
           end
 
