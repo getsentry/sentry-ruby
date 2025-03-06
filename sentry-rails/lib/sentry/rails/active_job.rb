@@ -21,6 +21,7 @@ module Sentry
         OP_NAME = "queue.active_job"
         SPAN_ORIGIN = "auto.queue.active_job"
         NOTIFICATION_NAME = "retry_stopped.active_job"
+
         class << self
           def record(job, &block)
             Sentry.with_scope do |scope|
