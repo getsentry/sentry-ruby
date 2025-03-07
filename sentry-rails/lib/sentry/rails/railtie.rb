@@ -52,7 +52,8 @@ module Sentry
 
       register_error_subscriber(app) if ::Rails.version.to_f >= 7.0 && Sentry.configuration.rails.register_error_subscriber
 
-      register_retry_stopped_subscriber if defined?(ActiveJob)
+      # Presence of ActiveJob is no longer a reliable cue
+      register_retry_stopped_subscriber if defined?(Sentry::Rails::ActiveJobExtensions)
     end
 
     runner do
