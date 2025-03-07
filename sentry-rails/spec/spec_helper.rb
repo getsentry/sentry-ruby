@@ -34,6 +34,8 @@ DUMMY_DSN = 'http://12345:67890@sentry.localdomain/sentry/42'
 
 Dir["#{__dir__}/support/**/*.rb"].each { |file| require file }
 
+RAILS_VERSION = Rails.version.to_f
+
 RSpec.configure do |config|
   # Enable flags like --only-failures and --next-failure
   config.example_status_persistence_file_path = ".rspec_status"
