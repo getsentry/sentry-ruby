@@ -7,7 +7,7 @@ services:
         IMAGE: ${IMAGE}
         TAG: ${TAG}
     volumes:
-      - ..:/workspace/sentry:cached
+      - ..:/workspace/sentry-ruby:cached
     command: sleep infinity
     environment:
       - REDIS_URL=${REDIS_URL:-redis://redis:6379/0}

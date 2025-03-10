@@ -2,13 +2,17 @@
   "name": "sentry-ruby",
   "dockerComposeFile": "docker-compose.yml",
   "service": "app",
-  "workspaceFolder": "/workspace/sentry",
+  "workspaceFolder": "/workspace/sentry-ruby",
   "customizations": {
     "vscode": {
       "extensions": [
         "sleistner.vscode-fileutils",
         "Shopify.ruby-lsp"
-      ]
+      ],
+      "settings": {}
+    },
+    "rubyLsp.rubyVersionManager": {
+      "identifier": "none"
     }
   },
   "remoteUser": "sentry",
