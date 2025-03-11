@@ -306,4 +306,3 @@ def perform_basic_setup
     yield config if block_given?
   end
 end
-
