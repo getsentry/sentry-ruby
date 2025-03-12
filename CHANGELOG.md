@@ -3,6 +3,7 @@
 ### Features
 
 - Add correct breadcrumb levels for 4xx/5xx response codes ([#2549](https://github.com/getsentry/sentry-ruby/pull/2549))
+- Update sentry-sidekiq to work correctly with Sidekiq 8.0 and its new timestamp format ([#2570](https://github.com/getsentry/sentry-ruby/pull/2570))
 
 ### Bug Fixes
 
