@@ -21,8 +21,12 @@ module Sentry
       # retry if it fails.
       attr_accessor :report_after_job_retries
 
+      # Only report jobs that don't have `dead: false` set in the job's `sidekiq_options`
+      attr_accessor :report_only_dead_jobs
+
       def initialize
         @report_after_job_retries = false
+        @report_only_dead_jobs = false
       end
     end
   end
