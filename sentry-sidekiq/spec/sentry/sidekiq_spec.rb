@@ -143,6 +143,28 @@ RSpec.describe Sentry::Sidekiq do
     end
   end
 
+  context "with config.report_only_dead_jobs = true" do
+    before do
+      Sentry.configuration.sidekiq.report_only_dead_jobs = true
+    end
+
+    it "reports normal jobs" do
+      worker = Class.new(SadWorker)
+      worker.sidekiq_options retry: 0
+      execute_worker(processor, worker)
+
+      expect(transport.events.count).to eq(1)
+    end
+
+    it "does not report jobs with dead: false" do
+      worker = Class.new(SadWorker)
+      worker.sidekiq_options retry: 0, dead: false
+      execute_worker(processor, worker)
+
+      expect(transport.events.count).to eq(0)
+    end
+  end
+
   context "with config.report_after_job_retries = true" do
     before do
       Sentry.configuration.sidekiq.report_after_job_retries = true

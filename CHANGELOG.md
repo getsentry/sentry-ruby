@@ -1,3 +1,9 @@
+## Unreleased
+
+### Features
+
+- Add new sidekiq config `report_only_dead_jobs` ([#2581](https://github.com/getsentry/sentry-ruby/pull/2581))
+
 ## 5.23.0
 
 ### Features
