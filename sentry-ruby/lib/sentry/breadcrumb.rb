@@ -47,7 +47,7 @@ module Sentry
     # @param message [String]
     # @return [void]
     def message=(message)
-      @message = message ? message.byteslice(0..Event::MAX_MESSAGE_SIZE_IN_BYTES) : ""
+      @message = message && Utils::EncodingHelper.valid_utf_8?(message) ? message.byteslice(0..Event::MAX_MESSAGE_SIZE_IN_BYTES) : ""
     end
 
     # @param level [String]
