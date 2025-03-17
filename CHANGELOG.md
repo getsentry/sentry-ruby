@@ -3,6 +3,7 @@
 ### Features
 
 - Add new sidekiq config `report_only_dead_jobs` ([#2581](https://github.com/getsentry/sentry-ruby/pull/2581))
+- Add `max_nesting` of 10 to breadcrumbs data serialization ([#2583](https://github.com/getsentry/sentry-ruby/pull/2583))
 
 ### Bug Fixes
 

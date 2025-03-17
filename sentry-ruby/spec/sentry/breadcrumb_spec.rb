@@ -3,8 +3,12 @@
 require "spec_helper"
 
 RSpec.describe Sentry::Breadcrumb do
+  let(:stringio) { StringIO.new }
+
   before do
-    perform_basic_setup
+    perform_basic_setup do |config|
+      config.logger = ::Logger.new(stringio)
+    end
   end
 
   let(:crumb) do
@@ -77,6 +81,16 @@ RSpec.describe Sentry::Breadcrumb do
       )
     end
 
+    let(:very_deep_crumb) do
+      data = [[[[[ { a: [{ b: [[{ c: 4 }]] }] }]]]]]
+
+      Sentry::Breadcrumb.new(
+        category: "cow",
+        message: "I cause too much recursion",
+        data: data
+      )
+    end
+
     it "serializes data correctly" do
       result = crumb.to_hash
 
@@ -91,6 +105,16 @@ RSpec.describe Sentry::Breadcrumb do
       expect(result[:category]).to eq("baz")
       expect(result[:message]).to eq("I cause issues")
       expect(result[:data]).to eq("[data were removed due to serialization issues]")
+      expect(stringio.string).to match(/can't serialize breadcrumb data because of error: nesting of 10 is too deep/)
+    end
+
+    it "rescues data serialization issue for extremely nested data and ditch the data" do
+      result = very_deep_crumb.to_hash
+
+      expect(result[:category]).to eq("cow")
+      expect(result[:message]).to eq("I cause too much recursion")
+      expect(result[:data]).to eq("[data were removed due to serialization issues]")
+      expect(stringio.string).to match(/can't serialize breadcrumb data because of error: nesting of 10 is too deep/)
     end
   end
 end
