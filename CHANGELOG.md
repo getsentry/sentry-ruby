@@ -1,5 +1,9 @@
 ## Unreleased
 
+### Features
+
+- Add new sidekiq config `report_only_dead_jobs` ([#2581](https://github.com/getsentry/sentry-ruby/pull/2581))
+
 ### Bug Fixes
 
 - Gracefully fail on malformed utf-8 breadcrumb message ([#2582](https://github.com/getsentry/sentry-ruby/pull/2582))

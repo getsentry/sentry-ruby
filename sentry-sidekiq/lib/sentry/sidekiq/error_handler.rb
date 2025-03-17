@@ -31,6 +31,9 @@ module Sentry
           end
         end
 
+        # See if we want to ignore jobs that have dead: false
+        return if Sentry.configuration.sidekiq.report_only_dead_jobs && context.dig(:job, "dead") == false
+
         # Check if the retry count is below the attempt_threshold
         attempt_threshold = context.dig(:job, "attempt_threshold")
         if attempt_threshold && retryable?(context)
