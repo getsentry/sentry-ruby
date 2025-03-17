@@ -2,6 +2,7 @@
 
 module Sentry
   class Breadcrumb
+    MAX_NESTING = 10
     DATA_SERIALIZATION_ERROR_MESSAGE = "[data were removed due to serialization issues]"
 
     # @return [String, nil]
@@ -60,7 +61,7 @@ module Sentry
 
     def serialized_data
       begin
-        ::JSON.parse(::JSON.generate(@data))
+        ::JSON.parse(::JSON.generate(@data, max_nesting: MAX_NESTING))
       rescue Exception => e
         Sentry.logger.debug(LOGGER_PROGNAME) do
           <<~MSG
