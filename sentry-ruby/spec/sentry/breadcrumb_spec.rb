@@ -40,6 +40,12 @@ RSpec.describe Sentry::Breadcrumb do
       crumb.message = long_message
       expect(crumb.message.length).to eq(Sentry::Event::MAX_MESSAGE_SIZE_IN_BYTES + 1)
     end
+
+    it "removes bad encoding message gracefully" do
+      crumb = described_class.new
+      crumb.message = "foo \x1F\xE6"
+      expect(crumb.message).to eq("")
+    end
   end
 
   describe "#level=" do

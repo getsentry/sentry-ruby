@@ -1,3 +1,10 @@
+## Unreleased
+
+### Bug Fixes
+
+- Gracefully fail on malformed utf-8 breadcrumb message ([#2582](https://github.com/getsentry/sentry-ruby/pull/2582))
+  - Fixes [#2376](https://github.com/getsentry/sentry-ruby/issues/2376)
+
 ## 5.23.0
 
 ### Features

@@ -237,6 +237,22 @@ RSpec.describe Sentry::Transport do
       end
     end
 
+    context "malformed breadcrumb" do
+      let(:event) { client.event_from_message("foo") }
+
+      before do
+        event.breadcrumbs = Sentry::BreadcrumbBuffer.new(1000)
+        breadcrumb = Sentry::Breadcrumb.new(message: "foo \x1F\xE6")
+        event.breadcrumbs.record(breadcrumb)
+      end
+
+      it "gracefully removes bad encoding breadcrumb message" do
+        expect do
+          serialized_result = JSON.generate(event.to_hash)
+        end.not_to raise_error
+      end
+    end
+
     context "oversized event" do
       context "due to breadcrumb" do
         let(:event) { client.event_from_message("foo") }
