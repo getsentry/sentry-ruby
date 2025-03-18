@@ -342,9 +342,6 @@ module Sentry
 
       items["transaction"] = name unless source_low_quality?
 
-      user = @hub.current_scope&.user
-      items["user_segment"] = user["segment"] if user && user["segment"]
-
       items.compact!
       @baggage = Baggage.new(items, mutable: false)
     end
