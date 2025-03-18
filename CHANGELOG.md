@@ -9,6 +9,8 @@
 
 - Gracefully fail on malformed utf-8 breadcrumb message ([#2582](https://github.com/getsentry/sentry-ruby/pull/2582))
   - Fixes [#2376](https://github.com/getsentry/sentry-ruby/issues/2376)
+- Fix breadcrumb serialization error message to be an object ([#2584](https://github.com/getsentry/sentry-ruby/pull/2584))
+  - Fixes [#2478](https://github.com/getsentry/sentry-ruby/issues/2478)
 
 ## 5.23.0
 

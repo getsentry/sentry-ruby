@@ -69,7 +69,7 @@ RSpec.describe Sentry::BreadcrumbBuffer do
       expect(result[0][:data]).to eq({ "name" => "John", "age" => 25 })
       expect(result[1][:category]).to eq("bar")
       expect(result[2][:category]).to eq("baz")
-      expect(result[2][:data]).to eq("[data were removed due to serialization issues]")
+      expect(result[2][:data][:error]).to eq("[data were removed due to serialization issues]")
     end
   end
 end
