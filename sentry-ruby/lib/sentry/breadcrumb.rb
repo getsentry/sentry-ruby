@@ -70,7 +70,7 @@ data: #{@data}
           MSG
         end
 
-        DATA_SERIALIZATION_ERROR_MESSAGE
+        { error: DATA_SERIALIZATION_ERROR_MESSAGE }
       end
     end
   end
