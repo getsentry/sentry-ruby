@@ -12,6 +12,10 @@
 - Fix breadcrumb serialization error message to be an object ([#2584](https://github.com/getsentry/sentry-ruby/pull/2584))
   - Fixes [#2478](https://github.com/getsentry/sentry-ruby/issues/2478)
 
+### Internal
+
+- Remove `user_segment` from DSC ([#2586](https://github.com/getsentry/sentry-ruby/pull/2586))
+
 ## 5.23.0
 
 ### Features
