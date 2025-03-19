@@ -4,6 +4,14 @@
 
 - Add new sidekiq config `report_only_dead_jobs` ([#2581](https://github.com/getsentry/sentry-ruby/pull/2581))
 - Add `max_nesting` of 10 to breadcrumbs data serialization ([#2583](https://github.com/getsentry/sentry-ruby/pull/2583))
+- Add sidekiq config `propagate_traces` to control trace header injection ([#2588](https://github.com/getsentry/sentry-ruby/pull/2588))
+
+  If you use schedulers you can get one large trace with all your jobs which is undesirable.
+  We recommend using the following to propagate traces only from the Rails server and not elsewhere.
+
+  ```ruby
+  config.sidekiq.propagate_traces = false unless Rails.const_defined?('Server')
+  ```
 
 ### Bug Fixes
 
