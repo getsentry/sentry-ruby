@@ -4,6 +4,7 @@
 
 - Add new sidekiq config `report_only_dead_jobs` ([#2581](https://github.com/getsentry/sentry-ruby/pull/2581))
 - Add `max_nesting` of 10 to breadcrumbs data serialization ([#2583](https://github.com/getsentry/sentry-ruby/pull/2583))
+- Only expose `active_storage` keys on span data if `send_default_pii` is on ([#2589](https://github.com/getsentry/sentry-ruby/pull/2589))
 
 ### Bug Fixes
 
