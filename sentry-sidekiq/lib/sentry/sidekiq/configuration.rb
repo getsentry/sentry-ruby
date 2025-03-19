@@ -24,9 +24,13 @@ module Sentry
       # Only report jobs that don't have `dead: false` set in the job's `sidekiq_options`
       attr_accessor :report_only_dead_jobs
 
+      # Whether we should inject headers while enqueuing the job in order to have a connected trace
+      attr_accessor :propagate_traces
+
       def initialize
         @report_after_job_retries = false
         @report_only_dead_jobs = false
+        @propagate_traces = true
       end
     end
   end
