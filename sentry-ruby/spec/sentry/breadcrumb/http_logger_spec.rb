@@ -60,7 +60,7 @@ RSpec.describe :http_logger do
     { 200 => :info, 302 => :info, 400 => :warning, 404 => :warning, 500 => :error, 502 => :error }.each do |status, level|
       it "has correct level #{level} for #{status}" do
         stub_normal_response(code: status)
-        response = Net::HTTP.get_response(URI("http://example.com/path?foo=bar"))
+        Net::HTTP.get_response(URI("http://example.com/path?foo=bar"))
 
         crumb = Sentry.get_current_scope.breadcrumbs.peek
         expect(crumb.level).to eq(level)

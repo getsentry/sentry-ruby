@@ -248,7 +248,7 @@ RSpec.describe Sentry::Transport do
 
       it "gracefully removes bad encoding breadcrumb message" do
         expect do
-          serialized_result = JSON.generate(event.to_hash)
+          JSON.generate(event.to_hash)
         end.not_to raise_error
       end
     end

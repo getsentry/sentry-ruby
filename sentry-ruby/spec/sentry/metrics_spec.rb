@@ -112,7 +112,7 @@ RSpec.describe Sentry::Metrics do
     end
 
     context 'with running transaction' do
-      let(:transaction) { transaction = Sentry.start_transaction(name: 'metrics') }
+      let(:transaction) { Sentry.start_transaction(name: 'metrics') }
 
       before do
         perform_basic_setup do |config|

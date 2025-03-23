@@ -76,7 +76,7 @@ RSpec.describe :redis_logger do
     end
 
     it "records the Redis call's span with command and key" do
-      transaction = Sentry.start_transaction
+      Sentry.start_transaction
 
       expect(result).to contain_exactly("OK", kind_of(Numeric))
       expect(Sentry.get_current_scope.breadcrumbs.peek).to have_attributes(

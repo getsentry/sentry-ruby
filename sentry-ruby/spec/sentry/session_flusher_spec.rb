@@ -29,7 +29,7 @@ RSpec.describe Sentry::SessionFlusher do
       before { configuration.release = nil }
 
       it "logs debug message" do
-        flusher = described_class.new(configuration, client)
+        described_class.new(configuration, client)
 
         expect(string_io.string).to match(
           /Sessions won't be captured without a valid release/
