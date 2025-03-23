@@ -734,7 +734,7 @@ RSpec.describe 'Sentry::Rack::CaptureExceptions', when: :rack_available? do
   describe "profiling with StackProf", when: [:stack_prof_installed?, :rack_available?] do
     context "when profiling is enabled" do
       let(:app) do
-         ->(_) do
+        ->(_) do
           [200, {}, "ok"]
         end
       end
@@ -765,7 +765,7 @@ RSpec.describe 'Sentry::Rack::CaptureExceptions', when: :rack_available? do
   describe "profiling with vernier", when: [:vernier_installed?, :rack_available?] do
     context "when profiling is enabled" do
       let(:app) do
-         ->(_) do
+        ->(_) do
           ProfilerTest::Bar.bar
           [200, {}, "ok"]
         end
