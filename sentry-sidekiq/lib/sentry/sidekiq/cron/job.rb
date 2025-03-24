@@ -45,10 +45,16 @@ module Sentry
           # fail gracefully if can't find class
           klass_const =
             begin
-              ::Sidekiq::Cron::Support.constantize(klass.to_s)
+              if ::Sidekiq::Cron::Support.respond_to?(:safe_constantize)
+                ::Sidekiq::Cron::Support.safe_constantize(klass.to_s)
+              else
+                ::Sidekiq::Cron::Support.constantize(klass.to_s)
+              end
             rescue NameError
               return true
             end
+
+          return true if klass_const.nil? # Sidekiq::Cron returns nil if class is not found
 
           # only patch if not explicitly included in job by user
           unless klass_const.send(:ancestors).include?(Sentry::Cron::MonitorCheckIns)
