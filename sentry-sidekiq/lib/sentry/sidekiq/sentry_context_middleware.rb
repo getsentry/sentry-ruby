@@ -95,7 +95,10 @@ module Sentry
 
         user = Sentry.get_current_scope.user
         job["sentry_user"] = user unless user.empty?
-        job["trace_propagation_headers"] ||= Sentry.get_trace_propagation_headers
+
+        if Sentry.configuration.sidekiq.propagate_traces
+          job["trace_propagation_headers"] ||= Sentry.get_trace_propagation_headers
+        end
 
         Sentry.with_child_span(op: "queue.publish", description: worker_class.to_s) do |span|
           set_span_data(span, id: job["jid"], queue: queue)
