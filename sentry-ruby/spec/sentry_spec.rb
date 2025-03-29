@@ -1159,8 +1159,6 @@ RSpec.describe Sentry do
     end
 
     it "can reinitialize closed SDK" do
-      perform_basic_setup
-
       transport = Sentry.get_current_client.transport
 
       expect do
@@ -1200,7 +1198,6 @@ RSpec.describe Sentry do
       end
 
       it "does not prepend patch if not in enabled_patches" do
-        perform_basic_setup
         expect(target_class.ancestors).not_to include(module_patch)
         expect(target_class.instance_methods).not_to include(:foo)
       end
@@ -1222,7 +1219,6 @@ RSpec.describe Sentry do
       end
 
       it "does not call block if not in enabled_patches" do
-        perform_basic_setup
         expect(target_class.ancestors).not_to include(module_patch)
         expect(target_class.instance_methods).not_to include(:foo)
       end
