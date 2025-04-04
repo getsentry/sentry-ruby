@@ -156,6 +156,10 @@ module Sentry
       # @return [Hash<String, Array<Symbol>>]
       attr_accessor :active_support_logger_subscription_items
 
+      # Set this option to true if you want Sentry to only capture the last job
+      # retry if it fails.
+      attr_accessor :active_job_report_after_job_retries
+
       def initialize
         @register_error_subscriber = false
         @report_rescued_exceptions = true
@@ -172,6 +176,7 @@ module Sentry
         @enable_db_query_source = true
         @db_query_source_threshold_ms = 100
         @active_support_logger_subscription_items = Sentry::Rails::ACTIVE_SUPPORT_LOGGER_SUBSCRIPTION_ITEMS_DEFAULT.dup
+        @active_job_report_after_job_retries = false
       end
     end
   end

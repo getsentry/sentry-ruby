@@ -67,6 +67,11 @@ class FailedJobWithCron < FailedJob
   sentry_monitor_check_ins slug: "failed_job", monitor_config: Sentry::Cron::MonitorConfig.from_crontab("5 * * * *")
 end
 
+class FailedJobWithRetryOn < FailedJob
+  if respond_to? :retry_on
+    retry_on StandardError, attempts: 3, wait: 0
+  end
+end
 
 RSpec.describe "without Sentry initialized", type: :job do
   it "runs job" do
@@ -361,7 +366,6 @@ RSpec.describe "ActiveJob integration", type: :job do
 
     it "does not trigger sentry and re-raises" do
       expect { FailedJob.perform_now }.to raise_error(FailedJob::TestError)
-
       expect(transport.events.size).to eq(0)
     end
   end
@@ -426,6 +430,46 @@ RSpec.describe "ActiveJob integration", type: :job do
           status: :error,
           monitor_config: { schedule: { type: :crontab, value: "5 * * * *" } }
         )
+      end
+    end
+  end
+
+  describe "active_job_report_after_job_retries", skip: RAILS_VERSION < 7.0 do
+    context "when active_job_report_after_job_retries is false" do
+      it "reports 3 exceptions" do
+        allow(Sentry::Rails::ActiveJobExtensions::SentryReporter)
+          .to receive(:capture_exception).and_call_original
+
+        assert_performed_jobs 3 do
+          FailedJobWithRetryOn.perform_later rescue nil
+        end
+
+        expect(Sentry::Rails::ActiveJobExtensions::SentryReporter)
+          .to have_received(:capture_exception)
+          .exactly(3).times
+      end
+    end
+
+    context "when active_job_report_after_job_retries is true" do
+      before do
+        Sentry.configuration.rails.active_job_report_after_job_retries = true
+      end
+
+      after do
+        Sentry.configuration.rails.active_job_report_after_job_retries = false
+      end
+
+      it "reports 1 exception" do
+        allow(Sentry::Rails::ActiveJobExtensions::SentryReporter)
+          .to receive(:capture_exception).and_call_original
+
+        assert_performed_jobs 3 do
+          FailedJobWithRetryOn.perform_later rescue nil
+        end
+
+        expect(Sentry::Rails::ActiveJobExtensions::SentryReporter)
+          .to have_received(:capture_exception)
+          .exactly(1).times
       end
     end
   end

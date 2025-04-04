@@ -34,6 +34,8 @@ DUMMY_DSN = 'http://12345:67890@sentry.localdomain/sentry/42'
 
 Dir["#{__dir__}/support/**/*.rb"].each { |file| require file }
 
+RAILS_VERSION = Rails.version.to_f
+
 RSpec.configure do |config|
   # Enable flags like --only-failures and --next-failure
   config.example_status_persistence_file_path = ".rspec_status"
@@ -51,6 +53,10 @@ RSpec.configure do |config|
     Sentry::Rails::Tracing.unsubscribe_tracing_events
     expect(Sentry::Rails::Tracing.subscribed_tracing_events).to be_empty
     Sentry::Rails::Tracing.remove_active_support_notifications_patch
+
+    if defined?(Sentry::Rails::ActiveJobExtensions)
+      Sentry::Rails::ActiveJobExtensions::SentryReporter.detach_retry_stopped_subscriber
+    end
 
     reset_sentry_globals!
   end
