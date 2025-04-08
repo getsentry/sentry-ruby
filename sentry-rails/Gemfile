@@ -57,7 +57,10 @@ gem "mini_magick"
 
 gem "sprockets-rails"
 
-gem "benchmark-ips"
-gem "benchmark_driver"
-gem "benchmark-ipsa"
-gem "benchmark-memory"
+group :benchmark do
+  gem "benchmark-ips"
+  gem "benchmark_driver"
+  gem "benchmark-ipsa"
+  gem "benchmark-memory"
+  gem "faker"
+end

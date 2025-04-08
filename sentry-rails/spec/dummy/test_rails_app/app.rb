@@ -40,7 +40,7 @@ FILE_NAME =
   end
 
 # require files and defined relevant setup methods for the Rails version
-require "dummy/test_rails_app/configs/#{FILE_NAME}"
+require_relative "configs/#{FILE_NAME}"
 
 def make_basic_app(&block)
   run_pre_initialize_cleanup
@@ -104,7 +104,7 @@ def make_basic_app(&block)
   Rails.application = app
 
   # load application code for the Rails version
-  require "dummy/test_rails_app/apps/#{FILE_NAME}"
+  require_relative "apps/#{FILE_NAME}"
 
   Post.all.to_a # to run the sqlte version query first
 

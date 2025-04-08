@@ -3,4 +3,4 @@ default: &default
 
 test:
   <<: *default
-  database: db
+  database: db/dev.sqlite3

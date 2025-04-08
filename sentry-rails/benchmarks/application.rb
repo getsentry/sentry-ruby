@@ -2,7 +2,8 @@
 
 require "active_support/all"
 require "action_controller"
-require_relative "../spec/support/test_rails_app/app"
+
+require_relative "../spec/dummy/test_rails_app/app"
 
 def create_app(&block)
   app = make_basic_app(&block)

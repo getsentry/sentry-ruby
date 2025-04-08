@@ -48,8 +48,8 @@ end
 
 class PostsController < ActionController::Base
   def index
-    Post.all.to_a
-    raise "foo"
+    posts = Post.all.to_a
+    render json: posts
   end
 
   def show
