@@ -33,7 +33,10 @@ module Sentry
               duration: duration
             ) do |span|
               payload.each do |key, value|
-                span.set_data(key, value) unless key == START_TIMESTAMP_NAME
+                next if key == START_TIMESTAMP_NAME
+                next if key == :key && !Sentry.configuration.send_default_pii
+
+                span.set_data(key, value)
               end
             end
           end
