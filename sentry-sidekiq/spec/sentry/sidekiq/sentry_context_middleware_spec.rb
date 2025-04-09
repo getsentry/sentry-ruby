@@ -222,5 +222,19 @@ RSpec.describe Sentry::Sidekiq::SentryContextClientMiddleware do
       expect(event.spans[0][:data]['messaging.message.id']).to eq(message_id)
       expect(event.spans[0][:data]['messaging.destination.name']).to eq('default')
     end
+
+    it "does not propagate headers with propagate_traces = false" do
+      perform_basic_setup do |config|
+        config.traces_sample_rate = 1.0
+        config.sidekiq.propagate_traces = false
+      end
+
+      Sentry.get_current_scope.set_span(transaction)
+
+      client.push('queue' => 'default', 'class' => HappyWorker, 'args' => [])
+
+      expect(queue.size).to be(1)
+      expect(queue.first["trace_propagation_headers"]).to be_nil
+    end
   end
 end
