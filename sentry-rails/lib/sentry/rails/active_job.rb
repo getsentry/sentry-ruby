@@ -17,6 +17,13 @@ module Sentry
         Sentry.configuration.rails.skippable_job_adapters.include?(self.class.queue_adapter.class.to_s)
       end
 
+      def retry_job(error:, **opts)
+        unless Sentry.configuration.rails.active_job_report_after_job_retries
+          SentryReporter.capture_exception(self, error)
+        end
+        super
+      end
+
       class SentryReporter
         OP_NAME = "queue.active_job"
         SPAN_ORIGIN = "auto.queue.active_job"
