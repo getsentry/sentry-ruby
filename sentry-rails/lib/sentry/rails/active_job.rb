@@ -18,9 +18,7 @@ module Sentry
       end
 
       def retry_job(error:, **opts)
-        unless Sentry.configuration.rails.active_job_report_after_job_retries
-          SentryReporter.capture_exception(self, error)
-        end
+        SentryReporter.maybe_capture_exception(self, error)
         super
       end
 
@@ -54,12 +52,16 @@ module Sentry
               rescue Exception => e # rubocop:disable Lint/RescueException
                 finish_sentry_transaction(transaction, 500)
 
-                unless Sentry.configuration.rails.active_job_report_after_job_retries
-                  capture_exception(job, e)
-                end
+                maybe_capture_exception(job, e)
 
                 raise
               end
+            end
+          end
+
+          def maybe_capture_exception(job, e)
+            unless Sentry.configuration.rails.active_job_report_after_job_retries
+              capture_exception(job, e)
             end
           end
 
