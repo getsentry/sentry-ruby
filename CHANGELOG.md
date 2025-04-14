@@ -22,6 +22,7 @@
   - Fixes [#2478](https://github.com/getsentry/sentry-ruby/issues/2478)
 - Fix compatibility issues with sidekiq-cron 2.2.0 ([#2591](https://github.com/getsentry/sentry-ruby/pull/2591))
 - Update sentry-sidekiq to work correctly with Sidekiq 8.0 and its new timestamp format ([#2570](https://github.com/getsentry/sentry-ruby/pull/2570))
+- Ensure we capture exceptions after each job retry ([#2597](https://github.com/getsentry/sentry-ruby/pull/2597))
 
 ### Internal
 
