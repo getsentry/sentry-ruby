@@ -17,6 +17,11 @@ module Sentry
         Sentry.configuration.rails.skippable_job_adapters.include?(self.class.queue_adapter.class.to_s)
       end
 
+      def retry_job(error:, **opts)
+        SentryReporter.maybe_capture_exception(self, error)
+        super
+      end
+
       class SentryReporter
         OP_NAME = "queue.active_job"
         SPAN_ORIGIN = "auto.queue.active_job"
@@ -47,12 +52,16 @@ module Sentry
               rescue Exception => e # rubocop:disable Lint/RescueException
                 finish_sentry_transaction(transaction, 500)
 
-                unless Sentry.configuration.rails.active_job_report_after_job_retries
-                  capture_exception(job, e)
-                end
+                maybe_capture_exception(job, e)
 
                 raise
               end
+            end
+          end
+
+          def maybe_capture_exception(job, e)
+            unless Sentry.configuration.rails.active_job_report_after_job_retries
+              capture_exception(job, e)
             end
           end
 
