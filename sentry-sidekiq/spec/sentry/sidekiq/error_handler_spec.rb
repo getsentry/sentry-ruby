@@ -11,20 +11,33 @@ RSpec.describe Sentry::Sidekiq::ErrorHandler do
     Sentry.get_current_client.transport
   end
 
+  let(:timestamps) do
+    if WITH_SIDEKIQ_8
+      {
+        "created_at" => 1_474_922_824_910,
+        "enqueued_at" => 1_474_922_824_910,
+        "failed_at" => 1_474_922_825_158
+      }
+    else
+      {
+        "created_at" => 1_474_922_824.910579,
+        "enqueued_at" => 1_474_922_824.910665,
+        "failed_at" => 1_474_922_825.158953
+      }
+    end
+  end
+
   let(:context) do
     {
       "args" => [true, true],
       "class" => "HardWorker",
-      "created_at" => 1_474_922_824.910579,
-      "enqueued_at" => 1_474_922_824.910665,
       "error_class" => "RuntimeError",
       "error_message" => "a wild exception appeared",
-      "failed_at" => 1_474_922_825.158953,
       "jid" => "701ed9cfa51c84a763d56bc4",
       "queue" => "default",
       "retry" => true,
       "retry_count" => 0
-    }
+    }.merge(timestamps)
   end
 
   let(:processor) do
