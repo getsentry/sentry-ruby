@@ -52,14 +52,14 @@ jobs:
             sidekiq_version: 7.0
           - ruby_version: "3.2"
             sidekiq_version: 7.0
+          - ruby_version: "3.2"
+            sidekiq_version: 8.0.0
+          - ruby_version: "3.3"
+            sidekiq_version: 8.0.0
+          - ruby_version: "3.4"
+            sidekiq_version: 8.0.0
             options:
               rubyopt: "--enable-frozen-string-literal --debug=frozen-string-literal"
-          - ruby_version: "3.2"
-            sidekiq_version: 8.0.0.beta1
-          - ruby_version: "3.3"
-            sidekiq_version: 8.0.0.beta1
-          - ruby_version: "3.4"
-            sidekiq_version: 8.0.0.beta1
         exclude:
           - ruby_version: head
           - ruby_version: jruby
