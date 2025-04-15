@@ -14,7 +14,7 @@ module Sentry
         span.set_data(Span::DataConventions::MESSAGING_MESSAGE_RETRY_COUNT, retry_count) if retry_count
       end
 
-      if ::Gem::Version.new(::Sidekiq::VERSION) >= ::Gem::Version.new("8.0.0.beta")
+      if ::Gem::Version.new(::Sidekiq::VERSION) >= ::Gem::Version.new("8.0.0")
         def calculate_latency(job)
           now_in_ms - job["enqueued_at"] if job["enqueued_at"]
         end

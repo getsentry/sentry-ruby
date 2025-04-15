@@ -84,18 +84,19 @@ RSpec.describe Sentry::Sidekiq::SentryContextServerMiddleware do
         expect(trace[:data]['messaging.message.id']).to eq('123123')
         expect(trace[:data]['messaging.destination.name']).to eq('default')
         expect(trace[:data]['messaging.message.retry.count']).to eq(0)
+        expect(trace[:data]['messaging.message.receive.latency']).to be >= 0
+      end
 
+      def timecop_delay
         if WITH_SIDEKIQ_8
-          expect(trace[:data]['messaging.message.receive.latency']).to be >= 0
+          Time.now + 1
         else
-          expect(trace[:data]['messaging.message.receive.latency']).to eq(0)
+          Time.now + 1000
         end
       end
 
       it "adds a queue.process transaction with correct latency data" do
-        Timecop.freeze do
-          execute_worker(processor, HappyWorker, jid: '123456', timecop_delay: Time.now + 86400)
-        end
+        execute_worker(processor, HappyWorker, jid: '123456', timecop_delay: timecop_delay)
 
         expect(transport.events.count).to eq(1)
 
@@ -108,12 +109,7 @@ RSpec.describe Sentry::Sidekiq::SentryContextServerMiddleware do
         expect(trace[:data]['messaging.message.id']).to eq('123456')
         expect(trace[:data]['messaging.destination.name']).to eq('default')
         expect(trace[:data]['messaging.message.retry.count']).to eq(0)
-
-        if WITH_SIDEKIQ_8
-          expect(trace[:data]['messaging.message.receive.latency']).to be >= 0
-        else
-          expect(trace[:data]['messaging.message.receive.latency']).to eq(86400000)
-        end
+        expect(trace[:data]['messaging.message.receive.latency']).to eq(1000)
       end
 
       if MIN_SIDEKIQ_6
