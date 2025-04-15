@@ -28,7 +28,12 @@ end
 
 if sidekiq_version == "main" || RUBY_VERSION.to_f >= 2.7 && sidekiq_version >= Gem::Version.new("6.0")
   gem "sidekiq-cron"
-  gem "sidekiq-scheduler"
+
+  if sidekiq_version == "main" || sidekiq_version >= Gem::Version.new("8.0")
+    gem "sidekiq-scheduler", "~> 6.0.0.beta"
+  else
+    gem "sidekiq-scheduler", "~> 5.0.0"
+  end
 end
 
 gem "rails", "> 5.0.0"
