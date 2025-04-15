@@ -11,6 +11,7 @@ require "sidekiq/cli"
 
 MIN_SIDEKIQ_6 = Gem::Version.new(Sidekiq::VERSION) >= Gem::Version.new("6.0")
 WITH_SIDEKIQ_7 = Gem::Version.new(Sidekiq::VERSION) >= Gem::Version.new("7.0")
+WITH_SIDEKIQ_8 = Gem::Version.new(Sidekiq::VERSION) >= Gem::Version.new("8.0.0")
 WITH_SIDEKIQ_6 = MIN_SIDEKIQ_6 && !WITH_SIDEKIQ_7
 
 require "sidekiq/embedded" if WITH_SIDEKIQ_7
@@ -54,6 +55,14 @@ RSpec.configure do |config|
 
   config.expect_with :rspec do |c|
     c.syntax = :expect
+  end
+
+  config.before :suite do
+    puts "\n"
+    puts "*" * 100
+    puts "Running with Sidekiq #{Sidekiq::VERSION}"
+    puts "*" * 100
+    puts "\n"
   end
 
   config.before :each do
