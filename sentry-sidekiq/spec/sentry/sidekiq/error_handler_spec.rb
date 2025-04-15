@@ -11,20 +11,38 @@ RSpec.describe Sentry::Sidekiq::ErrorHandler do
     Sentry.get_current_client.transport
   end
 
-  let(:context) do
-    {
-      "args" => [true, true],
-      "class" => "HardWorker",
-      "created_at" => 1_474_922_824.910579,
-      "enqueued_at" => 1_474_922_824.910665,
-      "error_class" => "RuntimeError",
-      "error_message" => "a wild exception appeared",
-      "failed_at" => 1_474_922_825.158953,
-      "jid" => "701ed9cfa51c84a763d56bc4",
-      "queue" => "default",
-      "retry" => true,
-      "retry_count" => 0
-    }
+  if WITH_SIDEKIQ_8
+    let(:context) do
+      {
+        "args" => [true, true],
+        "class" => "HardWorker",
+        "created_at" => 1_474_922_824_910,
+        "enqueued_at" => 1_474_922_824_910,
+        "error_class" => "RuntimeError",
+        "error_message" => "a wild exception appeared",
+        "failed_at" => 1_474_922_825_158,
+        "jid" => "701ed9cfa51c84a763d56bc4",
+        "queue" => "default",
+        "retry" => true,
+        "retry_count" => 0
+      }
+    end
+  else
+    let(:context) do
+      {
+        "args" => [true, true],
+        "class" => "HardWorker",
+        "created_at" => 1_474_922_824.910579,
+        "enqueued_at" => 1_474_922_824.910665,
+        "error_class" => "RuntimeError",
+        "error_message" => "a wild exception appeared",
+        "failed_at" => 1_474_922_825.158953,
+        "jid" => "701ed9cfa51c84a763d56bc4",
+        "queue" => "default",
+        "retry" => true,
+        "retry_count" => 0
+      }
+    end
   end
 
   let(:processor) do

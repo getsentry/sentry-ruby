@@ -76,28 +76,40 @@ RSpec.describe Sentry::Sidekiq::SentryContextServerMiddleware do
         expect(transport.events.count).to eq(1)
 
         transaction = transport.events[0]
+        trace = transaction.contexts[:trace]
+
         expect(transaction).not_to be_nil
         expect(transaction.spans.count).to eq(0)
-        expect(transaction.contexts[:trace][:data]['messaging.message.id']).to eq('123123') # Default defined in #execute_worker
-        expect(transaction.contexts[:trace][:data]['messaging.destination.name']).to eq('default')
-        expect(transaction.contexts[:trace][:data]['messaging.message.receive.latency']).to eq(0)
-        expect(transaction.contexts[:trace][:data]['messaging.message.retry.count']).to eq(0)
+
+        expect(trace[:data]['messaging.message.id']).to eq('123123')
+        expect(trace[:data]['messaging.destination.name']).to eq('default')
+        expect(trace[:data]['messaging.message.retry.count']).to eq(0)
+        expect(trace[:data]['messaging.message.receive.latency']).to be >= 0
+      end
+
+      def timecop_delay
+        Time.now + expected_latency / 1000
+      end
+
+      let(:expected_latency) do
+        86400000
       end
 
       it "adds a queue.process transaction with correct latency data" do
-        Timecop.freeze do
-          execute_worker(processor, HappyWorker, jid: '123456', timecop_delay: Time.now + 86400)
-        end
+        execute_worker(processor, HappyWorker, jid: '123456', timecop_delay: timecop_delay)
 
         expect(transport.events.count).to eq(1)
 
         transaction = transport.events[0]
+        trace = transaction.contexts[:trace]
+
         expect(transaction).not_to be_nil
         expect(transaction.spans.count).to eq(0)
-        expect(transaction.contexts[:trace][:data]['messaging.message.id']).to eq('123456') # Explicitly set above.
-        expect(transaction.contexts[:trace][:data]['messaging.destination.name']).to eq('default')
-        expect(transaction.contexts[:trace][:data]['messaging.message.receive.latency']).to eq(86400000)
-        expect(transaction.contexts[:trace][:data]['messaging.message.retry.count']).to eq(0)
+
+        expect(trace[:data]['messaging.message.id']).to eq('123456')
+        expect(trace[:data]['messaging.destination.name']).to eq('default')
+        expect(trace[:data]['messaging.message.retry.count']).to eq(0)
+        expect(trace[:data]['messaging.message.receive.latency']).to eq(expected_latency)
       end
 
       if MIN_SIDEKIQ_6

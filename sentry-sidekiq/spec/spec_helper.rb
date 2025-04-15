@@ -282,6 +282,10 @@ def sidekiq_config(opts)
   WITH_SIDEKIQ_7 ? ::Sidekiq::Config.new(opts) : SidekiqConfigMock.new(opts)
 end
 
+def now_in_ms
+  ::Process.clock_gettime(::Process::CLOCK_REALTIME, :millisecond)
+end
+
 def execute_worker(processor, klass, **options)
   klass_options = klass.sidekiq_options_hash || {}
   # for Ruby < 2.6
@@ -292,12 +296,40 @@ def execute_worker(processor, klass, **options)
   jid = options.delete(:jid) || "123123"
   timecop_delay = options.delete(:timecop_delay)
 
-  msg = Sidekiq.dump_json(created_at: Time.now.to_f, enqueued_at: Time.now.to_f, jid: jid, class: klass, args: [], **options)
-  Timecop.freeze(timecop_delay) if timecop_delay
+  timestamps = if WITH_SIDEKIQ_8
+    current_time_ms = now_in_ms
+    {
+      created_at: current_time_ms,
+      enqueued_at: current_time_ms
+    }
+  else
+    {
+      created_at: Time.now.to_f,
+      enqueued_at: Time.now.to_f
+    }
+  end
+
+  msg = Sidekiq.dump_json(
+    jid: jid,
+    class: klass,
+    args: [],
+    **timestamps,
+    **options
+  )
+
+  if timecop_delay
+    Timecop.mock_process_clock = true
+    Timecop.freeze(timecop_delay)
+  end
+
   work = Sidekiq::BasicFetch::UnitOfWork.new('queue:default', msg)
+
   process_work(processor, work)
 ensure
-  Timecop.return if timecop_delay
+  if timecop_delay
+    Timecop.return
+    Timecop.mock_process_clock = false
+  end
 end
 
 def process_work(processor, work)
