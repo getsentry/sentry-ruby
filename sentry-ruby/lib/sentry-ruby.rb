@@ -16,6 +16,8 @@ require "sentry/event"
 require "sentry/error_event"
 require "sentry/transaction_event"
 require "sentry/check_in_event"
+require "sentry/log_event"
+require "sentry/logging_feature"
 require "sentry/span"
 require "sentry/transaction"
 require "sentry/hub"
@@ -251,6 +253,9 @@ module Sentry
       @backpressure_monitor = config.enable_backpressure_handling ? Sentry::BackpressureMonitor.new(config, client) : nil
       @metrics_aggregator = config.metrics.enabled ? Sentry::Metrics::Aggregator.new(config, client) : nil
       exception_locals_tp.enable if config.include_local_variables
+
+      Sentry::LoggingFeature.setup if config._experiments[:enable_logs]
+
       at_exit { close }
     end
 
@@ -487,6 +492,19 @@ module Sentry
     def capture_check_in(slug, status, **options)
       return unless initialized?
       get_current_hub.capture_check_in(slug, status, **options)
+    end
+
+    def capture_log(message, level: :info, **attributes)
+      return unless initialized?
+
+      event = LogEvent.new(
+        level: level,
+        body: message,
+        timestamp: Time.now.to_f,
+        attributes: attributes
+      )
+
+      capture_event(event)
     end
 
     # Takes or initializes a new Sentry::Transaction and makes a sampling decision for it.

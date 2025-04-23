@@ -311,6 +311,10 @@ module Sentry
     # @!visibility private
     attr_reader :errors, :gem_specs
 
+    # Experimental features configuration
+    # @return [Hash]
+    attr_accessor :_experiments
+
     # These exceptions could enter Puma's `lowlevel_error_handler` callback and the SDK's Puma integration
     # But they are mostly considered as noise and should be ignored by default
     # Please see https://github.com/getsentry/sentry-ruby/pull/2026 for more information
@@ -452,6 +456,7 @@ module Sentry
       @transport = Transport::Configuration.new
       @cron = Cron::Configuration.new
       @metrics = Metrics::Configuration.new
+      @_experiments = {}
       @gem_specs = Hash[Gem::Specification.map { |spec| [spec.name, spec.version.to_s] }] if Gem::Specification.respond_to?(:map)
 
       run_post_initialization_callbacks
