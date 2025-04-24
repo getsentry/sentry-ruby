@@ -11,7 +11,7 @@ module Sentry
     def initialize(configuration: Sentry.configuration, **options)
       super(configuration: configuration)
       @type = TYPE
-      @level = options[:level] || :info
+      @level = options.fetch(:level)
       @body = options[:body]
       @trace_id = options[:trace_id] || SecureRandom.hex(16)
       @attributes = options[:attributes] || {}

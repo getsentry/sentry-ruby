@@ -54,7 +54,7 @@ module Sentry
         event.transaction = transaction_name if transaction_name
         event.transaction_info = { source: transaction_source } if transaction_source
         event.fingerprint = fingerprint
-        event.level = level
+        event.level = level unless event.is_a?(LogEvent)
         event.breadcrumbs = breadcrumbs
         event.rack_env = rack_env if rack_env
         event.attachments = attachments

@@ -43,6 +43,13 @@ RSpec.describe Sentry::Logging do
         expect_log("info", "Hello World") { |msg| Sentry.logger.info(msg) }
 
         expect(sentry_events.size).to be(1)
+
+        log_event = sentry_events.first
+
+        expect(log_event.type).to eql("log")
+        expect(log_event.level).to eql(:info)
+        expect(log_event.trace_id).to_not be(nil)
+        expect(log_event.body).to eql("Hello World")
       end
     end
   end
