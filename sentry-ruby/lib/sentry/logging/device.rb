@@ -7,32 +7,39 @@ module Sentry
         @handlers = options.fetch(:handlers)
       end
 
-      def trace(message)
-        log(:trace, message)
+      def trace(message, payload = {})
+        log(:trace, message, payload)
       end
 
-      def debug(message)
-        log(:debug, message)
+      def debug(message, payload = {})
+        log(:debug, message, payload)
       end
 
-      def info(message)
-        log(:info, message)
+      def info(message, payload = {})
+        log(:info, message, payload)
       end
 
-      def warn(message)
-        log(:warn, message)
+      def warn(message, payload = {})
+        log(:warn, message, payload)
       end
 
-      def error(message)
-        log(:error, message)
+      def error(message, payload = {})
+        log(:error, message, payload)
       end
 
-      def fatal(message)
-        log(:fatal, message)
+      def fatal(message, payload = {})
+        log(:fatal, message, payload)
       end
 
-      def log(level, message)
-        handlers.each { |handler| handler.public_send(level, message) }
+      def log(level, message, payload)
+        handlers.each do |handler|
+          case handler
+            when Sentry::Logger
+              handler.public_send(level, message)
+            else
+              handler.public_send(level, message, payload)
+            end
+        end
       end
     end
   end
