@@ -38,18 +38,21 @@ RSpec.describe Sentry::Logging do
       end
     end
 
-    describe "#info" do
-      it "logs using default logger and LogEvent logger" do
-        expect_log("info", "Hello World") { |msg| Sentry.logger.info(msg) }
+    # TODO: At the moment the Sentry::Logger enforces info - is that intentional?
+    ["info", "warn", "error", "fatal"].each do |level|
+      describe "##{level}" do
+        it "logs using default logger and LogEvent logger" do
+          expect_log(level, "Hello World") { |msg| Sentry.logger.public_send(level, msg) }
 
-        expect(sentry_events.size).to be(1)
+          expect(sentry_events.size).to be(1)
 
-        log_event = sentry_events.first
+          log_event = sentry_events.first
 
-        expect(log_event.type).to eql("log")
-        expect(log_event.level).to eql(:info)
-        expect(log_event.trace_id).to_not be(nil)
-        expect(log_event.body).to eql("Hello World")
+          expect(log_event.type).to eql("log")
+          expect(log_event.level).to eql(level.to_sym)
+          expect(log_event.trace_id).to_not be(nil)
+          expect(log_event.body).to eql("Hello World")
+        end
       end
     end
   end
