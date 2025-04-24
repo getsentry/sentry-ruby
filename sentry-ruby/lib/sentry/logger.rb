@@ -7,16 +7,6 @@ module Sentry
     LOG_PREFIX = "** [Sentry] "
     PROGNAME   = "sentry"
 
-    # https://develop.sentry.dev/sdk/telemetry/logs/#log-severity-number
-    LEVELS = {
-      "trace" => 1,
-      "debug" => 5,
-      "info" => 9,
-      "warn" => 13,
-      "error" => 17,
-      "fatal" => 21
-    }.freeze
-
     def initialize(*)
       super
       @level = ::Logger::INFO

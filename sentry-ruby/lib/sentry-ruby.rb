@@ -11,13 +11,12 @@ require "sentry/utils/argument_checking_helper"
 require "sentry/utils/encoding_helper"
 require "sentry/utils/logging_helper"
 require "sentry/configuration"
-require "sentry/logger"
+require "sentry/logging"
 require "sentry/event"
 require "sentry/error_event"
 require "sentry/transaction_event"
 require "sentry/check_in_event"
 require "sentry/log_event"
-require "sentry/logging_feature"
 require "sentry/span"
 require "sentry/transaction"
 require "sentry/hub"
@@ -254,7 +253,7 @@ module Sentry
       @metrics_aggregator = config.metrics.enabled ? Sentry::Metrics::Aggregator.new(config, client) : nil
       exception_locals_tp.enable if config.include_local_variables
 
-      Sentry::LoggingFeature.setup if config._experiments[:enable_logs]
+      Sentry::Logging.setup_logger(config)
 
       at_exit { close }
     end
