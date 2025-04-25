@@ -1,7 +1,7 @@
 ---
 name: 💡 Improvement
 about: Propose an improvement for existing functionality of the SDK
-type: Improvement
+labels: ["Ruby", "Improvement"]
 ---
 
 **Describe the idea**
