@@ -216,6 +216,16 @@ module Sentry
       event.check_in_id
     end
 
+    def capture_log_event(message, **options)
+      return unless current_client
+
+      event = current_client.event_from_log(message, **options)
+
+      return unless event
+
+      capture_event(event, **options)
+    end
+
     def capture_event(event, **options, &block)
       check_argument_type!(event, Sentry::Event)
 

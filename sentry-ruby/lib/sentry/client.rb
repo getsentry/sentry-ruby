@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require "sentry/transport"
+require "sentry/log_event"
 
 module Sentry
   class Client
@@ -164,6 +165,20 @@ module Sentry
         duration: duration,
         monitor_config: monitor_config,
         check_in_id: check_in_id
+      )
+    end
+
+    # Initializes a LogEvent object with the given message and options
+    def event_from_log(message, level:, **options)
+      return unless configuration.sending_allowed?
+
+      attributes = options.reject { |k, _| k == :level }
+
+      LogEvent.new(
+        level: level,
+        body: message,
+        timestamp: Time.now.to_f,
+        attributes: attributes
       )
     end
 

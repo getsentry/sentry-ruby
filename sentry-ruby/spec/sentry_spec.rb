@@ -352,6 +352,19 @@ RSpec.describe Sentry do
     end
   end
 
+  describe ".capture_log" do
+    it "sends a log event via current hub" do
+      expect do
+        described_class.capture_log("Test", level: :info, tags: { foo: "baz" })
+      end.to change { sentry_events.count }.by(1)
+
+      log_event = sentry_events.first
+
+      expect(log_event.type).to eql("log")
+      expect(log_event.level).to eq(:info)
+      expect(log_event.attributes).to eql({ tags: { foo: "baz" } })
+    end
+  end
 
   describe ".start_transaction" do
     describe "sampler example" do
