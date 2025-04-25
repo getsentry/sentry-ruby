@@ -1,7 +1,7 @@
 ---
 name: 💡 Feature Request
 about: Propose new functionality for the SDK
-type: Feature
+labels: ["Ruby", "Feature"]
 ---
 
 **Describe the idea**
