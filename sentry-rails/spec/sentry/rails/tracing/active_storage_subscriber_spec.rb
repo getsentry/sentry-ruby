@@ -48,8 +48,33 @@ RSpec.describe Sentry::Rails::Tracing::ActiveStorageSubscriber, :subscriber, typ
       expect(span[:op]).to eq("file.service_upload.active_storage")
       expect(span[:origin]).to eq("auto.file.rails")
       expect(span[:description]).to eq("Disk")
-      expect(span.dig(:data, :key)).to eq(p.cover.key)
+      expect(span.dig(:data, :key)).to be_nil
       expect(span[:trace_id]).to eq(request_transaction.dig(:contexts, :trace, :trace_id))
+    end
+
+    context "with send_default_pii = true" do
+      before do
+        make_basic_app do |config|
+          config.traces_sample_rate = 1.0
+          config.send_default_pii = true
+          config.rails.tracing_subscribers = [described_class]
+        end
+      end
+
+      it "records the :key in span.data" do
+        # make sure AnalyzeJob will be executed immediately
+        ActiveStorage::AnalyzeJob.queue_adapter.perform_enqueued_jobs = true
+
+        p = Post.create!
+        get "/posts/#{p.id}/attach"
+
+        request_transaction = transport.events.last.to_hash
+        expect(request_transaction[:type]).to eq("transaction")
+        expect(request_transaction[:spans].count).to eq(2)
+
+        span = request_transaction[:spans][1]
+        expect(span.dig(:data, :key)).to eq(p.cover.key)
+      end
     end
   end
 

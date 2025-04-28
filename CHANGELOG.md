@@ -12,6 +12,7 @@
   ```ruby
   config.sidekiq.propagate_traces = false unless Rails.const_defined?('Server')
   ```
+- Only expose `active_storage` keys on span data if `send_default_pii` is on ([#2589](https://github.com/getsentry/sentry-ruby/pull/2589))
 
 ### Bug Fixes
 
