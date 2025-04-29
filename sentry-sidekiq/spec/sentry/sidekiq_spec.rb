@@ -363,7 +363,7 @@ RSpec.describe Sentry::Sidekiq do
     end
   end
 
-  context "when profiling is enabled with Vernier", skip: RUBY_VERSION < "3.2.1" do
+  context "when profiling is enabled with Vernier", skip: !defined?(Vernier) do
     before do
       perform_basic_setup do |config|
         config.traces_sample_rate = 1.0
