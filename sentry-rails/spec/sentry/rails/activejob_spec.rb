@@ -435,6 +435,12 @@ RSpec.describe "ActiveJob integration", type: :job do
   end
 
   describe "active_job_report_after_job_retries", skip: RAILS_VERSION < 7.0 do
+    before do
+      if defined?(JRUBY_VERSION) && JRUBY_VERSION == "9.4.12.0" && RAILS_VERSION <= 7.1
+        skip "This crashes on jruby + rails 7.0.0.x. See https://github.com/getsentry/sentry-ruby/issues/2612"
+      end
+    end
+
     context "when active_job_report_after_job_retries is false" do
       it "reports 3 exceptions" do
         allow(Sentry::Rails::ActiveJobExtensions::SentryReporter)
