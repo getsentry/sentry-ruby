@@ -21,6 +21,7 @@
 - Fix breadcrumb serialization error message to be an object ([#2584](https://github.com/getsentry/sentry-ruby/pull/2584))
   - Fixes [#2478](https://github.com/getsentry/sentry-ruby/issues/2478)
 - Fix compatibility issues with sidekiq-cron 2.2.0 ([#2591](https://github.com/getsentry/sentry-ruby/pull/2591))
+- Update sentry-sidekiq to work correctly with Sidekiq 8.0 and its new timestamp format ([#2570](https://github.com/getsentry/sentry-ruby/pull/2570))
 
 ### Internal
 
