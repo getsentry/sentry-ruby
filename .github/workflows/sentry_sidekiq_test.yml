@@ -44,11 +44,11 @@ jobs:
             sidekiq_version: 5.0
           - ruby_version: 2.6
             sidekiq_version: 6.0
-          - ruby_version: jruby
+          - ruby_version: jruby-9.4.12.0
             sidekiq_version: 5.0
-          - ruby_version: jruby
+          - ruby_version: jruby-9.4.12.0
             sidekiq_version: 6.0
-          - ruby_version: jruby
+          - ruby_version: jruby-9.4.12.0
             sidekiq_version: 7.0
           - ruby_version: "3.2"
             sidekiq_version: 7.0
