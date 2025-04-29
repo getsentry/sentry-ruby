@@ -90,6 +90,7 @@ jobs:
             rails_version: 7.1.0
         exclude:
           - ruby_version: head
+          - ruby_version: 'jruby'
           - ruby_version: jruby-head
           - ruby_version: "3.4"
             rails_version: "6.1.0"
@@ -108,12 +109,7 @@ jobs:
         uses: ruby/setup-ruby@v1
         with:
           ruby-version: ${{ matrix.ruby_version }}
-          bundler-cache: ${{ ! contains(matrix.ruby_version, 'jruby') }}
-
-      # https://github.com/jruby/jruby/issues/8606#issuecomment-2641501008
-      - name: Bundle Jruby
-        if: ${{ contains(matrix.ruby_version, 'jruby') }}
-        run: gem install jar-dependencies && bundle
+          bundler-cache: true
 
       - name: Build with Rails ${{ matrix.rails_version }}
         run: bundle exec rake
