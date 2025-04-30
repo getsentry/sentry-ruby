@@ -92,6 +92,8 @@ module Sentry
             subscribers.clear
           end
 
+          # This handler does not capture error when `active_job_report_after_job_retries` is true
+          # because in such case only the last retry that failed will capture exception
           def retry_handler(*args)
             handle_error_event(*args) do |job, error|
               return if !Sentry.initialized? || job.already_supported_by_sentry_integration?
@@ -101,6 +103,9 @@ module Sentry
             end
           end
 
+          # This handler does not capture error when `active_job_report_after_job_retries` is false
+          # because in such cases regular execution flow that failed will capture it in `record`
+          # method
           def retry_stopped_handler(*args)
             handle_error_event(*args) do |job, error|
               return if !Sentry.initialized? || job.already_supported_by_sentry_integration?
