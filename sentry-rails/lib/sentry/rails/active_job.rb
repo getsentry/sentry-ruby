@@ -87,10 +87,15 @@ module Sentry
             end
           end
 
-          def detach_retry_stopped_subscriber
+          def detach_handlers
             if @retry_stopped_subscriber
               ActiveSupport::Notifications.unsubscribe(@retry_stopped_subscriber)
               @retry_stopped_subscriber = nil
+            end
+
+            if @retry_handler
+              ActiveSupport::Notifications.unsubscribe(@retry_handler)
+              @retry_handler = nil
             end
           end
 
