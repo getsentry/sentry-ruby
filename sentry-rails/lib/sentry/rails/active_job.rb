@@ -17,11 +17,6 @@ module Sentry
         Sentry.configuration.rails.skippable_job_adapters.include?(self.class.queue_adapter.class.to_s)
       end
 
-      def retry_job(error:, **opts)
-        SentryReporter.maybe_capture_exception(self, error)
-        super
-      end
-
       class SentryReporter
         OP_NAME = "queue.active_job"
         SPAN_ORIGIN = "auto.queue.active_job"
@@ -76,6 +71,14 @@ module Sentry
             )
           end
 
+          def register_retry_subscriber
+            unless @retry_subscriber
+              @retry_subscriber = ActiveSupport::Notifications.subscribe("enqueue_retry.active_job") do |*args|
+                retry_handler(*args)
+              end
+            end
+          end
+
           def register_retry_stopped_subscriber
             unless @retry_stopped_subscriber
               @retry_stopped_subscriber = ActiveSupport::Notifications.subscribe(NOTIFICATION_NAME) do |*args|
@@ -89,6 +92,17 @@ module Sentry
               ActiveSupport::Notifications.unsubscribe(@retry_stopped_subscriber)
               @retry_stopped_subscriber = nil
             end
+          end
+
+          def retry_handler(*args)
+            event = ActiveSupport::Notifications::Event.new(*args)
+            job = event.payload[:job]
+            error = event.payload[:error]
+
+            return if !Sentry.initialized? || job.already_supported_by_sentry_integration?
+            return if Sentry.configuration.rails.active_job_report_after_job_retries
+
+            capture_exception(job, error)
           end
 
           def retry_stopped_handler(*args)
