@@ -93,25 +93,26 @@ module Sentry
           end
 
           def retry_handler(*args)
-            event = ActiveSupport::Notifications::Event.new(*args)
-            job = event.payload[:job]
-            error = event.payload[:error]
+            handle_error_event(*args) do |job, error|
+              return if !Sentry.initialized? || job.already_supported_by_sentry_integration?
+              return if Sentry.configuration.rails.active_job_report_after_job_retries
 
-            return if !Sentry.initialized? || job.already_supported_by_sentry_integration?
-            return if Sentry.configuration.rails.active_job_report_after_job_retries
-
-            capture_exception(job, error)
+              capture_exception(job, error)
+            end
           end
 
           def retry_stopped_handler(*args)
+            handle_error_event(*args) do |job, error|
+              return if !Sentry.initialized? || job.already_supported_by_sentry_integration?
+              return unless Sentry.configuration.rails.active_job_report_after_job_retries
+
+              capture_exception(job, error)
+            end
+          end
+
+          def handle_error_event(*args)
             event = ActiveSupport::Notifications::Event.new(*args)
-            job = event.payload[:job]
-            error = event.payload[:error]
-
-            return if !Sentry.initialized? || job.already_supported_by_sentry_integration?
-            return unless Sentry.configuration.rails.active_job_report_after_job_retries
-
-            capture_exception(job, error)
+            yield(event.payload[:job], event.payload[:error])
           end
 
           def finish_sentry_transaction(transaction, status)
