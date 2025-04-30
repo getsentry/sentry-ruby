@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+require "set"
+
 module Sentry
   module Rails
     module ActiveJobExtensions
@@ -20,7 +22,11 @@ module Sentry
       class SentryReporter
         OP_NAME = "queue.active_job"
         SPAN_ORIGIN = "auto.queue.active_job"
-        NOTIFICATION_NAME = "retry_stopped.active_job"
+
+        EVENT_HANDLERS = {
+          "enqueue_retry.active_job" => :retry_handler,
+          "retry_stopped.active_job" => :retry_stopped_handler
+        }
 
         class << self
           def record(job, &block)
@@ -71,32 +77,19 @@ module Sentry
             )
           end
 
-          def register_retry_subscriber
-            unless @retry_subscriber
-              @retry_subscriber = ActiveSupport::Notifications.subscribe("enqueue_retry.active_job") do |*args|
-                retry_handler(*args)
+          def register_event_handlers
+            EVENT_HANDLERS.each do |name, handler|
+              subscribers << ActiveSupport::Notifications.subscribe(name) do |*args|
+                public_send(handler, *args)
               end
             end
           end
 
-          def register_retry_stopped_subscriber
-            unless @retry_stopped_subscriber
-              @retry_stopped_subscriber = ActiveSupport::Notifications.subscribe(NOTIFICATION_NAME) do |*args|
-                retry_stopped_handler(*args)
-              end
+          def detach_event_handlers
+            subscribers.each do |subscriber|
+              ActiveSupport::Notifications.unsubscribe(subscriber)
             end
-          end
-
-          def detach_handlers
-            if @retry_stopped_subscriber
-              ActiveSupport::Notifications.unsubscribe(@retry_stopped_subscriber)
-              @retry_stopped_subscriber = nil
-            end
-
-            if @retry_handler
-              ActiveSupport::Notifications.unsubscribe(@retry_handler)
-              @retry_handler = nil
-            end
+            subscribers.clear
           end
 
           def retry_handler(*args)
@@ -117,6 +110,7 @@ module Sentry
 
             return if !Sentry.initialized? || job.already_supported_by_sentry_integration?
             return unless Sentry.configuration.rails.active_job_report_after_job_retries
+
             capture_exception(job, error)
           end
 
@@ -155,6 +149,12 @@ module Sentry
             else
               argument
             end
+          end
+
+          private
+
+          def subscribers
+            @__subscribers__ ||= Set.new
           end
         end
       end

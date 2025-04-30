@@ -54,7 +54,7 @@ module Sentry
 
       # Presence of ActiveJob is no longer a reliable cue
       if defined?(Sentry::Rails::ActiveJobExtensions)
-        register_active_job_subscribers
+        Sentry::Rails::ActiveJobExtensions::SentryReporter.register_event_handlers
       end
     end
 
@@ -141,11 +141,6 @@ module Sentry
     def register_error_subscriber(app)
       require "sentry/rails/error_subscriber"
       app.executor.error_reporter.subscribe(Sentry::Rails::ErrorSubscriber.new)
-    end
-
-    def register_active_job_subscribers
-      Sentry::Rails::ActiveJobExtensions::SentryReporter.register_retry_subscriber
-      Sentry::Rails::ActiveJobExtensions::SentryReporter.register_retry_stopped_subscriber
     end
   end
 end
