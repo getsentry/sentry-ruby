@@ -299,9 +299,10 @@ RSpec.describe Sentry::Transport do
         expect(log_event["attributes"]).to include(
           "sentry.message.template" => { "value" => "User %s has logged in!", "type" => "string" },
           "sentry.message.parameters.0" => { "value" => "John", "type" => "string" },
-          "sentry.environment" => { "value" => "production", "type" => "string" },
+          "sentry.environment" => { "value" => "development", "type" => "string" },
           "sentry.release" => { "value" => "1.0.0", "type" => "string" },
-          "sentry.trace.parent_span_id" => { "value" => "b0e6f15b45c36b12", "type" => "string" }
+          "sentry.trace.parent_span_id" => { "value" => "b0e6f15b45c36b12", "type" => "string" },
+          "sentry.server_name" => { "value" => matching(/\w+/), "type" => "string" }
         )
       end
     end

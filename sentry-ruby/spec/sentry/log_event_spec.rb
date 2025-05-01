@@ -40,6 +40,12 @@ RSpec.describe Sentry::LogEvent do
   end
 
   describe "#to_hash" do
+    before do
+      configuration.release = "1.2.3"
+      configuration.environment = "test"
+      configuration.server_name = "server-123"
+    end
+
     it "includes all required fields" do
       attributes = {
         "sentry.message.template" => "User %s has logged in!",
@@ -58,15 +64,15 @@ RSpec.describe Sentry::LogEvent do
       expect(hash[:level]).to eq("info")
       expect(hash[:body]).to eq("User John has logged in!")
       expect(hash[:timestamp]).to be_a(Float)
-      expect(hash[:attributes]).to be_a(Hash)
-      expect(hash[:attributes]["sentry.message.template"]).to eq({ value: "User %s has logged in!", type: "string" })
-      expect(hash[:attributes]["sentry.message.parameters.0"]).to eq({ value: "John", type: "string" })
 
-      expect(hash[:sdk]).to eq(Sentry.sdk_meta)
-      expect(hash[:platform]).to eq(:ruby)
-      expect(hash[:environment]).to eq("development")
-      expect(hash).to have_key(:release)
-      expect(hash).to have_key(:server_name)
+      attributes = hash[:attributes]
+
+      expect(attributes).to be_a(Hash)
+      expect(attributes["sentry.message.template"]).to eq({ value: "User %s has logged in!", type: "string" })
+      expect(attributes["sentry.message.parameters.0"]).to eq({ value: "John", type: "string" })
+      expect(attributes["sentry.environment"]).to eq({value: "test", type: "string"})
+      expect(attributes["sentry.release"]).to eq({value: "1.2.3", type: "string"})
+      expect(attributes["sentry.server_name"]).to eq({value: "server-123", type: "string"})
     end
 
     it "serializes different attribute types correctly" do

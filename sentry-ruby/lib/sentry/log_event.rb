@@ -13,16 +13,15 @@ module Sentry
       timestamp
       trace_id
       attributes
-      release
-      sdk
-      platform
-      environment
-      server_name
-      trace_id
     ]
 
     SENTRY_ATTRIBUTES = {
-      "sentry.trace.parent_span_id" => :parent_span_id
+      "sentry.trace.parent_span_id" => :parent_span_id,
+      "sentry.environment" => :environment,
+      "sentry.release" => :release,
+      "sentry.server_name" => :server_name,
+      "sentry.sdk.name" => :sdk_name,
+      "sentry.sdk.version" => :sdk_version
     }
 
     LEVELS = %i[trace debug info warn error fatal].freeze
@@ -60,6 +59,14 @@ module Sentry
       level.to_s
     end
 
+    def serialize_sdk_name
+      Sentry.sdk_meta[:name]
+    end
+
+    def serialize_sdk_version
+      Sentry.sdk_meta[:version]
+    end
+
     def serialize_timestamp
       Time.parse(timestamp).to_f
     end
@@ -74,19 +81,20 @@ module Sentry
 
     def serialize_attributes
       hash = @attributes.each_with_object({}) do |(key, value), memo|
-        memo[key] = {
-          value: value,
-          type: value_type(value)
-        }
+        memo[key] = attribute_hash(value)
       end
 
       SENTRY_ATTRIBUTES.each do |key, name|
         if (value = serialize(name))
-          hash[key] = value
+          hash[key] = attribute_hash(value)
         end
       end
 
       hash
+    end
+
+    def attribute_hash(value)
+      { value: value, type: value_type(value) }
     end
 
     def value_type(value)

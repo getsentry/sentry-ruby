@@ -394,8 +394,8 @@ RSpec.describe Sentry do
       expect(log_event.attributes).to eql({ tags: { foo: "baz" } })
 
       hash = log_event.to_hash
-      expect(hash[:trace_id]).to_not be(nil)
-      expect(hash[:attributes]["sentry.trace.parent_span_id"]).to eql(transaction.span_id)
+      expect(hash[:trace_id]).to eq(transaction.trace_id)
+      expect(hash[:attributes]["sentry.trace.parent_span_id"]).to eql({ value: transaction.span_id, type: "string" })
     end
   end
 
