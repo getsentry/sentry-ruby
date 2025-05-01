@@ -77,6 +77,12 @@ RSpec.describe Sentry::LogEvent do
       expect(hash[:attributes]).to be_a(Hash)
       expect(hash[:attributes]["sentry.message.template"]).to eq({ value: "User %s has logged in!", type: "string" })
       expect(hash[:attributes]["sentry.message.parameters.0"]).to eq({ value: "John", type: "string" })
+
+      expect(hash[:sdk]).to eq(Sentry.sdk_meta)
+      expect(hash[:platform]).to eq(:ruby)
+      expect(hash[:environment]).to eq("development")
+      expect(hash).to have_key(:release)
+      expect(hash).to have_key(:server_name)
     end
 
     it "serializes different attribute types correctly" do

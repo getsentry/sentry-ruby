@@ -8,7 +8,16 @@ module Sentry
     TYPE = "log"
 
     SERIALIZEABLE_ATTRIBUTES = %i[
-      level body timestamp trace_id attributes
+      level
+      body
+      timestamp
+      trace_id
+      attributes
+      release
+      sdk
+      platform
+      environment
+      server_name
     ]
 
     LEVELS = %i[trace debug info warn error fatal].freeze
