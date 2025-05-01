@@ -1,8 +1,15 @@
 # frozen_string_literal: true
 
 module Sentry
+  # Event type that represents a log entry with its attributes
+  #
+  # @see https://develop.sentry.dev/sdk/telemetry/logs/#log-envelope-item-payload
   class LogEvent < Event
     TYPE = "log"
+
+    SERIALIZEABLE_ATTRIBUTES = %i[
+      level body timestamp trace_id attributes
+    ]
 
     LEVELS = %i[trace debug info warn error fatal].freeze
 
@@ -17,18 +24,31 @@ module Sentry
       @attributes = options[:attributes] || {}
     end
 
-    # https://develop.sentry.dev/sdk/telemetry/logs/#log-envelope-item-payload
     def to_hash
-      data = {}
-      data[:level] = @level.to_s
-      data[:body] = @body
-      data[:timestamp] = Time.parse(@timestamp).to_f
-      data[:trace_id] = @trace_id
-      data[:attributes] = serialize_attributes
-      data
+      SERIALIZEABLE_ATTRIBUTES.each_with_object({}) do |name, memo|
+        memo[name] = serialize(name)
+      end
     end
 
     private
+
+    def serialize(name)
+      serializer = :"serialize_#{name}"
+
+      if respond_to?(serializer, true)
+        __send__(serializer)
+      else
+        public_send(name)
+      end
+    end
+
+    def serialize_level
+      level.to_s
+    end
+
+    def serialize_timestamp
+      Time.parse(timestamp).to_f
+    end
 
     def serialize_attributes
       result = {}
