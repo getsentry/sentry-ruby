@@ -21,6 +21,10 @@ module Sentry
       trace_id
     ]
 
+    SENTRY_ATTRIBUTES = {
+      "sentry.trace.parent_span_id" => :parent_span_id
+    }
+
     LEVELS = %i[trace debug info warn error fatal].freeze
 
     attr_accessor :level, :body, :attributes, :trace_id
@@ -64,13 +68,25 @@ module Sentry
       @contexts.dig(:trace, :trace_id)
     end
 
+    def serialize_parent_span_id
+      @contexts.dig(:trace, :parent_span_id)
+    end
+
     def serialize_attributes
-      @attributes.each_with_object({}) do |(key, value), memo|
+      hash = @attributes.each_with_object({}) do |(key, value), memo|
         memo[key] = {
           value: value,
           type: value_type(value)
         }
       end
+
+      SENTRY_ATTRIBUTES.each do |key, name|
+        if (value = serialize(name))
+          hash[key] = value
+        end
+      end
+
+      hash
     end
 
     def value_type(value)
