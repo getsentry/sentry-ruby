@@ -60,11 +60,11 @@ module Sentry
     end
 
     def serialize_sdk_name
-      Sentry.sdk_meta[:name]
+      Sentry.sdk_meta["name"]
     end
 
     def serialize_sdk_version
-      Sentry.sdk_meta[:version]
+      Sentry.sdk_meta["version"]
     end
 
     def serialize_timestamp

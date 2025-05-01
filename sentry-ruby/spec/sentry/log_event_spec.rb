@@ -73,6 +73,8 @@ RSpec.describe Sentry::LogEvent do
       expect(attributes["sentry.environment"]).to eq({value: "test", type: "string"})
       expect(attributes["sentry.release"]).to eq({value: "1.2.3", type: "string"})
       expect(attributes["sentry.server_name"]).to eq({value: "server-123", type: "string"})
+      expect(attributes["sentry.sdk.name"]).to eq({ value: "sentry.ruby", type: "string" })
+      expect(attributes["sentry.sdk.version"]).to eq({ value: Sentry::VERSION, type: "string" })
     end
 
     it "serializes different attribute types correctly" do
