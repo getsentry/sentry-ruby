@@ -20,19 +20,6 @@ RSpec.describe Sentry::LogEvent do
       expect(event).to be_a(described_class)
       expect(event.level).to eq(:info)
       expect(event.body).to eq("User John has logged in!")
-      expect(event.trace_id).to_not be(nil)
-    end
-
-    it "accepts trace_id" do
-      trace_id = "5b8efff798038103d269b633813fc60c"
-      event = described_class.new(
-        configuration: configuration,
-        level: :info,
-        body: "User John has logged in!",
-        trace_id: trace_id
-      )
-
-      expect(event.trace_id).to eq(trace_id)
     end
 
     it "accepts attributes" do
@@ -54,7 +41,6 @@ RSpec.describe Sentry::LogEvent do
 
   describe "#to_hash" do
     it "includes all required fields" do
-      trace_id = "5b8efff798038103d269b633813fc60c"
       attributes = {
         "sentry.message.template" => "User %s has logged in!",
         "sentry.message.parameters.0" => "John"
@@ -64,7 +50,6 @@ RSpec.describe Sentry::LogEvent do
         configuration: configuration,
         level: :info,
         body: "User John has logged in!",
-        trace_id: trace_id,
         attributes: attributes
       )
 
@@ -72,7 +57,6 @@ RSpec.describe Sentry::LogEvent do
 
       expect(hash[:level]).to eq("info")
       expect(hash[:body]).to eq("User John has logged in!")
-      expect(hash[:trace_id]).to eq(trace_id)
       expect(hash[:timestamp]).to be_a(Float)
       expect(hash[:attributes]).to be_a(Hash)
       expect(hash[:attributes]["sentry.message.template"]).to eq({ value: "User %s has logged in!", type: "string" })

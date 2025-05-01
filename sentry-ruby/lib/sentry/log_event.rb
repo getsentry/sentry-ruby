@@ -18,6 +18,7 @@ module Sentry
       platform
       environment
       server_name
+      trace_id
     ]
 
     LEVELS = %i[trace debug info warn error fatal].freeze
@@ -29,8 +30,8 @@ module Sentry
       @type = TYPE
       @level = options.fetch(:level)
       @body = options[:body]
-      @trace_id = options[:trace_id] || SecureRandom.hex(16)
       @attributes = options[:attributes] || {}
+      @contexts = {}
     end
 
     def to_hash
@@ -57,6 +58,10 @@ module Sentry
 
     def serialize_timestamp
       Time.parse(timestamp).to_f
+    end
+
+    def serialize_trace_id
+      @contexts.dig(:trace, :trace_id)
     end
 
     def serialize_attributes

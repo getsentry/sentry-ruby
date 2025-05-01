@@ -364,6 +364,25 @@ RSpec.describe Sentry do
       expect(log_event.level).to eq(:info)
       expect(log_event.attributes).to eql({ tags: { foo: "baz" } })
     end
+
+    it "sends a log event with trace and span info" do
+      expect do
+        Sentry.with_scope do |scope|
+          Sentry.with_child_span(op: "log_testing") do |_span|
+            described_class.capture_log("Test", level: :info, tags: { foo: "baz" })
+          end
+        end
+      end.to change { sentry_events.count }.by(1)
+
+      log_event = sentry_events.first
+
+      expect(log_event.type).to eql("log")
+      expect(log_event.level).to eq(:info)
+      expect(log_event.attributes).to eql({ tags: { foo: "baz" } })
+
+      hash = log_event.to_hash
+      expect(hash[:trace_id]).to_not be(nil)
+    end
   end
 
   describe ".start_transaction" do

@@ -294,7 +294,6 @@ RSpec.describe Sentry::Transport do
         log_event = item_payload_parsed["items"].first
         expect(log_event["level"]).to eq("info")
         expect(log_event["body"]).to eq("User John has logged in!")
-        expect(log_event["trace_id"]).to eq("5b8efff798038103d269b633813fc60c")
         expect(log_event["timestamp"]).to be_a(Float)
 
         expect(log_event["attributes"]).to include(
