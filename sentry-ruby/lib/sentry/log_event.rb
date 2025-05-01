@@ -60,16 +60,12 @@ module Sentry
     end
 
     def serialize_attributes
-      result = {}
-
-      @attributes.each do |key, value|
-        result[key] = {
+      @attributes.each_with_object({}) do |(key, value), memo|
+        memo[key] = {
           value: value,
           type: value_type(value)
         }
       end
-
-      result
     end
 
     def value_type(value)
