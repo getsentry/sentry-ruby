@@ -133,10 +133,21 @@ module Sentry
 
       envelope = Envelope.new(envelope_headers)
 
-      envelope.add_item(
-        { type: item_type, content_type: "application/json" },
-        event_payload
-      )
+      if event.is_a?(LogEvent)
+        envelope.add_item(
+          {
+            type: "log",
+            item_count: 1,
+            content_type: "application/vnd.sentry.items.log+json"
+          },
+          { items: [event_payload] }
+        )
+      else
+        envelope.add_item(
+          { type: item_type, content_type: "application/json" },
+          event_payload
+        )
+      end
 
       if event.is_a?(TransactionEvent) && event.profile
         envelope.add_item(

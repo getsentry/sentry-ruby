@@ -11,6 +11,7 @@ RSpec.describe Sentry::Envelope::Item do
       ['transaction', 'transaction'],
       ['span', 'span'],
       ['profile', 'profile'],
+      ['log', 'log'],
       ['check_in', 'monitor'],
       ['statsd', 'metric_bucket'],
       ['metric_meta', 'metric_bucket'],

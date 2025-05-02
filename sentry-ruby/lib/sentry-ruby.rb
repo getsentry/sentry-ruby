@@ -489,6 +489,18 @@ module Sentry
       get_current_hub.capture_check_in(slug, status, **options)
     end
 
+    # Captures a log event and sends it to Sentry via the currently active hub.
+    #
+    # @param message [String] the log message
+    # @param [Hash] options Extra log event options
+    # @option options [Symbol] level The log level
+    #
+    # @return [LogEvent, nil]
+    def capture_log(message, **options)
+      return unless initialized?
+      get_current_hub.capture_log_event(message, **options)
+    end
+
     # Takes or initializes a new Sentry::Transaction and makes a sampling decision for it.
     #
     # @return [Transaction, nil]

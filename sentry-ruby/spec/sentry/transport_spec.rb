@@ -237,6 +237,76 @@ RSpec.describe Sentry::Transport do
       end
     end
 
+    context "log events" do
+      let(:log_events) do
+        5.times.map do |i|
+          Sentry::LogEvent.new(
+            configuration: configuration,
+            level: :info,
+            body: "User John has logged in!",
+            trace_id: "5b8efff798038103d269b633813fc60c",
+            timestamp: 1544719860.0,
+            attributes: {
+              "sentry.message.template" => "User %s has logged in!",
+              "sentry.message.parameters.0" => "John",
+              "sentry.environment" => "production",
+              "sentry.release" => "1.0.0",
+              "sentry.trace.parent_span_id" => "b0e6f15b45c36b12"
+            }
+          )
+        end
+      end
+
+      let(:envelope) do
+        envelope = Sentry::Envelope.new
+
+        envelope.add_item(
+          {
+            type: "log",
+            item_count: log_events.size,
+            content_type: "application/vnd.sentry.items.log+json"
+          },
+          { items: log_events.map(&:to_hash) }
+        )
+
+        envelope
+      end
+
+      it "generates correct envelope content for log events" do
+        result, _ = subject.serialize_envelope(envelope)
+
+        envelope_header, item_header, item_payload = result.split("\n")
+
+        envelope_header_parsed = JSON.parse(envelope_header)
+        expect(envelope_header_parsed).to be_a(Hash)
+
+        item_header_parsed = JSON.parse(item_header)
+        expect(item_header_parsed).to eq({
+          "type" => "log",
+          "item_count" => 5,
+          "content_type" => "application/vnd.sentry.items.log+json"
+        })
+
+        item_payload_parsed = JSON.parse(item_payload)
+        expect(item_payload_parsed).to have_key("items")
+        expect(item_payload_parsed["items"].size).to eq(5)
+
+        log_event = item_payload_parsed["items"].first
+        expect(log_event["level"]).to eq("info")
+        expect(log_event["body"]).to eq("User John has logged in!")
+        expect(log_event["timestamp"]).to be_a(Float)
+
+        expect(log_event["attributes"]).to include(
+          "sentry.message.template" => { "value" => "User %s has logged in!", "type" => "string" },
+          "sentry.message.parameters.0" => { "value" => "John", "type" => "string" },
+          "sentry.environment" => { "value" => "development", "type" => "string" },
+          "sentry.release" => { "value" => "1.0.0", "type" => "string" },
+          "sentry.trace.parent_span_id" => { "value" => "b0e6f15b45c36b12", "type" => "string" },
+          "sentry.address" => { "value" => matching(/\w+/), "type" => "string" }
+        )
+      end
+    end
+
     context "malformed breadcrumb" do
       let(:event) { client.event_from_message("foo") }
 
@@ -500,6 +570,51 @@ RSpec.describe Sentry::Transport do
         subject.send_envelope(envelope)
 
         expect(io.string).to match(/Sending envelope with items \[event, attachment, attachment\]/)
+      end
+    end
+
+    context "log events" do
+      let(:log_events) do
+        5.times.map do |i|
+          Sentry::LogEvent.new(
+            configuration: configuration,
+            level: :info,
+            body: "User John has logged in!",
+            trace_id: "5b8efff798038103d269b633813fc60c",
+            timestamp: 1544719860.0,
+            attributes: {
+              "sentry.message.template" => "User %s has logged in!",
+              "sentry.message.parameters.0" => "John",
+              "sentry.environment" => "production",
+              "sentry.release" => "1.0.0",
+              "sentry.trace.parent_span_id" => "b0e6f15b45c36b12"
+            }
+          )
+        end
+      end
+
+      let(:envelope) do
+        envelope = Sentry::Envelope.new
+
+        # Add log item header
+        envelope.add_item(
+          {
+            type: "log",
+            item_count: log_events.size,
+            content_type: "application/vnd.sentry.items.log+json"
+          },
+          { items: log_events.map(&:to_hash) }
+        )
+
+        envelope
+      end
+
+      it "sends the log events and logs the action" do
+        expect(subject).to receive(:send_data)
+
+        subject.send_envelope(envelope)
+
+        expect(io.string).to match(/Sending envelope with items \[log\]/)
       end
     end
   end
