@@ -19,7 +19,7 @@ module Sentry
       "sentry.trace.parent_span_id" => :parent_span_id,
       "sentry.environment" => :environment,
       "sentry.release" => :release,
-      "sentry.server_name" => :server_name,
+      "sentry.address" => :server_name,
       "sentry.sdk.name" => :sdk_name,
       "sentry.sdk.version" => :sdk_version
     }

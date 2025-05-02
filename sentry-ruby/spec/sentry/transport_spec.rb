@@ -302,7 +302,7 @@ RSpec.describe Sentry::Transport do
           "sentry.environment" => { "value" => "development", "type" => "string" },
           "sentry.release" => { "value" => "1.0.0", "type" => "string" },
           "sentry.trace.parent_span_id" => { "value" => "b0e6f15b45c36b12", "type" => "string" },
-          "sentry.server_name" => { "value" => matching(/\w+/), "type" => "string" }
+          "sentry.address" => { "value" => matching(/\w+/), "type" => "string" }
         )
       end
     end
