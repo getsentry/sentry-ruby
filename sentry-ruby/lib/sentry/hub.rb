@@ -223,7 +223,7 @@ module Sentry
 
       return unless event
 
-      capture_event(event, **options)
+      current_client.buffer_log_event(event, current_scope)
     end
 
     def capture_event(event, **options, &block)

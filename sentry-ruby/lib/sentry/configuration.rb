@@ -12,6 +12,7 @@ require "sentry/cron/configuration"
 require "sentry/metrics/configuration"
 require "sentry/linecache"
 require "sentry/interfaces/stacktrace_builder"
+require "sentry/log_event_buffer"
 
 module Sentry
   class Configuration
@@ -307,6 +308,10 @@ module Sentry
     # @return [Array<Symbol>]
     attr_accessor :enabled_patches
 
+    # Maximum number of log events to buffer before sending
+    # @return [Integer]
+    attr_accessor :max_log_events
+
     # these are not config options
     # @!visibility private
     attr_reader :errors, :gem_specs
@@ -455,6 +460,8 @@ module Sentry
       @gem_specs = Hash[Gem::Specification.map { |spec| [spec.name, spec.version.to_s] }] if Gem::Specification.respond_to?(:map)
 
       run_post_initialization_callbacks
+
+      self.max_log_events = LogEventBuffer::DEFAULT_MAX_EVENTS
     end
 
     def validate

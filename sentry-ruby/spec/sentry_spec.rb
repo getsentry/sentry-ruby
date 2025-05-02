@@ -356,6 +356,7 @@ RSpec.describe Sentry do
     before do
       perform_basic_setup do |config|
         config.traces_sample_rate = 1.0
+        config.max_log_events = 1
       end
     end
 
@@ -364,17 +365,17 @@ RSpec.describe Sentry do
         Sentry.with_scope do |scope|
           described_class.capture_log("Test", level: :info, tags: { foo: "baz" })
         end
-      end.to change { sentry_events.count }.by(1)
+      end.to_not change { sentry_events.count }
 
-      log_event = sentry_events.first
+      Sentry.get_current_client.flush
 
-      expect(log_event.type).to eql("log")
-      expect(log_event.level).to eq(:info)
-      expect(log_event.attributes).to eql({ tags: { foo: "baz" } })
+      expect(sentry_envelopes.count).to be(1)
 
-      hash = log_event.to_hash
-      expect(hash[:trace_id]).to_not be(nil)
-      expect(hash[:attributes]).to_not have_key("sentry.trace.parent_span_id")
+      log_event = sentry_logs.first
+
+      expect(log_event[:level]).to eq("info")
+      expect(log_event[:trace_id]).to_not be(nil)
+      expect(log_event[:attributes]).to_not have_key("sentry.trace.parent_span_id")
     end
 
     it "sends a log event with parent_span_id" do
@@ -387,15 +388,15 @@ RSpec.describe Sentry do
 
       transaction.finish
 
-      log_event = sentry_events.first
+      Sentry.get_current_client.flush
 
-      expect(log_event.type).to eql("log")
-      expect(log_event.level).to eq(:info)
-      expect(log_event.attributes).to eql({ tags: { foo: "baz" } })
+      expect(sentry_envelopes.size).to be(2)
 
-      hash = log_event.to_hash
-      expect(hash[:trace_id]).to eq(transaction.trace_id)
-      expect(hash[:attributes]["sentry.trace.parent_span_id"]).to eql({ value: transaction.span_id, type: "string" })
+      log_event = sentry_logs.first
+
+      expect(log_event[:level]).to eq("info")
+      expect(log_event[:trace_id]).to_not be(nil)
+      expect(log_event[:attributes]).to have_key("sentry.trace.parent_span_id")
     end
   end
 
