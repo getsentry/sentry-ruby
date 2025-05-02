@@ -85,7 +85,9 @@ end
 
 RSpec.describe "ActiveJob integration", type: :job do
   before do
-    make_basic_app
+    make_basic_app do |config|
+      config.rails.active_job_report_after_job_retries = false
+    end
   end
 
   let(:event) do
@@ -218,6 +220,7 @@ RSpec.describe "ActiveJob integration", type: :job do
     before do
       make_basic_app do |config|
         config.traces_sample_rate = 1.0
+        config.rails.active_job_report_after_job_retries = false
       end
     end
 
@@ -261,7 +264,9 @@ RSpec.describe "ActiveJob integration", type: :job do
 
   context "when DeserializationError happens in user's jobs" do
     before do
-      make_basic_app
+      make_basic_app do |config|
+        config.rails.active_job_report_after_job_retries = false
+      end
     end
 
     class DeserializationErrorJob < ActiveJob::Base
@@ -441,7 +446,16 @@ RSpec.describe "ActiveJob integration", type: :job do
       end
     end
 
+
     context "when active_job_report_after_job_retries is false" do
+      before do
+        Sentry.configuration.rails.active_job_report_after_job_retries = false
+      end
+
+      after do
+        Sentry.configuration.rails.active_job_report_after_job_retries = true
+      end
+
       it "reports 3 exceptions" do
         allow(Sentry::Rails::ActiveJobExtensions::SentryReporter)
           .to receive(:capture_exception).and_call_original
