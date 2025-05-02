@@ -55,7 +55,7 @@ RSpec.configure do |config|
     Sentry::Rails::Tracing.remove_active_support_notifications_patch
 
     if defined?(Sentry::Rails::ActiveJobExtensions)
-      Sentry::Rails::ActiveJobExtensions::SentryReporter.detach_retry_stopped_subscriber
+      Sentry::Rails::ActiveJobExtensions::SentryReporter.detach_event_handlers
     end
 
     reset_sentry_globals!

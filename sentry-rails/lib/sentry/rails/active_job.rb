@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+require "set"
+
 module Sentry
   module Rails
     module ActiveJobExtensions
@@ -20,7 +22,11 @@ module Sentry
       class SentryReporter
         OP_NAME = "queue.active_job"
         SPAN_ORIGIN = "auto.queue.active_job"
-        NOTIFICATION_NAME = "retry_stopped.active_job"
+
+        EVENT_HANDLERS = {
+          "enqueue_retry.active_job" => :retry_handler,
+          "retry_stopped.active_job" => :retry_stopped_handler
+        }
 
         class << self
           def record(job, &block)
@@ -47,12 +53,16 @@ module Sentry
               rescue Exception => e # rubocop:disable Lint/RescueException
                 finish_sentry_transaction(transaction, 500)
 
-                unless Sentry.configuration.rails.active_job_report_after_job_retries
-                  capture_exception(job, e)
-                end
+                maybe_capture_exception(job, e)
 
                 raise
               end
+            end
+          end
+
+          def maybe_capture_exception(job, e)
+            unless Sentry.configuration.rails.active_job_report_after_job_retries
+              capture_exception(job, e)
             end
           end
 
@@ -67,29 +77,47 @@ module Sentry
             )
           end
 
-          def register_retry_stopped_subscriber
-            unless @retry_stopped_subscriber
-              @retry_stopped_subscriber = ActiveSupport::Notifications.subscribe(NOTIFICATION_NAME) do |*args|
-                retry_stopped_handler(*args)
+          def register_event_handlers
+            EVENT_HANDLERS.each do |name, handler|
+              subscribers << ActiveSupport::Notifications.subscribe(name) do |*args|
+                public_send(handler, *args)
               end
             end
           end
 
-          def detach_retry_stopped_subscriber
-            if @retry_stopped_subscriber
-              ActiveSupport::Notifications.unsubscribe(@retry_stopped_subscriber)
-              @retry_stopped_subscriber = nil
+          def detach_event_handlers
+            subscribers.each do |subscriber|
+              ActiveSupport::Notifications.unsubscribe(subscriber)
+            end
+            subscribers.clear
+          end
+
+          # This handler does not capture error when `active_job_report_after_job_retries` is true
+          # because in such case only the last retry that failed will capture exception
+          def retry_handler(*args)
+            handle_error_event(*args) do |job, error|
+              return if !Sentry.initialized? || job.already_supported_by_sentry_integration?
+              return if Sentry.configuration.rails.active_job_report_after_job_retries
+
+              capture_exception(job, error)
             end
           end
 
+          # This handler does not capture error when `active_job_report_after_job_retries` is false
+          # because in such cases regular execution flow that failed will capture it in `record`
+          # method
           def retry_stopped_handler(*args)
-            event = ActiveSupport::Notifications::Event.new(*args)
-            job = event.payload[:job]
-            error = event.payload[:error]
+            handle_error_event(*args) do |job, error|
+              return if !Sentry.initialized? || job.already_supported_by_sentry_integration?
+              return unless Sentry.configuration.rails.active_job_report_after_job_retries
 
-            return if !Sentry.initialized? || job.already_supported_by_sentry_integration?
-            return unless Sentry.configuration.rails.active_job_report_after_job_retries
-            capture_exception(job, error)
+              capture_exception(job, error)
+            end
+          end
+
+          def handle_error_event(*args)
+            event = ActiveSupport::Notifications::Event.new(*args)
+            yield(event.payload[:job], event.payload[:error])
           end
 
           def finish_sentry_transaction(transaction, status)
@@ -127,6 +155,12 @@ module Sentry
             else
               argument
             end
+          end
+
+          private
+
+          def subscribers
+            @__subscribers__ ||= Set.new
           end
         end
       end

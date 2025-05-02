@@ -446,9 +446,11 @@ RSpec.describe "ActiveJob integration", type: :job do
         allow(Sentry::Rails::ActiveJobExtensions::SentryReporter)
           .to receive(:capture_exception).and_call_original
 
-        assert_performed_jobs 3 do
-          FailedJobWithRetryOn.perform_later rescue nil
-        end
+        FailedJobWithRetryOn.perform_later rescue nil
+
+        perform_enqueued_jobs
+        perform_enqueued_jobs
+        perform_enqueued_jobs rescue nil
 
         expect(Sentry::Rails::ActiveJobExtensions::SentryReporter)
           .to have_received(:capture_exception)
@@ -469,9 +471,11 @@ RSpec.describe "ActiveJob integration", type: :job do
         allow(Sentry::Rails::ActiveJobExtensions::SentryReporter)
           .to receive(:capture_exception).and_call_original
 
-        assert_performed_jobs 3 do
-          FailedJobWithRetryOn.perform_later rescue nil
-        end
+        FailedJobWithRetryOn.perform_later rescue nil
+
+        perform_enqueued_jobs
+        perform_enqueued_jobs
+        perform_enqueued_jobs rescue nil
 
         expect(Sentry::Rails::ActiveJobExtensions::SentryReporter)
           .to have_received(:capture_exception)
