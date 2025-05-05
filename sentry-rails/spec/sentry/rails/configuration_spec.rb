@@ -62,7 +62,7 @@ RSpec.describe Sentry::Rails::Configuration do
 
   describe "#active_job_report_on_retry_error" do
     it "has correct default value" do
-      expect(subject.active_job_report_on_retry_error).to be(true)
+      expect(subject.active_job_report_on_retry_error).to be(false)
     end
   end
 end
