@@ -14,7 +14,7 @@
   ```
 - Only expose `active_storage` keys on span data if `send_default_pii` is on ([#2589](https://github.com/getsentry/sentry-ruby/pull/2589))
 - Add `Sentry.capture_log` ([#2606](https://github.com/getsentry/sentry-ruby/pull/2617))
-- New configuration option called `active_job_report_on_retry_error` which enables reporting errors on each retry error ([#2500](https://github.com/getsentry/sentry-ruby/pull/2617))
+- New configuration option called `active_job_report_on_retry_error` which enables reporting errors on each retry error ([#2617](https://github.com/getsentry/sentry-ruby/pull/2617))
 
 ### Bug Fixes
 
