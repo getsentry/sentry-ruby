@@ -13,7 +13,8 @@
   config.sidekiq.propagate_traces = false unless Rails.const_defined?('Server')
   ```
 - Only expose `active_storage` keys on span data if `send_default_pii` is on ([#2589](https://github.com/getsentry/sentry-ruby/pull/2589))
-- Add `Sentry.capture_log` ([#2606](https://github.com/getsentry/sentry-ruby/pull/2606))
+- Add `Sentry.capture_log` ([#2606](https://github.com/getsentry/sentry-ruby/pull/2617))
+- New configuration option called `active_job_report_on_retry_error` which enables reporting errors on each retry error ([#2500](https://github.com/getsentry/sentry-ruby/pull/2617))
 
 ### Bug Fixes
 
@@ -28,7 +29,6 @@
 ### Internal
 
 - Remove `user_segment` from DSC ([#2586](https://github.com/getsentry/sentry-ruby/pull/2586))
-- New configuration option called `report_after_job_retries` for ActiveJob which makes reporting exceptions only happen when the last retry attempt failed ([#2500](https://github.com/getsentry/sentry-ruby/pull/2500))
 
 ## 5.23.0
 
