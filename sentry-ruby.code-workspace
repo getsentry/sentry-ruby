@@ -1,14 +1,8 @@
 {
   "folders": [
     {
-      "path": ".devcontainer"
-    },
-    {
-      "path": ".github",
-    },
-    {
-      "path": ".",
-      "name": "root"
+      "name": "root",
+      "path": "."
     },
     {
       "path": "sentry-ruby"
@@ -32,6 +26,21 @@
       "path": "sentry-raven"
     }
   ],
+  "settings": {
+    "files.exclude": {
+      "sentry-delayed_job": true,
+      "sentry-rails": true,
+      "sentry-raven": true,
+      "sentry-resque": true,
+      "sentry-ruby": true,
+      "sentry-sidekiq": true,
+      "sentry-opentelemetry": true
+    },
+    "rubyLsp.formatter": "rubocop",
+    "rubyLsp.rubyVersionManager": {
+      "identifier": "auto"
+    }
+  },
   "extensions": {
     "recommendations": [
       "Shopify.ruby-lsp"

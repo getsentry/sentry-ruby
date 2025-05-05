@@ -38,11 +38,13 @@ RUN chown -R sentry:sentry /workspace/sentry
 RUN mkdir /workspace/gems && chown -R sentry:sentry /workspace/gems
 
 ARG TAG=latest
+ARG GEM_HOME="/workspace/gems/${TAG}"
 
 ENV LANG=C.UTF-8 \
   BUNDLE_JOBS=4 \
   BUNDLE_RETRY=3 \
   GEM_HOME=/workspace/gems/${TAG} \
+  PATH=$PATH:${GEM_HOME}/bin \
   REDIS_HOST=redis
 
 USER sentry
