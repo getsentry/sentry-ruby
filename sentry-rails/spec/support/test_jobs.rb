@@ -65,3 +65,9 @@ class FailedJobWithCron < FailedJob
   include Sentry::Cron::MonitorCheckIns
   sentry_monitor_check_ins slug: "failed_job", monitor_config: Sentry::Cron::MonitorConfig.from_crontab("5 * * * *")
 end
+
+class FailedJobWithRetryOn < FailedJob
+  if respond_to? :retry_on
+    retry_on StandardError, attempts: 3, wait: 0
+  end
+end
