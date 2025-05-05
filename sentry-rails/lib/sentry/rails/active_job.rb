@@ -24,8 +24,7 @@ module Sentry
         SPAN_ORIGIN = "auto.queue.active_job"
 
         EVENT_HANDLERS = {
-          "enqueue_retry.active_job" => :retry_handler,
-          "retry_stopped.active_job" => :retry_stopped_handler
+          "enqueue_retry.active_job" => :retry_handler
         }
 
         class << self
@@ -53,16 +52,10 @@ module Sentry
               rescue Exception => e # rubocop:disable Lint/RescueException
                 finish_sentry_transaction(transaction, 500)
 
-                maybe_capture_exception(job, e)
+                capture_exception(job, e)
 
                 raise
               end
-            end
-          end
-
-          def maybe_capture_exception(job, e)
-            unless Sentry.configuration.rails.active_job_report_after_job_retries
-              capture_exception(job, e)
             end
           end
 
@@ -92,24 +85,11 @@ module Sentry
             subscribers.clear
           end
 
-          # This handler does not capture error when `active_job_report_after_job_retries` is true
-          # because in such case only the last retry that failed will capture exception
+          # This handler does not capture error unless `active_job_report_on_retry_error` is true
           def retry_handler(*args)
             handle_error_event(*args) do |job, error|
               return if !Sentry.initialized? || job.already_supported_by_sentry_integration?
-              return if Sentry.configuration.rails.active_job_report_after_job_retries
-
-              capture_exception(job, error)
-            end
-          end
-
-          # This handler does not capture error when `active_job_report_after_job_retries` is false
-          # because in such cases regular execution flow that failed will capture it in `record`
-          # method
-          def retry_stopped_handler(*args)
-            handle_error_event(*args) do |job, error|
-              return if !Sentry.initialized? || job.already_supported_by_sentry_integration?
-              return unless Sentry.configuration.rails.active_job_report_after_job_retries
+              return unless Sentry.configuration.rails.active_job_report_on_retry_error
 
               capture_exception(job, error)
             end
