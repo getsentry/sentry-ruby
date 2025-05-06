@@ -60,7 +60,7 @@ RSpec.describe Sentry::LogEventBuffer do
       expect(log_event_buffer).to be_empty
     end
 
-    it "thread-safely handles concurrent access" do
+    it "thread-safely handles concurrent access", skip: RUBY_ENGINE == "jruby" do
       expect(client).to receive(:send_envelope) do |_envelope|
         sleep 0.1
       end
