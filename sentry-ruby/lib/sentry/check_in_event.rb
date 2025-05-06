@@ -2,6 +2,7 @@
 
 require "securerandom"
 require "sentry/cron/monitor_config"
+require "sentry/utils/uuid"
 
 module Sentry
   class CheckInEvent < Event
@@ -43,7 +44,7 @@ module Sentry
       self.status = status
       self.duration = duration
       self.monitor_config = monitor_config
-      self.check_in_id = check_in_id || SecureRandom.uuid.delete("-")
+      self.check_in_id = check_in_id || Utils.uuid
     end
 
     # @return [Hash]

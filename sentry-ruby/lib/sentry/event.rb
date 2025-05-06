@@ -7,6 +7,7 @@ require "sentry/backtrace"
 require "sentry/utils/real_ip"
 require "sentry/utils/request_id"
 require "sentry/utils/custom_inspection"
+require "sentry/utils/uuid"
 
 module Sentry
   # This is an abstract class that defines the shared attributes of an event.
@@ -50,7 +51,7 @@ module Sentry
     # @param message [String, nil]
     def initialize(configuration:, integration_meta: nil, message: nil)
       # Set some simple default values
-      @event_id      = SecureRandom.uuid.delete("-")
+      @event_id      = Utils.uuid
       @timestamp     = Sentry.utc_now.iso8601
       @platform      = :ruby
       @type          = self.class::TYPE
