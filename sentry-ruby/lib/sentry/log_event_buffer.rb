@@ -39,6 +39,7 @@ module Sentry
 
       self
     end
+    alias_method :run, :flush
 
     def add_event(event)
       raise ArgumentError, "expected a LogEvent, got #{event.class}" unless event.is_a?(LogEvent)
@@ -57,8 +58,6 @@ module Sentry
     def size
       @pending_events.size
     end
-
-    alias_method :run, :flush
 
     private
 
