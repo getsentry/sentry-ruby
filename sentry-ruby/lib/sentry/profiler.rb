@@ -2,6 +2,7 @@
 
 require "securerandom"
 require_relative "profiler/helpers"
+require "sentry/utils/uuid"
 
 module Sentry
   class Profiler
@@ -17,7 +18,7 @@ module Sentry
     attr_reader :sampled, :started, :event_id
 
     def initialize(configuration)
-      @event_id = SecureRandom.uuid.delete("-")
+      @event_id = Utils.uuid
       @started = false
       @sampled = nil
 

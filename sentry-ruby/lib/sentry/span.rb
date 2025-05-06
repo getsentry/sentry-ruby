@@ -2,6 +2,7 @@
 
 require "securerandom"
 require "sentry/metrics/local_aggregator"
+require "sentry/utils/uuid"
 
 module Sentry
   class Span
@@ -127,8 +128,8 @@ module Sentry
       timestamp: nil,
       origin: nil
     )
-      @trace_id = trace_id || SecureRandom.uuid.delete("-")
-      @span_id = span_id || SecureRandom.uuid.delete("-").slice(0, 16)
+      @trace_id = trace_id || Utils.uuid
+      @span_id = span_id || Utils.uuid.slice(0, 16)
       @parent_span_id = parent_span_id
       @sampled = sampled
       @start_timestamp = start_timestamp || Sentry.utc_now.to_f

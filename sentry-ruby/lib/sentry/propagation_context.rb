@@ -2,6 +2,7 @@
 
 require "securerandom"
 require "sentry/baggage"
+require "sentry/utils/uuid"
 
 module Sentry
   class PropagationContext
@@ -66,8 +67,8 @@ module Sentry
         end
       end
 
-      @trace_id ||= SecureRandom.uuid.delete("-")
-      @span_id = SecureRandom.uuid.delete("-").slice(0, 16)
+      @trace_id ||= Utils.uuid
+      @span_id = Utils.uuid.slice(0, 16)
     end
 
     # Extract the trace_id, parent_span_id and parent_sampled values from a sentry-trace header.
