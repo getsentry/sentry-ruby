@@ -4,10 +4,10 @@ module Sentry
   class ThreadedPeriodicWorker
     include LoggingHelper
 
-    def initialize(logger, internal)
+    def initialize(logger, interval)
       @thread = nil
       @exited = false
-      @interval = internal
+      @interval = interval
       @logger = logger
     end
 
