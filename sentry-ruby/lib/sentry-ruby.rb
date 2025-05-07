@@ -96,7 +96,24 @@ module Sentry
     attr_reader :metrics_aggregator
 
     # @!attribute [r] logger
-    #   @return [Logging::Device]
+    #   Returns the structured logger instance that implements Sentry's SDK telemetry logs protocol.
+    #   This logger is only available when logs are enabled in the configuration.
+    #
+    #   @example Enable logs in configuration
+    #     Sentry.init do |config|
+    #       config.dsn = "YOUR_DSN"
+    #       config._experiments = { enable_logs: true }
+    #     end
+    #
+    #   @example Basic usage
+    #     Sentry.logger.info("User logged in successfully", user_id: 123)
+    #     Sentry.logger.error("Failed to process payment",
+    #       transaction_id: "tx_123",
+    #       error_code: "PAYMENT_FAILED"
+    #     )
+    #
+    #   @see https://develop.sentry.dev/sdk/telemetry/logs/ Sentry SDK Telemetry Logs Protocol
+    #   @return [StructuredLogger, nil] The structured logger instance or nil if logs are disabled
     attr_reader :logger
 
     ##### Patch Registration #####
@@ -244,7 +261,9 @@ module Sentry
       config = Configuration.new
       yield(config) if block_given?
 
-      # Public-facing Structured Logger
+      # Initialize the public-facing Structured Logger if logs are enabled
+      # This creates a StructuredLogger instance that implements Sentry's SDK telemetry logs protocol
+      # @see https://develop.sentry.dev/sdk/telemetry/logs/
       @logger = StructuredLogger.new(config) if config._experiments[:enable_logs]
 
       config.detect_release
@@ -499,12 +518,19 @@ module Sentry
     end
 
     # Captures a log event and sends it to Sentry via the currently active hub.
+    # This is the underlying method used by the StructuredLogger class.
     #
     # @param message [String] the log message
     # @param [Hash] options Extra log event options
-    # @option options [Symbol] level The log level
+    # @option options [Symbol] level The log level (:trace, :debug, :info, :warn, :error, :fatal)
+    # @option options [Integer] severity The severity number according to the Sentry Logs Protocol
+    # @option options [Hash] Additional attributes to include with the log
     #
-    # @return [LogEvent, nil]
+    # @example Direct usage (prefer using Sentry.logger instead)
+    #   Sentry.capture_log("User logged in", level: :info, user_id: 123)
+    #
+    # @see https://develop.sentry.dev/sdk/telemetry/logs/ Sentry SDK Telemetry Logs Protocol
+    # @return [LogEvent, nil] The created log event or nil if logging is disabled
     def capture_log(message, **options)
       return unless initialized?
       get_current_hub.capture_log_event(message, **options)
