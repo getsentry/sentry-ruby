@@ -25,7 +25,6 @@ RSpec.describe Sentry::StructuredLogger do
       Sentry.get_current_client.log_event_buffer.pending_events
     end
 
-    # TODO: At the moment the Sentry::Logger enforces info - is that intentional?
     ["info", "warn", "error", "fatal"].each do |level|
       describe "##{level}" do
         it "logs using default logger and LogEvent logger with extra attributes" do
