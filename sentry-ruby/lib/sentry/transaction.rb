@@ -45,7 +45,7 @@ module Sentry
     # @deprecated Use Sentry.configuration instead.
     attr_reader :configuration
 
-    # @deprecated Use Sentry.logger instead.
+    # @deprecated Use Sentry.sdk_logger instead.
     attr_reader :logger
 
     # The effective sample rate at which this transaction was sampled.
@@ -78,7 +78,7 @@ module Sentry
       @tracing_enabled = hub.configuration.tracing_enabled?
       @traces_sampler = hub.configuration.traces_sampler
       @traces_sample_rate = hub.configuration.traces_sample_rate
-      @logger = hub.configuration.logger
+      @logger = hub.configuration.sdk_logger
       @release = hub.configuration.release
       @environment = hub.configuration.environment
       @dsn = hub.configuration.dsn

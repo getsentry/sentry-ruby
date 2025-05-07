@@ -156,7 +156,7 @@ end
 
 def perform_basic_setup
   Sentry.init do |config|
-    config.logger = Logger.new(nil)
+    config.sdk_logger = Logger.new(nil)
     config.dsn = Sentry::TestHelper::DUMMY_DSN
     config.transport.transport_class = Sentry::DummyTransport
     # so the events will be sent synchronously for testing

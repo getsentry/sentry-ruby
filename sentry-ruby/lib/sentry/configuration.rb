@@ -184,7 +184,9 @@ module Sentry
     # Logger used by Sentry. In Rails, this is the Rails logger, otherwise
     # Sentry provides its own Sentry::Logger.
     # @return [Logger]
-    attr_accessor :logger
+    attr_accessor :sdk_logger
+    alias_method :logger, :sdk_logger
+    alias_method :logger=, :sdk_logger=
 
     # Project directory root for in_app detection. Could be Rails root, etc.
     # Set automatically for Rails.
@@ -312,6 +314,10 @@ module Sentry
     # @return [Integer]
     attr_accessor :max_log_events
 
+    # Experimental features configuration
+    # @return [Hash]
+    attr_accessor :_experiments
+
     # these are not config options
     # @!visibility private
     attr_reader :errors, :gem_specs
@@ -424,7 +430,7 @@ module Sentry
       self.excluded_exceptions = IGNORE_DEFAULT + PUMA_IGNORE_DEFAULT
       self.inspect_exception_causes_for_exclusion = true
       self.linecache = ::Sentry::LineCache.new
-      self.logger = ::Sentry::Logger.new(STDOUT)
+      self.sdk_logger = ::Sentry::Logger.new(STDOUT)
       self.project_root = Dir.pwd
       self.propagate_traces = true
 
@@ -458,6 +464,7 @@ module Sentry
       @cron = Cron::Configuration.new
       @metrics = Metrics::Configuration.new
       @gem_specs = Hash[Gem::Specification.map { |spec| [spec.name, spec.version.to_s] }] if Gem::Specification.respond_to?(:map)
+      @_experiments = { enable_logs: false }
 
       run_post_initialization_callbacks
 

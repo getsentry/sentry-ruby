@@ -9,7 +9,7 @@ module Sentry
     include LoggingHelper
 
     attr_reader :max_queue, :number_of_threads
-    # @deprecated Use Sentry.logger to retrieve the current logger instead.
+    # @deprecated Use Sentry.sdk_logger to retrieve the current logger instead.
     attr_reader :logger
     attr_accessor :shutdown_timeout
 
@@ -19,7 +19,7 @@ module Sentry
       @shutdown_timeout = 1
       @number_of_threads = configuration.background_worker_threads
       @max_queue = configuration.background_worker_max_queue
-      @logger = configuration.logger
+      @logger = configuration.sdk_logger
       @debug = configuration.debug
       @shutdown_callback = nil
 

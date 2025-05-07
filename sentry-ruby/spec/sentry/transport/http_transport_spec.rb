@@ -24,7 +24,7 @@ RSpec.describe Sentry::HTTPTransport do
   it "logs a debug message only during initialization" do
     sentry_stub_request(build_fake_response("200"))
     string_io = StringIO.new
-    configuration.logger = Logger.new(string_io)
+    configuration.sdk_logger = Logger.new(string_io)
 
     subject
 

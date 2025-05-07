@@ -7,8 +7,11 @@ module Sentry
     FLUSH_INTERVAL = 5 # seconds
     DEFAULT_MAX_EVENTS = 100
 
+    attr_reader :pending_events
+
     def initialize(configuration, client)
-      super(configuration.logger, FLUSH_INTERVAL)
+      super(configuration.sdk_logger, FLUSH_INTERVAL)
+
       @client = client
       @pending_events = []
       @max_events = configuration.max_log_events || DEFAULT_MAX_EVENTS
@@ -16,7 +19,7 @@ module Sentry
       @sdk = Sentry.sdk_meta
       @mutex = Mutex.new
 
-      log_debug("[LogEvents] Initialized buffer with max_events=#{@max_events}, flush_interval=#{FLUSH_INTERVAL}s")
+      log_debug("[Logging] Initialized buffer with max_events=#{@max_events}, flush_interval=#{FLUSH_INTERVAL}s")
     end
 
     def start

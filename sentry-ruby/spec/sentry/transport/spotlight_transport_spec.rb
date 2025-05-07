@@ -27,7 +27,7 @@ RSpec.describe Sentry::SpotlightTransport do
 
   it 'logs a debug message during initialization' do
     string_io = StringIO.new
-    configuration.logger = Logger.new(string_io)
+    configuration.sdk_logger = Logger.new(string_io)
 
     subject
 
@@ -60,8 +60,8 @@ RSpec.describe Sentry::SpotlightTransport do
   describe '#send_data' do
     it 'fails a maximum of three times and logs disable once' do
       string_io = StringIO.new
-      configuration.logger = Logger.new(string_io)
-      configuration.logger.level = :debug
+      configuration.sdk_logger = Logger.new(string_io)
+      configuration.sdk_logger.level = :debug
 
       allow(::Net::HTTP).to receive(:new).and_raise(Errno::ECONNREFUSED)
 
