@@ -11,7 +11,7 @@ require "sentry/utils/argument_checking_helper"
 require "sentry/utils/encoding_helper"
 require "sentry/utils/logging_helper"
 require "sentry/configuration"
-require "sentry/logger"
+require "sentry/structured_logger"
 require "sentry/event"
 require "sentry/error_event"
 require "sentry/transaction_event"
@@ -54,6 +54,7 @@ module Sentry
 
   GLOBALS = %i[
     main_hub
+    logger
     session_flusher
     backpressure_monitor
     metrics_aggregator
@@ -95,9 +96,8 @@ module Sentry
     attr_reader :metrics_aggregator
 
     # @!attribute [r] logger
-    #   @return [Logger]
-    # @!visibility private
-    attr_reader :sdk_logger
+    #   @return [Logging::Device]
+    attr_reader :logger
 
     ##### Patch Registration #####
 
@@ -244,8 +244,8 @@ module Sentry
       config = Configuration.new
       yield(config) if block_given?
 
-      # Internal SDK logger
-      @sdk_logger = config.sdk_logger
+      # Public-facing Structured Logger
+      @logger = StructuredLogger.new(config) if config._experiments[:enable_logs]
 
       config.detect_release
       apply_patches(config)
@@ -632,6 +632,11 @@ module Sentry
       return if result.nil? || result.empty? || ($CHILD_STATUS && $CHILD_STATUS.exitstatus != 0)
 
       result.strip
+    end
+
+    # @!visibility private
+    def sdk_logger
+      configuration.sdk_logger
     end
 
     # @!visibility private

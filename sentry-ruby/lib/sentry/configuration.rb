@@ -12,6 +12,7 @@ require "sentry/cron/configuration"
 require "sentry/metrics/configuration"
 require "sentry/linecache"
 require "sentry/interfaces/stacktrace_builder"
+require "sentry/logger"
 require "sentry/log_event_buffer"
 
 module Sentry

@@ -16,6 +16,9 @@ module Sentry
     # @return [SpotlightTransport, nil]
     attr_reader :spotlight_transport
 
+    # @!visibility private
+    attr_reader :log_event_buffer
+
     # @!macro configuration
     attr_reader :configuration
 
