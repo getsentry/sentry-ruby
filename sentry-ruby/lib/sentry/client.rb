@@ -2,6 +2,7 @@
 
 require "sentry/transport"
 require "sentry/log_event"
+require "sentry/log_event_buffer"
 
 module Sentry
   class Client
@@ -39,6 +40,8 @@ module Sentry
       end
 
       @spotlight_transport = SpotlightTransport.new(configuration) if configuration.spotlight
+
+      @log_event_buffer = LogEventBuffer.new(configuration, self).start
     end
 
     # Applies the given scope's data to the event and sends it to Sentry.
@@ -89,6 +92,15 @@ module Sentry
       nil
     end
 
+    # Buffer a log event to be sent later with other logs in a single envelope
+    # @param event [LogEvent] the log event to be buffered
+    # @return [LogEvent]
+    def buffer_log_event(event, scope)
+      return unless event.is_a?(LogEvent)
+      @log_event_buffer.add_event(scope.apply_to_event(event))
+      event
+    end
+
     # Capture an envelope directly.
     # @param envelope [Envelope] the envelope to be captured.
     # @return [void]
@@ -101,6 +113,7 @@ module Sentry
     def flush
       transport.flush if configuration.sending_to_dsn_allowed?
       spotlight_transport.flush if spotlight_transport
+      @log_event_buffer.flush
     end
 
     # Initializes an Event object with the given exception. Returns `nil` if the exception's class is excluded from reporting.

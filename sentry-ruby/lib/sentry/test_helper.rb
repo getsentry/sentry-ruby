@@ -72,6 +72,13 @@ module Sentry
       sentry_transport.envelopes
     end
 
+    def sentry_logs
+      sentry_envelopes
+        .flat_map(&:items)
+        .select { |item| item.headers[:type] == "log" }
+        .flat_map { |item| item.payload[:items] }
+    end
+
     # Returns the last captured event object.
     # @return [Event, nil]
     def last_sentry_event

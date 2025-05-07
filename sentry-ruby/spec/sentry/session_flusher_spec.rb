@@ -105,7 +105,7 @@ RSpec.describe Sentry::SessionFlusher do
     it "spawns new thread" do
       expect do
         subject.add_session(session)
-      end.to change { Thread.list.count }.by(1)
+      end.to change { Thread.list.count }.by(2)
 
       expect(subject.instance_variable_get(:@thread)).to be_a(Thread)
     end
@@ -113,7 +113,7 @@ RSpec.describe Sentry::SessionFlusher do
     it "spawns only one thread" do
       expect do
         subject.add_session(session)
-      end.to change { Thread.list.count }.by(1)
+      end.to change { Thread.list.count }.by(2)
 
       thread = subject.instance_variable_get(:@thread)
       expect(thread).to receive(:alive?).and_return(true)
@@ -132,7 +132,7 @@ RSpec.describe Sentry::SessionFlusher do
 
     context "when thread creation fails" do
       before do
-        expect(Thread).to receive(:new).and_raise(ThreadError)
+        allow(Thread).to receive(:new).and_raise(ThreadError)
       end
 
       it "doesn't create new thread" do
