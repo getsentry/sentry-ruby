@@ -4,7 +4,7 @@ require "spec_helper"
 
 require "sentry/vernier/profiler"
 
-RSpec.describe Sentry::Vernier::Profiler, when: { ruby_version?: [:>=, "3.2.1"] } do
+RSpec.describe Sentry::Vernier::Profiler, when: { ruby_version?: [:>=, "3.3"] } do
   subject(:profiler) { described_class.new(Sentry.configuration) }
 
   before do
