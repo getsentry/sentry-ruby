@@ -1,5 +1,5 @@
 name: 🐞 Bug Report
-description: "Report an unexpected problem or behavior of this SDK"
+description: Report an unexpected problem or behavior of this SDK.
 labels: ["Ruby", "Bug"]
 body:
   - type: textarea

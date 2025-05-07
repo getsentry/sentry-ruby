@@ -1,12 +1,12 @@
 blank_issues_enabled: false
 contact_links:
   - name: 📚 SDK Documentation
-    url: https://docs.sentry.io/
-    about: Check the SDK documentation
+    url: https://docs.sentry.io/platforms/ruby/
+    about: Check the SDK's documentation
     
-  - name: 📚 Ruby API Documentation
+  - name: 📚 SDK API Documentation
     url: https://www.rubydoc.info/gems/sentry-ruby-core/Sentry
-    about: Check the SDK's Ruby API documentation
+    about: Check the SDK's API documentation
 
   - name: 💬 Community Discord
     url: https://discord.gg/PXa5Apfe7K
