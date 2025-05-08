@@ -47,16 +47,10 @@ RSpec.describe Sentry::LogEvent do
     end
 
     it "includes all required fields" do
-      attributes = {
-        "sentry.message.template" => "User %s has logged in!",
-        "sentry.message.parameters.0" => "John"
-      }
-
       event = described_class.new(
         configuration: configuration,
         level: :info,
-        body: "User John has logged in!",
-        attributes: attributes
+        body: "User John has logged in!"
       )
 
       hash = event.to_hash
@@ -68,11 +62,6 @@ RSpec.describe Sentry::LogEvent do
       attributes = hash[:attributes]
 
       expect(attributes).to be_a(Hash)
-      expect(attributes["sentry.message.template"]).to eq({ value: "User %s has logged in!", type: "string" })
-      expect(attributes["sentry.message.parameters.0"]).to eq({ value: "John", type: "string" })
-      expect(attributes["sentry.environment"]).to eq({ value: "test", type: "string" })
-      expect(attributes["sentry.release"]).to eq({ value: "1.2.3", type: "string" })
-      expect(attributes["sentry.address"]).to eq({ value: "server-123", type: "string" })
       expect(attributes["sentry.sdk.name"]).to eq({ value: "sentry.ruby", type: "string" })
       expect(attributes["sentry.sdk.version"]).to eq({ value: Sentry::VERSION, type: "string" })
     end

@@ -41,6 +41,49 @@ RSpec.describe Sentry::StructuredLogger do
           expect(log_event.body).to eql("Hello World")
           expect(log_event.attributes).to include(payload)
         end
+
+        it "logs with template parameters" do
+          Sentry.logger.public_send(level, "Hello %s it is %s", ["Jane", "Monday"])
+
+          expect(logs).to_not be_empty
+
+          log_event = logs.last
+          log_hash = log_event.to_hash
+
+          expect(log_event.type).to eql("log")
+          expect(log_event.level).to eql(level.to_sym)
+          expect(log_event.body).to eql("Hello %s it is %s")
+
+          expect(log_hash[:body]).to eql("Hello Jane it is Monday")
+
+          attributes = log_hash[:attributes]
+
+          expect(attributes["sentry.message.template"]).to eql({ value: "Hello %s it is %s", type: "string" })
+          expect(attributes["sentry.message.parameters.0"]).to eql({ value: "Jane", type: "string" })
+          expect(attributes["sentry.message.parameters.1"]).to eql({ value: "Monday", type: "string" })
+        end
+
+        it "logs with template parameters and extra attributres" do
+          Sentry.logger.public_send(level, "Hello %s it is %s", ["Jane", "Monday"], extra: 312)
+
+          expect(logs).to_not be_empty
+
+          log_event = logs.last
+          log_hash = log_event.to_hash
+
+          expect(log_event.type).to eql("log")
+          expect(log_event.level).to eql(level.to_sym)
+          expect(log_event.body).to eql("Hello %s it is %s")
+
+          expect(log_hash[:body]).to eql("Hello Jane it is Monday")
+
+          attributes = log_hash[:attributes]
+
+          expect(attributes[:extra]).to eql({ value: 312, type: "integer" })
+          expect(attributes["sentry.message.template"]).to eql({ value: "Hello %s it is %s", type: "string" })
+          expect(attributes["sentry.message.parameters.0"]).to eql({ value: "Jane", type: "string" })
+          expect(attributes["sentry.message.parameters.1"]).to eql({ value: "Monday", type: "string" })
+        end
       end
     end
   end
