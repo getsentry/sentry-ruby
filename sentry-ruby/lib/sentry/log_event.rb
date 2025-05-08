@@ -21,19 +21,32 @@ module Sentry
       "sentry.release" => :release,
       "sentry.address" => :server_name,
       "sentry.sdk.name" => :sdk_name,
-      "sentry.sdk.version" => :sdk_version
+      "sentry.sdk.version" => :sdk_version,
+      "sentry.message.template" => :template
     }
 
     LEVELS = %i[trace debug info warn error fatal].freeze
 
-    attr_accessor :level, :body, :attributes, :trace_id
+    attr_accessor :level, :body, :template, :attributes, :trace_id, :parameters
 
     def initialize(configuration: Sentry.configuration, **options)
       super(configuration: configuration)
+
       @type = TYPE
       @level = options.fetch(:level)
       @body = options[:body]
+      @template = @body
       @attributes = options[:attributes] || {}
+      @parameters = @attributes[:parameters] || []
+
+      if has_template_parameters?
+        @attributes["sentry.message.template"] = @body
+
+        @parameters.each_with_index do |param, index|
+          @attributes["sentry.message.parameters.#{index}"] = param
+        end
+      end
+
       @contexts = {}
     end
 
@@ -79,6 +92,14 @@ module Sentry
       @contexts.dig(:trace, :parent_span_id)
     end
 
+    def serialize_body
+      if @parameters.empty?
+        @body
+      else
+        sprintf(@body, *@parameters)
+      end
+    end
+
     def serialize_attributes
       hash = @attributes.each_with_object({}) do |(key, value), memo|
         memo[key] = attribute_hash(value)
@@ -108,6 +129,10 @@ module Sentry
       else
         "string"
       end
+    end
+
+    def has_template_parameters?
+      @parameters.is_a?(Array) && !@parameters.empty? && @body.is_a?(String) && @body.include?("%")
     end
   end
 end

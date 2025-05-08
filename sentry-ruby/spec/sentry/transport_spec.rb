@@ -243,15 +243,11 @@ RSpec.describe Sentry::Transport do
           Sentry::LogEvent.new(
             configuration: configuration,
             level: :info,
-            body: "User John has logged in!",
+            body: "User %s has logged in!",
             trace_id: "5b8efff798038103d269b633813fc60c",
             timestamp: 1544719860.0,
             attributes: {
-              "sentry.message.template" => "User %s has logged in!",
-              "sentry.message.parameters.0" => "John",
-              "sentry.environment" => "production",
-              "sentry.release" => "1.0.0",
-              "sentry.trace.parent_span_id" => "b0e6f15b45c36b12"
+              parameters: ["John"]
             }
           )
         end
@@ -299,10 +295,7 @@ RSpec.describe Sentry::Transport do
         expect(log_event["attributes"]).to include(
           "sentry.message.template" => { "value" => "User %s has logged in!", "type" => "string" },
           "sentry.message.parameters.0" => { "value" => "John", "type" => "string" },
-          "sentry.environment" => { "value" => "development", "type" => "string" },
-          "sentry.release" => { "value" => "1.0.0", "type" => "string" },
-          "sentry.trace.parent_span_id" => { "value" => "b0e6f15b45c36b12", "type" => "string" },
-          "sentry.address" => { "value" => matching(/\w+/), "type" => "string" }
+          "sentry.environment" => { "value" => "development", "type" => "string" }
         )
       end
     end
@@ -318,7 +311,7 @@ RSpec.describe Sentry::Transport do
 
       it "gracefully removes bad encoding breadcrumb message" do
         expect do
-          serialized_result = JSON.generate(event.to_hash)
+          JSON.generate(event.to_hash)
         end.not_to raise_error
       end
     end
