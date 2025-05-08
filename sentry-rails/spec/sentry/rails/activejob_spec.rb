@@ -1,77 +1,6 @@
 # frozen_string_literal: true
 
-require "spec_helper"
-require "active_job/railtie"
-
-class NormalJob < ActiveJob::Base
-  def perform
-    "foo"
-  end
-end
-
-class FailedJob < ActiveJob::Base
-  self.logger = nil
-
-  class TestError < RuntimeError
-  end
-
-  def perform
-    a = 1
-    b = 0
-    raise TestError, "Boom!"
-  end
-end
-
-class FailedWithExtraJob < FailedJob
-  def perform
-    Sentry.get_current_scope.set_extras(foo: :bar)
-    super
-  end
-end
-
-class JobWithArgument < ActiveJob::Base
-  def perform(*args, integer:, post:, **options)
-    raise "foo"
-  end
-end
-
-class QueryPostJob < ActiveJob::Base
-  self.logger = nil
-
-  def perform
-    Post.all.to_a
-  end
-end
-
-class RescuedActiveJob < FailedWithExtraJob
-  rescue_from TestError, with: :rescue_callback
-
-  def rescue_callback(error); end
-end
-
-class ProblematicRescuedActiveJob < FailedWithExtraJob
-  rescue_from TestError, with: :rescue_callback
-
-  def rescue_callback(error)
-    raise "foo"
-  end
-end
-
-class NormalJobWithCron < NormalJob
-  include Sentry::Cron::MonitorCheckIns
-  sentry_monitor_check_ins
-end
-
-class FailedJobWithCron < FailedJob
-  include Sentry::Cron::MonitorCheckIns
-  sentry_monitor_check_ins slug: "failed_job", monitor_config: Sentry::Cron::MonitorConfig.from_crontab("5 * * * *")
-end
-
-class FailedJobWithRetryOn < FailedJob
-  if respond_to? :retry_on
-    retry_on StandardError, attempts: 3, wait: 0
-  end
-end
+require_relative "../../support/test_jobs"
 
 RSpec.describe "without Sentry initialized", type: :job do
   it "runs job" do
@@ -109,7 +38,10 @@ RSpec.describe "ActiveJob integration", type: :job do
         JobWithArgument.perform_now("foo", { bar: Sentry }, integer: 1, post: post, nested: { another_level: { post: post2 } })
       end.to raise_error(RuntimeError)
 
+      expect(transport.events.size).to be(1)
+
       event = transport.events.last.to_json_compatible
+
       expect(event.dig("extra", "arguments")).to eq(
         [
           "foo",
@@ -134,7 +66,10 @@ RSpec.describe "ActiveJob integration", type: :job do
         JobWithArgument.perform_now(integer: 1, post: post)
       end.to raise_error(RuntimeError)
 
+      expect(transport.events.size).to be(1)
+
       event = transport.events.last.to_json_compatible
+
       expect(event.dig("extra", "arguments")).to eq(
         [
           {
@@ -152,7 +87,10 @@ RSpec.describe "ActiveJob integration", type: :job do
         JobWithArgument.perform_now("foo", { bar: Sentry }, integer: 1, post: post, range: 1..3)
       end.to raise_error(RuntimeError)
 
+      expect(transport.events.size).to be(1)
+
       event = transport.events.last.to_json_compatible
+
       expect(event.dig("extra", "arguments")).to eq(
         [
           "foo",
@@ -174,7 +112,10 @@ RSpec.describe "ActiveJob integration", type: :job do
         JobWithArgument.perform_now("foo", { bar: Sentry }, integer: 1, post: post, range: range)
       end.to raise_error(RuntimeError)
 
+      expect(transport.events.size).to be(1)
+
       event = transport.events.last.to_json_compatible
+
       expect(event.dig("extra", "arguments")).to eq(
         [
           "foo",
@@ -192,7 +133,10 @@ RSpec.describe "ActiveJob integration", type: :job do
   it "adds useful context to extra" do
     expect { FailedJob.perform_now }.to raise_error(FailedJob::TestError)
 
+    expect(transport.events.size).to be(1)
+
     event = transport.events.last.to_json_compatible
+
     expect(event.dig("extra", "active_job")).to eq("FailedJob")
     expect(event.dig("extra", "job_id")).to be_a(String)
     expect(event.dig("extra", "provider_job_id")).to be_nil
@@ -206,6 +150,8 @@ RSpec.describe "ActiveJob integration", type: :job do
 
   it "clears context" do
     expect { FailedWithExtraJob.perform_now }.to raise_error(FailedWithExtraJob::TestError)
+
+    expect(transport.events.size).to be(1)
 
     event = transport.events.last.to_json_compatible
 
@@ -224,7 +170,8 @@ RSpec.describe "ActiveJob integration", type: :job do
     it "sends transaction" do
       QueryPostJob.perform_now
 
-      expect(transport.events.count).to eq(1)
+      expect(transport.events.size).to be(1)
+
       transaction = transport.events.last
       expect(transaction.transaction).to eq("QueryPostJob")
       expect(transaction.transaction_info).to eq({ source: :task })
@@ -242,7 +189,7 @@ RSpec.describe "ActiveJob integration", type: :job do
       it "sends transaction and associates it with the event" do
         expect { FailedWithExtraJob.perform_now }.to raise_error(FailedWithExtraJob::TestError)
 
-        expect(transport.events.count).to eq(2)
+        expect(transport.events.size).to be(2)
 
         transaction = transport.events.first
         expect(transaction.transaction).to eq("FailedWithExtraJob")
@@ -277,7 +224,7 @@ RSpec.describe "ActiveJob integration", type: :job do
         DeserializationErrorJob.perform_now
       end.to raise_error(ActiveJob::DeserializationError, /divided by 0/)
 
-      expect(transport.events.size).to eq(1)
+      expect(transport.events.size).to be(1)
 
       event = transport.events.last.to_json_compatible
       expect(event.dig("exception", "values", 0, "type")).to eq("ZeroDivisionError")
@@ -434,14 +381,22 @@ RSpec.describe "ActiveJob integration", type: :job do
     end
   end
 
-  describe "active_job_report_after_job_retries", skip: RAILS_VERSION < 7.0 do
+  describe "Reporting on retry errors", skip: RAILS_VERSION < 7.0 do
     before do
-      if defined?(JRUBY_VERSION) && JRUBY_VERSION == "9.4.12.0" && RAILS_VERSION <= 7.1
+      if defined?(JRUBY_VERSION) && JRUBY_VERSION == "9.4.12.0"
         skip "This crashes on jruby + rails 7.0.0.x. See https://github.com/getsentry/sentry-ruby/issues/2612"
       end
     end
 
-    context "when active_job_report_after_job_retries is false" do
+    context "when active_job_report_on_retry_error is true" do
+      before do
+        Sentry.configuration.rails.active_job_report_on_retry_error = true
+      end
+
+      after do
+        Sentry.configuration.rails.active_job_report_on_retry_error = false
+      end
+
       it "reports 3 exceptions" do
         allow(Sentry::Rails::ActiveJobExtensions::SentryReporter)
           .to receive(:capture_exception).and_call_original
@@ -458,16 +413,8 @@ RSpec.describe "ActiveJob integration", type: :job do
       end
     end
 
-    context "when active_job_report_after_job_retries is true" do
-      before do
-        Sentry.configuration.rails.active_job_report_after_job_retries = true
-      end
-
-      after do
-        Sentry.configuration.rails.active_job_report_after_job_retries = false
-      end
-
-      it "reports 1 exception" do
+    context "when active_job_report_on_retry_error is false" do
+      it "reports 1 exception on final attempt failure" do
         allow(Sentry::Rails::ActiveJobExtensions::SentryReporter)
           .to receive(:capture_exception).and_call_original
 
