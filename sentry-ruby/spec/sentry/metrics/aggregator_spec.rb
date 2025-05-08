@@ -14,7 +14,7 @@ RSpec.describe Sentry::Metrics::Aggregator do
       config.traces_sample_rate = 1.0
       config.release = 'test-release'
       config.environment = 'test'
-      config.logger = Logger.new(string_io)
+      config.sdk_logger = Logger.new(string_io)
     end
   end
 
@@ -197,7 +197,7 @@ RSpec.describe Sentry::Metrics::Aggregator do
           config.traces_sample_rate = 1.0
           config.release = 'test-release'
           config.environment = 'test'
-          config.logger = Logger.new(string_io)
+          config.sdk_logger = Logger.new(string_io)
 
           config.metrics.before_emit = lambda do |key, tags|
             return nil if key == 'foo'

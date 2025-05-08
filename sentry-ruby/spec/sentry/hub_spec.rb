@@ -12,7 +12,7 @@ RSpec.describe Sentry::Hub do
     config.dsn = Sentry::TestHelper::DUMMY_DSN
     config.transport.transport_class = Sentry::DummyTransport
     config.background_worker_threads = 0
-    config.logger = logger
+    config.sdk_logger = logger
     config
   end
   let(:client) { Sentry::Client.new(configuration) }

@@ -67,7 +67,7 @@ RSpec.describe Sentry::Rails, type: :request do
         logger = ::Logger.new(nil)
 
         make_basic_app do |config|
-          config.logger = logger
+          config.sdk_logger = logger
         end
 
         expect(Sentry.configuration.sdk_logger).to eq(logger)

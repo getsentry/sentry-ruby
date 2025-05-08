@@ -9,7 +9,7 @@ RSpec.describe Sentry::Faraday do
       perform_basic_setup do |config|
         config.enabled_patches << :faraday
         config.traces_sample_rate = 1.0
-        config.logger = ::Logger.new(StringIO.new)
+        config.sdk_logger = ::Logger.new(StringIO.new)
       end
     end
 

@@ -185,8 +185,18 @@ module Sentry
     # Sentry provides its own Sentry::Logger.
     # @return [Logger]
     attr_accessor :sdk_logger
-    alias_method :logger, :sdk_logger
-    alias_method :logger=, :sdk_logger=
+
+    # @deprecated Use {#sdk_logger=} instead.
+    def logger=(logger)
+      warn "[sentry] `config.logger=` is deprecated. Please use `config.sdk_logger=` instead."
+      self.sdk_logger = logger
+    end
+
+    # @deprecated Use {#sdk_logger} instead.
+    def logger
+      warn "[sentry] `config.logger` is deprecated. Please use `config.sdk_logger` instead."
+      self.sdk_logger = logger
+    end
 
     # Project directory root for in_app detection. Could be Rails root, etc.
     # Set automatically for Rails.

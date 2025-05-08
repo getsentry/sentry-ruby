@@ -8,7 +8,7 @@ RSpec.describe "rate limiting" do
 
   before do
     perform_basic_setup do |config|
-      config.logger = Logger.new(string_io)
+      config.sdk_logger = Logger.new(string_io)
     end
   end
 

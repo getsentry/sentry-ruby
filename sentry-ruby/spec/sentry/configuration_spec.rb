@@ -726,7 +726,7 @@ RSpec.describe Sentry::Configuration do
 
       expect {
         Sentry.init do |config|
-          config.logger = Logger.new($stdout)
+          config.sdk_logger = Logger.new($stdout)
           config.profiles_sample_rate = 1.0
         end
       }.to output(/Please add the 'stackprof' gem to your Gemfile/).to_stdout
@@ -737,7 +737,7 @@ RSpec.describe Sentry::Configuration do
 
       expect {
         Sentry.init do |config|
-          config.logger = Logger.new($stdout)
+          config.sdk_logger = Logger.new($stdout)
           config.profiles_sample_rate = nil
         end
       }.to_not output(/Please add the 'stackprof' gem to your Gemfile/).to_stdout
@@ -748,7 +748,7 @@ RSpec.describe Sentry::Configuration do
 
       expect {
         Sentry.init do |config|
-          config.logger = Logger.new($stdout)
+          config.sdk_logger = Logger.new($stdout)
           config.profiler_class = Sentry::Vernier::Profiler
           config.profiles_sample_rate = 1.0
         end
@@ -760,7 +760,7 @@ RSpec.describe Sentry::Configuration do
 
       expect {
         Sentry.init do |config|
-          config.logger = Logger.new($stdout)
+          config.sdk_logger = Logger.new($stdout)
           config.profiles_sample_rate = nil
         end
       }.to_not output(/Please add the 'vernier' gem to your Gemfile/).to_stdout

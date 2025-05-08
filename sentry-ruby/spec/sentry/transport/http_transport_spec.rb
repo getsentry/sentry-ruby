@@ -9,7 +9,7 @@ RSpec.describe Sentry::HTTPTransport do
   let(:configuration) do
     Sentry::Configuration.new.tap do |config|
       config.dsn = Sentry::TestHelper::DUMMY_DSN
-      config.logger = Logger.new(nil)
+      config.sdk_logger = Logger.new(nil)
     end
   end
   let(:client) { Sentry::Client.new(configuration) }
@@ -55,7 +55,7 @@ RSpec.describe Sentry::HTTPTransport do
     let(:configuration) do
       Sentry::Configuration.new.tap do |config|
         config.dsn = dsn
-        config.logger = Logger.new(nil)
+        config.sdk_logger = Logger.new(nil)
       end
     end
 

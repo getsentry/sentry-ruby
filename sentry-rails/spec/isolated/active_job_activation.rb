@@ -53,7 +53,7 @@ end
 app.config.eager_load = true
 app.initializer :sentry do
   Sentry.init do |config|
-    config.logger = Logger.new(nil)
+    config.sdk_logger = Logger.new(nil)
     config.dsn = 'https://2fb45f003d054a7ea47feb45898f7649@o447951.ingest.sentry.io/5434472'
     config.background_worker_threads = 0
   end

@@ -6,14 +6,14 @@ RSpec.describe Sentry::SpotlightTransport do
   let(:configuration) do
     Sentry::Configuration.new.tap do |config|
       config.spotlight = true
-      config.logger = Logger.new(nil)
+      config.sdk_logger = Logger.new(nil)
     end
   end
 
   let(:custom_configuration) do
     Sentry::Configuration.new.tap do |config|
       config.spotlight = 'http://foobar@test.com'
-      config.logger = Logger.new(nil)
+      config.sdk_logger = Logger.new(nil)
     end
   end
 

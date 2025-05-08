@@ -8,7 +8,7 @@ RSpec.describe Sentry::BackpressureMonitor do
   before do
     perform_basic_setup do |config|
       config.enable_backpressure_handling = true
-      config.logger = Logger.new(string_io)
+      config.sdk_logger = Logger.new(string_io)
     end
   end
 
