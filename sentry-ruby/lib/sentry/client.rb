@@ -19,8 +19,6 @@ module Sentry
     # @!macro configuration
     attr_reader :configuration
 
-    attr_reader :log_event_buffer
-
     # @param configuration [Configuration]
     def initialize(configuration)
       @configuration = configuration
