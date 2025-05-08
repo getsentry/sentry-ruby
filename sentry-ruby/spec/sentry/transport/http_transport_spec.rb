@@ -9,7 +9,7 @@ RSpec.describe Sentry::HTTPTransport do
   let(:configuration) do
     Sentry::Configuration.new.tap do |config|
       config.dsn = Sentry::TestHelper::DUMMY_DSN
-      config.logger = Logger.new(nil)
+      config.sdk_logger = Logger.new(nil)
     end
   end
   let(:client) { Sentry::Client.new(configuration) }
@@ -24,7 +24,7 @@ RSpec.describe Sentry::HTTPTransport do
   it "logs a debug message only during initialization" do
     sentry_stub_request(build_fake_response("200"))
     string_io = StringIO.new
-    configuration.logger = Logger.new(string_io)
+    configuration.sdk_logger = Logger.new(string_io)
 
     subject
 
@@ -55,7 +55,7 @@ RSpec.describe Sentry::HTTPTransport do
     let(:configuration) do
       Sentry::Configuration.new.tap do |config|
         config.dsn = dsn
-        config.logger = Logger.new(nil)
+        config.sdk_logger = Logger.new(nil)
       end
     end
 

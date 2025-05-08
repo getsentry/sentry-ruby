@@ -69,7 +69,7 @@ RSpec.describe 'GraphQL' do
 
           perform_basic_setup do |config|
             config.enabled_patches << :graphql
-            config.logger = Logger.new(string_io)
+            config.sdk_logger = Logger.new(string_io)
           end
 
           expect(string_io.string).to include('WARN -- sentry: You tried to enable the GraphQL integration but no GraphQL gem was detected. Make sure you have the `graphql` gem (>= 2.2.6) in your Gemfile.')

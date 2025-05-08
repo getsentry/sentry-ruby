@@ -29,6 +29,8 @@
 ### Internal
 
 - Remove `user_segment` from DSC ([#2586](https://github.com/getsentry/sentry-ruby/pull/2586))
+- New configuration option called `report_after_job_retries` for ActiveJob which makes reporting exceptions only happen when the last retry attempt failed ([#2500](https://github.com/getsentry/sentry-ruby/pull/2500))
+- Replace `logger` with `sdk_logger` ([#2621](https://github.com/getsentry/sentry-ruby/pull/2621))
 
 ## 5.23.0
 

@@ -19,13 +19,10 @@ module Sentry
     # @!macro configuration
     attr_reader :configuration
 
-    # @deprecated Use Sentry.logger to retrieve the current logger instead.
-    attr_reader :logger
-
     # @param configuration [Configuration]
     def initialize(configuration)
       @configuration = configuration
-      @logger = configuration.logger
+      @sdk_logger = configuration.sdk_logger
 
       if transport_class = configuration.transport.transport_class
         @transport = transport_class.new(configuration)

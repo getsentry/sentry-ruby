@@ -141,7 +141,7 @@ RSpec.describe Sentry do
       let(:string_io) { StringIO.new }
       before do
         perform_basic_setup do |config|
-          config.logger = Logger.new(string_io)
+          config.sdk_logger = Logger.new(string_io)
           config.transport.transport_class = Sentry::HTTPTransport
         end
 
@@ -576,7 +576,7 @@ RSpec.describe Sentry do
           ::Logger.new(string_io)
         end
         before do
-          Sentry.configuration.logger = logger
+          Sentry.configuration.sdk_logger = logger
           Sentry.configuration.enabled_environments = ["production"]
         end
 
@@ -1104,7 +1104,7 @@ RSpec.describe Sentry do
           logger = Logger.new(string_io)
 
           described_class.init do |config|
-            config.logger = logger
+            config.sdk_logger = logger
           end
 
           expect(described_class.configuration.release).to eq(nil)
@@ -1130,7 +1130,7 @@ RSpec.describe Sentry do
           allow(Sentry::ReleaseDetector).to receive(:detect_release_from_git).and_raise(TypeError.new)
 
           described_class.init do |config|
-            config.logger = logger
+            config.sdk_logger = logger
           end
 
           expect(string_io.string).to include("ERROR -- sentry: Error detecting release: TypeError")

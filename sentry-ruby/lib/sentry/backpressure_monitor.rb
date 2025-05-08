@@ -6,7 +6,7 @@ module Sentry
     MAX_DOWNSAMPLE_FACTOR = 10
 
     def initialize(configuration, client, interval: DEFAULT_INTERVAL)
-      super(configuration.logger, interval)
+      super(configuration.sdk_logger, interval)
       @client = client
 
       @healthy = true

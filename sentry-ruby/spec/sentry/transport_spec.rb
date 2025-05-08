@@ -8,7 +8,7 @@ RSpec.describe Sentry::Transport do
   let(:configuration) do
     Sentry::Configuration.new.tap do |config|
       config.server = 'http://12345:67890@sentry.localdomain/sentry/42'
-      config.logger = logger
+      config.sdk_logger = logger
     end
   end
 

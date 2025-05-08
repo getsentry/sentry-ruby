@@ -44,22 +44,22 @@ RSpec.describe Sentry::Rails, type: :request do
     describe "logger detection" do
       it "sets a duplicated Rails logger as the SDK's logger" do
         if Gem::Version.new(Rails.version) > Gem::Version.new("7.1.0.beta")
-          expect(Sentry.configuration.logger).to be_a(ActiveSupport::BroadcastLogger)
+          expect(Sentry.configuration.sdk_logger).to be_a(ActiveSupport::BroadcastLogger)
 
-          Sentry.configuration.logger.level = ::Logger::WARN
+          Sentry.configuration.sdk_logger.level = ::Logger::WARN
 
           # Configuring the SDK's logger should not affect the Rails logger
           expect(Rails.logger.broadcasts.first).to be_a(ActiveSupport::Logger)
           expect(Rails.logger.broadcasts.first.level).to eq(::Logger::DEBUG)
-          expect(Sentry.configuration.logger.level).to eq(::Logger::WARN)
+          expect(Sentry.configuration.sdk_logger.level).to eq(::Logger::WARN)
         else
-          expect(Sentry.configuration.logger).to be_a(ActiveSupport::Logger)
+          expect(Sentry.configuration.sdk_logger).to be_a(ActiveSupport::Logger)
 
-          Sentry.configuration.logger.level = ::Logger::WARN
+          Sentry.configuration.sdk_logger.level = ::Logger::WARN
 
           # Configuring the SDK's logger should not affect the Rails logger
           expect(Rails.logger.level).to eq(::Logger::DEBUG)
-          expect(Sentry.configuration.logger.level).to eq(::Logger::WARN)
+          expect(Sentry.configuration.sdk_logger.level).to eq(::Logger::WARN)
         end
       end
 
@@ -67,10 +67,10 @@ RSpec.describe Sentry::Rails, type: :request do
         logger = ::Logger.new(nil)
 
         make_basic_app do |config|
-          config.logger = logger
+          config.sdk_logger = logger
         end
 
-        expect(Sentry.configuration.logger).to eq(logger)
+        expect(Sentry.configuration.sdk_logger).to eq(logger)
       end
 
       it "doesn't cause error if Rails::Logger is not present during SDK initialization" do
@@ -78,7 +78,7 @@ RSpec.describe Sentry::Rails, type: :request do
 
         Sentry.init
 
-        expect(Sentry.configuration.logger).to be_a(Sentry::Logger)
+        expect(Sentry.configuration.sdk_logger).to be_a(Sentry::Logger)
       end
     end
 
