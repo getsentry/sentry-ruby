@@ -7,8 +7,6 @@ module Sentry
     FLUSH_INTERVAL = 5 # seconds
     DEFAULT_MAX_EVENTS = 100
 
-    attr_reader :pending_events
-
     def initialize(configuration, client)
       super(configuration.sdk_logger, FLUSH_INTERVAL)
 
