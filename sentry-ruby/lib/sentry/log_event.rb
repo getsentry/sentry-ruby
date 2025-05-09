@@ -79,25 +79,25 @@ module Sentry
     end
 
     def serialize_trace_id
-      @contexts.dig(:trace, :trace_id)
+      contexts.dig(:trace, :trace_id)
     end
 
     def serialize_parent_span_id
-      @contexts.dig(:trace, :parent_span_id)
+      contexts.dig(:trace, :parent_span_id)
     end
 
     def serialize_body
       if parameters.empty?
-        @body
+        body
       elsif parameters.is_a?(Hash)
-        @body % parameters
+        body % parameters
       else
-        sprintf(@body, *parameters)
+        sprintf(body, *parameters)
       end
     end
 
     def serialize_attributes
-      hash = @attributes.each_with_object({}) do |(key, value), memo|
+      hash = attributes.each_with_object({}) do |(key, value), memo|
         memo[key] = attribute_hash(value)
       end
 
@@ -146,7 +146,7 @@ module Sentry
     end
 
     def is_template?
-      @body.is_a?(String) && @body.include?("%")
+      body.is_a?(String) && body.include?("%")
     end
   end
 end
