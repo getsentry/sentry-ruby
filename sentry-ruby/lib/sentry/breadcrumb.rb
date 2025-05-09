@@ -63,7 +63,7 @@ module Sentry
       begin
         ::JSON.parse(::JSON.generate(@data, max_nesting: MAX_NESTING))
       rescue Exception => e
-        Sentry.logger.debug(LOGGER_PROGNAME) do
+        Sentry.sdk_logger.debug(LOGGER_PROGNAME) do
           <<~MSG
 can't serialize breadcrumb data because of error: #{e}
 data: #{@data}

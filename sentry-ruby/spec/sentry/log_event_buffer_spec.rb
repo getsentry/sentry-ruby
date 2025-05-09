@@ -10,7 +10,7 @@ RSpec.describe Sentry::LogEventBuffer do
 
   before do
     perform_basic_setup do |config|
-      config.logger = logger
+      config.sdk_logger = logger
       config.background_worker_threads = 0
       config.max_log_events = 3
     end

@@ -182,7 +182,7 @@ RSpec.describe Sentry::Rails::Tracing, type: :request do
         make_basic_app do |config, app|
           app.config.public_file_server.enabled = true
           config.traces_sample_rate = 1.0
-          config.logger = logger
+          config.sdk_logger = logger
         end
       end
 
@@ -202,7 +202,7 @@ RSpec.describe Sentry::Rails::Tracing, type: :request do
         make_basic_app do |config, app|
           app.config.public_file_server.enabled = true
           config.traces_sample_rate = 1.0
-          config.logger = logger
+          config.sdk_logger = logger
           config.rails.assets_regexp = %r{/foo/}
         end
       end
@@ -232,7 +232,7 @@ RSpec.describe Sentry::Rails::Tracing, type: :request do
       make_basic_app do |config, app|
         app.config.public_file_server.enabled = true
         config.traces_sample_rate = 1.0
-        config.logger = logger
+        config.sdk_logger = logger
       end
     end
 

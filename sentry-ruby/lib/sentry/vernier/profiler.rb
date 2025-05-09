@@ -104,7 +104,7 @@ module Sentry
       private
 
       def log(message)
-        Sentry.logger.debug(LOGGER_PROGNAME) { "[Profiler::Vernier] #{message}" }
+        Sentry.sdk_logger.debug(LOGGER_PROGNAME) { "[Profiler::Vernier] #{message}" }
       end
 
       def record_lost_event(reason)

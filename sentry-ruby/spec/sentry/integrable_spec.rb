@@ -28,7 +28,7 @@ RSpec.describe Sentry::Integrable do
 
     before do
       perform_basic_setup do |config|
-        config.logger = logger
+        config.sdk_logger = logger
       end
     end
 

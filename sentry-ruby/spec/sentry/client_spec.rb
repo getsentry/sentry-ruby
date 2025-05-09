@@ -141,7 +141,7 @@ RSpec.describe Sentry::Client do
 
       before do
         configuration.debug = true
-        configuration.logger = ::Logger.new(string_io)
+        configuration.sdk_logger = ::Logger.new(string_io)
 
         allow(subject.transport).to receive(:send_envelope).and_raise(Sentry::ExternalError.new("networking error"))
       end
@@ -739,7 +739,7 @@ RSpec.describe Sentry::Client do
     end
 
     before do
-      configuration.logger = logger
+      configuration.sdk_logger = logger
     end
 
     let(:span) { Sentry::Span.new(transaction: transaction) }
@@ -763,7 +763,7 @@ RSpec.describe Sentry::Client do
   end
 
   describe "#generate_baggage" do
-    before { configuration.logger = logger }
+    before { configuration.sdk_logger = logger }
 
     let(:string_io) { StringIO.new }
     let(:logger) { ::Logger.new(string_io) }

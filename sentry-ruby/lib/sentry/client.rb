@@ -16,16 +16,16 @@ module Sentry
     # @return [SpotlightTransport, nil]
     attr_reader :spotlight_transport
 
+    # @!visibility private
+    attr_reader :log_event_buffer
+
     # @!macro configuration
     attr_reader :configuration
-
-    # @deprecated Use Sentry.logger to retrieve the current logger instead.
-    attr_reader :logger
 
     # @param configuration [Configuration]
     def initialize(configuration)
       @configuration = configuration
-      @logger = configuration.logger
+      @sdk_logger = configuration.sdk_logger
 
       if transport_class = configuration.transport.transport_class
         @transport = transport_class.new(configuration)
@@ -182,10 +182,17 @@ module Sentry
     end
 
     # Initializes a LogEvent object with the given message and options
+    #
+    # @param message [String] the log message
+    # @param level [Symbol] the log level (:trace, :debug, :info, :warn, :error, :fatal)
+    # @param options [Hash] additional options
+    # @option options [Array] :parameters Array of values to replace template tokens in the message
+    #
+    # @return [LogEvent] the created log event
     def event_from_log(message, level:, **options)
       return unless configuration.sending_allowed?
 
-      attributes = options.reject { |k, _| k == :level }
+      attributes = options.reject { |k, _| k == :level || k == :severity }
 
       LogEvent.new(
         level: level,

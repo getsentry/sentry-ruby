@@ -11,7 +11,7 @@ require "sentry/utils/argument_checking_helper"
 require "sentry/utils/encoding_helper"
 require "sentry/utils/logging_helper"
 require "sentry/configuration"
-require "sentry/logger"
+require "sentry/structured_logger"
 require "sentry/event"
 require "sentry/error_event"
 require "sentry/transaction_event"
@@ -54,6 +54,7 @@ module Sentry
 
   GLOBALS = %i[
     main_hub
+    logger
     session_flusher
     backpressure_monitor
     metrics_aggregator
@@ -93,6 +94,27 @@ module Sentry
     # @!attribute [r] metrics_aggregator
     #   @return [Metrics::Aggregator, nil]
     attr_reader :metrics_aggregator
+
+    # @!attribute [r] logger
+    #   Returns the structured logger instance that implements Sentry's SDK telemetry logs protocol.
+    #   This logger is only available when logs are enabled in the configuration.
+    #
+    #   @example Enable logs in configuration
+    #     Sentry.init do |config|
+    #       config.dsn = "YOUR_DSN"
+    #       config._experiments = { enable_logs: true }
+    #     end
+    #
+    #   @example Basic usage
+    #     Sentry.logger.info("User logged in successfully", user_id: 123)
+    #     Sentry.logger.error("Failed to process payment",
+    #       transaction_id: "tx_123",
+    #       error_code: "PAYMENT_FAILED"
+    #     )
+    #
+    #   @see https://develop.sentry.dev/sdk/telemetry/logs/ Sentry SDK Telemetry Logs Protocol
+    #   @return [StructuredLogger, nil] The structured logger instance or nil if logs are disabled
+    attr_reader :logger
 
     ##### Patch Registration #####
 
@@ -138,7 +160,7 @@ module Sentry
     # @param version [String] version of the integration
     def register_integration(name, version)
       if initialized?
-        logger.warn(LOGGER_PROGNAME) do
+        sdk_logger.warn(LOGGER_PROGNAME) do
           <<~MSG
             Integration '#{name}' is loaded after the SDK is initialized, which can cause unexpected behavior.  Please make sure all integrations are loaded before SDK initialization.
           MSG
@@ -238,6 +260,12 @@ module Sentry
     def init(&block)
       config = Configuration.new
       yield(config) if block_given?
+
+      # Initialize the public-facing Structured Logger if logs are enabled
+      # This creates a StructuredLogger instance that implements Sentry's SDK telemetry logs protocol
+      # @see https://develop.sentry.dev/sdk/telemetry/logs/
+      @logger = StructuredLogger.new(config) if config._experiments[:enable_logs]
+
       config.detect_release
       apply_patches(config)
       config.validate
@@ -490,12 +518,19 @@ module Sentry
     end
 
     # Captures a log event and sends it to Sentry via the currently active hub.
+    # This is the underlying method used by the StructuredLogger class.
     #
     # @param message [String] the log message
     # @param [Hash] options Extra log event options
-    # @option options [Symbol] level The log level
+    # @option options [Symbol] level The log level (:trace, :debug, :info, :warn, :error, :fatal)
+    # @option options [Integer] severity The severity number according to the Sentry Logs Protocol
+    # @option options [Hash] Additional attributes to include with the log
     #
-    # @return [LogEvent, nil]
+    # @example Direct usage (prefer using Sentry.logger instead)
+    #   Sentry.capture_log("User logged in", level: :info, user_id: 123)
+    #
+    # @see https://develop.sentry.dev/sdk/telemetry/logs/ Sentry SDK Telemetry Logs Protocol
+    # @return [LogEvent, nil] The created log event or nil if logging is disabled
     def capture_log(message, **options)
       return unless initialized?
       get_current_hub.capture_log_event(message, **options)
@@ -616,8 +651,8 @@ module Sentry
     end
 
     # @!visibility private
-    def logger
-      configuration.logger
+    def sdk_logger
+      configuration.sdk_logger
     end
 
     # @!visibility private
