@@ -47,9 +47,7 @@ RSpec.describe Sentry::LogEvent do
     end
 
     it "formats message with hash-based parameters" do
-      attributes = {
-        parameters: { name: "John", day: "Monday" }
-      }
+      attributes = { name: "John", day: "Monday" }
 
       event = described_class.new(
         configuration: configuration,
