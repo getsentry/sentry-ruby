@@ -7,6 +7,10 @@ module Sentry
   class LogEvent < Event
     TYPE = "log"
 
+    DEFAULT_PARAMETERS = [].freeze
+    DEFAULT_ATTRIBUTES = {}.freeze
+    DEFAULT_CONTEXT = {}.freeze
+
     SERIALIZEABLE_ATTRIBUTES = %i[
       level
       body
@@ -36,8 +40,8 @@ module Sentry
       @level = options.fetch(:level)
       @body = options[:body]
       @template = @body if is_template?
-      @attributes = options[:attributes] || {}
-      @contexts = {}
+      @attributes = options[:attributes] || DEFAULT_ATTRIBUTES
+      @contexts = DEFAULT_CONTEXT
     end
 
     def to_hash
@@ -125,9 +129,9 @@ module Sentry
 
     def parameters
       @parameters ||= begin
-        return [] unless template
+        return DEFAULT_PARAMETERS unless template
 
-        parameters = attributes[:parameters] || []
+        parameters = attributes[:parameters] || DEFAULT_PARAMETERS
 
         if parameters.is_a?(Hash)
           parameters.each do |key, value|
