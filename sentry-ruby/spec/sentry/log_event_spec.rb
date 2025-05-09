@@ -88,6 +88,18 @@ RSpec.describe Sentry::LogEvent do
       expect(attributes["sentry.sdk.version"]).to eq({ value: Sentry::VERSION, type: "string" })
     end
 
+    it "doesn't set message.template when the body is not a template" do
+      event = described_class.new(
+        configuration: configuration,
+        level: :info,
+        body: "User John has logged in!"
+      )
+
+      hash = event.to_hash
+
+      expect(hash[:attributes]).not_to have_key("sentry.message.template")
+    end
+
     it "serializes different attribute types correctly" do
       attributes = {
         "string_attr" => "string value",

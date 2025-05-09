@@ -35,7 +35,7 @@ module Sentry
       @type = TYPE
       @level = options.fetch(:level)
       @body = options[:body]
-      @template = @body
+      @template = @body if is_template?
       @attributes = options[:attributes] || {}
       @contexts = {}
 
@@ -128,7 +128,7 @@ module Sentry
     def initialize_parameters
       @parameters = @attributes[:parameters] || []
 
-      return unless is_template?
+      return unless template
 
       if @parameters.is_a?(Hash)
         @parameters.each do |key, value|
