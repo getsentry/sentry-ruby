@@ -27,7 +27,7 @@ module Sentry
 
     LEVELS = %i[trace debug info warn error fatal].freeze
 
-    attr_accessor :level, :body, :template, :attributes, :trace_id, :parameters
+    attr_accessor :level, :body, :template, :attributes, :trace_id
 
     def initialize(configuration: Sentry.configuration, **options)
       super(configuration: configuration)
@@ -38,8 +38,6 @@ module Sentry
       @template = @body if is_template?
       @attributes = options[:attributes] || {}
       @contexts = {}
-
-      initialize_parameters
     end
 
     def to_hash
@@ -85,12 +83,12 @@ module Sentry
     end
 
     def serialize_body
-      if @parameters.empty?
+      if parameters.empty?
         @body
-      elsif @parameters.is_a?(Hash)
-        @body % @parameters
+      elsif parameters.is_a?(Hash)
+        @body % parameters
       else
-        sprintf(@body, *@parameters)
+        sprintf(@body, *parameters)
       end
     end
 
@@ -125,18 +123,20 @@ module Sentry
       end
     end
 
-    def initialize_parameters
-      @parameters = @attributes[:parameters] || []
+    def parameters
+      @parameters ||= begin
+        return [] unless template
 
-      return unless template
+        parameters = attributes[:parameters] || []
 
-      if @parameters.is_a?(Hash)
-        @parameters.each do |key, value|
-          @attributes["sentry.message.parameters.#{key}"] = value
-        end
-      else
-        @parameters.each_with_index do |param, index|
-          @attributes["sentry.message.parameters.#{index}"] = param
+        if parameters.is_a?(Hash)
+          parameters.each do |key, value|
+            attributes["sentry.message.parameters.#{key}"] = value
+          end
+        else
+          parameters.each_with_index do |param, index|
+            attributes["sentry.message.parameters.#{index}"] = param
+          end
         end
       end
     end
