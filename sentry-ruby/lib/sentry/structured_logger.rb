@@ -106,12 +106,12 @@ module Sentry
     #
     # @param level [Symbol] The log level (:trace, :debug, :info, :warn, :error, :fatal)
     # @param message [String] The log message
-    # @param parameters [Array] Array of values to replace template parameters in the message
+    # @param parameters [Array, Hash] Array or Hash of values to replace template parameters in the message
     # @param attributes [Hash] Additional attributes to include with the log
     # @return [LogEvent, nil] The created log event or nil if logging is disabled
     def log(level, message, parameters:, **attributes)
-      if parameters.is_a?(Hash) && attributes.empty?
-        Sentry.capture_log(message, level: level, severity: LEVELS[level], parameters: [], **parameters)
+      if parameters.is_a?(Hash) && attributes.empty? && !message.include?("%")
+        Sentry.capture_log(message, level: level, severity: LEVELS[level], **parameters)
       else
         Sentry.capture_log(message, level: level, severity: LEVELS[level], parameters: parameters, **attributes)
       end

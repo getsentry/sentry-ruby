@@ -84,6 +84,51 @@ RSpec.describe Sentry::StructuredLogger do
           expect(attributes["sentry.message.parameters.0"]).to eql({ value: "Jane", type: "string" })
           expect(attributes["sentry.message.parameters.1"]).to eql({ value: "Monday", type: "string" })
         end
+
+        it "logs with hash-based template parameters" do
+          hash_params = { name: "Jane", day: "Monday" }
+          Sentry.logger.public_send(level, "Hello %{name}, it is %{day}", hash_params)
+
+          expect(logs).to_not be_empty
+
+          log_event = logs.last
+          log_hash = log_event.to_hash
+
+          expect(log_event.type).to eql("log")
+          expect(log_event.level).to eql(level.to_sym)
+          expect(log_event.body).to eql("Hello %{name}, it is %{day}")
+
+          expect(log_hash[:body]).to eql("Hello Jane, it is Monday")
+
+          attributes = log_hash[:attributes]
+
+          expect(attributes["sentry.message.template"]).to eql({ value: "Hello %{name}, it is %{day}", type: "string" })
+          expect(attributes["sentry.message.parameters.name"]).to eql({ value: "Jane", type: "string" })
+          expect(attributes["sentry.message.parameters.day"]).to eql({ value: "Monday", type: "string" })
+        end
+
+        it "logs with hash-based template parameters and extra attributes" do
+          hash_params = { name: "Jane", day: "Monday" }
+          Sentry.logger.public_send(level, "Hello %{name}, it is %{day}", hash_params, user_id: 123)
+
+          expect(logs).to_not be_empty
+
+          log_event = logs.last
+          log_hash = log_event.to_hash
+
+          expect(log_event.type).to eql("log")
+          expect(log_event.level).to eql(level.to_sym)
+          expect(log_event.body).to eql("Hello %{name}, it is %{day}")
+
+          expect(log_hash[:body]).to eql("Hello Jane, it is Monday")
+
+          attributes = log_hash[:attributes]
+
+          expect(attributes[:user_id]).to eql({ value: 123, type: "integer" })
+          expect(attributes["sentry.message.template"]).to eql({ value: "Hello %{name}, it is %{day}", type: "string" })
+          expect(attributes["sentry.message.parameters.name"]).to eql({ value: "Jane", type: "string" })
+          expect(attributes["sentry.message.parameters.day"]).to eql({ value: "Monday", type: "string" })
+        end
       end
     end
   end

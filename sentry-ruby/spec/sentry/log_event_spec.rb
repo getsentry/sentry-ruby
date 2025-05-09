@@ -46,6 +46,28 @@ RSpec.describe Sentry::LogEvent do
       configuration.server_name = "server-123"
     end
 
+    it "formats message with hash-based parameters" do
+      attributes = {
+        parameters: { name: "John", day: "Monday" }
+      }
+
+      event = described_class.new(
+        configuration: configuration,
+        level: :info,
+        body: "Hello %{name}, today is %{day}",
+        attributes: attributes
+      )
+
+      hash = event.to_hash
+
+      expect(hash[:body]).to eq("Hello John, today is Monday")
+
+      attributes = hash[:attributes]
+      expect(attributes["sentry.message.template"]).to eq({ value: "Hello %{name}, today is %{day}", type: "string" })
+      expect(attributes["sentry.message.parameters.name"]).to eq({ value: "John", type: "string" })
+      expect(attributes["sentry.message.parameters.day"]).to eq({ value: "Monday", type: "string" })
+    end
+
     it "includes all required fields" do
       event = described_class.new(
         configuration: configuration,
