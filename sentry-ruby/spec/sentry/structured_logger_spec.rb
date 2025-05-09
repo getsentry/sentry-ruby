@@ -86,8 +86,7 @@ RSpec.describe Sentry::StructuredLogger do
         end
 
         it "logs with hash-based template parameters" do
-          hash_params = { name: "Jane", day: "Monday" }
-          Sentry.logger.public_send(level, "Hello %{name}, it is %{day}", hash_params)
+          Sentry.logger.public_send(level, "Hello %{name}, it is %{day}", name: "Jane", day: "Monday")
 
           expect(logs).to_not be_empty
 
@@ -108,8 +107,7 @@ RSpec.describe Sentry::StructuredLogger do
         end
 
         it "logs with hash-based template parameters and extra attributes" do
-          hash_params = { name: "Jane", day: "Monday" }
-          Sentry.logger.public_send(level, "Hello %{name}, it is %{day}", hash_params, user_id: 123)
+          Sentry.logger.public_send(level, "Hello %{name}, it is %{day}", name: "Jane", day: "Monday", user_id: 123)
 
           expect(logs).to_not be_empty
 
