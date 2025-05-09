@@ -18,6 +18,16 @@ module Sentry
   #     request_id: "abc-123"
   #   )
   #
+  # @example With a message template
+  #   # Using positional parameters
+  #   Sentry.logger.info("User %s logged in", ["Jane Doe"])
+  #
+  #   # Using hash parameters
+  #   Sentry.logger.info("User %{name} logged in", name: "Jane Doe")
+  #
+  #   # Using hash parameters and extra attributes
+  #   Sentry.logger.info("User %{name} logged in", name: "Jane Doe", user_id: 312)
+  #
   # @see https://develop.sentry.dev/sdk/telemetry/logs/ Sentry SDK Telemetry Logs Protocol
   class StructuredLogger
     # Severity number mapping for log levels according to the Sentry Logs Protocol
@@ -47,6 +57,7 @@ module Sentry
     # @param message [String] The log message
     # @param parameters [Array] Array of values to replace template parameters in the message
     # @param attributes [Hash] Additional attributes to include with the log
+    #
     # @return [LogEvent, nil] The created log event or nil if logging is disabled
     def trace(message, parameters = [], **attributes)
       log(__method__, message, parameters: parameters, **attributes)
@@ -57,6 +68,7 @@ module Sentry
     # @param message [String] The log message
     # @param parameters [Array] Array of values to replace template parameters in the message
     # @param attributes [Hash] Additional attributes to include with the log
+    #
     # @return [LogEvent, nil] The created log event or nil if logging is disabled
     def debug(message, parameters = [], **attributes)
       log(__method__, message, parameters: parameters, **attributes)
@@ -67,6 +79,7 @@ module Sentry
     # @param message [String] The log message
     # @param parameters [Array] Array of values to replace template parameters in the message
     # @param attributes [Hash] Additional attributes to include with the log
+    #
     # @return [LogEvent, nil] The created log event or nil if logging is disabled
     def info(message, parameters = [], **attributes)
       log(__method__, message, parameters: parameters, **attributes)
@@ -77,6 +90,7 @@ module Sentry
     # @param message [String] The log message
     # @param parameters [Array] Array of values to replace template parameters in the message
     # @param attributes [Hash] Additional attributes to include with the log
+    #
     # @return [LogEvent, nil] The created log event or nil if logging is disabled
     def warn(message, parameters = [], **attributes)
       log(__method__, message, parameters: parameters, **attributes)
@@ -87,6 +101,7 @@ module Sentry
     # @param message [String] The log message
     # @param parameters [Array] Array of values to replace template parameters in the message
     # @param attributes [Hash] Additional attributes to include with the log
+    #
     # @return [LogEvent, nil] The created log event or nil if logging is disabled
     def error(message, parameters = [], **attributes)
       log(__method__, message, parameters: parameters, **attributes)
@@ -97,6 +112,7 @@ module Sentry
     # @param message [String] The log message
     # @param parameters [Array] Array of values to replace template parameters in the message
     # @param attributes [Hash] Additional attributes to include with the log
+    #
     # @return [LogEvent, nil] The created log event or nil if logging is disabled
     def fatal(message, parameters = [], **attributes)
       log(__method__, message, parameters: parameters, **attributes)
@@ -108,6 +124,7 @@ module Sentry
     # @param message [String] The log message
     # @param parameters [Array, Hash] Array or Hash of values to replace template parameters in the message
     # @param attributes [Hash] Additional attributes to include with the log
+    #
     # @return [LogEvent, nil] The created log event or nil if logging is disabled
     def log(level, message, parameters:, **attributes)
       if parameters.is_a?(Hash) && attributes.empty? && !message.include?("%")
