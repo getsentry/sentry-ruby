@@ -37,17 +37,9 @@ module Sentry
       @body = options[:body]
       @template = @body
       @attributes = options[:attributes] || {}
-      @parameters = @attributes[:parameters] || []
-
-      if has_template_parameters?
-        @attributes["sentry.message.template"] = @body
-
-        @parameters.each_with_index do |param, index|
-          @attributes["sentry.message.parameters.#{index}"] = param
-        end
-      end
-
       @contexts = {}
+
+      initialize_parameters
     end
 
     def to_hash
@@ -95,6 +87,8 @@ module Sentry
     def serialize_body
       if @parameters.empty?
         @body
+      elsif @parameters.is_a?(Hash)
+        @body % @parameters
       else
         sprintf(@body, *@parameters)
       end
@@ -131,8 +125,26 @@ module Sentry
       end
     end
 
-    def has_template_parameters?
-      @parameters.is_a?(Array) && !@parameters.empty? && @body.is_a?(String) && @body.include?("%")
+    def initialize_parameters
+      @parameters = @attributes[:parameters] || []
+
+      return unless is_template?
+
+      attributes["sentry.message.template"] = body
+
+      if @parameters.is_a?(Hash)
+        @parameters.each do |key, value|
+          @attributes["sentry.message.parameters.#{key}"] = value
+        end
+      else
+        @parameters.each_with_index do |param, index|
+          @attributes["sentry.message.parameters.#{index}"] = param
+        end
+      end
+    end
+
+    def is_template?
+      @body.is_a?(String) && @body.include?("%")
     end
   end
 end
