@@ -131,7 +131,8 @@ module Sentry
       @parameters ||= begin
         return DEFAULT_PARAMETERS unless template
 
-        parameters = attributes[:parameters] || DEFAULT_PARAMETERS
+        parameters = template_tokens.empty? ?
+          attributes.fetch(:parameters, DEFAULT_PARAMETERS) : attributes.slice(*template_tokens)
 
         if parameters.is_a?(Hash)
           parameters.each do |key, value|
@@ -145,8 +146,14 @@ module Sentry
       end
     end
 
+    TOKEN_REGEXP = /%\{(\w+)\}/
+
+    def template_tokens
+      @template_tokens ||= body.scan(TOKEN_REGEXP).flatten.map(&:to_sym)
+    end
+
     def is_template?
-      body.is_a?(String) && body.include?("%")
+      body.include?("%s") || TOKEN_REGEXP.match?(body)
     end
   end
 end

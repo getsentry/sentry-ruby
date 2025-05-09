@@ -127,10 +127,11 @@ module Sentry
     #
     # @return [LogEvent, nil] The created log event or nil if logging is disabled
     def log(level, message, parameters:, **attributes)
-      if parameters.is_a?(Hash) && attributes.empty? && !message.include?("%")
-        Sentry.capture_log(message, level: level, severity: LEVELS[level], **parameters)
-      else
+      case parameters
+      when Array then
         Sentry.capture_log(message, level: level, severity: LEVELS[level], parameters: parameters, **attributes)
+      else
+        Sentry.capture_log(message, level: level, severity: LEVELS[level], **parameters)
       end
     end
   end
