@@ -130,8 +130,6 @@ module Sentry
 
       return unless is_template?
 
-      attributes["sentry.message.template"] = body
-
       if @parameters.is_a?(Hash)
         @parameters.each do |key, value|
           @attributes["sentry.message.parameters.#{key}"] = value
