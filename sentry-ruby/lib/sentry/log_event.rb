@@ -31,7 +31,7 @@ module Sentry
 
     LEVELS = %i[trace debug info warn error fatal].freeze
 
-    attr_accessor :level, :body, :template, :attributes, :trace_id
+    attr_accessor :level, :body, :template, :attributes
 
     def initialize(configuration: Sentry.configuration, **options)
       super(configuration: configuration)
