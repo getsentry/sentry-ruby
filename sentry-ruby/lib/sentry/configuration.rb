@@ -195,7 +195,7 @@ module Sentry
     # @deprecated Use {#sdk_logger} instead.
     def logger
       warn "[sentry] `config.logger` is deprecated. Please use `config.sdk_logger` instead."
-      self.sdk_logger = logger
+      self.sdk_logger
     end
 
     # Project directory root for in_app detection. Could be Rails root, etc.

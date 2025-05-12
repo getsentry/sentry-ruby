@@ -766,4 +766,20 @@ RSpec.describe Sentry::Configuration do
       }.to_not output(/Please add the 'vernier' gem to your Gemfile/).to_stdout
     end
   end
+
+  describe "#logger" do
+    it "returns configured sdk_logger and prints deprecation warning" do
+      expect {
+        expect(subject.logger).to be(subject.sdk_logger)
+      }.to output(/`config.logger` is deprecated/).to_stderr
+    end
+  end
+
+  describe "#logger=" do
+    it "sets sdk_logger and prints deprecation warning" do
+      expect {
+        subject.logger = Logger.new($stdout)
+      }.to output(/`config.logger=` is deprecated/).to_stderr
+    end
+  end
 end
