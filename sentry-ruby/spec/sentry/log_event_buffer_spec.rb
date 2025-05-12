@@ -7,12 +7,20 @@ RSpec.describe Sentry::LogEventBuffer do
 
   let(:string_io) { StringIO.new }
   let(:logger) { ::Logger.new(string_io) }
+  let(:client) { double(Sentry::Client) }
+  let(:log_event) do
+    Sentry::LogEvent.new(
+      configuration: Sentry.configuration,
+      level: :info,
+      body: "Test message"
+    )
+  end
 
   before do
     perform_basic_setup do |config|
       config.sdk_logger = logger
       config.background_worker_threads = 0
-      config.max_log_events = 3
+      config.max_log_events = max_log_events
     end
 
     Sentry.background_worker = Sentry::BackgroundWorker.new(Sentry.configuration)
@@ -22,17 +30,8 @@ RSpec.describe Sentry::LogEventBuffer do
     Sentry.background_worker = Class.new { def shutdown; end; }.new
   end
 
-  let(:client) { Sentry.get_current_client }
-  let(:transport) { client.transport }
-
   describe "#add_event" do
-    let(:log_event) do
-      Sentry::LogEvent.new(
-        configuration: Sentry.configuration,
-        level: :info,
-        body: "Test message"
-      )
-    end
+    let(:max_log_events) { 3 }
 
     it "does nothing when there are no pending events" do
       expect(client).not_to receive(:capture_envelope)
@@ -43,37 +42,35 @@ RSpec.describe Sentry::LogEventBuffer do
     end
 
     it "does nothing when the number of events is less than max_events " do
+      expect(client).to_not receive(:send_envelope)
+
       2.times { log_event_buffer.add_event(log_event) }
-
-      log_event_buffer.flush
-
-      expect(sentry_envelopes.size).to be(0)
     end
 
-    it "sends pending events to the client" do
+    it "auto-flushes pending events to the client when the number of events reaches max_events" do
+      expect(client).to receive(:send_envelope)
+
       3.times { log_event_buffer.add_event(log_event) }
-
-      log_event_buffer.flush
-
-      expect(sentry_envelopes.size).to be(1)
 
       expect(log_event_buffer).to be_empty
     end
+  end
 
-    it "thread-safely handles concurrent access", skip: RUBY_ENGINE == "jruby" do
-      expect(client).to receive(:send_envelope) do |_envelope|
-        sleep 0.1
-      end
+  describe "multi-threaded access" do
+    let(:max_log_events) { 30 }
 
-      threads = 100.times.map do
-        (1..50).to_a.sample.times { log_event_buffer.add_event(log_event) }
+    it "thread-safely handles concurrent access" do
+      expect(client).to receive(:send_envelope).exactly(3).times
 
+      threads = 3.times.map do
         Thread.new do
-          log_event_buffer.flush
+          (20..30).to_a.sample.times { log_event_buffer.add_event(log_event) }
         end
       end
 
       threads.each(&:join)
+
+      log_event_buffer.flush
 
       expect(log_event_buffer).to be_empty
     end

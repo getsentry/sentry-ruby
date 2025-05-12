@@ -21,10 +21,6 @@ RSpec.describe Sentry::StructuredLogger do
       end
     end
 
-    let(:logs) do
-      Sentry.get_current_client.log_event_buffer.pending_events
-    end
-
     ["info", "warn", "error", "fatal"].each do |level|
       describe "##{level}" do
         it "logs using default logger and LogEvent logger with extra attributes" do
@@ -32,100 +28,72 @@ RSpec.describe Sentry::StructuredLogger do
 
           Sentry.logger.public_send(level, "Hello World", payload)
 
-          expect(logs).to_not be_empty
+          expect(sentry_logs).to_not be_empty
 
-          log_event = logs.last
+          log_event = sentry_logs.last
 
-          expect(log_event.type).to eql("log")
-          expect(log_event.level).to eql(level.to_sym)
-          expect(log_event.body).to eql("Hello World")
-          expect(log_event.attributes).to include(payload)
+          expect(log_event[:level]).to eql(level)
+          expect(log_event[:body]).to eql("Hello World")
+          expect(log_event[:attributes]).to include({ user_id: { value: 123, type: "integer" } })
+          expect(log_event[:attributes]).to include({ action: { value: "create", type: "string" } })
         end
 
         it "logs with template parameters" do
           Sentry.logger.public_send(level, "Hello %s it is %s", ["Jane", "Monday"])
 
-          expect(logs).to_not be_empty
+          expect(sentry_logs).to_not be_empty
 
-          log_event = logs.last
-          log_hash = log_event.to_hash
+          log_event = sentry_logs.last
 
-          expect(log_event.type).to eql("log")
-          expect(log_event.level).to eql(level.to_sym)
-          expect(log_event.body).to eql("Hello %s it is %s")
-
-          expect(log_hash[:body]).to eql("Hello Jane it is Monday")
-
-          attributes = log_hash[:attributes]
-
-          expect(attributes["sentry.message.template"]).to eql({ value: "Hello %s it is %s", type: "string" })
-          expect(attributes["sentry.message.parameters.0"]).to eql({ value: "Jane", type: "string" })
-          expect(attributes["sentry.message.parameters.1"]).to eql({ value: "Monday", type: "string" })
+          expect(log_event[:level]).to eql(level)
+          expect(log_event[:body]).to eql("Hello Jane it is Monday")
+          expect(log_event[:attributes]["sentry.message.template"]).to eql({ value: "Hello %s it is %s", type: "string" })
+          expect(log_event[:attributes]["sentry.message.parameters.0"]).to eql({ value: "Jane", type: "string" })
+          expect(log_event[:attributes]["sentry.message.parameters.1"]).to eql({ value: "Monday", type: "string" })
         end
 
         it "logs with template parameters and extra attributres" do
           Sentry.logger.public_send(level, "Hello %s it is %s", ["Jane", "Monday"], extra: 312)
 
-          expect(logs).to_not be_empty
+          expect(sentry_logs).to_not be_empty
 
-          log_event = logs.last
-          log_hash = log_event.to_hash
+          log_event = sentry_logs.last
 
-          expect(log_event.type).to eql("log")
-          expect(log_event.level).to eql(level.to_sym)
-          expect(log_event.body).to eql("Hello %s it is %s")
-
-          expect(log_hash[:body]).to eql("Hello Jane it is Monday")
-
-          attributes = log_hash[:attributes]
-
-          expect(attributes[:extra]).to eql({ value: 312, type: "integer" })
-          expect(attributes["sentry.message.template"]).to eql({ value: "Hello %s it is %s", type: "string" })
-          expect(attributes["sentry.message.parameters.0"]).to eql({ value: "Jane", type: "string" })
-          expect(attributes["sentry.message.parameters.1"]).to eql({ value: "Monday", type: "string" })
+          expect(log_event[:level]).to eql(level)
+          expect(log_event[:body]).to eql("Hello Jane it is Monday")
+          expect(log_event[:attributes][:extra]).to eql({ value: 312, type: "integer" })
+          expect(log_event[:attributes]["sentry.message.template"]).to eql({ value: "Hello %s it is %s", type: "string" })
+          expect(log_event[:attributes]["sentry.message.parameters.0"]).to eql({ value: "Jane", type: "string" })
+          expect(log_event[:attributes]["sentry.message.parameters.1"]).to eql({ value: "Monday", type: "string" })
         end
 
         it "logs with hash-based template parameters" do
           Sentry.logger.public_send(level, "Hello %{name}, it is %{day}", name: "Jane", day: "Monday")
 
-          expect(logs).to_not be_empty
+          expect(sentry_logs).to_not be_empty
 
-          log_event = logs.last
-          log_hash = log_event.to_hash
+          log_event = sentry_logs.last
 
-          expect(log_event.type).to eql("log")
-          expect(log_event.level).to eql(level.to_sym)
-          expect(log_event.body).to eql("Hello %{name}, it is %{day}")
-
-          expect(log_hash[:body]).to eql("Hello Jane, it is Monday")
-
-          attributes = log_hash[:attributes]
-
-          expect(attributes["sentry.message.template"]).to eql({ value: "Hello %{name}, it is %{day}", type: "string" })
-          expect(attributes["sentry.message.parameters.name"]).to eql({ value: "Jane", type: "string" })
-          expect(attributes["sentry.message.parameters.day"]).to eql({ value: "Monday", type: "string" })
+          expect(log_event[:level]).to eql(level)
+          expect(log_event[:body]).to eql("Hello Jane, it is Monday")
+          expect(log_event[:attributes]["sentry.message.template"]).to eql({ value: "Hello %{name}, it is %{day}", type: "string" })
+          expect(log_event[:attributes]["sentry.message.parameters.name"]).to eql({ value: "Jane", type: "string" })
+          expect(log_event[:attributes]["sentry.message.parameters.day"]).to eql({ value: "Monday", type: "string" })
         end
 
         it "logs with hash-based template parameters and extra attributes" do
           Sentry.logger.public_send(level, "Hello %{name}, it is %{day}", name: "Jane", day: "Monday", user_id: 123)
 
-          expect(logs).to_not be_empty
+          expect(sentry_logs).to_not be_empty
 
-          log_event = logs.last
-          log_hash = log_event.to_hash
+          log_event = sentry_logs.last
 
-          expect(log_event.type).to eql("log")
-          expect(log_event.level).to eql(level.to_sym)
-          expect(log_event.body).to eql("Hello %{name}, it is %{day}")
-
-          expect(log_hash[:body]).to eql("Hello Jane, it is Monday")
-
-          attributes = log_hash[:attributes]
-
-          expect(attributes[:user_id]).to eql({ value: 123, type: "integer" })
-          expect(attributes["sentry.message.template"]).to eql({ value: "Hello %{name}, it is %{day}", type: "string" })
-          expect(attributes["sentry.message.parameters.name"]).to eql({ value: "Jane", type: "string" })
-          expect(attributes["sentry.message.parameters.day"]).to eql({ value: "Monday", type: "string" })
+          expect(log_event[:level]).to eql(level)
+          expect(log_event[:body]).to eql("Hello Jane, it is Monday")
+          expect(log_event[:attributes][:user_id]).to eql({ value: 123, type: "integer" })
+          expect(log_event[:attributes]["sentry.message.template"]).to eql({ value: "Hello %{name}, it is %{day}", type: "string" })
+          expect(log_event[:attributes]["sentry.message.parameters.name"]).to eql({ value: "Jane", type: "string" })
+          expect(log_event[:attributes]["sentry.message.parameters.day"]).to eql({ value: "Monday", type: "string" })
         end
       end
     end
