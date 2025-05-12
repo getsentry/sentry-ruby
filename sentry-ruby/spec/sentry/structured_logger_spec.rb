@@ -17,7 +17,7 @@ RSpec.describe Sentry::StructuredLogger do
     before do
       perform_basic_setup do |config|
         config.max_log_events = 1
-        config._experiments = { enable_logs: true }
+        config.enable_logs = true
       end
     end
 

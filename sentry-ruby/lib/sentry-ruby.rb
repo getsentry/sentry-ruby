@@ -102,7 +102,7 @@ module Sentry
     #   @example Enable logs in configuration
     #     Sentry.init do |config|
     #       config.dsn = "YOUR_DSN"
-    #       config._experiments = { enable_logs: true }
+    #       config.enable_logs = true
     #     end
     #
     #   @example Basic usage
@@ -264,7 +264,7 @@ module Sentry
       # Initialize the public-facing Structured Logger if logs are enabled
       # This creates a StructuredLogger instance that implements Sentry's SDK telemetry logs protocol
       # @see https://develop.sentry.dev/sdk/telemetry/logs/
-      @logger = StructuredLogger.new(config) if config._experiments[:enable_logs]
+      @logger = StructuredLogger.new(config) if config.enable_logs
 
       config.detect_release
       apply_patches(config)
