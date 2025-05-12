@@ -324,10 +324,6 @@ module Sentry
     # @return [Integer]
     attr_accessor :max_log_events
 
-    # Experimental features configuration
-    # @return [Hash]
-    attr_accessor :_experiments
-
     # these are not config options
     # @!visibility private
     attr_reader :errors, :gem_specs
@@ -474,7 +470,6 @@ module Sentry
       @cron = Cron::Configuration.new
       @metrics = Metrics::Configuration.new
       @gem_specs = Hash[Gem::Specification.map { |spec| [spec.name, spec.version.to_s] }] if Gem::Specification.respond_to?(:map)
-      @_experiments = { enable_logs: false }
 
       run_post_initialization_callbacks
 
