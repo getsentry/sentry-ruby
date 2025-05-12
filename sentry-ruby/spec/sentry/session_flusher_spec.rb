@@ -12,7 +12,7 @@ RSpec.describe Sentry::SessionFlusher do
       config.environment = 'test'
       config.transport.transport_class = Sentry::DummyTransport
       config.background_worker_threads = 0
-      config.logger = Logger.new(string_io)
+      config.sdk_logger = Logger.new(string_io)
     end
   end
 

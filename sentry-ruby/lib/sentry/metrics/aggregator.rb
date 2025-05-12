@@ -34,7 +34,7 @@ module Sentry
       attr_reader :client, :thread, :buckets, :flush_shift, :code_locations
 
       def initialize(configuration, client)
-        super(configuration.logger, FLUSH_INTERVAL)
+        super(configuration.sdk_logger, FLUSH_INTERVAL)
         @client = client
         @before_emit = configuration.metrics.before_emit
         @enable_code_locations = configuration.metrics.enable_code_locations

@@ -14,7 +14,7 @@ module Sentry
         SPAN_ORIGIN = "auto.view.rails"
 
         def self.subscribe!
-          Sentry.logger.warn <<~MSG
+          Sentry.sdk_logger.warn <<~MSG
             DEPRECATION WARNING: sentry-rails has changed its approach on controller span recording and #{self.name} is now depreacted.
             Please stop using or referencing #{self.name} as it will be removed in the next major release.
           MSG

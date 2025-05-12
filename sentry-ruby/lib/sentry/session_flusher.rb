@@ -5,7 +5,7 @@ module Sentry
     FLUSH_INTERVAL = 60
 
     def initialize(configuration, client)
-      super(configuration.logger, FLUSH_INTERVAL)
+      super(configuration.sdk_logger, FLUSH_INTERVAL)
       @client = client
       @pending_aggregates = {}
       @release = configuration.release

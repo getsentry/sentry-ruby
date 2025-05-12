@@ -26,11 +26,8 @@ module Sentry
 
     attr_reader :rate_limits, :discarded_events, :last_client_report_sent
 
-    # @deprecated Use Sentry.logger to retrieve the current logger instead.
-    attr_reader :logger
-
     def initialize(configuration)
-      @logger = configuration.logger
+      @sdk_logger = configuration.sdk_logger
       @transport_configuration = configuration.transport
       @dsn = configuration.dsn
       @rate_limits = {}

@@ -55,7 +55,7 @@ def make_basic_app(&block)
   app.config.action_controller.view_paths = "spec/dummy/test_rails_app"
   app.config.hosts = nil
   app.config.secret_key_base = "test"
-  app.config.logger = ActiveSupport::Logger.new(nil)
+  app.config.sdk_logger = ActiveSupport::Logger.new(nil)
   app.config.eager_load = false
   app.config.active_job.queue_adapter = :test
   app.config.cache_store = :memory_store

@@ -7,7 +7,7 @@ RSpec.describe Sentry::BackgroundWorker do
 
   let(:configuration) do
     Sentry::Configuration.new.tap do |config|
-      config.logger = Logger.new(string_io)
+      config.sdk_logger = Logger.new(string_io)
     end
   end
 

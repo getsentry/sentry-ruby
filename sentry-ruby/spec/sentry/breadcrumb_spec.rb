@@ -7,7 +7,7 @@ RSpec.describe Sentry::Breadcrumb do
 
   before do
     perform_basic_setup do |config|
-      config.logger = ::Logger.new(stringio)
+      config.sdk_logger = ::Logger.new(stringio)
     end
   end
 

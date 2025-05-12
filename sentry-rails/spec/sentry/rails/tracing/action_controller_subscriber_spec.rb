@@ -17,7 +17,7 @@ RSpec.describe Sentry::Rails::Tracing::ActionControllerSubscriber, :subscriber, 
       make_basic_app do |config|
         config.traces_sample_rate = 1.0
         config.rails.tracing_subscribers = [described_class]
-        config.logger = logger
+        config.sdk_logger = logger
       end
     end
 

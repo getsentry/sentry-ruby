@@ -184,7 +184,19 @@ module Sentry
     # Logger used by Sentry. In Rails, this is the Rails logger, otherwise
     # Sentry provides its own Sentry::Logger.
     # @return [Logger]
-    attr_accessor :logger
+    attr_accessor :sdk_logger
+
+    # @deprecated Use {#sdk_logger=} instead.
+    def logger=(logger)
+      warn "[sentry] `config.logger=` is deprecated. Please use `config.sdk_logger=` instead."
+      self.sdk_logger = logger
+    end
+
+    # @deprecated Use {#sdk_logger} instead.
+    def logger
+      warn "[sentry] `config.logger` is deprecated. Please use `config.sdk_logger` instead."
+      self.sdk_logger
+    end
 
     # Project directory root for in_app detection. Could be Rails root, etc.
     # Set automatically for Rails.
@@ -424,7 +436,7 @@ module Sentry
       self.excluded_exceptions = IGNORE_DEFAULT + PUMA_IGNORE_DEFAULT
       self.inspect_exception_causes_for_exclusion = true
       self.linecache = ::Sentry::LineCache.new
-      self.logger = ::Sentry::Logger.new(STDOUT)
+      self.sdk_logger = ::Sentry::Logger.new(STDOUT)
       self.project_root = Dir.pwd
       self.propagate_traces = true
 

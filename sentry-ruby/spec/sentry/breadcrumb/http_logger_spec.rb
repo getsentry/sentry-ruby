@@ -15,7 +15,7 @@ RSpec.describe :http_logger do
     perform_basic_setup do |config|
       config.breadcrumbs_logger = [:http_logger]
       config.transport.transport_class = Sentry::HTTPTransport
-      config.logger = logger
+      config.sdk_logger = logger
       # the dsn needs to have a real host so we can make a real connection before sending a failed request
       config.dsn = 'http://foobarbaz@o447951.ingest.sentry.io/5434472'
     end

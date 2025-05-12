@@ -17,12 +17,12 @@ module Sentry
       if ::Rails.logger
         if defined?(::ActiveSupport::BroadcastLogger) && ::Rails.logger.is_a?(::ActiveSupport::BroadcastLogger)
           dupped_broadcasts = ::Rails.logger.broadcasts.map(&:dup)
-          @logger = ::ActiveSupport::BroadcastLogger.new(*dupped_broadcasts)
+          self.sdk_logger = ::ActiveSupport::BroadcastLogger.new(*dupped_broadcasts)
         else
-          @logger = ::Rails.logger.dup
+          self.sdk_logger = ::Rails.logger.dup
         end
       else
-        @logger.warn(Sentry::LOGGER_PROGNAME) do
+        sdk_logger.warn(Sentry::LOGGER_PROGNAME) do
           <<~MSG
           sentry-rails can't detect Rails.logger. it may be caused by misplacement of the SDK initialization code
           please make sure you place the Sentry.init block under the `config/initializers` folder, e.g. `config/initializers/sentry.rb`

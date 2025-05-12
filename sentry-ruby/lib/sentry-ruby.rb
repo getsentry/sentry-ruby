@@ -94,6 +94,11 @@ module Sentry
     #   @return [Metrics::Aggregator, nil]
     attr_reader :metrics_aggregator
 
+    # @!attribute [r] logger
+    #   @return [Logger]
+    # @!visibility private
+    attr_reader :sdk_logger
+
     ##### Patch Registration #####
 
     # @!visibility private
@@ -138,7 +143,7 @@ module Sentry
     # @param version [String] version of the integration
     def register_integration(name, version)
       if initialized?
-        logger.warn(LOGGER_PROGNAME) do
+        sdk_logger.warn(LOGGER_PROGNAME) do
           <<~MSG
             Integration '#{name}' is loaded after the SDK is initialized, which can cause unexpected behavior.  Please make sure all integrations are loaded before SDK initialization.
           MSG
@@ -238,6 +243,10 @@ module Sentry
     def init(&block)
       config = Configuration.new
       yield(config) if block_given?
+
+      # Internal SDK logger
+      @sdk_logger = config.sdk_logger
+
       config.detect_release
       apply_patches(config)
       config.validate
@@ -608,16 +617,21 @@ module Sentry
     ##### Helpers #####
 
     # @!visibility private
+    def logger
+      warn <<~STR
+        [sentry] `Sentry.logger` will no longer be used as internal SDK logger when `enable_logs` feature is turned on.
+                 Use Sentry.configuration.sdk_logger for SDK-specific logging needs."
+      STR
+
+      configuration.sdk_logger
+    end
+
+    # @!visibility private
     def sys_command(command)
       result = `#{command} 2>&1` rescue nil
       return if result.nil? || result.empty? || ($CHILD_STATUS && $CHILD_STATUS.exitstatus != 0)
 
       result.strip
-    end
-
-    # @!visibility private
-    def logger
-      configuration.logger
     end
 
     # @!visibility private
