@@ -13,7 +13,18 @@
   config.sidekiq.propagate_traces = false unless Rails.const_defined?('Server')
   ```
 - Only expose `active_storage` keys on span data if `send_default_pii` is on ([#2589](https://github.com/getsentry/sentry-ruby/pull/2589))
-- Add `Sentry.capture_log` ([#2606](https://github.com/getsentry/sentry-ruby/pull/2617))
+- Add new `Sentry.logger` for [Structured Logging](https://develop.sentry.dev/sdk/telemetry/logs/) feature ([#2620](https://github.com/getsentry/sentry-ruby/pull/2620)).
+
+  To enable structured logging you need to turn on the `enable_logs` configuration option:
+  ```ruby
+  Sentry.init do |config|
+    # ... your setup ...
+    config.enable_logs = true
+  end
+  ```
+  :warning: When this is enabled, previous `Sentry.logger` should no longer be used for internal SDK
+  logging - it was replaced by `Sentry.configuration.sdk_logger` and should be used only by the SDK
+  itself and its extensions.
 - New configuration option called `active_job_report_on_retry_error` which enables reporting errors on each retry error ([#2617](https://github.com/getsentry/sentry-ruby/pull/2617))
 
 ### Bug Fixes
