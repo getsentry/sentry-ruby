@@ -3,9 +3,17 @@
 require "sentry/threaded_periodic_worker"
 
 module Sentry
+  # LogEventBuffer buffers log events and sends them to Sentry in a single envelope.
+  #
+  # This is used internally by the `Sentry::Client`.
+  #
+  # @!visibility private
   class LogEventBuffer < ThreadedPeriodicWorker
     FLUSH_INTERVAL = 5 # seconds
     DEFAULT_MAX_EVENTS = 100
+
+    # @!visibility private
+    attr_reader :pending_events
 
     def initialize(configuration, client)
       super(configuration.sdk_logger, FLUSH_INTERVAL)
@@ -27,13 +35,11 @@ module Sentry
 
     def flush
       @mutex.synchronize do
-        return unless size >= @max_events
+        return if empty?
 
         log_debug("[LogEventBuffer] flushing #{size} log events")
 
-        @client.send_envelope(to_envelope)
-
-        @pending_events.clear
+        send_events
       end
 
       log_debug("[LogEventBuffer] flushed #{size} log events")
@@ -47,6 +53,7 @@ module Sentry
 
       @mutex.synchronize do
         @pending_events << event
+        send_events if size >= @max_events
       end
 
       self
@@ -61,6 +68,11 @@ module Sentry
     end
 
     private
+
+    def send_events
+      @client.send_envelope(to_envelope)
+      @pending_events.clear
+    end
 
     def to_envelope
       envelope = Envelope.new(

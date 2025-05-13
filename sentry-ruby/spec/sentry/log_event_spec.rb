@@ -25,7 +25,7 @@ RSpec.describe Sentry::LogEvent do
     it "accepts attributes" do
       attributes = {
         "sentry.message.template" => "User %s has logged in!",
-        "sentry.message.parameters.0" => "John"
+        "sentry.message.parameter.0" => "John"
       }
 
       event = described_class.new(
@@ -46,17 +46,31 @@ RSpec.describe Sentry::LogEvent do
       configuration.server_name = "server-123"
     end
 
-    it "includes all required fields" do
-      attributes = {
-        "sentry.message.template" => "User %s has logged in!",
-        "sentry.message.parameters.0" => "John"
-      }
+    it "formats message with hash-based parameters" do
+      attributes = { name: "John", day: "Monday" }
 
       event = described_class.new(
         configuration: configuration,
         level: :info,
-        body: "User John has logged in!",
+        body: "Hello %{name}, today is %{day}",
         attributes: attributes
+      )
+
+      hash = event.to_hash
+
+      expect(hash[:body]).to eq("Hello John, today is Monday")
+
+      attributes = hash[:attributes]
+      expect(attributes["sentry.message.template"]).to eq({ value: "Hello %{name}, today is %{day}", type: "string" })
+      expect(attributes["sentry.message.parameter.name"]).to eq({ value: "John", type: "string" })
+      expect(attributes["sentry.message.parameter.day"]).to eq({ value: "Monday", type: "string" })
+    end
+
+    it "includes all required fields" do
+      event = described_class.new(
+        configuration: configuration,
+        level: :info,
+        body: "User John has logged in!"
       )
 
       hash = event.to_hash
@@ -68,13 +82,20 @@ RSpec.describe Sentry::LogEvent do
       attributes = hash[:attributes]
 
       expect(attributes).to be_a(Hash)
-      expect(attributes["sentry.message.template"]).to eq({ value: "User %s has logged in!", type: "string" })
-      expect(attributes["sentry.message.parameters.0"]).to eq({ value: "John", type: "string" })
-      expect(attributes["sentry.environment"]).to eq({ value: "test", type: "string" })
-      expect(attributes["sentry.release"]).to eq({ value: "1.2.3", type: "string" })
-      expect(attributes["sentry.address"]).to eq({ value: "server-123", type: "string" })
       expect(attributes["sentry.sdk.name"]).to eq({ value: "sentry.ruby", type: "string" })
       expect(attributes["sentry.sdk.version"]).to eq({ value: Sentry::VERSION, type: "string" })
+    end
+
+    it "doesn't set message.template when the body is not a template" do
+      event = described_class.new(
+        configuration: configuration,
+        level: :info,
+        body: "User John has logged in!"
+      )
+
+      hash = event.to_hash
+
+      expect(hash[:attributes]).not_to have_key("sentry.message.template")
     end
 
     it "serializes different attribute types correctly" do

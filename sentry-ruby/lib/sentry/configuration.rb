@@ -12,6 +12,7 @@ require "sentry/cron/configuration"
 require "sentry/metrics/configuration"
 require "sentry/linecache"
 require "sentry/interfaces/stacktrace_builder"
+require "sentry/logger"
 require "sentry/log_event_buffer"
 
 module Sentry
@@ -275,6 +276,10 @@ module Sentry
     # @return [Proc]
     attr_accessor :traces_sampler
 
+    # Enable Structured Logging
+    # @return [Boolean]
+    attr_accessor :enable_logs
+
     # Easier way to use performance tracing
     # If set to true, will set traces_sample_rate to 1.0
     # @deprecated It will be removed in the next major release.
@@ -463,6 +468,7 @@ module Sentry
       self.rack_env_whitelist = RACK_ENV_WHITELIST_DEFAULT
       self.traces_sampler = nil
       self.enable_tracing = nil
+      self.enable_logs = false
 
       self.profiler_class = Sentry::Profiler
 

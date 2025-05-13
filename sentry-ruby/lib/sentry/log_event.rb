@@ -7,6 +7,10 @@ module Sentry
   class LogEvent < Event
     TYPE = "log"
 
+    DEFAULT_PARAMETERS = [].freeze
+    DEFAULT_ATTRIBUTES = {}.freeze
+    DEFAULT_CONTEXT = {}.freeze
+
     SERIALIZEABLE_ATTRIBUTES = %i[
       level
       body
@@ -21,20 +25,23 @@ module Sentry
       "sentry.release" => :release,
       "sentry.address" => :server_name,
       "sentry.sdk.name" => :sdk_name,
-      "sentry.sdk.version" => :sdk_version
+      "sentry.sdk.version" => :sdk_version,
+      "sentry.message.template" => :template
     }
 
     LEVELS = %i[trace debug info warn error fatal].freeze
 
-    attr_accessor :level, :body, :attributes, :trace_id
+    attr_accessor :level, :body, :template, :attributes
 
     def initialize(configuration: Sentry.configuration, **options)
       super(configuration: configuration)
+
       @type = TYPE
       @level = options.fetch(:level)
       @body = options[:body]
-      @attributes = options[:attributes] || {}
-      @contexts = {}
+      @template = @body if is_template?
+      @attributes = options[:attributes] || DEFAULT_ATTRIBUTES
+      @contexts = DEFAULT_CONTEXT
     end
 
     def to_hash
@@ -72,15 +79,25 @@ module Sentry
     end
 
     def serialize_trace_id
-      @contexts.dig(:trace, :trace_id)
+      contexts.dig(:trace, :trace_id)
     end
 
     def serialize_parent_span_id
-      @contexts.dig(:trace, :parent_span_id)
+      contexts.dig(:trace, :parent_span_id)
+    end
+
+    def serialize_body
+      if parameters.empty?
+        body
+      elsif parameters.is_a?(Hash)
+        body % parameters
+      else
+        sprintf(body, *parameters)
+      end
     end
 
     def serialize_attributes
-      hash = @attributes.each_with_object({}) do |(key, value), memo|
+      hash = attributes.each_with_object({}) do |(key, value), memo|
         memo[key] = attribute_hash(value)
       end
 
@@ -108,6 +125,35 @@ module Sentry
       else
         "string"
       end
+    end
+
+    def parameters
+      @parameters ||= begin
+        return DEFAULT_PARAMETERS unless template
+
+        parameters = template_tokens.empty? ?
+          attributes.fetch(:parameters, DEFAULT_PARAMETERS) : attributes.slice(*template_tokens)
+
+        if parameters.is_a?(Hash)
+          parameters.each do |key, value|
+            attributes["sentry.message.parameter.#{key}"] = value
+          end
+        else
+          parameters.each_with_index do |param, index|
+            attributes["sentry.message.parameter.#{index}"] = param
+          end
+        end
+      end
+    end
+
+    TOKEN_REGEXP = /%\{(\w+)\}/
+
+    def template_tokens
+      @template_tokens ||= body.scan(TOKEN_REGEXP).flatten.map(&:to_sym)
+    end
+
+    def is_template?
+      body.include?("%s") || TOKEN_REGEXP.match?(body)
     end
   end
 end
