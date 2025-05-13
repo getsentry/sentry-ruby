@@ -136,11 +136,11 @@ module Sentry
 
         if parameters.is_a?(Hash)
           parameters.each do |key, value|
-            attributes["sentry.message.parameters.#{key}"] = value
+            attributes["sentry.message.parameter.#{key}"] = value
           end
         else
           parameters.each_with_index do |param, index|
-            attributes["sentry.message.parameters.#{index}"] = param
+            attributes["sentry.message.parameter.#{index}"] = param
           end
         end
       end

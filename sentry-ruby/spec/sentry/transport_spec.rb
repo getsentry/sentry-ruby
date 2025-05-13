@@ -294,7 +294,7 @@ RSpec.describe Sentry::Transport do
 
         expect(log_event["attributes"]).to include(
           "sentry.message.template" => { "value" => "User %s has logged in!", "type" => "string" },
-          "sentry.message.parameters.0" => { "value" => "John", "type" => "string" },
+          "sentry.message.parameter.0" => { "value" => "John", "type" => "string" },
           "sentry.environment" => { "value" => "development", "type" => "string" }
         )
       end
@@ -577,7 +577,7 @@ RSpec.describe Sentry::Transport do
             timestamp: 1544719860.0,
             attributes: {
               "sentry.message.template" => "User %s has logged in!",
-              "sentry.message.parameters.0" => "John",
+              "sentry.message.parameter.0" => "John",
               "sentry.environment" => "production",
               "sentry.release" => "1.0.0",
               "sentry.trace.parent_span_id" => "b0e6f15b45c36b12"

@@ -25,7 +25,7 @@ RSpec.describe Sentry::LogEvent do
     it "accepts attributes" do
       attributes = {
         "sentry.message.template" => "User %s has logged in!",
-        "sentry.message.parameters.0" => "John"
+        "sentry.message.parameter.0" => "John"
       }
 
       event = described_class.new(
@@ -62,8 +62,8 @@ RSpec.describe Sentry::LogEvent do
 
       attributes = hash[:attributes]
       expect(attributes["sentry.message.template"]).to eq({ value: "Hello %{name}, today is %{day}", type: "string" })
-      expect(attributes["sentry.message.parameters.name"]).to eq({ value: "John", type: "string" })
-      expect(attributes["sentry.message.parameters.day"]).to eq({ value: "Monday", type: "string" })
+      expect(attributes["sentry.message.parameter.name"]).to eq({ value: "John", type: "string" })
+      expect(attributes["sentry.message.parameter.day"]).to eq({ value: "Monday", type: "string" })
     end
 
     it "includes all required fields" do

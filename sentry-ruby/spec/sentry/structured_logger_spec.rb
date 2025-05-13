@@ -50,8 +50,8 @@ RSpec.describe Sentry::StructuredLogger do
           expect(log_event[:level]).to eql(level)
           expect(log_event[:body]).to eql("Hello Jane it is Monday")
           expect(log_event[:attributes]["sentry.message.template"]).to eql({ value: "Hello %s it is %s", type: "string" })
-          expect(log_event[:attributes]["sentry.message.parameters.0"]).to eql({ value: "Jane", type: "string" })
-          expect(log_event[:attributes]["sentry.message.parameters.1"]).to eql({ value: "Monday", type: "string" })
+          expect(log_event[:attributes]["sentry.message.parameter.0"]).to eql({ value: "Jane", type: "string" })
+          expect(log_event[:attributes]["sentry.message.parameter.1"]).to eql({ value: "Monday", type: "string" })
         end
 
         it "logs with template parameters and extra attributres" do
@@ -65,8 +65,8 @@ RSpec.describe Sentry::StructuredLogger do
           expect(log_event[:body]).to eql("Hello Jane it is Monday")
           expect(log_event[:attributes][:extra]).to eql({ value: 312, type: "integer" })
           expect(log_event[:attributes]["sentry.message.template"]).to eql({ value: "Hello %s it is %s", type: "string" })
-          expect(log_event[:attributes]["sentry.message.parameters.0"]).to eql({ value: "Jane", type: "string" })
-          expect(log_event[:attributes]["sentry.message.parameters.1"]).to eql({ value: "Monday", type: "string" })
+          expect(log_event[:attributes]["sentry.message.parameter.0"]).to eql({ value: "Jane", type: "string" })
+          expect(log_event[:attributes]["sentry.message.parameter.1"]).to eql({ value: "Monday", type: "string" })
         end
 
         it "logs with hash-based template parameters" do
@@ -79,8 +79,8 @@ RSpec.describe Sentry::StructuredLogger do
           expect(log_event[:level]).to eql(level)
           expect(log_event[:body]).to eql("Hello Jane, it is Monday")
           expect(log_event[:attributes]["sentry.message.template"]).to eql({ value: "Hello %{name}, it is %{day}", type: "string" })
-          expect(log_event[:attributes]["sentry.message.parameters.name"]).to eql({ value: "Jane", type: "string" })
-          expect(log_event[:attributes]["sentry.message.parameters.day"]).to eql({ value: "Monday", type: "string" })
+          expect(log_event[:attributes]["sentry.message.parameter.name"]).to eql({ value: "Jane", type: "string" })
+          expect(log_event[:attributes]["sentry.message.parameter.day"]).to eql({ value: "Monday", type: "string" })
         end
 
         it "logs with hash-based template parameters and extra attributes" do
@@ -94,8 +94,8 @@ RSpec.describe Sentry::StructuredLogger do
           expect(log_event[:body]).to eql("Hello Jane, it is Monday")
           expect(log_event[:attributes][:user_id]).to eql({ value: 123, type: "integer" })
           expect(log_event[:attributes]["sentry.message.template"]).to eql({ value: "Hello %{name}, it is %{day}", type: "string" })
-          expect(log_event[:attributes]["sentry.message.parameters.name"]).to eql({ value: "Jane", type: "string" })
-          expect(log_event[:attributes]["sentry.message.parameters.day"]).to eql({ value: "Monday", type: "string" })
+          expect(log_event[:attributes]["sentry.message.parameter.name"]).to eql({ value: "Jane", type: "string" })
+          expect(log_event[:attributes]["sentry.message.parameter.day"]).to eql({ value: "Monday", type: "string" })
         end
       end
     end
