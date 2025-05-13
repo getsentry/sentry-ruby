@@ -3,13 +3,15 @@
 require "spec_helper"
 
 RSpec.describe Sentry::StructuredLogger do
-  context "when log events are not enabled" do
+  context "when enable_logs is set to false" do
     before do
-      perform_basic_setup
+      perform_basic_setup do |config|
+        config.enable_logs = false
+      end
     end
 
-    it "logger is not set up" do
-      expect(Sentry.logger).to be_nil
+    it "configures default SDK logger" do
+      expect(Sentry.logger).to be(Sentry.configuration.sdk_logger)
     end
   end
 

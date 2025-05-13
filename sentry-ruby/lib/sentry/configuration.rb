@@ -468,7 +468,7 @@ module Sentry
       self.rack_env_whitelist = RACK_ENV_WHITELIST_DEFAULT
       self.traces_sampler = nil
       self.enable_tracing = nil
-      self.enable_logs = true
+      self.enable_logs = false
 
       self.profiler_class = Sentry::Profiler
 

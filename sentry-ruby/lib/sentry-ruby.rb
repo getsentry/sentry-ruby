@@ -95,27 +95,6 @@ module Sentry
     #   @return [Metrics::Aggregator, nil]
     attr_reader :metrics_aggregator
 
-    # @!attribute [r] logger
-    #   Returns the structured logger instance that implements Sentry's SDK telemetry logs protocol.
-    #   This logger is only available when logs are enabled in the configuration.
-    #
-    #   @example Enable logs in configuration
-    #     Sentry.init do |config|
-    #       config.dsn = "YOUR_DSN"
-    #       config.enable_logs = true
-    #     end
-    #
-    #   @example Basic usage
-    #     Sentry.logger.info("User logged in successfully", user_id: 123)
-    #     Sentry.logger.error("Failed to process payment",
-    #       transaction_id: "tx_123",
-    #       error_code: "PAYMENT_FAILED"
-    #     )
-    #
-    #   @see https://develop.sentry.dev/sdk/telemetry/logs/ Sentry SDK Telemetry Logs Protocol
-    #   @return [StructuredLogger, nil] The structured logger instance or nil if logs are disabled
-    attr_reader :logger
-
     ##### Patch Registration #####
 
     # @!visibility private
@@ -260,11 +239,6 @@ module Sentry
     def init(&block)
       config = Configuration.new
       yield(config) if block_given?
-
-      # Initialize the public-facing Structured Logger if logs are enabled
-      # This creates a StructuredLogger instance that implements Sentry's SDK telemetry logs protocol
-      # @see https://develop.sentry.dev/sdk/telemetry/logs/
-      @logger = StructuredLogger.new(config) if config.enable_logs
 
       config.detect_release
       apply_patches(config)
@@ -640,17 +614,44 @@ module Sentry
       get_current_hub.continue_trace(env, **options)
     end
 
-    ##### Helpers #####
-
-    # @!visibility private
+    # Returns the structured logger instance that implements Sentry's SDK telemetry logs protocol.
+    #
+    # This logger is only available when logs are enabled in the configuration.
+    #
+    # @example Enable logs in configuration
+    #   Sentry.init do |config|
+    #     config.dsn = "YOUR_DSN"
+    #     config.enable_logs = true
+    #   end
+    #
+    # @example Basic usage
+    #   Sentry.logger.info("User logged in successfully", user_id: 123)
+    #   Sentry.logger.error("Failed to process payment",
+    #     transaction_id: "tx_123",
+    #     error_code: "PAYMENT_FAILED"
+    #   )
+    #
+    # @see https://develop.sentry.dev/sdk/telemetry/logs/ Sentry SDK Telemetry Logs Protocol
+    #
+    # @return [StructuredLogger, nil] The structured logger instance or nil if logs are disabled
     def logger
-      warn <<~STR
-        [sentry] `Sentry.logger` will no longer be used as internal SDK logger when `enable_logs` feature is turned on.
-                 Use Sentry.configuration.sdk_logger for SDK-specific logging needs."
-      STR
+      @logger ||=
+        if configuration.enable_logs
+          # Initialize the public-facing Structured Logger if logs are enabled
+          # This creates a StructuredLogger instance that implements Sentry's SDK telemetry logs protocol
+          # @see https://develop.sentry.dev/sdk/telemetry/logs/
+          StructuredLogger.new(configuration)
+        else
+          warn <<~STR
+            [sentry] `Sentry.logger` will no longer be used as internal SDK logger when `enable_logs` feature is turned on.
+                    Use Sentry.configuration.sdk_logger for SDK-specific logging needs."
+          STR
 
-      configuration.sdk_logger
+          configuration.sdk_logger
+        end
     end
+
+    ##### Helpers #####
 
     # @!visibility private
     def sys_command(command)
