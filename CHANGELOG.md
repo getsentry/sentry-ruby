@@ -22,9 +22,38 @@
     config.enable_logs = true
   end
   ```
-  :warning: When this is enabled, previous `Sentry.logger` should no longer be used for internal SDK
+
+  Once you configured structured logging, you get access to a new `Sentry.logger` object that can be
+  used as a regular logger with additional structured data support:
+
+  ```ruby
+  Sentry.logger.info("User logged in", user_id: 123)
+
+  Sentry.logger.error("Failed to process payment",
+    transaction_id: "tx_123",
+    error_code: "PAYMENT_FAILED"
+  )
+  ```
+
+  You can also use message templates with positional or hash parameters:
+
+  ```ruby
+  Sentry.logger.info("User %{name} logged in", name: "Jane Doe")
+
+  Sentry.logger.info("User %s logged in", ["Jane Doe"])
+  ```
+
+  Any other arbitrary attributes will be sent as part of the log event payload:
+
+  ```ruby
+  # Here `user_id` and `action` will be sent as extra attributes that Sentry Logs UI displays
+  Sentry.logger.info("User %{user} logged in", user: "Jane", user_id: 123, action: "create")
+  ```
+
+  :warning: When `enable_logs` is `true`, previous `Sentry.logger` should no longer be used for internal SDK
   logging - it was replaced by `Sentry.configuration.sdk_logger` and should be used only by the SDK
   itself and its extensions.
+
 - New configuration option called `active_job_report_on_retry_error` which enables reporting errors on each retry error ([#2617](https://github.com/getsentry/sentry-ruby/pull/2617))
 
 ### Bug Fixes
