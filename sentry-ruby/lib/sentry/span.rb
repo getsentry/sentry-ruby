@@ -262,7 +262,7 @@ module Sentry
 
 
     # Sets the span's status.
-    # @param satus [String] status of the span.
+    # @param status [String] status of the span.
     def set_status(status)
       @status = status
     end
