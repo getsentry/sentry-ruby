@@ -21,16 +21,12 @@
     },
     {
       "path": "sentry-opentelemetry"
-    },
-    {
-      "path": "sentry-raven"
     }
   ],
   "settings": {
     "files.exclude": {
       "sentry-delayed_job": true,
       "sentry-rails": true,
-      "sentry-raven": true,
       "sentry-resque": true,
       "sentry-ruby": true,
       "sentry-sidekiq": true,
