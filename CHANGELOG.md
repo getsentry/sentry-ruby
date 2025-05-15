@@ -1,4 +1,4 @@
-## Unreleased
+## 5.24.0
 
 ### Features
 
