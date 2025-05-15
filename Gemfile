@@ -15,6 +15,10 @@ if ruby_version >= Gem::Version.new("2.7.0")
   gem "ruby-lsp-rspec" if ruby_version >= Gem::Version.new("3.0.0") && RUBY_PLATFORM != "java"
 end
 
+if RUBY_VERSION >= "3.5"
+  gem "cgi"
+end
+
 # For RSpec
 gem "rspec", "~> 3.0"
 gem "rspec-retry"
