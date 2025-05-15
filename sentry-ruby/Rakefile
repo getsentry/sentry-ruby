@@ -14,7 +14,7 @@ RSpec::Core::RakeTask.new(:spec).tap do |task|
 end
 
 task :isolated_specs do
-  Dir["spec/isolated/*"].each do |file|
+  Dir["spec/isolated/**/*_spec.rb"].each do |file|
     sh "bundle exec rspec #{file}"
   end
 end

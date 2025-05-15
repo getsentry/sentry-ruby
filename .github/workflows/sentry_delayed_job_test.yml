@@ -35,9 +35,6 @@ jobs:
           - ruby_version: "3.2"
             options:
               rubyopt: "--enable-frozen-string-literal --debug=frozen-string-literal"
-          - ruby_version: "3.2"
-            options:
-              codecov: 1
         exclude:
           # Because Rails 7.0 currently doesn't work with Ruby head
           # LoadError:
@@ -63,7 +60,6 @@ jobs:
         run: bundle exec rake
 
       - name: Upload Coverage
-        if: ${{ matrix.options.codecov }}
         uses: codecov/codecov-action@v5
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
