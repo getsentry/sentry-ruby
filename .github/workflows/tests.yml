@@ -19,42 +19,49 @@ jobs:
       engine: cruby-jruby
       min_version: 2.7
       versions: '["jruby-9.4.12.0"]'
+    secrets: inherit
 
   delayed_job-tests:
     needs: ruby-versions
     uses: ./.github/workflows/sentry_delayed_job_test.yml
     with:
       versions: ${{ needs.ruby-versions.outputs.versions }}
+    secrets: inherit
 
   opentelemetry-tests:
     needs: ruby-versions
     uses: ./.github/workflows/sentry_opentelemetry_test.yml
     with:
       versions: ${{ needs.ruby-versions.outputs.versions }}
+    secrets: inherit
 
   rails-tests:
     needs: ruby-versions
     uses: ./.github/workflows/sentry_rails_test.yml
     with:
       versions: ${{ needs.ruby-versions.outputs.versions }}
+    secrets: inherit
 
   resque-tests:
     needs: ruby-versions
     uses: ./.github/workflows/sentry_resque_test.yml
     with:
       versions: ${{ needs.ruby-versions.outputs.versions }}
+    secrets: inherit
 
   ruby-tests:
     needs: ruby-versions
     uses: ./.github/workflows/sentry_ruby_test.yml
     with:
       versions: ${{ needs.ruby-versions.outputs.versions }}
+    secrets: inherit
 
   sidekiq-tests:
     needs: ruby-versions
     uses: ./.github/workflows/sentry_sidekiq_test.yml
     with:
       versions: ${{ needs.ruby-versions.outputs.versions }}
+    secrets: inherit
 
   codecov:
     name: CodeCov
