@@ -2,6 +2,9 @@
 
 require "spec_helper"
 
+# isolated tests need a SimpleCov name otherwise they will overwrite coverage
+SimpleCov.command_name "RSpecVersioned_2.7_ActiveJob"
+
 RSpec.describe "ActiveJob integration", type: :job do
   before do
     make_basic_app

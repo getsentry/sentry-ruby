@@ -2,7 +2,8 @@
 
 require_relative "../spec_helper"
 
-SimpleCov.command_name "RSpecIsolated"
+# isolated tests need a SimpleCov name otherwise they will overwrite coverage
+SimpleCov.command_name "RSpecIsolatedInit"
 
 RSpec.describe Sentry do
   context "works within a trap context", when: { ruby_engine?: "ruby" } do

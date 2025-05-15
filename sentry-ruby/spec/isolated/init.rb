@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
-require_relative "../spec_helper"
+require "sentry-ruby"
+require "sentry/test_helper"
 
 Sentry.init do |config|
   config.dsn = Sentry::TestHelper::DUMMY_DSN
