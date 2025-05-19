@@ -127,6 +127,18 @@ RSpec.describe Sentry::StructuredLogger do
           expect(log_event[:attributes]["hello"]).to eql({ value: "world", type: "string" })
         end
       end
+
+      context "when the callback returns nil" do
+        let(:before_send_log) do
+          ->(_log) { nil }
+        end
+
+        it "skips the processed log event" do
+          Sentry.logger.info("Hello World", user_id: 123, action: "create")
+
+          expect(sentry_logs).to be_empty
+        end
+      end
     end
   end
 end

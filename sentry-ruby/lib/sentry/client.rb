@@ -285,7 +285,7 @@ module Sentry
       )
 
       items = if configuration.before_send_log
-        log_events.map { |log_event| configuration.before_send_log.call(log_event) }
+        log_events.map { |log_event| configuration.before_send_log.call(log_event) }.compact
       else
         log_events
       end
