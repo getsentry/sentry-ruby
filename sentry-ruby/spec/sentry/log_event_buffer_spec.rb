@@ -42,13 +42,13 @@ RSpec.describe Sentry::LogEventBuffer do
     end
 
     it "does nothing when the number of events is less than max_events " do
-      expect(client).to_not receive(:send_envelope)
+      expect(client).to_not receive(:send_logs)
 
       2.times { log_event_buffer.add_event(log_event) }
     end
 
     it "auto-flushes pending events to the client when the number of events reaches max_events" do
-      expect(client).to receive(:send_envelope)
+      expect(client).to receive(:send_logs)
 
       3.times { log_event_buffer.add_event(log_event) }
 
@@ -60,7 +60,7 @@ RSpec.describe Sentry::LogEventBuffer do
     let(:max_log_events) { 30 }
 
     it "thread-safely handles concurrent access" do
-      expect(client).to receive(:send_envelope).exactly(3).times
+      expect(client).to receive(:send_logs).exactly(3).times
 
       threads = 3.times.map do
         Thread.new do

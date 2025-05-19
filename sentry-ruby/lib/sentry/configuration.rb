@@ -101,6 +101,15 @@ module Sentry
     # @return [Proc]
     attr_reader :before_send_transaction
 
+    # Optional Proc, called before sending an event to the server
+    # @example
+    #   config.before_send_log = lambda do |log|
+    #     log.attributes["sentry"] = true
+    #     log
+    #   end
+    # @return [Proc]
+    attr_accessor :before_send_log
+
     # An array of breadcrumbs loggers to be used. Available options are:
     # - :sentry_logger
     # - :http_logger
@@ -465,6 +474,7 @@ module Sentry
 
       self.before_send = nil
       self.before_send_transaction = nil
+      self.before_send_log = nil
       self.rack_env_whitelist = RACK_ENV_WHITELIST_DEFAULT
       self.traces_sampler = nil
       self.enable_tracing = nil

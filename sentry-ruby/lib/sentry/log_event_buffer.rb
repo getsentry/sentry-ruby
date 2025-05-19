@@ -21,8 +21,6 @@ module Sentry
       @client = client
       @pending_events = []
       @max_events = configuration.max_log_events || DEFAULT_MAX_EVENTS
-      @dsn = configuration.dsn
-      @sdk = Sentry.sdk_meta
       @mutex = Mutex.new
 
       log_debug("[Logging] Initialized buffer with max_events=#{@max_events}, flush_interval=#{FLUSH_INTERVAL}s")
@@ -70,28 +68,8 @@ module Sentry
     private
 
     def send_events
-      @client.send_envelope(to_envelope)
+      @client.send_logs(@pending_events)
       @pending_events.clear
-    end
-
-    def to_envelope
-      envelope = Envelope.new(
-        event_id: SecureRandom.uuid.delete("-"),
-        sent_at: Sentry.utc_now.iso8601,
-        dsn: @dsn,
-        sdk: @sdk
-      )
-
-      envelope.add_item(
-        {
-          type: "log",
-          item_count: size,
-          content_type: "application/vnd.sentry.items.log+json"
-        },
-        { items: @pending_events.map(&:to_hash) }
-      )
-
-      envelope
     end
   end
 end

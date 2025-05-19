@@ -99,5 +99,34 @@ RSpec.describe Sentry::StructuredLogger do
         end
       end
     end
+
+    describe "using config.before_send_log" do
+      before do
+        perform_basic_setup do |config|
+          config.enable_logs = true
+          config.max_log_events = 1
+          config.before_send_log = before_send_log
+        end
+      end
+
+      context "when the callback returns a log event" do
+        let(:before_send_log) do
+          ->(log) {
+            log.attributes["hello"] = "world"
+            log
+          }
+        end
+
+        it "sends the processed log event" do
+          Sentry.logger.info("Hello World", user_id: 123, action: "create")
+
+          expect(sentry_logs).to_not be_empty
+
+          log_event = sentry_logs.last
+
+          expect(log_event[:attributes]["hello"]).to eql({ value: "world", type: "string" })
+        end
+      end
+    end
   end
 end

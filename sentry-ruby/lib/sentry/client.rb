@@ -272,6 +272,36 @@ module Sentry
       raise
     end
 
+    # Send an envelope with batched logs
+    # @param log_events [Array<LogEvent>] the log events to be sent
+    # @api private
+    # @return [void]
+    def send_logs(log_events)
+      envelope = Envelope.new(
+        event_id: SecureRandom.uuid.delete("-"),
+        sent_at: Sentry.utc_now.iso8601,
+        dsn: configuration.dsn,
+        sdk: Sentry.sdk_meta
+      )
+
+      items = if configuration.before_send_log
+        log_events.map { |log_event| configuration.before_send_log.call(log_event) }
+      else
+        log_events
+      end
+
+      envelope.add_item(
+        {
+          type: "log",
+          item_count: items.size,
+          content_type: "application/vnd.sentry.items.log+json"
+        },
+        { items: items.map(&:to_hash) }
+      )
+
+      send_envelope(envelope)
+    end
+
     # Send an envelope directly to Sentry.
     # @param envelope [Envelope] the envelope to be sent.
     # @return [void]
