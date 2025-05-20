@@ -285,7 +285,7 @@ module Sentry
         sdk: Sentry.sdk_meta
       )
 
-      discarded_logs = []
+      discarded_count = 0
       envelope_items = []
 
       if configuration.before_send_log
@@ -295,7 +295,7 @@ module Sentry
           if processed_log_event
             envelope_items << processed_log_event.to_hash
           else
-            discarded_logs << log_event
+            discarded_count += 1
           end
         end
 
@@ -315,8 +315,8 @@ module Sentry
 
       send_envelope(envelope)
 
-      unless discarded_logs.empty?
-        transport.record_lost_event(:before_send, "log_item", num: discarded_logs.size)
+      unless discarded_count.zero?
+        transport.record_lost_event(:before_send, "log_item", num: discarded_count)
       end
     end
 
