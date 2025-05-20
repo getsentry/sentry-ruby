@@ -101,15 +101,22 @@ RSpec.describe Sentry::StructuredLogger do
     end
 
     describe "using config.before_send_log" do
+      let(:transport) do
+        Sentry.get_current_client.transport
+      end
+
       before do
         perform_basic_setup do |config|
           config.enable_logs = true
+          config.send_client_reports = send_client_reports
           config.max_log_events = 1
           config.before_send_log = before_send_log
         end
       end
 
-      context "when the callback returns a log event" do
+      context "when send_client_reports is turned off and the callback returns a log event" do
+        let(:send_client_reports) { false }
+
         let(:before_send_log) do
           ->(log) {
             log.attributes["hello"] = "world"
@@ -117,10 +124,12 @@ RSpec.describe Sentry::StructuredLogger do
           }
         end
 
-        it "sends the processed log event" do
+        it "sends processed log events" do
+          Sentry.logger.info("Hello World", user_id: 125, action: "create")
           Sentry.logger.info("Hello World", user_id: 123, action: "create")
+          Sentry.logger.info("Hello World", user_id: 127, action: "create")
 
-          expect(sentry_logs).to_not be_empty
+          expect(sentry_logs.size).to be(3)
 
           log_event = sentry_logs.last
 
@@ -128,15 +137,25 @@ RSpec.describe Sentry::StructuredLogger do
         end
       end
 
-      context "when the callback returns nil" do
+      context "when send_client_reports is turned on and the callback returns a log event" do
+        let(:send_client_reports) { true }
+
         let(:before_send_log) do
-          ->(_log) { nil }
+          ->(log) {
+          if log.attributes[:user_id] == 123
+            log
+          end
+          }
         end
 
-        it "skips the processed log event" do
+        it "records discarded events" do
+          Sentry.logger.info("Hello World", user_id: 125, action: "create")
           Sentry.logger.info("Hello World", user_id: 123, action: "create")
+          Sentry.logger.info("Hello World", user_id: 127, action: "create")
 
-          expect(sentry_logs).to be_empty
+          expect(sentry_logs.size).to be(1)
+
+          expect(transport.discarded_events).to include([:before_send, "log_item"] => 2)
         end
       end
     end

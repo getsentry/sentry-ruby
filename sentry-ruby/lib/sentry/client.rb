@@ -284,22 +284,39 @@ module Sentry
         sdk: Sentry.sdk_meta
       )
 
-      items = if configuration.before_send_log
-        log_events.map { |log_event| configuration.before_send_log.call(log_event) }.compact
+      discarded_logs = []
+      envelope_items = []
+
+      if configuration.before_send_log
+        log_events.each do |log_event|
+          processed_log_event = configuration.before_send_log.call(log_event)
+
+          if processed_log_event
+            envelope_items << processed_log_event.to_hash
+          else
+            discarded_logs << log_event
+          end
+        end
+
+        envelope_items
       else
-        log_events
+        envelope_items = log_events.map(&:to_hash)
       end
 
       envelope.add_item(
         {
           type: "log",
-          item_count: items.size,
+          item_count: envelope_items.size,
           content_type: "application/vnd.sentry.items.log+json"
         },
-        { items: items.map(&:to_hash) }
+        { items: envelope_items }
       )
 
       send_envelope(envelope)
+
+      unless discarded_logs.empty?
+        transport.record_lost_event(:before_send, "log_item", num: discarded_logs.size)
+      end
     end
 
     # Send an envelope directly to Sentry.
