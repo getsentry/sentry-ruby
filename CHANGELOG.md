@@ -1,3 +1,9 @@
+## Unreleased
+
+### Features
+
+- Support for `before_send_log` ([#2634](https://github.com/getsentry/sentry-ruby/pull/2634))
+
 ## 5.24.0
 
 ### Features
