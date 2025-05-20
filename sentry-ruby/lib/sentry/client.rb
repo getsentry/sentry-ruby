@@ -3,6 +3,7 @@
 require "sentry/transport"
 require "sentry/log_event"
 require "sentry/log_event_buffer"
+require "sentry/utils/uuid"
 
 module Sentry
   class Client
@@ -278,7 +279,7 @@ module Sentry
     # @return [void]
     def send_logs(log_events)
       envelope = Envelope.new(
-        event_id: SecureRandom.uuid.delete("-"),
+        event_id: Sentry::Utils.uuid,
         sent_at: Sentry.utc_now.iso8601,
         dsn: configuration.dsn,
         sdk: Sentry.sdk_meta
