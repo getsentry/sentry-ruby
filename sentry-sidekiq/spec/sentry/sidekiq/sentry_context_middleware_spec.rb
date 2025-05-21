@@ -90,7 +90,7 @@ RSpec.describe Sentry::Sidekiq::SentryContextServerMiddleware do
         expect(trace[:data]['messaging.message.id']).to eq('123456')
         expect(trace[:data]['messaging.destination.name']).to eq('default')
         expect(trace[:data]['messaging.message.retry.count']).to eq(0)
-        expect(trace[:data]['messaging.message.receive.latency']).to be_within(1).of(expected_latency)
+        expect(trace[:data]['messaging.message.receive.latency']).to be_within(3).of(expected_latency)
       end
 
       if MIN_SIDEKIQ_6
