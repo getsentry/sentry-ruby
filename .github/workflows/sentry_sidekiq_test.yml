@@ -23,6 +23,7 @@ jobs:
         working-directory: sentry-sidekiq
     name: Ruby ${{ matrix.ruby_version }} & Sidekiq ${{ matrix.sidekiq_version }}, options - ${{ toJson(matrix.options) }}
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     env:
       RUBYOPT: ${{ matrix.options.rubyopt }}
       BUNDLE_GEMFILE: ${{ github.workspace }}/sentry-sidekiq/Gemfile
