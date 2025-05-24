@@ -59,6 +59,8 @@ gem "sentry-opentelemetry"
 
 You need to use Sentry.init to initialize and configure your SDK:
 ```ruby
+require "sentry-ruby"
+
 Sentry.init do |config|
   config.dsn = "MY_DSN"
 end
