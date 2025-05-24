@@ -366,6 +366,106 @@ RSpec.describe Sentry::Rails, type: :request do
 
         expect(transport.events.count).to eq(0)
       end
+
+      context "when passed a severity" do
+        context "when severity is fatal" do
+          it "sets fatal level to the reported event" do
+            Rails.error.handle(severity: :fatal) do
+              1/0
+            end
+
+            expect(transport.events.count).to eq(1)
+
+            event = transport.events.first
+
+            expect(event.level).to eq(:fatal)
+          end
+        end
+
+        context "when severity is error" do
+          it "sets error level to the reported event" do
+            Rails.error.handle(severity: :error) do
+              1/0
+            end
+
+            expect(transport.events.count).to eq(1)
+
+            event = transport.events.first
+
+            expect(event.level).to eq(:error)
+          end
+        end
+
+        context "when severity is warning" do
+          it "sets warning level to the reported event" do
+            Rails.error.handle(severity: :warning) do
+              1/0
+            end
+
+            expect(transport.events.count).to eq(1)
+
+            event = transport.events.first
+
+            expect(event.level).to eq(:warning)
+          end
+        end
+
+        context "when severity is warn" do
+          it "sets warning level to the reported event" do
+            Rails.error.handle(severity: :warn) do
+              1/0
+            end
+
+            expect(transport.events.count).to eq(1)
+
+            event = transport.events.first
+
+            expect(event.level).to eq(:warning)
+          end
+        end
+
+        context "when severity is log" do
+          it "sets log level to the reported event" do
+            Rails.error.handle(severity: :log) do
+              1/0
+            end
+
+            expect(transport.events.count).to eq(1)
+
+            event = transport.events.first
+
+            expect(event.level).to eq(:log)
+          end
+        end
+
+        context "when severity is info" do
+          it "sets info level to the reported event" do
+            Rails.error.handle(severity: :info) do
+              1/0
+            end
+
+            expect(transport.events.count).to eq(1)
+
+            event = transport.events.first
+
+            expect(event.level).to eq(:info)
+          end
+        end
+
+        context "when severity is debug" do
+          it "sets debug level to the reported event" do
+            Rails.error.handle(severity: :debug) do
+              1/0
+            end
+
+            expect(transport.events.count).to eq(1)
+
+            event = transport.events.first
+
+            expect(event.level).to eq(:debug)
+          end
+        end
+      end
     end
   end
 end
