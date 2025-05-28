@@ -1,7 +1,5 @@
 # frozen_string_literal: true
 
-require "spec_helper"
-
 RSpec.describe Sentry::LogEventBuffer do
   subject(:log_event_buffer) { described_class.new(Sentry.configuration, client) }
 

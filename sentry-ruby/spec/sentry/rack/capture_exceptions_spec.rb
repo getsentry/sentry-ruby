@@ -1,6 +1,5 @@
 # frozen_string_literal: true
 
-require 'spec_helper'
 require 'sentry/vernier/profiler'
 
 RSpec.describe 'Sentry::Rack::CaptureExceptions', when: :rack_available? do
@@ -526,7 +525,6 @@ RSpec.describe 'Sentry::Rack::CaptureExceptions', when: :rack_available? do
         transaction = last_sentry_event
         expect(event.contexts.dig(:trace, :trace_id).length).to eq(32)
         expect(event.contexts.dig(:trace, :trace_id)).to eq(transaction.contexts.dig(:trace, :trace_id))
-
 
         expect(transaction.type).to eq("transaction")
         expect(transaction.timestamp).not_to be_nil

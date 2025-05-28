@@ -1,6 +1,5 @@
 # frozen_string_literal: true
 
-require "spec_helper"
 require "sentry/rspec"
 
 RSpec.describe "Sentry RSpec Matchers" do

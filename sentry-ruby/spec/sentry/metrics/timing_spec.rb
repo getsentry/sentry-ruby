@@ -1,7 +1,5 @@
 # frozen_string_literal: true
 
-require 'spec_helper'
-
 RSpec.describe Sentry::Metrics::Timing do
   let(:fake_time) { Time.new(2024, 1, 2, 3, 4, 5) }
   before { allow(Time).to receive(:now).and_return(fake_time) }

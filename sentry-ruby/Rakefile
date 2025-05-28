@@ -8,15 +8,14 @@ Bundler::GemHelper.install_tasks(name: "sentry-ruby")
 
 require "rspec/core/rake_task"
 
+ISOLATED_SPECS = "spec/isolated/**/*_spec.rb"
+
 RSpec::Core::RakeTask.new(:spec).tap do |task|
-  task.rspec_opts = "--order rand"
-  task.exclude_pattern = "spec/isolated/**/*_spec.rb"
+  task.exclude_pattern = ISOLATED_SPECS
 end
 
-task :isolated_specs do
-  Dir["spec/isolated/**/*_spec.rb"].each do |file|
-    sh "bundle exec rspec #{file}"
-  end
+RSpec::Core::RakeTask.new(:isolated_specs).tap do |task|
+  task.pattern = ISOLATED_SPECS
 end
 
 task default: [:spec, :isolated_specs]

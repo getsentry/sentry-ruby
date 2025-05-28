@@ -1,6 +1,5 @@
 # frozen_string_literal: true
 
-require 'spec_helper'
 # rubocop:disable Style/WordArray
 RSpec.describe Sentry::LineCache do
   describe "#get_file_context" do

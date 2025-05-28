@@ -1,7 +1,5 @@
 # frozen_string_literal: true
 
-require "spec_helper"
-
 RSpec.describe Sentry::StructuredLogger do
   context "when enable_logs is set to false" do
     before do

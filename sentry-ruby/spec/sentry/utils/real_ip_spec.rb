@@ -1,7 +1,5 @@
 # frozen_string_literal: true
 
-require 'spec_helper'
-
 RSpec.describe Sentry::Utils::RealIp do
   context "when no ip addresses are provided other than REMOTE_ADDR" do
     subject { Sentry::Utils::RealIp.new(remote_addr: "1.1.1.1") }

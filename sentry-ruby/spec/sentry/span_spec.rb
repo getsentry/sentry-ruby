@@ -1,7 +1,5 @@
 # frozen_string_literal: true
 
-require "spec_helper"
-
 RSpec.describe Sentry::Span do
   let(:hub) do
     client = Sentry::Client.new(Sentry::Configuration.new)

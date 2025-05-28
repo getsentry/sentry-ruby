@@ -1,7 +1,5 @@
 # frozen_string_literal: true
 
-require 'spec_helper'
-
 RSpec.describe Sentry::Metrics::GaugeMetric do
   subject { described_class.new(0) }
   before { 9.times { |i| subject.add(i + 1) } }

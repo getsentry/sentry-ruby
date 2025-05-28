@@ -1,7 +1,5 @@
 # frozen_string_literal: true
 
-require 'spec_helper'
-
 RSpec.describe Sentry::Backtrace do
   let(:fixture_root) { File.join(Dir.pwd, "spec", "support") }
   let(:fixture_file) { File.join(fixture_root, "stacktrace_test_fixture.rb") }

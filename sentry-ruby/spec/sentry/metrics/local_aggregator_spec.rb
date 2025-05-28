@@ -1,7 +1,5 @@
 # frozen_string_literal: true
 
-require 'spec_helper'
-
 RSpec.describe Sentry::Metrics::LocalAggregator do
   let(:tags) { [['foo', 1], ['foo', 2], ['bar', 'baz']] }
   let(:key) { [:c, 'incr', 'second', tags] }

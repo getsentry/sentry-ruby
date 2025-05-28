@@ -1,7 +1,5 @@
 # frozen_string_literal: true
 
-require_relative "../spec_helper"
-
 # isolated tests need a SimpleCov name otherwise they will overwrite coverage
 SimpleCov.command_name "RSpecIsolatedInit"
 

@@ -1,7 +1,5 @@
 # frozen_string_literal: true
 
-require "spec_helper"
-
 require "sentry/vernier/profiler"
 
 RSpec.describe Sentry::Vernier::Profiler, when: { ruby_version?: [:>=, "3.3"] } do
@@ -151,7 +149,6 @@ RSpec.describe Sentry::Vernier::Profiler, when: { ruby_version?: [:>=, "3.3"] } 
 
   describe "#to_hash" do
     let (:transport) { Sentry.get_current_client.transport }
-
 
     it "records lost event if not sampled" do
       expect(transport).to receive(:record_lost_event).with(:sample_rate, "profile")

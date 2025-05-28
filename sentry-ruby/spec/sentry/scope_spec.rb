@@ -1,7 +1,5 @@
 # frozen_string_literal: true
 
-require "spec_helper"
-
 RSpec.describe Sentry::Scope do
   let(:new_breadcrumb) do
     new_breadcrumb = Sentry::Breadcrumb.new

@@ -1,7 +1,5 @@
 # frozen_string_literal: true
 
-require 'spec_helper'
-
 RSpec.describe Sentry::Cron::MonitorSchedule::Crontab do
   let(:subject) { described_class.new('5 * * * *') }
 

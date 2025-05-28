@@ -1,6 +1,5 @@
 # frozen_string_literal: true
 
-require "spec_helper"
 require "sentry/integrable"
 
 RSpec.describe Sentry::Integrable do

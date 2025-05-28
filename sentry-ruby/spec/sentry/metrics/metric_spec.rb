@@ -1,7 +1,5 @@
 # frozen_string_literal: true
 
-require 'spec_helper'
-
 RSpec.describe Sentry::Metrics::Metric do
   describe '#add' do
     it 'raises not implemented error' do

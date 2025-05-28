@@ -1,7 +1,5 @@
 # frozen_string_literal: true
 
-require "spec_helper"
-
 RSpec.describe "with uninitialized SDK" do
   before do
     # completely nuke any initialized hubs
