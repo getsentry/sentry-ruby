@@ -1,6 +1,5 @@
 # frozen_string_literal: true
 
-require "spec_helper"
 require 'contexts/with_request_mock'
 
 RSpec.describe Sentry::Net::HTTP do
@@ -112,7 +111,6 @@ RSpec.describe Sentry::Net::HTTP do
 
       transaction = Sentry.start_transaction
       Sentry.get_current_scope.set_span(transaction)
-
 
       response = http.request(request)
 

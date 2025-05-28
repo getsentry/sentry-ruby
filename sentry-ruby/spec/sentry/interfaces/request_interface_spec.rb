@@ -1,7 +1,5 @@
 # frozen_string_literal: true
 
-require 'spec_helper'
-
 return unless defined?(Rack)
 
 RSpec.describe Sentry::RequestInterface do

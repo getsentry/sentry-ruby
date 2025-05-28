@@ -1,7 +1,5 @@
 # frozen_string_literal: true
 
-require 'spec_helper'
-
 RSpec.describe Sentry::Metrics::DistributionMetric do
   subject { described_class.new(1) }
   before { subject.add(2) }

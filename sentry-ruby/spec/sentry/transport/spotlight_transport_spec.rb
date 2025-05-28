@@ -1,7 +1,5 @@
 # frozen_string_literal: true
 
-require 'spec_helper'
-
 RSpec.describe Sentry::SpotlightTransport do
   let(:configuration) do
     Sentry::Configuration.new.tap do |config|

@@ -1,7 +1,5 @@
 # frozen_string_literal: true
 
-require 'spec_helper'
-
 RSpec.describe Sentry::Transport do
   let(:io) { StringIO.new }
   let(:logger) { Logger.new(io) }

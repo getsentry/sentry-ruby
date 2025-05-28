@@ -1,7 +1,5 @@
 # frozen_string_literal: true
 
-require 'spec_helper'
-
 RSpec.describe Sentry::Cron::MonitorCheckIns do
   before { perform_basic_setup }
 

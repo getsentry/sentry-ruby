@@ -1,7 +1,5 @@
 # frozen_string_literal: true
 
-require 'spec_helper'
-
 RSpec.describe Sentry::Configuration do
   describe "#capture_exception_frame_locals" do
     it "passes/received the value to #include_local_variables" do

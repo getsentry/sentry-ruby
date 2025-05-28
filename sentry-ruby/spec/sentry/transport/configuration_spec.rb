@@ -1,7 +1,5 @@
 # frozen_string_literal: true
 
-require "spec_helper"
-
 RSpec.describe Sentry::Transport::Configuration do
   describe "#transport_class=" do
     it "doesn't accept non-class argument" do

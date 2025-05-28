@@ -1,6 +1,5 @@
 # frozen_string_literal: true
 
-require "spec_helper"
 require 'contexts/with_request_mock'
 
 RSpec.describe Sentry, 'transactions / profiler', when: [:vernier_installed?, :rack_available?] do

@@ -1,7 +1,5 @@
 # frozen_string_literal: true
 
-require "spec_helper"
-
 RSpec.describe Sentry::Utils::RequestId do
   describe ".read_from" do
     subject { Sentry::Utils::RequestId.read_from(env_hash) }

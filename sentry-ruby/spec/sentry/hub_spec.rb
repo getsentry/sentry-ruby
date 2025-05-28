@@ -1,7 +1,5 @@
 # frozen_string_literal: true
 
-require 'spec_helper'
-
 RSpec.describe Sentry::Hub do
   let(:string_io) { StringIO.new }
   let(:logger) do
@@ -259,7 +257,6 @@ RSpec.describe Sentry::Hub do
             exception
           end
         end
-
 
       it "raises error when passing a non-exception object" do
         expect do

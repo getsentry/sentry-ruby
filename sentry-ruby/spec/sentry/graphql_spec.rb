@@ -1,7 +1,5 @@
 # frozen_string_literal: true
 
-require 'spec_helper'
-
 with_graphql = begin
                  require 'graphql'
                  true

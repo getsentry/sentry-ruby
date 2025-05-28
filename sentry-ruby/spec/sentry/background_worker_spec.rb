@@ -1,7 +1,5 @@
 # frozen_string_literal: true
 
-require "spec_helper"
-
 RSpec.describe Sentry::BackgroundWorker do
   let(:string_io) { StringIO.new }
 

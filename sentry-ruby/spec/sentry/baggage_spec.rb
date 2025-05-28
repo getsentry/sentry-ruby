@@ -1,7 +1,5 @@
 # frozen_string_literal: true
 
-require "spec_helper"
-
 RSpec.describe Sentry::Baggage do
   let(:malformed_baggage) { "," }
   let(:third_party_baggage) { "other-vendor-value-1=foo;bar;baz, other-vendor-value-2=foo;bar;" }

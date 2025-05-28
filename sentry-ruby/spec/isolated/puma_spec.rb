@@ -1,7 +1,9 @@
 # frozen_string_literal: true
 
 require "puma"
-require_relative "../spec_helper"
+
+# Force-load the patches so that we don't depend on require order
+load Pathname(__FILE__).join("../../../lib/sentry/puma.rb").realpath
 
 # Because puma doesn't have any dependency, if Rack is not installed the entire test won't work
 return if ENV["RACK_VERSION"] == "0"

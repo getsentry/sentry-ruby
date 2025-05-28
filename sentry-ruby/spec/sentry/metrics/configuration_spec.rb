@@ -1,7 +1,5 @@
 # frozen_string_literal: true
 
-require 'spec_helper'
-
 RSpec.describe Sentry::Metrics::Configuration do
   describe '#before_emit=' do
     it 'raises error when setting before_emit to anything other than callable or nil' do

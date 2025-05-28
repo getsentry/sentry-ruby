@@ -1,7 +1,5 @@
 # frozen_string_literal: true
 
-require 'spec_helper'
-
 RSpec.describe Sentry::Metrics::SetMetric do
   subject { described_class.new('foo') }
 

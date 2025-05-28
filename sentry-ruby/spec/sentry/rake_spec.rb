@@ -1,7 +1,5 @@
 # frozen_string_literal: true
 
-require "spec_helper"
-
 RSpec.describe "rake auto-reporting" do
   it "sends a report to Sentry" do
     message = ""

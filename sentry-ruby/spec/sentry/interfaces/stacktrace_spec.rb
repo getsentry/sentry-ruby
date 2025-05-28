@@ -1,7 +1,5 @@
 # frozen_string_literal: true
 
-require 'spec_helper'
-
 RSpec.describe Sentry::StacktraceInterface::Frame do
   describe "#initialize" do
     let(:configuration) { Sentry::Configuration.new }
