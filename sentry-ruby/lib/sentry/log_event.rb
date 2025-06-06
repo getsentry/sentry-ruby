@@ -4,7 +4,7 @@ module Sentry
   # Event type that represents a log entry with its attributes
   #
   # @see https://develop.sentry.dev/sdk/telemetry/logs/#log-envelope-item-payload
-  class LogEvent < Event
+  class LogEvent
     TYPE = "log"
 
     DEFAULT_PARAMETERS = [].freeze
@@ -15,8 +15,12 @@ module Sentry
       level
       body
       timestamp
+      environment
+      release
+      server_name
       trace_id
       attributes
+      contexts
     ]
 
     SENTRY_ATTRIBUTES = {
@@ -33,15 +37,20 @@ module Sentry
 
     attr_accessor :level, :body, :template, :attributes
 
-    def initialize(configuration: Sentry.configuration, **options)
-      super(configuration: configuration)
+    attr_reader :configuration, *SERIALIZEABLE_ATTRIBUTES
 
+    def initialize(configuration: Sentry.configuration, **options)
+      @configuration = configuration
       @type = TYPE
+      @server_name = configuration.server_name
+      @environment = configuration.environment
+      @release = configuration.release
+      @timestamp = Sentry.utc_now.iso8601
       @level = options.fetch(:level)
       @body = options[:body]
       @template = @body if is_template?
       @attributes = options[:attributes] || DEFAULT_ATTRIBUTES
-      @contexts = DEFAULT_CONTEXT
+      @contexts = {}
     end
 
     def to_hash
