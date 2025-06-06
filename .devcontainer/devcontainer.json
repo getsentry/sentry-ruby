@@ -2,7 +2,7 @@
   "name": "sentry-ruby",
   "dockerComposeFile": "docker-compose.yml",
   "service": "app",
-  "workspaceFolder": "/workspace/sentry-ruby",
+  "workspaceFolder": "/workspace/sentry",
   "customizations": {
     "vscode": {
       "extensions": [
