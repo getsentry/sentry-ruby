@@ -123,17 +123,15 @@ module Sentry
       { value: value, type: value_type(value) }
     end
 
+    VALUE_TYPES = Hash.new("string").merge!({
+      Integer => "integer",
+      TrueClass => "boolean",
+      FalseClass => "boolean",
+      Float => "double"
+    }).freeze
+
     def value_type(value)
-      case value
-      when Integer
-        "integer"
-      when TrueClass, FalseClass
-        "boolean"
-      when Float
-        "double"
-      else
-        "string"
-      end
+      VALUE_TYPES[value.class]
     end
 
     def parameters
