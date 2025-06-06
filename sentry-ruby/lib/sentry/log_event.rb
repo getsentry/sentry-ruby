@@ -39,6 +39,17 @@ module Sentry
 
     attr_reader :configuration, *SERIALIZEABLE_ATTRIBUTES
 
+    SERIALIZERS = %i[
+      attributes
+      body
+      level
+      parent_span_id
+      sdk_name
+      sdk_version
+      timestamp
+      trace_id
+    ].map { |name| [name, :"serialize_#{name}"] }.to_h
+
     def initialize(configuration: Sentry.configuration, **options)
       @configuration = configuration
       @type = TYPE
@@ -62,9 +73,9 @@ module Sentry
     private
 
     def serialize(name)
-      serializer = :"serialize_#{name}"
+      serializer = SERIALIZERS[name]
 
-      if respond_to?(serializer, true)
+      if serializer
         __send__(serializer)
       else
         public_send(name)
