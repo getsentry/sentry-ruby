@@ -4,7 +4,7 @@ module Sentry
   # Event type that represents a log entry with its attributes
   #
   # @see https://develop.sentry.dev/sdk/telemetry/logs/#log-envelope-item-payload
-  class LogEvent < Event
+  class LogEvent
     TYPE = "log"
 
     DEFAULT_PARAMETERS = [].freeze
@@ -15,8 +15,12 @@ module Sentry
       level
       body
       timestamp
+      environment
+      release
+      server_name
       trace_id
       attributes
+      contexts
     ]
 
     SENTRY_ATTRIBUTES = {
@@ -33,15 +37,31 @@ module Sentry
 
     attr_accessor :level, :body, :template, :attributes
 
-    def initialize(configuration: Sentry.configuration, **options)
-      super(configuration: configuration)
+    attr_reader :configuration, *SERIALIZEABLE_ATTRIBUTES
 
+    SERIALIZERS = %i[
+      attributes
+      body
+      level
+      parent_span_id
+      sdk_name
+      sdk_version
+      timestamp
+      trace_id
+    ].map { |name| [name, :"serialize_#{name}"] }.to_h
+
+    def initialize(configuration: Sentry.configuration, **options)
+      @configuration = configuration
       @type = TYPE
+      @server_name = configuration.server_name
+      @environment = configuration.environment
+      @release = configuration.release
+      @timestamp = Sentry.utc_now.iso8601
       @level = options.fetch(:level)
       @body = options[:body]
       @template = @body if is_template?
       @attributes = options[:attributes] || DEFAULT_ATTRIBUTES
-      @contexts = DEFAULT_CONTEXT
+      @contexts = {}
     end
 
     def to_hash
@@ -53,9 +73,9 @@ module Sentry
     private
 
     def serialize(name)
-      serializer = :"serialize_#{name}"
+      serializer = SERIALIZERS[name]
 
-      if respond_to?(serializer, true)
+      if serializer
         __send__(serializer)
       else
         public_send(name)
@@ -97,8 +117,10 @@ module Sentry
     end
 
     def serialize_attributes
-      hash = attributes.each_with_object({}) do |(key, value), memo|
-        memo[key] = attribute_hash(value)
+      hash = {}
+
+      attributes.each do |key, value|
+        hash[key] = attribute_hash(value)
       end
 
       SENTRY_ATTRIBUTES.each do |key, name|
@@ -114,17 +136,15 @@ module Sentry
       { value: value, type: value_type(value) }
     end
 
+    VALUE_TYPES = Hash.new("string").merge!({
+      Integer => "integer",
+      TrueClass => "boolean",
+      FalseClass => "boolean",
+      Float => "double"
+    }).freeze
+
     def value_type(value)
-      case value
-      when Integer
-        "integer"
-      when TrueClass, FalseClass
-        "boolean"
-      when Float
-        "double"
-      else
-        "string"
-      end
+      VALUE_TYPES[value.class]
     end
 
     def parameters
