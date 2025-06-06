@@ -117,8 +117,10 @@ module Sentry
     end
 
     def serialize_attributes
-      hash = attributes.each_with_object({}) do |(key, value), memo|
-        memo[key] = attribute_hash(value)
+      hash = {}
+
+      attributes.each do |key, value|
+        hash[key] = attribute_hash(value)
       end
 
       SENTRY_ATTRIBUTES.each do |key, name|
