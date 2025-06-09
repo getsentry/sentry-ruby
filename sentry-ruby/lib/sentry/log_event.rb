@@ -56,7 +56,7 @@ module Sentry
       @server_name = configuration.server_name
       @environment = configuration.environment
       @release = configuration.release
-      @timestamp = Sentry.utc_now.iso8601
+      @timestamp = Sentry.utc_now
       @level = options.fetch(:level)
       @body = options[:body]
       @template = @body if is_template?
@@ -95,7 +95,7 @@ module Sentry
     end
 
     def serialize_timestamp
-      Time.parse(timestamp).to_f
+      timestamp.to_f
     end
 
     def serialize_trace_id
