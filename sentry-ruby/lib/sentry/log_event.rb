@@ -50,6 +50,13 @@ module Sentry
       trace_id
     ].map { |name| [name, :"serialize_#{name}"] }.to_h
 
+    VALUE_TYPES = Hash.new("string").merge!({
+      TrueClass => "boolean",
+      FalseClass => "boolean",
+      Integer => "integer",
+      Float => "double"
+    }).freeze
+
     def initialize(configuration: Sentry.configuration, **options)
       @configuration = configuration
       @type = TYPE
@@ -135,13 +142,6 @@ module Sentry
     def attribute_hash(value)
       { value: value, type: value_type(value) }
     end
-
-    VALUE_TYPES = Hash.new("string").merge!({
-      Integer => "integer",
-      TrueClass => "boolean",
-      FalseClass => "boolean",
-      Float => "double"
-    }).freeze
 
     def value_type(value)
       VALUE_TYPES[value.class]
