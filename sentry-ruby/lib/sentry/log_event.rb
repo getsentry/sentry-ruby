@@ -9,7 +9,6 @@ module Sentry
 
     DEFAULT_PARAMETERS = [].freeze
     DEFAULT_ATTRIBUTES = {}.freeze
-    DEFAULT_CONTEXT = {}.freeze
 
     SERIALIZEABLE_ATTRIBUTES = %i[
       level
