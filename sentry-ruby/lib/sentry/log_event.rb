@@ -57,6 +57,8 @@ module Sentry
       Float => "double"
     }).freeze
 
+    TOKEN_REGEXP = /%\{(\w+)\}/
+
     def initialize(configuration: Sentry.configuration, **options)
       @configuration = configuration
       @type = TYPE
@@ -165,8 +167,6 @@ module Sentry
         end
       end
     end
-
-    TOKEN_REGEXP = /%\{(\w+)\}/
 
     def template_tokens
       @template_tokens ||= body.scan(TOKEN_REGEXP).flatten.map(&:to_sym)
