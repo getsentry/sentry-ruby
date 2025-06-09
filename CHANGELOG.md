@@ -4,6 +4,10 @@
 
 - Support for `before_send_log` ([#2634](https://github.com/getsentry/sentry-ruby/pull/2634))
 
+### Bug Fixes
+
+- Structured logging consumes way less memory now ([#2643](https://github.com/getsentry/sentry-ruby/pull/2643))
+
 ## 5.24.0
 
 ### Features
