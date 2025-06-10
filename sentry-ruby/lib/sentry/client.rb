@@ -195,12 +195,7 @@ module Sentry
 
       attributes = options.reject { |k, _| k == :level || k == :severity }
 
-      LogEvent.new(
-        level: level,
-        body: message,
-        timestamp: Time.now.to_f,
-        attributes: attributes
-      )
+      LogEvent.new(level: level, body: message, attributes: attributes)
     end
 
     # Initializes an Event object with the given Transaction object.
