@@ -239,7 +239,7 @@ RSpec.describe Sentry::Profiler, when: :stack_prof_installed? do
         expect(foo_frame[:in_app]).to eq(true)
         expect(foo_frame[:lineno]).to eq(7)
         expect(foo_frame[:filename]).to eq('spec/sentry/profiler_spec.rb')
-        expect(foo_frame[:abs_path]).to include('sentry-ruby/sentry-ruby/spec/sentry/profiler_spec.rb')
+        expect(foo_frame[:abs_path]).to include('sentry-ruby/spec/sentry/profiler_spec.rb')
 
         bar_frame = frames.find { |f| f[:function] =~ /bar/ }
         expect(bar_frame[:function]).to eq('Bar.bar')
@@ -247,7 +247,7 @@ RSpec.describe Sentry::Profiler, when: :stack_prof_installed? do
         expect(bar_frame[:in_app]).to eq(true)
         expect(bar_frame[:lineno]).to eq(12)
         expect(bar_frame[:filename]).to eq('spec/sentry/profiler_spec.rb')
-        expect(bar_frame[:abs_path]).to include('sentry-ruby/sentry-ruby/spec/sentry/profiler_spec.rb')
+        expect(bar_frame[:abs_path]).to include('sentry-ruby/spec/sentry/profiler_spec.rb')
 
         sleep_frame = frames.find { |f| f[:function] =~ /sleep/ }
         expect(sleep_frame[:function]).to eq('Kernel#sleep')

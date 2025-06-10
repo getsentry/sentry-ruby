@@ -188,7 +188,7 @@ RSpec.describe Sentry::Vernier::Profiler, when: { ruby_version?: [:>=, "3.3"] } 
           expect(foo_frame[:in_app]).to eq(true)
           expect(foo_frame[:lineno]).to eq(6)
           expect(foo_frame[:filename]).to eq('spec/support/profiler.rb')
-          expect(foo_frame[:abs_path]).to include('sentry-ruby/sentry-ruby/spec/support/profiler.rb')
+          expect(foo_frame[:abs_path]).to include('sentry-ruby/spec/support/profiler.rb')
         end
 
         it 'has correct stacks' do
@@ -274,7 +274,7 @@ RSpec.describe Sentry::Vernier::Profiler, when: { ruby_version?: [:>=, "3.3"] } 
           expect(foo_frame[:in_app]).to eq(true)
           expect(foo_frame[:lineno]).to eq(6)
           expect(foo_frame[:filename]).to eq('spec/support/profiler.rb')
-          expect(foo_frame[:abs_path]).to include('sentry-ruby/sentry-ruby/spec/support/profiler.rb')
+          expect(foo_frame[:abs_path]).to include('sentry-ruby/spec/support/profiler.rb')
         end
 
         it 'has correct stacks', when: { ruby_version?: [:>=, "3.3"] } do
