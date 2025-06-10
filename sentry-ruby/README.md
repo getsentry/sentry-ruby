@@ -118,3 +118,6 @@ Thanks to everyone who has contributed to this project so far.
 <a href="https://github.com/getsentry/sentry-ruby/graphs/contributors">
   <img src="https://contributors-img.web.app/image?repo=getsentry/sentry-ruby" />
 </a>
+
+> [!WARNING]
+> Example and sample code in sentry-rails/examples and sentry-rails/spec/dummy is unmaintained. Sample code may contain security vulnerabilities, should never be used in production, and exists only for illustrative purposes.
