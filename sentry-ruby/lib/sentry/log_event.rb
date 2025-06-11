@@ -32,9 +32,15 @@ module Sentry
       "sentry.message.template" => :template
     }
 
+    USER_ATTRIBUTES = {
+      "user.id" => :user_id,
+      "user.name" => :user_username,
+      "user.email" => :user_email
+    }
+
     LEVELS = %i[trace debug info warn error fatal].freeze
 
-    attr_accessor :level, :body, :template, :attributes
+    attr_accessor :level, :body, :template, :attributes, :user
 
     attr_reader :configuration, *SERIALIZEABLE_ATTRIBUTES
 
@@ -47,6 +53,9 @@ module Sentry
       sdk_version
       timestamp
       trace_id
+      user_id
+      user_username
+      user_email
     ].map { |name| [name, :"serialize_#{name}"] }.to_h
 
     VALUE_TYPES = Hash.new("string").merge!({
@@ -69,6 +78,7 @@ module Sentry
       @body = options[:body]
       @template = @body if is_template?
       @attributes = options[:attributes] || DEFAULT_ATTRIBUTES
+      @user = options[:user] || {}
       @contexts = {}
     end
 
@@ -124,6 +134,18 @@ module Sentry
       end
     end
 
+    def serialize_user_id
+      user[:id]
+    end
+
+    def serialize_user_username
+      user[:username]
+    end
+
+    def serialize_user_email
+      user[:email]
+    end
+
     def serialize_attributes
       hash = {}
 
@@ -134,6 +156,12 @@ module Sentry
       SENTRY_ATTRIBUTES.each do |key, name|
         if (value = serialize(name))
           hash[key] = attribute_hash(value)
+        end
+      end
+
+      USER_ATTRIBUTES.each do |key, name|
+        if (value = serialize(name))
+          hash[key] = value
         end
       end
 
