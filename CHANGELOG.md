@@ -3,6 +3,7 @@
 ### Features
 
 - Support for `before_send_log` ([#2634](https://github.com/getsentry/sentry-ruby/pull/2634))
+- Default user attributes are now automatically added to logs ([#2647](https://github.com/getsentry/sentry-ruby/pull/2647))
 
 ### Bug Fixes
 
