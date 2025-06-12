@@ -118,5 +118,26 @@ RSpec.describe Sentry::LogEvent do
       expect(hash[:attributes]["boolean_attr"]).to eq({ value: true, type: "boolean" })
       expect(hash[:attributes]["float_attr"]).to eq({ value: 3.14, type: "double" })
     end
+
+    it "serializes user attributes correctly" do
+      user = {
+        id: 123,
+        username: "john_doe",
+        email: "john@example.com"
+      }
+
+      event = described_class.new(
+        configuration: configuration,
+        level: :info,
+        body: "User action performed",
+        user: user
+      )
+
+      hash = event.to_hash
+
+      expect(hash[:attributes]["user.id"]).to eq(123)
+      expect(hash[:attributes]["user.name"]).to eq("john_doe")
+      expect(hash[:attributes]["user.email"]).to eq("john@example.com")
+    end
   end
 end

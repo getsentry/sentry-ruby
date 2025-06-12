@@ -207,6 +207,7 @@ RSpec.describe Sentry::Scope do
 
     let(:event) { client.event_from_message("test message") }
     let(:check_in_event) { client.event_from_check_in("test_slug", :ok) }
+    let(:log_event) { client.event_from_log("test log message", level: :info) }
 
     it "applies the contextual data to event" do
       subject.apply_to_event(event)
@@ -236,6 +237,32 @@ RSpec.describe Sentry::Scope do
       expect(check_in_event.breadcrumbs).to eq(nil)
       expect(check_in_event.fingerprint).to eq([])
       expect(check_in_event.contexts).to include(:trace)
+    end
+
+    context "with LogEvent" do
+      it "adds user attributes to log event" do
+        scope = described_class.new
+        scope.set_user({ id: 123, username: "john_doe", email: "john@example.com" })
+
+        scope.apply_to_event(log_event)
+
+        log_hash = log_event.to_hash
+
+        expect(log_hash[:attributes]["user.id"]).to eq(123)
+        expect(log_hash[:attributes]["user.name"]).to eq("john_doe")
+        expect(log_hash[:attributes]["user.email"]).to eq("john@example.com")
+      end
+
+      it "does not add user attributes when user is empty" do
+        scope = described_class.new
+        scope.apply_to_event(log_event)
+
+        log_hash = log_event.to_hash
+
+        expect(log_hash[:attributes]).not_to have_key("user.id")
+        expect(log_hash[:attributes]).not_to have_key("user.name")
+        expect(log_hash[:attributes]).not_to have_key("user.email")
+      end
     end
 
     it "doesn't override event's pre-existing data" do

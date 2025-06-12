@@ -60,6 +60,10 @@ module Sentry
         event.attachments = attachments
       end
 
+      if event.is_a?(LogEvent)
+        event.user = user.merge(event.user)
+      end
+
       if span
         event.contexts[:trace] ||= span.get_trace_context
 
