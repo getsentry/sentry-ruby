@@ -36,6 +36,7 @@ RSpec.describe Sentry::Net::HTTP do
         expect(request_span.data).to eq(
           { "url" => "http://[::1]/path", "http.request.method" => "GET", "http.response.status_code" => 200 }
         )
+        expect(request_span.status).to eq("ok")
       end
     end
 
@@ -68,6 +69,7 @@ RSpec.describe Sentry::Net::HTTP do
           "http.request.method" => "GET",
           "http.query" => "foo=bar"
         })
+        expect(request_span.status).to eq("ok")
       end
     end
 
@@ -99,6 +101,7 @@ RSpec.describe Sentry::Net::HTTP do
           "url" => "http://example.com/path",
           "http.request.method" => "GET"
         })
+        expect(request_span.status).to eq("ok")
       end
     end
 
@@ -342,6 +345,7 @@ RSpec.describe Sentry::Net::HTTP do
           "url" => "http://example.com/path",
           "http.request.method" => "GET"
         })
+        expect(request_span.status).to eq("ok")
 
         request_span = transaction.span_recorder.spans[2]
         expect(request_span.op).to eq("http.client")
@@ -355,6 +359,7 @@ RSpec.describe Sentry::Net::HTTP do
           "url" => "http://example.com/path",
           "http.request.method" => "GET"
         })
+        expect(request_span.status).to eq("not_found")
       end
 
       it "doesn't mess different requests' data together" do

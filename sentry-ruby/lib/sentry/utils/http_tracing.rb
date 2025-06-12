@@ -8,7 +8,7 @@ module Sentry
         sentry_span.set_data(Span::DataConventions::URL, request_info[:url])
         sentry_span.set_data(Span::DataConventions::HTTP_METHOD, request_info[:method])
         sentry_span.set_data(Span::DataConventions::HTTP_QUERY, request_info[:query]) if request_info[:query]
-        sentry_span.set_data(Span::DataConventions::HTTP_STATUS_CODE, response_status)
+        sentry_span.set_http_status(response_status)
       end
 
       def set_propagation_headers(req)
