@@ -5,6 +5,10 @@
 - Support for `before_send_log` ([#2634](https://github.com/getsentry/sentry-ruby/pull/2634))
 - Default user attributes are now automatically added to logs ([#2647](https://github.com/getsentry/sentry-ruby/pull/2647))
 
+### Features
+
+- Include `Delayed::Job` instance in hint [#1861](https://github.com/getsentry/sentry-ruby/pull/1861)
+
 ### Bug Fixes
 
 - Structured logging consumes way less memory now ([#2643](https://github.com/getsentry/sentry-ruby/pull/2643))
