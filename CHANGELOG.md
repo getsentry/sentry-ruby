@@ -1,3 +1,9 @@
+## Unreleased
+
+### Bug Fixes
+
+- HTTP client spans now include status based on `http.request.method` ([#2650](https://github.com/getsentry/sentry-ruby/pull/2650))
+
 ## 5.25.0
 
 ### Features
