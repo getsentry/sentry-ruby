@@ -42,7 +42,9 @@ module Sentry
 
       @spotlight_transport = SpotlightTransport.new(configuration) if configuration.spotlight
 
-      @log_event_buffer = LogEventBuffer.new(configuration, self).start
+      if configuration.enable_logs
+        @log_event_buffer = LogEventBuffer.new(configuration, self).start
+      end
     end
 
     # Applies the given scope's data to the event and sends it to Sentry.
@@ -114,7 +116,7 @@ module Sentry
     def flush
       transport.flush if configuration.sending_to_dsn_allowed?
       spotlight_transport.flush if spotlight_transport
-      @log_event_buffer.flush
+      @log_event_buffer&.flush
     end
 
     # Initializes an Event object with the given exception. Returns `nil` if the exception's class is excluded from reporting.
