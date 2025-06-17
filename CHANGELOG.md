@@ -1,3 +1,7 @@
+## Unreleased
+
+- Skip creating `LogEventBuffer` if logging is not enabled ([#2652](https://github.com/getsentry/sentry-ruby/pull/2652))
+
 ## 5.25.0
 
 ### Features
