@@ -1,3 +1,9 @@
+## Unreleased
+
+### Feature
+
+- STDLIB Logger Support - send any instance of logger to sentry. ([#2653](https://github.com/getsentry/sentry-ruby/pull/2653))
+
 ## 5.25.0
 
 ### Features
