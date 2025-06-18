@@ -354,6 +354,7 @@ RSpec.describe Sentry do
   describe ".capture_log" do
     before do
       perform_basic_setup do |config|
+        config.enable_logs = true
         config.traces_sample_rate = 1.0
         config.max_log_events = 1
       end
