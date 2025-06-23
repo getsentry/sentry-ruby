@@ -1,9 +1,9 @@
 # frozen_string_literal: true
 
 RSpec.describe Sentry::StdLibLogger do
-	let(:logger) { ::Logger.new(IO::NULL) }
+  let(:logger) { ::Logger.new(IO::NULL) }
 
-	context "when enable_logs is set to true but logger patch is not enabled" do
+  context "when enable_logs is set to true but logger patch is not enabled" do
     before do
       perform_basic_setup do |config|
         config.enable_logs = true
@@ -13,7 +13,7 @@ RSpec.describe Sentry::StdLibLogger do
     it "does not send log using stdlib logger" do
       logger.send(:info, "Hello World")
 
-      expect(sentry_logs).to be_empty    
+      expect(sentry_logs).to be_empty
     end
   end
 
