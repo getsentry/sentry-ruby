@@ -19,6 +19,7 @@ RSpec.describe Sentry::LogEventBuffer do
       config.sdk_logger = logger
       config.background_worker_threads = 0
       config.max_log_events = max_log_events
+      config.enable_logs = true
     end
 
     Sentry.background_worker = Sentry::BackgroundWorker.new(Sentry.configuration)
