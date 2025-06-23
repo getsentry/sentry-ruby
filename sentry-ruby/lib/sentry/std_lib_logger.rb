@@ -14,11 +14,12 @@ module Sentry
 		}.freeze
 
 		def add(severity, message = nil, progname = nil, &block)
+			super
 
 			return unless Sentry.initialized? && Sentry.get_current_hub
 
-			config = Sentry.configuration
-			return unless config.enable_logs && config.send_stdlib_logs
+			# config = Sentry.configuration
+			# return unless config.enable_logs && config.send_stdlib_logs
 
 			# exclude sentry SDK logs -- to prevent recursive log action, 
 			# do not process internal logs again
@@ -38,8 +39,30 @@ module Sentry
 					Sentry.logger.send(method, message)
 	      end
 	    end
+
+	    super
 	  end
 	end
 end
 
-::Logger.send(:prepend, Sentry::StdLibLogger)
+# if Sentry.initialized? 
+# 	if Sentry.configuration.enable_logs
+# 		Sentry.register_patch(:logger, Sentry::StdLibLogger, ::Logger)
+# 	else 
+# 		Sentry.sdk_logger.warn(":logger patch enabled but `enable_logs` is turned off - skipping applying patch") 
+# 	end
+# end
+# Sentry.register_patch(:logger, Sentry::StdLibLogger, ::Logger) do |config|
+#   if config.enable_logs
+#     ::Logger.prepend(Sentry::StdLibLogger)
+#   else
+#     Sentry.sdk_logger.warn(":logger patch enabled but `enable_logs` is turned off - skipping applying patch")
+#   end
+# end
+Sentry.register_patch(:logger) do |config|
+  if config.enable_logs
+    ::Logger.prepend(Sentry::StdLibLogger)
+  else
+    Sentry.sdk_logger.warn(":logger patch enabled but `enable_logs` is turned off - skipping applying patch")
+  end
+end

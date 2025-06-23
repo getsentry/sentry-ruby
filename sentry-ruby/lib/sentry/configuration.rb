@@ -289,12 +289,6 @@ module Sentry
     # @return [Boolean]
     attr_accessor :enable_logs
 
-    # Enable stdlib Logger Add commentMore actions
-    # If set to true, any usage of any logger instance in client's app would result in sending logs to Sentry too.
-    # Dependent on :enable_logs
-    # @return [Boolean]
-    attr_accessor :send_stdlib_logs
-
     # Easier way to use performance tracing
     # If set to true, will set traces_sample_rate to 1.0
     # @deprecated It will be removed in the next major release.
@@ -485,7 +479,6 @@ module Sentry
       self.traces_sampler = nil
       self.enable_tracing = nil
       self.enable_logs = false
-      self.send_stdlib_logs = false
 
       self.profiler_class = Sentry::Profiler
 
