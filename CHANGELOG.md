@@ -1,6 +1,7 @@
 ## Unreleased
 
 - Skip creating `LogEventBuffer` if logging is not enabled ([#2652](https://github.com/getsentry/sentry-ruby/pull/2652))
+- Map `trilogy` database adapter to `mysql` for Query Insights compatibility ([#2656](https://github.com/getsentry/sentry-ruby/pull/2656))
 
 ## 5.25.0
 
