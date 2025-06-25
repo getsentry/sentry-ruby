@@ -13,7 +13,7 @@ module Sentry
     }.freeze
 
     def add(severity, message = nil, progname = nil, &block)
-      super
+      result = super
 
       return unless Sentry.initialized? && Sentry.get_current_hub
 
@@ -36,7 +36,7 @@ module Sentry
         end
       end
 
-      super
+      result
     end
   end
 end
