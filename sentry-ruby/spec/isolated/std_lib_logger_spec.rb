@@ -1,7 +1,9 @@
 # frozen_string_literal: true
 
+SimpleCov.command_name "StdLibLogger"
+
 RSpec.describe Sentry::StdLibLogger do
-  let(:logger) { ::Logger.new(IO::NULL) }
+  let(:logger) { ::Logger.new($stdout) }
 
   context "when enable_logs is set to true but logger patch is not enabled" do
     before do
@@ -11,7 +13,9 @@ RSpec.describe Sentry::StdLibLogger do
     end
 
     it "does not send log using stdlib logger" do
-      logger.send(:info, "Hello World")
+      expect {
+        logger.send(:info, "Hello World")
+      }.to output(/Hello World/).to_stdout
 
       expect(sentry_logs).to be_empty
     end
@@ -29,7 +33,9 @@ RSpec.describe Sentry::StdLibLogger do
     ["info", "warn", "error", "fatal"].each do |level|
       describe "##{level}" do
         it "send logs using stdlib logger" do
-          logger.send(level, "Hello World")
+          expect {
+            logger.send(level, "Hello World")
+          }.to output(/Hello World/).to_stdout
 
           expect(sentry_logs).to_not be_empty
 
