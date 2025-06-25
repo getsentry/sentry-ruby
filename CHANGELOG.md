@@ -2,7 +2,17 @@
 
 ### Feature
 
-- STDLIB Logger Support - send any instance of logger to sentry. ([#2653](https://github.com/getsentry/sentry-ruby/pull/2653))
+- Support for `:logger` patch which enables sending logs to Sentry when `enabled_logs` is set to true ([#2657](https://github.com/getsentry/sentry-ruby/pull/2657))
+
+  Here's a sample config:
+
+  ```ruby
+  Sentry.init do |config|
+    # ... your setup ...
+    config.enable_logs = true
+    config.enabled_patches = [:logger]
+  end
+  ```
 
 ### Bug Fixes
 - Skip creating `LogEventBuffer` if logging is not enabled ([#2652](https://github.com/getsentry/sentry-ruby/pull/2652))
