@@ -6,16 +6,13 @@ CLOBBER.include "pkg"
 require "bundler/gem_helper"
 Bundler::GemHelper.install_tasks(name: "sentry-ruby")
 
-require "rspec/core/rake_task"
+require_relative "../lib/sentry/test/rake_tasks"
 
 ISOLATED_SPECS = "spec/isolated/**/*_spec.rb"
 
-RSpec::Core::RakeTask.new(:spec).tap do |task|
-  task.exclude_pattern = ISOLATED_SPECS
-end
+Sentry::Test::RakeTasks.define_spec_tasks(
+  isolated_specs_pattern: ISOLATED_SPECS,
+  spec_exclude_pattern: ISOLATED_SPECS
+)
 
-RSpec::Core::RakeTask.new(:isolated_specs).tap do |task|
-  task.pattern = ISOLATED_SPECS
-end
-
-task default: [:spec, :isolated_specs]
+task default: [:spec, :"spec:isolated"]

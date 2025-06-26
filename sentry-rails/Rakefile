@@ -1,34 +1,17 @@
 # frozen_string_literal: true
 
 require "bundler/gem_tasks"
-require "rspec/core/rake_task"
+require_relative "../lib/sentry/test/rake_tasks"
 
-RSpec::Core::RakeTask.new(:spec).tap do |task|
-  task.rspec_opts = "--order rand"
-  task.pattern = "spec/sentry/**/*_spec.rb"
-end
+Sentry::Test::RakeTasks.define_spec_tasks(
+  spec_pattern: "spec/sentry/**/*_spec.rb",
+  spec_rspec_opts: "--order rand --format progress",
+  isolated_specs_pattern: "spec/isolated/**/*_spec.rb",
+  isolated_rspec_opts: "--format progress"
+)
 
-namespace :spec do
-  RSpec::Core::RakeTask.new(:versioned).tap do |task|
-    ruby_ver_dir = RUBY_VERSION.split(".")[0..1].join(".")
-    matching_dir = Dir["spec/versioned/*"].detect { |dir| File.basename(dir) <= ruby_ver_dir }
+Sentry::Test::RakeTasks.define_versioned_specs_task(
+  rspec_opts: "--order rand --format progress"
+)
 
-    unless matching_dir
-      puts "No versioned specs found for ruby #{RUBY_VERSION}"
-      exit 0
-    end
-
-    puts "Running versioned specs from #{matching_dir} for ruby #{RUBY_VERSION}"
-
-    task.rspec_opts = "--order rand"
-    task.pattern = "#{matching_dir}/**/*_spec.rb"
-  end
-end
-
-task :isolated_specs do
-  Dir["spec/isolated/*"].each do |file|
-    sh "bundle exec ruby #{file}"
-  end
-end
-
-task default: [:spec, :"spec:versioned", :isolated_specs]
+task default: [:spec, :"spec:versioned", :"spec:isolated"]
