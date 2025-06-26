@@ -45,6 +45,6 @@ Sentry.register_patch(:logger) do |config|
   if config.enable_logs
     ::Logger.prepend(Sentry::StdLibLogger)
   else
-    Sentry.sdk_logger.warn(":logger patch enabled but `enable_logs` is turned off - skipping applying patch")
+    config.sdk_logger.warn(":logger patch enabled but `enable_logs` is turned off - skipping applying patch")
   end
 end
