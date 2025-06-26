@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+SimpleCov.command_name "SentryLogger"
+
 RSpec.describe "Sentry::Breadcrumbs::SentryLogger" do
   before do
     perform_basic_setup do |config|
