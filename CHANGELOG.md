@@ -1,4 +1,4 @@
-## Unreleased
+## 5.26.0
 
 ### Feature
 
