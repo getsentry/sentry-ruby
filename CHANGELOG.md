@@ -1,3 +1,9 @@
+## Unreleased
+
+### Internal
+
+- Factor out do_request in HTTP transport ([#2662](https://github.com/getsentry/sentry-ruby/pull/2662))
+
 ## 5.26.0
 
 ### Feature
