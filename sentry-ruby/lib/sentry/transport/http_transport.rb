@@ -45,11 +45,7 @@ module Sentry
       auth_header = generate_auth_header
       headers["X-Sentry-Auth"] = auth_header if auth_header
 
-      response = conn.start do |http|
-        request = ::Net::HTTP::Post.new(endpoint, headers)
-        request.body = data
-        http.request(request)
-      end
+      response = do_request(endpoint, headers, data)
 
       if response.code.match?(/\A2\d{2}/)
         handle_rate_limited_response(response) if has_rate_limited_header?(response)
@@ -109,6 +105,14 @@ module Sentry
       end
 
       connection
+    end
+
+    def do_request(endpoint, headers, body)
+      conn.start do |http|
+        request = ::Net::HTTP::Post.new(endpoint, headers)
+        request.body = body
+        http.request(request)
+      end
     end
 
     private
