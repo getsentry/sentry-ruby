@@ -4,7 +4,7 @@ ARG TAG="latest"
 FROM ${IMAGE}:${TAG}
 
 USER root
-RUN apt-get update && apt-get install -y \
+RUN apt-get update && apt-get install -y --no-install-recommends \
   gnupg \
   git \
   curl \
@@ -22,6 +22,10 @@ RUN apt-get update && apt-get install -y \
   libncurses5-dev \
   libffi-dev \
   libgdbm-dev \
+  nodejs \
+  npm \
+  chromium \
+  chromium-driver \
   && apt-get clean \
   && rm -rf /var/lib/apt/lists/*
 
