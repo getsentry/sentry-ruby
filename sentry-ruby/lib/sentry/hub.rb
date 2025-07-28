@@ -120,7 +120,8 @@ module Sentry
 
       sampling_context = {
         transaction_context: transaction.to_hash,
-        parent_sampled: transaction.parent_sampled
+        parent_sampled: transaction.parent_sampled,
+        parent_sample_rate: transaction.parent_sample_rate
       }
 
       sampling_context.merge!(custom_sampling_context)
@@ -357,6 +358,7 @@ module Sentry
         parent_span_id: propagation_context.parent_span_id,
         parent_sampled: propagation_context.parent_sampled,
         baggage: propagation_context.baggage,
+        sample_rand: propagation_context.sample_rand,
         **options
       )
     end
