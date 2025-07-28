@@ -3,6 +3,7 @@
 require "securerandom"
 require "sentry/baggage"
 require "sentry/utils/uuid"
+require "sentry/utils/sample_rand"
 
 module Sentry
   class PropagationContext
@@ -33,6 +34,9 @@ module Sentry
     # Please use the #get_baggage method for interfacing outside this class.
     # @return [Baggage, nil]
     attr_reader :baggage
+    # The propagated random value used for sampling decisions.
+    # @return [Float, nil]
+    attr_reader :sample_rand
 
     def initialize(scope, env = nil)
       @scope = scope
@@ -40,6 +44,7 @@ module Sentry
       @parent_sampled = nil
       @baggage = nil
       @incoming_trace = false
+      @sample_rand = nil
 
       if env
         sentry_trace_header = env["HTTP_SENTRY_TRACE"] || env[SENTRY_TRACE_HEADER_NAME]
@@ -61,6 +66,7 @@ module Sentry
                 Baggage.new({})
               end
 
+            @sample_rand = extract_sample_rand_from_baggage(@baggage)
             @baggage.freeze!
             @incoming_trace = true
           end
@@ -69,6 +75,7 @@ module Sentry
 
       @trace_id ||= Utils.uuid
       @span_id = Utils.uuid.slice(0, 16)
+      @sample_rand ||= generate_sample_rand
     end
 
     # Extract the trace_id, parent_span_id and parent_sampled values from a sentry-trace header.
@@ -77,7 +84,7 @@ module Sentry
     # @return [Array, nil]
     def self.extract_sentry_trace(sentry_trace)
       match = SENTRY_TRACE_REGEXP.match(sentry_trace)
-      return nil if match.nil?
+      return if match.nil?
 
       trace_id, parent_span_id, sampled_flag = match[1..3]
       parent_sampled = sampled_flag.nil? ? nil : sampled_flag != "0"
@@ -123,6 +130,7 @@ module Sentry
 
       items = {
         "trace_id" => trace_id,
+        "sample_rand" => Utils::SampleRand.format(@sample_rand),
         "environment" => configuration.environment,
         "release" => configuration.release,
         "public_key" => configuration.dsn&.public_key
@@ -130,6 +138,31 @@ module Sentry
 
       items.compact!
       @baggage = Baggage.new(items, mutable: false)
+    end
+
+    def extract_sample_rand_from_baggage(baggage)
+      return unless baggage&.items
+
+      sample_rand_str = baggage.items["sample_rand"]
+      return unless sample_rand_str
+
+      sample_rand = sample_rand_str.to_f
+      Utils::SampleRand.valid?(sample_rand) ? sample_rand : nil
+    end
+
+    def generate_sample_rand
+      if @incoming_trace && !@parent_sampled.nil? && @baggage
+        sample_rate_str = @baggage.items["sample_rate"]
+        sample_rate = sample_rate_str&.to_f
+
+        if sample_rate && !@parent_sampled.nil?
+          Utils::SampleRand.generate_from_sampling_decision(@parent_sampled, sample_rate, @trace_id)
+        else
+          Utils::SampleRand.generate_from_trace_id(@trace_id)
+        end
+      else
+        Utils::SampleRand.generate_from_trace_id(@trace_id)
+      end
     end
   end
 end

@@ -119,6 +119,7 @@ RSpec.describe Sentry::PropagationContext do
       expect(baggage.mutable).to eq(false)
       expect(baggage.items).to eq({
         "trace_id" => subject.trace_id,
+        "sample_rand" => Sentry::Utils::SampleRand.format(subject.sample_rand),
         "environment" => "test",
         "release" => "foobar",
         "public_key" => Sentry.configuration.dsn.public_key
