@@ -4,6 +4,9 @@ module Sentry
   module TestHelper
     DUMMY_DSN = "http://12345:67890@sentry.localdomain/sentry/42"
 
+    # Not really real, but it will be resolved as a non-local for testing needs
+    REAL_DSN = "https://user:pass@getsentry.io/project/42"
+
     # Alters the existing SDK configuration with test-suitable options. Mainly:
     # - Sets a dummy DSN instead of `nil` or an actual DSN.
     # - Sets the transport to DummyTransport, which allows easy access to the captured events.
@@ -45,6 +48,11 @@ module Sentry
     # @return [void]
     def teardown_sentry_test
       return unless Sentry.initialized?
+
+      transport = Sentry.get_current_client&.transport
+      if transport.is_a?(Sentry::DebugTransport)
+        transport.clear
+      end
 
       # pop testing layer created by `setup_sentry_test`
       # but keep the base layer to avoid nil-pointer errors

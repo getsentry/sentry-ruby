@@ -79,6 +79,14 @@ RSpec.configure do |config|
   end
 
   config.after(:each) do
+    if Sentry.initialized?
+      transport = Sentry.get_current_client&.transport
+
+      if transport.is_a?(Sentry::DebugTransport)
+        transport.clear
+      end
+    end
+
     reset_sentry_globals!
   end
 
