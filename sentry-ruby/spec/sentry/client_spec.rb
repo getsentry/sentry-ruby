@@ -321,15 +321,15 @@ RSpec.describe Sentry::Client do
         version = Gem::Version.new(RUBY_VERSION)
 
         case
-        when version >= Gem::Version.new("3.4.0-dev")
+        when version >= Gem::Version.new("3.4.0-dev") && RUBY_ENGINE == "ruby"
           expect(hash[:exception][:values][0][:value]).to eq(
             "undefined method '[]' for nil (NoMethodError)\n\n          {}[:foo][:bar]\n                  ^^^^^^"
           )
-        when version >= Gem::Version.new("3.3.0-dev")
+        when version >= Gem::Version.new("3.3.0-dev") && RUBY_ENGINE == "ruby"
           expect(hash[:exception][:values][0][:value]).to eq(
             "undefined method `[]' for nil (NoMethodError)\n\n          {}[:foo][:bar]\n                  ^^^^^^"
           )
-        when version >= Gem::Version.new("3.2")
+        when version >= Gem::Version.new("3.2") && RUBY_ENGINE == "ruby"
           expect(hash[:exception][:values][0][:value]).to eq(
             "undefined method `[]' for nil:NilClass (NoMethodError)\n\n          {}[:foo][:bar]\n                  ^^^^^^"
           )
