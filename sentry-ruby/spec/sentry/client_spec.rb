@@ -201,10 +201,10 @@ RSpec.describe Sentry::Client do
       event = nil
 
       t = Thread.new do
+        Thread.current.name = "Thread 1"
         event = subject.event_from_message(message)
       end
 
-      t.name = "Thread 1"
       t.join
       hash = event.to_hash
 
@@ -365,10 +365,10 @@ RSpec.describe Sentry::Client do
       event = nil
 
       t = Thread.new do
+        Thread.current.name = "Thread 1"
         event = subject.event_from_exception(exception)
       end
 
-      t.name = "Thread 1"
       t.join
 
       event_hash = event.to_hash
