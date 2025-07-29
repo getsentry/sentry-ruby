@@ -1,6 +1,8 @@
 # frozen_string_literal: true
 
 require "faraday"
+require "contexts/with_request_mock"
+
 require_relative "../spec_helper"
 
 RSpec.describe Sentry::Faraday do
@@ -263,6 +265,8 @@ RSpec.describe Sentry::Faraday do
     end
 
     context "when adapter is net/http" do
+      include_context "with request mock"
+
       let(:http) do
         Faraday.new(url) do |f|
           f.request :json
@@ -272,7 +276,9 @@ RSpec.describe Sentry::Faraday do
 
       let(:url) { "http://example.com" }
 
-      it "skips instrumentation", webmock: false do
+      it "skips instrumentation" do
+        stub_normal_response(code: "200")
+
         transaction = Sentry.start_transaction
         Sentry.get_current_scope.set_span(transaction)
 
