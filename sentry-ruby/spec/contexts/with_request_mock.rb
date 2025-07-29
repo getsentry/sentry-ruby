@@ -36,4 +36,14 @@ RSpec.shared_context "with request mock" do
   def stub_normal_response(code: "200", &block)
     sentry_stub_request(build_fake_response(code), &block)
   end
+
+  def stub_response(http, code: "200", &block)
+    fake_response = build_fake_response(code)
+
+    allow(http).to receive(:connect)
+
+    allow(http).to receive(:transport_request) do |http_obj, request|
+      block.call(request, http_obj) if block
+    end.and_return(fake_response)
+  end
 end
