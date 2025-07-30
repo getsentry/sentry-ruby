@@ -370,13 +370,15 @@ RSpec.describe Sentry::Net::HTTP do
       end
 
       it "doesn't mess different requests' data together when making multiple requests with Net::HTTP.start" do
+        allow_any_instance_of(Net::HTTP).to receive(:connect)
+
         Net::HTTP.start("example.com") do |http|
-          stub_normal_response(code: "200")
+          stub_response(http, code: "200")
           request = Net::HTTP::Get.new("/path?foo=bar")
           response = http.request(request)
           expect(response.code).to eq("200")
 
-          stub_normal_response(code: "404")
+          stub_response(http, code: "404")
           request = Net::HTTP::Get.new("/path?foo=bar")
           response = http.request(request)
           expect(response.code).to eq("404")
