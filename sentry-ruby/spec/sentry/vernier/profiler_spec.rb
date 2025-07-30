@@ -2,7 +2,7 @@
 
 require "sentry/vernier/profiler"
 
-RSpec.describe Sentry::Vernier::Profiler, when: { ruby_version?: [:>=, "3.3"] } do
+RSpec.describe Sentry::Vernier::Profiler, when: { ruby_version?: [:>=, "3.3"], ruby_engine?: "ruby" } do
   subject(:profiler) { described_class.new(Sentry.configuration) }
 
   before do
@@ -264,7 +264,7 @@ RSpec.describe Sentry::Vernier::Profiler, when: { ruby_version?: [:>=, "3.3"] } 
           expect(thread2[:name]).to eq("thread-bar-1")
         end
 
-        it 'has correct frames', when: { ruby_version?: [:>=, "3.3"] } do
+        it 'has correct frames', when: { ruby_version?: [:>=, "3.3"], ruby_engine?: "ruby" } do
           frames = profiler.to_hash[:profile][:frames]
 
           foo_frame = frames.find { |f| f[:function] =~ /foo/ }
@@ -277,7 +277,7 @@ RSpec.describe Sentry::Vernier::Profiler, when: { ruby_version?: [:>=, "3.3"] } 
           expect(foo_frame[:abs_path]).to include('sentry-ruby/spec/support/profiler.rb')
         end
 
-        it 'has correct stacks', when: { ruby_version?: [:>=, "3.3"] } do
+        it 'has correct stacks', when: { ruby_version?: [:>=, "3.3"], ruby_engine?: "ruby" } do
           profile = profiler.to_hash[:profile]
           frames = profile[:frames]
           stacks = profile[:stacks]

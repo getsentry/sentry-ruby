@@ -201,10 +201,10 @@ RSpec.describe Sentry::Client do
       event = nil
 
       t = Thread.new do
+        Thread.current.name = "Thread 1"
         event = subject.event_from_message(message)
       end
 
-      t.name = "Thread 1"
       t.join
       hash = event.to_hash
 
@@ -321,15 +321,15 @@ RSpec.describe Sentry::Client do
         version = Gem::Version.new(RUBY_VERSION)
 
         case
-        when version >= Gem::Version.new("3.4.0-dev")
+        when version >= Gem::Version.new("3.4.0-dev") && RUBY_ENGINE == "ruby"
           expect(hash[:exception][:values][0][:value]).to eq(
             "undefined method '[]' for nil (NoMethodError)\n\n          {}[:foo][:bar]\n                  ^^^^^^"
           )
-        when version >= Gem::Version.new("3.3.0-dev")
+        when version >= Gem::Version.new("3.3.0-dev") && RUBY_ENGINE == "ruby"
           expect(hash[:exception][:values][0][:value]).to eq(
             "undefined method `[]' for nil (NoMethodError)\n\n          {}[:foo][:bar]\n                  ^^^^^^"
           )
-        when version >= Gem::Version.new("3.2")
+        when version >= Gem::Version.new("3.2") && RUBY_ENGINE == "ruby"
           expect(hash[:exception][:values][0][:value]).to eq(
             "undefined method `[]' for nil:NilClass (NoMethodError)\n\n          {}[:foo][:bar]\n                  ^^^^^^"
           )
@@ -365,10 +365,10 @@ RSpec.describe Sentry::Client do
       event = nil
 
       t = Thread.new do
+        Thread.current.name = "Thread 1"
         event = subject.event_from_exception(exception)
       end
 
-      t.name = "Thread 1"
       t.join
 
       event_hash = event.to_hash
