@@ -141,11 +141,24 @@ RSpec.describe Sentry::Sidekiq::SentryContextClientMiddleware do
   # the default queue
   let!(:queue) { Sidekiq::Queue.new("default") }
 
-  before do
+  def ensure_queue_empty(queue, timeout: 0.1)
     queue.clear
+    start_time = Time.now
+    while queue.size > 0 && (Time.now - start_time) < timeout
+      sleep(0.001)
+    end
+  end
+
+  before do
+    ensure_queue_empty(queue)
+
     perform_basic_setup do |config|
       config.traces_sample_rate = 1.0
     end
+  end
+
+  after do
+    ensure_queue_empty(queue)
   end
 
   it "does not add user to the job if they're absent in the current scope" do
