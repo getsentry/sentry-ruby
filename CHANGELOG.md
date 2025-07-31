@@ -3,6 +3,7 @@
 ### Internal
 
 - Factor out do_request in HTTP transport ([#2662](https://github.com/getsentry/sentry-ruby/pull/2662))
+- Add `Sentry::DebugTransport` that captures events and stores them as JSON for debugging purposes ([#2664](https://github.com/getsentry/sentry-ruby/pull/2664))
 
 ## 5.26.0
 

@@ -667,11 +667,15 @@ RSpec.describe 'Sentry::Rack::CaptureExceptions', when: :rack_available? do
 
           Sentry.session_flusher.flush
 
-          expect(sentry_envelopes.count).to eq(1)
-          envelope = sentry_envelopes.first
+          expect(sentry_envelopes.count).to eq(3)
 
-          expect(envelope.items.length).to eq(1)
-          item = envelope.items.first
+          session_envelope = sentry_envelopes.find do |envelope|
+            envelope.items.any? { |item| item.type == 'sessions' }
+          end
+
+          expect(session_envelope).not_to be_nil
+          expect(session_envelope.items.length).to eq(1)
+          item = session_envelope.items.first
           expect(item.type).to eq('sessions')
           expect(item.payload[:attrs]).to eq({ release: 'test-release', environment: 'test' })
           expect(item.payload[:aggregates].first).to eq({ exited: 10, errored: 2, started: now_bucket.iso8601 })

@@ -223,3 +223,4 @@ end
 require "sentry/transport/dummy_transport"
 require "sentry/transport/http_transport"
 require "sentry/transport/spotlight_transport"
+require "sentry/transport/debug_transport"

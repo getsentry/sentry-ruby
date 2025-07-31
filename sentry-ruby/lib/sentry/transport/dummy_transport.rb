@@ -12,6 +12,7 @@ module Sentry
 
     def send_event(event)
       @events << event
+      super
     end
 
     def send_envelope(envelope)

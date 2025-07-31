@@ -196,6 +196,11 @@ module Sentry
     # @return [Logger]
     attr_accessor :sdk_logger
 
+    # File path for DebugTransport to log events to. If not set, defaults to a temporary file.
+    # This is useful for debugging and testing purposes.
+    # @return [String, nil]
+    attr_accessor :sdk_debug_transport_log_file
+
     # @deprecated Use {#sdk_logger=} instead.
     def logger=(logger)
       warn "[sentry] `config.logger=` is deprecated. Please use `config.sdk_logger=` instead."

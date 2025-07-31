@@ -1,11 +1,15 @@
 # frozen_string_literal: true
 
 require "uri"
+require "ipaddr"
+require "resolv"
 
 module Sentry
   class DSN
     PORT_MAP = { "http" => 80, "https" => 443 }.freeze
     REQUIRED_ATTRIBUTES = %w[host path public_key project_id].freeze
+    LOCALHOST_NAMES = %w[localhost 127.0.0.1 ::1 [::1]].freeze
+    LOCALHOST_PATTERN = /\.local(host|domain)?$/i
 
     attr_reader :scheme, :secret_key, :port, *REQUIRED_ATTRIBUTES
 
@@ -48,6 +52,34 @@ module Sentry
 
     def envelope_endpoint
       "#{path}/api/#{project_id}/envelope/"
+    end
+
+    def local?
+      @local ||= (localhost? || private_ip? || resolved_ips_private?)
+    end
+
+    def localhost?
+      LOCALHOST_NAMES.include?(host.downcase) || LOCALHOST_PATTERN.match?(host)
+    end
+
+    def private_ip?
+      @private_ip ||= begin
+        begin
+          IPAddr.new(host).private?
+        rescue IPAddr::InvalidAddressError
+          false
+        end
+      end
+    end
+
+    def resolved_ips_private?
+      @resolved_ips_private ||= begin
+        begin
+          Resolv.getaddresses(host).any? { |ip| IPAddr.new(ip).private? }
+        rescue Resolv::ResolvError, IPAddr::InvalidAddressError
+          false
+        end
+      end
     end
   end
 end
