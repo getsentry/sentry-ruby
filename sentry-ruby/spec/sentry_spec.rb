@@ -390,7 +390,8 @@ RSpec.describe Sentry do
 
       Sentry.get_current_client.flush
 
-      expect(sentry_envelopes.size).to be(2)
+      # 3 envelopes: log, transaction, and client_report about dropped profile
+      expect(sentry_envelopes.size).to be(3)
 
       log_event = sentry_logs.first
 
