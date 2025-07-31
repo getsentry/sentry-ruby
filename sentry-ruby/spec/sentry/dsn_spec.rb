@@ -37,4 +37,29 @@ RSpec.describe Sentry::DSN do
       expect(subject.csp_report_uri).to eq("http://sentry.localdomain:3000/api/42/security/?sentry_key=12345")
     end
   end
+
+  describe "#local?" do
+    it "returns true for localhost" do
+      expect(described_class.new("http://12345:67890@localhost/sentry/42").local?).to eq(true)
+    end
+
+    it "returns true for 127.0.0.1" do
+      expect(described_class.new("http://12345:67890@127.0.0.1/sentry/42").local?).to eq(true)
+    end
+    it "returns true for ::1" do
+      expect(described_class.new("http://12345:67890@[::1]/sentry/42").local?).to eq(true)
+    end
+
+    it "returns true for private IP" do
+      expect(described_class.new("http://12345:67890@192.168.0.1/sentry/42").local?).to eq(true)
+    end
+
+    it "returns true for private IP with port" do
+      expect(described_class.new("http://12345:67890@192.168.0.1:3000/sentry/42").local?).to eq(true)
+    end
+
+    it "returns false for non-local domain" do
+      expect(described_class.new("http://12345:67890@sentry.io/sentry/42").local?).to eq(false)
+    end
+  end
 end
