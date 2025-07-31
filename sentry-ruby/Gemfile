@@ -34,3 +34,8 @@ gem "webrick"
 gem "faraday"
 gem "excon"
 gem "webmock"
+
+group :e2e do
+  gem "capybara"
+  gem "selenium-webdriver"
+end
