@@ -5,7 +5,7 @@
   async function triggerError() {
     loading = true;
     try {
-      const response = await fetch('http://localhost:5000/error', {
+      const response = await fetch(`${__RAILS_API_URL__}/error`, {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',

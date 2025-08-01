@@ -63,7 +63,7 @@ RSpec.describe "Tracing", type: :feature do
   private
 
   def get_rails_events
-    log_file_path = File.join(Dir.pwd, "spec", "apps", "rails-mini", "log", "sentry_debug_events.log")
+    log_file_path = File.join(Dir.pwd, "log", "sentry_debug_events.log")
 
     return { "events" => [], "envelopes" => [], "event_count" => 0, "envelope_count" => 0 } unless File.exist?(log_file_path)
 
@@ -106,7 +106,7 @@ RSpec.describe "Tracing", type: :feature do
   end
 
   def clear_rails_events
-    log_file_path = File.join(Dir.pwd, "spec", "apps", "rails-mini", "log", "sentry_debug_events.log")
+    log_file_path = File.join(Dir.pwd, "log", "sentry_debug_events.log")
     File.write(log_file_path, "") if File.exist?(log_file_path)
   end
 end

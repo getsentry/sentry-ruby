@@ -11,7 +11,7 @@ require "capybara/rspec"
 Capybara.configure do |config|
   config.default_driver = :selenium_headless_chrome
   config.javascript_driver = :selenium_headless_chrome
-  config.app_host = "http://localhost:5001"
+  config.app_host = ENV.fetch("SENTRY_E2E_SVELTE_APP_URL", "http://localhost:5001")
 end
 
 Capybara.register_driver :selenium_headless_chrome do |app|

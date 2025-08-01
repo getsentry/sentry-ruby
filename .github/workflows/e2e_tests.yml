@@ -1,0 +1,90 @@
+name: E2E Tests
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - master
+      - \d+-\d+
+  pull_request:
+    paths:
+      - 'spec/features/**'
+      - 'spec/apps/**'
+      - 'Procfile'
+      - 'docker-compose.e2e.yml'
+      - '.github/workflows/e2e_tests.yml'
+
+concurrency:
+  group: e2e-tests-${{ github.head_ref || github.run_id }}
+  cancel-in-progress: true
+
+jobs:
+  e2e-tests:
+    name: E2E Tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    strategy:
+      fail-fast: false
+      matrix:
+        ruby_version: ["3.2", "3.3"]
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Ruby ${{ matrix.ruby_version }}
+        uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: ${{ matrix.ruby_version }}
+          bundler-cache: true
+
+      - name: Install Chrome for Selenium
+        uses: browser-actions/setup-chrome@v1
+        with:
+          chrome-version: stable
+
+      - name: Start E2E services
+        run: |
+          cd .devcontainer
+          docker-compose --profile e2e up -d rails-mini svelte-mini
+
+          # Wait for services to be ready
+          echo "Waiting for services to be ready..."
+          timeout 60 bash -c 'until curl -s http://localhost:5000/trace_headers >/dev/null && curl -s http://localhost:5001 >/dev/null; do sleep 2; done'
+
+      - name: Run E2E tests
+        run: |
+          cd .devcontainer
+          docker-compose run --rm sentry bundle exec rspec spec/features/ --format progress
+        env:
+          SENTRY_E2E_RAILS_APP_URL: http://rails-mini:5000
+          SENTRY_E2E_SVELTE_APP_URL: http://svelte-mini:5001
+
+      - name: Show service logs on failure
+        if: failure()
+        run: |
+          cd .devcontainer
+          echo "=== Docker Compose Services ==="
+          docker-compose ps
+
+          echo "=== Rails Service Logs ==="
+          docker-compose logs rails-mini
+
+          echo "=== Svelte Service Logs ==="
+          docker-compose logs svelte-mini
+
+      - name: Stop E2E services
+        if: always()
+        run: |
+          cd .devcontainer
+          docker-compose --profile e2e down
+
+      - name: Upload test artifacts
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: e2e-test-logs-ruby-${{ matrix.ruby_version }}
+          path: |
+            spec/apps/rails-mini/log/sentry_debug_events.log
+          retention-days: 7

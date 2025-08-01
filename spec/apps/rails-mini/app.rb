@@ -40,7 +40,7 @@ class RailsMiniApp < Rails::Application
       config.release = "sentry-ruby-rails-mini-#{Time.now.utc}"
 
       config.transport.transport_class = Sentry::DebugTransport
-      config.sdk_debug_transport_log_file = File.join(Rails.root, "log", "sentry_debug_events.log")
+      config.sdk_debug_transport_log_file = "/workspace/sentry/log/sentry_debug_events.log"
       config.background_worker_threads = 0
     end
   end
@@ -74,6 +74,8 @@ class EventsController < ActionController::Base
     render json: { headers: headers }
   end
 
+
+
   private
 
   def set_cors_headers
@@ -106,5 +108,5 @@ if __FILE__ == $0
   require "rack"
   require "rack/handler/puma"
 
-  Rack::Handler::Puma.run(RailsMiniApp, Host: "localhost", Port: 5000)
+  Rack::Handler::Puma.run(RailsMiniApp, Host: "0.0.0.0", Port: 5000)
 end
