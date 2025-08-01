@@ -1,5 +1,5 @@
 services:
-  app:
+  sentry:
     build:
       context: .
       dockerfile: Dockerfile
@@ -8,7 +8,26 @@ services:
         TAG: ${TAG}
     volumes:
       - ..:/workspace/sentry:cached
+      - e2e_logs:/workspace/sentry/log
     command: sleep infinity
+    environment:
+      - REDIS_URL=${REDIS_URL:-redis://redis:6379/0}
+    env_file: [".env"]
+    depends_on:
+      - redis
+
+  sentry-test:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        IMAGE: ${IMAGE}
+        TAG: ${TAG}
+    volumes:
+      - ..:/workspace/sentry:cached
+      - e2e_logs:/workspace/sentry/log
+    working_dir: /workspace/sentry
+    entrypoint: .devcontainer/setup
     environment:
       - REDIS_URL=${REDIS_URL:-redis://redis:6379/0}
     env_file: [".env"]
@@ -21,3 +40,47 @@ services:
       - ALLOW_EMPTY_PASSWORD=yes
     ports:
       - "6379:6379"
+
+  sentry-rails-mini:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        IMAGE: ${IMAGE}
+        TAG: ${TAG}
+    working_dir: /workspace/sentry/spec/apps/rails-mini
+    volumes:
+      - ..:/workspace/sentry:cached
+      - e2e_logs:/workspace/sentry/log
+    ports:
+      - "5000:5000"
+    command: ruby app.rb
+    entrypoint: .devcontainer/setup --only sentry-ruby,sentry-rails --only-bundle
+    environment:
+      - RAILS_ENV=development
+    profiles:
+      - e2e
+    env_file: [".env"]
+
+  sentry-svelte-mini:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        IMAGE: ${IMAGE}
+        TAG: ${TAG}
+    working_dir: /workspace/sentry/spec/apps/svelte-mini
+    volumes:
+      - ..:/workspace/sentry:cached
+    ports:
+      - "5001:5001"
+    command: sh -c "npm install && npm run dev -- --host 0.0.0.0"
+    entrypoint: .devcontainer/setup --only-npm
+    environment:
+      - SENTRY_E2E_RAILS_APP_URL=http://rails-mini:5000
+    profiles:
+      - e2e
+    env_file: [".env"]
+
+volumes:
+  e2e_logs:
