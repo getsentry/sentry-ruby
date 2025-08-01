@@ -61,7 +61,7 @@ FROM base AS rails-mini
 
 USER root
 # Copy and set up entrypoint script for rails mini
-COPY --chown=root:root .devcontainer/entrypoint-rails-mini.sh /usr/local/bin/rails-entrypoint.sh
+COPY --chown=root:root entrypoint-rails-mini.sh /usr/local/bin/rails-entrypoint.sh
 RUN chmod +x /usr/local/bin/rails-entrypoint.sh
 
 USER sentry
@@ -84,7 +84,7 @@ RUN groupadd --gid 1000 sentry \
   && useradd --uid 1000 --gid sentry --shell /bin/bash --create-home sentry
 
 # Copy and set up entrypoint script for svelte mini
-COPY --chown=root:root .devcontainer/entrypoint-svelte-mini.sh /usr/local/bin/svelte-entrypoint.sh
+COPY --chown=root:root entrypoint-svelte-mini.sh /usr/local/bin/svelte-entrypoint.sh
 RUN chmod +x /usr/local/bin/svelte-entrypoint.sh
 
 # Allow sentry user to use sudo without password for chown
