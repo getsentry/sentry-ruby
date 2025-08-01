@@ -1,18 +1,43 @@
 services:
-  app:
+  sentry:
     build:
       context: .
       dockerfile: Dockerfile
+      target: base
       args:
         IMAGE: ${IMAGE}
-        TAG: ${TAG}
+        VERSION: ${VERSION}
     volumes:
       - ..:/workspace/sentry:cached
+      - e2e_logs:/workspace/sentry/log
     command: sleep infinity
     environment:
       - REDIS_URL=${REDIS_URL:-redis://redis:6379/0}
+    env_file: [".env"]
     depends_on:
       - redis
+
+  sentry-test:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: base
+      args:
+        IMAGE: ${IMAGE}
+        VERSION: ${VERSION}
+    volumes:
+      - ..:/workspace/sentry:cached
+      - e2e_logs:/workspace/sentry/log
+      - test_gems:/workspace/gems
+    working_dir: /workspace/sentry
+    entrypoint: .devcontainer/entrypoint-sentry-test.sh
+    environment:
+      - REDIS_URL=${REDIS_URL:-redis://redis:6379/0}
+    env_file: [".env"]
+    depends_on:
+      - redis
+      - sentry-rails-mini
+      - sentry-svelte-mini
 
   redis:
     image: redis:latest
@@ -20,3 +45,52 @@ services:
       - ALLOW_EMPTY_PASSWORD=yes
     ports:
       - "6379:6379"
+
+  sentry-rails-mini:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: rails-mini
+      args:
+        IMAGE: ${IMAGE}
+        VERSION: ${VERSION}
+    working_dir: /workspace/sentry/spec/apps/rails-mini
+    volumes:
+      - ..:/workspace/sentry:cached
+      - e2e_logs:/workspace/sentry/log
+      - rails_gems:/workspace/gems
+    ports:
+      - "5000:5000"
+    command: ruby app.rb
+    environment:
+      - RAILS_ENV=development
+    profiles:
+      - e2e
+    env_file: [".env"]
+
+  sentry-svelte-mini:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: svelte-mini
+      args:
+        IMAGE: ${IMAGE}
+        VERSION: ${VERSION}
+    working_dir: /workspace/sentry/spec/apps/svelte-mini
+    volumes:
+      - ..:/workspace/sentry:cached
+      - svelte_node_modules:/workspace/sentry/spec/apps/svelte-mini/node_modules
+    ports:
+      - "5001:5001"
+    command: sh -c "cd /workspace/sentry/spec/apps/svelte-mini && npm run dev -- --host 0.0.0.0"
+    environment:
+      - SENTRY_E2E_RAILS_APP_URL=http://sentry-rails-mini:5000
+    profiles:
+      - e2e
+    env_file: [".env"]
+
+volumes:
+  e2e_logs:
+  test_gems:
+  rails_gems:
+  svelte_node_modules:

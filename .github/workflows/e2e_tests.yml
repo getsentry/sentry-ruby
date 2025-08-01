@@ -1,0 +1,81 @@
+name: e2e tests
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - master
+  pull_request:
+
+concurrency:
+  group: e2e-tests-${{ github.head_ref || github.run_id }}
+  cancel-in-progress: true
+
+jobs:
+  e2e-tests:
+    name: e2e tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    strategy:
+      fail-fast: false
+      matrix:
+        ruby_version: ["3.4.5"]
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up `.env` file
+        run: |
+          cd .devcontainer
+          cp .env.example .env
+
+      - name: Start mini rails app
+        run: |
+          cd .devcontainer
+          source .env
+          docker compose --profile e2e up -d sentry-rails-mini
+
+      - name: Start mini svelte app
+        run: |
+          cd .devcontainer
+          source .env
+          docker compose --profile e2e up -d sentry-svelte-mini
+
+      - name: Wait for services to be healthy
+        run: |
+          echo "Waiting for Rails mini app to be ready..."
+          timeout 60 bash -c 'until curl -s http://localhost:5000/health | grep -q "ok"; do echo "Waiting for Rails app..."; sleep 2; done'
+          echo "✅ Rails mini app is ready"
+
+          echo "Waiting for Svelte mini app to be ready..."
+          timeout 60 bash -c 'until curl -s http://localhost:5001/health | grep -q "ok"; do echo "Waiting for Svelte app..."; sleep 2; done'
+          echo "✅ Svelte mini app is ready"
+
+          echo "All services are healthy!"
+
+      - name: Run e2e tests
+        run: |
+          cd .devcontainer
+          source .env
+          docker compose --profile e2e run --rm sentry-test bundle exec rake
+        env:
+          SENTRY_E2E_RAILS_APP_URL: http://sentry-rails-mini:5000
+          SENTRY_E2E_SVELTE_APP_URL: http://sentry-svelte-mini:5001
+
+      - name: Stop e2e services
+        if: always()
+        run: |
+          cd .devcontainer
+          source .env
+          docker compose --profile e2e down
+
+      - name: Upload test artifacts
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: e2e-test-logs-ruby-${{ matrix.ruby_version }}
+          path: |
+            spec/apps/rails-mini/log/sentry_debug_events.log
+          retention-days: 7
