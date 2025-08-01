@@ -1,2 +1,0 @@
-rails: cd rails-mini && ruby app.rb
-svelte: cd svelte-mini && npm run dev

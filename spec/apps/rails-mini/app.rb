@@ -11,7 +11,7 @@ gemfile(true) do
   gem 'railties', '~> 8.0'
   gem 'actionpack', '~> 8.0'
   gem 'sentry-ruby', path: Pathname(__dir__).join("../../..").realpath
-  gem 'sentry-rails', path: Pathname(__dir__).join("../../../..").realpath
+  gem 'sentry-rails', path: Pathname(__dir__).join("../../..").realpath
 end
 
 require "action_controller"

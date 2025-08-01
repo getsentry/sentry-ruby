@@ -1,8 +1,6 @@
 # frozen_string_literal: true
 
-SimpleCov.command_name "RSpecIsolatedE2ETracing"
-
-RSpec.describe "Distributed Tracing E2E with Sample Rand Propagation", type: :e2e, webmock: false do
+RSpec.describe "Tracing", type: :feature do
   it "works", js: false do
     visit "/error"
 

@@ -1,5 +1,8 @@
 # frozen_string_literal: true
 
+require "sentry-ruby"
+require "sentry/test_helper"
+
 require "selenium-webdriver"
 
 require "capybara"

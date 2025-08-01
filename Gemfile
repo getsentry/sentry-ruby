@@ -26,7 +26,21 @@ gem "simplecov"
 gem "simplecov-cobertura", "~> 1.4"
 gem "rexml"
 
+if ruby_version >= Gem::Version.new("3.4")
+  gem "ostruct"
+end
+
+group :e2e do
+  gem "capybara"
+  gem "selenium-webdriver"
+end
+
 group :rubocop do
   gem "rubocop-rails-omakase"
   gem "rubocop-packaging"
+end
+
+group :sentry do
+  gem "sentry-ruby", path: "sentry-ruby"
+  gem "sentry-rails", path: "sentry-rails"
 end
