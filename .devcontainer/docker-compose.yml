@@ -6,7 +6,7 @@ services:
       target: base
       args:
         IMAGE: ${IMAGE}
-        TAG: ${TAG}
+        VERSION: ${VERSION}
     volumes:
       - ..:/workspace/sentry:cached
       - e2e_logs:/workspace/sentry/log
@@ -24,7 +24,7 @@ services:
       target: base
       args:
         IMAGE: ${IMAGE}
-        TAG: ${TAG}
+        VERSION: ${VERSION}
     volumes:
       - ..:/workspace/sentry:cached
       - e2e_logs:/workspace/sentry/log
@@ -53,7 +53,7 @@ services:
       target: rails-mini
       args:
         IMAGE: ${IMAGE}
-        TAG: ${TAG}
+        VERSION: ${VERSION}
     working_dir: /workspace/sentry/spec/apps/rails-mini
     volumes:
       - ..:/workspace/sentry:cached
@@ -75,7 +75,7 @@ services:
       target: svelte-mini
       args:
         IMAGE: ${IMAGE}
-        TAG: ${TAG}
+        VERSION: ${VERSION}
     working_dir: /workspace/sentry/spec/apps/svelte-mini
     volumes:
       - ..:/workspace/sentry:cached
