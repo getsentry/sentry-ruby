@@ -5,7 +5,6 @@ ARG DISTRO="slim-bookworm"
 # Base stage for sentry services
 FROM ${IMAGE}:${VERSION}-${DISTRO} AS base
 
-USER root
 RUN apt-get update && apt-get install -y --no-install-recommends \
   sudo \
   gnupg \
@@ -24,11 +23,8 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
   libffi-dev \
   libgdbm-dev \
   sqlite3 \
-  && apt-get clean \
-  && rm -rf /var/lib/apt/lists/*
-
-# Install Chromium for Selenium tests (works on both amd64 and arm64)
-RUN apt-get update && apt-get install -y --no-install-recommends \
+  nodejs \
+  npm \
   chromium \
   chromium-driver \
   && apt-get clean \
@@ -56,43 +52,18 @@ ENV LANG=C.UTF-8 \
 
 USER sentry
 
-COPY --chown=sentry:sentry . .
-
 FROM base AS rails-mini
+
+USER sentry
 
 COPY entrypoint-rails-mini.sh /workspace/rails-entrypoint.sh
 
 ENTRYPOINT ["/workspace/rails-entrypoint.sh"]
 
-# Svelte mini stage
-FROM ${IMAGE}:${VERSION}-${DISTRO} AS svelte-mini
-
-USER root
-RUN apt-get update && apt-get install -y --no-install-recommends \
-  sudo \
-  git \
-  curl \
-  nodejs \
-  npm \
-  && apt-get clean \
-  && rm -rf /var/lib/apt/lists/*
-
-RUN groupadd --gid 1000 sentry \
-  && useradd --uid 1000 --gid sentry --shell /bin/bash --create-home sentry
-
-# Copy and set up entrypoint script for svelte mini
-COPY --chown=root:root entrypoint-svelte-mini.sh /usr/local/bin/svelte-entrypoint.sh
-RUN chmod +x /usr/local/bin/svelte-entrypoint.sh
-
-# Allow sentry user to use sudo without password for chown
-RUN echo "sentry ALL=(ALL) NOPASSWD: /bin/chown" >> /etc/sudoers
-
-WORKDIR /workspace/sentry
-RUN chown -R sentry:sentry /workspace/sentry
+FROM base AS svelte-mini
 
 USER sentry
 
-# Copy source code
-COPY --chown=sentry:sentry . .
+COPY entrypoint-svelte-mini.sh /usr/local/bin/svelte-entrypoint.sh
 
 ENTRYPOINT ["/usr/local/bin/svelte-entrypoint.sh"]
