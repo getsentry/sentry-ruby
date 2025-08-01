@@ -26,6 +26,11 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
+      - name: Set up `.env` file
+        run: |
+          cd .devcontainer
+          cp .env.example .env
+
       - name: Start E2E services
         run: |
           cd .devcontainer
