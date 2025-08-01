@@ -23,6 +23,9 @@ Capybara.register_driver :selenium_headless_chrome do |app|
   options.add_argument("--disable-gpu")
   options.add_argument("--temp-profile")
 
+  # Use Chromium binary when available (for Docker containers)
+  options.binary = "/usr/bin/chromium" if File.exist?("/usr/bin/chromium")
+
   Capybara::Selenium::Driver.new(app, browser: :chrome, options: options)
 end
 
