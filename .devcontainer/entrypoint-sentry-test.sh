@@ -8,7 +8,7 @@ cd /workspace/sentry
 echo "Installing bundle dependencies in root folder..."
 bundle install
 
-sudo chown -R sentry:sentry /workspace/sentry/log
+sudo chown -R sentry:sentry /workspace/sentry
 
 echo "✅ sentry-test setup completed!"
 
