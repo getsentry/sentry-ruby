@@ -20,7 +20,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        ruby_version: ["3.2", "3.3"]
+        ruby_version: ["3.4.5"]
 
     steps:
       - name: Checkout code
@@ -29,7 +29,7 @@ jobs:
       - name: Start E2E services
         run: |
           cd .devcontainer
-          docker-compose --profile e2e up -d rails-mini svelte-mini
+          docker compose --profile e2e up -d sentry-rails-mini sentry-svelte-mini
 
           # Wait for services to be ready
           echo "Waiting for services to be ready..."
@@ -40,7 +40,7 @@ jobs:
       - name: Run E2E tests
         run: |
           cd .devcontainer
-          docker-compose run --rm sentry bundle exec rake
+          docker compose --profile e2e run --rm sentry-test bundle exec rake
         env:
           SENTRY_E2E_RAILS_APP_URL: http://rails-mini:5000
           SENTRY_E2E_SVELTE_APP_URL: http://svelte-mini:5001
@@ -49,7 +49,7 @@ jobs:
         if: always()
         run: |
           cd .devcontainer
-          docker-compose --profile e2e down
+          docker compose --profile e2e down
 
       - name: Upload test artifacts
         if: failure()
