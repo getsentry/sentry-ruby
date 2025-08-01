@@ -1,4 +1,4 @@
-name: E2E Tests
+name: e2e tests
 
 on:
   workflow_dispatch:
@@ -13,7 +13,7 @@ concurrency:
 
 jobs:
   e2e-tests:
-    name: E2E Tests
+    name: e2e tests
     runs-on: ubuntu-latest
     timeout-minutes: 15
 
@@ -31,19 +31,19 @@ jobs:
           cd .devcontainer
           cp .env.example .env
 
-      - name: Start E2E services
+      - name: Start mini rails app
         run: |
           cd .devcontainer
           source .env
-          docker compose --profile e2e up -d sentry-rails-mini sentry-svelte-mini
+          docker compose --profile e2e up -d sentry-rails-mini
 
-          # Wait for services to be ready
-          echo "Waiting for services to be ready..."
+      - name: Start mini svelte app
+        run: |
+          cd .devcontainer
+          source .env
+          docker compose --profile e2e up -d sentry-svelte-mini
 
-          timeout 60 bash -c 'until curl -s http://localhost:5000/trace_headers >/dev/null && \
-            curl -s http://localhost:5001 >/dev/null; do sleep 2; done'
-
-      - name: Run E2E tests
+      - name: Run e2e tests
         run: |
           cd .devcontainer
           source .env
@@ -52,7 +52,7 @@ jobs:
           SENTRY_E2E_RAILS_APP_URL: http://rails-mini:5000
           SENTRY_E2E_SVELTE_APP_URL: http://svelte-mini:5001
 
-      - name: Stop E2E services
+      - name: Stop e2e services
         if: always()
         run: |
           cd .devcontainer
