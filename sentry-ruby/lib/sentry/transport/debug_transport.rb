@@ -62,9 +62,37 @@ module Sentry
     def initialize_log_file(configuration)
       log_file = Pathname(configuration.sdk_debug_transport_log_file || DEFAULT_LOG_FILE_PATH)
 
-      FileUtils.mkdir_p(log_file.dirname) unless log_file.dirname.exist?
+      unless log_file.dirname.exist?
+        begin
+          FileUtils.mkdir_p(log_file.dirname)
+        rescue Errno::EACCES => e
+          raise "Cannot create log directory #{log_file.dirname}: #{e.message}"
+        end
+      end
+
+      check_log_file_permissions(log_file)
 
       log_file
+    end
+
+    def check_log_file_permissions(log_file)
+      if log_file.exist?
+        unless log_file.writable?
+          raise "Cannot write to log file #{log_file}: Permission denied"
+        end
+      else
+        unless log_file.dirname.writable?
+          raise "Cannot write to log directory #{log_file.dirname}: Permission denied"
+        end
+
+        begin
+          File.open(log_file, "a") { |f| f.write("") }
+        rescue Errno::EACCES => e
+          raise "Cannot write to log file #{log_file}: #{e.message}"
+        rescue => e
+          raise "Failed to initialize log file #{log_file}: #{e.message}"
+        end
+      end
     end
   end
 end

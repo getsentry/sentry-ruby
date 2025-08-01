@@ -43,6 +43,18 @@ jobs:
           source .env
           docker compose --profile e2e up -d sentry-svelte-mini
 
+      - name: Wait for services to be healthy
+        run: |
+          echo "Waiting for Rails mini app to be ready..."
+          timeout 60 bash -c 'until curl -s http://localhost:5000/health | grep -q "ok"; do echo "Waiting for Rails app..."; sleep 2; done'
+          echo "✅ Rails mini app is ready"
+
+          echo "Waiting for Svelte mini app to be ready..."
+          timeout 60 bash -c 'until curl -s http://localhost:5001/health | grep -q "ok"; do echo "Waiting for Svelte app..."; sleep 2; done'
+          echo "✅ Svelte mini app is ready"
+
+          echo "All services are healthy!"
+
       - name: Run e2e tests
         run: |
           cd .devcontainer

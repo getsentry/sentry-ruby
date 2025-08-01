@@ -32,11 +32,22 @@ namespace :spec do
 
       # Wait for services to be ready
       puts "Waiting for services to be ready..."
-      unless system("timeout 60 bash -c 'until curl -s http://localhost:5000/trace_headers >/dev/null && curl -s http://localhost:5001 >/dev/null; do sleep 2; done'")
-        puts "Services failed to become ready"
+      puts "Checking Rails mini app health..."
+      unless system("timeout 60 bash -c 'until curl -s http://localhost:5000/health | grep -q \"ok\"; do echo \"Waiting for Rails app...\"; sleep 2; done'")
+        puts "Rails mini app failed to become ready"
         Dir.chdir('.devcontainer') { system("docker-compose --profile e2e down") }
         exit(1)
       end
+      puts "✅ Rails mini app is ready"
+
+      puts "Checking Svelte mini app health..."
+      unless system("timeout 60 bash -c 'until curl -s http://localhost:5001/health | grep -q \"ok\"; do echo \"Waiting for Svelte app...\"; sleep 2; done'")
+        puts "Svelte mini app failed to become ready"
+        Dir.chdir('.devcontainer') { system("docker-compose --profile e2e down") }
+        exit(1)
+      end
+      puts "✅ Svelte mini app is ready"
+      puts "All services are healthy!"
 
       # Run tests in sentry container with proper environment variables
       Dir.chdir('.devcontainer') do
