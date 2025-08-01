@@ -2,12 +2,7 @@
 
 SimpleCov.command_name "RSpecIsolatedE2ETracing"
 
-require_relative "../../support/e2e"
-require "webmock/rspec"
-
-RSpec.describe "Distributed Tracing E2E with Sample Rand Propagation", webmock: true do
-  include Rack::Test
-
+RSpec.describe "Distributed Tracing E2E with Sample Rand Propagation", type: :e2e, webmock: false do
   it "works", js: false do
     visit "/error"
 

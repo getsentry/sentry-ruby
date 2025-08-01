@@ -27,10 +27,11 @@ end
 
 require "sentry-ruby"
 require "sentry/test_helper"
-require "webmock/rspec"
 
+require "webmock/rspec"
 require_relative "support/profiler"
 require_relative "support/stacktrace_test_fixture"
+require_relative "support/e2e"
 
 RSpec.configure do |config|
   # Enable flags like --only-failures and --next-failure
