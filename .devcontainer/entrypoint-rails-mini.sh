@@ -11,4 +11,6 @@ bundle install --gemfile=sentry-rails/Gemfile
 # Change to the rails-mini app directory
 cd /workspace/sentry/spec/apps/rails-mini
 
+sudo chown -R sentry:sentry /workspace/sentry/log
+
 exec "$@"

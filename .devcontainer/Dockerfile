@@ -34,6 +34,9 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
   && apt-get clean \
   && rm -rf /var/lib/apt/lists/*
 
+RUN echo "sentry ALL=(ALL) NOPASSWD:ALL" > /etc/sudoers.d/sentry \
+  && chmod 0440 /etc/sudoers.d/sentry
+
 RUN groupadd --gid 1000 sentry \
   && useradd --uid 1000 --gid sentry --shell /bin/bash --create-home sentry
 
@@ -53,19 +56,13 @@ ENV LANG=C.UTF-8 \
 
 USER sentry
 
-# Copy source code
 COPY --chown=sentry:sentry . .
 
-# Rails mini stage - extends base with specific entrypoint
 FROM base AS rails-mini
 
-USER root
-# Copy and set up entrypoint script for rails mini
-COPY --chown=root:root entrypoint-rails-mini.sh /usr/local/bin/rails-entrypoint.sh
-RUN chmod +x /usr/local/bin/rails-entrypoint.sh
+COPY entrypoint-rails-mini.sh /workspace/rails-entrypoint.sh
 
-USER sentry
-ENTRYPOINT ["/usr/local/bin/rails-entrypoint.sh"]
+ENTRYPOINT ["/workspace/rails-entrypoint.sh"]
 
 # Svelte mini stage
 FROM ${IMAGE}:${VERSION}-${DISTRO} AS svelte-mini
