@@ -34,6 +34,7 @@ jobs:
       - name: Start E2E services
         run: |
           cd .devcontainer
+          source .env
           docker compose --profile e2e up -d sentry-rails-mini sentry-svelte-mini
 
           # Wait for services to be ready
@@ -45,6 +46,7 @@ jobs:
       - name: Run E2E tests
         run: |
           cd .devcontainer
+          source .env
           docker compose --profile e2e run --rm sentry-test bundle exec rake
         env:
           SENTRY_E2E_RAILS_APP_URL: http://rails-mini:5000
@@ -54,6 +56,7 @@ jobs:
         if: always()
         run: |
           cd .devcontainer
+          source .env
           docker compose --profile e2e down
 
       - name: Upload test artifacts
