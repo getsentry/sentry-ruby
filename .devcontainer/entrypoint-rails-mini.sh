@@ -2,16 +2,13 @@
 set -e
 
 echo "Installing Ruby dependencies for Rails mini..."
+cd /workspace/sentry
 
-# Ensure proper ownership of workspace
-chown -R sentry:sentry /workspace/sentry
+# Install dependencies for sentry-ruby and sentry-rails
+bundle install --gemfile=sentry-ruby/Gemfile
+bundle install --gemfile=sentry-rails/Gemfile
 
-# Switch to sentry user and run bundle install commands
-su - sentry -c "cd /workspace/sentry && bundle install --gemfile=sentry-ruby/Gemfile"
-su - sentry -c "cd /workspace/sentry && bundle install --gemfile=sentry-rails/Gemfile"
-
-# Change to the rails-mini app directory and switch to sentry user
+# Change to the rails-mini app directory
 cd /workspace/sentry/spec/apps/rails-mini
 
-# Switch to sentry user for the main command
-exec su - sentry -c "cd /workspace/sentry/spec/apps/rails-mini && exec $*"
+exec "$@"
