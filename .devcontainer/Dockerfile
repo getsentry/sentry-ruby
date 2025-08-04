@@ -1,8 +1,6 @@
 ARG IMAGE="ruby"
-ARG VERSION="3.4.5"
-ARG DISTRO="slim-bookworm"
 
-FROM ${IMAGE}:${VERSION}-${DISTRO} AS build
+FROM ${IMAGE} AS build
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
   sudo \
@@ -40,37 +38,13 @@ WORKDIR /workspace/sentry
 RUN chown -R sentry:sentry /workspace/sentry
 
 ARG VERSION
-ARG GEM_HOME="/workspace/gems/${VERSION}"
-
-RUN mkdir /workspace/gems && chown -R sentry:sentry /workspace/gems
+ARG GEM_HOME="/workspace/sentry/vendor/gems/${VERSION}"
 
 ENV LANG=C.UTF-8 \
   BUNDLE_JOBS=4 \
   BUNDLE_RETRY=3 \
-  GEM_HOME=/workspace/gems/${VERSION} \
+  GEM_HOME=/workspace/sentry/vendor/gems/${VERSION} \
   PATH=$PATH:${GEM_HOME}/bin \
   REDIS_HOST=redis
 
-FROM build AS dev
-
 USER sentry
-
-COPY .devcontainer/entrypoint.sh /workspace/entrypoint.sh
-
-ENTRYPOINT ["/workspace/entrypoint.sh"]
-
-FROM build AS test
-
-COPY . .
-
-RUN chown -R sentry:sentry .
-
-USER sentry
-
-RUN gem install foreman && \
-  bundle install && \
-  cd spec/apps/rails-mini && \
-  bundle install
-
-RUN cd spec/apps/svelte-mini && \
-  npm install

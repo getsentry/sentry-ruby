@@ -1,42 +1,37 @@
 services:
   sentry-build: &sentry-build
+    image: ${DOCKER_IMAGE:-sentry-ruby-devcontainer}:${DOCKER_TAG:-latest}
     build:
       context: ..
       dockerfile: .devcontainer/Dockerfile
-      target: test
       args:
         IMAGE: ${IMAGE}
         VERSION: ${VERSION}
-        SENTRY_E2E_RAILS_APP_PORT: ${SENTRY_E2E_RAILS_APP_PORT}
-        SENTRY_E2E_SVELTE_APP_PORT: ${SENTRY_E2E_SVELTE_APP_PORT}
-        SENTRY_E2E_RAILS_APP_URL: ${SENTRY_E2E_RAILS_APP_URL}
-        SENTRY_E2E_SVELTE_APP_URL: ${SENTRY_E2E_SVELTE_APP_URL}
     volumes:
       - ..:/workspace/sentry:cached
-      - sentry_e2e_logs:/workspace/sentry/log
     working_dir: /workspace/sentry
-    environment:
-      - REDIS_URL=${REDIS_URL:-redis://redis:6379/0}
     env_file: [".env"]
 
   sentry-dev:
     <<: *sentry-build
-    command: sleep infinity
+    entrypoint: ".devcontainer/run --service dev"
+    command: "sleep infinity"
     depends_on:
       - redis
 
   sentry-test:
     <<: *sentry-build
+    entrypoint: ".devcontainer/run --service test"
     depends_on:
-      - redis
       - sentry-test-services
 
   sentry-test-services:
     <<: *sentry-build
+    entrypoint: ".devcontainer/run --service test-services"
     command: "foreman start"
     ports:
-      - ${SENTRY_E2E_RAILS_APP_PORT}
-      - ${SENTRY_E2E_SVELTE_APP_PORT}
+      - "${SENTRY_E2E_RAILS_APP_PORT}:4000"
+      - "${SENTRY_E2E_SVELTE_APP_PORT}:4001"
 
   redis:
     image: redis:latest
@@ -44,8 +39,3 @@ services:
       - ALLOW_EMPTY_PASSWORD=yes
     ports:
       - "6379:6379"
-
-volumes:
-  sentry_e2e_logs:
-  sentry_ruby_gems:
-  sentry_node_modules:
