@@ -4,9 +4,12 @@
 
 require 'optparse'
 require 'fileutils'
+require 'pathname'
 
 class SetupScript
   WORKSPACE_FOLDERS = %w[
+    .
+    spec/apps/rails-mini
     sentry-ruby
     sentry-rails
     sentry-sidekiq
@@ -27,8 +30,6 @@ class SetupScript
 
   def run(args)
     parse_options(args)
-
-    puts "🚀 Running post-create setup script..."
 
     Dir.chdir(@workspace_root)
 
@@ -119,8 +120,10 @@ class SetupScript
 
       if Dir.exist?(folder_path) && File.exist?(gemfile_path)
         Dir.chdir(folder_path) do
-          run_with_spinner("   #{folder}") do
-            system('bundle install > /dev/null 2>&1')
+          puts "   Installing dependencies for #{folder_path}..."
+          unless system('bundle install')
+            puts "❌ Bundle install failed for #{folder}"
+            exit 1
           end
         end
 
@@ -132,8 +135,9 @@ class SetupScript
   end
 
   def install_foreman_gem
-    run_with_spinner("💎 Installing foreman gem") do
-      system('gem install foreman > /dev/null 2>&1')
+    unless system('gem install foreman')
+      puts "❌ Foreman gem installation failed"
+      exit 1
     end
   end
 
@@ -142,8 +146,9 @@ class SetupScript
 
     if Dir.exist?(svelte_mini_path)
       Dir.chdir(svelte_mini_path) do
-        run_with_spinner("📦 Installing npm dependencies for e2e tests") do
-          system('npm install > /dev/null 2>&1')
+        unless system('npm install')
+          puts "❌ npm install failed for svelte-mini"
+          exit 1
         end
       end
     else

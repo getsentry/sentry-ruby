@@ -1,0 +1,63 @@
+#!/bin/bash
+
+set -e
+
+cd /workspace/sentry
+
+sudo mkdir -p vendor/gems
+sudo chown -R sentry:sentry vendor/gems
+
+git config --global --add safe.directory /workspace/sentry/vendor/gems
+git config --global --add safe.directory /workspace/sentry
+
+sudo chown -R sentry:sentry .
+
+run_service_setup() {
+  local service="$1"
+
+  echo "🚀 Running setup for service: $service"
+
+  case "$service" in
+    "dev")
+      if ! .devcontainer/setup --with-foreman --only-bundle; then
+        echo "❌ Setup failed for service: $service"
+        exit 1
+      fi
+      ;;
+    "test")
+      if ! .devcontainer/setup --with-foreman --only-bundle --only .; then
+        echo "❌ Setup failed for service: $service"
+        exit 1
+      fi
+      ;;
+    "test-services")
+      if ! .devcontainer/setup --with-foreman --only .,spec/apps/rails-mini; then
+        echo "❌ Setup failed for service: $service"
+        exit 1
+      fi
+      ;;
+    *)
+      echo "❌ Unknown service: $service"
+      echo "Available services: dev, test, test-services"
+      exit 1
+      ;;
+  esac
+
+  echo "✅ Setup completed for service: $service"
+}
+
+# Parse arguments
+if [ "$1" = "--service" ] && [ -n "$2" ]; then
+  service="$2"
+  shift 2
+
+  run_service_setup "$service"
+
+  if [ $# -gt 0 ]; then
+    exec "$@"
+  else
+    exec bash
+  fi
+else
+  exec "$@"
+fi

@@ -16,3 +16,5 @@ Gemfile.lock
 
 node_modules
 .vite
+
+vendor/gems
