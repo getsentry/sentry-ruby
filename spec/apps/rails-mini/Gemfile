@@ -1,0 +1,10 @@
+# frozen_string_literal: true
+
+source 'https://rubygems.org'
+
+gem "rake"
+gem "puma"
+gem 'railties', '~> 8.0'
+gem 'actionpack', '~> 8.0'
+gem 'sentry-ruby', path: Pathname(__dir__).join("../../..").realpath
+gem 'sentry-rails', path: Pathname(__dir__).join("../../..").realpath
