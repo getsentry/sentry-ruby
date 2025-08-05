@@ -11,9 +11,9 @@ RSpec.describe "Tracing", type: :feature do
 
     events_data = get_rails_events
 
-    expect(events_data["event_count"]).to be > 0
+    expect(events_data[:event_count]).to be > 0
 
-    error_events = events_data["events"].select { |event| event["exception"] }
+    error_events = events_data[:events].select { |event| event["exception"] }
     expect(error_events).not_to be_empty
 
     error_event = error_events.first
@@ -21,7 +21,7 @@ RSpec.describe "Tracing", type: :feature do
     expect(exception_values).not_to be_empty
     expect(exception_values.first["type"]).to eq("ZeroDivisionError")
 
-    transaction_events = events_data["events"].select { |event| event["type"] == "transaction" }
+    transaction_events = events_data[:events].select { |event| event["type"] == "transaction" }
 
     expect(error_event.dig("contexts", "trace")).not_to be_nil
     error_trace_id = error_event.dig("contexts", "trace", "trace_id")
@@ -47,7 +47,7 @@ RSpec.describe "Tracing", type: :feature do
       end
     end
 
-    events_data["envelopes"].each do |envelope|
+    events_data[:envelopes].each do |envelope|
       envelope["items"].each do |item|
         if item["payload"] && item["payload"]["_meta"] && item["payload"]["_meta"]["dsc"]
           dsc = item["payload"]["_meta"]["dsc"]
@@ -58,55 +58,5 @@ RSpec.describe "Tracing", type: :feature do
         end
       end
     end
-  end
-
-  private
-
-  def get_rails_events
-    log_file_path = File.join(Dir.pwd, "log", "sentry_debug_events.log")
-
-    return { "events" => [], "envelopes" => [], "event_count" => 0, "envelope_count" => 0 } unless File.exist?(log_file_path)
-
-    events = []
-    File.readlines(log_file_path).each do |line|
-      line = line.strip
-      next if line.empty?
-
-      begin
-        events << JSON.parse(line)
-      rescue JSON::ParserError => e
-        puts "Failed to parse line: #{line}, error: #{e.message}"
-      end
-    end
-
-    extracted_events = []
-    envelopes = []
-
-    events.each do |event_data|
-      envelopes << {
-        "headers" => event_data["envelope_headers"],
-        "items" => event_data["items"]
-      }
-
-      # Extract actual events from envelope items
-      event_data["items"].each do |item|
-        if item["headers"]["type"] == "event"
-          extracted_events << item["payload"]
-        end
-      end
-    end
-
-    {
-      "events" => extracted_events,
-      "envelopes" => envelopes,
-      "event_count" => extracted_events.length,
-      "envelope_count" => envelopes.length,
-      "raw_events" => events
-    }
-  end
-
-  def clear_rails_events
-    log_file_path = File.join(Dir.pwd, "log", "sentry_debug_events.log")
-    File.write(log_file_path, "") if File.exist?(log_file_path)
   end
 end

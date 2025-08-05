@@ -8,6 +8,8 @@ require "selenium-webdriver"
 require "capybara"
 require "capybara/rspec"
 
+require_relative "support/test_helper"
+
 Capybara.configure do |config|
   config.default_driver = :selenium_headless_chrome
   config.javascript_driver = :selenium_headless_chrome
@@ -29,4 +31,12 @@ end
 
 RSpec.configure do |config|
   config.include(Capybara::DSL, type: :e2e)
+
+  config.include(Test::Helper)
+
+  config.before(:suite) do
+    Test::Helper.perform_basic_setup do |config|
+      config.transport.transport_class = Sentry::DebugTransport
+    end
+  end
 end
