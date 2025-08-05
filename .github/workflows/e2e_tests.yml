@@ -27,7 +27,7 @@ jobs:
 
     env:
       DOCKER_IMAGE: "ghcr.io/getsentry/sentry-ruby-devcontainer-3.4"
-      DOCKER_TAG: "9c29d73a943de506a5990f7407c93663c80b44fd"
+      DOCKER_TAG: "c7f73e278f0f8ad6035d578685e7bfb34be5eb4c"
 
     steps:
       - name: Checkout code
