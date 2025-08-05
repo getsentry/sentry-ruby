@@ -1,20 +1,29 @@
 {
   "name": "sentry-ruby",
   "dockerComposeFile": "docker-compose.yml",
-  "service": "app",
+  "service": "sentry-dev",
   "workspaceFolder": "/workspace/sentry",
+  "features": {
+    "ghcr.io/devcontainers/features/github-cli": {},
+    "ghcr.io/nils-geistmann/devcontainers-features/zsh": {},
+    "ghcr.io/devcontainers-extra/features/npm-packages": {},
+    "ghcr.io/rocker-org/devcontainer-features/apt-packages": {
+      "packages": "inotify-tools"
+    }
+  },
   "customizations": {
     "vscode": {
       "extensions": [
         "sleistner.vscode-fileutils",
         "Shopify.ruby-lsp"
       ],
-      "settings": {}
-    },
-    "rubyLsp.rubyVersionManager": {
-      "identifier": "none"
+      "editor.formatOnSaveMode": "modifications",
+      "editor.formatOnSave": true,
+      "rubyLsp.rubyVersionManager": {
+        "identifier": "auto"
+      },
+      "rubyLsp.formatter": "auto"
     }
   },
-  "remoteUser": "sentry",
-  "postCreateCommand": "ruby --version"
+  "remoteUser": "sentry"
 }

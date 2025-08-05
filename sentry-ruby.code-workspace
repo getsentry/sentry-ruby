@@ -32,10 +32,12 @@
       "sentry-sidekiq": true,
       "sentry-opentelemetry": true
     },
-    "rubyLsp.formatter": "rubocop",
+    "editor.formatOnSaveMode": "file",
+    "editor.formatOnSave": true,
     "rubyLsp.rubyVersionManager": {
       "identifier": "auto"
-    }
+    },
+    "rubyLsp.formatter": "auto"
   },
   "extensions": {
     "recommendations": [

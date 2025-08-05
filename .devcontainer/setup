@@ -1,0 +1,194 @@
+#!/usr/bin/env ruby
+
+# frozen_string_literal: true
+
+require 'optparse'
+require 'fileutils'
+require 'pathname'
+
+class SetupScript
+  WORKSPACE_FOLDERS = %w[
+    .
+    spec/apps/rails-mini
+    sentry-ruby
+    sentry-rails
+    sentry-sidekiq
+    sentry-delayed_job
+    sentry-resque
+    sentry-opentelemetry
+  ].freeze
+
+  def initialize
+    @options = {
+      only_folders: [],
+      only_bundle: false,
+      only_npm: false,
+      with_foreman: false
+    }
+    @workspace_root = '/workspace/sentry'
+  end
+
+  def run(args)
+    parse_options(args)
+
+    Dir.chdir(@workspace_root)
+
+    if should_run_bundle?
+      cleanup_ruby_lsp_directories
+      install_bundle_dependencies
+      install_foreman_gem if @options[:with_foreman]
+    end
+
+    if should_run_npm?
+      install_npm_dependencies
+    end
+
+    puts "✅ Post-create setup completed!"
+  end
+
+  private
+
+  def parse_options(args)
+    parser = OptionParser.new do |opts|
+      opts.banner = "Usage: setup.rb [options]"
+
+      opts.on("--only FOLDERS", Array, "Only process specified folders (comma-separated)") do |folders|
+        @options[:only_folders] = folders
+      end
+
+      opts.on("--only-bundle", "Only run bundle operations (skip npm)") do
+        @options[:only_bundle] = true
+      end
+
+      opts.on("--only-npm", "Only run npm operations (skip bundle)") do
+        @options[:only_npm] = true
+      end
+
+      opts.on("--with-foreman", "Install foreman gem (default: false)") do
+        @options[:with_foreman] = true
+      end
+
+      opts.on("-h", "--help", "Show this help message") do
+        puts opts
+        exit
+      end
+    end
+
+    parser.parse!(args)
+
+    if @options[:only_bundle] && @options[:only_npm]
+      puts "❌ Error: --only-bundle and --only-npm are mutually exclusive"
+      exit 1
+    end
+  end
+
+  def should_run_bundle?
+    !@options[:only_npm]
+  end
+
+  def should_run_npm?
+    !@options[:only_bundle]
+  end
+
+  def target_folders
+    return @options[:only_folders] unless @options[:only_folders].empty?
+    WORKSPACE_FOLDERS
+  end
+
+  def all_folders
+    target_folders
+  end
+
+  def cleanup_ruby_lsp_directories
+    puts "🧹 Cleaning up .ruby-lsp directories..."
+
+    all_folders.each do |folder|
+      ruby_lsp_path = File.join(folder, '.ruby-lsp')
+      if Dir.exist?(ruby_lsp_path)
+        puts "   Removing #{folder}/.ruby-lsp"
+        FileUtils.rm_rf(ruby_lsp_path)
+      end
+    end
+  end
+
+  def install_bundle_dependencies
+    puts "📦 Installing bundle dependencies for workspace folders..."
+
+    target_folders.each do |folder|
+      folder_path = File.join(@workspace_root, folder)
+      gemfile_path = File.join(folder_path, 'Gemfile')
+
+      if Dir.exist?(folder_path) && File.exist?(gemfile_path)
+        Dir.chdir(folder_path) do
+          puts "   Installing dependencies for #{folder_path}..."
+          unless system('bundle install')
+            puts "❌ Bundle install failed for #{folder}"
+            exit 1
+          end
+        end
+
+        Dir.chdir(@workspace_root)
+      else
+        puts "  Skipping #{folder} (no Gemfile found or directory doesn't exist)"
+      end
+    end
+  end
+
+  def install_foreman_gem
+    unless system('gem install foreman')
+      puts "❌ Foreman gem installation failed"
+      exit 1
+    end
+  end
+
+  def install_npm_dependencies
+    svelte_mini_path = File.join(@workspace_root, 'spec/apps/svelte-mini')
+
+    if Dir.exist?(svelte_mini_path)
+      Dir.chdir(svelte_mini_path) do
+        unless system('npm install')
+          puts "❌ npm install failed for svelte-mini"
+          exit 1
+        end
+      end
+    else
+      puts "❌ Svelte mini app directory not found: #{svelte_mini_path}"
+      exit 1
+    end
+  end
+
+  def run_with_spinner(message)
+    print "#{message} "
+
+    spinner_chars = %w[- \\ | /]
+    spinner_index = 0
+    spinner_running = true
+
+    spinner_thread = Thread.new do
+      while spinner_running
+        print "\r#{message} #{spinner_chars[spinner_index]}"
+        spinner_index = (spinner_index + 1) % spinner_chars.length
+        sleep 0.1
+      end
+    end
+
+    # Run the actual command
+    success = yield
+
+    # Stop spinner
+    spinner_running = false
+    spinner_thread.join
+
+    if success
+      puts "\r#{message} ✅"
+    else
+      puts "\r#{message} ❌"
+      puts "❌ Command failed. Please check for missing dependencies or run manually."
+      exit 1
+    end
+  end
+end
+
+if __FILE__ == $0
+  SetupScript.new.run(ARGV)
+end

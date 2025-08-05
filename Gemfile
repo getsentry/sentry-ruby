@@ -1,32 +1,13 @@
 # frozen_string_literal: true
 
-source "https://rubygems.org"
-git_source(:github) { |name| "https://github.com/#{name}.git" }
+eval_gemfile "Gemfile.dev"
 
-gem "jar-dependencies" if RUBY_PLATFORM == "java"
-gem "rake", "~> 12.0"
-
-ruby_version = Gem::Version.new(RUBY_VERSION)
-
-# Development tools
-if ruby_version >= Gem::Version.new("2.7.0")
-  gem "debug", github: "ruby/debug", platform: :ruby
-  gem "irb"
-  gem "ruby-lsp-rspec" if ruby_version >= Gem::Version.new("3.0.0") && RUBY_PLATFORM != "java"
+group :e2e do
+  gem "capybara"
+  gem "selenium-webdriver"
 end
 
-if RUBY_VERSION >= "3.5"
-  gem "cgi"
-end
-
-# For RSpec
-gem "rspec", "~> 3.0"
-gem "rspec-retry"
-gem "simplecov"
-gem "simplecov-cobertura", "~> 1.4"
-gem "rexml"
-
-group :rubocop do
-  gem "rubocop-rails-omakase"
-  gem "rubocop-packaging"
+group :sentry do
+  gem "sentry-ruby", path: "sentry-ruby"
+  gem "sentry-rails", path: "sentry-rails"
 end
