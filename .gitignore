@@ -14,4 +14,7 @@ Gemfile.lock
 *.rdb
 .rgignore
 
-examples/**/node_modules
+node_modules
+.vite
+
+vendor/gems
