@@ -4,29 +4,31 @@ module Test
   module Helper
     module_function
 
-    def get_rails_events
-      extracted_events = []
-      envelopes = []
+    def logged_events
+      @logged_events ||= begin
+        extracted_events = []
+        envelopes = []
 
-      logged_envelopes.each do |event_data|
-        envelopes << {
-          "headers" => event_data["envelope_headers"],
-          "items" => event_data["items"]
-        }
+        logged_envelopes.each do |event_data|
+          envelopes << {
+            "headers" => event_data["envelope_headers"],
+            "items" => event_data["items"]
+          }
 
-        event_data["items"].each do |item|
-          if item["headers"]["type"] == "event"
-            extracted_events << item["payload"]
+          event_data["items"].each do |item|
+            if item["headers"]["type"] == "event"
+              extracted_events << item["payload"]
+            end
           end
         end
-      end
 
-      {
-        events: extracted_events,
-        envelopes: envelopes,
-        event_count: extracted_events.length,
-        envelope_count: envelopes.length
-      }
+        {
+          events: extracted_events,
+          envelopes: envelopes,
+          event_count: extracted_events.length,
+          envelope_count: envelopes.length
+        }
+      end
     end
 
     def logged_envelopes
