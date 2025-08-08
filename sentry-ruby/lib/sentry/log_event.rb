@@ -42,7 +42,7 @@ module Sentry
 
     attr_accessor :level, :body, :template, :attributes, :user
 
-    attr_reader :configuration, *SERIALIZEABLE_ATTRIBUTES
+    attr_reader :configuration, *(SERIALIZEABLE_ATTRIBUTES - %i[level body attributes])
 
     SERIALIZERS = %i[
       attributes
