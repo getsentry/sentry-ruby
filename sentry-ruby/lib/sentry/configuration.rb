@@ -201,6 +201,18 @@ module Sentry
     # @return [String, nil]
     attr_accessor :sdk_debug_transport_log_file
 
+    # File path for DebugStructuredLogger to log events to. If not set, defaults to a temporary file.
+    # This is useful for debugging and testing structured logging.
+    # @return [String, nil]
+    attr_accessor :sdk_debug_structured_logger_log_file
+
+    # The class to use as a structured logger.
+    # If this option is not set, it will return `nil`, and Sentry will use
+    # `Sentry::StructuredLogger` by default when logs are enabled.
+    #
+    # @return [Class, nil]
+    attr_reader :structured_logger_class
+
     # @deprecated Use {#sdk_logger=} instead.
     def logger=(logger)
       warn "[sentry] `config.logger=` is deprecated. Please use `config.sdk_logger=` instead."
@@ -610,6 +622,14 @@ module Sentry
       end
 
       @profiler_class = profiler_class
+    end
+
+    def structured_logger_class=(klass)
+      unless klass.is_a?(Class)
+        raise Sentry::Error.new("config.structured_logger_class must be a class. got: #{klass.class}")
+      end
+
+      @structured_logger_class = klass
     end
 
     def sending_allowed?
