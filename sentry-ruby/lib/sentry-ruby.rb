@@ -13,6 +13,7 @@ require "sentry/utils/logging_helper"
 require "sentry/utils/sample_rand"
 require "sentry/configuration"
 require "sentry/structured_logger"
+require "sentry/debug_structured_logger"
 require "sentry/event"
 require "sentry/error_event"
 require "sentry/transaction_event"
@@ -639,9 +640,10 @@ module Sentry
       @logger ||=
         if configuration.enable_logs
           # Initialize the public-facing Structured Logger if logs are enabled
-          # This creates a StructuredLogger instance that implements Sentry's SDK telemetry logs protocol
+          # Use configured structured logger class or default to StructuredLogger
           # @see https://develop.sentry.dev/sdk/telemetry/logs/
-          StructuredLogger.new(configuration)
+          logger_class = configuration.structured_logger_class || StructuredLogger
+          logger_class.new(configuration)
         else
           warn <<~STR
             [sentry] `Sentry.logger` will no longer be used as internal SDK logger when `enable_logs` feature is turned on.
