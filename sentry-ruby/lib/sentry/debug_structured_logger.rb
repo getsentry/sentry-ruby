@@ -51,8 +51,6 @@ module Sentry
     end
 
     def logged_events
-      return [] unless File.exist?(log_file)
-
       File.readlines(log_file).map do |line|
         JSON.parse(line)
       end

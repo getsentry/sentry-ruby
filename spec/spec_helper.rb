@@ -7,6 +7,7 @@ require "selenium-webdriver"
 
 require "capybara"
 require "capybara/rspec"
+require "debug"
 
 require_relative "support/test_helper"
 
@@ -31,12 +32,14 @@ end
 
 RSpec.configure do |config|
   config.include(Capybara::DSL, type: :e2e)
-
   config.include(Test::Helper)
 
   config.before(:suite) do
     Test::Helper.perform_basic_setup do |config|
       config.transport.transport_class = Sentry::DebugTransport
+      config.structured_logger_class = Sentry::DebugStructuredLogger
+      config.sdk_debug_structured_logger_log_file = Test::Helper.debug_log_path.join("sentry_e2e_tests.log")
+      config.enable_logs = true
     end
 
     Test::Helper.clear_logged_events
@@ -44,5 +47,9 @@ RSpec.configure do |config|
 
   config.after(:each) do
     Test::Helper.clear_logged_events
+  end
+
+  config.after(:each) do
+    Test::Helper.clear_logs
   end
 end
