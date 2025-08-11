@@ -2,6 +2,8 @@
 
 module Sentry
   module TestHelper
+    module_function
+
     DUMMY_DSN = "http://12345:67890@sentry.localdomain/sentry/42"
 
     # Not really real, but it will be resolved as a non-local for testing needs
@@ -49,10 +51,7 @@ module Sentry
     def teardown_sentry_test
       return unless Sentry.initialized?
 
-      transport = Sentry.get_current_client&.transport
-      if transport.is_a?(Sentry::DebugTransport)
-        transport.clear
-      end
+      clear_sentry_events
 
       # pop testing layer created by `setup_sentry_test`
       # but keep the base layer to avoid nil-pointer errors
@@ -61,6 +60,14 @@ module Sentry
         Sentry.get_current_hub.pop_scope
       end
       Sentry::Scope.global_event_processors.clear
+    end
+
+    def clear_sentry_events
+      if Sentry.initialized? && Sentry.configuration.enable_logs
+        [Sentry.get_current_client.transport, Sentry.logger].each do |obj|
+          obj.clear if obj.respond_to?(:clear)
+        end
+      end
     end
 
     # @return [Transport]

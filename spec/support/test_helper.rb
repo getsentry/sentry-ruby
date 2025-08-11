@@ -39,6 +39,14 @@ module Test
       Sentry.get_current_client.transport.logged_envelopes
     end
 
+    def logged_structured_events
+      if Sentry.logger.is_a?(Sentry::DebugStructuredLogger)
+        Sentry.logger.logged_events
+      else
+        []
+      end
+    end
+
     # TODO: move this to a shared helper for all gems
     def perform_basic_setup
       Sentry.init do |config|
