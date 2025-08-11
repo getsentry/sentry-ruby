@@ -1,8 +1,19 @@
 # frozen_string_literal: true
 
+require 'net/http'
+require 'uri'
+
 module Test
   module Helper
     module_function
+
+    def rails_app_url
+      ENV.fetch("SENTRY_E2E_RAILS_APP_URL")
+    end
+
+    def make_request(path)
+      Net::HTTP.get_response(URI("#{rails_app_url}#{path}"))
+    end
 
     def logged_events
       @logged_events ||= begin
@@ -40,11 +51,7 @@ module Test
     end
 
     def logged_structured_events
-      if Sentry.logger.is_a?(Sentry::DebugStructuredLogger)
-        Sentry.logger.logged_events
-      else
-        []
-      end
+      Sentry.logger.logged_events
     end
 
     # TODO: move this to a shared helper for all gems
@@ -57,6 +64,19 @@ module Test
         config.background_worker_threads = 0
         yield(config) if block_given?
       end
+    end
+
+    def debug_log_path
+      @log_path ||= begin
+        path = Pathname(__dir__).join("../../log")
+        FileUtils.mkdir_p(path) unless path.exist?
+        path.realpath
+      end
+    end
+
+    def clear_logs
+      Sentry.get_current_client.transport.clear
+      Sentry.logger.clear
     end
   end
 end
