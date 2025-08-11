@@ -6,5 +6,8 @@ gem "rake"
 gem "puma"
 gem 'railties', '~> 8.0'
 gem 'actionpack', '~> 8.0'
+gem 'activerecord', '~> 8.0'
+gem 'activejob', '~> 8.0'
+gem 'sqlite3', '>= 2.1'
 gem 'sentry-ruby', path: Pathname(__dir__).join("../../..").realpath
 gem 'sentry-rails', path: Pathname(__dir__).join("../../..").realpath
