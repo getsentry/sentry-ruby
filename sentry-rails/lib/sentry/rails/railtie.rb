@@ -49,6 +49,7 @@ module Sentry
       setup_backtrace_cleanup_callback
       inject_breadcrumbs_logger
       activate_tracing
+      activate_structured_logging
 
       register_error_subscriber(app) if ::Rails.version.to_f >= 7.0 && Sentry.configuration.rails.register_error_subscriber
 
@@ -136,6 +137,16 @@ module Sentry
         Sentry::Rails::Tracing.subscribe_tracing_events
         Sentry::Rails::Tracing.patch_active_support_notifications
       end
+    end
+
+    def activate_structured_logging
+      if Sentry.configuration.rails.structured_logging.enabled? && Sentry.configuration.enable_logs
+        require "sentry/rails/logger"
+        Sentry::Rails::Logger.subscribe_tracing_events
+      end
+    rescue => e
+      Sentry.configuration.sdk_logger.error("Failed to activate structured logging: #{e.message}")
+      Sentry.configuration.sdk_logger.error(e.backtrace.join("\n"))
     end
 
     def register_error_subscriber(app)

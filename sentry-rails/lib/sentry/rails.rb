@@ -6,6 +6,7 @@ require "sentry/integrable"
 require "sentry/rails/tracing"
 require "sentry/rails/configuration"
 require "sentry/rails/log_subscriber"
+require "sentry/rails/logger"
 require "sentry/rails/engine"
 require "sentry/rails/railtie"
 
