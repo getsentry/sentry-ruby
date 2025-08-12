@@ -1,0 +1,80 @@
+name: "Build & push devcontainer"
+
+on:
+  push:
+    branches:
+      - master
+    paths:
+      - .devcontainer/**
+      - .github/workflows/build_images.yml
+
+  # Uncomment if you want to test things out in a PR
+  #
+  # pull_request:
+  #   paths:
+  #     - .devcontainer/**
+  #     - .github/workflows/build_images.yml
+
+permissions:
+  contents: read
+  packages: write # Required for GHCR
+
+jobs:
+  build-and-push:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        ruby_image:
+          - ruby:2.7.8-slim-bullseye
+          - ruby:3.0.7-slim-bullseye
+          - ruby:3.1.7-slim-bookworm
+          - ruby:3.2.9-slim-bookworm
+          - ruby:3.3.9-slim-bookworm
+          - ruby:3.4.5-slim-bookworm
+
+    steps:
+      - name: Check out current commit
+        uses: actions/checkout@v4
+
+      - name: Generate short image name and extract version
+        id: image_name
+        run: |
+          ruby_image="${{ matrix.ruby_image }}"
+
+          # Extract full version for GEM_HOME (e.g., ruby:3.4.5-slim-bookworm -> 3.4.5)
+          if [[ "$ruby_image" == ruby:* ]]; then
+            full_version=$(echo "$ruby_image" | cut -d: -f2 | cut -d- -f1)
+            version=$(echo "$ruby_image" | cut -d: -f2 | cut -d. -f1,2)
+            short_name="sentry-ruby-devcontainer-${version}"
+          elif [[ "$ruby_image" == jruby:latest ]]; then
+            full_version="latest"
+            short_name="sentry-ruby-devcontainer-jruby-latest"
+          elif [[ "$ruby_image" == jruby:* ]]; then
+            full_version=$(echo "$ruby_image" | cut -d: -f2 | cut -d- -f1)
+            version=$(echo "$ruby_image" | cut -d: -f2 | cut -d. -f1,2)
+            short_name="sentry-ruby-devcontainer-jruby-${version}"
+          else
+            full_version="latest"
+            short_name="sentry-ruby-devcontainer-${ruby_image}"
+          fi
+
+          echo "short_name=${short_name}" >> $GITHUB_OUTPUT
+          echo "full_version=${full_version}" >> $GITHUB_OUTPUT
+          echo "Generated short image name: ${short_name}"
+          echo "Extracted full version: ${full_version}"
+
+      - name: Build and push devcontainer image
+        id: build
+        uses: getsentry/action-build-and-push-images@main
+        with:
+          image_name: '${{ steps.image_name.outputs.short_name }}'
+          dockerfile_path: '.devcontainer/Dockerfile'
+          ghcr: true
+          publish_on_pr: true
+          build_args: |
+            IMAGE=${{ matrix.ruby_image }}
+            VERSION=${{ steps.image_name.outputs.full_version }}
+
+      - name: Use outputs
+        run: |
+          echo "GHCR URL: ${{ steps.build.outputs.ghcr_image_url }}"

@@ -3,15 +3,13 @@
 source "https://rubygems.org"
 git_source(:github) { |name| "https://github.com/#{name}.git" }
 
-eval_gemfile "../Gemfile"
+eval_gemfile "../Gemfile.dev"
 
 gem "sentry-ruby", path: "./"
 
 rack_version = ENV["RACK_VERSION"]
 rack_version = "3.0.0" if rack_version.nil?
 gem "rack", "~> #{Gem::Version.new(rack_version)}" unless rack_version == "0"
-
-gem "ostruct" if RUBY_VERSION >= "3.4"
 
 redis_rb_version = ENV.fetch("REDIS_RB_VERSION", "5.0")
 gem "redis", "~> #{redis_rb_version}"

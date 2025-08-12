@@ -1,18 +1,31 @@
 services:
-  app:
+  sentry-build: &sentry-build
+    image: ${DOCKER_IMAGE:-sentry-ruby-devcontainer}:${DOCKER_TAG:-latest}
     build:
-      context: .
-      dockerfile: Dockerfile
+      context: ..
+      dockerfile: .devcontainer/Dockerfile
       args:
         IMAGE: ${IMAGE}
-        TAG: ${TAG}
+        VERSION: ${VERSION}
     volumes:
       - ..:/workspace/sentry:cached
-    command: sleep infinity
-    environment:
-      - REDIS_URL=${REDIS_URL:-redis://redis:6379/0}
+    working_dir: /workspace/sentry
+    env_file: [".env"]
+
+  sentry-dev:
+    <<: *sentry-build
+    entrypoint: ".devcontainer/run --service dev"
+    command: "sleep infinity"
     depends_on:
       - redis
+
+  sentry-test:
+    <<: *sentry-build
+    entrypoint: ".devcontainer/run --service test"
+    command: ["foreman", "start"]
+    ports:
+      - "${SENTRY_E2E_RAILS_APP_PORT}:4000"
+      - "${SENTRY_E2E_SVELTE_APP_PORT}:4001"
 
   redis:
     image: redis:latest
