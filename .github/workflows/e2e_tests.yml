@@ -54,12 +54,12 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-node-modules-
 
-      - name: Set up test services
+      - name: Set up test container
         run: |
           docker compose \
             --file .devcontainer/docker-compose.yml \
             --env-file .devcontainer/.env \
-            run --rm sentry-test-services \
+            run --rm sentry-test \
             echo "Done"
 
       - name: Start test services
@@ -67,7 +67,7 @@ jobs:
           docker compose \
             --file .devcontainer/docker-compose.yml \
             --env-file .devcontainer/.env \
-            up -d sentry-test-services
+            up -d sentry-test
 
       - name: "Wait for rails-mini app to be ready"
         uses: nev7n/wait_for_response@v1
@@ -85,20 +85,12 @@ jobs:
           timeout: 90000
           interval: 500
 
-      - name: Set up sentry-test container
-        run: |
-          docker compose \
-            --file .devcontainer/docker-compose.yml \
-            --env-file .devcontainer/.env \
-            run --rm sentry-test \
-            echo "Done"
-
       - name: Run e2e tests via sentry-test
         run: |
           docker compose \
             --file .devcontainer/docker-compose.yml \
             --env-file .devcontainer/.env \
-            run --rm sentry-test \
+            exec sentry-test \
             bundle exec rake
 
       - name: Stop e2e services

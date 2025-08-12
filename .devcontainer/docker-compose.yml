@@ -22,13 +22,7 @@ services:
   sentry-test:
     <<: *sentry-build
     entrypoint: ".devcontainer/run --service test"
-    depends_on:
-      - sentry-test-services
-
-  sentry-test-services:
-    <<: *sentry-build
-    entrypoint: ".devcontainer/run --service test-services"
-    command: "foreman start"
+    command: ["foreman", "start"]
     ports:
       - "${SENTRY_E2E_RAILS_APP_PORT}:4000"
       - "${SENTRY_E2E_SVELTE_APP_PORT}:4001"

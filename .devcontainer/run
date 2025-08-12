@@ -25,12 +25,6 @@ run_service_setup() {
       fi
       ;;
     "test")
-      if ! .devcontainer/setup --with-foreman --only-bundle --only .; then
-        echo "❌ Setup failed for service: $service"
-        exit 1
-      fi
-      ;;
-    "test-services")
       if ! .devcontainer/setup --with-foreman --only .,spec/apps/rails-mini; then
         echo "❌ Setup failed for service: $service"
         exit 1
@@ -38,12 +32,45 @@ run_service_setup() {
       ;;
     *)
       echo "❌ Unknown service: $service"
-      echo "Available services: dev, test, test-services"
+      echo "Available services: dev, test"
       exit 1
       ;;
   esac
 
   echo "✅ Setup completed for service: $service"
+}
+
+# Function to start services in background
+start_services_if_needed() {
+  # Check if we're running tests (bundle exec rake)
+  if [[ "$*" == *"bundle exec rake"* ]]; then
+    echo "🚀 Starting e2e services in background for test execution..."
+
+    # Start foreman in background
+    foreman start &
+    FOREMAN_PID=$!
+
+    # Wait for services to be ready
+    echo "⏳ Waiting for services to start..."
+    for i in {1..30}; do
+      if curl -f http://localhost:4000/health >/dev/null 2>&1 && \
+         curl -f http://localhost:4001/health >/dev/null 2>&1; then
+        echo "✅ Services are ready!"
+        break
+      fi
+
+      if [ $i -eq 30 ]; then
+        echo "❌ Services failed to start within timeout"
+        kill $FOREMAN_PID 2>/dev/null || true
+        exit 1
+      fi
+
+      sleep 2
+    done
+
+    # Set up cleanup trap
+    trap "echo '🧹 Stopping services...'; kill $FOREMAN_PID 2>/dev/null || true; wait $FOREMAN_PID 2>/dev/null || true" EXIT
+  fi
 }
 
 # Parse arguments
@@ -54,10 +81,12 @@ if [ "$1" = "--service" ] && [ -n "$2" ]; then
   run_service_setup "$service"
 
   if [ $# -gt 0 ]; then
+    start_services_if_needed "$@"
     exec "$@"
   else
     exec bash
   fi
 else
+  start_services_if_needed "$@"
   exec "$@"
 fi
