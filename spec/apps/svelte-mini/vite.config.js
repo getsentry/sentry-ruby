@@ -26,7 +26,6 @@ export default defineConfig({
   server: {
     port: parseInt(process.env.SENTRY_E2E_SVELTE_APP_PORT || '4001'),
     host: '0.0.0.0',
-    allowedHosts: ['sentry-test-services']
   },
   define: {
     __RAILS_API_URL__: JSON.stringify(process.env.SENTRY_E2E_RAILS_APP_URL || 'http://localhost:4000')
