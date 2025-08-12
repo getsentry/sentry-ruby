@@ -17,4 +17,5 @@ Gemfile.lock
 node_modules
 .vite
 
+.devcontainer/.env
 vendor/gems
