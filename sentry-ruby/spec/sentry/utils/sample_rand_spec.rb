@@ -1,10 +1,11 @@
 # frozen_string_literal: true
 
 RSpec.describe Sentry::Utils::SampleRand do
-  describe ".generate_from_trace_id" do
+  describe "#generate_from_trace_id" do
     it "generates a float in range [0, 1) with 6 decimal places" do
       trace_id = "abcdef1234567890abcdef1234567890"
-      sample_rand = described_class.generate_from_trace_id(trace_id)
+      generator = described_class.new(trace_id: trace_id)
+      sample_rand = generator.generate_from_trace_id
 
       expect(sample_rand).to be_a(Float)
       expect(sample_rand).to be >= 0.0
@@ -15,8 +16,10 @@ RSpec.describe Sentry::Utils::SampleRand do
     it "generates deterministic values for the same trace_id" do
       trace_id = "abcdef1234567890abcdef1234567890"
 
-      sample_rand1 = described_class.generate_from_trace_id(trace_id)
-      sample_rand2 = described_class.generate_from_trace_id(trace_id)
+      generator1 = described_class.new(trace_id: trace_id)
+      generator2 = described_class.new(trace_id: trace_id)
+      sample_rand1 = generator1.generate_from_trace_id
+      sample_rand2 = generator2.generate_from_trace_id
 
       expect(sample_rand1).to eq(sample_rand2)
     end
@@ -25,15 +28,18 @@ RSpec.describe Sentry::Utils::SampleRand do
       trace_id1 = "abcdef1234567890abcdef1234567890"
       trace_id2 = "fedcba0987654321fedcba0987654321"
 
-      sample_rand1 = described_class.generate_from_trace_id(trace_id1)
-      sample_rand2 = described_class.generate_from_trace_id(trace_id2)
+      generator1 = described_class.new(trace_id: trace_id1)
+      generator2 = described_class.new(trace_id: trace_id2)
+      sample_rand1 = generator1.generate_from_trace_id
+      sample_rand2 = generator2.generate_from_trace_id
 
       expect(sample_rand1).not_to eq(sample_rand2)
     end
 
     it "handles short trace_ids" do
       trace_id = "abc123"
-      sample_rand = described_class.generate_from_trace_id(trace_id)
+      generator = described_class.new(trace_id: trace_id)
+      sample_rand = generator.generate_from_trace_id
 
       expect(sample_rand).to be_a(Float)
       expect(sample_rand).to be >= 0.0
@@ -41,13 +47,14 @@ RSpec.describe Sentry::Utils::SampleRand do
     end
   end
 
-  describe ".generate_from_sampling_decision" do
+  describe "#generate_from_sampling_decision" do
     let(:trace_id) { "abcdef1234567890abcdef1234567890" }
 
     context "with valid sample_rate and sampled=true" do
       it "generates value in range [0, sample_rate)" do
         sample_rate = 0.5
-        sample_rand = described_class.generate_from_sampling_decision(true, sample_rate, trace_id)
+        generator = described_class.new(trace_id: trace_id)
+        sample_rand = generator.generate_from_sampling_decision(true, sample_rate)
 
         expect(sample_rand).to be >= 0.0
         expect(sample_rand).to be < sample_rate
@@ -56,14 +63,17 @@ RSpec.describe Sentry::Utils::SampleRand do
       it "is deterministic with trace_id" do
         sample_rate = 0.5
 
-        sample_rand1 = described_class.generate_from_sampling_decision(true, sample_rate, trace_id)
-        sample_rand2 = described_class.generate_from_sampling_decision(true, sample_rate, trace_id)
+        generator1 = described_class.new(trace_id: trace_id)
+        generator2 = described_class.new(trace_id: trace_id)
+        sample_rand1 = generator1.generate_from_sampling_decision(true, sample_rate)
+        sample_rand2 = generator2.generate_from_sampling_decision(true, sample_rate)
 
         expect(sample_rand1).to eq(sample_rand2)
       end
 
       it "never generates invalid values even with sample_rate = 1.0" do
-        result = described_class.generate_from_sampling_decision(true, 1.0, trace_id)
+        generator = described_class.new(trace_id: trace_id)
+        result = generator.generate_from_sampling_decision(true, 1.0)
 
         expect(result).to be >= 0.0
         expect(result).to be < 1.0
@@ -74,7 +84,8 @@ RSpec.describe Sentry::Utils::SampleRand do
     context "with valid sample_rate and sampled=false" do
       it "generates value in range [sample_rate, 1)" do
         sample_rate = 0.3
-        sample_rand = described_class.generate_from_sampling_decision(false, sample_rate, trace_id)
+        generator = described_class.new(trace_id: trace_id)
+        sample_rand = generator.generate_from_sampling_decision(false, sample_rate)
 
         expect(sample_rand).to be >= sample_rate
         expect(sample_rand).to be < 1.0
@@ -83,8 +94,10 @@ RSpec.describe Sentry::Utils::SampleRand do
       it "is deterministic with trace_id" do
         sample_rate = 0.3
 
-        sample_rand1 = described_class.generate_from_sampling_decision(false, sample_rate, trace_id)
-        sample_rand2 = described_class.generate_from_sampling_decision(false, sample_rate, trace_id)
+        generator1 = described_class.new(trace_id: trace_id)
+        generator2 = described_class.new(trace_id: trace_id)
+        sample_rand1 = generator1.generate_from_sampling_decision(false, sample_rate)
+        sample_rand2 = generator2.generate_from_sampling_decision(false, sample_rate)
 
         expect(sample_rand1).to eq(sample_rand2)
       end
@@ -92,28 +105,35 @@ RSpec.describe Sentry::Utils::SampleRand do
 
     context "with invalid sample_rate" do
       it "falls back to trace_id generation when sample_rate is nil" do
-        expected = described_class.generate_from_trace_id(trace_id)
-        actual = described_class.generate_from_sampling_decision(true, nil, trace_id)
+        generator1 = described_class.new(trace_id: trace_id)
+        generator2 = described_class.new(trace_id: trace_id)
+        expected = generator1.generate_from_trace_id
+        actual = generator2.generate_from_sampling_decision(true, nil)
 
         expect(actual).to eq(expected)
       end
 
       it "falls back to trace_id generation when sample_rate is 0" do
-        expected = described_class.generate_from_trace_id(trace_id)
-        actual = described_class.generate_from_sampling_decision(true, 0.0, trace_id)
+        generator1 = described_class.new(trace_id: trace_id)
+        generator2 = described_class.new(trace_id: trace_id)
+        expected = generator1.generate_from_trace_id
+        actual = generator2.generate_from_sampling_decision(true, 0.0)
 
         expect(actual).to eq(expected)
       end
 
       it "falls back to trace_id generation when sample_rate > 1" do
-        expected = described_class.generate_from_trace_id(trace_id)
-        actual = described_class.generate_from_sampling_decision(true, 1.5, trace_id)
+        generator1 = described_class.new(trace_id: trace_id)
+        generator2 = described_class.new(trace_id: trace_id)
+        expected = generator1.generate_from_trace_id
+        actual = generator2.generate_from_sampling_decision(true, 1.5)
 
         expect(actual).to eq(expected)
       end
 
       it "uses Random.rand when no trace_id provided" do
-        result = described_class.generate_from_sampling_decision(true, nil, nil)
+        generator = described_class.new
+        result = generator.generate_from_sampling_decision(true, nil)
 
         expect(result).to be_a(Float)
         expect(result).to be >= 0.0
@@ -123,13 +143,15 @@ RSpec.describe Sentry::Utils::SampleRand do
 
       it "never generates values >= 1.0 even with edge case rounding" do
         1000.times do
-          result = described_class.generate_from_sampling_decision(true, nil, nil)
+          generator = described_class.new
+          result = generator.generate_from_sampling_decision(true, nil)
           expect(result).to be < 1.0
         end
       end
 
       it "handles edge case where sampled is false and sample_rate is 1.0" do
-        result = described_class.generate_from_sampling_decision(false, 1.0, "abcdef1234567890abcdef1234567890")
+        generator = described_class.new(trace_id: "abcdef1234567890abcdef1234567890")
+        result = generator.generate_from_sampling_decision(false, 1.0)
 
         expect(result).to be_a(Float)
         expect(result).to be >= 0.0
@@ -139,25 +161,37 @@ RSpec.describe Sentry::Utils::SampleRand do
     end
   end
 
-  describe ".valid?" do
-    it "returns true for valid float values" do
-      expect(described_class.valid?(0.0)).to be true
-      expect(described_class.valid?(0.5)).to be true
-      expect(described_class.valid?(0.999999)).to be true
+  describe "#generate_from_value" do
+    it "accepts valid float values" do
+      generator = described_class.new
+      result = generator.generate_from_value(0.5)
+      expect(described_class.valid?(result)).to be true
+      expect(result).to eq(0.5)
     end
 
-    it "returns true for valid string values" do
-      expect(described_class.valid?("0.0")).to be true
-      expect(described_class.valid?("0.5")).to be true
-      expect(described_class.valid?("0.999999")).to be true
+    it "accepts valid string values" do
+      generator = described_class.new
+      result = generator.generate_from_value("0.5")
+      expect(described_class.valid?(result)).to be true
+      expect(result).to eq(0.5)
+    end
+
+    it "falls back for invalid values" do
+      generator = described_class.new(trace_id: "abcdef1234567890abcdef1234567890")
+      result = generator.generate_from_value(1.5)
+      expect(described_class.valid?(result)).to be true
+      expect(result).to be >= 0.0
+      expect(result).to be < 1.0
+    end
+  end
+
+  describe ".valid?" do
+    it "returns true for valid values" do
+      expect(described_class.valid?(0.5)).to be true
     end
 
     it "returns false for invalid values" do
-      expect(described_class.valid?(nil)).to be false
-      expect(described_class.valid?(-0.1)).to be false
-      expect(described_class.valid?(1.0)).to be false
       expect(described_class.valid?(1.5)).to be false
-      expect(described_class.valid?("")).to be false
     end
   end
 

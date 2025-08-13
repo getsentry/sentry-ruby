@@ -279,11 +279,11 @@ RSpec.describe 'Sentry::Rack::CaptureExceptions', when: :rack_available? do
       end
 
       def wont_be_sampled_by_sdk
-        allow(Sentry::Utils::SampleRand).to receive(:generate_from_trace_id).and_return(1.0)
+        allow_any_instance_of(Sentry::Utils::SampleRand).to receive(:generate_from_trace_id).and_return(1.0)
       end
 
       def will_be_sampled_by_sdk
-        allow(Sentry::Utils::SampleRand).to receive(:generate_from_trace_id).and_return(0.3)
+        allow_any_instance_of(Sentry::Utils::SampleRand).to receive(:generate_from_trace_id).and_return(0.3)
       end
 
       before do
@@ -430,7 +430,7 @@ RSpec.describe 'Sentry::Rack::CaptureExceptions', when: :rack_available? do
 
     context "when the transaction is sampled" do
       before do
-        allow(Sentry::Utils::SampleRand).to receive(:generate_from_trace_id).and_return(0.4)
+        allow_any_instance_of(Sentry::Utils::SampleRand).to receive(:generate_from_trace_id).and_return(0.4)
       end
 
       it "starts a transaction and finishes it" do
@@ -488,7 +488,7 @@ RSpec.describe 'Sentry::Rack::CaptureExceptions', when: :rack_available? do
 
     context "when the transaction is not sampled" do
       before do
-        allow(Sentry::Utils::SampleRand).to receive(:generate_from_trace_id).and_return(1.0)
+        allow_any_instance_of(Sentry::Utils::SampleRand).to receive(:generate_from_trace_id).and_return(1.0)
       end
 
       it "doesn't do anything" do
@@ -506,7 +506,7 @@ RSpec.describe 'Sentry::Rack::CaptureExceptions', when: :rack_available? do
 
     context "when there's an exception" do
       before do
-        allow(Sentry::Utils::SampleRand).to receive(:generate_from_trace_id).and_return(0.4)
+        allow_any_instance_of(Sentry::Utils::SampleRand).to receive(:generate_from_trace_id).and_return(0.4)
       end
 
       it "still finishes the transaction" do

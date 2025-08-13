@@ -1047,7 +1047,8 @@ RSpec.describe Sentry do
             expect(transaction.sample_rand).to eq(propagation_context.sample_rand)
 
             # Should be deterministic based on trace_id
-            expected = Sentry::Utils::SampleRand.generate_from_trace_id("771a43a4192642f0b136d5159a501700")
+            generator = Sentry::Utils::SampleRand.new(trace_id: "771a43a4192642f0b136d5159a501700")
+            expected = generator.generate_from_trace_id
             expect(transaction.sample_rand).to eq(expected)
           end
         end
@@ -1064,7 +1065,8 @@ RSpec.describe Sentry do
             transaction = described_class.continue_trace(env, name: "test")
 
             # Should fall back to deterministic generation
-            expected = Sentry::Utils::SampleRand.generate_from_trace_id("771a43a4192642f0b136d5159a501700")
+            generator = Sentry::Utils::SampleRand.new(trace_id: "771a43a4192642f0b136d5159a501700")
+            expected = generator.generate_from_trace_id
             expect(transaction.sample_rand).to eq(expected)
           end
         end

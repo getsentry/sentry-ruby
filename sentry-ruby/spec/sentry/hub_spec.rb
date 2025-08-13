@@ -715,7 +715,8 @@ RSpec.describe Sentry::Hub do
 
           expect(transaction.sample_rand).to eq(propagation_context.sample_rand)
 
-          expected = Sentry::Utils::SampleRand.generate_from_trace_id("771a43a4192642f0b136d5159a501700")
+          generator = Sentry::Utils::SampleRand.new(trace_id: "771a43a4192642f0b136d5159a501700")
+          expected = generator.generate_from_trace_id
 
           expect(transaction.sample_rand).to eq(expected)
         end

@@ -2,46 +2,96 @@
 
 module Sentry
   module Utils
-    module SampleRand
-      def self.generate_from_trace_id(trace_id)
-        (random_from_trace_id(trace_id) * 1_000_000).floor / 1_000_000.0
+    class SampleRand
+      PRECISION = 1_000_000.0
+      FORMAT_PRECISION = 6
+
+      attr_reader :trace_id
+
+      def self.valid?(value)
+        return false unless value
+        value >= 0.0 && value < 1.0
       end
 
-      def self.generate_from_sampling_decision(sampled, sample_rate, trace_id = nil)
-        if sample_rate.nil? || sample_rate <= 0.0 || sample_rate > 1.0
-          trace_id ? generate_from_trace_id(trace_id) : format(Random.rand(1.0)).to_f
-        else
-          random = random_from_trace_id(trace_id)
+      def self.format(value)
+        return unless value
 
-          if sampled
-            format(random * sample_rate)
-          elsif sample_rate == 1.0
-            format(random)
-          else
-            format(sample_rate + random * (1.0 - sample_rate))
-          end.to_f
+        truncated = (value * PRECISION).floor / PRECISION
+        "%.#{FORMAT_PRECISION}f" % truncated
+      end
+
+      def initialize(trace_id: nil)
+        @trace_id = trace_id
+      end
+
+      def generate_from_trace_id
+        (random_from_trace_id * PRECISION).floor / PRECISION
+      end
+
+      def generate_from_sampling_decision(sampled, sample_rate)
+        if invalid_sample_rate?(sample_rate)
+          fallback_generation
+        else
+          generate_based_on_sampling(sampled, sample_rate)
         end
       end
 
-      def self.random_from_trace_id(trace_id)
-        if trace_id
-          Random.new(trace_id[0, 16].to_i(16))
+      def generate_from_value(sample_rand_value)
+        parsed_value = parse_value(sample_rand_value)
+
+        if self.class.valid?(parsed_value)
+          parsed_value
+        else
+          fallback_generation
+        end
+      end
+
+      private
+
+      def random_from_trace_id
+        if @trace_id
+          Random.new(@trace_id[0, 16].to_i(16))
         else
           Random.new
         end.rand(1.0)
       end
 
-      def self.valid?(sample_rand)
-        return false unless sample_rand
-        return false if sample_rand.is_a?(String) && sample_rand.empty?
-
-        value = sample_rand.is_a?(String) ? sample_rand.to_f : sample_rand
-        value >= 0.0 && value < 1.0
+      def invalid_sample_rate?(sample_rate)
+        sample_rate.nil? || sample_rate <= 0.0 || sample_rate > 1.0
       end
 
-      def self.format(sample_rand)
-        truncated = (sample_rand * 1_000_000).floor / 1_000_000.0
-        "%.6f" % truncated
+      def fallback_generation
+        if @trace_id
+          (random_from_trace_id * PRECISION).floor / PRECISION
+        else
+          format_random(Random.rand(1.0))
+        end
+      end
+
+      def generate_based_on_sampling(sampled, sample_rate)
+        random = random_from_trace_id
+
+        result = if sampled
+          random * sample_rate
+        elsif sample_rate == 1.0
+          random
+        else
+          sample_rate + random * (1.0 - sample_rate)
+        end
+
+        format_random(result)
+      end
+
+      def format_random(value)
+        truncated = (value * PRECISION).floor / PRECISION
+        ("%.#{FORMAT_PRECISION}f" % truncated).to_f
+      end
+
+      def parse_value(sample_rand_value)
+        return unless sample_rand_value
+        return if sample_rand_value.is_a?(String) && sample_rand_value.empty?
+
+        sample_rand_value.is_a?(String) ? sample_rand_value.to_f : sample_rand_value
       end
     end
   end
