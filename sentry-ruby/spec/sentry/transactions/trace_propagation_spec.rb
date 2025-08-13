@@ -68,19 +68,15 @@ RSpec.describe "Trace propagation" do
 
       expect(transaction).not_to be_nil
 
-      expected_sample_rand = Sentry::Utils::SampleRand.generate_from_sampling_decision(
-        true,
-        0.25,
-        "771a43a4192642f0b136d5159a501700"
-      )
+      generator = Sentry::Utils::SampleRand.new(trace_id: "771a43a4192642f0b136d5159a501700")
+      expected_sample_rand = generator.generate_from_sampling_decision(true, 0.25)
 
       expect(expected_sample_rand).to be >= 0.0
       expect(expected_sample_rand).to be < 1.0
       expect(expected_sample_rand).to be < 0.25
 
-      expected_sample_rand2 = Sentry::Utils::SampleRand.generate_from_sampling_decision(
-        true, 0.25, "771a43a4192642f0b136d5159a501700"
-      )
+      generator2 = Sentry::Utils::SampleRand.new(trace_id: "771a43a4192642f0b136d5159a501700")
+      expected_sample_rand2 = generator2.generate_from_sampling_decision(true, 0.25)
       expect(expected_sample_rand2).to eq(expected_sample_rand)
 
       baggage = transaction.get_baggage
@@ -125,9 +121,9 @@ RSpec.describe "Trace propagation" do
 
       expect(sample_rands.uniq.length).to eq(1)
 
-      expected_sample_rand = Sentry::Utils::SampleRand.format(
-        Sentry::Utils::SampleRand.generate_from_trace_id(trace_id)
-      )
+      generator = Sentry::Utils::SampleRand.new(trace_id: trace_id)
+      value = generator.generate_from_trace_id
+      expected_sample_rand = Sentry::Utils::SampleRand.format(value)
       expect(sample_rands.first).to eq(expected_sample_rand)
     end
 
@@ -165,7 +161,8 @@ RSpec.describe "Trace propagation" do
 
       expect(transaction).not_to be_nil
 
-      expected_sample_rand = Sentry::Utils::SampleRand.generate_from_trace_id("771a43a4192642f0b136d5159a501700")
+      generator = Sentry::Utils::SampleRand.new(trace_id: "771a43a4192642f0b136d5159a501700")
+      expected_sample_rand = generator.generate_from_trace_id
 
       expect(expected_sample_rand).to be >= 0.0
       expect(expected_sample_rand).to be < 1.0

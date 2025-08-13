@@ -146,22 +146,24 @@ module Sentry
       sample_rand_str = baggage.items["sample_rand"]
       return unless sample_rand_str
 
-      sample_rand = sample_rand_str.to_f
-      Utils::SampleRand.valid?(sample_rand) ? sample_rand : nil
+      generator = Utils::SampleRand.new(trace_id: @trace_id)
+      generator.generate_from_value(sample_rand_str)
     end
 
     def generate_sample_rand
+      generator = Utils::SampleRand.new(trace_id: @trace_id)
+
       if @incoming_trace && !@parent_sampled.nil? && @baggage
         sample_rate_str = @baggage.items["sample_rate"]
         sample_rate = sample_rate_str&.to_f
 
         if sample_rate && !@parent_sampled.nil?
-          Utils::SampleRand.generate_from_sampling_decision(@parent_sampled, sample_rate, @trace_id)
+          generator.generate_from_sampling_decision(@parent_sampled, sample_rate)
         else
-          Utils::SampleRand.generate_from_trace_id(@trace_id)
+          generator.generate_from_trace_id
         end
       else
-        Utils::SampleRand.generate_from_trace_id(@trace_id)
+        generator.generate_from_trace_id
       end
     end
   end

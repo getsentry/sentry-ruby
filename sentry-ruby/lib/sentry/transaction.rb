@@ -96,7 +96,10 @@ module Sentry
 
       init_span_recorder
 
-      @sample_rand ||= Utils::SampleRand.generate_from_trace_id(@trace_id)
+      unless @sample_rand
+        generator = Utils::SampleRand.new(trace_id: @trace_id)
+        @sample_rand = generator.generate_from_trace_id
+      end
     end
 
     # @deprecated use Sentry.continue_trace instead.
@@ -152,20 +155,25 @@ module Sentry
     end
 
     def self.extract_sample_rand_from_baggage(baggage, trace_id, parent_sampled)
-      return Utils::SampleRand.generate_from_trace_id(trace_id) unless baggage&.items
+      generator = Utils::SampleRand.new(trace_id: trace_id)
+
+      unless baggage&.items
+        return generator.generate_from_trace_id
+      end
 
       sample_rand_str = baggage.items["sample_rand"]
-      if sample_rand_str && Utils::SampleRand.valid?(sample_rand_str.to_f)
-        sample_rand_str.to_f
-      else
-        sample_rate_str = baggage.items["sample_rate"]
-        sample_rate = sample_rate_str&.to_f
 
-        if sample_rate && parent_sampled != nil
-          Utils::SampleRand.generate_from_sampling_decision(parent_sampled, sample_rate, trace_id)
-        else
-          Utils::SampleRand.generate_from_trace_id(trace_id)
-        end
+      if sample_rand_str
+        return generator.generate_from_value(sample_rand_str)
+      end
+
+      sample_rate_str = baggage.items["sample_rate"]
+      sample_rate = sample_rate_str&.to_f
+
+      if sample_rate && parent_sampled != nil
+        generator.generate_from_sampling_decision(parent_sampled, sample_rate)
+      else
+        generator.generate_from_trace_id
       end
     end
 

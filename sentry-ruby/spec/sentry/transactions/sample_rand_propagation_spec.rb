@@ -34,7 +34,8 @@ RSpec.describe "Transactions and sample rand propagation" do
 
       expect(transaction.sample_rand).to eq(propagation_context.sample_rand)
 
-      expected = Sentry::Utils::SampleRand.generate_from_trace_id("771a43a4192642f0b136d5159a501700")
+      generator = Sentry::Utils::SampleRand.new(trace_id: "771a43a4192642f0b136d5159a501700")
+      expected = generator.generate_from_trace_id
 
       expect(transaction.sample_rand).to eq(expected)
       expect(propagation_context.sample_rand).to eq(expected)
@@ -90,7 +91,8 @@ RSpec.describe "Transactions and sample rand propagation" do
       transaction = Sentry.continue_trace(env, name: "test")
       propagation_context = Sentry.get_current_scope.propagation_context
 
-      expected = Sentry::Utils::SampleRand.generate_from_trace_id("771a43a4192642f0b136d5159a501700")
+      generator = Sentry::Utils::SampleRand.new(trace_id: "771a43a4192642f0b136d5159a501700")
+      expected = generator.generate_from_trace_id
 
       expect(transaction.sample_rand).to eq(expected)
       expect(propagation_context.sample_rand).to eq(expected)

@@ -658,6 +658,46 @@ RSpec.describe Sentry::Transaction do
     end
   end
 
+  describe ".extract_sample_rand_from_baggage" do
+    let(:trace_id) { "771a43a4192642f0b136d5159a501700" }
+
+    it "returns trace_id generation when baggage is nil" do
+      result = described_class.extract_sample_rand_from_baggage(nil, trace_id, true)
+
+      generator = Sentry::Utils::SampleRand.new(trace_id: trace_id)
+      expected = generator.generate_from_trace_id
+
+      expect(result).to eq(expected)
+    end
+
+    it "returns trace_id generation when baggage has no items" do
+      baggage = double("baggage", items: nil)
+      result = described_class.extract_sample_rand_from_baggage(baggage, trace_id, true)
+
+      generator = Sentry::Utils::SampleRand.new(trace_id: trace_id)
+      expected = generator.generate_from_trace_id
+
+      expect(result).to eq(expected)
+    end
+
+    it "returns trace_id generation when sample_rand is invalid" do
+      baggage = double("baggage", items: { "sample_rand" => "1.5" })
+      result = described_class.extract_sample_rand_from_baggage(baggage, trace_id, true)
+
+      generator = Sentry::Utils::SampleRand.new(trace_id: trace_id)
+      expected = generator.generate_from_trace_id
+
+      expect(result).to eq(expected)
+    end
+
+    it "returns valid sample_rand from baggage when present" do
+      baggage = double("baggage", items: { "sample_rand" => "0.5" })
+      result = described_class.extract_sample_rand_from_baggage(baggage, trace_id, true)
+
+      expect(result).to eq(0.5)
+    end
+  end
+
   describe "#set_name" do
     it "sets name and source directly" do
       subject.set_name("bar", source: :url)

@@ -103,8 +103,11 @@ RSpec.describe Sentry::PropagationContext do
         it "uses parent's explicit unsampled decision instead of falling back to trace_id generation" do
           context = described_class.new(scope, env)
 
-          expected_from_decision = Sentry::Utils::SampleRand.generate_from_sampling_decision(false, 0.5, "771a43a4192642f0b136d5159a501700")
-          expected_from_trace_id = Sentry::Utils::SampleRand.generate_from_trace_id("771a43a4192642f0b136d5159a501700")
+          generator1 = Sentry::Utils::SampleRand.new(trace_id: "771a43a4192642f0b136d5159a501700")
+          expected_from_decision = generator1.generate_from_sampling_decision(false, 0.5)
+
+          generator2 = Sentry::Utils::SampleRand.new(trace_id: "771a43a4192642f0b136d5159a501700")
+          expected_from_trace_id = generator2.generate_from_trace_id
 
           expect(context.sample_rand).to eq(expected_from_decision)
           expect(context.sample_rand).not_to eq(expected_from_trace_id)
@@ -126,7 +129,8 @@ RSpec.describe Sentry::PropagationContext do
           expect(context.sample_rand).to be < 1.0
           expect(context.incoming_trace).to be true
 
-          expected = Sentry::Utils::SampleRand.generate_from_trace_id("771a43a4192642f0b136d5159a501700")
+          generator = Sentry::Utils::SampleRand.new(trace_id: "771a43a4192642f0b136d5159a501700")
+          expected = generator.generate_from_trace_id
           expect(context.sample_rand).to eq(expected)
         end
       end
