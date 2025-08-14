@@ -117,5 +117,26 @@ RSpec.describe "Transactions and sample rand propagation" do
         expect(transaction.trace_id).to eq(request[:trace_id])
       end
     end
+
+    it "handles corrupted trace context during transaction creation" do
+      # TODO: does it make sense to even handle such case?
+      transaction = Sentry::Transaction.new(
+        hub: Sentry.get_current_hub,
+        trace_id: nil,
+        name: "corrupted_trace_test",
+        op: "test"
+      )
+
+      expect(transaction.sample_rand).to be_a(Float)
+      expect(transaction.sample_rand).to be >= 0.0
+      expect(transaction.sample_rand).to be < 1.0
+      expect(Sentry::Utils::SampleRand.valid?(transaction.sample_rand)).to be true
+
+      Sentry.start_transaction(transaction: transaction)
+      expect([true, false]).to include(transaction.sampled)
+
+      baggage = transaction.get_baggage
+      expect(baggage.items["sample_rand"]).to match(/\A\d+\.\d{6}\z/)
+    end
   end
 end
