@@ -257,22 +257,24 @@ RSpec.describe Sentry::Transaction do
         end
 
         it "uses traces_sample_rate for sampling (positive result)" do
-          allow(Random).to receive(:rand).and_return(0.4)
+          # Create transaction with sample_rand < sample_rate (0.5) to ensure sampled
+          transaction = described_class.new(op: "rack.request", hub: Sentry.get_current_hub, sample_rand: 0.4)
 
-          subject.set_initial_sample_decision(sampling_context: {})
-          expect(subject.sampled).to eq(true)
-          expect(subject.effective_sample_rate).to eq(0.5)
+          transaction.set_initial_sample_decision(sampling_context: {})
+          expect(transaction.sampled).to eq(true)
+          expect(transaction.effective_sample_rate).to eq(0.5)
           expect(string_io.string).to include(
             "[Tracing] Starting <rack.request> transaction"
           )
         end
 
         it "uses traces_sample_rate for sampling (negative result)" do
-          allow(Random).to receive(:rand).and_return(0.6)
+          # Create transaction with sample_rand > sample_rate (0.5) to ensure not sampled
+          transaction = described_class.new(op: "rack.request", hub: Sentry.get_current_hub, sample_rand: 0.6)
 
-          subject.set_initial_sample_decision(sampling_context: {})
-          expect(subject.sampled).to eq(false)
-          expect(subject.effective_sample_rate).to eq(0.5)
+          transaction.set_initial_sample_decision(sampling_context: {})
+          expect(transaction.sampled).to eq(false)
+          expect(transaction.effective_sample_rate).to eq(0.5)
           expect(string_io.string).to include(
             "[Tracing] Discarding <rack.request> transaction because it's not included in the random sample (sampling rate = 0.5)"
           )
@@ -474,11 +476,21 @@ RSpec.describe Sentry::Transaction do
       end
 
       it "submits the event with the transaction's hub by default" do
-        subject.instance_variable_set(:@hub, another_hub)
+        # Create transaction with the specific hub from the beginning
+        transaction = described_class.new(
+          op: "sql.query",
+          description: "SELECT * FROM users;",
+          status: "ok",
+          sampled: true,
+          parent_sampled: true,
+          name: "foo",
+          source: :view,
+          hub: another_hub
+        )
 
         expect(another_hub).to receive(:capture_event)
 
-        subject.finish
+        transaction.finish
       end
     end
 
@@ -511,9 +523,13 @@ RSpec.describe Sentry::Transaction do
       it "records lost event with reason backpressure" do
         expect(Sentry.get_current_client.transport).to receive(:any_rate_limited?).and_return(true)
         Sentry.backpressure_monitor.run
-        allow(Random).to receive(:rand).and_return(0.6)
 
-        subject.finish
+        # Create transaction with sample_rand that will be rejected after backpressure downsampling
+        # With traces_sample_rate = 1.0 and downsample_factor = 1, effective rate becomes 0.5
+        # So sample_rand = 0.6 > 0.5 will be rejected
+        transaction = described_class.new(hub: Sentry.get_current_hub, sample_rand: 0.6)
+
+        transaction.finish
         expect(Sentry.get_current_client.transport).to have_recorded_lost_event(:backpressure, 'transaction')
         expect(Sentry.get_current_client.transport).to have_recorded_lost_event(:backpressure, 'span')
       end
@@ -556,7 +572,8 @@ RSpec.describe Sentry::Transaction do
         name: "foo",
         source: source,
         hub: Sentry.get_current_hub,
-        baggage: incoming_baggage
+        baggage: incoming_baggage,
+        sample_rand: 0.123456  # Use a known value for predictable testing
       )
 
       transaction.set_initial_sample_decision(sampling_context: {})
@@ -574,6 +591,7 @@ RSpec.describe Sentry::Transaction do
         expect(baggage.items).to eq({
           "environment" => "development",
           "public_key" => "12345",
+          "sample_rand" => "0.123456",  # Known value from transaction creation
           "trace_id" => subject.trace_id,
           "transaction"=>"foo",
           "sample_rate" => "1.0",
@@ -630,12 +648,53 @@ RSpec.describe Sentry::Transaction do
         expect(baggage.items).to eq({
           "environment" => "development",
           "public_key" => "12345",
+          "sample_rand" => "0.123456",  # Known value from transaction creation
           "trace_id" => subject.trace_id,
           "transaction"=>"foo",
           "sample_rate" => "1.0",
           "sampled" => "true"
         })
       end
+    end
+  end
+
+  describe ".extract_sample_rand_from_baggage" do
+    let(:trace_id) { "771a43a4192642f0b136d5159a501700" }
+
+    it "returns trace_id generation when baggage is nil" do
+      result = described_class.extract_sample_rand_from_baggage(nil, trace_id, true)
+
+      generator = Sentry::Utils::SampleRand.new(trace_id: trace_id)
+      expected = generator.generate_from_trace_id
+
+      expect(result).to eq(expected)
+    end
+
+    it "returns trace_id generation when baggage has no items" do
+      baggage = double("baggage", items: nil)
+      result = described_class.extract_sample_rand_from_baggage(baggage, trace_id, true)
+
+      generator = Sentry::Utils::SampleRand.new(trace_id: trace_id)
+      expected = generator.generate_from_trace_id
+
+      expect(result).to eq(expected)
+    end
+
+    it "returns trace_id generation when sample_rand is invalid" do
+      baggage = double("baggage", items: { "sample_rand" => "1.5" })
+      result = described_class.extract_sample_rand_from_baggage(baggage, trace_id, true)
+
+      generator = Sentry::Utils::SampleRand.new(trace_id: trace_id)
+      expected = generator.generate_from_trace_id
+
+      expect(result).to eq(expected)
+    end
+
+    it "returns valid sample_rand from baggage when present" do
+      baggage = double("baggage", items: { "sample_rand" => "0.5" })
+      result = described_class.extract_sample_rand_from_baggage(baggage, trace_id, true)
+
+      expect(result).to eq(0.5)
     end
   end
 

@@ -641,4 +641,111 @@ RSpec.describe Sentry::Hub do
       expect(transport.events.count).to eq(0)
     end
   end
+
+  describe "#continue_trace" do
+    before do
+      configuration.traces_sample_rate = 1.0
+    end
+
+    context "without incoming sentry trace" do
+      let(:env) { { "HTTP_FOO" => "bar" } }
+
+      it "returns nil" do
+        expect(subject.continue_trace(env)).to be_nil
+      end
+
+      it "generates new propagation context on scope" do
+        subject.continue_trace(env)
+
+        propagation_context = subject.current_scope.propagation_context
+        expect(propagation_context.incoming_trace).to be false
+      end
+    end
+
+    context "with incoming sentry trace" do
+      context "with sample_rand in baggage" do
+        let(:env) do
+          {
+            "HTTP_SENTRY_TRACE" => "771a43a4192642f0b136d5159a501700-7c51afd529da4a2a-1",
+            "HTTP_BAGGAGE" => "sentry-trace_id=771a43a4192642f0b136d5159a501700,sentry-sample_rand=0.123456"
+          }
+        end
+
+        it "creates Transaction with sample_rand from PropagationContext" do
+          transaction = subject.continue_trace(env, name: "test_transaction")
+
+          expect(transaction).to be_a(Sentry::Transaction)
+
+          propagation_context = subject.current_scope.propagation_context
+
+          expect(propagation_context.sample_rand).to eq(0.123456)
+          expect(transaction.sample_rand).to eq(0.123456)
+        end
+
+        it "creates Transaction with correct trace properties" do
+          transaction = subject.continue_trace(env, name: "test_transaction")
+
+          expect(transaction.trace_id).to eq("771a43a4192642f0b136d5159a501700")
+          expect(transaction.parent_span_id).to eq("7c51afd529da4a2a")
+          expect(transaction.parent_sampled).to be true
+        end
+
+        it "preserves baggage in Transaction" do
+          transaction = subject.continue_trace(env, name: "test_transaction")
+
+          baggage = transaction.get_baggage
+
+          expect(baggage.items["trace_id"]).to eq("771a43a4192642f0b136d5159a501700")
+          expect(baggage.items["sample_rand"]).to eq("0.123456")
+        end
+      end
+
+      context "without sample_rand in baggage" do
+        let(:env) do
+          {
+            "HTTP_SENTRY_TRACE" => "771a43a4192642f0b136d5159a501700-7c51afd529da4a2a-1",
+            "HTTP_BAGGAGE" => "sentry-trace_id=771a43a4192642f0b136d5159a501700"
+          }
+        end
+
+        it "creates Transaction with deterministic sample_rand" do
+          transaction = subject.continue_trace(env, name: "test_transaction")
+
+          propagation_context = subject.current_scope.propagation_context
+
+          expect(transaction.sample_rand).to eq(propagation_context.sample_rand)
+
+          generator = Sentry::Utils::SampleRand.new(trace_id: "771a43a4192642f0b136d5159a501700")
+          expected = generator.generate_from_trace_id
+
+          expect(transaction.sample_rand).to eq(expected)
+        end
+      end
+
+      context "with tracing disabled" do
+        before do
+          configuration.traces_sample_rate = nil
+        end
+
+        let(:env) do
+          {
+            "HTTP_SENTRY_TRACE" => "771a43a4192642f0b136d5159a501700-7c51afd529da4a2a-1",
+            "HTTP_BAGGAGE" => "sentry-trace_id=771a43a4192642f0b136d5159a501700,sentry-sample_rand=0.123456"
+          }
+        end
+
+        it "returns nil even with valid incoming trace" do
+          expect(subject.continue_trace(env)).to be_nil
+        end
+
+        it "still generates propagation context on scope" do
+          subject.continue_trace(env)
+
+          propagation_context = subject.current_scope.propagation_context
+          expect(propagation_context.incoming_trace).to be true
+          expect(propagation_context.sample_rand).to eq(0.123456)
+        end
+      end
+    end
+  end
 end
