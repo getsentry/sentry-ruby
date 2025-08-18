@@ -38,6 +38,47 @@ module Sentry
     # @return [Float, nil]
     attr_reader :sample_rand
 
+    # Extract the trace_id, parent_span_id and parent_sampled values from a sentry-trace header.
+    #
+    # @param sentry_trace [String] the sentry-trace header value from the previous transaction.
+    # @return [Array, nil]
+    def self.extract_sentry_trace(sentry_trace)
+      match = SENTRY_TRACE_REGEXP.match(sentry_trace)
+      return if match.nil?
+
+      trace_id, parent_span_id, sampled_flag = match[1..3]
+      parent_sampled = sampled_flag.nil? ? nil : sampled_flag != "0"
+
+      [trace_id, parent_span_id, parent_sampled]
+    end
+
+    def self.extract_sample_rand_from_baggage(baggage, trace_id = nil)
+      return unless baggage&.items
+
+      sample_rand_str = baggage.items["sample_rand"]
+      return unless sample_rand_str
+
+      generator = Utils::SampleRand.new(trace_id: trace_id)
+      generator.generate_from_value(sample_rand_str)
+    end
+
+    def self.generate_sample_rand(baggage, trace_id, parent_sampled)
+      generator = Utils::SampleRand.new(trace_id: trace_id)
+
+      if baggage&.items && !parent_sampled.nil?
+        sample_rate_str = baggage.items["sample_rate"]
+        sample_rate = sample_rate_str&.to_f
+
+        if sample_rate && !parent_sampled.nil?
+          generator.generate_from_sampling_decision(parent_sampled, sample_rate)
+        else
+          generator.generate_from_trace_id
+        end
+      else
+        generator.generate_from_trace_id
+      end
+    end
+
     def initialize(scope, env = nil)
       @scope = scope
       @parent_span_id = nil
@@ -66,7 +107,8 @@ module Sentry
                 Baggage.new({})
               end
 
-            @sample_rand = extract_sample_rand_from_baggage(@baggage)
+            @sample_rand = self.class.extract_sample_rand_from_baggage(@baggage, @trace_id)
+
             @baggage.freeze!
             @incoming_trace = true
           end
@@ -75,21 +117,7 @@ module Sentry
 
       @trace_id ||= Utils.uuid
       @span_id = Utils.uuid.slice(0, 16)
-      @sample_rand ||= generate_sample_rand
-    end
-
-    # Extract the trace_id, parent_span_id and parent_sampled values from a sentry-trace header.
-    #
-    # @param sentry_trace [String] the sentry-trace header value from the previous transaction.
-    # @return [Array, nil]
-    def self.extract_sentry_trace(sentry_trace)
-      match = SENTRY_TRACE_REGEXP.match(sentry_trace)
-      return if match.nil?
-
-      trace_id, parent_span_id, sampled_flag = match[1..3]
-      parent_sampled = sampled_flag.nil? ? nil : sampled_flag != "0"
-
-      [trace_id, parent_span_id, parent_sampled]
+      @sample_rand ||= self.class.generate_sample_rand(@baggage, @trace_id, @parent_sampled)
     end
 
     # Returns the trace context that can be used to embed in an Event.
@@ -138,33 +166,6 @@ module Sentry
 
       items.compact!
       @baggage = Baggage.new(items, mutable: false)
-    end
-
-    def extract_sample_rand_from_baggage(baggage)
-      return unless baggage&.items
-
-      sample_rand_str = baggage.items["sample_rand"]
-      return unless sample_rand_str
-
-      generator = Utils::SampleRand.new(trace_id: @trace_id)
-      generator.generate_from_value(sample_rand_str)
-    end
-
-    def generate_sample_rand
-      generator = Utils::SampleRand.new(trace_id: @trace_id)
-
-      if @incoming_trace && !@parent_sampled.nil? && @baggage
-        sample_rate_str = @baggage.items["sample_rate"]
-        sample_rate = sample_rate_str&.to_f
-
-        if sample_rate && !@parent_sampled.nil?
-          generator.generate_from_sampling_decision(@parent_sampled, sample_rate)
-        else
-          generator.generate_from_trace_id
-        end
-      else
-        generator.generate_from_trace_id
-      end
     end
   end
 end
