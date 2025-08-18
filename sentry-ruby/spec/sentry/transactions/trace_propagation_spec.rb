@@ -61,29 +61,30 @@ RSpec.describe "Trace propagation" do
     end
 
     it "handles missing sample_rand gracefully" do
-      sentry_trace = "771a43a4192642f0b136d5159a501700-7c51afd529da4a2a-1"
-      baggage_header = "sentry-trace_id=771a43a4192642f0b136d5159a501700,sentry-sample_rate=0.25"
+      sentry_trace = "771a43a4192642f0b136d5159a501700-7c51afd529da4a2a"
+      baggage_header = "sentry-trace_id=#{sentry_trace},sentry-sample_rate=0.25"
 
+      expected_sample_rand = Sentry::Utils::SampleRand.new(trace_id: "771a43a4192642f0b136d5159a501700").generate_from_trace_id
       transaction = Sentry::Transaction.from_sentry_trace(sentry_trace, baggage: baggage_header)
 
-      expect(transaction).not_to be_nil
+      expect(transaction.sample_rand).to eql(expected_sample_rand)
+      expect(transaction.baggage.items["sample_rate"]).to eql("0.25")
+    end
 
-      generator = Sentry::Utils::SampleRand.new(trace_id: "771a43a4192642f0b136d5159a501700")
-      expected_sample_rand = generator.generate_from_sampling_decision(true, 0.25)
+    it "handles invalid sample_rand in baggage" do
+      sentry_trace = "771a43a4192642f0b136d5159a501700-7c51afd529da4a2a-1"
+      baggage_header = "sentry-trace_id=771a43a4192642f0b136d5159a501700,sentry-sample_rand=1.5"
 
-      expect(expected_sample_rand).to be >= 0.0
-      expect(expected_sample_rand).to be < 1.0
-      expect(expected_sample_rand).to be < 0.25
+      expected_sample_rand = Sentry::Utils::SampleRand.new(trace_id: "771a43a4192642f0b136d5159a501700").generate_from_trace_id
+      transaction = Sentry::Transaction.from_sentry_trace(sentry_trace, baggage: baggage_header)
 
-      generator2 = Sentry::Utils::SampleRand.new(trace_id: "771a43a4192642f0b136d5159a501700")
-      expected_sample_rand2 = generator2.generate_from_sampling_decision(true, 0.25)
-      expect(expected_sample_rand2).to eq(expected_sample_rand)
+      expect(transaction.sample_rand).to eq(expected_sample_rand)
 
       baggage = transaction.get_baggage
 
       expect(baggage.items).to eq({
         "trace_id" => "771a43a4192642f0b136d5159a501700",
-        "sample_rate" => "0.25"
+        "sample_rand" => "1.5"
       })
     end
 
@@ -151,28 +152,6 @@ RSpec.describe "Trace propagation" do
       transaction_baggage = parent_transaction.get_baggage
 
       expect(transaction_baggage.items["sample_rand"]).to eq("0.600000")
-    end
-
-    it "handles invalid sample_rand in baggage" do
-      sentry_trace = "771a43a4192642f0b136d5159a501700-7c51afd529da4a2a-1"
-      baggage_header = "sentry-trace_id=771a43a4192642f0b136d5159a501700,sentry-sample_rand=1.5"
-
-      transaction = Sentry::Transaction.from_sentry_trace(sentry_trace, baggage: baggage_header)
-
-      expect(transaction).not_to be_nil
-
-      generator = Sentry::Utils::SampleRand.new(trace_id: "771a43a4192642f0b136d5159a501700")
-      expected_sample_rand = generator.generate_from_trace_id
-
-      expect(expected_sample_rand).to be >= 0.0
-      expect(expected_sample_rand).to be < 1.0
-
-      baggage = transaction.get_baggage
-
-      expect(baggage.items).to eq({
-        "trace_id" => "771a43a4192642f0b136d5159a501700",
-        "sample_rand" => "1.5"
-      })
     end
   end
 end
