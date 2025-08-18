@@ -195,6 +195,63 @@ RSpec.describe Sentry::Utils::SampleRand do
     end
   end
 
+  describe "#generate_from_value with invalid string inputs" do
+    it "rejects non-numeric strings that convert to 0.0" do
+      generator = described_class.new(trace_id: "abcdef1234567890abcdef1234567890")
+
+      invalid_strings = ["invalid", "abc", "not_a_number", ""]
+
+      invalid_strings.each do |invalid_string|
+        result = generator.generate_from_value(invalid_string)
+
+        expect(result).not_to eq(0.0)
+        expect(described_class.valid?(result)).to be true
+        expect(result).to be >= 0.0
+        expect(result).to be < 1.0
+      end
+    end
+
+    it "accepts valid numeric strings" do
+      generator = described_class.new
+
+      valid_strings = ["0.5", "0.0", "0.999999", "0", "0.000000"]
+
+      valid_strings.each do |valid_string|
+        result = generator.generate_from_value(valid_string)
+        expect(result).to eq(valid_string.to_f)
+        expect(described_class.valid?(result)).to be true
+      end
+    end
+
+    it "rejects numeric strings that are out of valid range" do
+      generator = described_class.new(trace_id: "abcdef1234567890abcdef1234567890")
+
+      invalid_range_strings = ["1.0", "1.5", "-0.1", "-1.0"]
+
+      invalid_range_strings.each do |invalid_string|
+        result = generator.generate_from_value(invalid_string)
+
+        expect(result).not_to eq(invalid_string.to_f)
+        expect(described_class.valid?(result)).to be true
+        expect(result).to be >= 0.0
+        expect(result).to be < 1.0
+      end
+    end
+
+    ["0.5abc", "abc0.5", "0..5", "0.5.0", "0.5e2", ".", "-"].each do |value|
+      it "rejects #{value.inspect} and generates from trace_id" do
+        generator = described_class.new(trace_id: "abcdef1234567890abcdef1234567890")
+
+        result = generator.generate_from_value(value)
+
+        expect(result).not_to eq(value.to_f)
+        expect(described_class.valid?(result)).to be true
+        expect(result).to be >= 0.0
+        expect(result).to be < 1.0
+      end
+    end
+  end
+
   describe ".format" do
     it "formats float to 6 decimal places" do
       expect(described_class.format(0.123456789)).to eq("0.123456")

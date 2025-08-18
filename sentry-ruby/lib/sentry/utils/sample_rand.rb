@@ -88,10 +88,9 @@ module Sentry
       end
 
       def parse_value(sample_rand_value)
-        return unless sample_rand_value
-        return if sample_rand_value.is_a?(String) && sample_rand_value.empty?
-
-        sample_rand_value.is_a?(String) ? sample_rand_value.to_f : sample_rand_value
+        Float(sample_rand_value)
+      rescue ArgumentError
+        nil
       end
     end
   end
