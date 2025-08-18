@@ -41,28 +41,26 @@ RSpec.describe "Transactions and sample rand propagation" do
       expect(propagation_context.sample_rand).to eq(expected)
     end
 
-    it "properly handles sampling decisions" do
-      test_cases = [
-        { sample_rand: 0.1, sample_rate: 0.5, should_sample: true },
-        { sample_rand: 0.7, sample_rate: 0.5, should_sample: false },
-        { sample_rand: 0.5, sample_rate: 0.5, should_sample: false },
-        { sample_rand: 0.499999, sample_rate: 0.5, should_sample: true }
-      ]
+    [
+      { sample_rand: 0.1, sample_rate: 0.5, should_sample: true },
+      { sample_rand: 0.7, sample_rate: 0.5, should_sample: false },
+      { sample_rand: 0.5, sample_rate: 0.5, should_sample: false },
+      { sample_rand: 0.499999, sample_rate: 0.5, should_sample: true }
+  ].each do |test_case|
+    it "with #{test_case.inspect} - properly handles sampling decisions" do
+      Sentry.configuration.traces_sample_rate = test_case[:sample_rate]
 
-      test_cases.each do |test_case|
-        Sentry.configuration.traces_sample_rate = test_case[:sample_rate]
+      env = {
+        "HTTP_SENTRY_TRACE" => "771a43a4192642f0b136d5159a501700-7c51afd529da4a2a-",
+        "HTTP_BAGGAGE" => "sentry-trace_id=771a43a4192642f0b136d5159a501700,sentry-sample_rand=#{test_case[:sample_rand]}"
+      }
 
-        env = {
-          "HTTP_SENTRY_TRACE" => "771a43a4192642f0b136d5159a501700-7c51afd529da4a2a-",
-          "HTTP_BAGGAGE" => "sentry-trace_id=771a43a4192642f0b136d5159a501700,sentry-sample_rand=#{test_case[:sample_rand]}"
-        }
+      transaction = Sentry.continue_trace(env, name: "test")
+      Sentry.start_transaction(transaction: transaction)
 
-        transaction = Sentry.continue_trace(env, name: "test")
-        Sentry.start_transaction(transaction: transaction)
-
-        expect(transaction.sampled).to eq(test_case[:should_sample])
-      end
+      expect(transaction.sampled).to eq(test_case[:should_sample])
     end
+  end
 
     it "ensures baggage propagation includes correct sample_rand" do
       env = {
