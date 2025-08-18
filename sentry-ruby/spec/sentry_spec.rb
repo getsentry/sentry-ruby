@@ -1014,17 +1014,15 @@ RSpec.describe Sentry do
         end
 
         context "with different sample_rand values" do
-          it "correctly propagates various sample_rand values" do
-            test_values = [0.000001, 0.123456, 0.500000, 0.999999]
-
-            test_values.each do |sample_rand_value|
+          [0.000001, 0.123456, 0.500000, 0.999999].each do |sample_rand|
+            it "correctly propagates sentry-sample_rand=#{sample_rand}" do
               env = {
                 "HTTP_SENTRY_TRACE" => "771a43a4192642f0b136d5159a501700-7c51afd529da4a2a-1",
-                "HTTP_BAGGAGE" => "sentry-trace_id=771a43a4192642f0b136d5159a501700,sentry-sample_rand=#{sample_rand_value}"
+                "HTTP_BAGGAGE" => "sentry-trace_id=771a43a4192642f0b136d5159a501700,sentry-sample_rand=#{sample_rand}"
               }
 
               transaction = described_class.continue_trace(env, name: "test")
-              expect(transaction.sample_rand).to eq(sample_rand_value)
+              expect(transaction.sample_rand).to eq(sample_rand)
             end
           end
         end
