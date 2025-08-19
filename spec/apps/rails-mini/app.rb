@@ -17,6 +17,14 @@ class RailsMiniApp < Rails::Application
   config.api_only = true
   config.force_ssl = false
 
+  def debug_log_path
+    @log_path ||= begin
+      path = Pathname(__dir__).join("../../../log")
+      FileUtils.mkdir_p(path) unless path.exist?
+      path.realpath
+    end
+  end
+
   initializer :configure_sentry do
     Sentry.init do |config|
       config.dsn = ENV["SENTRY_DSN"]
@@ -28,9 +36,8 @@ class RailsMiniApp < Rails::Application
       config.debug = true
       config.include_local_variables = true
       config.release = "sentry-ruby-rails-mini-#{Time.now.utc}"
-
       config.transport.transport_class = Sentry::DebugTransport
-      config.sdk_debug_transport_log_file = "/workspace/sentry/log/sentry_debug_events.log"
+      config.sdk_debug_transport_log_file = debug_log_path.join("sentry_debug_events.log")
       config.background_worker_threads = 0
     end
   end
@@ -57,11 +64,22 @@ class EventsController < ActionController::Base
   before_action :set_cors_headers
 
   def health
+    sentry_initialized = Sentry.initialized?
+    sentry_dsn = ENV["SENTRY_DSN"]
+
     render json: {
       status: "ok",
       timestamp: Time.now.utc.iso8601,
-      sentry_initialized: Sentry.initialized?,
-      log_file_writable: check_log_file_writable
+      sentry_initialized: sentry_initialized,
+      sentry_dsn_configured: !sentry_dsn.nil? && !sentry_dsn.empty?,
+      sentry_dsn: sentry_dsn,
+      sentry_environment: sentry_initialized ? Sentry.configuration.environment : nil,
+      debug_info: {
+        sentry_loaded: defined?(Sentry),
+        configuration_present: Sentry.respond_to?(:configuration),
+        dsn_configured: Sentry.respond_to?(:configuration) && Sentry.configuration&.dsn.present?,
+        env_dsn_value: sentry_dsn
+      }
     }
   end
 
@@ -71,14 +89,6 @@ class EventsController < ActionController::Base
   end
 
   private
-
-  def check_log_file_writable
-    log_file_path = "/workspace/sentry/log/sentry_debug_events.log"
-    File.writable?(File.dirname(log_file_path)) &&
-      (!File.exist?(log_file_path) || File.writable?(log_file_path))
-  rescue
-    false
-  end
 
   def set_cors_headers
     response.headers['Access-Control-Allow-Origin'] = '*'
@@ -94,7 +104,6 @@ RailsMiniApp.routes.draw do
   get '/error', to: 'error#error'
   get '/trace_headers', to: 'events#trace_headers'
 
-  # Add CORS headers for cross-origin requests from JS app
   match '*path', to: proc { |env|
     [200, {
       'Access-Control-Allow-Origin' => '*',

@@ -16,7 +16,7 @@ module Test
           }
 
           event_data["items"].each do |item|
-            if item["headers"]["type"] == "event"
+            if ["event", "transaction"].include?(item["headers"]["type"])
               extracted_events << item["payload"]
             end
           end
