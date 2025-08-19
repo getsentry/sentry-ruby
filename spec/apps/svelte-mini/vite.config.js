@@ -1,20 +1,20 @@
-import { defineConfig } from 'vite'
-import { svelte } from '@sveltejs/vite-plugin-svelte'
+import { defineConfig } from "vite"
+import { svelte } from "@sveltejs/vite-plugin-svelte"
 
 export default defineConfig({
   plugins: [
     svelte(),
     {
-      name: 'health-check',
+      name: "health-check",
       configureServer(server) {
-        server.middlewares.use('/health', (req, res, next) => {
-          if (req.method === 'GET') {
-            res.setHeader('Content-Type', 'application/json')
-            res.setHeader('Access-Control-Allow-Origin', '*')
+        server.middlewares.use("/health", (req, res, next) => {
+          if (req.method === "GET") {
+            res.setHeader("Content-Type", "application/json")
+            res.setHeader("Access-Control-Allow-Origin", "*")
             res.end(JSON.stringify({
-              status: 'ok',
+              status: "ok",
               timestamp: new Date().toISOString(),
-              service: 'svelte-mini'
+              service: "svelte-mini"
             }))
           } else {
             next()
@@ -24,10 +24,11 @@ export default defineConfig({
     }
   ],
   server: {
-    port: parseInt(process.env.SENTRY_E2E_SVELTE_APP_PORT || '4001'),
-    host: '0.0.0.0',
+    port: parseInt(process.env.SENTRY_E2E_SVELTE_APP_PORT),
+    host: "0.0.0.0",
   },
   define: {
-    __RAILS_API_URL__: JSON.stringify(process.env.SENTRY_E2E_RAILS_APP_URL || 'http://localhost:4000')
-  }
+    SENTRY_E2E_RAILS_APP_URL: JSON.stringify(process.env.SENTRY_E2E_RAILS_APP_URL)
+  },
+  envPrefix: ["SENTRY_"]
 })

@@ -1,5 +1,6 @@
 import * as Sentry from "@sentry/svelte";
-import App from './App.svelte'
+import { mount } from "svelte";
+import App from "./App.svelte"
 
 Sentry.init({
   dsn: import.meta.env.SENTRY_DSN || "https://user:secret@sentry.localdomain/42",
@@ -11,8 +12,8 @@ Sentry.init({
   tracePropagationTargets: ["localhost:4000"],
 });
 
-const app = new App({
-  target: document.getElementById('app'),
+const app = mount(App, {
+  target: document.getElementById("app"),
 })
 
 export default app
