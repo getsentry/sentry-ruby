@@ -20,6 +20,12 @@ if RUBY_VERSION >= "3.5"
   gem "cgi"
 end
 
+if RUBY_VERSION >= "3.4"
+  gem "drb"
+  gem "mutex_m"
+  gem "benchmark"
+end
+
 # For RSpec
 gem "rspec", "~> 3.0"
 gem "rspec-retry"

@@ -47,6 +47,7 @@ elsif rails_version >= Gem::Version.new("6.1.0")
     gem "sqlite3", "~> 1.6.9", platform: :ruby
   end
 else
+  gem "psych", "~> 3.0.0"
   gem "rspec-rails", "~> 4.0"
   gem "psych", "~> 3.0.0"
 
