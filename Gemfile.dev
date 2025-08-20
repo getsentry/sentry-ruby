@@ -20,12 +20,30 @@ if RUBY_VERSION >= "3.5"
   gem "cgi"
 end
 
+if RUBY_VERSION >= "3.4"
+  gem "drb"
+  gem "mutex_m"
+  gem "benchmark"
+  gem "base64"
+  gem "ostruct"
+end
+
 # For RSpec
 gem "rspec", "~> 3.0"
 gem "rspec-retry"
+
+# Coverage
 gem "simplecov"
-gem "simplecov-cobertura", "~> 1.4"
-gem "rexml"
+
+# Do not change it without checking that `CI=true COVERAGE=true bundle exec rake` passes
+# in all projects
+if RUBY_VERSION >= "2.5.0"
+  gem "rexml", "3.4.1"
+  gem "simplecov-cobertura", "~> 3.0"
+else
+  gem "rexml", "3.2.5"
+  gem "simplecov-cobertura", "~> 1.4.0"
+end
 
 if ruby_version >= Gem::Version.new("3.4")
   gem "ostruct"
