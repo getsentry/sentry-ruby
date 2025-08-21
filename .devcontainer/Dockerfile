@@ -20,6 +20,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
   libffi-dev \
   libgdbm-dev \
   sqlite3 \
+  libsqlite3-dev \
   nodejs \
   npm \
   chromium \
