@@ -16,8 +16,18 @@ end
 
 ruby_version = Gem::Version.new(RUBY_VERSION)
 
-rails_version = ENV["RAILS_VERSION"]
-rails_version = "8.0.0" if rails_version.nil?
+rails_version = ENV.fetch("RAILS_VERSION") do
+  if ruby_version >= Gem::Version.new("3.2")
+    "8.0"
+  elsif ruby_version >= Gem::Version.new("3.1")
+    "7.2"
+  elsif ruby_version >= Gem::Version.new("2.7")
+    "7.1"
+  elsif ruby_version >= Gem::Version.new("2.4")
+    "5.2"
+  end
+end
+
 rails_version = Gem::Version.new(rails_version)
 
 gem "rails", "~> #{rails_version}"
