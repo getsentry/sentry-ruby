@@ -7,8 +7,8 @@ cd /workspace/sentry
 sudo mkdir -p vendor/gems
 sudo chown -R sentry:sentry vendor/gems
 
-git config --global --add safe.directory /workspace/sentry
-git config --global --add safe.directory /workspace/sentry/vendor/gems/*
+git config --global safe.directory /workspace/sentry
+git config --global safe.directory /workspace/sentry/vendor/gems/*
 
 sudo chown -R sentry:sentry .
 
