@@ -31,6 +31,10 @@ module Test
       end
     end
 
+    def clear_logged_events
+      Sentry.get_current_client.transport.clear
+    end
+
     def logged_envelopes
       Sentry.get_current_client.transport.logged_envelopes
     end
