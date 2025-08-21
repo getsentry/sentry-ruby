@@ -457,15 +457,9 @@ RSpec.describe Sentry do
 
         expect(transaction.sampled).to eq(false)
 
-        transaction = Sentry.continue_trace(
-          {
-            "sentry-trace" => not_sampled_trace,
-            "baggage" => "sentry-sample_rand=0.4"
-          },
-          op: "rack.request",
-          name: "/payment"
+        transaction = described_class.start_transaction(
+          op: "rack.request", name: "/payment", sample_rand: 0.4
         )
-        described_class.start_transaction(transaction: transaction)
 
         expect(transaction.sampled).to eq(true)
       end
