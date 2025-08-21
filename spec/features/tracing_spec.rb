@@ -3,7 +3,7 @@
 RSpec.describe "Tracing", type: :e2e do
   def expect_valid_sample_rand(sample_rand)
     expect(sample_rand).not_to be_nil
-    expect(sample_rand).to match(/^\d+\.\d{1,6}$/)
+    expect(sample_rand).to match(/^\d+\.\d+$/)
     sample_rand_value = sample_rand.to_f
     expect(sample_rand_value).to be >= 0.0
     expect(sample_rand_value).to be < 1.0
@@ -45,6 +45,7 @@ RSpec.describe "Tracing", type: :e2e do
 
     transactions_with_headers
   end
+
   it "validates basic tracing functionality" do
     visit "/error"
 
@@ -105,8 +106,35 @@ RSpec.describe "Tracing", type: :e2e do
         expect_valid_sample_rand(dsc["sample_rand"])
 
         expect(dsc["sampled"]).to eq("true")
-        expect(dsc["environment"]).to eq("development")
-        expect(dsc["public_key"]).to eq("user")
+        expect(dsc["environment"]).to eql("production")
+        expect(dsc["public_key"]).to eql("user")
+      end
+
+      transactions_with_headers = get_http_server_transactions_with_headers
+
+      transactions_with_headers.each do |transaction|
+        headers = transaction.dig("request", "headers")
+
+        expect(headers).not_to be_nil
+
+        sentry_trace = headers["Sentry-Trace"] || headers["sentry-trace"]
+        expect(sentry_trace).not_to be_nil
+        expect(sentry_trace).to match(/^[a-f0-9]{32}-[a-f0-9]{16}(-[01])?$/)
+
+        baggage = headers["Baggage"] || headers["baggage"]
+        expect(baggage).not_to be_nil
+        expect(baggage).to include("sentry-sample_rand=")
+
+        sample_rand_match = baggage.match(/sentry-sample_rand=([0-9.]+)/)
+        expect(sample_rand_match).not_to be_nil
+        sample_rand_value = sample_rand_match[1]
+        expect_valid_sample_rand(sample_rand_value)
+
+        trace_context = transaction.dig("contexts", "trace")
+        expect(trace_context).not_to be_nil
+        expect(trace_context["trace_id"]).to match(/^[a-f0-9]{32}$/)
+        expect(trace_context["span_id"]).to match(/^[a-f0-9]{16}$/)
+        expect(trace_context["op"]).to eq("http.server")
       end
     end
 
@@ -123,17 +151,57 @@ RSpec.describe "Tracing", type: :e2e do
       expect(page).to have_content("Error:")
 
       dsc_envelopes = expect_dsc_in_envelope_headers
-      expect(dsc_envelopes.length).to be >= 2
+      expect(dsc_envelopes.length).to be >= 3
 
       trace_ids = dsc_envelopes.map { |dsc| dsc["trace_id"] }.uniq
       sample_rands = dsc_envelopes.map { |dsc| dsc["sample_rand"] }.uniq
 
-      expect(trace_ids.length).to be >= 2
-      expect(sample_rands.length).to be >= 2
+      expect(trace_ids.length).to be(1)
+      expect(sample_rands.length).to be(1)
 
       sample_rands.each do |sample_rand|
         expect_valid_sample_rand(sample_rand)
       end
+
+      transactions_with_headers = get_http_server_transactions_with_headers
+
+      expect(transactions_with_headers.length).to eql(3)
+
+      transactions_with_headers.each do |transaction|
+        headers = transaction.dig("request", "headers")
+        expect(headers).not_to be_nil
+
+        sentry_trace = headers["Sentry-Trace"] || headers["sentry-trace"]
+        expect(sentry_trace).not_to be_nil
+        expect(sentry_trace).to match(/^[a-f0-9]{32}-[a-f0-9]{16}(-[01])?$/)
+
+        baggage = headers["Baggage"] || headers["baggage"]
+        expect(baggage).not_to be_nil
+        expect(baggage).to include("sentry-sample_rand=")
+
+        sample_rand_match = baggage.match(/sentry-sample_rand=([0-9.]+)/)
+        expect(sample_rand_match).not_to be_nil
+        sample_rand_value = sample_rand_match[1]
+        expect_valid_sample_rand(sample_rand_value)
+
+        trace_context = transaction.dig("contexts", "trace")
+        expect(trace_context).not_to be_nil
+        expect(trace_context["trace_id"]).to match(/^[a-f0-9]{32}$/)
+        expect(trace_context["span_id"]).to match(/^[a-f0-9]{16}$/)
+        expect(trace_context["op"]).to eq("http.server")
+      end
+
+      transaction_trace_ids = transactions_with_headers.map { |t| t.dig("contexts", "trace", "trace_id") }.uniq
+      expect(transaction_trace_ids.length).to be(1)
+
+      transaction_sample_rands = transactions_with_headers.map do |transaction|
+        headers = transaction.dig("request", "headers")
+        baggage = headers["Baggage"] || headers["baggage"]
+        sample_rand_match = baggage.match(/sentry-sample_rand=([0-9.]+)/)
+        sample_rand_match[1] if sample_rand_match
+      end.compact.uniq
+
+      expect(transaction_sample_rands.length).to be(1)
     end
   end
 end
