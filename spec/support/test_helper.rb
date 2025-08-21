@@ -16,7 +16,7 @@ module Test
           }
 
           event_data["items"].each do |item|
-            if item["headers"]["type"] == "event"
+            if ["event", "transaction"].include?(item["headers"]["type"])
               extracted_events << item["payload"]
             end
           end
@@ -29,6 +29,10 @@ module Test
           envelope_count: envelopes.length
         }
       end
+    end
+
+    def clear_logged_events
+      Sentry.get_current_client.transport.clear
     end
 
     def logged_envelopes

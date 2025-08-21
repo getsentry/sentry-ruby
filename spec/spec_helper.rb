@@ -38,5 +38,11 @@ RSpec.configure do |config|
     Test::Helper.perform_basic_setup do |config|
       config.transport.transport_class = Sentry::DebugTransport
     end
+
+    Test::Helper.clear_logged_events
+  end
+
+  config.after(:each) do
+    Test::Helper.clear_logged_events
   end
 end

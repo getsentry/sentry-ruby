@@ -457,9 +457,9 @@ RSpec.describe Sentry do
 
         expect(transaction.sampled).to eq(false)
 
-        allow(Random).to receive(:rand).and_return(0.4)
-        transaction = Sentry.continue_trace({ "sentry-trace" => not_sampled_trace }, op: "rack.request", name: "/payment")
-        described_class.start_transaction(transaction: transaction)
+        transaction = described_class.start_transaction(
+          op: "rack.request", name: "/payment", sample_rand: 0.4
+        )
 
         expect(transaction.sampled).to eq(true)
       end
@@ -470,42 +470,50 @@ RSpec.describe Sentry do
       end
 
       it "gives /payment 0.5 of rate" do
-        allow(Random).to receive(:rand).and_return(0.4)
-        transaction = described_class.start_transaction(op: "rack.request", name: "/payment")
+        transaction = Sentry::Transaction.new(hub: Sentry.get_current_hub, op: "rack.request", name: "/payment", sample_rand: 0.4)
+
+        described_class.start_transaction(transaction: transaction)
         expect(transaction.sampled).to eq(true)
 
-        allow(Random).to receive(:rand).and_return(0.6)
-        transaction = described_class.start_transaction(op: "rack.request", name: "/payment")
+        transaction = Sentry::Transaction.new(hub: Sentry.get_current_hub, op: "rack.request", name: "/payment", sample_rand: 0.6)
+
+        described_class.start_transaction(transaction: transaction)
         expect(transaction.sampled).to eq(false)
       end
 
       it "gives /api 0.2 of rate" do
-        allow(Random).to receive(:rand).and_return(0.1)
-        transaction = described_class.start_transaction(op: "rack.request", name: "/api")
+        transaction = Sentry::Transaction.new(hub: Sentry.get_current_hub, op: "rack.request", name: "/api", sample_rand: 0.1)
+
+        described_class.start_transaction(transaction: transaction)
         expect(transaction.sampled).to eq(true)
 
-        allow(Random).to receive(:rand).and_return(0.3)
-        transaction = described_class.start_transaction(op: "rack.request", name: "/api")
+        transaction = Sentry::Transaction.new(hub: Sentry.get_current_hub, op: "rack.request", name: "/api", sample_rand: 0.3)
+
+        described_class.start_transaction(transaction: transaction)
         expect(transaction.sampled).to eq(false)
       end
 
       it "gives other paths 0.1 of rate" do
-        allow(Random).to receive(:rand).and_return(0.05)
-        transaction = described_class.start_transaction(op: "rack.request", name: "/orders")
+        transaction = Sentry::Transaction.new(hub: Sentry.get_current_hub, op: "rack.request", name: "/orders", sample_rand: 0.05)
+
+        described_class.start_transaction(transaction: transaction)
         expect(transaction.sampled).to eq(true)
 
-        allow(Random).to receive(:rand).and_return(0.2)
-        transaction = described_class.start_transaction(op: "rack.request", name: "/orders")
+        transaction = Sentry::Transaction.new(hub: Sentry.get_current_hub, op: "rack.request", name: "/orders", sample_rand: 0.2)
+
+        described_class.start_transaction(transaction: transaction)
         expect(transaction.sampled).to eq(false)
       end
 
       it "gives sidekiq ops 0.01 of rate" do
-        allow(Random).to receive(:rand).and_return(0.005)
-        transaction = described_class.start_transaction(op: "sidekiq")
+        transaction = Sentry::Transaction.new(hub: Sentry.get_current_hub, op: "sidekiq", sample_rand: 0.005)
+
+        described_class.start_transaction(transaction: transaction)
         expect(transaction.sampled).to eq(true)
 
-        allow(Random).to receive(:rand).and_return(0.02)
-        transaction = described_class.start_transaction(op: "sidekiq")
+        transaction = Sentry::Transaction.new(hub: Sentry.get_current_hub, op: "sidekiq", sample_rand: 0.02)
+
+        described_class.start_transaction(transaction: transaction)
         expect(transaction.sampled).to eq(false)
       end
     end
@@ -860,7 +868,7 @@ RSpec.describe Sentry do
       baggage = described_class.get_baggage
       propagation_context = described_class.get_current_scope.propagation_context
 
-      expect(baggage).to eq("sentry-trace_id=#{propagation_context.trace_id},sentry-environment=development,sentry-public_key=12345")
+      expect(baggage).to eq("sentry-trace_id=#{propagation_context.trace_id},sentry-sample_rand=#{Sentry::Utils::SampleRand.format(propagation_context.sample_rand)},sentry-environment=development,sentry-public_key=12345")
     end
 
     it "returns a valid baggage header from scope current span" do
@@ -870,7 +878,7 @@ RSpec.describe Sentry do
 
       baggage = described_class.get_baggage
 
-      expect(baggage).to eq("sentry-trace_id=#{span.trace_id},sentry-sampled=true,sentry-environment=development,sentry-public_key=12345")
+      expect(baggage).to eq("sentry-trace_id=#{span.trace_id},sentry-sample_rand=#{Sentry::Utils::SampleRand.format(transaction.sample_rand)},sentry-sampled=true,sentry-environment=development,sentry-public_key=12345")
     end
   end
 
@@ -952,6 +960,133 @@ RSpec.describe Sentry do
         expect(transaction.parent_span_id).to eq(incoming_prop_context.span_id)
         expect(transaction.baggage.items).to eq(incoming_prop_context.get_baggage.items)
         expect(transaction.baggage.mutable).to eq(false)
+      end
+
+      describe "sample_rand propagation" do
+        before do
+          Sentry.configuration.traces_sample_rate = 1.0
+        end
+
+        context "with sample_rand in incoming baggage" do
+          let(:env) do
+            {
+              "HTTP_SENTRY_TRACE" => "771a43a4192642f0b136d5159a501700-7c51afd529da4a2a-1",
+              "HTTP_BAGGAGE" => "sentry-trace_id=771a43a4192642f0b136d5159a501700,sentry-sample_rand=0.123456"
+            }
+          end
+
+          it "propagates sample_rand from PropagationContext to Transaction" do
+            # This is the critical test that would have caught the bug
+            transaction = described_class.continue_trace(env, name: "test")
+
+            # Get the PropagationContext that was created
+            propagation_context = Sentry.get_current_scope.propagation_context
+
+            # Verify PropagationContext extracted sample_rand from baggage
+            expect(propagation_context.sample_rand).to eq(0.123456)
+
+            # Verify Transaction received the same sample_rand (this was the bug)
+            expect(transaction.sample_rand).to eq(0.123456)
+          end
+
+          it "uses propagated sample_rand for sampling decision" do
+            # Test with sample_rand that should result in sampling
+            transaction = described_class.continue_trace(env, name: "test")
+            described_class.start_transaction(transaction: transaction)
+
+            # With sample_rand=0.123456 and traces_sample_rate=1.0, should be sampled
+            expect(transaction.sampled).to be true
+          end
+
+          it "maintains sample_rand consistency across the trace" do
+            transaction = described_class.continue_trace(env, name: "test")
+
+            # The sample_rand should be included in outgoing baggage
+            baggage = transaction.get_baggage
+            expect(baggage.items["sample_rand"]).to eq("0.123456")
+          end
+        end
+
+        context "with different sample_rand values" do
+          [0.000001, 0.123456, 0.500000, 0.999999].each do |sample_rand|
+            it "correctly propagates sentry-sample_rand=#{sample_rand}" do
+              env = {
+                "HTTP_SENTRY_TRACE" => "771a43a4192642f0b136d5159a501700-7c51afd529da4a2a-1",
+                "HTTP_BAGGAGE" => "sentry-trace_id=771a43a4192642f0b136d5159a501700,sentry-sample_rand=#{sample_rand}"
+              }
+
+              transaction = described_class.continue_trace(env, name: "test")
+              expect(transaction.sample_rand).to eq(sample_rand)
+            end
+          end
+        end
+
+        context "without sample_rand in incoming baggage" do
+          let(:env) do
+            {
+              "HTTP_SENTRY_TRACE" => "771a43a4192642f0b136d5159a501700-7c51afd529da4a2a-1",
+              "HTTP_BAGGAGE" => "sentry-trace_id=771a43a4192642f0b136d5159a501700"
+            }
+          end
+
+          it "propagates deterministic sample_rand from PropagationContext to Transaction" do
+            transaction = described_class.continue_trace(env, name: "test")
+
+            # Get the PropagationContext that was created
+            propagation_context = Sentry.get_current_scope.propagation_context
+
+            # Both should have the same deterministic sample_rand
+            expect(transaction.sample_rand).to eq(propagation_context.sample_rand)
+
+            # Should be deterministic based on trace_id
+            generator = Sentry::Utils::SampleRand.new(trace_id: "771a43a4192642f0b136d5159a501700")
+            expected = generator.generate_from_trace_id
+            expect(transaction.sample_rand).to eq(expected)
+          end
+        end
+
+        context "with invalid sample_rand in baggage" do
+          let(:env) do
+            {
+              "HTTP_SENTRY_TRACE" => "771a43a4192642f0b136d5159a501700-7c51afd529da4a2a-1",
+              "HTTP_BAGGAGE" => "sentry-trace_id=771a43a4192642f0b136d5159a501700,sentry-sample_rand=1.5"
+            }
+          end
+
+          it "falls back to deterministic sample_rand generation" do
+            transaction = described_class.continue_trace(env, name: "test")
+
+            # Should fall back to deterministic generation
+            generator = Sentry::Utils::SampleRand.new(trace_id: "771a43a4192642f0b136d5159a501700")
+            expected = generator.generate_from_trace_id
+            expect(transaction.sample_rand).to eq(expected)
+          end
+        end
+
+        context "sampling decision consistency" do
+          it "makes consistent sampling decisions based on sample_rand" do
+            # Test case where sample_rand < sample_rate (should be sampled)
+            env_sampled = {
+              "HTTP_SENTRY_TRACE" => "771a43a4192642f0b136d5159a501700-7c51afd529da4a2a-",
+              "HTTP_BAGGAGE" => "sentry-trace_id=771a43a4192642f0b136d5159a501700,sentry-sample_rand=0.3"
+            }
+
+            Sentry.configuration.traces_sample_rate = 0.5
+            transaction_sampled = described_class.continue_trace(env_sampled, name: "test")
+            described_class.start_transaction(transaction: transaction_sampled)
+            expect(transaction_sampled.sampled).to be true
+
+            # Test case where sample_rand >= sample_rate (should not be sampled)
+            env_not_sampled = {
+              "HTTP_SENTRY_TRACE" => "771a43a4192642f0b136d5159a501700-7c51afd529da4a2a-",
+              "HTTP_BAGGAGE" => "sentry-trace_id=771a43a4192642f0b136d5159a501700,sentry-sample_rand=0.7"
+            }
+
+            transaction_not_sampled = described_class.continue_trace(env_not_sampled, name: "test")
+            described_class.start_transaction(transaction: transaction_not_sampled)
+            expect(transaction_not_sampled.sampled).to be false
+          end
+        end
       end
     end
   end

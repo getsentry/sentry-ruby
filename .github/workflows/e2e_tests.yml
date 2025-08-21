@@ -27,7 +27,7 @@ jobs:
 
     env:
       DOCKER_IMAGE: "ghcr.io/getsentry/sentry-ruby-devcontainer-3.4"
-      DOCKER_TAG: "c7f73e278f0f8ad6035d578685e7bfb34be5eb4c"
+      DOCKER_TAG: "d54d0ea1ee3e0d49f2b86d2689278447ccbbe0f9"
 
     steps:
       - name: Checkout code
@@ -50,9 +50,9 @@ jobs:
         uses: actions/cache@v3
         with:
           path: spec/apps/svelte-mini/node_modules
-          key: ${{ runner.os }}-node-modules-${{ hashFiles('spec/apps/svelte-mini/package-lock.json') }}
+          key: ${{ runner.os }}-${{ runner.arch }}-node-modules-${{ hashFiles('spec/apps/svelte-mini/package-lock.json') }}
           restore-keys: |
-            ${{ runner.os }}-node-modules-
+            ${{ runner.os }}-${{ runner.arch }}-node-modules-
 
       - name: Set up test container
         run: |

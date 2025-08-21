@@ -2,6 +2,7 @@
 
 require "sentry/baggage"
 require "sentry/profiler"
+require "sentry/utils/sample_rand"
 require "sentry/propagation_context"
 
 module Sentry
@@ -57,12 +58,17 @@ module Sentry
     # @return [Profiler]
     attr_reader :profiler
 
+    # Sample rand value generated from trace_id
+    # @return [String]
+    attr_reader :sample_rand
+
     def initialize(
       hub:,
       name: nil,
       source: :custom,
       parent_sampled: nil,
       baggage: nil,
+      sample_rand: nil,
       **options
     )
       super(transaction: self, **options)
@@ -82,12 +88,18 @@ module Sentry
       @effective_sample_rate = nil
       @contexts = {}
       @measurements = {}
+      @sample_rand = sample_rand
 
       unless @hub.profiler_running?
         @profiler = @configuration.profiler_class.new(@configuration)
       end
 
       init_span_recorder
+
+      unless @sample_rand
+        generator = Utils::SampleRand.new(trace_id: @trace_id)
+        @sample_rand = generator.generate_from_trace_id
+      end
     end
 
     # @deprecated use Sentry.continue_trace instead.
@@ -123,12 +135,15 @@ module Sentry
 
       baggage.freeze!
 
+      sample_rand = extract_sample_rand_from_baggage(baggage, trace_id, parent_sampled)
+
       new(
         trace_id: trace_id,
         parent_span_id: parent_span_id,
         parent_sampled: parent_sampled,
         hub: hub,
         baggage: baggage,
+        sample_rand: sample_rand,
         **options
       )
     end
@@ -137,6 +152,11 @@ module Sentry
     # @return [Array, nil]
     def self.extract_sentry_trace(sentry_trace)
       PropagationContext.extract_sentry_trace(sentry_trace)
+    end
+
+    def self.extract_sample_rand_from_baggage(baggage, trace_id, parent_sampled)
+      PropagationContext.extract_sample_rand_from_baggage(baggage, trace_id) ||
+        PropagationContext.generate_sample_rand(baggage, trace_id, parent_sampled)
     end
 
     # @return [Hash]
@@ -151,6 +171,13 @@ module Sentry
       )
 
       hash
+    end
+
+    def parent_sample_rate
+      return unless @baggage&.items
+
+      sample_rate_str = @baggage.items["sample_rate"]
+      sample_rate_str&.to_f
     end
 
     # @return [Transaction]
@@ -225,7 +252,7 @@ module Sentry
           @effective_sample_rate /= 2**factor
         end
 
-        @sampled = Random.rand < @effective_sample_rate
+        @sampled = @sample_rand < @effective_sample_rate
       end
 
       if @sampled
@@ -331,6 +358,7 @@ module Sentry
       items = {
         "trace_id" => trace_id,
         "sample_rate" => effective_sample_rate&.to_s,
+        "sample_rand" => Utils::SampleRand.format(@sample_rand),
         "sampled" => sampled&.to_s,
         "environment" => @environment,
         "release" => @release,

@@ -1,5 +1,9 @@
 ## Unreleased
 
+### Feature
+
+- Propagated sampling rates as specified in [Traces](https://develop.sentry.dev/sdk/telemetry/traces/#propagated-random-value) docs ([#2671](https://github.com/getsentry/sentry-ruby/pull/2671))
+
 ### Internal
 
 - Factor out do_request in HTTP transport ([#2662](https://github.com/getsentry/sentry-ruby/pull/2662))

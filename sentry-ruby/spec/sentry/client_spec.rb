@@ -273,6 +273,7 @@ RSpec.describe Sentry::Client do
       expect(event.dynamic_sampling_context).to eq({
         "environment" => "development",
         "public_key" => "12345",
+        "sample_rand" => Sentry::Utils::SampleRand.format(transaction.sample_rand),
         "sample_rate" => "1.0",
         "sampled" => "true",
         "transaction" => "test transaction",

@@ -1,14 +1,14 @@
 <script>
   let loading = false;
-  let result = '';
+  let result = "";
 
   async function triggerError() {
     loading = true;
     try {
-      const response = await fetch(`${__RAILS_API_URL__}/error`, {
-        method: 'GET',
+      const response = await fetch(`${SENTRY_E2E_RAILS_APP_URL}/error`, {
+        method: "GET",
         headers: {
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
         },
       });
 
@@ -28,14 +28,13 @@
 
 <main>
   <h1>Svelte Mini App</h1>
-  <p>Click the button to trigger an error in the Rails app and test distributed tracing:</p>
+  <p>
+    Click the button to trigger an error in the Rails app and test distributed
+    tracing:
+  </p>
 
-  <button
-    id="trigger-error-btn"
-    on:click={triggerError}
-    disabled={loading}
-  >
-    {loading ? 'Loading...' : 'Trigger Error'}
+  <button id="trigger-error-btn" on:click={triggerError} disabled={loading}>
+    {loading ? "Loading..." : "Trigger Error"}
   </button>
 
   {#if result}
