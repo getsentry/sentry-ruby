@@ -65,9 +65,13 @@ module Sentry
     def clear_sentry_events
       return unless Sentry.initialized?
 
-      [Sentry.get_current_client.transport, Sentry.logger].each do |obj|
-        obj.clear if obj.respond_to?(:clear)
+      # Clear debugger structured logger events
+      if Sentry.configuration.enable_logs
+        Sentry.logger.clear if Sentry.logger.respond_to?(:clear)
       end
+
+      # Clear debugger transport events
+      sentry_transport.clear if sentry_transport.respond_to?(:clear)
     end
 
     # @return [Transport]

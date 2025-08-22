@@ -21,7 +21,7 @@ v5_2 = Gem::Version.new("5.2")
 v6_0 = Gem::Version.new("6.0")
 v6_1 = Gem::Version.new("6.1")
 v7_0 = Gem::Version.new("7.0")
-v7_1 = Gem::Version.new("7.1.alpha")
+v7_1 = Gem::Version.new("7.1")
 
 FILE_NAME =
   case Gem::Version.new(Rails.version)
@@ -70,6 +70,9 @@ def make_basic_app(&block)
   app.config.eager_load_namespaces.clear
 
   configure_app(app)
+
+  # Configure parameter filtering for consistent test behavior
+  app.config.filter_parameters += [:custom_secret, :api_key, :credit_card, :authorization, :password, :token]
 
   app.routes.append do
     get "/exception", to: "hello#exception"

@@ -26,7 +26,6 @@ if RUBY_VERSION >= "3.4"
   gem "benchmark"
   gem "base64"
   gem "ostruct"
-  gem "psych"
 end
 
 # For RSpec

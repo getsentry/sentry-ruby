@@ -63,6 +63,10 @@ if ruby_version < Gem::Version.new("2.5.0")
   gem "loofah", "2.20.0"
 end
 
+if rails_version >= Gem::Version.new("7.1")
+  gem "psych", "~> 4.0.0"
+end
+
 gem "mini_magick"
 
 gem "sprockets-rails"

@@ -59,6 +59,7 @@ RSpec.configure do |config|
     Sentry::Rails::Tracing.remove_active_support_notifications_patch
 
     Sentry::TestHelper.clear_sentry_events
+    Sentry::Rails::StructuredLogging.detach
 
     if defined?(Sentry::Rails::ActiveJobExtensions)
       Sentry::Rails::ActiveJobExtensions::SentryReporter.detach_event_handlers

@@ -39,7 +39,7 @@ RSpec.describe "Rails.logger with :logger patch" do
       Rails.logger.error("Test error message")
       Rails.logger.fatal("Test fatal message")
 
-      Sentry.get_current_client.log_event_buffer.flush
+      Sentry.get_current_client.flush
 
       expect(sentry_logs).not_to be_empty
 
@@ -60,7 +60,7 @@ RSpec.describe "Rails.logger with :logger patch" do
     it "captures Rails.logger calls with block syntax" do
       Rails.logger.info { "Block message" }
 
-      Sentry.get_current_client.log_event_buffer.flush
+      Sentry.get_current_client.flush
 
       expect(sentry_logs).not_to be_empty
 
@@ -74,7 +74,7 @@ RSpec.describe "Rails.logger with :logger patch" do
     it "captures Rails.logger calls with progname" do
       Rails.logger.info("MyProgram") { "Message with progname" }
 
-      Sentry.get_current_client.log_event_buffer.flush
+      Sentry.get_current_client.flush
 
       expect(sentry_logs).not_to be_empty
 
@@ -88,7 +88,7 @@ RSpec.describe "Rails.logger with :logger patch" do
     it "does not capture Sentry SDK internal logs" do
       Rails.logger.info(Sentry::Logger::PROGNAME) { "Internal Sentry message" }
 
-      Sentry.get_current_client.log_event_buffer.flush
+      Sentry.get_current_client.flush
 
       log_messages = sentry_logs.map { |log| log[:body] }
       expect(log_messages).not_to include("Internal Sentry message")
@@ -97,7 +97,7 @@ RSpec.describe "Rails.logger with :logger patch" do
     it "strips whitespace from log messages" do
       Rails.logger.info("  Message with whitespace  ")
 
-      Sentry.get_current_client.log_event_buffer.flush
+      Sentry.get_current_client.flush
 
       expect(sentry_logs).not_to be_empty
 
@@ -108,7 +108,7 @@ RSpec.describe "Rails.logger with :logger patch" do
     it "handles non-string log messages" do
       Rails.logger.info(12345)
 
-      Sentry.get_current_client.log_event_buffer.flush
+      Sentry.get_current_client.flush
 
       expect(sentry_logs).not_to be_empty
 
@@ -140,7 +140,7 @@ RSpec.describe "Rails.logger with :logger patch" do
     it "captures logs from BroadcastLogger" do
       Rails.logger.info("Broadcast message")
 
-      Sentry.get_current_client.log_event_buffer.flush
+      Sentry.get_current_client.flush
 
       expect(sentry_logs).not_to be_empty
 
