@@ -8,11 +8,9 @@ require "sentry/utils/sample_rand"
 module Sentry
   class PropagationContext
     SENTRY_TRACE_REGEXP = Regexp.new(
-      "^[ \t]*" +  # whitespace
-      "([0-9a-f]{32})?" +  # trace_id
+      "\\A([0-9a-f]{32})?" + # trace_id
       "-?([0-9a-f]{16})?" +  # span_id
-      "-?([01])?" +  # sampled
-      "[ \t]*$"  # whitespace
+      "-?([01])?\\z"         # sampled
     )
 
     # An uuid that can be used to identify a trace.
@@ -43,7 +41,10 @@ module Sentry
     # @param sentry_trace [String] the sentry-trace header value from the previous transaction.
     # @return [Array, nil]
     def self.extract_sentry_trace(sentry_trace)
-      match = SENTRY_TRACE_REGEXP.match(sentry_trace)
+      value = sentry_trace.to_s.strip
+      return if value.empty?
+
+      match = SENTRY_TRACE_REGEXP.match(value)
       return if match.nil?
 
       trace_id, parent_span_id, sampled_flag = match[1..3]

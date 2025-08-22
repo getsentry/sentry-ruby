@@ -132,4 +132,41 @@ RSpec.describe Sentry::PropagationContext do
       expect(subject.get_dynamic_sampling_context).to eq(subject.get_baggage.dynamic_sampling_context)
     end
   end
+
+  describe ".extract_sentry_trace" do
+    it "extracts valid sentry-trace without whitespace" do
+      sentry_trace = "771a43a4192642f0b136d5159a501700-7c51afd529da4a2a-1"
+      result = described_class.extract_sentry_trace(sentry_trace)
+
+      expect(result).to eq(["771a43a4192642f0b136d5159a501700", "7c51afd529da4a2a", true])
+    end
+
+    it "extracts valid sentry-trace with leading and trailing whitespace" do
+      sentry_trace = "  \t771a43a4192642f0b136d5159a501700-7c51afd529da4a2a-1\t  "
+      result = described_class.extract_sentry_trace(sentry_trace)
+
+      expect(result).to eq(["771a43a4192642f0b136d5159a501700", "7c51afd529da4a2a", true])
+    end
+
+    it "extracts sentry-trace without sampled flag" do
+      sentry_trace = "771a43a4192642f0b136d5159a501700-7c51afd529da4a2a"
+      result = described_class.extract_sentry_trace(sentry_trace)
+
+      expect(result).to eq(["771a43a4192642f0b136d5159a501700", "7c51afd529da4a2a", nil])
+    end
+
+    it "returns nil for invalid sentry-trace" do
+      expect(described_class.extract_sentry_trace("invalid")).to be_nil
+      expect(described_class.extract_sentry_trace("000-000-0")).to be_nil
+      expect(described_class.extract_sentry_trace("")).to be_nil
+    end
+
+    it "allows whitespace" do
+      whitespace = " \t \t \t \t "
+      sentry_trace = "#{whitespace}771a43a4192642f0b136d5159a501700-7c51afd529da4a2a-1#{whitespace}"
+      result = described_class.extract_sentry_trace(sentry_trace)
+
+      expect(result).to eq(["771a43a4192642f0b136d5159a501700", "7c51afd529da4a2a", true])
+    end
+  end
 end
