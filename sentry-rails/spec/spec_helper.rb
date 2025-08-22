@@ -36,6 +36,10 @@ Dir["#{__dir__}/support/**/*.rb"].each { |file| require file }
 
 RAILS_VERSION = Rails.version.to_f
 
+puts "*" * 120
+puts "Running specs on Ruby #{RUBY_VERSION} against Rails #{RAILS_VERSION}"
+puts "*" * 120
+
 RSpec.configure do |config|
   # Enable flags like --only-failures and --next-failure
   config.example_status_persistence_file_path = ".rspec_status"
