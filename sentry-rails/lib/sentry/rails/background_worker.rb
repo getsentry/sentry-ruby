@@ -2,6 +2,7 @@
 
 module Sentry
   class BackgroundWorker
+    alias :_perform :_perform # Silence method redefinition warning.
     def _perform(&block)
       block.call
     ensure
