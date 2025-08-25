@@ -154,6 +154,20 @@ RSpec.describe Sentry::OpenTelemetry::SpanProcessor do
 
     it 'starts a sentry transaction on otel root span' do
       expect(Sentry).to receive(:start_transaction).and_call_original
+      expect_any_instance_of(Sentry::Transaction).to receive(:set_initial_sample_decision).with(
+        sampling_context: a_hash_including(
+          otel: {
+            attributes: root_span.attributes,
+            resource: root_span.resource.attribute_enumerator.to_h,
+            kind: root_span.kind,
+            instrumentation_scope: {
+              name: root_span.instrumentation_scope.name,
+              version: root_span.instrumentation_scope.version
+            }
+          }
+        )
+      )
+
       subject.on_start(root_span, empty_context)
 
       span_id = root_span.context.hex_span_id

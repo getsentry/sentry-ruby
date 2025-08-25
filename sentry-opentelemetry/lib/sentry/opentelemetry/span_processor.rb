@@ -48,7 +48,16 @@ module Sentry
             parent_sampled: trace_data.parent_sampled,
             baggage: trace_data.baggage,
             start_timestamp: otel_span.start_timestamp / 1e9,
-            origin: SPAN_ORIGIN
+            origin: SPAN_ORIGIN,
+            custom_sampling_context: {
+              otel: otel_context_hash(otel_span).merge(
+                kind: otel_span.kind,
+                instrumentation_scope: {
+                  name: otel_span.instrumentation_scope.name,
+                  version: otel_span.instrumentation_scope.version
+                }
+              )
+            }
           }
 
           Sentry.start_transaction(**options)
