@@ -49,6 +49,7 @@ module Sentry
       setup_backtrace_cleanup_callback
       inject_breadcrumbs_logger
       activate_tracing
+      activate_structured_logging
 
       register_error_subscriber(app) if ::Rails.version.to_f >= 7.0 && Sentry.configuration.rails.register_error_subscriber
 
@@ -135,6 +136,12 @@ module Sentry
         Sentry::Rails::Tracing.register_subscribers(subscribers)
         Sentry::Rails::Tracing.subscribe_tracing_events
         Sentry::Rails::Tracing.patch_active_support_notifications
+      end
+    end
+
+    def activate_structured_logging
+      if Sentry.configuration.rails.structured_logging.enabled && Sentry.configuration.enable_logs
+        Sentry::Rails::StructuredLogging.attach(Sentry.configuration.rails.structured_logging)
       end
     end
 

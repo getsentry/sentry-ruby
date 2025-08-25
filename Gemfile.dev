@@ -20,16 +20,20 @@ if RUBY_VERSION >= "3.5"
   gem "cgi"
 end
 
+if RUBY_VERSION >= "3.4"
+  gem "drb"
+  gem "mutex_m"
+  gem "benchmark"
+  gem "base64"
+  gem "ostruct"
+end
+
 # For RSpec
-gem "rspec", "~> 3.0"
+gem "rspec"
 gem "rspec-retry"
 gem "simplecov"
 gem "simplecov-cobertura", "~> 1.4"
 gem "rexml"
-
-if ruby_version >= Gem::Version.new("3.4")
-  gem "ostruct"
-end
 
 group :rubocop do
   gem "rubocop-rails-omakase"

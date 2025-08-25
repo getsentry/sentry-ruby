@@ -47,8 +47,8 @@ elsif rails_version >= Gem::Version.new("6.1.0")
     gem "sqlite3", "~> 1.6.9", platform: :ruby
   end
 else
-  gem "rspec-rails", "~> 4.0"
   gem "psych", "~> 3.0.0"
+  gem "rspec-rails", "~> 4.0"
 
   if rails_version >= Gem::Version.new("6.0.0")
     gem "sqlite3", "~> 1.4.0", platform: :ruby
@@ -61,6 +61,10 @@ if ruby_version < Gem::Version.new("2.5.0")
   # https://github.com/flavorjones/loofah/pull/267
   # loofah changed the required ruby version in a patch so we need to explicitly pin it
   gem "loofah", "2.20.0"
+end
+
+if rails_version >= Gem::Version.new("7.1")
+  gem "psych", "~> 4.0.0"
 end
 
 gem "mini_magick"

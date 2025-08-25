@@ -36,6 +36,10 @@ Dir["#{__dir__}/support/**/*.rb"].each { |file| require file }
 
 RAILS_VERSION = Rails.version.to_f
 
+puts "*" * 120
+puts "Running specs on Ruby #{RUBY_VERSION} against Rails #{RAILS_VERSION}"
+puts "*" * 120
+
 RSpec.configure do |config|
   # Enable flags like --only-failures and --next-failure
   config.example_status_persistence_file_path = ".rspec_status"
@@ -53,6 +57,9 @@ RSpec.configure do |config|
     Sentry::Rails::Tracing.unsubscribe_tracing_events
     expect(Sentry::Rails::Tracing.subscribed_tracing_events).to be_empty
     Sentry::Rails::Tracing.remove_active_support_notifications_patch
+
+    Sentry::TestHelper.clear_sentry_events
+    Sentry::Rails::StructuredLogging.detach
 
     if defined?(Sentry::Rails::ActiveJobExtensions)
       Sentry::Rails::ActiveJobExtensions::SentryReporter.detach_event_handlers
