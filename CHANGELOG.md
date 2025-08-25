@@ -31,6 +31,8 @@
   DB.extension(:sentry)
   ```
 
+- Add support for OpenTelemetry messaging/queue system spans ([#2685](https://github.com/getsentry/sentry-ruby/pull/2685))
+
 ### Bug Fixes
 
 - Handle empty frames case gracefully with local vars ([#2807](https://github.com/getsentry/sentry-ruby/pull/2807))
