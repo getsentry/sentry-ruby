@@ -65,4 +65,27 @@ RSpec.describe Sentry::Rails::Configuration do
       expect(subject.active_job_report_on_retry_error).to be(false)
     end
   end
+
+  describe "#structured_logging" do
+    let(:config) { Sentry.configuration.rails }
+
+    it "allows enabling by setting to true" do
+      make_basic_app do |config|
+        config.rails.structured_logging = true
+        config.rails.structured_logging.attach_to = [:action_controller]
+      end
+
+      expect(config.structured_logging.enabled).to be(true)
+      expect(config.structured_logging.attach_to).to eql([:action_controller])
+    end
+
+    it "allows disabling by setting to false" do
+      make_basic_app do |config|
+        config.rails.structured_logging = false
+      end
+
+      expect(config.structured_logging.enabled).to be(false)
+      expect(config.structured_logging.attach_to).to be_empty
+    end
+  end
 end
