@@ -21,7 +21,7 @@ v5_2 = Gem::Version.new("5.2")
 v6_0 = Gem::Version.new("6.0")
 v6_1 = Gem::Version.new("6.1")
 v7_0 = Gem::Version.new("7.0")
-v7_1 = Gem::Version.new("7.1.alpha")
+v7_1 = Gem::Version.new("7.1")
 
 FILE_NAME =
   case Gem::Version.new(Rails.version)

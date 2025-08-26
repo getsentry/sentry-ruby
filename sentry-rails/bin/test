@@ -1,0 +1,389 @@
+#!/usr/bin/env ruby
+
+# frozen_string_literal: true
+
+# Standalone CLI script to test sentry-rails against multiple Rails versions
+#
+# FEATURES:
+# - Dedicated lock files for each Ruby/Rails version combination
+# - Prevents dependency conflicts between different Rails versions
+# - Automatic lock file management and restoration
+# - Clean up functionality for old lock files
+#
+# LOCK FILE STRATEGY:
+# Each Ruby/Rails combination gets its own lock file:
+# - Ruby 3.4.5 + Rails 6.1 → Gemfile-ruby-3.4.5-rails-6.1.lock
+# - Ruby 3.4.5 + Rails 7.0 → Gemfile-ruby-3.4.5-rails-7.0.lock
+#
+# Usage:
+#   ./bin/test --version 5.0
+#   ./bin/test --all
+#   ./bin/test --help
+
+require 'optparse'
+require 'fileutils'
+
+class RailsVersionTester
+  SUPPORTED_VERSIONS = %w[5.0 5.1 5.2 6.0 6.1 7.0 7.1 7.2 8.0].freeze
+
+  def initialize
+    @options = {}
+    @failed_versions = []
+    @ruby_version = RUBY_VERSION
+    @spec_paths = []
+  end
+
+  def run(args)
+    parse_options(args)
+
+    case
+    when @options[:help]
+      show_help
+    when @options[:list]
+      list_versions
+    when @options[:clean]
+      clean_lock_files
+    when @options[:all]
+      test_all_versions
+    when @options[:version]
+      test_single_version(@options[:version])
+    else
+      puts "Error: No action specified. Use --help for usage information."
+      exit(1)
+    end
+  end
+
+  private
+
+  def parse_options(args)
+    OptionParser.new do |opts|
+      opts.banner = "Usage: #{$0} [options] [spec_paths...]"
+
+      opts.on("-v", "--version VERSION", "Test specific Rails version") do |version|
+        unless SUPPORTED_VERSIONS.include?(version)
+          puts "Error: Unsupported Rails version '#{version}'"
+          puts "Supported versions: #{SUPPORTED_VERSIONS.join(', ')}"
+          exit(1)
+        end
+        @options[:version] = version
+      end
+
+      opts.on("-a", "--all", "Test all supported Rails versions") do
+        @options[:all] = true
+      end
+
+      opts.on("-l", "--list", "List supported Rails versions and lock file status") do
+        @options[:list] = true
+      end
+
+      opts.on("-c", "--clean", "Clean up old lock files for current Ruby version") do
+        @options[:clean] = true
+      end
+
+      opts.on("-h", "--help", "Show this help message") do
+        @options[:help] = true
+      end
+    end.parse!(args)
+
+    # Remaining arguments are spec paths
+    @spec_paths = args
+  end
+
+  def show_help
+    puts <<~HELP
+      Rails Version Tester for sentry-rails
+
+      This script tests sentry-rails against different Rails versions by:
+      1. Setting the RAILS_VERSION environment variable
+      2. Managing bundle dependencies with dedicated lock files per Ruby/Rails combination
+      3. Running the test suite in isolated processes
+      4. Providing proper exit codes for CI/CD integration
+
+      Each Ruby/Rails version combination gets its own Gemfile.lock to prevent conflicts:
+      - Ruby #{@ruby_version} + Rails 6.1 → Gemfile-ruby-#{@ruby_version}-rails-6.1.lock
+      - Ruby #{@ruby_version} + Rails 7.0 → Gemfile-ruby-#{@ruby_version}-rails-7.0.lock
+
+      Usage:
+        #{$0} --version 6.1                                    # Test specific Rails version (all specs)
+        #{$0} --version 7.0 spec/sentry/rails/log_subscribers  # Test specific Rails version with specific specs
+        #{$0} --all                                            # Test all supported versions
+        #{$0} --list                                           # List supported versions and lock file status
+        #{$0} --clean                                          # Clean up old lock files for current Ruby version
+        #{$0} --help                                           # Show this help
+
+      Supported Rails versions: #{SUPPORTED_VERSIONS.join(', ')}
+
+      Examples:
+        #{$0} -v 7.1                                           # Test Rails 7.1 (all specs)
+        #{$0} -v 7.0 spec/sentry/rails/log_subscribers         # Test Rails 7.0 log subscriber specs only
+        #{$0} -v 7.0 spec/sentry/rails/tracing                 # Test Rails 7.0 tracing specs only
+        #{$0} -a                                               # Test all versions
+        #{$0} -c                                               # Clean up old lock files
+    HELP
+  end
+
+  def list_versions
+    puts "Supported Rails versions:"
+    SUPPORTED_VERSIONS.each do |version|
+      lock_file = generate_lock_file_name(version)
+      status = File.exist?(lock_file) ? "(has lock file)" : "(no lock file)"
+      puts "  - #{version} #{status}"
+    end
+    puts
+    puts "Current Ruby version: #{@ruby_version}"
+    puts "Lock files are stored as: Gemfile-ruby-X.X.X-rails-Y.Y.lock"
+  end
+
+  def test_all_versions
+    puts "Testing sentry-rails against all supported Rails versions: #{SUPPORTED_VERSIONS.join(', ')}"
+    puts
+
+    SUPPORTED_VERSIONS.each do |version|
+      puts "=" * 60
+      puts "Testing Rails #{version}"
+      puts "=" * 60
+
+      exit_code = test_rails_version(version)
+
+      if exit_code == 0
+        puts "✓ Rails #{version} - PASSED"
+      else
+        puts "✗ Rails #{version} - FAILED (exit code: #{exit_code})"
+        @failed_versions << version
+      end
+      puts
+    end
+
+    print_summary
+  end
+
+  def test_single_version(version)
+    puts "Testing sentry-rails against Rails #{version}..."
+    exit_code = test_rails_version(version)
+    exit(exit_code) unless exit_code == 0
+  end
+
+  def test_rails_version(version)
+    puts "Setting up environment for Rails #{version}..."
+
+    # Generate dedicated lock file name for this Ruby/Rails combination
+    dedicated_lock_file = generate_lock_file_name(version)
+    current_lock_file = "Gemfile.lock"
+
+    # Set up environment variables
+    env = {
+      "RAILS_VERSION" => version,
+      "BUNDLE_GEMFILE" => File.expand_path("Gemfile", Dir.pwd)
+    }
+
+    puts "Using dedicated lock file: #{dedicated_lock_file}"
+
+    # Manage lock file switching
+    setup_lock_file(dedicated_lock_file, current_lock_file)
+
+    begin
+      # Check if bundle update is needed
+      if bundle_update_needed?(env, dedicated_lock_file)
+        puts "Dependencies need to be updated for Rails #{version}..."
+        unless update_bundle(env, dedicated_lock_file)
+          puts "✗ Failed to update bundle for Rails #{version}"
+          return 1
+        end
+      end
+
+      # Run the tests in a separate process
+      puts "Running test suite..."
+      run_tests(env, @spec_paths)
+    ensure
+      # Save the current lock file back to the dedicated location
+      save_lock_file(dedicated_lock_file, current_lock_file)
+    end
+  end
+
+  def generate_lock_file_name(rails_version)
+    # Create a unique lock file name for this Ruby/Rails combination
+    ruby_version_clean = @ruby_version.gsub(/[^\d\.]/, '')
+    rails_version_clean = rails_version.gsub(/[^\d\.]/, '')
+    "Gemfile-ruby-#{ruby_version_clean}-rails-#{rails_version_clean}.lock"
+  end
+
+  def setup_lock_file(dedicated_lock_file, current_lock_file)
+    # If we have a dedicated lock file, copy it to the current location
+    if File.exist?(dedicated_lock_file)
+      puts "Restoring lock file from #{dedicated_lock_file}"
+      FileUtils.cp(dedicated_lock_file, current_lock_file)
+    elsif File.exist?(current_lock_file)
+      # If no dedicated lock file exists but current one does, remove it
+      # so we get a fresh resolution
+      puts "Removing existing lock file for fresh dependency resolution"
+      File.delete(current_lock_file)
+    end
+  end
+
+  def save_lock_file(dedicated_lock_file, current_lock_file)
+    # Save the current lock file to the dedicated location
+    if File.exist?(current_lock_file)
+      puts "Saving lock file to #{dedicated_lock_file}"
+      FileUtils.cp(current_lock_file, dedicated_lock_file)
+    end
+  end
+
+  def bundle_update_needed?(env, dedicated_lock_file)
+    # Check if current Gemfile.lock exists
+    current_lock_file = "Gemfile.lock"
+    gemfile_path = env["BUNDLE_GEMFILE"] || "Gemfile"
+
+    return true unless File.exist?(current_lock_file)
+
+    # Check if Gemfile is newer than the current lock file
+    return true if File.mtime(gemfile_path) > File.mtime(current_lock_file)
+
+    # For Rails version changes, check if lockfile has incompatible Rails version
+    if env["RAILS_VERSION"] && lockfile_has_incompatible_rails_version?(current_lock_file, env["RAILS_VERSION"])
+      return true
+    end
+
+    # Check if bundle check passes
+    system(env, "bundle check > /dev/null 2>&1") == false
+  end
+
+  def lockfile_has_incompatible_rails_version?(lockfile_path, target_rails_version)
+    return false unless File.exist?(lockfile_path)
+
+    lockfile_content = File.read(lockfile_path)
+
+    # Extract Rails version from lockfile
+    if lockfile_content =~ /^\s*rails \(([^)]+)\)/
+      locked_rails_version = $1
+      target_major_minor = target_rails_version.split('.')[0..1].join('.')
+      locked_major_minor = locked_rails_version.split('.')[0..1].join('.')
+
+      # If major.minor versions don't match, we need to update
+      return target_major_minor != locked_major_minor
+    end
+
+    # If we can't determine the Rails version, assume update is needed
+    true
+  end
+
+  def update_bundle(env, dedicated_lock_file)
+    puts "Updating bundle for Rails #{env['RAILS_VERSION']}..."
+
+    current_lock_file = "Gemfile.lock"
+
+    # Try bundle update first
+    if system(env, "bundle update --quiet")
+      puts "Bundle updated successfully"
+      return true
+    end
+
+    puts "Bundle update failed, trying clean install..."
+
+    # Remove the current lockfile and try fresh install
+    File.delete(current_lock_file) if File.exist?(current_lock_file)
+
+    if system(env, "bundle install --quiet")
+      puts "Bundle installed successfully"
+      return true
+    end
+
+    puts "Bundle install failed"
+    false
+  end
+
+  def run_tests(env, spec_paths = [])
+    # Determine the command to run
+    if spec_paths.empty?
+      # Run all tests via rake
+      command = "bundle exec rake"
+    else
+      # Run specific specs via rspec
+      command = "bundle exec rspec #{spec_paths.join(' ')}"
+    end
+
+    puts "Executing: #{command}"
+
+    # Run the tests in a separate process with proper signal handling
+    pid = spawn(env, command,
+               out: $stdout,
+               err: $stderr,
+               pgroup: true)
+
+    begin
+      _, status = Process.wait2(pid)
+      status.exitstatus
+    rescue Interrupt
+      puts "\nInterrupted! Terminating test process..."
+      terminate_process_group(pid)
+      130 # Standard exit code for SIGINT
+    end
+  end
+
+  def terminate_process_group(pid)
+    begin
+      Process.kill("TERM", -pid) # Kill the process group
+      sleep(2)
+      Process.kill("KILL", -pid) if process_running?(pid)
+    rescue Errno::ESRCH
+      # Process already terminated
+    end
+  end
+
+  def process_running?(pid)
+    Process.getpgid(pid)
+    true
+  rescue Errno::ESRCH
+    false
+  end
+
+  def clean_lock_files
+    puts "Cleaning up lock files for Ruby #{@ruby_version}..."
+
+    # Find all lock files matching our pattern
+    pattern = "Gemfile-ruby-#{@ruby_version.gsub(/[^\d\.]/, '')}-rails-*.lock"
+    lock_files = Dir.glob(pattern)
+
+    if lock_files.empty?
+      puts "No lock files found matching pattern: #{pattern}"
+      return
+    end
+
+    puts "Found #{lock_files.length} lock file(s):"
+    lock_files.each { |file| puts "  - #{file}" }
+
+    print "Delete these files? [y/N]: "
+    response = $stdin.gets.chomp.downcase
+
+    if response == 'y' || response == 'yes'
+      lock_files.each do |file|
+        File.delete(file)
+        puts "Deleted: #{file}"
+      end
+      puts "Cleanup complete!"
+    else
+      puts "Cleanup cancelled."
+    end
+  end
+
+  def print_summary
+    puts "=" * 60
+    puts "SUMMARY"
+    puts "=" * 60
+
+    if @failed_versions.empty?
+      puts "✓ All Rails versions passed!"
+      exit(0)
+    else
+      puts "✗ Failed versions: #{@failed_versions.join(', ')}"
+      puts
+      puts "Some Rails versions failed. See output above for details."
+      exit(1)
+    end
+  end
+end
+
+# Run the script if called directly
+if __FILE__ == $0
+  tester = RailsVersionTester.new
+  tester.run(ARGV)
+end
