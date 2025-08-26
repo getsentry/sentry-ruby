@@ -13,22 +13,39 @@ ruby_version = Gem::Version.new(RUBY_VERSION)
 if ruby_version >= Gem::Version.new("2.7.0")
   gem "debug", github: "ruby/debug", platform: :ruby
   gem "irb"
-  gem "ruby-lsp-rspec" if ruby_version >= Gem::Version.new("3.0.0") && RUBY_PLATFORM != "java"
 end
 
-if RUBY_VERSION >= "3.5"
+if ruby_version >= Gem::Version.new("2.5")
   gem "cgi"
 end
 
-# For RSpec
-gem "rspec", "~> 3.0"
-gem "rspec-retry"
-gem "simplecov"
-gem "simplecov-cobertura", "~> 1.4"
-gem "rexml"
-
 if ruby_version >= Gem::Version.new("3.4")
+  gem "drb"
+  gem "mutex_m"
+  gem "benchmark"
+  gem "base64"
   gem "ostruct"
+end
+
+# RSpec
+gem "rspec"
+gem "rspec-retry"
+
+if ruby_version >= Gem::Version.new("3.0") && RUBY_PLATFORM != "java"
+  gem "ruby-lsp-rspec"
+end
+
+# Coverage
+gem "simplecov"
+
+# Do not change it without checking that `CI=true COVERAGE=true bundle exec rake`
+# passes in all projects
+if ruby_version >= Gem::Version.new("2.5")
+  gem "rexml", "3.4.1"
+  gem "simplecov-cobertura", "~> 3.0"
+else
+  gem "rexml", "3.2.5"
+  gem "simplecov-cobertura", "~> 1.4.0"
 end
 
 group :rubocop do
