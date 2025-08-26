@@ -646,6 +646,8 @@ module Sentry
           warn <<~STR
             [sentry] `Sentry.logger` will no longer be used as internal SDK logger when `enable_logs` feature is turned on.
                     Use Sentry.configuration.sdk_logger for SDK-specific logging needs."
+
+                    Caller: #{caller.first}
           STR
 
           configuration.sdk_logger
