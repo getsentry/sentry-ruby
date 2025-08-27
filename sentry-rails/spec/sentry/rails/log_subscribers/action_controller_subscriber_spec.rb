@@ -1,7 +1,6 @@
 # frozen_string_literal: true
 
 require "spec_helper"
-require "sentry/rails/log_subscribers/action_controller_subscriber"
 
 RSpec.describe Sentry::Rails::LogSubscribers::ActionControllerSubscriber, type: :request do
   before do
@@ -9,7 +8,6 @@ RSpec.describe Sentry::Rails::LogSubscribers::ActionControllerSubscriber, type: 
       config.enable_logs = true
       config.rails.structured_logging.enabled = true
       config.rails.structured_logging.subscribers = { action_controller: Sentry::Rails::LogSubscribers::ActionControllerSubscriber }
-      app.config.filter_parameters += [:api_key, :credit_card, :authorization]
     end
   end
 

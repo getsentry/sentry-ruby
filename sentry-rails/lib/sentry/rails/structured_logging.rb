@@ -1,5 +1,11 @@
 # frozen_string_literal: true
 
+require "sentry/rails/log_subscriber"
+require "sentry/rails/log_subscribers/action_controller_subscriber"
+require "sentry/rails/log_subscribers/active_record_subscriber"
+require "sentry/rails/log_subscribers/active_job_subscriber"
+require "sentry/rails/log_subscribers/action_mailer_subscriber"
+
 module Sentry
   module Rails
     module StructuredLogging

@@ -1,7 +1,6 @@
 # frozen_string_literal: true
 
 require "spec_helper"
-require "sentry/rails/log_subscribers/action_mailer_subscriber"
 
 RSpec.describe Sentry::Rails::LogSubscribers::ActionMailerSubscriber do
   before do

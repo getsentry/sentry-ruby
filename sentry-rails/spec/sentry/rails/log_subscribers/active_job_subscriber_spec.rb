@@ -1,9 +1,6 @@
 # frozen_string_literal: true
 
 require "spec_helper"
-require "sentry/rails/log_subscribers/active_job_subscriber"
-
-require_relative "../../support/test_jobs"
 
 RSpec.describe Sentry::Rails::LogSubscribers::ActiveJobSubscriber, skip: Rails.version.to_f < 5.1 do
   before do
