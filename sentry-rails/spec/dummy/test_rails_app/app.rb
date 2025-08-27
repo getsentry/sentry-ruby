@@ -71,6 +71,17 @@ def make_basic_app(&block)
 
   configure_app(app)
 
+  # Configure parameter filtering for consistent test behavior
+  app.config.filter_parameters.concat(
+    [:custom_secret,
+     :api_key,
+     :credit_card,
+     :authorization,
+     :password,
+     :token]
+  )
+  app.config.filter_parameters.uniq!
+
   app.routes.append do
     get "/exception", to: "hello#exception"
     get "/view_exception", to: "hello#view_exception"

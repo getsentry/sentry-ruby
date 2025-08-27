@@ -159,6 +159,25 @@ module Sentry
       # Set this option to true if you want Sentry to capture each retry failure
       attr_accessor :active_job_report_on_retry_error
 
+      # Configuration for structured logging feature
+      # @return [StructuredLoggingConfiguration]
+      attr_reader :structured_logging
+
+      # Allow setting structured_logging as a boolean for convenience
+      # @param value [Boolean, StructuredLoggingConfiguration]
+      def structured_logging=(value)
+        case value
+        when true
+          @structured_logging.enabled = true
+        when false
+          @structured_logging.enabled = false
+        when StructuredLoggingConfiguration
+          @structured_logging = value
+        else
+          raise ArgumentError, "structured_logging must be a boolean or StructuredLoggingConfiguration"
+        end
+      end
+
       def initialize
         @register_error_subscriber = false
         @report_rescued_exceptions = true
@@ -176,6 +195,22 @@ module Sentry
         @db_query_source_threshold_ms = 100
         @active_support_logger_subscription_items = Sentry::Rails::ACTIVE_SUPPORT_LOGGER_SUBSCRIPTION_ITEMS_DEFAULT.dup
         @active_job_report_on_retry_error = false
+        @structured_logging = StructuredLoggingConfiguration.new
+      end
+    end
+
+    class StructuredLoggingConfiguration
+      # Enable or disable structured logging
+      # @return [Boolean]
+      attr_accessor :enabled
+
+      # Hash of components to subscriber classes for structured logging
+      # @return [Hash<Symbol, Class>]
+      attr_accessor :subscribers
+
+      def initialize
+        @enabled = false
+        @subscribers = {}
       end
     end
   end

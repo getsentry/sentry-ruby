@@ -3,6 +3,8 @@
 ### Feature
 
 - Propagated sampling rates as specified in [Traces](https://develop.sentry.dev/sdk/telemetry/traces/#propagated-random-value) docs ([#2671](https://github.com/getsentry/sentry-ruby/pull/2671))
+- Support for Rails ActiveSupport log subscribers ([#2690](https://github.com/getsentry/sentry-ruby/pull/2690))
+- Support for defining custom Rails log subscribers that work with Sentry Structured Logging ([#2689](https://github.com/getsentry/sentry-ruby/pull/2689))
 
 ### Internal
 
