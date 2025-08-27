@@ -90,7 +90,6 @@ RSpec.describe Sentry::Rails::LogSubscribers::ActiveJobSubscriber, skip: Rails.v
       sentry_transport.events.clear
       sentry_transport.envelopes.clear
 
-      # Simulate a scheduled job enqueue event
       job = NormalJob.new
       job.job_id = SecureRandom.uuid
       job.queue_name = "default"
@@ -125,14 +124,12 @@ RSpec.describe Sentry::Rails::LogSubscribers::ActiveJobSubscriber, skip: Rails.v
         sentry_transport.events.clear
         sentry_transport.envelopes.clear
 
-        # Create a job class that doesn't raise an error
         test_job_class = Class.new(ActiveJob::Base) do
           def self.name
             "TestJobWithArgs"
           end
 
           def perform(*args, **kwargs)
-            # Job implementation that doesn't raise
           end
         end
 
@@ -155,14 +152,12 @@ RSpec.describe Sentry::Rails::LogSubscribers::ActiveJobSubscriber, skip: Rails.v
         original_filter_params = Rails.application.config.filter_parameters.dup
         Rails.application.config.filter_parameters += [:token]
 
-        # Create a job class that accepts sensitive arguments
         test_job_class = Class.new(ActiveJob::Base) do
           def self.name
             "TestJobWithSensitiveArgs"
           end
 
           def perform(password:, token:, safe_data:)
-            # Job implementation
           end
         end
 
@@ -189,14 +184,12 @@ RSpec.describe Sentry::Rails::LogSubscribers::ActiveJobSubscriber, skip: Rails.v
         sentry_transport.events.clear
         sentry_transport.envelopes.clear
 
-        # Create a job class that doesn't raise an error
         test_job_class = Class.new(ActiveJob::Base) do
           def self.name
             "TestJobNoArgs"
           end
 
           def perform(*args, **kwargs)
-            # Job implementation that doesn't raise
           end
         end
 
@@ -218,7 +211,6 @@ RSpec.describe Sentry::Rails::LogSubscribers::ActiveJobSubscriber, skip: Rails.v
       sentry_transport.events.clear
       sentry_transport.envelopes.clear
 
-      # Simulate a retry_stopped event
       job = FailedJob.new
       error = StandardError.new("Test error")
 
@@ -241,7 +233,6 @@ RSpec.describe Sentry::Rails::LogSubscribers::ActiveJobSubscriber, skip: Rails.v
       sentry_transport.events.clear
       sentry_transport.envelopes.clear
 
-      # Simulate a discard event
       job = FailedJob.new
       error = StandardError.new("Test error")
 
@@ -264,7 +255,6 @@ RSpec.describe Sentry::Rails::LogSubscribers::ActiveJobSubscriber, skip: Rails.v
       sentry_transport.events.clear
       sentry_transport.envelopes.clear
 
-      # Simulate a discard event without error
       job = FailedJob.new
 
       ActiveSupport::Notifications.instrument("discard.active_job",
@@ -305,6 +295,5 @@ RSpec.describe Sentry::Rails::LogSubscribers::ActiveJobSubscriber, skip: Rails.v
     end
   end
 
-  # Test ParameterFilter functionality using shared examples
   include_examples "parameter filtering", described_class
 end
