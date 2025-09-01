@@ -69,18 +69,18 @@ RSpec.describe Sentry::Rails::Configuration do
   describe "#structured_logging" do
     let(:config) { Sentry.configuration.rails }
 
-    it "allows enabling by setting to true" do
+    it "allows enabling by setting enabled to true" do
       make_basic_app do |config|
-        config.rails.structured_logging = true
+        config.rails.structured_logging.enabled = true
       end
 
       expect(config.structured_logging.enabled).to be(true)
       expect(config.structured_logging.subscribers).to be_a(Hash)
     end
 
-    it "allows disabling by setting to false" do
+    it "allows disabling by setting enabled to false" do
       make_basic_app do |config|
-        config.rails.structured_logging = false
+        config.rails.structured_logging.enabled = false
       end
 
       expect(config.structured_logging.enabled).to be(false)
@@ -91,7 +91,7 @@ RSpec.describe Sentry::Rails::Configuration do
       class TestSubscriber; end
 
       make_basic_app do |config|
-        config.rails.structured_logging = true
+        config.rails.structured_logging.enabled = true
         config.rails.structured_logging.subscribers = { action_controller: TestSubscriber }
       end
 

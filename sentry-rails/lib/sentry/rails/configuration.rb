@@ -163,21 +163,6 @@ module Sentry
       # @return [StructuredLoggingConfiguration]
       attr_reader :structured_logging
 
-      # Allow setting structured_logging as a boolean for convenience
-      # @param value [Boolean, StructuredLoggingConfiguration]
-      def structured_logging=(value)
-        case value
-        when true
-          @structured_logging.enabled = true
-        when false
-          @structured_logging.enabled = false
-        when StructuredLoggingConfiguration
-          @structured_logging = value
-        else
-          raise ArgumentError, "structured_logging must be a boolean or StructuredLoggingConfiguration"
-        end
-      end
-
       def initialize
         @register_error_subscriber = false
         @report_rescued_exceptions = true

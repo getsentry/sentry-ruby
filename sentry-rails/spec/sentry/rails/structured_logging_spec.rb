@@ -7,7 +7,7 @@ RSpec.describe Sentry::Rails::StructuredLogging, type: :request do
     before do
       make_basic_app do |config|
         config.enable_logs = false
-        config.rails.structured_logging = true
+        config.rails.structured_logging.enabled = true
       end
     end
 
@@ -26,7 +26,7 @@ RSpec.describe Sentry::Rails::StructuredLogging, type: :request do
     before do
       make_basic_app do |config|
         config.enable_logs = true
-        config.rails.structured_logging = false
+        config.rails.structured_logging.enabled = false
       end
     end
 
