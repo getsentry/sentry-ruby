@@ -63,11 +63,18 @@ module Sentry
     end
 
     def clear_sentry_events
-      if Sentry.initialized? && Sentry.configuration.enable_logs
-        [Sentry.get_current_client.transport, Sentry.logger].each do |obj|
-          obj.clear if obj.respond_to?(:clear)
-        end
+      return unless Sentry.initialized?
+
+      sentry_transport.clear if sentry_transport.respond_to?(:clear)
+
+      if Sentry.configuration.enable_logs && sentry_logger.respond_to?(:clear)
+        sentry_logger.clear
       end
+    end
+
+    # @return [Sentry::StructuredLogger, Sentry::DebugStructuredLogger]
+    def sentry_logger
+      Sentry.logger
     end
 
     # @return [Transport]
