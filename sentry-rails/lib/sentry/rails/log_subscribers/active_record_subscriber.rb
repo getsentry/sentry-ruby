@@ -74,18 +74,9 @@ module Sentry
         def extract_db_config(payload)
           connection = payload[:connection]
 
-          if payload[:connection_id] && !connection
-            connection = ActiveRecord::Base.connection_pool.connections.find do |conn|
-              conn.object_id == payload[:connection_id]
-            end
-          end
-
           return unless connection
 
           extract_db_config_from_connection(connection)
-        rescue => e
-          Sentry.configuration.sdk_logger.debug("Failed to extract db config: #{e.message}")
-          nil
         end
 
         def add_db_config_attributes(attributes, db_config)

@@ -59,22 +59,24 @@ RSpec.describe Sentry::Rails::LogSubscribers::ActiveRecordSubscriber do
     end
   end
 
-  describe "database configuration extraction" do
-    it "includes database configuration in log attributes" do
-      Post.create!
+  if Rails.version.to_f >= 7.2
+    describe "database configuration extraction" do
+      it "includes database configuration in log attributes" do
+        Post.create!
 
-      Sentry.get_current_client.flush
+        Sentry.get_current_client.flush
 
-      log_event = sentry_logs.find do |log|
-        log[:body]&.include?("Database query") &&
-          log[:attributes]&.dig(:sql, :value)&.include?("INSERT")
+        log_event = sentry_logs.find do |log|
+          log[:body]&.include?("Database query") &&
+            log[:attributes]&.dig(:sql, :value)&.include?("INSERT")
+        end
+
+        expect(log_event).not_to be_nil
+
+        attributes = log_event[:attributes]
+        expect(attributes[:db_system][:value]).to eq("sqlite3")
+        expect(attributes[:db_name][:value]).to eq("db")
       end
-
-      expect(log_event).not_to be_nil
-
-      attributes = log_event[:attributes]
-      expect(attributes[:db_system][:value]).to eq("sqlite3")
-      expect(attributes[:db_name][:value]).to eq("db")
     end
   end
 
