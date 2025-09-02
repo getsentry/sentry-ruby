@@ -4,6 +4,19 @@ RSpec.shared_examples "parameter filtering" do |subscriber_class|
   let(:test_instance) { subscriber_class.new }
 
   describe "#filter_sensitive_params" do
+    around do |example|
+      original_filter_params = Rails.application.config.filter_parameters.dup
+
+      Rails.application.config.filter_parameters.concat([
+        :password, :secret, :custom_secret, :api_key,
+        :credit_card, :authorization, :token, :session_token
+      ]).uniq!
+
+      example.run
+
+      Rails.application.config.filter_parameters = original_filter_params
+    end
+
     context "when params is not a hash" do
       it "returns empty hash for nil" do
         result = test_instance.filter_sensitive_params(nil)

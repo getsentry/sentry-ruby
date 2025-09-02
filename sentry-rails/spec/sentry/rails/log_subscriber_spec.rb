@@ -9,7 +9,6 @@ RSpec.describe Sentry::Rails::LogSubscriber, type: :request do
   let!(:test_subscriber) { test_subscriber_class.new }
 
   after do
-    Sentry.logger.clear if Sentry.logger.respond_to?(:clear)
     test_subscriber_class.detach_from(:test_component)
   end
 
@@ -242,9 +241,9 @@ RSpec.describe Sentry::Rails::LogSubscriber, type: :request do
     before do
       make_basic_app do |config, app|
         config.enable_logs = true
+
         config.structured_logger_class = Sentry::DebugStructuredLogger
         config.send_default_pii = true
-        app.config.filter_parameters += [:custom_secret, :api_key, :credit_card, :authorization]
       end
     end
 
