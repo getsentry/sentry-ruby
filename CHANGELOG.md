@@ -6,6 +6,71 @@
 - Support for Rails ActiveSupport log subscribers ([#2690](https://github.com/getsentry/sentry-ruby/pull/2690))
 - Support for defining custom Rails log subscribers that work with Sentry Structured Logging ([#2689](https://github.com/getsentry/sentry-ruby/pull/2689))
 
+  Rails applications can now define custom log subscribers that integrate with Sentry's structured logging system. The feature includes built-in subscribers for ActionController, ActiveRecord, ActiveJob, and ActionMailer events, with automatic parameter filtering that respects Rails' `config.filter_parameters` configuration.
+
+  To enable structured logging with Rails log subscribers:
+
+  ```ruby
+  Sentry.init do |config|
+    # ... your setup ...
+
+    # Make sure structured logging is enabled
+    config.enable_logs = true
+
+    # Enable default Rails log subscribers (ActionController and ActiveRecord)
+    config.rails.structured_logging.enabled = true
+  end
+  ```
+
+  To configure all subscribers:
+
+  ```ruby
+  Sentry.init do |config|
+    # ... your setup ...
+
+    # Make sure structured logging is enabled
+    config.enable_logs = true
+
+    # Enable Rails log subscribers
+    config.rails.structured_logging.enabled = true
+
+    # Add ActionMailer and ActiveJob subscribers
+    config.rails.structured_logging.subscribers.update(
+      action_mailer: Sentry::Rails::LogSubscribers::ActionMailerSubscriber,
+      active_job: Sentry::Rails::LogSubscribers::ActiveJobSubscriber
+    )
+  end
+  ```
+
+  You can also define custom log subscribers by extending the base class:
+
+  ```ruby
+  class MyCustomSubscriber < Sentry::Rails::LogSubscriber
+    attach_to :my_component
+
+    def my_event(event)
+      log_structured_event(
+        message: "Custom event occurred",
+        level: :info,
+        attributes: { duration_ms: event.duration }
+      )
+    end
+  end
+
+  Sentry.init do |config|
+    # ... your setup ...
+
+    # Make sure structured logging is enabled
+    config.enable_logs = true
+
+    # Enable Rails log subscribers
+    config.rails.structured_logging.enabled = true
+
+    # Add custom subscriber
+    config.rails.structured_logging.subscribers[:my_component] = MyCustomSubscriber
+  end
+  ```
+
 ### Internal
 
 - Factor out do_request in HTTP transport ([#2662](https://github.com/getsentry/sentry-ruby/pull/2662))
