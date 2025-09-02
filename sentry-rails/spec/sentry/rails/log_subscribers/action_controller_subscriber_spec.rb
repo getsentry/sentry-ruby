@@ -25,7 +25,11 @@ RSpec.describe Sentry::Rails::LogSubscribers::ActionControllerSubscriber, type: 
       expect(log_event[:attributes][:controller][:value]).to eq("HelloController")
       expect(log_event[:attributes][:action][:value]).to eq("world")
       expect(log_event[:attributes][:status][:value]).to eq(200)
-      expect(log_event[:attributes][:duration_ms][:value]).to be > 0
+
+      duration = log_event[:attributes][:duration_ms][:value]
+      expect(duration).to be_a(Float)
+      expect(duration).to be_in(0.01..30.0)
+
       expect(log_event[:attributes][:method][:value]).to eq("GET")
       expect(log_event[:attributes][:path][:value]).to eq("/world")
       expect(log_event[:attributes][:format][:value]).to eq(:html)

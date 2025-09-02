@@ -28,7 +28,7 @@ module Sentry
         # @param event [ActiveSupport::Notifications::Event] The controller action event
         def process_action(event)
           payload = event.payload
-          duration = event.time.round(2)
+          duration = event.duration.round(2)
 
           controller = payload[:controller]
           action = payload[:action]
