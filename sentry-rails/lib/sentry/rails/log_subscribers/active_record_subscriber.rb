@@ -37,13 +37,12 @@ module Sentry
           # Rails 5.0.0 doesn't include :cached in the payload, it was added in Rails 5.1
           cached = event.payload.fetch(:cached, false)
           connection_id = event.payload[:connection_id]
-          duration = duration_ms(event)
 
           db_config = extract_db_config(event.payload)
 
           attributes = {
             sql: sql,
-            duration_ms: duration,
+            duration_ms: duration_ms(event),
             cached: cached
           }
 

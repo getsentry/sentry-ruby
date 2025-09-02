@@ -27,12 +27,12 @@ module Sentry
         # @param event [ActiveSupport::Notifications::Event] The email delivery event
         def deliver(event)
           payload = event.payload
+
           mailer = payload[:mailer]
-          duration = duration_ms(event)
 
           attributes = {
             mailer: mailer,
-            duration_ms: duration,
+            duration_ms: duration_ms(event),
             perform_deliveries: payload[:perform_deliveries]
           }
 

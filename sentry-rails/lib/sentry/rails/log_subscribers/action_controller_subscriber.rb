@@ -28,7 +28,6 @@ module Sentry
         # @param event [ActiveSupport::Notifications::Event] The controller action event
         def process_action(event)
           payload = event.payload
-          duration = event.duration.round(2)
 
           controller = payload[:controller]
           action = payload[:action]
@@ -39,7 +38,7 @@ module Sentry
             controller: controller,
             action: action,
             status: status,
-            duration_ms: duration,
+            duration_ms: duration_ms(event),
             method: payload[:method],
             path: payload[:path],
             format: payload[:format]
