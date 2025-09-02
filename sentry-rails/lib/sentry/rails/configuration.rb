@@ -6,6 +6,9 @@ require "sentry/rails/tracing/active_record_subscriber"
 require "sentry/rails/tracing/active_storage_subscriber"
 require "sentry/rails/tracing/active_support_subscriber"
 
+require "sentry/rails/log_subscribers/active_record_subscriber"
+require "sentry/rails/log_subscribers/action_controller_subscriber"
+
 module Sentry
   class Configuration
     attr_reader :rails
@@ -193,9 +196,14 @@ module Sentry
       # @return [Hash<Symbol, Class>]
       attr_accessor :subscribers
 
+      DEFAULT_SUBSCRIBERS = {
+        active_record: Sentry::Rails::LogSubscribers::ActiveRecordSubscriber,
+        action_controller: Sentry::Rails::LogSubscribers::ActionControllerSubscriber
+      }.freeze
+
       def initialize
         @enabled = false
-        @subscribers = {}
+        @subscribers = DEFAULT_SUBSCRIBERS.dup
       end
     end
   end
