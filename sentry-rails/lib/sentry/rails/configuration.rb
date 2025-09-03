@@ -6,6 +6,9 @@ require "sentry/rails/tracing/active_record_subscriber"
 require "sentry/rails/tracing/active_storage_subscriber"
 require "sentry/rails/tracing/active_support_subscriber"
 
+require "sentry/rails/log_subscribers/active_record_subscriber"
+require "sentry/rails/log_subscribers/action_controller_subscriber"
+
 module Sentry
   class Configuration
     attr_reader :rails
@@ -159,6 +162,10 @@ module Sentry
       # Set this option to true if you want Sentry to capture each retry failure
       attr_accessor :active_job_report_on_retry_error
 
+      # Configuration for structured logging feature
+      # @return [StructuredLoggingConfiguration]
+      attr_reader :structured_logging
+
       def initialize
         @register_error_subscriber = false
         @report_rescued_exceptions = true
@@ -176,6 +183,27 @@ module Sentry
         @db_query_source_threshold_ms = 100
         @active_support_logger_subscription_items = Sentry::Rails::ACTIVE_SUPPORT_LOGGER_SUBSCRIPTION_ITEMS_DEFAULT.dup
         @active_job_report_on_retry_error = false
+        @structured_logging = StructuredLoggingConfiguration.new
+      end
+    end
+
+    class StructuredLoggingConfiguration
+      # Enable or disable structured logging
+      # @return [Boolean]
+      attr_accessor :enabled
+
+      # Hash of components to subscriber classes for structured logging
+      # @return [Hash<Symbol, Class>]
+      attr_accessor :subscribers
+
+      DEFAULT_SUBSCRIBERS = {
+        active_record: Sentry::Rails::LogSubscribers::ActiveRecordSubscriber,
+        action_controller: Sentry::Rails::LogSubscribers::ActionControllerSubscriber
+      }.freeze
+
+      def initialize
+        @enabled = false
+        @subscribers = DEFAULT_SUBSCRIBERS.dup
       end
     end
   end
