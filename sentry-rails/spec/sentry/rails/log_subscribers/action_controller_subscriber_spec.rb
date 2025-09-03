@@ -97,6 +97,164 @@ RSpec.describe Sentry::Rails::LogSubscribers::ActionControllerSubscriber, type: 
         end
       end
 
+      it "handles missing payload fields gracefully" do
+        event = ActiveSupport::Notifications::Event.new(
+          "process_action.action_controller",
+          Time.current,
+          Time.current + 0.1,
+          "unique_id",
+          {
+            controller: "TestController",
+            action: "test"
+          }
+        )
+
+        subscriber = described_class.new
+        expect { subscriber.process_action(event) }.not_to raise_error
+
+        Sentry.get_current_client.flush
+
+        log_event = sentry_logs.find { |log| log[:body] == "TestController#test" }
+        expect(log_event).not_to be_nil
+        expect(log_event[:attributes][:controller][:value]).to eq("TestController")
+        expect(log_event[:attributes][:action][:value]).to eq("test")
+        expect(log_event[:attributes]).not_to have_key(:status)
+      end
+
+      it "includes status when explicitly provided" do
+        event = ActiveSupport::Notifications::Event.new(
+          "process_action.action_controller",
+          Time.current,
+          Time.current + 0.1,
+          "unique_id",
+          {
+            controller: "TestController",
+            action: "test",
+            status: 201,
+            method: "POST",
+            path: "/test",
+            format: :json
+          }
+        )
+
+        subscriber = described_class.new
+        subscriber.process_action(event)
+
+        Sentry.get_current_client.flush
+
+        log_event = sentry_logs.find { |log| log[:body] == "TestController#test" }
+        expect(log_event).not_to be_nil
+        expect(log_event[:attributes][:status][:value]).to eq(201)
+      end
+
+      it "handles custom status codes correctly" do
+        event = ActiveSupport::Notifications::Event.new(
+          "process_action.action_controller",
+          Time.current,
+          Time.current + 0.1,
+          "unique_id",
+          {
+            controller: "TestController",
+            action: "test",
+            status: 418, # I'm a teapot
+            method: "GET",
+            path: "/test",
+            format: :json
+          }
+        )
+
+        subscriber = described_class.new
+        subscriber.process_action(event)
+
+        Sentry.get_current_client.flush
+
+        log_event = sentry_logs.find { |log| log[:body] == "TestController#test" }
+        expect(log_event).not_to be_nil
+        expect(log_event[:level]).to eq("warn")
+        expect(log_event[:attributes][:status][:value]).to eq(418)
+      end
+
+      it "handles ActionController::RoutingError exceptions" do
+        event = ActiveSupport::Notifications::Event.new(
+          "process_action.action_controller",
+          Time.current,
+          Time.current + 0.1,
+          "unique_id",
+          {
+            controller: "TestController",
+            action: "test",
+            exception: ["ActionController::RoutingError", "No route matches"],
+            method: "GET",
+            path: "/nonexistent",
+            format: :html
+          }
+        )
+
+        subscriber = described_class.new
+        subscriber.process_action(event)
+
+        Sentry.get_current_client.flush
+
+        log_event = sentry_logs.find { |log| log[:body] == "TestController#test" }
+        expect(log_event).not_to be_nil
+        expect(log_event[:level]).to eq("warn")
+        expect(log_event[:attributes][:status][:value]).to eq(404)
+      end
+
+      it "handles ActionController::BadRequest exceptions" do
+        event = ActiveSupport::Notifications::Event.new(
+          "process_action.action_controller",
+          Time.current,
+          Time.current + 0.1,
+          "unique_id",
+          {
+            controller: "TestController",
+            action: "test",
+            exception: ["ActionController::BadRequest", "Bad request"],
+            method: "POST",
+            path: "/test",
+            format: :json
+          }
+        )
+
+        subscriber = described_class.new
+        subscriber.process_action(event)
+
+        Sentry.get_current_client.flush
+
+        log_event = sentry_logs.find { |log| log[:body] == "TestController#test" }
+        expect(log_event).not_to be_nil
+        expect(log_event[:level]).to eq("warn")
+        expect(log_event[:attributes][:status][:value]).to eq(400)
+      end
+
+      it "handles other exceptions with error level" do
+        event = ActiveSupport::Notifications::Event.new(
+          "process_action.action_controller",
+          Time.current,
+          Time.current + 0.1,
+          "unique_id",
+          {
+            controller: "TestController",
+            action: "test",
+            exception: ["StandardError", "Something went wrong"],
+            method: "POST",
+            path: "/test",
+            format: :json
+          }
+        )
+
+        subscriber = described_class.new
+        subscriber.process_action(event)
+
+        Sentry.get_current_client.flush
+
+        log_event = sentry_logs.find { |log| log[:body] == "TestController#test" }
+        expect(log_event).not_to be_nil
+        expect(log_event[:level]).to eq("error")
+        expect(log_event[:attributes][:status][:value]).to eq(500)
+      end
+
       context "when send_default_pii is enabled" do
         before do
           Sentry.configuration.send_default_pii = true
@@ -170,6 +328,33 @@ RSpec.describe Sentry::Rails::LogSubscribers::ActionControllerSubscriber, type: 
           expect(params["user"]).to include("password" => "[FILTERED]")
           expect(params["user"]["profile"]).to include("api_key" => "[FILTERED]")
           expect(params["user"]["profile"]).to include("public_info" => "visible")
+        end
+
+        it "handles malformed parameters gracefully" do
+          event = ActiveSupport::Notifications::Event.new(
+            "process_action.action_controller",
+            Time.current,
+            Time.current + 0.1,
+            "unique_id",
+            {
+              controller: "TestController",
+              action: "test",
+              status: 200,
+              method: "POST",
+              path: "/test",
+              format: :json,
+              params: "not_a_hash"
+            }
+          )
+
+          subscriber = described_class.new
+          expect { subscriber.process_action(event) }.not_to raise_error
+
+          Sentry.get_current_client.flush
+
+          log_event = sentry_logs.find { |log| log[:body] == "TestController#test" }
+          expect(log_event).not_to be_nil
+          expect(log_event[:attributes]).not_to have_key(:params)
         end
       end
 

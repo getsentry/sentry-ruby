@@ -154,6 +154,72 @@ RSpec.describe Sentry::Rails::LogSubscribers::ActiveJobSubscriber, skip: Rails.v
 
           Rails.application.config.filter_parameters = original_filter_params
         end
+
+        it "filters long string arguments" do
+          test_job_class = Class.new(ActiveJob::Base) do
+            def self.name
+              "TestJobWithLongString"
+            end
+
+            def perform(short_string, long_string)
+            end
+          end
+
+          long_string = "a" * 150
+          test_job_class.perform_now("short", long_string)
+
+          Sentry.get_current_client.flush
+
+          log_event = sentry_logs.find { |log| log[:body]&.include?("Job performed") }
+          expect(log_event).not_to be_nil
+
+          attributes = log_event[:attributes]
+          arguments = attributes[:arguments][:value]
+
+          expect(arguments).to include("short")
+          expect(arguments).to include("[FILTERED: 150 chars]")
+        end
+
+        it "handles mixed argument types" do
+          test_job_class = Class.new(ActiveJob::Base) do
+            def self.name
+              "TestJobWithMixedArgs"
+            end
+
+            def perform(string_arg, hash_arg, number_arg, array_arg)
+            end
+          end
+
+          test_job_class.perform_now(
+            "string_value",
+            { safe_key: "value", password: "secret" },
+            42,
+            [1, 2, 3]
+          )
+
+          Sentry.get_current_client.flush
+
+          log_event = sentry_logs.find { |log| log[:body]&.include?("Job performed") }
+          expect(log_event).not_to be_nil
+
+          attributes = log_event[:attributes]
+          arguments = attributes[:arguments][:value]
+
+          expect(arguments[0]).to eq("string_value")
+          expect(arguments[1]).to include(safe_key: "value")
+          expect(arguments[1]).to include(password: "[FILTERED]")
+          expect(arguments[2]).to eq(42)
+          expect(arguments[3]).to eq([1, 2, 3])
+        end
+
+        it "handles non-array arguments gracefully" do
+          subscriber = described_class.new
+          result = subscriber.send(:filter_sensitive_arguments, "not_an_array")
+          expect(result).to eq([])
+
+          result = subscriber.send(:filter_sensitive_arguments, nil)
+          expect(result).to eq([])
+        end
       end
 
       context "when send_default_pii is disabled" do
@@ -235,6 +301,25 @@ RSpec.describe Sentry::Rails::LogSubscribers::ActiveJobSubscriber, skip: Rails.v
         expect(log_event[:attributes][:job_class][:value]).to eq("FailedJob")
         expect(log_event[:attributes]).not_to have_key(:error_class)
         expect(log_event[:attributes]).not_to have_key(:error_message)
+      end
+
+      it "logs discard events with custom discard reason" do
+        job = FailedJob.new
+        error = StandardError.new("Custom discard reason")
+
+        ActiveSupport::Notifications.instrument("discard.active_job",
+          job: job,
+          error: error
+        )
+
+        Sentry.get_current_client.flush
+
+        log_event = sentry_logs.find { |log| log[:body]&.include?("Job discarded") }
+        expect(log_event).not_to be_nil
+        expect(log_event[:level]).to eq("warn")
+        expect(log_event[:attributes][:job_class][:value]).to eq("FailedJob")
+        expect(log_event[:attributes][:error_class][:value]).to eq("StandardError")
+        expect(log_event[:attributes][:error_message][:value]).to eq("Custom discard reason")
       end
     end
   end

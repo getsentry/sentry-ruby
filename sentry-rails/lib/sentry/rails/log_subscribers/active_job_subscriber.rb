@@ -38,7 +38,7 @@ module Sentry
             priority: job.priority
           }
 
-          attributes[:adapter] = job.class.queue_adapter.class.name if job.class.respond_to?(:queue_adapter)
+          attributes[:adapter] = job.class.queue_adapter.class.name
 
           if job.scheduled_at
             attributes[:scheduled_at] = job.scheduled_at.iso8601

@@ -78,6 +78,59 @@ RSpec.describe Sentry::Rails::LogSubscribers::ActionMailerSubscriber do
         expect(log_event[:attributes][:delivery_method][:value]).to eq(:smtp)
       end
 
+      it "includes date when available" do
+        test_date = Time.current
+        ActiveSupport::Notifications.instrument("deliver.action_mailer",
+          mailer: "NotificationMailer",
+          perform_deliveries: true,
+          date: test_date
+        )
+
+        Sentry.get_current_client.flush
+
+        expect(sentry_logs).not_to be_empty
+
+        log_event = sentry_logs.find { |log| log[:body] == "Email delivered via NotificationMailer" }
+        expect(log_event).not_to be_nil
+        expect(log_event[:attributes][:date][:value]).to eq(test_date.to_s)
+      end
+
+      it "handles missing optional fields gracefully" do
+        ActiveSupport::Notifications.instrument("deliver.action_mailer",
+          mailer: "MinimalMailer",
+          perform_deliveries: false
+        )
+
+        Sentry.get_current_client.flush
+
+        expect(sentry_logs).not_to be_empty
+
+        log_event = sentry_logs.find { |log| log[:body] == "Email delivered via MinimalMailer" }
+        expect(log_event).not_to be_nil
+        expect(log_event[:attributes][:mailer][:value]).to eq("MinimalMailer")
+        expect(log_event[:attributes][:perform_deliveries][:value]).to be false
+        expect(log_event[:attributes]).not_to have_key(:delivery_method)
+        expect(log_event[:attributes]).not_to have_key(:date)
+        expect(log_event[:attributes]).not_to have_key(:message_id)
+      end
+
+      it "handles process events with missing params gracefully" do
+        ActiveSupport::Notifications.instrument("process.action_mailer",
+          mailer: "UserMailer",
+          action: "welcome_email"
+        )
+
+        Sentry.get_current_client.flush
+
+        expect(sentry_logs).not_to be_empty
+
+        log_event = sentry_logs.find { |log| log[:body] == "UserMailer#welcome_email" }
+        expect(log_event).not_to be_nil
+        expect(log_event[:attributes][:mailer][:value]).to eq("UserMailer")
+        expect(log_event[:attributes][:action][:value]).to eq("welcome_email")
+        expect(log_event[:attributes]).not_to have_key(:params)
+      end
+
       context "when send_default_pii is enabled" do
         before do
           Sentry.configuration.send_default_pii = true

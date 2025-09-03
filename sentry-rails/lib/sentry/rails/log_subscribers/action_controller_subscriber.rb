@@ -37,12 +37,13 @@ module Sentry
           attributes = {
             controller: controller,
             action: action,
-            status: status,
             duration_ms: duration_ms(event),
             method: payload[:method],
             path: payload[:path],
             format: payload[:format]
           }
+
+          attributes[:status] = status if status
 
           if payload[:view_runtime]
             attributes[:view_runtime_ms] = payload[:view_runtime].round(2)
@@ -97,6 +98,8 @@ module Sentry
             else
               :error
             end
+          elsif status.nil?
+            :info
           elsif status >= 200 && status < 400
             :info
           elsif status >= 400 && status < 500

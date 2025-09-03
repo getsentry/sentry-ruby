@@ -57,6 +57,49 @@ RSpec.describe Sentry::Rails::LogSubscribers::ActiveRecordSubscriber do
           schema_logs = sentry_logs.select { |log| log[:attributes]&.dig(:sql, :value)&.include?("CREATE TABLE") }
           expect(schema_logs).to be_empty
         end
+
+        it "excludes TRANSACTION events" do
+          ActiveSupport::Notifications.instrument("sql.active_record",
+            sql: "BEGIN",
+            name: "TRANSACTION",
+            connection: ActiveRecord::Base.connection
+          )
+
+          Sentry.get_current_client.flush
+
+          transaction_logs = sentry_logs.select { |log| log[:attributes]&.dig(:sql, :value) == "BEGIN" }
+          expect(transaction_logs).to be_empty
+        end
+      end
+
+      it "handles events with missing connection gracefully" do
+        ActiveSupport::Notifications.instrument("sql.active_record",
+          sql: "SELECT 1",
+          name: "SQL"
+        )
+
+        Sentry.get_current_client.flush
+
+        log_event = sentry_logs.find { |log| log[:attributes]&.dig(:sql, :value) == "SELECT 1" }
+        expect(log_event).not_to be_nil
+        expect(log_event[:attributes][:sql][:value]).to eq("SELECT 1")
+        expect(log_event[:attributes]).not_to have_key(:db_system)
+        expect(log_event[:attributes]).not_to have_key(:db_name)
+      end
+
+      it "handles events with missing connection_id gracefully" do
+        ActiveSupport::Notifications.instrument("sql.active_record",
+          sql: "SELECT 2",
+          name: "SQL",
+          connection: ActiveRecord::Base.connection
+        )
+
+        Sentry.get_current_client.flush
+
+        log_event = sentry_logs.find { |log| log[:attributes]&.dig(:sql, :value) == "SELECT 2" }
+        expect(log_event).not_to be_nil
+        expect(log_event[:attributes][:sql][:value]).to eq("SELECT 2")
+        expect(log_event[:attributes]).not_to have_key(:connection_id)
       end
     end
 
@@ -98,9 +141,6 @@ RSpec.describe Sentry::Rails::LogSubscribers::ActiveRecordSubscriber do
       end
 
       it "handles queries without specific statement names" do
-        sentry_transport.events.clear
-        sentry_transport.envelopes.clear
-
         ActiveRecord::Base.connection.execute("SELECT 1")
 
         Sentry.get_current_client.flush
@@ -118,8 +158,6 @@ RSpec.describe Sentry::Rails::LogSubscribers::ActiveRecordSubscriber do
       it "includes cached flag when query is cached", skip: Rails.version.to_f < 5.1 ? "Rails 5.0.0 doesn't include cached flag in sql.active_record events" : false do
         ActiveRecord::Base.cache do
           post = Post.create!
-          sentry_transport.events.clear
-          sentry_transport.envelopes.clear
 
           Post.find(post.id)
           Post.find(post.id)
