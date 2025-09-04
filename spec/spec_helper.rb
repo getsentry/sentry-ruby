@@ -37,9 +37,9 @@ RSpec.configure do |config|
   config.before(:suite) do
     Test::Helper.perform_basic_setup do |config|
       config.transport.transport_class = Sentry::DebugTransport
-      config.structured_logger_class = Sentry::DebugStructuredLogger
-      config.sdk_debug_structured_logger_log_file = Test::Helper.debug_log_path.join("sentry_e2e_tests.log")
       config.enable_logs = true
+      config.structured_logging.logger_class = Sentry::DebugStructuredLogger
+      config.structured_logging.file_path = Test::Helper.debug_log_path.join("sentry_e2e_tests.log")
     end
 
     Test::Helper.clear_logged_events

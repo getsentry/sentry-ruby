@@ -44,7 +44,7 @@ RSpec.describe Sentry::Rails::LogSubscriber, type: :request do
     before do
       make_basic_app do |config|
         config.enable_logs = true
-        config.structured_logger_class = Sentry::DebugStructuredLogger
+        config.structured_logging.logger_class = Sentry::DebugStructuredLogger
       end
     end
 
@@ -57,7 +57,8 @@ RSpec.describe Sentry::Rails::LogSubscriber, type: :request do
         logged_events = Sentry.logger.logged_events
         expect(logged_events).not_to be_empty
 
-        log_event = logged_events.first
+        log_event = logged_events.find { |event| event["message"] == "Test event occurred" }
+        expect(log_event).not_to be_nil
         expect(log_event["level"]).to eq("info")
         expect(log_event["message"]).to eq("Test event occurred")
         expect(log_event["attributes"]["test_data"]).to eq("sample_data")
@@ -241,8 +242,7 @@ RSpec.describe Sentry::Rails::LogSubscriber, type: :request do
     before do
       make_basic_app do |config, app|
         config.enable_logs = true
-
-        config.structured_logger_class = Sentry::DebugStructuredLogger
+        config.structured_logging.logger_class = Sentry::DebugStructuredLogger
         config.send_default_pii = true
       end
     end

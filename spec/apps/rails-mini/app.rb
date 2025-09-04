@@ -44,8 +44,8 @@ class RailsMiniApp < Rails::Application
       config.background_worker_threads = 0
 
       config.enable_logs = true
-      config.structured_logger_class = Sentry::DebugStructuredLogger
-      config.sdk_debug_structured_logger_log_file = debug_log_path.join("sentry_e2e_tests.log")
+      config.structured_logging.logger_class = Sentry::DebugStructuredLogger
+      config.structured_logging.file_path = debug_log_path.join("sentry_e2e_tests.log")
 
       config.rails.structured_logging.enabled = true
 

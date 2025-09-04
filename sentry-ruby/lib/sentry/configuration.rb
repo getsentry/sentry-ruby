@@ -13,6 +13,7 @@ require "sentry/metrics/configuration"
 require "sentry/linecache"
 require "sentry/interfaces/stacktrace_builder"
 require "sentry/logger"
+require "sentry/structured_logger"
 require "sentry/log_event_buffer"
 
 module Sentry
@@ -201,18 +202,6 @@ module Sentry
     # @return [String, nil]
     attr_accessor :sdk_debug_transport_log_file
 
-    # File path for DebugStructuredLogger to log events to. If not set, defaults to a temporary file.
-    # This is useful for debugging and testing structured logging.
-    # @return [String, nil]
-    attr_accessor :sdk_debug_structured_logger_log_file
-
-    # The class to use as a structured logger.
-    # If this option is not set, it will return `nil`, and Sentry will use
-    # `Sentry::StructuredLogger` by default when logs are enabled.
-    #
-    # @return [Class, nil]
-    attr_reader :structured_logger_class
-
     # @deprecated Use {#sdk_logger=} instead.
     def logger=(logger)
       warn "[sentry] `config.logger=` is deprecated. Please use `config.sdk_logger=` instead."
@@ -305,6 +294,10 @@ module Sentry
     # Enable Structured Logging
     # @return [Boolean]
     attr_accessor :enable_logs
+
+    # Structured logging configuration.
+    # @return [StructuredLoggingConfiguration]
+    attr_reader :structured_logging
 
     # Easier way to use performance tracing
     # If set to true, will set traces_sample_rate to 1.0
@@ -502,6 +495,7 @@ module Sentry
       @transport = Transport::Configuration.new
       @cron = Cron::Configuration.new
       @metrics = Metrics::Configuration.new
+      @structured_logging = StructuredLoggingConfiguration.new
       @gem_specs = Hash[Gem::Specification.map { |spec| [spec.name, spec.version.to_s] }] if Gem::Specification.respond_to?(:map)
 
       run_post_initialization_callbacks
@@ -622,14 +616,6 @@ module Sentry
       end
 
       @profiler_class = profiler_class
-    end
-
-    def structured_logger_class=(klass)
-      unless klass.is_a?(Class)
-        raise Sentry::Error.new("config.structured_logger_class must be a class. got: #{klass.class}")
-      end
-
-      @structured_logger_class = klass
     end
 
     def sending_allowed?
@@ -807,6 +793,21 @@ module Sentry
     def processor_count
       available_processor_count = Concurrent.available_processor_count if Concurrent.respond_to?(:available_processor_count)
       available_processor_count || Concurrent.processor_count
+    end
+  end
+
+  class StructuredLoggingConfiguration
+    # File path for DebugStructuredLogger to log events to
+    # @return [String, Pathname, nil]
+    attr_accessor :file_path
+
+    # The class to use as a structured logger.
+    # @return [Class]
+    attr_accessor :logger_class
+
+    def initialize
+      @file_path = nil
+      @logger_class = Sentry::StructuredLogger
     end
   end
 end

@@ -642,8 +642,7 @@ module Sentry
           # Initialize the public-facing Structured Logger if logs are enabled
           # Use configured structured logger class or default to StructuredLogger
           # @see https://develop.sentry.dev/sdk/telemetry/logs/
-          logger_class = configuration.structured_logger_class || StructuredLogger
-          logger_class.new(configuration)
+          configuration.structured_logging.logger_class.new(configuration)
         else
           warn <<~STR
             [sentry] `Sentry.logger` will no longer be used as internal SDK logger when `enable_logs` feature is turned on.

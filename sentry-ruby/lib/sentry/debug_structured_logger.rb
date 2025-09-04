@@ -16,7 +16,9 @@ module Sentry
     attr_reader :log_file, :backend
 
     def initialize(configuration)
-      @log_file = initialize_log_file(configuration)
+      @log_file = initialize_log_file(
+        configuration.structured_logging.file_path || DEFAULT_LOG_FILE_PATH
+      )
       @backend = initialize_backend(configuration)
 
       super(@backend)
@@ -74,8 +76,8 @@ module Sentry
       end
     end
 
-    def initialize_log_file(configuration)
-      log_file = Pathname(configuration.sdk_debug_structured_logger_log_file || DEFAULT_LOG_FILE_PATH)
+    def initialize_log_file(log_file_path)
+      log_file = Pathname(log_file_path)
 
       FileUtils.mkdir_p(log_file.dirname) unless log_file.dirname.exist?
 
