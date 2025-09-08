@@ -2,6 +2,6 @@
 
 module Sentry
   module Rails
-    VERSION = "5.26.0"
+    VERSION = "5.27.0"
   end
 end
