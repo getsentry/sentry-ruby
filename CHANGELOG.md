@@ -1,4 +1,4 @@
-## Unreleased
+## 5.27.0
 
 ### Feature
 
@@ -70,11 +70,28 @@
     config.rails.structured_logging.subscribers[:my_component] = MyCustomSubscriber
   end
   ```
+- Introduce `structured_logging` config namespace ([#2692](https://github.com/getsentry/sentry-ruby/pull/2692))
+
+### Bug Fixes
+
+- Silence `_perform` method redefinition warning ([#2682](https://github.com/getsentry/sentry-ruby/pull/2682))
+- Update sentry trace regexp ([#2678](https://github.com/getsentry/sentry-ruby/pull/2678))
+- Remove redundant `attr_reader` ([#2673](https://github.com/getsentry/sentry-ruby/pull/2673))
 
 ### Internal
 
 - Factor out do_request in HTTP transport ([#2662](https://github.com/getsentry/sentry-ruby/pull/2662))
 - Add `Sentry::DebugTransport` that captures events and stores them as JSON for debugging purposes ([#2664](https://github.com/getsentry/sentry-ruby/pull/2664))
+- Add `Sentry::DebugStructuredLogger` that caputres log events and stores them as JSON to a file for debugging purposes ([#2693](https://github.com/getsentry/sentry-ruby/pull/2693))
+- Rails test runner ([#2687](https://github.com/getsentry/sentry-ruby/pull/2687))
+- Update common gem deps for development ([#2688](https://github.com/getsentry/sentry-ruby/pull/2688))
+- Make devcontainer work with ancient Ruby/Rails ([#2679](https://github.com/getsentry/sentry-ruby/pull/2679))
+- Improved devcontainer setup with e2e test mini infra ([#2672](https://github.com/getsentry/sentry-ruby/pull/2672))
+- Address various flaky specs
+  - Fix test failures under JRuby ([#2665](https://github.com/getsentry/sentry-ruby/pull/2665))
+  - Fix flaky faraday spec ([#2666](https://github.com/getsentry/sentry-ruby/pull/2666))
+  - Fix flaky net/http spec ([#2667](https://github.com/getsentry/sentry-ruby/pull/2667))
+  - Fix flaky tracing specs ([#2670](https://github.com/getsentry/sentry-ruby/pull/2670))
 
 ## 5.26.0
 
