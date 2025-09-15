@@ -47,16 +47,21 @@ module Sentry
           return if attempt < attempt_threshold
         end
 
-        Sentry::Sidekiq.capture_exception(
-          ex,
-          contexts: { sidekiq: context_filter.filtered },
-          hint: { background: false }
-        )
+        report_error(ex, context_filter.filtered, hint: { background: false })
       ensure
         scope&.clear
       end
 
       private
+
+      def report_error(ex, context, hint: {})
+        if Sentry.configuration.sidekiq.report_errors_via_rails
+          mechanism = Sentry::Mechanism.new(type: "sidekiq", handled: false)
+          ::Rails.error.report(ex, context: { sidekiq: context, hint: hint.merge(mechanism: mechanism) }, handled: false)
+        else
+          Sentry::Sidekiq.capture_exception(ex, contexts: { sidekiq: context }, hint: hint)
+        end
+      end
 
       def retryable?(context)
         retry_option = context.dig(:job, "retry")

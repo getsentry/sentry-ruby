@@ -104,4 +104,33 @@ RSpec.describe Sentry::Sidekiq::ErrorHandler do
       expect(event[:transaction]).to eq("Sidekiq/HardWorker")
     end
   end
+
+  context "when `report_errors_via_rails` is true" do
+    before do
+      Sentry.configuration.sidekiq.report_errors_via_rails = true
+    end
+
+    it "reports errors via Rails.error instead of the Sentry client" do
+      error_reporter = spy("Rails.error")
+      stub_const("Rails", double(error: error_reporter))
+
+      exception = build_exception
+
+      subject.call(exception, context)
+
+      expect(transport.events.count).to eq(0)
+
+      expect(error_reporter).to have_received(:report) do |*args|
+        ex = args[0]
+        error_context = args[1][:context]
+        handled = args[1][:handled]
+
+        expect(ex).to eq(exception)
+        expect(error_context[:sidekiq]).to eq(context)
+        expect(error_context[:hint][:background]).to eq(false)
+        expect(error_context[:hint][:mechanism].type).to eq("sidekiq")
+        expect(handled).to eq(false)
+      end
+    end
+  end
 end
