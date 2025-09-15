@@ -55,7 +55,7 @@ module Sentry
       private
 
       def report_error(ex, context, hint: {})
-        if Sentry.configuration.sidekiq.report_errors_via_rails
+        if Sentry.configuration.sidekiq.report_errors_via_rails && defined?(::Rails)
           mechanism = Sentry::Mechanism.new(type: "sidekiq", handled: false)
           ::Rails.error.report(ex, context: { sidekiq: context, hint: hint.merge(mechanism: mechanism) }, handled: false)
         else
