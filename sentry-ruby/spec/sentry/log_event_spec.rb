@@ -96,6 +96,39 @@ RSpec.describe Sentry::LogEvent do
       expect(hash[:attributes]).not_to have_key("sentry.message.template")
     end
 
+    it "doesn't set message.template when template has no parameters" do
+      event = described_class.new(
+        configuration: configuration,
+        level: :info,
+        body: "Hello %{name}, today is %{day}"
+      )
+
+      hash = event.to_hash
+
+      expect(hash[:attributes]).not_to have_key("sentry.message.template")
+      expect(hash[:attributes]).not_to have_key("sentry.message.parameter.name")
+      expect(hash[:attributes]).not_to have_key("sentry.message.parameter.day")
+    end
+
+    it "sets message.template only when parameters are present" do
+      attributes = {
+        "sentry.message.parameter.0" => "John"
+      }
+
+      event = described_class.new(
+        configuration: configuration,
+        level: :info,
+        body: "User %s has logged in!",
+        attributes: attributes
+      )
+
+      hash = event.to_hash
+
+      expect(hash[:attributes]).to have_key("sentry.message.template")
+      expect(hash[:attributes]["sentry.message.template"]).to eq({ value: "User %s has logged in!", type: "string" })
+      expect(hash[:attributes]["sentry.message.parameter.0"]).to eq({ value: "John", type: "string" })
+    end
+
     it "serializes different attribute types correctly" do
       attributes = {
         "string_attr" => "string value",

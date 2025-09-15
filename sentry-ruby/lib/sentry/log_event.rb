@@ -32,6 +32,8 @@ module Sentry
       "sentry.message.template" => :template
     }
 
+    PARAMETER_PREFIX = "sentry.message.parameter"
+
     USER_ATTRIBUTES = {
       "user.id" => :user_id,
       "user.name" => :user_username,
@@ -51,6 +53,7 @@ module Sentry
       parent_span_id
       sdk_name
       sdk_version
+      template
       timestamp
       trace_id
       user_id
@@ -146,6 +149,10 @@ module Sentry
       user[:email]
     end
 
+    def serialize_template
+      template if has_parameters?
+    end
+
     def serialize_attributes
       hash = {}
 
@@ -185,11 +192,11 @@ module Sentry
 
         if parameters.is_a?(Hash)
           parameters.each do |key, value|
-            attributes["sentry.message.parameter.#{key}"] = value
+            attributes["#{PARAMETER_PREFIX}.#{key}"] = value
           end
         else
           parameters.each_with_index do |param, index|
-            attributes["sentry.message.parameter.#{index}"] = param
+            attributes["#{PARAMETER_PREFIX}.#{index}"] = param
           end
         end
       end
@@ -201,6 +208,10 @@ module Sentry
 
     def is_template?
       body.include?("%s") || TOKEN_REGEXP.match?(body)
+    end
+
+    def has_parameters?
+      attributes.keys.any? { |key| key.start_with?(PARAMETER_PREFIX) }
     end
   end
 end
