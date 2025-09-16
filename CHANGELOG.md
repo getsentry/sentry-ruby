@@ -1,3 +1,9 @@
+## Unreleased
+
+### Bug Fixes
+
+- Skip including `sentry.message.template` in the log event attributes if there are no interpolation parameters provided ([#2700](https://github.com/getsentry/sentry-ruby/pull/2700))
+
 ## 5.27.0
 
 ### Feature
