@@ -4,6 +4,8 @@
 
 - Remove `config.async` [#1894](https://github.com/getsentry/sentry-ruby/pull/1894)
 - Migrate from to_hash to to_h ([#2351](https://github.com/getsentry/sentry-ruby/pull/2351))
+- Add `before_send_check_in` for applying to `CheckInEvent` ([#2703](https://github.com/getsentry/sentry-ruby/pull/2703))
+- Returning a hash from `before_send` and `before_send_transaction` is no longer supported and will drop the event.
 
 ## Unreleased
 
