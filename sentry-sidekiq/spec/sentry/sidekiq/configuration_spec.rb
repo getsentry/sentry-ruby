@@ -38,4 +38,10 @@ RSpec.describe Sentry::Sidekiq::Configuration do
       expect(subject.propagate_traces).to eq(true)
     end
   end
+
+  describe "#report_errors_via_rails" do
+    it "has correct default value" do
+      expect(subject.report_errors_via_rails).to eq(false)
+    end
+  end
 end

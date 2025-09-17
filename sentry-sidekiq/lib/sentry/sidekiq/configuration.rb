@@ -27,10 +27,14 @@ module Sentry
       # Whether we should inject headers while enqueuing the job in order to have a connected trace
       attr_accessor :propagate_traces
 
+      # Report exceptions via `Rails.error` instead of directly to the Sentry client
+      attr_accessor :report_errors_via_rails
+
       def initialize
         @report_after_job_retries = false
         @report_only_dead_jobs = false
         @propagate_traces = true
+        @report_errors_via_rails = false
       end
     end
   end
