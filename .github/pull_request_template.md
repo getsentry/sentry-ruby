@@ -11,7 +11,7 @@ Thanks for your Pull Request 🎉
 **Other Notes**
 - We squash all commits before merging
 - We generally try to review new PRs within a week
-- If you have any question, you can ask for feedback in our [discord community](https://discord.gg/Ww9hbqr) first or consult [CONTRIBUTING.md](../CONTRIBUTING.md) or [Sentry SDK development docs](https://develop.sentry.dev/sdk/)
+- If you have any question, you can ask for feedback in our [discord community](https://discord.gg/Ww9hbqr) first or consult [CONTRIBUTING.md](https://github.com/getsentry/sentry-ruby/blob/master/CONTRIBUTING.md) or [Sentry SDK development docs](https://develop.sentry.dev/sdk/)
 
 ## Description
 Describe your changes:
