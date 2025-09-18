@@ -128,6 +128,8 @@ RSpec.describe Sentry::Client do
       client.event_from_exception(ZeroDivisionError.new("divided by 0"))
     end
 
+    let(:check_in_event) { client.event_from_check_in("test_slug", :ok)  }
+
     shared_examples "Event in send_event" do
       context "when there's an exception" do
         before do
@@ -140,6 +142,7 @@ RSpec.describe Sentry::Client do
           end.to raise_error(Sentry::ExternalError, "networking error")
         end
       end
+
       it "sends data through the transport" do
         expect(client.transport).to receive(:send_event).with(event)
         client.send_event(event)
@@ -153,18 +156,6 @@ RSpec.describe Sentry::Client do
 
         client.send_event(event)
         expect(event.tags[:called]).to eq(true)
-      end
-
-      context "for check in events" do
-        let(:event_object) { client.event_from_check_in("test_slug", :ok)  }
-
-        it "does not fail due to before_send" do
-          configuration.before_send = lambda { |e, _h| e }
-          client.send_event(event)
-
-          expect(client.transport).to receive(:send_event).with(event)
-          client.send_event(event)
-        end
       end
 
       it "doesn't apply before_send_transaction to Event" do
@@ -199,19 +190,6 @@ RSpec.describe Sentry::Client do
         return_value = client.send_event(event)
         expect(string_io.string).to include("Discarded event because before_send didn't return a Sentry::ErrorEvent object but an instance of Integer")
         expect(return_value).to eq(nil)
-      end
-
-      it "warns about Hash value's deprecation" do
-        string_io = StringIO.new
-        logger = Logger.new(string_io, level: :debug)
-        configuration.sdk_logger = logger
-        configuration.before_send = lambda do |_event, _hint|
-          { foo: "bar" }
-        end
-
-        return_value = client.send_event(event)
-        expect(string_io.string).to include("Returning a Hash from before_send is deprecated and will be removed in the next major version.")
-        expect(return_value).to eq({ foo: "bar" })
       end
     end
 
@@ -254,23 +232,60 @@ RSpec.describe Sentry::Client do
         expect(string_io.string).to include("Discarded event because before_send_transaction didn't return a Sentry::TransactionEvent object but an instance of NilClass")
         expect(return_value).to be_nil
       end
-
-      it "warns about Hash value's deprecation" do
-        string_io = StringIO.new
-        logger = Logger.new(string_io, level: :debug)
-        configuration.sdk_logger = logger
-        configuration.before_send_transaction = lambda do |_event, _hint|
-          { foo: "bar" }
-        end
-
-        return_value = client.send_event(event)
-        expect(string_io.string).to include("Returning a Hash from before_send_transaction is deprecated and will be removed in the next major version.")
-        expect(return_value).to eq({ foo: "bar" })
-      end
     end
 
     it_behaves_like "TransactionEvent in send_event" do
       let(:event) { transaction_event }
+    end
+
+    shared_examples "CheckInEvent in send_event" do
+      it "sends data through the transport" do
+        client.send_event(event)
+      end
+
+      it "doesn't apply before_send to CheckInEvent" do
+        configuration.before_send = lambda do |event, _hint|
+          raise "shouldn't trigger me"
+        end
+
+        client.send_event(event)
+      end
+
+      it "doesn't apply before_send_transaction to CheckInEvent" do
+        configuration.before_send_transaction = lambda do |event, _hint|
+          raise "shouldn't trigger me"
+        end
+
+        client.send_event(event)
+      end
+
+      it "applies before_send_check_in callback before sending the event" do
+        called = false
+        configuration.before_send_check_in = lambda do |event, _hint|
+          called = true
+          event
+        end
+
+        client.send_event(event)
+        expect(called).to eq(true)
+      end
+
+      it "warns if before_send_check_in returns nil" do
+        string_io = StringIO.new
+        logger = Logger.new(string_io, level: :debug)
+        configuration.sdk_logger = logger
+        configuration.before_send_check_in = lambda do |_event, _hint|
+          nil
+        end
+
+        return_value = client.send_event(event)
+        expect(string_io.string).to include("Discarded event because before_send_check_in didn't return a Sentry::CheckInEvent object but an instance of NilClass")
+        expect(return_value).to be_nil
+      end
+    end
+
+    it_behaves_like "CheckInEvent in send_event" do
+      let(:event) { check_in_event }
     end
   end
 

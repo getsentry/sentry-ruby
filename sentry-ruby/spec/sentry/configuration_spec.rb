@@ -389,6 +389,12 @@ RSpec.describe Sentry::Configuration do
     expect { subject.before_send_transaction = true }.to raise_error(ArgumentError, "before_send_transaction must be callable (or nil to disable)")
   end
 
+  it 'raises error when setting before_send_check_in to anything other than callable or nil' do
+    subject.before_send_check_in = -> { }
+    subject.before_send_check_in = nil
+    expect { subject.before_send_check_in = true }.to raise_error(ArgumentError, "before_send_check_in must be callable (or nil to disable)")
+  end
+
   it 'raises error when setting before_breadcrumb to anything other than callable or nil' do
     subject.before_breadcrumb = -> { }
     subject.before_breadcrumb = nil
