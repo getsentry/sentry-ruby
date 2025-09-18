@@ -68,7 +68,7 @@ module Sentry
     # @return [Proc]
     attr_reader :before_breadcrumb
 
-    # Optional Proc, called before sending an event to the server
+    # Optional Proc, called before sending an error event to the server
     # @example
     #   config.before_send = lambda do |event, hint|
     #     # skip ZeroDivisionError exceptions
@@ -81,7 +81,7 @@ module Sentry
     # @return [Proc]
     attr_reader :before_send
 
-    # Optional Proc, called before sending an event to the server
+    # Optional Proc, called before sending a transaction event to the server
     # @example
     #   config.before_send_transaction = lambda do |event, hint|
     #     # skip unimportant transactions or strip sensitive data
@@ -93,6 +93,18 @@ module Sentry
     #   end
     # @return [Proc]
     attr_reader :before_send_transaction
+
+    # Optional Proc, called before sending a check-in event to the server
+    # @example
+    #   config.before_send_check_in = lambda do |event, hint|
+    #     if event.monitor_slug == "unimportant_job"
+    #       nil
+    #     else
+    #       event
+    #     end
+    #   end
+    # @return [Proc]
+    attr_reader :before_send_check_in
 
     # Optional Proc, called before sending an event to the server
     # @example
@@ -476,6 +488,7 @@ module Sentry
 
       self.before_send = nil
       self.before_send_transaction = nil
+      self.before_send_check_in = nil
       self.before_send_log = nil
       self.rack_env_whitelist = RACK_ENV_WHITELIST_DEFAULT
       self.traces_sampler = nil
@@ -548,6 +561,12 @@ module Sentry
       check_callable!("before_send_transaction", value)
 
       @before_send_transaction = value
+    end
+
+    def before_send_check_in=(value)
+      check_callable!("before_send_check_in", value)
+
+      @before_send_check_in = value
     end
 
     def before_breadcrumb=(value)

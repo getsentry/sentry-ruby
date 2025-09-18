@@ -210,18 +210,10 @@ module Sentry
       data_category = Envelope::Item.data_category(event.type)
       spans_before = event.is_a?(TransactionEvent) ? event.spans.size : 0
 
-      if event.type != TransactionEvent::TYPE && configuration.before_send
+      if event.is_a?(ErrorEvent) && configuration.before_send
         event = configuration.before_send.call(event, hint)
 
-        case event
-        when ErrorEvent, CheckInEvent
-          # do nothing
-        when Hash
-          log_debug(<<~MSG)
-            Returning a Hash from before_send is deprecated and will be removed in the next major version.
-            Please return a Sentry::ErrorEvent object instead.
-          MSG
-        else
+        if !event.is_a?(ErrorEvent)
           # Avoid serializing the event object in this case because we aren't sure what it is and what it contains
           log_debug(<<~MSG)
             Discarded event because before_send didn't return a Sentry::ErrorEvent object but an instance of #{event.class}
@@ -231,27 +223,33 @@ module Sentry
         end
       end
 
-      if event.type == TransactionEvent::TYPE && configuration.before_send_transaction
+      if event.is_a?(TransactionEvent) && configuration.before_send_transaction
         event = configuration.before_send_transaction.call(event, hint)
 
-        if event.is_a?(TransactionEvent) || event.is_a?(Hash)
-          spans_after = event.is_a?(TransactionEvent) ? event.spans.size : 0
-          spans_delta = spans_before - spans_after
-          transport.record_lost_event(:before_send, "span", num: spans_delta) if spans_delta > 0
-
-          if event.is_a?(Hash)
-            log_debug(<<~MSG)
-              Returning a Hash from before_send_transaction is deprecated and will be removed in the next major version.
-              Please return a Sentry::TransactionEvent object instead.
-            MSG
-          end
-        else
+        if !event.is_a?(TransactionEvent)
           # Avoid serializing the event object in this case because we aren't sure what it is and what it contains
           log_debug(<<~MSG)
             Discarded event because before_send_transaction didn't return a Sentry::TransactionEvent object but an instance of #{event.class}
           MSG
           transport.record_lost_event(:before_send, "transaction")
           transport.record_lost_event(:before_send, "span", num: spans_before + 1)
+          return
+        end
+
+        spans_after = event.is_a?(TransactionEvent) ? event.spans.size : 0
+        spans_delta = spans_before - spans_after
+        transport.record_lost_event(:before_send, "span", num: spans_delta) if spans_delta > 0
+      end
+
+      if event.is_a?(CheckInEvent) && configuration.before_send_check_in
+        event = configuration.before_send_check_in.call(event, hint)
+
+        if !event.is_a?(CheckInEvent)
+          # Avoid serializing the event object in this case because we aren't sure what it is and what it contains
+          log_debug(<<~MSG)
+            Discarded event because before_send_check_in didn't return a Sentry::CheckInEvent object but an instance of #{event.class}
+          MSG
+          transport.record_lost_event(:before_send, data_category)
           return
         end
       end
