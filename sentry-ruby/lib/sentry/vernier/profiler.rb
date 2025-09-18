@@ -90,7 +90,7 @@ module Sentry
         Thread.current.object_id
       end
 
-      def to_hash
+      def to_h
         unless @sampled
           record_lost_event(:sample_rate)
           return EMPTY_RESULT

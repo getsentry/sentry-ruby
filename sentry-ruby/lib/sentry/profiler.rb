@@ -81,7 +81,7 @@ module Sentry
       log("Discarding profile due to sampling decision") unless @sampled
     end
 
-    def to_hash
+    def to_h
       unless @sampled
         record_lost_event(:sample_rate)
         return {}

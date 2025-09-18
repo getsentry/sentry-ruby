@@ -31,13 +31,6 @@ module Sentry
     # @return [Regexp, nil]
     attr_accessor :app_dirs_pattern
 
-    # Provide an object that responds to `call` to send events asynchronously.
-    # E.g.: lambda { |event| Thread.new { Sentry.send_event(event) } }
-    #
-    # @deprecated It will be removed in the next major release. Please read https://github.com/getsentry/sentry-ruby/issues/1522 for more information
-    # @return [Proc, nil]
-    attr_reader :async
-
     # to send events in a non-blocking way, sentry-ruby has its own background worker
     # by default, the worker holds a thread pool that has [the number of processors] threads
     # but you can configure it with this configuration option
@@ -75,11 +68,10 @@ module Sentry
     # @return [Proc]
     attr_reader :before_breadcrumb
 
-    # Optional Proc, called before sending an event to the server
+    # Optional Proc, called before sending an error event to the server
     # @example
     #   config.before_send = lambda do |event, hint|
     #     # skip ZeroDivisionError exceptions
-    #     # note: hint[:exception] would be a String if you use async callback
     #     if hint[:exception].is_a?(ZeroDivisionError)
     #       nil
     #     else
@@ -89,7 +81,7 @@ module Sentry
     # @return [Proc]
     attr_reader :before_send
 
-    # Optional Proc, called before sending an event to the server
+    # Optional Proc, called before sending a transaction event to the server
     # @example
     #   config.before_send_transaction = lambda do |event, hint|
     #     # skip unimportant transactions or strip sensitive data
@@ -101,6 +93,18 @@ module Sentry
     #   end
     # @return [Proc]
     attr_reader :before_send_transaction
+
+    # Optional Proc, called before sending a check-in event to the server
+    # @example
+    #   config.before_send_check_in = lambda do |event, hint|
+    #     if event.monitor_slug == "unimportant_job"
+    #       nil
+    #     else
+    #       event
+    #     end
+    #   end
+    # @return [Proc]
+    attr_reader :before_send_check_in
 
     # Optional Proc, called before sending an event to the server
     # @example
@@ -484,6 +488,7 @@ module Sentry
 
       self.before_send = nil
       self.before_send_transaction = nil
+      self.before_send_check_in = nil
       self.before_send_log = nil
       self.rack_env_whitelist = RACK_ENV_WHITELIST_DEFAULT
       self.traces_sampler = nil
@@ -533,22 +538,6 @@ module Sentry
       @release = value
     end
 
-    def async=(value)
-      check_callable!("async", value)
-
-      log_warn <<~MSG
-
-        sentry-ruby now sends events asynchronously by default with its background worker (supported since 4.1.0).
-        The `config.async` callback has become redundant while continuing to cause issues.
-        (The problems of `async` are detailed in https://github.com/getsentry/sentry-ruby/issues/1522)
-
-        Therefore, we encourage you to remove it and let the background worker take care of async job sending.
-      It's deprecation is planned in the next major release (6.0), which is scheduled around the 3rd quarter of 2022.
-      MSG
-
-      @async = value
-    end
-
     def breadcrumbs_logger=(logger)
       loggers =
         if logger.is_a?(Array)
@@ -572,6 +561,12 @@ module Sentry
       check_callable!("before_send_transaction", value)
 
       @before_send_transaction = value
+    end
+
+    def before_send_check_in=(value)
+      check_callable!("before_send_check_in", value)
+
+      @before_send_check_in = value
     end
 
     def before_breadcrumb=(value)

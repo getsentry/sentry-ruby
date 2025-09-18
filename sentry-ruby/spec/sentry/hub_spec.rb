@@ -147,7 +147,7 @@ RSpec.describe Sentry::Hub do
 
     it "takes backtrace option" do
       event = subject.capture_message(message, backtrace: ["#{__FILE__}:10:in `foo'"])
-      event_hash = event.to_hash
+      event_hash = event.to_h
       expect(event_hash.dig(:threads, :values, 0, :stacktrace, :frames, 0, :function)).to eq("foo")
     end
 
@@ -159,7 +159,7 @@ RSpec.describe Sentry::Hub do
 
     it "assigns default backtrace with caller" do
       event = subject.capture_message(message)
-      event_hash = event.to_hash
+      event_hash = event.to_h
       expect(event_hash.dig(:threads, :values, 0, :stacktrace, :frames, 0, :function)).to eq("<main>")
     end
 
@@ -211,7 +211,7 @@ RSpec.describe Sentry::Hub do
         monitor_config: Sentry::Cron::MonitorConfig.from_crontab("* * * * *")
       )
 
-      event = transport.events.last.to_hash
+      event = transport.events.last.to_h
       expect(event).to include(
         monitor_slug: slug,
         status: :ok,
