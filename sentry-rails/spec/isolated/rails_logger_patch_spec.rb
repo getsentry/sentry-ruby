@@ -15,20 +15,23 @@ require_relative "../dummy/test_rails_app/app"
 RSpec.describe "Rails.logger with :logger patch" do
   include Sentry::TestHelper
 
-  # Set up a real Rails app with logger
-  let(:log_output) { StringIO.new }
-  let(:app) do
-    make_basic_app do |config|
+  let!(:app) do
+    make_basic_app do |config, app|
       config.enable_logs = true
       config.enabled_patches = [:logger]
       config.max_log_events = 10
       config.sdk_logger = Logger.new(nil)
+
+      app.config.log_level = log_level
     end
   end
 
+  let(:log_level) { ::Logger::DEBUG }
+  let(:log_output) { StringIO.new }
+
   before do
-    app
     Rails.logger = Logger.new(log_output)
+    Rails.logger.level = log_level
   end
 
   context "when :logger patch is enabled" do
@@ -114,6 +117,89 @@ RSpec.describe "Rails.logger with :logger patch" do
 
       log_messages = sentry_logs.map { |log| log[:body] }
       expect(log_messages).to include("12345")
+    end
+
+    context "when Rails logger level is configured to warn" do
+      let(:log_level) { ::Logger::WARN }
+
+      it "does not send debug logs to Sentry when Rails logger level is warn" do
+        expect {
+          Rails.logger.debug("Debug message should not be sent")
+        }.not_to output.to_stdout
+
+        Sentry.get_current_client.log_event_buffer.flush
+
+        log_messages = sentry_logs.map { |log| log[:body] }
+        expect(log_messages).not_to include("Debug message should not be sent")
+      end
+
+      it "does not send info logs to Sentry when Rails logger level is warn" do
+        expect {
+          Rails.logger.info("Info message should not be sent")
+        }.not_to output.to_stdout
+
+        Sentry.get_current_client.log_event_buffer.flush
+
+        log_messages = sentry_logs.map { |log| log[:body] }
+        expect(log_messages).not_to include("Info message should not be sent")
+      end
+
+      it "sends warn logs to Sentry when Rails logger level is warn" do
+        Rails.logger.warn("Warn message should be sent")
+
+        Sentry.get_current_client.log_event_buffer.flush
+
+        expect(sentry_logs).not_to be_empty
+
+        log_messages = sentry_logs.map { |log| log[:body] }
+        expect(log_messages).to include("Warn message should be sent")
+
+        warn_log = sentry_logs.find { |log| log[:body] == "Warn message should be sent" }
+        expect(warn_log[:level]).to eq("warn")
+      end
+
+      it "sends error logs to Sentry when Rails logger level is warn" do
+        Rails.logger.error("Error message should be sent")
+
+        Sentry.get_current_client.log_event_buffer.flush
+
+        expect(sentry_logs).not_to be_empty
+
+        log_messages = sentry_logs.map { |log| log[:body] }
+        expect(log_messages).to include("Error message should be sent")
+
+        error_log = sentry_logs.find { |log| log[:body] == "Error message should be sent" }
+        expect(error_log[:level]).to eq("error")
+      end
+    end
+
+    context "when Rails logger level is configured to error" do
+      let(:log_level) { ::Logger::ERROR }
+
+      it "does not send warn logs to Sentry when Rails logger level is error" do
+        expect {
+          Rails.logger.warn("Warn message should not be sent")
+        }.not_to output.to_stdout
+
+        Sentry.get_current_client.log_event_buffer.flush
+
+        log_messages = sentry_logs.map { |log| log[:body] }
+        expect(log_messages).not_to include("Warn message should not be sent")
+      end
+
+      it "sends error logs to Sentry when Rails logger level is error" do
+        Rails.logger.error("Error message should be sent")
+
+        Sentry.get_current_client.log_event_buffer.flush
+
+        expect(sentry_logs).not_to be_empty
+
+        log_messages = sentry_logs.map { |log| log[:body] }
+        expect(log_messages).to include("Error message should be sent")
+
+        error_log = sentry_logs.find { |log| log[:body] == "Error message should be sent" }
+        expect(error_log[:level]).to eq("error")
+      end
     end
   end
 
