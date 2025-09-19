@@ -17,6 +17,9 @@ module Sentry
 
       return unless Sentry.initialized? && Sentry.get_current_hub
 
+      # Only process logs that meet or exceed the logger's level
+      return result if severity < level
+
       # exclude sentry SDK logs -- to prevent recursive log action,
       # do not process internal logs again
       if message.nil? && progname != Sentry::Logger::PROGNAME
