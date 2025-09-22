@@ -12,6 +12,8 @@ module Sentry
       4 => :fatal
     }.freeze
 
+    ORIGIN = "auto.logger.ruby.std_logger"
+
     def add(severity, message = nil, progname = nil, &block)
       result = super
 
@@ -35,7 +37,7 @@ module Sentry
         message = message.to_s.strip
 
         if !message.nil? && message != Sentry::Logger::PROGNAME && method = SEVERITY_MAP[severity]
-          Sentry.logger.send(method, message)
+          Sentry.logger.send(method, message, origin: ORIGIN)
         end
       end
 
