@@ -20,6 +20,17 @@ RSpec.describe Sentry::LogEvent do
       expect(event.body).to eq("User John has logged in!")
     end
 
+    it "accepts origin parameter" do
+      event = described_class.new(
+        configuration: configuration,
+        level: :info,
+        body: "Database query executed",
+        origin: "auto.db.rails"
+      )
+
+      expect(event.origin).to eq("auto.db.rails")
+    end
+
     it "accepts attributes" do
       attributes = {
         "sentry.message.template" => "User %s has logged in!",
@@ -171,6 +182,31 @@ RSpec.describe Sentry::LogEvent do
       expect(hash[:attributes]["user.id"]).to eq(123)
       expect(hash[:attributes]["user.name"]).to eq("john_doe")
       expect(hash[:attributes]["user.email"]).to eq("john@example.com")
+    end
+
+    it "includes sentry.origin attribute when origin is set" do
+      event = described_class.new(
+        configuration: configuration,
+        level: :info,
+        body: "Database query executed",
+        origin: "auto.db.rails"
+      )
+
+      hash = event.to_hash
+
+      expect(hash[:attributes]["sentry.origin"]).to eq({ value: "auto.db.rails", type: "string" })
+    end
+
+    it "does not include sentry.origin attribute when origin is nil" do
+      event = described_class.new(
+        configuration: configuration,
+        level: :info,
+        body: "Manual log message"
+      )
+
+      hash = event.to_hash
+
+      expect(hash[:attributes]).not_to have_key("sentry.origin")
     end
   end
 end

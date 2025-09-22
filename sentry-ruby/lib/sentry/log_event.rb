@@ -29,7 +29,8 @@ module Sentry
       "sentry.address" => :server_name,
       "sentry.sdk.name" => :sdk_name,
       "sentry.sdk.version" => :sdk_version,
-      "sentry.message.template" => :template
+      "sentry.message.template" => :template,
+      "sentry.origin" => :origin
     }
 
     PARAMETER_PREFIX = "sentry.message.parameter"
@@ -42,7 +43,7 @@ module Sentry
 
     LEVELS = %i[trace debug info warn error fatal].freeze
 
-    attr_accessor :level, :body, :template, :attributes, :user
+    attr_accessor :level, :body, :template, :attributes, :user, :origin
 
     attr_reader :configuration, *(SERIALIZEABLE_ATTRIBUTES - %i[level body attributes])
 
@@ -82,6 +83,7 @@ module Sentry
       @template = @body if is_template?
       @attributes = options[:attributes] || DEFAULT_ATTRIBUTES
       @user = options[:user] || {}
+      @origin = options[:origin]
       @contexts = {}
     end
 
