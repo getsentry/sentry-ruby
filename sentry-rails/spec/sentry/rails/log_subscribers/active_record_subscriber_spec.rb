@@ -25,6 +25,7 @@ RSpec.describe Sentry::Rails::LogSubscribers::ActiveRecordSubscriber do
         expect(log_event[:level]).to eq("info")
         expect(log_event[:attributes][:sql][:value]).to include("INSERT INTO")
         expect(log_event[:attributes][:duration_ms][:value]).to be > 0
+        expect(log_event[:attributes]["sentry.origin"][:value]).to eq("auto.logger.rails.log_subscriber")
       end
 
       it "logs SELECT queries with proper attributes" do
