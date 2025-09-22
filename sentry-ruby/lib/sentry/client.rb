@@ -195,9 +195,10 @@ module Sentry
     def event_from_log(message, level:, **options)
       return unless configuration.sending_allowed?
 
-      attributes = options.reject { |k, _| k == :level || k == :severity }
+      attributes = options.reject { |k, _| k == :level || k == :severity || k == :origin }
+      origin = options[:origin]
 
-      LogEvent.new(level: level, body: message, attributes: attributes)
+      LogEvent.new(level: level, body: message, attributes: attributes, origin: origin)
     end
 
     # Initializes an Event object with the given Transaction object.

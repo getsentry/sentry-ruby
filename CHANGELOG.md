@@ -1,13 +1,18 @@
 ## Unreleased
 
+### Features
+
+- Support for `:origin` attribute in log events ([#2712](https://github.com/getsentry/sentry-ruby/pull/2712))
+
 ### Bug Fixes
 
 - Skip including `sentry.message.template` in the log event attributes if there are no interpolation parameters provided ([#2700](https://github.com/getsentry/sentry-ruby/pull/2700))
 - Respect `log_level` when logging via `:std_lib_logger` patch ([#2709](https://github.com/getsentry/sentry-ruby/pull/2709))
+- Add `sentry.origin` attribute to log events ([#2712](https://github.com/getsentry/sentry-ruby/pull/2712))
 
 ## 5.27.0
 
-### Feature
+### Features
 
 - Propagated sampling rates as specified in [Traces](https://develop.sentry.dev/sdk/telemetry/traces/#propagated-random-value) docs ([#2671](https://github.com/getsentry/sentry-ruby/pull/2671))
 - Support for Rails ActiveSupport log subscribers ([#2690](https://github.com/getsentry/sentry-ruby/pull/2690))

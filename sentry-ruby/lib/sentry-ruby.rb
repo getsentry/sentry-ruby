@@ -500,6 +500,7 @@ module Sentry
     # @param [Hash] options Extra log event options
     # @option options [Symbol] level The log level (:trace, :debug, :info, :warn, :error, :fatal)
     # @option options [Integer] severity The severity number according to the Sentry Logs Protocol
+    # @option options [String] origin The origin of the log event (e.g., "auto.db.rails", "manual")
     # @option options [Hash] Additional attributes to include with the log
     #
     # @example Direct usage (prefer using Sentry.logger instead)

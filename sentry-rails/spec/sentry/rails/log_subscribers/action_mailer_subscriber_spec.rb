@@ -38,6 +38,7 @@ RSpec.describe Sentry::Rails::LogSubscribers::ActionMailerSubscriber do
         expect(log_event[:attributes][:duration_ms][:value]).to be > 0
         expect(log_event[:attributes][:perform_deliveries][:value]).to be true
         expect(log_event[:attributes][:delivery_method][:value]).to eq(:test)
+        expect(log_event[:attributes]["sentry.origin"][:value]).to eq("auto.logger.rails.log_subscriber")
         expect(log_event[:attributes][:date]).to be_present
       end
 

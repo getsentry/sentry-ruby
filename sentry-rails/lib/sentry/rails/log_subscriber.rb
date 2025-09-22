@@ -27,6 +27,8 @@ module Sentry
     #     end
     #   end
     class LogSubscriber < ActiveSupport::LogSubscriber
+      ORIGIN = "auto.logger.rails.log_subscriber"
+
       class << self
         if ::Rails.version.to_f < 6.0
           # Rails 5.x does not provide detach_from
@@ -51,8 +53,9 @@ module Sentry
       # @param message [String] The log message
       # @param level [Symbol] The log level (:trace, :debug, :info, :warn, :error, :fatal)
       # @param attributes [Hash] Additional structured attributes to include
-      def log_structured_event(message:, level: :info, attributes: {})
-        Sentry.logger.public_send(level, message, **attributes)
+      # @param origin [String] The origin of the log event
+      def log_structured_event(message:, level: :info, attributes: {}, origin: ORIGIN)
+        Sentry.logger.public_send(level, message, **attributes, origin: origin)
       rescue => e
         # Silently handle any errors in logging to avoid breaking the application
         Sentry.configuration.sdk_logger.debug("Failed to log structured event: #{e.message}")
