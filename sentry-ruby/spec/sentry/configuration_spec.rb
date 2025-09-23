@@ -409,9 +409,8 @@ RSpec.describe Sentry::Configuration do
 
     it 'should send events if test is whitelisted' do
       subject.enabled_environments = %w[test]
-      subject.sending_allowed?
-      puts subject.errors
       expect(subject.sending_allowed?).to eq(true)
+      expect(subject.errors).to be_empty
     end
 
     it 'should not send events if test is not whitelisted' do

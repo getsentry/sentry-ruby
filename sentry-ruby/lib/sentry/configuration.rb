@@ -149,7 +149,7 @@ module Sentry
     attr_reader :dsn
 
     # Whitelist of enabled_environments that will send notifications to Sentry. Array of Strings.
-    # @return [Array<String>]
+    # @return [Array<String>, nil]
     attr_accessor :enabled_environments
 
     # Logger 'progname's to exclude from breadcrumbs
@@ -459,7 +459,7 @@ module Sentry
       self.context_lines = 3
       self.include_local_variables = false
       self.environment = environment_from_env
-      self.enabled_environments = []
+      self.enabled_environments = nil
       self.exclude_loggers = []
       self.excluded_exceptions = IGNORE_DEFAULT + PUMA_IGNORE_DEFAULT
       self.inspect_exception_causes_for_exclusion = true
@@ -647,7 +647,7 @@ module Sentry
     end
 
     def enabled_in_current_env?
-      enabled_environments.empty? || enabled_environments.include?(environment)
+      enabled_environments.nil? || enabled_environments.include?(environment)
     end
 
     def valid_sample_rate?(sample_rate)
