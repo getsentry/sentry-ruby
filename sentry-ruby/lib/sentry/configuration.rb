@@ -122,7 +122,6 @@ module Sentry
     #
     # And if you also use sentry-rails:
     # - :active_support_logger
-    # - :monotonic_active_support_logger
     #
     # @return [Array<Symbol>]
     attr_reader :breadcrumbs_logger

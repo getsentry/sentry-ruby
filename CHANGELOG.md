@@ -8,6 +8,7 @@
 - Returning a hash from `before_send` and `before_send_transaction` is no longer supported and will drop the event.
 - Remove stacktrace trimming ([#2714](https://github.com/getsentry/sentry-ruby/pull/2714))
 - `config.enabled_environments` now defaults to `nil` instead of `[]` for sending to all environments ([#2716](https://github.com/getsentry/sentry-ruby/pull/2716))
+- Remove `:monotonic_active_support_logger` from `config.breadcrumbs_logger` ([#2717](https://github.com/getsentry/sentry-ruby/pull/2717))
 
 ### Internal
 
