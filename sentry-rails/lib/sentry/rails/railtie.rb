@@ -140,7 +140,7 @@ module Sentry
     end
 
     def activate_structured_logging
-      if Sentry.configuration.rails.structured_logging.enabled && Sentry.configuration.enable_logs
+      if Sentry.configuration.rails.structured_logging.enabled? && Sentry.configuration.enable_logs
         Sentry::Rails::StructuredLogging.attach(Sentry.configuration.rails.structured_logging)
       end
     end

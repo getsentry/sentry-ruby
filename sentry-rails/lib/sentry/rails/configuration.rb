@@ -14,7 +14,7 @@ module Sentry
     attr_reader :rails
 
     add_post_initialization_callback do
-      @rails = Sentry::Rails::Configuration.new
+      @rails = Sentry::Rails::Configuration.new(self)
       @excluded_exceptions = @excluded_exceptions.concat(Sentry::Rails::IGNORE_DEFAULT)
 
       if ::Rails.logger
@@ -166,7 +166,7 @@ module Sentry
       # @return [StructuredLoggingConfiguration]
       attr_reader :structured_logging
 
-      def initialize
+      def initialize(parent_config = nil)
         @register_error_subscriber = false
         @report_rescued_exceptions = true
         @skippable_job_adapters = []
@@ -183,7 +183,7 @@ module Sentry
         @db_query_source_threshold_ms = 100
         @active_support_logger_subscription_items = Sentry::Rails::ACTIVE_SUPPORT_LOGGER_SUBSCRIPTION_ITEMS_DEFAULT.dup
         @active_job_report_on_retry_error = false
-        @structured_logging = StructuredLoggingConfiguration.new
+        @structured_logging = StructuredLoggingConfiguration.new(parent_config)
       end
     end
 
@@ -192,18 +192,30 @@ module Sentry
       # @return [Boolean]
       attr_accessor :enabled
 
+      private :enabled
+
       # Hash of components to subscriber classes for structured logging
       # @return [Hash<Symbol, Class>]
       attr_accessor :subscribers
+
+      # @return [Sentry::Configuration]
+      attr_reader :parent_config
 
       DEFAULT_SUBSCRIBERS = {
         active_record: Sentry::Rails::LogSubscribers::ActiveRecordSubscriber,
         action_controller: Sentry::Rails::LogSubscribers::ActionControllerSubscriber
       }.freeze
 
-      def initialize
-        @enabled = false
+      def initialize(parent_config)
+        @enabled = nil
         @subscribers = DEFAULT_SUBSCRIBERS.dup
+        @parent_config = parent_config
+      end
+
+      # Returns true if structured logging should be enabled.
+      # @return [Boolean]
+      def enabled?
+        enabled.nil? ? parent_config.enable_logs : enabled
       end
     end
   end
