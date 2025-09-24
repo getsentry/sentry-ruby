@@ -1,3 +1,9 @@
+## Unreleased
+
+### Internal
+
+- Fix leftover `config.logger` call in `graphql` patch ([#2722](https://github.com/getsentry/sentry-ruby/2722)
+
 ## 5.27.1
 
 ### Features
