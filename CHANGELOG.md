@@ -3,6 +3,7 @@
 ### Internal
 
 - Fix leftover `config.logger` call in `graphql` patch ([#2722](https://github.com/getsentry/sentry-ruby/2722)
+- Add `Configuration.before` and `Configuration.after` to run hooks before and after given event ([#2724](https://github.com/getsentry/sentry-ruby/pull/2724))
 
 ## 5.27.1
 
