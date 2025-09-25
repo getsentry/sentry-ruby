@@ -328,6 +328,18 @@ module Sentry
     # @return [Array<String, Regexp>]
     attr_accessor :trace_propagation_targets
 
+    # Collection of HTTP status codes or inclusive ranges to ignore when tracing incoming requests.
+    # If a transaction's http.response.status_code matches one of these values,
+    # the transaction will be dropped and marked as not sampled.
+    # Defaults to TRACE_IGNORE_STATUS_CODES_DEFAULT.
+    #
+    # @example
+    #   # ignore 404 and 502 <= status_code <= 511
+    #   config.trace_ignore_status_codes = [404, [502, 511]]
+    #
+    # @return [Array<Integer, Array<Integer>>]
+    attr_reader :trace_ignore_status_codes
+
     # The instrumenter to use, :sentry or :otel
     # @return [Symbol]
     attr_reader :instrumenter
@@ -378,6 +390,8 @@ module Sentry
       SERVER_NAME
       SERVER_PORT
     ].freeze
+
+    TRACE_IGNORE_STATUS_CODES_DEFAULT = [[301, 303], [305, 399], [401, 404]]
 
     HEROKU_DYNO_METADATA_MESSAGE = "You are running on Heroku but haven't enabled Dyno Metadata. For Sentry's "\
     "release detection to work correctly, please run `heroku labs:enable runtime-dyno-metadata`"
@@ -483,6 +497,7 @@ module Sentry
       self.server_name = server_name_from_env
       self.instrumenter = :sentry
       self.trace_propagation_targets = [PROPAGATION_TARGETS_MATCH_ALL]
+      self.trace_ignore_status_codes = TRACE_IGNORE_STATUS_CODES_DEFAULT
       self.enabled_patches = DEFAULT_PATCHES.dup
 
       self.before_send = nil
@@ -580,6 +595,14 @@ module Sentry
 
     def instrumenter=(instrumenter)
       @instrumenter = INSTRUMENTERS.include?(instrumenter) ? instrumenter : :sentry
+    end
+
+    def trace_ignore_status_codes=(codes)
+      unless codes.is_a?(Array) && codes.all? { |code| valid_status_code_entry?(code) }
+        raise ArgumentError, "trace_ignore_status_codes must be an Array of integers (100-599) or arrays of two integers [start, end] where start <= end"
+      end
+
+      @trace_ignore_status_codes = codes
     end
 
     def enable_tracing=(enable_tracing)
@@ -787,6 +810,21 @@ module Sentry
     def processor_count
       available_processor_count = Concurrent.available_processor_count if Concurrent.respond_to?(:available_processor_count)
       available_processor_count || Concurrent.processor_count
+    end
+
+    def valid_http_status_code?(code)
+      code.is_a?(Integer) && code >= 100 && code <= 599
+    end
+
+    def valid_status_code_entry?(entry)
+      case entry
+      when Integer
+        valid_http_status_code?(entry)
+      when Array
+        entry.size == 2 && entry.all? { |code| valid_http_status_code?(code) } && entry[0] <= entry[1]
+      else
+        false
+      end
     end
   end
 

@@ -9,6 +9,21 @@
 - Remove stacktrace trimming ([#2714](https://github.com/getsentry/sentry-ruby/pull/2714))
 - `config.enabled_environments` now defaults to `nil` instead of `[]` for sending to all environments ([#2716](https://github.com/getsentry/sentry-ruby/pull/2716))
 - Remove `:monotonic_active_support_logger` from `config.breadcrumbs_logger` ([#2717](https://github.com/getsentry/sentry-ruby/pull/2717))
+- Requests which have response status codes in the inclusive ranges `[[301, 303], [305, 399], [401, 404]]` will no longer create transactions by default. See `config.trace_ignore_status_codes` below to control what gets traced.
+
+### Features
+
+- Add `config.trace_ignore_status_codes` to control which response codes to ignore for tracing ([#2725](https://github.com/getsentry/sentry-ruby/pull/2725))
+
+  You can pass in an Array of individual status codes or inclusive ranges.
+
+  ```ruby
+  Sentry.init do |config|
+      # ...
+      # will ignore 404, 501, 502, 503
+      config.trace_ignore_status_codes = [404, [501, 503]]
+  end
+  ```
 
 ### Internal
 
