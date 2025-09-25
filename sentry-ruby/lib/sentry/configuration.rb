@@ -501,6 +501,8 @@ module Sentry
       run_post_initialization_callbacks
 
       self.max_log_events = LogEventBuffer::DEFAULT_MAX_EVENTS
+
+      yield(self) if block_given?
     end
 
     def validate
