@@ -154,19 +154,6 @@ RSpec.describe Sentry::OpenTelemetry::SpanProcessor do
 
     it 'starts a sentry transaction on otel root span' do
       expect(Sentry).to receive(:start_transaction).and_call_original
-      expect_any_instance_of(Sentry::Transaction).to receive(:set_initial_sample_decision).with(
-        sampling_context: a_hash_including(
-          otel: {
-            attributes: root_span.attributes,
-            resource: root_span.resource.attribute_enumerator.to_h,
-            kind: root_span.kind,
-            instrumentation_scope: {
-              name: root_span.instrumentation_scope.name,
-              version: root_span.instrumentation_scope.version
-            }
-          }
-        )
-      )
 
       subject.on_start(root_span, empty_context)
 
@@ -187,6 +174,32 @@ RSpec.describe Sentry::OpenTelemetry::SpanProcessor do
       expect(transaction.parent_span_id).to eq(nil)
       expect(transaction.parent_sampled).to eq(nil)
       expect(transaction.baggage).to eq(nil)
+    end
+
+    it 'includes otel context in custom sampling context' do
+      sampling_context = nil
+      Sentry.configuration.traces_sampler = lambda do |context|
+        sampling_context = context
+        0.5
+      end
+
+      subject.on_start(root_span, empty_context)
+
+      expect(sampling_context).to include(:otel)
+      otel_context = sampling_context[:otel]
+
+      expect(otel_context).to include(
+        kind: root_span.kind,
+        instrumentation_scope: {
+          name: root_span.instrumentation_scope.name,
+          version: root_span.instrumentation_scope.version
+        }
+      )
+
+      expect(otel_context).to include(attributes: root_span.attributes)
+
+      resource_attributes = root_span.resource.attribute_enumerator.to_h
+      expect(otel_context).to include(resource: resource_attributes)
     end
 
     context 'with started transaction' do
