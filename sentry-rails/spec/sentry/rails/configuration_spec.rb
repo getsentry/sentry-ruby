@@ -74,7 +74,7 @@ RSpec.describe Sentry::Rails::Configuration do
         config.rails.structured_logging.enabled = true
       end
 
-      expect(config.structured_logging.enabled).to be(true)
+      expect(config.structured_logging.enabled?).to be(true)
       expect(config.structured_logging.subscribers).to be_a(Hash)
     end
 
@@ -83,8 +83,33 @@ RSpec.describe Sentry::Rails::Configuration do
         config.rails.structured_logging.enabled = false
       end
 
-      expect(config.structured_logging.enabled).to be(false)
+      expect(config.structured_logging.enabled?).to be(false)
       expect(config.structured_logging.subscribers).to be_a(Hash)
+    end
+
+    it "auto-enables when enable_logs is true and not explicitly set" do
+      make_basic_app do |config|
+        config.enable_logs = true
+      end
+
+      expect(config.structured_logging.enabled?).to be(true)
+    end
+
+    it "remains disabled when enable_logs is false" do
+      make_basic_app do |config|
+        config.enable_logs = false
+      end
+
+      expect(config.structured_logging.enabled?).to be(false)
+    end
+
+    it "respects explicit disable even when enable_logs is true" do
+      make_basic_app do |config|
+        config.rails.structured_logging.enabled = false
+        config.enable_logs = true
+      end
+
+      expect(config.structured_logging.enabled?).to be(false)
     end
 
     it "allows customizing subscribers" do

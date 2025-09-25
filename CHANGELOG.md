@@ -1,5 +1,9 @@
 ## Unreleased
 
+### Features
+
+- Auto-enable Rails structured logging when `enable_logs` is true ([#2721](https://github.com/getsentry/sentry-ruby/pull/2721))
+
 ### Internal
 
 - Fix leftover `config.logger` call in `graphql` patch ([#2722](https://github.com/getsentry/sentry-ruby/2722)

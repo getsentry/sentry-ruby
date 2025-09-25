@@ -13,7 +13,7 @@ module Sentry
   class Configuration
     attr_reader :rails
 
-    add_post_initialization_callback do
+    after(:initialize) do
       @rails = Sentry::Rails::Configuration.new
       @excluded_exceptions = @excluded_exceptions.concat(Sentry::Rails::IGNORE_DEFAULT)
 
@@ -32,6 +32,10 @@ module Sentry
           MSG
         end
       end
+    end
+
+    after(:configured) do
+      rails.structured_logging.enabled = enable_logs if rails.structured_logging.enabled.nil?
     end
   end
 
@@ -202,8 +206,14 @@ module Sentry
       }.freeze
 
       def initialize
-        @enabled = false
+        @enabled = nil
         @subscribers = DEFAULT_SUBSCRIBERS.dup
+      end
+
+      # Returns true if structured logging should be enabled.
+      # @return [Boolean]
+      def enabled?
+        enabled
       end
     end
   end
