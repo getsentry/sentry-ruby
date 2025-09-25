@@ -13,7 +13,7 @@ module Sentry
   class Configuration
     attr_reader :rails
 
-    add_post_initialization_callback do
+    after(:initialize) do
       @rails = Sentry::Rails::Configuration.new(self)
       @excluded_exceptions = @excluded_exceptions.concat(Sentry::Rails::IGNORE_DEFAULT)
 
