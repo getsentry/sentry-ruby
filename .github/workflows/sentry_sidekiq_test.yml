@@ -71,8 +71,6 @@ jobs:
           redis-version: ${{ (contains(matrix.sidekiq_version, '7.0') || contains(matrix.sidekiq_version, '8.0')) && 6 || 5 }}
 
       - name: Run specs with Sidekiq ${{ matrix.sidekiq_version }}
-        env:
-          WITH_SENTRY_RAILS: 1
         run: bundle exec rake
 
       - name: Upload Coverage
