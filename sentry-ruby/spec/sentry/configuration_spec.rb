@@ -605,6 +605,39 @@ RSpec.describe Sentry::Configuration do
     end
   end
 
+  describe '.before' do
+    it 'calls a hook before given event' do
+      config = Class.new(Sentry::Configuration) do
+        attr_reader :info
+
+        before(:initialize) do
+          @info = "debug is #{debug.inspect}"
+        end
+      end.new do |config|
+        config.debug = true
+      end
+
+      expect(config.info).to eq("debug is nil")
+      expect(config.debug).to be(true)
+    end
+  end
+
+  describe '.after' do
+    it 'calls a hook after given event' do
+      config = Class.new(Sentry::Configuration) do
+        attr_reader :info
+
+        after(:configured) do
+          @info = "debug was set to #{debug}"
+        end
+      end.new do |config|
+        config.debug = true
+      end
+
+      expect(config.info).to eq("debug was set to true")
+    end
+  end
+
   describe "#skip_rake_integration" do
     it "returns false by default" do
       expect(subject.skip_rake_integration).to eq(false)
