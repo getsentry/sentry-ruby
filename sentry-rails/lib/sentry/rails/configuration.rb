@@ -14,7 +14,7 @@ module Sentry
     attr_reader :rails
 
     after(:initialize) do
-      @rails = Sentry::Rails::Configuration.new(self)
+      @rails = Sentry::Rails::Configuration.new
       @excluded_exceptions = @excluded_exceptions.concat(Sentry::Rails::IGNORE_DEFAULT)
 
       if ::Rails.logger
@@ -170,7 +170,7 @@ module Sentry
       # @return [StructuredLoggingConfiguration]
       attr_reader :structured_logging
 
-      def initialize(parent_config = nil)
+      def initialize
         @register_error_subscriber = false
         @report_rescued_exceptions = true
         @skippable_job_adapters = []
