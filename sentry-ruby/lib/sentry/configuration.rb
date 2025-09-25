@@ -400,7 +400,23 @@ module Sentry
 
       # allow extensions to add their hooks to the Configuration class
       def add_post_initialization_callback(&block)
-        post_initialization_callbacks << block
+        callbacks[:initialize][:after] << block
+      end
+
+      def before(event, &block)
+        callbacks[event.to_sym][:before] << block
+      end
+
+      def after(event, &block)
+        callbacks[event.to_sym][:after] << block
+      end
+
+      # @!visibility private
+      def callbacks
+        @callbacks ||= {
+          initialize: { before: [], after: [] },
+          configured: { before: [], after: [] }
+        }
       end
 
       def validations
@@ -444,6 +460,8 @@ module Sentry
     validate :profiles_sample_rate, optional: true, type: :numeric
 
     def initialize
+      run_callbacks(:before, :initialize)
+
       self.app_dirs_pattern = APP_DIRS_PATTERN
       self.debug = Sentry::Utils::EnvHelper.env_to_bool(ENV["SENTRY_DEBUG"])
       self.background_worker_threads = (processor_count / 2.0).ceil
@@ -498,11 +516,13 @@ module Sentry
       @structured_logging = StructuredLoggingConfiguration.new
       @gem_specs = Hash[Gem::Specification.map { |spec| [spec.name, spec.version.to_s] }] if Gem::Specification.respond_to?(:map)
 
-      run_post_initialization_callbacks
-
       self.max_log_events = LogEventBuffer::DEFAULT_MAX_EVENTS
 
+      run_callbacks(:after, :initialize)
+
       yield(self) if block_given?
+
+      run_callbacks(:after, :configured)
     end
 
     def validate
@@ -786,8 +806,8 @@ module Sentry
       File.directory?("/etc/heroku") && !ENV["CI"]
     end
 
-    def run_post_initialization_callbacks
-      self.class.post_initialization_callbacks.each do |hook|
+    def run_callbacks(hook, event)
+      self.class.callbacks[event][hook].each do |hook|
         instance_eval(&hook)
       end
     end
