@@ -75,16 +75,6 @@ RSpec.describe Sentry::Span do
       expect(hash[:span_id].length).to eq(16)
       expect(hash[:origin]).to eq('manual')
     end
-
-    it 'has metric summary if present' do
-      key = [:c, 'incr', 'none', []]
-      subject.metrics_local_aggregator.add(key, 10)
-
-      hash = subject.to_h
-      expect(hash[:_metrics_summary]).to eq({
-        'c:incr@none' => { count: 1, max: 10.0, min: 10.0, sum: 10.0, tags: {} }
-      })
-    end
   end
 
   describe "#to_sentry_trace" do

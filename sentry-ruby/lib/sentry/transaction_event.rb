@@ -17,9 +17,6 @@ module Sentry
     # @return [Hash, nil]
     attr_accessor :profile
 
-    # @return [Hash, nil]
-    attr_accessor :metrics_summary
-
     def initialize(transaction:, **options)
       super(**options)
 
@@ -32,7 +29,6 @@ module Sentry
       self.tags = transaction.tags
       self.dynamic_sampling_context = transaction.get_baggage.dynamic_sampling_context
       self.measurements = transaction.measurements
-      self.metrics_summary = transaction.metrics_summary
 
       finished_spans = transaction.span_recorder.spans.select { |span| span.timestamp && span != transaction }
       self.spans = finished_spans.map(&:to_h)
@@ -53,7 +49,6 @@ module Sentry
       data[:spans] = @spans.map(&:to_h) if @spans
       data[:start_timestamp] = @start_timestamp
       data[:measurements] = @measurements
-      data[:_metrics_summary] = @metrics_summary if @metrics_summary
       data
     end
 

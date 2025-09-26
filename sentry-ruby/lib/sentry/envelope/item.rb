@@ -17,7 +17,6 @@ module Sentry
       when "session", "attachment", "transaction", "profile", "span", "log" then type
       when "sessions" then "session"
       when "check_in" then "monitor"
-      when "statsd", "metric_meta" then "metric_bucket"
       when "event" then "error"
       when "client_report" then "internal"
       else "default"
