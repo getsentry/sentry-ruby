@@ -81,6 +81,7 @@ module Sentry
       @tracing_enabled = hub.configuration.tracing_enabled?
       @traces_sampler = hub.configuration.traces_sampler
       @traces_sample_rate = hub.configuration.traces_sample_rate
+      @trace_ignore_status_codes = hub.configuration.trace_ignore_status_codes
       @sdk_logger = hub.configuration.sdk_logger
       @release = hub.configuration.release
       @environment = hub.configuration.environment
@@ -287,7 +288,15 @@ module Sentry
 
       @hub.stop_profiler!(self)
 
-      if @sampled
+      if @sampled && ignore_status_code?
+        @sampled = false
+
+        status_code = get_http_status_code
+        log_debug("#{MESSAGE_PREFIX} Discarding #{generate_transaction_description} due to ignored HTTP status code: #{status_code}")
+
+        @hub.current_client.transport.record_lost_event(:event_processor, "transaction")
+        @hub.current_client.transport.record_lost_event(:event_processor, "span")
+      elsif @sampled
         event = hub.current_client.event_from_transaction(self)
         hub.capture_event(event)
       else
@@ -369,6 +378,21 @@ module Sentry
 
       items.compact!
       @baggage = Baggage.new(items, mutable: false)
+    end
+
+    def ignore_status_code?
+      return false unless @trace_ignore_status_codes
+
+      status_code = get_http_status_code
+      return false unless status_code
+
+      @trace_ignore_status_codes.any? do |ignored|
+        ignored.is_a?(Range) ? ignored.include?(status_code) : status_code == ignored
+      end
+    end
+
+    def get_http_status_code
+      @data && @data[Span::DataConventions::HTTP_STATUS_CODE]
     end
 
     class SpanRecorder
