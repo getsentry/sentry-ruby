@@ -83,7 +83,7 @@ module Sentry
 
     def to_h
       unless @sampled
-        record_lost_event(:sample_rate)
+        record_lost_event(:sample_rate) if @profiling_enabled
         return {}
       end
 
