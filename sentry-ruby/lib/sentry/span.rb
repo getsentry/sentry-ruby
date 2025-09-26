@@ -1,7 +1,6 @@
 # frozen_string_literal: true
 
 require "securerandom"
-require "sentry/metrics/local_aggregator"
 require "sentry/utils/uuid"
 
 module Sentry
@@ -174,7 +173,7 @@ module Sentry
 
     # @return [Hash]
     def to_h
-      hash = {
+      {
         trace_id: @trace_id,
         span_id: @span_id,
         parent_span_id: @parent_span_id,
@@ -187,11 +186,6 @@ module Sentry
         data: @data,
         origin: @origin
       }
-
-      summary = metrics_summary
-      hash[:_metrics_summary] = summary if summary
-
-      hash
     end
 
     # Returns the span's context that can be used to embed in an Event.
@@ -306,15 +300,6 @@ module Sentry
     # @param origin [String]
     def set_origin(origin)
       @origin = origin
-    end
-
-    # Collects gauge metrics on the span for metric summaries.
-    def metrics_local_aggregator
-      @metrics_local_aggregator ||= Sentry::Metrics::LocalAggregator.new
-    end
-
-    def metrics_summary
-      @metrics_local_aggregator&.to_h
     end
   end
 end

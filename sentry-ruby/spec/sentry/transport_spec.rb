@@ -211,30 +211,6 @@ RSpec.describe Sentry::Transport do
       end
     end
 
-    context "metrics/statsd item" do
-      let(:payload) do
-        "foo@none:10.0|c|#tag1:42,tag2:bar|T1709042970\n" +
-          "bar@second:0.3:0.1:0.9:49.8:100|g|#|T1709042980"
-      end
-
-      let(:envelope) do
-        envelope = Sentry::Envelope.new
-        envelope.add_item(
-          { type: 'statsd', length: payload.bytesize },
-          payload
-        )
-        envelope
-      end
-
-      it "adds raw payload to envelope item" do
-        result, _ = subject.serialize_envelope(envelope)
-        item = result.split("\n", 2).last
-        item_header, item_payload = item.split("\n", 2)
-        expect(JSON.parse(item_header)).to eq({ 'type' => 'statsd', 'length' => 93 })
-        expect(item_payload).to eq(payload)
-      end
-    end
-
     context "log events" do
       let(:log_events) do
         5.times.map do |i|

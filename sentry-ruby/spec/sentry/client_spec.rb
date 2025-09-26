@@ -99,7 +99,6 @@ RSpec.describe Sentry::Client do
     let(:envelope) do
       envelope = Sentry::Envelope.new({ env_header: 1 })
       envelope.add_item({ type: 'event' }, { payload: 'test' })
-      envelope.add_item({ type: 'statsd' }, { payload: 'test2' })
       envelope.add_item({ type: 'transaction' }, { payload: 'test3' })
       envelope.add_item({ type: 'log' }, { level: 'info', message: 'test4' })
       envelope
@@ -159,7 +158,6 @@ RSpec.describe Sentry::Client do
         end.to raise_error(Sentry::ExternalError)
 
         expect(subject.transport).to have_recorded_lost_event(:network_error, 'error')
-        expect(subject.transport).to have_recorded_lost_event(:network_error, 'metric_bucket')
         expect(subject.transport).to have_recorded_lost_event(:network_error, 'transaction')
         expect(subject.transport).to have_recorded_lost_event(:network_error, 'log')
       end
@@ -285,16 +283,6 @@ RSpec.describe Sentry::Client do
       transaction.set_context(:foo, { bar: 42 })
       event = subject.event_from_transaction(transaction)
       expect(event.contexts).to include({ foo: { bar: 42 } })
-    end
-
-    it 'adds metric summary on transaction if any' do
-      key = [:c, 'incr', 'none', []]
-      transaction.metrics_local_aggregator.add(key, 10)
-      hash = subject.event_from_transaction(transaction).to_h
-
-      expect(hash[:_metrics_summary]).to eq({
-        'c:incr@none' => { count: 1, max: 10.0, min: 10.0, sum: 10.0, tags: {} }
-      })
     end
   end
 

@@ -75,14 +75,6 @@ module Sentry
       StacktraceInterface.new(frames: frames)
     end
 
-    # Get the code location hash for a single line for where metrics where added.
-    # @return [Hash]
-    def metrics_code_location(unparsed_line)
-      parsed_line = Backtrace::Line.parse(unparsed_line)
-      frame = convert_parsed_line_into_frame(parsed_line)
-      frame.to_h.reject { |k, _| %i[project_root in_app].include?(k) }
-    end
-
     private
 
     def convert_parsed_line_into_frame(line)
