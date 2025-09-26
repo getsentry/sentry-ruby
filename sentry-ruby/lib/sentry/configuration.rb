@@ -328,16 +328,16 @@ module Sentry
     # @return [Array<String, Regexp>]
     attr_accessor :trace_propagation_targets
 
-    # Collection of HTTP status codes or inclusive ranges to ignore when tracing incoming requests.
+    # Collection of HTTP status codes or ranges of codes to ignore when tracing incoming requests.
     # If a transaction's http.response.status_code matches one of these values,
     # the transaction will be dropped and marked as not sampled.
     # Defaults to TRACE_IGNORE_STATUS_CODES_DEFAULT.
     #
     # @example
     #   # ignore 404 and 502 <= status_code <= 511
-    #   config.trace_ignore_status_codes = [404, [502, 511]]
+    #   config.trace_ignore_status_codes = [404, (502..511)]
     #
-    # @return [Array<Integer, Array<Integer>>]
+    # @return [Array<Integer>, Array<Range>]
     attr_reader :trace_ignore_status_codes
 
     # The instrumenter to use, :sentry or :otel
@@ -391,7 +391,7 @@ module Sentry
       SERVER_PORT
     ].freeze
 
-    TRACE_IGNORE_STATUS_CODES_DEFAULT = [[301, 303], [305, 399], [401, 404]]
+    TRACE_IGNORE_STATUS_CODES_DEFAULT = [(301..303), (305..399), (401..404)]
 
     HEROKU_DYNO_METADATA_MESSAGE = "You are running on Heroku but haven't enabled Dyno Metadata. For Sentry's "\
     "release detection to work correctly, please run `heroku labs:enable runtime-dyno-metadata`"
@@ -599,7 +599,7 @@ module Sentry
 
     def trace_ignore_status_codes=(codes)
       unless codes.is_a?(Array) && codes.all? { |code| valid_status_code_entry?(code) }
-        raise ArgumentError, "trace_ignore_status_codes must be an Array of integers (100-599) or arrays of two integers [start, end] where start <= end"
+        raise ArgumentError, "trace_ignore_status_codes must be an Array of integers or ranges between (100-599) where begin <= end"
       end
 
       @trace_ignore_status_codes = codes
@@ -820,8 +820,10 @@ module Sentry
       case entry
       when Integer
         valid_http_status_code?(entry)
-      when Array
-        entry.size == 2 && entry.all? { |code| valid_http_status_code?(code) } && entry[0] <= entry[1]
+      when Range
+        valid_http_status_code?(entry.begin) &&
+          valid_http_status_code?(entry.end) &&
+          entry.begin <= entry.end
       else
         false
       end

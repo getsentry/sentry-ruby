@@ -560,7 +560,7 @@ RSpec.describe Sentry::Transaction do
         perform_basic_setup do |config|
           config.traces_sample_rate = 1.0
           config.sdk_logger = sdk_logger
-          config.trace_ignore_status_codes = [404, [500, 503]]
+          config.trace_ignore_status_codes = [404, (500..503)]
         end
       end
 

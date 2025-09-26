@@ -387,14 +387,7 @@ module Sentry
       return false unless status_code
 
       @trace_ignore_status_codes.any? do |ignored|
-        if ignored.is_a?(Array) && ignored.size == 2
-          # Range format: [start, end]
-          start_code, end_code = ignored
-          status_code >= start_code && status_code <= end_code
-        else
-          # Individual status code
-          status_code == ignored
-        end
+        ignored.is_a?(Range) ? ignored.include?(status_code) : status_code == ignored
       end
     end
 

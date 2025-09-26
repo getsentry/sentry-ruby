@@ -775,7 +775,7 @@ RSpec.describe Sentry::Configuration do
 
   describe "#trace_ignore_status_codes" do
     it "has default values" do
-      expect(subject.trace_ignore_status_codes).to eq([[301, 303], [305, 399], [401, 404]])
+      expect(subject.trace_ignore_status_codes).to eq([(301..303), (305..399), (401..404)])
     end
 
     it "can be configured with individual status codes" do
@@ -784,13 +784,13 @@ RSpec.describe Sentry::Configuration do
     end
 
     it "can be configured with ranges" do
-      subject.trace_ignore_status_codes = [[300, 399], [500, 599]]
-      expect(subject.trace_ignore_status_codes).to eq([[300, 399], [500, 599]])
+      subject.trace_ignore_status_codes = [(300..399), (500..599)]
+      expect(subject.trace_ignore_status_codes).to eq([(300..399), (500..599)])
     end
 
     it "can be configured with mixed individual codes and ranges" do
-      subject.trace_ignore_status_codes = [404, [500, 599]]
-      expect(subject.trace_ignore_status_codes).to eq([404, [500, 599]])
+      subject.trace_ignore_status_codes = [404, (500..599)]
+      expect(subject.trace_ignore_status_codes).to eq([404, (500..599)])
     end
 
     it "raises ArgumentError when not an Array" do
@@ -799,17 +799,17 @@ RSpec.describe Sentry::Configuration do
     end
 
     it "raises ArgumentError for invalid status codes" do
-      expect { subject.trace_ignore_status_codes = [99] }.to raise_error(ArgumentError, /must be an Array of integers \(100-599\)/)
-      expect { subject.trace_ignore_status_codes = [600] }.to raise_error(ArgumentError, /must be an Array of integers \(100-599\)/)
+      expect { subject.trace_ignore_status_codes = [99] }.to raise_error(ArgumentError, /must be.* between \(100-599\)/)
+      expect { subject.trace_ignore_status_codes = [600] }.to raise_error(ArgumentError, /must be.* between \(100-599\)/)
       expect { subject.trace_ignore_status_codes = ["404"] }.to raise_error(ArgumentError, /must be an Array of integers/)
     end
 
     it "raises ArgumentError for invalid ranges" do
-      expect { subject.trace_ignore_status_codes = [[400]] }.to raise_error(ArgumentError, /arrays of two integers/)
-      expect { subject.trace_ignore_status_codes = [[400, 500, 600]] }.to raise_error(ArgumentError, /arrays of two integers/)
-      expect { subject.trace_ignore_status_codes = [[500, 400]] }.to raise_error(ArgumentError, /start <= end/)
-      expect { subject.trace_ignore_status_codes = [[99, 200]] }.to raise_error(ArgumentError, /100-599/)
-      expect { subject.trace_ignore_status_codes = [[400, 600]] }.to raise_error(ArgumentError, /100-599/)
+      expect { subject.trace_ignore_status_codes = [[400]] }.to raise_error(ArgumentError, /must be.* ranges/)
+      expect { subject.trace_ignore_status_codes = [[400, 500, 600]] }.to raise_error(ArgumentError, /must be.* ranges/)
+      expect { subject.trace_ignore_status_codes = [[500, 400]] }.to raise_error(ArgumentError, /must be.* begin <= end/)
+      expect { subject.trace_ignore_status_codes = [[99, 200]] }.to raise_error(ArgumentError, /must be.* between \(100-599\)/)
+      expect { subject.trace_ignore_status_codes = [[400, 600]] }.to raise_error(ArgumentError, /must be.* between \(100-599\)/)
     end
   end
 end
