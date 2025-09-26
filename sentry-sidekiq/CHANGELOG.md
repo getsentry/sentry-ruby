@@ -2,11 +2,15 @@
 
 Individual gem's changelog has been deprecated. Please check the [project changelog](https://github.com/getsentry/sentry-ruby/blob/master/CHANGELOG.md).
 
+## Unreleased
+
+- Add `report_errors_via_rails` config [#2701](https://github.com/getsentry/sentry-ruby/pull/2701)
+
 ## 4.4.0
 
 ### Features
 
-- Make Sidekiq job context more readable [#1410](https://github.com/getsentry/sentry-ruby/pull/1410) 
+- Make Sidekiq job context more readable [#1410](https://github.com/getsentry/sentry-ruby/pull/1410)
 
 **Before**
 
