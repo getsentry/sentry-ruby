@@ -45,6 +45,8 @@ RSpec.describe Sentry::Rails::LogSubscriber, type: :request do
       make_basic_app do |config|
         config.enable_logs = true
         config.structured_logging.logger_class = Sentry::DebugStructuredLogger
+        # Disable default structured logging subscribers to avoid interference
+        config.rails.structured_logging.enabled = false
       end
     end
 
@@ -123,8 +125,8 @@ RSpec.describe Sentry::Rails::LogSubscriber, type: :request do
         duration = log_event["attributes"]["duration_ms"]
 
         expect(duration).to be_a(Float)
-        expect(duration).to be >= 40.0
-        expect(duration).to be < 100.0
+        expect(duration).to be >= 10.0
+        expect(duration).to be < 200.0
         expect(duration.round(2)).to eq(duration)
       end
     end

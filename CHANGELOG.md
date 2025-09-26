@@ -29,6 +29,39 @@
 
 - Archive [`sentry-raven`](https://github.com/getsentry/raven-ruby) ([#2708](https://github.com/getsentry/sentry-ruby/pull/2708))
 
+## 5.28.0
+
+### Features
+
+- Auto-enable Rails structured logging when `enable_logs` is true ([#2721](https://github.com/getsentry/sentry-ruby/pull/2721))
+
+### Miscellaneous
+
+- Deprecate all Metrics related APIs [#2726](https://github.com/getsentry/sentry-ruby/pull/2726)
+
+    Sentry [no longer has the Metrics Beta offering](https://sentry.zendesk.com/hc/en-us/articles/26369339769883-Metrics-Beta-Ended-on-October-7th) so
+    all the following APIs linked to Metrics have been deprecated and will be removed in the next major.
+
+    ```ruby
+    Sentry.init do |config|
+      # ...
+      config.metrics.enabled = true
+      config.metrics.enable_code_locations = true
+      config.metrics.before_emit = lambda {}
+    end
+
+    Sentry::Metrics.increment('button_click')
+    Sentry::Metrics.distribution('page_load', 15.0, unit: 'millisecond')
+    Sentry::Metrics.gauge('page_load', 15.0, unit: 'millisecond')
+    Sentry::Metrics.set('user_view', 'jane')
+    Sentry::Metrics.timing('how_long') { sleep(1) }
+    ```
+
+### Internal
+
+- Fix leftover `config.logger` call in `graphql` patch ([#2722](https://github.com/getsentry/sentry-ruby/2722)
+- Add `Configuration.before` and `Configuration.after` to run hooks before and after given event ([#2724](https://github.com/getsentry/sentry-ruby/pull/2724))
+
 ## 5.27.1
 
 ### Features

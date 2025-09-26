@@ -239,8 +239,7 @@ module Sentry
     # @yieldparam config [Configuration]
     # @return [void]
     def init(&block)
-      config = Configuration.new
-      yield(config) if block_given?
+      config = Configuration.new(&block)
 
       config.detect_release
       apply_patches(config)
