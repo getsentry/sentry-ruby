@@ -1,29 +1,6 @@
 # frozen_string_literal: true
 
 RSpec.describe Sentry::Configuration do
-  describe "#capture_exception_frame_locals" do
-    it "passes/received the value to #include_local_variables" do
-      subject.capture_exception_frame_locals = true
-      expect(subject.include_local_variables).to eq(true)
-      expect(subject.capture_exception_frame_locals).to eq(true)
-
-      subject.capture_exception_frame_locals = false
-      expect(subject.include_local_variables).to eq(false)
-      expect(subject.capture_exception_frame_locals).to eq(false)
-    end
-
-    it "prints deprecation message when being assigned" do
-      string_io = StringIO.new
-      subject.logger = Logger.new(string_io)
-
-      subject.capture_exception_frame_locals = true
-
-      expect(string_io.string).to include(
-        "WARN -- sentry: `capture_exception_frame_locals` is now deprecated in favor of `include_local_variables`."
-      )
-    end
-  end
-
   describe "#background_worker_threads" do
     it "sets to have of the processors count" do
       allow_any_instance_of(Sentry::Configuration).to receive(:processor_count).and_return(8)
