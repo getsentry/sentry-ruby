@@ -192,18 +192,6 @@ module Sentry
     # @return [String, nil]
     attr_accessor :sdk_debug_transport_log_file
 
-    # @deprecated Use {#sdk_logger=} instead.
-    def logger=(logger)
-      warn "[sentry] `config.logger=` is deprecated. Please use `config.sdk_logger=` instead."
-      self.sdk_logger = logger
-    end
-
-    # @deprecated Use {#sdk_logger} instead.
-    def logger
-      warn "[sentry] `config.logger` is deprecated. Please use `config.sdk_logger` instead."
-      self.sdk_logger
-    end
-
     # Project directory root for in_app detection. Could be Rails root, etc.
     # Set automatically for Rails.
     # @return [String]
@@ -284,12 +272,6 @@ module Sentry
     # Structured logging configuration.
     # @return [StructuredLoggingConfiguration]
     attr_reader :structured_logging
-
-    # Easier way to use performance tracing
-    # If set to true, will set traces_sample_rate to 1.0
-    # @deprecated It will be removed in the next major release.
-    # @return [Boolean, nil]
-    attr_reader :enable_tracing
 
     # Send diagnostic client reports about dropped events, true by default
     # tries to attach to an existing envelope max once every 30s
@@ -507,7 +489,6 @@ module Sentry
       self.before_send_log = nil
       self.rack_env_whitelist = RACK_ENV_WHITELIST_DEFAULT
       self.traces_sampler = nil
-      self.enable_tracing = nil
       self.enable_logs = false
 
       self.profiler_class = Sentry::Profiler
@@ -609,17 +590,6 @@ module Sentry
       @trace_ignore_status_codes = codes
     end
 
-    def enable_tracing=(enable_tracing)
-      unless enable_tracing.nil?
-        log_warn <<~MSG
-          `enable_tracing` is now deprecated in favor of `traces_sample_rate = 1.0`.
-        MSG
-      end
-
-      @enable_tracing = enable_tracing
-      @traces_sample_rate ||= 1.0 if enable_tracing
-    end
-
     def traces_sample_rate=(traces_sample_rate)
       @traces_sample_rate = traces_sample_rate
     end
@@ -684,7 +654,7 @@ module Sentry
     def tracing_enabled?
       valid_sampler = !!((valid_sample_rate?(@traces_sample_rate)) || @traces_sampler)
 
-      (@enable_tracing != false) && valid_sampler && sending_allowed?
+      valid_sampler && sending_allowed?
     end
 
     def profiling_enabled?

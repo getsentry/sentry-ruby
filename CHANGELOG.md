@@ -2,16 +2,19 @@
 
 ### Breaking Changes
 
-- Remove `config.async` [#1894](https://github.com/getsentry/sentry-ruby/pull/1894)
+- Remove deprecated `config.async` [#1894](https://github.com/getsentry/sentry-ruby/pull/1894)
+- Remove deprecated `Sentry::Metrics` and `config.metrics` and all metrics related code ([#2729](https://github.com/getsentry/sentry-ruby/pull/2729))
+- Remove deprecated `config.capture_exception_frame_locals`, use `include_local_variables` instead ([#2730](https://github.com/getsentry/sentry-ruby/pull/2730))
+- Remove deprecated `config.enable_tracing`, use `config.traces_sample_rate = 1.0` instead ([#2731](https://github.com/getsentry/sentry-ruby/pull/2731))
+- Remove deprecated `config.logger=`, use `config.sdk_logger=` instead ([#2732](https://github.com/getsentry/sentry-ruby/pull/2732))
+- Remove deprecated `Sentry::Rails::Tracing::ActionControllerSubscriber` ([#2733](https://github.com/getsentry/sentry-ruby/pull/2733))
+- Remove `:monotonic_active_support_logger` from `config.breadcrumbs_logger` ([#2717](https://github.com/getsentry/sentry-ruby/pull/2717))
 - Migrate from to_hash to to_h ([#2351](https://github.com/getsentry/sentry-ruby/pull/2351))
 - Add `before_send_check_in` for applying to `CheckInEvent` ([#2703](https://github.com/getsentry/sentry-ruby/pull/2703))
 - Returning a hash from `before_send` and `before_send_transaction` is no longer supported and will drop the event.
 - Remove stacktrace trimming ([#2714](https://github.com/getsentry/sentry-ruby/pull/2714))
 - `config.enabled_environments` now defaults to `nil` instead of `[]` for sending to all environments ([#2716](https://github.com/getsentry/sentry-ruby/pull/2716))
-- Remove `:monotonic_active_support_logger` from `config.breadcrumbs_logger` ([#2717](https://github.com/getsentry/sentry-ruby/pull/2717))
 - Requests which have response status codes in the inclusive ranges `[(301..303), (305..399), (401..404)]` will no longer create transactions by default. See `config.trace_ignore_status_codes` below to control what gets traced.
-- Remove `Sentry::Metrics` and `config.metrics` and all metrics related code ([#2729](https://github.com/getsentry/sentry-ruby/pull/2729))
-- Remove deprecated `config.capture_exception_frame_locals`, use `include_local_variables` instead ([#2730](https://github.com/getsentry/sentry-ruby/pull/2730))
 
 ### Features
 
