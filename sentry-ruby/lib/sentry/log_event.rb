@@ -87,7 +87,7 @@ module Sentry
       @contexts = {}
     end
 
-    def to_hash
+    def to_h
       SERIALIZEABLE_ATTRIBUTES.each_with_object({}) do |name, memo|
         memo[name] = serialize(name)
       end

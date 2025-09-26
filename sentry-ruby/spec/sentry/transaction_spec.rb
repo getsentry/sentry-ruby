@@ -18,6 +18,9 @@ RSpec.describe Sentry::Transaction do
     )
   end
 
+  let(:string_io) { StringIO.new }
+  let(:sdk_logger) { Logger.new(string_io) }
+
   describe ".from_sentry_trace" do
     let(:sentry_trace) { subject.to_sentry_trace }
 
@@ -197,14 +200,9 @@ RSpec.describe Sentry::Transaction do
   end
 
   describe "#set_initial_sample_decision" do
-    let(:string_io) { StringIO.new }
-    let(:logger) do
-      ::Logger.new(string_io)
-    end
-
     before do
       perform_basic_setup do |config|
-        config.sdk_logger = logger
+        config.sdk_logger = sdk_logger
       end
     end
 
@@ -392,9 +390,9 @@ RSpec.describe Sentry::Transaction do
     end
   end
 
-  describe "#to_hash" do
+  describe "#to_h" do
     it "returns correct data" do
-      hash = subject.to_hash
+      hash = subject.to_h
 
       expect(hash[:op]).to eq("sql.query")
       expect(hash[:description]).to eq("SELECT * FROM users;")
@@ -421,7 +419,7 @@ RSpec.describe Sentry::Transaction do
       subject.finish
 
       expect(events.count).to eq(1)
-      event = events.last.to_hash
+      event = events.last.to_h
 
       # don't contain itself
       expect(event[:spans]).to be_empty
@@ -431,7 +429,7 @@ RSpec.describe Sentry::Transaction do
       subject.finish
 
       expect(events.count).to eq(1)
-      event = events.last.to_hash
+      event = events.last.to_h
 
       expect(event[:transaction]).to eq("foo")
     end
@@ -441,7 +439,7 @@ RSpec.describe Sentry::Transaction do
       subject.finish(end_timestamp: timestamp)
 
       expect(events.count).to eq(1)
-      event = events.last.to_hash
+      event = events.last.to_h
 
       expect(event[:timestamp]).to eq(timestamp)
     end
@@ -454,7 +452,7 @@ RSpec.describe Sentry::Transaction do
       subject.finish
 
       expect(events.count).to eq(1)
-      event = events.last.to_hash
+      event = events.last.to_h
 
       expect(event[:tags]).to eq({ foo: 'bar', name: "apple" })
     end
@@ -550,10 +548,57 @@ RSpec.describe Sentry::Transaction do
         subject.set_measurement("metric.foo", 0.5, "second")
         subject.finish
 
-        transaction = events.last.to_hash
+        transaction = events.last.to_h
         expect(transaction[:measurements]).to eq(
           { "metric.foo" => { value: 0.5, unit: "second" } }
         )
+      end
+    end
+
+    describe "with trace_ignore_status_codes" do
+      before do
+        perform_basic_setup do |config|
+          config.traces_sample_rate = 1.0
+          config.sdk_logger = sdk_logger
+          config.trace_ignore_status_codes = [404, (500..503)]
+        end
+      end
+
+      it "drops transaction with individual status code match" do
+        subject.set_http_status(404)
+        subject.finish
+
+        expect(sentry_events).to be_empty
+        expect(Sentry.get_current_client.transport).to have_recorded_lost_event(:event_processor, 'transaction')
+        expect(Sentry.get_current_client.transport).to have_recorded_lost_event(:event_processor, 'span')
+        expect(string_io.string).to include("Discarding")
+        expect(string_io.string).to include("due to ignored HTTP status code: 404")
+      end
+
+      it "drops transaction with range status code match" do
+        subject.set_http_status(502)
+        subject.finish
+
+        expect(sentry_events).to be_empty
+        expect(Sentry.get_current_client.transport).to have_recorded_lost_event(:event_processor, 'transaction')
+        expect(Sentry.get_current_client.transport).to have_recorded_lost_event(:event_processor, 'span')
+        expect(string_io.string).to include("Discarding")
+        expect(string_io.string).to include("due to ignored HTTP status code: 502")
+      end
+
+      it "does not drop transaction with status code outside ignore list" do
+        subject.set_http_status(200)
+        subject.finish
+
+        expect(sentry_events).not_to be_empty
+        expect(sentry_events.last).to be_a(Sentry::TransactionEvent)
+      end
+
+      it "does not drop transaction without a status code set" do
+        subject.finish
+
+        expect(sentry_events).not_to be_empty
+        expect(sentry_events.first).to be_a(Sentry::TransactionEvent)
       end
     end
   end

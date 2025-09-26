@@ -280,7 +280,7 @@ RSpec.describe Sentry do
           described_class.capture_exception(e)
         end
 
-        event = last_sentry_event.to_hash
+        event = last_sentry_event.to_h
         last_frame = event.dig(:exception, :values, 0, :stacktrace, :frames).last
         expect(last_frame[:vars]).to eq(nil)
       end
@@ -306,7 +306,7 @@ RSpec.describe Sentry do
           described_class.capture_exception(e)
         end
 
-        event = last_sentry_event.to_hash
+        event = last_sentry_event.to_h
         last_frame = event.dig(:exception, :values, 0, :stacktrace, :frames).last
         expect(last_frame[:vars]).to include({ a: "1", b: "0" })
       end
@@ -390,8 +390,8 @@ RSpec.describe Sentry do
 
       Sentry.get_current_client.flush
 
-      # 3 envelopes: log, transaction, and client_report about dropped profile
-      expect(sentry_envelopes.size).to be(3)
+      # 2 envelopes: log and transaction
+      expect(sentry_envelopes.size).to be(2)
 
       log_event = sentry_logs.first
 
@@ -1353,14 +1353,6 @@ RSpec.describe Sentry do
         expect(described_class.backpressure_monitor).to receive(:kill)
         described_class.close
         expect(described_class.backpressure_monitor).to eq(nil)
-      end
-
-      it "flushes and kills metrics aggregator" do
-        perform_basic_setup { |c| c.metrics.enabled = true }
-        expect(described_class.metrics_aggregator).to receive(:flush).with(force: true)
-        expect(described_class.metrics_aggregator).to receive(:kill)
-        described_class.close
-        expect(described_class.metrics_aggregator).to eq(nil)
       end
 
       it "flushes transport" do

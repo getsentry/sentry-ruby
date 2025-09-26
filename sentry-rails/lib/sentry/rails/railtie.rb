@@ -101,16 +101,11 @@ module Sentry
     end
 
     def inject_breadcrumbs_logger
-      if Sentry.configuration.breadcrumbs_logger.include?(:active_support_logger)
+      if Sentry.configuration.breadcrumbs_logger.include?(:active_support_logger) ||
+        ## legacy name redirected for backwards compat
+        Sentry.configuration.breadcrumbs_logger.include?(:monotonic_active_support_logger)
         require "sentry/rails/breadcrumb/active_support_logger"
         Sentry::Rails::Breadcrumb::ActiveSupportLogger.inject(Sentry.configuration.rails.active_support_logger_subscription_items)
-      end
-
-      if Sentry.configuration.breadcrumbs_logger.include?(:monotonic_active_support_logger)
-        return warn "Usage of `monotonic_active_support_logger` require a version of Rails >= 6.1, please upgrade your Rails version or use another logger" if ::Rails.version.to_f < 6.1
-
-        require "sentry/rails/breadcrumb/monotonic_active_support_logger"
-        Sentry::Rails::Breadcrumb::MonotonicActiveSupportLogger.inject
       end
     end
 

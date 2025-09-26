@@ -23,7 +23,7 @@ RSpec.describe Sentry::Rails::Tracing::ActiveSupportSubscriber, :subscriber, typ
       transaction.finish
 
       expect(transport.events.count).to eq(1)
-      cache_transaction = transport.events.first.to_hash
+      cache_transaction = transport.events.first.to_h
       expect(cache_transaction[:type]).to eq("transaction")
 
       expect(cache_transaction[:spans].count).to eq(1)
@@ -45,7 +45,7 @@ RSpec.describe Sentry::Rails::Tracing::ActiveSupportSubscriber, :subscriber, typ
 
       expect(Rails.cache.read("my_cache_key")).to eq(1)
       expect(transport.events.count).to eq(1)
-      cache_transaction = transport.events.first.to_hash
+      cache_transaction = transport.events.first.to_h
       expect(cache_transaction[:type]).to eq("transaction")
       expect(cache_transaction[:spans].count).to eq(1)
       expect(cache_transaction[:spans][0][:op]).to eq("cache.put")
@@ -64,7 +64,7 @@ RSpec.describe Sentry::Rails::Tracing::ActiveSupportSubscriber, :subscriber, typ
       transaction.finish
 
       expect(transport.events.count).to eq(1)
-      cache_transaction = transport.events.first.to_hash
+      cache_transaction = transport.events.first.to_h
       expect(cache_transaction[:type]).to eq("transaction")
       expect(cache_transaction[:spans].count).to eq(1)
       expect(cache_transaction[:spans][0][:op]).to eq("cache.put")
@@ -79,7 +79,7 @@ RSpec.describe Sentry::Rails::Tracing::ActiveSupportSubscriber, :subscriber, typ
       transaction.finish
 
       expect(transport.events.count).to eq(1)
-      cache_transaction = transport.events.first.to_hash
+      cache_transaction = transport.events.first.to_h
       expect(cache_transaction[:type]).to eq("transaction")
       expect(cache_transaction[:spans].count).to eq(1)
       expect(cache_transaction[:spans][0][:op]).to eq("cache.get")
@@ -95,7 +95,7 @@ RSpec.describe Sentry::Rails::Tracing::ActiveSupportSubscriber, :subscriber, typ
       transaction.finish
 
       expect(transport.events.count).to eq(1)
-      cache_transaction = transport.events.first.to_hash
+      cache_transaction = transport.events.first.to_h
       expect(cache_transaction[:type]).to eq("transaction")
       expect(cache_transaction[:spans].count).to eq(1)
       expect(cache_transaction[:spans][0][:op]).to eq("cache.get")
@@ -112,7 +112,7 @@ RSpec.describe Sentry::Rails::Tracing::ActiveSupportSubscriber, :subscriber, typ
       transaction.finish
 
       expect(transport.events.count).to eq(1)
-      cache_transaction = transport.events.first.to_hash
+      cache_transaction = transport.events.first.to_h
       expect(cache_transaction[:type]).to eq("transaction")
       expect(cache_transaction[:spans].count).to eq(2)
       expect(cache_transaction[:spans][1][:op]).to eq("cache.flush")
@@ -130,7 +130,7 @@ RSpec.describe Sentry::Rails::Tracing::ActiveSupportSubscriber, :subscriber, typ
 
       transaction.finish
       expect(transport.events.count).to eq(1)
-      cache_transaction = transport.events.first.to_hash
+      cache_transaction = transport.events.first.to_h
       expect(cache_transaction[:type]).to eq("transaction")
       expect(cache_transaction[:spans].count).to eq(2)
       expect(cache_transaction[:spans][0][:op]).to eq("cache.get")
@@ -152,7 +152,7 @@ RSpec.describe Sentry::Rails::Tracing::ActiveSupportSubscriber, :subscriber, typ
 
       transaction.finish
       expect(transport.events.count).to eq(1)
-      cache_transaction = transport.events.first.to_hash
+      cache_transaction = transport.events.first.to_h
       expect(cache_transaction[:type]).to eq("transaction")
       expect(cache_transaction[:spans].count).to eq(1)
       expect(cache_transaction[:spans][0][:op]).to eq("cache.remove")

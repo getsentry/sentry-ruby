@@ -55,13 +55,13 @@ RSpec.describe Sentry::BreadcrumbBuffer do
     end
   end
 
-  describe "#to_hash" do
+  describe "#to_h" do
     it "doesn't break because of 1 problematic crumb" do
       subject.record(crumb_1)
       subject.record(crumb_2)
       subject.record(problematic_crumb)
 
-      result = subject.to_hash[:values]
+      result = subject.to_h[:values]
 
       expect(result[0][:category]).to eq("foo")
       expect(result[0][:data]).to eq({ "name" => "John", "age" => 25 })

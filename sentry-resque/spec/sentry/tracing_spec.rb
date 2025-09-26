@@ -35,10 +35,10 @@ RSpec.describe Sentry::Resque do
     worker.work(0)
 
     expect(transport.events.count).to eq(2)
-    event = transport.events.first.to_hash
+    event = transport.events.first.to_h
     expect(event[:message]).to eq("report")
 
-    tracing_event = transport.events.last.to_hash
+    tracing_event = transport.events.last.to_h
     expect(tracing_event[:transaction]).to eq("MessageJob")
     expect(tracing_event[:transaction_info]).to eq({ source: :task })
     expect(tracing_event[:type]).to eq("transaction")
@@ -53,10 +53,10 @@ RSpec.describe Sentry::Resque do
     worker.work(0)
 
     expect(transport.events.count).to eq(2)
-    event = transport.events.first.to_hash
+    event = transport.events.first.to_h
     expect(event.dig(:exception, :values, 0, :type)).to eq("ZeroDivisionError")
 
-    tracing_event = transport.events.last.to_hash
+    tracing_event = transport.events.last.to_h
     expect(tracing_event[:transaction]).to eq("FailedJob")
     expect(tracing_event[:transaction_info]).to eq({ source: :task })
     expect(tracing_event[:type]).to eq("transaction")
@@ -78,7 +78,7 @@ RSpec.describe Sentry::Resque do
       worker.work(0)
 
       expect(transport.events.count).to eq(1)
-      event = transport.events.first.to_hash
+      event = transport.events.first.to_h
       expect(event[:message]).to eq("report")
     end
   end

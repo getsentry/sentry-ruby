@@ -13,6 +13,7 @@ Gemfile.lock
 .idea
 *.rdb
 .rgignore
+.claude
 
 node_modules
 .vite
