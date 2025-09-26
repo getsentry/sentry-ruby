@@ -4,12 +4,13 @@ module Sentry
   module Metrics
     class Configuration
       include ArgumentCheckingHelper
+      include LoggingHelper
 
       # Enable metrics usage.
       # Starts a new {Sentry::Metrics::Aggregator} instance to aggregate metrics
       # and a thread to aggregate flush every 5 seconds.
       # @return [Boolean]
-      attr_accessor :enabled
+      attr_reader :enabled
 
       # Enable code location reporting.
       # Will be sent once per day.
@@ -32,9 +33,18 @@ module Sentry
       # @return [Proc, nil]
       attr_reader :before_emit
 
-      def initialize
+      def initialize(sdk_logger)
+        @sdk_logger = sdk_logger
         @enabled = false
         @enable_code_locations = true
+      end
+
+      def enabled=(value)
+        log_warn <<~MSG
+          `config.metrics` is now deprecated and will be removed in the next major.
+        MSG
+
+        @enabled = value
       end
 
       def before_emit=(value)

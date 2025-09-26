@@ -1,14 +1,17 @@
 # frozen_string_literal: true
 
 RSpec.describe Sentry::Metrics do
+  let(:aggregator) { Sentry.metrics_aggregator }
+  let(:fake_time) { Time.new(2024, 1, 1, 1, 1, 3) }
+  let(:string_io) { StringIO.new }
+  let(:sdk_logger) { Logger.new(string_io) }
+
   before do
     perform_basic_setup do |config|
       config.metrics.enabled = true
+      config.sdk_logger = sdk_logger
     end
   end
-
-  let(:aggregator) { Sentry.metrics_aggregator }
-  let(:fake_time) { Time.new(2024, 1, 1, 1, 1, 3) }
 
   describe '.increment' do
     it 'passes default value of 1.0 with only key' do
@@ -36,6 +39,14 @@ RSpec.describe Sentry::Metrics do
 
       described_class.increment('foo', 5.0, unit: 'second', tags: { fortytwo: 42 }, timestamp: fake_time)
     end
+
+    it 'logs deprecation warning' do
+      described_class.increment('foo')
+
+      expect(string_io.string).to include(
+        "WARN -- sentry: `Sentry::Metrics` is now deprecated and will be removed in the next major."
+      )
+    end
   end
 
   describe '.distribution' do
@@ -50,6 +61,14 @@ RSpec.describe Sentry::Metrics do
       )
 
       described_class.distribution('foo', 5.0, unit: 'second', tags: { fortytwo: 42 }, timestamp: fake_time)
+    end
+
+    it 'logs deprecation warning' do
+      described_class.distribution('foo', 5.0, unit: 'second', tags: { fortytwo: 42 }, timestamp: fake_time)
+
+      expect(string_io.string).to include(
+        "WARN -- sentry: `Sentry::Metrics` is now deprecated and will be removed in the next major."
+      )
     end
   end
 
@@ -66,6 +85,14 @@ RSpec.describe Sentry::Metrics do
 
       described_class.set('foo', 'jane', tags: { fortytwo: 42 }, timestamp: fake_time)
     end
+
+    it 'logs deprecation warning' do
+      described_class.set('foo', 'jane', tags: { fortytwo: 42 }, timestamp: fake_time)
+
+      expect(string_io.string).to include(
+        "WARN -- sentry: `Sentry::Metrics` is now deprecated and will be removed in the next major."
+      )
+    end
   end
 
   describe '.gauge' do
@@ -80,6 +107,14 @@ RSpec.describe Sentry::Metrics do
       )
 
       described_class.gauge('foo', 5.0, unit: 'second', tags: { fortytwo: 42 }, timestamp: fake_time)
+    end
+
+    it 'logs deprecation warning' do
+      described_class.gauge('foo', 5.0, unit: 'second', tags: { fortytwo: 42 }, timestamp: fake_time)
+
+      expect(string_io.string).to include(
+        "WARN -- sentry: `Sentry::Metrics` is now deprecated and will be removed in the next major."
+      )
     end
   end
 
@@ -107,6 +142,14 @@ RSpec.describe Sentry::Metrics do
 
       result = described_class.timing('foo', unit: 'millisecond', tags: { fortytwo: 42 }, timestamp: fake_time) { sleep(0.1); 42 }
       expect(result).to eq(42)
+    end
+
+    it 'logs deprecation warning' do
+      described_class.timing('foo', unit: 'millisecond', tags: { fortytwo: 42 }, timestamp: fake_time) { sleep(0.1); 42 }
+
+      expect(string_io.string).to include(
+        "WARN -- sentry: `Sentry::Metrics` is now deprecated and will be removed in the next major."
+      )
     end
 
     context 'with running transaction' do

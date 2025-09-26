@@ -512,7 +512,7 @@ module Sentry
 
       @transport = Transport::Configuration.new
       @cron = Cron::Configuration.new
-      @metrics = Metrics::Configuration.new
+      @metrics = Metrics::Configuration.new(self.sdk_logger)
       @structured_logging = StructuredLoggingConfiguration.new
       @gem_specs = Hash[Gem::Specification.map { |spec| [spec.name, spec.version.to_s] }] if Gem::Specification.respond_to?(:map)
 
