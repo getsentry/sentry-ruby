@@ -12,6 +12,8 @@
 - Requests which have response status codes in the inclusive ranges `[(301..303), (305..399), (401..404)]` will no longer create transactions by default. See `config.trace_ignore_status_codes` below to control what gets traced.
 - Remove deprecated `config.capture_exception_frame_locals`, use `include_local_variables` instead ([#2730](https://github.com/getsentry/sentry-ruby/pull/2730))
 - Remove deprecated `config.enable_tracing`, use `config.traces_sample_rate = 1.0` instead ([#2731](https://github.com/getsentry/sentry-ruby/pull/2731))
+- Remove deprecated `config.logger=`, use `config.sdk_logger=` instead ([#2732](https://github.com/getsentry/sentry-ruby/pull/2732))
+- Remove deprecated `Sentry::Rails::Tracing::ActionControllerSubscriber` ([#2733](https://github.com/getsentry/sentry-ruby/pull/2733))
 
 ### Features
 

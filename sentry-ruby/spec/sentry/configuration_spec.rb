@@ -712,22 +712,6 @@ RSpec.describe Sentry::Configuration do
     end
   end
 
-  describe "#logger" do
-    it "returns configured sdk_logger and prints deprecation warning" do
-      expect {
-        expect(subject.logger).to be(subject.sdk_logger)
-      }.to output(/`config.logger` is deprecated/).to_stderr
-    end
-  end
-
-  describe "#logger=" do
-    it "sets sdk_logger and prints deprecation warning" do
-      expect {
-        subject.logger = Logger.new($stdout)
-      }.to output(/`config.logger=` is deprecated/).to_stderr
-    end
-  end
-
   describe "#trace_ignore_status_codes" do
     it "has default values" do
       expect(subject.trace_ignore_status_codes).to eq([(301..303), (305..399), (401..404)])
