@@ -19,22 +19,28 @@ module Sentry
 
     class << self
       def increment(key, value = 1.0, unit: "none", tags: {}, timestamp: nil)
+        log_deprecation
         Sentry.metrics_aggregator&.add(:c, key, value, unit: unit, tags: tags, timestamp: timestamp)
       end
 
       def distribution(key, value, unit: "none", tags: {}, timestamp: nil)
+        log_deprecation
         Sentry.metrics_aggregator&.add(:d, key, value, unit: unit, tags: tags, timestamp: timestamp)
       end
 
       def set(key, value, unit: "none", tags: {}, timestamp: nil)
+        log_deprecation
         Sentry.metrics_aggregator&.add(:s, key, value, unit: unit, tags: tags, timestamp: timestamp)
       end
 
       def gauge(key, value, unit: "none", tags: {}, timestamp: nil)
+        log_deprecation
         Sentry.metrics_aggregator&.add(:g, key, value, unit: unit, tags: tags, timestamp: timestamp)
       end
 
       def timing(key, unit: "second", tags: {}, timestamp: nil, &block)
+        log_deprecation
+
         return unless block_given?
         return yield unless DURATION_UNITS.include?(unit)
 
@@ -50,6 +56,12 @@ module Sentry
 
         Sentry.metrics_aggregator&.add(:d, key, value, unit: unit, tags: tags, timestamp: timestamp)
         result
+      end
+
+      def log_deprecation
+        Sentry.sdk_logger.warn(LOGGER_PROGNAME) do
+          "`Sentry::Metrics` is now deprecated and will be removed in the next major."
+        end
       end
     end
   end
