@@ -1,29 +1,6 @@
 # frozen_string_literal: true
 
 RSpec.describe Sentry::Configuration do
-  describe "#capture_exception_frame_locals" do
-    it "passes/received the value to #include_local_variables" do
-      subject.capture_exception_frame_locals = true
-      expect(subject.include_local_variables).to eq(true)
-      expect(subject.capture_exception_frame_locals).to eq(true)
-
-      subject.capture_exception_frame_locals = false
-      expect(subject.include_local_variables).to eq(false)
-      expect(subject.capture_exception_frame_locals).to eq(false)
-    end
-
-    it "prints deprecation message when being assigned" do
-      string_io = StringIO.new
-      subject.logger = Logger.new(string_io)
-
-      subject.capture_exception_frame_locals = true
-
-      expect(string_io.string).to include(
-        "WARN -- sentry: `capture_exception_frame_locals` is now deprecated in favor of `include_local_variables`."
-      )
-    end
-  end
-
   describe "#background_worker_threads" do
     it "sets to have of the processors count" do
       allow_any_instance_of(Sentry::Configuration).to receive(:processor_count).and_return(8)
@@ -114,25 +91,6 @@ RSpec.describe Sentry::Configuration do
           expect(subject.tracing_enabled?).to eq(false)
         end
       end
-
-      context "when enable_tracing is set" do
-        it "returns false" do
-          subject.enable_tracing = true
-
-          expect(subject.tracing_enabled?).to eq(false)
-        end
-
-        it "prints deprecation message when being assigned" do
-          string_io = StringIO.new
-          subject.logger = Logger.new(string_io)
-
-          subject.enable_tracing = true
-
-          expect(string_io.string).to include(
-            "WARN -- sentry: `enable_tracing` is now deprecated in favor of `traces_sample_rate = 1.0`."
-          )
-        end
-      end
     end
 
     context "when sending allowed" do
@@ -175,29 +133,6 @@ RSpec.describe Sentry::Configuration do
           expect(subject.tracing_enabled?).to eq(true)
         end
       end
-
-      context "when enable_tracing is true" do
-        it "returns true" do
-          subject.enable_tracing = true
-
-          expect(subject.tracing_enabled?).to eq(true)
-        end
-      end
-
-      context "when enable_tracing is false" do
-        it "returns false" do
-          subject.enable_tracing = false
-
-          expect(subject.tracing_enabled?).to eq(false)
-        end
-
-        it "returns false even with explicit traces_sample_rate" do
-          subject.traces_sample_rate = 1.0
-          subject.enable_tracing = false
-
-          expect(subject.tracing_enabled?).to eq(false)
-        end
-      end
     end
   end
 
@@ -227,19 +162,19 @@ RSpec.describe Sentry::Configuration do
 
   describe "#profiling_enabled?" do
     it "returns false unless tracing enabled" do
-      subject.enable_tracing = false
+      subject.traces_sample_rate = nil
       expect(subject.profiling_enabled?).to eq(false)
     end
 
     it "returns false unless sending enabled" do
-      subject.enable_tracing = true
+      subject.traces_sample_rate = 1.0
       subject.profiles_sample_rate = 1.0
       allow(subject).to receive(:sending_allowed?).and_return(false)
       expect(subject.profiling_enabled?).to eq(false)
     end
 
     context 'when tracing and sending enabled' do
-      before { subject.enable_tracing = true }
+      before { subject.traces_sample_rate = 1.0 }
       before { allow(subject).to receive(:sending_allowed?).and_return(true) }
 
       it "returns false if nil sample rate" do
@@ -256,19 +191,6 @@ RSpec.describe Sentry::Configuration do
         subject.profiles_sample_rate = 0.5
         expect(subject.profiling_enabled?).to eq(true)
       end
-    end
-  end
-
-  describe "#enable_tracing=" do
-    it "sets traces_sample_rate to 1.0 automatically" do
-      subject.enable_tracing = true
-      expect(subject.traces_sample_rate).to eq(1.0)
-    end
-
-    it "doesn't override existing traces_sample_rate" do
-      subject.traces_sample_rate = 0.5
-      subject.enable_tracing = true
-      expect(subject.traces_sample_rate).to eq(0.5)
     end
   end
 
@@ -787,22 +709,6 @@ RSpec.describe Sentry::Configuration do
           config.profiles_sample_rate = nil
         end
       }.to_not output(/Please add the 'vernier' gem to your Gemfile/).to_stdout
-    end
-  end
-
-  describe "#logger" do
-    it "returns configured sdk_logger and prints deprecation warning" do
-      expect {
-        expect(subject.logger).to be(subject.sdk_logger)
-      }.to output(/`config.logger` is deprecated/).to_stderr
-    end
-  end
-
-  describe "#logger=" do
-    it "sets sdk_logger and prints deprecation warning" do
-      expect {
-        subject.logger = Logger.new($stdout)
-      }.to output(/`config.logger=` is deprecated/).to_stderr
     end
   end
 

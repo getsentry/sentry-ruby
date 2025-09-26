@@ -5,7 +5,7 @@ require "sentry-ruby"
 require "sentry/benchmarks/benchmark_transport"
 
 Sentry.init do |config|
-  config.logger = ::Logger.new(nil)
+  config.sdk_logger = ::Logger.new(nil)
   config.dsn = "dummy://12345:67890@sentry.localdomain:3000/sentry/42"
   config.transport.transport_class = Sentry::BenchmarkTransport
   config.breadcrumbs_logger = [:sentry_logger]
