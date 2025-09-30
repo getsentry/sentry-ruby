@@ -37,6 +37,10 @@
 
 - Support for `:origin` attribute in log events ([#2712](https://github.com/getsentry/sentry-ruby/pull/2712))
 
+### Features
+
+- Include `Delayed::Job` instance in hint [#1861](https://github.com/getsentry/sentry-ruby/pull/1861)
+
 ### Bug Fixes
 
 - Skip including `sentry.message.template` in the log event attributes if there are no interpolation parameters provided ([#2700](https://github.com/getsentry/sentry-ruby/pull/2700))

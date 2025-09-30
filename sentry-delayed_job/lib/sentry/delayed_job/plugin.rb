@@ -81,7 +81,7 @@ module Sentry
       end
 
       def self.capture_exception(exception, job)
-        Sentry::DelayedJob.capture_exception(exception, hint: { background: false }) if report?(job)
+        Sentry::DelayedJob.capture_exception(exception, hint: { background: false, delayed_job: job }) if report?(job)
       end
 
       def self.report?(job)
