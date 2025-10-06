@@ -26,7 +26,6 @@ module Sentry
     # @param configuration [Configuration]
     def initialize(configuration)
       @configuration = configuration
-      @sdk_logger = configuration.sdk_logger
 
       if transport_class = configuration.transport.transport_class
         @transport = transport_class.new(configuration)

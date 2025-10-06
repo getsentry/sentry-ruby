@@ -16,7 +16,7 @@ module Sentry
     attr_reader :pending_events
 
     def initialize(configuration, client)
-      super(configuration.sdk_logger, FLUSH_INTERVAL)
+      super(FLUSH_INTERVAL)
 
       @client = client
       @pending_events = []

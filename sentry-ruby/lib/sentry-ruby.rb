@@ -245,7 +245,7 @@ module Sentry
       @main_hub = hub
       @background_worker = Sentry::BackgroundWorker.new(config)
       @session_flusher = config.session_tracking? ? Sentry::SessionFlusher.new(config, client) : nil
-      @backpressure_monitor = config.enable_backpressure_handling ? Sentry::BackpressureMonitor.new(config, client) : nil
+      @backpressure_monitor = config.enable_backpressure_handling ? Sentry::BackpressureMonitor.new(client) : nil
       exception_locals_tp.enable if config.include_local_variables
       at_exit { close }
     end
@@ -624,22 +624,10 @@ module Sentry
     #
     # @return [StructuredLogger, nil] The structured logger instance or nil if logs are disabled
     def logger
-      @logger ||=
-        if configuration.enable_logs
-          # Initialize the public-facing Structured Logger if logs are enabled
-          # Use configured structured logger class or default to StructuredLogger
-          # @see https://develop.sentry.dev/sdk/telemetry/logs/
-          configuration.structured_logging.logger_class.new(configuration)
-        else
-          warn <<~STR
-            [sentry] `Sentry.logger` will no longer be used as internal SDK logger when `enable_logs` feature is turned on.
-                    Use Sentry.configuration.sdk_logger for SDK-specific logging needs."
+      return nil unless initialized?
+      return nil unless configuration.enable_logs
 
-                    Caller: #{caller.first}
-          STR
-
-          configuration.sdk_logger
-        end
+      @logger ||= configuration.structured_logging.logger_class.new(configuration)
     end
 
     ##### Helpers #####
@@ -654,7 +642,7 @@ module Sentry
 
     # @!visibility private
     def sdk_logger
-      configuration.sdk_logger
+      configuration&.sdk_logger
     end
 
     # @!visibility private

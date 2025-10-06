@@ -9,10 +9,14 @@ class ExceptionWithContext < StandardError
 end
 
 RSpec.describe Sentry::Client do
+  let(:string_io) { StringIO.new }
+  let(:sdk_logger) { Logger.new(string_io) }
+
   let(:configuration) do
     Sentry::Configuration.new.tap do |config|
       config.dsn = Sentry::TestHelper::DUMMY_DSN
       config.transport.transport_class = Sentry::DummyTransport
+      config.sdk_logger = sdk_logger
     end
   end
   subject { Sentry::Client.new(configuration) }
@@ -30,6 +34,7 @@ RSpec.describe Sentry::Client do
 
   before do
     allow(Time).to receive(:now).and_return fake_time
+    allow(Sentry).to receive(:sdk_logger).and_return sdk_logger
   end
 
   describe "#transport" do
@@ -134,12 +139,8 @@ RSpec.describe Sentry::Client do
     end
 
     context 'when transport failure' do
-      let(:string_io) { StringIO.new }
-
       before do
         configuration.debug = true
-        configuration.sdk_logger = ::Logger.new(string_io)
-
         allow(subject.transport).to receive(:send_envelope).and_raise(Sentry::ExternalError.new("networking error"))
       end
 
@@ -720,15 +721,6 @@ RSpec.describe Sentry::Client do
   end
 
   describe "#generate_sentry_trace" do
-    let(:string_io) { StringIO.new }
-    let(:logger) do
-      ::Logger.new(string_io)
-    end
-
-    before do
-      configuration.sdk_logger = logger
-    end
-
     let(:span) { Sentry::Span.new(transaction: transaction) }
 
     it "generates the trace with given span and logs correct message" do
@@ -750,10 +742,6 @@ RSpec.describe Sentry::Client do
   end
 
   describe "#generate_baggage" do
-    before { configuration.sdk_logger = logger }
-
-    let(:string_io) { StringIO.new }
-    let(:logger) { ::Logger.new(string_io) }
     let(:baggage) do
       Sentry::Baggage.from_incoming_header(
         "other-vendor-value-1=foo;bar;baz, sentry-trace_id=771a43a4192642f0b136d5159a501700, "\

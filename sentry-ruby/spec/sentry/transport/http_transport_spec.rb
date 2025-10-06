@@ -5,10 +5,12 @@ require 'contexts/with_request_mock'
 RSpec.describe Sentry::HTTPTransport do
   include_context "with request mock"
 
+  let(:string_io) { StringIO.new }
+  let(:sdk_logger) { Logger.new(string_io) }
   let(:configuration) do
     Sentry::Configuration.new.tap do |config|
       config.dsn = Sentry::TestHelper::DUMMY_DSN
-      config.sdk_logger = Logger.new(nil)
+      config.sdk_logger = sdk_logger
     end
   end
   let(:client) { Sentry::Client.new(configuration) }
@@ -20,11 +22,12 @@ RSpec.describe Sentry::HTTPTransport do
 
   subject { client.transport }
 
+  before do
+    allow(Sentry).to receive(:sdk_logger).and_return(sdk_logger)
+  end
+
   it "logs a debug message only during initialization" do
     sentry_stub_request(build_fake_response("200"))
-    string_io = StringIO.new
-    configuration.sdk_logger = Logger.new(string_io)
-
     subject
 
     expect(string_io.string).to include("sentry: Sentry HTTP Transport will connect to http://sentry.localdomain")

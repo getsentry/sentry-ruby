@@ -1,9 +1,11 @@
 # frozen_string_literal: true
 
 RSpec.describe Sentry::Client do
+  let(:string_io) { StringIO.new }
+  let(:sdk_logger) { Logger.new(string_io) }
   let(:configuration) do
     Sentry::Configuration.new.tap do |config|
-      config.sdk_logger = Logger.new(nil)
+      config.sdk_logger = sdk_logger
       config.dsn = Sentry::TestHelper::DUMMY_DSN
       config.transport.transport_class = Sentry::DummyTransport
     end
@@ -11,6 +13,7 @@ RSpec.describe Sentry::Client do
 
   before do
     stub_request(:post, Sentry::TestHelper::DUMMY_DSN)
+    allow(Sentry).to receive(:sdk_logger).and_return(sdk_logger)
   end
 
   subject(:client) { Sentry::Client.new(configuration) }
@@ -168,9 +171,6 @@ RSpec.describe Sentry::Client do
       end
 
       it "warns if before_send returns nil" do
-        string_io = StringIO.new
-        logger = Logger.new(string_io, level: :debug)
-        configuration.sdk_logger = logger
         configuration.before_send = lambda do |_event, _hint|
           nil
         end
@@ -180,9 +180,6 @@ RSpec.describe Sentry::Client do
       end
 
       it "warns if before_send returns non-Event objects" do
-        string_io = StringIO.new
-        logger = Logger.new(string_io, level: :debug)
-        configuration.sdk_logger = logger
         configuration.before_send = lambda do |_event, _hint|
           123
         end
@@ -221,9 +218,6 @@ RSpec.describe Sentry::Client do
       end
 
       it "warns if before_send_transaction returns nil" do
-        string_io = StringIO.new
-        logger = Logger.new(string_io, level: :debug)
-        configuration.sdk_logger = logger
         configuration.before_send_transaction = lambda do |_event, _hint|
           nil
         end
@@ -271,9 +265,6 @@ RSpec.describe Sentry::Client do
       end
 
       it "warns if before_send_check_in returns nil" do
-        string_io = StringIO.new
-        logger = Logger.new(string_io, level: :debug)
-        configuration.sdk_logger = logger
         configuration.before_send_check_in = lambda do |_event, _hint|
           nil
         end
@@ -290,14 +281,10 @@ RSpec.describe Sentry::Client do
   end
 
   describe "integrated error handling testing with HTTPTransport" do
-    let(:string_io) { StringIO.new }
-    let(:logger) do
-      ::Logger.new(string_io)
-    end
     let(:configuration) do
       Sentry::Configuration.new.tap do |config|
         config.dsn = Sentry::TestHelper::DUMMY_DSN
-        config.sdk_logger = logger
+        config.sdk_logger = sdk_logger
       end
     end
 

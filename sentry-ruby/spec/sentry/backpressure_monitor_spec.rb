@@ -15,7 +15,7 @@ RSpec.describe Sentry::BackpressureMonitor do
   let(:transport) { client.transport }
   let(:background_worker) { Sentry.background_worker }
 
-  subject { described_class.new(configuration, client) }
+  subject { described_class.new(client) }
 
   describe '#healthy?' do
     it 'returns true by default' do

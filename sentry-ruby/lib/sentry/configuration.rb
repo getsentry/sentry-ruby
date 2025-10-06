@@ -509,11 +509,11 @@ module Sentry
 
     def validate
       if profiler_class == Sentry::Profiler && profiles_sample_rate && !Sentry.dependency_installed?(:StackProf)
-        log_warn("Please add the 'stackprof' gem to your Gemfile to use the StackProf profiler with Sentry.")
+        sdk_logger.warn(LOGGER_PROGNAME) { "Please add the 'stackprof' gem to your Gemfile to use the StackProf profiler with Sentry." }
       end
 
       if profiler_class == Sentry::Vernier::Profiler && profiles_sample_rate && !Sentry.dependency_installed?(:Vernier)
-        log_warn("Please add the 'vernier' gem to your Gemfile to use the Vernier profiler with Sentry.")
+        sdk_logger.warn(LOGGER_PROGNAME) { "Please add the 'vernier' gem to your Gemfile to use the Vernier profiler with Sentry." }
       end
 
       self.class.validations.each do |attribute, validation|
@@ -632,10 +632,10 @@ module Sentry
     def exception_class_allowed?(exc)
       if exc.is_a?(Sentry::Error)
         # Try to prevent error reporting loops
-        log_debug("Refusing to capture Sentry error: #{exc.inspect}")
+        sdk_logger.debug(LOGGER_PROGNAME) { "Refusing to capture Sentry error: #{exc.inspect}" }
         false
       elsif excluded_exception?(exc)
-        log_debug("User excluded error: #{exc.inspect}")
+        sdk_logger.debug(LOGGER_PROGNAME) { "User excluded error: #{exc.inspect}" }
         false
       else
         true
@@ -692,10 +692,12 @@ module Sentry
       @release ||= ReleaseDetector.detect_release(project_root: project_root, running_on_heroku: running_on_heroku?)
 
       if running_on_heroku? && release.nil?
-        log_warn(HEROKU_DYNO_METADATA_MESSAGE)
+        sdk_logger.warn(LOGGER_PROGNAME) { HEROKU_DYNO_METADATA_MESSAGE }
       end
     rescue => e
-      log_error("Error detecting release", e, debug: debug)
+      message = "Error detecting release: #{e.message}"
+      message += "\n#{e.backtrace.join("\n")}" if debug
+      sdk_logger.error(LOGGER_PROGNAME) { message }
     end
 
     # @api private

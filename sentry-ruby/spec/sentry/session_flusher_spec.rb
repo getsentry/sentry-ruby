@@ -2,6 +2,7 @@
 
 RSpec.describe Sentry::SessionFlusher do
   let(:string_io) { StringIO.new }
+  let(:sdk_logger) { Logger.new(string_io) }
 
   let(:configuration) do
     Sentry::Configuration.new.tap do |config|
@@ -10,7 +11,7 @@ RSpec.describe Sentry::SessionFlusher do
       config.environment = 'test'
       config.transport.transport_class = Sentry::DummyTransport
       config.background_worker_threads = 0
-      config.sdk_logger = Logger.new(string_io)
+      config.sdk_logger = sdk_logger
     end
   end
 
@@ -20,6 +21,7 @@ RSpec.describe Sentry::SessionFlusher do
 
   before do
     Sentry.background_worker = Sentry::BackgroundWorker.new(configuration)
+    allow(Sentry).to receive(:sdk_logger).and_return sdk_logger
   end
 
   describe "#initialize" do

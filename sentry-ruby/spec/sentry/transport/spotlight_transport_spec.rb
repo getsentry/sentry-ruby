@@ -1,17 +1,20 @@
 # frozen_string_literal: true
 
 RSpec.describe Sentry::SpotlightTransport do
+  let(:string_io) { StringIO.new }
+  let(:sdk_logger) { Logger.new(string_io) }
+
   let(:configuration) do
     Sentry::Configuration.new.tap do |config|
       config.spotlight = true
-      config.sdk_logger = Logger.new(nil)
+      config.sdk_logger = sdk_logger
     end
   end
 
   let(:custom_configuration) do
     Sentry::Configuration.new.tap do |config|
       config.spotlight = 'http://foobar@test.com'
-      config.sdk_logger = Logger.new(nil)
+      config.sdk_logger = sdk_logger
     end
   end
 
@@ -23,12 +26,12 @@ RSpec.describe Sentry::SpotlightTransport do
 
   subject { described_class.new(configuration) }
 
+  before do
+    allow(Sentry).to receive(:sdk_logger).and_return(sdk_logger)
+  end
+
   it 'logs a debug message during initialization' do
-    string_io = StringIO.new
-    configuration.sdk_logger = Logger.new(string_io)
-
     subject
-
     expect(string_io.string).to include('sentry: [Spotlight] initialized for url http://localhost:8969/stream')
   end
 
@@ -57,8 +60,6 @@ RSpec.describe Sentry::SpotlightTransport do
 
   describe '#send_data' do
     it 'fails a maximum of three times and logs disable once' do
-      string_io = StringIO.new
-      configuration.sdk_logger = Logger.new(string_io)
       configuration.sdk_logger.level = :debug
 
       allow(::Net::HTTP).to receive(:new).and_raise(Errno::ECONNREFUSED)

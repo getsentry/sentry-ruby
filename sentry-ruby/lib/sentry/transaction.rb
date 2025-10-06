@@ -72,7 +72,6 @@ module Sentry
       @traces_sampler = hub.configuration.traces_sampler
       @traces_sample_rate = hub.configuration.traces_sample_rate
       @trace_ignore_status_codes = hub.configuration.trace_ignore_status_codes
-      @sdk_logger = hub.configuration.sdk_logger
       @release = hub.configuration.release
       @environment = hub.configuration.environment
       @dsn = hub.configuration.dsn

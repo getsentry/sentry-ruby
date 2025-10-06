@@ -2,11 +2,16 @@
 
 RSpec.describe Sentry::BackgroundWorker do
   let(:string_io) { StringIO.new }
+  let(:sdk_logger) { Logger.new(string_io) }
 
   let(:configuration) do
     Sentry::Configuration.new.tap do |config|
-      config.sdk_logger = Logger.new(string_io)
+      config.sdk_logger = sdk_logger
     end
+  end
+
+  before do
+    allow(Sentry).to receive(:sdk_logger).and_return(sdk_logger)
   end
 
   describe "#initialize" do

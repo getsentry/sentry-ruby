@@ -2,11 +2,11 @@
 
 RSpec.describe Sentry::Transport do
   let(:io) { StringIO.new }
-  let(:logger) { Logger.new(io) }
+  let(:sdk_logger) { Logger.new(io) }
   let(:configuration) do
     Sentry::Configuration.new.tap do |config|
       config.server = 'http://12345:67890@sentry.localdomain/sentry/42'
-      config.sdk_logger = logger
+      config.sdk_logger = sdk_logger
     end
   end
 
@@ -25,6 +25,10 @@ RSpec.describe Sentry::Transport do
   end
 
   subject { client.transport }
+
+  before do
+    allow(Sentry).to receive(:sdk_logger).and_return(sdk_logger)
+  end
 
   describe "#serialize_envelope" do
     context "normal event" do

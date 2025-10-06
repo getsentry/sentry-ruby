@@ -18,7 +18,6 @@ module Sentry
       @shutdown_timeout = 1
       @number_of_threads = configuration.background_worker_threads
       @max_queue = configuration.background_worker_max_queue
-      @sdk_logger = configuration.sdk_logger
       @debug = configuration.debug
       @shutdown_callback = nil
 

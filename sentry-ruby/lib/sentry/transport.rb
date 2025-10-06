@@ -27,7 +27,6 @@ module Sentry
     attr_reader :rate_limits, :discarded_events, :last_client_report_sent
 
     def initialize(configuration)
-      @sdk_logger = configuration.sdk_logger
       @transport_configuration = configuration.transport
       @dsn = configuration.dsn
       @rate_limits = {}
