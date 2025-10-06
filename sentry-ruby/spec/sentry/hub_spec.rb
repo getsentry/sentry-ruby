@@ -358,11 +358,15 @@ RSpec.describe Sentry::Hub do
     end
 
     context "when event is a transaction" do
+      before do
+        configuration.traces_sample_rate = 1.0
+      end
+
       it "transaction.set_context merges and takes precedence over scope.set_context" do
         scope.set_context(:foo, { val: 42 })
         scope.set_context(:bar, { val: 43 })
 
-        transaction = Sentry::Transaction.new(hub: subject, name: 'test')
+        transaction = subject.start_transaction(name: 'test')
         transaction.set_context(:foo, { val: 44 })
         transaction.set_context(:baz, { val: 45 })
 
@@ -581,21 +585,27 @@ RSpec.describe Sentry::Hub do
       expect(subject.last_event_id).to eq(event.event_id)
     end
 
-    it 'only records last_event_id for error events' do
-      exception = ZeroDivisionError.new("divided by 0")
-      transaction = Sentry::Transaction.new(name: "test transaction", op: "rack.request", hub: subject)
+    context "with tracing" do
+      before do
+        configuration.traces_sample_rate = 1.0
+      end
 
-      error_event = client.event_from_exception(exception)
-      transaction_event = client.event_from_transaction(transaction)
-      check_in_event = client.event_from_check_in("test_slug", :ok)
+      it 'only records last_event_id for error events' do
+        exception = ZeroDivisionError.new("divided by 0")
+        transaction = subject.start_transaction(name: "test transaction", op: "rack.request")
 
-      subject.capture_event(error_event)
-      subject.capture_event(transaction_event)
-      subject.capture_event(check_in_event)
+        error_event = client.event_from_exception(exception)
+        transaction_event = client.event_from_transaction(transaction)
+        check_in_event = client.event_from_check_in("test_slug", :ok)
 
-      expect(subject.last_event_id).to eq(error_event.event_id)
-      expect(subject.last_event_id).not_to eq(transaction_event.event_id)
-      expect(subject.last_event_id).not_to eq(check_in_event.event_id)
+        subject.capture_event(error_event)
+        subject.capture_event(transaction_event)
+        subject.capture_event(check_in_event)
+
+        expect(subject.last_event_id).to eq(error_event.event_id)
+        expect(subject.last_event_id).not_to eq(transaction_event.event_id)
+        expect(subject.last_event_id).not_to eq(check_in_event.event_id)
+      end
     end
   end
 

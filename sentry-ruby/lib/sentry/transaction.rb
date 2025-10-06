@@ -54,7 +54,6 @@ module Sentry
     attr_reader :sample_rand
 
     def initialize(
-      hub:,
       name: nil,
       source: :custom,
       parent_sampled: nil,
@@ -66,26 +65,14 @@ module Sentry
 
       set_name(name, source: source)
       @parent_sampled = parent_sampled
-      @hub = hub
       @baggage = baggage
-      @tracing_enabled = hub.configuration.tracing_enabled?
-      @traces_sampler = hub.configuration.traces_sampler
-      @traces_sample_rate = hub.configuration.traces_sample_rate
-      @trace_ignore_status_codes = hub.configuration.trace_ignore_status_codes
-      @sdk_logger = hub.configuration.sdk_logger
-      @release = hub.configuration.release
-      @environment = hub.configuration.environment
-      @dsn = hub.configuration.dsn
       @effective_sample_rate = nil
       @contexts = {}
       @measurements = {}
       @sample_rand = sample_rand
 
-      unless hub.profiler_running?
-        @profiler = hub.configuration.profiler_class.new(hub.configuration)
-      end
-
       init_span_recorder
+      init_profiler
 
       unless @sample_rand
         generator = Utils::SampleRand.new(trace_id: @trace_id)
@@ -141,7 +128,9 @@ module Sentry
     # @param sampling_context [Hash] a context Hash that'll be passed to `traces_sampler` (if provided).
     # @return [void]
     def set_initial_sample_decision(sampling_context:)
-      unless @tracing_enabled
+      configuration = Sentry.configuration
+
+      unless configuration && configuration.tracing_enabled?
         @sampled = false
         return
       end
@@ -152,12 +141,12 @@ module Sentry
       end
 
       sample_rate =
-        if @traces_sampler.is_a?(Proc)
-          @traces_sampler.call(sampling_context)
+        if configuration.traces_sampler.is_a?(Proc)
+          configuration.traces_sampler.call(sampling_context)
         elsif !sampling_context[:parent_sampled].nil?
           sampling_context[:parent_sampled]
         else
-          @traces_sample_rate
+          configuration.traces_sample_rate
         end
 
       transaction_description = generate_transaction_description
@@ -207,7 +196,10 @@ module Sentry
         @name = UNLABELD_NAME
       end
 
-      @hub.stop_profiler!(self)
+      hub = Sentry.get_current_hub
+      return unless hub
+
+      hub.stop_profiler!(self)
 
       if @sampled && ignore_status_code?
         @sampled = false
@@ -215,16 +207,16 @@ module Sentry
         status_code = get_http_status_code
         log_debug("#{MESSAGE_PREFIX} Discarding #{generate_transaction_description} due to ignored HTTP status code: #{status_code}")
 
-        @hub.current_client.transport.record_lost_event(:event_processor, "transaction")
-        @hub.current_client.transport.record_lost_event(:event_processor, "span")
+        hub.current_client.transport.record_lost_event(:event_processor, "transaction")
+        hub.current_client.transport.record_lost_event(:event_processor, "span")
       elsif @sampled
-        event = @hub.current_client.event_from_transaction(self)
-        @hub.capture_event(event)
+        event = hub.current_client.event_from_transaction(self)
+        hub.capture_event(event)
       else
         is_backpressure = Sentry.backpressure_monitor&.downsample_factor&.positive?
         reason = is_backpressure ? :backpressure : :sample_rate
-        @hub.current_client.transport.record_lost_event(reason, "transaction")
-        @hub.current_client.transport.record_lost_event(reason, "span")
+        hub.current_client.transport.record_lost_event(reason, "transaction")
+        hub.current_client.transport.record_lost_event(reason, "span")
       end
     end
 
@@ -275,6 +267,15 @@ module Sentry
       @span_recorder.add(self)
     end
 
+    def init_profiler
+      hub = Sentry.get_current_hub
+      return unless hub
+
+      unless hub.profiler_running?
+        @profiler = hub.configuration.profiler_class.new(hub.configuration)
+      end
+    end
+
     private
 
     def generate_transaction_description
@@ -285,14 +286,16 @@ module Sentry
     end
 
     def populate_head_baggage
+      configuration = Sentry.configuration
+
       items = {
         "trace_id" => trace_id,
         "sample_rate" => effective_sample_rate&.to_s,
         "sample_rand" => Utils::SampleRand.format(@sample_rand),
         "sampled" => sampled&.to_s,
-        "environment" => @environment,
-        "release" => @release,
-        "public_key" => @dsn&.public_key
+        "environment" => configuration&.environment,
+        "release" => configuration&.release,
+        "public_key" => configuration&.dsn&.public_key
       }
 
       items["transaction"] = name unless source_low_quality?
@@ -302,12 +305,13 @@ module Sentry
     end
 
     def ignore_status_code?
-      return false unless @trace_ignore_status_codes
+      trace_ignore_status_codes = Sentry.configuration&.trace_ignore_status_codes
+      return false unless trace_ignore_status_codes
 
       status_code = get_http_status_code
       return false unless status_code
 
-      @trace_ignore_status_codes.any? do |ignored|
+      trace_ignore_status_codes.any? do |ignored|
         ignored.is_a?(Range) ? ignored.include?(status_code) : status_code == ignored
       end
     end

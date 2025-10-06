@@ -7,9 +7,8 @@ RSpec.describe Sentry::Span do
   end
 
   let(:transaction) do
-    Sentry::Transaction.new(
+    hub.start_transaction(
       name: "test transaction",
-      hub: hub,
       sampled: true
     )
   end
@@ -100,7 +99,9 @@ RSpec.describe Sentry::Span do
   describe "#to_baggage" do
     before do
       # because initializing transactions requires an active hub
-      perform_basic_setup
+      perform_basic_setup do |config|
+        config.traces_sample_rate = 1.0
+      end
     end
 
     subject do
@@ -113,7 +114,7 @@ RSpec.describe Sentry::Span do
         "other-vendor-value-2=foo;bar;"
       )
 
-      Sentry::Transaction.new(hub: Sentry.get_current_hub, baggage: baggage).start_child
+      Sentry.start_transaction(baggage: baggage).start_child
     end
 
     it "propagates sentry baggage values" do
@@ -129,7 +130,9 @@ RSpec.describe Sentry::Span do
   describe "#get_dynamic_sampling_context" do
     before do
       # because initializing transactions requires an active hub
-      perform_basic_setup
+      perform_basic_setup do |config|
+        config.traces_sample_rate = 1.0
+      end
     end
 
     subject do
@@ -142,7 +145,7 @@ RSpec.describe Sentry::Span do
         "other-vendor-value-2=foo;bar;"
       )
 
-      Sentry::Transaction.new(hub: Sentry.get_current_hub, baggage: baggage).start_child
+      Sentry.start_transaction(baggage: baggage).start_child
     end
 
     it "propagates sentry dynamic_sampling_context" do
@@ -158,7 +161,9 @@ RSpec.describe Sentry::Span do
   describe "#start_child" do
     before do
       # because initializing transactions requires an active hub
-      perform_basic_setup
+      perform_basic_setup do |config|
+        config.traces_sample_rate = 1.0
+      end
     end
 
     it "initializes a new child Span" do
@@ -198,7 +203,7 @@ RSpec.describe Sentry::Span do
     context "when the parent span has a span_recorder" do
       subject do
         # inherits the span recorder from the transaction
-        Sentry::Transaction.new(hub: Sentry.get_current_hub).start_child
+        Sentry.start_transaction(name: "test").start_child
       end
 
       it "gives the child span its span_recorder" do

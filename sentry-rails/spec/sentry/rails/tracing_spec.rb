@@ -275,7 +275,6 @@ RSpec.describe Sentry::Rails::Tracing, type: :request do
           status: "ok",
           sampled: true,
           name: "a/path",
-          hub: Sentry.get_current_hub
         )
       end
 

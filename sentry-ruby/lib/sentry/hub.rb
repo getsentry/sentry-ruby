@@ -116,7 +116,7 @@ module Sentry
       return unless configuration.tracing_enabled?
       return unless instrumenter == configuration.instrumenter
 
-      transaction ||= Transaction.new(**options.merge(hub: self))
+      transaction ||= Transaction.new(**options)
 
       sampling_context = {
         transaction_context: transaction.to_h,
@@ -353,7 +353,6 @@ module Sentry
       return nil unless propagation_context.incoming_trace
 
       Transaction.new(
-        hub: self,
         trace_id: propagation_context.trace_id,
         parent_span_id: propagation_context.parent_span_id,
         parent_sampled: propagation_context.parent_sampled,

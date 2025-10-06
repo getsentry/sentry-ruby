@@ -11,9 +11,6 @@ RSpec.describe Sentry::Transport do
   end
 
   let(:client) { Sentry::Client.new(configuration) }
-  let(:hub) do
-    Sentry::Hub.new(client, Sentry::Scope.new)
-  end
 
   let(:dynamic_sampling_context) do
     {
@@ -60,7 +57,7 @@ RSpec.describe Sentry::Transport do
 
     context "transaction event" do
       let(:transaction) do
-        Sentry::Transaction.new(name: "test transaction", op: "rack.request", hub: hub)
+        Sentry::Transaction.new(name: "test transaction", op: "rack.request")
       end
 
       let(:event) do
@@ -348,7 +345,7 @@ RSpec.describe Sentry::Transport do
 
     context "transaction event" do
       let(:transaction) do
-        Sentry::Transaction.new(name: "test transaction", op: "rack.request", hub: hub)
+        Sentry::Transaction.new(name: "test transaction", op: "rack.request")
       end
       let(:event) { client.event_from_transaction(transaction) }
       let(:envelope) { subject.envelope_from_event(event) }

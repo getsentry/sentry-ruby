@@ -240,12 +240,11 @@ RSpec.describe 'Sentry::Rack::CaptureExceptions', when: :rack_available? do
 
     context "when sentry-trace header is sent" do
       let(:external_transaction) do
-        Sentry::Transaction.new(
+        Sentry.start_transaction(
           op: "pageload",
           status: "ok",
           sampled: true,
           name: "a/path",
-          hub: Sentry.get_current_hub
         )
       end
 
@@ -560,7 +559,6 @@ RSpec.describe 'Sentry::Rack::CaptureExceptions', when: :rack_available? do
             status: "ok",
             sampled: true,
             name: "a/path",
-            hub: Sentry.get_current_hub
           )
         end
 

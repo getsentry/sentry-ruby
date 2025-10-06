@@ -60,7 +60,7 @@ RSpec.describe Sentry::Scope do
     it "deep-copies span as well" do
       perform_basic_setup
 
-      span = Sentry::Transaction.new(sampled: true, hub: hub)
+      span = Sentry::Transaction.new(sampled: true)
       subject.set_span(span)
       copy = subject.dup
 
@@ -128,7 +128,7 @@ RSpec.describe Sentry::Scope do
       subject.set_extras({ additional_info: "hello" })
       subject.set_user({ id: 1 })
       subject.set_transaction_name("WelcomeController#index")
-      subject.set_span(Sentry::Transaction.new(op: "foo", hub: hub))
+      subject.set_span(Sentry::Transaction.new(op: "foo"))
       subject.set_fingerprint(["foo"])
       scope_id = subject.object_id
 
@@ -155,7 +155,7 @@ RSpec.describe Sentry::Scope do
     end
 
     let(:transaction) do
-      Sentry::Transaction.new(op: "parent", hub: hub)
+      Sentry::Transaction.new(op: "parent")
     end
 
     context "with span in the scope" do
@@ -321,7 +321,7 @@ RSpec.describe Sentry::Scope do
     end
 
     it "sets trace context and dynamic_sampling_context from span if there's a span" do
-      transaction = Sentry::Transaction.new(op: "foo", hub: hub)
+      transaction = Sentry::Transaction.new(op: "foo")
       subject.set_span(transaction)
 
       subject.apply_to_event(event)

@@ -104,15 +104,14 @@ RSpec.describe "Trace propagation" do
       trace_id = "771a43a4192642f0b136d5159a501700"
 
       results = 5.times.map do
-        transaction = Sentry::Transaction.new(trace_id: trace_id, hub: Sentry.get_current_hub)
-        Sentry.start_transaction(transaction: transaction)
+        transaction = Sentry.start_transaction(trace_id: trace_id)
         transaction.sampled
       end
 
       expect(results.uniq.length).to eq(1)
 
       sample_rands = 5.times.map do
-        transaction = Sentry::Transaction.new(trace_id: trace_id, hub: Sentry.get_current_hub)
+        transaction = Sentry.start_transaction(trace_id: trace_id)
         baggage = transaction.get_baggage
         baggage.items["sample_rand"]
       end
@@ -135,8 +134,7 @@ RSpec.describe "Trace propagation" do
 
       baggage = Sentry::Baggage.new({ "sample_rate" => "0.75" })
 
-      parent_transaction = Sentry::Transaction.new(
-        hub: Sentry.get_current_hub,
+      parent_transaction = Sentry.start_transaction(
         baggage: baggage,
         sample_rand: 0.6
       )
