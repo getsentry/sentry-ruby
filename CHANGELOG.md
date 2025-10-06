@@ -8,6 +8,13 @@
 - Remove deprecated `config.enable_tracing`, use `config.traces_sample_rate = 1.0` instead ([#2731](https://github.com/getsentry/sentry-ruby/pull/2731))
 - Remove deprecated `config.logger=`, use `config.sdk_logger=` instead ([#2732](https://github.com/getsentry/sentry-ruby/pull/2732))
 - Remove deprecated `Sentry::Rails::Tracing::ActionControllerSubscriber` ([#2733](https://github.com/getsentry/sentry-ruby/pull/2733))
+- Remove `Transaction` deprecations ([#2736](https://github.com/getsentry/sentry-ruby/pull/2736))
+  - Remove deprecated constant `Sentry::Transaction::SENTRY_TRACE_REGEXP`, use `Sentry::PropagationContext::SENTRY_TRACE_REGEXP` instead
+  - Remove deprecated method `Sentry::Transaction.from_sentry_trace`, use `Sentry.continue_trace` instead
+  - Remove deprecated method `Sentry::Transaction.extract_sentry_trace`, use `Sentry::PropagationContext.extract_sentry_trace` instead
+  - Remove deprecated attribute `Sentry::Transaction.configuration`
+  - Remove deprecated attribute `Sentry::Transaction.hub`
+  - Remove deprecated argument `hub` to `Sentry::Transaction.finish`
 - Remove `:monotonic_active_support_logger` from `config.breadcrumbs_logger` ([#2717](https://github.com/getsentry/sentry-ruby/pull/2717))
 - Migrate from to_hash to to_h ([#2351](https://github.com/getsentry/sentry-ruby/pull/2351))
 - Add `before_send_check_in` for applying to `CheckInEvent` ([#2703](https://github.com/getsentry/sentry-ruby/pull/2703))

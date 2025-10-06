@@ -21,93 +21,6 @@ RSpec.describe Sentry::Transaction do
   let(:string_io) { StringIO.new }
   let(:sdk_logger) { Logger.new(string_io) }
 
-  describe ".from_sentry_trace" do
-    let(:sentry_trace) { subject.to_sentry_trace }
-
-    let(:baggage) {
-      "other-vendor-value-1=foo;bar;baz, "\
-      "sentry-trace_id=771a43a4192642f0b136d5159a501700, "\
-      "sentry-public_key=49d0f7386ad645858ae85020e393bef3, "\
-      "sentry-sample_rate=0.01337, "\
-      "sentry-user_id=Am%C3%A9lie,  "\
-      "other-vendor-value-2=foo;bar;"
-    }
-
-    let(:configuration) do
-      Sentry.configuration
-    end
-
-    context "when tracing is enabled (> 0)" do
-      before do
-        configuration.traces_sample_rate = 1.0
-      end
-
-      it "returns correctly-formatted value" do
-        child_transaction = described_class.from_sentry_trace(sentry_trace, op: "child")
-
-        expect(child_transaction.trace_id).to eq(subject.trace_id)
-        expect(child_transaction.parent_span_id).to eq(subject.span_id)
-        expect(child_transaction.parent_sampled).to eq(true)
-        # doesn't set the sampled value
-        expect(child_transaction.sampled).to eq(nil)
-        expect(child_transaction.op).to eq("child")
-      end
-
-      it "handles invalid values without crashing" do
-        child_transaction = described_class.from_sentry_trace("dummy", op: "child")
-
-        expect(child_transaction).to be_nil
-      end
-
-      it "stores frozen empty baggage on incoming traces from older SDKs" do
-        child_transaction = described_class.from_sentry_trace(sentry_trace, baggage: nil, op: "child")
-        expect(child_transaction.baggage).not_to be_nil
-        expect(child_transaction.baggage.mutable).to be(false)
-        expect(child_transaction.baggage.items).to eq({})
-      end
-
-      it "stores correct baggage on incoming baggage header" do
-        child_transaction = described_class.from_sentry_trace(sentry_trace, baggage: baggage, op: "child")
-        expect(child_transaction.baggage).not_to be_nil
-        expect(child_transaction.baggage.mutable).to be(false)
-
-        expect(child_transaction.baggage.items).to eq({
-          "sample_rate" => "0.01337",
-          "public_key" => "49d0f7386ad645858ae85020e393bef3",
-          "trace_id" => "771a43a4192642f0b136d5159a501700",
-          "user_id" => "Amélie"
-        })
-      end
-    end
-
-    context "when tracing is enabled (= 0)" do
-      before do
-        configuration.traces_sample_rate = 0.0
-      end
-
-      it "returns correctly-formatted value" do
-        child_transaction = described_class.from_sentry_trace(sentry_trace, op: "child")
-
-        expect(child_transaction.trace_id).to eq(subject.trace_id)
-        expect(child_transaction.parent_span_id).to eq(subject.span_id)
-        expect(child_transaction.parent_sampled).to eq(true)
-        # doesn't set the sampled value
-        expect(child_transaction.sampled).to eq(nil)
-        expect(child_transaction.op).to eq("child")
-      end
-    end
-
-    context "when tracing is disabled" do
-      before do
-        configuration.traces_sample_rate = nil
-      end
-
-      it "returns nil" do
-        expect(described_class.from_sentry_trace(sentry_trace, op: "child")).to be_nil
-      end
-    end
-  end
-
   describe "#deep_dup" do
     before do
       subject.start_child(op: "first child")
@@ -467,12 +380,6 @@ RSpec.describe Sentry::Transaction do
     end
 
     describe "hub selection" do
-      it "prioritizes the optional hub argument and uses it to submit the transaction" do
-        expect(another_hub).to receive(:capture_event)
-
-        subject.finish(hub: another_hub)
-      end
-
       it "submits the event with the transaction's hub by default" do
         # Create transaction with the specific hub from the beginning
         transaction = described_class.new(
@@ -700,46 +607,6 @@ RSpec.describe Sentry::Transaction do
           "sampled" => "true"
         })
       end
-    end
-  end
-
-  describe ".extract_sample_rand_from_baggage" do
-    let(:trace_id) { "771a43a4192642f0b136d5159a501700" }
-
-    it "returns trace_id generation when baggage is nil" do
-      result = described_class.extract_sample_rand_from_baggage(nil, trace_id, true)
-
-      generator = Sentry::Utils::SampleRand.new(trace_id: trace_id)
-      expected = generator.generate_from_trace_id
-
-      expect(result).to eq(expected)
-    end
-
-    it "returns trace_id generation when baggage has no items" do
-      baggage = double("baggage", items: nil)
-      result = described_class.extract_sample_rand_from_baggage(baggage, trace_id, true)
-
-      generator = Sentry::Utils::SampleRand.new(trace_id: trace_id)
-      expected = generator.generate_from_trace_id
-
-      expect(result).to eq(expected)
-    end
-
-    it "returns trace_id generation when sample_rand is invalid" do
-      baggage = double("baggage", items: { "sample_rand" => "1.5" })
-      result = described_class.extract_sample_rand_from_baggage(baggage, trace_id, true)
-
-      generator = Sentry::Utils::SampleRand.new(trace_id: trace_id)
-      expected = generator.generate_from_trace_id
-
-      expect(result).to eq(expected)
-    end
-
-    it "returns valid sample_rand from baggage when present" do
-      baggage = double("baggage", items: { "sample_rand" => "0.5" })
-      result = described_class.extract_sample_rand_from_baggage(baggage, trace_id, true)
-
-      expect(result).to eq(0.5)
     end
   end
 

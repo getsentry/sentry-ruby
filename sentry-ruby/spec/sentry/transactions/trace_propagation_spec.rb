@@ -36,10 +36,7 @@ RSpec.describe "Trace propagation" do
       sentry_trace = headers["sentry-trace"]
       baggage_header = headers["baggage"]
 
-      child_transaction = Sentry::Transaction.from_sentry_trace(
-        sentry_trace,
-        baggage: baggage_header
-      )
+      child_transaction = Sentry.continue_trace(headers)
 
       expect(child_transaction).not_to be_nil
 
@@ -65,7 +62,7 @@ RSpec.describe "Trace propagation" do
       baggage_header = "sentry-trace_id=#{sentry_trace},sentry-sample_rate=0.25"
 
       expected_sample_rand = Sentry::Utils::SampleRand.new(trace_id: "771a43a4192642f0b136d5159a501700").generate_from_trace_id
-      transaction = Sentry::Transaction.from_sentry_trace(sentry_trace, baggage: baggage_header)
+      transaction = Sentry.continue_trace({ "sentry-trace" => sentry_trace, "baggage" => baggage_header })
 
       expect(transaction.sample_rand).to eql(expected_sample_rand)
       expect(transaction.baggage.items["sample_rate"]).to eql("0.25")
@@ -76,7 +73,7 @@ RSpec.describe "Trace propagation" do
       baggage_header = "sentry-trace_id=771a43a4192642f0b136d5159a501700,sentry-sample_rand=1.5"
 
       expected_sample_rand = Sentry::Utils::SampleRand.new(trace_id: "771a43a4192642f0b136d5159a501700").generate_from_trace_id
-      transaction = Sentry::Transaction.from_sentry_trace(sentry_trace, baggage: baggage_header)
+      transaction = Sentry.continue_trace({ "sentry-trace" => sentry_trace, "baggage" => baggage_header })
 
       expect(transaction.sample_rand).to eq(expected_sample_rand)
 

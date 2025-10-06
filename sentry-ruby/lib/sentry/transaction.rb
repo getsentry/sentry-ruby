@@ -7,9 +7,6 @@ require "sentry/propagation_context"
 
 module Sentry
   class Transaction < Span
-    # @deprecated Use Sentry::PropagationContext::SENTRY_TRACE_REGEXP instead.
-    SENTRY_TRACE_REGEXP = PropagationContext::SENTRY_TRACE_REGEXP
-
     UNLABELD_NAME = "<unlabeled transaction>"
     MESSAGE_PREFIX = "[Tracing]"
 
@@ -39,12 +36,6 @@ module Sentry
     # The measurements added to the transaction.
     # @return [Hash]
     attr_reader :measurements
-
-    # @deprecated Use Sentry.get_current_hub instead.
-    attr_reader :hub
-
-    # @deprecated Use Sentry.configuration instead.
-    attr_reader :configuration
 
     # The effective sample rate at which this transaction was sampled.
     # @return [Float, nil]
@@ -77,7 +68,6 @@ module Sentry
       @parent_sampled = parent_sampled
       @hub = hub
       @baggage = baggage
-      @configuration = hub.configuration # to be removed
       @tracing_enabled = hub.configuration.tracing_enabled?
       @traces_sampler = hub.configuration.traces_sampler
       @traces_sample_rate = hub.configuration.traces_sample_rate
@@ -91,8 +81,8 @@ module Sentry
       @measurements = {}
       @sample_rand = sample_rand
 
-      unless @hub.profiler_running?
-        @profiler = @configuration.profiler_class.new(@configuration)
+      unless hub.profiler_running?
+        @profiler = hub.configuration.profiler_class.new(hub.configuration)
       end
 
       init_span_recorder
@@ -101,63 +91,6 @@ module Sentry
         generator = Utils::SampleRand.new(trace_id: @trace_id)
         @sample_rand = generator.generate_from_trace_id
       end
-    end
-
-    # @deprecated use Sentry.continue_trace instead.
-    #
-    # Initalizes a Transaction instance with a Sentry trace string from another transaction (usually from an external request).
-    #
-    # The original transaction will become the parent of the new Transaction instance. And they will share the same `trace_id`.
-    #
-    # The child transaction will also store the parent's sampling decision in its `parent_sampled` attribute.
-    # @param sentry_trace [String] the trace string from the previous transaction.
-    # @param baggage [String, nil] the incoming baggage header string.
-    # @param hub [Hub] the hub that'll be responsible for sending this transaction when it's finished.
-    # @param options [Hash] the options you want to use to initialize a Transaction instance.
-    # @return [Transaction, nil]
-    def self.from_sentry_trace(sentry_trace, baggage: nil, hub: Sentry.get_current_hub, **options)
-      return unless hub.configuration.tracing_enabled?
-      return unless sentry_trace
-
-      sentry_trace_data = extract_sentry_trace(sentry_trace)
-      return unless sentry_trace_data
-
-      trace_id, parent_span_id, parent_sampled = sentry_trace_data
-
-      baggage =
-        if baggage && !baggage.empty?
-          Baggage.from_incoming_header(baggage)
-        else
-          # If there's an incoming sentry-trace but no incoming baggage header,
-          # for instance in traces coming from older SDKs,
-          # baggage will be empty and frozen and won't be populated as head SDK.
-          Baggage.new({})
-        end
-
-      baggage.freeze!
-
-      sample_rand = extract_sample_rand_from_baggage(baggage, trace_id, parent_sampled)
-
-      new(
-        trace_id: trace_id,
-        parent_span_id: parent_span_id,
-        parent_sampled: parent_sampled,
-        hub: hub,
-        baggage: baggage,
-        sample_rand: sample_rand,
-        **options
-      )
-    end
-
-    # @deprecated Use Sentry::PropagationContext.extract_sentry_trace instead.
-    # @return [Array, nil]
-    def self.extract_sentry_trace(sentry_trace)
-      PropagationContext.extract_sentry_trace(sentry_trace)
-    end
-
-    def self.extract_sample_rand_from_baggage(baggage, trace_id, parent_sampled)
-      PropagationContext.extract_sample_rand_from_baggage(baggage, trace_id) ||
-        PropagationContext.generate_sample_rand(baggage, trace_id, parent_sampled)
     end
 
     # @return [Hash]
@@ -266,20 +199,8 @@ module Sentry
     end
 
     # Finishes the transaction's recording and send it to Sentry.
-    # @param hub [Hub] the hub that'll send this transaction. (Deprecated)
     # @return [TransactionEvent]
-    def finish(hub: nil, end_timestamp: nil)
-      if hub
-        log_warn(
-          <<~MSG
-            Specifying a different hub in `Transaction#finish` will be deprecated in version 5.0.
-            Please use `Hub#start_transaction` with the designated hub.
-          MSG
-        )
-      end
-
-      hub ||= @hub
-
+    def finish(end_timestamp: nil)
       super(end_timestamp: end_timestamp)
 
       if @name.nil?
@@ -297,13 +218,13 @@ module Sentry
         @hub.current_client.transport.record_lost_event(:event_processor, "transaction")
         @hub.current_client.transport.record_lost_event(:event_processor, "span")
       elsif @sampled
-        event = hub.current_client.event_from_transaction(self)
-        hub.capture_event(event)
+        event = @hub.current_client.event_from_transaction(self)
+        @hub.capture_event(event)
       else
         is_backpressure = Sentry.backpressure_monitor&.downsample_factor&.positive?
         reason = is_backpressure ? :backpressure : :sample_rate
-        hub.current_client.transport.record_lost_event(reason, "transaction")
-        hub.current_client.transport.record_lost_event(reason, "span")
+        @hub.current_client.transport.record_lost_event(reason, "transaction")
+        @hub.current_client.transport.record_lost_event(reason, "span")
       end
     end
 
