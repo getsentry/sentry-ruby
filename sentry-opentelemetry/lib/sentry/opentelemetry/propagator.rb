@@ -34,7 +34,7 @@ module Sentry
         sentry_trace = getter.get(carrier, SENTRY_TRACE_HEADER_NAME)
         return context unless sentry_trace
 
-        sentry_trace_data = Transaction.extract_sentry_trace(sentry_trace)
+        sentry_trace_data = PropagationContext.extract_sentry_trace(sentry_trace)
         return context unless sentry_trace_data
 
         context = context.set_value(SENTRY_TRACE_KEY, sentry_trace_data)
