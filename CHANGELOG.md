@@ -8,6 +8,7 @@
 - Remove deprecated `config.enable_tracing`, use `config.traces_sample_rate = 1.0` instead ([#2731](https://github.com/getsentry/sentry-ruby/pull/2731))
 - Remove deprecated `config.logger=`, use `config.sdk_logger=` instead ([#2732](https://github.com/getsentry/sentry-ruby/pull/2732))
 - Remove deprecated `Sentry::Rails::Tracing::ActionControllerSubscriber` ([#2733](https://github.com/getsentry/sentry-ruby/pull/2733))
+- Remove deprecated `Event#configuration` ([#2740](https://github.com/getsentry/sentry-ruby/pull/2740))
 - Remove `Transaction` deprecations ([#2736](https://github.com/getsentry/sentry-ruby/pull/2736))
   - Remove deprecated constant `Sentry::Transaction::SENTRY_TRACE_REGEXP`, use `Sentry::PropagationContext::SENTRY_TRACE_REGEXP` instead
   - Remove deprecated method `Sentry::Transaction.from_sentry_trace`, use `Sentry.continue_trace` instead
