@@ -328,38 +328,6 @@ module Sentry
       raise
     end
 
-    # @deprecated use Sentry.get_traceparent instead.
-    #
-    # Generates a Sentry trace for distribted tracing from the given Span.
-    # Returns `nil` if `config.propagate_traces` is `false`.
-    # @param span [Span] the span to generate trace from.
-    # @return [String, nil]
-    def generate_sentry_trace(span)
-      return unless configuration.propagate_traces
-
-      trace = span.to_sentry_trace
-      log_debug("[Tracing] Adding #{SENTRY_TRACE_HEADER_NAME} header to outgoing request: #{trace}")
-      trace
-    end
-
-    # @deprecated Use Sentry.get_baggage instead.
-    #
-    # Generates a W3C Baggage header for distributed tracing from the given Span.
-    # Returns `nil` if `config.propagate_traces` is `false`.
-    # @param span [Span] the span to generate trace from.
-    # @return [String, nil]
-    def generate_baggage(span)
-      return unless configuration.propagate_traces
-
-      baggage = span.to_baggage
-
-      if baggage && !baggage.empty?
-        log_debug("[Tracing] Adding #{BAGGAGE_HEADER_NAME} header to outgoing request: #{baggage}")
-      end
-
-      baggage
-    end
-
     private
 
     def dispatch_background_event(event, hint)
