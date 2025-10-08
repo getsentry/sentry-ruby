@@ -55,7 +55,7 @@ RSpec.describe Sentry::Profiler, when: :stack_prof_installed? do
         subject.set_initial_sample_decision(true)
 
         expect(StackProf).to receive(:start).with(
-          interval: 1e6 / 101,
+          interval: Profiler::DEFAULT_INTERVAL,
           mode: :wall,
           raw: true,
           aggregate: false

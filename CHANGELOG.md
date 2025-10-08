@@ -1,3 +1,7 @@
+## Unreleased
+
+- Change default Stackprof profiler interval to 1000 microseconds ([#2742](https://github.com/getsentry/sentry-ruby/pull/2742))
+
 ## 5.28.0
 
 ### Features
@@ -7,7 +11,7 @@
 ### Miscellaneous
 
 - Deprecate all Metrics related APIs [#2726](https://github.com/getsentry/sentry-ruby/pull/2726)
-    
+
     Sentry [no longer has the Metrics Beta offering](https://sentry.zendesk.com/hc/en-us/articles/26369339769883-Metrics-Beta-Ended-on-October-7th) so
     all the following APIs linked to Metrics have been deprecated and will be removed in the next major.
 
