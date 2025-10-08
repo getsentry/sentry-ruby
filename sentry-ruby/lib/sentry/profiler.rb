@@ -10,8 +10,8 @@ module Sentry
 
     VERSION = "1"
     PLATFORM = "ruby"
-    # 101 Hz in microseconds
-    DEFAULT_INTERVAL = 1e6 / 101
+    # 1000 Hz in microseconds
+    DEFAULT_INTERVAL = 1000
     MICRO_TO_NANO_SECONDS = 1e3
     MIN_SAMPLES_REQUIRED = 2
 
