@@ -11,9 +11,6 @@ RSpec.describe Sentry::Transport do
   end
 
   let(:client) { Sentry::Client.new(configuration) }
-  let(:hub) do
-    Sentry::Hub.new(client, Sentry::Scope.new)
-  end
 
   let(:dynamic_sampling_context) do
     {
@@ -54,13 +51,13 @@ RSpec.describe Sentry::Transport do
           '{"type":"event","content_type":"application/json"}'
         )
 
-        expect(item).to eq(event.to_hash.to_json)
+        expect(item).to eq(event.to_h.to_json)
       end
     end
 
     context "transaction event" do
       let(:transaction) do
-        Sentry::Transaction.new(name: "test transaction", op: "rack.request", hub: hub)
+        Sentry::Transaction.new(name: "test transaction", op: "rack.request")
       end
 
       let(:event) do
@@ -89,7 +86,7 @@ RSpec.describe Sentry::Transport do
           '{"type":"transaction","content_type":"application/json"}'
         )
 
-        expect(item).to eq(event.to_hash.to_json)
+        expect(item).to eq(event.to_h.to_json)
       end
 
       context "with profiling on transaction" do
@@ -211,30 +208,6 @@ RSpec.describe Sentry::Transport do
       end
     end
 
-    context "metrics/statsd item" do
-      let(:payload) do
-        "foo@none:10.0|c|#tag1:42,tag2:bar|T1709042970\n" +
-          "bar@second:0.3:0.1:0.9:49.8:100|g|#|T1709042980"
-      end
-
-      let(:envelope) do
-        envelope = Sentry::Envelope.new
-        envelope.add_item(
-          { type: 'statsd', length: payload.bytesize },
-          payload
-        )
-        envelope
-      end
-
-      it "adds raw payload to envelope item" do
-        result, _ = subject.serialize_envelope(envelope)
-        item = result.split("\n", 2).last
-        item_header, item_payload = item.split("\n", 2)
-        expect(JSON.parse(item_header)).to eq({ 'type' => 'statsd', 'length' => 93 })
-        expect(item_payload).to eq(payload)
-      end
-    end
-
     context "log events" do
       let(:log_events) do
         5.times.map do |i|
@@ -260,7 +233,7 @@ RSpec.describe Sentry::Transport do
             item_count: log_events.size,
             content_type: "application/vnd.sentry.items.log+json"
           },
-          { items: log_events.map(&:to_hash) }
+          { items: log_events.map(&:to_h) }
         )
 
         envelope
@@ -309,7 +282,7 @@ RSpec.describe Sentry::Transport do
 
       it "gracefully removes bad encoding breadcrumb message" do
         expect do
-          JSON.generate(event.to_hash)
+          JSON.generate(event.to_h)
         end.not_to raise_error
       end
     end
@@ -324,7 +297,7 @@ RSpec.describe Sentry::Transport do
           1000.times do |i|
             event.breadcrumbs.record Sentry::Breadcrumb.new(category: i.to_s, message: "x" * Sentry::Event::MAX_MESSAGE_SIZE_IN_BYTES)
           end
-          serialized_result = JSON.generate(event.to_hash)
+          serialized_result = JSON.generate(event.to_h)
           expect(serialized_result.bytesize).to be > Sentry::Envelope::Item::MAX_SERIALIZED_PAYLOAD_SIZE
         end
 
@@ -336,79 +309,6 @@ RSpec.describe Sentry::Transport do
 
           event_item = envelope.items.first
           expect(event_item.payload[:breadcrumbs]).to be_nil
-        end
-
-        context "if it's still oversized" do
-          before do
-            1000.times do |i|
-              event.contexts["context_#{i}"] = "s" * Sentry::Event::MAX_MESSAGE_SIZE_IN_BYTES
-            end
-          end
-
-          it "rejects the item and logs attributes size breakdown" do
-            data, _ = subject.serialize_envelope(envelope)
-            expect(data).to be_nil
-            expect(io.string).not_to match(/Sending envelope with items \[event\]/)
-            expect(io.string).to match(/tags: 2, contexts: 8208891, extra: 2/)
-          end
-        end
-      end
-
-      context "due to stacktrace frames" do
-        let(:event) { client.event_from_exception(SystemStackError.new("stack level too deep")) }
-        let(:envelope) { subject.envelope_from_event(event) }
-
-        let(:in_app_pattern) do
-          project_root = "/fake/project_root"
-          Regexp.new("^(#{project_root}/)?#{Sentry::Configuration::APP_DIRS_PATTERN}")
-        end
-        let(:frame_list_limit) { 500 }
-        let(:frame_list_size) { frame_list_limit * 20 }
-
-        before do
-          single_exception = event.exception.values[0]
-          new_stacktrace = Sentry::StacktraceInterface.new(
-            frames: frame_list_size.times.map do |zero_based_index|
-              Sentry::StacktraceInterface::Frame.new(
-                "/fake/path",
-                Sentry::Backtrace::Line.parse("app.rb:#{zero_based_index + 1}:in `/'", in_app_pattern)
-              )
-            end,
-          )
-          single_exception.instance_variable_set(:@stacktrace, new_stacktrace)
-
-          serialized_result = JSON.generate(event.to_hash)
-          expect(serialized_result.bytesize).to be > Sentry::Envelope::Item::MAX_SERIALIZED_PAYLOAD_SIZE
-        end
-
-        it "keeps some stacktrace frames and carry on" do
-          data, _ = subject.serialize_envelope(envelope)
-          expect(data.bytesize).to be < Sentry::Envelope::Item::MAX_SERIALIZED_PAYLOAD_SIZE
-
-          expect(envelope.items.count).to eq(1)
-
-          event_item = envelope.items.first
-          frames = event_item.payload[:exception][:values][0][:stacktrace][:frames]
-          expect(frames.length).to eq(frame_list_limit)
-
-          # Last N lines kept
-          # N = Frame limit / 2
-          expect(frames[-1][:lineno]).to eq(frame_list_size)
-          expect(frames[-1][:filename]).to eq('app.rb')
-          expect(frames[-1][:function]).to eq('/')
-          #
-          expect(frames[-(frame_list_limit / 2)][:lineno]).to eq(frame_list_size - ((frame_list_limit / 2) - 1))
-          expect(frames[-(frame_list_limit / 2)][:filename]).to eq('app.rb')
-          expect(frames[-(frame_list_limit / 2)][:function]).to eq('/')
-
-          # First N lines kept
-          # N = Frame limit / 2
-          expect(frames[0][:lineno]).to eq(1)
-          expect(frames[0][:filename]).to eq('app.rb')
-          expect(frames[0][:function]).to eq('/')
-          expect(frames[(frame_list_limit / 2) - 1][:lineno]).to eq(frame_list_limit / 2)
-          expect(frames[(frame_list_limit / 2) - 1][:filename]).to eq('app.rb')
-          expect(frames[(frame_list_limit / 2) - 1][:function]).to eq('/')
         end
 
         context "if it's still oversized" do
@@ -445,7 +345,7 @@ RSpec.describe Sentry::Transport do
 
     context "transaction event" do
       let(:transaction) do
-        Sentry::Transaction.new(name: "test transaction", op: "rack.request", hub: hub)
+        Sentry::Transaction.new(name: "test transaction", op: "rack.request")
       end
       let(:event) { client.event_from_transaction(transaction) }
       let(:envelope) { subject.envelope_from_event(event) }
@@ -487,7 +387,7 @@ RSpec.describe Sentry::Transport do
         1000.times do |i|
           event.breadcrumbs.record Sentry::Breadcrumb.new(category: i.to_s, message: "x" * Sentry::Event::MAX_MESSAGE_SIZE_IN_BYTES)
         end
-        serialized_result = JSON.generate(event.to_hash)
+        serialized_result = JSON.generate(event.to_h)
         expect(serialized_result.bytesize).to be > Sentry::Envelope::Item::MAX_SERIALIZED_PAYLOAD_SIZE
       end
 
@@ -497,18 +397,6 @@ RSpec.describe Sentry::Transport do
         subject.send_envelope(envelope)
 
         expect(io.string).to match(/Sending envelope with items \[event\]/)
-      end
-
-      context "when the event hash has string keys" do
-        let(:envelope) { subject.envelope_from_event(event.to_json_compatible) }
-
-        it "deletes the event's breadcrumbs and sends it" do
-          expect(subject).to receive(:send_data)
-
-          subject.send_envelope(envelope)
-
-          expect(io.string).to match(/Sending envelope with items \[event\]/)
-        end
       end
 
       context "if it's still oversized" do
@@ -594,7 +482,7 @@ RSpec.describe Sentry::Transport do
             item_count: log_events.size,
             content_type: "application/vnd.sentry.items.log+json"
           },
-          { items: log_events.map(&:to_hash) }
+          { items: log_events.map(&:to_h) }
         )
 
         envelope
@@ -623,12 +511,6 @@ RSpec.describe Sentry::Transport do
         expect(subject).not_to receive(:failed_send)
 
         expect(subject.send_event(event)).to eq(event)
-      end
-
-      it "sends Event hash" do
-        expect(subject).not_to receive(:failed_send)
-
-        expect(subject.send_event(event.to_json_compatible)).to eq(event.to_json_compatible)
       end
 
       it "logs correct message" do

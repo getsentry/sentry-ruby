@@ -11,7 +11,7 @@ Gem::Specification.new do |spec|
   spec.license = 'MIT'
 
   spec.platform = Gem::Platform::RUBY
-  spec.required_ruby_version = '>= 2.4'
+  spec.required_ruby_version = '>= 2.7'
   spec.extra_rdoc_files = ["README.md", "LICENSE.txt"]
   spec.files = `git ls-files | grep -Ev '^(spec|benchmarks|examples|\.rubocop\.yml)'`.split("\n")
 
@@ -31,5 +31,5 @@ Gem::Specification.new do |spec|
   spec.require_paths = ["lib"]
 
   spec.add_dependency "sentry-ruby", "~> 5.28.0"
-  spec.add_dependency "sidekiq", ">= 3.0"
+  spec.add_dependency "sidekiq", ">= 5.0"
 end

@@ -11,8 +11,6 @@ RSpec.describe Sentry::Envelope::Item do
       ['profile', 'profile'],
       ['log', 'log'],
       ['check_in', 'monitor'],
-      ['statsd', 'metric_bucket'],
-      ['metric_meta', 'metric_bucket'],
       ['event', 'error'],
       ['client_report', 'internal'],
       ['unknown', 'default']

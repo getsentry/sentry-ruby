@@ -11,7 +11,7 @@ TestApp.configure do |config|
 end
 
 app = create_app do |config|
-  config.logger = ::Logger.new(STDOUT)
+  config.sdk_logger = ::Logger.new(STDOUT)
   config.transport.transport_class = Sentry::BenchmarkTransport
   config.breadcrumbs_logger = [:active_support_logger]
 end

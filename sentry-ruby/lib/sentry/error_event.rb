@@ -10,10 +10,10 @@ module Sentry
     attr_reader :threads
 
     # @return [Hash]
-    def to_hash
+    def to_h
       data = super
-      data[:threads] = threads.to_hash if threads
-      data[:exception] = exception.to_hash if exception
+      data[:threads] = threads.to_h if threads
+      data[:exception] = exception.to_h if exception
       data
     end
 

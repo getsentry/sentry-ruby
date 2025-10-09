@@ -24,10 +24,14 @@ RSpec.describe Sentry::Scope do
   end
 
   describe "#set_span" do
+    before do
+      perform_basic_setup do |config|
+        config.traces_sample_rate = 1.0
+      end
+    end
+
     let(:transaction) do
-      client = Sentry::Client.new(Sentry::Configuration.new)
-      hub = Sentry::Hub.new(client, subject)
-      Sentry::Transaction.new(name: "test transaction", hub: hub)
+      Sentry.start_transaction(name: "test transaction")
     end
 
     let(:span) { Sentry::Span.new(op: "foo", transaction: transaction) }

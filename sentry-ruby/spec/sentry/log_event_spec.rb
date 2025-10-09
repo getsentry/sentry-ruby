@@ -48,7 +48,7 @@ RSpec.describe Sentry::LogEvent do
     end
   end
 
-  describe "#to_hash" do
+  describe "#to_h" do
     before do
       configuration.release = "1.2.3"
       configuration.environment = "test"
@@ -65,7 +65,7 @@ RSpec.describe Sentry::LogEvent do
         attributes: attributes
       )
 
-      hash = event.to_hash
+      hash = event.to_h
 
       expect(hash[:body]).to eq("Hello John, today is Monday")
 
@@ -82,7 +82,7 @@ RSpec.describe Sentry::LogEvent do
         body: "User John has logged in!"
       )
 
-      hash = event.to_hash
+      hash = event.to_h
 
       expect(hash[:level]).to eq("info")
       expect(hash[:body]).to eq("User John has logged in!")
@@ -102,7 +102,7 @@ RSpec.describe Sentry::LogEvent do
         body: "User John has logged in!"
       )
 
-      hash = event.to_hash
+      hash = event.to_h
 
       expect(hash[:attributes]).not_to have_key("sentry.message.template")
     end
@@ -114,7 +114,7 @@ RSpec.describe Sentry::LogEvent do
         body: "Hello %{name}, today is %{day}"
       )
 
-      hash = event.to_hash
+      hash = event.to_h
 
       expect(hash[:attributes]).not_to have_key("sentry.message.template")
       expect(hash[:attributes]).not_to have_key("sentry.message.parameter.name")
@@ -133,7 +133,7 @@ RSpec.describe Sentry::LogEvent do
         attributes: attributes
       )
 
-      hash = event.to_hash
+      hash = event.to_h
 
       expect(hash[:attributes]).to have_key("sentry.message.template")
       expect(hash[:attributes]["sentry.message.template"]).to eq({ value: "User %s has logged in!", type: "string" })
@@ -155,7 +155,7 @@ RSpec.describe Sentry::LogEvent do
         attributes: attributes
       )
 
-      hash = event.to_hash
+      hash = event.to_h
 
       expect(hash[:attributes]["string_attr"]).to eq({ value: "string value", type: "string" })
       expect(hash[:attributes]["integer_attr"]).to eq({ value: 42, type: "integer" })
@@ -177,7 +177,7 @@ RSpec.describe Sentry::LogEvent do
         user: user
       )
 
-      hash = event.to_hash
+      hash = event.to_h
 
       expect(hash[:attributes]["user.id"]).to eq(123)
       expect(hash[:attributes]["user.name"]).to eq("john_doe")
@@ -192,7 +192,7 @@ RSpec.describe Sentry::LogEvent do
         origin: "auto.db.rails"
       )
 
-      hash = event.to_hash
+      hash = event.to_h
 
       expect(hash[:attributes]["sentry.origin"]).to eq({ value: "auto.db.rails", type: "string" })
     end
@@ -204,7 +204,7 @@ RSpec.describe Sentry::LogEvent do
         body: "Manual log message"
       )
 
-      hash = event.to_hash
+      hash = event.to_h
 
       expect(hash[:attributes]).not_to have_key("sentry.origin")
     end
