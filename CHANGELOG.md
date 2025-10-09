@@ -20,6 +20,7 @@
   - Remove deprecated attribute `Sentry::Transaction.configuration`
   - Remove deprecated attribute `Sentry::Transaction.hub`
   - Remove deprecated argument `hub` to `Sentry::Transaction.finish`
+  - Remove deprecated argument `hub` to `Sentry::Transaction#initialize` ([#2739](https://github.com/getsentry/sentry-ruby/pull/2739))
 - Remove `:monotonic_active_support_logger` from `config.breadcrumbs_logger` ([#2717](https://github.com/getsentry/sentry-ruby/pull/2717))
 - Migrate from to_hash to to_h ([#2351](https://github.com/getsentry/sentry-ruby/pull/2351))
 - Add `before_send_check_in` for applying to `CheckInEvent` ([#2703](https://github.com/getsentry/sentry-ruby/pull/2703))

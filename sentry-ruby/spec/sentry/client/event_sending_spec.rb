@@ -11,6 +11,7 @@ RSpec.describe Sentry::Client do
 
   before do
     stub_request(:post, Sentry::TestHelper::DUMMY_DSN)
+    allow(Sentry).to receive(:configuration).and_return configuration
   end
 
   subject(:client) { Sentry::Client.new(configuration) }
@@ -20,7 +21,9 @@ RSpec.describe Sentry::Client do
   end
 
   let(:transaction) do
-    transaction = Sentry::Transaction.new(name: "test transaction", op: "rack.request", hub: hub)
+    configuration.traces_sample_rate = 1.0
+
+    transaction = hub.start_transaction(name: "test transaction", op: "rack.request")
     5.times { |i| transaction.with_child_span(description: "span_#{i}") { } }
     transaction
   end

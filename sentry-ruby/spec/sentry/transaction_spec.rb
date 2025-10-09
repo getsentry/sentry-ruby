@@ -14,7 +14,6 @@ RSpec.describe Sentry::Transaction do
       parent_sampled: true,
       name: "foo",
       source: :view,
-      hub: Sentry.get_current_hub
     )
   end
 
@@ -127,14 +126,14 @@ RSpec.describe Sentry::Transaction do
       it "sets @sampled to false and return" do
         allow(Sentry.configuration).to receive(:tracing_enabled?).and_return(false)
 
-        transaction = described_class.new(sampled: true, hub: Sentry.get_current_hub)
+        transaction = described_class.new(sampled: true)
         transaction.set_initial_sample_decision(sampling_context: {})
         expect(transaction.sampled).to eq(false)
       end
     end
 
     context "when tracing is enabled" do
-      let(:subject) { described_class.new(op: "rack.request", hub: Sentry.get_current_hub) }
+      let(:subject) { described_class.new(op: "rack.request") }
 
       before do
         allow(Sentry.configuration).to receive(:tracing_enabled?).and_return(true)
@@ -142,12 +141,12 @@ RSpec.describe Sentry::Transaction do
 
       context "when the transaction already has a decision" do
         it "doesn't change it" do
-          transaction = described_class.new(sampled: true, hub: Sentry.get_current_hub)
+          transaction = described_class.new(sampled: true)
           transaction.set_initial_sample_decision(sampling_context: {})
           expect(transaction.sampled).to eq(true)
           expect(transaction.effective_sample_rate).to eq(1.0)
 
-          transaction = described_class.new(sampled: false, hub: Sentry.get_current_hub)
+          transaction = described_class.new(sampled: false)
           transaction.set_initial_sample_decision(sampling_context: {})
           expect(transaction.sampled).to eq(false)
           expect(transaction.effective_sample_rate).to eq(0.0)
@@ -169,7 +168,7 @@ RSpec.describe Sentry::Transaction do
 
         it "uses traces_sample_rate for sampling (positive result)" do
           # Create transaction with sample_rand < sample_rate (0.5) to ensure sampled
-          transaction = described_class.new(op: "rack.request", hub: Sentry.get_current_hub, sample_rand: 0.4)
+          transaction = described_class.new(op: "rack.request", sample_rand: 0.4)
 
           transaction.set_initial_sample_decision(sampling_context: {})
           expect(transaction.sampled).to eq(true)
@@ -181,7 +180,7 @@ RSpec.describe Sentry::Transaction do
 
         it "uses traces_sample_rate for sampling (negative result)" do
           # Create transaction with sample_rand > sample_rate (0.5) to ensure not sampled
-          transaction = described_class.new(op: "rack.request", hub: Sentry.get_current_hub, sample_rand: 0.6)
+          transaction = described_class.new(op: "rack.request", sample_rand: 0.6)
 
           transaction.set_initial_sample_decision(sampling_context: {})
           expect(transaction.sampled).to eq(false)
@@ -241,19 +240,19 @@ RSpec.describe Sentry::Transaction do
           expect(Sentry.configuration.sdk_logger).to receive(:debug).exactly(3).and_call_original
 
           Sentry.configuration.traces_sampler = ->(_) { true }
-          subject = described_class.new(hub: Sentry.get_current_hub)
+          subject = described_class.new
           subject.set_initial_sample_decision(sampling_context: {})
           expect(subject.sampled).to eq(true)
           expect(subject.effective_sample_rate).to eq(1.0)
 
           Sentry.configuration.traces_sampler = ->(_) { 1.0 }
-          subject = described_class.new(hub: Sentry.get_current_hub)
+          subject = described_class.new
           subject.set_initial_sample_decision(sampling_context: {})
           expect(subject.sampled).to eq(true)
           expect(subject.effective_sample_rate).to eq(1.0)
 
           Sentry.configuration.traces_sampler = ->(_) { 1 }
-          subject = described_class.new(hub: Sentry.get_current_hub)
+          subject = described_class.new
           subject.set_initial_sample_decision(sampling_context: {})
           expect(subject.sampled).to eq(true)
           expect(subject.effective_sample_rate).to eq(1.0)
@@ -267,13 +266,13 @@ RSpec.describe Sentry::Transaction do
           expect(Sentry.configuration.sdk_logger).to receive(:debug).exactly(2).and_call_original
 
           Sentry.configuration.traces_sampler = ->(_) { false }
-          subject = described_class.new(hub: Sentry.get_current_hub)
+          subject = described_class.new
           subject.set_initial_sample_decision(sampling_context: {})
           expect(subject.sampled).to eq(false)
           expect(subject.effective_sample_rate).to eq(0.0)
 
           Sentry.configuration.traces_sampler = ->(_) { 0.0 }
-          subject = described_class.new(hub: Sentry.get_current_hub)
+          subject = described_class.new
           subject.set_initial_sample_decision(sampling_context: {})
           expect(subject.sampled).to eq(false)
           expect(subject.effective_sample_rate).to eq(0.0)
@@ -324,10 +323,6 @@ RSpec.describe Sentry::Transaction do
       Sentry.get_current_client.transport.events
     end
 
-    let(:another_hub) do
-      Sentry.get_current_hub.clone
-    end
-
     it "finishes the transaction, converts it into an Event and send it" do
       subject.finish
 
@@ -372,35 +367,15 @@ RSpec.describe Sentry::Transaction do
 
     it "only follows sampling decision" do
       Sentry.configuration.traces_sampler = proc { false }
-      subject = described_class.new(parent_sampled: true, hub: Sentry.get_current_hub)
+      subject = described_class.new(parent_sampled: true)
 
       subject.finish
 
       expect(events.count).to eq(0)
     end
 
-    describe "hub selection" do
-      it "submits the event with the transaction's hub by default" do
-        # Create transaction with the specific hub from the beginning
-        transaction = described_class.new(
-          op: "sql.query",
-          description: "SELECT * FROM users;",
-          status: "ok",
-          sampled: true,
-          parent_sampled: true,
-          name: "foo",
-          source: :view,
-          hub: another_hub
-        )
-
-        expect(another_hub).to receive(:capture_event)
-
-        transaction.finish
-      end
-    end
-
     context "if the transaction is not sampled" do
-      subject { described_class.new(sampled: false, hub: Sentry.get_current_hub) }
+      subject { described_class.new(sampled: false) }
 
       it "doesn't send it" do
         subject.finish
@@ -423,8 +398,6 @@ RSpec.describe Sentry::Transaction do
         end
       end
 
-      subject { described_class.new(hub: Sentry.get_current_hub) }
-
       it "records lost event with reason backpressure" do
         expect(Sentry.get_current_client.transport).to receive(:any_rate_limited?).and_return(true)
         Sentry.backpressure_monitor.run
@@ -432,7 +405,7 @@ RSpec.describe Sentry::Transaction do
         # Create transaction with sample_rand that will be rejected after backpressure downsampling
         # With traces_sample_rate = 1.0 and downsample_factor = 1, effective rate becomes 0.5
         # So sample_rand = 0.6 > 0.5 will be rejected
-        transaction = described_class.new(hub: Sentry.get_current_hub, sample_rand: 0.6)
+        transaction = described_class.new(sample_rand: 0.6)
 
         transaction.finish
         expect(Sentry.get_current_client.transport).to have_recorded_lost_event(:backpressure, 'transaction')
@@ -441,7 +414,7 @@ RSpec.describe Sentry::Transaction do
     end
 
     context "if the transaction doesn't have a name" do
-      subject { described_class.new(sampled: true, hub: Sentry.get_current_hub) }
+      subject { described_class.new(sampled: true) }
 
       it "adds a default name" do
         subject.finish
@@ -523,7 +496,6 @@ RSpec.describe Sentry::Transaction do
         parent_sampled: true,
         name: "foo",
         source: source,
-        hub: Sentry.get_current_hub,
         baggage: incoming_baggage,
         sample_rand: 0.123456  # Use a known value for predictable testing
       )

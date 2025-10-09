@@ -17,19 +17,19 @@ RSpec.describe Sentry::Client do
   end
   subject { Sentry::Client.new(configuration) }
 
+  let(:hub) do
+    Sentry::Hub.new(subject, Sentry::Scope.new)
+  end
+
   let(:transaction) do
-    hub = Sentry::Hub.new(subject, Sentry::Scope.new)
-    Sentry::Transaction.new(
-      name: "test transaction",
-      hub: hub,
-      sampled: true
-    )
+    hub.start_transaction(name: "test transaction")
   end
 
   let(:fake_time) { Time.now }
 
   before do
     allow(Time).to receive(:now).and_return fake_time
+    allow(Sentry).to receive(:configuration).and_return configuration
   end
 
   describe "#transport" do
@@ -215,14 +215,6 @@ RSpec.describe Sentry::Client do
   end
 
   describe "#event_from_transaction" do
-    let(:hub) do
-      Sentry::Hub.new(subject, Sentry::Scope.new)
-    end
-
-    let(:transaction) do
-      hub.start_transaction(name: "test transaction")
-    end
-
     before do
       configuration.traces_sample_rate = 1.0
 
@@ -254,7 +246,7 @@ RSpec.describe Sentry::Client do
         "other-vendor-value-2=foo;bar;"
       )
 
-      transaction = Sentry::Transaction.new(name: "test transaction", hub: hub, baggage: baggage, sampled: true)
+      transaction = hub.start_transaction(name: "test transaction", baggage: baggage, sampled: true)
       event = subject.event_from_transaction(transaction)
 
       expect(event.dynamic_sampling_context).to eq({
