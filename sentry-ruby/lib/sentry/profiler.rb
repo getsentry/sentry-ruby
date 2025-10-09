@@ -10,8 +10,6 @@ module Sentry
 
     VERSION = "1"
     PLATFORM = "ruby"
-    # 101 Hz in microseconds
-    DEFAULT_INTERVAL = 1e6 / 101
     MICRO_TO_NANO_SECONDS = 1e3
     MIN_SAMPLES_REQUIRED = 2
 
@@ -24,6 +22,7 @@ module Sentry
 
       @profiling_enabled = defined?(StackProf) && configuration.profiling_enabled?
       @profiles_sample_rate = configuration.profiles_sample_rate
+      @profiles_sample_interval = configuration.profiles_sample_interval
       @project_root = configuration.project_root
       @app_dirs_pattern = configuration.app_dirs_pattern
       @in_app_pattern = Regexp.new("^(#{@project_root}/)?#{@app_dirs_pattern}")
@@ -32,7 +31,7 @@ module Sentry
     def start
       return unless @sampled
 
-      @started = StackProf.start(interval: DEFAULT_INTERVAL,
+      @started = StackProf.start(interval: @profiles_sample_interval,
                                  mode: :wall,
                                  raw: true,
                                  aggregate: false)
