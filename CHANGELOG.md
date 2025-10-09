@@ -2,6 +2,9 @@
 
 ### Breaking Changes
 
+- Drop support for rubies below 2.7 [#2743](https://github.com/getsentry/sentry-ruby/pull/2743)
+  - Drop support for Rails below 5.2.0
+  - Drop support for Sidekiq below 5.0
 - Remove deprecated `config.async` [#1894](https://github.com/getsentry/sentry-ruby/pull/1894)
 - Remove deprecated `Sentry::Metrics` and `config.metrics` and all metrics related code ([#2729](https://github.com/getsentry/sentry-ruby/pull/2729))
 - Remove deprecated `config.capture_exception_frame_locals`, use `include_local_variables` instead ([#2730](https://github.com/getsentry/sentry-ruby/pull/2730))
