@@ -74,7 +74,7 @@ RSpec.describe Sentry::Vernier::Profiler, when: { ruby_version?: [:>=, "3.3"], r
       end
 
       it 'starts Vernier if sampled' do
-        expect(Vernier).to receive(:start_profile).and_return(true)
+        expect(Vernier).to receive(:start_profile).with(interval: 1e6 / 101).and_return(true)
 
         profiler.start
 
@@ -82,7 +82,7 @@ RSpec.describe Sentry::Vernier::Profiler, when: { ruby_version?: [:>=, "3.3"], r
       end
 
       it 'does not start Vernier again if already started' do
-        expect(Vernier).to receive(:start_profile).and_return(true).once
+        expect(Vernier).to receive(:start_profile).with(interval: 1e6 / 101).and_return(true).once
 
         profiler.start
         profiler.start
@@ -108,6 +108,25 @@ RSpec.describe Sentry::Vernier::Profiler, when: { ruby_version?: [:>=, "3.3"], r
         profiler.start
 
         expect(profiler.started).to eq(false)
+      end
+    end
+
+    context 'with custom profiles_sample_interval' do
+      before do
+        perform_basic_setup do |config|
+          config.traces_sample_rate = 1.0
+          config.profiles_sample_rate = 1.0
+          config.profiles_sample_interval = 1e5 / 101
+        end
+      end
+
+      it 'starts Vernier with custom interval' do
+        expect(Vernier).to receive(:start_profile).with(interval: 1e5 / 101).and_return(true)
+
+        profiler.set_initial_sample_decision(true)
+        profiler.start
+
+        expect(profiler.started).to eq(true)
       end
     end
   end

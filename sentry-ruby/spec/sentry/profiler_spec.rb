@@ -74,6 +74,30 @@ RSpec.describe Sentry::Profiler, when: :stack_prof_installed? do
         expect(subject.started).to eq(false)
       end
     end
+
+    context 'with custom profiles_sample_interval' do
+      before do
+        perform_basic_setup do |config|
+          config.traces_sample_rate = 1.0
+          config.profiles_sample_rate = 1.0
+          config.profiles_sample_interval = 1e5 / 101
+        end
+      end
+
+      it 'starts StackProf with custom interval' do
+        subject.set_initial_sample_decision(true)
+
+        expect(StackProf).to receive(:start).with(
+          interval: 1e5 / 101,
+          mode: :wall,
+          raw: true,
+          aggregate: false
+        ).and_call_original
+
+        subject.start
+        expect(subject.started).to eq(true)
+      end
+    end
   end
 
   describe '#stop' do

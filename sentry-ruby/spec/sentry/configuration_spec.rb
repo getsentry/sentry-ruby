@@ -194,6 +194,12 @@ RSpec.describe Sentry::Configuration do
     end
   end
 
+  describe "#profiles_sample_interval" do
+    it "defaults to 101 Hz" do
+      expect(subject.profiles_sample_interval).to eq(1e6 / 101)
+    end
+  end
+
   describe "#transport" do
     it "returns an initialized Transport::Configuration object" do
       transport_config = subject.transport

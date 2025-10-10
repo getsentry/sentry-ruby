@@ -20,6 +20,7 @@ module Sentry
 
         @profiling_enabled = defined?(Vernier) && configuration.profiling_enabled?
         @profiles_sample_rate = configuration.profiles_sample_rate
+        @profiles_sample_interval = configuration.profiles_sample_interval
         @project_root = configuration.project_root
         @app_dirs_pattern = configuration.app_dirs_pattern
         @in_app_pattern = Regexp.new("^(#{@project_root}/)?#{@app_dirs_pattern}")
@@ -56,7 +57,7 @@ module Sentry
         return unless @sampled
         return if @started
 
-        @started = ::Vernier.start_profile
+        @started = ::Vernier.start_profile(interval: @profiles_sample_interval)
 
         log("Started")
 
