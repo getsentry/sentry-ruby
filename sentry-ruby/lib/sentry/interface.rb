@@ -3,7 +3,7 @@
 module Sentry
   class Interface
     # @return [Hash]
-    def to_hash
+    def to_h
       Hash[instance_variables.map { |name| [name[1..-1].to_sym, instance_variable_get(name)] }]
     end
   end

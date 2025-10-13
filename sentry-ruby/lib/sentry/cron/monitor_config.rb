@@ -40,9 +40,9 @@ module Sentry
         new(MonitorSchedule::Interval.new(num, unit), **options)
       end
 
-      def to_hash
+      def to_h
         {
-          schedule: schedule.to_hash,
+          schedule: schedule.to_h,
           checkin_margin: checkin_margin,
           max_runtime: max_runtime,
           timezone: timezone

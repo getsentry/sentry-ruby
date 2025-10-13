@@ -81,12 +81,6 @@ module Sentry
       @message = (message || "").byteslice(0..MAX_MESSAGE_SIZE_IN_BYTES)
     end
 
-    # @deprecated This method will be removed in v5.0.0. Please just use Sentry.configuration
-    # @return [Configuration]
-    def configuration
-      Sentry.configuration
-    end
-
     # Sets the event's timestamp.
     # @param time [Time, Float]
     # @return [void]
@@ -118,16 +112,16 @@ module Sentry
     end
 
     # @return [Hash]
-    def to_hash
+    def to_h
       data = serialize_attributes
-      data[:breadcrumbs] = breadcrumbs.to_hash if breadcrumbs
-      data[:request] = request.to_hash if request
+      data[:breadcrumbs] = breadcrumbs.to_h if breadcrumbs
+      data[:request] = request.to_h if request
       data
     end
 
     # @return [Hash]
     def to_json_compatible
-      JSON.parse(JSON.generate(to_hash))
+      JSON.parse(JSON.generate(to_h))
     end
 
     private

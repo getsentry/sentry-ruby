@@ -32,10 +32,10 @@ module Sentry
       @mechanism = mechanism
     end
 
-    def to_hash
+    def to_h
       data = super
-      data[:stacktrace] = data[:stacktrace].to_hash if data[:stacktrace]
-      data[:mechanism] = data[:mechanism].to_hash
+      data[:stacktrace] = data[:stacktrace].to_h if data[:stacktrace]
+      data[:mechanism] = data[:mechanism].to_h
       data
     end
 

@@ -64,7 +64,7 @@ RSpec.describe Sentry::Breadcrumb do
     end
   end
 
-  describe "#to_hash" do
+  describe "#to_h" do
     let(:problematic_crumb) do
       # circular reference
       a = []
@@ -90,7 +90,7 @@ RSpec.describe Sentry::Breadcrumb do
     end
 
     it "serializes data correctly" do
-      result = crumb.to_hash
+      result = crumb.to_h
 
       expect(result[:category]).to eq("foo")
       expect(result[:message]).to eq("crumb")
@@ -98,7 +98,7 @@ RSpec.describe Sentry::Breadcrumb do
     end
 
     it "rescues data serialization issue and ditch the data" do
-      result = problematic_crumb.to_hash
+      result = problematic_crumb.to_h
 
       expect(result[:category]).to eq("baz")
       expect(result[:message]).to eq("I cause issues")
@@ -107,7 +107,7 @@ RSpec.describe Sentry::Breadcrumb do
     end
 
     it "rescues data serialization issue for extremely nested data and ditch the data" do
-      result = very_deep_crumb.to_hash
+      result = very_deep_crumb.to_h
 
       expect(result[:category]).to eq("cow")
       expect(result[:message]).to eq("I cause too much recursion")

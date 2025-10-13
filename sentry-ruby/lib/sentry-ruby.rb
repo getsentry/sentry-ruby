@@ -26,7 +26,6 @@ require "sentry/threaded_periodic_worker"
 require "sentry/session_flusher"
 require "sentry/backpressure_monitor"
 require "sentry/cron/monitor_check_ins"
-require "sentry/metrics"
 require "sentry/vernier/profiler"
 
 [
@@ -59,7 +58,6 @@ module Sentry
     logger
     session_flusher
     backpressure_monitor
-    metrics_aggregator
     exception_locals_tp
   ].freeze
 
@@ -92,10 +90,6 @@ module Sentry
     # @!attribute [r] backpressure_monitor
     #   @return [BackpressureMonitor, nil]
     attr_reader :backpressure_monitor
-
-    # @!attribute [r] metrics_aggregator
-    #   @return [Metrics::Aggregator, nil]
-    attr_reader :metrics_aggregator
 
     ##### Patch Registration #####
 
@@ -252,7 +246,6 @@ module Sentry
       @background_worker = Sentry::BackgroundWorker.new(config)
       @session_flusher = config.session_tracking? ? Sentry::SessionFlusher.new(config, client) : nil
       @backpressure_monitor = config.enable_backpressure_handling ? Sentry::BackpressureMonitor.new(config, client) : nil
-      @metrics_aggregator = config.metrics.enabled ? Sentry::Metrics::Aggregator.new(config, client) : nil
       exception_locals_tp.enable if config.include_local_variables
       at_exit { close }
     end
@@ -271,12 +264,6 @@ module Sentry
       if @backpressure_monitor
         @backpressure_monitor.kill
         @backpressure_monitor = nil
-      end
-
-      if @metrics_aggregator
-        @metrics_aggregator.flush(force: true)
-        @metrics_aggregator.kill
-        @metrics_aggregator = nil
       end
 
       if client = get_current_client
