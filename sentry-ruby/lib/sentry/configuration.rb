@@ -319,6 +319,15 @@ module Sentry
     # @return [Float, nil]
     attr_reader :profiles_sample_rate
 
+    # Interval in microseconds at which to take samples.
+    # The default is 1e6 / 101, or 101Hz.
+    # Note that the 101 is intentional to avoid lockstep sampling.
+    #
+    # @example
+    #   config.profiles_sample_interval = 1e5 / 101
+    # @return [Float]
+    attr_accessor :profiles_sample_interval
+
     # Array of patches to apply.
     # Default is {DEFAULT_PATCHES}
     # @return [Array<Symbol>]
@@ -372,6 +381,9 @@ module Sentry
     DEFAULT_PATCHES = %i[redis puma http].freeze
 
     APP_DIRS_PATTERN = /(bin|exe|app|config|lib|test|spec)/
+
+    # 101 Hz in microseconds
+    DEFAULT_PROFILES_SAMPLE_INTERVAL = 1e6 / 101
 
     class << self
       # Post initialization callbacks are called at the end of initialization process
@@ -492,6 +504,7 @@ module Sentry
       self.enable_logs = false
 
       self.profiler_class = Sentry::Profiler
+      self.profiles_sample_interval = DEFAULT_PROFILES_SAMPLE_INTERVAL
 
       @transport = Transport::Configuration.new
       @cron = Cron::Configuration.new

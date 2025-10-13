@@ -42,6 +42,8 @@
       config.trace_ignore_status_codes = [404, (501..503)]
   end
   ```
+- Add `config.profiles_sample_interval` to control sampling frequency ([#2745](https://github.com/getsentry/sentry-ruby/pull/2745))
+  - Both `stackprof` and `vernier` now get sampled at a default frequency of 101 Hz.
 
 ### Internal
 
