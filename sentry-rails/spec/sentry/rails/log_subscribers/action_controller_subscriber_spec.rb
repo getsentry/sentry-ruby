@@ -35,7 +35,7 @@ RSpec.describe Sentry::Rails::LogSubscribers::ActionControllerSubscriber, type: 
         expect(log_event[:attributes][:method][:value]).to eq("GET")
         expect(log_event[:attributes][:path][:value]).to eq("/world")
         expect(log_event[:attributes][:format][:value]).to eq(:html)
-        expect(log_event[:attributes]["sentry.origin"][:value]).to eq("auto.logger.rails.log_subscriber")
+        expect(log_event[:attributes]["sentry.origin"][:value]).to eq("auto.log.rails.log_subscriber")
       end
 
       it "logs bad requests appropriately" do

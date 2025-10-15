@@ -12,7 +12,7 @@ module Sentry
       4 => :fatal
     }.freeze
 
-    ORIGIN = "auto.logger.ruby.std_logger"
+    ORIGIN = "auto.log.ruby.std_logger"
 
     def add(severity, message = nil, progname = nil, &block)
       result = super

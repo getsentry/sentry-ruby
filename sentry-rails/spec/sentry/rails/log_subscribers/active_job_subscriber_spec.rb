@@ -26,7 +26,7 @@ RSpec.describe Sentry::Rails::LogSubscribers::ActiveJobSubscriber, skip: Rails.v
         expect(log_event[:level]).to eq("info")
         expect(log_event[:attributes][:job_class][:value]).to eq("NormalJob")
         expect(log_event[:attributes][:duration_ms][:value]).to be > 0
-        expect(log_event[:attributes]["sentry.origin"][:value]).to eq("auto.logger.rails.log_subscriber")
+        expect(log_event[:attributes]["sentry.origin"][:value]).to eq("auto.log.rails.log_subscriber")
       end
 
       it "logs job enqueue events when jobs are enqueued" do

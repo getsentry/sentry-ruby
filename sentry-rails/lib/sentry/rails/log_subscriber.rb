@@ -27,7 +27,7 @@ module Sentry
     #     end
     #   end
     class LogSubscriber < ActiveSupport::LogSubscriber
-      ORIGIN = "auto.logger.rails.log_subscriber"
+      ORIGIN = "auto.log.rails.log_subscriber"
 
       class << self
         if ::Rails.version.to_f < 6.0

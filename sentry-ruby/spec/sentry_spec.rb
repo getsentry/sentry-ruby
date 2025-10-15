@@ -402,7 +402,7 @@ RSpec.describe Sentry do
 
     it "includes sentry.origin attribute when origin is provided" do
       expect do
-        described_class.capture_log("Database query executed", level: :info, origin: "auto.logger.rails.log_subscriber")
+        described_class.capture_log("Database query executed", level: :info, origin: "auto.log.rails.log_subscriber")
       end.to_not change { sentry_events.count }
 
       Sentry.get_current_client.flush
@@ -414,7 +414,7 @@ RSpec.describe Sentry do
       expect(log_event[:level]).to eq("info")
       expect(log_event[:body]).to eq("Database query executed")
       expect(log_event[:attributes]).to have_key("sentry.origin")
-      expect(log_event[:attributes]["sentry.origin"]).to eq({ value: "auto.logger.rails.log_subscriber", type: "string" })
+      expect(log_event[:attributes]["sentry.origin"]).to eq({ value: "auto.log.rails.log_subscriber", type: "string" })
     end
 
     it "does not include sentry.origin attribute when origin is not provided" do
