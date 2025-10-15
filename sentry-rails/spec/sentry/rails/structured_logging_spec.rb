@@ -58,7 +58,7 @@ RSpec.describe Sentry::Rails::StructuredLogging, type: :request do
       expect(sentry_logs).not_to be_empty
 
       rails_log_events = sentry_logs.select { |log|
-        log.dig(:attributes, "sentry.origin", :value) == "auto.logger.rails.log_subscriber"
+        log.dig(:attributes, "sentry.origin", :value) == "auto.log.rails.log_subscriber"
       }
 
       expect(rails_log_events).not_to be_empty
