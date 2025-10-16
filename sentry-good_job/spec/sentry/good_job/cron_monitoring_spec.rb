@@ -72,8 +72,8 @@ RSpec.describe Sentry::GoodJob::CronMonitoring do
       end
 
       it "handles invalid timezone format" do
-        cron, timezone = described_class::Helpers.parse_cron_with_timezone("0 * * * * invalid-timezone")
-        expect(cron).to eq("0 * * * * invalid-timezone")
+        cron, timezone = described_class::Helpers.parse_cron_with_timezone("0 * * * * invalid@timezone")
+        expect(cron).to eq("0 * * * * invalid@timezone")
         expect(timezone).to be_nil
       end
 
@@ -81,6 +81,42 @@ RSpec.describe Sentry::GoodJob::CronMonitoring do
         cron, timezone = described_class::Helpers.parse_cron_with_timezone("0 * * *")
         expect(cron).to eq("0 * * *")
         expect(timezone).to be_nil
+      end
+
+      it "handles multi-slash timezones" do
+        cron, timezone = described_class::Helpers.parse_cron_with_timezone("0 * * * * America/Argentina/Buenos_Aires")
+        expect(cron).to eq("0 * * * *")
+        expect(timezone).to eq("America/Argentina/Buenos_Aires")
+      end
+
+      it "handles GMT offsets" do
+        cron, timezone = described_class::Helpers.parse_cron_with_timezone("0 * * * * GMT-5")
+        expect(cron).to eq("0 * * * *")
+        expect(timezone).to eq("GMT-5")
+      end
+
+      it "handles UTC offsets" do
+        cron, timezone = described_class::Helpers.parse_cron_with_timezone("0 * * * * UTC+2")
+        expect(cron).to eq("0 * * * *")
+        expect(timezone).to eq("UTC+2")
+      end
+
+      it "handles timezones with underscores" do
+        cron, timezone = described_class::Helpers.parse_cron_with_timezone("0 * * * * America/New_York")
+        expect(cron).to eq("0 * * * *")
+        expect(timezone).to eq("America/New_York")
+      end
+
+      it "handles timezones with positive offsets" do
+        cron, timezone = described_class::Helpers.parse_cron_with_timezone("0 * * * * GMT+1")
+        expect(cron).to eq("0 * * * *")
+        expect(timezone).to eq("GMT+1")
+      end
+
+      it "handles timezones with negative offsets" do
+        cron, timezone = described_class::Helpers.parse_cron_with_timezone("0 * * * * UTC-8")
+        expect(cron).to eq("0 * * * *")
+        expect(timezone).to eq("UTC-8")
       end
     end
   end

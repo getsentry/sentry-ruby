@@ -12,15 +12,22 @@ module Sentry
         return unless Sentry.initialized?
 
         # Skip reporting if configured to only report after all retries are exhausted
-        if Sentry.configuration.good_job.report_after_job_retries && retryable?(job)
-          retry_count = job.executions
-          # Use default retry attempts since we can't reliably access the configured value
-          max_retries = DEFAULT_RETRY_ATTEMPTS
-          return if retry_count < max_retries
+        if Sentry.configuration.good_job.report_after_job_retries
+          if retryable?(job)
+            # For retryable jobs, only report after max retries are reached
+            return unless has_exhausted_retries?(job)
+          end
+          # For non-retryable jobs, report immediately (they're dead on first failure)
         end
 
-        # Skip reporting if configured to only report dead jobs and this job can be retried
-        return if Sentry.configuration.good_job.report_only_dead_jobs && retryable?(job)
+        # Skip reporting if configured to only report dead jobs
+        if Sentry.configuration.good_job.report_only_dead_jobs
+          if retryable?(job)
+            # For retryable jobs, never report (they're not dead yet)
+            return
+          end
+          # For non-retryable jobs, report immediately (they're dead on first failure)
+        end
 
         # Report to Sentry via GoodJob wrapper for testability
         # Context is already set by the job concern
@@ -34,10 +41,21 @@ module Sentry
       private
 
       def retryable?(job)
-        # Since we can't reliably access retry configuration, we'll use a simpler approach:
-        # If the job has been executed more than once, it's likely retryable
-        # This is a conservative approach that works with the actual ActiveJob API
+        # Determine if a job is likely retryable based on execution patterns
+        # This is a heuristic approach since we can't reliably access retry configuration
+
+        # If the job has been executed multiple times, it's likely retryable
+        # This covers the common case where jobs are configured to retry
         job.executions > 1
+      end
+
+      def has_exhausted_retries?(job)
+        # Determine if a job has likely exhausted its retries
+        # This is a heuristic based on execution count and reasonable retry limits
+
+        # If a job has been executed many times (more than typical retry limits),
+        # it's likely exhausted its retries and is now dead
+        job.executions > DEFAULT_RETRY_ATTEMPTS
       end
 
       def job_context(job)

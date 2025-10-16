@@ -11,14 +11,14 @@ module Sentry
       module Helpers
         # Parse cron expression and create Sentry monitor config
         def self.monitor_config_from_cron(cron_expression, timezone: nil)
-          return nil unless cron_expression.present?
+          return nil unless cron_expression && !cron_expression.strip.empty?
 
           # Parse cron expression using fugit (same as Good Job)
           parsed_cron = Fugit.parse_cron(cron_expression)
           return nil unless parsed_cron
 
           # Convert to Sentry monitor config
-          if timezone.present?
+          if timezone && !timezone.strip.empty?
             ::Sentry::Cron::MonitorConfig.from_crontab(cron_expression, timezone: timezone)
           else
             ::Sentry::Cron::MonitorConfig.from_crontab(cron_expression)
@@ -35,15 +35,24 @@ module Sentry
 
         # Parse cron expression and extract timezone
         def self.parse_cron_with_timezone(cron_expression)
-          return [cron_expression, nil] unless cron_expression.present?
+          return [cron_expression, nil] unless cron_expression && !cron_expression.strip.empty?
 
           parts = cron_expression.strip.split(" ")
           return [cron_expression, nil] unless parts.length > 5
 
           # Last part might be timezone
           timezone = parts.last
-          # Basic timezone validation (matches common timezone formats including Europe/Stockholm, America/New_York, etc.)
-          if timezone.match?(/^[A-Za-z_]+\/[A-Za-z_]+$/) || timezone.match?(/^[A-Za-z_]+$/)
+          # Comprehensive timezone validation that handles:
+          # - Standard timezone names (UTC, GMT)
+          # - IANA timezone identifiers (America/New_York, Europe/Stockholm)
+          # - Multi-level IANA timezones (America/Argentina/Buenos_Aires)
+          # - UTC offsets (UTC+2, UTC-5, GMT+1, GMT-8)
+          # - Numeric timezones (GMT-5, UTC+2)
+          if timezone.match?(/^[A-Za-z_]+$/) || # Simple timezone names (UTC, GMT, EST, etc.)
+             timezone.match?(/^[A-Za-z_]+\/[A-Za-z_]+$/) || # Single slash timezones (Europe/Stockholm)
+             timezone.match?(/^[A-Za-z_]+\/[A-Za-z_]+\/[A-Za-z_]+$/) || # Multi-slash timezones (America/Argentina/Buenos_Aires)
+             timezone.match?(/^[A-Za-z_]+[+-]\d+$/) || # UTC/GMT offsets (UTC+2, GMT-5)
+             timezone.match?(/^[A-Za-z_]+\/[A-Za-z_]+[+-]\d+$/) # IANA with offset (Europe/Stockholm+1)
             cron_without_timezone = cron_expression.gsub(/\s+#{Regexp.escape(timezone)}$/, "")
             [cron_without_timezone, timezone]
           else

@@ -71,15 +71,14 @@ RSpec.describe Sentry::GoodJob::ErrorHandler do
           let(:job) { double("Job", class: job_class, job_id: "123", queue_name: "default", executions: 2, enqueued_at: Time.now, scheduled_at: nil, arguments: []) }
 
           context "and retry count is less than max retries" do
-
             it "does not capture the exception" do
               expect(Sentry::GoodJob).not_to receive(:capture_exception)
               handler.call(exception, job)
             end
           end
 
-          context "and retry count equals max retries" do
-            let(:job) { double("Job", class: job_class, job_id: "123", queue_name: "default", executions: 5, enqueued_at: Time.now, scheduled_at: nil, arguments: []) }
+          context "and retry count exceeds max retries" do
+            let(:job) { double("Job", class: job_class, job_id: "123", queue_name: "default", executions: 6, enqueued_at: Time.now, scheduled_at: nil, arguments: []) }
 
             it "captures the exception" do
               expect(Sentry::GoodJob).to receive(:capture_exception)
@@ -141,6 +140,26 @@ RSpec.describe Sentry::GoodJob::ErrorHandler do
       job = double("Job", executions: 0)
 
       expect(handler.send(:retryable?, job)).to be false
+    end
+  end
+
+  describe "#has_exhausted_retries?" do
+    it "returns true when job has been executed more than default retry attempts" do
+      job = double("Job", executions: 6)
+
+      expect(handler.send(:has_exhausted_retries?, job)).to be true
+    end
+
+    it "returns false when job has been executed less than default retry attempts" do
+      job = double("Job", executions: 3)
+
+      expect(handler.send(:has_exhausted_retries?, job)).to be false
+    end
+
+    it "returns false when job has been executed exactly default retry attempts" do
+      job = double("Job", executions: 5)
+
+      expect(handler.send(:has_exhausted_retries?, job)).to be false
     end
   end
 
