@@ -320,7 +320,7 @@ RSpec.describe Sentry::Sidekiq do
       expect(first.to_hash).to include(
         type: 'check_in',
         check_in_id: check_in_id,
-        monitor_slug: "happyworkerwithcron",
+        monitor_slug: "happy_worker_with_cron",
         status: :in_progress
       )
 
@@ -330,7 +330,7 @@ RSpec.describe Sentry::Sidekiq do
         :duration,
         type: 'check_in',
         check_in_id: check_in_id,
-        monitor_slug: "happyworkerwithcron",
+        monitor_slug: "happy_worker_with_cron",
         status: :ok
       )
     end
