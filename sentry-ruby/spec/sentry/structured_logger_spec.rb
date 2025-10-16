@@ -8,8 +8,8 @@ RSpec.describe Sentry::StructuredLogger do
       end
     end
 
-    it "configures default SDK logger" do
-      expect(Sentry.logger).to be(Sentry.configuration.sdk_logger)
+    it "initializes" do
+      expect(Sentry.logger).to be_a(described_class)
     end
   end
 

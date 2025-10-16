@@ -10,6 +10,7 @@
 - Remove deprecated `config.capture_exception_frame_locals`, use `include_local_variables` instead ([#2730](https://github.com/getsentry/sentry-ruby/pull/2730))
 - Remove deprecated `config.enable_tracing`, use `config.traces_sample_rate = 1.0` instead ([#2731](https://github.com/getsentry/sentry-ruby/pull/2731))
 - Remove deprecated `config.logger=`, use `config.sdk_logger=` instead ([#2732](https://github.com/getsentry/sentry-ruby/pull/2732))
+- `Sentry.logger` now always points to the `StructuredLogger` ([#2752](https://github.com/getsentry/sentry-ruby/pull/2752))
 - Remove deprecated `Sentry::Rails::Tracing::ActionControllerSubscriber` ([#2733](https://github.com/getsentry/sentry-ruby/pull/2733))
 - Remove deprecated `Event#configuration` ([#2740](https://github.com/getsentry/sentry-ruby/pull/2740))
 - Remove deprecated `Sentry::Client#generate_sentry_trace` and `Sentry::Client#generate_baggage` ([#2741](https://github.com/getsentry/sentry-ruby/pull/2741))

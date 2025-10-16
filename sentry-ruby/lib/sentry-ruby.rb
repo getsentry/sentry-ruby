@@ -622,24 +622,9 @@ module Sentry
     #
     # @see https://develop.sentry.dev/sdk/telemetry/logs/ Sentry SDK Telemetry Logs Protocol
     #
-    # @return [StructuredLogger, nil] The structured logger instance or nil if logs are disabled
+    # @return [StructuredLogger] The structured logger instance or nil if logs are disabled
     def logger
-      @logger ||=
-        if configuration.enable_logs
-          # Initialize the public-facing Structured Logger if logs are enabled
-          # Use configured structured logger class or default to StructuredLogger
-          # @see https://develop.sentry.dev/sdk/telemetry/logs/
-          configuration.structured_logging.logger_class.new(configuration)
-        else
-          warn <<~STR
-            [sentry] `Sentry.logger` will no longer be used as internal SDK logger when `enable_logs` feature is turned on.
-                    Use Sentry.configuration.sdk_logger for SDK-specific logging needs."
-
-                    Caller: #{caller.first}
-          STR
-
-          configuration.sdk_logger
-        end
+      @logger ||= configuration.structured_logging.logger_class.new(configuration)
     end
 
     ##### Helpers #####
