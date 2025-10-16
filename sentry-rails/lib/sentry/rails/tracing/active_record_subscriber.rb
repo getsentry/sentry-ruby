@@ -19,7 +19,7 @@ module Sentry
           end)
 
           # Cache for clean_frame results to avoid redundant processing
-          # Uses frozen array keys to avoid string allocation overhead
+          # Uses array [absolute_path, lineno] as cache key (faster than string interpolation)
           # Bounded size prevents memory leaks
           # No mutex needed - benign race conditions are acceptable (worst case: duplicate work)
           CLEAN_FRAME_CACHE_SIZE = 1000
@@ -104,9 +104,9 @@ module Sentry
             # Key insight: Thread.each_caller_location iterates through the entire call stack
             # for every query. Caching allows us to skip frames we've already processed.
             def cached_clean_frame(location)
-              # Use frozen array as cache key to avoid string allocation overhead
-              # Array keys are compared by value, and freezing prevents modification
-              cache_key = [location.absolute_path, location.lineno].freeze
+              # Use array [absolute_path, lineno] as cache key
+              # Arrays are compared by value and are faster than string interpolation
+              cache_key = [location.absolute_path, location.lineno]
 
               # Check cache (Hash reads are thread-safe in MRI due to GIL)
               cached_result = @clean_frame_cache[cache_key]
