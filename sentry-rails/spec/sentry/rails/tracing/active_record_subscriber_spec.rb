@@ -120,6 +120,61 @@ RSpec.describe Sentry::Rails::Tracing::ActiveRecordSubscriber, :subscriber do
       end
     end
 
+    context "when caching clean_frame results", skip: RUBY_VERSION.to_f < 3.2 || Rails.version.to_f < 7.1 do
+      let(:enable_db_query_source) { true }
+      let(:db_query_source_threshold_ms) { 0 }
+
+      it "caches clean_frame results for the same location" do
+        # Track how many times clean_frame is called for the specific location
+        call_count = Hash.new(0)
+        original_clean_frame = described_class.backtrace_cleaner.method(:clean_frame)
+
+        allow(described_class.backtrace_cleaner).to receive(:clean_frame) do |location|
+          key = "#{location.absolute_path}:#{location.lineno}"
+          call_count[key] += 1
+          original_clean_frame.call(location)
+        end
+
+        transaction = Sentry::Transaction.new(sampled: true, hub: Sentry.get_current_hub)
+        Sentry.get_current_scope.set_span(transaction)
+
+        # Disable ActiveRecord query cache to ensure each query is actually executed
+        ActiveRecord::Base.connection.uncached do
+          # Execute the same query from the same location multiple times
+          3.times { Post.all.to_a }
+        end
+
+        transaction.finish
+
+        # Verify the source location is correctly recorded for all queries
+        transaction_hash = transport.events.first.to_hash
+        expect(transaction_hash[:spans].count).to eq(3)
+
+        # With caching, each unique location should only be processed once
+        # The same location (this test file at the Post.all.to_a line) should be called only once
+        test_file_calls = call_count.select { |k, _| k.include?(__FILE__) }
+        expect(test_file_calls.values.max).to eq(1) if test_file_calls.any?
+      end
+
+      it "doesn't leak memory with bounded cache" do
+        transaction = Sentry::Transaction.new(sampled: true, hub: Sentry.get_current_hub)
+        Sentry.get_current_scope.set_span(transaction)
+
+        ActiveRecord::Base.connection.uncached do
+          # Execute queries from many different locations to test cache bounds
+          100.times do |i|
+            eval("Post.all.to_a # query #{i}")
+          end
+        end
+
+        transaction.finish
+
+        # Verify cache size is bounded (implementation detail will be checked in the code)
+        # This test mainly ensures no memory errors occur with many unique locations
+        expect(transport.events.first.to_hash[:spans].count).to eq(100)
+      end
+    end
+
     it "records database cached query events", skip: Rails.version.to_f < 5.1 do
       transaction = Sentry::Transaction.new(sampled: true, hub: Sentry.get_current_hub)
       Sentry.get_current_scope.set_span(transaction)

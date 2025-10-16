@@ -17,6 +17,13 @@ module Sentry
           class_attribute :backtrace_cleaner, default: (ActiveSupport::BacktraceCleaner.new.tap do |cleaner|
             cleaner.add_silencer { |line| line.include?("sentry-ruby/lib") || line.include?("sentry-rails/lib") }
           end)
+
+          # Cache for clean_frame results to avoid redundant processing
+          # Uses frozen array keys to avoid string allocation overhead
+          # Bounded size prevents memory leaks
+          # No mutex needed - benign race conditions are acceptable (worst case: duplicate work)
+          CLEAN_FRAME_CACHE_SIZE = 1000
+          @clean_frame_cache = {}
         end
 
         class << self
@@ -87,10 +94,35 @@ module Sentry
           if SUPPORT_SOURCE_LOCATION && Thread.respond_to?(:each_caller_location)
             def query_source_location
               Thread.each_caller_location do |location|
-                frame = backtrace_cleaner.clean_frame(location)
+                frame = cached_clean_frame(location)
                 return frame if frame
               end
               nil
+            end
+
+            # Cache clean_frame results to avoid redundant processing
+            # Key insight: Thread.each_caller_location iterates through the entire call stack
+            # for every query. Caching allows us to skip frames we've already processed.
+            def cached_clean_frame(location)
+              # Use frozen array as cache key to avoid string allocation overhead
+              # Array keys are compared by value, and freezing prevents modification
+              cache_key = [location.absolute_path, location.lineno].freeze
+
+              # Check cache (Hash reads are thread-safe in MRI due to GIL)
+              cached_result = @clean_frame_cache[cache_key]
+              return cached_result if cached_result
+
+              # Compute result
+              frame = backtrace_cleaner.clean_frame(location)
+
+              # Cache result if non-nil and cache isn't full
+              # No mutex needed - benign race condition is acceptable
+              # Worst case: duplicate work or slightly exceeding cache size
+              if frame && @clean_frame_cache.size < CLEAN_FRAME_CACHE_SIZE
+                @clean_frame_cache[cache_key] = frame
+              end
+
+              frame
             end
           else
             # Since Sentry is mostly used in production, we don't want to fallback to the slower implementation
