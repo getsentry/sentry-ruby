@@ -37,9 +37,6 @@ module Sentry
       # Sentry Rails integration already handles ActiveJob exceptions automatically
       # No need for custom error handling
 
-      # Set up unified job monitoring for ApplicationJob
-      Sentry::GoodJob::JobMonitor.setup_for_job_class(ApplicationJob)
-
       # Set up cron monitoring for all scheduled jobs (automatically configured from Good Job config)
       if Sentry.configuration.good_job.auto_setup_cron_monitoring
         Sentry::GoodJob::CronMonitoring::Integration.setup_monitoring_for_scheduled_jobs

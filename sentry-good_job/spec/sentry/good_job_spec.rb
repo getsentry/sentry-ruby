@@ -21,9 +21,6 @@ RSpec.describe Sentry::GoodJob do
 
   describe "setup_good_job_integration" do
     before do
-      # Mock ApplicationJob
-      stub_const("ApplicationJob", Class.new(ActiveJob::Base))
-
       # Mock Rails application configuration
       rails_app = double("Rails::Application")
       rails_config = double("Rails::Configuration")
@@ -35,10 +32,18 @@ RSpec.describe Sentry::GoodJob do
       allow(good_job_config).to receive(:cron).and_return({})
     end
 
-    it "sets up job monitoring for ApplicationJob" do
-      expect(Sentry::GoodJob::JobMonitor).to receive(:setup_for_job_class).with(ApplicationJob)
+    it "does not automatically set up job monitoring for any specific job class" do
+      expect(Sentry::GoodJob::JobMonitor).not_to receive(:setup_for_job_class)
 
       described_class.setup_good_job_integration
+    end
+
+    it "allows manual setup of job monitoring" do
+      job_class = Class.new(ActiveJob::Base)
+
+      expect(Sentry::GoodJob::JobMonitor).to receive(:setup_for_job_class).with(job_class)
+
+      Sentry::GoodJob::JobMonitor.setup_for_job_class(job_class)
     end
 
     context "when auto_setup_cron_monitoring is enabled" do

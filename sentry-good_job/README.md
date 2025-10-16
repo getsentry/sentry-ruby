@@ -80,11 +80,27 @@ The integration works automatically once installed. It will:
 
 ### Manual Job Monitoring
 
-You can manually set up monitoring for specific job classes:
+You need to manually set up monitoring for your job classes. This can be done in your job class or in an initializer:
 
 ```ruby
 class MyJob < ApplicationJob
-  # The integration will automatically set up monitoring
+  # Set up monitoring for this job class
+  Sentry::GoodJob::JobMonitor.setup_for_job_class(self)
+end
+```
+
+Or set up monitoring for all your job classes in an initializer:
+
+```ruby
+# config/initializers/sentry_good_job.rb
+Rails.application.config.after_initialize do
+  # Set up monitoring for ApplicationJob if it exists
+  if defined?(ApplicationJob)
+    Sentry::GoodJob::JobMonitor.setup_for_job_class(ApplicationJob)
+  end
+  
+  # Or set up monitoring for specific job classes
+  # Sentry::GoodJob::JobMonitor.setup_for_job_class(MyJob)
 end
 ```
 
