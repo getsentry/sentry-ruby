@@ -14,7 +14,8 @@ module Sentry
         # Skip reporting if configured to only report after all retries are exhausted
         if Sentry.configuration.good_job.report_after_job_retries && retryable?(job)
           retry_count = job.executions
-          max_retries = job.class.retry_on_attempts || DEFAULT_RETRY_ATTEMPTS
+          # Use default retry attempts since we can't reliably access the configured value
+          max_retries = DEFAULT_RETRY_ATTEMPTS
           return if retry_count < max_retries
         end
 
@@ -33,7 +34,10 @@ module Sentry
       private
 
       def retryable?(job)
-        job.class.retry_on_attempts.present? && job.class.retry_on_attempts > 0
+        # Since we can't reliably access retry configuration, we'll use a simpler approach:
+        # If the job has been executed more than once, it's likely retryable
+        # This is a conservative approach that works with the actual ActiveJob API
+        job.executions > 1
       end
 
       def job_context(job)

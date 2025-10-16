@@ -12,7 +12,7 @@ RSpec.describe Sentry::GoodJob::ErrorHandler do
 
   describe "#call" do
     let(:job) { double("Job", class: job_class, job_id: "123", queue_name: "default", executions: 1, enqueued_at: Time.now, scheduled_at: nil, arguments: []) }
-    let(:job_class) { double("JobClass", retry_on_attempts: nil, name: "TestJob") }
+    let(:job_class) { double("JobClass", name: "TestJob") }
     let(:exception) { build_exception }
 
     context "when Sentry is not initialized" do
@@ -68,10 +68,9 @@ RSpec.describe Sentry::GoodJob::ErrorHandler do
         end
 
         context "and job is retryable" do
-          let(:job_class) { double("JobClass", retry_on_attempts: 3, name: "TestJob") }
+          let(:job) { double("Job", class: job_class, job_id: "123", queue_name: "default", executions: 2, enqueued_at: Time.now, scheduled_at: nil, arguments: []) }
 
           context "and retry count is less than max retries" do
-            let(:job) { double("Job", class: job_class, job_id: "123", queue_name: "default", executions: 2, enqueued_at: Time.now, scheduled_at: nil, arguments: []) }
 
             it "does not capture the exception" do
               expect(Sentry::GoodJob).not_to receive(:capture_exception)
@@ -80,7 +79,7 @@ RSpec.describe Sentry::GoodJob::ErrorHandler do
           end
 
           context "and retry count equals max retries" do
-            let(:job) { double("Job", class: job_class, job_id: "123", queue_name: "default", executions: 3, enqueued_at: Time.now, scheduled_at: nil, arguments: []) }
+            let(:job) { double("Job", class: job_class, job_id: "123", queue_name: "default", executions: 5, enqueued_at: Time.now, scheduled_at: nil, arguments: []) }
 
             it "captures the exception" do
               expect(Sentry::GoodJob).to receive(:capture_exception)
@@ -90,7 +89,7 @@ RSpec.describe Sentry::GoodJob::ErrorHandler do
         end
 
         context "and job is not retryable" do
-          let(:job_class) { double("JobClass", retry_on_attempts: nil, name: "TestJob") }
+          let(:job_class) { double("JobClass", name: "TestJob") }
 
           it "captures the exception" do
             expect(Sentry::GoodJob).to receive(:capture_exception)
@@ -105,7 +104,7 @@ RSpec.describe Sentry::GoodJob::ErrorHandler do
         end
 
         context "and job is retryable" do
-          let(:job_class) { double("JobClass", retry_on_attempts: 3, name: "TestJob") }
+          let(:job) { double("Job", class: job_class, job_id: "123", queue_name: "default", executions: 2, enqueued_at: Time.now, scheduled_at: nil, arguments: []) }
 
           it "does not capture the exception" do
             expect(Sentry::GoodJob).not_to receive(:capture_exception)
@@ -114,7 +113,7 @@ RSpec.describe Sentry::GoodJob::ErrorHandler do
         end
 
         context "and job is not retryable" do
-          let(:job_class) { double("JobClass", retry_on_attempts: nil, name: "TestJob") }
+          let(:job) { double("Job", class: job_class, job_id: "123", queue_name: "default", executions: 1, enqueued_at: Time.now, scheduled_at: nil, arguments: []) }
 
           it "captures the exception" do
             expect(Sentry::GoodJob).to receive(:capture_exception)
@@ -126,23 +125,20 @@ RSpec.describe Sentry::GoodJob::ErrorHandler do
   end
 
   describe "#retryable?" do
-    it "returns true when job has retry_on_attempts" do
-      job_class = double("JobClass", retry_on_attempts: 3)
-      job = double("Job", class: job_class)
+    it "returns true when job has been executed more than once" do
+      job = double("Job", executions: 2)
 
       expect(handler.send(:retryable?, job)).to be true
     end
 
-    it "returns false when job has no retry_on_attempts" do
-      job_class = double("JobClass", retry_on_attempts: nil)
-      job = double("Job", class: job_class)
+    it "returns false when job has been executed only once" do
+      job = double("Job", executions: 1)
 
       expect(handler.send(:retryable?, job)).to be false
     end
 
-    it "returns false when job has retry_on_attempts of 0" do
-      job_class = double("JobClass", retry_on_attempts: 0)
-      job = double("Job", class: job_class)
+    it "returns false when job has not been executed" do
+      job = double("Job", executions: 0)
 
       expect(handler.send(:retryable?, job)).to be false
     end
