@@ -76,3 +76,6 @@ node_modules/
 
 # TernJS port file
 .tern-port
+
+# RSpec status file
+.rspec_status
