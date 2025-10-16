@@ -4,6 +4,7 @@ module Sentry
   module Cron
     module MonitorCheckIns
       MAX_SLUG_LENGTH = 50
+      MAX_NAME_LENGTH = 128
       SLUG_HASH_LENGTH = 10
 
       module Patch
