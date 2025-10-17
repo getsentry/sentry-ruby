@@ -65,11 +65,16 @@ module Sentry
       # Main integration class that handles all cron monitoring setup
       # This class follows Good Job's integration patterns and Sentry's extension guidelines
       class Integration
+        # Track whether setup has already been performed to prevent duplicates
+        @setup_completed = false
+
         # Set up monitoring for all scheduled jobs from Good Job configuration
         def self.setup_monitoring_for_scheduled_jobs
           return unless ::Sentry.initialized?
           return unless ::Sentry.configuration.good_job.enable_cron_monitors
+          return if @setup_completed
 
+          return unless defined?(::Rails) && ::Rails.respond_to?(:application) && ::Rails.application
           cron_config = ::Rails.application.config.good_job.cron
           return unless cron_config.present?
 
@@ -77,7 +82,13 @@ module Sentry
             setup_monitoring_for_job(cron_key, job_config)
           end
 
+          @setup_completed = true
           Sentry::GoodJob::Logger.info "Sentry cron monitoring setup for #{cron_config.keys.size} scheduled jobs"
+        end
+
+        # Reset setup state (primarily for testing)
+        def self.reset_setup_state!
+          @setup_completed = false
         end
 
         # Set up monitoring for a specific job
@@ -128,8 +139,8 @@ module Sentry
 
           # Set up monitoring when the job class is first loaded
           # This defers constantization until the job is actually needed
-          if defined?(Rails) && Rails.application
-            Rails.application.config.after_initialize do
+          if defined?(::Rails) && ::Rails.respond_to?(:application) && ::Rails.application
+            ::Rails.application.config.after_initialize do
               deferred_setup.call
             end
           else

@@ -185,6 +185,7 @@ RSpec.describe Sentry::GoodJob::CronHelpers do
         end
 
         it "sets up monitoring for each job" do
+          described_class::Integration.reset_setup_state!
           expect(described_class::Integration).to receive(:setup_monitoring_for_job).with("test_job", cron_config["test_job"])
           expect(described_class::Integration).to receive(:setup_monitoring_for_job).with("another_job", cron_config["another_job"])
 
@@ -192,6 +193,7 @@ RSpec.describe Sentry::GoodJob::CronHelpers do
         end
 
         it "logs the setup completion" do
+          described_class::Integration.reset_setup_state!
           allow(described_class::Integration).to receive(:setup_monitoring_for_job)
           allow(Sentry::GoodJob::Logger).to receive(:info)
 
