@@ -43,8 +43,8 @@ module Sentry
             job_data["_sentry"] = _sentry.to_json
           end
         end
-      rescue
-        # Swallow errors. Better to lose Sentry context than fail to serialize the job.
+      rescue JSON::GeneratorError, TypeError
+        # Swallow JSON serialization errors. Better to lose Sentry context than fail to serialize the job.
         super
       end
 
@@ -54,8 +54,8 @@ module Sentry
 
         begin
           self._sentry = JSON.parse(job_data["_sentry"]) if job_data["_sentry"]
-        rescue
-          # Swallow errors. Better to lose Sentry context than fail to deserialize the job.
+        rescue JSON::ParserError
+          # Swallow JSON parsing errors. Better to lose Sentry context than fail to deserialize the job.
         end
       end
 
