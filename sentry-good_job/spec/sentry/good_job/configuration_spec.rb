@@ -35,6 +35,5 @@ RSpec.describe Sentry::GoodJob::Configuration do
       config.enable_cron_monitors = false
       expect(config.enable_cron_monitors).to eq(false)
     end
-
   end
 end

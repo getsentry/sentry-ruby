@@ -60,7 +60,7 @@ module Sentry
       end
 
       # Set span data with messaging semantics
-      def set_span_data(span, job, retry_count: nil)
+      def _sentry_set_span_data(span, job, retry_count: nil)
         return unless span
 
         span.set_data("messaging.message.id", job.job_id)
@@ -69,7 +69,7 @@ module Sentry
       end
 
       # Start transaction with trace propagation
-      def start_transaction(scope, trace_headers)
+      def _sentry_start_transaction(scope, trace_headers)
         options = {
           name: scope.transaction_name,
           source: scope.transaction_source,
@@ -82,7 +82,7 @@ module Sentry
       end
 
       # Finish transaction with proper status
-      def finish_transaction(transaction, status)
+      def _sentry_finish_transaction(transaction, status)
         return unless transaction
 
         transaction.set_http_status(status)
@@ -115,7 +115,7 @@ module Sentry
                 transaction = nil
                 unless job.is_a?(::Sentry::SendEventJob)
                   if job._sentry && job._sentry["trace_propagation_headers"]
-                    transaction = job.start_transaction(scope, job._sentry["trace_propagation_headers"])
+                    transaction = job._sentry_start_transaction(scope, job._sentry["trace_propagation_headers"])
                   else
                     transaction = Sentry.start_transaction(
                       name: scope.transaction_name,
@@ -135,7 +135,7 @@ module Sentry
                   else
                     0
                   end
-                  job.set_span_data(transaction, job, retry_count: retry_count)
+                  job._sentry_set_span_data(transaction, job, retry_count: retry_count)
                 end
 
                 yield.tap do

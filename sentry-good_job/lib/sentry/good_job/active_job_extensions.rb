@@ -74,6 +74,13 @@ module Sentry
         ActiveSupport.on_load(:active_job) do
           # Add GoodJob-specific attributes and methods
           include GoodJobExtensions
+
+          # Ensure the sentry-rails integration is properly set up
+          # by checking if the ActiveJobExtensions module is already included
+          if defined?(::Sentry::Rails::ActiveJobExtensions) && !ancestors.include?(::Sentry::Rails::ActiveJobExtensions)
+            require "sentry/rails/active_job"
+            prepend ::Sentry::Rails::ActiveJobExtensions
+          end
         end
       end
 
@@ -88,37 +95,30 @@ module Sentry
 
             # Create enqueue span with GoodJob-specific data
             ::Sentry.with_child_span(op: "queue.publish", description: job.class.name) do |span|
-              set_span_data(span, job)
+              _sentry_set_span_data(span, job)
               block.call
             end
           end
 
-          # Set up around_perform hook for GoodJob-specific tags and span data
-          around_perform do |job, block|
-            next block.call unless ::Sentry.initialized?
-
-            # Add GoodJob-specific tags to current scope
-            good_job_tags = {
-              queue_name: job.queue_name,
-              executions: job.executions
-            }
-            good_job_tags[:priority] = job.priority if job.respond_to?(:priority)
-
-            Sentry.with_scope do |scope|
-              scope.set_tags(good_job_tags)
-              block.call
-            end
-          end
+          # GoodJob-specific context is now handled through the enhanced sentry_context method
+          # The sentry-rails integration handles error capturing through SentryReporter.record
         end
 
         private
 
-        # Override set_span_data to add GoodJob-specific functionality
-        def set_span_data(span, job, retry_count: nil)
+        # Override _sentry_set_span_data to add GoodJob-specific functionality
+        def _sentry_set_span_data(span, job, retry_count: nil)
           return unless span
 
-          # Call the base implementation
-          super(span, job, retry_count: retry_count)
+          # Call the base implementation if it exists (from sentry-rails)
+          if respond_to?(:_sentry_set_span_data, true) && method(:_sentry_set_span_data).super_method
+            super(span, job, retry_count: retry_count)
+          else
+            # Fallback: implement base functionality directly
+            span.set_data("messaging.message.id", job.job_id)
+            span.set_data("messaging.destination.name", job.queue_name) if job.respond_to?(:queue_name)
+            span.set_data("messaging.message.retry.count", retry_count) if retry_count
+          end
 
           # Add GoodJob-specific span data (latency)
           latency = calculate_job_latency(job)
