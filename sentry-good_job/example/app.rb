@@ -12,7 +12,7 @@ Sentry.init do |config|
   config.logger = Logger.new(STDOUT)
 
   # Good Job specific configuration
-  config.good_job.logging_enabled = true
+  # Logging is now handled by the standard Sentry SDK logger
 
   # ActiveJob configuration (handled by sentry-rails)
   config.rails.active_job_report_on_retry_error = false

@@ -29,12 +29,12 @@ RSpec.describe Sentry::GoodJob::CronHelpers do
 
       it "handles parsing errors gracefully" do
         allow(Fugit).to receive(:parse_cron).and_raise(StandardError.new("Invalid cron"))
-        allow(Sentry::GoodJob::Logger).to receive(:warn)
+        allow(Sentry.configuration.sdk_logger).to receive(:warn)
 
         result = described_class::Helpers.monitor_config_from_cron("invalid")
 
         expect(result).to be_nil
-        expect(Sentry::GoodJob::Logger).to have_received(:warn)
+        expect(Sentry.configuration.sdk_logger).to have_received(:warn)
       end
     end
 
@@ -195,11 +195,11 @@ RSpec.describe Sentry::GoodJob::CronHelpers do
         it "logs the setup completion" do
           described_class::Integration.reset_setup_state!
           allow(described_class::Integration).to receive(:setup_monitoring_for_job).and_return("TestJob", "AnotherJob")
-          allow(Sentry::GoodJob::Logger).to receive(:info)
+          allow(Sentry.configuration.sdk_logger).to receive(:info)
 
           described_class::Integration.setup_monitoring_for_scheduled_jobs
 
-          expect(Sentry::GoodJob::Logger).to have_received(:info).with("Sentry cron monitoring setup for 2 scheduled jobs: TestJob, AnotherJob")
+          expect(Sentry.configuration.sdk_logger).to have_received(:info).with("[sentry-good_job] Sentry cron monitoring setup for 2 scheduled jobs: TestJob, AnotherJob")
         end
       end
     end
@@ -216,13 +216,13 @@ RSpec.describe Sentry::GoodJob::CronHelpers do
         let(:job_config) { { class: "NonExistentJob", cron: "0 * * * *" } }
 
         it "logs a warning and returns" do
-          allow(Sentry::GoodJob::Logger).to receive(:warn)
+          allow(Sentry.configuration.sdk_logger).to receive(:warn)
           # Mock Rails.application.config.after_initialize to execute immediately
           allow(Rails.application.config).to receive(:after_initialize).and_yield
 
           described_class::Integration.setup_monitoring_for_job("test_job", job_config)
 
-          expect(Sentry::GoodJob::Logger).to have_received(:warn).with(/Could not find job class/)
+          expect(Sentry.configuration.sdk_logger).to have_received(:warn).with(/Could not find job class/)
         end
       end
 
@@ -311,11 +311,11 @@ RSpec.describe Sentry::GoodJob::CronHelpers do
       it "logs the setup completion" do
         # JobMonitor removed - no setup needed
         allow(job_class).to receive(:sentry_monitor_check_ins)
-        allow(Sentry::GoodJob::Logger).to receive(:info)
+        allow(Sentry.configuration.sdk_logger).to receive(:info)
 
         described_class::Integration.add_monitoring_to_job(job_class)
 
-        expect(Sentry::GoodJob::Logger).to have_received(:info).with(/Added Sentry cron monitoring/)
+        expect(Sentry.configuration.sdk_logger).to have_received(:info).with(/Added Sentry cron monitoring/)
       end
     end
   end

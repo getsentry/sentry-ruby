@@ -12,8 +12,6 @@ RSpec.describe Sentry::GoodJob::Configuration do
   describe "default values" do
     it "sets default values correctly" do
       expect(config.enable_cron_monitors).to eq(true)
-      expect(config.logging_enabled).to eq(false)
-      expect(config.logger).to be_nil
     end
   end
 
@@ -38,15 +36,5 @@ RSpec.describe Sentry::GoodJob::Configuration do
       expect(config.enable_cron_monitors).to eq(false)
     end
 
-    it "allows setting logging_enabled" do
-      config.logging_enabled = true
-      expect(config.logging_enabled).to eq(true)
-    end
-
-    it "allows setting logger" do
-      logger = double("Logger")
-      config.logger = logger
-      expect(config.logger).to eq(logger)
-    end
   end
 end

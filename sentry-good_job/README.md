@@ -49,7 +49,6 @@ Sentry.init do |config|
   
   # Good Job specific configuration
   config.good_job.enable_cron_monitors = true
-  config.good_job.logging_enabled = false
   
   # ActiveJob configuration (handled by sentry-rails)
   config.rails.active_job_report_on_retry_error = false
@@ -62,8 +61,6 @@ end
 #### Good Job Specific Options
 
 - `enable_cron_monitors` (default: `true`): Enable cron monitoring for scheduled jobs
-- `logging_enabled` (default: `false`): Enable logging for the Good Job integration
-- `logger` (default: `nil`): Custom logger to use (defaults to Rails.logger when available)
 
 #### ActiveJob Options (handled by sentry-rails)
 
@@ -132,24 +129,56 @@ end
 
 ### Debugging and Detailed Logging
 
-For debugging purposes, you can enable detailed logging to see what the integration is doing:
+The integration uses the standard Sentry SDK logger (`Sentry.configuration.sdk_logger`) for all logging needs. You can configure this logger to get detailed information about what the integration is doing:
 
 ```ruby
 Sentry.init do |config|
   config.dsn = 'your-dsn-here'
   
-  # Enable detailed logging for debugging
-  config.good_job.logging_enabled = true
-  config.good_job.logger = Logger.new($stdout)
+  # Configure the SDK logger for debugging
+  config.sdk_logger = Logger.new($stdout)
+  config.sdk_logger.level = Logger::DEBUG
+
+  # Or use Rails logger with debug level
+  # config.sdk_logger = Rails.logger
+  # config.sdk_logger.level = Logger::DEBUG
 end
 ```
 
-This will output detailed information about:
+#### Custom Logger Configuration
+
+For more advanced logging needs, you can provide a custom logger:
+
+```ruby
+# Custom logger with specific formatting
+custom_logger = Logger.new('log/sentry-good_job.log')
+custom_logger.formatter = proc do |severity, datetime, progname, msg|
+  "[#{datetime}] #{severity}: #{msg}\n"
+end
+
+Sentry.init do |config|
+  config.dsn = 'your-dsn-here'
+  config.sdk_logger = custom_logger
+  config.sdk_logger.level = Logger::INFO
+end
+```
+
+#### Log Levels
+
+The integration logs at different levels:
+- **INFO**: Integration setup, cron monitoring configuration, job monitoring setup
+- **WARN**: Configuration issues, missing job classes, cron parsing errors
+- **DEBUG**: Detailed execution flow (when debug level is enabled)
+
+#### What Gets Logged
+
+When logging is enabled, you'll see information about:
 - Job execution start and completion
 - Error capture and reporting decisions
-- Cron monitoring setup
+- Cron monitoring setup and configuration
 - Performance metrics collection
 - GoodJob-specific context enhancement
+- Integration initialization and setup
 
 ## Performance Monitoring
 

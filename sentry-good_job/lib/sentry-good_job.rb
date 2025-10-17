@@ -5,7 +5,6 @@ require "sentry-ruby"
 require "sentry/integrable"
 require "sentry/good_job/version"
 require "sentry/good_job/configuration"
-require "sentry/good_job/logger"
 require "sentry/good_job/context_helpers"
 require "sentry/good_job/active_job_extensions"
 require "sentry/good_job/cron_helpers"
@@ -38,7 +37,7 @@ module Sentry
         Sentry::GoodJob::CronHelpers::Integration.setup_monitoring_for_scheduled_jobs
       end
 
-      Sentry::GoodJob::Logger.info "Sentry Good Job integration initialized automatically"
+      Sentry.configuration.sdk_logger.info "[sentry-good_job] Sentry Good Job integration initialized automatically"
     end
 
     # Delegate capture_exception so internal components can be tested in isolation

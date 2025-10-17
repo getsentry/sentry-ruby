@@ -18,8 +18,6 @@ Individual gem's changelog has been deprecated. Please check the [project change
 
 #### Good Job Specific Options
 - `enable_cron_monitors`: Enable cron monitoring for scheduled jobs
-- `logging_enabled`: Enable logging for the Good Job integration
-- `logger`: Custom logger to use
 
 #### ActiveJob Options (handled by sentry-rails)
 - `config.rails.active_job_report_on_retry_error`: Only report errors after all retry attempts are exhausted
