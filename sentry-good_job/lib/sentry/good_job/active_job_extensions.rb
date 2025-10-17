@@ -58,11 +58,13 @@ module Sentry
       def self.enhance_sentry_reporter
         # Enhance the sentry_context method in SentryReporter
         ::Sentry::Rails::ActiveJobExtensions::SentryReporter.class_eval do
-          alias_method :original_sentry_context, :sentry_context
+          class << self
+            alias_method :original_sentry_context, :sentry_context
 
-          def sentry_context(job)
-            base_context = original_sentry_context(job)
-            Sentry::GoodJob::ActiveJobExtensions.enhance_sentry_context(job, base_context)
+            def sentry_context(job)
+              base_context = original_sentry_context(job)
+              Sentry::GoodJob::ActiveJobExtensions.enhance_sentry_context(job, base_context)
+            end
           end
         end
       end
