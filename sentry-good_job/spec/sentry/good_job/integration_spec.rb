@@ -73,6 +73,39 @@ RSpec.describe "Sentry GoodJob Integration", type: :job do
       expect(enhanced_context).to include(:good_job)
       expect(enhanced_context[:good_job]).to include(:queue_name, :executions)
     end
+
+    it "preserves Current.user context after job execution" do
+      # Set user context before job execution
+      Sentry.configure_scope do |scope|
+        scope.set_user(id: "123", email: "test@example.com")
+      end
+
+      # Verify user context is set
+      expect(Sentry.get_current_scope.user).to eq({ id: "123", email: "test@example.com" })
+
+      # Execute a job
+      result = TestGoodJob.perform_now("test message")
+      expect(result).to eq("Processed: test message")
+
+      # Verify user context is still preserved after job execution
+      expect(Sentry.get_current_scope.user).to eq({ id: "123", email: "test@example.com" })
+    end
+
+    it "preserves Current.user context after job execution with error" do
+      # Set user context before job execution
+      Sentry.configure_scope do |scope|
+        scope.set_user(id: "456", email: "error@example.com")
+      end
+
+      # Verify user context is set
+      expect(Sentry.get_current_scope.user).to eq({ id: "456", email: "error@example.com" })
+
+      # Execute a job that raises an error
+      expect { FailingGoodJob.perform_now("error message") }.to raise_error(StandardError, "Job failed: error message")
+
+      # Verify user context is still preserved after job execution with error
+      expect(Sentry.get_current_scope.user).to eq({ id: "456", email: "error@example.com" })
+    end
   end
 
   describe "integration setup" do

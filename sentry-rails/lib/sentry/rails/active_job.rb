@@ -102,6 +102,9 @@ module Sentry
 
         class << self
           def record(job, &block)
+            # Store the current user context before creating the temporary scope
+            current_user = Sentry.get_current_scope&.user
+
             Sentry.with_scope do |scope|
               begin
                 scope.set_transaction_name(job.class.name, source: :task)
@@ -147,6 +150,13 @@ module Sentry
                 capture_exception(job, e)
 
                 raise
+              end
+            end
+
+            # Restore the user context to the current thread's scope after job execution
+            if current_user.present?
+              Sentry.configure_scope do |scope|
+                scope.set_user(current_user)
               end
             end
           end
