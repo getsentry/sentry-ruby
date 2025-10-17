@@ -49,7 +49,7 @@ Sentry.init do |config|
   
   # Good Job specific configuration
   config.good_job.report_after_job_retries = false
-  config.good_job.report_only_dead_jobs = false
+  config.good_job.report_only_discarded_jobs = false
   config.good_job.propagate_traces = true
   config.good_job.include_job_arguments = false
   config.good_job.auto_setup_cron_monitoring = true
@@ -60,7 +60,7 @@ end
 ### Configuration Options
 
 - `report_after_job_retries` (default: `false`): Only report errors after all retry attempts are exhausted
-- `report_only_dead_jobs` (default: `false`): Only report errors for jobs that cannot be retried
+- `report_only_discarded_jobs` (default: `false`): Only report errors for jobs that have been discarded (failed and cannot be retried)
 - `propagate_traces` (default: `true`): Propagate trace headers for distributed tracing
 - `include_job_arguments` (default: `false`): Include job arguments in error context (be careful with sensitive data)
 - `auto_setup_cron_monitoring` (default: `true`): Automatically set up cron monitoring for scheduled jobs

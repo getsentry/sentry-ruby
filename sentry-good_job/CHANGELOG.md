@@ -17,7 +17,7 @@ Individual gem's changelog has been deprecated. Please check the [project change
 ### Configuration Options
 
 - `report_after_job_retries`: Only report errors after all retry attempts are exhausted
-- `report_only_dead_jobs`: Only report errors for jobs that cannot be retried
+- `report_only_discarded_jobs`: Only report errors for jobs that have been discarded (failed and cannot be retried)
 - `propagate_traces`: Propagate trace headers for distributed tracing
 - `include_job_arguments`: Include job arguments in error context
 - `auto_setup_cron_monitoring`: Automatically set up cron monitoring for scheduled jobs

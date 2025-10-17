@@ -20,8 +20,8 @@ module Sentry
           # For non-retryable jobs, report immediately (they're dead on first failure)
         end
 
-        # Skip reporting if configured to only report dead jobs
-        if Sentry.configuration.good_job.report_only_dead_jobs
+        # Skip reporting if configured to only report discarded jobs
+        if Sentry.configuration.good_job.report_only_discarded_jobs
           if retryable?(job)
             # For retryable jobs, never report (they're not dead yet)
             return

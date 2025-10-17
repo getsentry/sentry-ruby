@@ -97,9 +97,9 @@ RSpec.describe Sentry::GoodJob::ErrorHandler do
         end
       end
 
-      context "when report_only_dead_jobs is enabled" do
+      context "when report_only_discarded_jobs is enabled" do
         before do
-          Sentry.configuration.good_job.report_only_dead_jobs = true
+          Sentry.configuration.good_job.report_only_discarded_jobs = true
         end
 
         context "and job is retryable" do

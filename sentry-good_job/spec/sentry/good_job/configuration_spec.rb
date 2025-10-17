@@ -12,7 +12,7 @@ RSpec.describe Sentry::GoodJob::Configuration do
   describe "default values" do
     it "sets default values correctly" do
       expect(config.report_after_job_retries).to eq(false)
-      expect(config.report_only_dead_jobs).to eq(false)
+      expect(config.report_only_discarded_jobs).to eq(false)
       expect(config.propagate_traces).to eq(true)
       expect(config.include_job_arguments).to eq(false)
       expect(config.auto_setup_cron_monitoring).to eq(true)
@@ -36,9 +36,9 @@ RSpec.describe Sentry::GoodJob::Configuration do
       expect(config.report_after_job_retries).to eq(true)
     end
 
-    it "allows setting report_only_dead_jobs" do
-      config.report_only_dead_jobs = true
-      expect(config.report_only_dead_jobs).to eq(true)
+    it "allows setting report_only_discarded_jobs" do
+      config.report_only_discarded_jobs = true
+      expect(config.report_only_discarded_jobs).to eq(true)
     end
 
     it "allows setting propagate_traces" do

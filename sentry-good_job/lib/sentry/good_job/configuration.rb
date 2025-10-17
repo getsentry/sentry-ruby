@@ -21,8 +21,8 @@ module Sentry
       # retry if it fails.
       attr_accessor :report_after_job_retries
 
-      # Only report jobs that have retry_on_attempts set (i.e., jobs that can be retried)
-      attr_accessor :report_only_dead_jobs
+      # Only report jobs that have been discarded (failed and cannot be retried)
+      attr_accessor :report_only_discarded_jobs
 
       # Whether we should inject headers while enqueuing the job in order to have a connected trace
       attr_accessor :propagate_traces
@@ -41,7 +41,7 @@ module Sentry
 
       def initialize
         @report_after_job_retries = false
-        @report_only_dead_jobs = false
+        @report_only_discarded_jobs = false
         @propagate_traces = true
         @include_job_arguments = false
         @auto_setup_cron_monitoring = true
