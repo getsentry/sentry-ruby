@@ -1,0 +1,19 @@
+inherit_gem:
+  rubocop-rails-omakase: rubocop.yml
+
+Layout/SpaceInsideArrayLiteralBrackets:
+  Enabled: false
+
+Layout/EmptyLineAfterMagicComment:
+  Enabled: true
+
+Style/FrozenStringLiteralComment:
+  Enabled: true
+
+Style/RedundantFreeze:
+  Enabled: true
+
+AllCops:
+  Exclude:
+    - "tmp/**/*"
+    - "examples/**/*"
