@@ -17,21 +17,9 @@ module Sentry
     ]
 
     class Configuration
-      # Set this option to true if you want Sentry to only capture the last job
-      # retry if it fails.
-      attr_accessor :report_after_job_retries
-
-      # Only report jobs that have been discarded (failed and cannot be retried)
-      attr_accessor :report_only_discarded_jobs
-
-      # Whether we should inject headers while enqueuing the job in order to have a connected trace
-      attr_accessor :propagate_traces
-
-      # Whether to include job arguments in error context (be careful with sensitive data)
-      attr_accessor :include_job_arguments
-
-      # Whether to automatically set up cron monitoring for all scheduled jobs
-      attr_accessor :auto_setup_cron_monitoring
+      # Whether to enable cron monitoring for all scheduled jobs
+      # This is GoodJob-specific functionality for monitoring scheduled tasks
+      attr_accessor :enable_cron_monitors
 
       # When false, suppresses all Sentry GoodJob integration logs
       attr_accessor :logging_enabled
@@ -40,11 +28,7 @@ module Sentry
       attr_accessor :logger
 
       def initialize
-        @report_after_job_retries = false
-        @report_only_discarded_jobs = false
-        @propagate_traces = true
-        @include_job_arguments = false
-        @auto_setup_cron_monitoring = true
+        @enable_cron_monitors = true
         @logging_enabled = false
         @logger = nil
       end

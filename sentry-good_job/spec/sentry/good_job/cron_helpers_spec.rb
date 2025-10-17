@@ -2,7 +2,7 @@
 
 require "spec_helper"
 
-RSpec.describe Sentry::GoodJob::CronMonitoring do
+RSpec.describe Sentry::GoodJob::CronHelpers do
   before do
     perform_basic_setup
   end
@@ -145,10 +145,10 @@ RSpec.describe Sentry::GoodJob::CronMonitoring do
         end
       end
 
-      context "when auto_setup_cron_monitoring is disabled" do
+      context "when enable_cron_monitors is disabled" do
         before do
           allow(Sentry).to receive(:initialized?).and_return(true)
-          Sentry.configuration.good_job.auto_setup_cron_monitoring = false
+          Sentry.configuration.good_job.enable_cron_monitors = false
         end
 
         it "does not set up monitoring" do
@@ -160,7 +160,7 @@ RSpec.describe Sentry::GoodJob::CronMonitoring do
       context "when cron config is not present" do
         before do
           allow(Sentry).to receive(:initialized?).and_return(true)
-          Sentry.configuration.good_job.auto_setup_cron_monitoring = true
+          Sentry.configuration.good_job.enable_cron_monitors = true
           allow(good_job_config).to receive(:cron).and_return(nil)
         end
 
@@ -180,7 +180,7 @@ RSpec.describe Sentry::GoodJob::CronMonitoring do
 
         before do
           allow(Sentry).to receive(:initialized?).and_return(true)
-          Sentry.configuration.good_job.auto_setup_cron_monitoring = true
+          Sentry.configuration.good_job.enable_cron_monitors = true
           allow(good_job_config).to receive(:cron).and_return(cron_config)
         end
 
@@ -215,6 +215,8 @@ RSpec.describe Sentry::GoodJob::CronMonitoring do
 
         it "logs a warning and returns" do
           allow(Sentry::GoodJob::Logger).to receive(:warn)
+          # Mock Rails.application.config.after_initialize to execute immediately
+          allow(Rails.application.config).to receive(:after_initialize).and_yield
 
           described_class::Integration.setup_monitoring_for_job("test_job", job_config)
 
@@ -226,7 +228,7 @@ RSpec.describe Sentry::GoodJob::CronMonitoring do
         let(:job_config) { { cron: "0 * * * *" } }
 
         it "does not set up monitoring" do
-          expect(Sentry::GoodJob::JobMonitor).not_to receive(:setup_for_job_class)
+          # No job monitoring setup needed since we removed JobMonitor
           described_class::Integration.setup_monitoring_for_job("test_job", job_config)
         end
       end
@@ -235,7 +237,7 @@ RSpec.describe Sentry::GoodJob::CronMonitoring do
         let(:job_config) { { class: "TestJob" } }
 
         it "does not set up monitoring" do
-          expect(Sentry::GoodJob::JobMonitor).not_to receive(:setup_for_job_class)
+          # No job monitoring setup needed since we removed JobMonitor
           described_class::Integration.setup_monitoring_for_job("test_job", job_config)
         end
       end
@@ -243,22 +245,26 @@ RSpec.describe Sentry::GoodJob::CronMonitoring do
       context "when job config is complete" do
         let(:job_config) { { class: "TestJob", cron: "0 * * * *" } }
 
-        it "sets up job monitoring" do
-          expect(Sentry::GoodJob::JobMonitor).to receive(:setup_for_job_class).with(job_class)
+        it "sets up cron monitoring" do
+          expect(job_class).to receive(:include).with(Sentry::Cron::MonitorCheckIns).at_least(:once)
+          expect(job_class).to receive(:sentry_monitor_check_ins)
+          # Mock Rails.application.config.after_initialize to execute immediately
+          allow(Rails.application.config).to receive(:after_initialize).and_yield
           described_class::Integration.setup_monitoring_for_job("test_job", job_config)
         end
 
-        it "sets up cron monitoring" do
-          allow(Sentry::GoodJob::JobMonitor).to receive(:setup_for_job_class)
+        it "sets up cron monitoring with proper configuration" do
           expect(job_class).to receive(:sentry_monitor_check_ins)
-
+          # Mock Rails.application.config.after_initialize to execute immediately
+          allow(Rails.application.config).to receive(:after_initialize).and_yield
           described_class::Integration.setup_monitoring_for_job("test_job", job_config)
         end
 
         it "logs the setup completion" do
-          allow(Sentry::GoodJob::JobMonitor).to receive(:setup_for_job_class)
           allow(job_class).to receive(:sentry_monitor_check_ins)
           allow(Sentry::GoodJob::Logger).to receive(:info)
+          # Mock Rails.application.config.after_initialize to execute immediately
+          allow(Rails.application.config).to receive(:after_initialize).and_yield
 
           described_class::Integration.setup_monitoring_for_job("test_job", job_config)
 
@@ -274,34 +280,35 @@ RSpec.describe Sentry::GoodJob::CronMonitoring do
         allow(Sentry).to receive(:initialized?).and_return(true)
       end
 
-      it "sets up job monitoring" do
-        expect(Sentry::GoodJob::JobMonitor).to receive(:setup_for_job_class).with(job_class)
+      it "sets up cron monitoring" do
+        expect(job_class).to receive(:include).with(Sentry::Cron::MonitorCheckIns).at_least(:once)
+        expect(job_class).to receive(:sentry_monitor_check_ins)
         described_class::Integration.add_monitoring_to_job(job_class)
       end
 
       it "sets up cron monitoring with default config" do
-        allow(Sentry::GoodJob::JobMonitor).to receive(:setup_for_job_class)
+        # JobMonitor removed - no setup needed
         expect(job_class).to receive(:sentry_monitor_check_ins)
 
         described_class::Integration.add_monitoring_to_job(job_class)
       end
 
       it "uses provided slug" do
-        allow(Sentry::GoodJob::JobMonitor).to receive(:setup_for_job_class)
+        # JobMonitor removed - no setup needed
         expect(job_class).to receive(:sentry_monitor_check_ins).with(hash_including(slug: "custom_slug"))
 
         described_class::Integration.add_monitoring_to_job(job_class, slug: "custom_slug")
       end
 
       it "uses provided cron expression" do
-        allow(Sentry::GoodJob::JobMonitor).to receive(:setup_for_job_class)
+        # JobMonitor removed - no setup needed
         expect(job_class).to receive(:sentry_monitor_check_ins)
 
         described_class::Integration.add_monitoring_to_job(job_class, cron_expression: "0 0 * * *")
       end
 
       it "logs the setup completion" do
-        allow(Sentry::GoodJob::JobMonitor).to receive(:setup_for_job_class)
+        # JobMonitor removed - no setup needed
         allow(job_class).to receive(:sentry_monitor_check_ins)
         allow(Sentry::GoodJob::Logger).to receive(:info)
 

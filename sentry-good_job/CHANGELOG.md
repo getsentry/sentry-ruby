@@ -16,13 +16,16 @@ Individual gem's changelog has been deprecated. Please check the [project change
 
 ### Configuration Options
 
-- `report_after_job_retries`: Only report errors after all retry attempts are exhausted
-- `report_only_discarded_jobs`: Only report errors for jobs that have been discarded (failed and cannot be retried)
-- `propagate_traces`: Propagate trace headers for distributed tracing
-- `include_job_arguments`: Include job arguments in error context
-- `auto_setup_cron_monitoring`: Automatically set up cron monitoring for scheduled jobs
+#### Good Job Specific Options
+- `enable_cron_monitors`: Enable cron monitoring for scheduled jobs
 - `logging_enabled`: Enable logging for the Good Job integration
 - `logger`: Custom logger to use
+
+#### ActiveJob Options (handled by sentry-rails)
+- `config.rails.active_job_report_on_retry_error`: Only report errors after all retry attempts are exhausted
+- `config.send_default_pii`: Include job arguments in error context
+
+**Note**: The Good Job integration now leverages sentry-rails for core ActiveJob functionality, including trace propagation, user context preservation, and error reporting.
 
 ### Integration Features
 

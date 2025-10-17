@@ -48,24 +48,29 @@ Sentry.init do |config|
   config.dsn = 'your-dsn-here'
   
   # Good Job specific configuration
-  config.good_job.report_after_job_retries = false
-  config.good_job.report_only_discarded_jobs = false
-  config.good_job.propagate_traces = true
-  config.good_job.include_job_arguments = false
-  config.good_job.auto_setup_cron_monitoring = true
+  config.good_job.enable_cron_monitors = true
   config.good_job.logging_enabled = false
+  
+  # ActiveJob configuration (handled by sentry-rails)
+  config.rails.active_job_report_on_retry_error = false
+  config.send_default_pii = false  # Controls job arguments inclusion
 end
 ```
 
 ### Configuration Options
 
-- `report_after_job_retries` (default: `false`): Only report errors after all retry attempts are exhausted
-- `report_only_discarded_jobs` (default: `false`): Only report errors for jobs that have been discarded (failed and cannot be retried)
-- `propagate_traces` (default: `true`): Propagate trace headers for distributed tracing
-- `include_job_arguments` (default: `false`): Include job arguments in error context (be careful with sensitive data)
-- `auto_setup_cron_monitoring` (default: `true`): Automatically set up cron monitoring for scheduled jobs
+#### Good Job Specific Options
+
+- `enable_cron_monitors` (default: `true`): Enable cron monitoring for scheduled jobs
 - `logging_enabled` (default: `false`): Enable logging for the Good Job integration
 - `logger` (default: `nil`): Custom logger to use (defaults to Rails.logger when available)
+
+#### ActiveJob Options (handled by sentry-rails)
+
+- `config.rails.active_job_report_on_retry_error` (default: `false`): Only report errors after all retry attempts are exhausted
+- `config.send_default_pii` (default: `false`): Include job arguments in error context (be careful with sensitive data)
+
+**Note**: The Good Job integration now leverages sentry-rails for core ActiveJob functionality, including trace propagation, user context preservation, and error reporting. This provides better integration and reduces duplication.
 
 ## Usage
 
@@ -78,31 +83,15 @@ The integration works automatically once installed. It will:
 3. Automatically configure cron monitoring for scheduled jobs
 4. Preserve user context and trace propagation
 
-### Manual Job Monitoring
+### Automatic Setup
 
-You need to manually set up monitoring for your job classes. This can be done in your job class or in an initializer:
+The integration works automatically once installed. It will:
 
-```ruby
-class MyJob < ApplicationJob
-  # Set up monitoring for this job class
-  Sentry::GoodJob::JobMonitor.setup_for_job_class(self)
-end
-```
-
-Or set up monitoring for all your job classes in an initializer:
-
-```ruby
-# config/initializers/sentry_good_job.rb
-Rails.application.config.after_initialize do
-  # Set up monitoring for ApplicationJob if it exists
-  if defined?(ApplicationJob)
-    Sentry::GoodJob::JobMonitor.setup_for_job_class(ApplicationJob)
-  end
-  
-  # Or set up monitoring for specific job classes
-  # Sentry::GoodJob::JobMonitor.setup_for_job_class(MyJob)
-end
-```
+1. **Capture exceptions** from ActiveJob workers using sentry-rails
+2. **Set up performance monitoring** for job execution with enhanced GoodJob-specific metrics
+3. **Automatically configure cron monitoring** for scheduled jobs
+4. **Preserve user context and trace propagation** across job executions
+5. **Add GoodJob-specific context** including queue name, executions, priority, and latency
 
 ### Cron Monitoring
 
@@ -135,7 +124,7 @@ class MyJob < ApplicationJob
   retry_on StandardError, wait: :exponentially_longer, attempts: 3
   
   def perform
-    # This will only be reported to Sentry after 3 attempts if report_after_job_retries is true
+    # This will only be reported to Sentry after 3 attempts if active_job_report_on_retry_error is true
     raise "Something went wrong"
   end
 end
@@ -160,16 +149,17 @@ This will output detailed information about:
 - Error capture and reporting decisions
 - Cron monitoring setup
 - Performance metrics collection
-- Trace propagation
+- GoodJob-specific context enhancement
 
 ## Performance Monitoring
 
 When performance monitoring is enabled, the integration will track:
 
 - Job execution time
-- Queue latency
+- Queue latency (GoodJob-specific)
 - Retry counts
 - Job context and metadata
+- GoodJob-specific metrics (queue name, executions, priority)
 
 ## Error Context
 
@@ -177,10 +167,12 @@ The integration automatically adds relevant context to error reports:
 
 - Job class name
 - Job ID
-- Queue name
-- Execution count
+- Queue name (GoodJob-specific)
+- Execution count (GoodJob-specific)
+- Priority (GoodJob-specific)
 - Enqueued and scheduled timestamps
-- Job arguments (if enabled)
+- Job arguments (if enabled via send_default_pii)
+- Latency metrics (GoodJob-specific)
 
 ## Compatibility
 

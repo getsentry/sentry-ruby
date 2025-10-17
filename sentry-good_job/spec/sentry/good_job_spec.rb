@@ -33,38 +33,37 @@ RSpec.describe Sentry::GoodJob do
     end
 
     it "does not automatically set up job monitoring for any specific job class" do
-      expect(Sentry::GoodJob::JobMonitor).not_to receive(:setup_for_job_class)
+      # The integration now only sets up cron monitoring, not custom job monitoring
+      expect(Sentry::GoodJob::CronHelpers::Integration).to receive(:setup_monitoring_for_scheduled_jobs)
 
       described_class.setup_good_job_integration
     end
 
-    it "allows manual setup of job monitoring" do
-      job_class = Class.new(ActiveJob::Base)
+    it "sets up cron monitoring when enabled" do
+      expect(Sentry::GoodJob::CronHelpers::Integration).to receive(:setup_monitoring_for_scheduled_jobs)
 
-      expect(Sentry::GoodJob::JobMonitor).to receive(:setup_for_job_class).with(job_class)
-
-      Sentry::GoodJob::JobMonitor.setup_for_job_class(job_class)
+      described_class.setup_good_job_integration
     end
 
-    context "when auto_setup_cron_monitoring is enabled" do
+    context "when enable_cron_monitors is enabled" do
       before do
-        Sentry.configuration.good_job.auto_setup_cron_monitoring = true
+        Sentry.configuration.good_job.enable_cron_monitors = true
       end
 
       it "sets up cron monitoring" do
-        expect(Sentry::GoodJob::CronMonitoring::Integration).to receive(:setup_monitoring_for_scheduled_jobs)
+        expect(Sentry::GoodJob::CronHelpers::Integration).to receive(:setup_monitoring_for_scheduled_jobs)
 
         described_class.setup_good_job_integration
       end
     end
 
-    context "when auto_setup_cron_monitoring is disabled" do
+    context "when enable_cron_monitors is disabled" do
       before do
-        Sentry.configuration.good_job.auto_setup_cron_monitoring = false
+        Sentry.configuration.good_job.enable_cron_monitors = false
       end
 
       it "does not set up cron monitoring" do
-        expect(Sentry::GoodJob::CronMonitoring::Integration).not_to receive(:setup_monitoring_for_scheduled_jobs)
+        expect(Sentry::GoodJob::CronHelpers::Integration).not_to receive(:setup_monitoring_for_scheduled_jobs)
 
         described_class.setup_good_job_integration
       end

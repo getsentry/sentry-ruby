@@ -5,6 +5,9 @@ require "set"
 module Sentry
   module Rails
     module ActiveJobExtensions
+      # Add _sentry attribute for storing context and trace data
+      attr_accessor :_sentry
+
       def perform_now
         if !Sentry.initialized? || already_supported_by_sentry_integration?
           super
@@ -19,6 +22,76 @@ module Sentry
         Sentry.configuration.rails.skippable_job_adapters.include?(self.class.queue_adapter.class.to_s)
       end
 
+      # Enhanced enqueue method that captures context and trace data
+      def enqueue(options = {})
+        self._sentry ||= {}
+
+        # Capture user context
+        user = ::Sentry.get_current_scope&.user
+        self._sentry["user"] = user if user.present?
+
+        # Capture trace propagation headers
+        self._sentry["trace_propagation_headers"] = ::Sentry.get_trace_propagation_headers
+
+        super(options)
+      end
+
+      # Enhanced serialize method that includes _sentry data
+      def serialize
+        super.tap do |job_data|
+          if _sentry
+            job_data["_sentry"] = _sentry.to_json
+          end
+        end
+      rescue
+        # Swallow errors. Better to lose Sentry context than fail to serialize the job.
+        super
+      end
+
+      # Enhanced deserialize method that restores _sentry data
+      def deserialize(job_data)
+        super(job_data)
+
+        begin
+          self._sentry = JSON.parse(job_data["_sentry"]) if job_data["_sentry"]
+        rescue
+          # Swallow errors. Better to lose Sentry context than fail to deserialize the job.
+        end
+      end
+
+      # Set span data with messaging semantics
+      def set_span_data(span, job, retry_count: nil)
+        return unless span
+
+        span.set_data("messaging.message.id", job.job_id)
+        span.set_data("messaging.destination.name", job.queue_name) if job.respond_to?(:queue_name)
+        span.set_data("messaging.message.retry.count", retry_count) if retry_count
+      end
+
+      # Start transaction with trace propagation
+      def start_transaction(scope, trace_headers)
+        options = {
+          name: scope.transaction_name,
+          source: scope.transaction_source,
+          op: "queue.process",
+          origin: "auto.queue.active_job"
+        }
+
+        transaction = ::Sentry.continue_trace(trace_headers, **options)
+        ::Sentry.start_transaction(transaction: transaction, **options)
+      end
+
+      # Finish transaction with proper status
+      def finish_transaction(transaction, status)
+        return unless transaction
+
+        transaction.set_http_status(status)
+        transaction.finish
+      end
+
+      private
+
+
       class SentryReporter
         OP_NAME = "queue.active_job"
         SPAN_ORIGIN = "auto.queue.active_job"
@@ -32,19 +105,32 @@ module Sentry
             Sentry.with_scope do |scope|
               begin
                 scope.set_transaction_name(job.class.name, source: :task)
-                transaction =
-                  if job.is_a?(::Sentry::SendEventJob)
-                    nil
-                  else
-                    Sentry.start_transaction(
-                      name: scope.transaction_name,
-                      source: scope.transaction_source,
-                      op: OP_NAME,
-                      origin: SPAN_ORIGIN
-                    )
-                  end
+
+                # Restore user context if available
+                if job._sentry && (user = job._sentry["user"])
+                  scope.set_user(user)
+                end
+
+                # Set up transaction with trace propagation
+                transaction = nil
+                if job._sentry && job._sentry["trace_propagation_headers"]
+                  transaction = job.start_transaction(scope, job._sentry["trace_propagation_headers"])
+                else
+                  transaction = Sentry.start_transaction(
+                    name: scope.transaction_name,
+                    source: scope.transaction_source,
+                    op: OP_NAME,
+                    origin: SPAN_ORIGIN
+                  ) unless job.is_a?(::Sentry::SendEventJob)
+                end
 
                 scope.set_span(transaction) if transaction
+
+                # Add enhanced span data
+                if transaction
+                  retry_count = job.executions.is_a?(Integer) ? job.executions - 1 : 0
+                  job.set_span_data(transaction, job, retry_count: retry_count)
+                end
 
                 yield.tap do
                   finish_sentry_transaction(transaction, 200)

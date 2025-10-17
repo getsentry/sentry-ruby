@@ -12,9 +12,11 @@ Sentry.init do |config|
   config.logger = Logger.new(STDOUT)
 
   # Good Job specific configuration
-  config.good_job.report_after_job_retries = false
-  config.good_job.include_job_arguments = true
   config.good_job.logging_enabled = true
+
+  # ActiveJob configuration (handled by sentry-rails)
+  config.rails.active_job_report_on_retry_error = false
+  config.send_default_pii = true  # Include job arguments
 end
 
 # Example job classes

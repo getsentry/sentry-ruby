@@ -1,11 +1,12 @@
 # frozen_string_literal: true
 
-# Sentry Cron Monitoring for Good Job
-# This module provides comprehensive cron monitoring for Good Job scheduled tasks
-# Following Good Job's extension patterns and Sentry's integration guidelines
+# Sentry Cron Monitoring for Active Job
+# This module provides comprehensive cron monitoring for Active Job scheduled tasks
+# It works with any Active Job adapter, including GoodJob
+# Following Active Job's extension patterns and Sentry's integration guidelines
 module Sentry
   module GoodJob
-    module CronMonitoring
+    module CronHelpers
       # Utility methods for cron parsing and configuration
       # These methods handle the conversion between Good Job cron expressions and Sentry monitor configs
       module Helpers
@@ -67,57 +68,73 @@ module Sentry
         # Set up monitoring for all scheduled jobs from Good Job configuration
         def self.setup_monitoring_for_scheduled_jobs
           return unless ::Sentry.initialized?
-          return unless ::Sentry.configuration.good_job.auto_setup_cron_monitoring
+          return unless ::Sentry.configuration.good_job.enable_cron_monitors
 
           cron_config = ::Rails.application.config.good_job.cron
           return unless cron_config.present?
 
-          cron_config.each do |job_name, job_config|
-            setup_monitoring_for_job(job_name, job_config)
+          cron_config.each do |cron_key, job_config|
+            setup_monitoring_for_job(cron_key, job_config)
           end
 
           Sentry::GoodJob::Logger.info "Sentry cron monitoring setup for #{cron_config.keys.size} scheduled jobs"
         end
 
         # Set up monitoring for a specific job
-        def self.setup_monitoring_for_job(job_name, job_config)
+        def self.setup_monitoring_for_job(cron_key, job_config)
           job_class_name = job_config[:class]
           cron_expression = job_config[:cron]
 
           return unless job_class_name && cron_expression
 
-          # Get the job class
-          job_class = begin
-            job_class_name.constantize
-          rescue NameError => e
-            Sentry::GoodJob::Logger.warn "Could not find job class '#{job_class_name}' for Sentry cron monitoring: #{e.message}"
-            return
-          end
+          # Defer job class constantization to avoid boot-time issues
+          # The job class will be constantized when the job is actually executed
+          # This prevents issues during development boot and circular dependencies
 
-          # Set up job monitoring if not already set up
-          Sentry::GoodJob::JobMonitor.setup_for_job_class(job_class)
+          # Store the monitoring configuration for later use
+          # We'll set up the monitoring when the job class is first loaded
+          deferred_setup = lambda do
+            job_class = begin
+              job_class_name.constantize
+            rescue NameError => e
+              Sentry::GoodJob::Logger.warn "Could not find job class '#{job_class_name}' for Sentry cron monitoring: #{e.message}"
+              return
+            end
 
-          # Parse cron expression and create monitor config
-          cron_without_tz, timezone = Sentry::GoodJob::CronMonitoring::Helpers.parse_cron_with_timezone(cron_expression)
-          monitor_config = Sentry::GoodJob::CronMonitoring::Helpers.monitor_config_from_cron(cron_without_tz, timezone: timezone)
-
-          if monitor_config
-            # Configure Sentry cron monitoring - use job_name as slug for consistency
-            monitor_slug = Sentry::GoodJob::CronMonitoring::Helpers.monitor_slug(job_name)
-
+            # Include Sentry::Cron::MonitorCheckIns module for cron monitoring
             # only patch if not explicitly included in job by user
             unless job_class.ancestors.include?(Sentry::Cron::MonitorCheckIns)
               job_class.include(Sentry::Cron::MonitorCheckIns)
             end
 
-            job_class.sentry_monitor_check_ins(
-              slug: monitor_slug,
-              monitor_config: monitor_config
-            )
+            # Parse cron expression and create monitor config
+            cron_without_tz, timezone = Sentry::GoodJob::CronHelpers::Helpers.parse_cron_with_timezone(cron_expression)
+            monitor_config = Sentry::GoodJob::CronHelpers::Helpers.monitor_config_from_cron(cron_without_tz, timezone: timezone)
 
-            Sentry::GoodJob::Logger.info "Added Sentry cron monitoring for #{job_class_name} (#{monitor_slug})"
+            if monitor_config
+              # Configure Sentry cron monitoring - use cron_key as slug for consistency
+              monitor_slug = Sentry::GoodJob::CronHelpers::Helpers.monitor_slug(cron_key)
+
+              job_class.sentry_monitor_check_ins(
+                slug: monitor_slug,
+                monitor_config: monitor_config
+              )
+
+              Sentry::GoodJob::Logger.info "Added Sentry cron monitoring for #{job_class_name} (#{monitor_slug})"
+            else
+              Sentry::GoodJob::Logger.warn "Could not create monitor config for #{job_class_name} with cron '#{cron_expression}'"
+            end
+          end
+
+          # Set up monitoring when the job class is first loaded
+          # This defers constantization until the job is actually needed
+          if defined?(Rails) && Rails.application
+            Rails.application.config.after_initialize do
+              deferred_setup.call
+            end
           else
-            Sentry::GoodJob::Logger.warn "Could not create monitor config for #{job_class_name} with cron '#{cron_expression}'"
+            # Fallback for non-Rails environments
+            deferred_setup.call
           end
         end
 
@@ -125,19 +142,22 @@ module Sentry
         def self.add_monitoring_to_job(job_class, slug: nil, cron_expression: nil, timezone: nil)
           return unless ::Sentry.initialized?
 
-          # Set up job monitoring if not already set up
-          Sentry::GoodJob::JobMonitor.setup_for_job_class(job_class)
+          # Include Sentry::Cron::MonitorCheckIns module for cron monitoring
+          # only patch if not explicitly included in job by user
+          unless job_class.ancestors.include?(Sentry::Cron::MonitorCheckIns)
+            job_class.include(Sentry::Cron::MonitorCheckIns)
+          end
 
           # Create monitor config
           monitor_config = if cron_expression
-            Sentry::GoodJob::CronMonitoring::Helpers.monitor_config_from_cron(cron_expression, timezone: timezone)
+            Sentry::GoodJob::CronHelpers::Helpers.monitor_config_from_cron(cron_expression, timezone: timezone)
           else
             # Default to hourly monitoring if no cron expression provided
             ::Sentry::Cron::MonitorConfig.from_crontab("0 * * * *")
           end
 
           if monitor_config
-            monitor_slug = slug || Sentry::GoodJob::CronMonitoring::Helpers.monitor_slug(job_class.name)
+            monitor_slug = slug || Sentry::GoodJob::CronHelpers::Helpers.monitor_slug(job_class.name)
 
             # only patch if not explicitly included in job by user
             unless job_class.ancestors.include?(Sentry::Cron::MonitorCheckIns)

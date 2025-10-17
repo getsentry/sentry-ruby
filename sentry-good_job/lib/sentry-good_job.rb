@@ -5,10 +5,10 @@ require "sentry-ruby"
 require "sentry/integrable"
 require "sentry/good_job/version"
 require "sentry/good_job/configuration"
-require "sentry/good_job/error_handler"
 require "sentry/good_job/logger"
-require "sentry/good_job/job_monitor"
-require "sentry/good_job/cron_monitoring"
+require "sentry/good_job/context_helpers"
+require "sentry/good_job/active_job_extensions"
+require "sentry/good_job/cron_helpers"
 
 module Sentry
   module GoodJob
@@ -21,10 +21,6 @@ module Sentry
         config.after_initialize do
           next unless Sentry.initialized? && defined?(::Sentry::Rails)
 
-          # Skip ActiveJob error reporting when using Good Job as the backend
-          # since we handle it ourselves
-          Sentry.configuration.rails.skippable_job_adapters << "ActiveJob::QueueAdapters::GoodJobAdapter"
-
           # Automatic setup for Good Job when the integration is enabled
           if Sentry.configuration.enabled_patches.include?(:good_job)
             Sentry::GoodJob.setup_good_job_integration
@@ -34,12 +30,12 @@ module Sentry
     end
 
     def self.setup_good_job_integration
-      # Sentry Rails integration already handles ActiveJob exceptions automatically
-      # No need for custom error handling
+      # Enhance sentry-rails ActiveJob integration with GoodJob-specific context
+      Sentry::GoodJob::ActiveJobExtensions.setup
 
       # Set up cron monitoring for all scheduled jobs (automatically configured from Good Job config)
-      if Sentry.configuration.good_job.auto_setup_cron_monitoring
-        Sentry::GoodJob::CronMonitoring::Integration.setup_monitoring_for_scheduled_jobs
+      if Sentry.configuration.good_job.enable_cron_monitors
+        Sentry::GoodJob::CronHelpers::Integration.setup_monitoring_for_scheduled_jobs
       end
 
       Sentry::GoodJob::Logger.info "Sentry Good Job integration initialized automatically"

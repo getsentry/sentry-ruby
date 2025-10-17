@@ -11,11 +11,7 @@ RSpec.describe Sentry::GoodJob::Configuration do
 
   describe "default values" do
     it "sets default values correctly" do
-      expect(config.report_after_job_retries).to eq(false)
-      expect(config.report_only_discarded_jobs).to eq(false)
-      expect(config.propagate_traces).to eq(true)
-      expect(config.include_job_arguments).to eq(false)
-      expect(config.auto_setup_cron_monitoring).to eq(true)
+      expect(config.enable_cron_monitors).to eq(true)
       expect(config.logging_enabled).to eq(false)
       expect(config.logger).to be_nil
     end
@@ -31,29 +27,15 @@ RSpec.describe Sentry::GoodJob::Configuration do
   end
 
   describe "configuration attributes" do
-    it "allows setting report_after_job_retries" do
-      config.report_after_job_retries = true
-      expect(config.report_after_job_retries).to eq(true)
-    end
+    # Removed configuration options that are now handled by sentry-rails:
+    # - report_after_job_retries (use sentry-rails active_job_report_on_retry_error)
+    # - report_only_discarded_jobs (handled by ActiveJob retry/discard logic)
+    # - propagate_traces (handled by sentry-rails)
+    # - include_job_arguments (use sentry-rails send_default_pii)
 
-    it "allows setting report_only_discarded_jobs" do
-      config.report_only_discarded_jobs = true
-      expect(config.report_only_discarded_jobs).to eq(true)
-    end
-
-    it "allows setting propagate_traces" do
-      config.propagate_traces = false
-      expect(config.propagate_traces).to eq(false)
-    end
-
-    it "allows setting include_job_arguments" do
-      config.include_job_arguments = true
-      expect(config.include_job_arguments).to eq(true)
-    end
-
-    it "allows setting auto_setup_cron_monitoring" do
-      config.auto_setup_cron_monitoring = false
-      expect(config.auto_setup_cron_monitoring).to eq(false)
+    it "allows setting enable_cron_monitors" do
+      config.enable_cron_monitors = false
+      expect(config.enable_cron_monitors).to eq(false)
     end
 
     it "allows setting logging_enabled" do
