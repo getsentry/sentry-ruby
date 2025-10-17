@@ -194,12 +194,12 @@ RSpec.describe Sentry::GoodJob::CronHelpers do
 
         it "logs the setup completion" do
           described_class::Integration.reset_setup_state!
-          allow(described_class::Integration).to receive(:setup_monitoring_for_job)
+          allow(described_class::Integration).to receive(:setup_monitoring_for_job).and_return("TestJob", "AnotherJob")
           allow(Sentry::GoodJob::Logger).to receive(:info)
 
           described_class::Integration.setup_monitoring_for_scheduled_jobs
 
-          expect(Sentry::GoodJob::Logger).to have_received(:info).with("Sentry cron monitoring setup for 2 scheduled jobs")
+          expect(Sentry::GoodJob::Logger).to have_received(:info).with("Sentry cron monitoring setup for 2 scheduled jobs: TestJob, AnotherJob")
         end
       end
     end
@@ -262,15 +262,14 @@ RSpec.describe Sentry::GoodJob::CronHelpers do
           described_class::Integration.setup_monitoring_for_job("test_job", job_config)
         end
 
-        it "logs the setup completion" do
+        it "returns the job name when setup is successful" do
           allow(job_class).to receive(:sentry_monitor_check_ins)
-          allow(Sentry::GoodJob::Logger).to receive(:info)
           # Mock Rails.application.config.after_initialize to execute immediately
           allow(Rails.application.config).to receive(:after_initialize).and_yield
 
-          described_class::Integration.setup_monitoring_for_job("test_job", job_config)
+          result = described_class::Integration.setup_monitoring_for_job("test_job", job_config)
 
-          expect(Sentry::GoodJob::Logger).to have_received(:info).with(/Added Sentry cron monitoring for TestJob/)
+          expect(result).to eq("TestJob")
         end
       end
     end

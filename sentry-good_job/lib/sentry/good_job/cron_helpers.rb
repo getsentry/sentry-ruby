@@ -78,12 +78,19 @@ module Sentry
           cron_config = ::Rails.application.config.good_job.cron
           return unless cron_config.present?
 
+          added_jobs = []
           cron_config.each do |cron_key, job_config|
-            setup_monitoring_for_job(cron_key, job_config)
+            job_name = setup_monitoring_for_job(cron_key, job_config)
+            added_jobs << job_name if job_name
           end
 
           @setup_completed = true
-          Sentry::GoodJob::Logger.info "Sentry cron monitoring setup for #{cron_config.keys.size} scheduled jobs"
+          if added_jobs.any?
+            job_list = added_jobs.join(", ")
+            Sentry::GoodJob::Logger.info "Sentry cron monitoring setup for #{added_jobs.size} scheduled jobs: #{job_list}"
+          else
+            Sentry::GoodJob::Logger.info "Sentry cron monitoring setup for #{cron_config.keys.size} scheduled jobs"
+          end
         end
 
         # Reset setup state (primarily for testing)
@@ -109,7 +116,7 @@ module Sentry
               job_class_name.constantize
             rescue NameError => e
               Sentry::GoodJob::Logger.warn "Could not find job class '#{job_class_name}' for Sentry cron monitoring: #{e.message}"
-              return
+              return nil
             end
 
             # Include Sentry::Cron::MonitorCheckIns module for cron monitoring
@@ -131,9 +138,10 @@ module Sentry
                 monitor_config: monitor_config
               )
 
-              Sentry::GoodJob::Logger.info "Added Sentry cron monitoring for #{job_class_name} (#{monitor_slug})"
+              return job_class_name
             else
               Sentry::GoodJob::Logger.warn "Could not create monitor config for #{job_class_name} with cron '#{cron_expression}'"
+              return nil
             end
           end
 
