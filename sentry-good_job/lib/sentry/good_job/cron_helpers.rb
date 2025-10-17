@@ -138,10 +138,10 @@ module Sentry
                 monitor_config: monitor_config
               )
 
-              return job_class_name
+              job_class_name
             else
               Sentry.configuration.sdk_logger.warn "[sentry-good_job] Could not create monitor config for #{job_class_name} with cron '#{cron_expression}'"
-              return
+              nil
             end
           end
 
