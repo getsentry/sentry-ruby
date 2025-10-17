@@ -113,22 +113,28 @@ module Sentry
 
                 # Set up transaction with trace propagation
                 transaction = nil
-                if job._sentry && job._sentry["trace_propagation_headers"]
-                  transaction = job.start_transaction(scope, job._sentry["trace_propagation_headers"])
-                else
-                  transaction = Sentry.start_transaction(
-                    name: scope.transaction_name,
-                    source: scope.transaction_source,
-                    op: OP_NAME,
-                    origin: SPAN_ORIGIN
-                  ) unless job.is_a?(::Sentry::SendEventJob)
+                unless job.is_a?(::Sentry::SendEventJob)
+                  if job._sentry && job._sentry["trace_propagation_headers"]
+                    transaction = job.start_transaction(scope, job._sentry["trace_propagation_headers"])
+                  else
+                    transaction = Sentry.start_transaction(
+                      name: scope.transaction_name,
+                      source: scope.transaction_source,
+                      op: OP_NAME,
+                      origin: SPAN_ORIGIN
+                    )
+                  end
                 end
 
                 scope.set_span(transaction) if transaction
 
                 # Add enhanced span data
                 if transaction
-                  retry_count = job.executions.is_a?(Integer) ? job.executions - 1 : 0
+                  retry_count = if job.respond_to?(:executions) && job.executions.is_a?(Integer)
+                    job.executions - 1
+                  else
+                    0
+                  end
                   job.set_span_data(transaction, job, retry_count: retry_count)
                 end
 

@@ -61,6 +61,32 @@ RSpec.describe "Sentry::SendEventJob" do
       expect(event.type).to eq("event")
     end
 
+    it "doesn't create a new transaction even with trace propagation headers" do
+      make_basic_app do |config|
+        config.traces_sample_rate = 1.0
+      end
+
+      # Start a transaction to create trace propagation headers
+      transaction = Sentry.start_transaction
+      Sentry.get_current_scope.set_span(transaction)
+
+      # Create a SendEventJob with trace propagation headers
+      job = Sentry::SendEventJob.new
+      job._sentry = {
+        "trace_propagation_headers" => Sentry.get_trace_propagation_headers
+      }
+
+      # Set the arguments for the job
+      job.arguments = [event, {}]
+
+      # Perform the job
+      job.perform_now
+
+      expect(transport.events.count).to eq(1)
+      event = transport.events.first
+      expect(event.type).to eq("event")
+    end
+
     context "when ApplicationJob is not defined" do
       before do
         make_basic_app
