@@ -78,7 +78,7 @@ module Sentry
         }
 
         transaction = ::Sentry.continue_trace(trace_headers, **options)
-        ::Sentry.start_transaction(transaction: transaction, **options)
+        ::Sentry.start_transaction(transaction: transaction)
       end
 
       # Finish transaction with proper status
