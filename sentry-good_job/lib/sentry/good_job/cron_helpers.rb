@@ -116,7 +116,7 @@ module Sentry
               job_class_name.constantize
             rescue NameError => e
               Sentry::GoodJob::Logger.warn "Could not find job class '#{job_class_name}' for Sentry cron monitoring: #{e.message}"
-              return nil
+              return
             end
 
             # Include Sentry::Cron::MonitorCheckIns module for cron monitoring
@@ -141,7 +141,7 @@ module Sentry
               return job_class_name
             else
               Sentry::GoodJob::Logger.warn "Could not create monitor config for #{job_class_name} with cron '#{cron_expression}'"
-              return nil
+              return
             end
           end
 
@@ -155,6 +155,9 @@ module Sentry
             # Fallback for non-Rails environments
             deferred_setup.call
           end
+
+          # Return the job name for logging purposes
+          job_class_name
         end
 
         # Manually add cron monitoring to a specific job
@@ -177,11 +180,6 @@ module Sentry
 
           if monitor_config
             monitor_slug = slug || Sentry::GoodJob::CronHelpers::Helpers.monitor_slug(job_class.name)
-
-            # only patch if not explicitly included in job by user
-            unless job_class.ancestors.include?(Sentry::Cron::MonitorCheckIns)
-              job_class.include(Sentry::Cron::MonitorCheckIns)
-            end
 
             job_class.sentry_monitor_check_ins(
               slug: monitor_slug,
