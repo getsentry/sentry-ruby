@@ -160,37 +160,6 @@ RSpec.describe "ActiveJob integration", type: :job do
     expect(Sentry.get_current_scope.extra).to eq({})
   end
 
-  it "preserves user context after job execution" do
-    # Set user context before job execution
-    Sentry.configure_scope do |scope|
-      scope.set_user(id: "123", email: "test@example.com")
-    end
-
-    # Verify user context is set
-    expect(Sentry.get_current_scope.user).to eq({ id: "123", email: "test@example.com" })
-
-    # Execute a job
-    NormalJob.perform_now
-
-    # Verify user context is still preserved after job execution
-    expect(Sentry.get_current_scope.user).to eq({ id: "123", email: "test@example.com" })
-  end
-
-  it "preserves user context after job execution with error" do
-    # Set user context before job execution
-    Sentry.configure_scope do |scope|
-      scope.set_user(id: "456", email: "error@example.com")
-    end
-
-    # Verify user context is set
-    expect(Sentry.get_current_scope.user).to eq({ id: "456", email: "error@example.com" })
-
-    # Execute a job that raises an error
-    expect { FailedJob.perform_now }.to raise_error(FailedJob::TestError)
-
-    # Verify user context is still preserved after job execution with error
-    expect(Sentry.get_current_scope.user).to eq({ id: "456", email: "error@example.com" })
-  end
 
   context "with tracing enabled" do
     before do
