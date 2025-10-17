@@ -25,6 +25,8 @@ The official Ruby-language client and integration layer for the [Sentry](https:/
 
 ```ruby
 gem "sentry-ruby"
+gem "sentry-rails"
+gem "good_job"
 gem "sentry-good_job"
 ```
 
@@ -52,7 +54,10 @@ Sentry.init do |config|
   
   # ActiveJob configuration (handled by sentry-rails)
   config.rails.active_job_report_on_retry_error = false
-  config.send_default_pii = false  # Controls job arguments inclusion
+  config.send_default_pii = false
+
+  # Optional: Configure logging for debugging
+  config.sdk_logger = Rails.logger
 end
 ```
 
@@ -66,19 +71,11 @@ end
 
 - `config.rails.active_job_report_on_retry_error` (default: `false`): Only report errors after all retry attempts are exhausted
 - `config.send_default_pii` (default: `false`): Include job arguments in error context (be careful with sensitive data)
+- `config.sdk_logger` (default: `nil`): Configure the SDK logger for custom logging needs (general Sentry configuration)
 
 **Note**: The Good Job integration now leverages sentry-rails for core ActiveJob functionality, including trace propagation, user context preservation, and error reporting. This provides better integration and reduces duplication.
 
 ## Usage
-
-### Basic Setup
-
-The integration works automatically once installed. It will:
-
-1. Capture exceptions from ActiveJob workers
-2. Set up performance monitoring for job execution
-3. Automatically configure cron monitoring for scheduled jobs
-4. Preserve user context and trace propagation
 
 ### Automatic Setup
 
@@ -108,7 +105,12 @@ You can also manually set up cron monitoring:
 
 ```ruby
 class MyScheduledJob < ApplicationJob
-  sentry_cron_monitor "0 * * * *", timezone: "UTC"
+  include Sentry::Cron::MonitorCheckIns
+
+  sentry_monitor_check_ins(
+    slug: "my_scheduled_job",
+    monitor_config: Sentry::Cron::MonitorConfig.from_crontab("0 * * * *", timezone: "UTC")
+  )
 end
 ```
 
@@ -142,24 +144,6 @@ Sentry.init do |config|
   # Or use Rails logger with debug level
   # config.sdk_logger = Rails.logger
   # config.sdk_logger.level = Logger::DEBUG
-end
-```
-
-#### Custom Logger Configuration
-
-For more advanced logging needs, you can provide a custom logger:
-
-```ruby
-# Custom logger with specific formatting
-custom_logger = Logger.new('log/sentry-good_job.log')
-custom_logger.formatter = proc do |severity, datetime, progname, msg|
-  "[#{datetime}] #{severity}: #{msg}\n"
-end
-
-Sentry.init do |config|
-  config.dsn = 'your-dsn-here'
-  config.sdk_logger = custom_logger
-  config.sdk_logger.level = Logger::INFO
 end
 ```
 
