@@ -229,6 +229,92 @@ RSpec.describe 'Sentry::Rack::CaptureExceptions', when: :rack_available? do
         expect(Sentry.get_current_scope.tags).to eq(tag_1: "don't change me")
       end
     end
+
+    context "with send_default_pii" do
+      before do
+        perform_basic_setup do |config|
+          config.send_default_pii = true
+        end
+      end
+
+      context "with form data" do
+        let(:additional_headers) do
+          { "REQUEST_METHOD" => "POST", ::Rack::RACK_INPUT => StringIO.new("foo=bar") }
+        end
+
+        it "captures the exception with request form data" do
+          app = ->(_e) { raise exception }
+          stack = Sentry::Rack::CaptureExceptions.new(app)
+
+          expect { stack.call(env) }.to raise_error(ZeroDivisionError)
+
+          event = last_sentry_event.to_h
+          expect(event.dig(:request, :url)).to eq("http://example.org/test")
+          expect(event.dig(:request, :data)).to eq({ "foo" => "bar" })
+        end
+
+        it "allows later middlewares to read body" do
+          app = ->(_e) { raise exception }
+          stack = Sentry::Rack::CaptureExceptions.new(app)
+
+          expect { stack.call(env) }.to raise_error(ZeroDivisionError)
+          expect { ::Rack::Request.new(env).body.read }.not_to raise_error
+        end
+      end
+
+      context "with rewindable non form data" do
+        let(:additional_headers) do
+          { "REQUEST_METHOD" => "POST", "CONTENT_TYPE" => "application/text", ::Rack::RACK_INPUT => StringIO.new("stuff") }
+        end
+
+        it "captures the exception with request form data" do
+          app = ->(_e) { raise exception }
+          stack = Sentry::Rack::CaptureExceptions.new(app)
+
+          expect { stack.call(env) }.to raise_error(ZeroDivisionError)
+
+          event = last_sentry_event.to_h
+          expect(event.dig(:request, :url)).to eq("http://example.org/test")
+          expect(event.dig(:request, :data)).to eq("stuff")
+        end
+
+        it "allows later middlewares to read body" do
+          app = ->(_e) { raise exception }
+          stack = Sentry::Rack::CaptureExceptions.new(app)
+
+          expect { stack.call(env) }.to raise_error(ZeroDivisionError)
+          expect { ::Rack::Request.new(env).body.read }.not_to raise_error
+        end
+      end
+
+      context "with non rewindable non form data" do
+        let(:dbl) { double }
+        let(:additional_headers) do
+          { "REQUEST_METHOD" => "POST", "CONTENT_TYPE" => "application/text", ::Rack::RACK_INPUT => dbl }
+        end
+
+        it "does not try to read non rewindable body" do
+          app = ->(_e) { raise exception }
+          stack = Sentry::Rack::CaptureExceptions.new(app)
+
+          expect { stack.call(env) }.to raise_error(ZeroDivisionError)
+
+          event = last_sentry_event.to_h
+          expect(event.dig(:request, :url)).to eq("http://example.org/test")
+          expect(event.dig(:request, :data)).to eq("Skipped non-rewindable request body")
+        end
+
+        it "allows later middlewares to read body" do
+          allow(dbl).to receive(:read)
+
+          app = ->(_e) { raise exception }
+          stack = Sentry::Rack::CaptureExceptions.new(app)
+
+          expect { stack.call(env) }.to raise_error(ZeroDivisionError)
+          expect { ::Rack::Request.new(env).body.read }.not_to raise_error
+        end
+      end
+    end
   end
 
   describe "performance monitoring" do
