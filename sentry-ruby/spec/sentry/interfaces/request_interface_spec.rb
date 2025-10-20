@@ -182,6 +182,21 @@ RSpec.describe Sentry::RequestInterface do
       expect(subject.data).to eq("catch me")
     end
 
+    it "does not try to read non rewindable body" do
+      env.merge!(::Rack::RACK_INPUT => double)
+
+      expect(subject.data).to eq("Skipped non-rewindable request body")
+    end
+
+    it "reads rewindable body" do
+      dbl = double
+      allow(dbl).to receive(:rewind)
+      allow(dbl).to receive(:read).and_return("stuff")
+      env.merge!(::Rack::RACK_INPUT => dbl)
+
+      expect(subject.data).to eq("stuff")
+    end
+
     it "stores Authorization header" do
       env.merge!("HTTP_AUTHORIZATION" => "Basic YWxhZGRpbjpvcGVuc2VzYW1l")
 

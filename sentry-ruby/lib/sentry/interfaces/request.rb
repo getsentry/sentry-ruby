@@ -69,6 +69,8 @@ module Sentry
     private
 
     def read_data_from(request)
+      return "Skipped non-rewindable request body" unless request.body.respond_to?(:rewind)
+
       if request.form_data?
         request.POST
       elsif request.body # JSON requests, etc

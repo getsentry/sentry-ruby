@@ -45,6 +45,7 @@
   ```
 - Add `config.profiles_sample_interval` to control sampling frequency ([#2745](https://github.com/getsentry/sentry-ruby/pull/2745))
   - Both `stackprof` and `vernier` now get sampled at a default frequency of 101 Hz.
+- Request body reading checks for `:rewind` to match Rack 3 behavior. ([#2754](https://github.com/getsentry/sentry-ruby/pull/2754))
 
 ### Internal
 
