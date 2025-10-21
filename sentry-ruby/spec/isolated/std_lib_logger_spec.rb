@@ -57,7 +57,7 @@ RSpec.describe Sentry::StdLibLogger do
 
           expect(log_event[:level]).to eql(level)
           expect(log_event[:body]).to eql("Hello World")
-          expect(log_event[:attributes]["sentry.origin"][:value]).to eq("auto.logger.ruby.std_logger")
+          expect(log_event[:attributes]["sentry.origin"][:value]).to eq("auto.log.ruby.std_logger")
         end
       end
     end

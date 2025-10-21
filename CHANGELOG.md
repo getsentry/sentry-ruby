@@ -1,4 +1,4 @@
-## Unreleased (6.0.0)
+## 6.0.0
 
 ### Breaking Changes
 
@@ -51,6 +51,12 @@
 
 - Archive [`sentry-raven`](https://github.com/getsentry/raven-ruby) ([#2708](https://github.com/getsentry/sentry-ruby/pull/2708))
 - Don't send `sample_rate` client reports for profiles if profiling is disabled ([#2728](https://github.com/getsentry/sentry-ruby/pull/2728))
+
+## 5.28.1
+
+### Bug Fixes
+
+- The `sentry.origin` log event attribute is now correctly prefixed with `auto.log` ([#2749](https://github.com/getsentry/sentry-ruby/pull/2749))
 
 ## 5.28.0
 
