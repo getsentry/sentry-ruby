@@ -1,5 +1,9 @@
 ## 5.28.1
 
+### Features
+
+- Include `Delayed::Job` instance in hint [#1861](https://github.com/getsentry/sentry-ruby/pull/1861)
+
 ### Bug Fixes
 
 - The `sentry.origin` log event attribute is now correctly prefixed with `auto.log` ([#2749](https://github.com/getsentry/sentry-ruby/pull/2749))
