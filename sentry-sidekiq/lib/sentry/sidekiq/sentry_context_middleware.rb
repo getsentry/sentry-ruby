@@ -91,7 +91,7 @@ module Sentry
         }
 
         transaction = Sentry.continue_trace(env, **options)
-        Sentry.start_transaction(transaction: transaction, **options)
+        Sentry.start_transaction(transaction: transaction)
       end
 
       def finish_transaction(transaction, status)

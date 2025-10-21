@@ -160,6 +160,7 @@ RSpec.describe "ActiveJob integration", type: :job do
     expect(Sentry.get_current_scope.extra).to eq({})
   end
 
+
   context "with tracing enabled" do
     before do
       make_basic_app do |config|
