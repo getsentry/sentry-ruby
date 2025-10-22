@@ -20,7 +20,7 @@ RSpec.describe Sentry::Rails::Tracing::ActionViewSubscriber, :subscriber, type: 
 
       expect(transport.events.count).to eq(1)
 
-      transaction = transport.events.first.to_hash
+      transaction = transport.events.first.to_h
       expect(transaction[:type]).to eq("transaction")
       expect(transaction[:spans].count).to eq(2)
 
@@ -39,7 +39,7 @@ RSpec.describe Sentry::Rails::Tracing::ActionViewSubscriber, :subscriber, type: 
     end
 
     it "doesn't record spans" do
-      transaction = Sentry::Transaction.new(sampled: false, hub: Sentry.get_current_hub)
+      transaction = Sentry::Transaction.new(sampled: false)
       Sentry.get_current_scope.set_span(transaction)
 
       get "/view"

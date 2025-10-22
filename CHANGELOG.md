@@ -1,3 +1,57 @@
+## 6.0.0
+
+### Breaking Changes
+
+- Drop support for rubies below 2.7 [#2743](https://github.com/getsentry/sentry-ruby/pull/2743)
+  - Drop support for Rails below 5.2.0
+  - Drop support for Sidekiq below 5.0
+- Remove deprecated `config.async` [#1894](https://github.com/getsentry/sentry-ruby/pull/1894)
+- Remove deprecated `Sentry::Metrics` and `config.metrics` and all metrics related code ([#2729](https://github.com/getsentry/sentry-ruby/pull/2729))
+- Remove deprecated `config.capture_exception_frame_locals`, use `include_local_variables` instead ([#2730](https://github.com/getsentry/sentry-ruby/pull/2730))
+- Remove deprecated `config.enable_tracing`, use `config.traces_sample_rate = 1.0` instead ([#2731](https://github.com/getsentry/sentry-ruby/pull/2731))
+- Remove deprecated `config.logger=`, use `config.sdk_logger=` instead ([#2732](https://github.com/getsentry/sentry-ruby/pull/2732))
+- `Sentry.logger` now always points to the `StructuredLogger` ([#2752](https://github.com/getsentry/sentry-ruby/pull/2752))
+- Remove deprecated `Sentry::Rails::Tracing::ActionControllerSubscriber` ([#2733](https://github.com/getsentry/sentry-ruby/pull/2733))
+- Remove deprecated `Event#configuration` ([#2740](https://github.com/getsentry/sentry-ruby/pull/2740))
+- Remove deprecated `Sentry::Client#generate_sentry_trace` and `Sentry::Client#generate_baggage` ([#2741](https://github.com/getsentry/sentry-ruby/pull/2741))
+- Remove `Transaction` deprecations ([#2736](https://github.com/getsentry/sentry-ruby/pull/2736))
+  - Remove deprecated constant `Sentry::Transaction::SENTRY_TRACE_REGEXP`, use `Sentry::PropagationContext::SENTRY_TRACE_REGEXP` instead
+  - Remove deprecated method `Sentry::Transaction.from_sentry_trace`, use `Sentry.continue_trace` instead
+  - Remove deprecated method `Sentry::Transaction.extract_sentry_trace`, use `Sentry::PropagationContext.extract_sentry_trace` instead
+  - Remove deprecated attribute `Sentry::Transaction.configuration`
+  - Remove deprecated attribute `Sentry::Transaction.hub`
+  - Remove deprecated argument `hub` to `Sentry::Transaction.finish`
+  - Remove deprecated argument `hub` to `Sentry::Transaction#initialize` ([#2739](https://github.com/getsentry/sentry-ruby/pull/2739))
+- Remove `:monotonic_active_support_logger` from `config.breadcrumbs_logger` ([#2717](https://github.com/getsentry/sentry-ruby/pull/2717))
+- Migrate from to_hash to to_h ([#2351](https://github.com/getsentry/sentry-ruby/pull/2351))
+- Add `before_send_check_in` for applying to `CheckInEvent` ([#2703](https://github.com/getsentry/sentry-ruby/pull/2703))
+- Returning a hash from `before_send` and `before_send_transaction` is no longer supported and will drop the event.
+- `config.enabled_environments` now defaults to `nil` instead of `[]` for sending to all environments ([#2716](https://github.com/getsentry/sentry-ruby/pull/2716))
+- Requests which have response status codes in the inclusive ranges `[(301..303), (305..399), (401..404)]` will no longer create transactions by default. See `config.trace_ignore_status_codes` below to control what gets traced.
+- Stacktrace truncation for oversized events now takes 500 frames on each side instead of 250.
+
+### Features
+
+- Add `config.trace_ignore_status_codes` to control which response codes to ignore for tracing ([#2725](https://github.com/getsentry/sentry-ruby/pull/2725))
+
+  You can pass in an Array of individual status codes or ranges of status codes.
+
+  ```ruby
+  Sentry.init do |config|
+      # ...
+      # will ignore 404, 501, 502, 503
+      config.trace_ignore_status_codes = [404, (501..503)]
+  end
+  ```
+- Add `config.profiles_sample_interval` to control sampling frequency ([#2745](https://github.com/getsentry/sentry-ruby/pull/2745))
+  - Both `stackprof` and `vernier` now get sampled at a default frequency of 101 Hz.
+- Request body reading checks for `:rewind` to match Rack 3 behavior. ([#2754](https://github.com/getsentry/sentry-ruby/pull/2754))
+
+### Internal
+
+- Archive [`sentry-raven`](https://github.com/getsentry/raven-ruby) ([#2708](https://github.com/getsentry/sentry-ruby/pull/2708))
+- Don't send `sample_rate` client reports for profiles if profiling is disabled ([#2728](https://github.com/getsentry/sentry-ruby/pull/2728))
+
 ## 5.28.1
 
 ### Bug Fixes

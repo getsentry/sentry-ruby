@@ -16,14 +16,14 @@ RSpec.describe Sentry::Rails::Tracing::ActiveSupportSubscriber, :subscriber, typ
     end
 
     it "tracks cache write" do
-      transaction = Sentry::Transaction.new(sampled: true, hub: Sentry.get_current_hub)
+      transaction = Sentry.start_transaction(sampled: true)
       Sentry.get_current_scope.set_span(transaction)
 
       Rails.cache.write("my_cache_key", "my_cache_value")
       transaction.finish
 
       expect(transport.events.count).to eq(1)
-      cache_transaction = transport.events.first.to_hash
+      cache_transaction = transport.events.first.to_h
       expect(cache_transaction[:type]).to eq("transaction")
 
       expect(cache_transaction[:spans].count).to eq(1)
@@ -37,7 +37,7 @@ RSpec.describe Sentry::Rails::Tracing::ActiveSupportSubscriber, :subscriber, typ
 
       Rails.cache.write("my_cache_key", 0)
 
-      transaction = Sentry::Transaction.new(sampled: true, hub: Sentry.get_current_hub)
+      transaction = Sentry.start_transaction(sampled: true)
       Sentry.get_current_scope.set_span(transaction)
       Rails.cache.increment("my_cache_key")
 
@@ -45,7 +45,7 @@ RSpec.describe Sentry::Rails::Tracing::ActiveSupportSubscriber, :subscriber, typ
 
       expect(Rails.cache.read("my_cache_key")).to eq(1)
       expect(transport.events.count).to eq(1)
-      cache_transaction = transport.events.first.to_hash
+      cache_transaction = transport.events.first.to_h
       expect(cache_transaction[:type]).to eq("transaction")
       expect(cache_transaction[:spans].count).to eq(1)
       expect(cache_transaction[:spans][0][:op]).to eq("cache.put")
@@ -57,14 +57,14 @@ RSpec.describe Sentry::Rails::Tracing::ActiveSupportSubscriber, :subscriber, typ
 
       Rails.cache.write("my_cache_key", 0)
 
-      transaction = Sentry::Transaction.new(sampled: true, hub: Sentry.get_current_hub)
+      transaction = Sentry.start_transaction(sampled: true)
       Sentry.get_current_scope.set_span(transaction)
       Rails.cache.decrement("my_cache_key")
 
       transaction.finish
 
       expect(transport.events.count).to eq(1)
-      cache_transaction = transport.events.first.to_hash
+      cache_transaction = transport.events.first.to_h
       expect(cache_transaction[:type]).to eq("transaction")
       expect(cache_transaction[:spans].count).to eq(1)
       expect(cache_transaction[:spans][0][:op]).to eq("cache.put")
@@ -72,14 +72,14 @@ RSpec.describe Sentry::Rails::Tracing::ActiveSupportSubscriber, :subscriber, typ
     end
 
     it "tracks cache read" do
-      transaction = Sentry::Transaction.new(sampled: true, hub: Sentry.get_current_hub)
+      transaction = Sentry.start_transaction(sampled: true)
       Sentry.get_current_scope.set_span(transaction)
       Rails.cache.read("my_cache_key")
 
       transaction.finish
 
       expect(transport.events.count).to eq(1)
-      cache_transaction = transport.events.first.to_hash
+      cache_transaction = transport.events.first.to_h
       expect(cache_transaction[:type]).to eq("transaction")
       expect(cache_transaction[:spans].count).to eq(1)
       expect(cache_transaction[:spans][0][:op]).to eq("cache.get")
@@ -87,7 +87,7 @@ RSpec.describe Sentry::Rails::Tracing::ActiveSupportSubscriber, :subscriber, typ
     end
 
     it "tracks cache delete" do
-      transaction = Sentry::Transaction.new(sampled: true, hub: Sentry.get_current_hub)
+      transaction = Sentry.start_transaction(sampled: true)
       Sentry.get_current_scope.set_span(transaction)
 
       Rails.cache.read("my_cache_key")
@@ -95,14 +95,14 @@ RSpec.describe Sentry::Rails::Tracing::ActiveSupportSubscriber, :subscriber, typ
       transaction.finish
 
       expect(transport.events.count).to eq(1)
-      cache_transaction = transport.events.first.to_hash
+      cache_transaction = transport.events.first.to_h
       expect(cache_transaction[:type]).to eq("transaction")
       expect(cache_transaction[:spans].count).to eq(1)
       expect(cache_transaction[:spans][0][:op]).to eq("cache.get")
       expect(cache_transaction[:spans][0][:origin]).to eq("auto.cache.rails")
     end
     it "tracks cache prune" do
-      transaction = Sentry::Transaction.new(sampled: true, hub: Sentry.get_current_hub)
+      transaction = Sentry.start_transaction(sampled: true)
       Sentry.get_current_scope.set_span(transaction)
 
       Rails.cache.write("my_cache_key", 123, expires_in: 0.seconds)
@@ -112,7 +112,7 @@ RSpec.describe Sentry::Rails::Tracing::ActiveSupportSubscriber, :subscriber, typ
       transaction.finish
 
       expect(transport.events.count).to eq(1)
-      cache_transaction = transport.events.first.to_hash
+      cache_transaction = transport.events.first.to_h
       expect(cache_transaction[:type]).to eq("transaction")
       expect(cache_transaction[:spans].count).to eq(2)
       expect(cache_transaction[:spans][1][:op]).to eq("cache.flush")
@@ -123,14 +123,14 @@ RSpec.describe Sentry::Rails::Tracing::ActiveSupportSubscriber, :subscriber, typ
       skip("cache.hit is unset on Rails 6.0.x.") if Rails.version.to_i == 6
 
       Rails.cache.write("my_cache_key", "my_cache_value")
-      transaction = Sentry::Transaction.new(sampled: true, hub: Sentry.get_current_hub)
+      transaction = Sentry.start_transaction(sampled: true)
       Sentry.get_current_scope.set_span(transaction)
       Rails.cache.read("my_cache_key")
       Rails.cache.read("my_cache_key_non_existing")
 
       transaction.finish
       expect(transport.events.count).to eq(1)
-      cache_transaction = transport.events.first.to_hash
+      cache_transaction = transport.events.first.to_h
       expect(cache_transaction[:type]).to eq("transaction")
       expect(cache_transaction[:spans].count).to eq(2)
       expect(cache_transaction[:spans][0][:op]).to eq("cache.get")
@@ -146,13 +146,13 @@ RSpec.describe Sentry::Rails::Tracing::ActiveSupportSubscriber, :subscriber, typ
 
     it "tracks cache delete" do
       Rails.cache.write("my_cache_key", "my_cache_value")
-      transaction = Sentry::Transaction.new(sampled: true, hub: Sentry.get_current_hub)
+      transaction = Sentry.start_transaction(sampled: true)
       Sentry.get_current_scope.set_span(transaction)
       Rails.cache.delete("my_cache_key")
 
       transaction.finish
       expect(transport.events.count).to eq(1)
-      cache_transaction = transport.events.first.to_hash
+      cache_transaction = transport.events.first.to_h
       expect(cache_transaction[:type]).to eq("transaction")
       expect(cache_transaction[:spans].count).to eq(1)
       expect(cache_transaction[:spans][0][:op]).to eq("cache.remove")

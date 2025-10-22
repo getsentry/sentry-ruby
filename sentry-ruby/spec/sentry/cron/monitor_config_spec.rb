@@ -43,7 +43,7 @@ RSpec.describe Sentry::Cron::MonitorConfig do
     end
   end
 
-  describe '#to_hash' do
+  describe '#to_h' do
     it 'returns hash with correct attributes for crontab' do
       subject = described_class.from_crontab(
         '5 * * * *',
@@ -52,7 +52,7 @@ RSpec.describe Sentry::Cron::MonitorConfig do
         timezone: 'Europe/Vienna'
       )
 
-      hash = subject.to_hash
+      hash = subject.to_h
       expect(hash).to eq({
         schedule: { type: :crontab, value: '5 * * * *' },
         checkin_margin: 10,
@@ -70,7 +70,7 @@ RSpec.describe Sentry::Cron::MonitorConfig do
         timezone: 'Europe/Vienna'
       )
 
-      hash = subject.to_hash
+      hash = subject.to_h
       expect(hash).to eq({
         schedule: { type: :interval, value: 5, unit: :hour },
         checkin_margin: 10,

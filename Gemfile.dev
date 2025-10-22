@@ -10,14 +10,9 @@ gem "rake", "~> 12.0"
 ruby_version = Gem::Version.new(RUBY_VERSION)
 
 # Development tools
-if ruby_version >= Gem::Version.new("2.7.0")
-  gem "debug", github: "ruby/debug", platform: :ruby
-  gem "irb"
-end
-
-if ruby_version >= Gem::Version.new("2.5")
-  gem "cgi"
-end
+gem "debug", github: "ruby/debug", platform: :ruby
+gem "irb"
+gem "cgi"
 
 if ruby_version >= Gem::Version.new("3.4")
   gem "drb"
@@ -40,13 +35,8 @@ gem "simplecov"
 
 # Do not change it without checking that `CI=true COVERAGE=true bundle exec rake`
 # passes in all projects
-if ruby_version >= Gem::Version.new("2.5")
-  gem "rexml", "3.4.1"
-  gem "simplecov-cobertura", "~> 3.0"
-else
-  gem "rexml", "3.2.5"
-  gem "simplecov-cobertura", "~> 1.4.0"
-end
+gem "rexml", "3.4.1"
+gem "simplecov-cobertura", "~> 3.0"
 
 group :rubocop do
   gem "rubocop-rails-omakase"

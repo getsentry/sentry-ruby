@@ -1,6 +1,5 @@
 # frozen_string_literal: true
 
-require "sentry/rails/tracing/action_controller_subscriber"
 require "sentry/rails/tracing/action_view_subscriber"
 require "sentry/rails/tracing/active_record_subscriber"
 require "sentry/rails/tracing/active_storage_subscriber"

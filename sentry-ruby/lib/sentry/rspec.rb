@@ -70,7 +70,7 @@ RSpec::Matchers.define :include_sentry_event do |event_message = "", **opts|
   end
 
   def dump_events(sentry_events)
-    sentry_events.map(&Kernel.method(:Hash)).map do |hash|
+    sentry_events.map(&:to_h).map do |hash|
       hash.select { |k, _| [:message, :contexts, :tags, :exception].include?(k) }
     end.map do |hash|
       JSON.pretty_generate(hash)

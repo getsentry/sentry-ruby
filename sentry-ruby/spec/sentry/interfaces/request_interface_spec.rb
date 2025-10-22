@@ -61,7 +61,7 @@ RSpec.describe Sentry::RequestInterface do
       let(:additional_headers) { { "HTTP_FOO" => "Tekirda\xC4" } }
 
       it "doesn't cause any issue" do
-        json = JSON.generate(subject.to_hash)
+        json = JSON.generate(subject.to_h)
 
         expect(JSON.parse(json)["headers"]).to include("Foo"=>"Tekirda�")
       end
@@ -182,6 +182,21 @@ RSpec.describe Sentry::RequestInterface do
       expect(subject.data).to eq("catch me")
     end
 
+    it "does not try to read non rewindable body" do
+      env.merge!(::Rack::RACK_INPUT => double)
+
+      expect(subject.data).to eq("Skipped non-rewindable request body")
+    end
+
+    it "reads rewindable body" do
+      dbl = double
+      allow(dbl).to receive(:rewind)
+      allow(dbl).to receive(:read).and_return("stuff")
+      env.merge!(::Rack::RACK_INPUT => dbl)
+
+      expect(subject.data).to eq("stuff")
+    end
+
     it "stores Authorization header" do
       env.merge!("HTTP_AUTHORIZATION" => "Basic YWxhZGRpbjpvcGVuc2VzYW1l")
 
@@ -192,7 +207,7 @@ RSpec.describe Sentry::RequestInterface do
       env.merge!(::Rack::RACK_INPUT => StringIO.new("あ"))
 
       expect do
-        JSON.generate(subject.to_hash)
+        JSON.generate(subject.to_h)
       end.not_to raise_error
     end
 

@@ -7,9 +7,8 @@ RSpec.describe Sentry::Span do
   end
 
   let(:transaction) do
-    Sentry::Transaction.new(
+    hub.start_transaction(
       name: "test transaction",
-      hub: hub,
       sampled: true
     )
   end
@@ -57,14 +56,14 @@ RSpec.describe Sentry::Span do
     end
   end
 
-  describe "#to_hash" do
+  describe "#to_h" do
     before do
       subject.set_data("controller", "WelcomeController")
       subject.set_tag("foo", "bar")
     end
 
     it "returns correct data" do
-      hash = subject.to_hash
+      hash = subject.to_h
 
       expect(hash[:op]).to eq("sql.query")
       expect(hash[:description]).to eq("SELECT * FROM users;")
@@ -74,16 +73,6 @@ RSpec.describe Sentry::Span do
       expect(hash[:trace_id].length).to eq(32)
       expect(hash[:span_id].length).to eq(16)
       expect(hash[:origin]).to eq('manual')
-    end
-
-    it 'has metric summary if present' do
-      key = [:c, 'incr', 'none', []]
-      subject.metrics_local_aggregator.add(key, 10)
-
-      hash = subject.to_hash
-      expect(hash[:_metrics_summary]).to eq({
-        'c:incr@none' => { count: 1, max: 10.0, min: 10.0, sum: 10.0, tags: {} }
-      })
     end
   end
 
@@ -110,7 +99,9 @@ RSpec.describe Sentry::Span do
   describe "#to_baggage" do
     before do
       # because initializing transactions requires an active hub
-      perform_basic_setup
+      perform_basic_setup do |config|
+        config.traces_sample_rate = 1.0
+      end
     end
 
     subject do
@@ -123,7 +114,7 @@ RSpec.describe Sentry::Span do
         "other-vendor-value-2=foo;bar;"
       )
 
-      Sentry::Transaction.new(hub: Sentry.get_current_hub, baggage: baggage).start_child
+      Sentry.start_transaction(baggage: baggage).start_child
     end
 
     it "propagates sentry baggage values" do
@@ -139,7 +130,9 @@ RSpec.describe Sentry::Span do
   describe "#get_dynamic_sampling_context" do
     before do
       # because initializing transactions requires an active hub
-      perform_basic_setup
+      perform_basic_setup do |config|
+        config.traces_sample_rate = 1.0
+      end
     end
 
     subject do
@@ -152,7 +145,7 @@ RSpec.describe Sentry::Span do
         "other-vendor-value-2=foo;bar;"
       )
 
-      Sentry::Transaction.new(hub: Sentry.get_current_hub, baggage: baggage).start_child
+      Sentry.start_transaction(baggage: baggage).start_child
     end
 
     it "propagates sentry dynamic_sampling_context" do
@@ -168,7 +161,9 @@ RSpec.describe Sentry::Span do
   describe "#start_child" do
     before do
       # because initializing transactions requires an active hub
-      perform_basic_setup
+      perform_basic_setup do |config|
+        config.traces_sample_rate = 1.0
+      end
     end
 
     it "initializes a new child Span" do
@@ -208,7 +203,7 @@ RSpec.describe Sentry::Span do
     context "when the parent span has a span_recorder" do
       subject do
         # inherits the span recorder from the transaction
-        Sentry::Transaction.new(hub: Sentry.get_current_hub).start_child
+        Sentry.start_transaction(name: "test").start_child
       end
 
       it "gives the child span its span_recorder" do

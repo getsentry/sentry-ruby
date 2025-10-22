@@ -11,6 +11,7 @@ RSpec.describe Sentry::Client do
 
   before do
     stub_request(:post, Sentry::TestHelper::DUMMY_DSN)
+    allow(Sentry).to receive(:configuration).and_return configuration
   end
 
   subject(:client) { Sentry::Client.new(configuration) }
@@ -20,7 +21,9 @@ RSpec.describe Sentry::Client do
   end
 
   let(:transaction) do
-    transaction = Sentry::Transaction.new(name: "test transaction", op: "rack.request", hub: hub)
+    configuration.traces_sample_rate = 1.0
+
+    transaction = hub.start_transaction(name: "test transaction", op: "rack.request")
     5.times { |i| transaction.with_child_span(description: "span_#{i}") { } }
     transaction
   end
@@ -57,84 +60,6 @@ RSpec.describe Sentry::Client do
           allow(Random).to receive(:rand).and_return(0.51)
           client.capture_event(transaction_event, scope)
           expect(client.transport.events.count).to eq(1)
-        end
-      end
-    end
-
-    context 'with config.async set' do
-      let(:async_block) do
-        lambda do |event|
-          client.send_event(event)
-        end
-      end
-
-      around do |example|
-        prior_async = configuration.async
-        configuration.async = async_block
-        example.run
-        configuration.async = prior_async
-      end
-
-      it "executes the given block" do
-        expect(async_block).to receive(:call).and_call_original
-
-        returned = client.capture_event(event, scope)
-
-        expect(returned).to be_a(Sentry::ErrorEvent)
-        expect(client.transport.events.first).to eq(event.to_json_compatible)
-      end
-
-      it "doesn't call the async block if not allow sending events" do
-        allow(configuration).to receive(:sending_allowed?).and_return(false)
-
-        expect(async_block).not_to receive(:call)
-
-        returned = client.capture_event(event, scope)
-
-        expect(returned).to eq(nil)
-      end
-
-      context "with to json conversion failed" do
-        let(:logger) { ::Logger.new(string_io) }
-        let(:string_io) { StringIO.new }
-        let(:event) { client.event_from_message("Bad data '\x80\xF8'") }
-
-        it "does not mask the exception" do
-          configuration.sdk_logger = logger
-
-          client.capture_event(event, scope)
-
-          expect(string_io.string).to match(/Converting event \(#{event.event_id}\) to JSON compatible hash failed:.*illegal\/malformed utf-8/i)
-        end
-      end
-
-      context "with nil as value (the legacy way to disable it)" do
-        let(:async_block) { nil }
-
-        it "doesn't cause any issue" do
-          returned = client.capture_event(event, scope, { background: false })
-
-          expect(returned).to be_a(Sentry::ErrorEvent)
-          expect(client.transport.events.first).to eq(event)
-        end
-      end
-
-      context "with 2 arity block" do
-        let(:async_block) do
-          lambda do |event, hint|
-            event["tags"]["hint"] = hint
-            client.send_event(event)
-          end
-        end
-
-        it "serializes hint and supplies it as the second argument" do
-          expect(configuration.async).to receive(:call).and_call_original
-
-          returned = client.capture_event(event, scope, { foo: "bar" })
-
-          expect(returned).to be_a(Sentry::ErrorEvent)
-          event = client.transport.events.first
-          expect(event.dig("tags", "hint")).to eq({ "foo" => "bar" })
         end
       end
     end
@@ -206,6 +131,8 @@ RSpec.describe Sentry::Client do
       client.event_from_exception(ZeroDivisionError.new("divided by 0"))
     end
 
+    let(:check_in_event) { client.event_from_check_in("test_slug", :ok)  }
+
     shared_examples "Event in send_event" do
       context "when there's an exception" do
         before do
@@ -218,6 +145,7 @@ RSpec.describe Sentry::Client do
           end.to raise_error(Sentry::ExternalError, "networking error")
         end
       end
+
       it "sends data through the transport" do
         expect(client.transport).to receive(:send_event).with(event)
         client.send_event(event)
@@ -225,34 +153,12 @@ RSpec.describe Sentry::Client do
 
       it "applies before_send callback before sending the event" do
         configuration.before_send = lambda do |event, _hint|
-          if event.is_a?(Sentry::Event)
-            event.tags[:called] = true
-          else
-            event["tags"]["called"] = true
-          end
-
+          event.tags[:called] = true
           event
         end
 
         client.send_event(event)
-
-        if event.is_a?(Sentry::Event)
-          expect(event.tags[:called]).to eq(true)
-        else
-          expect(event["tags"]["called"]).to eq(true)
-        end
-      end
-
-      context "for check in events" do
-        let(:event_object) { client.event_from_check_in("test_slug", :ok)  }
-
-        it "does not fail due to before_send" do
-          configuration.before_send = lambda { |e, _h| e }
-          client.send_event(event)
-
-          expect(client.transport).to receive(:send_event).with(event)
-          client.send_event(event)
-        end
+        expect(event.tags[:called]).to eq(true)
       end
 
       it "doesn't apply before_send_transaction to Event" do
@@ -288,27 +194,10 @@ RSpec.describe Sentry::Client do
         expect(string_io.string).to include("Discarded event because before_send didn't return a Sentry::ErrorEvent object but an instance of Integer")
         expect(return_value).to eq(nil)
       end
-
-      it "warns about Hash value's deprecation" do
-        string_io = StringIO.new
-        logger = Logger.new(string_io, level: :debug)
-        configuration.sdk_logger = logger
-        configuration.before_send = lambda do |_event, _hint|
-          { foo: "bar" }
-        end
-
-        return_value = client.send_event(event)
-        expect(string_io.string).to include("Returning a Hash from before_send is deprecated and will be removed in the next major version.")
-        expect(return_value).to eq({ foo: "bar" })
-      end
     end
 
     it_behaves_like "Event in send_event" do
       let(:event) { event_object }
-    end
-
-    it_behaves_like "Event in send_event" do
-      let(:event) { event_object.to_json_compatible }
     end
 
     shared_examples "TransactionEvent in send_event" do
@@ -326,22 +215,12 @@ RSpec.describe Sentry::Client do
 
       it "applies before_send_transaction callback before sending the event" do
         configuration.before_send_transaction = lambda do |event, _hint|
-          if event.is_a?(Sentry::TransactionEvent)
-            event.tags[:called] = true
-          else
-            event["tags"]["called"] = true
-          end
-
+          event.tags[:called] = true
           event
         end
 
         client.send_event(event)
-
-        if event.is_a?(Sentry::Event)
-          expect(event.tags[:called]).to eq(true)
-        else
-          expect(event["tags"]["called"]).to eq(true)
-        end
+        expect(event.tags[:called]).to eq(true)
       end
 
       it "warns if before_send_transaction returns nil" do
@@ -356,27 +235,60 @@ RSpec.describe Sentry::Client do
         expect(string_io.string).to include("Discarded event because before_send_transaction didn't return a Sentry::TransactionEvent object but an instance of NilClass")
         expect(return_value).to be_nil
       end
-
-      it "warns about Hash value's deprecation" do
-        string_io = StringIO.new
-        logger = Logger.new(string_io, level: :debug)
-        configuration.sdk_logger = logger
-        configuration.before_send_transaction = lambda do |_event, _hint|
-          { foo: "bar" }
-        end
-
-        return_value = client.send_event(event)
-        expect(string_io.string).to include("Returning a Hash from before_send_transaction is deprecated and will be removed in the next major version.")
-        expect(return_value).to eq({ foo: "bar" })
-      end
     end
 
     it_behaves_like "TransactionEvent in send_event" do
       let(:event) { transaction_event }
     end
 
-    it_behaves_like "TransactionEvent in send_event" do
-      let(:event) { transaction_event.to_json_compatible }
+    shared_examples "CheckInEvent in send_event" do
+      it "sends data through the transport" do
+        client.send_event(event)
+      end
+
+      it "doesn't apply before_send to CheckInEvent" do
+        configuration.before_send = lambda do |event, _hint|
+          raise "shouldn't trigger me"
+        end
+
+        client.send_event(event)
+      end
+
+      it "doesn't apply before_send_transaction to CheckInEvent" do
+        configuration.before_send_transaction = lambda do |event, _hint|
+          raise "shouldn't trigger me"
+        end
+
+        client.send_event(event)
+      end
+
+      it "applies before_send_check_in callback before sending the event" do
+        called = false
+        configuration.before_send_check_in = lambda do |event, _hint|
+          called = true
+          event
+        end
+
+        client.send_event(event)
+        expect(called).to eq(true)
+      end
+
+      it "warns if before_send_check_in returns nil" do
+        string_io = StringIO.new
+        logger = Logger.new(string_io, level: :debug)
+        configuration.sdk_logger = logger
+        configuration.before_send_check_in = lambda do |_event, _hint|
+          nil
+        end
+
+        return_value = client.send_event(event)
+        expect(string_io.string).to include("Discarded event because before_send_check_in didn't return a Sentry::CheckInEvent object but an instance of NilClass")
+        expect(return_value).to be_nil
+      end
+    end
+
+    it_behaves_like "CheckInEvent in send_event" do
+      let(:event) { check_in_event }
     end
   end
 
@@ -397,12 +309,6 @@ RSpec.describe Sentry::Client do
     let(:event) { client.event_from_message(message) }
 
     describe "#capture_event" do
-      around do |example|
-        prior_async = configuration.async
-        example.run
-        configuration.async = prior_async
-      end
-
       context "when scope.apply_to_event returns nil" do
         before do
           scope.add_event_processor do |event, hint|
@@ -540,28 +446,6 @@ RSpec.describe Sentry::Client do
           sleep(0.2)
           expect(client.transport).to have_recorded_lost_event(:network_error, 'transaction')
           expect(client.transport).to have_recorded_lost_event(:network_error, 'span', num: 6)
-        end
-      end
-
-      context "when config.async causes error" do
-        before do
-          expect(client).to receive(:send_event)
-        end
-
-        it "swallows Redis related error and send the event synchronizely" do
-          configuration.async = ->(_, _) { raise Redis::ConnectionError }
-
-          client.capture_event(event, scope)
-
-          expect(string_io.string).to match(/Async event sending failed: Redis::ConnectionError/)
-        end
-
-        it "swallows and logs the exception" do
-          configuration.async = ->(_, _) { raise TypeError }
-
-          client.capture_event(event, scope)
-
-          expect(string_io.string).to match(/Async event sending failed: TypeError/)
         end
       end
     end
