@@ -46,7 +46,9 @@ module Sentry
             cached: cached
           }
 
-          if Sentry.configuration.send_default_pii && !(binds = event.payload[:binds]).empty?
+          binds = event.payload[:binds]
+
+          if Sentry.configuration.send_default_pii && !binds&.empty?
             type_casted_binds = event.payload[:type_casted_binds]
 
             binds.each_with_index do |bind, index|
