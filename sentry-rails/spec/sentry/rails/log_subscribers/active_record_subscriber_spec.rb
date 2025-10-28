@@ -70,14 +70,15 @@ RSpec.describe Sentry::Rails::LogSubscribers::ActiveRecordSubscriber do
           log_event = sentry_logs.find { |log| log[:body]&.include?("Database query") }
           expect(log_event).not_to be_nil
 
-          expect(log_event[:attributes][:id][:value]).to be(post.id)
-          expect(log_event[:attributes][:id][:type]).to eql("integer")
+          # Follow Sentry convention: db.query.parameter.<key> with string values
+          expect(log_event[:attributes]["db.query.parameter.id"][:value]).to eq(post.id.to_s)
+          expect(log_event[:attributes]["db.query.parameter.id"][:type]).to eql("string")
 
-          expect(log_event[:attributes][:title][:value]).to eql(post.title)
-          expect(log_event[:attributes][:title][:type]).to eql("string")
+          expect(log_event[:attributes]["db.query.parameter.title"][:value]).to eql(post.title)
+          expect(log_event[:attributes]["db.query.parameter.title"][:type]).to eql("string")
 
-          expect(log_event[:attributes][:created_at][:value]).to include("2025-10-28 13:11:44")
-          expect(log_event[:attributes][:created_at][:type]).to eql("string")
+          expect(log_event[:attributes]["db.query.parameter.created_at"][:value]).to include("2025-10-28 13:11:44")
+          expect(log_event[:attributes]["db.query.parameter.created_at"][:type]).to eql("string")
         end
       end
 
@@ -96,8 +97,8 @@ RSpec.describe Sentry::Rails::LogSubscribers::ActiveRecordSubscriber do
           log_event = sentry_logs.find { |log| log[:body]&.include?("Database query") }
           expect(log_event).not_to be_nil
 
-          expect(log_event[:attributes][:id]).to be_nil
-          expect(log_event[:attributes][:title]).to be_nil
+          expect(log_event[:attributes]["db.query.parameter.id"]).to be_nil
+          expect(log_event[:attributes]["db.query.parameter.title"]).to be_nil
         end
       end
 

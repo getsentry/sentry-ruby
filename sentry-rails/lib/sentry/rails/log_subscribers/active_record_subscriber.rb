@@ -52,8 +52,8 @@ module Sentry
             type_casted_binds = event.payload[:type_casted_binds]
 
             binds.each_with_index do |bind, index|
-              name = bind.is_a?(Symbol) ? bind : bind.name.to_sym
-              attributes[name] = type_casted_binds[index]
+              name = bind.is_a?(Symbol) ? bind : bind.name
+              attributes["db.query.parameter.#{name}"] = type_casted_binds[index].to_s
             end
           end
 
