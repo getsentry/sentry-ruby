@@ -25,8 +25,6 @@ v7_1 = Gem::Version.new("7.1")
 
 FILE_NAME =
   case Gem::Version.new(Rails.version)
-  when ->(v) { v < v5_2 }
-    "5-0"
   when ->(v) { v.between?(v5_2, v6_0) }
     "5-2"
   when ->(v) { v.between?(v6_0, v6_1) }
