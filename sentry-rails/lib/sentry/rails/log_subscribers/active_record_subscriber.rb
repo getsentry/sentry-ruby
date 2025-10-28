@@ -46,6 +46,15 @@ module Sentry
             cached: cached
           }
 
+          if Sentry.configuration.send_default_pii && !(binds = event.payload[:binds]).empty?
+            type_casted_binds = event.payload[:type_casted_binds]
+
+            binds.each_with_index do |bind, index|
+              name = bind.is_a?(Symbol) ? bind : bind.name.to_sym
+              attributes[name] = type_casted_binds[index]
+            end
+          end
+
           attributes[:statement_name] = statement_name if statement_name && statement_name != "SQL"
           attributes[:connection_id] = connection_id if connection_id
 

@@ -12,6 +12,7 @@ RSpec.describe Sentry::Rails::LogSubscribers::ActiveRecordSubscriber do
         config.rails.structured_logging.subscribers = { active_record: Sentry::Rails::LogSubscribers::ActiveRecordSubscriber }
       end
     end
+
     describe "integration with ActiveSupport::Notifications" do
       it "logs SQL events when database queries are executed" do
         Post.create!
@@ -43,6 +44,61 @@ RSpec.describe Sentry::Rails::LogSubscribers::ActiveRecordSubscriber do
         expect(log_event).not_to be_nil
         expect(log_event[:attributes][:sql][:value]).to include("SELECT")
         expect(log_event[:attributes][:sql][:value]).to include("posts")
+      end
+
+      context "when send_default_pii is enabled" do
+        before do
+          Sentry.configuration.send_default_pii = true
+        end
+
+        after do
+          Sentry.configuration.send_default_pii = false
+        end
+
+        it "logs SELECT queries with binds in attributes" do
+          post = Post.create!(title: "test")
+
+          Sentry.get_current_client.flush
+          sentry_transport.events.clear
+          sentry_transport.envelopes.clear
+
+          created_at = Time.new(2025, 10, 28, 13, 11, 44)
+          Post.where(id: post.id, title: post.title, created_at: created_at).to_a
+
+          Sentry.get_current_client.flush
+
+          log_event = sentry_logs.find { |log| log[:body]&.include?("Database query") }
+          expect(log_event).not_to be_nil
+
+          expect(log_event[:attributes][:id][:value]).to be(post.id)
+          expect(log_event[:attributes][:id][:type]).to eql("integer")
+
+          expect(log_event[:attributes][:title][:value]).to eql(post.title)
+          expect(log_event[:attributes][:title][:type]).to eql("string")
+
+          expect(log_event[:attributes][:created_at][:value]).to include("2025-10-28 13:11:44")
+          expect(log_event[:attributes][:created_at][:type]).to eql("string")
+        end
+      end
+
+      context "when send_default_pii is disabled" do
+        it "logs SELECT queries without binds in attributes" do
+          post = Post.create!(title: "test")
+
+          Sentry.get_current_client.flush
+          sentry_transport.events.clear
+          sentry_transport.envelopes.clear
+
+          Post.where(id: post.id, title: post.title).to_a
+
+          Sentry.get_current_client.flush
+
+          log_event = sentry_logs.find { |log| log[:body]&.include?("Database query") }
+          expect(log_event).not_to be_nil
+
+          expect(log_event[:attributes][:id]).to be_nil
+          expect(log_event[:attributes][:title]).to be_nil
+        end
       end
 
       if Rails.version.to_f > 5.1
