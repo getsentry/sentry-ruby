@@ -137,23 +137,22 @@ class SetupScript
   end
 
   def update_rubygems_and_bundler
+    return if RUBY_ENGINE != "ruby"
+
     puts "📦 Updating RubyGems and Bundler..."
 
     if RUBY_VERSION >= "3.0"
       unless system("sudo gem update --system --silent")
         puts "❌ RubyGems update failed"
-        exit 1
       end
     else
       unless system("sudo gem update --silent --system 3.4.22")
         puts "❌ RubyGems update failed"
-        exit 1
       end
 
       # sentry-sidekiq does not bundle with Bundler 2.5.x that ships with RubyGems 3.4.22
       unless system("sudo gem install bundler -v 2.4.22")
         puts "❌ Bundler installation failed"
-        exit 1
       end
     end
   end

@@ -1,5 +1,5 @@
 {
-  "name": "sentry-ruby",
+  "name": "sentry-ruby - jruby",
   "dockerComposeFile": "docker-compose.yml",
   "service": "sentry-dev",
   "workspaceFolder": "/workspace/sentry",

@@ -9,7 +9,13 @@ gem 'railties'
 gem 'actionpack'
 gem 'activerecord'
 gem 'activejob'
-gem 'sqlite3'
+
+gem 'sqlite3', platform: :ruby
+
+platform :jruby do
+  gem "activerecord-jdbcmysql-adapter"
+  gem "jdbc-sqlite3"
+end
 
 gem 'sentry-ruby', path: Pathname(__dir__).join("../../..").realpath
 gem 'sentry-rails', path: Pathname(__dir__).join("../../..").realpath
