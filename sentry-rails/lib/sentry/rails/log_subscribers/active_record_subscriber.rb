@@ -49,7 +49,7 @@ module Sentry
           binds = event.payload[:binds]
 
           if Sentry.configuration.send_default_pii && !binds&.empty?
-            type_casted_binds = event.payload[:type_casted_binds]
+            type_casted_binds = type_casted_binds(event)
 
             binds.each_with_index do |bind, index|
               name = bind.is_a?(Symbol) ? bind : bind.name
@@ -69,6 +69,16 @@ module Sentry
             level: :info,
             attributes: attributes
           )
+        end
+
+        if RUBY_ENGINE == "jruby"
+          def type_casted_binds(event)
+            event.payload[:type_casted_binds].call
+          end
+        else
+          def type_casted_binds(event)
+            event.payload[:type_casted_binds]
+          end
         end
 
         private
