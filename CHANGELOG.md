@@ -1,3 +1,9 @@
+## Unreleased
+
+### Features
+
+- Add support for ActiveRecord binds in the log events ([#2761](https://github.com/getsentry/sentry-ruby/pull/2761))
+
 ## 6.0.0
 
 ### Breaking Changes
