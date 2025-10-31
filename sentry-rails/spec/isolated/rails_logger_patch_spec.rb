@@ -6,117 +6,108 @@ begin
 rescue LoadError
 end
 
-require "logger"
-require "sentry-ruby"
-require "sentry/test_helper"
-
-require_relative "../dummy/test_rails_app/app"
-
 RSpec.describe "Rails.logger with :logger patch" do
-  include Sentry::TestHelper
-
-  let!(:app) do
-    make_basic_app do |config, app|
-      config.enable_logs = true
-      config.enabled_patches = [:logger]
-      config.max_log_events = 10
-      config.sdk_logger = Logger.new(nil)
-
-      app.config.log_level = log_level
-    end
-  end
-
-  let(:log_level) { ::Logger::DEBUG }
-  let(:log_output) { StringIO.new }
-
-  before do
-    Rails.logger = Logger.new(log_output)
-    Rails.logger.level = log_level
-  end
-
   context "when :logger patch is enabled" do
-    it "captures Rails.logger calls when :logger patch is enabled" do
-      Rails.logger.debug("Test debug message")
-      Rails.logger.info("Test info message")
-      Rails.logger.warn("Test warning message")
-      Rails.logger.error("Test error message")
-      Rails.logger.fatal("Test fatal message")
+    before do
+      make_basic_app do |config, app|
+        config.enable_logs = true
+        config.enabled_patches = [:logger]
+        config.max_log_events = 10
+        config.sdk_logger = Logger.new(nil)
 
-      Sentry.get_current_client.log_event_buffer.flush
+        app.config.log_level = log_level
+      end
 
-      expect(sentry_logs).not_to be_empty
-
-      log_messages = sentry_logs.map { |log| log[:body] }
-      expect(log_messages).to include(
-        "Test debug message",
-        "Test info message",
-        "Test warning message",
-        "Test error message",
-        "Test fatal message"
-      )
-
-      test_logs = sentry_logs.select { |log| log[:body].start_with?("Test ") }
-      log_levels = test_logs.map { |log| log[:level] }
-      expect(log_levels).to contain_exactly("debug", "info", "warn", "error", "fatal")
+      Rails.logger = Logger.new(nil)
+      Rails.logger.level = log_level
     end
 
-    it "captures Rails.logger calls with block syntax" do
-      Rails.logger.info { "Block message" }
+    context "when Rails logger level is configured to debug" do
+      let(:log_level) { ::Logger::DEBUG }
 
-      Sentry.get_current_client.log_event_buffer.flush
+      it "captures Rails.logger calls when :logger patch is enabled" do
+        Rails.logger.debug("Test debug message")
+        Rails.logger.info("Test info message")
+        Rails.logger.warn("Test warning message")
+        Rails.logger.error("Test error message")
+        Rails.logger.fatal("Test fatal message")
 
-      expect(sentry_logs).not_to be_empty
+        Sentry.get_current_client.log_event_buffer.flush
 
-      log_messages = sentry_logs.map { |log| log[:body] }
-      expect(log_messages).to include("Block message")
+        expect(sentry_logs).not_to be_empty
 
-      block_log = sentry_logs.find { |log| log[:body] == "Block message" }
-      expect(block_log[:level]).to eq("info")
-    end
+        log_messages = sentry_logs.map { |log| log[:body] }
+        expect(log_messages).to include(
+          "Test debug message",
+          "Test info message",
+          "Test warning message",
+          "Test error message",
+          "Test fatal message"
+        )
 
-    it "captures Rails.logger calls with progname" do
-      Rails.logger.info("MyProgram") { "Message with progname" }
+        test_logs = sentry_logs.select { |log| log[:body].start_with?("Test ") }
+        log_levels = test_logs.map { |log| log[:level] }
+        expect(log_levels).to contain_exactly("debug", "info", "warn", "error", "fatal")
+      end
 
-      Sentry.get_current_client.log_event_buffer.flush
+      it "captures Rails.logger calls with block syntax" do
+        Rails.logger.info { "Block message" }
 
-      expect(sentry_logs).not_to be_empty
+        Sentry.get_current_client.log_event_buffer.flush
 
-      log_messages = sentry_logs.map { |log| log[:body] }
-      expect(log_messages).to include("Message with progname")
+        expect(sentry_logs).not_to be_empty
 
-      progname_log = sentry_logs.find { |log| log[:body] == "Message with progname" }
-      expect(progname_log[:level]).to eq("info")
-    end
+        log_messages = sentry_logs.map { |log| log[:body] }
+        expect(log_messages).to include("Block message")
 
-    it "does not capture Sentry SDK internal logs" do
-      Rails.logger.info(Sentry::Logger::PROGNAME) { "Internal Sentry message" }
+        block_log = sentry_logs.find { |log| log[:body] == "Block message" }
+        expect(block_log[:level]).to eq("info")
+      end
 
-      Sentry.get_current_client.log_event_buffer.flush
+      it "captures Rails.logger calls with progname" do
+        Rails.logger.info("MyProgram") { "Message with progname" }
 
-      log_messages = sentry_logs.map { |log| log[:body] }
-      expect(log_messages).not_to include("Internal Sentry message")
-    end
+        Sentry.get_current_client.log_event_buffer.flush
 
-    it "strips whitespace from log messages" do
-      Rails.logger.info("  Message with whitespace  ")
+        expect(sentry_logs).not_to be_empty
 
-      Sentry.get_current_client.log_event_buffer.flush
+        log_messages = sentry_logs.map { |log| log[:body] }
+        expect(log_messages).to include("Message with progname")
 
-      expect(sentry_logs).not_to be_empty
+        progname_log = sentry_logs.find { |log| log[:body] == "Message with progname" }
+        expect(progname_log[:level]).to eq("info")
+      end
 
-      log_messages = sentry_logs.map { |log| log[:body] }
-      expect(log_messages).to include("Message with whitespace")
-    end
+      it "does not capture Sentry SDK internal logs" do
+        Rails.logger.info(Sentry::Logger::PROGNAME) { "Internal Sentry message" }
 
-    it "handles non-string log messages" do
-      Rails.logger.info(12345)
+        Sentry.get_current_client.log_event_buffer.flush
 
-      Sentry.get_current_client.log_event_buffer.flush
+        log_messages = sentry_logs.map { |log| log[:body] }
+        expect(log_messages).not_to include("Internal Sentry message")
+      end
 
-      expect(sentry_logs).not_to be_empty
+      it "strips whitespace from log messages" do
+        Rails.logger.info("  Message with whitespace  ")
 
-      log_messages = sentry_logs.map { |log| log[:body] }
-      expect(log_messages).to include("12345")
+        Sentry.get_current_client.log_event_buffer.flush
+
+        expect(sentry_logs).not_to be_empty
+
+        log_messages = sentry_logs.map { |log| log[:body] }
+        expect(log_messages).to include("Message with whitespace")
+      end
+
+      it "handles non-string log messages" do
+        Rails.logger.info(12345)
+
+        Sentry.get_current_client.log_event_buffer.flush
+
+        expect(sentry_logs).not_to be_empty
+
+        log_messages = sentry_logs.map { |log| log[:body] }
+        expect(log_messages).to include("12345")
+      end
     end
 
     context "when Rails logger level is configured to warn" do

@@ -112,7 +112,7 @@ RSpec.describe Sentry::Rails::Tracing::ActiveRecordSubscriber, :subscriber do
 
           span = transaction[:spans][0]
           data = span[:data]
-          expect(data["db.name"]).to include("db")
+          expect(data["db.name"]).to include("db.sqlite3")
           expect(data["code.filepath"]).to eq(nil)
           expect(data["code.lineno"]).to eq(nil)
           expect(data["code.function"]).to eq(nil)
@@ -144,7 +144,7 @@ RSpec.describe Sentry::Rails::Tracing::ActiveRecordSubscriber, :subscriber do
       expect(cached_query_span[:tags]).to include({ cached: true })
 
       data = cached_query_span[:data]
-      expect(data["db.name"]).to include("db")
+      expect(data["db.name"]).to include("db.sqlite3")
       expect(data["db.system"]).to eq("sqlite3")
     end
   end
