@@ -41,7 +41,7 @@ RSpec.describe "ActiveJob integration", type: :job do
           { "bar" => "Sentry" },
           {
             "integer" => 1,
-            "post" => "gid://rails-test-app/Post/#{post.id}",
+            "post" => post.to_global_id.to_s,
             "range_no_beginning" => "..#{range_no_beginning.last}",
             "range_no_end" => "#{range_no_end.first}.."
           }

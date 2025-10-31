@@ -1,6 +1,7 @@
 default: &default
   adapter: sqlite3
+  pool: 10
 
 test:
   <<: *default
-  database: db
+  database: <%= Rails.root.join("db", "db.sqlite3") %>

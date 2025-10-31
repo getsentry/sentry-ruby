@@ -48,8 +48,8 @@ RSpec.describe "ActiveJob integration", type: :job do
           { "bar" => "Sentry" },
           {
             "integer" => 1,
-            "post" => "gid://rails-test-app/Post/#{post.id}",
-            "nested" => { "another_level" => { "post" => "gid://rails-test-app/Post/#{post2.id}" } }
+            "post" => post.to_global_id.to_s,
+            "nested" => { "another_level" => { "post" => post2.to_global_id.to_s } }
           }
         ]
       )
@@ -97,7 +97,7 @@ RSpec.describe "ActiveJob integration", type: :job do
           { "bar" => "Sentry" },
           {
             "integer" => 1,
-            "post" => "gid://rails-test-app/Post/#{post.id}",
+            "post" => post.to_global_id.to_s,
             "range" => [1, 2, 3]
           }
         ]
@@ -122,7 +122,7 @@ RSpec.describe "ActiveJob integration", type: :job do
           { "bar" => "Sentry" },
           {
             "integer" => 1,
-            "post" => "gid://rails-test-app/Post/#{post.id}",
+            "post" => post.to_global_id.to_s,
             "range" => "#{range.first}...#{range.last}"
           }
         ]
