@@ -24,7 +24,7 @@ require 'optparse'
 require 'fileutils'
 
 class RailsVersionTester
-  SUPPORTED_VERSIONS = %w[5.0 5.1 5.2 6.0 6.1 7.0 7.1 7.2 8.0].freeze
+  SUPPORTED_VERSIONS = %w[5.2 6.0 6.1 7.0 7.1 7.2 8.0 8.1].freeze
 
   def initialize
     @options = {}
