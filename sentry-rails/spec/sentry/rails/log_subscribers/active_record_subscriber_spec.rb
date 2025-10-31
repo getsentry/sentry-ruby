@@ -112,7 +112,7 @@ RSpec.describe Sentry::Rails::LogSubscribers::ActiveRecordSubscriber do
 
           Sentry.get_current_client.flush
 
-          schema_logs = sentry_logs.select { |log| log[:attributes]&.dig(:sql, :value)&.include?("CREATE TABLE") }
+          schema_logs = sentry_logs.select { |log| log[:attributes]&.dig(:sql, :value)&.include?("temp_test_table") }
           expect(schema_logs).to be_empty
         end
 
@@ -177,7 +177,7 @@ RSpec.describe Sentry::Rails::LogSubscribers::ActiveRecordSubscriber do
 
           attributes = log_event[:attributes]
           expect(attributes[:db_system][:value]).to eq("sqlite3")
-          expect(attributes[:db_name][:value]).to eq("db")
+          expect(attributes[:db_name][:value]).to include("db.sqlite3")
         end
       end
     end

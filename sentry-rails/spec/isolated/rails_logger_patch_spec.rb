@@ -10,7 +10,7 @@ require "logger"
 require "sentry-ruby"
 require "sentry/test_helper"
 
-require_relative "../dummy/test_rails_app/app"
+require_relative "../dummy/test_rails_app/config/application"
 
 RSpec.describe "Rails.logger with :logger patch" do
   include Sentry::TestHelper
