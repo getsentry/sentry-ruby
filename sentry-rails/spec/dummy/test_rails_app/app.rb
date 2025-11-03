@@ -58,7 +58,6 @@ def make_basic_app(&block)
   app.config.active_job.queue_adapter = :test
   app.config.cache_store = :memory_store
   app.config.action_controller.perform_caching = true
-  app.config.filter_parameters += [:password, :secret]
 
   # Eager load namespaces can be accumulated after repeated initializations and make initialization
   # slower after each run
@@ -70,15 +69,15 @@ def make_basic_app(&block)
   configure_app(app)
 
   # Configure parameter filtering for consistent test behavior
-  app.config.filter_parameters.concat(
-    [:custom_secret,
-     :api_key,
-     :credit_card,
-     :authorization,
-     :password,
-     :token]
-  )
-  app.config.filter_parameters.uniq!
+  app.config.filter_parameters = [
+    :password,
+    :secret,
+    :custom_secret,
+    :api_key,
+    :credit_card,
+    :authorization,
+    :token
+  ]
 
   app.routes.append do
     get "/exception", to: "hello#exception"

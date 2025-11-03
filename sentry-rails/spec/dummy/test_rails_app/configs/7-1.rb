@@ -30,6 +30,10 @@ def run_pre_initialize_cleanup
   # Rails 7.1 stores the error reporter directly under the ActiveSupport class.
   # So we need to make sure the subscriber is not subscribed unexpectedly before any tests
   ActiveSupport.error_reporter.unsubscribe(Sentry::Rails::ErrorSubscriber)
+
+  if ActiveSupport.respond_to?(:filter_parameters)
+    ActiveSupport.filter_parameters.clear
+  end
 end
 
 def configure_app(app)
