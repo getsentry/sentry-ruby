@@ -64,6 +64,8 @@ RSpec.configure do |config|
     end
 
     reset_sentry_globals!
+
+    Rails.application = nil
   end
 
   config.before :each do
