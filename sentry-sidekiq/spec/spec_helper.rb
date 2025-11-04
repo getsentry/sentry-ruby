@@ -345,11 +345,6 @@ def perform_basic_setup
     config.background_worker_threads = 0
     config.transport.transport_class = Sentry::DummyTransport
 
-    # This causes failures in Sidekiq < 7.0
-    #
-    # TODO: why is redis patch enabled by default?
-    config.enabled_patches.delete(:redis)
-
     yield config if block_given?
   end
 end
