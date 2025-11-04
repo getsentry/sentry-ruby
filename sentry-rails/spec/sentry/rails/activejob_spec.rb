@@ -352,7 +352,7 @@ RSpec.describe "ActiveJob integration", type: :job do
 
   describe "Reporting on retry errors", skip: RAILS_VERSION < 7.0 do
     before do
-      if defined?(JRUBY_VERSION) && JRUBY_VERSION == "9.4.12.0"
+      if defined?(JRUBY_VERSION) && JRUBY_VERSION == "9.4.14.0"
         skip "This crashes on jruby + rails 7.0.0.x. See https://github.com/getsentry/sentry-ruby/issues/2612"
       end
 
