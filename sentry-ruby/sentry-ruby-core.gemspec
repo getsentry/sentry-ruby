@@ -12,7 +12,7 @@ Gem::Specification.new do |spec|
   spec.homepage = "https://github.com/getsentry/sentry-ruby"
 
   spec.platform = Gem::Platform::RUBY
-  spec.required_ruby_version = '>= 2.4'
+  spec.required_ruby_version = '>= 2.7'
   spec.extra_rdoc_files = ["README.md", "LICENSE.txt"]
   spec.files = `git ls-files | grep -Ev '^(spec|benchmarks|examples|\.rubocop\.yml)'`.split("\n")
 

@@ -74,7 +74,7 @@ RSpec.describe Sentry::Vernier::Profiler, when: { ruby_version?: [:>=, "3.3"], r
       end
 
       it 'starts Vernier if sampled' do
-        expect(Vernier).to receive(:start_profile).and_return(true)
+        expect(Vernier).to receive(:start_profile).with(interval: 1e6 / 101).and_return(true)
 
         profiler.start
 
@@ -82,7 +82,7 @@ RSpec.describe Sentry::Vernier::Profiler, when: { ruby_version?: [:>=, "3.3"], r
       end
 
       it 'does not start Vernier again if already started' do
-        expect(Vernier).to receive(:start_profile).and_return(true).once
+        expect(Vernier).to receive(:start_profile).with(interval: 1e6 / 101).and_return(true).once
 
         profiler.start
         profiler.start
@@ -108,6 +108,25 @@ RSpec.describe Sentry::Vernier::Profiler, when: { ruby_version?: [:>=, "3.3"], r
         profiler.start
 
         expect(profiler.started).to eq(false)
+      end
+    end
+
+    context 'with custom profiles_sample_interval' do
+      before do
+        perform_basic_setup do |config|
+          config.traces_sample_rate = 1.0
+          config.profiles_sample_rate = 1.0
+          config.profiles_sample_interval = 1e5 / 101
+        end
+      end
+
+      it 'starts Vernier with custom interval' do
+        expect(Vernier).to receive(:start_profile).with(interval: 1e5 / 101).and_return(true)
+
+        profiler.set_initial_sample_decision(true)
+        profiler.start
+
+        expect(profiler.started).to eq(true)
       end
     end
   end
@@ -147,7 +166,7 @@ RSpec.describe Sentry::Vernier::Profiler, when: { ruby_version?: [:>=, "3.3"], r
     end
   end
 
-  describe "#to_hash" do
+  describe "#to_h" do
     let (:transport) { Sentry.get_current_client.transport }
 
     it "records lost event if not sampled" do
@@ -157,7 +176,7 @@ RSpec.describe Sentry::Vernier::Profiler, when: { ruby_version?: [:>=, "3.3"], r
       profiler.start
       profiler.set_initial_sample_decision(false)
 
-      expect(profiler.to_hash).to eq({})
+      expect(profiler.to_h).to eq({})
     end
   end
 
@@ -166,9 +185,9 @@ RSpec.describe Sentry::Vernier::Profiler, when: { ruby_version?: [:>=, "3.3"], r
       profiler.set_initial_sample_decision(true)
     end
 
-    describe '#to_hash' do
+    describe '#to_h' do
       it "returns empty hash if not started" do
-        expect(profiler.to_hash).to eq({})
+        expect(profiler.to_h).to eq({})
       end
 
       context 'with single-thread profiled code' do
@@ -179,7 +198,7 @@ RSpec.describe Sentry::Vernier::Profiler, when: { ruby_version?: [:>=, "3.3"], r
         end
 
         it 'has correct frames' do
-          frames = profiler.to_hash[:profile][:frames]
+          frames = profiler.to_h[:profile][:frames]
 
           foo_frame = frames.find { |f| f[:function] =~ /foo/ }
 
@@ -192,7 +211,7 @@ RSpec.describe Sentry::Vernier::Profiler, when: { ruby_version?: [:>=, "3.3"], r
         end
 
         it 'has correct stacks' do
-          profile = profiler.to_hash[:profile]
+          profile = profiler.to_h[:profile]
           frames = profile[:frames]
           stacks = profile[:stacks]
 
@@ -210,7 +229,7 @@ RSpec.describe Sentry::Vernier::Profiler, when: { ruby_version?: [:>=, "3.3"], r
         end
 
         it 'has correct samples' do
-          profile = profiler.to_hash[:profile]
+          profile = profiler.to_h[:profile]
           samples = profile[:samples]
           last_elapsed = 0
 
@@ -249,7 +268,7 @@ RSpec.describe Sentry::Vernier::Profiler, when: { ruby_version?: [:>=, "3.3"], r
         end
 
         it "has correct thread metadata" do
-          thread_metadata = profiler.to_hash[:profile][:thread_metadata]
+          thread_metadata = profiler.to_h[:profile][:thread_metadata]
 
           main_thread = thread_metadata.values.find { |metadata| metadata[:name].include?("rspec") }
           thread1 = thread_metadata.values.find { |metadata| metadata[:name] == "thread-bar-0" }
@@ -265,7 +284,7 @@ RSpec.describe Sentry::Vernier::Profiler, when: { ruby_version?: [:>=, "3.3"], r
         end
 
         it 'has correct frames', when: { ruby_version?: [:>=, "3.3"], ruby_engine?: "ruby" } do
-          frames = profiler.to_hash[:profile][:frames]
+          frames = profiler.to_h[:profile][:frames]
 
           foo_frame = frames.find { |f| f[:function] =~ /foo/ }
 
@@ -278,7 +297,7 @@ RSpec.describe Sentry::Vernier::Profiler, when: { ruby_version?: [:>=, "3.3"], r
         end
 
         it 'has correct stacks', when: { ruby_version?: [:>=, "3.3"], ruby_engine?: "ruby" } do
-          profile = profiler.to_hash[:profile]
+          profile = profiler.to_h[:profile]
           frames = profile[:frames]
           stacks = profile[:stacks]
 
@@ -296,7 +315,7 @@ RSpec.describe Sentry::Vernier::Profiler, when: { ruby_version?: [:>=, "3.3"], r
         end
 
         it 'has correct samples' do
-          profile = profiler.to_hash[:profile]
+          profile = profiler.to_h[:profile]
           samples = profile[:samples]
 
           samples.group_by { |sample| sample[:thread_id] }.each do |thread_id, thread_samples|

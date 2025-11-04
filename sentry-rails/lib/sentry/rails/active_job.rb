@@ -112,18 +112,15 @@ module Sentry
                 end
 
                 # Set up transaction with trace propagation
-                transaction = nil
-                unless job.is_a?(::Sentry::SendEventJob)
-                  if job._sentry && job._sentry["trace_propagation_headers"]
-                    transaction = job._sentry_start_transaction(scope, job._sentry["trace_propagation_headers"])
-                  else
-                    transaction = Sentry.start_transaction(
-                      name: scope.transaction_name,
-                      source: scope.transaction_source,
-                      op: OP_NAME,
-                      origin: SPAN_ORIGIN
-                    )
-                  end
+                transaction = if job._sentry && job._sentry["trace_propagation_headers"]
+                  job._sentry_start_transaction(scope, job._sentry["trace_propagation_headers"])
+                else
+                  Sentry.start_transaction(
+                    name: scope.transaction_name,
+                    source: scope.transaction_source,
+                    op: OP_NAME,
+                    origin: SPAN_ORIGIN
+                  )
                 end
 
                 scope.set_span(transaction) if transaction

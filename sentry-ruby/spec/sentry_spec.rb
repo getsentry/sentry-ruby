@@ -280,7 +280,7 @@ RSpec.describe Sentry do
           described_class.capture_exception(e)
         end
 
-        event = last_sentry_event.to_hash
+        event = last_sentry_event.to_h
         last_frame = event.dig(:exception, :values, 0, :stacktrace, :frames).last
         expect(last_frame[:vars]).to eq(nil)
       end
@@ -306,7 +306,7 @@ RSpec.describe Sentry do
           described_class.capture_exception(e)
         end
 
-        event = last_sentry_event.to_hash
+        event = last_sentry_event.to_h
         last_frame = event.dig(:exception, :values, 0, :stacktrace, :frames).last
         expect(last_frame[:vars]).to include({ a: "1", b: "0" })
       end
@@ -390,8 +390,8 @@ RSpec.describe Sentry do
 
       Sentry.get_current_client.flush
 
-      # 3 envelopes: log, transaction, and client_report about dropped profile
-      expect(sentry_envelopes.size).to be(3)
+      # 2 envelopes: log and transaction
+      expect(sentry_envelopes.size).to be(2)
 
       log_event = sentry_logs.first
 
@@ -503,50 +503,34 @@ RSpec.describe Sentry do
       end
 
       it "gives /payment 0.5 of rate" do
-        transaction = Sentry::Transaction.new(hub: Sentry.get_current_hub, op: "rack.request", name: "/payment", sample_rand: 0.4)
-
-        described_class.start_transaction(transaction: transaction)
+        transaction = described_class.start_transaction(op: "rack.request", name: "/payment", sample_rand: 0.4)
         expect(transaction.sampled).to eq(true)
 
-        transaction = Sentry::Transaction.new(hub: Sentry.get_current_hub, op: "rack.request", name: "/payment", sample_rand: 0.6)
-
-        described_class.start_transaction(transaction: transaction)
+        transaction = described_class.start_transaction(op: "rack.request", name: "/payment", sample_rand: 0.6)
         expect(transaction.sampled).to eq(false)
       end
 
       it "gives /api 0.2 of rate" do
-        transaction = Sentry::Transaction.new(hub: Sentry.get_current_hub, op: "rack.request", name: "/api", sample_rand: 0.1)
-
-        described_class.start_transaction(transaction: transaction)
+        transaction = described_class.start_transaction(op: "rack.request", name: "/api", sample_rand: 0.1)
         expect(transaction.sampled).to eq(true)
 
-        transaction = Sentry::Transaction.new(hub: Sentry.get_current_hub, op: "rack.request", name: "/api", sample_rand: 0.3)
-
-        described_class.start_transaction(transaction: transaction)
+        transaction = described_class.start_transaction(op: "rack.request", name: "/api", sample_rand: 0.3)
         expect(transaction.sampled).to eq(false)
       end
 
       it "gives other paths 0.1 of rate" do
-        transaction = Sentry::Transaction.new(hub: Sentry.get_current_hub, op: "rack.request", name: "/orders", sample_rand: 0.05)
-
-        described_class.start_transaction(transaction: transaction)
+        transaction = described_class.start_transaction(op: "rack.request", name: "/orders", sample_rand: 0.05)
         expect(transaction.sampled).to eq(true)
 
-        transaction = Sentry::Transaction.new(hub: Sentry.get_current_hub, op: "rack.request", name: "/orders", sample_rand: 0.2)
-
-        described_class.start_transaction(transaction: transaction)
+        transaction = described_class.start_transaction(op: "rack.request", name: "/orders", sample_rand: 0.2)
         expect(transaction.sampled).to eq(false)
       end
 
       it "gives sidekiq ops 0.01 of rate" do
-        transaction = Sentry::Transaction.new(hub: Sentry.get_current_hub, op: "sidekiq", sample_rand: 0.005)
-
-        described_class.start_transaction(transaction: transaction)
+        transaction = described_class.start_transaction(op: "sidekiq", sample_rand: 0.005)
         expect(transaction.sampled).to eq(true)
 
-        transaction = Sentry::Transaction.new(hub: Sentry.get_current_hub, op: "sidekiq", sample_rand: 0.02)
-
-        described_class.start_transaction(transaction: transaction)
+        transaction = described_class.start_transaction(op: "sidekiq", sample_rand: 0.02)
         expect(transaction.sampled).to eq(false)
       end
     end
@@ -564,10 +548,8 @@ RSpec.describe Sentry do
 
       context "when given an transaction object" do
         it "adds sample decision to it" do
-          transaction = Sentry::Transaction.new(hub: Sentry.get_current_hub)
-
-          described_class.start_transaction(transaction: transaction)
-
+          transaction = Sentry::Transaction.new(name: "test")
+          transaction = described_class.start_transaction(transaction: transaction)
           expect(transaction.sampled).to eq(true)
         end
 
@@ -577,9 +559,7 @@ RSpec.describe Sentry do
             context = sampling_context
           end
 
-          transaction = Sentry::Transaction.new(op: "foo", hub: Sentry.get_current_hub)
-
-          described_class.start_transaction(transaction: transaction)
+          described_class.start_transaction(op: "foo")
 
           expect(context[:parent_sampled]).to be_nil
           expect(context[:transaction_context][:op]).to eq("foo")
@@ -591,10 +571,7 @@ RSpec.describe Sentry do
             context = sampling_context
           end
 
-          transaction = Sentry::Transaction.new(parent_sampled: true, hub: Sentry.get_current_hub)
-
-          described_class.start_transaction(transaction: transaction)
-
+          described_class.start_transaction(parent_sampled: true)
           expect(context[:parent_sampled]).to eq(true)
         end
       end
@@ -681,7 +658,7 @@ RSpec.describe Sentry do
 
     context "when the current span is present" do
       let(:parent_span) do
-        transaction = Sentry::Transaction.new(op: "foo", hub: Sentry.get_current_hub)
+        transaction = described_class.start_transaction(op: "foo")
         Sentry::Span.new(op: "parent", transaction: transaction)
       end
 
@@ -884,15 +861,23 @@ RSpec.describe Sentry do
       expect(traceparent).to eq("#{propagation_context.trace_id}-#{propagation_context.span_id}")
     end
 
-    it "returns a valid traceparent header from scope current span" do
-      transaction = Sentry::Transaction.new(op: "foo", hub: Sentry.get_current_hub, sampled: true)
-      span = transaction.start_child(op: "parent")
-      described_class.get_current_scope.set_span(span)
+    context "with tracing" do
+      before do
+        perform_basic_setup do |config|
+          config.traces_sample_rate = 1.0
+        end
+      end
 
-      traceparent = described_class.get_traceparent
+      it "returns a valid traceparent header from scope current span" do
+        transaction = described_class.start_transaction(op: "foo", sampled: true)
+        span = transaction.start_child(op: "parent")
+        described_class.get_current_scope.set_span(span)
 
-      expect(traceparent).to match(Sentry::PropagationContext::SENTRY_TRACE_REGEXP)
-      expect(traceparent).to eq("#{span.trace_id}-#{span.span_id}-1")
+        traceparent = described_class.get_traceparent
+
+        expect(traceparent).to match(Sentry::PropagationContext::SENTRY_TRACE_REGEXP)
+        expect(traceparent).to eq("#{span.trace_id}-#{span.span_id}-1")
+      end
     end
   end
 
@@ -904,14 +889,22 @@ RSpec.describe Sentry do
       expect(baggage).to eq("sentry-trace_id=#{propagation_context.trace_id},sentry-sample_rand=#{Sentry::Utils::SampleRand.format(propagation_context.sample_rand)},sentry-environment=development,sentry-public_key=12345")
     end
 
-    it "returns a valid baggage header from scope current span" do
-      transaction = Sentry::Transaction.new(op: "foo", hub: Sentry.get_current_hub, sampled: true)
-      span = transaction.start_child(op: "parent")
-      described_class.get_current_scope.set_span(span)
+    context "with tracing" do
+      before do
+        perform_basic_setup do |config|
+          config.traces_sample_rate = 1.0
+        end
+      end
 
-      baggage = described_class.get_baggage
+      it "returns a valid baggage header from scope current span" do
+        transaction = described_class.start_transaction(op: "foo", sampled: true)
+        span = transaction.start_child(op: "parent")
+        described_class.get_current_scope.set_span(span)
 
-      expect(baggage).to eq("sentry-trace_id=#{span.trace_id},sentry-sample_rand=#{Sentry::Utils::SampleRand.format(transaction.sample_rand)},sentry-sampled=true,sentry-environment=development,sentry-public_key=12345")
+        baggage = described_class.get_baggage
+
+        expect(baggage).to eq("sentry-trace_id=#{span.trace_id},sentry-sample_rate=1.0,sentry-sample_rand=#{Sentry::Utils::SampleRand.format(transaction.sample_rand)},sentry-sampled=true,sentry-environment=development,sentry-public_key=12345")
+      end
     end
   end
 
@@ -1353,14 +1346,6 @@ RSpec.describe Sentry do
         expect(described_class.backpressure_monitor).to receive(:kill)
         described_class.close
         expect(described_class.backpressure_monitor).to eq(nil)
-      end
-
-      it "flushes and kills metrics aggregator" do
-        perform_basic_setup { |c| c.metrics.enabled = true }
-        expect(described_class.metrics_aggregator).to receive(:flush).with(force: true)
-        expect(described_class.metrics_aggregator).to receive(:kill)
-        described_class.close
-        expect(described_class.metrics_aggregator).to eq(nil)
       end
 
       it "flushes transport" do

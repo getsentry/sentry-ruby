@@ -11,8 +11,8 @@ module Sentry
     end
 
     # @return [Hash]
-    def to_hash
-      { frames: @frames.map(&:to_hash) }
+    def to_h
+      { frames: @frames.map(&:to_h) }
     end
 
     # @return [String]
@@ -66,7 +66,7 @@ module Sentry
             linecache.get_file_context(abs_path, lineno, context_lines)
       end
 
-      def to_hash(*args)
+      def to_h(*args)
         data = super(*args)
         data.delete(:vars) unless vars && !vars.empty?
         data.delete(:pre_context) unless pre_context && !pre_context.empty?

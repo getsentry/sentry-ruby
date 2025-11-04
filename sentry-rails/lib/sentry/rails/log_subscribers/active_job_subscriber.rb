@@ -26,6 +26,8 @@ module Sentry
         #
         # @param event [ActiveSupport::Notifications::Event] The job performance event
         def perform(event)
+          return unless Sentry.initialized?
+
           job = event.payload[:job]
           duration = duration_ms(event)
 
@@ -63,6 +65,8 @@ module Sentry
         #
         # @param event [ActiveSupport::Notifications::Event] The job enqueue event
         def enqueue(event)
+          return unless Sentry.initialized?
+
           job = event.payload[:job]
 
           attributes = {
@@ -89,6 +93,8 @@ module Sentry
         end
 
         def retry_stopped(event)
+          return unless Sentry.initialized?
+
           job = event.payload[:job]
           error = event.payload[:error]
 
@@ -111,6 +117,8 @@ module Sentry
         end
 
         def discard(event)
+          return unless Sentry.initialized?
+
           job = event.payload[:job]
           error = event.payload[:error]
 

@@ -9,7 +9,6 @@ require "sentry/dsn"
 require "sentry/release_detector"
 require "sentry/transport/configuration"
 require "sentry/cron/configuration"
-require "sentry/metrics/configuration"
 require "sentry/linecache"
 require "sentry/interfaces/stacktrace_builder"
 require "sentry/logger"
@@ -30,13 +29,6 @@ module Sentry
     #
     # @return [Regexp, nil]
     attr_accessor :app_dirs_pattern
-
-    # Provide an object that responds to `call` to send events asynchronously.
-    # E.g.: lambda { |event| Thread.new { Sentry.send_event(event) } }
-    #
-    # @deprecated It will be removed in the next major release. Please read https://github.com/getsentry/sentry-ruby/issues/1522 for more information
-    # @return [Proc, nil]
-    attr_reader :async
 
     # to send events in a non-blocking way, sentry-ruby has its own background worker
     # by default, the worker holds a thread pool that has [the number of processors] threads
@@ -75,11 +67,10 @@ module Sentry
     # @return [Proc]
     attr_reader :before_breadcrumb
 
-    # Optional Proc, called before sending an event to the server
+    # Optional Proc, called before sending an error event to the server
     # @example
     #   config.before_send = lambda do |event, hint|
     #     # skip ZeroDivisionError exceptions
-    #     # note: hint[:exception] would be a String if you use async callback
     #     if hint[:exception].is_a?(ZeroDivisionError)
     #       nil
     #     else
@@ -89,7 +80,7 @@ module Sentry
     # @return [Proc]
     attr_reader :before_send
 
-    # Optional Proc, called before sending an event to the server
+    # Optional Proc, called before sending a transaction event to the server
     # @example
     #   config.before_send_transaction = lambda do |event, hint|
     #     # skip unimportant transactions or strip sensitive data
@@ -101,6 +92,18 @@ module Sentry
     #   end
     # @return [Proc]
     attr_reader :before_send_transaction
+
+    # Optional Proc, called before sending a check-in event to the server
+    # @example
+    #   config.before_send_check_in = lambda do |event, hint|
+    #     if event.monitor_slug == "unimportant_job"
+    #       nil
+    #     else
+    #       event
+    #     end
+    #   end
+    # @return [Proc]
+    attr_reader :before_send_check_in
 
     # Optional Proc, called before sending an event to the server
     # @example
@@ -118,7 +121,6 @@ module Sentry
     #
     # And if you also use sentry-rails:
     # - :active_support_logger
-    # - :monotonic_active_support_logger
     #
     # @return [Array<Symbol>]
     attr_reader :breadcrumbs_logger
@@ -145,7 +147,7 @@ module Sentry
     attr_reader :dsn
 
     # Whitelist of enabled_environments that will send notifications to Sentry. Array of Strings.
-    # @return [Array<String>]
+    # @return [Array<String>, nil]
     attr_accessor :enabled_environments
 
     # Logger 'progname's to exclude from breadcrumbs
@@ -174,18 +176,6 @@ module Sentry
     # @return [Boolean, String]
     attr_accessor :spotlight
 
-    # @deprecated Use {#include_local_variables} instead.
-    alias_method :capture_exception_frame_locals, :include_local_variables
-
-    # @deprecated Use {#include_local_variables=} instead.
-    def capture_exception_frame_locals=(value)
-      log_warn <<~MSG
-        `capture_exception_frame_locals` is now deprecated in favor of `include_local_variables`.
-      MSG
-
-      self.include_local_variables = value
-    end
-
     # You may provide your own LineCache for matching paths with source files.
     # This may be useful if you need to get source code from places other than the disk.
     # @see LineCache
@@ -201,18 +191,6 @@ module Sentry
     # This is useful for debugging and testing purposes.
     # @return [String, nil]
     attr_accessor :sdk_debug_transport_log_file
-
-    # @deprecated Use {#sdk_logger=} instead.
-    def logger=(logger)
-      warn "[sentry] `config.logger=` is deprecated. Please use `config.sdk_logger=` instead."
-      self.sdk_logger = logger
-    end
-
-    # @deprecated Use {#sdk_logger} instead.
-    def logger
-      warn "[sentry] `config.logger` is deprecated. Please use `config.sdk_logger` instead."
-      self.sdk_logger
-    end
 
     # Project directory root for in_app detection. Could be Rails root, etc.
     # Set automatically for Rails.
@@ -273,10 +251,6 @@ module Sentry
     # @return [Cron::Configuration]
     attr_reader :cron
 
-    # Metrics related configuration.
-    # @return [Metrics::Configuration]
-    attr_reader :metrics
-
     # Take a float between 0.0 and 1.0 as the sample rate for tracing events (transactions).
     # @return [Float, nil]
     attr_reader :traces_sample_rate
@@ -299,12 +273,6 @@ module Sentry
     # @return [StructuredLoggingConfiguration]
     attr_reader :structured_logging
 
-    # Easier way to use performance tracing
-    # If set to true, will set traces_sample_rate to 1.0
-    # @deprecated It will be removed in the next major release.
-    # @return [Boolean, nil]
-    attr_reader :enable_tracing
-
     # Send diagnostic client reports about dropped events, true by default
     # tries to attach to an existing envelope max once every 30s
     # @return [Boolean]
@@ -325,6 +293,18 @@ module Sentry
     # @return [Array<String, Regexp>]
     attr_accessor :trace_propagation_targets
 
+    # Collection of HTTP status codes or ranges of codes to ignore when tracing incoming requests.
+    # If a transaction's http.response.status_code matches one of these values,
+    # the transaction will be dropped and marked as not sampled.
+    # Defaults to TRACE_IGNORE_STATUS_CODES_DEFAULT.
+    #
+    # @example
+    #   # ignore 404 and 502 <= status_code <= 511
+    #   config.trace_ignore_status_codes = [404, (502..511)]
+    #
+    # @return [Array<Integer>, Array<Range>]
+    attr_reader :trace_ignore_status_codes
+
     # The instrumenter to use, :sentry or :otel
     # @return [Symbol]
     attr_reader :instrumenter
@@ -338,6 +318,15 @@ module Sentry
     # i.e. the profile is sampled by this rate after the transaction is sampled.
     # @return [Float, nil]
     attr_reader :profiles_sample_rate
+
+    # Interval in microseconds at which to take samples.
+    # The default is 1e6 / 101, or 101Hz.
+    # Note that the 101 is intentional to avoid lockstep sampling.
+    #
+    # @example
+    #   config.profiles_sample_interval = 1e5 / 101
+    # @return [Float]
+    attr_accessor :profiles_sample_interval
 
     # Array of patches to apply.
     # Default is {DEFAULT_PATCHES}
@@ -376,6 +365,8 @@ module Sentry
       SERVER_PORT
     ].freeze
 
+    TRACE_IGNORE_STATUS_CODES_DEFAULT = [(301..303), (305..399), (401..404)]
+
     HEROKU_DYNO_METADATA_MESSAGE = "You are running on Heroku but haven't enabled Dyno Metadata. For Sentry's "\
     "release detection to work correctly, please run `heroku labs:enable runtime-dyno-metadata`"
 
@@ -390,6 +381,9 @@ module Sentry
     DEFAULT_PATCHES = %i[redis puma http].freeze
 
     APP_DIRS_PATTERN = /(bin|exe|app|config|lib|test|spec)/
+
+    # 101 Hz in microseconds
+    DEFAULT_PROFILES_SAMPLE_INTERVAL = 1e6 / 101
 
     class << self
       # Post initialization callbacks are called at the end of initialization process
@@ -473,7 +467,7 @@ module Sentry
       self.context_lines = 3
       self.include_local_variables = false
       self.environment = environment_from_env
-      self.enabled_environments = []
+      self.enabled_environments = nil
       self.exclude_loggers = []
       self.excluded_exceptions = IGNORE_DEFAULT + PUMA_IGNORE_DEFAULT
       self.inspect_exception_causes_for_exclusion = true
@@ -498,21 +492,22 @@ module Sentry
       self.server_name = server_name_from_env
       self.instrumenter = :sentry
       self.trace_propagation_targets = [PROPAGATION_TARGETS_MATCH_ALL]
+      self.trace_ignore_status_codes = TRACE_IGNORE_STATUS_CODES_DEFAULT
       self.enabled_patches = DEFAULT_PATCHES.dup
 
       self.before_send = nil
       self.before_send_transaction = nil
+      self.before_send_check_in = nil
       self.before_send_log = nil
       self.rack_env_whitelist = RACK_ENV_WHITELIST_DEFAULT
       self.traces_sampler = nil
-      self.enable_tracing = nil
       self.enable_logs = false
 
       self.profiler_class = Sentry::Profiler
+      self.profiles_sample_interval = DEFAULT_PROFILES_SAMPLE_INTERVAL
 
       @transport = Transport::Configuration.new
       @cron = Cron::Configuration.new
-      @metrics = Metrics::Configuration.new(self.sdk_logger)
       @structured_logging = StructuredLoggingConfiguration.new
       @gem_specs = Hash[Gem::Specification.map { |spec| [spec.name, spec.version.to_s] }] if Gem::Specification.respond_to?(:map)
 
@@ -555,22 +550,6 @@ module Sentry
       @release = value
     end
 
-    def async=(value)
-      check_callable!("async", value)
-
-      log_warn <<~MSG
-
-        sentry-ruby now sends events asynchronously by default with its background worker (supported since 4.1.0).
-        The `config.async` callback has become redundant while continuing to cause issues.
-        (The problems of `async` are detailed in https://github.com/getsentry/sentry-ruby/issues/1522)
-
-        Therefore, we encourage you to remove it and let the background worker take care of async job sending.
-      It's deprecation is planned in the next major release (6.0), which is scheduled around the 3rd quarter of 2022.
-      MSG
-
-      @async = value
-    end
-
     def breadcrumbs_logger=(logger)
       loggers =
         if logger.is_a?(Array)
@@ -596,6 +575,12 @@ module Sentry
       @before_send_transaction = value
     end
 
+    def before_send_check_in=(value)
+      check_callable!("before_send_check_in", value)
+
+      @before_send_check_in = value
+    end
+
     def before_breadcrumb=(value)
       check_callable!("before_breadcrumb", value)
 
@@ -610,15 +595,12 @@ module Sentry
       @instrumenter = INSTRUMENTERS.include?(instrumenter) ? instrumenter : :sentry
     end
 
-    def enable_tracing=(enable_tracing)
-      unless enable_tracing.nil?
-        log_warn <<~MSG
-          `enable_tracing` is now deprecated in favor of `traces_sample_rate = 1.0`.
-        MSG
+    def trace_ignore_status_codes=(codes)
+      unless codes.is_a?(Array) && codes.all? { |code| valid_status_code_entry?(code) }
+        raise ArgumentError, "trace_ignore_status_codes must be an Array of integers or ranges between (100-599) where begin <= end"
       end
 
-      @enable_tracing = enable_tracing
-      @traces_sample_rate ||= 1.0 if enable_tracing
+      @trace_ignore_status_codes = codes
     end
 
     def traces_sample_rate=(traces_sample_rate)
@@ -674,7 +656,7 @@ module Sentry
     end
 
     def enabled_in_current_env?
-      enabled_environments.empty? || enabled_environments.include?(environment)
+      enabled_environments.nil? || enabled_environments.include?(environment)
     end
 
     def valid_sample_rate?(sample_rate)
@@ -685,7 +667,7 @@ module Sentry
     def tracing_enabled?
       valid_sampler = !!((valid_sample_rate?(@traces_sample_rate)) || @traces_sampler)
 
-      (@enable_tracing != false) && valid_sampler && sending_allowed?
+      valid_sampler && sending_allowed?
     end
 
     def profiling_enabled?
@@ -815,6 +797,23 @@ module Sentry
     def processor_count
       available_processor_count = Concurrent.available_processor_count if Concurrent.respond_to?(:available_processor_count)
       available_processor_count || Concurrent.processor_count
+    end
+
+    def valid_http_status_code?(code)
+      code.is_a?(Integer) && code >= 100 && code <= 599
+    end
+
+    def valid_status_code_entry?(entry)
+      case entry
+      when Integer
+        valid_http_status_code?(entry)
+      when Range
+        valid_http_status_code?(entry.begin) &&
+          valid_http_status_code?(entry.end) &&
+          entry.begin <= entry.end
+      else
+        false
+      end
     end
   end
 

@@ -12,7 +12,7 @@ module Sentry
           @value = value
         end
 
-        def to_hash
+        def to_h
           { type: :crontab, value: value }
         end
       end
@@ -33,7 +33,7 @@ module Sentry
           @unit = unit
         end
 
-        def to_hash
+        def to_h
           { type: :interval, value: value, unit: unit }
         end
       end

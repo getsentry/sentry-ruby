@@ -17,19 +17,19 @@ RSpec.describe Sentry::Client do
   end
   subject { Sentry::Client.new(configuration) }
 
+  let(:hub) do
+    Sentry::Hub.new(subject, Sentry::Scope.new)
+  end
+
   let(:transaction) do
-    hub = Sentry::Hub.new(subject, Sentry::Scope.new)
-    Sentry::Transaction.new(
-      name: "test transaction",
-      hub: hub,
-      sampled: true
-    )
+    hub.start_transaction(name: "test transaction")
   end
 
   let(:fake_time) { Time.now }
 
   before do
     allow(Time).to receive(:now).and_return fake_time
+    allow(Sentry).to receive(:configuration).and_return configuration
   end
 
   describe "#transport" do
@@ -99,7 +99,6 @@ RSpec.describe Sentry::Client do
     let(:envelope) do
       envelope = Sentry::Envelope.new({ env_header: 1 })
       envelope.add_item({ type: 'event' }, { payload: 'test' })
-      envelope.add_item({ type: 'statsd' }, { payload: 'test2' })
       envelope.add_item({ type: 'transaction' }, { payload: 'test3' })
       envelope.add_item({ type: 'log' }, { level: 'info', message: 'test4' })
       envelope
@@ -159,7 +158,6 @@ RSpec.describe Sentry::Client do
         end.to raise_error(Sentry::ExternalError)
 
         expect(subject.transport).to have_recorded_lost_event(:network_error, 'error')
-        expect(subject.transport).to have_recorded_lost_event(:network_error, 'metric_bucket')
         expect(subject.transport).to have_recorded_lost_event(:network_error, 'transaction')
         expect(subject.transport).to have_recorded_lost_event(:network_error, 'log')
       end
@@ -190,7 +188,7 @@ RSpec.describe Sentry::Client do
 
     it 'returns an event' do
       event = subject.event_from_message(message)
-      hash = event.to_hash
+      hash = event.to_h
 
       expect(event).to be_a(Sentry::ErrorEvent)
       expect(hash[:message]).to eq(message)
@@ -206,7 +204,7 @@ RSpec.describe Sentry::Client do
       end
 
       t.join
-      hash = event.to_hash
+      hash = event.to_h
 
       thread = hash[:threads][:values][0]
       expect(thread[:id]).to eq(t.object_id)
@@ -217,14 +215,6 @@ RSpec.describe Sentry::Client do
   end
 
   describe "#event_from_transaction" do
-    let(:hub) do
-      Sentry::Hub.new(subject, Sentry::Scope.new)
-    end
-
-    let(:transaction) do
-      hub.start_transaction(name: "test transaction")
-    end
-
     before do
       configuration.traces_sample_rate = 1.0
 
@@ -234,7 +224,7 @@ RSpec.describe Sentry::Client do
 
     it "initializes a correct event for the transaction" do
       event = subject.event_from_transaction(transaction)
-      event_hash = event.to_hash
+      event_hash = event.to_h
 
       expect(event_hash[:type]).to eq("transaction")
       expect(event_hash[:contexts][:trace]).to eq(transaction.get_trace_context)
@@ -256,7 +246,7 @@ RSpec.describe Sentry::Client do
         "other-vendor-value-2=foo;bar;"
       )
 
-      transaction = Sentry::Transaction.new(name: "test transaction", hub: hub, baggage: baggage, sampled: true)
+      transaction = hub.start_transaction(name: "test transaction", baggage: baggage, sampled: true)
       event = subject.event_from_transaction(transaction)
 
       expect(event.dynamic_sampling_context).to eq({
@@ -286,23 +276,13 @@ RSpec.describe Sentry::Client do
       event = subject.event_from_transaction(transaction)
       expect(event.contexts).to include({ foo: { bar: 42 } })
     end
-
-    it 'adds metric summary on transaction if any' do
-      key = [:c, 'incr', 'none', []]
-      transaction.metrics_local_aggregator.add(key, 10)
-      hash = subject.event_from_transaction(transaction).to_hash
-
-      expect(hash[:_metrics_summary]).to eq({
-        'c:incr@none' => { count: 1, max: 10.0, min: 10.0, sum: 10.0, tags: {} }
-      })
-    end
   end
 
   describe "#event_from_exception" do
     let(:message) { 'This is a message' }
     let(:exception) { Exception.new(message) }
     let(:event) { subject.event_from_exception(exception) }
-    let(:hash) { event.to_hash }
+    let(:hash) { event.to_h }
 
     it "sets the message to the exception's value and type" do
       expect(hash[:exception][:values][0][:type]).to eq("Exception")
@@ -351,7 +331,7 @@ RSpec.describe Sentry::Client do
         end
 
         event = subject.event_from_exception(NonStringMessageError.new)
-        hash = event.to_hash
+        hash = event.to_h
         expect(event).to be_a(Sentry::ErrorEvent)
 
         if RUBY_VERSION >= "3.4"
@@ -372,7 +352,7 @@ RSpec.describe Sentry::Client do
 
       t.join
 
-      event_hash = event.to_hash
+      event_hash = event.to_h
       thread = event_hash[:threads][:values][0]
 
       expect(thread[:id]).to eq(t.object_id)
@@ -393,7 +373,7 @@ RSpec.describe Sentry::Client do
     it 'returns an event' do
       event = subject.event_from_exception(ZeroDivisionError.new("divided by 0"))
       expect(event).to be_a(Sentry::ErrorEvent)
-      hash = event.to_hash
+      hash = event.to_h
       expect(hash[:exception][:values][0][:type]).to match("ZeroDivisionError")
       expect(hash[:exception][:values][0][:value]).to match("divided by 0")
     end
@@ -593,7 +573,7 @@ RSpec.describe Sentry::Client do
       context 'when the exception responds to sentry_context' do
         let(:hash) do
           event = subject.event_from_exception(ExceptionWithContext.new)
-          event.to_hash
+          event.to_h
         end
 
         it "merges the context into event's extra" do
@@ -671,7 +651,7 @@ RSpec.describe Sentry::Client do
       it 'has correct custom mechanism when passed' do
         mech = Sentry::Mechanism.new(type: 'custom', handled: false)
         event = subject.event_from_exception(exception, mechanism: mech)
-        hash = event.to_hash
+        hash = event.to_h
         mechanism = hash[:exception][:values][0][:mechanism]
         expect(mechanism).to eq({ type: 'custom', handled: false })
       end
@@ -686,7 +666,7 @@ RSpec.describe Sentry::Client do
       event = subject.event_from_check_in(slug, status)
       expect(event).to be_a(Sentry::CheckInEvent)
 
-      hash = event.to_hash
+      hash = event.to_h
       expect(hash[:monitor_slug]).to eq(slug)
       expect(hash[:status]).to eq(status)
       expect(hash[:check_in_id].length).to eq(32)
@@ -703,7 +683,7 @@ RSpec.describe Sentry::Client do
 
       expect(event).to be_a(Sentry::CheckInEvent)
 
-      hash = event.to_hash
+      hash = event.to_h
       expect(hash[:monitor_slug]).to eq(slug)
       expect(hash[:status]).to eq(status)
       expect(hash[:check_in_id]).to eq("xxx-yyy")
@@ -722,92 +702,12 @@ RSpec.describe Sentry::Client do
 
       expect(event).to be_a(Sentry::CheckInEvent)
 
-      hash = event.to_hash
+      hash = event.to_h
       expect(hash[:monitor_slug]).to eq(slug)
       expect(hash[:status]).to eq(status)
       expect(hash[:check_in_id]).to eq("xxx-yyy")
       expect(hash[:duration]).to eq(30)
       expect(hash[:monitor_config]).to eq({ schedule: { type: :interval, value: 30, unit: :minute } })
-    end
-  end
-
-  describe "#generate_sentry_trace" do
-    let(:string_io) { StringIO.new }
-    let(:logger) do
-      ::Logger.new(string_io)
-    end
-
-    before do
-      configuration.sdk_logger = logger
-    end
-
-    let(:span) { Sentry::Span.new(transaction: transaction) }
-
-    it "generates the trace with given span and logs correct message" do
-      expect(subject.generate_sentry_trace(span)).to eq(span.to_sentry_trace)
-      expect(string_io.string).to match(
-        /\[Tracing\] Adding sentry-trace header to outgoing request: #{span.to_sentry_trace}/
-      )
-    end
-
-    context "with config.propagate_traces = false" do
-      before do
-        configuration.propagate_traces = false
-      end
-
-      it "returns nil" do
-        expect(subject.generate_sentry_trace(span)).to eq(nil)
-      end
-    end
-  end
-
-  describe "#generate_baggage" do
-    before { configuration.sdk_logger = logger }
-
-    let(:string_io) { StringIO.new }
-    let(:logger) { ::Logger.new(string_io) }
-    let(:baggage) do
-      Sentry::Baggage.from_incoming_header(
-        "other-vendor-value-1=foo;bar;baz, sentry-trace_id=771a43a4192642f0b136d5159a501700, "\
-        "sentry-public_key=49d0f7386ad645858ae85020e393bef3, sentry-sample_rate=0.01337, "\
-        "sentry-user_id=Am%C3%A9lie, other-vendor-value-2=foo;bar;"
-      )
-    end
-
-    let(:span) do
-      hub = Sentry::Hub.new(subject, Sentry::Scope.new)
-      transaction = Sentry::Transaction.new(name: "test transaction",
-                                            baggage: baggage,
-                                            hub: hub,
-                                            sampled: true)
-
-      transaction.start_child(op: "finished child", timestamp: Time.now.utc.iso8601)
-    end
-
-    it "generates the baggage header with given span and logs correct message" do
-      generated_baggage = subject.generate_baggage(span)
-      expect(generated_baggage).to eq(span.to_baggage)
-
-      expect(generated_baggage).to eq(
-        "sentry-trace_id=771a43a4192642f0b136d5159a501700,"\
-        "sentry-public_key=49d0f7386ad645858ae85020e393bef3,"\
-        "sentry-sample_rate=0.01337,"\
-        "sentry-user_id=Am%C3%A9lie"
-      )
-
-      expect(string_io.string).to match(
-        /\[Tracing\] Adding baggage header to outgoing request: #{span.to_baggage}/
-      )
-    end
-
-    context "with config.propagate_traces = false" do
-      before do
-        configuration.propagate_traces = false
-      end
-
-      it "returns nil" do
-        expect(subject.generate_baggage(span)).to eq(nil)
-      end
     end
   end
 end

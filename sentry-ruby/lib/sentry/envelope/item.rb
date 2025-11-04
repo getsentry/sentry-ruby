@@ -3,7 +3,7 @@
 module Sentry
   # @api private
   class Envelope::Item
-    STACKTRACE_FRAME_LIMIT_ON_OVERSIZED_PAYLOAD = 500
+    STACKTRACE_FRAME_LIMIT_ON_OVERSIZED_PAYLOAD = 1000
     MAX_SERIALIZED_PAYLOAD_SIZE = 1024 * 1000
 
     SIZE_LIMITS = Hash.new(MAX_SERIALIZED_PAYLOAD_SIZE).update(
@@ -18,7 +18,6 @@ module Sentry
       when "session", "attachment", "transaction", "profile", "span", "log" then type
       when "sessions" then "session"
       when "check_in" then "monitor"
-      when "statsd", "metric_meta" then "metric_bucket"
       when "event" then "error"
       when "client_report" then "internal"
       else "default"

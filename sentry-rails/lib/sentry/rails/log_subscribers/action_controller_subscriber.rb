@@ -27,6 +27,8 @@ module Sentry
         #
         # @param event [ActiveSupport::Notifications::Event] The controller action event
         def process_action(event)
+          return unless Sentry.initialized?
+
           payload = event.payload
 
           controller = payload[:controller]

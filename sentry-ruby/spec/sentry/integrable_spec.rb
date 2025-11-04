@@ -82,7 +82,7 @@ RSpec.describe Sentry::Integrable do
     it "generates Sentry::FakeIntegration.capture_check_in" do
       hint = nil
 
-      Sentry.configuration.before_send = lambda do |event, h|
+      Sentry.configuration.before_send_check_in = lambda do |event, h|
         hint = h
         event
       end
