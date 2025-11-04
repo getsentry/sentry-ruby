@@ -37,7 +37,7 @@ module Sentry
         Sentry::GoodJob::CronHelpers::Integration.setup_monitoring_for_scheduled_jobs
       end
 
-      Sentry.configuration.sdk_logger.info "[sentry-good_job] Sentry Good Job integration initialized automatically"
+      Sentry.configuration.sdk_logger.info "Sentry Good Job integration initialized automatically"
     end
 
     # Delegate capture_exception so internal components can be tested in isolation

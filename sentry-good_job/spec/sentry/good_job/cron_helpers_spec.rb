@@ -199,7 +199,7 @@ RSpec.describe Sentry::GoodJob::CronHelpers do
 
           described_class::Integration.setup_monitoring_for_scheduled_jobs
 
-          expect(Sentry.configuration.sdk_logger).to have_received(:info).with("[sentry-good_job] Sentry cron monitoring setup for 2 scheduled jobs: TestJob, AnotherJob")
+          expect(Sentry.configuration.sdk_logger).to have_received(:info).with("Sentry cron monitoring setup for 2 scheduled jobs: TestJob, AnotherJob")
         end
       end
     end
