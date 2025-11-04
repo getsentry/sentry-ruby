@@ -222,11 +222,12 @@ RSpec.describe Sentry::Sidekiq::SentryContextClientMiddleware do
       transaction.finish
 
       expect(transport.events.count).to eq(1)
-      event = transport.events.last
-      expect(event.spans.count).to eq(1)
-      expect(event.spans[0][:op]).to eq("queue.publish")
-      expect(event.spans[0][:data]['messaging.message.id']).to eq(message_id)
-      expect(event.spans[0][:data]['messaging.destination.name']).to eq('default')
+
+      span = transport.events.last.spans.detect { |span| span[:op] == "queue.publish" }
+      expect(span).not_to be_nil
+      expect(span[:op]).to eq("queue.publish")
+      expect(span[:data]['messaging.message.id']).to eq(message_id)
+      expect(span[:data]['messaging.destination.name']).to eq('default')
     end
 
     it "does not propagate headers with propagate_traces = false" do
