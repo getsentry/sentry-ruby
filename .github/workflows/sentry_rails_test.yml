@@ -61,7 +61,6 @@ jobs:
             rails_version: 7.1.0
         exclude:
           - ruby_version: head
-          - ruby_version: 'jruby'
           - ruby_version: jruby-head
           - ruby_version: "3.4"
             rails_version: "6.1.0"
