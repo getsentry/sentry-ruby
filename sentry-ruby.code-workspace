@@ -37,7 +37,8 @@
     "rubyLsp.rubyVersionManager": {
       "identifier": "auto"
     },
-    "rubyLsp.formatter": "auto"
+    "rubyLsp.formatter": "auto",
+    "testing.gutterEnabled": false
   },
   "extensions": {
     "recommendations": [

@@ -1,17 +1,18 @@
 # frozen_string_literal: true
 
 require "bundler/setup"
+
+ENV["RAILS_ENV"] = "test"
+
 begin
   require "debug/prelude"
 rescue LoadError
 end
 
 require "sentry-ruby"
-require "sentry/test_helper"
+require "sentry-rails"
 
-require 'rspec/retry'
-
-require 'simplecov'
+require "simplecov"
 
 SimpleCov.start do
   project_name "sentry-rails"
@@ -25,16 +26,19 @@ if ENV["CI"]
   SimpleCov.formatter = SimpleCov::Formatter::CoberturaFormatter
 end
 
-# this already requires the sdk
-require "dummy/test_rails_app/app"
-# need to be required after rails is loaded from the above
-require "rspec/rails"
-
-DUMMY_DSN = 'http://12345:67890@sentry.localdomain/sentry/42'
-
 Dir["#{__dir__}/support/**/*.rb"].each { |file| require file }
 
 RAILS_VERSION = Rails.version.to_f
+
+puts "\n"
+puts "*"*80
+puts "Running tests for Rails #{RAILS_VERSION}"
+puts "*"*80
+puts "\n"
+
+# Need to be required after rails is loaded from the dummy app
+require "rspec/retry"
+require "rspec/rails"
 
 RSpec.configure do |config|
   # Enable flags like --only-failures and --next-failure
@@ -47,7 +51,21 @@ RSpec.configure do |config|
     c.syntax = :expect
   end
 
-  config.include(Sentry::TestHelper)
+  config.include(Sentry::Rails::TestHelper)
+
+  config.before :suite do
+    Sentry::TestRailsApp.load_test_schema
+  end
+
+  config.before :each do
+    # Make sure we reset the env in case something leaks in
+    ENV.delete('SENTRY_DSN')
+    ENV.delete('SENTRY_CURRENT_ENV')
+    ENV.delete('SENTRY_ENVIRONMENT')
+    ENV.delete('SENTRY_RELEASE')
+    ENV.delete('RAILS_ENV')
+    ENV.delete('RACK_ENV')
+  end
 
   config.after :each do
     Sentry::Rails::Tracing.unsubscribe_tracing_events
@@ -65,17 +83,7 @@ RSpec.configure do |config|
 
     reset_sentry_globals!
 
-    Rails.application = nil
-  end
-
-  config.before :each do
-    # Make sure we reset the env in case something leaks in
-    ENV.delete('SENTRY_DSN')
-    ENV.delete('SENTRY_CURRENT_ENV')
-    ENV.delete('SENTRY_ENVIRONMENT')
-    ENV.delete('SENTRY_RELEASE')
-    ENV.delete('RAILS_ENV')
-    ENV.delete('RACK_ENV')
+    Rails.application&.cleanup!
   end
 
   config.include ActiveJob::TestHelper, type: :job
