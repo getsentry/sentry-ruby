@@ -26,6 +26,8 @@ module Sentry
         #
         # @param event [ActiveSupport::Notifications::Event] The email delivery event
         def deliver(event)
+          return unless Sentry.initialized?
+
           payload = event.payload
 
           mailer = payload[:mailer]
@@ -57,6 +59,8 @@ module Sentry
         #
         # @param event [ActiveSupport::Notifications::Event] The email processing event
         def process(event)
+          return unless Sentry.initialized?
+
           payload = event.payload
 
           mailer = payload[:mailer]

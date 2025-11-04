@@ -29,6 +29,7 @@ module Sentry
         #
         # @param event [ActiveSupport::Notifications::Event] The SQL event
         def sql(event)
+          return unless Sentry.initialized?
           return if EXCLUDED_NAMES.include?(event.payload[:name])
 
           sql = event.payload[:sql]
