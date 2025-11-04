@@ -4,6 +4,10 @@
 
 - Add support for ActiveRecord binds in the log events ([#2761](https://github.com/getsentry/sentry-ruby/pull/2761))
 
+### Bug Fixes
+
+- Guard log subscribers with initialized check ([#2765](https://github.com/getsentry/sentry-ruby/pull/2765))
+
 ## 6.0.0
 
 ### Breaking Changes
