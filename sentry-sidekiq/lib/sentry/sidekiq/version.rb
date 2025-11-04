@@ -2,6 +2,6 @@
 
 module Sentry
   module Sidekiq
-    VERSION = "5.28.0"
+    VERSION = "6.1.0"
   end
 end

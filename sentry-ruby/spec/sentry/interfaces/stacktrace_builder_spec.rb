@@ -97,17 +97,4 @@ RSpec.describe Sentry::StacktraceBuilder do
       end
     end
   end
-
-  describe '#metrics_code_location' do
-    it 'builds metrics code location hash for line' do
-      hash = subject.metrics_code_location(backtrace.first)
-
-      expect(hash[:filename]).to match(/stacktrace_test_fixture.rb/)
-      expect(hash[:function]).to eq("bar")
-      expect(hash[:lineno]).to eq(8)
-      expect(hash[:pre_context]).to eq(["end\n", "\n", "def bar\n"])
-      expect(hash[:context_line]).to eq("  baz\n")
-      expect(hash[:post_context]).to eq(["end\n", nil, nil])
-    end
-  end
 end

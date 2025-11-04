@@ -18,7 +18,7 @@ RSpec.describe 'Sentry::Rack::CaptureExceptions', when: :rack_available? do
 
       expect { stack.call(env) }.to raise_error(ZeroDivisionError)
 
-      event = last_sentry_event.to_hash
+      event = last_sentry_event.to_h
       expect(event.dig(:request, :url)).to eq("http://example.org/test")
       expect(env["sentry.error_event_id"]).to eq(event[:event_id])
       last_frame = event.dig(:exception, :values, 0, :stacktrace, :frames).last
@@ -31,7 +31,7 @@ RSpec.describe 'Sentry::Rack::CaptureExceptions', when: :rack_available? do
 
       expect { stack.call(env) }.to raise_error(ZeroDivisionError)
 
-      event = last_sentry_event.to_hash
+      event = last_sentry_event.to_h
       mechanism = event.dig(:exception, :values, 0, :mechanism)
       expect(mechanism).to eq({ type: 'rack', handled: false })
     end
@@ -49,7 +49,7 @@ RSpec.describe 'Sentry::Rack::CaptureExceptions', when: :rack_available? do
 
       event = last_sentry_event
       expect(env["sentry.error_event_id"]).to eq(event.event_id)
-      expect(event.to_hash.dig(:request, :url)).to eq("http://example.org/test")
+      expect(event.to_h.dig(:request, :url)).to eq("http://example.org/test")
     end
 
     it 'captures the exception from sinatra.error' do
@@ -64,7 +64,7 @@ RSpec.describe 'Sentry::Rack::CaptureExceptions', when: :rack_available? do
       end.to change { sentry_events.count }.by(1)
 
       event = last_sentry_event
-      expect(event.to_hash.dig(:request, :url)).to eq("http://example.org/test")
+      expect(event.to_h.dig(:request, :url)).to eq("http://example.org/test")
     end
 
     it 'sets the transaction and rack env' do
@@ -78,7 +78,7 @@ RSpec.describe 'Sentry::Rack::CaptureExceptions', when: :rack_available? do
 
       event = last_sentry_event
       expect(event.transaction).to eq("/test")
-      expect(event.to_hash.dig(:request, :url)).to eq("http://example.org/test")
+      expect(event.to_h.dig(:request, :url)).to eq("http://example.org/test")
       expect(Sentry.get_current_scope.transaction_name).to be_nil
       expect(Sentry.get_current_scope.rack_env).to eq({})
     end
@@ -115,7 +115,7 @@ RSpec.describe 'Sentry::Rack::CaptureExceptions', when: :rack_available? do
 
         expect { stack.call(env) }.to raise_error(ZeroDivisionError)
 
-        event = last_sentry_event.to_hash
+        event = last_sentry_event.to_h
         expect(event.dig(:request, :url)).to eq("http://example.org/test")
         last_frame = event.dig(:exception, :values, 0, :stacktrace, :frames).last
         expect(last_frame[:vars]).to include({ a: "1", b: "0" })
@@ -139,7 +139,7 @@ RSpec.describe 'Sentry::Rack::CaptureExceptions', when: :rack_available? do
 
         expect { stack.call(env) }.to raise_error(ZeroDivisionError)
 
-        event = last_sentry_event.to_hash
+        event = last_sentry_event.to_h
         expect(event.dig(:request, :url)).to eq("http://example.org/test")
         last_frame = event.dig(:exception, :values, 0, :stacktrace, :frames).last
         expect(last_frame[:vars]).to include({ a: "1", b: "0", f: "[ignored due to error]" })
@@ -157,7 +157,7 @@ RSpec.describe 'Sentry::Rack::CaptureExceptions', when: :rack_available? do
 
         expect { stack.call(env) }.to raise_error(ZeroDivisionError)
 
-        event = last_sentry_event.to_hash
+        event = last_sentry_event.to_h
         expect(event.dig(:request, :url)).to eq("http://example.org/test")
         last_frame = event.dig(:exception, :values, 0, :stacktrace, :frames).last
         expect(last_frame[:vars]).to include({ a: "1", b: "0", long: "*" * 1024 + "..." })
@@ -229,6 +229,92 @@ RSpec.describe 'Sentry::Rack::CaptureExceptions', when: :rack_available? do
         expect(Sentry.get_current_scope.tags).to eq(tag_1: "don't change me")
       end
     end
+
+    context "with send_default_pii" do
+      before do
+        perform_basic_setup do |config|
+          config.send_default_pii = true
+        end
+      end
+
+      context "with form data" do
+        let(:additional_headers) do
+          { "REQUEST_METHOD" => "POST", ::Rack::RACK_INPUT => StringIO.new("foo=bar") }
+        end
+
+        it "captures the exception with request form data" do
+          app = ->(_e) { raise exception }
+          stack = Sentry::Rack::CaptureExceptions.new(app)
+
+          expect { stack.call(env) }.to raise_error(ZeroDivisionError)
+
+          event = last_sentry_event.to_h
+          expect(event.dig(:request, :url)).to eq("http://example.org/test")
+          expect(event.dig(:request, :data)).to eq({ "foo" => "bar" })
+        end
+
+        it "allows later middlewares to read body" do
+          app = ->(_e) { raise exception }
+          stack = Sentry::Rack::CaptureExceptions.new(app)
+
+          expect { stack.call(env) }.to raise_error(ZeroDivisionError)
+          expect { ::Rack::Request.new(env).body.read }.not_to raise_error
+        end
+      end
+
+      context "with rewindable non form data" do
+        let(:additional_headers) do
+          { "REQUEST_METHOD" => "POST", "CONTENT_TYPE" => "application/text", ::Rack::RACK_INPUT => StringIO.new("stuff") }
+        end
+
+        it "captures the exception with request form data" do
+          app = ->(_e) { raise exception }
+          stack = Sentry::Rack::CaptureExceptions.new(app)
+
+          expect { stack.call(env) }.to raise_error(ZeroDivisionError)
+
+          event = last_sentry_event.to_h
+          expect(event.dig(:request, :url)).to eq("http://example.org/test")
+          expect(event.dig(:request, :data)).to eq("stuff")
+        end
+
+        it "allows later middlewares to read body" do
+          app = ->(_e) { raise exception }
+          stack = Sentry::Rack::CaptureExceptions.new(app)
+
+          expect { stack.call(env) }.to raise_error(ZeroDivisionError)
+          expect { ::Rack::Request.new(env).body.read }.not_to raise_error
+        end
+      end
+
+      context "with non rewindable non form data" do
+        let(:dbl) { double }
+        let(:additional_headers) do
+          { "REQUEST_METHOD" => "POST", "CONTENT_TYPE" => "application/text", ::Rack::RACK_INPUT => dbl }
+        end
+
+        it "does not try to read non rewindable body" do
+          app = ->(_e) { raise exception }
+          stack = Sentry::Rack::CaptureExceptions.new(app)
+
+          expect { stack.call(env) }.to raise_error(ZeroDivisionError)
+
+          event = last_sentry_event.to_h
+          expect(event.dig(:request, :url)).to eq("http://example.org/test")
+          expect(event.dig(:request, :data)).to eq("Skipped non-rewindable request body")
+        end
+
+        it "allows later middlewares to read body" do
+          allow(dbl).to receive(:read)
+
+          app = ->(_e) { raise exception }
+          stack = Sentry::Rack::CaptureExceptions.new(app)
+
+          expect { stack.call(env) }.to raise_error(ZeroDivisionError)
+          expect { ::Rack::Request.new(env).body.read }.not_to raise_error
+        end
+      end
+    end
   end
 
   describe "performance monitoring" do
@@ -240,12 +326,11 @@ RSpec.describe 'Sentry::Rack::CaptureExceptions', when: :rack_available? do
 
     context "when sentry-trace header is sent" do
       let(:external_transaction) do
-        Sentry::Transaction.new(
+        Sentry.start_transaction(
           op: "pageload",
           status: "ok",
           sampled: true,
           name: "a/path",
-          hub: Sentry.get_current_hub
         )
       end
 
@@ -560,7 +645,6 @@ RSpec.describe 'Sentry::Rack::CaptureExceptions', when: :rack_available? do
             status: "ok",
             sampled: true,
             name: "a/path",
-            hub: Sentry.get_current_hub
           )
         end
 

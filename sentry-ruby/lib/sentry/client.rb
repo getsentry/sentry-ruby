@@ -60,8 +60,7 @@ module Sentry
         return
       end
 
-      event_type = event.is_a?(Event) ? event.type : event["type"]
-      data_category = Envelope::Item.data_category(event_type)
+      data_category = Envelope::Item.data_category(event.type)
 
       is_transaction = event.is_a?(TransactionEvent)
       spans_before = is_transaction ? event.spans.size : 0
@@ -78,9 +77,7 @@ module Sentry
         transport.record_lost_event(:event_processor, "span", num: spans_delta) if spans_delta > 0
       end
 
-      if async_block = configuration.async
-        dispatch_async_event(async_block, event, hint)
-      elsif configuration.background_worker_threads != 0 && hint.fetch(:background, true)
+      if configuration.background_worker_threads != 0 && hint.fetch(:background, true)
         unless dispatch_background_event(event, hint)
           transport.record_lost_event(:queue_overflow, data_category)
           transport.record_lost_event(:queue_overflow, "span", num: spans_before + 1) if is_transaction
@@ -210,22 +207,13 @@ module Sentry
 
     # @!macro send_event
     def send_event(event, hint = nil)
-      event_type = event.is_a?(Event) ? event.type : event["type"]
-      data_category = Envelope::Item.data_category(event_type)
+      data_category = Envelope::Item.data_category(event.type)
       spans_before = event.is_a?(TransactionEvent) ? event.spans.size : 0
 
-      if event_type != TransactionEvent::TYPE && configuration.before_send
+      if event.is_a?(ErrorEvent) && configuration.before_send
         event = configuration.before_send.call(event, hint)
 
-        case event
-        when ErrorEvent, CheckInEvent
-          # do nothing
-        when Hash
-          log_debug(<<~MSG)
-            Returning a Hash from before_send is deprecated and will be removed in the next major version.
-            Please return a Sentry::ErrorEvent object instead.
-          MSG
-        else
+        if !event.is_a?(ErrorEvent)
           # Avoid serializing the event object in this case because we aren't sure what it is and what it contains
           log_debug(<<~MSG)
             Discarded event because before_send didn't return a Sentry::ErrorEvent object but an instance of #{event.class}
@@ -235,27 +223,33 @@ module Sentry
         end
       end
 
-      if event_type == TransactionEvent::TYPE && configuration.before_send_transaction
+      if event.is_a?(TransactionEvent) && configuration.before_send_transaction
         event = configuration.before_send_transaction.call(event, hint)
 
-        if event.is_a?(TransactionEvent) || event.is_a?(Hash)
-          spans_after = event.is_a?(TransactionEvent) ? event.spans.size : 0
-          spans_delta = spans_before - spans_after
-          transport.record_lost_event(:before_send, "span", num: spans_delta) if spans_delta > 0
-
-          if event.is_a?(Hash)
-            log_debug(<<~MSG)
-              Returning a Hash from before_send_transaction is deprecated and will be removed in the next major version.
-              Please return a Sentry::TransactionEvent object instead.
-            MSG
-          end
-        else
+        if !event.is_a?(TransactionEvent)
           # Avoid serializing the event object in this case because we aren't sure what it is and what it contains
           log_debug(<<~MSG)
             Discarded event because before_send_transaction didn't return a Sentry::TransactionEvent object but an instance of #{event.class}
           MSG
           transport.record_lost_event(:before_send, "transaction")
           transport.record_lost_event(:before_send, "span", num: spans_before + 1)
+          return
+        end
+
+        spans_after = event.is_a?(TransactionEvent) ? event.spans.size : 0
+        spans_delta = spans_before - spans_after
+        transport.record_lost_event(:before_send, "span", num: spans_delta) if spans_delta > 0
+      end
+
+      if event.is_a?(CheckInEvent) && configuration.before_send_check_in
+        event = configuration.before_send_check_in.call(event, hint)
+
+        if !event.is_a?(CheckInEvent)
+          # Avoid serializing the event object in this case because we aren't sure what it is and what it contains
+          log_debug(<<~MSG)
+            Discarded event because before_send_check_in didn't return a Sentry::CheckInEvent object but an instance of #{event.class}
+          MSG
+          transport.record_lost_event(:before_send, data_category)
           return
         end
       end
@@ -291,7 +285,7 @@ module Sentry
           processed_log_event = configuration.before_send_log.call(log_event)
 
           if processed_log_event
-            envelope_items << processed_log_event.to_hash
+            envelope_items << processed_log_event.to_h
           else
             discarded_count += 1
           end
@@ -299,7 +293,7 @@ module Sentry
 
         envelope_items
       else
-        envelope_items = log_events.map(&:to_hash)
+        envelope_items = log_events.map(&:to_h)
       end
 
       envelope.add_item(
@@ -334,67 +328,12 @@ module Sentry
       raise
     end
 
-    # @deprecated use Sentry.get_traceparent instead.
-    #
-    # Generates a Sentry trace for distribted tracing from the given Span.
-    # Returns `nil` if `config.propagate_traces` is `false`.
-    # @param span [Span] the span to generate trace from.
-    # @return [String, nil]
-    def generate_sentry_trace(span)
-      return unless configuration.propagate_traces
-
-      trace = span.to_sentry_trace
-      log_debug("[Tracing] Adding #{SENTRY_TRACE_HEADER_NAME} header to outgoing request: #{trace}")
-      trace
-    end
-
-    # @deprecated Use Sentry.get_baggage instead.
-    #
-    # Generates a W3C Baggage header for distributed tracing from the given Span.
-    # Returns `nil` if `config.propagate_traces` is `false`.
-    # @param span [Span] the span to generate trace from.
-    # @return [String, nil]
-    def generate_baggage(span)
-      return unless configuration.propagate_traces
-
-      baggage = span.to_baggage
-
-      if baggage && !baggage.empty?
-        log_debug("[Tracing] Adding #{BAGGAGE_HEADER_NAME} header to outgoing request: #{baggage}")
-      end
-
-      baggage
-    end
-
     private
 
     def dispatch_background_event(event, hint)
       Sentry.background_worker.perform do
         send_event(event, hint)
       end
-    end
-
-    def dispatch_async_event(async_block, event, hint)
-      # We have to convert to a JSON-like hash, because background job
-      # processors (esp ActiveJob) may not like weird types in the event hash
-
-      event_hash =
-        begin
-          event.to_json_compatible
-        rescue => e
-          log_error("Converting #{event.type} (#{event.event_id}) to JSON compatible hash failed", e, debug: configuration.debug)
-          return
-        end
-
-      if async_block.arity == 2
-        hint = JSON.parse(JSON.generate(hint))
-        async_block.call(event_hash, hint)
-      else
-        async_block.call(event_hash)
-      end
-    rescue => e
-      log_error("Async #{event_hash["type"]} sending failed", e, debug: configuration.debug)
-      send_event(event, hint)
     end
   end
 end

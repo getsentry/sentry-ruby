@@ -16,12 +16,12 @@ module Sentry
                                                 :in_progress,
                                                 monitor_config: monitor_config)
 
-          start = Metrics::Timing.duration_start
+          start = Process.clock_gettime(Process::CLOCK_MONOTONIC)
 
           begin
             # need to do this on ruby <= 2.6 sadly
             ret = method(:perform).super_method.arity == 0 ? super() : super
-            duration = Metrics::Timing.duration_end(start)
+            duration = Process.clock_gettime(Process::CLOCK_MONOTONIC) - start
 
             Sentry.capture_check_in(slug,
                                     :ok,
@@ -31,7 +31,7 @@ module Sentry
 
             ret
           rescue Exception
-            duration = Metrics::Timing.duration_end(start)
+            duration = Process.clock_gettime(Process::CLOCK_MONOTONIC) - start
 
             Sentry.capture_check_in(slug,
                                     :error,

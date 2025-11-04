@@ -46,7 +46,7 @@ RSpec.describe Sentry::DelayedJob do
     enqueued_job.invoke_job
 
     expect(transport.events.count).to eq(1)
-    event = transport.events.last.to_hash
+    event = transport.events.last.to_h
     expect(event[:message]).to eq("report")
     expect(event[:contexts][:"Delayed-Job"][:id]).to eq(enqueued_job.id.to_s)
     expect(event[:tags]).to eq({ "delayed_job.id" => enqueued_job.id.to_s, "delayed_job.queue" => nil })
@@ -68,7 +68,7 @@ RSpec.describe Sentry::DelayedJob do
     enqueued_job.invoke_job
 
     expect(transport.events.count).to eq(1)
-    event = transport.events.last.to_hash
+    event = transport.events.last.to_h
     expect(event[:message]).to eq("tagged report")
     expect(event[:tags]).to eq({ "delayed_job.id" => enqueued_job.id.to_s, "delayed_job.queue" => nil, number: 1 })
 
@@ -77,7 +77,7 @@ RSpec.describe Sentry::DelayedJob do
     enqueued_job.invoke_job
 
     expect(transport.events.count).to eq(2)
-    event = transport.events.last.to_hash
+    event = transport.events.last.to_h
     expect(event[:tags]).to eq({ "delayed_job.id" => enqueued_job.id.to_s, "delayed_job.queue" => nil })
   end
 
@@ -93,7 +93,7 @@ RSpec.describe Sentry::DelayedJob do
       end.to raise_error(ZeroDivisionError)
 
       expect(transport.events.count).to eq(1)
-      event = transport.events.last.to_hash
+      event = transport.events.last.to_h
 
       expect(event[:sdk]).to eq({ name: "sentry.ruby.delayed_job", version: described_class::VERSION })
       expect(event.dig(:exception, :values, 0, :type)).to eq("ZeroDivisionError")
@@ -109,7 +109,7 @@ RSpec.describe Sentry::DelayedJob do
       end.to raise_error(RuntimeError)
 
       expect(transport.events.count).to eq(1)
-      event = transport.events.last.to_hash
+      event = transport.events.last.to_h
 
       expect(event[:tags]).to eq({ "delayed_job.id" => enqueued_job.id.to_s, "delayed_job.queue" => nil, number: 1 })
       expect(Sentry.get_current_scope.extra).to eq({})
@@ -123,7 +123,7 @@ RSpec.describe Sentry::DelayedJob do
       end.to raise_error(ZeroDivisionError)
 
       expect(transport.events.count).to eq(2)
-      event = transport.events.last.to_hash
+      event = transport.events.last.to_h
       expect(event[:tags]).to eq({ "delayed_job.id" => enqueued_job.id.to_s, "delayed_job.queue" => nil })
       expect(Sentry.get_current_scope.extra).to eq({})
       expect(Sentry.get_current_scope.tags).to eq({})
@@ -228,7 +228,7 @@ RSpec.describe Sentry::DelayedJob do
       it "injects ActiveJob information to the event" do
         expect(transport.events.count).to eq(1)
 
-        event = transport.events.last.to_hash
+        event = transport.events.last.to_h
         expect(event[:message]).to eq("report from ActiveJob")
         expect(event[:tags]).to match({ "delayed_job.id" => anything, "delayed_job.queue" => "default", number: 1 })
         expect(event[:contexts][:"Active-Job"][:job_class]).to eq("ReportingJob")
@@ -255,7 +255,7 @@ RSpec.describe Sentry::DelayedJob do
       it "injects ActiveJob information to the event" do
         expect(transport.events.count).to eq(1)
 
-        event = transport.events.last.to_hash
+        event = transport.events.last.to_h
         expect(event.dig(:exception, :values, 0, :type)).to eq("ZeroDivisionError")
         expect(event[:tags]).to match({ "delayed_job.id" => anything, "delayed_job.queue" => "default", number: 2 })
         expect(event[:contexts][:"Active-Job"][:job_class]).to eq("FailedJob")

@@ -63,16 +63,6 @@ RSpec.describe Sentry::Rails, type: :request do
         end
       end
 
-      it "respects the logger set by user" do
-        logger = ::Logger.new(nil)
-
-        make_basic_app do |config|
-          config.sdk_logger = logger
-        end
-
-        expect(Sentry.configuration.sdk_logger).to eq(logger)
-      end
-
       it "doesn't cause error if Rails::Logger is not present during SDK initialization" do
         Rails.logger = nil
 
@@ -251,7 +241,39 @@ RSpec.describe Sentry::Rails, type: :request do
       expect(gem_frame["post_context"]).not_to be_empty
       expect(gem_frame["context_line"]).not_to be_empty
     end
+  end
 
+  context "with config.exceptions_app = self.routes" do
+    before do
+      make_basic_app do |config, app|
+        app.config.consider_all_requests_local = false
+        app.config.exceptions_app = app.routes
+      end
+    end
+
+    it "sets transaction to ControllerName#method" do
+      get "/exception"
+
+      expect(transport.events.count).to eq(1)
+      last_event = transport.events.last
+      expect(last_event.transaction).to eq("HelloController#exception")
+      expect(transport.events.last.transaction_info).to eq({ source: :view })
+      expect(response.body).to match(last_event.event_id)
+
+      get "/posts"
+
+      expect(transport.events.last.transaction).to eq("PostsController#index")
+      expect(transport.events.last.transaction_info).to eq({ source: :view })
+    end
+
+    it "sets correct request url" do
+      get "/exception"
+
+      expect(event.dig("request", "url")).to eq("http://www.example.com/exception")
+    end
+  end
+
+  context "with overridden backtrace_cleanup_callback" do
     it "doesn't filters exception backtrace if backtrace_cleanup_callback is overridden" do
       make_basic_app do |config|
         config.backtrace_cleanup_callback = lambda { |backtrace| backtrace }
@@ -262,35 +284,6 @@ RSpec.describe Sentry::Rails, type: :request do
       traces = event.dig("exception", "values", 0, "stacktrace", "frames")
       expect(traces.dig(-1, "filename")).to eq("inline template")
       expect(traces.dig(-1, "function")).not_to be_nil
-    end
-
-    context "with config.exceptions_app = self.routes" do
-      before do
-        make_basic_app do |config, app|
-          app.config.exceptions_app = app.routes
-        end
-      end
-
-      it "sets transaction to ControllerName#method" do
-        get "/exception"
-
-        expect(transport.events.count).to eq(1)
-        last_event = transport.events.last
-        expect(last_event.transaction).to eq("HelloController#exception")
-        expect(transport.events.last.transaction_info).to eq({ source: :view })
-        expect(response.body).to match(last_event.event_id)
-
-        get "/posts"
-
-        expect(transport.events.last.transaction).to eq("PostsController#index")
-        expect(transport.events.last.transaction_info).to eq({ source: :view })
-      end
-
-      it "sets correct request url" do
-        get "/exception"
-
-        expect(event.dig("request", "url")).to eq("http://www.example.com/exception")
-      end
     end
   end
 
@@ -303,6 +296,20 @@ RSpec.describe Sentry::Rails, type: :request do
 
     it "sets Sentry.configuration.trusted_proxies correctly" do
       expect(Sentry.configuration.trusted_proxies).to eq(["5.5.5.5"])
+    end
+  end
+
+  context "with custom logger" do
+    before do
+      make_basic_app do |config|
+        config.sdk_logger = logger
+      end
+    end
+
+    let(:logger) { ::Logger.new(nil) }
+
+    it "respects the logger set by user" do
+      expect(Sentry.configuration.sdk_logger).to be(logger)
     end
   end
 

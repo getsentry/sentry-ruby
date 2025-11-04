@@ -1,29 +1,6 @@
 # frozen_string_literal: true
 
 RSpec.describe Sentry::Configuration do
-  describe "#capture_exception_frame_locals" do
-    it "passes/received the value to #include_local_variables" do
-      subject.capture_exception_frame_locals = true
-      expect(subject.include_local_variables).to eq(true)
-      expect(subject.capture_exception_frame_locals).to eq(true)
-
-      subject.capture_exception_frame_locals = false
-      expect(subject.include_local_variables).to eq(false)
-      expect(subject.capture_exception_frame_locals).to eq(false)
-    end
-
-    it "prints deprecation message when being assigned" do
-      string_io = StringIO.new
-      subject.logger = Logger.new(string_io)
-
-      subject.capture_exception_frame_locals = true
-
-      expect(string_io.string).to include(
-        "WARN -- sentry: `capture_exception_frame_locals` is now deprecated in favor of `include_local_variables`."
-      )
-    end
-  end
-
   describe "#background_worker_threads" do
     it "sets to have of the processors count" do
       allow_any_instance_of(Sentry::Configuration).to receive(:processor_count).and_return(8)
@@ -114,25 +91,6 @@ RSpec.describe Sentry::Configuration do
           expect(subject.tracing_enabled?).to eq(false)
         end
       end
-
-      context "when enable_tracing is set" do
-        it "returns false" do
-          subject.enable_tracing = true
-
-          expect(subject.tracing_enabled?).to eq(false)
-        end
-
-        it "prints deprecation message when being assigned" do
-          string_io = StringIO.new
-          subject.logger = Logger.new(string_io)
-
-          subject.enable_tracing = true
-
-          expect(string_io.string).to include(
-            "WARN -- sentry: `enable_tracing` is now deprecated in favor of `traces_sample_rate = 1.0`."
-          )
-        end
-      end
     end
 
     context "when sending allowed" do
@@ -175,29 +133,6 @@ RSpec.describe Sentry::Configuration do
           expect(subject.tracing_enabled?).to eq(true)
         end
       end
-
-      context "when enable_tracing is true" do
-        it "returns true" do
-          subject.enable_tracing = true
-
-          expect(subject.tracing_enabled?).to eq(true)
-        end
-      end
-
-      context "when enable_tracing is false" do
-        it "returns false" do
-          subject.enable_tracing = false
-
-          expect(subject.tracing_enabled?).to eq(false)
-        end
-
-        it "returns false even with explicit traces_sample_rate" do
-          subject.traces_sample_rate = 1.0
-          subject.enable_tracing = false
-
-          expect(subject.tracing_enabled?).to eq(false)
-        end
-      end
     end
   end
 
@@ -227,19 +162,19 @@ RSpec.describe Sentry::Configuration do
 
   describe "#profiling_enabled?" do
     it "returns false unless tracing enabled" do
-      subject.enable_tracing = false
+      subject.traces_sample_rate = nil
       expect(subject.profiling_enabled?).to eq(false)
     end
 
     it "returns false unless sending enabled" do
-      subject.enable_tracing = true
+      subject.traces_sample_rate = 1.0
       subject.profiles_sample_rate = 1.0
       allow(subject).to receive(:sending_allowed?).and_return(false)
       expect(subject.profiling_enabled?).to eq(false)
     end
 
     context 'when tracing and sending enabled' do
-      before { subject.enable_tracing = true }
+      before { subject.traces_sample_rate = 1.0 }
       before { allow(subject).to receive(:sending_allowed?).and_return(true) }
 
       it "returns false if nil sample rate" do
@@ -259,16 +194,9 @@ RSpec.describe Sentry::Configuration do
     end
   end
 
-  describe "#enable_tracing=" do
-    it "sets traces_sample_rate to 1.0 automatically" do
-      subject.enable_tracing = true
-      expect(subject.traces_sample_rate).to eq(1.0)
-    end
-
-    it "doesn't override existing traces_sample_rate" do
-      subject.traces_sample_rate = 0.5
-      subject.enable_tracing = true
-      expect(subject.traces_sample_rate).to eq(0.5)
+  describe "#profiles_sample_interval" do
+    it "defaults to 101 Hz" do
+      expect(subject.profiles_sample_interval).to eq(1e6 / 101)
     end
   end
 
@@ -372,22 +300,9 @@ RSpec.describe Sentry::Configuration do
     end
   end
 
-  context 'configuring for async' do
-    it 'should be configurable to send events async' do
-      subject.async = ->(_e) { :ok }
-      expect(subject.async.call('event')).to eq(:ok)
-    end
-  end
-
   it 'raises error when setting release to anything other than String' do
     subject.release = "foo"
     expect { subject.release = 42 }.to raise_error(ArgumentError, "expect the argument to be a String or NilClass, got Integer (42)")
-  end
-
-  it 'raises error when setting async to anything other than callable or nil' do
-    subject.async = -> { }
-    subject.async = nil
-    expect { subject.async = true }.to raise_error(ArgumentError, "async must be callable (or nil to disable)")
   end
 
   it 'raises error when setting before_send to anything other than callable or nil' do
@@ -400,6 +315,12 @@ RSpec.describe Sentry::Configuration do
     subject.before_send_transaction = -> { }
     subject.before_send_transaction = nil
     expect { subject.before_send_transaction = true }.to raise_error(ArgumentError, "before_send_transaction must be callable (or nil to disable)")
+  end
+
+  it 'raises error when setting before_send_check_in to anything other than callable or nil' do
+    subject.before_send_check_in = -> { }
+    subject.before_send_check_in = nil
+    expect { subject.before_send_check_in = true }.to raise_error(ArgumentError, "before_send_check_in must be callable (or nil to disable)")
   end
 
   it 'raises error when setting before_breadcrumb to anything other than callable or nil' do
@@ -416,9 +337,8 @@ RSpec.describe Sentry::Configuration do
 
     it 'should send events if test is whitelisted' do
       subject.enabled_environments = %w[test]
-      subject.sending_allowed?
-      puts subject.errors
       expect(subject.sending_allowed?).to eq(true)
+      expect(subject.errors).to be_empty
     end
 
     it 'should not send events if test is not whitelisted' do
@@ -798,19 +718,43 @@ RSpec.describe Sentry::Configuration do
     end
   end
 
-  describe "#logger" do
-    it "returns configured sdk_logger and prints deprecation warning" do
-      expect {
-        expect(subject.logger).to be(subject.sdk_logger)
-      }.to output(/`config.logger` is deprecated/).to_stderr
+  describe "#trace_ignore_status_codes" do
+    it "has default values" do
+      expect(subject.trace_ignore_status_codes).to eq([(301..303), (305..399), (401..404)])
     end
-  end
 
-  describe "#logger=" do
-    it "sets sdk_logger and prints deprecation warning" do
-      expect {
-        subject.logger = Logger.new($stdout)
-      }.to output(/`config.logger=` is deprecated/).to_stderr
+    it "can be configured with individual status codes" do
+      subject.trace_ignore_status_codes = [404, 500]
+      expect(subject.trace_ignore_status_codes).to eq([404, 500])
+    end
+
+    it "can be configured with ranges" do
+      subject.trace_ignore_status_codes = [(300..399), (500..599)]
+      expect(subject.trace_ignore_status_codes).to eq([(300..399), (500..599)])
+    end
+
+    it "can be configured with mixed individual codes and ranges" do
+      subject.trace_ignore_status_codes = [404, (500..599)]
+      expect(subject.trace_ignore_status_codes).to eq([404, (500..599)])
+    end
+
+    it "raises ArgumentError when not an Array" do
+      expect { subject.trace_ignore_status_codes = 404 }.to raise_error(ArgumentError, /must be an Array/)
+      expect { subject.trace_ignore_status_codes = "404" }.to raise_error(ArgumentError, /must be an Array/)
+    end
+
+    it "raises ArgumentError for invalid status codes" do
+      expect { subject.trace_ignore_status_codes = [99] }.to raise_error(ArgumentError, /must be.* between \(100-599\)/)
+      expect { subject.trace_ignore_status_codes = [600] }.to raise_error(ArgumentError, /must be.* between \(100-599\)/)
+      expect { subject.trace_ignore_status_codes = ["404"] }.to raise_error(ArgumentError, /must be an Array of integers/)
+    end
+
+    it "raises ArgumentError for invalid ranges" do
+      expect { subject.trace_ignore_status_codes = [[400]] }.to raise_error(ArgumentError, /must be.* ranges/)
+      expect { subject.trace_ignore_status_codes = [[400, 500, 600]] }.to raise_error(ArgumentError, /must be.* ranges/)
+      expect { subject.trace_ignore_status_codes = [[500, 400]] }.to raise_error(ArgumentError, /must be.* begin <= end/)
+      expect { subject.trace_ignore_status_codes = [[99, 200]] }.to raise_error(ArgumentError, /must be.* between \(100-599\)/)
+      expect { subject.trace_ignore_status_codes = [[400, 600]] }.to raise_error(ArgumentError, /must be.* between \(100-599\)/)
     end
   end
 end

@@ -29,6 +29,7 @@ module Sentry
         #
         # @param event [ActiveSupport::Notifications::Event] The SQL event
         def sql(event)
+          return unless Sentry.initialized?
           return if EXCLUDED_NAMES.include?(event.payload[:name])
 
           sql = event.payload[:sql]
@@ -46,6 +47,17 @@ module Sentry
             cached: cached
           }
 
+          binds = event.payload[:binds]
+
+          if Sentry.configuration.send_default_pii && !binds&.empty?
+            type_casted_binds = type_casted_binds(event)
+
+            binds.each_with_index do |bind, index|
+              name = bind.is_a?(Symbol) ? bind : bind.name
+              attributes["db.query.parameter.#{name}"] = type_casted_binds[index].to_s
+            end
+          end
+
           attributes[:statement_name] = statement_name if statement_name && statement_name != "SQL"
           attributes[:connection_id] = connection_id if connection_id
 
@@ -58,6 +70,16 @@ module Sentry
             level: :info,
             attributes: attributes
           )
+        end
+
+        if RUBY_ENGINE == "jruby"
+          def type_casted_binds(event)
+            event.payload[:type_casted_binds].call
+          end
+        else
+          def type_casted_binds(event)
+            event.payload[:type_casted_binds]
+          end
         end
 
         private

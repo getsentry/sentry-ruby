@@ -21,7 +21,7 @@ RSpec.describe Sentry::Rails::Tracing::ActiveRecordSubscriber, :subscriber do
     end
 
     it "records database query events" do
-      transaction = Sentry::Transaction.new(sampled: true, hub: Sentry.get_current_hub)
+      transaction = Sentry.start_transaction(sampled: true)
       Sentry.get_current_scope.set_span(transaction)
 
       Post.all.to_a
@@ -30,7 +30,7 @@ RSpec.describe Sentry::Rails::Tracing::ActiveRecordSubscriber, :subscriber do
 
       expect(transport.events.count).to eq(1)
 
-      transaction = transport.events.first.to_hash
+      transaction = transport.events.first.to_h
       expect(transaction[:type]).to eq("transaction")
       expect(transaction[:spans].count).to eq(1)
 
@@ -54,7 +54,7 @@ RSpec.describe Sentry::Rails::Tracing::ActiveRecordSubscriber, :subscriber do
       rspec_class = self.name # RSpec::ExampleGroups::[....]
 
       before do
-        transaction = Sentry::Transaction.new(sampled: true, hub: Sentry.get_current_hub)
+        transaction = Sentry.start_transaction(sampled: true)
         Sentry.get_current_scope.set_span(transaction)
 
         foo
@@ -68,7 +68,7 @@ RSpec.describe Sentry::Rails::Tracing::ActiveRecordSubscriber, :subscriber do
         it "doesn't record query's source location" do
           expect(transport.events.count).to eq(1)
 
-          transaction = transport.events.first.to_hash
+          transaction = transport.events.first.to_h
           expect(transaction[:type]).to eq("transaction")
           expect(transaction[:spans].count).to eq(1)
 
@@ -87,7 +87,7 @@ RSpec.describe Sentry::Rails::Tracing::ActiveRecordSubscriber, :subscriber do
         it "records query's source location" do
           expect(transport.events.count).to eq(1)
 
-          transaction = transport.events.first.to_hash
+          transaction = transport.events.first.to_h
           expect(transaction[:type]).to eq("transaction")
           expect(transaction[:spans].count).to eq(1)
 
@@ -106,13 +106,13 @@ RSpec.describe Sentry::Rails::Tracing::ActiveRecordSubscriber, :subscriber do
         it "doesn't record query's source location" do
           expect(transport.events.count).to eq(1)
 
-          transaction = transport.events.first.to_hash
+          transaction = transport.events.first.to_h
           expect(transaction[:type]).to eq("transaction")
           expect(transaction[:spans].count).to eq(1)
 
           span = transaction[:spans][0]
           data = span[:data]
-          expect(data["db.name"]).to include("db")
+          expect(data["db.name"]).to include("db.sqlite3")
           expect(data["code.filepath"]).to eq(nil)
           expect(data["code.lineno"]).to eq(nil)
           expect(data["code.function"]).to eq(nil)
@@ -121,7 +121,7 @@ RSpec.describe Sentry::Rails::Tracing::ActiveRecordSubscriber, :subscriber do
     end
 
     it "records database cached query events", skip: Rails.version.to_f < 5.1 do
-      transaction = Sentry::Transaction.new(sampled: true, hub: Sentry.get_current_hub)
+      transaction = Sentry.start_transaction(sampled: true)
       Sentry.get_current_scope.set_span(transaction)
 
       ActiveRecord::Base.connection.cache do
@@ -133,7 +133,7 @@ RSpec.describe Sentry::Rails::Tracing::ActiveRecordSubscriber, :subscriber do
 
       expect(transport.events.count).to eq(1)
 
-      transaction = transport.events.first.to_hash
+      transaction = transport.events.first.to_h
       expect(transaction[:type]).to eq("transaction")
       expect(transaction[:spans].count).to eq(2)
 
@@ -144,7 +144,7 @@ RSpec.describe Sentry::Rails::Tracing::ActiveRecordSubscriber, :subscriber do
       expect(cached_query_span[:tags]).to include({ cached: true })
 
       data = cached_query_span[:data]
-      expect(data["db.name"]).to include("db")
+      expect(data["db.name"]).to include("db.sqlite3")
       expect(data["db.system"]).to eq("sqlite3")
     end
   end
@@ -155,7 +155,7 @@ RSpec.describe Sentry::Rails::Tracing::ActiveRecordSubscriber, :subscriber do
     end
 
     it "doesn't record spans" do
-      transaction = Sentry::Transaction.new(sampled: false, hub: Sentry.get_current_hub)
+      transaction = Sentry::Transaction.new(sampled: false)
       Sentry.get_current_scope.set_span(transaction)
 
       Post.all.to_a

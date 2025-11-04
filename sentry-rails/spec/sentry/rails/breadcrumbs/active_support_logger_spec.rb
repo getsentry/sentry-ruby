@@ -93,6 +93,33 @@ RSpec.describe "Sentry::Breadcrumbs::ActiveSupportLogger", type: :request do
     end
   end
 
+  context "redirects legacy :monotonic_active_support_logger" do
+    before do
+      make_basic_app do |sentry_config|
+        sentry_config.breadcrumbs_logger = [:monotonic_active_support_logger]
+      end
+    end
+
+    it "captures correct data of exception requests" do
+      get "/exception"
+
+      expect(response.status).to eq(500)
+      breadcrumbs = event.dig("breadcrumbs", "values")
+      expect(breadcrumbs.count).to eq(2)
+
+      breadcrumb = breadcrumbs.detect { |b| b["category"] == "process_action.action_controller" }
+      expect(breadcrumb["data"]).to include(
+        {
+          "controller" => "HelloController",
+          "action" => "exception",
+          "params" => { "controller" => "hello", "action" => "exception" },
+          "format" => "html",
+          "method" => "GET", "path" => "/exception"
+        }
+      )
+    end
+  end
+
   context "with tracing" do
     before do
       make_basic_app do |sentry_config|
@@ -130,7 +157,7 @@ RSpec.describe "Sentry::Breadcrumbs::ActiveSupportLogger", type: :request do
 
       expect(transport.events.count).to eq(1)
 
-      transaction = transport.events.last.to_hash
+      transaction = transport.events.last.to_h
       breadcrumbs = transaction[:breadcrumbs][:values]
       process_action_crumb = breadcrumbs.last
       expect(process_action_crumb[:category]).to eq("process_action.action_controller")

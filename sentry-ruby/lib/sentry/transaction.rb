@@ -7,9 +7,6 @@ require "sentry/propagation_context"
 
 module Sentry
   class Transaction < Span
-    # @deprecated Use Sentry::PropagationContext::SENTRY_TRACE_REGEXP instead.
-    SENTRY_TRACE_REGEXP = PropagationContext::SENTRY_TRACE_REGEXP
-
     UNLABELD_NAME = "<unlabeled transaction>"
     MESSAGE_PREFIX = "[Tracing]"
 
@@ -40,12 +37,6 @@ module Sentry
     # @return [Hash]
     attr_reader :measurements
 
-    # @deprecated Use Sentry.get_current_hub instead.
-    attr_reader :hub
-
-    # @deprecated Use Sentry.configuration instead.
-    attr_reader :configuration
-
     # The effective sample rate at which this transaction was sampled.
     # @return [Float, nil]
     attr_reader :effective_sample_rate
@@ -63,7 +54,6 @@ module Sentry
     attr_reader :sample_rand
 
     def initialize(
-      hub:,
       name: nil,
       source: :custom,
       parent_sampled: nil,
@@ -75,26 +65,14 @@ module Sentry
 
       set_name(name, source: source)
       @parent_sampled = parent_sampled
-      @hub = hub
       @baggage = baggage
-      @configuration = hub.configuration # to be removed
-      @tracing_enabled = hub.configuration.tracing_enabled?
-      @traces_sampler = hub.configuration.traces_sampler
-      @traces_sample_rate = hub.configuration.traces_sample_rate
-      @sdk_logger = hub.configuration.sdk_logger
-      @release = hub.configuration.release
-      @environment = hub.configuration.environment
-      @dsn = hub.configuration.dsn
       @effective_sample_rate = nil
       @contexts = {}
       @measurements = {}
       @sample_rand = sample_rand
 
-      unless @hub.profiler_running?
-        @profiler = @configuration.profiler_class.new(@configuration)
-      end
-
       init_span_recorder
+      init_profiler
 
       unless @sample_rand
         generator = Utils::SampleRand.new(trace_id: @trace_id)
@@ -102,65 +80,8 @@ module Sentry
       end
     end
 
-    # @deprecated use Sentry.continue_trace instead.
-    #
-    # Initalizes a Transaction instance with a Sentry trace string from another transaction (usually from an external request).
-    #
-    # The original transaction will become the parent of the new Transaction instance. And they will share the same `trace_id`.
-    #
-    # The child transaction will also store the parent's sampling decision in its `parent_sampled` attribute.
-    # @param sentry_trace [String] the trace string from the previous transaction.
-    # @param baggage [String, nil] the incoming baggage header string.
-    # @param hub [Hub] the hub that'll be responsible for sending this transaction when it's finished.
-    # @param options [Hash] the options you want to use to initialize a Transaction instance.
-    # @return [Transaction, nil]
-    def self.from_sentry_trace(sentry_trace, baggage: nil, hub: Sentry.get_current_hub, **options)
-      return unless hub.configuration.tracing_enabled?
-      return unless sentry_trace
-
-      sentry_trace_data = extract_sentry_trace(sentry_trace)
-      return unless sentry_trace_data
-
-      trace_id, parent_span_id, parent_sampled = sentry_trace_data
-
-      baggage =
-        if baggage && !baggage.empty?
-          Baggage.from_incoming_header(baggage)
-        else
-          # If there's an incoming sentry-trace but no incoming baggage header,
-          # for instance in traces coming from older SDKs,
-          # baggage will be empty and frozen and won't be populated as head SDK.
-          Baggage.new({})
-        end
-
-      baggage.freeze!
-
-      sample_rand = extract_sample_rand_from_baggage(baggage, trace_id, parent_sampled)
-
-      new(
-        trace_id: trace_id,
-        parent_span_id: parent_span_id,
-        parent_sampled: parent_sampled,
-        hub: hub,
-        baggage: baggage,
-        sample_rand: sample_rand,
-        **options
-      )
-    end
-
-    # @deprecated Use Sentry::PropagationContext.extract_sentry_trace instead.
-    # @return [Array, nil]
-    def self.extract_sentry_trace(sentry_trace)
-      PropagationContext.extract_sentry_trace(sentry_trace)
-    end
-
-    def self.extract_sample_rand_from_baggage(baggage, trace_id, parent_sampled)
-      PropagationContext.extract_sample_rand_from_baggage(baggage, trace_id) ||
-        PropagationContext.generate_sample_rand(baggage, trace_id, parent_sampled)
-    end
-
     # @return [Hash]
-    def to_hash
+    def to_h
       hash = super
 
       hash.merge!(
@@ -207,7 +128,9 @@ module Sentry
     # @param sampling_context [Hash] a context Hash that'll be passed to `traces_sampler` (if provided).
     # @return [void]
     def set_initial_sample_decision(sampling_context:)
-      unless @tracing_enabled
+      configuration = Sentry.configuration
+
+      unless configuration && configuration.tracing_enabled?
         @sampled = false
         return
       end
@@ -218,12 +141,12 @@ module Sentry
       end
 
       sample_rate =
-        if @traces_sampler.is_a?(Proc)
-          @traces_sampler.call(sampling_context)
+        if configuration.traces_sampler.is_a?(Proc)
+          configuration.traces_sampler.call(sampling_context)
         elsif !sampling_context[:parent_sampled].nil?
           sampling_context[:parent_sampled]
         else
-          @traces_sample_rate
+          configuration.traces_sample_rate
         end
 
       transaction_description = generate_transaction_description
@@ -265,29 +188,28 @@ module Sentry
     end
 
     # Finishes the transaction's recording and send it to Sentry.
-    # @param hub [Hub] the hub that'll send this transaction. (Deprecated)
     # @return [TransactionEvent]
-    def finish(hub: nil, end_timestamp: nil)
-      if hub
-        log_warn(
-          <<~MSG
-            Specifying a different hub in `Transaction#finish` will be deprecated in version 5.0.
-            Please use `Hub#start_transaction` with the designated hub.
-          MSG
-        )
-      end
-
-      hub ||= @hub
-
+    def finish(end_timestamp: nil)
       super(end_timestamp: end_timestamp)
 
       if @name.nil?
         @name = UNLABELD_NAME
       end
 
-      @hub.stop_profiler!(self)
+      hub = Sentry.get_current_hub
+      return unless hub
 
-      if @sampled
+      hub.stop_profiler!(self)
+
+      if @sampled && ignore_status_code?
+        @sampled = false
+
+        status_code = get_http_status_code
+        log_debug("#{MESSAGE_PREFIX} Discarding #{generate_transaction_description} due to ignored HTTP status code: #{status_code}")
+
+        hub.current_client.transport.record_lost_event(:event_processor, "transaction")
+        hub.current_client.transport.record_lost_event(:event_processor, "span")
+      elsif @sampled
         event = hub.current_client.event_from_transaction(self)
         hub.capture_event(event)
       else
@@ -345,6 +267,15 @@ module Sentry
       @span_recorder.add(self)
     end
 
+    def init_profiler
+      hub = Sentry.get_current_hub
+      return unless hub
+
+      unless hub.profiler_running?
+        @profiler = hub.configuration.profiler_class.new(hub.configuration)
+      end
+    end
+
     private
 
     def generate_transaction_description
@@ -355,20 +286,38 @@ module Sentry
     end
 
     def populate_head_baggage
+      configuration = Sentry.configuration
+
       items = {
         "trace_id" => trace_id,
         "sample_rate" => effective_sample_rate&.to_s,
         "sample_rand" => Utils::SampleRand.format(@sample_rand),
         "sampled" => sampled&.to_s,
-        "environment" => @environment,
-        "release" => @release,
-        "public_key" => @dsn&.public_key
+        "environment" => configuration&.environment,
+        "release" => configuration&.release,
+        "public_key" => configuration&.dsn&.public_key
       }
 
       items["transaction"] = name unless source_low_quality?
 
       items.compact!
       @baggage = Baggage.new(items, mutable: false)
+    end
+
+    def ignore_status_code?
+      trace_ignore_status_codes = Sentry.configuration&.trace_ignore_status_codes
+      return false unless trace_ignore_status_codes
+
+      status_code = get_http_status_code
+      return false unless status_code
+
+      trace_ignore_status_codes.any? do |ignored|
+        ignored.is_a?(Range) ? ignored.include?(status_code) : status_code == ignored
+      end
+    end
+
+    def get_http_status_code
+      @data && @data[Span::DataConventions::HTTP_STATUS_CODE]
     end
 
     class SpanRecorder

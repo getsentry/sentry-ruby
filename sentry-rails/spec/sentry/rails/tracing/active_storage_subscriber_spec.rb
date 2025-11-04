@@ -25,7 +25,7 @@ RSpec.describe Sentry::Rails::Tracing::ActiveStorageSubscriber, :subscriber, typ
       expect(response).to have_http_status(:ok)
       expect(transport.events.count).to eq(2)
 
-      analysis_transaction = transport.events.first.to_hash
+      analysis_transaction = transport.events.first.to_h
       expect(analysis_transaction[:type]).to eq("transaction")
 
       if Rails.version.to_f > 6.1
@@ -40,7 +40,7 @@ RSpec.describe Sentry::Rails::Tracing::ActiveStorageSubscriber, :subscriber, typ
         expect(analysis_transaction[:spans][0][:origin]).to eq("auto.file.rails")
       end
 
-      request_transaction = transport.events.last.to_hash
+      request_transaction = transport.events.last.to_h
       expect(request_transaction[:type]).to eq("transaction")
       expect(request_transaction[:spans].count).to eq(2)
 
@@ -51,30 +51,30 @@ RSpec.describe Sentry::Rails::Tracing::ActiveStorageSubscriber, :subscriber, typ
       expect(span.dig(:data, :key)).to be_nil
       expect(span[:trace_id]).to eq(request_transaction.dig(:contexts, :trace, :trace_id))
     end
+  end
 
-    context "with send_default_pii = true" do
-      before do
-        make_basic_app do |config|
-          config.traces_sample_rate = 1.0
-          config.send_default_pii = true
-          config.rails.tracing_subscribers = [described_class]
-        end
+  context "with send_default_pii = true" do
+    before do
+      make_basic_app do |config|
+        config.traces_sample_rate = 1.0
+        config.rails.tracing_subscribers = [described_class]
+        config.send_default_pii = true
       end
+    end
 
-      it "records the :key in span.data" do
-        # make sure AnalyzeJob will be executed immediately
-        ActiveStorage::AnalyzeJob.queue_adapter.perform_enqueued_jobs = true
+    it "records the :key in span.data" do
+      # make sure AnalyzeJob will be executed immediately
+      ActiveStorage::AnalyzeJob.queue_adapter.perform_enqueued_jobs = true
 
-        p = Post.create!
-        get "/posts/#{p.id}/attach"
+      p = Post.create!
+      get "/posts/#{p.id}/attach"
 
-        request_transaction = transport.events.last.to_hash
-        expect(request_transaction[:type]).to eq("transaction")
-        expect(request_transaction[:spans].count).to eq(2)
+      request_transaction = transport.events.last.to_h
+      expect(request_transaction[:type]).to eq("transaction")
+      expect(request_transaction[:spans].count).to eq(2)
 
-        span = request_transaction[:spans][1]
-        expect(span.dig(:data, :key)).to eq(p.cover.key)
-      end
+      span = request_transaction[:spans][1]
+      expect(span.dig(:data, :key)).to eq(p.cover.key)
     end
   end
 
