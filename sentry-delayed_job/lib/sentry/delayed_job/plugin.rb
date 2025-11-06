@@ -10,35 +10,128 @@ module Sentry
       ACTIVE_JOB_CONTEXT_KEY = :"Active-Job"
       OP_NAME = "queue.delayed_job"
       SPAN_ORIGIN = "auto.queue.delayed_job"
+      PROCESS_OP_NAME = "queue.process"
 
       callbacks do |lifecycle|
         lifecycle.before(:enqueue) do |job, *args, &block|
-          inject_trace_data(job) if Sentry.initialized?
+          monitor_job_enqueue(job) if Sentry.initialized?
         end
 
         lifecycle.around(:invoke_job) do |job, *args, &block|
-          env = extract_trace_data(job)
-          next block.call(job, *args) unless Sentry.initialized?
+          monitor_job_execution(job, *args, &block)
+        end
+      end
 
-          Sentry.with_scope do |scope|
-            contexts = generate_contexts(job)
-            name = contexts.dig(ACTIVE_JOB_CONTEXT_KEY, :job_class) || contexts.dig(DELAYED_JOB_CONTEXT_KEY, :job_class)
-            scope.set_transaction_name(name, source: :task)
-            scope.set_contexts(**contexts)
-            scope.set_tags("delayed_job.queue" => job.queue, "delayed_job.id" => job.id.to_s)
+      def self.set_span_data(span, job:)
+        return unless span
 
-            transaction = start_transaction(scope, env, contexts)
-            scope.set_span(transaction) if transaction
+        # Set messaging conventions data similar to Sidekiq implementation
+        span.set_data(Sentry::Span::DataConventions::MESSAGING_MESSAGE_ID, job.id.to_s)
+        span.set_data(Sentry::Span::DataConventions::MESSAGING_DESTINATION_NAME, job.queue || "default")
 
-            begin
-              block.call(job, *args)
+        # Calculate and set latency if the job has been enqueued
+        if job.run_at && job.created_at
+          latency_ms = calculate_latency(job)
+          span.set_data(Sentry::Span::DataConventions::MESSAGING_MESSAGE_RECEIVE_LATENCY, latency_ms) if latency_ms
+        end
+
+        # Set retry count
+        span.set_data(Sentry::Span::DataConventions::MESSAGING_MESSAGE_RETRY_COUNT, job.attempts) if job.attempts > 0
+      end
+
+      def self.calculate_latency(job)
+        return nil unless job.run_at && job.created_at
+
+        # Calculate latency in milliseconds
+        now = Time.current
+        enqueued_at = job.created_at
+        scheduled_at = job.run_at
+
+        # If the job was scheduled for the future, use the scheduled time
+        # Otherwise use the enqueued time
+        start_time = [scheduled_at, enqueued_at].max
+
+        # Calculate latency from when the job should have run to now
+        latency_seconds = now - start_time
+        (latency_seconds * 1000).round
+      end
+
+      def self.capture_enqueue_context(job)
+        # Extract user context if available (from Active Job)
+        return nil unless job.payload_object.respond_to?(:job_data)
+
+        job.payload_object.job_data["sentry_user"]
+      end
+
+      def self.monitor_job_enqueue(job)
+        # Add queue metrics for enqueue
+        current_span = Sentry.get_current_scope&.span
+
+        # Check if current span is active and not already finished
+        if current_span && current_span.timestamp.nil?
+          # Inject trace data first with the parent span context
+          inject_trace_data(job)
+
+          # Then create a child span for monitoring
+          Sentry.with_child_span(op: "queue.publish", description: compute_job_class(job.payload_object)) do |span|
+            if span
+              set_span_data(span, job: job)
+              # Mark the span as successful
+              span.set_status("ok")
+            end
+          end
+        else
+          # Fallback: just inject trace data without creating transactions
+          inject_trace_data(job)
+        end
+      end
+
+      def self.monitor_job_execution(job, *args, &block)
+        env = extract_trace_data(job)
+        return block.call(job, *args) unless Sentry.initialized?
+
+        Sentry.clone_hub_to_current_thread
+
+        Sentry.with_scope do |scope|
+          contexts = generate_contexts(job)
+
+          if (user = capture_enqueue_context(job))
+            scope.set_user(user)
+          end
+
+          name = contexts.dig(ACTIVE_JOB_CONTEXT_KEY, :job_class) || contexts.dig(DELAYED_JOB_CONTEXT_KEY, :job_class)
+          scope.set_transaction_name(name, source: :task)
+          scope.set_contexts(**contexts)
+          scope.set_tags("delayed_job.queue" => job.queue, "delayed_job.id" => job.id.to_s)
+
+          transaction = start_transaction(scope, env, contexts)
+          scope.set_span(transaction) if transaction
+
+          begin
+            if transaction
+              # Create a queue.process child span for the actual job processing
+              # This follows Sentry's queues module documentation
+              Sentry.with_child_span(op: PROCESS_OP_NAME, description: compute_job_class(job.payload_object)) do |span|
+                # Add queue usage reporting data to the processing span
+                set_span_data(span, job: job) if span
+
+                block.call(job, *args)
+
+                # Mark the span as successful
+                span&.set_status("ok")
+              end
 
               finish_transaction(transaction, 200)
-            rescue Exception => e
-              capture_exception(e, job)
-              finish_transaction(transaction, 500)
-              raise
+            else
+              # Fallback if no transaction could be created
+              block.call(job, *args)
             end
+          rescue Exception => e
+            # Mark the transaction and span as failed
+            transaction&.set_status("internal_error")
+            capture_exception(e, job)
+            finish_transaction(transaction, 500)
+            raise
           end
         end
       end
