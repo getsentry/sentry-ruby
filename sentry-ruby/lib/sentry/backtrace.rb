@@ -1,86 +1,12 @@
 # frozen_string_literal: true
 
 require "rubygems"
+require "concurrent/map"
+require "sentry/backtrace/line"
 
 module Sentry
   # @api private
   class Backtrace
-    # Handles backtrace parsing line by line
-    class Line
-      RB_EXTENSION = ".rb"
-      # regexp (optional leading X: on windows, or JRuby9000 class-prefix)
-      RUBY_INPUT_FORMAT = /
-        ^ \s* (?: [a-zA-Z]: | uri:classloader: )? ([^:]+ | <.*>):
-        (\d+)
-        (?: :in\s('|`)(?:([\w:]+)\#)?([^']+)')?$
-      /x
-
-      # org.jruby.runtime.callsite.CachingCallSite.call(CachingCallSite.java:170)
-      JAVA_INPUT_FORMAT = /^([\w$.]+)\.([\w$]+)\(([\w$.]+):(\d+)\)$/
-
-      # The file portion of the line (such as app/models/user.rb)
-      attr_reader :file
-
-      # The line number portion of the line
-      attr_reader :number
-
-      # The method of the line (such as index)
-      attr_reader :method
-
-      # The module name (JRuby)
-      attr_reader :module_name
-
-      attr_reader :in_app_pattern
-
-      # Parses a single line of a given backtrace
-      # @param [String] unparsed_line The raw line from +caller+ or some backtrace
-      # @return [Line] The parsed backtrace line
-      def self.parse(unparsed_line, in_app_pattern = nil)
-        ruby_match = unparsed_line.match(RUBY_INPUT_FORMAT)
-
-        if ruby_match
-          _, file, number, _, module_name, method = ruby_match.to_a
-          file.sub!(/\.class$/, RB_EXTENSION)
-          module_name = module_name
-        else
-          java_match = unparsed_line.match(JAVA_INPUT_FORMAT)
-          _, module_name, method, file, number = java_match.to_a
-        end
-        new(file, number, method, module_name, in_app_pattern)
-      end
-
-      def initialize(file, number, method, module_name, in_app_pattern)
-        @file = file
-        @module_name = module_name
-        @number = number.to_i
-        @method = method
-        @in_app_pattern = in_app_pattern
-      end
-
-      def in_app
-        return false unless in_app_pattern
-
-        if file =~ in_app_pattern
-          true
-        else
-          false
-        end
-      end
-
-      # Reconstructs the line in a readable fashion
-      def to_s
-        "#{file}:#{number}:in `#{method}'"
-      end
-
-      def ==(other)
-        to_s == other.to_s
-      end
-
-      def inspect
-        "<Line:#{self}>"
-      end
-    end
-
     # holder for an Array of Backtrace::Line instances
     attr_reader :lines
 
@@ -99,6 +25,52 @@ module Sentry
 
       new(lines)
     end
+
+    # Thread.each_caller_location is an API added in Ruby 3.2 that doesn't always collect
+    # the entire stack like Kernel#caller or #caller_locations do.
+    #
+    # @see https://github.com/rails/rails/pull/49095 for more context.
+    if Thread.respond_to?(:each_caller_location)
+      def self.source_location(backtrace_cleaner)
+        cache = (line_cache[backtrace_cleaner.__id__] ||= Concurrent::Map.new)
+
+        Thread.each_caller_location do |location|
+          frame_key = [location.absolute_path, location.lineno]
+          cached_value = cache[frame_key]
+
+          next if cached_value == :skip
+
+          if cached_value
+            return cached_value
+          else
+            cleaned_frame = backtrace_cleaner.clean_frame(location)
+
+            if cleaned_frame
+              line = Line.from_source_location(location)
+              cache[frame_key] = line
+
+              return line
+            else
+              cache[frame_key] = :skip
+
+              next
+            end
+          end
+        end
+      end
+
+      def self.line_cache
+        @line_cache ||= Concurrent::Map.new
+      end
+    else
+      # Since Sentry is mostly used in production, we don't want to fallback
+      # to the slower implementation and adds potentially big overhead to the
+      # application.
+      def self.source_location(*)
+        nil
+      end
+    end
+
 
     def initialize(lines)
       @lines = lines
