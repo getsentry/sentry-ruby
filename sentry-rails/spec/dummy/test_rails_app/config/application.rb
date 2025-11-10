@@ -88,7 +88,7 @@ module Sentry
           config.hosts = nil
           config.secret_key_base = "test 123"
           config.sdk_logger = ActiveSupport::Logger.new(nil)
-          config.eager_load = true
+          config.eager_load = false
           config.active_job.queue_adapter = :test
           config.cache_store = :memory_store
           config.action_controller.perform_caching = true
