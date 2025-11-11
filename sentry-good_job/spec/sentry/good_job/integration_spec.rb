@@ -73,7 +73,6 @@ RSpec.describe "Sentry GoodJob Integration", type: :job do
       expect(enhanced_context).to include(:good_job)
       expect(enhanced_context[:good_job]).to include(:queue_name, :executions)
     end
-
   end
 
   describe "integration setup" do
