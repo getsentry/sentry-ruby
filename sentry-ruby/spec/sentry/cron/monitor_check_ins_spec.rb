@@ -183,7 +183,7 @@ RSpec.describe Sentry::Cron::MonitorCheckIns do
 
       it 'truncates from the beginning and parameterizes slug' do
         slug = VeryLongOuterModule::VeryVeryVeryVeryLongInnerModule::Job.sentry_monitor_slug
-        expect(slug).to eq('ongoutermodule-veryveryveryverylonginnermodule-job')
+        expect(slug).to eq('675905e0c9_very_very_very_long_inner_module-job')
       end
     end
 
