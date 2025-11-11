@@ -61,7 +61,7 @@ module Sentry
 
         def sentry_monitor_slug(name: self.name)
           @sentry_monitor_slug ||= begin
-            slug = name.gsub("::", "-").gsub(/([A-Z]+)([A-Z][a-z])/, '\1_\2').gsub(/([a-z\d])([A-Z])/, '\1_\2').downcase
+            slug = name.gsub("::", "-").gsub(/([A-Z]{1,1000})([A-Z][a-z])/, '\1_\2').gsub(/([a-z\d])([A-Z])/, '\1_\2').downcase
             if slug.length > MAX_SLUG_LENGTH
               diff_length = slug.length + 1 + SLUG_HASH_LENGTH - MAX_SLUG_LENGTH
               trim_part = ""
