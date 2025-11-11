@@ -1,3 +1,9 @@
+## Unreleased
+
+### Breaking changes
+
+- Improve cron monitor slug readability with better formatting and hashing ([#2750](https://github.com/getsentry/sentry-ruby/pull/2750))
+
 ## 6.1.0
 
 ### Features
