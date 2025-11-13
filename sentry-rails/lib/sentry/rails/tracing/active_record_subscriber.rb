@@ -17,9 +17,9 @@ module Sentry
         if SUPPORT_SOURCE_LOCATION
           backtrace_cleaner = ActiveSupport::BacktraceCleaner.new.tap do |cleaner|
             cleaner.add_silencer { |line| line.include?("sentry-ruby/lib") || line.include?("sentry-rails/lib") }
-          end
+          end.method(:clean_frame)
 
-          class_attribute :backtrace_cleaner, default: backtrace_cleaner.freeze
+          class_attribute :backtrace_cleaner, default: backtrace_cleaner
         end
 
         class << self
@@ -67,7 +67,7 @@ module Sentry
 
                 # both duration and query_source_threshold are in ms
                 if record_query_source && duration >= query_source_threshold
-                  backtrace_line = Backtrace.source_location(backtrace_cleaner)
+                  backtrace_line = Backtrace.source_location(&backtrace_cleaner)
 
                   if backtrace_line
                     span.set_data(Span::DataConventions::FILEPATH, backtrace_line.file) if backtrace_line.file

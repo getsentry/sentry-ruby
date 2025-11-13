@@ -31,27 +31,23 @@ module Sentry
     #
     # @see https://github.com/rails/rails/pull/49095 for more context.
     if Thread.respond_to?(:each_caller_location)
-      def self.source_location(backtrace_cleaner)
-        cache = (line_cache[backtrace_cleaner.__id__] ||= Concurrent::Map.new)
-
+      def self.source_location(&backtrace_cleaner)
         Thread.each_caller_location do |location|
           frame_key = [location.absolute_path, location.lineno]
-          cached_value = cache[frame_key]
+          cached_value = line_cache[frame_key]
 
           next if cached_value == :skip
 
           if cached_value
             return cached_value
           else
-            cleaned_frame = backtrace_cleaner.clean_frame(location)
-
-            if cleaned_frame
+            if cleaned_frame = backtrace_cleaner.(location)
               line = Line.from_source_location(location)
-              cache[frame_key] = line
+              line_cache[frame_key] = line
 
               return line
             else
-              cache[frame_key] = :skip
+              line_cache[frame_key] = :skip
 
               next
             end
