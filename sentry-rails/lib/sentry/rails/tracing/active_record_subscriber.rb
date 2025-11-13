@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require "sentry/rails/tracing/abstract_subscriber"
+require "sentry/backtrace"
 
 module Sentry
   module Rails
