@@ -48,10 +48,11 @@ module Sentry
       "ActionController::NotImplemented",
       "ActionController::ParameterMissing",
       "ActionController::RoutingError",
+      "ActionController::TooManyRequests"
       "ActionController::UnknownAction",
       "ActionController::UnknownFormat",
-      "ActionDispatch::Http::MimeNegotiation::InvalidType",
       "ActionController::UnknownHttpMethod",
+      "ActionDispatch::Http::MimeNegotiation::InvalidType",
       "ActionDispatch::Http::Parameters::ParseError",
       "ActiveRecord::RecordNotFound"
     ].freeze
