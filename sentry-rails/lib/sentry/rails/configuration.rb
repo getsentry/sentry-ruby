@@ -48,7 +48,7 @@ module Sentry
       "ActionController::NotImplemented",
       "ActionController::ParameterMissing",
       "ActionController::RoutingError",
-      "ActionController::TooManyRequests"
+      "ActionController::TooManyRequests",
       "ActionController::UnknownAction",
       "ActionController::UnknownFormat",
       "ActionController::UnknownHttpMethod",
