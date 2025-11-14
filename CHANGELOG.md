@@ -4,6 +4,10 @@
 
 - Optimize getting query source location in ActiveRecord tracing - this makes tracing up to roughly 40-60% faster depending on the use cases ([#2769](https://github.com/getsentry/sentry-ruby/pull/2769))
 
+### Bug fixes
+
+- Properly skip silenced `ActiveRecord::Base.logger`'s log entries in the ActiveRecord log subscriber ([#2775](https://github.com/getsentry/sentry-ruby/pull/2775))
+
 ## 6.1.0
 
 ### Features

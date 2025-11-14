@@ -9,8 +9,6 @@ require "action_controller/railtie"
 require "action_cable/engine"
 require "active_storage/engine"
 
-ActiveRecord::Base.logger = Logger.new(nil)
-
 module Sentry
   module Rails
     module Test
@@ -83,7 +81,6 @@ module Sentry
         # This can be inherited and extended by subclasses
         def configure
           config.root = Test::Application.root_path
-          config.logger = ActiveSupport::Logger.new(nil)
           config.active_support.deprecation = :silence
           config.hosts = nil
           config.secret_key_base = "test 123"
