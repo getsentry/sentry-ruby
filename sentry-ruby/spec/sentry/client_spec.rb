@@ -1,13 +1,5 @@
 # frozen_string_literal: true
 
-class ExceptionWithContext < StandardError
-  def sentry_context
-    {
-      foo: "bar"
-    }
-  end
-end
-
 RSpec.describe Sentry::Client do
   subject { Sentry::Client.new(configuration) }
 
@@ -572,8 +564,18 @@ RSpec.describe Sentry::Client do
       end
 
       context 'when the exception responds to sentry_context' do
+        let(:exception_with_context) do
+          Class.new(StandardError) do
+            def sentry_context
+              {
+                foo: "bar"
+              }
+            end
+          end
+        end
+
         let(:hash) do
-          event = subject.event_from_exception(ExceptionWithContext.new)
+          event = subject.event_from_exception(exception_with_context.new)
           event.to_h
         end
 
