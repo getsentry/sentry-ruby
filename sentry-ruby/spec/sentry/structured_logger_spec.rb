@@ -95,6 +95,13 @@ RSpec.describe Sentry::StructuredLogger do
           expect(log_event[:attributes]["sentry.message.parameter.name"]).to eql({ value: "Jane", type: "string" })
           expect(log_event[:attributes]["sentry.message.parameter.day"]).to eql({ value: "Monday", type: "string" })
         end
+
+        it "doesn't choke on malformed UTF-8 strings" do
+          malformed_string = "Hello World\x92".dup.force_encoding("UTF-8")
+          Sentry.logger.public_send(level, malformed_string, user_id: 123)
+
+          expect(sentry_logs).to be_empty
+        end
       end
     end
 
