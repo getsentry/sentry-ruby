@@ -9,13 +9,14 @@ class ExceptionWithContext < StandardError
 end
 
 RSpec.describe Sentry::Client do
+  subject { Sentry::Client.new(configuration) }
+
   let(:configuration) do
     Sentry::Configuration.new.tap do |config|
       config.dsn = Sentry::TestHelper::DUMMY_DSN
       config.transport.transport_class = Sentry::DummyTransport
     end
   end
-  subject { Sentry::Client.new(configuration) }
 
   let(:hub) do
     Sentry::Hub.new(subject, Sentry::Scope.new)
