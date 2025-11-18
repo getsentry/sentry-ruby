@@ -102,6 +102,13 @@ RSpec.describe Sentry::StructuredLogger do
 
           expect(sentry_logs).to be_empty
         end
+
+        it "doesn't choke on malformed UTF-8 in attributes" do
+          malformed_user_agent = "Mozilla/5.0 (compatible; Yahoo! Slurp; http://help.yahoo.com/help/us/ysearch/slurp\xA1\xB1)".dup.force_encoding("UTF-8")
+          Sentry.logger.public_send(level, "Valid message", user_agent: malformed_user_agent)
+
+          expect(sentry_logs).to be_empty
+        end
       end
     end
 

@@ -199,7 +199,17 @@ module Sentry
 
       return unless body
 
-      LogEvent.new(level: level, body: body, attributes: attributes, origin: origin)
+      sanitized_attributes = attributes.transform_values do |value|
+        if value.is_a?(String)
+          return unless (sanitized_string = Utils::EncodingHelper.safe_utf_8_string(value))
+
+          sanitized_string
+        else
+          value
+        end
+      end
+
+      LogEvent.new(level: level, body: body, attributes: sanitized_attributes, origin: origin)
     end
 
     # Initializes an Event object with the given Transaction object.
