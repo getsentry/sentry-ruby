@@ -113,6 +113,22 @@ RSpec.describe Sentry::StructuredLogger do
             expect(log_event[:body]).to eql(malformed_string_default)
           end
 
+          it "doesn't choke on malformed UTF-8 in body and attributes" do
+            malformed_string = "Hello World %{user_agent} \x92".dup.force_encoding("UTF-8")
+            malformed_user_agent = "Mozilla/5.0 (compatible; Yahoo! Slurp; http://help.yahoo.com/help/us/ysearch/slurp\xA1\xB1)".dup.force_encoding("UTF-8")
+            Sentry.logger.public_send(level, malformed_string, user_agent: malformed_user_agent, user_id: 312)
+
+            expect(sentry_logs).to_not be_empty
+
+            log_event = sentry_logs.last
+
+            expect(log_event[:level]).to eql(level)
+            expect(log_event[:body]).to eql(malformed_string_default)
+
+            expect(log_event[:attributes]["sentry.message.parameter.user_id"]).to be_nil
+            expect(log_event[:attributes]["sentry.message.parameter.user_agent"]).to be_nil
+          end
+
           it "doesn't choke on malformed UTF-8 in attributes" do
             malformed_user_agent = "Mozilla/5.0 (compatible; Yahoo! Slurp; http://help.yahoo.com/help/us/ysearch/slurp\xA1\xB1)".dup.force_encoding("UTF-8")
             Sentry.logger.public_send(level, "Valid message %{user_agent}", user_agent: malformed_user_agent)
