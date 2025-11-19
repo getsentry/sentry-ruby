@@ -1,4 +1,4 @@
-## Unreleased
+## 6.1.1
 
 ### Improvements
 
@@ -8,6 +8,7 @@
 
 - Properly skip silenced `ActiveRecord::Base.logger`'s log entries in the ActiveRecord log subscriber ([#2775](https://github.com/getsentry/sentry-ruby/pull/2775))
 - Skip malformed utf-8 messages ([#2777](https://github.com/getsentry/sentry-ruby/pull/2777))
+- Fix initialized check in Sentry::Rails::CaptureExceptions ([#2783](https://github.com/getsentry/sentry-ruby/pull/2783))
 
 ## 6.1.0
 
