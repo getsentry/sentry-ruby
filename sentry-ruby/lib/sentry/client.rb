@@ -197,13 +197,9 @@ module Sentry
       origin = options[:origin]
       body = Utils::EncodingHelper.safe_utf_8_string(message)
 
-      return unless body
-
       sanitized_attributes = attributes.transform_values do |value|
         if value.is_a?(String)
-          return unless (sanitized_string = Utils::EncodingHelper.safe_utf_8_string(value))
-
-          sanitized_string
+          Utils::EncodingHelper.safe_utf_8_string(value)
         else
           value
         end

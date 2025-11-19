@@ -4,6 +4,7 @@ module Sentry
   module Utils
     module EncodingHelper
       EMPTY_STRING = ""
+      MALFORMED_STRING = "<malformed-string>"
 
       def self.encode_to_utf_8(value)
         if value.encoding != Encoding::UTF_8 && value.respond_to?(:force_encoding)
@@ -21,7 +22,7 @@ module Sentry
       end
 
       def self.safe_utf_8_string(value)
-        valid_utf_8?(value) && value
+        valid_utf_8?(value) ? value : MALFORMED_STRING
       end
     end
   end

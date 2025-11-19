@@ -96,18 +96,36 @@ RSpec.describe Sentry::StructuredLogger do
           expect(log_event[:attributes]["sentry.message.parameter.day"]).to eql({ value: "Monday", type: "string" })
         end
 
-        it "doesn't choke on malformed UTF-8 strings" do
-          malformed_string = "Hello World\x92".dup.force_encoding("UTF-8")
-          Sentry.logger.public_send(level, malformed_string, user_id: 123)
+        context "handling of malformed strings" do
+          let(:malformed_string_default) do
+            Sentry::Utils::EncodingHelper::MALFORMED_STRING
+          end
 
-          expect(sentry_logs).to be_empty
-        end
+          it "doesn't choke on malformed UTF-8 strings" do
+            malformed_string = "Hello World\x92".dup.force_encoding("UTF-8")
+            Sentry.logger.public_send(level, malformed_string, user_id: 123)
 
-        it "doesn't choke on malformed UTF-8 in attributes" do
-          malformed_user_agent = "Mozilla/5.0 (compatible; Yahoo! Slurp; http://help.yahoo.com/help/us/ysearch/slurp\xA1\xB1)".dup.force_encoding("UTF-8")
-          Sentry.logger.public_send(level, "Valid message", user_agent: malformed_user_agent)
+            expect(sentry_logs).to_not be_empty
 
-          expect(sentry_logs).to be_empty
+            log_event = sentry_logs.last
+
+            expect(log_event[:level]).to eql(level)
+            expect(log_event[:body]).to eql(malformed_string_default)
+          end
+
+          it "doesn't choke on malformed UTF-8 in attributes" do
+            malformed_user_agent = "Mozilla/5.0 (compatible; Yahoo! Slurp; http://help.yahoo.com/help/us/ysearch/slurp\xA1\xB1)".dup.force_encoding("UTF-8")
+            Sentry.logger.public_send(level, "Valid message %{user_agent}", user_agent: malformed_user_agent)
+
+            expect(sentry_logs).to_not be_empty
+
+            log_event = sentry_logs.last
+
+            expect(log_event[:level]).to eql(level)
+            expect(log_event[:body]).to include("Valid message")
+            expect(log_event[:attributes]["sentry.message.parameter.user_agent"])
+              .to eql({ value: malformed_string_default, type: "string" })
+          end
         end
       end
     end
