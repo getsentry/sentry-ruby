@@ -197,9 +197,15 @@ module Sentry
       origin = options[:origin]
       body = Utils::EncodingHelper.safe_utf_8_string(message)
 
-      return unless body
+      sanitized_attributes = attributes.transform_values do |value|
+        if value.is_a?(String)
+          Utils::EncodingHelper.safe_utf_8_string(value)
+        else
+          value
+        end
+      end
 
-      LogEvent.new(level: level, body: body, attributes: attributes, origin: origin)
+      LogEvent.new(level: level, body: body, attributes: sanitized_attributes, origin: origin)
     end
 
     # Initializes an Event object with the given Transaction object.
