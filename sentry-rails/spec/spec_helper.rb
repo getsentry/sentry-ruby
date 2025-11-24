@@ -4,6 +4,10 @@ require "bundler/setup"
 
 ENV["RAILS_ENV"] = "test"
 
+# We run tests against sqlite3 by default
+# See SentryRailsTest application for more info
+ENV["DATABASE"] ||= "sqlite3"
+
 begin
   require "debug/prelude"
 rescue LoadError

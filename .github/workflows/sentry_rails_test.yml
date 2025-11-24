@@ -17,49 +17,80 @@ jobs:
     defaults:
       run:
         working-directory: sentry-rails
-    name: Ruby ${{ matrix.ruby_version }} & Rails ${{ matrix.rails_version }}, options - ${{ toJson(matrix.options) }}
+    name: "Ruby ${{ matrix.ruby_version }} & Rails ${{ matrix.rails_version }} (${{ matrix.database }}) - ${{ toJson(matrix.options) }}"
     runs-on: ubuntu-latest
     timeout-minutes: 10
+    services:
+      postgres:
+        image: postgres:15
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: sentry
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
     env:
       RUBYOPT: ${{ matrix.options.rubyopt }}
       BUNDLE_GEMFILE: ${{ github.workspace }}/sentry-rails/Gemfile
       BUNDLE_WITHOUT: rubocop
       RAILS_VERSION: ${{ matrix.rails_version }}
+      DATABASE: ${{ matrix.database }}
+      DATABASE_HOST: "localhost"
       JRUBY_OPTS: "--debug" # for more accurate test coverage
     strategy:
       fail-fast: false
       matrix:
         ruby_version: ${{ fromJson(inputs.versions) }}
         rails_version: [6.1.0, 7.0.0, 7.1.0]
+        database:
+          - "sqlite3"
+          - "postgresql"
         include:
           - ruby_version: "2.7"
-            rails_version: 5.2.0
+            rails_version: "5.2.0"
+            database: "sqlite3"
           - ruby_version: "2.7"
-            rails_version: 6.0.0
+            rails_version: "6.0.0"
+            database: "sqlite3"
           - ruby_version: "2.7"
-            rails_version: 6.1.0
+            rails_version: "6.1.0"
+            database: "sqlite3"
           - ruby_version: "3.1"
-            rails_version: 7.2.0
+            rails_version: "7.2.0"
+            database: "sqlite3"
           - ruby_version: "3.2"
-            rails_version: 7.2.0
+            rails_version: "7.2.0"
+            database: "sqlite3"
           - ruby_version: "3.3"
-            rails_version: 7.2.0
+            rails_version: "7.2.0"
+            database: "sqlite3"
           - ruby_version: "3.4"
-            rails_version: 7.2.0
+            rails_version: "7.2.0"
+            database: "sqlite3"
           - ruby_version: "3.2"
-            rails_version: "8.0.0"
-          - ruby_version: "3.3"
-            rails_version: "8.0.0"
-          - ruby_version: "3.4"
-            rails_version: "8.0.0"
-          - ruby_version: "3.4"
-            rails_version: "8.1.0"
-          - ruby_version: "3.2"
-            rails_version: 7.1.0
+            rails_version: "7.1.0"
+            database: "sqlite3"
             options:
               rubyopt: "--enable-frozen-string-literal --debug=frozen-string-literal"
           - ruby_version: "3.2"
-            rails_version: 7.1.0
+            rails_version: "7.1.0"
+          - ruby_version: "3.2"
+            rails_version: "8.0.0"
+            database: "sqlite3"
+          - ruby_version: "3.3"
+            rails_version: "8.0.0"
+            database: "sqlite3"
+          - ruby_version: "3.4"
+            rails_version: "8.0.0"
+            database: "postgresql"
+          - ruby_version: "3.4"
+            rails_version: "8.1.0"
+            database: "postgresql"
         exclude:
           - ruby_version: head
           - ruby_version: jruby-head
@@ -70,12 +101,7 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
-      - name: Install sqlite and ImageMagick
-        run: |
-          # See https://github.community/t5/GitHub-Actions/ubuntu-latest-Apt-repository-list-issues/td-p/41122/page/2
-          for apt_file in `grep -lr microsoft /etc/apt/sources.list.d/`; do sudo rm $apt_file; done
-          sudo apt-get update
-          sudo apt-get install libsqlite3-dev imagemagick
+
       - name: Set up Ruby ${{ matrix.ruby_version }}
         uses: ruby/setup-ruby@v1
         with:
