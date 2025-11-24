@@ -95,7 +95,11 @@ RSpec.describe Sentry::Rails::Tracing::ActiveRecordSubscriber, :subscriber do
           data = span[:data]
           expect(data["code.filepath"]).to eq(__FILE__)
           expect(data["code.lineno"]).to eq(query_line)
-          expect(data["code.namespace"]).to eq(rspec_class) if RUBY_VERSION.to_f >= 3.4
+
+          if RUBY_VERSION.to_f >= 3.4 && RUBY_ENGINE == "ruby"
+            expect(data["code.namespace"]).to eq(rspec_class)
+          end
+
           expect(data["code.function"]).to eq("foo")
         end
       end

@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require "sentry/rails/tracing/abstract_subscriber"
+require "sentry/backtrace"
 
 module Sentry
   module Rails
@@ -14,9 +15,11 @@ module Sentry
         SUPPORT_SOURCE_LOCATION = ActiveSupport::BacktraceCleaner.method_defined?(:clean_frame)
 
         if SUPPORT_SOURCE_LOCATION
-          class_attribute :backtrace_cleaner, default: (ActiveSupport::BacktraceCleaner.new.tap do |cleaner|
+          backtrace_cleaner = ActiveSupport::BacktraceCleaner.new.tap do |cleaner|
             cleaner.add_silencer { |line| line.include?("sentry-ruby/lib") || line.include?("sentry-rails/lib") }
-          end)
+          end.method(:clean_frame)
+
+          class_attribute :backtrace_cleaner, default: backtrace_cleaner
         end
 
         class << self
@@ -62,41 +65,19 @@ module Sentry
                 span.set_data(Span::DataConventions::SERVER_PORT, db_config[:port]) if db_config[:port]
                 span.set_data(Span::DataConventions::SERVER_SOCKET_ADDRESS, db_config[:socket]) if db_config[:socket]
 
-                next unless record_query_source
-
                 # both duration and query_source_threshold are in ms
-                next unless duration >= query_source_threshold
+                if record_query_source && duration >= query_source_threshold
+                  backtrace_line = Backtrace.source_location(&backtrace_cleaner)
 
-                source_location = query_source_location
-
-                if source_location
-                  backtrace_line = Sentry::Backtrace::Line.parse(source_location)
-
-                  span.set_data(Span::DataConventions::FILEPATH, backtrace_line.file) if backtrace_line.file
-                  span.set_data(Span::DataConventions::LINENO, backtrace_line.number) if backtrace_line.number
-                  span.set_data(Span::DataConventions::FUNCTION, backtrace_line.method) if backtrace_line.method
-                  # Only JRuby has namespace in the backtrace
-                  span.set_data(Span::DataConventions::NAMESPACE, backtrace_line.module_name) if backtrace_line.module_name
+                  if backtrace_line
+                    span.set_data(Span::DataConventions::FILEPATH, backtrace_line.file) if backtrace_line.file
+                    span.set_data(Span::DataConventions::LINENO, backtrace_line.number) if backtrace_line.number
+                    span.set_data(Span::DataConventions::FUNCTION, backtrace_line.method) if backtrace_line.method
+                    # Only JRuby has namespace in the backtrace
+                    span.set_data(Span::DataConventions::NAMESPACE, backtrace_line.module_name) if backtrace_line.module_name
+                  end
                 end
               end
-            end
-          end
-
-          # Thread.each_caller_location is an API added in Ruby 3.2 that doesn't always collect the entire stack like
-          # Kernel#caller or #caller_locations do. See https://github.com/rails/rails/pull/49095 for more context.
-          if SUPPORT_SOURCE_LOCATION && Thread.respond_to?(:each_caller_location)
-            def query_source_location
-              Thread.each_caller_location do |location|
-                frame = backtrace_cleaner.clean_frame(location)
-                return frame if frame
-              end
-              nil
-            end
-          else
-            # Since Sentry is mostly used in production, we don't want to fallback to the slower implementation
-            # and adds potentially big overhead to the application.
-            def query_source_location
-              nil
             end
           end
         end

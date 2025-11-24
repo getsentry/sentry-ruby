@@ -6,6 +6,7 @@ ignore:
   - "**/spec/**"
 comment:
   layout: "header, diff, flags, components, tree"
+  after_n_builds: 100
 component_management:
   individual_components:
     - component_id: "sentry-ruby"

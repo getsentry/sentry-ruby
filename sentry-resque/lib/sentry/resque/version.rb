@@ -2,6 +2,6 @@
 
 module Sentry
   module Resque
-    VERSION = "6.0.0"
+    VERSION = "6.1.1"
   end
 end

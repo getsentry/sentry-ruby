@@ -229,6 +229,36 @@ RSpec.describe Sentry::Rails::LogSubscribers::ActiveRecordSubscriber do
     end
   end
 
+  context "when logger is silenced" do
+    before do
+      make_basic_app do |config, app|
+        config.enable_logs = true
+
+        config.rails.structured_logging.enabled = true
+        config.rails.structured_logging.subscribers = {
+          active_record: Sentry::Rails::LogSubscribers::ActiveRecordSubscriber
+        }
+      end
+    end
+
+    it "does not log silenced logs", if: RAILS_VERSION > 5.2 do
+      # This makes it log only errors
+      ActiveRecord::Base.logger.silence { Post.create! }
+
+      Post.find(1)
+
+      Sentry.get_current_client.flush
+
+      expect(
+        sentry_logs.find { |log| log[:body].include?("Database query: Post Create") }
+      ).to be(nil)
+
+      expect(
+        sentry_logs.find { |log| log[:body].include?("Database query: Post Load") }
+      ).to_not be(nil)
+    end
+  end
+
   context "when logging is disabled" do
     before do
       make_basic_app do |config|
