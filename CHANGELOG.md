@@ -1,3 +1,9 @@
+## Unreleased
+
+### Fixes
+
+- Handle positioned binds in logging ([#2787](https://github.com/getsentry/sentry-ruby/pull/2787))
+
 ## 6.1.1
 
 ### Improvements
