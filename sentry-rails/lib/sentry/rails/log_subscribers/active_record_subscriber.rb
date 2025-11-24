@@ -50,12 +50,14 @@ module Sentry
 
           binds = event.payload[:binds]
 
-          if Sentry.configuration.send_default_pii && !binds&.empty?
+          if Sentry.configuration.send_default_pii && binds&.any?
             type_casted_binds = type_casted_binds(event)
 
             binds.each_with_index do |bind, index|
-              name = bind.is_a?(Symbol) ? bind : bind.name
-              attributes["db.query.parameter.#{name}"] = type_casted_binds[index].to_s
+              key = bind.respond_to?(:name) ? bind.name : index.to_s
+              value = type_casted_binds[index].to_s
+
+              attributes["db.query.parameter.#{key}"] = value
             end
           end
 
