@@ -4,6 +4,7 @@ require "sentry/transport"
 require "sentry/log_event"
 require "sentry/log_event_buffer"
 require "sentry/utils/uuid"
+require "sentry/utils/encoding_helper"
 
 module Sentry
   class Client
@@ -194,8 +195,17 @@ module Sentry
 
       attributes = options.reject { |k, _| k == :level || k == :severity || k == :origin }
       origin = options[:origin]
+      body = Utils::EncodingHelper.safe_utf_8_string(message)
 
-      LogEvent.new(level: level, body: message, attributes: attributes, origin: origin)
+      sanitized_attributes = attributes.transform_values do |value|
+        if value.is_a?(String)
+          Utils::EncodingHelper.safe_utf_8_string(value)
+        else
+          value
+        end
+      end
+
+      LogEvent.new(level: level, body: body, attributes: sanitized_attributes, origin: origin)
     end
 
     # Initializes an Event object with the given Transaction object.

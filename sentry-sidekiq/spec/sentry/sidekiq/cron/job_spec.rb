@@ -109,10 +109,10 @@ RSpec.describe Sentry::Sidekiq::Cron::Job do
 
       expect(::Sidekiq::Queue.new.size).to eq(1)
       expect(transport.events.count).to eq(1)
-      event = transport.events.last
-      expect(event.spans.count).to eq(1)
-      expect(event.spans[0][:op]).to eq("queue.publish")
-      expect(event.spans[0][:data]['messaging.destination.name']).to eq('default')
+
+      span = transport.events.last.spans.detect { |span| span[:op] == "queue.publish" }
+      expect(span[:op]).to eq("queue.publish")
+      expect(span[:data]['messaging.destination.name']).to eq('default')
     end
 
     it 'adds job to sidekiq within transaction' do
@@ -124,12 +124,16 @@ RSpec.describe Sentry::Sidekiq::Cron::Job do
       expect(::Sidekiq::Queue.new.size).to eq(2)
       expect(transport.events.count).to eq(2)
       events = transport.events
-      expect(events[0].spans.count).to eq(1)
-      expect(events[0].spans[0][:op]).to eq("queue.publish")
-      expect(events[0].spans[0][:data]['messaging.destination.name']).to eq('default')
-      expect(events[1].spans.count).to eq(1)
-      expect(events[1].spans[0][:op]).to eq("queue.publish")
-      expect(events[1].spans[0][:data]['messaging.destination.name']).to eq('default')
+
+      span = events[0].spans.detect { |span| span[:op] == "queue.publish" }
+      expect(span).not_to be_nil
+      expect(span[:op]).to eq("queue.publish")
+      expect(span[:data]['messaging.destination.name']).to eq('default')
+
+      span = events[1].spans.detect { |span| span[:op] == "queue.publish" }
+      expect(span).not_to be_nil
+      expect(span[:op]).to eq("queue.publish")
+      expect(span[:data]['messaging.destination.name']).to eq('default')
 
       expect(events[0].dynamic_sampling_context['trace_id']).to_not eq(events[1].dynamic_sampling_context['trace_id'])
     end

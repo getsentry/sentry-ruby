@@ -27,6 +27,7 @@ module Sentry
 
       def capture_exception(exception, env)
         # the exception will be swallowed by ShowExceptions middleware
+        return unless Sentry.initialized?
         return if show_exceptions?(exception, env) && !Sentry.configuration.rails.report_rescued_exceptions
 
         Sentry::Rails.capture_exception(exception).tap do |event|

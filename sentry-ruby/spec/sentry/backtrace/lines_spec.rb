@@ -41,4 +41,40 @@ RSpec.describe Sentry::Backtrace::Line do
       expect(line.in_app).to eq(false)
     end
   end
+
+  describe ".from_source_location", skip: !Thread.respond_to?(:each_caller_location) do
+    it "creates a Line from Thread::Backtrace::Location" do
+      location = caller_locations.first
+      line = described_class.from_source_location(location, in_app_pattern)
+
+      expect(line).to be_a(described_class)
+      expect(line.file).to be_a(String)
+      expect(line.number).to be_a(Integer)
+      expect(line.method).to be_a(String)
+      expect(line.in_app_pattern).to eq(in_app_pattern)
+    end
+
+    it "extracts file, line number, and method correctly" do
+      location = caller_locations.first
+      line = described_class.from_source_location(location)
+
+      expect(line.file).to eq(location.absolute_path)
+      expect(line.number).to eq(location.lineno)
+      expect(line.method).to eq(location.base_label)
+    end
+
+    it "extracts module name from label when present", when: { ruby_version?: [:>=, "3.4"] } do
+      location = caller_locations.first
+      line = described_class.from_source_location(location)
+
+      expect(line.module_name).to be_a(String)
+    end
+
+    it "skips module name from label when present", when: { ruby_version?: [:<, "3.4"] } do
+      location = caller_locations.first
+      line = described_class.from_source_location(location)
+
+      expect(line.module_name).to be(nil)
+    end
+  end
 end

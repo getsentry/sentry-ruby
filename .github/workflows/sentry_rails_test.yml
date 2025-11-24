@@ -25,6 +25,7 @@ jobs:
       BUNDLE_GEMFILE: ${{ github.workspace }}/sentry-rails/Gemfile
       BUNDLE_WITHOUT: rubocop
       RAILS_VERSION: ${{ matrix.rails_version }}
+      JRUBY_OPTS: "--debug" # for more accurate test coverage
     strategy:
       fail-fast: false
       matrix:
@@ -61,7 +62,6 @@ jobs:
             rails_version: 7.1.0
         exclude:
           - ruby_version: head
-          - ruby_version: 'jruby'
           - ruby_version: jruby-head
           - ruby_version: "3.4"
             rails_version: "6.1.0"

@@ -28,6 +28,7 @@ jobs:
       RUBYOPT: ${{ matrix.options.rubyopt }}
       BUNDLE_GEMFILE: ${{ github.workspace }}/sentry-delayed_job/Gemfile
       BUNDLE_WITHOUT: rubocop
+      JRUBY_OPTS: "--debug" # for more accurate test coverage
     strategy:
       fail-fast: false
       matrix:
