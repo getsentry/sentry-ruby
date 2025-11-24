@@ -3,6 +3,7 @@
 ### Fixes
 
 - Handle positioned binds in logging ([#2787](https://github.com/getsentry/sentry-ruby/pull/2787))
+- Handle cached queries with binds correctly when logging ([#2789](https://github.com/getsentry/sentry-ruby/pull/2789))
 
 ## 6.1.1
 
