@@ -147,7 +147,7 @@ RSpec.describe Sentry::Rails::LogSubscribers::ActiveRecordSubscriber do
           expect(log_event).not_to be_nil
         end
 
-        it "includes cached flag when query is cached", skip: Rails.version.to_f < 5.1 ? "Rails 5.0.0 doesn't include cached flag in sql.active_record events" : false do
+        it "includes cached flag when query is cached" do
           post = Post.create!(title: "test")
 
           Sentry.get_current_client.flush
