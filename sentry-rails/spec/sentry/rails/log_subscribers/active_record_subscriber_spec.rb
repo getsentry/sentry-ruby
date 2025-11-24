@@ -80,6 +80,72 @@ RSpec.describe Sentry::Rails::LogSubscribers::ActiveRecordSubscriber do
           expect(log_event[:attributes]["db.query.parameter.created_at"][:value]).to include("2025-10-28 13:11:44")
           expect(log_event[:attributes]["db.query.parameter.created_at"][:type]).to eql("string")
         end
+
+        it "logs queries with positional (unnamed) binds", skip: RAILS_VERSION >= 8.0 do
+          Sentry.get_current_client.flush
+          sentry_transport.events.clear
+          sentry_transport.envelopes.clear
+
+          Post.where("id = ? AND title = ?", 1, "Hello World").first
+
+          Sentry.get_current_client.flush
+
+          log_event = sentry_logs.find { |log| log[:body]&.include?("Database query") }
+          expect(log_event).not_to be_nil
+        end
+
+        it "logs queries with positional (unnamed) binds", skip: RAILS_VERSION < 8.0 do
+          Sentry.get_current_client.flush
+          sentry_transport.events.clear
+          sentry_transport.envelopes.clear
+
+          Post.where("id = ? AND title = ?", 1, "Hello World").first
+
+          Sentry.get_current_client.flush
+
+          log_event = sentry_logs.find { |log| log[:body]&.include?("Database query") }
+          expect(log_event).not_to be_nil
+
+          expect(log_event[:attributes]["db.query.parameter.0"][:value]).to eq("1")
+          expect(log_event[:attributes]["db.query.parameter.1"][:value]).to eq("Hello World")
+        end
+
+        it "handles nil binds gracefully" do
+          Sentry.get_current_client.flush
+          sentry_transport.events.clear
+          sentry_transport.envelopes.clear
+
+          # In theory, this should never happened
+          ActiveSupport::Notifications.instrument("sql.active_record",
+            sql: "SELECT 1",
+            name: "SQL",
+            connection: ActiveRecord::Base.connection,
+            binds: nil
+          )
+
+          Sentry.get_current_client.flush
+
+          log_event = sentry_logs.find { |log| log[:attributes]&.dig(:sql, :value) == "SELECT 1" }
+          expect(log_event).not_to be_nil
+          expect(log_event[:attributes][:sql][:value]).to eq("SELECT 1")
+        end
+
+        it "when binds are empty array" do
+          Sentry.get_current_client.flush
+          sentry_transport.events.clear
+          sentry_transport.envelopes.clear
+
+          Post.connection.execute("SELECT posts.* FROM posts")
+
+          Sentry.get_current_client.flush
+
+          log_event = sentry_logs.find { |log|
+            log[:attributes].dig(:sql, :value).include?("SELECT") &&
+              log[:attributes].dig(:sql, :value).include?("posts")
+          }
+
+          expect(log_event).not_to be_nil
+        end
       end
 
       context "when send_default_pii is disabled" do
