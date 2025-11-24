@@ -146,6 +146,38 @@ RSpec.describe Sentry::Rails::LogSubscribers::ActiveRecordSubscriber do
 
           expect(log_event).not_to be_nil
         end
+
+        it "includes cached flag when query is cached", skip: Rails.version.to_f < 5.1 ? "Rails 5.0.0 doesn't include cached flag in sql.active_record events" : false do
+          post = Post.create!(title: "test")
+
+          Sentry.get_current_client.flush
+          sentry_transport.events.clear
+          sentry_transport.envelopes.clear
+
+          ActiveRecord::Base.cache do
+            Post.where(id: post.id).first
+            Post.where(id: post.id).first
+
+            Post.where(title: post.title).first
+            Post.where(title: post.title).first
+          end
+
+          Sentry.get_current_client.flush
+
+          cached_logs = sentry_logs.select { |log| log[:attributes].dig(:cached, :value) == true }
+
+          expect(cached_logs.size).to be(2)
+
+          id_query, title_query = cached_logs
+
+          expect(id_query[:attributes]["db.query.parameter.id"]).to eq(
+            type: "string", value: post.id.to_s
+          )
+
+          expect(title_query[:attributes]["db.query.parameter.title"]).to eq(
+            type: "string", value: "test"
+          )
+        end
       end
 
       context "when send_default_pii is disabled" do
@@ -275,22 +307,6 @@ RSpec.describe Sentry::Rails::LogSubscribers::ActiveRecordSubscriber do
         end
         expect(log_event).not_to be_nil
         expect(log_event[:attributes][:sql][:value]).to include("SELECT 1")
-      end
-    end
-
-    describe "caching information" do
-      it "includes cached flag when query is cached", skip: Rails.version.to_f < 5.1 ? "Rails 5.0.0 doesn't include cached flag in sql.active_record events" : false do
-        ActiveRecord::Base.cache do
-          post = Post.create!
-
-          Post.find(post.id)
-          Post.find(post.id)
-
-          Sentry.get_current_client.flush
-
-          cached_log = sentry_logs.find { |log| log[:attributes]&.dig(:cached, :value) == true }
-          expect(cached_log).not_to be_nil
-        end
       end
     end
   end
