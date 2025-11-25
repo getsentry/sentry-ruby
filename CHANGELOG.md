@@ -1,4 +1,4 @@
-## Unreleased
+## 6.1.2
 
 ### Fixes
 
