@@ -50,7 +50,7 @@ module Sentry
 
           binds = event.payload[:binds]
 
-          if Sentry.configuration.send_default_pii && binds&.any?
+          if Sentry.configuration.send_default_pii && (binds && !binds.empty?)
             type_casted_binds = type_casted_binds(event)
 
             binds.each_with_index do |bind, index|
@@ -75,13 +75,15 @@ module Sentry
           )
         end
 
-        if RUBY_ENGINE == "jruby"
-          def type_casted_binds(event)
-            event.payload[:type_casted_binds].call
-          end
-        else
-          def type_casted_binds(event)
-            event.payload[:type_casted_binds]
+        def type_casted_binds(event)
+          binds = event.payload[:type_casted_binds]
+
+          # When a query is cached, binds are a callable,
+          # and under JRuby they're always a callable.
+          if binds.respond_to?(:call)
+            binds.call
+          else
+            binds
           end
         end
 
