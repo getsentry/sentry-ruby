@@ -15,6 +15,7 @@ module Sentry
     after(:initialize) do
       @rails = Sentry::Rails::Configuration.new
       @excluded_exceptions = @excluded_exceptions.concat(Sentry::Rails::IGNORE_DEFAULT)
+      @excluded_exceptions = @excluded_exceptions.concat(Sentry::Rails::RAILS_8_1_1_IGNORE_DEFAULT) if Gem::Version.new(::Rails.version) >= Gem::Version.new("8.1.1")
 
       if ::Rails.logger
         if defined?(::ActiveSupport::BroadcastLogger) && ::Rails.logger.is_a?(::ActiveSupport::BroadcastLogger)
@@ -48,13 +49,18 @@ module Sentry
       "ActionController::NotImplemented",
       "ActionController::ParameterMissing",
       "ActionController::RoutingError",
-      "ActionController::TooManyRequests",
       "ActionController::UnknownAction",
       "ActionController::UnknownFormat",
       "ActionController::UnknownHttpMethod",
       "ActionDispatch::Http::MimeNegotiation::InvalidType",
       "ActionDispatch::Http::Parameters::ParseError",
       "ActiveRecord::RecordNotFound"
+    ].freeze
+
+    # Rails 8.1.1 introduced ActionController::TooManyRequests for rate limiting
+    # https://github.com/rails/rails/commit/73ecd0ced634e5177496677a2986ec3731c7e2ee
+    RAILS_8_1_1_IGNORE_DEFAULT = [
+      "ActionController::TooManyRequests"
     ].freeze
 
     ACTIVE_SUPPORT_LOGGER_SUBSCRIPTION_ITEMS_DEFAULT = {
