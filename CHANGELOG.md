@@ -4,6 +4,10 @@
 
 - Include otel as custom sampling context ([2683](https://github.com/getsentry/sentry-ruby/pull/2683))
 
+### Fixes
+
+- Prevent logging from crashing main thread ([2795](https://github.com/getsentry/sentry-ruby/pull/2795))
+
 ## 6.1.2
 
 ### Fixes
