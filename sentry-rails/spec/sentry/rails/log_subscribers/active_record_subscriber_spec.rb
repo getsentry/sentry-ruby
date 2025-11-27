@@ -195,6 +195,27 @@ RSpec.describe Sentry::Rails::LogSubscribers::ActiveRecordSubscriber do
           expect(log_event).not_to be_nil
           expect(log_event[:attributes][:sql][:value]).to eq("SELECT error")
         end
+
+        it "does not choke on retrieving connection info" do
+          connection = double(ActiveRecord::Base.connection.class)
+
+          expect(connection).to receive(:pool).and_raise(StandardError.new("boom"))
+
+          ActiveSupport::Notifications.instrument("sql.active_record",
+            sql: "SELECT error",
+            name: "SQL",
+            connection: connection,
+            binds: ["foo"],
+            type_casted_binds: -> { raise StandardError.new("boom") }
+          )
+
+          Sentry.get_current_client.flush
+
+          log_event = sentry_logs.last
+
+          expect(log_event).to_not be_nil
+          expect(log_event[:attributes][:sql][:value]).to eq("SELECT error")
+        end
       end
 
       context "when send_default_pii is disabled" do
