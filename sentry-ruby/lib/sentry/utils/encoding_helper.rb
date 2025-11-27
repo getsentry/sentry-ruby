@@ -3,7 +3,6 @@
 module Sentry
   module Utils
     module EncodingHelper
-      EMPTY_STRING = ""
       MALFORMED_STRING = "<malformed-string>"
 
       def self.encode_to_utf_8(value)
