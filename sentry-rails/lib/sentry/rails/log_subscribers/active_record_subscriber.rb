@@ -72,6 +72,8 @@ module Sentry
             level: :info,
             attributes: attributes
           )
+        rescue => e
+          log_debug("[#{self.class}] failed to log sql event: #{e.message}")
         end
 
         def type_casted_binds(event)
@@ -84,10 +86,6 @@ module Sentry
           else
             binds
           end
-        rescue => e
-          log_debug("[#{self.class}] failed to get type cast binds: #{e.message}")
-
-          EMPTY_ARRAY
         end
 
         private
