@@ -196,12 +196,16 @@ RSpec.describe Sentry::Rails::LogSubscribers::ActiveRecordSubscriber do
         end
 
         it "does not choke on retrieving connection info" do
+          connection = double(ActiveRecord::Base.connection.class)
+
+          expect(connection).to receive(:pool).and_raise(StandardError.new("boom"))
+
           ActiveSupport::Notifications.instrument("sql.active_record",
             sql: "SELECT error",
             name: "SQL",
-            connection: ActiveRecord::Base.connection,
-            binds: ["foo"],
-            type_casted_binds: -> { raise StandardError.new("boom") }
+            connection: connection,
+            binds: [:foo],
+            type_casted_binds: -> { ["foo"] }
           )
 
           Sentry.get_current_client.flush

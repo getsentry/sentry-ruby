@@ -118,8 +118,6 @@ module Sentry
           attributes[:server_address] = db_config[:host] if db_config[:host]
           attributes[:server_port] = db_config[:port] if db_config[:port]
           attributes[:server_socket_address] = db_config[:socket] if db_config[:socket]
-        rescue => e
-          log_debug("[#{self.class}] failed to add DB config attributes: #{e.message}")
         end
 
         def extract_db_config(payload)
@@ -128,9 +126,6 @@ module Sentry
           return unless connection
 
           extract_db_config_from_connection(connection)
-        rescue => e
-          log_debug("[#{self.class}] failed to extract DB config: #{e.message}")
-          nil
         end
 
         if ::Rails.version.to_f >= 6.1
