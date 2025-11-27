@@ -24,6 +24,7 @@ module Sentry
         include ParameterFilter
 
         EXCLUDED_NAMES = ["SCHEMA", "TRANSACTION"].freeze
+        EMPTY_ARRAY = [].freeze
 
         # Handle sql.active_record events
         #
@@ -40,8 +41,6 @@ module Sentry
           cached = event.payload.fetch(:cached, false)
           connection_id = event.payload[:connection_id]
 
-          db_config = extract_db_config(event.payload)
-
           attributes = {
             sql: sql,
             duration_ms: duration_ms(event),
@@ -53,18 +52,18 @@ module Sentry
           if Sentry.configuration.send_default_pii && (binds && !binds.empty?)
             type_casted_binds = type_casted_binds(event)
 
-            binds.each_with_index do |bind, index|
-              key = bind.respond_to?(:name) ? bind.name : index.to_s
-              value = type_casted_binds[index].to_s
+            type_casted_binds.each_with_index do |value, index|
+              bind = binds[index]
+              name = bind.respond_to?(:name) ? bind.name : index.to_s
 
-              attributes["db.query.parameter.#{key}"] = value
+              attributes["db.query.parameter.#{name}"] = value.to_s
             end
           end
 
           attributes[:statement_name] = statement_name if statement_name && statement_name != "SQL"
           attributes[:connection_id] = connection_id if connection_id
 
-          add_db_config_attributes(attributes, db_config)
+          maybe_add_db_config_attributes(attributes, event.payload)
 
           message = build_log_message(statement_name)
 
@@ -73,6 +72,8 @@ module Sentry
             level: :info,
             attributes: attributes
           )
+        rescue => e
+          log_debug("[#{self.class}] failed to log sql event: #{e.message}")
         end
 
         def type_casted_binds(event)
@@ -97,15 +98,9 @@ module Sentry
           end
         end
 
-        def extract_db_config(payload)
-          connection = payload[:connection]
+        def maybe_add_db_config_attributes(attributes, payload)
+          db_config = extract_db_config(payload)
 
-          return unless connection
-
-          extract_db_config_from_connection(connection)
-        end
-
-        def add_db_config_attributes(attributes, db_config)
           return unless db_config
 
           attributes[:db_system] = db_config[:adapter] if db_config[:adapter]
@@ -123,6 +118,14 @@ module Sentry
           attributes[:server_address] = db_config[:host] if db_config[:host]
           attributes[:server_port] = db_config[:port] if db_config[:port]
           attributes[:server_socket_address] = db_config[:socket] if db_config[:socket]
+        end
+
+        def extract_db_config(payload)
+          connection = payload[:connection]
+
+          return unless connection
+
+          extract_db_config_from_connection(connection)
         end
 
         if ::Rails.version.to_f >= 6.1

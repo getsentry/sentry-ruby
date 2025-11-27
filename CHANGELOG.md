@@ -7,6 +7,7 @@
 ### Fixes
 
 - Prevent logging from crashing main thread ([2795](https://github.com/getsentry/sentry-ruby/pull/2795))
+- Improve error handling in ActiveRecord subscriber ([2798](https://github.com/getsentry/sentry-ruby/pull/2798))
 
 ## 6.1.2
 
