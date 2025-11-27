@@ -1,4 +1,4 @@
-## Unreleased
+## 6.2.0
 
 ### Features
 
