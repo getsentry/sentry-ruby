@@ -178,6 +178,23 @@ RSpec.describe Sentry::Rails::LogSubscribers::ActiveRecordSubscriber do
             type: "string", value: "test"
           )
         end
+
+        it "does not choke on type_casted_binds errors" do
+          ActiveSupport::Notifications.instrument("sql.active_record",
+            sql: "SELECT error",
+            name: "SQL",
+            connection: ActiveRecord::Base.connection,
+            binds: ["foo"],
+            type_casted_binds: -> { raise StandardError.new("boom") }
+          )
+
+          Sentry.get_current_client.flush
+
+          log_event = sentry_logs.last
+
+          expect(log_event).not_to be_nil
+          expect(log_event[:attributes][:sql][:value]).to eq("SELECT error")
+        end
       end
 
       context "when send_default_pii is disabled" do

@@ -24,6 +24,7 @@ module Sentry
         include ParameterFilter
 
         EXCLUDED_NAMES = ["SCHEMA", "TRANSACTION"].freeze
+        EMPTY_ARRAY = [].freeze
 
         # Handle sql.active_record events
         #
@@ -53,11 +54,11 @@ module Sentry
           if Sentry.configuration.send_default_pii && (binds && !binds.empty?)
             type_casted_binds = type_casted_binds(event)
 
-            binds.each_with_index do |bind, index|
-              key = bind.respond_to?(:name) ? bind.name : index.to_s
-              value = type_casted_binds[index].to_s
+            type_casted_binds.each_with_index do |value, index|
+              bind = binds[index]
+              name = bind.respond_to?(:name) ? bind.name : index.to_s
 
-              attributes["db.query.parameter.#{key}"] = value
+              attributes["db.query.parameter.#{name}"] = value.to_s
             end
           end
 
@@ -85,6 +86,10 @@ module Sentry
           else
             binds
           end
+        rescue => e
+          log_debug("[#{self.class}] failed to get type cast binds: #{e.message}")
+
+          EMPTY_ARRAY
         end
 
         private
