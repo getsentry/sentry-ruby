@@ -74,4 +74,61 @@ RSpec.describe Sentry::LogEventBuffer do
       expect(log_event_buffer).to be_empty
     end
   end
+
+  describe "error handling" do
+    let(:max_log_events) { 3 }
+
+    let(:error) { Errno::ECONNREFUSED.new("Connection refused") }
+
+    context "when send_logs raises an exception" do
+      before do
+        allow(client).to receive(:send_logs).and_raise(error)
+      end
+
+      it "does not propagate exception from add_event when buffer is full" do
+        expect {
+          3.times { log_event_buffer.add_event(log_event) }
+        }.not_to raise_error
+      end
+
+      it "does not propagate exception from flush" do
+        2.times { log_event_buffer.add_event(log_event) }
+
+        expect {
+          log_event_buffer.flush
+        }.not_to raise_error
+      end
+
+      it "logs the error to sdk_logger" do
+        3.times { log_event_buffer.add_event(log_event) }
+
+        expect(string_io.string).to include("Failed to send logs")
+      end
+
+      it "clears the buffer after a failed send to avoid memory buildup" do
+        3.times { log_event_buffer.add_event(log_event) }
+
+        expect(log_event_buffer).to be_empty
+      end
+    end
+
+    context "when background thread encounters an error" do
+      let(:max_log_events) { 100 }
+
+      before do
+        allow(client).to receive(:send_logs).and_raise(error)
+      end
+
+      it "keeps the background thread alive after an error" do
+        log_event_buffer.add_event(log_event)
+        log_event_buffer.start
+
+        thread = log_event_buffer.instance_variable_get(:@thread)
+
+        expect(thread).to be_alive
+        expect { log_event_buffer.flush }.not_to raise_error
+        expect(thread).to be_alive
+      end
+    end
+  end
 end
