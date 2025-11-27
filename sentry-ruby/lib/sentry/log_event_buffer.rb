@@ -65,11 +65,18 @@ module Sentry
       @pending_events.size
     end
 
+    def clear!
+      @pending_events.clear
+    end
+
     private
 
     def send_events
       @client.send_logs(@pending_events)
-      @pending_events.clear
+    rescue => e
+      log_debug("[LogEventBuffer] Failed to send logs: #{e.message}")
+    ensure
+      clear!
     end
   end
 end
