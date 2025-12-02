@@ -151,6 +151,9 @@ module Sentry
 
           statement = otel_span.attributes[SEMANTIC_CONVENTIONS::DB_STATEMENT]
           description = statement if statement
+        elsif (messaging_system = otel_span.attributes[SEMANTIC_CONVENTIONS::MESSAGING_SYSTEM])
+          op = "queue.#{otel_span.kind == :producer ? "publish" : "process"}"
+          description = description&.split(" ")&.first&.strip || messaging_system
         end
 
         [op, description]
