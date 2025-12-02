@@ -34,6 +34,10 @@
 
 - Add support for ActiveRecord binds in the log events ([#2761](https://github.com/getsentry/sentry-ruby/pull/2761))
 
+### Features
+
+- Include `Delayed::Job` instance in hint [#1861](https://github.com/getsentry/sentry-ruby/pull/1861)
+
 ### Bug Fixes
 
 - Guard log subscribers with initialized check ([#2765](https://github.com/getsentry/sentry-ruby/pull/2765))
