@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require "active_support/log_subscriber"
+require "sentry/utils/logging_helper"
 
 module Sentry
   module Rails
@@ -27,6 +28,8 @@ module Sentry
     #     end
     #   end
     class LogSubscriber < ActiveSupport::LogSubscriber
+      include Sentry::LoggingHelper
+
       ORIGIN = "auto.log.rails.log_subscriber"
 
       class << self

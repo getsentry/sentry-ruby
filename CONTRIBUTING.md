@@ -85,4 +85,4 @@ In addition to all the steps listed above, you also need to:
 [extension guideline]: https://github.com/getsentry/sentry-ruby/blob/master/EXTENSION.md
 [Sentry SDK spec]: https://develop.sentry.dev/sdk/unified-api/
 [sentry-doc repo]: https://github.com/getsentry/sentry-docs
-[Discord]: https://discord.gg/Ww9hbqr
+[Discord]: https://discord.gg/sentry

@@ -80,6 +80,140 @@ RSpec.describe Sentry::Rails::LogSubscribers::ActiveRecordSubscriber do
           expect(log_event[:attributes]["db.query.parameter.created_at"][:value]).to include("2025-10-28 13:11:44")
           expect(log_event[:attributes]["db.query.parameter.created_at"][:type]).to eql("string")
         end
+
+        it "logs queries with positional (unnamed) binds", skip: RAILS_VERSION >= 8.0 do
+          Sentry.get_current_client.flush
+          sentry_transport.events.clear
+          sentry_transport.envelopes.clear
+
+          Post.where("id = ? AND title = ?", 1, "Hello World").first
+
+          Sentry.get_current_client.flush
+
+          log_event = sentry_logs.find { |log| log[:body]&.include?("Database query") }
+          expect(log_event).not_to be_nil
+        end
+
+        it "logs queries with positional (unnamed) binds", skip: RAILS_VERSION < 8.0 do
+          Sentry.get_current_client.flush
+          sentry_transport.events.clear
+          sentry_transport.envelopes.clear
+
+          Post.where("id = ? AND title = ?", 1, "Hello World").first
+
+          Sentry.get_current_client.flush
+
+          log_event = sentry_logs.find { |log| log[:body]&.include?("Database query") }
+          expect(log_event).not_to be_nil
+
+          expect(log_event[:attributes]["db.query.parameter.0"][:value]).to eq("1")
+          expect(log_event[:attributes]["db.query.parameter.1"][:value]).to eq("Hello World")
+        end
+
+        it "handles nil binds gracefully" do
+          Sentry.get_current_client.flush
+          sentry_transport.events.clear
+          sentry_transport.envelopes.clear
+
+          # In theory, this should never happened
+          ActiveSupport::Notifications.instrument("sql.active_record",
+            sql: "SELECT 1",
+            name: "SQL",
+            connection: ActiveRecord::Base.connection,
+            binds: nil
+          )
+
+          Sentry.get_current_client.flush
+
+          log_event = sentry_logs.find { |log| log[:attributes]&.dig(:sql, :value) == "SELECT 1" }
+          expect(log_event).not_to be_nil
+          expect(log_event[:attributes][:sql][:value]).to eq("SELECT 1")
+        end
+
+        it "when binds are empty array" do
+          Sentry.get_current_client.flush
+          sentry_transport.events.clear
+          sentry_transport.envelopes.clear
+
+          Post.connection.execute("SELECT posts.* FROM posts")
+
+          Sentry.get_current_client.flush
+
+          log_event = sentry_logs.find { |log|
+            log[:attributes].dig(:sql, :value).include?("SELECT") &&
+              log[:attributes].dig(:sql, :value).include?("posts")
+          }
+
+          expect(log_event).not_to be_nil
+        end
+
+        it "includes cached flag when query is cached" do
+          post = Post.create!(title: "test")
+
+          Sentry.get_current_client.flush
+          sentry_transport.events.clear
+          sentry_transport.envelopes.clear
+
+          ActiveRecord::Base.cache do
+            Post.where(id: post.id).first
+            Post.where(id: post.id).first
+
+            Post.where(title: post.title).first
+            Post.where(title: post.title).first
+          end
+
+          Sentry.get_current_client.flush
+
+          cached_logs = sentry_logs.select { |log| log[:attributes].dig(:cached, :value) == true }
+
+          expect(cached_logs.size).to be(2)
+
+          id_query, title_query = cached_logs
+
+          expect(id_query[:attributes]["db.query.parameter.id"]).to eq(
+            type: "string", value: post.id.to_s
+          )
+
+          expect(title_query[:attributes]["db.query.parameter.title"]).to eq(
+            type: "string", value: "test"
+          )
+        end
+
+        it "does not choke on type_casted_binds errors" do
+          ActiveSupport::Notifications.instrument("sql.active_record",
+            sql: "SELECT error",
+            name: "SQL",
+            connection: ActiveRecord::Base.connection,
+            binds: ["foo"],
+            type_casted_binds: -> { raise StandardError.new("boom") }
+          )
+
+          Sentry.get_current_client.flush
+
+          log_event = sentry_logs.find { |log| log[:attributes].dig(:sql, :value) == "SELECT error" }
+
+          expect(log_event).to be_nil
+        end
+
+        it "does not choke on retrieving connection info" do
+          connection = double(ActiveRecord::Base.connection.class)
+
+          expect(connection).to receive(:pool).and_raise(StandardError.new("boom"))
+
+          ActiveSupport::Notifications.instrument("sql.active_record",
+            sql: "SELECT error",
+            name: "SQL",
+            connection: connection,
+            binds: [:foo],
+            type_casted_binds: -> { ["foo"] }
+          )
+
+          Sentry.get_current_client.flush
+
+          log_event = sentry_logs.find { |log| log[:attributes].dig(:sql, :value) == "SELECT error" }
+
+          expect(log_event).to be_nil
+        end
       end
 
       context "when send_default_pii is disabled" do
@@ -209,22 +343,6 @@ RSpec.describe Sentry::Rails::LogSubscribers::ActiveRecordSubscriber do
         end
         expect(log_event).not_to be_nil
         expect(log_event[:attributes][:sql][:value]).to include("SELECT 1")
-      end
-    end
-
-    describe "caching information" do
-      it "includes cached flag when query is cached", skip: Rails.version.to_f < 5.1 ? "Rails 5.0.0 doesn't include cached flag in sql.active_record events" : false do
-        ActiveRecord::Base.cache do
-          post = Post.create!
-
-          Post.find(post.id)
-          Post.find(post.id)
-
-          Sentry.get_current_client.flush
-
-          cached_log = sentry_logs.find { |log| log[:attributes]&.dig(:cached, :value) == true }
-          expect(cached_log).not_to be_nil
-        end
       end
     end
   end
