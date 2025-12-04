@@ -4,6 +4,8 @@ module Sentry
   module Cron
     module MonitorCheckIns
       MAX_SLUG_LENGTH = 50
+      MAX_NAME_LENGTH = 128
+      SLUG_HASH_LENGTH = 10
 
       module Patch
         def perform(*args, **opts)
@@ -59,8 +61,19 @@ module Sentry
 
         def sentry_monitor_slug(name: self.name)
           @sentry_monitor_slug ||= begin
-            slug = name.gsub("::", "-").downcase
-            slug[-MAX_SLUG_LENGTH..-1] || slug
+            slug = name.gsub("::", "-").gsub(/([A-Z]{1,1000})([A-Z][a-z])/, '\1_\2').gsub(/([a-z\d])([A-Z])/, '\1_\2').downcase
+            if slug.length > MAX_SLUG_LENGTH
+              diff_length = slug.length + 1 + SLUG_HASH_LENGTH - MAX_SLUG_LENGTH
+              trim_part = ""
+              slug.scan(/([^_-]+)([_-])/) do |match, separator|
+                trim_part = "#{trim_part}#{match}#{separator}"
+                break if trim_part.length >= diff_length
+              end
+              trim_part = slug[0...diff_length] if trim_part.empty?
+              hash = OpenSSL::Digest::SHA256.hexdigest(trim_part)[0..SLUG_HASH_LENGTH-1]
+              slug = "#{hash}_#{slug.sub(trim_part, '')}"
+            end
+            slug
           end
         end
 
