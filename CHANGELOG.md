@@ -1,3 +1,9 @@
+## Unreleased
+
+### Features
+
+- Introduce sentry-good_job integration ([#2751](https://github.com/getsentry/sentry-ruby/pull/2751))
+
 ## 6.2.0
 
 ### Features

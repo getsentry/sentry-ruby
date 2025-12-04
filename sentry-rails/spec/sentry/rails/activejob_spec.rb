@@ -167,6 +167,7 @@ RSpec.describe "ActiveJob integration", type: :job do
     end
   end
 
+
   context "with tracing enabled" do
     before do
       make_basic_app do |config|
