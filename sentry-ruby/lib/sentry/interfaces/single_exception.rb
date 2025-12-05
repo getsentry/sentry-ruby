@@ -60,7 +60,7 @@ module Sentry
             end
         end
 
-        stacktrace.frames.last.vars = locals
+        stacktrace.frames.last&.vars = locals
       end
 
       new(exception: exception, stacktrace: stacktrace, mechanism: mechanism)

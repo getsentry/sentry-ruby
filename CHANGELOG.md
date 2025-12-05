@@ -1,3 +1,9 @@
+## Unreleased
+
+### Bug Fixes
+
+- Handle empty frames case gracefully with local vars ([#2807](https://github.com/getsentry/sentry-ruby/pull/2807))
+
 ## 6.2.0
 
 ### Features
