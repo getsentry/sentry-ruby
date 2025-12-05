@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+require "json"
+
 module Sentry
   # Event type that represents a log entry with its attributes
   #
@@ -61,13 +63,6 @@ module Sentry
       user_username
       user_email
     ].map { |name| [name, :"serialize_#{name}"] }.to_h
-
-    VALUE_TYPES = Hash.new("string").merge!({
-      TrueClass => "boolean",
-      FalseClass => "boolean",
-      Integer => "integer",
-      Float => "double"
-    }).freeze
 
     TOKEN_REGEXP = /%\{(\w+)\}/
 
@@ -178,11 +173,22 @@ module Sentry
     end
 
     def attribute_hash(value)
-      { value: value, type: value_type(value) }
-    end
-
-    def value_type(value)
-      VALUE_TYPES[value.class]
+      case value
+      when String
+        { value: value, type: "string" }
+      when TrueClass, FalseClass
+        { value: value, type: "boolean" }
+      when Integer
+        { value: value, type: "integer" }
+      when Float
+        { value: value, type: "double" }
+      else
+        begin
+          { value: JSON.generate(value), type: "string" }
+        rescue
+          { value: value, type: "string" }
+        end
+      end
     end
 
     def parameters
