@@ -9,6 +9,7 @@
 ### Features
 
 - Include otel as custom sampling context ([2683](https://github.com/getsentry/sentry-ruby/pull/2683))
+- Ignore new rails rate limit errors ([#2774](https://github.com/getsentry/sentry-ruby/pull/2774))
 
 ### Fixes
 
