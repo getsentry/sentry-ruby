@@ -15,6 +15,12 @@ RSpec.describe Sentry::Rails::Configuration do
     expect(config.excluded_exceptions).to include("ActiveRecord::RecordNotFound")
   end
 
+  it "ignores ActionController::TooManyRequests by default on Rails 8.1.1+", skip: Gem::Version.new(Rails.version) < Gem::Version.new("8.1.1") do
+    config = Sentry::Configuration.new
+
+    expect(config.excluded_exceptions).to include("ActionController::TooManyRequests")
+  end
+
   describe "#report_rescued_exceptions" do
     it "has correct default value" do
       expect(subject.report_rescued_exceptions).to eq(true)
