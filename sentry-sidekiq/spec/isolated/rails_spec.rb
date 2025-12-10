@@ -13,7 +13,7 @@ require "sentry-rails"
 require_relative "../spec_helper"
 
 # This is needed to prevent Sidekiq 6.5 crash
-if Sidekiq::VERSION >= Gem::Version.new("6.5") && Sidekiq::VERSION < Gem::Version.new("7.0")
+if SIDEKIQ_VERSION >= Gem::Version.new("6.5") && SIDEKIQ_VERSION < Gem::Version.new("7.0")
   # NoMethodError:
   #  undefined method 'broadcast' for class ActiveSupport::Logger
   #  /workspace/sentry/vendor/gems/3.4.5/gems/sidekiq-6.5.7/lib/sidekiq/rails.rb:46:in 'block (2 levels) in <class:Rails>'
