@@ -56,6 +56,8 @@ module Sentry
       private
 
       def self.enhance_sentry_reporter
+        return if defined?(@reporter_enhanced) && @reporter_enhanced
+
         # Enhance the sentry_context method in SentryReporter
         ::Sentry::Rails::ActiveJobExtensions::SentryReporter.class_eval do
           class << self
@@ -67,6 +69,8 @@ module Sentry
             end
           end
         end
+
+        @reporter_enhanced = true
       end
 
       def self.setup_good_job_extensions
