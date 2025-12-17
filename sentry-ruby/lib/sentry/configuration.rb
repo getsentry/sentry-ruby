@@ -14,6 +14,7 @@ require "sentry/interfaces/stacktrace_builder"
 require "sentry/logger"
 require "sentry/structured_logger"
 require "sentry/log_event_buffer"
+require "sentry/metric_event_buffer"
 
 module Sentry
   class Configuration
@@ -337,6 +338,23 @@ module Sentry
     # @return [Integer]
     attr_accessor :max_log_events
 
+    # Enable metrics collection
+    # @return [Boolean]
+    attr_accessor :enable_metrics
+
+    # Maximum number of metric events to buffer before sending
+    # @return [Integer]
+    attr_accessor :max_metric_events
+
+    # Optional Proc, called before sending a metric
+    # @example
+    #   config.before_send_metric = lambda do |metric|
+    #     # return nil to drop the metric
+    #     metric
+    #   end
+    # @return [Proc, nil]
+    attr_reader :before_send_metric
+
     # these are not config options
     # @!visibility private
     attr_reader :errors, :gem_specs
@@ -499,9 +517,11 @@ module Sentry
       self.before_send_transaction = nil
       self.before_send_check_in = nil
       self.before_send_log = nil
+      self.before_send_metric = nil
       self.rack_env_whitelist = RACK_ENV_WHITELIST_DEFAULT
       self.traces_sampler = nil
       self.enable_logs = false
+      self.enable_metrics = false
 
       self.profiler_class = Sentry::Profiler
       self.profiles_sample_interval = DEFAULT_PROFILES_SAMPLE_INTERVAL
@@ -512,6 +532,7 @@ module Sentry
       @gem_specs = Hash[Gem::Specification.map { |spec| [spec.name, spec.version.to_s] }] if Gem::Specification.respond_to?(:map)
 
       self.max_log_events = LogEventBuffer::DEFAULT_MAX_EVENTS
+      self.max_metric_events = MetricEventBuffer::DEFAULT_MAX_METRICS
 
       run_callbacks(:after, :initialize)
 
@@ -579,6 +600,12 @@ module Sentry
       check_callable!("before_send_check_in", value)
 
       @before_send_check_in = value
+    end
+
+    def before_send_metric=(value)
+      check_callable!("before_send_metric", value)
+
+      @before_send_metric = value
     end
 
     def before_breadcrumb=(value)
