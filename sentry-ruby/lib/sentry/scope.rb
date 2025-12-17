@@ -89,6 +89,24 @@ module Sentry
       event
     end
 
+    # A leaner version of apply_to_event that applies to
+    # lightweight payloads like Logs and Metrics.
+    #
+    # Only adds trace_id, span_id and user from the scope.
+    #
+    # @param telemetry [MetricEvent]
+    # @return [MetricEvent]
+    def apply_to_telemetry(telemetry)
+      # TODO-neel when new scope set_attribute api is added: add them here
+      telemetry.user = user.merge(telemetry.user)
+
+      trace_context = span ? span.get_trace_context : propagation_context.get_trace_context
+      telemetry.trace_id = trace_context[:trace_id]
+      telemetry.span_id = trace_context[:span_id]
+
+      telemetry
+    end
+
     # Adds the breadcrumb to the scope's breadcrumbs buffer.
     # @param breadcrumb [Breadcrumb]
     # @return [void]

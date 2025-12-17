@@ -757,4 +757,52 @@ RSpec.describe Sentry::Configuration do
       expect { subject.trace_ignore_status_codes = [[400, 600]] }.to raise_error(ArgumentError, /must be.* between \(100-599\)/)
     end
   end
+
+  describe "#enable_metrics" do
+    it "returns false by default" do
+      expect(subject.enable_metrics).to eq(false)
+    end
+
+    it "can be set to true" do
+      subject.enable_metrics = true
+      expect(subject.enable_metrics).to eq(true)
+    end
+  end
+
+  describe "#max_metric_events" do
+    it "returns 100 by default" do
+      expect(subject.max_metric_events).to eq(100)
+    end
+
+    it "can be set to an integer value" do
+      subject.max_metric_events = 50
+      expect(subject.max_metric_events).to eq(50)
+    end
+  end
+
+  describe "#before_send_metric" do
+    it "returns nil by default" do
+      expect(subject.before_send_metric).to eq(nil)
+    end
+
+    it "accepts a callable value" do
+      callable = lambda { |metric| metric }
+      subject.before_send_metric = callable
+      expect(subject.before_send_metric).to eq(callable)
+    end
+
+    it "accepts a proc" do
+      subject.before_send_metric = proc { |metric| metric }
+      expect(subject.before_send_metric).to be_a(Proc)
+    end
+
+    it "accepts nil value" do
+      subject.before_send_metric = nil
+      expect(subject.before_send_metric).to eq(nil)
+    end
+
+    it "raises error when setting to anything other than callable or nil" do
+      expect { subject.before_send_metric = true }.to raise_error(ArgumentError, "before_send_metric must be callable (or nil to disable)")
+    end
+  end
 end
