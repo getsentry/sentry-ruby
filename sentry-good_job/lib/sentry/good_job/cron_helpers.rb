@@ -67,11 +67,13 @@ module Sentry
       class Integration
         # Track whether setup has already been performed to prevent duplicates
         @setup_completed = false
+        @reload_hooked = false
 
         # Set up monitoring for all scheduled jobs from Good Job configuration
         def self.setup_monitoring_for_scheduled_jobs
           return unless ::Sentry.initialized?
           return unless ::Sentry.configuration.good_job.enable_cron_monitors
+          attach_reload_hook_if_available
           return if @setup_completed
 
           return unless defined?(::Rails) && ::Rails.respond_to?(:application) && ::Rails.application
@@ -188,6 +190,19 @@ module Sentry
 
             Sentry.configuration.sdk_logger.info "Added Sentry cron monitoring for #{job_class.name} (#{monitor_slug})"
           end
+        end
+
+        def self.attach_reload_hook_if_available
+          return if @reload_hooked
+          return unless defined?(::ActiveSupport::Reloader)
+
+          ::ActiveSupport::Reloader.to_prepare do
+            @setup_completed = false
+          end
+
+          @reload_hooked = true
+        rescue NameError
+          # ActiveSupport::Reloader not available in this environment
         end
       end
     end
