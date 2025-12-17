@@ -337,6 +337,23 @@ module Sentry
     # @return [Integer]
     attr_accessor :max_log_events
 
+    # Enable metrics collection
+    # @return [Boolean]
+    attr_accessor :enable_metrics
+
+    # Maximum number of metric events to buffer before sending
+    # @return [Integer]
+    attr_accessor :max_metric_events
+
+    # Optional Proc, called before sending a metric
+    # @example
+    #   config.before_send_metric = lambda do |metric|
+    #     # return nil to drop the metric
+    #     metric
+    #   end
+    # @return [Proc, nil]
+    attr_accessor :before_send_metric
+
     # these are not config options
     # @!visibility private
     attr_reader :errors, :gem_specs
@@ -499,9 +516,11 @@ module Sentry
       self.before_send_transaction = nil
       self.before_send_check_in = nil
       self.before_send_log = nil
+      self.before_send_metric = nil
       self.rack_env_whitelist = RACK_ENV_WHITELIST_DEFAULT
       self.traces_sampler = nil
       self.enable_logs = false
+      self.enable_metrics = false
 
       self.profiler_class = Sentry::Profiler
       self.profiles_sample_interval = DEFAULT_PROFILES_SAMPLE_INTERVAL
