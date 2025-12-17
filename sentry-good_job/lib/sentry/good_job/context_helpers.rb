@@ -39,51 +39,6 @@ module Sentry
 
         base_tags.merge(good_job_tags)
       end
-
-      # Enhanced context that includes both ActiveJob and GoodJob-specific data
-      def self.enhanced_context(job)
-        # Start with sentry-rails ActiveJob context
-        active_job_context = {
-          active_job: job.class.name,
-          arguments: job.respond_to?(:arguments) ? job.arguments.map(&:inspect) : [],
-          scheduled_at: job.scheduled_at,
-          job_id: job.job_id,
-          provider_job_id: job.provider_job_id,
-          locale: job.locale
-        }
-
-        # Add GoodJob-specific context
-        good_job_context = {
-          queue_name: job.queue_name,
-          executions: job.executions,
-          enqueued_at: job.enqueued_at,
-          priority: job.respond_to?(:priority) ? job.priority : nil
-        }
-
-        {
-          active_job: active_job_context,
-          good_job: good_job_context
-        }
-      end
-
-      # Enhanced tags that include both ActiveJob and GoodJob-specific data
-      def self.enhanced_tags(job)
-        base_tags = {
-          job_id: job.job_id,
-          provider_job_id: job.provider_job_id
-        }
-
-        good_job_tags = {
-          queue_name: job.queue_name,
-          executions: job.executions
-        }
-
-        if job.respond_to?(:priority)
-          good_job_tags[:priority] = job.priority
-        end
-
-        base_tags.merge(good_job_tags)
-      end
     end
   end
 end
