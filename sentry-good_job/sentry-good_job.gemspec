@@ -5,9 +5,9 @@ require_relative "lib/sentry/good_job/version"
 Gem::Specification.new do |spec|
   spec.name          = "sentry-good_job"
   spec.version       = Sentry::GoodJob::VERSION
-  spec.authors = ["Sentry Team"]
+  spec.authors = ["Andrei Makarov"]
   spec.description = spec.summary = "A gem that provides Good Job integration for the Sentry error logger"
-  spec.email = "accounts@sentry.io"
+  spec.email = "contact@kiskolabs.com"
   spec.license = 'MIT'
 
   spec.platform = Gem::Platform::RUBY
@@ -15,7 +15,7 @@ Gem::Specification.new do |spec|
   spec.extra_rdoc_files = ["README.md", "LICENSE.txt"]
   spec.files = `git ls-files | grep -Ev '^(spec|benchmarks|examples|\.rubocop\.yml)'`.split("\n")
 
-  github_root_uri = 'https://github.com/getsentry/sentry-ruby'
+  github_root_uri = 'https://github.com/amkisko/sentry-good_job'
   spec.homepage = "#{github_root_uri}/tree/#{spec.version}/#{spec.name}"
 
   spec.metadata = {
