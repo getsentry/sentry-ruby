@@ -7,8 +7,11 @@ eval_gemfile "../Gemfile.dev"
 
 gem "sentry-ruby", path: "./"
 
+ruby_version = Gem::Version.new(RUBY_VERSION)
+
 rack_version = ENV["RACK_VERSION"]
 rack_version = "3.0.0" if rack_version.nil?
+
 gem "rack", "~> #{Gem::Version.new(rack_version)}" unless rack_version == "0"
 
 redis_rb_version = ENV.fetch("REDIS_RB_VERSION", "5.0")
@@ -32,3 +35,24 @@ gem "webrick"
 gem "faraday"
 gem "excon"
 gem "webmock"
+
+group :sequel do
+  gem "sequel"
+
+  sqlite_version = if ruby_version >= Gem::Version.new("3.2")
+    "2.1.0"
+  elsif ruby_version >= Gem::Version.new("3.0")
+    "1.4.0"
+  else
+    "1.3.0"
+  end
+
+  platform :ruby do
+    gem "sqlite3", "~> #{sqlite_version}"
+  end
+
+  platform :jruby do
+    gem "activerecord-jdbcmysql-adapter"
+    gem "jdbc-sqlite3"
+  end
+end
