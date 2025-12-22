@@ -1,5 +1,21 @@
 ## Unreleased
 
+### Features
+
+- Support for tracing `Sequel` queries ([#2814](https://github.com/getsentry/sentry-ruby/pull/2814))
+
+  ```ruby
+  require "sentry"
+  require "sentry/sequel"
+
+  Sentry.init do |config|
+    config.enabled_patches << :sequel
+  end
+
+  DB = Sequel.sqlite
+  DB.extension(:sentry)
+  ```
+
 ### Bug Fixes
 
 - Handle empty frames case gracefully with local vars ([#2807](https://github.com/getsentry/sentry-ruby/pull/2807))
