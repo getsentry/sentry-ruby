@@ -122,6 +122,16 @@ module Sentry
               end
             end
 
+            # Sequel-specific routes for testing Sequel tracing
+            scope "/sequel" do
+              get "/users", to: "sequel_users#index"
+              post "/users", to: "sequel_users#create"
+              get "/users/:id", to: "sequel_users#show"
+              put "/users/:id", to: "sequel_users#update"
+              delete "/users/:id", to: "sequel_users#destroy"
+              get "/exception", to: "sequel_users#exception"
+            end
+
             get "500", to: "hello#reporting"
 
             root to: "hello#world"
