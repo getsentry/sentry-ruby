@@ -67,6 +67,45 @@ RSpec.describe Sentry::StructuredLogger do
           expect(log_event[:attributes]["sentry.message.parameter.1"]).to eql({ value: "Monday", type: "string" })
         end
 
+        it "logs with nested hash attributes" do
+          attributes = { number: 312, string: "hello" }
+
+          Sentry.logger.public_send(level, "Hello world", extra: attributes)
+
+          expect(sentry_logs).to_not be_empty
+
+          log_event = sentry_logs.last
+
+          expect(log_event[:level]).to eql(level)
+          expect(log_event[:attributes][:extra]).to eql({ type: "string", value: attributes.to_json })
+        end
+
+        it "logs with array attributes" do
+          attributes = [1, 2, 3, "hello"]
+
+          Sentry.logger.public_send(level, "Hello world", extra: attributes)
+
+          expect(sentry_logs).to_not be_empty
+
+          log_event = sentry_logs.last
+
+          expect(log_event[:level]).to eql(level)
+          expect(log_event[:attributes][:extra]).to eql({ type: "string", value: attributes.to_json })
+        end
+
+        it "logs with date in attributes" do
+          attributes = Date.today
+
+          Sentry.logger.public_send(level, "Hello world", extra: attributes)
+
+          expect(sentry_logs).to_not be_empty
+
+          log_event = sentry_logs.last
+
+          expect(log_event[:level]).to eql(level)
+          expect(log_event[:attributes][:extra]).to eql({ type: "string", value: attributes.to_json })
+        end
+
         it "logs with hash-based template parameters" do
           Sentry.logger.public_send(level, "Hello %{name}, it is %{day}", name: "Jane", day: "Monday")
 

@@ -34,7 +34,7 @@ RSpec.describe Sentry::Rails::LogSubscribers::ActionControllerSubscriber, type: 
 
         expect(log_event[:attributes][:method][:value]).to eq("GET")
         expect(log_event[:attributes][:path][:value]).to eq("/world")
-        expect(log_event[:attributes][:format][:value]).to eq(:html)
+        expect(log_event[:attributes][:format][:value]).to eq("\"html\"")
         expect(log_event[:attributes]["sentry.origin"][:value]).to eq("auto.log.rails.log_subscriber")
       end
 
@@ -275,8 +275,10 @@ RSpec.describe Sentry::Rails::LogSubscribers::ActionControllerSubscriber, type: 
           log_event = sentry_logs.find { |log| log[:body] == "HelloController#world" }
           expect(log_event).not_to be_nil
           expect(log_event[:attributes][:params]).to be_present
-          expect(log_event[:attributes][:params][:value]).to include("safe_param" => "value")
-          expect(log_event[:attributes][:params][:value]).to include("password" => "[FILTERED]")
+
+          params = JSON.parse(log_event[:attributes][:params][:value])
+          expect(params).to include("safe_param" => "value")
+          expect(params).to include("password" => "[FILTERED]")
         end
 
         it "filters sensitive parameter names" do
@@ -295,7 +297,7 @@ RSpec.describe Sentry::Rails::LogSubscribers::ActionControllerSubscriber, type: 
           log_event = sentry_logs.find { |log| log[:body] == "HelloController#world" }
           expect(log_event).not_to be_nil
 
-          params = log_event[:attributes][:params][:value]
+          params = JSON.parse(log_event[:attributes][:params][:value])
           expect(params).to include("normal_param" => "value")
           expect(params).to include("password" => "[FILTERED]")
           expect(params).to include("api_key" => "[FILTERED]")
@@ -323,7 +325,7 @@ RSpec.describe Sentry::Rails::LogSubscribers::ActionControllerSubscriber, type: 
           log_event = sentry_logs.find { |log| log[:body] == "HelloController#world" }
           expect(log_event).not_to be_nil
 
-          params = log_event[:attributes][:params][:value]
+          params = JSON.parse(log_event[:attributes][:params][:value])
           expect(params).to include("normal_param" => "value")
           expect(params["user"]).to include("name" => "John")
           expect(params["user"]).to include("password" => "[FILTERED]")

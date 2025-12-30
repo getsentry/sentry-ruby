@@ -57,7 +57,7 @@ RSpec.describe Sentry::Rails::LogSubscribers::ActiveJobSubscriber, skip: Rails.v
         expect(attributes[:job_id][:value]).to be_a(String)
         expect(attributes[:queue_name][:value]).to eq("default")
         expect(attributes[:executions][:value]).to eq(1)
-        expect(attributes[:priority][:value]).to be_a(Integer).or be_nil
+        expect(attributes[:priority][:value]).to be_a(Integer).or(eq("null")).or be_nil
       end
 
       it "includes adapter information when available" do
@@ -122,8 +122,9 @@ RSpec.describe Sentry::Rails::LogSubscribers::ActiveJobSubscriber, skip: Rails.v
           expect(log_event).not_to be_nil
 
           attributes = log_event[:attributes]
-          expect(attributes[:arguments][:value]).to be_a(Array)
-          expect(attributes[:arguments][:value]).to include("safe_arg")
+          arguments = JSON.parse(attributes[:arguments][:value])
+          expect(arguments).to be_a(Array)
+          expect(arguments).to include("safe_arg")
         end
 
         it "filters sensitive arguments" do
@@ -147,11 +148,11 @@ RSpec.describe Sentry::Rails::LogSubscribers::ActiveJobSubscriber, skip: Rails.v
           expect(log_event).not_to be_nil
 
           attributes = log_event[:attributes]
-          arguments = attributes[:arguments][:value]
+          arguments = JSON.parse(attributes[:arguments][:value])
 
-          expect(arguments.first).to include(safe_data: "public")
-          expect(arguments.first).to include(password: "[FILTERED]")
-          expect(arguments.first).to include(token: "[FILTERED]")
+          expect(arguments.first).to include("safe_data" => "public")
+          expect(arguments.first).to include("password" => "[FILTERED]")
+          expect(arguments.first).to include("token" => "[FILTERED]")
 
           Rails.application.config.filter_parameters = original_filter_params
         end
@@ -175,7 +176,7 @@ RSpec.describe Sentry::Rails::LogSubscribers::ActiveJobSubscriber, skip: Rails.v
           expect(log_event).not_to be_nil
 
           attributes = log_event[:attributes]
-          arguments = attributes[:arguments][:value]
+          arguments = JSON.parse(attributes[:arguments][:value])
 
           expect(arguments).to include("short")
           expect(arguments).to include("[FILTERED: 150 chars]")
@@ -204,11 +205,11 @@ RSpec.describe Sentry::Rails::LogSubscribers::ActiveJobSubscriber, skip: Rails.v
           expect(log_event).not_to be_nil
 
           attributes = log_event[:attributes]
-          arguments = attributes[:arguments][:value]
+          arguments = JSON.parse(attributes[:arguments][:value])
 
           expect(arguments[0]).to eq("string_value")
-          expect(arguments[1]).to include(safe_key: "value")
-          expect(arguments[1]).to include(password: "[FILTERED]")
+          expect(arguments[1]).to include("safe_key" => "value")
+          expect(arguments[1]).to include("password" => "[FILTERED]")
           expect(arguments[2]).to eq(42)
           expect(arguments[3]).to eq([1, 2, 3])
         end
