@@ -181,6 +181,15 @@ RSpec.describe Sentry::DelayedJob do
     require "active_job"
     require "sentry-rails"
 
+    # delayed_job 4.2.0 adapter references AbstractAdapter which was removed in newer ActiveJob versions
+    # Define it as a compatibility shim
+    module ActiveJob
+      module QueueAdapters
+        class AbstractAdapter
+        end
+      end
+    end
+
     class ReportingJob < ActiveJob::Base
       self.queue_adapter = :delayed_job
 
