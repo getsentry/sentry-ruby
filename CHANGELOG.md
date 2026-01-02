@@ -19,6 +19,7 @@
 ### Bug Fixes
 
 - Handle empty frames case gracefully with local vars ([#2807](https://github.com/getsentry/sentry-ruby/pull/2807))
+- Prevent SDK crash when SDK logging fails ([#2817](https://github.com/getsentry/sentry-ruby/pull/2817))
 
 ## 6.2.0
 
