@@ -34,7 +34,7 @@ module Sentry
 
     # @!visibility private
     def log_to_stderr(error, message)
-      $stderr.puts("Sentry SDK logging failed (#{error.class}: #{error.message}): #{message}".scrub(%q{<?>}))
+      $stderr.puts("Sentry SDK logging failed (#{error.class}: #{error.message}): #{message}".scrub(%q(<?>)))
     end
   end
 end

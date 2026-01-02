@@ -85,15 +85,15 @@ RSpec.describe Sentry::LoggingHelper do
 
     it "scrubs invalid UTF-8 in stderr output when JSON logger fails on encoding" do
       helper = helper_class.new(json_logger)
-      
+
       invalid_message = "a\x92b"
       exception = StandardError.new("oops")
-      
+
       stderr_message = nil
       expect($stderr).to receive(:puts) { |msg| stderr_message = msg }
-      
+
       expect { helper.log_error(invalid_message, exception) }.not_to raise_error
-      
+
       expect(stderr_message).to include("JSON::GeneratorError")
       expect(stderr_message).to include("a<?>b")
       expect(stderr_message).to include("oops")
