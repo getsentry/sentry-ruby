@@ -46,7 +46,7 @@ RSpec.describe Sentry::LoggingHelper do
 
         helper = helper_class.new(broken_logger)
 
-        expect($stderr).to receive(:puts).with(/Sentry SDK logging failed \(IOError: /)
+        expect($stderr).to receive(:puts).with(/Sentry SDK logging failed \(IOError: oops\)/)
         expect { helper.public_send(method_name, *args) }.not_to raise_error
       end
     end
