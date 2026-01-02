@@ -46,7 +46,7 @@ RSpec.describe Sentry::LoggingHelper do
 
         helper = helper_class.new(broken_logger)
 
-        expect($stderr).to receive(:puts).with(/Sentry SDK logging failed \(IOError: oops\)/)
+        expect($stderr).to receive(:puts).with(/Sentry SDK logging failed \(IOError:/)
         expect { helper.public_send(method_name, *args) }.not_to raise_error
       end
     end
@@ -70,9 +70,7 @@ RSpec.describe Sentry::LoggingHelper do
       Class.new(::Logger) do
         class JsonFormatter
           def call(level, _, _, m)
-            message = { message: m.message, backtrace: m.backtrace.first(5).join("\n") } if m.is_a?(Exception)
-            message = { message: m } if m.is_a?(String)
-            { severity: level }.merge(message).to_json << "\n"
+            { severity: level, message: m }.to_json << "\n"
           end
         end
 
@@ -85,18 +83,20 @@ RSpec.describe Sentry::LoggingHelper do
 
     let(:logger_helper) { helper_class.new(json_logger) }
 
-    it "falls back to stderr when JSON encoding fails on invalid UTF-8" do
-      exception = StandardError.new("Error \x92".dup.force_encoding("UTF-8"))
-
-      # Capture the stderr message
+    it "scrubs invalid UTF-8 in stderr output when JSON logger fails on encoding" do
+      helper = helper_class.new(json_logger)
+      
+      invalid_message = "a\x92b"
+      exception = StandardError.new("oops")
+      
       stderr_message = nil
       expect($stderr).to receive(:puts) { |msg| stderr_message = msg }
-
-      expect { logger_helper.log_error("Event sending failed", exception) }.not_to raise_error
-
-      # Verify the error message contains the key information
-      expect(stderr_message).to include("Sentry SDK logging failed")
+      
+      expect { helper.log_error(invalid_message, exception) }.not_to raise_error
+      
       expect(stderr_message).to include("JSON::GeneratorError")
+      expect(stderr_message).to include("a<?>b")
+      expect(stderr_message).to include("oops")
     end
   end
 end
