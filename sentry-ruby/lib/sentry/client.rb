@@ -375,6 +375,8 @@ module Sentry
         envelope_items = metrics.map(&:to_h)
       end
 
+      return if envelope_items.empty?
+
       envelope.add_item(
         {
           type: "trace_metric",
