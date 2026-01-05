@@ -236,7 +236,7 @@ module Sentry
     # @param attributes [Hash, nil] (optional) additional attributes for the metric
     # @return [void]
     def capture_metric(name:, type:, value:, unit: nil, attributes: nil)
-      return unless current_client && current_client.configuration.enable_metrics
+      return unless current_client&.configuration.enable_metrics
 
       metric = MetricEvent.new(
         name: name,
