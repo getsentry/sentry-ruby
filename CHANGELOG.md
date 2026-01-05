@@ -2,6 +2,21 @@
 
 ### Features
 
+- Implement new `Sentry.metrics` functionality ([#2818](https://github.com/getsentry/sentry-ruby/pull/2818))
+
+  The SDK now supports Sentry's new [Trace Connected Metrics](https://docs.sentry.io/product/explore/metrics/) product.
+
+  ```ruby
+   Sentry.init do |config|
+     # ...
+     config.enable_metrics = true
+   end
+
+   Sentry.metrics.count("button.click", 1, attributes: { button_id: "submit" })
+   Sentry.metrics.distribution("response.time", 120.5, unit: "millisecond")
+   Sentry.metrics.gauge("cpu.usage", 75.2, unit: "percent")
+   ```
+
 - Support for tracing `Sequel` queries ([#2814](https://github.com/getsentry/sentry-ruby/pull/2814))
 
   ```ruby

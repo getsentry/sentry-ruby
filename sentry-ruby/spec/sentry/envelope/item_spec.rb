@@ -10,6 +10,7 @@ RSpec.describe Sentry::Envelope::Item do
       ['span', 'span'],
       ['profile', 'profile'],
       ['log', 'log'],
+      ['trace_metric', 'trace_metric'],
       ['check_in', 'monitor'],
       ['event', 'error'],
       ['client_report', 'internal'],

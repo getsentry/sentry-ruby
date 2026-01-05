@@ -102,6 +102,13 @@ module Sentry
         .flat_map { |item| item.payload[:items] }
     end
 
+    def sentry_metrics
+      sentry_envelopes
+        .flat_map(&:items)
+        .select { |item| item.headers[:type] == "trace_metric" }
+        .flat_map { |item| item.payload[:items] }
+    end
+
     # Returns the last captured event object.
     # @return [Event, nil]
     def last_sentry_event

@@ -227,6 +227,29 @@ module Sentry
       current_client.buffer_log_event(event, current_scope)
     end
 
+    # Captures a metric and sends it to Sentry
+    #
+    # @param name [String] the metric name
+    # @param type [Symbol] the metric type (:counter, :gauge, :distribution)
+    # @param value [Numeric] the metric value
+    # @param unit [String, nil] (optional) the metric unit
+    # @param attributes [Hash, nil] (optional) additional attributes for the metric
+    # @return [void]
+    def capture_metric(name:, type:, value:, unit: nil, attributes: nil)
+      return unless current_client&.configuration.enable_metrics
+
+      metric = MetricEvent.new(
+        name: name,
+        value: value,
+        type: type,
+        unit: unit,
+        attributes: attributes,
+      )
+
+      current_client.buffer_metric_event(metric, current_scope)
+    end
+
+
     def capture_event(event, **options, &block)
       check_argument_type!(event, Sentry::Event)
 
