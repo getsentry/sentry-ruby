@@ -37,7 +37,7 @@ RSpec.describe Sentry::Rails::LogSubscribers::ActionMailerSubscriber do
         expect(log_event[:attributes][:mailer][:value]).to eq("UserMailer")
         expect(log_event[:attributes][:duration_ms][:value]).to be > 0
         expect(log_event[:attributes][:perform_deliveries][:value]).to be true
-        expect(log_event[:attributes][:delivery_method][:value]).to eq(:test)
+        expect(log_event[:attributes][:delivery_method][:value]).to eq("\"test\"")
         expect(log_event[:attributes]["sentry.origin"][:value]).to eq("auto.log.rails.log_subscriber")
         expect(log_event[:attributes][:date]).to be_present
       end
@@ -76,7 +76,7 @@ RSpec.describe Sentry::Rails::LogSubscribers::ActionMailerSubscriber do
 
         log_event = sentry_logs.find { |log| log[:body] == "Email delivered via NotificationMailer" }
         expect(log_event).not_to be_nil
-        expect(log_event[:attributes][:delivery_method][:value]).to eq(:smtp)
+        expect(log_event[:attributes][:delivery_method][:value]).to eq("\"smtp\"")
       end
 
       it "includes date when available" do
@@ -179,12 +179,12 @@ RSpec.describe Sentry::Rails::LogSubscribers::ActionMailerSubscriber do
           expect(log_event).not_to be_nil
           expect(log_event[:attributes][:params]).to be_present
 
-          params = log_event[:attributes][:params][:value]
+          params = JSON.parse(log_event[:attributes][:params][:value])
 
-          expect(params).to include(user_id: 123, safe_param: "value")
-          expect(params[:password]).to eq("[FILTERED]")
-          expect(params[:api_key]).to eq("[FILTERED]")
-          expect(params).to include(email_address: "user@example.com", subject: "Welcome!")
+          expect(params).to include("user_id" => 123, "safe_param" => "value")
+          expect(params["password"]).to eq("[FILTERED]")
+          expect(params["api_key"]).to eq("[FILTERED]")
+          expect(params).to include("email_address" => "user@example.com", "subject" => "Welcome!")
         end
       end
 
