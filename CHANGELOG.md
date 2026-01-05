@@ -39,6 +39,7 @@
   # This now works too and the nested hash is dumped to JSON string
   Sentry.logger.info("Hello World", extra: { today: Date.today, user_id: user.id })
   ```
+- Prevent SDK crash when SDK logging fails ([#2817](https://github.com/getsentry/sentry-ruby/pull/2817))
 
 ## 6.2.0
 
