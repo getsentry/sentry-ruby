@@ -34,7 +34,10 @@ module Sentry
 
     # @!visibility private
     def log_to_stderr(error, message)
-      $stderr.puts("Sentry SDK logging failed (#{error.class}: #{error.message}): #{message}".scrub(%q(<?>)))
+      error_msg = "Sentry SDK logging failed (#{error.class}: #{error.message}): #{message}".scrub(%q(<?>))
+      error_msg += "\n#{error.backtrace.join("\n")}" if error.backtrace
+
+      $stderr.puts(error_msg)
     rescue StandardError
       # swallow everything – logging must never crash the app
     end

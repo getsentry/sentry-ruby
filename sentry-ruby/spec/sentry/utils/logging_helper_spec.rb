@@ -39,7 +39,6 @@ RSpec.describe Sentry::LoggingHelper do
     shared_examples "falls back to stderr" do |method_name, *args|
       it "outputs to stderr with error class and message" do
         broken_logger = Class.new do
-          def error(*); raise IOError, "oops"; end
           def debug(*); raise IOError, "oops"; end
           def warn(*); raise IOError, "oops"; end
         end.new
@@ -51,16 +50,37 @@ RSpec.describe Sentry::LoggingHelper do
       end
     end
 
-    context "#log_error" do
-      include_examples "falls back to stderr", :log_error, "Test", StandardError.new("Error")
-    end
-
     context "#log_debug" do
       include_examples "falls back to stderr", :log_debug, "Debug message"
     end
 
     context "#log_warn" do
       include_examples "falls back to stderr", :log_warn, "Warning message"
+    end
+
+    it "includes backtrace in stderr output" do
+      broken_logger = Class.new do
+        def error(*)
+          error = IOError.new("oops")
+          error.set_backtrace([
+            "logger.rb:42:in `write'",
+            "logger.rb:10:in `error'"
+          ])
+
+          raise error
+        end
+      end.new
+
+      helper = helper_class.new(broken_logger)
+
+      stderr_output = nil
+      expect($stderr).to receive(:puts) { |msg| stderr_output = msg }
+
+      helper.log_error("Test message", StandardError.new("Error"))
+
+      expect(stderr_output).to include("IOError: oops")
+      expect(stderr_output).to include("logger.rb:42:in `write'")
+      expect(stderr_output).to include("logger.rb:10:in `error'")
     end
   end
 
