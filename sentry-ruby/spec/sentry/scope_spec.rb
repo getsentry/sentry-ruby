@@ -413,4 +413,51 @@ RSpec.describe Sentry::Scope do
       expect(attachment.filename).to eq("test.txt")
     end
   end
+
+  describe "#apply_to_telemetry" do
+    before { perform_basic_setup }
+
+    let(:metric_event) do
+      Sentry::MetricEvent.new(name: "test.metric", type: :counter, value: 1)
+    end
+
+    context "with user data" do
+      before { subject.set_user({ id: 1, username: "test_user" }) }
+
+      it "merges user data from scope to telemetry" do
+        subject.apply_to_telemetry(metric_event)
+        expect(metric_event.user).to eq({ id: 1, username: "test_user" })
+      end
+
+      it "doesn't override telemetry's pre-existing user data" do
+        metric_event.user = { id: 2, email: "test@example.com" }
+        subject.apply_to_telemetry(metric_event)
+        expect(metric_event.user).to eq({ id: 2, username: "test_user", email: "test@example.com" })
+      end
+    end
+
+    it "sets trace_id and span_id from propagation context when no span is set" do
+      subject.apply_to_telemetry(metric_event)
+
+      trace_context = subject.propagation_context.get_trace_context
+      expect(metric_event.trace_id).to eq(trace_context[:trace_id])
+      expect(metric_event.span_id).to eq(trace_context[:span_id])
+    end
+
+    it "sets trace_id and span_id from span when span is set" do
+      transaction = Sentry::Transaction.new(op: "test_op")
+      subject.set_span(transaction)
+
+      subject.apply_to_telemetry(metric_event)
+
+      trace_context = transaction.get_trace_context
+      expect(metric_event.trace_id).to eq(trace_context[:trace_id])
+      expect(metric_event.span_id).to eq(trace_context[:span_id])
+    end
+
+    it "returns the telemetry object" do
+      result = subject.apply_to_telemetry(metric_event)
+      expect(result).to eq(metric_event)
+    end
+  end
 end

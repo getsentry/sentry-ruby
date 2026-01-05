@@ -27,6 +27,7 @@ require "sentry/session_flusher"
 require "sentry/backpressure_monitor"
 require "sentry/cron/monitor_check_ins"
 require "sentry/vernier/profiler"
+require "sentry/metrics"
 
 [
   "sentry/rake",
@@ -625,6 +626,24 @@ module Sentry
     # @return [StructuredLogger] The structured logger instance or nil if logs are disabled
     def logger
       @logger ||= configuration.structured_logging.logger_class.new(configuration)
+    end
+
+    # Returns the metrics API for capturing custom metrics.
+    #
+    # @example Enable metrics
+    #   Sentry.init do |config|
+    #     config.dsn = "YOUR_DSN"
+    #     config.enable_metrics = true
+    #   end
+    #
+    # @example Usage
+    #   Sentry.metrics.count("button.click", 1, attributes: { button_id: "submit" })
+    #   Sentry.metrics.distribution("response.time", 120.5, unit: "millisecond")
+    #   Sentry.metrics.gauge("cpu.usage", 75.2, unit: "percent")
+    #
+    # @return [Metrics] The metrics API
+    def metrics
+      Metrics
     end
 
     ##### Helpers #####

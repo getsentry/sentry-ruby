@@ -3,6 +3,8 @@
 require "sentry/transport"
 require "sentry/log_event"
 require "sentry/log_event_buffer"
+require "sentry/metric_event"
+require "sentry/metric_event_buffer"
 require "sentry/utils/uuid"
 require "sentry/utils/encoding_helper"
 
@@ -20,6 +22,9 @@ module Sentry
 
     # @!visibility private
     attr_reader :log_event_buffer
+
+    # @!visibility private
+    attr_reader :metric_event_buffer
 
     # @!macro configuration
     attr_reader :configuration
@@ -45,6 +50,10 @@ module Sentry
 
       if configuration.enable_logs
         @log_event_buffer = LogEventBuffer.new(configuration, self).start
+      end
+
+      if configuration.enable_metrics
+        @metric_event_buffer = MetricEventBuffer.new(configuration, self).start
       end
     end
 
@@ -102,6 +111,16 @@ module Sentry
       event
     end
 
+    # Buffer a metric event to be sent later with other metrics in a single envelope
+    # @param event [MetricEvent] the metric event to be buffered
+    # @return [MetricEvent]
+    def buffer_metric_event(event, scope)
+      return unless event.is_a?(MetricEvent)
+      event = scope.apply_to_telemetry(event)
+      @metric_event_buffer.add_metric(event)
+      event
+    end
+
     # Capture an envelope directly.
     # @param envelope [Envelope] the envelope to be captured.
     # @return [void]
@@ -115,6 +134,7 @@ module Sentry
       transport.flush if configuration.sending_to_dsn_allowed?
       spotlight_transport.flush if spotlight_transport
       @log_event_buffer&.flush
+      @metric_event_buffer&.flush
     end
 
     # Initializes an Event object with the given exception. Returns `nil` if the exception's class is excluded from reporting.
@@ -319,6 +339,57 @@ module Sentry
 
       unless discarded_count.zero?
         transport.record_lost_event(:before_send, "log_item", num: discarded_count)
+      end
+    end
+
+    # Send an envelope with batched metrics
+    # @param metrics [Array<MetricEvent>] the metrics to send
+    # @api private
+    # @return [void]
+    def send_metrics(metrics)
+      return if metrics.nil? || metrics.empty?
+
+      envelope = Envelope.new(
+        event_id: Sentry::Utils.uuid,
+        sent_at: Sentry.utc_now.iso8601,
+        dsn: configuration.dsn,
+        sdk: Sentry.sdk_meta
+      )
+
+      discarded_count = 0
+      envelope_items = []
+
+      if configuration.before_send_metric
+        metrics.each do |metric|
+          processed_metric = configuration.before_send_metric.call(metric)
+
+          if processed_metric
+            envelope_items << processed_metric.to_h
+          else
+            discarded_count += 1
+          end
+        end
+
+        envelope_items
+      else
+        envelope_items = metrics.map(&:to_h)
+      end
+
+      return if envelope_items.empty?
+
+      envelope.add_item(
+        {
+          type: "trace_metric",
+          item_count: envelope_items.size,
+          content_type: "application/vnd.sentry.items.trace-metric+json"
+        },
+        { items: envelope_items }
+      )
+
+      send_envelope(envelope)
+
+      unless discarded_count.zero?
+        transport.record_lost_event(:before_send, "metric", num: discarded_count)
       end
     end
 

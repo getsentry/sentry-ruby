@@ -2,6 +2,21 @@
 
 ### Features
 
+- Implement new `Sentry.metrics` functionality ([#2818](https://github.com/getsentry/sentry-ruby/pull/2818))
+
+  The SDK now supports Sentry's new [Trace Connected Metrics](https://docs.sentry.io/product/explore/metrics/) product.
+
+  ```ruby
+   Sentry.init do |config|
+     # ...
+     config.enable_metrics = true
+   end
+
+   Sentry.metrics.count("button.click", 1, attributes: { button_id: "submit" })
+   Sentry.metrics.distribution("response.time", 120.5, unit: "millisecond")
+   Sentry.metrics.gauge("cpu.usage", 75.2, unit: "percent")
+   ```
+
 - Support for tracing `Sequel` queries ([#2814](https://github.com/getsentry/sentry-ruby/pull/2814))
 
   ```ruby
@@ -19,6 +34,11 @@
 ### Bug Fixes
 
 - Handle empty frames case gracefully with local vars ([#2807](https://github.com/getsentry/sentry-ruby/pull/2807))
+- Handle more extra attribute types when using `extra` attributes for structured logging ([#2815](https://github.com/getsentry/sentry-ruby/pull/2815))
+  ```ruby
+  # This now works too and the nested hash is dumped to JSON string
+  Sentry.logger.info("Hello World", extra: { today: Date.today, user_id: user.id })
+  ```
 - Prevent SDK crash when SDK logging fails ([#2817](https://github.com/getsentry/sentry-ruby/pull/2817))
 
 ## 6.2.0
@@ -530,7 +550,6 @@
 - Use `Concurrent.available_processor_count` instead of `Concurrent.usable_processor_count` ([#2358](https://github.com/getsentry/sentry-ruby/pull/2358))
 
 - Support for tracing Faraday requests ([#2345](https://github.com/getsentry/sentry-ruby/pull/2345))
-
   - Closes [#1795](https://github.com/getsentry/sentry-ruby/issues/1795)
   - Please note that the Faraday instrumentation has some limitations in case of async requests: <https://github.com/lostisland/faraday/issues/1381>
 
@@ -553,7 +572,6 @@
   ```
 
 - Transaction data are now included in the context ([#2365](https://github.com/getsentry/sentry-ruby/pull/2365))
-
   - Closes [#2363](https://github.com/getsentry/sentry-ruby/issues/2363)
 
 - Inject Sentry meta tags in the Rails application layout automatically in the generator ([#2369](https://github.com/getsentry/sentry-ruby/pull/2369))
@@ -667,7 +685,6 @@
 - Fix warning about default gems on Ruby 3.3.0 ([#2225](https://github.com/getsentry/sentry-ruby/pull/2225))
 - Add `hint:` support to `Sentry::Rails::ErrorSubscriber` [#2235](https://github.com/getsentry/sentry-ruby/pull/2235)
 - Add [Metrics](https://docs.sentry.io/product/metrics/) support
-
   - Add main APIs and `Aggregator` thread [#2247](https://github.com/getsentry/sentry-ruby/pull/2247)
   - Add `Sentry::Metrics.timing` API for measuring block duration [#2254](https://github.com/getsentry/sentry-ruby/pull/2254)
   - Add metric summaries on spans [#2255](https://github.com/getsentry/sentry-ruby/pull/2255)
@@ -827,7 +844,6 @@
 - Improve default slug generation for Crons [#2168](https://github.com/getsentry/sentry-ruby/pull/2168)
 - Change release name generator to use full SHA commit hash and align with `sentry-cli` and other Sentry SDKs [#2174](https://github.com/getsentry/sentry-ruby/pull/2174)
 - Automatic Crons support for scheduling gems
-
   - Add support for [`sidekiq-cron`](https://github.com/sidekiq-cron/sidekiq-cron) [#2170](https://github.com/getsentry/sentry-ruby/pull/2170)
 
     You can opt in to the `sidekiq-cron` patch and we will automatically monitor check-ins for all jobs listed in your `config/schedule.yml` file.
@@ -883,7 +899,6 @@
 - Adopt Rails 7.1's new BroadcastLogger [#2120](https://github.com/getsentry/sentry-ruby/pull/2120)
 - Support sending events after all retries were performed (sentry-resque) [#2087](https://github.com/getsentry/sentry-ruby/pull/2087)
 - Add [Cron Monitoring](https://docs.sentry.io/product/crons/) support
-
   - Add `Sentry.capture_check_in` API for Cron Monitoring [#2117](https://github.com/getsentry/sentry-ruby/pull/2117)
 
     You can now track progress of long running scheduled jobs.
@@ -966,7 +981,6 @@
   ```
 
 - Tracing without Performance
-
   - Implement `PropagationContext` on `Scope` and add `Sentry.get_trace_propagation_headers` API [#2084](https://github.com/getsentry/sentry-ruby/pull/2084)
   - Implement `Sentry.continue_trace` API [#2089](https://github.com/getsentry/sentry-ruby/pull/2089)
 
@@ -1053,7 +1067,6 @@
   ```
 
   Some implementation caveats:
-
   - Profiles are sampled **relative** to traces, so if both rates are 0.5, we will capture 0.25 of all requests.
   - Profiles are only captured for code running within a transaction.
   - Profiles for multi-threaded servers like `puma` might not capture frames correctly when async I/O is happening. This is a `stackprof` limitation.
@@ -1138,7 +1151,6 @@
 - Expose `end_timestamp` in `Span#finish` and `Transaction#finish` [#1946](https://github.com/getsentry/sentry-ruby/pull/1946)
 - Add `Transaction#set_context` api [#1947](https://github.com/getsentry/sentry-ruby/pull/1947)
 - Add OpenTelemetry support with new `sentry-opentelemetry` gem
-
   - Add `config.instrumenter` to switch between `:sentry` and `:otel` instrumentation [#1944](https://github.com/getsentry/sentry-ruby/pull/1944)
 
     The new `sentry-opentelemetry` gem adds support to automatically integrate OpenTelemetry performance tracing with Sentry. [Give it a try](https://github.com/getsentry/sentry-ruby/tree/master/sentry-opentelemetry#getting-started) and let us know if you have any feedback or problems with using it.
@@ -1158,7 +1170,6 @@
   ```
 
 - Use `Sentry.with_child_span` in redis and net/http instead of `span.start_child` [#1920](https://github.com/getsentry/sentry-ruby/pull/1920)
-
   - This might change the nesting of some spans and make it more accurate
   - Followup fix to set the sentry-trace header in the correct place [#1922](https://github.com/getsentry/sentry-ruby/pull/1922)
 
@@ -1187,14 +1198,12 @@
 ### Features
 
 - Support rack 3 [#1884](https://github.com/getsentry/sentry-ruby/pull/1884)
-
   - We no longer need the `HTTP_VERSION` check for ignoring the header
 
 - Add [Dynamic Sampling](https://docs.sentry.io/product/sentry-basics/sampling/) support
   The SDK now supports Sentry's Dynamic Sampling product.
 
   Note that this is not supported for users still using the `config.async` option.
-
   - Parse incoming [W3C Baggage Headers](https://www.w3.org/TR/baggage/) and propagate them to continue traces [#1869](https://github.com/getsentry/sentry-ruby/pull/1869)
     - in all outgoing requests in our net/http patch
     - in Sentry transactions as [Dynamic Sampling Context](https://develop.sentry.dev/sdk/performance/dynamic-sampling-context/)
@@ -1230,7 +1239,6 @@
 - Expose `:values` in `ExceptionInterface`, so that it can be accessed in `before_send` under `event.exception.values` [#1843](https://github.com/getsentry/sentry-ruby/pull/1843)
 
 - Add top level `Sentry.close` API [#1844](https://github.com/getsentry/sentry-ruby/pull/1844)
-
   - Cleans up SDK state and sets it to uninitialized
   - No-ops all SDK APIs and also disables the transport layer, so nothing will be sent to Sentry after closing the SDK
 
@@ -1392,7 +1400,6 @@ end
 - Check envelope size before sending it [#1747](https://github.com/getsentry/sentry-ruby/pull/1747)
 
   The SDK will now check if the envelope's event items are oversized before sending the envelope. It goes like this:
-
   1. If an event is oversized (200kb), the SDK will remove its breadcrumbs (which in our experience is the most common cause).
   2. If the event size now falls within the limit, it'll be sent.
   3. Otherwise, the event will be thrown away. The SDK will also log a debug message about the event's attributes size (in bytes) breakdown. For example,
@@ -1711,7 +1718,6 @@ When `config.send_default_pii` is set as `true`, `:http_logger` will include que
 ### Features
 
 - Support exception frame's local variable capturing
-
   - [#1580](https://github.com/getsentry/sentry-ruby/pull/1580)
   - [#1589](https://github.com/getsentry/sentry-ruby/pull/1589)
 
