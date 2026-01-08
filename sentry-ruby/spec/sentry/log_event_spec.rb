@@ -1,16 +1,26 @@
 # frozen_string_literal: true
 
 RSpec.describe Sentry::LogEvent do
-  let(:configuration) do
-    Sentry::Configuration.new.tap do |config|
-      config.dsn = Sentry::TestHelper::DUMMY_DSN
+  before do
+    perform_basic_setup do |config|
+      config.environment = "test"
+      config.release = "1.2.3"
+      config.server_name = "server-123"
     end
+  end
+
+  let(:event_with_applied_scope_with_user) do
+    scope = Sentry::Scope.new
+    scope.set_user({ id: 123, username: "john_doe", email: "john@example.com" })
+
+    event = described_class.new(level: :info, body: "User John has logged in!")
+    scope.apply_to_telemetry(event)
+    event
   end
 
   describe "#initialize" do
     it "initializes with required attributes" do
       event = described_class.new(
-        configuration: configuration,
         level: :info,
         body: "User John has logged in!"
       )
@@ -22,7 +32,6 @@ RSpec.describe Sentry::LogEvent do
 
     it "accepts origin parameter" do
       event = described_class.new(
-        configuration: configuration,
         level: :info,
         body: "Database query executed",
         origin: "auto.db.rails"
@@ -38,7 +47,6 @@ RSpec.describe Sentry::LogEvent do
       }
 
       event = described_class.new(
-        configuration: configuration,
         level: :info,
         body: "User John has logged in!",
         attributes: attributes
@@ -49,17 +57,10 @@ RSpec.describe Sentry::LogEvent do
   end
 
   describe "#to_h" do
-    before do
-      configuration.release = "1.2.3"
-      configuration.environment = "test"
-      configuration.server_name = "server-123"
-    end
-
     it "formats message with hash-based parameters" do
       attributes = { name: "John", day: "Monday" }
 
       event = described_class.new(
-        configuration: configuration,
         level: :info,
         body: "Hello %{name}, today is %{day}",
         attributes: attributes
@@ -76,13 +77,7 @@ RSpec.describe Sentry::LogEvent do
     end
 
     it "includes all required fields" do
-      event = described_class.new(
-        configuration: configuration,
-        level: :info,
-        body: "User John has logged in!"
-      )
-
-      hash = event.to_h
+      hash = event_with_applied_scope_with_user.to_h
 
       expect(hash[:level]).to eq("info")
       expect(hash[:body]).to eq("User John has logged in!")
@@ -97,7 +92,6 @@ RSpec.describe Sentry::LogEvent do
 
     it "doesn't set message.template when the body is not a template" do
       event = described_class.new(
-        configuration: configuration,
         level: :info,
         body: "User John has logged in!"
       )
@@ -109,7 +103,6 @@ RSpec.describe Sentry::LogEvent do
 
     it "doesn't set message.template when template has no parameters" do
       event = described_class.new(
-        configuration: configuration,
         level: :info,
         body: "Hello %{name}, today is %{day}"
       )
@@ -127,7 +120,6 @@ RSpec.describe Sentry::LogEvent do
       }
 
       event = described_class.new(
-        configuration: configuration,
         level: :info,
         body: "User %s has logged in!",
         attributes: attributes
@@ -149,7 +141,6 @@ RSpec.describe Sentry::LogEvent do
       }
 
       event = described_class.new(
-        configuration: configuration,
         level: :info,
         body: "Test message",
         attributes: attributes
@@ -164,29 +155,18 @@ RSpec.describe Sentry::LogEvent do
     end
 
     it "serializes user attributes correctly" do
-      user = {
-        id: 123,
-        username: "john_doe",
-        email: "john@example.com"
-      }
+      # Enable send_default_pii so user attributes are added
+      Sentry.configuration.send_default_pii = true
+      hash = event_with_applied_scope_with_user.to_h
 
-      event = described_class.new(
-        configuration: configuration,
-        level: :info,
-        body: "User action performed",
-        user: user
-      )
-
-      hash = event.to_h
-
-      expect(hash[:attributes]["user.id"]).to eq(123)
-      expect(hash[:attributes]["user.name"]).to eq("john_doe")
-      expect(hash[:attributes]["user.email"]).to eq("john@example.com")
+      # User attributes are now wrapped with type information (consistent with MetricEvent)
+      expect(hash[:attributes]["user.id"]).to eq({ value: 123, type: "integer" })
+      expect(hash[:attributes]["user.name"]).to eq({ value: "john_doe", type: "string" })
+      expect(hash[:attributes]["user.email"]).to eq({ value: "john@example.com", type: "string" })
     end
 
     it "includes sentry.origin attribute when origin is set" do
       event = described_class.new(
-        configuration: configuration,
         level: :info,
         body: "Database query executed",
         origin: "auto.db.rails"
@@ -199,7 +179,6 @@ RSpec.describe Sentry::LogEvent do
 
     it "does not include sentry.origin attribute when origin is nil" do
       event = described_class.new(
-        configuration: configuration,
         level: :info,
         body: "Manual log message"
       )

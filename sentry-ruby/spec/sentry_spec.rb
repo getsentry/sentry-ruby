@@ -385,10 +385,10 @@ RSpec.describe Sentry do
 
       expect(log_event[:level]).to eq("info")
       expect(log_event[:trace_id]).to_not be(nil)
-      expect(log_event[:attributes]).to_not have_key("sentry.trace.parent_span_id")
+      expect(log_event[:span_id]).to_not be(nil)
     end
 
-    it "sends a log event with parent_span_id" do
+    it "sends a log event with span_id" do
       transaction = Sentry.start_transaction(name: "test_transaction", op: "test.op")
       span = transaction.start_child(op: "child span")
 
@@ -406,8 +406,8 @@ RSpec.describe Sentry do
       log_event = sentry_logs.first
 
       expect(log_event[:level]).to eq("info")
-      expect(log_event[:trace_id]).to_not be(nil)
-      expect(log_event[:attributes]).to have_key("sentry.trace.parent_span_id")
+      expect(log_event[:trace_id]).to eq(span.trace_id)
+      expect(log_event[:span_id]).to eq(span.span_id)
     end
 
     it "includes sentry.origin attribute when origin is provided" do

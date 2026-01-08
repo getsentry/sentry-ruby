@@ -1,128 +1,52 @@
 # frozen_string_literal: true
 
-require "json"
+require "sentry/utils/telemetry_attributes"
 
 module Sentry
   # Event type that represents a log entry with its attributes
   #
   # @see https://develop.sentry.dev/sdk/telemetry/logs/#log-envelope-item-payload
   class LogEvent
+    include Sentry::Utils::TelemetryAttributes
+
     TYPE = "log"
 
     DEFAULT_PARAMETERS = [].freeze
     DEFAULT_ATTRIBUTES = {}.freeze
 
-    SERIALIZEABLE_ATTRIBUTES = %i[
-      level
-      body
-      timestamp
-      environment
-      release
-      server_name
-      trace_id
-      attributes
-      contexts
-    ]
-
-    SENTRY_ATTRIBUTES = {
-      "sentry.trace.parent_span_id" => :parent_span_id,
-      "sentry.environment" => :environment,
-      "sentry.release" => :release,
-      "sentry.address" => :server_name,
-      "sentry.sdk.name" => :sdk_name,
-      "sentry.sdk.version" => :sdk_version,
-      "sentry.message.template" => :template,
-      "sentry.origin" => :origin
-    }
-
     PARAMETER_PREFIX = "sentry.message.parameter"
-
-    USER_ATTRIBUTES = {
-      "user.id" => :user_id,
-      "user.name" => :user_username,
-      "user.email" => :user_email
-    }
 
     LEVELS = %i[trace debug info warn error fatal].freeze
 
-    attr_accessor :level, :body, :template, :attributes, :user, :origin
-
-    attr_reader :configuration, *(SERIALIZEABLE_ATTRIBUTES - %i[level body attributes])
-
-    SERIALIZERS = %i[
-      attributes
-      body
-      level
-      parent_span_id
-      sdk_name
-      sdk_version
-      template
-      timestamp
-      trace_id
-      user_id
-      user_username
-      user_email
-    ].map { |name| [name, :"serialize_#{name}"] }.to_h
+    attr_accessor :level, :body, :template, :attributes, :origin, :trace_id, :span_id
+    attr_reader :timestamp
 
     TOKEN_REGEXP = /%\{(\w+)\}/
 
-    def initialize(configuration: Sentry.configuration, **options)
-      @configuration = configuration
+    def initialize(**options)
       @type = TYPE
-      @server_name = configuration.server_name
-      @environment = configuration.environment
-      @release = configuration.release
       @timestamp = Sentry.utc_now
       @level = options.fetch(:level)
       @body = options[:body]
       @template = @body if is_template?
       @attributes = options[:attributes] || DEFAULT_ATTRIBUTES
-      @user = options[:user] || {}
       @origin = options[:origin]
-      @contexts = {}
+      @trace_id = nil
+      @span_id = nil
     end
 
     def to_h
-      SERIALIZEABLE_ATTRIBUTES.each_with_object({}) do |name, memo|
-        memo[name] = serialize(name)
-      end
+      {
+        level: level.to_s,
+        timestamp: timestamp.to_f,
+        trace_id: @trace_id,
+        span_id: @span_id,
+        body: serialize_body,
+        attributes: serialize_attributes
+      }.compact
     end
 
     private
-
-    def serialize(name)
-      serializer = SERIALIZERS[name]
-
-      if serializer
-        __send__(serializer)
-      else
-        public_send(name)
-      end
-    end
-
-    def serialize_level
-      level.to_s
-    end
-
-    def serialize_sdk_name
-      Sentry.sdk_meta["name"]
-    end
-
-    def serialize_sdk_version
-      Sentry.sdk_meta["version"]
-    end
-
-    def serialize_timestamp
-      timestamp.to_f
-    end
-
-    def serialize_trace_id
-      contexts.dig(:trace, :trace_id)
-    end
-
-    def serialize_parent_span_id
-      contexts.dig(:trace, :parent_span_id)
-    end
 
     def serialize_body
       if parameters.empty?
@@ -134,61 +58,15 @@ module Sentry
       end
     end
 
-    def serialize_user_id
-      user[:id]
-    end
-
-    def serialize_user_username
-      user[:username]
-    end
-
-    def serialize_user_email
-      user[:email]
-    end
-
-    def serialize_template
-      template if has_parameters?
-    end
-
     def serialize_attributes
-      hash = {}
-
-      attributes.each do |key, value|
-        hash[key] = attribute_hash(value)
-      end
-
-      SENTRY_ATTRIBUTES.each do |key, name|
-        if (value = serialize(name))
-          hash[key] = attribute_hash(value)
-        end
-      end
-
-      USER_ATTRIBUTES.each do |key, name|
-        if (value = serialize(name))
-          hash[key] = value
-        end
-      end
-
-      hash
+      sentry_attributes.merge(@attributes).transform_values { |v| attribute_hash(v) }
     end
 
-    def attribute_hash(value)
-      case value
-      when String
-        { value: value, type: "string" }
-      when TrueClass, FalseClass
-        { value: value, type: "boolean" }
-      when Integer
-        { value: value, type: "integer" }
-      when Float
-        { value: value, type: "double" }
-      else
-        begin
-          { value: JSON.generate(value), type: "string" }
-        rescue
-          { value: value, type: "string" }
-        end
-      end
+    def sentry_attributes
+      sentry_attributes = {}
+      sentry_attributes["sentry.origin"] = @origin if @origin
+      sentry_attributes["sentry.message.template"] = template if has_parameters?
+      sentry_attributes
     end
 
     def parameters
