@@ -212,7 +212,6 @@ RSpec.describe Sentry::Transport do
       let(:log_events) do
         5.times.map do |i|
           Sentry::LogEvent.new(
-            configuration: configuration,
             level: :info,
             body: "User %s has logged in!",
             trace_id: "5b8efff798038103d269b633813fc60c",
@@ -266,7 +265,6 @@ RSpec.describe Sentry::Transport do
         expect(log_event["attributes"]).to include(
           "sentry.message.template" => { "value" => "User %s has logged in!", "type" => "string" },
           "sentry.message.parameter.0" => { "value" => "John", "type" => "string" },
-          "sentry.environment" => { "value" => "development", "type" => "string" }
         )
       end
     end
@@ -529,7 +527,6 @@ RSpec.describe Sentry::Transport do
       let(:log_events) do
         5.times.map do |i|
           Sentry::LogEvent.new(
-            configuration: configuration,
             level: :info,
             body: "User John has logged in!",
             trace_id: "5b8efff798038103d269b633813fc60c",

@@ -43,6 +43,10 @@
   ```
 - Prevent SDK crash when SDK logging fails ([#2817](https://github.com/getsentry/sentry-ruby/pull/2817))
 
+### Internal
+
+- Unify Logs and Metrics implementations ([#2826](https://github.com/getsentry/sentry-ruby/pull/2826))
+
 ## 6.2.0
 
 ### Features

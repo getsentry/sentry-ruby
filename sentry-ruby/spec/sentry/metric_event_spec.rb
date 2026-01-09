@@ -12,6 +12,13 @@ RSpec.describe Sentry::MetricEvent do
     )
   end
 
+  let(:metric_event_scope_applied) do
+    scope = Sentry::Scope.new
+    scope.set_user({ id: "123", username: "jane", email: "jane.doe@email.com" })
+    scope.apply_to_telemetry(metric_event)
+    metric_event
+  end
+
   before do
     perform_basic_setup do |config|
       config.environment = "test"
@@ -31,7 +38,6 @@ RSpec.describe Sentry::MetricEvent do
       expect(metric_event.timestamp).to be_a(Time)
       expect(metric_event.trace_id).to be_nil
       expect(metric_event.span_id).to be_nil
-      expect(metric_event.user).to eq({})
     end
 
     it "accepts custom attributes" do
@@ -73,7 +79,7 @@ RSpec.describe Sentry::MetricEvent do
     end
 
     it "includes default attributes from configuration" do
-      hash = metric_event.to_h
+      hash = metric_event_scope_applied.to_h
       attributes = hash[:attributes]
 
       expect(attributes["sentry.environment"]).to eq({ type: "string", value: "test" })
@@ -118,6 +124,8 @@ RSpec.describe Sentry::MetricEvent do
         value: 1.0,
         attributes: { "custom" => "value" }
       )
+      scope = Sentry::Scope.new
+      scope.apply_to_telemetry(event)
       hash = event.to_h
       attributes = hash[:attributes]
 
@@ -126,17 +134,13 @@ RSpec.describe Sentry::MetricEvent do
     end
 
     context "with user data" do
-      before do
-        metric_event.user = { id: "123", username: "jane", email: "jane.doe@email.com" }
-      end
-
       context "when send_default_pii is true" do
         before do
           Sentry.configuration.send_default_pii = true
         end
 
         it "includes user.id attribute" do
-          hash = metric_event.to_h
+          hash = metric_event_scope_applied.to_h
 
           expect(hash[:attributes]["user.id"]).to eq({ type: "string", value: "123" })
           expect(hash[:attributes]["user.name"]).to eq({ type: "string", value: "jane" })
@@ -150,7 +154,7 @@ RSpec.describe Sentry::MetricEvent do
         end
 
         it "does not include user attributes" do
-          hash = metric_event.to_h
+          hash = metric_event_scope_applied.to_h
 
           expect(hash[:attributes].key?("user.id")).to eq(false)
           expect(hash[:attributes].key?("user.name")).to eq(false)

@@ -8,7 +8,6 @@ RSpec.describe Sentry::LogEventBuffer do
   let(:client) { double(Sentry::Client) }
   let(:log_event) do
     Sentry::LogEvent.new(
-      configuration: Sentry.configuration,
       level: :info,
       body: "Test message"
     )
