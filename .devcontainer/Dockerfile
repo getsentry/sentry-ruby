@@ -24,15 +24,6 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
   && apt-get clean \
   && rm -rf /var/lib/apt/lists/*
 
-RUN curl -fsSL https://deb.nodesource.com/setup_22.x | bash -
-
-RUN apt-get update && apt-get install -y --no-install-recommends \
-  nodejs \
-  chromium \
-  chromium-driver \
-  && apt-get clean \
-  && rm -rf /var/lib/apt/lists/*
-
 RUN echo "sentry ALL=(ALL) NOPASSWD:ALL" > /etc/sudoers.d/sentry \
   && chmod 0440 /etc/sudoers.d/sentry
 

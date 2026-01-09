@@ -6,17 +6,16 @@
   "features": {
     "ghcr.io/devcontainers/features/github-cli": {},
     "ghcr.io/nils-geistmann/devcontainers-features/zsh": {},
+    "ghcr.io/devcontainers/features/node:1": {},
     "ghcr.io/devcontainers-extra/features/npm-packages": {},
+    "ghcr.io/devcontainers/features/copilot-cli:1": {},
     "ghcr.io/rocker-org/devcontainer-features/apt-packages": {
       "packages": "inotify-tools"
     }
   },
   "customizations": {
     "vscode": {
-      "extensions": [
-        "sleistner.vscode-fileutils",
-        "Shopify.ruby-lsp"
-      ],
+      "extensions": ["sleistner.vscode-fileutils", "Shopify.ruby-lsp"],
       "editor.formatOnSaveMode": "modifications",
       "editor.formatOnSave": true,
       "rubyLsp.rubyVersionManager": {
