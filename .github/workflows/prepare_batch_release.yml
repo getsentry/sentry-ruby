@@ -3,28 +3,35 @@ on:
   workflow_dispatch:
     inputs:
       version:
-        description: Version to release
-        required: true
-      force:
-        description: Force a release even when there are release-blockers (optional)
+        description: Version to release (or "auto")
         required: false
+      force:
+        description: Force a release even when there are release-blockers
+        required: false
+
+permissions:
+  contents: write
+  pull-requests: write
+
 jobs:
   release:
     runs-on: ubuntu-latest
-    name: "Release a new version"
+    name: Release a new version
     steps:
       - name: Get auth token
         id: token
-        uses: actions/create-github-app-token@5d869da34e18e7287c1daad50e0b8ea0f506ce69 # v1.11.0
+        uses: actions/create-github-app-token@d72941d797fd3113feb6b93fd0dec494b13a2547 # v1
         with:
           app-id: ${{ vars.SENTRY_RELEASE_BOT_CLIENT_ID }}
           private-key: ${{ secrets.SENTRY_RELEASE_BOT_PRIVATE_KEY }}
-      - uses: actions/checkout@v4
+
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4 # v4 # v4
         with:
           token: ${{ steps.token.outputs.token }}
           fetch-depth: 0
+
       - name: Prepare release
-        uses: getsentry/action-prepare-release@v1
+        uses: getsentry/craft@39ee616a6a58dc64797feecb145d66770492b66c # v2
         env:
           GITHUB_TOKEN: ${{ steps.token.outputs.token }}
         with:
