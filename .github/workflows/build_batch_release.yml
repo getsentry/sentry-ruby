@@ -4,12 +4,16 @@ on:
   push:
     branches:
       - release/**
+permissions:
+  contents: write
+  pull-requests: write
+
 jobs:
   build:
     name: Build gems
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v2
     - name: Set up Ruby
       uses: ruby/setup-ruby@v1
       with:
