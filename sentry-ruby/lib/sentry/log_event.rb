@@ -58,7 +58,7 @@ module Sentry
     end
 
     def serialize_attributes
-      sentry_attributes.merge(@attributes).transform_values { |v| attribute_hash(v) }
+      sentry_attributes.update(@attributes).transform_values! { |v| attribute_hash(v) }
     end
 
     def sentry_attributes
