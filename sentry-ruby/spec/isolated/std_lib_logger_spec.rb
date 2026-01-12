@@ -131,5 +131,115 @@ RSpec.describe Sentry::StdLibLogger do
         expect(log_event[:body]).to eql("Fatal message")
       end
     end
+
+    context "with std_lib_logger_filter" do
+      let(:null_logger) { ::Logger.new(IO::NULL) }
+
+      context "when no filter is configured" do
+        it "sends all log messages to Sentry" do
+          logger.info("Test message")
+
+          expect(sentry_logs).to_not be_empty
+          expect(sentry_logs.last[:body]).to eq("Test message")
+        end
+      end
+
+      context "when filter always returns true" do
+        before do
+          Sentry.configuration.std_lib_logger_filter = ->(logger, message, level) { true }
+        end
+
+        it "sends log messages to Sentry" do
+          logger.info("Test message")
+
+          expect(sentry_logs).to_not be_empty
+          expect(sentry_logs.last[:body]).to eq("Test message")
+        end
+      end
+
+      context "when filter always returns false" do
+        before do
+          Sentry.configuration.std_lib_logger_filter = ->(logger, message, level) { false }
+        end
+
+        it "blocks messages from Sentry but still logs locally" do
+          expect {
+            logger.info("Test message")
+          }.to output(/Test message/).to_stdout
+
+          expect(sentry_logs).to be_empty
+        end
+      end
+
+      context "when filter uses logger instance for decisions" do
+        before do
+          Sentry.configuration.std_lib_logger_filter = ->(logger, message, level) do
+            !logger.instance_variable_get(:@logdev).nil?
+          end
+        end
+
+        it "allows logs from regular loggers" do
+          logger.info("Regular log message")
+
+          expect(sentry_logs).to_not be_empty
+          expect(sentry_logs.last[:body]).to eq("Regular log message")
+        end
+
+        it "blocks logs from IO::NULL loggers" do
+          null_logger.error("Null log message")
+
+          expect(sentry_logs).to be_empty
+        end
+      end
+
+      context "when filter uses message content for decisions" do
+        before do
+          Sentry.configuration.std_lib_logger_filter = ->(logger, message, level) do
+            !message.to_s.include?("SKIP")
+          end
+        end
+
+        it "allows messages without SKIP keyword" do
+          logger.info("Regular info message")
+
+          expect(sentry_logs).to_not be_empty
+          expect(sentry_logs.last[:body]).to eq("Regular info message")
+        end
+
+        it "blocks messages containing SKIP keyword" do
+          expect {
+            logger.info("SKIP: this should be filtered")
+          }.to output(/SKIP: this should be filtered/).to_stdout
+
+          expect(sentry_logs).to be_empty
+        end
+      end
+
+      context "when filter uses log level for decisions" do
+        before do
+          Sentry.configuration.std_lib_logger_filter = ->(logger, message, level) do
+            [:error, :fatal].include?(level)
+          end
+        end
+
+        it "allows error and fatal logs" do
+          logger.error("Error message")
+          logger.fatal("Fatal message")
+
+          expect(sentry_logs.size).to eq(2)
+          expect(sentry_logs[0][:body]).to eq("Error message")
+          expect(sentry_logs[1][:body]).to eq("Fatal message")
+        end
+
+        it "blocks info and warn logs" do
+          expect {
+            logger.info("Info message")
+            logger.warn("Warn message")
+          }.to output(/Info message.*Warn message/m).to_stdout
+
+          expect(sentry_logs).to be_empty
+        end
+      end
+    end
   end
 end

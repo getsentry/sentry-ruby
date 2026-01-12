@@ -37,6 +37,10 @@ module Sentry
         message = message.to_s.strip
 
         if !message.nil? && message != Sentry::Logger::PROGNAME && method = SEVERITY_MAP[severity]
+          if (filter = Sentry.configuration.std_lib_logger_filter) && !filter.call(self, message, method)
+            return result
+          end
+
           Sentry.logger.send(method, message, origin: ORIGIN)
         end
       end

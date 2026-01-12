@@ -805,4 +805,48 @@ RSpec.describe Sentry::Configuration do
       expect { subject.before_send_metric = true }.to raise_error(ArgumentError, "before_send_metric must be callable (or nil to disable)")
     end
   end
+
+  describe "#std_lib_logger_filter" do
+    it "defaults to nil" do
+      expect(subject.std_lib_logger_filter).to be_nil
+    end
+
+    it "accepts nil" do
+      expect {
+        subject.std_lib_logger_filter = nil
+      }.not_to raise_error
+
+      expect(subject.std_lib_logger_filter).to be_nil
+    end
+
+    it "accepts a proc" do
+      filter_proc = ->(logger, message, level) { true }
+
+      expect {
+        subject.std_lib_logger_filter = filter_proc
+      }.not_to raise_error
+
+      expect(subject.std_lib_logger_filter).to eq(filter_proc)
+    end
+
+    it "accepts a callable object" do
+      callable_object = Class.new do
+        def call(logger, message, level)
+          false
+        end
+      end.new
+
+      expect {
+        subject.std_lib_logger_filter = callable_object
+      }.not_to raise_error
+
+      expect(subject.std_lib_logger_filter).to eq(callable_object)
+    end
+
+    it "does not accept non-callable objects" do
+      expect {
+        subject.std_lib_logger_filter = "not a callable"
+      }.to raise_error(ArgumentError, "std_lib_logger_filter must be callable (or nil to disable)")
+    end
+  end
 end
