@@ -109,7 +109,7 @@ module Sentry
         "server.address" => configuration.server_name
       }.compact
 
-      telemetry.attributes = default_attributes.merge(telemetry.attributes)
+      default_attributes.each { |k, v| telemetry.attributes[k] ||= v }
 
       if configuration.send_default_pii && !user.empty?
         user_attributes = {
@@ -118,7 +118,7 @@ module Sentry
           "user.email" => user[:email]
         }.compact
 
-        telemetry.attributes = user_attributes.merge(telemetry.attributes)
+        user_attributes.each { |k, v| telemetry.attributes[k] ||= v }
       end
 
       telemetry

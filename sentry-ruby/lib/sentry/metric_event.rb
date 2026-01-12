@@ -6,8 +6,6 @@ module Sentry
   class MetricEvent
     include Sentry::Utils::TelemetryAttributes
 
-    DEFAULT_ATTRIBUTES = {}.freeze
-
     attr_reader :name, :type, :value, :unit, :timestamp, :trace_id, :span_id, :attributes
     attr_writer :trace_id, :span_id, :attributes
 
@@ -22,7 +20,7 @@ module Sentry
       @type = type
       @value = value
       @unit = unit
-      @attributes = attributes || DEFAULT_ATTRIBUTES
+      @attributes = attributes || {}
 
       @timestamp = Sentry.utc_now
       @trace_id = nil

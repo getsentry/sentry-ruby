@@ -12,7 +12,6 @@ module Sentry
     TYPE = "log"
 
     DEFAULT_PARAMETERS = [].freeze
-    DEFAULT_ATTRIBUTES = {}.freeze
 
     PARAMETER_PREFIX = "sentry.message.parameter"
 
@@ -29,7 +28,7 @@ module Sentry
       @level = options.fetch(:level)
       @body = options[:body]
       @template = @body if is_template?
-      @attributes = options[:attributes] || DEFAULT_ATTRIBUTES
+      @attributes = options[:attributes] || {}
       @origin = options[:origin]
       @trace_id = nil
       @span_id = nil
