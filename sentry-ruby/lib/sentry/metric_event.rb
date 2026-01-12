@@ -43,7 +43,7 @@ module Sentry
     private
 
     def serialize_attributes
-      @attributes.transform_values { |v| attribute_hash(v) }
+      @attributes.transform_values! { |v| attribute_hash(v) }
     end
   end
 end
