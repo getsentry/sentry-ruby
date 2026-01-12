@@ -58,14 +58,13 @@ module Sentry
     end
 
     def serialize_attributes
-      sentry_attributes.update(@attributes).transform_values! { |v| attribute_hash(v) }
+      populate_sentry_attributes!
+      @attributes.transform_values! { |v| attribute_hash(v) }
     end
 
-    def sentry_attributes
-      sentry_attributes = {}
-      sentry_attributes["sentry.origin"] = @origin if @origin
-      sentry_attributes["sentry.message.template"] = template if has_parameters?
-      sentry_attributes
+    def populate_sentry_attributes!
+      @attributes["sentry.origin"] ||= @origin if @origin
+      @attributes["sentry.message.template"] ||= template if has_parameters?
     end
 
     def parameters

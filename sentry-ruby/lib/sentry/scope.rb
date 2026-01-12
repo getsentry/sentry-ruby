@@ -101,24 +101,16 @@ module Sentry
       configuration = Sentry.configuration
       return telemetry unless configuration
 
-      default_attributes = {
-        "sentry.environment" => configuration.environment,
-        "sentry.release" => configuration.release,
-        "sentry.sdk.name" => Sentry.sdk_meta["name"],
-        "sentry.sdk.version" => Sentry.sdk_meta["version"],
-        "server.address" => configuration.server_name
-      }.compact
-
-      default_attributes.each { |k, v| telemetry.attributes[k] ||= v }
+      telemetry.attributes["sentry.sdk.name"] ||= Sentry.sdk_meta["name"]
+      telemetry.attributes["sentry.sdk.version"] ||= Sentry.sdk_meta["version"]
+      telemetry.attributes["sentry.environment"] ||= configuration.environment if configuration.environment
+      telemetry.attributes["sentry.release"] ||= configuration.release if configuration.release
+      telemetry.attributes["server.address"] ||= configuration.server_name if configuration.server_name
 
       if configuration.send_default_pii && !user.empty?
-        user_attributes = {
-          "user.id" => user[:id],
-          "user.name" => user[:username],
-          "user.email" => user[:email]
-        }.compact
-
-        user_attributes.each { |k, v| telemetry.attributes[k] ||= v }
+        telemetry.attributes["user.id"] ||= user[:id] if user[:id]
+        telemetry.attributes["user.name"] ||= user[:username] if user[:username]
+        telemetry.attributes["user.email"] ||= user[:email] if user[:email]
       end
 
       telemetry
