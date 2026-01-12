@@ -355,6 +355,15 @@ module Sentry
     # @return [Proc, nil]
     attr_reader :before_send_metric
 
+    # Optional Proc, called to filter log messages before sending to Sentry
+    # @example
+    #   config.std_lib_logger_filter = lambda do |logger, message, level|
+    #     # Only send error and fatal logs to Sentry
+    #     [:error, :fatal].include?(level)
+    #   end
+    # @return [Proc, nil]
+    attr_reader :std_lib_logger_filter
+
     # these are not config options
     # @!visibility private
     attr_reader :errors, :gem_specs
@@ -518,6 +527,7 @@ module Sentry
       self.before_send_check_in = nil
       self.before_send_log = nil
       self.before_send_metric = nil
+      self.std_lib_logger_filter = nil
       self.rack_env_whitelist = RACK_ENV_WHITELIST_DEFAULT
       self.traces_sampler = nil
       self.enable_logs = false
@@ -612,6 +622,12 @@ module Sentry
       check_callable!("before_breadcrumb", value)
 
       @before_breadcrumb = value
+    end
+
+    def std_lib_logger_filter=(value)
+      check_callable!("std_lib_logger_filter", value)
+
+      @std_lib_logger_filter = value
     end
 
     def environment=(environment)
