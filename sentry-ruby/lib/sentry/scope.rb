@@ -46,7 +46,7 @@ module Sentry
     # @param hint [Hash] the hint data that'll be passed to event processors.
     # @return [Event]
     def apply_to_event(event, hint = nil)
-      unless event.is_a?(CheckInEvent) || event.is_a?(LogEvent)
+      unless event.is_a?(CheckInEvent)
         event.tags = tags.merge(event.tags)
         event.user = user.merge(event.user)
         event.extra = extra.merge(event.extra)
@@ -58,10 +58,6 @@ module Sentry
         event.breadcrumbs = breadcrumbs
         event.rack_env = rack_env if rack_env
         event.attachments = attachments
-      end
-
-      if event.is_a?(LogEvent)
-        event.user = user.merge(event.user)
       end
 
       if span
@@ -92,17 +88,30 @@ module Sentry
     # A leaner version of apply_to_event that applies to
     # lightweight payloads like Logs and Metrics.
     #
-    # Only adds trace_id, span_id and user from the scope.
+    # Adds trace_id, span_id, user from the scope and default attributes from configuration.
     #
-    # @param telemetry [MetricEvent]
-    # @return [MetricEvent]
+    # @param telemetry [MetricEvent, LogEvent] the telemetry event to apply scope context to
+    # @return [MetricEvent, LogEvent] the telemetry event with scope context applied
     def apply_to_telemetry(telemetry)
       # TODO-neel when new scope set_attribute api is added: add them here
-      telemetry.user = user.merge(telemetry.user)
-
       trace_context = span ? span.get_trace_context : propagation_context.get_trace_context
       telemetry.trace_id = trace_context[:trace_id]
       telemetry.span_id = trace_context[:span_id]
+
+      configuration = Sentry.configuration
+      return telemetry unless configuration
+
+      telemetry.attributes["sentry.sdk.name"] ||= Sentry.sdk_meta["name"]
+      telemetry.attributes["sentry.sdk.version"] ||= Sentry.sdk_meta["version"]
+      telemetry.attributes["sentry.environment"] ||= configuration.environment if configuration.environment
+      telemetry.attributes["sentry.release"] ||= configuration.release if configuration.release
+      telemetry.attributes["server.address"] ||= configuration.server_name if configuration.server_name
+
+      if configuration.send_default_pii && !user.empty?
+        telemetry.attributes["user.id"] ||= user[:id] if user[:id]
+        telemetry.attributes["user.name"] ||= user[:username] if user[:username]
+        telemetry.attributes["user.email"] ||= user[:email] if user[:email]
+      end
 
       telemetry
     end

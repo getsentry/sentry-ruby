@@ -107,7 +107,7 @@ module Sentry
     # @return [LogEvent]
     def buffer_log_event(event, scope)
       return unless event.is_a?(LogEvent)
-      @log_event_buffer.add_event(scope.apply_to_event(event))
+      @log_event_buffer.add_event(scope.apply_to_telemetry(event))
       event
     end
 

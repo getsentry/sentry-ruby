@@ -207,7 +207,6 @@ RSpec.describe Sentry::Scope do
 
     let(:event) { client.event_from_message("test message") }
     let(:check_in_event) { client.event_from_check_in("test_slug", :ok) }
-    let(:log_event) { client.event_from_log("test log message", level: :info) }
 
     it "applies the contextual data to event" do
       subject.apply_to_event(event)
@@ -237,32 +236,6 @@ RSpec.describe Sentry::Scope do
       expect(check_in_event.breadcrumbs).to eq(nil)
       expect(check_in_event.fingerprint).to eq([])
       expect(check_in_event.contexts).to include(:trace)
-    end
-
-    context "with LogEvent" do
-      it "adds user attributes to log event" do
-        scope = described_class.new
-        scope.set_user({ id: 123, username: "john_doe", email: "john@example.com" })
-
-        scope.apply_to_event(log_event)
-
-        log_hash = log_event.to_h
-
-        expect(log_hash[:attributes]["user.id"]).to eq(123)
-        expect(log_hash[:attributes]["user.name"]).to eq("john_doe")
-        expect(log_hash[:attributes]["user.email"]).to eq("john@example.com")
-      end
-
-      it "does not add user attributes when user is empty" do
-        scope = described_class.new
-        scope.apply_to_event(log_event)
-
-        log_hash = log_event.to_h
-
-        expect(log_hash[:attributes]).not_to have_key("user.id")
-        expect(log_hash[:attributes]).not_to have_key("user.name")
-        expect(log_hash[:attributes]).not_to have_key("user.email")
-      end
     end
 
     it "doesn't override event's pre-existing data" do
@@ -415,49 +388,107 @@ RSpec.describe Sentry::Scope do
   end
 
   describe "#apply_to_telemetry" do
-    before { perform_basic_setup }
-
-    let(:metric_event) do
-      Sentry::MetricEvent.new(name: "test.metric", type: :counter, value: 1)
-    end
-
-    context "with user data" do
-      before { subject.set_user({ id: 1, username: "test_user" }) }
-
-      it "merges user data from scope to telemetry" do
-        subject.apply_to_telemetry(metric_event)
-        expect(metric_event.user).to eq({ id: 1, username: "test_user" })
-      end
-
-      it "doesn't override telemetry's pre-existing user data" do
-        metric_event.user = { id: 2, email: "test@example.com" }
-        subject.apply_to_telemetry(metric_event)
-        expect(metric_event.user).to eq({ id: 2, username: "test_user", email: "test@example.com" })
+    before do
+      perform_basic_setup do |config|
+        config.environment = "test"
+        config.release = "1.2.3"
+        config.server_name = "my-server"
       end
     end
 
-    it "sets trace_id and span_id from propagation context when no span is set" do
-      subject.apply_to_telemetry(metric_event)
+    shared_examples "telemetry event user data" do
+      context "with user data" do
+        before { subject.set_user({ id: 123, username: "john_doe", email: "john@example.com" }) }
 
-      trace_context = subject.propagation_context.get_trace_context
-      expect(metric_event.trace_id).to eq(trace_context[:trace_id])
-      expect(metric_event.span_id).to eq(trace_context[:span_id])
+        it "adds user attributes when send_default_pii is enabled" do
+          Sentry.configuration.send_default_pii = true
+          subject.apply_to_telemetry(telemetry_event)
+
+          hash = telemetry_event.to_h
+          expect(hash[:attributes]["user.id"]).to eq({ value: 123, type: "integer" })
+          expect(hash[:attributes]["user.name"]).to eq({ value: "john_doe", type: "string" })
+          expect(hash[:attributes]["user.email"]).to eq({ value: "john@example.com", type: "string" })
+        end
+
+        it "doesn't add user attributes when send_default_pii is disabled" do
+          Sentry.configuration.send_default_pii = false
+          subject.apply_to_telemetry(telemetry_event)
+
+          hash = telemetry_event.to_h
+          expect(hash[:attributes].key?("user.id")).to eq(false)
+          expect(hash[:attributes].key?("user.name")).to eq(false)
+          expect(hash[:attributes].key?("user.email")).to eq(false)
+        end
+      end
+
+      context "without user data" do
+        it "does not add user attributes when user is empty" do
+          Sentry.configuration.send_default_pii = true
+          subject.apply_to_telemetry(telemetry_event)
+
+          hash = telemetry_event.to_h
+          expect(hash[:attributes]).not_to have_key("user.id")
+          expect(hash[:attributes]).not_to have_key("user.name")
+          expect(hash[:attributes]).not_to have_key("user.email")
+        end
+      end
     end
 
-    it "sets trace_id and span_id from span when span is set" do
-      transaction = Sentry::Transaction.new(op: "test_op")
-      subject.set_span(transaction)
+    shared_examples "telemetry event trace data" do
+      it "sets trace_id and span_id from propagation context when no span is set" do
+        subject.apply_to_telemetry(telemetry_event)
+        hash = telemetry_event.to_h
 
-      subject.apply_to_telemetry(metric_event)
+        trace_context = subject.propagation_context.get_trace_context
+        expect(hash[:trace_id]).to eq(trace_context[:trace_id])
+        expect(hash[:span_id]).to eq(trace_context[:span_id])
+      end
 
-      trace_context = transaction.get_trace_context
-      expect(metric_event.trace_id).to eq(trace_context[:trace_id])
-      expect(metric_event.span_id).to eq(trace_context[:span_id])
+      it "sets trace_id and span_id from span when span is set" do
+        transaction = Sentry::Transaction.new(op: "test_op")
+        subject.set_span(transaction)
+
+        subject.apply_to_telemetry(telemetry_event)
+        hash = telemetry_event.to_h
+
+        trace_context = transaction.get_trace_context
+        expect(hash[:trace_id]).to eq(trace_context[:trace_id])
+        expect(hash[:span_id]).to eq(trace_context[:span_id])
+      end
     end
 
-    it "returns the telemetry object" do
-      result = subject.apply_to_telemetry(metric_event)
-      expect(result).to eq(metric_event)
+    shared_examples "telemetry event default attributes" do
+      it "includes default attributes from configuration" do
+        subject.apply_to_telemetry(telemetry_event)
+        hash = telemetry_event.to_h
+        attributes = hash[:attributes]
+
+        expect(attributes["sentry.environment"]).to eq({ type: "string", value: "test" })
+        expect(attributes["sentry.release"]).to eq({ type: "string", value: "1.2.3" })
+        expect(attributes["sentry.sdk.name"]).to eq({ type: "string", value: Sentry.sdk_meta["name"] })
+        expect(attributes["sentry.sdk.version"]).to eq({ type: "string", value: Sentry.sdk_meta["version"] })
+        expect(attributes["server.address"]).to eq({ type: "string", value: "my-server" })
+      end
+    end
+
+    context "with MetricEvent" do
+      let(:telemetry_event) do
+        Sentry::MetricEvent.new(name: "test.metric", type: :counter, value: 1)
+      end
+
+      include_examples "telemetry event user data"
+      include_examples "telemetry event trace data"
+      include_examples "telemetry event default attributes"
+    end
+
+    context "with LogEvent" do
+      let(:telemetry_event) do
+        Sentry.get_current_client.event_from_log("test log message", level: :info)
+      end
+
+      include_examples "telemetry event user data"
+      include_examples "telemetry event trace data"
+      include_examples "telemetry event default attributes"
     end
   end
 end
