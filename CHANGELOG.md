@@ -15,7 +15,7 @@
    Sentry.metrics.count("button.click", 1, attributes: { button_id: "submit" })
    Sentry.metrics.distribution("response.time", 120.5, unit: "millisecond")
    Sentry.metrics.gauge("cpu.usage", 75.2, unit: "percent")
-   ```
+  ```
 
 - Support for tracing `Sequel` queries ([#2814](https://github.com/getsentry/sentry-ruby/pull/2814))
 
@@ -32,6 +32,19 @@
   ```
 
 - Add support for OpenTelemetry messaging/queue system spans ([#2685](https://github.com/getsentry/sentry-ruby/pull/2685))
+
+- Add support for `config.std_lib_logger_filter` proc ([#2829](https://github.com/getsentry/sentry-ruby/pull/2829))
+
+  ```ruby
+  Sentry.init do |config|
+    config.std_lib_logger_filter = proc do |logger, message, severity|
+      # Only send ERROR and above messages
+      severity == :error || severity == :fatal
+    end
+
+    config.enabled_patches = [:std_lib_logger]
+  end
+  ```
 
 ### Bug Fixes
 
