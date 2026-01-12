@@ -9,7 +9,7 @@ RSpec.describe Sentry::Envelope::Item do
       ['transaction', 'transaction'],
       ['span', 'span'],
       ['profile', 'profile'],
-      ['log', 'log'],
+      ['log', 'log_item'],
       ['trace_metric', 'trace_metric'],
       ['check_in', 'monitor'],
       ['event', 'error'],

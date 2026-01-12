@@ -116,7 +116,7 @@ RSpec.describe Sentry::Client do
       expect(log_item).not_to be_nil
       expect(log_item.payload[:level]).to eq('info')
       expect(log_item.payload[:message]).to eq('test4')
-      expect(log_item.data_category).to eq('log')
+      expect(log_item.data_category).to eq('log_item')
     end
 
     it 'sends envelope with spotlight transport if enabled' do
@@ -152,7 +152,7 @@ RSpec.describe Sentry::Client do
 
         expect(subject.transport).to have_recorded_lost_event(:network_error, 'error')
         expect(subject.transport).to have_recorded_lost_event(:network_error, 'transaction')
-        expect(subject.transport).to have_recorded_lost_event(:network_error, 'log')
+        expect(subject.transport).to have_recorded_lost_event(:network_error, 'log_item')
       end
     end
   end
