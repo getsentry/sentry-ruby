@@ -10,6 +10,7 @@ module Sentry
   # @!visibility private
   class LogEventBuffer < TelemetryEventBuffer
     DEFAULT_MAX_EVENTS = 100
+    MAX_EVENTS_BEFORE_DROP = 1000
 
     def initialize(configuration, client)
       super(
@@ -17,6 +18,7 @@ module Sentry
         client,
         event_class: LogEvent,
         max_items: configuration.max_log_events || DEFAULT_MAX_EVENTS,
+        max_items_before_drop: MAX_EVENTS_BEFORE_DROP,
         envelope_type: "log",
         envelope_content_type: "application/vnd.sentry.items.log+json",
         before_send: configuration.before_send_log
