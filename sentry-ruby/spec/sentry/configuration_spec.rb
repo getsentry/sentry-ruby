@@ -770,8 +770,8 @@ RSpec.describe Sentry::Configuration do
   end
 
   describe "#max_metric_events" do
-    it "returns 100 by default" do
-      expect(subject.max_metric_events).to eq(100)
+    it "returns 1000 by default" do
+      expect(subject.max_metric_events).to eq(1000)
     end
 
     it "can be set to an integer value" do

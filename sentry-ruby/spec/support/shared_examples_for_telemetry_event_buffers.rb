@@ -2,13 +2,13 @@
 
 RSpec.shared_examples "telemetry event buffer" do |event_factory:, max_items_config:, enable_config:|
   let(:string_io) { StringIO.new }
-  let(:logger) { ::Logger.new(string_io) }
-  let(:client) { double(Sentry::Client) }
+  let(:sdk_logger) { ::Logger.new(string_io) }
+  let(:client) { Sentry.get_current_client }
   let(:event) { event_factory.call }
 
   before do
     perform_basic_setup do |config|
-      config.sdk_logger = logger
+      config.sdk_logger = sdk_logger
       config.background_worker_threads = 0
       config.public_send(:"#{max_items_config}=", max_items)
       config.public_send(:"#{enable_config}=", true)
@@ -64,6 +64,49 @@ RSpec.shared_examples "telemetry event buffer" do |event_factory:, max_items_con
       subject.flush
 
       expect(subject).to be_empty
+    end
+  end
+
+  describe "max capacity and dropping events" do
+    let(:max_items) { 3 }
+    let(:max_items_before_drop) { 10 }
+
+    before do
+      subject.instance_variable_set(:@max_items_before_drop, max_items_before_drop)
+
+      # don't clear pending items to allow buffer to grow
+      allow(subject).to receive(:clear!)
+    end
+
+    it "adds items up to max_items_before_drop capacity" do
+      expect {
+        max_items_before_drop.times { subject.add_item(event) }
+      }.to change { subject.size }.from(0).to(max_items_before_drop)
+    end
+
+    it "drops events when buffer reaches max_items_before_drop" do
+      max_items_before_drop.times { subject.add_item(event) }
+
+      expect {
+        subject.add_item(event)
+      }.not_to change { subject.size }
+
+      expect(subject.size).to eq(max_items_before_drop)
+    end
+
+    it "records lost event when dropping due to queue overflow" do
+      max_items_before_drop.times { subject.add_item(event) }
+
+      expect(client.transport).to receive(:record_lost_event).with(:queue_overflow, subject.data_category)
+
+      subject.add_item(event)
+    end
+
+    it "logs debug message when dropping events" do
+      max_items_before_drop.times { subject.add_item(event) }
+      subject.add_item(event)
+
+      expect(string_io.string).to include("exceeded max capacity, dropping event")
     end
   end
 

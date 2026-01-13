@@ -14,9 +14,9 @@ module Sentry
     FLUSH_INTERVAL = 5 # seconds
 
     # @!visibility private
-    attr_reader :pending_items
+    attr_reader :pending_items, :envelope_type, :data_category
 
-    def initialize(configuration, client, event_class:, max_items:, envelope_type:, envelope_content_type:, before_send:)
+    def initialize(configuration, client, event_class:, max_items:, max_items_before_drop:, envelope_type:, envelope_content_type:, before_send:)
       super(configuration.sdk_logger, FLUSH_INTERVAL)
 
       @client = client
@@ -24,7 +24,9 @@ module Sentry
       @debug = configuration.debug
       @event_class = event_class
       @max_items = max_items
+      @max_items_before_drop = max_items_before_drop
       @envelope_type = envelope_type
+      @data_category = Sentry::Envelope::Item.data_category(@envelope_type)
       @envelope_content_type = envelope_content_type
       @before_send = before_send
 
@@ -53,10 +55,19 @@ module Sentry
     alias_method :run, :flush
 
     def add_item(item)
-      raise ArgumentError, "expected a #{@event_class}, got #{item.class}" unless item.is_a?(@event_class)
+      unless item.is_a?(@event_class)
+        log_debug("[#{self.class}] expected a #{@event_class}, got #{item.class}")
+        return
+      end
 
       @mutex.synchronize do
-        @pending_items << item
+        if size >= @max_items_before_drop
+          log_debug("[#{self.class}] exceeded max capacity, dropping event")
+          @client.transport.record_lost_event(:queue_overflow, @data_category)
+        else
+          @pending_items << item
+        end
+
         send_items if size >= @max_items
       end
 
@@ -103,7 +114,6 @@ module Sentry
       end
 
       unless discarded_count.zero?
-        @data_category = Sentry::Envelope::Item.data_category(@envelope_type)
         @client.transport.record_lost_event(:before_send, @data_category, num: discarded_count)
       end
 
