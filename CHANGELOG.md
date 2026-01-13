@@ -61,6 +61,7 @@
 - Unify Logs and Metrics implementations ([#2826](https://github.com/getsentry/sentry-ruby/pull/2826))
 - Unify LogEventBuffer and MetricEventBuffer logic ([#2830](https://github.com/getsentry/sentry-ruby/pull/2830))
 - Add maximum limits on LogEventBuffer (1k) and MetricEventBuffer (10k) for protection from memory blowup ([#2831](https://github.com/getsentry/sentry-ruby/pull/2831))
+- Lazily start LogEventBuffer and MetricEventBuffer threads ([#2832](https://github.com/getsentry/sentry-ruby/pull/2832))
 
 ## 6.2.0
 

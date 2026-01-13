@@ -14,7 +14,7 @@ module Sentry
     FLUSH_INTERVAL = 5 # seconds
 
     # @!visibility private
-    attr_reader :pending_items, :envelope_type, :data_category
+    attr_reader :pending_items, :envelope_type, :data_category, :thread
 
     def initialize(configuration, client, event_class:, max_items:, max_items_before_drop:, envelope_type:, envelope_content_type:, before_send:)
       super(configuration.sdk_logger, FLUSH_INTERVAL)
@@ -36,11 +36,6 @@ module Sentry
       log_debug("[#{self.class}] Initialized buffer with max_items=#{@max_items}, flush_interval=#{FLUSH_INTERVAL}s")
     end
 
-    def start
-      ensure_thread
-      self
-    end
-
     def flush
       @mutex.synchronize do
         return if empty?
@@ -55,10 +50,7 @@ module Sentry
     alias_method :run, :flush
 
     def add_item(item)
-      unless item.is_a?(@event_class)
-        log_debug("[#{self.class}] expected a #{@event_class}, got #{item.class}")
-        return
-      end
+      return unless ensure_thread
 
       @mutex.synchronize do
         if size >= @max_items_before_drop
