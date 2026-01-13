@@ -673,7 +673,7 @@ RSpec.describe Sentry::Hub do
         expect(subject.current_client).to receive(:buffer_metric_event).and_call_original
         expect do
           subject.capture_metric(name: "test", type: :counter, value: 1)
-        end.to change { subject.current_client.metric_event_buffer.pending_metrics.count }.by(1)
+        end.to change { subject.current_client.metric_event_buffer.size }.by(1)
       end
     end
   end

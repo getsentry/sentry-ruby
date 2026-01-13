@@ -15,7 +15,8 @@ module Sentry
     # rate limits and client reports use the data_category rather than envelope item type
     def self.data_category(type)
       case type
-      when "session", "attachment", "transaction", "profile", "span", "log", "trace_metric" then type
+      when "session", "attachment", "transaction", "profile", "span", "trace_metric" then type
+      when "log" then "log_item"
       when "sessions" then "session"
       when "check_in" then "monitor"
       when "event" then "error"

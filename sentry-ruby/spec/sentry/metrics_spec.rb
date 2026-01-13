@@ -293,9 +293,12 @@ RSpec.describe "Sentry Metrics" do
 
       context "with before_send_metric callback" do
         it "receives MetricEvent" do
-          Sentry.configuration.before_send_metric = lambda do |metric|
-            expect(metric).to be_a(Sentry::MetricEvent)
-            metric
+          perform_basic_setup do |config|
+            config.enable_metrics = true
+            config.before_send_metric = lambda do |metric|
+              expect(metric).to be_a(Sentry::MetricEvent)
+              metric
+            end
           end
 
           Sentry.metrics.gauge("test.gauge", 42.5, unit: "seconds", attributes: { "foo" => "bar" })
@@ -303,9 +306,12 @@ RSpec.describe "Sentry Metrics" do
         end
 
         it "allows modifying metrics before sending" do
-          Sentry.configuration.before_send_metric = lambda do |metric|
-            metric.attributes["modified"] = true
-            metric
+          perform_basic_setup do |config|
+            config.enable_metrics = true
+            config.before_send_metric = lambda do |metric|
+              metric.attributes["modified"] = true
+              metric
+            end
           end
 
           Sentry.metrics.count("test.counter")
@@ -317,8 +323,11 @@ RSpec.describe "Sentry Metrics" do
         end
 
         it "filters out metrics when callback returns nil" do
-          Sentry.configuration.before_send_metric = lambda do |metric|
-            metric.name == "test.filtered" ? nil : metric
+          perform_basic_setup do |config|
+            config.enable_metrics = true
+            config.before_send_metric = lambda do |metric|
+              metric.name == "test.filtered" ? nil : metric
+            end
           end
 
           Sentry.metrics.count("test.filtered")
@@ -329,7 +338,7 @@ RSpec.describe "Sentry Metrics" do
 
           expect(sentry_metrics.count).to eq(1)
           expect(sentry_metrics.first[:name]).to eq("test.allowed")
-          expect(Sentry.get_current_client.transport).to have_recorded_lost_event(:before_send, 'metric', num: 2)
+          expect(Sentry.get_current_client.transport).to have_recorded_lost_event(:before_send, 'trace_metric', num: 2)
         end
       end
     end
