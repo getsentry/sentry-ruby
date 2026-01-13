@@ -24,6 +24,18 @@ RSpec.shared_examples "telemetry event buffer" do |event_factory:, max_items_con
   describe "#add_item" do
     let(:max_items) { 3 }
 
+    it "spawns only one thread" do
+      expect do
+        subject.add_item(event)
+      end.to change { Thread.list.count }.by(1)
+
+      expect(subject.thread).to receive(:alive?).and_return(true)
+
+      expect do
+        subject.add_item(event)
+      end.to change { Thread.list.count }.by(0)
+    end
+
     it "does nothing when there are no pending items" do
       expect(client).not_to receive(:capture_envelope)
 
@@ -156,9 +168,8 @@ RSpec.shared_examples "telemetry event buffer" do |event_factory:, max_items_con
 
       it "keeps the background thread alive after an error" do
         subject.add_item(event)
-        subject.start
 
-        thread = subject.instance_variable_get(:@thread)
+        thread = subject.thread
 
         expect(thread).to be_alive
         expect { subject.flush }.not_to raise_error
