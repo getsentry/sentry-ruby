@@ -21,6 +21,7 @@ module Sentry
 
       @client = client
       @dsn = configuration.dsn
+      @debug = configuration.debug
       @event_class = event_class
       @max_items = max_items
       @envelope_type = envelope_type
@@ -119,7 +120,7 @@ module Sentry
 
       @client.send_envelope(envelope)
     rescue => e
-      log_debug("[#{self.class}] Failed to send #{@event_class}: #{e.message}")
+      log_error("[#{self.class}] Failed to send #{@event_class}", e, debug: @debug)
     ensure
       clear!
     end
