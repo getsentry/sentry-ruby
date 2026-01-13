@@ -50,9 +50,9 @@ module Sentry
     alias_method :run, :flush
 
     def add_item(item)
-      return unless ensure_thread
-
       @mutex.synchronize do
+        return unless ensure_thread
+
         if size >= @max_items_before_drop
           log_debug("[#{self.class}] exceeded max capacity, dropping event")
           @client.transport.record_lost_event(:queue_overflow, @data_category)
