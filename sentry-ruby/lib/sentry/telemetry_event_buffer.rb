@@ -30,7 +30,7 @@ module Sentry
       @pending_items = []
       @mutex = Mutex.new
 
-      log_debug("[] Initialized buffer with max_items=#{@max_items}, flush_interval=#{FLUSH_INTERVAL}s")
+      log_debug("[#{self.class}] Initialized buffer with max_items=#{@max_items}, flush_interval=#{FLUSH_INTERVAL}s")
     end
 
     def start
@@ -42,7 +42,7 @@ module Sentry
       @mutex.synchronize do
         return if empty?
 
-        log_debug("[#{self.class.name}] flushing #{size} #{@event_class}")
+        log_debug("[#{self.class}] flushing #{size} #{@event_class}")
 
         send_items
       end
@@ -119,7 +119,7 @@ module Sentry
 
       @client.send_envelope(envelope)
     rescue => e
-      log_debug("[#{self.class.name}] Failed to send #{@event_class}: #{e.message}")
+      log_debug("[#{self.class}] Failed to send #{@event_class}: #{e.message}")
     ensure
       clear!
     end
