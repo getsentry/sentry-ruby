@@ -338,7 +338,7 @@ module Sentry
     # @return [Integer]
     attr_accessor :max_log_events
 
-    # Enable metrics collection
+    # Enable metrics collection, defaults to true
     # @return [Boolean]
     attr_accessor :enable_metrics
 
@@ -531,7 +531,7 @@ module Sentry
       self.rack_env_whitelist = RACK_ENV_WHITELIST_DEFAULT
       self.traces_sampler = nil
       self.enable_logs = false
-      self.enable_metrics = false
+      self.enable_metrics = true
 
       self.profiler_class = Sentry::Profiler
       self.profiles_sample_interval = DEFAULT_PROFILES_SAMPLE_INTERVAL

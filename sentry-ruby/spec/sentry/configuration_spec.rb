@@ -759,13 +759,13 @@ RSpec.describe Sentry::Configuration do
   end
 
   describe "#enable_metrics" do
-    it "returns false by default" do
-      expect(subject.enable_metrics).to eq(false)
+    it "returns true by default" do
+      expect(subject.enable_metrics).to eq(true)
     end
 
-    it "can be set to true" do
-      subject.enable_metrics = true
-      expect(subject.enable_metrics).to eq(true)
+    it "can be set to false" do
+      subject.enable_metrics = false
+      expect(subject.enable_metrics).to eq(false)
     end
   end
 

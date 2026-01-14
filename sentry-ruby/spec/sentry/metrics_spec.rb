@@ -3,7 +3,6 @@
 RSpec.describe "Sentry Metrics" do
   before do
     perform_basic_setup do |config|
-      config.enable_metrics = true
       config.traces_sample_rate = 1.0
       config.release = "test-release"
       config.environment = "test"
@@ -294,7 +293,6 @@ RSpec.describe "Sentry Metrics" do
       context "with before_send_metric callback" do
         it "receives MetricEvent" do
           perform_basic_setup do |config|
-            config.enable_metrics = true
             config.before_send_metric = lambda do |metric|
               expect(metric).to be_a(Sentry::MetricEvent)
               metric
@@ -307,7 +305,6 @@ RSpec.describe "Sentry Metrics" do
 
         it "allows modifying metrics before sending" do
           perform_basic_setup do |config|
-            config.enable_metrics = true
             config.before_send_metric = lambda do |metric|
               metric.attributes["modified"] = true
               metric
@@ -324,7 +321,6 @@ RSpec.describe "Sentry Metrics" do
 
         it "filters out metrics when callback returns nil" do
           perform_basic_setup do |config|
-            config.enable_metrics = true
             config.before_send_metric = lambda do |metric|
               metric.name == "test.filtered" ? nil : metric
             end
