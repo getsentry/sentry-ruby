@@ -44,7 +44,7 @@ jobs:
           - { ruby_version: "head" }
           - { ruby_version: 'jruby-head' }
     steps:
-      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
+      - uses: actions/checkout@v4
       - name: Install sqlite
         run: |
           # See https://github.community/t5/GitHub-Actions/ubuntu-latest-Apt-repository-list-issues/td-p/41122/page/2
