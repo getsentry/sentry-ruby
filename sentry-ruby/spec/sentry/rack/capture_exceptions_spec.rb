@@ -672,17 +672,19 @@ RSpec.describe 'Sentry::Rack::CaptureExceptions', when: :rack_available? do
       end
     end
 
-    let(:transaction) { last_sentry_event }
-
     context "with X-Request-Start header" do
-      it "attaches queue time to transaction" do
+      it "emits queue time metric" do
         timestamp = Time.now.to_f - 0.05  # 50ms ago
         env["HTTP_X_REQUEST_START"] = "t=#{timestamp}"
 
         stack.call(env)
+        Sentry.get_current_client.flush
 
-        queue_time = transaction.contexts.dig(:trace, :data, 'http.queue_time_ms')
-        expect(queue_time).to be_within(10).of(50)
+        metric = sentry_metrics.find { |m| m[:name] == "http.queue_time" }
+        expect(metric).not_to be_nil
+        expect(metric[:type]).to eq(:distribution)
+        expect(metric[:value]).to be_within(10).of(50)
+        expect(metric[:unit]).to eq("millisecond")
       end
 
       it "subtracts puma.request_body_wait" do
@@ -691,9 +693,10 @@ RSpec.describe 'Sentry::Rack::CaptureExceptions', when: :rack_available? do
         env["puma.request_body_wait"] = 40  # 40ms waiting for client
 
         stack.call(env)
+        Sentry.get_current_client.flush
 
-        queue_time = transaction.contexts.dig(:trace, :data, 'http.queue_time_ms')
-        expect(queue_time).to be_within(10).of(60)  # 100 - 40
+        metric = sentry_metrics.find { |m| m[:name] == "http.queue_time" }
+        expect(metric[:value]).to be_within(10).of(60)  # 100 - 40
       end
 
       it "handles different timestamp formats" do
@@ -702,29 +705,32 @@ RSpec.describe 'Sentry::Rack::CaptureExceptions', when: :rack_available? do
         env["HTTP_X_REQUEST_START"] = "t=#{timestamp_us}"
 
         stack.call(env)
+        Sentry.get_current_client.flush
 
-        queue_time = transaction.contexts.dig(:trace, :data, 'http.queue_time_ms')
-        expect(queue_time).to be_within(10).of(30)
+        metric = sentry_metrics.find { |m| m[:name] == "http.queue_time" }
+        expect(metric[:value]).to be_within(10).of(30)
       end
     end
 
     context "without X-Request-Start header" do
-      it "doesn't add queue time data" do
+      it "doesn't emit queue time metric" do
         stack.call(env)
+        Sentry.get_current_client.flush
 
-        queue_time = transaction.contexts.dig(:trace, :data, 'http.queue_time_ms')
-        expect(queue_time).to be_nil
+        metric = sentry_metrics.find { |m| m[:name] == "http.queue_time" }
+        expect(metric).to be_nil
       end
     end
 
     context "with invalid header" do
-      it "doesn't add queue time data" do
+      it "doesn't emit queue time metric" do
         env["HTTP_X_REQUEST_START"] = "invalid"
 
         stack.call(env)
+        Sentry.get_current_client.flush
 
-        queue_time = transaction.contexts.dig(:trace, :data, 'http.queue_time_ms')
-        expect(queue_time).to be_nil
+        metric = sentry_metrics.find { |m| m[:name] == "http.queue_time" }
+        expect(metric).to be_nil
       end
     end
 
@@ -733,14 +739,15 @@ RSpec.describe 'Sentry::Rack::CaptureExceptions', when: :rack_available? do
         Sentry.configuration.capture_queue_time = false
       end
 
-      it "doesn't capture queue time" do
+      it "doesn't emit queue time metric" do
         timestamp = Time.now.to_f - 0.05
         env["HTTP_X_REQUEST_START"] = "t=#{timestamp}"
 
         stack.call(env)
+        Sentry.get_current_client.flush
 
-        queue_time = transaction.contexts.dig(:trace, :data, 'http.queue_time_ms')
-        expect(queue_time).to be_nil
+        metric = sentry_metrics.find { |m| m[:name] == "http.queue_time" }
+        expect(metric).to be_nil
       end
     end
   end

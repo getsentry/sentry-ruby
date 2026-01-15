@@ -74,9 +74,16 @@ module Sentry
         transaction = Sentry.continue_trace(env, **options)
         transaction = Sentry.start_transaction(transaction: transaction, custom_sampling_context: { env: env }, **options)
 
-        # attach queue time if available
+        # emit queue time metric if available
         if transaction && (queue_time = extract_queue_time(env))
-          transaction.set_data(Span::DataConventions::HTTP_QUEUE_TIME_MS, queue_time)
+          Sentry.metrics.distribution(
+            "http.queue_time",
+            queue_time,
+            unit: "millisecond",
+            attributes: {
+              transaction: scope.transaction_name
+            }
+          )
         end
 
         transaction
