@@ -142,12 +142,10 @@ module Sentry
       def parse_request_start_header(header_value)
         return nil unless header_value
 
-        # handle format: t=<timestamp>
-        timestamp = if header_value =~ /t=(\d+\.?\d*)/
-          $1.to_f
-        # handle raw timestamp format
-        elsif header_value =~ /^(\d+\.?\d*)$/
-          $1.to_f
+        timestamp = if header_value.start_with?("t=")
+          header_value[2..-1].to_f
+        elsif header_value.match?(/\A\d+(?:\.\d+)?\z/)
+          header_value.to_f
         else
           return nil
         end
