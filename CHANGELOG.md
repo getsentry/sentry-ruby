@@ -1,3 +1,9 @@
+## Unreleased
+
+### Bug Fixes
+
+- Add explicit dependency on logger gem to fix Ruby 4.0 warning ([#2837](https://github.com/getsentry/sentry-ruby/pull/2837))
+
 ## 6.3.0
 
 ### Features
