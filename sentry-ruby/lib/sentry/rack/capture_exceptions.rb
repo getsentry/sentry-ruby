@@ -105,7 +105,7 @@ module Sentry
       # @param env [Hash] Rack env
       # @return [Float, nil] queue time in milliseconds or nil
       def extract_queue_time(env)
-        return nil unless Sentry.configuration.capture_queue_time
+        return nil unless Sentry.configuration&.capture_queue_time
 
         header_value = env["HTTP_X_REQUEST_START"]
         return nil unless header_value
