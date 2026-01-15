@@ -2,6 +2,8 @@
 
 ### Features
 
+- Queue time capture for Rack ([#2838](https://github.com/getsentry/sentry-ruby/pull/2838))
+
 - Implement new `Sentry.metrics` functionality ([#2818](https://github.com/getsentry/sentry-ruby/pull/2818))
 
   The SDK now supports Sentry's new [Trace Connected Metrics](https://docs.sentry.io/product/explore/metrics/) product.
