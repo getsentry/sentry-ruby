@@ -49,6 +49,9 @@ module Sentry
       MESSAGING_DESTINATION_NAME = "messaging.destination.name"
       MESSAGING_MESSAGE_RECEIVE_LATENCY = "messaging.message.receive.latency"
       MESSAGING_MESSAGE_RETRY_COUNT = "messaging.message.retry.count"
+
+      # Time in ms the request spent in the server queue before processing began.
+      HTTP_QUEUE_TIME_MS = "http.queue_time_ms"
     end
 
     STATUS_MAP = {

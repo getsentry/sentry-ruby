@@ -72,7 +72,14 @@ module Sentry
         }
 
         transaction = Sentry.continue_trace(env, **options)
-        Sentry.start_transaction(transaction: transaction, custom_sampling_context: { env: env }, **options)
+        transaction = Sentry.start_transaction(transaction: transaction, custom_sampling_context: { env: env }, **options)
+
+        # attach queue time if available
+        if transaction && (queue_time = extract_queue_time(env))
+          transaction.set_data(Span::DataConventions::HTTP_QUEUE_TIME_MS, queue_time)
+        end
+
+        transaction
       end
 
 
@@ -85,6 +92,78 @@ module Sentry
 
       def mechanism
         Sentry::Mechanism.new(type: MECHANISM_TYPE, handled: false)
+      end
+
+      # Extracts queue time from the request environment.
+      # Calculates the time (in milliseconds) the request spent waiting in the
+      # web server queue before processing began.
+      #
+      # Subtracts puma.request_body_wait to account for time spent waiting for
+      # slow clients to send the request body, isolating actual queue time.
+      # See: https://github.com/puma/puma/blob/master/docs/architecture.md
+      #
+      # @param env [Hash] Rack env
+      # @return [Float, nil] queue time in milliseconds or nil
+      def extract_queue_time(env)
+        return nil unless Sentry.configuration.capture_queue_time
+
+        header_value = env["HTTP_X_REQUEST_START"]
+        return nil unless header_value
+
+        request_start = parse_request_start_header(header_value)
+        return nil unless request_start
+
+        total_time_ms = ((Time.now.to_f - request_start) * 1000).round(2)
+
+        # reject negative (clock skew between proxy & app server) or very large values (> 60 seconds)
+        return nil unless total_time_ms >= 0 && total_time_ms < 60_000
+
+        puma_wait_ms = env["puma.request_body_wait"]
+
+        if puma_wait_ms && puma_wait_ms > 0
+          queue_time_ms = total_time_ms - puma_wait_ms
+          queue_time_ms >= 0 ? queue_time_ms : 0.0 # more sanity check
+        else
+          total_time_ms
+        end
+      rescue StandardError
+        nil
+      end
+
+      # Parses X-Request-Start header value to extract a timestamp.
+      # Supports multiple formats:
+      #   - Nginx: "t=1234567890.123" (seconds with decimal)
+      #   - Heroku, HAProxy 1.9+: "t=1234567890123456" (microseconds)
+      #   - HAProxy < 1.9: "t=1234567890" (seconds)
+      #   - Generic: "1234567890.123" (raw timestamp)
+      #
+      # @param header_value [String] The X-Request-Start header value
+      # @return [Float, nil] Timestamp in seconds since epoch or nil
+      def parse_request_start_header(header_value)
+        return nil unless header_value
+
+        # handle format: t=<timestamp>
+        timestamp = if header_value =~ /t=(\d+\.?\d*)/
+          $1.to_f
+        # handle raw timestamp format
+        elsif header_value =~ /^(\d+\.?\d*)$/
+          $1.to_f
+        else
+          return nil
+        end
+
+        # normalize: timestamps can be in seconds, milliseconds or microseconds
+        # any timestamp > 10 trillion = microseconds
+        if timestamp > 10_000_000_000_000
+          timestamp / 1_000_000.0
+        # timestamp > 10 billion & < 10 trillion = milliseconds
+        elsif timestamp > 10_000_000_000
+          timestamp / 1_000.0
+        else
+          timestamp # assume seconds
+        end
+      rescue StandardError
+        nil
       end
     end
   end
