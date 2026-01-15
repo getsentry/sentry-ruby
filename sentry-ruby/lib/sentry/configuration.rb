@@ -234,6 +234,12 @@ module Sentry
     # @return [Boolean]
     attr_accessor :send_default_pii
 
+    # Capture queue time from X-Request-Start header set by reverse proxies.
+    # Works with any Rack app behind Nginx, HAProxy, Heroku router, etc.
+    # Defaults to true.
+    # @return [Boolean]
+    attr_accessor :capture_queue_time
+
     # Allow to skip Sentry emails within rake tasks
     # @return [Boolean]
     attr_accessor :skip_rake_integration
@@ -512,6 +518,7 @@ module Sentry
       self.enable_backpressure_handling = false
       self.trusted_proxies = []
       self.dsn = ENV["SENTRY_DSN"]
+      self.capture_queue_time = true
 
       spotlight_env = ENV["SENTRY_SPOTLIGHT"]
       spotlight_bool = Sentry::Utils::EnvHelper.env_to_bool(spotlight_env, strict: true)

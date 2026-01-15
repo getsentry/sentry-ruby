@@ -1,3 +1,7 @@
+## Unreleased
+
+- Queue time capture for Rack ([#2838](https://github.com/getsentry/sentry-ruby/pull/2838))
+
 ## 6.3.0
 
 ### Features
