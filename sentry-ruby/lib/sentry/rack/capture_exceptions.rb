@@ -115,8 +115,8 @@ module Sentry
 
         total_time_ms = ((Time.now.to_f - request_start) * 1000).round(2)
 
-        # reject negative (clock skew between proxy & app server) or very large values (> 60 seconds)
-        return nil unless total_time_ms >= 0 && total_time_ms < 60_000
+        # reject negative (clock skew between proxy & app server)
+        return nil unless total_time_ms >= 0
 
         puma_wait_ms = env["puma.request_body_wait"]
 
