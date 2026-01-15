@@ -681,7 +681,7 @@ RSpec.describe 'Sentry::Rack::CaptureExceptions', when: :rack_available? do
 
         stack.call(env)
 
-        queue_time = transaction.contexts.dig(:trace, :data, 'http.queue_time_ms')
+        queue_time = transaction.contexts.dig(:trace, :data, 'http.server.request.time_in_queue')
         expect(queue_time).to be_within(10).of(50)
       end
 
@@ -693,7 +693,7 @@ RSpec.describe 'Sentry::Rack::CaptureExceptions', when: :rack_available? do
 
           stack.call(env)
 
-          queue_time = transaction.contexts.dig(:trace, :data, 'http.queue_time_ms')
+          queue_time = transaction.contexts.dig(:trace, :data, 'http.server.request.time_in_queue')
           expect(queue_time).to be_within(10).of(60)  # 100 - 40
         end
       end
@@ -705,7 +705,7 @@ RSpec.describe 'Sentry::Rack::CaptureExceptions', when: :rack_available? do
 
         stack.call(env)
 
-        queue_time = transaction.contexts.dig(:trace, :data, 'http.queue_time_ms')
+        queue_time = transaction.contexts.dig(:trace, :data, 'http.server.request.time_in_queue')
         expect(queue_time).to be_within(10).of(30)
       end
     end
@@ -714,7 +714,7 @@ RSpec.describe 'Sentry::Rack::CaptureExceptions', when: :rack_available? do
       it "doesn't add queue time data" do
         stack.call(env)
 
-        queue_time = transaction.contexts.dig(:trace, :data, 'http.queue_time_ms')
+        queue_time = transaction.contexts.dig(:trace, :data, 'http.server.request.time_in_queue')
         expect(queue_time).to be_nil
       end
     end
@@ -725,7 +725,7 @@ RSpec.describe 'Sentry::Rack::CaptureExceptions', when: :rack_available? do
 
         stack.call(env)
 
-        queue_time = transaction.contexts.dig(:trace, :data, 'http.queue_time_ms')
+        queue_time = transaction.contexts.dig(:trace, :data, 'http.server.request.time_in_queue')
         expect(queue_time).to be_nil
       end
     end
@@ -741,7 +741,7 @@ RSpec.describe 'Sentry::Rack::CaptureExceptions', when: :rack_available? do
 
         stack.call(env)
 
-        queue_time = transaction.contexts.dig(:trace, :data, 'http.queue_time_ms')
+        queue_time = transaction.contexts.dig(:trace, :data, 'http.server.request.time_in_queue')
         expect(queue_time).to be_nil
       end
     end
