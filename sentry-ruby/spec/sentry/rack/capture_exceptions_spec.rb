@@ -686,14 +686,16 @@ RSpec.describe 'Sentry::Rack::CaptureExceptions', when: :rack_available? do
       end
 
       it "subtracts puma.request_body_wait" do
-        timestamp = Time.now.to_f - 0.1  # 100ms ago
-        env["HTTP_X_REQUEST_START"] = "t=#{timestamp}"
-        env["puma.request_body_wait"] = 40  # 40ms waiting for client
+        Timecop.freeze do
+          timestamp = Time.now.to_f - 0.1  # 100ms ago
+          env["HTTP_X_REQUEST_START"] = "t=#{timestamp}"
+          env["puma.request_body_wait"] = 40  # 40ms waiting for client
 
-        stack.call(env)
+          stack.call(env)
 
-        queue_time = transaction.contexts.dig(:trace, :data, 'http.queue_time_ms')
-        expect(queue_time).to be_within(10).of(60)  # 100 - 40
+          queue_time = transaction.contexts.dig(:trace, :data, 'http.queue_time_ms')
+          expect(queue_time).to be_within(10).of(60)  # 100 - 40
+        end
       end
 
       it "handles different timestamp formats" do
