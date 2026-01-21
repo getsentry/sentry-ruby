@@ -9,6 +9,7 @@ require "sentry/dsn"
 require "sentry/release_detector"
 require "sentry/transport/configuration"
 require "sentry/cron/configuration"
+require "sentry/otlp/configuration"
 require "sentry/linecache"
 require "sentry/interfaces/stacktrace_builder"
 require "sentry/logger"
@@ -251,6 +252,10 @@ module Sentry
     # Cron related configuration.
     # @return [Cron::Configuration]
     attr_reader :cron
+
+    # OTLP related configuration.
+    # @return [OTLP::Configuration]
+    attr_reader :otlp
 
     # Take a float between 0.0 and 1.0 as the sample rate for tracing events (transactions).
     # @return [Float, nil]
@@ -538,6 +543,7 @@ module Sentry
 
       @transport = Transport::Configuration.new
       @cron = Cron::Configuration.new
+      @otlp = OTLP::Configuration.new
       @structured_logging = StructuredLoggingConfiguration.new
       @gem_specs = Hash[Gem::Specification.map { |spec| [spec.name, spec.version.to_s] }] if Gem::Specification.respond_to?(:map)
 

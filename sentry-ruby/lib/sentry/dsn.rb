@@ -54,6 +54,10 @@ module Sentry
       "#{path}/api/#{project_id}/envelope/"
     end
 
+    def otlp_traces_endpoint
+      "#{path}/api/#{project_id}/integration/otlp/v1/traces/"
+    end
+
     def local?
       @local ||= (localhost? || private_ip? || resolved_ips_private?)
     end
