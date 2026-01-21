@@ -60,19 +60,10 @@ module Sentry
         event.attachments = attachments
       end
 
-      if span
-        event.contexts[:trace] ||= span.get_trace_context
-
-        if event.respond_to?(:dynamic_sampling_context)
-          event.dynamic_sampling_context ||= span.get_dynamic_sampling_context
-        end
-      else
-        event.contexts[:trace] ||= propagation_context.get_trace_context
-
-        if event.respond_to?(:dynamic_sampling_context)
-          event.dynamic_sampling_context ||= propagation_context.get_dynamic_sampling_context
-        end
-      end
+      trace_context = get_trace_context
+      dynamic_sampling_context = trace_context.delete(:dynamic_sampling_context)
+      event.contexts[:trace] ||= trace_context
+      event.dynamic_sampling_context ||= dynamic_sampling_context
 
       all_event_processors = self.class.global_event_processors + @event_processors
 
@@ -94,7 +85,7 @@ module Sentry
     # @return [MetricEvent, LogEvent] the telemetry event with scope context applied
     def apply_to_telemetry(telemetry)
       # TODO-neel when new scope set_attribute api is added: add them here
-      trace_context = span ? span.get_trace_context : propagation_context.get_trace_context
+      trace_context = get_trace_context
       telemetry.trace_id = trace_context[:trace_id]
       telemetry.span_id = trace_context[:span_id]
 
@@ -303,6 +294,20 @@ module Sentry
     # @return [Span, nil]
     def get_span
       span
+    end
+
+    # Returns the trace context for this scope.
+    # Prioritizes external propagation context (from OTel) over local propagation context.
+    # @return [Hash]
+    def get_trace_context
+      if span
+        span.get_trace_context.merge(dynamic_sampling_context: span.get_dynamic_sampling_context)
+      elsif (external_context = Sentry.get_external_propagation_context)
+        trace_id, span_id = external_context
+        { trace_id: trace_id, span_id: span_id }
+      else
+        propagation_context.get_trace_context.merge(dynamic_sampling_context: propagation_context.get_dynamic_sampling_context)
+      end
     end
 
     # Sets the scope's fingerprint attribute.
