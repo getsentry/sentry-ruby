@@ -1,3 +1,27 @@
+## Unreleased
+
+### Features
+
+- Add support for OTLP ingestion in `sentry-opentelemetry` ([#2853](https://github.com/getsentry/sentry-ruby/pull/2853))
+
+  Sentry now has first class [OTLP ingestion](https://docs.sentry.io/concepts/otlp/) capabilities.
+
+  ```ruby
+  Sentry.init do |config|
+    ## ...
+    config.otlp.enabled = true
+  end
+  ```
+
+  Under the hood, this will setup:
+  - An `OpenTelemetry::Exporter` that will automatically set up the OTLP ingestion endpoint from your DSN
+    - You can turn this off with `config.otlp.setup_otlp_traces_exporter = false` to setup your own exporter
+  - An `OTLPPropagator` that ensures Distributed Tracing works
+    - You can turn this off with `config.otlp.setup_propagator = false`
+  - Trace/Span linking for all other Sentry events such as Errors, Logs, Crons and Metrics
+
+  If you were using the `SpanProcessor` before, we recommend migrating over to `config.otlp` since it's a much simpler setup.
+
 ## 6.3.1
 
 ### Bug Fixes

@@ -69,17 +69,7 @@ module Sentry
     end
 
     def generate_auth_header
-      return nil unless @dsn
-
-      now = Sentry.utc_now.to_i
-      fields = {
-        "sentry_version" => PROTOCOL_VERSION,
-        "sentry_client" => USER_AGENT,
-        "sentry_timestamp" => now,
-        "sentry_key" => @dsn.public_key
-      }
-      fields["sentry_secret"] = @dsn.secret_key if @dsn.secret_key
-      "Sentry " + fields.map { |key, value| "#{key}=#{value}" }.join(", ")
+      @dsn&.generate_auth_header(client: USER_AGENT)
     end
 
     def conn
