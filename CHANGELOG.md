@@ -4,6 +4,10 @@
 
 - Add explicit dependency on logger gem to fix Ruby 4.0 warning ([#2837](https://github.com/getsentry/sentry-ruby/pull/2837))
 
+### Internal
+
+- Add external_propagation_context support ([#2841](https://github.com/getsentry/sentry-ruby/pull/2841))
+
 ## 6.3.0
 
 ### Features
