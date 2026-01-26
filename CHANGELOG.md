@@ -1,3 +1,9 @@
+## Unreleased
+
+### Internal
+
+- Add external_propagation_context support ([#2841](https://github.com/getsentry/sentry-ruby/pull/2841))
+
 ## 6.3.0
 
 ### Features
