@@ -140,7 +140,7 @@ module Sentry
       # @param header_value [String] The X-Request-Start header value
       # @return [Float, nil] Timestamp in seconds since epoch or nil
       def parse_request_start_header(header_value)
-        return nil unless header_value
+        return unless header_value
 
         timestamp = if header_value.start_with?("t=")
           header_value[2..-1].to_f
