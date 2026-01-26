@@ -161,7 +161,6 @@ module Sentry
           timestamp # assume seconds
         end
       rescue StandardError
-        nil
       end
     end
   end
