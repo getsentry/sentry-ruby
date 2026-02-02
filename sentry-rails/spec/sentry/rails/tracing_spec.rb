@@ -59,6 +59,23 @@ RSpec.describe Sentry::Rails::Tracing, type: :request do
       expect(second_span[:timestamp] - second_span[:start_timestamp]).to be_between(min_duration, max_duration)
     end
 
+    it "records correct status when Rails rescues exception to non-500 status" do
+      get "/posts/999999"
+
+      expect(response).to have_http_status(:not_found)
+      expect(transport.events.count).to eq(1)
+
+      transaction = transport.events.last.to_h
+
+      expect(transaction[:type]).to eq("transaction")
+
+      first_span = transaction[:spans][0]
+      expect(first_span[:op]).to eq("view.process_action.action_controller")
+      expect(first_span[:description]).to eq("PostsController#show")
+      expect(first_span[:status]).to eq("not_found")
+      expect(first_span[:data]["http.response.status_code"]).to eq(404)
+    end
+
     it "records transaction alone" do
       p = Post.create!
 
