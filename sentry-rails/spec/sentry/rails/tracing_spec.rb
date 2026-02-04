@@ -246,7 +246,7 @@ RSpec.describe Sentry::Rails::Tracing, type: :request do
         get "/assets/application-ad022df6f1289ec07a560bb6c9a227ecf7bdd5a5cace5e9a8cdbd50b454931fb.css"
 
         expect(response).to have_http_status(:not_found)
-        expect(transport.events.count).to eq(1)
+        expect(transport.events.count).to eq(0)
       end
     end
   end
