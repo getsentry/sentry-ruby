@@ -112,6 +112,29 @@ RSpec.describe Sentry::Rails::Tracing, type: :request do
     end
   end
 
+  context "with report_rescued_exceptions and public error pages" do
+    before do
+      make_basic_app do |config, app|
+        config.traces_sample_rate = 1.0
+        config.rails.report_rescued_exceptions = true
+        # Enable capturing RoutingError which is excluded by default
+        config.excluded_exceptions -= ['ActionController::RoutingError']
+        app.config.consider_all_requests_local = false
+      end
+    end
+
+    it "records correct status code for 404 errors served by public error pages" do
+      get "/nonexistent_route"
+
+      expect(response).to have_http_status(:not_found)
+      expect(transport.events.count).to be >= 1
+
+      # Verify the captured event has correct 404 status in trace data, not 500
+      event = transport.events.first.to_h
+      expect(event.dig(:contexts, :trace, :data, "http.response.status_code")).to eq(404)
+    end
+  end
+
   describe "filtering pii data" do
     context "with send_default_pii = false" do
       before do
