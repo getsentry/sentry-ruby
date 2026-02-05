@@ -139,6 +139,13 @@ RSpec.describe Sentry::Rails::Tracing, type: :request do
         config.traces_sample_rate = 1.0
         app.config.consider_all_requests_local = false
         config.trace_ignore_status_codes = [(301..303), (305..399)]
+
+        # In Rails < 6.0, ActiveRecord::RecordNotFound is not automatically mapped to :not_found
+        # https://github.com/rails/rails/blob/main/guides/source/configuring.md?configaction_dispatchrescue_responses
+        # We need to add it to the rescue_responses hash
+        if Rails.gem_version < Gem::Version.new("6.0.0")
+          ActionDispatch::ExceptionWrapper.rescue_responses['ActiveRecord::RecordNotFound'] = :not_found
+        end
       end
     end
 
