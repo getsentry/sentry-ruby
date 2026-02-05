@@ -117,7 +117,6 @@ RSpec.describe Sentry::Rails::Tracing, type: :request do
       make_basic_app do |config, app|
         config.traces_sample_rate = 1.0
         config.rails.report_rescued_exceptions = true
-        # Enable capturing RoutingError which is excluded by default
         config.excluded_exceptions -= ['ActionController::RoutingError']
         app.config.consider_all_requests_local = false
       end
@@ -129,7 +128,6 @@ RSpec.describe Sentry::Rails::Tracing, type: :request do
       expect(response).to have_http_status(:not_found)
       expect(transport.events.count).to be >= 1
 
-      # Verify the captured event has correct 404 status in trace data, not 500
       event = transport.events.first.to_h
       expect(event.dig(:contexts, :trace, :data, "http.response.status_code")).to eq(404)
     end
@@ -139,9 +137,7 @@ RSpec.describe Sentry::Rails::Tracing, type: :request do
     before do
       make_basic_app do |config, app|
         config.traces_sample_rate = 1.0
-        # Don't enable report_rescued_exceptions since RecordNotFound is excluded by default anyway
         app.config.consider_all_requests_local = false
-        # Allow 404 status codes to be traced (default ignores 401-404)
         config.trace_ignore_status_codes = [(301..303), (305..399)]
       end
     end
@@ -155,11 +151,9 @@ RSpec.describe Sentry::Rails::Tracing, type: :request do
       transaction = transport.events.last.to_h
 
       expect(transaction[:type]).to eq("transaction")
-      # Transaction should have correct 404 status (this is what the PR fixes)
       expect(transaction.dig(:contexts, :trace, :status)).to eq("not_found")
       expect(transaction.dig(:contexts, :trace, :data, "http.response.status_code")).to eq(404)
 
-      # Controller action span will still show internal_error because exception was raised
       first_span = transaction[:spans][0]
       expect(first_span[:op]).to eq("view.process_action.action_controller")
       expect(first_span[:description]).to eq("PostsController#show")
