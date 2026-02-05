@@ -135,6 +135,39 @@ RSpec.describe Sentry::Rails::Tracing, type: :request do
     end
   end
 
+  context "with public error pages for controller exceptions" do
+    before do
+      make_basic_app do |config, app|
+        config.traces_sample_rate = 1.0
+        # Don't enable report_rescued_exceptions since RecordNotFound is excluded by default anyway
+        app.config.consider_all_requests_local = false
+        # Allow 404 status codes to be traced (default ignores 401-404)
+        config.trace_ignore_status_codes = [(301..303), (305..399)]
+      end
+    end
+
+    it "records correct status when Rails rescues exception to non-500 status" do
+      get "/posts/999999"
+
+      expect(response).to have_http_status(:not_found)
+      expect(transport.events.count).to eq(1)
+
+      transaction = transport.events.last.to_h
+
+      expect(transaction[:type]).to eq("transaction")
+      # Transaction should have correct 404 status (this is what the PR fixes)
+      expect(transaction.dig(:contexts, :trace, :status)).to eq("not_found")
+      expect(transaction.dig(:contexts, :trace, :data, "http.response.status_code")).to eq(404)
+
+      # Controller action span will still show internal_error because exception was raised
+      first_span = transaction[:spans][0]
+      expect(first_span[:op]).to eq("view.process_action.action_controller")
+      expect(first_span[:description]).to eq("PostsController#show")
+      expect(first_span[:status]).to eq("internal_error")
+      expect(first_span[:data]["http.response.status_code"]).to eq(500)
+    end
+  end
+
   describe "filtering pii data" do
     context "with send_default_pii = false" do
       before do
@@ -233,6 +266,8 @@ RSpec.describe Sentry::Rails::Tracing, type: :request do
           config.traces_sample_rate = 1.0
           config.sdk_logger = logger
           config.rails.assets_regexp = %r{/foo/}
+          # Allow 404 status codes to be traced (default ignores 401-404)
+          config.trace_ignore_status_codes = [(301..303), (305..399)]
         end
       end
 
@@ -246,7 +281,7 @@ RSpec.describe Sentry::Rails::Tracing, type: :request do
         get "/assets/application-ad022df6f1289ec07a560bb6c9a227ecf7bdd5a5cace5e9a8cdbd50b454931fb.css"
 
         expect(response).to have_http_status(:not_found)
-        expect(transport.events.count).to eq(0)
+        expect(transport.events.count).to eq(1)
       end
     end
   end
