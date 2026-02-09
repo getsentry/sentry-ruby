@@ -2,6 +2,7 @@
 
 ### Bug Fixes
 
+- Use `ActionDispatch::ExceptionWrapper` for correct HTTP status code ([#2850](https://github.com/getsentry/sentry-ruby/pull/2850))
 - Add explicit dependency on logger gem to fix Ruby 4.0 warning ([#2837](https://github.com/getsentry/sentry-ruby/pull/2837))
 
 ### Internal

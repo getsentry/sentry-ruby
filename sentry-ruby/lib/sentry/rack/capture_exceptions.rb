@@ -33,7 +33,7 @@ module Sentry
               raise # Don't capture Sentry errors
             rescue Exception => e
               capture_exception(e, env)
-              finish_transaction(transaction, 500)
+              finish_transaction(transaction, status_code_for_exception(e))
               raise
             end
 
@@ -85,6 +85,10 @@ module Sentry
 
       def mechanism
         Sentry::Mechanism.new(type: MECHANISM_TYPE, handled: false)
+      end
+
+      def status_code_for_exception(exception)
+        500
       end
     end
   end
