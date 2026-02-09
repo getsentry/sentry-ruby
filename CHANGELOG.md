@@ -1,5 +1,9 @@
 ## Unreleased
 
+### Features
+
+- Include `Delayed::Job` instance in hint [#1861](https://github.com/getsentry/sentry-ruby/pull/1861)
+
 ### Bug Fixes
 
 - Use `ActionDispatch::ExceptionWrapper` for correct HTTP status code ([#2850](https://github.com/getsentry/sentry-ruby/pull/2850))
