@@ -248,7 +248,7 @@ RSpec.describe "Sentry Metrics" do
 
           expect(headers[:event_id]).to match(/\A[0-9a-f]{32}\z/) # UUID format
           expect(headers[:sent_at]).to match(/\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}/) # ISO8601 timestamp
-          expect(headers[:dsn]).to eq(Sentry.configuration.dsn)
+          expect(headers[:dsn]).to eq(Sentry.configuration.dsn.to_s)
           expect(headers[:sdk]).to eq(Sentry.sdk_meta)
         end
 
