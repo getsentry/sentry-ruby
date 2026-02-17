@@ -10,7 +10,8 @@ require "simplecov"
 require "rspec/retry"
 require "redis"
 require "stackprof" unless RUBY_PLATFORM == "java"
-require "vernier" unless RUBY_PLATFORM == "java" || RUBY_VERSION < "3.2"
+# XXX: vernier does not currently compile on Ruby head (4.1)
+require "vernier" unless RUBY_PLATFORM == "java" || RUBY_VERSION < "3.2" || RUBY_VERSION.start_with?("4.1")
 
 SimpleCov.start do
   project_name "sentry-ruby"
