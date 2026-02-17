@@ -133,6 +133,14 @@ RSpec.describe Sentry::TestHelper do
       expect(Sentry::Scope.global_event_processors).to eq([])
     end
 
+    context "when the test layer was already popped before teardown" do
+      it "emits a warning to stderr" do
+        Sentry.get_current_hub.pop_scope # simulate accidental early pop
+
+        expect { teardown_sentry_test }.to output(/teardown_sentry_test.*test scope layer/).to_stderr
+      end
+    end
+
     context "when the configuration is mutated" do
       it "rolls back client changes" do
         Sentry.configuration.environment = "quack"

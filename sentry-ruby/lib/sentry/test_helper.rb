@@ -56,9 +56,12 @@ module Sentry
 
       # pop testing layer created by `setup_sentry_test`
       # but keep the base layer to avoid nil-pointer errors
-      # TODO: find a way to notify users if they somehow popped the test layer before calling this method
       if Sentry.get_current_hub.instance_variable_get(:@stack).size > 1
         Sentry.get_current_hub.pop_scope
+      else
+        warn "[Sentry] `teardown_sentry_test` expected a test scope layer to be present, " \
+             "but it was already removed. Make sure you are not calling `Sentry.get_current_hub.pop_scope` " \
+             "manually in your tests."
       end
       Sentry::Scope.global_event_processors.clear
     end
