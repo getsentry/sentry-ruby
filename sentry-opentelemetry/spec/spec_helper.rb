@@ -39,6 +39,7 @@ RSpec.configure do |config|
 
   config.after :each do
     reset_sentry_globals!
+    Sentry::Scope.global_event_processors.clear
   end
 end
 
@@ -47,11 +48,14 @@ def perform_basic_setup
     config.sdk_logger = Logger.new(nil)
     config.dsn = Sentry::TestHelper::DUMMY_DSN
     config.transport.transport_class = Sentry::DummyTransport
-    # so the events will be sent synchronously for testing
     config.background_worker_threads = 0
     config.instrumenter = :otel
     config.traces_sample_rate = 1.0
     yield(config) if block_given?
+  end
+
+  if Sentry.configuration.instrumenter == :otel
+    Sentry::OpenTelemetry::SpanProcessor.instance.send(:setup_event_processor)
   end
 end
 

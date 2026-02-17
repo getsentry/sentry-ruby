@@ -331,8 +331,8 @@ RSpec.describe Sentry::HTTPTransport do
 
     it "generates an auth header" do
       expect(subject.send(:generate_auth_header)).to eq(
-        "Sentry sentry_version=7, sentry_client=sentry-ruby/#{Sentry::VERSION}, sentry_timestamp=#{fake_time.to_i}, " \
-        "sentry_key=12345, sentry_secret=67890"
+        "Sentry sentry_version=7, sentry_timestamp=#{fake_time.to_i}, " \
+        "sentry_key=12345, sentry_client=sentry-ruby/#{Sentry::VERSION}, sentry_secret=67890"
       )
     end
 
@@ -340,8 +340,8 @@ RSpec.describe Sentry::HTTPTransport do
       configuration.server = "https://66260460f09b5940498e24bb7ce093a0@sentry.io/42"
 
       expect(subject.send(:generate_auth_header)).to eq(
-        "Sentry sentry_version=7, sentry_client=sentry-ruby/#{Sentry::VERSION}, sentry_timestamp=#{fake_time.to_i}, " \
-        "sentry_key=66260460f09b5940498e24bb7ce093a0"
+        "Sentry sentry_version=7, sentry_timestamp=#{fake_time.to_i}, " \
+        "sentry_key=66260460f09b5940498e24bb7ce093a0, sentry_client=sentry-ruby/#{Sentry::VERSION}"
       )
     end
   end

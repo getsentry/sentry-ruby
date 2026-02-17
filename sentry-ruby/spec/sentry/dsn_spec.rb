@@ -26,6 +26,12 @@ RSpec.describe Sentry::DSN do
     end
   end
 
+  describe "#otlp_traces_endpoint" do
+    it "assembles correct OTLP traces endpoint" do
+      expect(subject.otlp_traces_endpoint).to eq("/sentry/api/42/integration/otlp/v1/traces/")
+    end
+  end
+
   describe "#server" do
     it "returns scheme + host" do
       expect(subject.server).to eq("http://sentry.localdomain:3000")

@@ -5,7 +5,7 @@ require "sentry/envelope"
 
 module Sentry
   class Transport
-    PROTOCOL_VERSION = "7"
+    PROTOCOL_VERSION = DSN::PROTOCOL_VERSION
     USER_AGENT = "sentry-ruby/#{Sentry::VERSION}"
     CLIENT_REPORT_INTERVAL = 30
 
