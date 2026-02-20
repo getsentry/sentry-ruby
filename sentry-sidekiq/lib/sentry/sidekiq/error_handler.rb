@@ -60,6 +60,9 @@ module Sentry
 
       def retryable?(context)
         retry_option = context.dig(:job, "retry")
+        retry_option ||= context.dig(:job, "class")&.safe_constantize
+                                                   &.get_sidekiq_options
+                                                   &.[]("retry")
         # when `retry` is not specified, it's default is `true` and it means 25 retries.
         retry_option == true || (retry_option.is_a?(Integer) && retry_option.positive?)
       end
