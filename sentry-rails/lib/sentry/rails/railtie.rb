@@ -142,6 +142,9 @@ module Sentry
 
     def register_error_subscriber(app)
       require "sentry/rails/error_subscriber"
+      ActiveSupport::ErrorReporter::SEVERITIES.push(
+        *%i[fatal log debug warn].reject { |severity| ActiveSupport::ErrorReporter::SEVERITIES.include?(severity) }
+      )
       app.executor.error_reporter.subscribe(Sentry::Rails::ErrorSubscriber.new)
     end
   end
