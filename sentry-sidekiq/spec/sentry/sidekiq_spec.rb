@@ -210,6 +210,24 @@ RSpec.describe Sentry::Sidekiq do
       end
     end
 
+    context "when retry is nil in the job payload (e.g. raw payload pushed by AWS Lambda)" do
+      it "treats the job as retryable by default and does not report on first failure" do
+        context = {
+          job: {
+            "class" => "SadWorker",
+            "jid" => "abc123",
+            "queue" => "default",
+            "retry_count" => nil
+          }
+        }
+
+        handler = Sentry::Sidekiq::ErrorHandler.new
+        handler.call(RuntimeError.new("I'm sad!"), context)
+
+        expect(transport.events.count).to eq(0)
+      end
+    end
+
     context "when retry is not specified on the worker" do
       before do
         # this is required for Sidekiq to assign default options to the worker
