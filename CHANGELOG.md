@@ -22,6 +22,8 @@
 
   If you were using the `SpanProcessor` before, we recommend migrating over to `config.otlp` since it's a much simpler setup.
 
+- Treat Sidekiq nil retry as true ([#2864](https://github.com/getsentry/sentry-ruby/pull/2864))
+
 ### Bug Fixes
 
 - Fix `MetricEvent` timestamp serialization to float ([#2862](https://github.com/getsentry/sentry-ruby/pull/2862))
