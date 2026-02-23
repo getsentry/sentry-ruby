@@ -1,5 +1,6 @@
 # frozen_string_literal: true
 
+require "cgi/escape"
 require "concurrent/utility/processor_counter"
 
 require "sentry/utils/exception_cause_chain"

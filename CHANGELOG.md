@@ -25,6 +25,7 @@
 ### Bug Fixes
 
 - Fix `MetricEvent` timestamp serialization to float ([#2862](https://github.com/getsentry/sentry-ruby/pull/2862))
+- Fix CGI imports for ruby 4.x ([#2863](https://github.com/getsentry/sentry-ruby/pull/2863))
 
 ## 6.3.1
 

@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-require "cgi"
+require "cgi/escape"
 
 module Sentry
   # A {https://www.w3.org/TR/baggage W3C Baggage Header} implementation.
