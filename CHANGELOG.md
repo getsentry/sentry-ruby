@@ -22,6 +22,10 @@
 
   If you were using the `SpanProcessor` before, we recommend migrating over to `config.otlp` since it's a much simpler setup.
 
+### Bug Fixes
+
+- Fix `MetricEvent` timestamp serialization to float ([#2862](https://github.com/getsentry/sentry-ruby/pull/2862))
+
 ## 6.3.1
 
 ### Bug Fixes

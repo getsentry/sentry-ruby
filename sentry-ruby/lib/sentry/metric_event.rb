@@ -33,7 +33,7 @@ module Sentry
         type: @type,
         value: @value,
         unit: @unit,
-        timestamp: @timestamp,
+        timestamp: @timestamp.to_f,
         trace_id: @trace_id,
         span_id: @span_id,
         attributes: serialize_attributes
