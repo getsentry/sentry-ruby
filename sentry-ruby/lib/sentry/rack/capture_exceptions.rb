@@ -143,7 +143,9 @@ module Sentry
         return unless header_value
 
         timestamp = if header_value.start_with?("t=")
-          header_value[2..-1].to_f
+          value = header_value[2..-1]
+          return nil unless value.match?(/\A\d+(?:\.\d+)?\z/)
+          value.to_f
         elsif header_value.match?(/\A\d+(?:\.\d+)?\z/)
           header_value.to_f
         else

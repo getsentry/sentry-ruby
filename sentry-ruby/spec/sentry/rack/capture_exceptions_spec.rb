@@ -728,6 +728,17 @@ RSpec.describe 'Sentry::Rack::CaptureExceptions', when: :rack_available? do
         queue_time = transaction.contexts.dig(:trace, :data, 'http.server.request.time_in_queue')
         expect(queue_time).to be_nil
       end
+
+      it "doesn't add queue time data for malformed t= values" do
+        ["t=invalid", "t=abc", "t="].each do |bad_value|
+          env["HTTP_X_REQUEST_START"] = bad_value
+
+          stack.call(env)
+
+          queue_time = transaction.contexts.dig(:trace, :data, 'http.server.request.time_in_queue')
+          expect(queue_time).to be_nil, "expected nil for header #{bad_value.inspect}"
+        end
+      end
     end
 
     context "when capture_queue_time is disabled" do
