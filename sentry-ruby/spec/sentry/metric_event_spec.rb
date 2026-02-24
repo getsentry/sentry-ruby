@@ -134,32 +134,12 @@ RSpec.describe Sentry::MetricEvent do
     end
 
     context "with user data" do
-      context "when send_default_pii is true" do
-        before do
-          Sentry.configuration.send_default_pii = true
-        end
+      it "includes user.id attribute" do
+        hash = metric_event_scope_applied.to_h
 
-        it "includes user.id attribute" do
-          hash = metric_event_scope_applied.to_h
-
-          expect(hash[:attributes]["user.id"]).to eq({ type: "string", value: "123" })
-          expect(hash[:attributes]["user.name"]).to eq({ type: "string", value: "jane" })
-          expect(hash[:attributes]["user.email"]).to eq({ type: "string", value: "jane.doe@email.com" })
-        end
-      end
-
-      context "when send_default_pii is false" do
-        before do
-          Sentry.configuration.send_default_pii = false
-        end
-
-        it "does not include user attributes" do
-          hash = metric_event_scope_applied.to_h
-
-          expect(hash[:attributes].key?("user.id")).to eq(false)
-          expect(hash[:attributes].key?("user.name")).to eq(false)
-          expect(hash[:attributes].key?("user.email")).to eq(false)
-        end
+        expect(hash[:attributes]["user.id"]).to eq({ type: "string", value: "123" })
+        expect(hash[:attributes]["user.name"]).to eq({ type: "string", value: "jane" })
+        expect(hash[:attributes]["user.email"]).to eq({ type: "string", value: "jane.doe@email.com" })
       end
     end
   end

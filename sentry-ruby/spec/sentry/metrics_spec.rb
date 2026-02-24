@@ -174,38 +174,17 @@ RSpec.describe "Sentry Metrics" do
           end
         end
 
-        context "when send_default_pii is true" do
-          before do
-            Sentry.configuration.send_default_pii = true
-          end
+        it "includes user attributes in the metric" do
+          Sentry.metrics.count("test.counter")
 
-          it "includes user attributes in the metric" do
-            Sentry.metrics.count("test.counter")
+          Sentry.get_current_client.flush
 
-            Sentry.get_current_client.flush
+          metric = sentry_metrics.first
+          attributes = metric[:attributes]
 
-            metric = sentry_metrics.first
-            attributes = metric[:attributes]
-
-            expect(attributes["user.id"]).to eq({ type: "integer", value: 123 })
-            expect(attributes["user.name"]).to eq({ type: "string", value: "jane" })
-            expect(attributes["user.email"]).to eq({ type: "string", value: "jane@example.com" })
-          end
-        end
-
-        context "when send_default_pii is false" do
-          it "does not include user attributes" do
-            Sentry.metrics.count("test.counter")
-
-            Sentry.get_current_client.flush
-
-            metric = sentry_metrics.first
-            attributes = metric[:attributes]
-
-            expect(attributes).not_to have_key("user.id")
-            expect(attributes).not_to have_key("user.name")
-            expect(attributes).not_to have_key("user.email")
-          end
+          expect(attributes["user.id"]).to eq({ type: "integer", value: 123 })
+          expect(attributes["user.name"]).to eq({ type: "string", value: "jane" })
+          expect(attributes["user.email"]).to eq({ type: "string", value: "jane@example.com" })
         end
       end
 

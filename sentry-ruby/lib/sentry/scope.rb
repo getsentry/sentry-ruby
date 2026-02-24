@@ -98,7 +98,7 @@ module Sentry
       telemetry.attributes["sentry.release"] ||= configuration.release if configuration.release
       telemetry.attributes["server.address"] ||= configuration.server_name if configuration.server_name
 
-      if configuration.send_default_pii && !user.empty?
+      unless user.empty?
         telemetry.attributes["user.id"] ||= user[:id] if user[:id]
         telemetry.attributes["user.name"] ||= user[:username] if user[:username]
         telemetry.attributes["user.email"] ||= user[:email] if user[:email]
