@@ -108,7 +108,7 @@ module Sentry
         return unless Sentry.configuration&.capture_queue_time
 
         header_value = env["HTTP_X_REQUEST_START"]
-        return nil unless header_value
+        return unless header_value
 
         request_start = parse_request_start_header(header_value)
         return nil unless request_start
