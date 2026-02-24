@@ -127,7 +127,6 @@ module Sentry
           total_time_ms
         end
       rescue StandardError
-        nil
       end
 
       # Parses X-Request-Start header value to extract a timestamp.
