@@ -111,7 +111,7 @@ module Sentry
         return unless header_value
 
         request_start = parse_request_start_header(header_value)
-        return nil unless request_start
+        return unless request_start
 
         total_time_ms = ((Time.now.to_f - request_start) * 1000).round(2)
 
