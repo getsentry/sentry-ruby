@@ -148,7 +148,7 @@ module Sentry
         elsif header_value.match?(/\A\d+(?:\.\d+)?\z/)
           header_value.to_f
         else
-          return nil
+          return
         end
 
         # normalize: timestamps can be in seconds, milliseconds or microseconds
