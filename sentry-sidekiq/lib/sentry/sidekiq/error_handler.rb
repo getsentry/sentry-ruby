@@ -61,7 +61,7 @@ module Sentry
       def retryable?(context)
         retry_option = context.dig(:job, "retry")
         # when `retry` is not specified, it's default is `true` and it means 25 retries.
-        retry_option == true || (retry_option.is_a?(Integer) && retry_option.positive?)
+        retry_option.nil? || retry_option == true || (retry_option.is_a?(Integer) && retry_option.positive?)
       end
 
       # @return [Integer] the number of retries allowed for the job
@@ -73,7 +73,7 @@ module Sentry
         case limit
         when Integer
           limit
-        when TrueClass
+        when TrueClass, NilClass
           max_retries =
             if WITH_SIDEKIQ_7
               # Sidekiq 7.1.5+ passes the config to the error handler, so we should use that.

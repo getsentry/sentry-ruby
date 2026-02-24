@@ -666,6 +666,38 @@ module Sentry
       META
     end
 
+    # Registers a callback function that retrieves the current external propagation context.
+    # This is used by OpenTelemetry integration to provide trace_id and span_id from OTel context.
+    #
+    # @param callback [Proc, nil] A callable that returns [trace_id, span_id] or nil
+    # @return [void]
+    #
+    # @example
+    #   Sentry.register_external_propagation_context do
+    #     span_context = OpenTelemetry::Trace.current_span.context
+    #     return nil unless span_context.valid?
+    #     [span_context.hex_trace_id, span_context.hex_span_id]
+    #   end
+    def register_external_propagation_context(&callback)
+      @external_propagation_context_callback = callback
+    end
+
+    # Returns the external propagation context (trace_id, span_id) if a callback is registered.
+    #
+    # @return [Array<String>, nil] A tuple of [trace_id, span_id] or nil if no context is available
+    def get_external_propagation_context
+      return nil unless @external_propagation_context_callback
+
+      @external_propagation_context_callback.call
+    rescue => e
+      sdk_logger&.debug(LOGGER_PROGNAME) { "Error getting external propagation context: #{e.message}" } if initialized?
+      nil
+    end
+
+    def clear_external_propagation_context
+      @external_propagation_context_callback = nil
+    end
+
     # @!visibility private
     def utc_now
       Time.now.utc

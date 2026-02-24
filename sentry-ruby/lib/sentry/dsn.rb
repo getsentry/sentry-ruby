@@ -6,6 +6,7 @@ require "resolv"
 
 module Sentry
   class DSN
+    PROTOCOL_VERSION = "7"
     PORT_MAP = { "http" => 80, "https" => 443 }.freeze
     REQUIRED_ATTRIBUTES = %w[host path public_key project_id].freeze
     LOCALHOST_NAMES = %w[localhost 127.0.0.1 ::1 [::1]].freeze
@@ -54,6 +55,10 @@ module Sentry
       "#{path}/api/#{project_id}/envelope/"
     end
 
+    def otlp_traces_endpoint
+      "#{path}/api/#{project_id}/integration/otlp/v1/traces/"
+    end
+
     def local?
       @local ||= (localhost? || private_ip? || resolved_ips_private?)
     end
@@ -80,6 +85,21 @@ module Sentry
           false
         end
       end
+    end
+
+    def generate_auth_header(client: nil)
+      now = Sentry.utc_now.to_i
+
+      fields = {
+        "sentry_version" => PROTOCOL_VERSION,
+        "sentry_timestamp" => now,
+        "sentry_key" => @public_key
+      }
+
+      fields["sentry_client"] = client if client
+      fields["sentry_secret"] = @secret_key if @secret_key
+
+      "Sentry " + fields.map { |key, value| "#{key}=#{value}" }.join(", ")
     end
   end
 end

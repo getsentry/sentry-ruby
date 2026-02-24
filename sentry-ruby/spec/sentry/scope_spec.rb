@@ -187,6 +187,78 @@ RSpec.describe Sentry::Scope do
     end
   end
 
+  describe "#get_trace_context" do
+    before { perform_basic_setup }
+
+    context "with span" do
+      let(:transaction) { Sentry::Transaction.new(op: "test") }
+
+      before do
+        subject.set_span(transaction)
+      end
+
+      it "returns the span's trace context with dynamic_sampling_context" do
+        trace_context = subject.get_trace_context
+        expect(trace_context[:trace_id]).to eq(transaction.trace_id)
+        expect(trace_context[:span_id]).to eq(transaction.span_id)
+        expect(trace_context[:op]).to eq("test")
+        expect(trace_context[:dynamic_sampling_context]).to eq(transaction.get_dynamic_sampling_context)
+      end
+
+      it "prioritizes span over external propagation context" do
+        Sentry.register_external_propagation_context do
+          ["abc123def456789012345678901234ab", "1234567890abcdef"]
+        end
+
+        trace_context = subject.get_trace_context
+        expect(trace_context[:trace_id]).to eq(transaction.trace_id)
+        expect(trace_context[:dynamic_sampling_context]).to eq(transaction.get_dynamic_sampling_context)
+
+        Sentry.clear_external_propagation_context
+      end
+    end
+
+    context "with external propagation context" do
+      let(:external_trace_id) { "abc123def456789012345678901234ab" }
+      let(:external_span_id) { "1234567890abcdef" }
+
+      before do
+        Sentry.register_external_propagation_context do
+          [external_trace_id, external_span_id]
+        end
+      end
+
+      after do
+        Sentry.clear_external_propagation_context
+      end
+
+      it "returns the external propagation context's trace context" do
+        trace_context = subject.get_trace_context
+        expect(trace_context[:trace_id]).to eq(external_trace_id)
+        expect(trace_context[:span_id]).to eq(external_span_id)
+      end
+    end
+
+    context "when external propagation context callback returns nil" do
+      before do
+        Sentry.register_external_propagation_context do
+          nil
+        end
+      end
+
+      after do
+        Sentry.clear_external_propagation_context
+      end
+
+      it "falls back to local propagation context with dynamic_sampling_context" do
+        trace_context = subject.get_trace_context
+        expect(trace_context[:trace_id]).to eq(subject.propagation_context.trace_id)
+        expect(trace_context[:span_id]).to eq(subject.propagation_context.span_id)
+        expect(trace_context[:dynamic_sampling_context]).to eq(subject.propagation_context.get_dynamic_sampling_context)
+      end
+    end
+  end
+
   describe "#apply_to_event" do
     before { perform_basic_setup }
 
@@ -300,6 +372,7 @@ RSpec.describe Sentry::Scope do
       subject.apply_to_event(event)
 
       expect(event.contexts[:trace]).to eq(transaction.get_trace_context)
+      expect(event.contexts[:trace]).not_to have_key(:dynamic_sampling_context)
       expect(event.contexts.dig(:trace, :op)).to eq("foo")
       expect(event.dynamic_sampling_context).to eq(transaction.get_dynamic_sampling_context)
     end
@@ -307,6 +380,7 @@ RSpec.describe Sentry::Scope do
     it "sets trace context and dynamic_sampling_context from propagation context if there's no span" do
       subject.apply_to_event(event)
       expect(event.contexts[:trace]).to eq(subject.propagation_context.get_trace_context)
+      expect(event.contexts[:trace]).not_to have_key(:dynamic_sampling_context)
       expect(event.dynamic_sampling_context).to eq(subject.propagation_context.get_dynamic_sampling_context)
     end
 

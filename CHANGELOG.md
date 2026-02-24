@@ -2,6 +2,46 @@
 
 - Queue time capture for Rack ([#2838](https://github.com/getsentry/sentry-ruby/pull/2838))
 
+### Features
+
+- Add support for OTLP ingestion in `sentry-opentelemetry` ([#2853](https://github.com/getsentry/sentry-ruby/pull/2853))
+
+  Sentry now has first class [OTLP ingestion](https://docs.sentry.io/concepts/otlp/) capabilities.
+
+  ```ruby
+  Sentry.init do |config|
+    ## ...
+    config.otlp.enabled = true
+  end
+  ```
+
+  Under the hood, this will setup:
+  - An `OpenTelemetry::Exporter` that will automatically set up the OTLP ingestion endpoint from your DSN
+    - You can turn this off with `config.otlp.setup_otlp_traces_exporter = false` to setup your own exporter
+  - An `OTLPPropagator` that ensures Distributed Tracing works
+    - You can turn this off with `config.otlp.setup_propagator = false`
+  - Trace/Span linking for all other Sentry events such as Errors, Logs, Crons and Metrics
+
+  If you were using the `SpanProcessor` before, we recommend migrating over to `config.otlp` since it's a much simpler setup.
+
+- Treat Sidekiq nil retry as true ([#2864](https://github.com/getsentry/sentry-ruby/pull/2864))
+
+### Bug Fixes
+
+- Fix `MetricEvent` timestamp serialization to float ([#2862](https://github.com/getsentry/sentry-ruby/pull/2862))
+- Fix CGI imports for ruby 4.x ([#2863](https://github.com/getsentry/sentry-ruby/pull/2863))
+
+## 6.3.1
+
+### Bug Fixes
+
+- Use `ActionDispatch::ExceptionWrapper` for correct HTTP status code ([#2850](https://github.com/getsentry/sentry-ruby/pull/2850))
+- Add explicit dependency on logger gem to fix Ruby 4.0 warning ([#2837](https://github.com/getsentry/sentry-ruby/pull/2837))
+
+### Internal
+
+- Add external_propagation_context support ([#2841](https://github.com/getsentry/sentry-ruby/pull/2841))
+
 ## 6.3.0
 
 ### Features

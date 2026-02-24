@@ -60,6 +60,10 @@ module Sentry
           request.show_exceptions?
         end
       end
+
+      def status_code_for_exception(exception)
+        ActionDispatch::ExceptionWrapper.status_code_for_exception(exception.class.name)
+      end
     end
   end
 end
