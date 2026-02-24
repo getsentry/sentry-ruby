@@ -119,6 +119,7 @@ module Sentry
         return nil unless total_time_ms >= 0
 
         puma_wait_ms = env["puma.request_body_wait"]
+        puma_wait_ms = puma_wait_ms.to_f if puma_wait_ms.is_a?(String)
 
         if puma_wait_ms && puma_wait_ms > 0
           queue_time_ms = total_time_ms - puma_wait_ms

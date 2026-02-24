@@ -698,6 +698,32 @@ RSpec.describe 'Sentry::Rack::CaptureExceptions', when: :rack_available? do
         end
       end
 
+      it "subtracts puma.request_body_wait when given as a string" do
+        Timecop.freeze do
+          timestamp = Time.now.to_f - 0.1  # 100ms ago
+          env["HTTP_X_REQUEST_START"] = "t=#{timestamp}"
+          env["puma.request_body_wait"] = "40"
+
+          stack.call(env)
+
+          queue_time = transaction.contexts.dig(:trace, :data, 'http.server.request.time_in_queue')
+          expect(queue_time).to be_within(10).of(60)  # 100 - 40
+        end
+      end
+
+      it "still returns queue time when puma.request_body_wait is a non-numeric string" do
+        Timecop.freeze do
+          timestamp = Time.now.to_f - 0.05  # 50ms ago
+          env["HTTP_X_REQUEST_START"] = "t=#{timestamp}"
+          env["puma.request_body_wait"] = "N/A"
+
+          stack.call(env)
+
+          queue_time = transaction.contexts.dig(:trace, :data, 'http.server.request.time_in_queue')
+          expect(queue_time).to be_within(10).of(50)
+        end
+      end
+
       it "handles different timestamp formats" do
         # Heroku/HAProxy microseconds format
         timestamp_us = ((Time.now.to_f - 0.03) * 1_000_000).to_i
