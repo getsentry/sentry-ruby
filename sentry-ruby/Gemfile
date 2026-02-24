@@ -21,7 +21,7 @@ gem "puma"
 
 gem "timecop"
 gem "stackprof" unless RUBY_PLATFORM == "java"
-gem "vernier", platforms: :ruby if RUBY_VERSION >= "3.2.1"
+gem "vernier", platforms: :ruby if ruby_version >= Gem::Version.new("3.3") && ruby_version < Gem::Version.new("4.1.0")
 
 gem "graphql", ">= 2.2.6"
 
