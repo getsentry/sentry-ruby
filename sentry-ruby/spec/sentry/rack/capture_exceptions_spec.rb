@@ -739,6 +739,31 @@ RSpec.describe 'Sentry::Rack::CaptureExceptions', when: :rack_available? do
           expect(queue_time).to be_nil, "expected nil for header #{bad_value.inspect}"
         end
       end
+
+      it "handles leading and trailing whitespace" do
+        Timecop.freeze do
+          timestamp = Time.now.to_f - 0.05
+          env["HTTP_X_REQUEST_START"] = "  t=#{timestamp}  "
+
+          stack.call(env)
+
+          queue_time = transaction.contexts.dig(:trace, :data, 'http.server.request.time_in_queue')
+          expect(queue_time).to be_within(10).of(50)
+        end
+      end
+
+      it "uses the first value when header is comma-separated" do
+        Timecop.freeze do
+          earlier = Time.now.to_f - 0.08
+          later   = Time.now.to_f - 0.02
+          env["HTTP_X_REQUEST_START"] = "t=#{earlier}, t=#{later}"
+
+          stack.call(env)
+
+          queue_time = transaction.contexts.dig(:trace, :data, 'http.server.request.time_in_queue')
+          expect(queue_time).to be_within(10).of(80)
+        end
+      end
     end
 
     context "when capture_queue_time is disabled" do

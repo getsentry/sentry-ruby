@@ -142,12 +142,16 @@ module Sentry
       def parse_request_start_header(header_value)
         return unless header_value
 
-        timestamp = if header_value.start_with?("t=")
-          value = header_value[2..-1]
+        # Take the first value if comma-separated (multiple headers collapsed by a proxy)
+        # and strip surrounding whitespace from each token
+        raw = header_value.split(",").first.to_s.strip
+
+        timestamp = if raw.start_with?("t=")
+          value = raw[2..-1].strip
           return nil unless value.match?(/\A\d+(?:\.\d+)?\z/)
           value.to_f
-        elsif header_value.match?(/\A\d+(?:\.\d+)?\z/)
-          header_value.to_f
+        elsif raw.match?(/\A\d+(?:\.\d+)?\z/)
+          raw.to_f
         else
           return nil
         end
