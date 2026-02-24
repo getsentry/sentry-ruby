@@ -938,6 +938,55 @@ RSpec.describe Sentry do
     end
   end
 
+  describe ".register_external_propagation_context" do
+    after do
+      described_class.clear_external_propagation_context
+    end
+
+    it "registers a callback function" do
+      described_class.register_external_propagation_context do
+        ["trace123", "span456"]
+      end
+
+      expect(described_class.get_external_propagation_context).to eq(["trace123", "span456"])
+    end
+  end
+
+  describe ".get_external_propagation_context" do
+    after do
+      described_class.clear_external_propagation_context
+    end
+
+    it "returns nil when no callback is registered" do
+      expect(described_class.get_external_propagation_context).to be_nil
+    end
+
+    it "returns nil when callback returns nil" do
+      described_class.register_external_propagation_context do
+        nil
+      end
+
+      expect(described_class.get_external_propagation_context).to be_nil
+    end
+
+    it "returns the result from the callback" do
+      described_class.register_external_propagation_context do
+        ["abc123def456789012345678901234", "1234567890abcdef"]
+      end
+
+      result = described_class.get_external_propagation_context
+      expect(result).to eq(["abc123def456789012345678901234", "1234567890abcdef"])
+    end
+
+    it "catches errors from the callback and returns nil" do
+      described_class.register_external_propagation_context do
+        raise "Something went wrong"
+      end
+
+      expect(described_class.get_external_propagation_context).to be_nil
+    end
+  end
+
   describe ".continue_trace" do
     context "without incoming sentry trace" do
       let(:env) { { "HTTP_FOO" => "bar" } }

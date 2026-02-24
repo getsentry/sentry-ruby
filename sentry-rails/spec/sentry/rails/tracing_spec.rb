@@ -112,6 +112,63 @@ RSpec.describe Sentry::Rails::Tracing, type: :request do
     end
   end
 
+  context "with report_rescued_exceptions and public error pages" do
+    before do
+      make_basic_app do |config, app|
+        config.traces_sample_rate = 1.0
+        config.rails.report_rescued_exceptions = true
+        config.excluded_exceptions -= ['ActionController::RoutingError']
+        app.config.consider_all_requests_local = false
+      end
+    end
+
+    it "records correct status code for 404 errors served by public error pages" do
+      get "/nonexistent_route"
+
+      expect(response).to have_http_status(:not_found)
+      expect(transport.events.count).to be >= 1
+
+      event = transport.events.first.to_h
+      expect(event.dig(:contexts, :trace, :data, "http.response.status_code")).to eq(404)
+    end
+  end
+
+  context "with public error pages for controller exceptions" do
+    before do
+      make_basic_app do |config, app|
+        config.traces_sample_rate = 1.0
+        app.config.consider_all_requests_local = false
+        config.trace_ignore_status_codes = [(301..303), (305..399)]
+
+        # In Rails < 6.0, ActiveRecord::RecordNotFound is not automatically mapped to :not_found
+        # https://github.com/rails/rails/blob/main/guides/source/configuring.md?configaction_dispatchrescue_responses
+        # We need to add it to the rescue_responses hash
+        if Rails.gem_version < Gem::Version.new("6.0.0")
+          ActionDispatch::ExceptionWrapper.rescue_responses['ActiveRecord::RecordNotFound'] = :not_found
+        end
+      end
+    end
+
+    it "records correct status when Rails rescues exception to non-500 status" do
+      get "/posts/999999"
+
+      expect(response).to have_http_status(:not_found)
+      expect(transport.events.count).to eq(1)
+
+      transaction = transport.events.last.to_h
+
+      expect(transaction[:type]).to eq("transaction")
+      expect(transaction.dig(:contexts, :trace, :status)).to eq("not_found")
+      expect(transaction.dig(:contexts, :trace, :data, "http.response.status_code")).to eq(404)
+
+      first_span = transaction[:spans][0]
+      expect(first_span[:op]).to eq("view.process_action.action_controller")
+      expect(first_span[:description]).to eq("PostsController#show")
+      expect(first_span[:status]).to eq("internal_error")
+      expect(first_span[:data]["http.response.status_code"]).to eq(500)
+    end
+  end
+
   describe "filtering pii data" do
     context "with send_default_pii = false" do
       before do
@@ -210,6 +267,8 @@ RSpec.describe Sentry::Rails::Tracing, type: :request do
           config.traces_sample_rate = 1.0
           config.sdk_logger = logger
           config.rails.assets_regexp = %r{/foo/}
+          # Allow 404 status codes to be traced (default ignores 401-404)
+          config.trace_ignore_status_codes = [(301..303), (305..399)]
         end
       end
 

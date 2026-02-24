@@ -33,7 +33,7 @@ module Sentry
               raise # Don't capture Sentry errors
             rescue Exception => e
               capture_exception(e, env)
-              finish_transaction(transaction, 500)
+              finish_transaction(transaction, status_code_for_exception(e))
               raise
             end
 
@@ -105,18 +105,18 @@ module Sentry
       # @param env [Hash] Rack env
       # @return [Float, nil] queue time in milliseconds or nil
       def extract_queue_time(env)
-        return nil unless Sentry.configuration&.capture_queue_time
+        return unless Sentry.configuration&.capture_queue_time
 
         header_value = env["HTTP_X_REQUEST_START"]
-        return nil unless header_value
+        return unless header_value
 
         request_start = parse_request_start_header(header_value)
-        return nil unless request_start
+        return unless request_start
 
         total_time_ms = ((Time.now.to_f - request_start) * 1000).round(2)
 
         # reject negative (clock skew between proxy & app server)
-        return nil unless total_time_ms >= 0
+        return unless total_time_ms >= 0
 
         puma_wait_ms = env["puma.request_body_wait"]
         puma_wait_ms = puma_wait_ms.to_f if puma_wait_ms.is_a?(String)
@@ -128,7 +128,6 @@ module Sentry
           total_time_ms
         end
       rescue StandardError
-        nil
       end
 
       # Parses X-Request-Start header value to extract a timestamp.
@@ -154,7 +153,7 @@ module Sentry
         elsif raw.match?(/\A\d+(?:\.\d+)?\z/)
           raw.to_f
         else
-          return nil
+          return
         end
 
         # normalize: timestamps can be in seconds, milliseconds or microseconds
@@ -168,6 +167,10 @@ module Sentry
           timestamp # assume seconds
         end
       rescue StandardError
+      end
+
+      def status_code_for_exception(exception)
+        500
       end
     end
   end

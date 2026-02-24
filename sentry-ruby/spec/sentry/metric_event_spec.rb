@@ -59,7 +59,7 @@ RSpec.describe Sentry::MetricEvent do
       expect(hash[:type]).to eq(:distribution)
       expect(hash[:value]).to eq(5.0)
       expect(hash[:unit]).to eq("seconds")
-      expect(hash[:timestamp]).to be_a(Time)
+      expect(hash[:timestamp]).to be_a(Float)
     end
 
     it "includes trace info if provided" do
