@@ -474,8 +474,7 @@ RSpec.describe Sentry::Scope do
       context "with user data" do
         before { subject.set_user({ id: 123, username: "john_doe", email: "john@example.com" }) }
 
-        it "adds user attributes when send_default_pii is enabled" do
-          Sentry.configuration.send_default_pii = true
+        it "adds user attributes" do
           subject.apply_to_telemetry(telemetry_event)
 
           hash = telemetry_event.to_h
@@ -483,21 +482,10 @@ RSpec.describe Sentry::Scope do
           expect(hash[:attributes]["user.name"]).to eq({ value: "john_doe", type: "string" })
           expect(hash[:attributes]["user.email"]).to eq({ value: "john@example.com", type: "string" })
         end
-
-        it "doesn't add user attributes when send_default_pii is disabled" do
-          Sentry.configuration.send_default_pii = false
-          subject.apply_to_telemetry(telemetry_event)
-
-          hash = telemetry_event.to_h
-          expect(hash[:attributes].key?("user.id")).to eq(false)
-          expect(hash[:attributes].key?("user.name")).to eq(false)
-          expect(hash[:attributes].key?("user.email")).to eq(false)
-        end
       end
 
       context "without user data" do
         it "does not add user attributes when user is empty" do
-          Sentry.configuration.send_default_pii = true
           subject.apply_to_telemetry(telemetry_event)
 
           hash = telemetry_event.to_h

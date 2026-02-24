@@ -30,6 +30,7 @@
 
 - Fix `MetricEvent` timestamp serialization to float ([#2862](https://github.com/getsentry/sentry-ruby/pull/2862))
 - Fix CGI imports for ruby 4.x ([#2863](https://github.com/getsentry/sentry-ruby/pull/2863))
+- Always include scope user data in telemetry ([#2866](https://github.com/getsentry/sentry-ruby/pull/2866))
 
 ## 6.3.1
 
