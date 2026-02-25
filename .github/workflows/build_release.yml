@@ -3,31 +3,21 @@ name: Build Release
 on:
   push:
     branches:
-      - release-*/**
+      - release/**
 jobs:
   build:
-    name: Build
+    name: Build gems
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v4
-    - uses: actions/setup-node@v4
     - name: Set up Ruby
       uses: ruby/setup-ruby@v1
       with:
         ruby-version: 3.4
-    - name: Capture sdk name
-      uses: actions-ecosystem/action-regex-match@v2
-      id: regex-match
-      with:
-        text: ${{ github.ref }}
-        regex: 'refs\/heads\/release-(sentry-\w+)\/.*'
-    - name: Set sdk-directory path
-      run: echo ${{format('sdk-directory={0}', steps.regex-match.outputs.group1)}} >> $GITHUB_ENV
     - name: Build gem source
-      working-directory: ${{env.sdk-directory}}
-      run: make build
+      run:  ruby .scripts/batch_build.rb
     - name: Archive Artifacts
       uses: actions/upload-artifact@v4
       with:
         name: ${{ github.sha }}
-        path: ${{env.sdk-directory}}/*.gem
+        path: sentry*/*.gem
