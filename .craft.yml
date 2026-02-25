@@ -1,5 +1,6 @@
-minVersion: '1.8.1'
-changelogPolicy: simple
+minVersion: 2.21.1
+changelog:
+  policy: auto
 preReleaseCommand: ruby .scripts/batch_release.rb
 requireNames:
   - /^sentry-ruby-.*\.gem$/
