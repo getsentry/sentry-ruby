@@ -45,8 +45,48 @@ module Sentry
           @schema_file ||= root_path.join("db/schema.rb")
         end
 
+        def self.database_url
+          @__database_url__ ||=
+            begin
+              url = ENV["DATABASE_URL"]
+
+              if url
+                url
+              else
+                url =
+                  case ENV["DATABASE"].to_s
+                  when "sqlite3" then "sqlite3://#{db_path}"
+                  when "postgresql" then "postgresql://postgres:postgres@#{db_host}:5432/sentry"
+                  else
+                    raise "Unsupported database for tests: #{ENV["DATABASE"].inspect}"
+                  end
+
+                # Set it too to make AR happy
+                ENV["DATABASE_URL"] = url
+
+                url
+              end
+            end
+        end
+
         def self.db_path
           @db_path ||= root_path.join("db", "db.sqlite3")
+        end
+
+        def self.db_host
+          @db_host ||= (ENV["DATABASE_HOST"] || "postgres")
+        end
+
+        def self.db_uri
+          @db_url ||= URI(database_url)
+        end
+
+        def self.db_system
+          @db_system ||= db_uri.scheme
+        end
+
+        def self.db_name
+          @db_name ||= File.basename(db_uri.path[1..-1])
         end
 
         def self.application_file
@@ -61,14 +101,29 @@ module Sentry
 
         def self.load_test_schema
           @__schema_loaded__ ||= begin
-            # This is more reliable than setting config/database.yml
-            ENV["DATABASE_URL"] = "sqlite3://#{db_path}"
-
             # Silence migrations output
             ActiveRecord::Migration.verbose = false
 
             # We need to connect manually here
-            ActiveRecord::Base.establish_connection(adapter: "sqlite3", database: db_path)
+            case db_uri.scheme
+            when "postgresql"
+              ActiveRecord::Base.establish_connection(
+                adapter: db_uri.scheme,
+                host: db_uri.host,
+                username: db_uri.user,
+                password: db_uri.password,
+                database: db_name
+              )
+            when "sqlite3"
+              ActiveRecord::Base.establish_connection(
+                adapter: db_uri.scheme,
+                database: db_path.to_s
+              )
+            else
+              ActiveRecord::Base.establish_connection(
+                adapter: db_uri.scheme, database: db_name
+              )
+            end
 
             # Load schema from db/schema.rb into the current connection
             require Test::Application.schema_file

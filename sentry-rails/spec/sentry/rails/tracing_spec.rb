@@ -86,8 +86,8 @@ RSpec.describe Sentry::Rails::Tracing, type: :request do
       second_span = transaction[:spans][1]
       expect(second_span[:op]).to eq("db.sql.active_record")
       expect(second_span[:origin]).to eq("auto.db.rails")
-      expect(second_span[:description].squeeze("\s")).to eq(
-        'SELECT "posts".* FROM "posts" WHERE "posts"."id" = ? LIMIT ?'
+      expect(second_span[:description].squeeze("\s")).to match(
+        /SELECT "posts"\.\* FROM "posts" WHERE "posts"\."id" = (\?|\$1) LIMIT (\?|\$2)/
       )
       expect(second_span[:parent_span_id]).to eq(first_span[:span_id])
 
