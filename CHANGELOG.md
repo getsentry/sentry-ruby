@@ -1,5 +1,7 @@
 ## Unreleased
 
+- Queue time capture for Rack ([#2838](https://github.com/getsentry/sentry-ruby/pull/2838))
+
 ### Features
 
 - Add support for OTLP ingestion in `sentry-opentelemetry` ([#2853](https://github.com/getsentry/sentry-ruby/pull/2853))

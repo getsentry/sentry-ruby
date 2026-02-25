@@ -329,6 +329,17 @@ RSpec.describe Sentry::Configuration do
     expect { subject.before_breadcrumb = true }.to raise_error(ArgumentError, "before_breadcrumb must be callable (or nil to disable)")
   end
 
+  describe "#capture_queue_time" do
+    it "defaults to true" do
+      expect(subject.capture_queue_time).to eq(true)
+    end
+
+    it "can be set to false" do
+      subject.capture_queue_time = false
+      expect(subject.capture_queue_time).to eq(false)
+    end
+  end
+
   context 'being initialized with a current environment' do
     before(:each) do
       subject.environment = 'test'
