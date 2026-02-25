@@ -1,4 +1,4 @@
-name: Prepare Batch Release
+name: Release
 on:
   workflow_dispatch:
     inputs:
