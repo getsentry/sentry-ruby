@@ -36,19 +36,11 @@ module Sentry
       end
 
       def start_transaction(env, scope)
-        options = {
-          name: scope.transaction_name,
-          source: scope.transaction_source,
-          op: transaction_op,
-          origin: SPAN_ORIGIN
-        }
-
-        if @assets_regexp && scope.transaction_name.match?(@assets_regexp)
-          options.merge!(sampled: false)
+        super do |options|
+          if @assets_regexp && scope.transaction_name.match?(@assets_regexp)
+            options.merge!(sampled: false)
+          end
         end
-
-        transaction = Sentry.continue_trace(env, **options)
-        Sentry.start_transaction(transaction: transaction, custom_sampling_context: { env: env }, **options)
       end
 
       def show_exceptions?(exception, env)

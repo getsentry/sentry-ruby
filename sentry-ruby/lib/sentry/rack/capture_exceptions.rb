@@ -71,6 +71,8 @@ module Sentry
           origin: SPAN_ORIGIN
         }
 
+        yield(options) if block_given?
+
         transaction = Sentry.continue_trace(env, **options)
         transaction = Sentry.start_transaction(transaction: transaction, custom_sampling_context: { env: env }, **options)
 
