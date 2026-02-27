@@ -11,8 +11,9 @@ module Sentry
     REQUIRED_ATTRIBUTES = %w[host path public_key project_id].freeze
     LOCALHOST_NAMES = %w[localhost 127.0.0.1 ::1 [::1]].freeze
     LOCALHOST_PATTERN = /\.local(host|domain)?$/i
+    ORG_ID_REGEX = /\Ao(\d+)\./
 
-    attr_reader :scheme, :secret_key, :port, *REQUIRED_ATTRIBUTES
+    attr_reader :scheme, :secret_key, :port, :org_id, *REQUIRED_ATTRIBUTES
 
     def initialize(dsn_string)
       @raw_value = dsn_string
@@ -31,6 +32,9 @@ module Sentry
       @host = uri.host
       @port = uri.port if uri.port
       @path = uri_path.join("/")
+
+      # Extract org ID from the host (e.g., "o123.ingest.sentry.io" -> "123")
+      @org_id = extract_org_id_from_host
     end
 
     def valid?
@@ -87,6 +91,14 @@ module Sentry
       end
     end
 
+    # Override the org ID parsed from the DSN.
+    # This is used when the org_id config option is set explicitly.
+    # @param value [String]
+    # @return [void]
+    def org_id=(value)
+      @org_id = value
+    end
+
     def generate_auth_header(client: nil)
       now = Sentry.utc_now.to_i
 
@@ -100,6 +112,15 @@ module Sentry
       fields["sentry_secret"] = @secret_key if @secret_key
 
       "Sentry " + fields.map { |key, value| "#{key}=#{value}" }.join(", ")
+    end
+
+    private
+
+    def extract_org_id_from_host
+      return nil unless @host
+
+      match = ORG_ID_REGEX.match(@host)
+      match ? match[1] : nil
     end
   end
 end

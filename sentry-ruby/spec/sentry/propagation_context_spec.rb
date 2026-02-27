@@ -133,6 +133,183 @@ RSpec.describe Sentry::PropagationContext do
     end
   end
 
+  describe ".should_continue_trace?" do
+    # Decision matrix:
+    # | Baggage org | SDK org | strict | Result       |
+    # |-------------|---------|--------|--------------|
+    # | 1           | 1       | false  | Continue     |
+    # | None        | 1       | false  | Continue     |
+    # | 1           | None    | false  | Continue     |
+    # | None        | None    | false  | Continue     |
+    # | 1           | 2       | false  | Start new    |
+    # | 1           | 1       | true   | Continue     |
+    # | None        | 1       | true   | Start new    |
+    # | 1           | None    | true   | Start new    |
+    # | None        | None    | true   | Continue     |
+    # | 1           | 2       | true   | Start new    |
+
+    let(:sentry_trace) { "771a43a4192642f0b136d5159a501700-7c51afd529da4a2a-1" }
+
+    def make_env(sentry_trace:, baggage_org_id: nil)
+      baggage_parts = ["sentry-trace_id=771a43a4192642f0b136d5159a501700"]
+      baggage_parts << "sentry-org_id=#{baggage_org_id}" if baggage_org_id
+
+      {
+        "sentry-trace" => sentry_trace,
+        "baggage" => baggage_parts.join(",")
+      }
+    end
+
+    context "with strict_trace_continuation=false" do
+      it "continues when baggage org matches SDK org" do
+        perform_basic_setup do |config|
+          config.dsn = "https://key@o1.ingest.sentry.io/42"
+          config.strict_trace_continuation = false
+        end
+
+        env = make_env(sentry_trace: sentry_trace, baggage_org_id: "1")
+        propagation_context = described_class.new(scope, env)
+        expect(propagation_context.incoming_trace).to eq(true)
+        expect(propagation_context.trace_id).to eq("771a43a4192642f0b136d5159a501700")
+      end
+
+      it "continues when baggage has no org but SDK has org" do
+        perform_basic_setup do |config|
+          config.dsn = "https://key@o1.ingest.sentry.io/42"
+          config.strict_trace_continuation = false
+        end
+
+        env = make_env(sentry_trace: sentry_trace, baggage_org_id: nil)
+        propagation_context = described_class.new(scope, env)
+        expect(propagation_context.incoming_trace).to eq(true)
+        expect(propagation_context.trace_id).to eq("771a43a4192642f0b136d5159a501700")
+      end
+
+      it "continues when baggage has org but SDK has no org" do
+        perform_basic_setup do |config|
+          config.strict_trace_continuation = false
+        end
+
+        env = make_env(sentry_trace: sentry_trace, baggage_org_id: "1")
+        propagation_context = described_class.new(scope, env)
+        expect(propagation_context.incoming_trace).to eq(true)
+        expect(propagation_context.trace_id).to eq("771a43a4192642f0b136d5159a501700")
+      end
+
+      it "continues when neither has org" do
+        perform_basic_setup do |config|
+          config.strict_trace_continuation = false
+        end
+
+        env = make_env(sentry_trace: sentry_trace, baggage_org_id: nil)
+        propagation_context = described_class.new(scope, env)
+        expect(propagation_context.incoming_trace).to eq(true)
+        expect(propagation_context.trace_id).to eq("771a43a4192642f0b136d5159a501700")
+      end
+
+      it "starts new trace when orgs mismatch" do
+        perform_basic_setup do |config|
+          config.dsn = "https://key@o2.ingest.sentry.io/42"
+          config.strict_trace_continuation = false
+        end
+
+        env = make_env(sentry_trace: sentry_trace, baggage_org_id: "1")
+        propagation_context = described_class.new(scope, env)
+        expect(propagation_context.incoming_trace).to eq(false)
+        expect(propagation_context.trace_id).not_to eq("771a43a4192642f0b136d5159a501700")
+      end
+    end
+
+    context "with strict_trace_continuation=true" do
+      it "continues when baggage org matches SDK org" do
+        perform_basic_setup do |config|
+          config.dsn = "https://key@o1.ingest.sentry.io/42"
+          config.strict_trace_continuation = true
+        end
+
+        env = make_env(sentry_trace: sentry_trace, baggage_org_id: "1")
+        propagation_context = described_class.new(scope, env)
+        expect(propagation_context.incoming_trace).to eq(true)
+        expect(propagation_context.trace_id).to eq("771a43a4192642f0b136d5159a501700")
+      end
+
+      it "starts new trace when baggage has no org but SDK has org" do
+        perform_basic_setup do |config|
+          config.dsn = "https://key@o1.ingest.sentry.io/42"
+          config.strict_trace_continuation = true
+        end
+
+        env = make_env(sentry_trace: sentry_trace, baggage_org_id: nil)
+        propagation_context = described_class.new(scope, env)
+        expect(propagation_context.incoming_trace).to eq(false)
+        expect(propagation_context.trace_id).not_to eq("771a43a4192642f0b136d5159a501700")
+      end
+
+      it "starts new trace when baggage has org but SDK has no org" do
+        perform_basic_setup do |config|
+          config.strict_trace_continuation = true
+        end
+
+        env = make_env(sentry_trace: sentry_trace, baggage_org_id: "1")
+        propagation_context = described_class.new(scope, env)
+        expect(propagation_context.incoming_trace).to eq(false)
+        expect(propagation_context.trace_id).not_to eq("771a43a4192642f0b136d5159a501700")
+      end
+
+      it "continues when neither has org" do
+        perform_basic_setup do |config|
+          config.strict_trace_continuation = true
+        end
+
+        env = make_env(sentry_trace: sentry_trace, baggage_org_id: nil)
+        propagation_context = described_class.new(scope, env)
+        expect(propagation_context.incoming_trace).to eq(true)
+        expect(propagation_context.trace_id).to eq("771a43a4192642f0b136d5159a501700")
+      end
+
+      it "starts new trace when orgs mismatch" do
+        perform_basic_setup do |config|
+          config.dsn = "https://key@o2.ingest.sentry.io/42"
+          config.strict_trace_continuation = true
+        end
+
+        env = make_env(sentry_trace: sentry_trace, baggage_org_id: "1")
+        propagation_context = described_class.new(scope, env)
+        expect(propagation_context.incoming_trace).to eq(false)
+        expect(propagation_context.trace_id).not_to eq("771a43a4192642f0b136d5159a501700")
+      end
+    end
+
+    context "with explicit org_id config" do
+      it "uses explicit org_id over DSN-parsed org_id" do
+        perform_basic_setup do |config|
+          config.dsn = "https://key@o1234.ingest.sentry.io/42"
+          config.org_id = "9999"
+          config.strict_trace_continuation = false
+        end
+
+        env = make_env(sentry_trace: sentry_trace, baggage_org_id: "1234")
+        propagation_context = described_class.new(scope, env)
+        # org_id mismatch: baggage has 1234 but SDK effective org_id is 9999
+        expect(propagation_context.incoming_trace).to eq(false)
+        expect(propagation_context.trace_id).not_to eq("771a43a4192642f0b136d5159a501700")
+      end
+
+      it "continues when explicit org_id matches baggage org_id" do
+        perform_basic_setup do |config|
+          config.dsn = "https://key@o1234.ingest.sentry.io/42"
+          config.org_id = "5678"
+          config.strict_trace_continuation = false
+        end
+
+        env = make_env(sentry_trace: sentry_trace, baggage_org_id: "5678")
+        propagation_context = described_class.new(scope, env)
+        expect(propagation_context.incoming_trace).to eq(true)
+        expect(propagation_context.trace_id).to eq("771a43a4192642f0b136d5159a501700")
+      end
+    end
+  end
+
   describe ".extract_sentry_trace" do
     it "extracts valid sentry-trace without whitespace" do
       sentry_trace = "771a43a4192642f0b136d5159a501700-7c51afd529da4a2a-1"

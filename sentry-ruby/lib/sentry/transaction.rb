@@ -295,7 +295,8 @@ module Sentry
         "sampled" => sampled&.to_s,
         "environment" => configuration&.environment,
         "release" => configuration&.release,
-        "public_key" => configuration&.dsn&.public_key
+        "public_key" => configuration&.dsn&.public_key,
+        "org_id" => configuration&.effective_org_id
       }
 
       items["transaction"] = name unless source_low_quality?

@@ -44,6 +44,36 @@ RSpec.describe Sentry::DSN do
     end
   end
 
+  describe "#org_id" do
+    it "extracts org_id from DSN host with org prefix" do
+      dsn = described_class.new("https://key@o1234.ingest.sentry.io/42")
+      expect(dsn.org_id).to eq("1234")
+    end
+
+    it "extracts single digit org_id" do
+      dsn = described_class.new("https://key@o1.ingest.us.sentry.io/42")
+      expect(dsn.org_id).to eq("1")
+    end
+
+    it "returns nil when host does not have org prefix" do
+      dsn = described_class.new("http://12345:67890@sentry.localdomain:3000/sentry/42")
+      expect(dsn.org_id).to be_nil
+    end
+
+    it "returns nil for non-standard host without o prefix" do
+      dsn = described_class.new("https://key@not_org_id.ingest.sentry.io/42")
+      expect(dsn.org_id).to be_nil
+    end
+
+    it "can be overridden with org_id=" do
+      dsn = described_class.new("https://key@o1234.ingest.sentry.io/42")
+      expect(dsn.org_id).to eq("1234")
+
+      dsn.org_id = "9999"
+      expect(dsn.org_id).to eq("9999")
+    end
+  end
+
   describe "#local?" do
     it "returns true for localhost" do
       expect(described_class.new("http://12345:67890@localhost/sentry/42").local?).to eq(true)

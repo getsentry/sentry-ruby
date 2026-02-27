@@ -371,6 +371,20 @@ module Sentry
     # @return [Proc, nil]
     attr_reader :std_lib_logger_filter
 
+    # An optional organization ID. The SDK will try to extract it from the DSN in most cases
+    # but you can provide it explicitly for self-hosted and Relay setups.
+    # This value is used for trace propagation and for features like strict_trace_continuation.
+    # @return [String, nil]
+    attr_accessor :org_id
+
+    # Controls whether the SDK requires matching org IDs from incoming baggage
+    # to continue a trace. When true, the SDK will start a new trace if the org_id
+    # from the incoming baggage does not match the SDK's own org_id, or if either
+    # side is missing an org_id (unless both are missing).
+    # Default is false.
+    # @return [Boolean]
+    attr_accessor :strict_trace_continuation
+
     # these are not config options
     # @!visibility private
     attr_reader :errors, :gem_specs
@@ -520,6 +534,8 @@ module Sentry
       self.trusted_proxies = []
       self.dsn = ENV["SENTRY_DSN"]
       self.capture_queue_time = true
+      self.org_id = nil
+      self.strict_trace_continuation = false
 
       spotlight_env = ENV["SENTRY_SPOTLIGHT"]
       spotlight_bool = Sentry::Utils::EnvHelper.env_to_bool(spotlight_env, strict: true)
@@ -671,6 +687,12 @@ module Sentry
       end
 
       @profiler_class = profiler_class
+    end
+
+    # Returns the effective org ID, preferring the explicit config option over the DSN-parsed value.
+    # @return [String, nil]
+    def effective_org_id
+      org_id || dsn&.org_id
     end
 
     def sending_allowed?
