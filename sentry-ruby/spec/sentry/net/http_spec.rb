@@ -156,7 +156,8 @@ RSpec.describe Sentry::Net::HTTP do
         "sentry-sample_rand=#{Sentry::Utils::SampleRand.format(transaction.sample_rand)},"\
         "sentry-sampled=true,"\
         "sentry-environment=development,"\
-        "sentry-public_key=foobarbaz"
+        "sentry-public_key=foobarbaz,"\
+        "sentry-org_id=447951"
       )
     end
 
