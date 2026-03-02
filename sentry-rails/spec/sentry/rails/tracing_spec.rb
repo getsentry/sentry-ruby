@@ -110,6 +110,33 @@ RSpec.describe Sentry::Rails::Tracing, type: :request do
 
       expect(transport.events.count).to eq(1)
     end
+
+    context "with X-Request-Start header" do
+      it "attaches queue time to the Rails transaction" do
+        p = Post.create!
+        timestamp = Time.now.to_f - 0.05  # 50ms ago
+
+        get "/posts/#{p.id}", headers: { "X-Request-Start" => "t=#{timestamp}" }
+
+        expect(response).to have_http_status(:ok)
+        transaction = transport.events.last
+        queue_time = transaction.contexts.dig(:trace, :data, "http.server.request.time_in_queue")
+        expect(queue_time).not_to be_nil
+        expect(queue_time).to be >= 0
+      end
+
+      it "does not attach queue time when capture_queue_time is disabled" do
+        p = Post.create!
+        timestamp = Time.now.to_f - 0.05
+
+        Sentry.configuration.capture_queue_time = false
+        get "/posts/#{p.id}", headers: { "X-Request-Start" => "t=#{timestamp}" }
+
+        transaction = transport.events.last
+        queue_time = transaction.contexts.dig(:trace, :data, "http.server.request.time_in_queue")
+        expect(queue_time).to be_nil
+      end
+    end
   end
 
   context "with report_rescued_exceptions and public error pages" do

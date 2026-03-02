@@ -73,13 +73,15 @@ module Sentry
 
         transaction = Sentry.continue_trace(env, **options)
         transaction = Sentry.start_transaction(transaction: transaction, custom_sampling_context: { env: env }, **options)
-
-        # attach queue time if available
-        if transaction && (queue_time = extract_queue_time(env))
-          transaction.set_data(Span::DataConventions::HTTP_QUEUE_TIME_MS, queue_time)
-        end
-
+        attach_queue_time(transaction, env)
         transaction
+      end
+
+      def attach_queue_time(transaction, env)
+        return unless transaction
+        return unless (queue_time = extract_queue_time(env))
+
+        transaction.set_data(Span::DataConventions::HTTP_QUEUE_TIME_MS, queue_time)
       end
 
 
