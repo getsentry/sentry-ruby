@@ -1,3 +1,9 @@
+## 6.4.1
+
+### Bug Fixes 🐛
+
+- (rails) Track request queue time in Rails middleware by @dingsdax in [#2877](https://github.com/getsentry/sentry-ruby/pull/2877)
+
 ## 6.4.0
 
 ### Features
