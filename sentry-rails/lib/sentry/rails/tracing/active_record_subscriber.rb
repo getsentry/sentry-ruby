@@ -59,7 +59,10 @@ module Sentry
 
                 next unless db_config
 
-                span.set_data(Span::DataConventions::DB_SYSTEM, db_config[:adapter]) if db_config[:adapter]
+                adapter = db_config[:adapter]
+                adapter = "mysql" if adapter == "trilogy"
+
+                span.set_data(Span::DataConventions::DB_SYSTEM, adapter) if adapter
                 span.set_data(Span::DataConventions::DB_NAME, db_config[:database]) if db_config[:database]
                 span.set_data(Span::DataConventions::SERVER_ADDRESS, db_config[:host]) if db_config[:host]
                 span.set_data(Span::DataConventions::SERVER_PORT, db_config[:port]) if db_config[:port]
