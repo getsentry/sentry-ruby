@@ -377,11 +377,15 @@ module Sentry
     # @return [String, nil]
     attr_accessor :org_id
 
-    # Controls whether the SDK requires matching org IDs from incoming baggage
-    # to continue a trace. When true, the SDK will start a new trace if the org_id
-    # from the incoming baggage does not match the SDK's own org_id, or if either
-    # side is missing an org_id (unless both are missing).
-    # Default is false.
+    # If set to true, the SDK will only continue a trace if the org_id of the incoming trace found in the
+    # baggage header matches the org_id of the current Sentry client and only if BOTH are present.
+    #
+    # If set to false, consistency of org_id will only be enforced if both are present.
+    # If either are missing, the trace will be continued.
+    #
+    # The client's organization ID is extracted from the DSN or can be set with the org_id option.
+    # If the organization IDs do not match, the SDK will start a new trace instead of continuing the incoming one.
+    # This is useful to prevent traces of unknown third-party services from being continued in your application.
     # @return [Boolean]
     attr_accessor :strict_trace_continuation
 

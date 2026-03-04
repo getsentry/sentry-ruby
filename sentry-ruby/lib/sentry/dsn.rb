@@ -33,7 +33,6 @@ module Sentry
       @port = uri.port if uri.port
       @path = uri_path.join("/")
 
-      # Extract org ID from the host (e.g., "o123.ingest.sentry.io" -> "123")
       @org_id = extract_org_id_from_host
     end
 

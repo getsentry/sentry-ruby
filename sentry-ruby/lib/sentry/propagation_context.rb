@@ -63,23 +63,32 @@ module Sentry
 
       configuration = Sentry.configuration
       sdk_org_id = configuration.effective_org_id
-      baggage_org_id = incoming_baggage&.items&.fetch("org_id", nil)
+      baggage_org_id = incoming_baggage.items["org_id"]
 
       # Mismatched org IDs always start a new trace regardless of strict mode
       if sdk_org_id && baggage_org_id && sdk_org_id != baggage_org_id
+        Sentry.sdk_logger.debug(LOGGER_PROGNAME) do
+          "Starting a new trace because org IDs don't match (incoming baggage org_id: #{baggage_org_id}, SDK org_id: #{sdk_org_id})"
+        end
+
         return false
       end
 
+      return true unless configuration.strict_trace_continuation
+
       # In strict mode, both must be present and match (unless both are missing)
-      if configuration.strict_trace_continuation
-        if sdk_org_id.nil? && baggage_org_id.nil?
-          return true
+      if sdk_org_id.nil? && baggage_org_id.nil?
+        true
+      elsif sdk_org_id.nil? || baggage_org_id.nil?
+        Sentry.sdk_logger.debug(LOGGER_PROGNAME) do
+          "Starting a new trace because strict trace continuation is enabled and one org ID is missing " \
+            "(incoming baggage org_id: #{baggage_org_id.inspect}, SDK org_id: #{sdk_org_id.inspect})"
         end
 
-        return sdk_org_id == baggage_org_id
+        false
+      else
+        true
       end
-
-      true
     end
 
     def self.extract_sample_rand_from_baggage(baggage, trace_id = nil)
