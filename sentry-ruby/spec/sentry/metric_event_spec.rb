@@ -117,6 +117,18 @@ RSpec.describe Sentry::MetricEvent do
       expect(attributes["unknown"][:value]).to include("Object")
     end
 
+    it "does not mutate the original attributes hash" do
+      attributes = { "foo" => "bar" }
+      event1 = described_class.new(name: "test.metric", type: :counter, value: 1, attributes: attributes)
+      event1.to_h
+
+      event2 = described_class.new(name: "test.metric", type: :counter, value: 1, attributes: attributes)
+      hash = event2.to_h
+
+      expect(attributes).to eq({ "foo" => "bar" })
+      expect(hash[:attributes]["foo"]).to eq({ type: "string", value: "bar" })
+    end
+
     it "merges custom attributes with default attributes" do
       event = described_class.new(
         name: "test.metric",
