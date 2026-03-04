@@ -25,7 +25,7 @@ module Sentry
     # The presence of a Sentry item makes the baggage object immutable.
     #
     # @param header [String] The incoming Baggage header string.
-    # @return [Baggage, nil]
+    # @return [Baggage]
     def self.from_incoming_header(header)
       items = {}
       mutable = true

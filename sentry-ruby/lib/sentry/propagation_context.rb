@@ -53,6 +53,44 @@ module Sentry
       [trace_id, parent_span_id, parent_sampled]
     end
 
+    # Determines whether we should continue an incoming trace based on org_id matching
+    # and the strict_trace_continuation configuration option.
+    #
+    # @param incoming_baggage [Baggage] the baggage from the incoming request
+    # @return [Boolean]
+    def self.should_continue_trace?(incoming_baggage)
+      return true unless Sentry.initialized?
+
+      configuration = Sentry.configuration
+      sdk_org_id = configuration.effective_org_id
+      baggage_org_id = incoming_baggage.items["org_id"]
+
+      # Mismatched org IDs always start a new trace regardless of strict mode
+      if sdk_org_id && baggage_org_id && sdk_org_id != baggage_org_id
+        Sentry.sdk_logger.debug(LOGGER_PROGNAME) do
+          "Starting a new trace because org IDs don't match (incoming baggage org_id: #{baggage_org_id}, SDK org_id: #{sdk_org_id})"
+        end
+
+        return false
+      end
+
+      return true unless configuration.strict_trace_continuation
+
+      # In strict mode, both must be present and match (unless both are missing)
+      if sdk_org_id.nil? && baggage_org_id.nil?
+        true
+      elsif sdk_org_id.nil? || baggage_org_id.nil?
+        Sentry.sdk_logger.debug(LOGGER_PROGNAME) do
+          "Starting a new trace because strict trace continuation is enabled and one org ID is missing " \
+            "(incoming baggage org_id: #{baggage_org_id.inspect}, SDK org_id: #{sdk_org_id.inspect})"
+        end
+
+        false
+      else
+        true
+      end
+    end
+
     def self.extract_sample_rand_from_baggage(baggage, trace_id = nil)
       return unless baggage&.items
 
@@ -96,9 +134,7 @@ module Sentry
           sentry_trace_data = self.class.extract_sentry_trace(sentry_trace_header)
 
           if sentry_trace_data
-            @trace_id, @parent_span_id, @parent_sampled = sentry_trace_data
-
-            @baggage =
+            incoming_baggage =
               if baggage_header && !baggage_header.empty?
                 Baggage.from_incoming_header(baggage_header)
               else
@@ -108,10 +144,13 @@ module Sentry
                 Baggage.new({})
               end
 
-            @sample_rand = self.class.extract_sample_rand_from_baggage(@baggage, @trace_id)
-
-            @baggage.freeze!
-            @incoming_trace = true
+            if self.class.should_continue_trace?(incoming_baggage)
+              @trace_id, @parent_span_id, @parent_sampled = sentry_trace_data
+              @baggage = incoming_baggage
+              @sample_rand = self.class.extract_sample_rand_from_baggage(@baggage, @trace_id)
+              @baggage.freeze!
+              @incoming_trace = true
+            end
           end
         end
       end
@@ -162,7 +201,8 @@ module Sentry
         "sample_rand" => Utils::SampleRand.format(@sample_rand),
         "environment" => configuration.environment,
         "release" => configuration.release,
-        "public_key" => configuration.dsn&.public_key
+        "public_key" => configuration.dsn&.public_key,
+        "org_id" => configuration.effective_org_id
       }
 
       items.compact!
