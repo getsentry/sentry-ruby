@@ -676,13 +676,15 @@ RSpec.describe 'Sentry::Rack::CaptureExceptions', when: :rack_available? do
 
     context "with X-Request-Start header" do
       it "attaches queue time to transaction" do
-        timestamp = Time.now.to_f - 0.05  # 50ms ago
-        env["HTTP_X_REQUEST_START"] = "t=#{timestamp}"
+        Timecop.freeze do
+          timestamp = Time.now.to_f - 0.05  # 50ms ago
+          env["HTTP_X_REQUEST_START"] = "t=#{timestamp}"
 
-        stack.call(env)
+          stack.call(env)
 
-        queue_time = transaction.contexts.dig(:trace, :data, 'http.server.request.time_in_queue')
-        expect(queue_time).to be_within(10).of(50)
+          queue_time = transaction.contexts.dig(:trace, :data, 'http.server.request.time_in_queue')
+          expect(queue_time).to be_within(10).of(50)
+        end
       end
 
       it "subtracts puma.request_body_wait" do
@@ -725,14 +727,16 @@ RSpec.describe 'Sentry::Rack::CaptureExceptions', when: :rack_available? do
       end
 
       it "handles different timestamp formats" do
-        # Heroku/HAProxy microseconds format
-        timestamp_us = ((Time.now.to_f - 0.03) * 1_000_000).to_i
-        env["HTTP_X_REQUEST_START"] = "t=#{timestamp_us}"
+        Timecop.freeze do
+          # Heroku/HAProxy microseconds format
+          timestamp_us = ((Time.now.to_f - 0.03) * 1_000_000).to_i
+          env["HTTP_X_REQUEST_START"] = "t=#{timestamp_us}"
 
-        stack.call(env)
+          stack.call(env)
 
-        queue_time = transaction.contexts.dig(:trace, :data, 'http.server.request.time_in_queue')
-        expect(queue_time).to be_within(10).of(30)
+          queue_time = transaction.contexts.dig(:trace, :data, 'http.server.request.time_in_queue')
+          expect(queue_time).to be_within(10).of(30)
+        end
       end
     end
 
