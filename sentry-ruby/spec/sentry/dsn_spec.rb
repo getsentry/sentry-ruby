@@ -64,14 +64,6 @@ RSpec.describe Sentry::DSN do
       dsn = described_class.new("https://key@not_org_id.ingest.sentry.io/42")
       expect(dsn.org_id).to be_nil
     end
-
-    it "can be overridden with org_id=" do
-      dsn = described_class.new("https://key@o1234.ingest.sentry.io/42")
-      expect(dsn.org_id).to eq("1234")
-
-      dsn.org_id = "9999"
-      expect(dsn.org_id).to eq("9999")
-    end
   end
 
   describe "#local?" do

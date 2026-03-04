@@ -375,7 +375,7 @@ module Sentry
     # but you can provide it explicitly for self-hosted and Relay setups.
     # This value is used for trace propagation and for features like strict_trace_continuation.
     # @return [String, nil]
-    attr_accessor :org_id
+    attr_reader :org_id
 
     # If set to true, the SDK will only continue a trace if the org_id of the incoming trace found in the
     # baggage header matches the org_id of the current Sentry client and only if BOTH are present.
@@ -691,6 +691,10 @@ module Sentry
       end
 
       @profiler_class = profiler_class
+    end
+
+    def org_id=(value)
+      @org_id = value&.to_s
     end
 
     # Returns the effective org ID, preferring the explicit config option over the DSN-parsed value.

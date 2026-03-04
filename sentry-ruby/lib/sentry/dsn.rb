@@ -90,14 +90,6 @@ module Sentry
       end
     end
 
-    # Override the org ID parsed from the DSN.
-    # This is used when the org_id config option is set explicitly.
-    # @param value [String]
-    # @return [void]
-    def org_id=(value)
-      @org_id = value
-    end
-
     def generate_auth_header(client: nil)
       now = Sentry.utc_now.to_i
 
