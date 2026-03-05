@@ -1320,7 +1320,7 @@ RSpec.describe Sentry do
           end
         end
 
-        it "returns nil + logs an warning if HEROKU_SLUG_COMMIT is not set" do
+        it "returns nil + logs an warning if HEROKU_BUILD_COMMIT is not set" do
           string_io = StringIO.new
           logger = Logger.new(string_io)
 
@@ -1332,13 +1332,37 @@ RSpec.describe Sentry do
           expect(string_io.string).to include(Sentry::Configuration::HEROKU_DYNO_METADATA_MESSAGE)
         end
 
-        it "returns HEROKU_SLUG_COMMIT" do
+        it "returns HEROKU_BUILD_COMMIT" do
           begin
-            ENV["HEROKU_SLUG_COMMIT"] = "REVISION"
+            ENV["HEROKU_BUILD_COMMIT"] = "REVISION"
 
             described_class.init
             expect(described_class.configuration.release).to eq("REVISION")
           ensure
+            ENV["HEROKU_BUILD_COMMIT"] = nil
+          end
+        end
+
+        it "falls back to HEROKU_SLUG_COMMIT when HEROKU_BUILD_COMMIT is not set" do
+          begin
+            ENV["HEROKU_SLUG_COMMIT"] = "SLUG_REVISION"
+
+            described_class.init
+            expect(described_class.configuration.release).to eq("SLUG_REVISION")
+          ensure
+            ENV["HEROKU_SLUG_COMMIT"] = nil
+          end
+        end
+
+        it "prefers HEROKU_BUILD_COMMIT over HEROKU_SLUG_COMMIT" do
+          begin
+            ENV["HEROKU_BUILD_COMMIT"] = "BUILD_REVISION"
+            ENV["HEROKU_SLUG_COMMIT"] = "SLUG_REVISION"
+
+            described_class.init
+            expect(described_class.configuration.release).to eq("BUILD_REVISION")
+          ensure
+            ENV["HEROKU_BUILD_COMMIT"] = nil
             ENV["HEROKU_SLUG_COMMIT"] = nil
           end
         end
