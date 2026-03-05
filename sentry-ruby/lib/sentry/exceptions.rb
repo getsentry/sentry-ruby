@@ -6,4 +6,7 @@ module Sentry
 
   class ExternalError < Error
   end
+
+  class SizeExceededError < ExternalError
+  end
 end

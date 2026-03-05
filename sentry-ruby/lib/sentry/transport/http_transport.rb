@@ -49,6 +49,12 @@ module Sentry
 
       if response.code.match?(/\A2\d{2}/)
         handle_rate_limited_response(response) if has_rate_limited_header?(response)
+      elsif response.code == "413"
+        error_message = "HTTP 413: Envelope dropped due to exceeded size limit"
+        error_message += " (body: #{response.body})" if response.body && !response.body.empty?
+        log_warn(error_message)
+
+        raise Sentry::SizeExceededError, error_message
       elsif response.code == "429"
         log_debug("the server responded with status 429")
         handle_rate_limited_response(response)
