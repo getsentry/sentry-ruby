@@ -13,7 +13,7 @@ module Sentry
 
       def detect_release_from_heroku(running_on_heroku)
         return unless running_on_heroku
-        ENV["HEROKU_SLUG_COMMIT"]
+        ENV["HEROKU_BUILD_COMMIT"] || ENV["HEROKU_SLUG_COMMIT"]
       end
 
       def detect_release_from_capistrano(project_root)
