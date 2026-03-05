@@ -19,7 +19,8 @@ module Sentry
       :before_send,
       :event_processor,
       :insufficient_data,
-      :backpressure
+      :backpressure,
+      :send_error
     ]
 
     include LoggingHelper
@@ -60,6 +61,10 @@ module Sentry
       if data
         log_debug("[Transport] Sending envelope with items [#{serialized_items.map(&:type).join(', ')}] #{envelope.event_id} to Sentry")
         send_data(data)
+      end
+    rescue Sentry::SizeExceededError
+      serialized_items&.each do |item|
+        record_lost_event(:send_error, item.data_category)
       end
     end
 

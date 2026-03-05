@@ -291,6 +291,79 @@ RSpec.describe Sentry::HTTPTransport do
   end
 
   describe "failed request handling" do
+    context "receive 413 response" do
+      let(:string_io) { StringIO.new }
+
+      before do
+        configuration.sdk_logger = Logger.new(string_io)
+      end
+
+      context "with response body" do
+        let(:fake_response) { build_fake_response("413", body: { detail: "Envelope too large" }) }
+
+        it "raises SizeExceededError with body in message" do
+          sentry_stub_request(fake_response)
+
+          expect { subject.send_data(data) }.to raise_error(
+            Sentry::SizeExceededError,
+            /HTTP 413: Envelope dropped due to exceeded size limit.*body:.*Envelope too large/
+          )
+        end
+
+        it "logs a warning message with body" do
+          sentry_stub_request(fake_response)
+
+          expect { subject.send_data(data) }.to raise_error(Sentry::SizeExceededError)
+          expect(string_io.string).to include("HTTP 413: Envelope dropped due to exceeded size limit")
+          expect(string_io.string).to include("Envelope too large")
+        end
+      end
+
+      context "with empty response body" do
+        let(:fake_response) do
+          Net::HTTPResponse.new("1.0", "413", "").tap do |response|
+            allow(response).to receive(:body).and_return("")
+          end
+        end
+
+        it "raises SizeExceededError without body in message" do
+          sentry_stub_request(fake_response)
+
+          expect { subject.send_data(data) }.to raise_error(
+            Sentry::SizeExceededError,
+            "HTTP 413: Envelope dropped due to exceeded size limit"
+          )
+        end
+      end
+
+      context "records client reports via send_envelope" do
+        let(:fake_response) { build_fake_response("413", body: { detail: "too large" }) }
+
+        it "records send_error for each item in the envelope" do
+          sentry_stub_request(fake_response)
+
+          configuration.send_client_reports = true
+          transport = Sentry::HTTPTransport.new(configuration)
+          envelope = transport.envelope_from_event(event)
+
+          transport.send_envelope(envelope)
+
+          # Should have recorded send_error for the event item
+          expect(transport.discarded_events[[:send_error, "error"]]).to eq(1)
+        end
+
+        it "does not raise the error to the caller" do
+          sentry_stub_request(fake_response)
+
+          configuration.send_client_reports = true
+          transport = Sentry::HTTPTransport.new(configuration)
+          envelope = transport.envelope_from_event(event)
+
+          expect { transport.send_envelope(envelope) }.not_to raise_error
+        end
+      end
+    end
+
     context "receive 4xx responses" do
       let(:fake_response) { build_fake_response("404") }
 
