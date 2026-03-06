@@ -7,6 +7,7 @@ RSpec.describe Sentry::OTLP::Configuration do
     it "sets default values" do
       expect(subject.enabled).to eq(false)
       expect(subject.setup_otlp_traces_exporter).to eq(true)
+      expect(subject.collector_url).to be_nil
       expect(subject.setup_propagator).to eq(true)
     end
   end
@@ -15,6 +16,11 @@ RSpec.describe Sentry::OTLP::Configuration do
     it "allows setting enabled" do
       subject.enabled = true
       expect(subject.enabled).to eq(true)
+    end
+
+    it "allows setting collector_url" do
+      subject.collector_url = "http://localhost:4318/v1/traces"
+      expect(subject.collector_url).to eq("http://localhost:4318/v1/traces")
     end
 
     it "allows setting setup_otlp_traces_exporter" do
