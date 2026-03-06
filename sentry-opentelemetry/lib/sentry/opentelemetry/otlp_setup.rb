@@ -11,6 +11,7 @@ module Sentry
       class << self
         def setup(config)
           @dsn = config.dsn
+          @collector_url = config.otlp.collector_url
           @sdk_logger = config.sdk_logger
           log_debug("[OTLP] Setting up OTLP integration")
 
@@ -39,7 +40,7 @@ module Sentry
         end
 
         def setup_otlp_exporter
-          return unless @dsn
+          return unless @dsn || @collector_url
 
           log_debug("[OTLP] Setting up OTLP exporter")
 
@@ -51,15 +52,20 @@ module Sentry
             return
           end
 
-          endpoint = "#{@dsn.server}#{@dsn.otlp_traces_endpoint}"
-          auth_header = @dsn.generate_auth_header(client: USER_AGENT)
+          exporter = if @collector_url
+            endpoint = @collector_url
+            headers = {}
+            log_debug("[OTLP] Sending traces to collector at #{endpoint}")
 
-          log_debug("[OTLP] Sending traces to #{endpoint}")
+            ::OpenTelemetry::Exporter::OTLP::Exporter.new(endpoint: endpoint)
+          else
+            endpoint = "#{@dsn.server}#{@dsn.otlp_traces_endpoint}"
+            auth_header = @dsn.generate_auth_header(client: USER_AGENT)
+            headers = { "X-Sentry-Auth" => auth_header }
+            log_debug("[OTLP] Sending traces to #{endpoint}")
 
-          exporter = ::OpenTelemetry::Exporter::OTLP::Exporter.new(
-            endpoint: endpoint,
-            headers: { "X-Sentry-Auth" => auth_header }
-          )
+            ::OpenTelemetry::Exporter::OTLP::Exporter.new(endpoint: endpoint, headers: headers)
+          end
 
           span_processor = ::OpenTelemetry::SDK::Trace::Export::BatchSpanProcessor.new(exporter)
           ::OpenTelemetry.tracer_provider.add_span_processor(span_processor)
