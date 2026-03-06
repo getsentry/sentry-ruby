@@ -54,7 +54,6 @@ module Sentry
 
           exporter = if @collector_url
             endpoint = @collector_url
-            headers = {}
             log_debug("[OTLP] Sending traces to collector at #{endpoint}")
 
             ::OpenTelemetry::Exporter::OTLP::Exporter.new(endpoint: endpoint)
