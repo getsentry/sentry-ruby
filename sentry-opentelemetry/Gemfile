@@ -9,6 +9,7 @@ eval_gemfile "../Gemfile.dev"
 gemspec
 
 gem "opentelemetry-sdk"
+gem "opentelemetry-exporter-otlp" unless RUBY_PLATFORM == "java"
 gem "opentelemetry-instrumentation-rails"
 
 gem "sentry-ruby", path: "../sentry-ruby"
