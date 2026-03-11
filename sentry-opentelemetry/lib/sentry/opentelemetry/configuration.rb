@@ -21,11 +21,13 @@ module Sentry
     class Configuration
       attr_accessor :enabled
       attr_accessor :setup_otlp_traces_exporter
+      attr_accessor :collector_url
       attr_accessor :setup_propagator
 
       def initialize
         @enabled = false
         @setup_otlp_traces_exporter = true
+        @collector_url = nil
         @setup_propagator = true
       end
     end
