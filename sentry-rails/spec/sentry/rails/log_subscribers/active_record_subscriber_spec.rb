@@ -310,8 +310,8 @@ RSpec.describe Sentry::Rails::LogSubscribers::ActiveRecordSubscriber do
           expect(log_event).not_to be_nil
 
           attributes = log_event[:attributes]
-          expect(attributes[:db_system][:value]).to eq("sqlite3")
-          expect(attributes[:db_name][:value]).to eq("db.sqlite3")
+          expect(attributes[:db_system][:value]).to eq(Rails.application.db_uri.scheme)
+          expect(attributes[:db_name][:value]).to eq(Rails.application.db_name)
         end
       end
     end
