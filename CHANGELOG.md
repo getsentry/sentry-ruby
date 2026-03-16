@@ -1,3 +1,22 @@
+## 6.5.0
+
+### New Features ✨
+
+- (otlp) Add collector_url option to OTLP integration by @sl0thentr0py in [#2887](https://github.com/getsentry/sentry-ruby/pull/2887)
+- (release-detector) Prefer HEROKU_BUILD_COMMIT over deprecated HEROKU_SLUG_COMMIT by @ericapisani in [#2886](https://github.com/getsentry/sentry-ruby/pull/2886)
+- Implement strict trace continuation by @giortzisg in [#2872](https://github.com/getsentry/sentry-ruby/pull/2872)
+
+### Bug Fixes 🐛
+
+- (rails) Set mechanism.handled based on error handling status by @solnic in [#2892](https://github.com/getsentry/sentry-ruby/pull/2892)
+- Copy event processors on Scope#dup by @sl0thentr0py in [#2893](https://github.com/getsentry/sentry-ruby/pull/2893)
+- Map `trilogy` database adapter to `mysql` for Query Insights compatibility by @krismichalski in [#2656](https://github.com/getsentry/sentry-ruby/pull/2656)
+- Don't transform attributes in place in metrics by @sl0thentr0py in [#2883](https://github.com/getsentry/sentry-ruby/pull/2883)
+
+### Internal Changes 🔧
+
+- (transport) Handle HTTP 413 response for oversized envelopes by @sl0thentr0py in [#2885](https://github.com/getsentry/sentry-ruby/pull/2885)
+
 ## 6.4.1
 
 ### Bug Fixes 🐛
