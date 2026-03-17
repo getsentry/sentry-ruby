@@ -12,7 +12,13 @@ module Sentry
       end
 
       def set_propagation_headers(req)
-        Sentry.get_trace_propagation_headers&.each { |k, v| req[k] = v }
+        Sentry.get_trace_propagation_headers&.each do |k, v|
+          if k == BAGGAGE_HEADER_NAME && req[k]
+            req[k] = "#{v},#{req[k]}"
+          else
+            req[k] = v
+          end
+        end
       end
 
       def record_sentry_breadcrumb(request_info, response_status)
