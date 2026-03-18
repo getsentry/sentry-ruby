@@ -8,6 +8,7 @@
 
 ### Bug Fixes 🐛
 
+- Do not overwrite baggage header contents if it already exists by @jakubsomonday in [#2894](https://github.com/getsentry/sentry-ruby/pull/2894)
 - (rails) Set mechanism.handled based on error handling status by @solnic in [#2892](https://github.com/getsentry/sentry-ruby/pull/2892)
 - Copy event processors on Scope#dup by @sl0thentr0py in [#2893](https://github.com/getsentry/sentry-ruby/pull/2893)
 - Map `trilogy` database adapter to `mysql` for Query Insights compatibility by @krismichalski in [#2656](https://github.com/getsentry/sentry-ruby/pull/2656)
