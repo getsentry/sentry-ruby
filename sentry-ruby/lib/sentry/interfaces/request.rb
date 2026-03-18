@@ -11,6 +11,9 @@ module Sentry
       "HTTP_X_FORWARDED_FOR"
     ].freeze
 
+    # Regex to detect lowercase chars — match? is allocation-free (no MatchData/String)
+    LOWERCASE_PATTERN = /[a-z]/.freeze
+
     # See Sentry server default limits at
     # https://github.com/getsentry/sentry/blob/master/src/sentry/conf/server.py
     MAX_BODY_LIMIT = 4096 * 4
@@ -93,7 +96,7 @@ module Sentry
           next if key == "HTTP_AUTHORIZATION" && !send_default_pii
 
           # Rack stores headers as HTTP_WHAT_EVER, we need What-Ever
-          key = key.sub(/^HTTP_/, "")
+          key = key.delete_prefix("HTTP_")
           key = key.split("_").map(&:capitalize).join("-")
 
           memo[key] = Utils::EncodingHelper.encode_to_utf_8(value.to_s)
@@ -107,9 +110,6 @@ module Sentry
       end
     end
 
-    # Regex to detect lowercase chars — match? is allocation-free (no MatchData/String)
-    LOWERCASE_PATTERN = /[a-z]/.freeze
-
     def is_skippable_header?(key)
       key.match?(LOWERCASE_PATTERN) || # lower-case envs aren't real http headers
         key == "HTTP_COOKIE" || # Cookies don't go here, they go somewhere else
@@ -122,10 +122,16 @@ module Sentry
     # if the request has legitimately sent a Version header themselves.
     # See: https://github.com/rack/rack/blob/028438f/lib/rack/handler/cgi.rb#L29
     def is_server_protocol?(key, value, protocol_version)
-      rack_version = Gem::Version.new(::Rack.release)
-      return false if rack_version >= Gem::Version.new("3.0")
+      return false if self.class.rack_3_or_above?
 
       key == "HTTP_VERSION" && value == protocol_version
+    end
+
+    def self.rack_3_or_above?
+      return @rack_3_or_above if defined?(@rack_3_or_above)
+
+      @rack_3_or_above = defined?(::Rack) &&
+        Gem::Version.new(::Rack.release) >= Gem::Version.new("3.0")
     end
 
     def filter_and_format_env(env, rack_env_whitelist)
