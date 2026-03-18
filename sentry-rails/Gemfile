@@ -11,6 +11,7 @@ gem "sentry-ruby", path: "../sentry-ruby"
 
 platform :jruby do
   gem "activerecord-jdbcmysql-adapter"
+  gem "activerecord-jdbcpostgresql-adapter"
   gem "jdbc-sqlite3"
 end
 
@@ -29,6 +30,7 @@ end
 rails_version = Gem::Version.new(rails_version)
 
 gem "rails", "~> #{rails_version}"
+gem "pg", platform: :ruby
 
 if rails_version >= Gem::Version.new("8.1.0")
   gem "rspec-rails", "~> 8.0.0"

@@ -16,8 +16,12 @@ services:
     <<: *sentry-build
     entrypoint: ".devcontainer/run --service dev"
     command: "sleep infinity"
+    links:
+      - redis
+      - postgres
     depends_on:
       - redis
+      - postgres
 
   sentry-test:
     <<: *sentry-build
@@ -26,6 +30,15 @@ services:
     ports:
       - "${SENTRY_E2E_RAILS_APP_PORT}:4000"
       - "${SENTRY_E2E_SVELTE_APP_PORT}:4001"
+
+  postgres:
+    image: postgres:15
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+      - POSTGRES_DB=sentry
+    ports:
+      - "5432:5432"
 
   redis:
     image: redis:latest
