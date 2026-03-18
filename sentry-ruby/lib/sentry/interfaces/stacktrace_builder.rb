@@ -64,13 +64,21 @@ module Sentry
     # @yieldparam frame [StacktraceInterface::Frame]
     # @return [StacktraceInterface]
     def build(backtrace:, &frame_callback)
-      parsed_lines = parse_backtrace_lines(backtrace).select(&:file)
+      parsed_lines = parse_backtrace_lines(backtrace)
 
-      frames = parsed_lines.reverse.map do |line|
+      # Build frames in reverse order, skipping lines without files
+      # Single pass instead of select + reverse + map + compact
+      frames = []
+      i = parsed_lines.size - 1
+      while i >= 0
+        line = parsed_lines[i]
+        i -= 1
+        next unless line.file
+
         frame = convert_parsed_line_into_frame(line)
         frame = frame_callback.call(frame) if frame_callback
-        frame
-      end.compact
+        frames << frame if frame
+      end
 
       StacktraceInterface.new(frames: frames)
     end
@@ -78,8 +86,16 @@ module Sentry
     private
 
     def convert_parsed_line_into_frame(line)
+      # Cache frames by Line object identity — same Line produces same Frame
+      cache_key = line.object_id
+      cached_frame = @frame_cache&.[](cache_key)
+      return cached_frame if cached_frame
+
       frame = StacktraceInterface::Frame.new(project_root, line, strip_backtrace_load_path)
       frame.set_context(linecache, context_lines) if context_lines
+
+      @frame_cache ||= {}
+      @frame_cache[cache_key] = frame if @frame_cache.size < 2048
       frame
     end
 

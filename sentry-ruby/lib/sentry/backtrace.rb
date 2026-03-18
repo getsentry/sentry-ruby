@@ -10,13 +10,16 @@ module Sentry
     # holder for an Array of Backtrace::Line instances
     attr_reader :lines
 
+    @in_app_pattern_cache = {}
+
     def self.parse(backtrace, project_root, app_dirs_pattern, &backtrace_cleanup_callback)
       ruby_lines = backtrace.is_a?(Array) ? backtrace : backtrace.split(/\n\s*/)
 
       ruby_lines = backtrace_cleanup_callback.call(ruby_lines) if backtrace_cleanup_callback
 
-      in_app_pattern ||= begin
-        Regexp.new("^(#{project_root}/)?#{app_dirs_pattern}")
+      cache_key = app_dirs_pattern
+      in_app_pattern = @in_app_pattern_cache.fetch(cache_key) do
+        @in_app_pattern_cache[cache_key] = Regexp.new("^(#{project_root}/)?#{app_dirs_pattern}")
       end
 
       lines = ruby_lines.to_a.map do |unparsed_line|

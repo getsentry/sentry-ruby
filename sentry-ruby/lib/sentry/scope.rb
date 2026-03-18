@@ -124,13 +124,15 @@ module Sentry
     def dup
       copy = super
       copy.breadcrumbs = breadcrumbs.dup
-      copy.contexts = contexts.deep_dup
-      copy.extra = extra.deep_dup
-      copy.tags = tags.deep_dup
-      copy.user = user.deep_dup
+      # Shallow dup is sufficient for these containers — inner values are not
+      # mutated after scope duplication, only replaced via merge! or assignment
+      copy.contexts = contexts.dup
+      copy.extra = extra.dup
+      copy.tags = tags.dup
+      copy.user = user.dup
       copy.transaction_name = transaction_name.dup
       copy.transaction_source = transaction_source.dup
-      copy.fingerprint = fingerprint.deep_dup
+      copy.fingerprint = fingerprint.dup
       copy.span = span.deep_dup
       copy.session = session.deep_dup
       copy.propagation_context = propagation_context.deep_dup

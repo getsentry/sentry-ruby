@@ -283,12 +283,12 @@ module Sentry
       event
     end
 
-    def add_breadcrumb(breadcrumb, hint: {})
+    def add_breadcrumb(breadcrumb, hint: nil)
       return unless current_client
       return unless configuration.enabled_in_current_env?
 
       if before_breadcrumb = current_client.configuration.before_breadcrumb
-        breadcrumb = before_breadcrumb.call(breadcrumb, hint)
+        breadcrumb = before_breadcrumb.call(breadcrumb, hint || {})
       end
 
       return unless breadcrumb

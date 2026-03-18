@@ -11,6 +11,14 @@ module Sentry
       "HTTP_X_FORWARDED_FOR"
     ].freeze
 
+    # Cache for Rack env key → HTTP header name transformations
+    # e.g. "HTTP_ACCEPT_LANGUAGE" → "Accept-Language", "CONTENT_TYPE" → "Content-Type"
+    @header_name_cache = {}
+
+    class << self
+      attr_reader :header_name_cache
+    end
+
     # See Sentry server default limits at
     # https://github.com/getsentry/sentry/blob/master/src/sentry/conf/server.py
     MAX_BODY_LIMIT = 4096 * 4
@@ -42,15 +50,6 @@ module Sentry
     # @see Configuration#send_default_pii
     # @see Configuration#rack_env_whitelist
     def initialize(env:, send_default_pii:, rack_env_whitelist:)
-      env = env.dup
-
-      unless send_default_pii
-        # need to completely wipe out ip addresses
-        RequestInterface::IP_HEADERS.each do |header|
-          env.delete(header)
-        end
-      end
-
       request = ::Rack::Request.new(env)
 
       if send_default_pii
@@ -63,7 +62,7 @@ module Sentry
       self.method = request.request_method
 
       self.headers = filter_and_format_headers(env, send_default_pii)
-      self.env     = filter_and_format_env(env, rack_env_whitelist)
+      self.env     = filter_and_format_env(env, rack_env_whitelist, send_default_pii)
     end
 
     private
@@ -91,12 +90,22 @@ module Sentry
           next if is_server_protocol?(key, value, env["SERVER_PROTOCOL"])
           next if is_skippable_header?(key)
           next if key == "HTTP_AUTHORIZATION" && !send_default_pii
+          # Filter IP headers inline instead of env.dup + delete
+          next if !send_default_pii && IP_HEADERS.include?(key)
 
           # Rack stores headers as HTTP_WHAT_EVER, we need What-Ever
-          key = key.sub(/^HTTP_/, "")
-          key = key.split("_").map(&:capitalize).join("-")
+          key = self.class.header_name_cache[key] ||= begin
+            k = key.delete_prefix("HTTP_")
+            k.split("_").map(&:capitalize).join("-").freeze
+          end
 
-          memo[key] = Utils::EncodingHelper.encode_to_utf_8(value.to_s)
+          # Fast path: ASCII strings are valid UTF-8, skip dup+force_encoding
+          str = value.to_s
+          memo[key] = if str.ascii_only?
+            str
+          else
+            Utils::EncodingHelper.encode_to_utf_8(str)
+          end
         rescue StandardError => e
           # Rails adds objects to the Rack env that can sometimes raise exceptions
           # when `to_s` is called.
@@ -107,8 +116,11 @@ module Sentry
       end
     end
 
+    # Regex to detect lowercase chars — match? is allocation-free (no MatchData/String)
+    LOWERCASE_PATTERN = /[a-z]/.freeze
+
     def is_skippable_header?(key)
-      key.upcase != key || # lower-case envs aren't real http headers
+      key.match?(LOWERCASE_PATTERN) || # lower-case envs aren't real http headers
         key == "HTTP_COOKIE" || # Cookies don't go here, they go somewhere else
         !(key.start_with?("HTTP_") || CONTENT_HEADERS.include?(key))
     end
@@ -119,17 +131,25 @@ module Sentry
     # if the request has legitimately sent a Version header themselves.
     # See: https://github.com/rack/rack/blob/028438f/lib/rack/handler/cgi.rb#L29
     def is_server_protocol?(key, value, protocol_version)
-      rack_version = Gem::Version.new(::Rack.release)
-      return false if rack_version >= Gem::Version.new("3.0")
+      return false if self.class.rack_3_or_above?
 
       key == "HTTP_VERSION" && value == protocol_version
     end
 
-    def filter_and_format_env(env, rack_env_whitelist)
+    def self.rack_3_or_above?
+      return @rack_3_or_above if defined?(@rack_3_or_above)
+
+      @rack_3_or_above = defined?(::Rack) &&
+        Gem::Version.new(::Rack.release) >= Gem::Version.new("3.0")
+    end
+
+    def filter_and_format_env(env, rack_env_whitelist, send_default_pii)
       return env if rack_env_whitelist.empty?
 
       env.select do |k, _v|
-        rack_env_whitelist.include? k.to_s
+        key = k.to_s
+        next false if !send_default_pii && IP_HEADERS.include?(key)
+        rack_env_whitelist.include?(key)
       end
     end
   end
