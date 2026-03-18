@@ -78,8 +78,16 @@ module Sentry
     private
 
     def convert_parsed_line_into_frame(line)
+      # Cache frames by Line object identity — same Line produces same Frame
+      cache_key = line.object_id
+      cached_frame = @frame_cache&.[](cache_key)
+      return cached_frame if cached_frame
+
       frame = StacktraceInterface::Frame.new(project_root, line, strip_backtrace_load_path)
       frame.set_context(linecache, context_lines) if context_lines
+
+      @frame_cache ||= {}
+      @frame_cache[cache_key] = frame if @frame_cache.size < 2048
       frame
     end
 
