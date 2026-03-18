@@ -107,8 +107,11 @@ module Sentry
       end
     end
 
+    # Regex to detect lowercase chars — match? is allocation-free (no MatchData/String)
+    LOWERCASE_PATTERN = /[a-z]/.freeze
+
     def is_skippable_header?(key)
-      key.upcase != key || # lower-case envs aren't real http headers
+      key.match?(LOWERCASE_PATTERN) || # lower-case envs aren't real http headers
         key == "HTTP_COOKIE" || # Cookies don't go here, they go somewhere else
         !(key.start_with?("HTTP_") || CONTENT_HEADERS.include?(key))
     end
