@@ -57,7 +57,7 @@ module Sentry
     # @return [BreadcrumbBuffer]
     def dup
       copy = super
-      copy.buffer = buffer.deep_dup
+      copy.buffer = buffer.dup
       copy
     end
   end
