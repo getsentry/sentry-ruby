@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+require "sentry/utils/filename_cache"
+
 module Sentry
   class StacktraceBuilder
     # @return [String]
@@ -47,6 +49,7 @@ module Sentry
       @backtrace_cleanup_callback = backtrace_cleanup_callback
       @strip_backtrace_load_path = strip_backtrace_load_path
       @in_app_pattern = Regexp.new("^(#{project_root}/)?#{app_dirs_pattern}") if app_dirs_pattern
+      @filename_cache = FilenameCache.new(project_root)
     end
 
     # Generates a StacktraceInterface with the given backtrace.
@@ -87,7 +90,7 @@ module Sentry
     private
 
     def convert_parsed_line_into_frame(line)
-      frame = StacktraceInterface::Frame.new(project_root, line, strip_backtrace_load_path)
+      frame = StacktraceInterface::Frame.new(project_root, line, strip_backtrace_load_path, filename_cache: @filename_cache)
       frame.set_context(linecache, context_lines) if context_lines
       frame
     end
