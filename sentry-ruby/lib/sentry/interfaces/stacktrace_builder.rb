@@ -46,6 +46,7 @@ module Sentry
       @context_lines = context_lines
       @backtrace_cleanup_callback = backtrace_cleanup_callback
       @strip_backtrace_load_path = strip_backtrace_load_path
+      @in_app_pattern = Regexp.new("^(#{project_root}/)?#{app_dirs_pattern}") if app_dirs_pattern
     end
 
     # Generates a StacktraceInterface with the given backtrace.
@@ -64,13 +65,21 @@ module Sentry
     # @yieldparam frame [StacktraceInterface::Frame]
     # @return [StacktraceInterface]
     def build(backtrace:, &frame_callback)
-      parsed_lines = parse_backtrace_lines(backtrace).select(&:file)
+      parsed_lines = parse_backtrace_lines(backtrace)
 
-      frames = parsed_lines.reverse.map do |line|
+      # Build frames in reverse order, skipping lines without files
+      # Single pass instead of select + reverse + map + compact
+      frames = []
+      i = parsed_lines.size - 1
+      while i >= 0
+        line = parsed_lines[i]
+        i -= 1
+        next unless line.file
+
         frame = convert_parsed_line_into_frame(line)
         frame = frame_callback.call(frame) if frame_callback
-        frame
-      end.compact
+        frames << frame if frame
+      end
 
       StacktraceInterface.new(frames: frames)
     end
@@ -85,7 +94,8 @@ module Sentry
 
     def parse_backtrace_lines(backtrace)
       Backtrace.parse(
-        backtrace, project_root, app_dirs_pattern, &backtrace_cleanup_callback
+        backtrace, project_root, app_dirs_pattern,
+        in_app_pattern: @in_app_pattern, &backtrace_cleanup_callback
       ).lines
     end
   end

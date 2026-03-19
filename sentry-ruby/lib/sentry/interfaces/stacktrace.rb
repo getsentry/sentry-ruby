@@ -28,35 +28,43 @@ module Sentry
                   :lineno, :module, :pre_context, :post_context, :vars
 
       def initialize(project_root, line, strip_backtrace_load_path = true)
-        @project_root = project_root
-        @strip_backtrace_load_path = strip_backtrace_load_path
-
         @abs_path = line.file
         @function = line.method if line.method
         @lineno = line.number
         @in_app = line.in_app
         @module = line.module_name if line.module_name
-        @filename = compute_filename
+        @filename = compute_filename(project_root, strip_backtrace_load_path)
       end
 
       def to_s
         "#{@filename}:#{@lineno}"
       end
 
-      def compute_filename
+      def compute_filename(project_root, strip_backtrace_load_path)
         return if abs_path.nil?
-        return abs_path unless @strip_backtrace_load_path
+        return abs_path unless strip_backtrace_load_path
 
+        under_root = project_root && abs_path.start_with?(project_root)
         prefix =
-          if under_project_root? && in_app
-            @project_root
-          elsif under_project_root?
-            longest_load_path || @project_root
+          if under_root && in_app
+            project_root
+          elsif under_root
+            longest_load_path || project_root
           else
             longest_load_path
           end
 
-        prefix ? abs_path[prefix.to_s.chomp(File::SEPARATOR).length + 1..-1] : abs_path
+        if prefix
+          prefix_str = prefix.to_s
+          offset = if prefix_str.end_with?(File::SEPARATOR)
+            prefix_str.bytesize
+          else
+            prefix_str.bytesize + 1
+          end
+          abs_path.byteslice(offset, abs_path.bytesize - offset)
+        else
+          abs_path
+        end
       end
 
       def set_context(linecache, context_lines)
@@ -76,10 +84,6 @@ module Sentry
       end
 
       private
-
-      def under_project_root?
-        @project_root && abs_path.start_with?(@project_root)
-      end
 
       def longest_load_path
         $LOAD_PATH.select { |path| abs_path.start_with?(path.to_s) }.max_by(&:size)

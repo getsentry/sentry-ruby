@@ -10,14 +10,16 @@ module Sentry
     # holder for an Array of Backtrace::Line instances
     attr_reader :lines
 
-    def self.parse(backtrace, project_root, app_dirs_pattern, &backtrace_cleanup_callback)
+    # @deprecated project_root, in_app_pattern passed from outside
+    # @deprecated app_dirs_pattern, in_app_pattern passed from outside
+    def self.parse(backtrace, project_root, app_dirs_pattern, in_app_pattern: nil, &backtrace_cleanup_callback)
       ruby_lines = backtrace.is_a?(Array) ? backtrace : backtrace.split(/\n\s*/)
 
       ruby_lines = backtrace_cleanup_callback.call(ruby_lines) if backtrace_cleanup_callback
 
-      in_app_pattern ||= begin
-        Regexp.new("^(#{project_root}/)?#{app_dirs_pattern}")
-      end
+      # in_app_pattern is now passed in from StacktraceBuilder, so this regex won't be triggered
+      # only here for backwards compat and will be deleted
+      in_app_pattern ||= Regexp.new("^(#{project_root}/)?#{app_dirs_pattern}")
 
       lines = ruby_lines.to_a.map do |unparsed_line|
         Line.parse(unparsed_line, in_app_pattern)
