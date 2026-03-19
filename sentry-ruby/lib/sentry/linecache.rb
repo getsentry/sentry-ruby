@@ -12,36 +12,33 @@ module Sentry
     # file. The number of lines retrieved is (2 * context) + 1, the middle
     # line should be the line requested by lineno. See specs for more information.
     def get_file_context(filename, lineno, context)
-      return nil, nil, nil unless valid_path?(filename)
+      lines = getlines(filename)
+      return nil, nil, nil unless lines
 
-      lines = Array.new(2 * context + 1) do |i|
-        getline(filename, lineno - context + i)
-      end
-      [lines[0..(context - 1)], lines[context], lines[(context + 1)..-1]]
+      first_line = lineno - context
+      pre = Array.new(context) { |i| line_at(lines, first_line + i) }
+      context_line = line_at(lines, lineno)
+      post = Array.new(context) { |i| line_at(lines, lineno + 1 + i) }
+
+      [pre, context_line, post]
     end
 
     private
 
-    def valid_path?(path)
-      lines = getlines(path)
-      !lines.nil?
+    def line_at(lines, n)
+      return nil if n < 1
+
+      lines[n - 1]
     end
 
     def getlines(path)
-      @cache[path] ||= begin
-        File.open(path, "r", &:readlines)
-      rescue
-        nil
+      @cache.fetch(path) do
+        @cache[path] = begin
+          File.open(path, "r", &:readlines)
+        rescue
+          nil
+        end
       end
-    end
-
-    def getline(path, n)
-      return nil if n < 1
-
-      lines = getlines(path)
-      return nil if lines.nil?
-
-      lines[n - 1]
     end
   end
 end
