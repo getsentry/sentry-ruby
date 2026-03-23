@@ -42,10 +42,10 @@ jobs:
         exclude:
           - { ruby_version: 'jruby-head' }
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
 
       - name: Set up Ruby ${{ matrix.ruby_version }}
-        uses: ruby/setup-ruby@v1
+        uses: ruby/setup-ruby@319994f95fa847cf3fb3cd3dbe89f6dcde9f178f # v1
         with:
           ruby-version: ${{ matrix.ruby_version }}
           bundler-cache: true
@@ -54,6 +54,6 @@ jobs:
         run: bundle exec rake
 
       - name: Upload Coverage
-        uses: codecov/codecov-action@v5
+        uses: codecov/codecov-action@1af58845a975a7985b0beb0cbe6fbbb71a41dbad # v5
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
