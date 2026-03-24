@@ -135,6 +135,22 @@ RSpec.describe Sentry::StructuredLogger do
           expect(log_event[:attributes]["sentry.message.parameter.day"]).to eql({ value: "Monday", type: "string" })
         end
 
+        it "logs with block syntax for compatibility with ruby Logger" do
+          Sentry.logger.public_send(level) { "Hello world" }
+
+          expect(sentry_logs).to_not be_empty
+
+          log_event = sentry_logs.last
+
+          expect(log_event[:level]).to eql(level)
+          expect(log_event[:body]).to eql("Hello world")
+        end
+
+        it "raises an argument error when no message or block is given" do
+          expect { Sentry.logger.public_send(level) }
+            .to raise_error(ArgumentError, "message or block is required")
+        end
+
         context "handling of malformed strings" do
           let(:malformed_string_default) do
             Sentry::Utils::EncodingHelper::MALFORMED_STRING

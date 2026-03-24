@@ -66,6 +66,21 @@ RSpec.describe Sentry::DebugStructuredLogger do
           expect(log_event["parameters"]).to eq(["param1", "param2"])
           expect(log_event["attributes"]["extra_attr"]).to eq("extra")
         end
+
+        it "supports block syntax for compatibility with StructuredLogger" do
+          debug_logger.public_send(level) { "Test #{level} block message" }
+
+          logged_events = debug_logger.logged_events
+          expect(logged_events).not_to be_empty
+
+          log_event = logged_events.last
+          expect(log_event["message"]).to eq("Test #{level} block message")
+        end
+
+        it "raises an argument error when no message or block is given" do
+          expect { debug_logger.public_send(level) }
+            .to raise_error(ArgumentError, "message or block is required")
+        end
       end
     end
   end
@@ -81,6 +96,22 @@ RSpec.describe Sentry::DebugStructuredLogger do
       expect(log_event["level"]).to eq("info")
       expect(log_event["message"]).to eq("Test log message")
       expect(log_event["attributes"]["custom_attr"]).to eq("custom_value")
+    end
+
+    it "supports block syntax for compatibility with StructuredLogger" do
+      debug_logger.log(:info, parameters: []) { "Test log block message" }
+
+      logged_events = debug_logger.logged_events
+      expect(logged_events).not_to be_empty
+
+      log_event = logged_events.last
+      expect(log_event["level"]).to eq("info")
+      expect(log_event["message"]).to eq("Test log block message")
+    end
+
+    it "raises an argument error when no message or block is given" do
+      expect { debug_logger.log(:info, parameters: []) }
+        .to raise_error(ArgumentError, "message or block is required")
     end
   end
 
