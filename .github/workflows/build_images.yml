@@ -35,7 +35,7 @@ jobs:
 
     steps:
       - name: Check out current commit
-        uses: actions/checkout@v4
+        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
 
       - name: Generate short image name and extract version
         id: image_name
@@ -66,7 +66,7 @@ jobs:
 
       - name: Build and push devcontainer image
         id: build
-        uses: getsentry/action-build-and-push-images@main
+        uses: getsentry/action-build-and-push-images@8fc75e483c09a68721f2c8951292ee17f8821766 # main
         with:
           image_name: "${{ steps.image_name.outputs.short_name }}"
           dockerfile_path: ".devcontainer/Dockerfile"
