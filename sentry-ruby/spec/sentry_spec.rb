@@ -1235,6 +1235,15 @@ RSpec.describe Sentry do
       end
     end
 
+    it 'uses `KAMAL_VERSION` env variable' do
+      ENV['KAMAL_VERSION'] = 'GIT_SHA'
+
+      described_class.init
+      expect(described_class.configuration.release).to eq('GIT_SHA')
+
+      ENV.delete('KAMAL_VERSION')
+    end
+
     context "when git is available" do
       before do
         allow(File).to receive(:directory?).and_return(false)
