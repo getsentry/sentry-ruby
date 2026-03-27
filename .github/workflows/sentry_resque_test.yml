@@ -24,6 +24,16 @@ jobs:
     name: Ruby ${{ matrix.ruby_version }}, options - ${{ toJson(matrix.options) }}
     runs-on: ubuntu-latest
     timeout-minutes: 10
+    services:
+      redis:
+        image: redis:5
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
     env:
       RUBYOPT: ${{ matrix.options.rubyopt }}
       BUNDLE_GEMFILE: ${{ github.workspace }}/sentry-resque/Gemfile
@@ -47,11 +57,6 @@ jobs:
         with:
           ruby-version: ${{ matrix.ruby_version }}
           bundler-cache: true
-
-      - name: Start Redis
-        uses: supercharge/redis-github-action@105b02b0ae87d7c6a8bb8debaf94b553a593327b # 1.8.1
-        with:
-          redis-version: 5
 
       - name: Run specs without Rails
         env:
