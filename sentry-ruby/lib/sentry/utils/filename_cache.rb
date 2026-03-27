@@ -2,6 +2,8 @@
 
 module Sentry
   class FilenameCache
+    attr_reader :cache
+
     def initialize(project_root)
       @project_root = project_root
       @load_paths = $LOAD_PATH.map(&:to_s).sort_by(&:size).reverse.freeze
