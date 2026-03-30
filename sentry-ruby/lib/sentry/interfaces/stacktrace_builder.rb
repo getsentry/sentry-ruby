@@ -22,6 +22,9 @@ module Sentry
     # @return [Boolean]
     attr_reader :strip_backtrace_load_path
 
+    # @return [FilenameCache]
+    attr_reader :filename_cache
+
     # @param project_root [String]
     # @param app_dirs_pattern [Regexp, nil]
     # @param linecache [LineCache]
