@@ -6,10 +6,10 @@ module Sentry
   module Yabeda
     class Adapter < ::Yabeda::BaseAdapter
       # Sentry does not require pre-registration of metrics
-      def register_counter!(_metric) = nil
-      def register_gauge!(_metric) = nil
-      def register_histogram!(_metric) = nil
-      def register_summary!(_metric) = nil
+      def register_counter!(_metric); end
+      def register_gauge!(_metric); end
+      def register_histogram!(_metric); end
+      def register_summary!(_metric); end
 
       def perform_counter_increment!(counter, tags, increment)
         return unless enabled?
