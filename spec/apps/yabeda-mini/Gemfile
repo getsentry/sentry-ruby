@@ -1,0 +1,19 @@
+# frozen_string_literal: true
+
+source "https://rubygems.org"
+
+gem "rake"
+gem "puma"
+
+gem "railties"
+gem "actionpack"
+gem "activerecord"
+gem "activejob"
+gem "sqlite3"
+
+gem "yabeda"
+gem "yabeda-rails"
+
+gem "sentry-ruby", path: Pathname(__dir__).join("../../..").realpath
+gem "sentry-rails", path: Pathname(__dir__).join("../../..").realpath
+gem "sentry-yabeda", path: Pathname(__dir__).join("../../..").realpath
