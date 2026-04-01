@@ -101,6 +101,8 @@ end
 
 # Controllers
 class ApplicationController < ActionController::API
+  include ActionController::RequestForgeryProtection
+  protect_from_forgery with: :exception
   around_action :track_metrics
 
   private
