@@ -1,79 +1,41 @@
-# sentry-yabeda
+<p align="center">
+  <a href="https://sentry.io" target="_blank" align="center">
+    <img src="https://sentry-brand.storage.googleapis.com/sentry-logo-black.png" width="280">
+  </a>
+  <br>
+</p>
 
-A [Yabeda](https://github.com/yabeda-rb/yabeda) adapter that forwards Ruby application metrics to [Sentry](https://sentry.io).
+# sentry-yabeda, the Yabeda integration for Sentry's Ruby client
 
-## Installation
+---
 
-Add this line to your application's Gemfile:
+[![Gem Version](https://img.shields.io/gem/v/sentry-yabeda.svg)](https://rubygems.org/gems/sentry-yabeda)
+![Build Status](https://github.com/getsentry/sentry-ruby/actions/workflows/sentry_yabeda_test.yml/badge.svg)
+[![Coverage Status](https://img.shields.io/codecov/c/github/getsentry/sentry-ruby/master?logo=codecov)](https://codecov.io/gh/getsentry/sentry-ruby/branch/master)
+[![Gem](https://img.shields.io/gem/dt/sentry-yabeda.svg)](https://rubygems.org/gems/sentry-yabeda/)
+
+
+[Documentation](https://docs.sentry.io/platforms/ruby/) | [Bug Tracker](https://github.com/getsentry/sentry-ruby/issues) | [Forum](https://forum.sentry.io/) | IRC: irc.freenode.net, #sentry
+
+The official Ruby-language client and integration layer for the [Sentry](https://github.com/getsentry/sentry) error reporting API.
+
+
+## Getting Started
+
+### Install
 
 ```ruby
+gem "sentry-ruby"
 gem "sentry-yabeda"
 ```
 
-## Usage
-
-Require `sentry-yabeda` in your application. If you're using Bundler (most cases), simply adding it to your Gemfile is enough.
+Then initialize Sentry with metrics enabled:
 
 ```ruby
-# config/initializers/sentry.rb
 Sentry.init do |config|
   config.dsn = ENV["SENTRY_DSN"]
   config.enable_metrics = true
 end
-
-# config/initializers/yabeda.rb (or wherever Yabeda is configured)
-require "sentry-yabeda"
 ```
 
 That's it! All Yabeda metrics will automatically flow to Sentry.
-
-### Periodic Gauge Collection
-
-Many Yabeda plugins (puma, gc, gvl\_metrics) measure process-level state using **gauge metrics** with `collect` blocks. These blocks are designed for Prometheus's pull model. A scrape request triggers `Yabeda.collect!`, which reads the current state and sets gauge values.
-
-In a push-based system like Sentry, there's no scrape request. `sentry-yabeda` solves this with a built-in **periodic collector** that calls `Yabeda.collect!` on a background thread:
-
-```ruby
-require "sentry-yabeda"
-
-# Start the collector (default: every 15 seconds)
-Sentry::Yabeda.start_collector!
-
-# Or with a custom interval
-Sentry::Yabeda.start_collector!(interval: 30)
-
-# Stop the collector
-Sentry::Yabeda.stop_collector!
-```
-
-Without starting the collector, only **event-driven metrics** (counters incremented on each request, histograms measured per-operation) will flow to Sentry. Gauges that depend on periodic collection (e.g. GC stats, GVL contention, and Puma thread pool utilization) require the collector.
-
-** How it works **
-
-Every 15s (or set interval)
-1. Collector calls Yabeda.collect!
-2. Plugin collect blocks fire (read GC.stat, fetch Puma /stats, etc.)
-3. gauge.set(value) calls flow through the adapter
-4. Sentry.metrics.gauge(name, value, attributes: tags)
-5. Sentry buffers and sends in the next envelope flush
-
-### Metric Type Mapping
-
-| Yabeda Type | Sentry Type |
-|-------------|-------------|
-| Counter | `Sentry.metrics.count` |
-| Gauge | `Sentry.metrics.gauge` |
-| Histogram | `Sentry.metrics.distribution` |
-| Summary | `Sentry.metrics.distribution` |
-
-### Tags
-
-Yabeda tags are passed directly as Sentry metric attributes, enabling filtering and grouping in the Sentry UI.
-
-### Metric Naming
-
-Metrics are named using the pattern `{group}.{name}` (e.g., `rails.request_duration`). Metrics without a group use just the name.
-
-### Trace Integration
-
-Since Sentry metrics carry trace context automatically, metrics emitted via the adapter are connected to active traces when `sentry-rails` or other Sentry integrations are active. This enables pivoting from metric spikes to relevant traces in the Sentry UI.
