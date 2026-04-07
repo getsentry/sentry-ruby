@@ -6,6 +6,7 @@ require "sentry/integrable"
 require "sentry/yabeda/version"
 require "sentry/yabeda/adapter"
 require "sentry/yabeda/collector"
+require "sentry/yabeda/configuration"
 
 module Sentry
   module Yabeda
@@ -15,21 +16,6 @@ module Sentry
 
     class << self
       attr_accessor :collector
-
-      # Start periodic collection of Yabeda gauge metrics.
-      # Call this after Sentry.init to begin pushing runtime metrics
-      # (GC, GVL, Puma stats, etc.) to Sentry.
-      def start_collector!(interval: Collector::DEFAULT_INTERVAL)
-        raise ArgumentError, "call start_collector! after Sentry.init" unless Sentry.initialized?
-
-        @collector&.kill
-        @collector = Collector.new(interval: interval)
-      end
-
-      def stop_collector!
-        @collector&.kill
-        @collector = nil
-      end
     end
   end
 end

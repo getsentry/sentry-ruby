@@ -5,47 +5,49 @@ require "spec_helper"
 RSpec.describe Sentry::Yabeda::Collector do
   before { perform_basic_setup }
 
-  after { Sentry::Yabeda.stop_collector! }
-
   describe "#run" do
     it "calls Yabeda.collect!" do
-      collector = described_class.new(interval: 999)
+      collector = described_class.new(Sentry.configuration, interval: 999)
 
       expect(::Yabeda).to receive(:collect!)
       collector.run
     end
 
     it "does not raise when Yabeda.collect! fails" do
-      collector = described_class.new(interval: 999)
+      collector = described_class.new(Sentry.configuration, interval: 999)
 
       allow(::Yabeda).to receive(:collect!).and_raise(RuntimeError, "boom")
       expect { collector.run }.not_to raise_error
     end
   end
 
-  describe ".start_collector! / .stop_collector!" do
-    it "creates and stops a collector" do
-      Sentry::Yabeda.start_collector!(interval: 999)
+  describe "auto-start" do
+    it "starts automatically when Sentry is initialized with enable_metrics" do
       expect(Sentry::Yabeda.collector).to be_a(described_class)
+    end
 
-      Sentry::Yabeda.stop_collector!
+    it "does not start when enable_metrics is false" do
+      Sentry.close
+      Sentry::Yabeda.collector = nil
+
+      Sentry.init do |config|
+        config.dsn = DUMMY_DSN
+        config.sdk_logger = ::Logger.new(nil)
+        config.transport.transport_class = Sentry::DummyTransport
+        config.enable_metrics = false
+      end
+
       expect(Sentry::Yabeda.collector).to be_nil
     end
 
-    it "replaces the collector when called again" do
-      Sentry::Yabeda.start_collector!(interval: 999)
+    it "replaces an existing collector on re-initialization" do
       first = Sentry::Yabeda.collector
 
-      Sentry::Yabeda.start_collector!(interval: 999)
-      second = Sentry::Yabeda.collector
+      Sentry.close
+      perform_basic_setup
 
-      expect(second).not_to equal(first)
-    end
-
-    it "raises when called before Sentry.init" do
-      reset_sentry_globals!
-
-      expect { Sentry::Yabeda.start_collector! }.to raise_error(ArgumentError, /Sentry\.init/)
+      expect(Sentry::Yabeda.collector).to be_a(described_class)
+      expect(Sentry::Yabeda.collector).not_to equal(first)
     end
   end
 end

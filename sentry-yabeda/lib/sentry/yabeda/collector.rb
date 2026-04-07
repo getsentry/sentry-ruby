@@ -15,8 +15,8 @@ module Sentry
     class Collector < Sentry::ThreadedPeriodicWorker
       DEFAULT_INTERVAL = 15 # seconds
 
-      def initialize(interval: DEFAULT_INTERVAL)
-        super(Sentry.sdk_logger, interval)
+      def initialize(configuration, interval: DEFAULT_INTERVAL)
+        super(configuration.sdk_logger, interval)
         ensure_thread
       end
 

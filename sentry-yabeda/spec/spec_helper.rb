@@ -44,6 +44,8 @@ RSpec.configure do |config|
   config.include(Sentry::TestHelper)
 
   config.after :each do
+    Sentry::Yabeda.collector&.kill
+    Sentry::Yabeda.collector = nil
     reset_sentry_globals!
   end
 end
