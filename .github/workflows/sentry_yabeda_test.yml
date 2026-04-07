@@ -1,0 +1,58 @@
+name: sentry-yabeda Test
+
+on:
+  workflow_dispatch:
+  workflow_call:
+    outputs:
+      matrix-result:
+        description: "Matrix job result"
+        value: ${{ jobs.test.outputs.matrix-result }}
+    inputs:
+      versions:
+        required: true
+        type: string
+# Cancel in progress workflows on pull_requests.
+# https://docs.github.com/en/actions/using-jobs/using-concurrency#example-using-a-fallback-value
+concurrency:
+  group: sentry-yabeda-test-${{ github.head_ref || github.run_id }}
+  cancel-in-progress: true
+jobs:
+  test:
+    defaults:
+      run:
+        working-directory: sentry-yabeda
+    name: Ruby ${{ matrix.ruby_version }}, options - ${{ toJson(matrix.options) }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      RUBYOPT: ${{ matrix.options.rubyopt }}
+      BUNDLE_GEMFILE: ${{ github.workspace }}/sentry-yabeda/Gemfile
+      BUNDLE_WITHOUT: rubocop
+      JRUBY_OPTS: "--debug" # for more accurate test coverage
+    strategy:
+      fail-fast: false
+      matrix:
+        ruby_version: ${{ fromJson(inputs.versions) }}
+        include:
+          - ruby_version: "3.2"
+            options:
+              rubyopt: "--enable-frozen-string-literal --debug=frozen-string-literal"
+        exclude:
+          - ruby_version: 'jruby'
+          - ruby_version: 'jruby-head'
+    steps:
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
+
+      - name: Set up Ruby ${{ matrix.ruby_version }}
+        uses: ruby/setup-ruby@319994f95fa847cf3fb3cd3dbe89f6dcde9f178f # v1
+        with:
+          ruby-version: ${{ matrix.ruby_version }}
+          bundler-cache: true
+
+      - name: Run specs
+        run: bundle exec rake
+
+      - name: Upload Coverage
+        uses: codecov/codecov-action@1af58845a975a7985b0beb0cbe6fbbb71a41dbad # v5
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
