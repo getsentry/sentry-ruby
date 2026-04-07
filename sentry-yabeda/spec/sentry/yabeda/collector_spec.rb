@@ -28,7 +28,6 @@ RSpec.describe Sentry::Yabeda::Collector do
 
     it "does not start when enable_metrics is false" do
       Sentry.close
-      Sentry::Yabeda.collector = nil
 
       Sentry.init do |config|
         config.dsn = DUMMY_DSN
