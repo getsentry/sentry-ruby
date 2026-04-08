@@ -231,6 +231,59 @@ RSpec.describe Sentry::Net::HTTP do
       expect(request["baggage"]).to eq(request_span.to_baggage)
     end
 
+    context "when respecting W3C baggage limits" do
+      it "respects member count limit when merging with pre-existing baggage" do
+        stub_normal_response
+
+        uri = URI("http://example.com/path")
+        http = Net::HTTP.new(uri.host, uri.port)
+        request = Net::HTTP::Get.new(uri.request_uri)
+
+        # Create a large pre-existing baggage with 60 items
+        large_baggage = (0...60).map { |i| "key#{i}=value#{i}" }.join(",")
+        request["baggage"] = large_baggage
+
+        transaction = Sentry.start_transaction
+        Sentry.get_current_scope.set_span(transaction)
+
+        response = http.request(request)
+
+        expect(response.code).to eq("200")
+
+        # Check that the total member count doesn't exceed 64
+        baggage_items = request["baggage"].split(",")
+        expect(baggage_items.size).to be <= 64
+
+        # Sentry items should still be present
+        expect(request["baggage"]).to include("sentry-trace_id")
+      end
+
+      it "respects byte limit when merging with pre-existing baggage" do
+        stub_normal_response
+
+        uri = URI("http://example.com/path")
+        http = Net::HTTP.new(uri.host, uri.port)
+        request = Net::HTTP::Get.new(uri.request_uri)
+
+        # Create a large pre-existing baggage that would exceed 8192 bytes with sentry items
+        large_baggage = (0...30).map { |i| "key#{i}=#{'x' * 250}" }.join(",")
+        request["baggage"] = large_baggage
+
+        transaction = Sentry.start_transaction
+        Sentry.get_current_scope.set_span(transaction)
+
+        response = http.request(request)
+
+        expect(response.code).to eq("200")
+
+        # Check that the total byte size doesn't exceed 8192
+        expect(request["baggage"].bytesize).to be <= 8192
+
+        # Sentry items should still be present
+        expect(request["baggage"]).to include("sentry-trace_id")
+      end
+    end
+
     context "with config.propagate_traces = false" do
       before do
         Sentry.configuration.propagate_traces = false
