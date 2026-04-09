@@ -39,3 +39,9 @@ end
 ```
 
 That's it! All Yabeda metrics will automatically flow to Sentry.
+
+## How it works
+
+Counters, histograms, summaries, and directly-set gauges all forward to Sentry inline when your app calls them. Yabeda summaries map to Sentry distributions, as Sentry has no summary type.
+
+Collector blocks (`Yabeda.configure { collect { ... } }`) are Yabeda's pull hook — in Prometheus they're triggered by a scrape request. Since Sentry is push-based, `sentry-yabeda` runs a background thread that calls `Yabeda.collect!` every 15 seconds. Metrics populated this way (typically gauges for GC stats, thread counts, etc.) won't carry trace context.
