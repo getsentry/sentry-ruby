@@ -268,6 +268,7 @@ module Sentry
       end
 
       if client = get_current_client
+        client.configuration.run_after_close_callbacks
         client.flush
 
         if client.configuration.include_local_variables

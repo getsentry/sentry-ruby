@@ -8,5 +8,13 @@ module Sentry
         Sentry::Yabeda.collector = Sentry::Yabeda::Collector.new(self)
       end
     end
+
+    after(:closed) do
+      if (collector = Sentry::Yabeda.collector)
+        collector.run
+        collector.kill
+        Sentry::Yabeda.collector = nil
+      end
+    end
   end
 end
