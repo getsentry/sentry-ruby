@@ -18,7 +18,15 @@ Gemfile.lock
 node_modules
 .vite
 
+.DS_Store
+
+mise.toml
+
 .devcontainer/.env
 vendor/gems
+
 sentry-rails/Gemfile-*.lock
-mise.toml
+
+sentry-yabeda/.DS_Store
+sentry-yabeda/.rspec_status
+sentry-yabeda/Gemfile-*.lock

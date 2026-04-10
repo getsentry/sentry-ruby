@@ -63,6 +63,13 @@ jobs:
       versions: ${{ needs.ruby-versions.outputs.versions }}
     secrets: inherit
 
+  yabeda-tests:
+    needs: ruby-versions
+    uses: ./.github/workflows/sentry_yabeda_test.yml
+    with:
+      versions: ${{ needs.ruby-versions.outputs.versions }}
+    secrets: inherit
+
   codecov:
     name: CodeCov
     runs-on: ubuntu-latest
@@ -73,6 +80,7 @@ jobs:
       - delayed_job-tests
       - resque-tests
       - opentelemetry-tests
+      - yabeda-tests
     steps:
       - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
 
