@@ -51,6 +51,10 @@
 - Treat Sidekiq nil retry as true ([#2864](https://github.com/getsentry/sentry-ruby/pull/2864))
 - Queue time capture for Rack ([#2838](https://github.com/getsentry/sentry-ruby/pull/2838))
 
+### Features
+
+- Include `Delayed::Job` instance in hint [#1861](https://github.com/getsentry/sentry-ruby/pull/1861)
+
 ### Bug Fixes
 
 - Fix `MetricEvent` timestamp serialization to float ([#2862](https://github.com/getsentry/sentry-ruby/pull/2862))
