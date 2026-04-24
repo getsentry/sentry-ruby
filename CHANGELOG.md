@@ -1,3 +1,9 @@
+## Unreleased
+
+### Bug Fixes 🐛
+
+- (sidekiq) Report final attempt when retry limit is below `attempt_threshold` by @marcboquet in [#XXXX](https://github.com/getsentry/sentry-ruby/pull/XXXX)
+
 ## 6.5.0
 
 ### New Features ✨

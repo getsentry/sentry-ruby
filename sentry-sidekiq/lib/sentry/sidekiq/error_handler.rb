@@ -43,8 +43,10 @@ module Sentry
           # attempt 2 - this is your first retry so retry_count is 0
           # attempt 3 - you have retried once, retry_count is 1
           attempt = retry_count.nil? ? 1 : retry_count.to_i + 2
+          # Cap at the final attempt so jobs with fewer retries than the threshold still report.
+          effective_threshold = [attempt_threshold, retry_limit(context, sidekiq_config) + 1].min
 
-          return if attempt < attempt_threshold
+          return if attempt < effective_threshold
         end
 
         Sentry::Sidekiq.capture_exception(
