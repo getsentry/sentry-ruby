@@ -32,13 +32,16 @@ gem "rails", "~> #{rails_version}"
 
 if rails_version >= Gem::Version.new("8.1.0")
   gem "rspec-rails", "~> 8.0.0"
+  gem "solid_queue"
   gem "sqlite3", "~> 2.1.1", platform: :ruby
 elsif rails_version >= Gem::Version.new("8.0.0")
   gem "rspec-rails", "~> 8.0.0"
+  gem "solid_queue"
   gem "sqlite3", "~> 2.1.1", platform: :ruby
 elsif rails_version >= Gem::Version.new("7.1.0")
   gem "psych", "~> 4.0.0"
   gem "rspec-rails", "~> 7.0"
+  gem "solid_queue"
   gem "sqlite3", "~> 1.7.3", platform: :ruby
 elsif rails_version >= Gem::Version.new("6.1.0")
   gem "rspec-rails", "~> 6.0"
