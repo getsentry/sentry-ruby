@@ -32,7 +32,8 @@ RSpec.shared_context "active_job backend harness" do |adapter:|
   def drain(at: nil)
     case adapter
     when :test
-      perform_enqueued_jobs(at: at)
+      kwargs = at ? { at: at } : {}
+      perform_enqueued_jobs(**kwargs)
     else
       raise NotImplementedError, "active_job backend harness has no drain strategy for adapter: #{adapter.inspect}"
     end
