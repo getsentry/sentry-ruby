@@ -2,7 +2,7 @@
 
 RSpec.shared_context "active_job backend harness" do |adapter:|
   let(:adapter) { adapter }
-  let(:configure_sentry) { proc {} }
+  let(:configure_sentry) { proc { } }
 
   around do |example|
     make_basic_app(&configure_sentry)
