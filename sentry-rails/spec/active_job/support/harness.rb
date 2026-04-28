@@ -32,8 +32,16 @@ RSpec.shared_context "active_job backend harness" do |adapter:|
   def drain(at: nil)
     case adapter
     when :test
-      kwargs = at ? { at: at } : {}
-      perform_enqueued_jobs(**kwargs)
+      if RAILS_VERSION < 6.0
+        # Rails 5.2: perform_enqueued_jobs always requires a block and only runs
+        # jobs enqueued *inside* the block. Manually flush already-enqueued jobs.
+        jobs = queue_adapter.enqueued_jobs.dup
+        queue_adapter.enqueued_jobs.clear
+        jobs.each { |payload| send(:instantiate_job, payload).perform_now }
+      else
+        kwargs = at ? { at: at } : {}
+        perform_enqueued_jobs(**kwargs)
+      end
     else
       raise NotImplementedError, "active_job backend harness has no drain strategy for adapter: #{adapter.inspect}"
     end
