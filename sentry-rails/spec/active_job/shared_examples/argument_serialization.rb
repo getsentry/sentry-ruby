@@ -35,7 +35,7 @@ RSpec.shared_examples "an ActiveJob backend that serializes complex arguments" d
     expect(event_arguments).to eq([{ wrapper: { post: post.to_global_id.to_s } }])
   end
 
-  it "expands integer ranges into arrays" do
+  it "expands integer ranges into arrays", skip: RAILS_VERSION < 7.0 do
     expect do
       failing_job.perform_later(1..3)
       drain
@@ -44,7 +44,7 @@ RSpec.shared_examples "an ActiveJob backend that serializes complex arguments" d
     expect(event_arguments).to eq([[1, 2, 3]])
   end
 
-  it "stringifies ActiveSupport::TimeWithZone ranges preserving the boundary operator" do
+  it "stringifies ActiveSupport::TimeWithZone ranges preserving the boundary operator", skip: RAILS_VERSION < 7.0 do
     range = 1.day.ago...Time.zone.now
 
     expect do
