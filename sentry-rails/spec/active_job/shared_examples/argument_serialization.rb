@@ -44,16 +44,17 @@ RSpec.shared_examples "an ActiveJob backend that serializes complex arguments" d
     expect(event_arguments).to eq([[1, 2, 3]])
   end
 
-  it "stringifies ActiveSupport::TimeWithZone ranges" do
-    range = 1.day.ago..Time.zone.now
+  it "stringifies ActiveSupport::TimeWithZone ranges preserving the boundary operator" do
+    range = 1.day.ago...Time.zone.now
 
     expect do
       failing_job.perform_later(range)
       drain
     end.to raise_error(RuntimeError, /boom from argument_serialization spec/)
 
-    expect(event_arguments.first).to be_a(String)
-    expect(event_arguments.first).to include("..")
+    serialized = event_arguments.first
+    expect(serialized).to be_a(String)
+    expect(serialized).to eq("#{range.first}...#{range.last}")
   end
 
   it "falls back to the original argument when to_global_id raises" do
@@ -75,5 +76,21 @@ RSpec.shared_examples "an ActiveJob backend that serializes complex arguments" d
     end.to raise_error(RuntimeError, /boom from argument_serialization spec/)
 
     expect(event_arguments).to eq([post])
+  end
+
+  it "passes through objects that do not respond to to_global_id unchanged" do
+    mod = Module.new
+
+    module_job = job_fixture do
+      define_method(:perform) do |_mod|
+        raise "boom from argument_serialization spec"
+      end
+    end
+
+    expect do
+      module_job.perform_now(mod)
+    end.to raise_error(RuntimeError, /boom from argument_serialization spec/)
+
+    expect(event_arguments).to eq([mod])
   end
 end
