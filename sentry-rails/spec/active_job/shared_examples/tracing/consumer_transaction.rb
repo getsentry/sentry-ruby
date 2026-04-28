@@ -16,7 +16,7 @@ RSpec.shared_examples "an ActiveJob backend that emits a consumer transaction" d
   end
 
   context "with traces_sample_rate = 1.0" do
-    before { Sentry.configuration.traces_sample_rate = 1.0 }
+    let(:configure_sentry) { proc { |config| config.traces_sample_rate = 1.0 } }
 
     it "captures a successful transaction with name, op, origin, source, and ok status" do
       successful_job.perform_later
@@ -30,6 +30,23 @@ RSpec.shared_examples "an ActiveJob backend that emits a consumer transaction" d
       expect(transaction.contexts.dig(:trace, :op)).to eq("queue.active_job")
       expect(transaction.contexts.dig(:trace, :origin)).to eq("auto.queue.active_job")
       expect(transaction.contexts.dig(:trace, :status)).to eq("ok")
+    end
+
+    it "records a db.sql.active_record child span when the job performs a query" do
+      query_job = job_fixture do
+        def perform
+          Post.all.to_a
+        end
+      end
+
+      query_job.perform_later
+      drain
+
+      transaction = sentry_events.find { |e| e.is_a?(Sentry::TransactionEvent) }
+      expect(transaction).not_to be_nil
+
+      db_span = transaction.spans.find { |s| s[:op] == "db.sql.active_record" }
+      expect(db_span).not_to be_nil
     end
 
     it "marks the failing transaction internal_error and links the error event by trace_id" do
