@@ -6,7 +6,12 @@ RSpec.shared_examples "an ActiveJob backend that unwraps DeserializationError" d
       def perform
         1 / 0
       rescue
-        raise ActiveJob::DeserializationError
+        err = ActiveJob::DeserializationError.new
+        # DeserializationError#initialize copies $!.backtrace, which on JRuby can
+        # contain nil elements for frames defined in anonymous Class.new blocks.
+        # Compact the backtrace to avoid a JRuby NPE in traceRaise at shutdown.
+        err.set_backtrace(Array(err.backtrace).compact)
+        raise err
       end
     end
   end
