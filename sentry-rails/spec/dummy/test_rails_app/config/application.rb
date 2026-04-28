@@ -143,6 +143,20 @@ module Sentry
         end
 
         def after_initialize!
+          # The active_job.custom_serializers railtie initializer calls
+          # add_serializers(app.config.active_job.custom_serializers). Under some
+          # Rails/Ruby combinations custom_serializers resolves to nil instead of the
+          # railtie default of [], inserting nil into the global serializers Set.
+          # Remove it right after initialization so it cannot affect any test.
+          # Rails < 8 uses mattr_accessor _additional_serializers; Rails 8+ uses @serializers.
+          if defined?(::ActiveJob::Serializers)
+            if ::ActiveJob::Serializers.respond_to?(:_additional_serializers)
+              ::ActiveJob::Serializers._additional_serializers.delete(nil)
+            elsif ::ActiveJob::Serializers.instance_variable_defined?(:@serializers)
+              ::ActiveJob::Serializers.instance_variable_get(:@serializers).delete(nil)
+            end
+          end
+
           if Sentry.initialized?
             # Run a query to make sure the schema metadata gets loaded and cached
             Post.all.to_a.inspect
