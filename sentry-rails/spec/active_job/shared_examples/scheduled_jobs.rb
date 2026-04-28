@@ -9,7 +9,7 @@ RSpec.shared_examples "an ActiveJob backend that records scheduled_at on delayed
     end
   end
 
-  it "records scheduled_at in the event extras" do
+  it "records scheduled_at in the event extras", skip: RAILS_VERSION < 6.1 do
     expect do
       failing_job.set(wait: 5.seconds).perform_later
       drain(at: 1.minute.from_now)
