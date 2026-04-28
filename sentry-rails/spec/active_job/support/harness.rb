@@ -28,10 +28,10 @@ RSpec.shared_context "active_job backend harness" do |adapter:|
     # or otherwise clean up state between examples.
   end
 
-  def drain
+  def drain(at: nil)
     case adapter
     when :test
-      perform_enqueued_jobs
+      perform_enqueued_jobs(at: at)
     else
       raise NotImplementedError, "active_job backend harness has no drain strategy for adapter: #{adapter.inspect}"
     end
