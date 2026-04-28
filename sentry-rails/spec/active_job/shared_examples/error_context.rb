@@ -4,6 +4,8 @@ RSpec.shared_examples "an ActiveJob backend that attaches job context to error e
   let(:failing_job) do
     job_fixture do
       def perform
+        a = 1
+        b = 0
         raise "boom from failing_job spec"
       end
     end
@@ -30,5 +32,8 @@ RSpec.shared_examples "an ActiveJob backend that attaches job context to error e
       job_id: event.extra[:job_id],
       provider_job_id: event.extra[:provider_job_id]
     )
+
+    last_frame = event.exception.values.first.stacktrace.frames.last
+    expect(last_frame.vars).to include(a: "1", b: "0")
   end
 end
