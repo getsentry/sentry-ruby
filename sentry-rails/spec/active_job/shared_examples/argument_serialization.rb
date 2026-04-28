@@ -61,7 +61,7 @@ RSpec.shared_examples "an ActiveJob backend that serializes complex arguments" d
     post = Post.create!
 
     problematic_job = job_fixture do
-      define_method(:perform) do |passed_post|
+      def perform(passed_post)
         def passed_post.to_global_id
           raise "intentional"
         end
@@ -82,7 +82,7 @@ RSpec.shared_examples "an ActiveJob backend that serializes complex arguments" d
     mod = Module.new
 
     module_job = job_fixture do
-      define_method(:perform) do |_mod|
+      def perform(_mod)
         raise "boom from argument_serialization spec"
       end
     end
