@@ -11,6 +11,7 @@ RSpec.shared_examples "a Sentry-instrumented ActiveJob backend" do
   it_behaves_like "an ActiveJob backend that emits a consumer transaction"
   it_behaves_like "an ActiveJob backend that records scheduled_at on delayed jobs"
   it_behaves_like "an ActiveJob backend that emits cron check-ins for monitor jobs"
+  it_behaves_like "an ActiveJob backend that produces structured logs"
   it_behaves_like "an ActiveJob backend that respects retry semantics"
   it_behaves_like "an ActiveJob backend that respects discard semantics"
 end
