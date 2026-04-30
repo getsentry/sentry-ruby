@@ -20,26 +20,9 @@ RSpec.shared_context "active_job backend harness" do |adapter:|
   end
 
   def boot_adapter(adapter)
-    case adapter
-    when :solid_queue
-      Sentry::Rails::Test::Application.load_queue_schema
-    end
   end
 
   def reset_adapter(adapter)
-    case adapter
-    when :solid_queue
-      [
-        SolidQueue::ReadyExecution,
-        SolidQueue::ClaimedExecution,
-        SolidQueue::FailedExecution,
-        SolidQueue::BlockedExecution,
-        SolidQueue::ScheduledExecution,
-        SolidQueue::RecurringExecution,
-        SolidQueue::Process,
-        SolidQueue::Job
-      ].each(&:delete_all)
-    end
   end
 
   def drain(at: nil)
@@ -55,14 +38,6 @@ RSpec.shared_context "active_job backend harness" do |adapter:|
         kwargs = at ? { at: at } : {}
         perform_enqueued_jobs(**kwargs)
       end
-    when :solid_queue
-      process = SolidQueue::Process.register(
-        kind: "Worker",
-        pid: ::Process.pid,
-        name: "spec-#{SecureRandom.hex(4)}"
-      )
-
-      SolidQueue::ReadyExecution.claim("*", 100, process.id).each(&:perform)
     else
       raise NotImplementedError, "active_job backend harness has no drain strategy for adapter: #{adapter.inspect}"
     end
