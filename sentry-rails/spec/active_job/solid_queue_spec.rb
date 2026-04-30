@@ -2,7 +2,7 @@
 
 require "spec_helper"
 
-if RAILS_VERSION >= 7.1
+if RAILS_VERSION >= 7.1 && RUBY_VERSION >= "3.1"
   require "solid_queue"
 
   RSpec.describe "Sentry + ActiveJob on SolidQueue" do
