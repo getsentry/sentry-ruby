@@ -19,14 +19,10 @@ RSpec.shared_context "active_job backend harness" do |adapter:|
     teardown_sentry_test
   end
 
-  def boot_adapter(_adapter)
-    # Per-adapter setup hook. Backends extend this when they need to load
-    # schemas, start supervisors, or otherwise prepare the environment.
+  def boot_adapter(adapter)
   end
 
-  def reset_adapter(_adapter)
-    # Per-adapter teardown hook. Backends extend this to truncate tables
-    # or otherwise clean up state between examples.
+  def reset_adapter(adapter)
   end
 
   def drain(at: nil)
