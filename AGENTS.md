@@ -15,6 +15,7 @@ cd sentry-ruby && bundle install
 | `sentry-resque` | `sentry-resque/` | Resque integration |
 | `sentry-delayed_job` | `sentry-delayed_job/` | DelayedJob integration |
 | `sentry-opentelemetry` | `sentry-opentelemetry/` | OpenTelemetry integration |
+| `sentry-yabeda` | `sentry-yabeda/` | Yabeda integration |
 
 Shared test infrastructure lives in `lib/sentry/test/`. Root `Gemfile.dev` defines shared dev dependencies.
 

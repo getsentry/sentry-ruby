@@ -10,6 +10,7 @@ requireNames:
   - /^sentry-resque-.*\.gem$/
   - /^sentry-delayed_job-.*\.gem$/
   - /^sentry-opentelemetry-.*\.gem$/
+  - /^sentry-yabeda-.*\.gem$/
 targets:
     - name: gem
     - name: registry
@@ -21,4 +22,9 @@ targets:
         'gem:sentry-delayed_job':
         'gem:sentry-opentelemetry':
         'gem:sentry-resque':
+        'gem:sentry-yabeda':
+          name: 'Sentry Yabeda SDK'
+          sdkName: 'sentry.ruby.yabeda'
+          packageUrl: 'https://rubygems.org/gems/sentry-yabeda'
+          mainDocsUrl: 'https://docs.sentry.io/platforms/ruby/guides/yabeda/'
     - name: github

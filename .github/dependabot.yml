@@ -18,3 +18,4 @@ updates:
       - "sentry-ruby"
       - "sentry-resque"
       - "sentry-sidekiq"
+      - "sentry-yabeda"
