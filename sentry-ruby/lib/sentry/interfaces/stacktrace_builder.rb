@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+require "sentry/utils/filename_cache"
+
 module Sentry
   class StacktraceBuilder
     # @return [String]
@@ -19,6 +21,9 @@ module Sentry
 
     # @return [Boolean]
     attr_reader :strip_backtrace_load_path
+
+    # @return [FilenameCache]
+    attr_reader :filename_cache
 
     # @param project_root [String]
     # @param app_dirs_pattern [Regexp, nil]
@@ -46,6 +51,8 @@ module Sentry
       @context_lines = context_lines
       @backtrace_cleanup_callback = backtrace_cleanup_callback
       @strip_backtrace_load_path = strip_backtrace_load_path
+      @in_app_pattern = Regexp.new("^(#{project_root}/)?#{app_dirs_pattern}") if app_dirs_pattern
+      @filename_cache = FilenameCache.new(project_root)
     end
 
     # Generates a StacktraceInterface with the given backtrace.
@@ -64,13 +71,21 @@ module Sentry
     # @yieldparam frame [StacktraceInterface::Frame]
     # @return [StacktraceInterface]
     def build(backtrace:, &frame_callback)
-      parsed_lines = parse_backtrace_lines(backtrace).select(&:file)
+      parsed_lines = parse_backtrace_lines(backtrace)
 
-      frames = parsed_lines.reverse.map do |line|
+      # Build frames in reverse order, skipping lines without files
+      # Single pass instead of select + reverse + map + compact
+      frames = []
+      i = parsed_lines.size - 1
+      while i >= 0
+        line = parsed_lines[i]
+        i -= 1
+        next unless line.file
+
         frame = convert_parsed_line_into_frame(line)
         frame = frame_callback.call(frame) if frame_callback
-        frame
-      end.compact
+        frames << frame if frame
+      end
 
       StacktraceInterface.new(frames: frames)
     end
@@ -78,14 +93,15 @@ module Sentry
     private
 
     def convert_parsed_line_into_frame(line)
-      frame = StacktraceInterface::Frame.new(project_root, line, strip_backtrace_load_path)
+      frame = StacktraceInterface::Frame.new(project_root, line, strip_backtrace_load_path, filename_cache: @filename_cache)
       frame.set_context(linecache, context_lines) if context_lines
       frame
     end
 
     def parse_backtrace_lines(backtrace)
       Backtrace.parse(
-        backtrace, project_root, app_dirs_pattern, &backtrace_cleanup_callback
+        backtrace, project_root, app_dirs_pattern,
+        in_app_pattern: @in_app_pattern, &backtrace_cleanup_callback
       ).lines
     end
   end

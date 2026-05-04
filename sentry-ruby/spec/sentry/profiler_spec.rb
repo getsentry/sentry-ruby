@@ -320,6 +320,22 @@ RSpec.describe Sentry::Profiler, when: :stack_prof_installed? do
           last_elapsed = elapsed
         end
       end
+
+      it 'reuses filename_cache entries with stacktrace_builder' do
+        filename_cache = Sentry.configuration.stacktrace_builder.filename_cache
+        spec_path = "#{Dir.pwd}/spec/sentry/profiler_spec.rb"
+
+        # building a stacktrace populates the cache
+        Sentry.configuration.stacktrace_builder.build(
+          backtrace: ["#{spec_path}:7:in `foo'"]
+        )
+
+        expect(filename_cache.cache).to have_key(spec_path)
+
+        # profiler reuses the cached entry instead of recomputing
+        expect(filename_cache).not_to receive(:longest_load_path).with(spec_path)
+        subject.to_h
+      end
     end
   end
 end

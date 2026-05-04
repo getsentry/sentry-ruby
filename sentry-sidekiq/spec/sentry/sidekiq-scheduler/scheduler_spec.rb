@@ -19,8 +19,12 @@ RSpec.describe Sentry::SidekiqScheduler::Scheduler do
     scheduler_config = SidekiqScheduler::Config.new(sidekiq_config: sidekiq_config(config_options))
 
     # Making and starting a Manager instance will load the jobs
-    schedule_manager = SidekiqScheduler::Manager.new(scheduler_config)
-    schedule_manager.start
+    @schedule_manager = SidekiqScheduler::Manager.new(scheduler_config)
+    @schedule_manager.start
+  end
+
+  after do
+    @schedule_manager&.stop
   end
 
   it 'patches class' do

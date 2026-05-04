@@ -402,6 +402,23 @@ RSpec.describe Sentry::Hub do
       expect(outter_event.tags).to eq({ level: 1 })
     end
 
+    it "doesn't leak event processors to the outer scope" do
+      processor_calls = 0
+
+      2.times do
+        subject.with_scope do |scope|
+          scope.add_event_processor do |event, _hint|
+            processor_calls += 1
+            event
+          end
+
+          subject.capture_message("test")
+        end
+      end
+
+      expect(processor_calls).to eq(2)
+    end
+
     it "doesn't leak data mutation" do
       inner_event = nil
       scope.set_tags({ level: 1 })

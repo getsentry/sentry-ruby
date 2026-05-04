@@ -192,6 +192,45 @@ RSpec.describe Sentry::Net::HTTP do
       )
     end
 
+    it "merges baggage header with pre-existing baggage on the request" do
+      stub_normal_response
+
+      uri = URI("http://example.com/path")
+      http = Net::HTTP.new(uri.host, uri.port)
+      request = Net::HTTP::Get.new(uri.request_uri)
+      request["baggage"] = "routingKey=myvalue,tenantId=123"
+
+      transaction = Sentry.start_transaction
+      Sentry.get_current_scope.set_span(transaction)
+
+      response = http.request(request)
+
+      expect(response.code).to eq("200")
+      request_span = transaction.span_recorder.spans.last
+      sentry_baggage = request_span.to_baggage
+
+      expect(request["baggage"]).to include(sentry_baggage)
+      expect(request["baggage"]).to include("routingKey=myvalue,tenantId=123")
+      expect(request["baggage"]).to eq("#{sentry_baggage},routingKey=myvalue,tenantId=123")
+    end
+
+    it "sets baggage header normally when no pre-existing baggage on the request" do
+      stub_normal_response
+
+      uri = URI("http://example.com/path")
+      http = Net::HTTP.new(uri.host, uri.port)
+      request = Net::HTTP::Get.new(uri.request_uri)
+
+      transaction = Sentry.start_transaction
+      Sentry.get_current_scope.set_span(transaction)
+
+      response = http.request(request)
+
+      expect(response.code).to eq("200")
+      request_span = transaction.span_recorder.spans.last
+      expect(request["baggage"]).to eq(request_span.to_baggage)
+    end
+
     context "with config.propagate_traces = false" do
       before do
         Sentry.configuration.propagate_traces = false

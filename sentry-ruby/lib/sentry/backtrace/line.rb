@@ -6,6 +6,7 @@ module Sentry
     # Handles backtrace parsing line by line
     class Line
       RB_EXTENSION = ".rb"
+      CLASS_EXTENSION = ".class"
       # regexp (optional leading X: on windows, or JRuby9000 class-prefix)
       RUBY_INPUT_FORMAT = /
         ^ \s* (?: [a-zA-Z]: | uri:classloader: )? ([^:]+ | <.*>):
@@ -37,12 +38,21 @@ module Sentry
         ruby_match = unparsed_line.match(RUBY_INPUT_FORMAT)
 
         if ruby_match
-          _, file, number, _, module_name, method = ruby_match.to_a
-          file.sub!(/\.class$/, RB_EXTENSION)
-          module_name = module_name
+          file = ruby_match[1]
+          number = ruby_match[2]
+          module_name = ruby_match[4]
+          method = ruby_match[5]
+          if file.end_with?(CLASS_EXTENSION)
+            file.sub!(/\.class$/, RB_EXTENSION)
+          end
         else
           java_match = unparsed_line.match(JAVA_INPUT_FORMAT)
-          _, module_name, method, file, number = java_match.to_a
+          if java_match
+            module_name = java_match[1]
+            method = java_match[2]
+            file = java_match[3]
+            number = java_match[4]
+          end
         end
         new(file, number, method, module_name, in_app_pattern)
       end
@@ -74,12 +84,9 @@ module Sentry
 
       def in_app
         return false unless in_app_pattern
+        return false unless file
 
-        if file =~ in_app_pattern
-          true
-        else
-          false
-        end
+        file.match?(in_app_pattern)
       end
 
       # Reconstructs the line in a readable fashion

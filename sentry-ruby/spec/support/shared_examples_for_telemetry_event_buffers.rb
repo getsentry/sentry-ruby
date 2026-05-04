@@ -67,7 +67,7 @@ RSpec.shared_examples "telemetry event buffer" do |event_factory:, max_items_con
 
       threads = 3.times.map do
         Thread.new do
-          (20..30).to_a.sample.times { subject.add_item(event) }
+          (21..30).to_a.sample.times { subject.add_item(event) }
         end
       end
 

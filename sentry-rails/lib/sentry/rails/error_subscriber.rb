@@ -27,6 +27,8 @@ module Sentry
           hint.merge!(context.delete(:hint))
         end
 
+        hint[:mechanism] ||= Sentry::Mechanism.new(type: Sentry::Rails.integration_name, handled: handled)
+
         Sentry::Rails.capture_exception(error, level: severity, contexts: { "rails.error" => context }, tags: tags, hint: hint)
       end
     end

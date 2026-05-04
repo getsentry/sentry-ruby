@@ -10,11 +10,12 @@ module Sentry
 
       attr_reader :profile
 
-      def initialize(profile, project_root:, in_app_pattern:, app_dirs_pattern:)
+      def initialize(profile, project_root:, in_app_pattern:, app_dirs_pattern:, filename_cache:)
         @profile = profile
         @project_root = project_root
         @in_app_pattern = in_app_pattern
         @app_dirs_pattern = app_dirs_pattern
+        @filename_cache = filename_cache
       end
 
       def to_h

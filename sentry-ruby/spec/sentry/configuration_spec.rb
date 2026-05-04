@@ -569,6 +569,20 @@ RSpec.describe Sentry::Configuration do
     end
   end
 
+  describe '#run_after_close_callbacks' do
+    it 'calls hooks registered with after(:closed)' do
+      called = false
+
+      config = Class.new(Sentry::Configuration) do
+        after(:closed) do
+          called = true
+        end
+      end.new
+
+      expect { config.run_after_close_callbacks }.to change { called }.from(false).to(true)
+    end
+  end
+
   describe "#skip_rake_integration" do
     it "returns false by default" do
       expect(subject.skip_rake_integration).to eq(false)

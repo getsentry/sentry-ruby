@@ -57,6 +57,16 @@ RSpec.describe Sentry::Scope do
       expect(subject.span).to eq(nil)
     end
 
+    it "copies event_processors so mutations don't affect the original" do
+      subject.add_event_processor { |event, _hint| event }
+      copy = subject.dup
+
+      copy.add_event_processor { |event, _hint| event }
+
+      expect(subject.event_processors.length).to eq(1)
+      expect(copy.event_processors.length).to eq(2)
+    end
+
     it "deep-copies span as well" do
       perform_basic_setup
 

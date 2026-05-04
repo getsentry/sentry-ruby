@@ -21,12 +21,14 @@ module Sentry
         scope = Sentry.get_current_scope
         scope.set_transaction_name(context_filter.transaction_name, source: :task) unless scope.transaction_name
 
+        retry_lim = retry_limit(context, sidekiq_config)
+
         # If Sentry is configured to only report an error _after_ all retries have been exhausted,
         # and if the job is retryable, and have not exceeded the retry_limit,
         # return early.
         if Sentry.configuration.sidekiq.report_after_job_retries && retryable?(context)
           retry_count = context.dig(:job, "retry_count")
-          if retry_count.nil? || retry_count < retry_limit(context, sidekiq_config) - 1
+          if retry_count.nil? || retry_count < retry_lim - 1
             return
           end
         end
@@ -43,8 +45,10 @@ module Sentry
           # attempt 2 - this is your first retry so retry_count is 0
           # attempt 3 - you have retried once, retry_count is 1
           attempt = retry_count.nil? ? 1 : retry_count.to_i + 2
+          # Cap at the final attempt so jobs with fewer retries than the threshold still report.
+          effective_threshold = [attempt_threshold, retry_lim + 1].min
 
-          return if attempt < attempt_threshold
+          return if attempt < effective_threshold
         end
 
         Sentry::Sidekiq.capture_exception(

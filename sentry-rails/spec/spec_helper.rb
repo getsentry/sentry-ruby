@@ -27,6 +27,8 @@ if ENV["CI"]
 end
 
 Dir["#{__dir__}/support/**/*.rb"].each { |file| require file }
+Dir["#{__dir__}/active_job/support/**/*.rb"].each { |file| require file }
+Dir["#{__dir__}/active_job/shared_examples/**/*.rb"].each { |file| require file }
 
 RAILS_VERSION = Rails.version.to_f
 

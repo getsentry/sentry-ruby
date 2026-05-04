@@ -31,7 +31,7 @@ jobs:
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
 
       - name: Set up `.env` file
         run: |
@@ -39,7 +39,7 @@ jobs:
           cp .env.example .env
 
       - name: Restore rubygems cache
-        uses: actions/cache@v3
+        uses: actions/cache@6f8efc29b200d32929f49075959781ed54ec270c # v3
         with:
           path: vendor/gems
           key: ${{ runner.os }}-${{ matrix.ruby_version }}-gems-${{ hashFiles('Gemfile.lock', '*/Gemfile.lock', 'spec/apps/**/Gemfile.lock') }}
@@ -47,7 +47,7 @@ jobs:
             ${{ runner.os }}-${{ matrix.ruby_version }}-gems-
 
       - name: Restore node_modules cache
-        uses: actions/cache@v3
+        uses: actions/cache@6f8efc29b200d32929f49075959781ed54ec270c # v3
         with:
           path: spec/apps/svelte-mini/node_modules
           key: ${{ runner.os }}-${{ runner.arch }}-node-modules-${{ hashFiles('spec/apps/svelte-mini/package-lock.json') }}
@@ -70,7 +70,7 @@ jobs:
             up -d sentry-test
 
       - name: "Wait for rails-mini app to be ready"
-        uses: nev7n/wait_for_response@v1
+        uses: nev7n/wait_for_response@81b0b0eded16435202e126beb3e704fc00430f5b # v1
         with:
           url: 'http://localhost:4000/health'
           responseCode: 200
@@ -78,7 +78,7 @@ jobs:
           interval: 500
 
       - name: "Wait for svelte-mini app to be ready"
-        uses: nev7n/wait_for_response@v1
+        uses: nev7n/wait_for_response@81b0b0eded16435202e126beb3e704fc00430f5b # v1
         with:
           url: 'http://localhost:4001/health'
           responseCode: 200
@@ -99,7 +99,7 @@ jobs:
 
       - name: Upload test artifacts
         if: failure()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
           name: e2e-test-logs-ruby-${{ matrix.ruby_version }}
           path: |

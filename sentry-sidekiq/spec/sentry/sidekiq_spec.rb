@@ -141,6 +141,17 @@ RSpec.describe Sentry::Sidekiq do
       retry_last_failed_job
       expect(transport.events.count).to eq(0)
     end
+
+    it "reports on the final attempt when retry limit is below the threshold" do
+      worker = Class.new(SadWorker)
+      worker.sidekiq_options attempt_threshold: 3, retry: 1
+
+      execute_worker(processor, worker)
+      expect(transport.events.count).to eq(0)
+
+      retry_last_failed_job
+      expect(transport.events.count).to eq(1)
+    end
   end
 
   context "with config.report_only_dead_jobs = true" do

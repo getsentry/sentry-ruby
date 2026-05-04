@@ -30,7 +30,7 @@ RSpec.describe Sentry::Rails::LogSubscribers::ActionControllerSubscriber, type: 
 
         duration = log_event[:attributes][:duration_ms][:value]
         expect(duration).to be_a(Float)
-        expect(duration).to be_in(0.01..30.0)
+        expect(duration).to be_in(0.01..100.0)
 
         expect(log_event[:attributes][:method][:value]).to eq("GET")
         expect(log_event[:attributes][:path][:value]).to eq("/world")

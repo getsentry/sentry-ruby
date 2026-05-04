@@ -71,6 +71,24 @@ RSpec.describe Sentry::Rails::ErrorSubscriber, skip: Rails.version.to_f < 7.0 ? 
       end
     end
 
+    context 'when handled: true' do
+      it 'sets mechanism.handled to true' do
+        expect(Sentry::Rails).to receive(:capture_exception) do |_, hint:, **_|
+          expect(hint[:mechanism].handled).to eq(true)
+        end
+        described_class.new.report(StandardError.new, handled: true, severity: :error, context: {})
+      end
+    end
+
+    context 'when handled: false' do
+      it 'sets mechanism.handled to false' do
+        expect(Sentry::Rails).to receive(:capture_exception) do |_, hint:, **_|
+          expect(hint[:mechanism].handled).to eq(false)
+        end
+        described_class.new.report(StandardError.new, handled: false, severity: :error, context: {})
+      end
+    end
+
     context 'when passed a context with hint key' do
       context 'when hint is a Hash' do
         it 'merges the hint into the event' do

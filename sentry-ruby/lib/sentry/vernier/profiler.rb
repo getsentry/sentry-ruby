@@ -24,6 +24,7 @@ module Sentry
         @project_root = configuration.project_root
         @app_dirs_pattern = configuration.app_dirs_pattern
         @in_app_pattern = Regexp.new("^(#{@project_root}/)?#{@app_dirs_pattern}")
+        @filename_cache = configuration.stacktrace_builder.filename_cache
       end
 
       def set_initial_sample_decision(transaction_sampled)
@@ -125,7 +126,8 @@ module Sentry
           result,
           project_root: @project_root,
           app_dirs_pattern: @app_dirs_pattern,
-          in_app_pattern: @in_app_pattern
+          in_app_pattern: @in_app_pattern,
+          filename_cache: @filename_cache
         )
       end
     end

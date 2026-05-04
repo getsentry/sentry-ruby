@@ -342,7 +342,9 @@ RSpec.describe Sentry::Transport do
             frames: frame_list_size.times.map do |zero_based_index|
               Sentry::StacktraceInterface::Frame.new(
                 "/fake/path",
-                Sentry::Backtrace::Line.parse("app.rb:#{zero_based_index + 1}:in `/'", in_app_pattern)
+                Sentry::Backtrace::Line.parse("app.rb:#{zero_based_index + 1}:in `/'", in_app_pattern),
+                true,
+                filename_cache: Sentry::FilenameCache.new("/fake/path")
               )
             end,
           )

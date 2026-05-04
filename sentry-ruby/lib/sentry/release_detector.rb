@@ -6,6 +6,7 @@ module Sentry
     class << self
       def detect_release(project_root:, running_on_heroku:)
         detect_release_from_env ||
+        detect_release_from_kamal ||
         detect_release_from_git ||
         detect_release_from_capistrano(project_root) ||
         detect_release_from_heroku(running_on_heroku)
@@ -29,6 +30,10 @@ module Sentry
 
       def detect_release_from_git
         Sentry.sys_command("git rev-parse HEAD") if File.directory?(".git")
+      end
+
+      def detect_release_from_kamal
+        ENV["KAMAL_VERSION"]
       end
 
       def detect_release_from_env

@@ -24,6 +24,16 @@ jobs:
     name: Ruby ${{ matrix.ruby_version }} & Sidekiq ${{ matrix.sidekiq_version }}, options - ${{ toJson(matrix.options) }}
     runs-on: ubuntu-latest
     timeout-minutes: 10
+    services:
+      redis:
+        image: redis:${{ (contains(matrix.sidekiq_version, '7.0') || contains(matrix.sidekiq_version, '8.0')) && '6' || '5' }}
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
     env:
       RUBYOPT: ${{ matrix.options.rubyopt }}
       BUNDLE_GEMFILE: ${{ github.workspace }}/sentry-sidekiq/Gemfile
@@ -57,23 +67,18 @@ jobs:
           - ruby_version: jruby
           - ruby_version: jruby-head
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
 
       - name: Set up Ruby ${{ matrix.ruby_version }}
-        uses: ruby/setup-ruby@v1
+        uses: ruby/setup-ruby@319994f95fa847cf3fb3cd3dbe89f6dcde9f178f # v1
         with:
           ruby-version: ${{ matrix.ruby_version }}
           bundler-cache: true
-
-      - name: Start Redis
-        uses: supercharge/redis-github-action@1.8.1
-        with:
-          redis-version: ${{ (contains(matrix.sidekiq_version, '7.0') || contains(matrix.sidekiq_version, '8.0')) && 6 || 5 }}
 
       - name: Run specs with Sidekiq ${{ matrix.sidekiq_version }}
         run: bundle exec rake
 
       - name: Upload Coverage
-        uses: codecov/codecov-action@v5
+        uses: codecov/codecov-action@1af58845a975a7985b0beb0cbe6fbbb71a41dbad # v5
         with:
           token: ${{ secrets.CODECOV_TOKEN }}

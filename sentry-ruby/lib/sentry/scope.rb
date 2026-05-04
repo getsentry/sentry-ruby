@@ -135,6 +135,7 @@ module Sentry
       copy.session = session.deep_dup
       copy.propagation_context = propagation_context.deep_dup
       copy.attachments = attachments.dup
+      copy.event_processors = event_processors.dup
       copy
     end
 

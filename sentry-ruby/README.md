@@ -21,6 +21,7 @@ Sentry SDK for Ruby
 | [![Gem Version](https://img.shields.io/gem/v/sentry-delayed_job?label=sentry-delayed_job)](https://rubygems.org/gems/sentry-delayed_job)       | [![Build Status](https://github.com/getsentry/sentry-ruby/actions/workflows/tests.yml/badge.svg)](https://github.com/getsentry/sentry-ruby/actions/workflows/tests.yml)     | [![codecov](https://codecov.io/gh/getsentry/sentry-ruby/graph/badge.svg?token=ZePzrpZFP6&component=sentry-delayed_job)](https://codecov.io/gh/getsentry/sentry-ruby) | [![API doc](https://img.shields.io/badge/API%20doc-rubydoc.info-blue)](https://www.rubydoc.info/gems/sentry-delayed_job)   |
 | [![Gem Version](https://img.shields.io/gem/v/sentry-resque?label=sentry-resque)](https://rubygems.org/gems/sentry-resque)                      | [![Build Status](https://github.com/getsentry/sentry-ruby/actions/workflows/tests.yml/badge.svg)](https://github.com/getsentry/sentry-ruby/actions/workflows/tests.yml)               | [![codecov](https://codecov.io/gh/getsentry/sentry-ruby/graph/badge.svg?token=ZePzrpZFP6&component=sentry-resque)](https://codecov.io/gh/getsentry/sentry-ruby) | [![API doc](https://img.shields.io/badge/API%20doc-rubydoc.info-blue)](https://www.rubydoc.info/gems/sentry-resque)        |
 | [![Gem Version](https://img.shields.io/gem/v/sentry-opentelemetry?label=sentry-opentelemetry)](https://rubygems.org/gems/sentry-opentelemetry) | [![Build Status](https://github.com/getsentry/sentry-ruby/actions/workflows/tests.yml/badge.svg)](https://github.com/getsentry/sentry-ruby/actions/workflows/tests.yml) | [![codecov](https://codecov.io/gh/getsentry/sentry-ruby/graph/badge.svg?token=ZePzrpZFP6&component=sentry-opentelemetry)](https://codecov.io/gh/getsentry/sentry-ruby) | [![API doc](https://img.shields.io/badge/API%20doc-rubydoc.info-blue)](https://www.rubydoc.info/gems/sentry-opentelemetry) |
+| [![Gem Version](https://img.shields.io/gem/v/sentry-yabeda?label=sentry-yabeda)](https://rubygems.org/gems/sentry-yabeda) | [![Build Status](https://github.com/getsentry/sentry-ruby/actions/workflows/tests.yml/badge.svg)](https://github.com/getsentry/sentry-ruby/actions/workflows/tests.yml) | [![codecov](https://codecov.io/gh/getsentry/sentry-ruby/graph/badge.svg?token=ZePzrpZFP6&component=sentry-yabeda)](https://codecov.io/gh/getsentry/sentry-ruby) | [![API doc](https://img.shields.io/badge/API%20doc-rubydoc.info-blue)](https://www.rubydoc.info/gems/sentry-yabeda) |
 
 
 
@@ -53,6 +54,7 @@ gem "sentry-sidekiq"
 gem "sentry-delayed_job"
 gem "sentry-resque"
 gem "sentry-opentelemetry"
+gem "sentry-yabeda"
 ```
 
 ### Configuration
@@ -93,6 +95,7 @@ To learn more about sampling transactions, please visit the [official documentat
 - [DelayedJob](https://docs.sentry.io/platforms/ruby/guides/delayed_job/)
 - [Resque](https://docs.sentry.io/platforms/ruby/guides/resque/)
 - [OpenTelemetry](https://docs.sentry.io/platforms/ruby/performance/instrumentation/opentelemetry/)
+- [Yabeda](https://docs.sentry.io/platforms/ruby/guides/yabeda/)
 
 ### Enriching Events
 
