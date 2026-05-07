@@ -20,8 +20,8 @@ RSpec.shared_examples "an ActiveJob backend that isolates Sentry context per wor
 
     Sentry.get_current_scope.set_tags(test_thread: true)
 
-    thread_a = Thread.new { job_a.perform_later; drain }
-    thread_b = Thread.new { job_b.perform_later; drain }
+    thread_a = worker_thread { job_a.perform_later; drain }
+    thread_b = worker_thread { job_b.perform_later; drain }
     [thread_a, thread_b].each(&:join)
 
     txn_a = transactions.find { |t| t.tags[:job] == "A" }
