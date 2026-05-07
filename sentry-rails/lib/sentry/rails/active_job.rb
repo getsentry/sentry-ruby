@@ -5,13 +5,46 @@ require "set"
 module Sentry
   module Rails
     module ActiveJobExtensions
+      SENTRY_PAYLOAD_KEY = "_sentry"
+
       def perform_now
         if !Sentry.initialized? || already_supported_by_sentry_integration?
           super
         else
-          SentryReporter.record(self) do
+          SentryReporter.record(self, trace_headers: @_sentry_trace_headers) do
             super
           end
+        end
+      end
+
+      def serialize
+        payload = super
+        return payload if !Sentry.initialized? || already_supported_by_sentry_integration?
+
+        begin
+          sentry_data = {}
+          headers = Sentry.get_trace_propagation_headers
+          sentry_data["trace_propagation_headers"] = headers if headers && !headers.empty?
+
+          payload[SENTRY_PAYLOAD_KEY] = sentry_data unless sentry_data.empty?
+        rescue StandardError => e
+          Sentry.sdk_logger&.error("sentry-rails: failed to inject _sentry payload: #{e}")
+        end
+
+        payload
+      end
+
+      def deserialize(job_data)
+        super
+        return if !Sentry.initialized? || already_supported_by_sentry_integration?
+
+        begin
+          sentry_data = job_data[SENTRY_PAYLOAD_KEY]
+          return unless sentry_data
+
+          @_sentry_trace_headers = sentry_data["trace_propagation_headers"]
+        rescue StandardError => e
+          Sentry.sdk_logger&.error("sentry-rails: failed to extract _sentry payload: #{e}")
         end
       end
 
@@ -28,6 +61,14 @@ module Sentry
         }
 
         class << self
+          def producer_callback_registered?
+            @producer_callback_registered ||= false
+          end
+
+          def producer_callback_registered!
+            @producer_callback_registered = true
+          end
+
           def record_producer_span(job)
             return yield if !Sentry.initialized? || job.already_supported_by_sentry_integration?
 
@@ -41,17 +82,24 @@ module Sentry
             end
           end
 
-          def record(job, &block)
+          def record(job, trace_headers: nil, &block)
             Sentry.with_scope do |scope|
               begin
                 scope.set_transaction_name(job.class.name, source: :task)
 
-                transaction = Sentry.start_transaction(
+                transaction_options = {
                   name: scope.transaction_name,
                   source: scope.transaction_source,
                   op: OP_NAME,
                   origin: SPAN_ORIGIN
-                )
+                }
+
+                transaction = if trace_headers && !trace_headers.empty?
+                  continued = Sentry.continue_trace(trace_headers, **transaction_options)
+                  Sentry.start_transaction(transaction: continued, **transaction_options)
+                else
+                  Sentry.start_transaction(**transaction_options)
+                end
 
                 if transaction
                   set_messaging_data(transaction, job)
