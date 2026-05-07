@@ -7,13 +7,17 @@ module Sentry
     module ActiveJobExtensions
       SENTRY_PAYLOAD_KEY = "_sentry"
 
+      USER_FIELDS_WHITELIST = %w[id email username].freeze
+
       def perform_now
         if !Sentry.initialized? || already_supported_by_sentry_integration?
           super
         else
-          SentryReporter.record(self, trace_headers: @_sentry_trace_headers) do
-            super
-          end
+          SentryReporter.record(
+            self,
+            trace_headers: @_sentry_trace_headers,
+            user: @_sentry_user
+          ) { super }
         end
       end
 
@@ -25,6 +29,14 @@ module Sentry
           sentry_data = {}
           headers = Sentry.get_trace_propagation_headers
           sentry_data["trace_propagation_headers"] = headers if headers && !headers.empty?
+
+          if Sentry.configuration.send_default_pii
+            user = Sentry.get_current_scope.user || {}
+            whitelisted = user.each_with_object({}) do |(k, v), acc|
+              acc[k.to_s] = v if USER_FIELDS_WHITELIST.include?(k.to_s)
+            end
+            sentry_data["user"] = whitelisted unless whitelisted.empty?
+          end
 
           payload[SENTRY_PAYLOAD_KEY] = sentry_data unless sentry_data.empty?
         rescue StandardError => e
@@ -43,6 +55,7 @@ module Sentry
           return unless sentry_data
 
           @_sentry_trace_headers = sentry_data["trace_propagation_headers"]
+          @_sentry_user = sentry_data["user"]
         rescue StandardError => e
           Sentry.sdk_logger&.error("sentry-rails: failed to extract _sentry payload: #{e}")
         end
@@ -82,9 +95,10 @@ module Sentry
             end
           end
 
-          def record(job, trace_headers: nil, &block)
+          def record(job, trace_headers: nil, user: nil, &block)
             Sentry.with_scope do |scope|
               begin
+                scope.set_user(user) if user && !user.empty?
                 scope.set_transaction_name(job.class.name, source: :task)
 
                 transaction_options = {
