@@ -40,7 +40,10 @@ module Sentry
                   origin: SPAN_ORIGIN
                 )
 
-                scope.set_span(transaction) if transaction
+                if transaction
+                  set_messaging_data(transaction, job)
+                  scope.set_span(transaction)
+                end
 
                 yield.tap do
                   finish_sentry_transaction(transaction, 200)
@@ -53,6 +56,26 @@ module Sentry
                 raise
               end
             end
+          end
+
+          def set_messaging_data(transaction, job)
+            transaction.set_data(Sentry::Span::DataConventions::MESSAGING_MESSAGE_ID, job.job_id)
+            transaction.set_data(Sentry::Span::DataConventions::MESSAGING_DESTINATION_NAME, job.queue_name)
+
+            if job.executions && job.executions > 1
+              transaction.set_data(Sentry::Span::DataConventions::MESSAGING_MESSAGE_RETRY_COUNT, job.executions - 1)
+            end
+
+            if (latency = compute_latency(job))
+              transaction.set_data(Sentry::Span::DataConventions::MESSAGING_MESSAGE_RECEIVE_LATENCY, latency)
+            end
+          end
+
+          def compute_latency(job)
+            return unless job.respond_to?(:enqueued_at) && job.enqueued_at
+
+            enqueued_time = job.enqueued_at.is_a?(String) ? Time.parse(job.enqueued_at) : job.enqueued_at
+            ((Time.now.to_f - enqueued_time.to_f) * 1000).round
           end
 
           def capture_exception(job, e)
