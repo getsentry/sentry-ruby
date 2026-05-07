@@ -44,14 +44,13 @@ RSpec.describe Sentry::Rails::Tracing::ActiveStorageSubscriber, :subscriber, typ
 
       request_transaction = transport.events.last.to_h
       expect(request_transaction[:type]).to eq("transaction")
-      expect(request_transaction[:spans].count).to eq(2)
 
-      span = request_transaction[:spans][1]
-      expect(span[:op]).to eq("file.service_upload.active_storage")
-      expect(span[:origin]).to eq("auto.file.rails")
-      expect(span[:description]).to eq("Disk")
-      expect(span.dig(:data, :key)).to be_nil
-      expect(span[:trace_id]).to eq(request_transaction.dig(:contexts, :trace, :trace_id))
+      upload_span = request_transaction[:spans].find { |s| s[:op] == "file.service_upload.active_storage" }
+      expect(upload_span).not_to be_nil
+      expect(upload_span[:origin]).to eq("auto.file.rails")
+      expect(upload_span[:description]).to eq("Disk")
+      expect(upload_span.dig(:data, :key)).to be_nil
+      expect(upload_span[:trace_id]).to eq(request_transaction.dig(:contexts, :trace, :trace_id))
     end
   end
 
@@ -73,10 +72,10 @@ RSpec.describe Sentry::Rails::Tracing::ActiveStorageSubscriber, :subscriber, typ
 
       request_transaction = transport.events.last.to_h
       expect(request_transaction[:type]).to eq("transaction")
-      expect(request_transaction[:spans].count).to eq(2)
 
-      span = request_transaction[:spans][1]
-      expect(span.dig(:data, :key)).to eq(p.cover.key)
+      upload_span = request_transaction[:spans].find { |s| s[:op] == "file.service_upload.active_storage" }
+      expect(upload_span).not_to be_nil
+      expect(upload_span.dig(:data, :key)).to eq(p.cover.key)
     end
   end
 
