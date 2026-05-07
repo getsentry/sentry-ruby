@@ -69,4 +69,12 @@ RSpec.shared_context "active_job backend harness" do |adapter:|
   ensure
     txn&.finish
   end
+
+  # Hook used by the worker_hub_isolation shared example. The default
+  # is a plain Thread.new — adapters that need extra setup (e.g. an
+  # isolated database per worker thread, like :solid_queue on SQLite)
+  # override this to wrap the block in their isolation scope.
+  def worker_thread(&block)
+    Thread.new(&block)
+  end
 end
