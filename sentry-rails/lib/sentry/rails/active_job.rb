@@ -96,6 +96,8 @@ module Sentry
           end
 
           def record(job, trace_headers: nil, user: nil, &block)
+            Sentry.clone_hub_to_current_thread if Thread.current != Thread.main
+
             Sentry.with_scope do |scope|
               begin
                 scope.set_user(user) if user && !user.empty?
