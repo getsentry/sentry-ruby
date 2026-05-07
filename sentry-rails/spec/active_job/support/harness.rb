@@ -53,4 +53,12 @@ RSpec.shared_context "active_job backend harness" do |adapter:|
     stub_const(name, klass)
     klass
   end
+
+  def transactions
+    sentry_events.select { |e| e.is_a?(Sentry::TransactionEvent) }
+  end
+
+  def consumer_transaction
+    transactions.find { |t| t.contexts.dig(:trace, :op) == "queue.active_job" }
+  end
 end
