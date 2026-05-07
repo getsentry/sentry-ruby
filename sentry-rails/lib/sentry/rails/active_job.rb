@@ -28,6 +28,19 @@ module Sentry
         }
 
         class << self
+          def record_producer_span(job)
+            return yield if !Sentry.initialized? || job.already_supported_by_sentry_integration?
+
+            Sentry.with_child_span(op: "queue.publish", description: job.class.name) do |span|
+              if span
+                span.set_origin(SPAN_ORIGIN)
+                span.set_data(Sentry::Span::DataConventions::MESSAGING_MESSAGE_ID, job.job_id)
+                span.set_data(Sentry::Span::DataConventions::MESSAGING_DESTINATION_NAME, job.queue_name)
+              end
+              yield
+            end
+          end
+
           def record(job, &block)
             Sentry.with_scope do |scope|
               begin

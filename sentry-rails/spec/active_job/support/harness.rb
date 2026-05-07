@@ -61,4 +61,12 @@ RSpec.shared_context "active_job backend harness" do |adapter:|
   def consumer_transaction
     transactions.find { |t| t.contexts.dig(:trace, :op) == "queue.active_job" }
   end
+
+  def within_parent_transaction(name: "parent.test", op: "test")
+    txn = Sentry.start_transaction(name: name, op: op)
+    Sentry.get_current_scope.set_span(txn) if txn
+    yield(txn)
+  ensure
+    txn&.finish
+  end
 end
