@@ -48,7 +48,7 @@ RSpec.shared_examples "an ActiveJob backend that records messaging span data on 
     # Older Rails versions truncate Time.now to whole seconds inside `travel`
     # (no `with_usec:` option until 7.0+), so the measured latency can be up
     # to ~999ms below the travel delta. Widen the tolerance accordingly.
-    if RAILS_VERSION >= 7.0
+    if RAILS_VERSION > 7.0
       travel(5.seconds, with_usec: true) { drain }
       tolerance = 50
     else
