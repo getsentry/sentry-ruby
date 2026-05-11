@@ -60,8 +60,15 @@ RUN curl https://mise.run | sh \
 # container starts immediately without downloading it at runtime. When it is
 # empty (local dev builds) Ruby is installed lazily by the `run` entrypoint.
 ARG RUBY_VERSION=""
+
+# Java is always installed (required for JRuby). It is listed in .mise.toml so
+# it is available for all users regardless of which Ruby flavour they use.
+RUN echo "📦 Pre-installing java@temurin-21..." && \
+    /home/sentry/.local/bin/mise install "java@temurin-21" && \
+    /home/sentry/.local/bin/mise use --global "java@temurin-21"
+
 RUN if [ -n "${RUBY_VERSION}" ]; then \
-    echo "📦 Pre-installing ruby@${RUBY_VERSION} (precompiled)..." && \
+    echo "📦 Pre-installing ruby@${RUBY_VERSION}..." && \
     MISE_RUBY_COMPILE=0 /home/sentry/.local/bin/mise install "ruby@${RUBY_VERSION}" && \
     /home/sentry/.local/bin/mise use --global "ruby@${RUBY_VERSION}"; \
   fi
