@@ -20,6 +20,7 @@ services:
 
   sentry-test:
     <<: *sentry-build
+    profiles: ["e2e"]
     entrypoint: [".devcontainer/run"]
     command: ["mise", "run", "e2e:serve"]
     environment:

@@ -69,6 +69,7 @@ jobs:
           docker compose \
             --file .devcontainer/docker-compose.yml \
             --env-file .devcontainer/.env \
+            --profile e2e \
             run --rm sentry-test \
             .devcontainer/setup --only .,spec/apps/rails-mini
 
@@ -77,6 +78,7 @@ jobs:
           docker compose \
             --file .devcontainer/docker-compose.yml \
             --env-file .devcontainer/.env \
+            --profile e2e \
             up -d --no-build sentry-test
 
       - name: "Wait for rails-mini app to be ready"
@@ -100,12 +102,13 @@ jobs:
           docker compose \
             --file .devcontainer/docker-compose.yml \
             --env-file .devcontainer/.env \
+            --profile e2e \
             exec sentry-test \
             bundle exec rake
 
       - name: Stop e2e services
         if: always()
-        run: docker compose --file .devcontainer/docker-compose.yml down
+        run: docker compose --file .devcontainer/docker-compose.yml --profile e2e down
 
       - name: Upload test artifacts
         if: failure()
