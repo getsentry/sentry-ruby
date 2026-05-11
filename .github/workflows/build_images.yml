@@ -10,10 +10,10 @@ on:
 
   # Uncomment if you want to test things out in a PR
 
-  pull_request:
-    paths:
-      - .devcontainer/**
-      - .github/workflows/build_images.yml
+  # pull_request:
+  #   paths:
+  #     - .devcontainer/**
+  #     - .github/workflows/build_images.yml
 
 permissions:
   contents: read
