@@ -1,6 +1,10 @@
+[settings]
+ruby.compile = false
+
 [tools]
 ruby = "latest"
 node = "lts"
+java = "temurin-21"
 
 [tasks."e2e:rails"]
 description = "Start the rails-mini e2e app"

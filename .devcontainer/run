@@ -38,9 +38,6 @@ eval "$("$MISE_BIN" activate bash)"
 # Default to the latest Ruby unless the caller pins a specific version.
 RUBY_VERSION="${RUBY_VERSION:-latest}"
 
-# Always pull a precompiled binary from jdx/ruby — never build from source.
-export MISE_RUBY_COMPILE=0
-
 # Skip installation when the version is already present in the image (e.g. CI
 # images built with the RUBY_VERSION build arg in the Dockerfile).
 if "$MISE_BIN" list ruby 2>/dev/null | grep -qF "${RUBY_VERSION}"; then
