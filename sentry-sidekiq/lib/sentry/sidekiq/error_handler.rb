@@ -7,7 +7,7 @@ module Sentry
     class ErrorHandler
       WITH_SIDEKIQ_7 = ::Gem::Version.new(::Sidekiq::VERSION) >= ::Gem::Version.new("7.0")
 
-      # @param ex [Exception] the exception / error that occured
+      # @param ex [Exception] the exception / error that occurred
       # @param context [Hash or Array] Sidekiq error context
       # @param sidekiq_config [Sidekiq::Config, Hash] Sidekiq configuration,
       #   Defaults to nil.
