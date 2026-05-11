@@ -135,15 +135,6 @@ class SetupScript
     end
   end
 
-  def update_rubygems_and_bundler
-    puts "📦 Updating RubyGems and Bundler..."
-
-    unless system("gem update --system --silent")
-      puts "❌ RubyGems update failed"
-      exit 1
-    end
-  end
-
   def install_foreman_gem
     unless system('gem install foreman')
       puts "❌ Foreman gem installation failed"
