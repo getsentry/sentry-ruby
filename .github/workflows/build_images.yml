@@ -56,7 +56,7 @@ jobs:
           push: true
           tags: |
             ghcr.io/getsentry/sentry-ruby-devcontainer-${{ matrix.flavor }}:${{ steps.version.outputs.version }}
-            ghcr.io/getsentry/sentry-ruby-devcontainer-${{ matrix.flavor }}:latest
+            ${{ github.ref == 'refs/heads/master' && format('ghcr.io/getsentry/sentry-ruby-devcontainer-{0}:latest', matrix.flavor) || '' }}
           build-args: |
             BASE_IMAGE=${{ matrix.base_image }}
             RUBY_VERSION=${{ matrix.ruby_version }}
