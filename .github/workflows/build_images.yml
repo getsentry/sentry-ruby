@@ -1,19 +1,13 @@
 name: "Build & push devcontainer"
 
 on:
+  workflow_dispatch:
   push:
     branches:
       - master
     paths:
       - .devcontainer/**
       - .github/workflows/build_images.yml
-
-  # Uncomment if you want to test things out in a PR
-
-  # pull_request:
-  #   paths:
-  #     - .devcontainer/**
-  #     - .github/workflows/build_images.yml
 
 permissions:
   contents: read
