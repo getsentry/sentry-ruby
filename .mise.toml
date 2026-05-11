@@ -1,0 +1,15 @@
+[tools]
+ruby = "latest"
+node = "lts"
+
+[tasks."e2e:rails"]
+description = "Start the rails-mini e2e app"
+run = "cd spec/apps/rails-mini && bundle exec ruby app.rb"
+
+[tasks."e2e:svelte"]
+description = "Start the svelte-mini e2e app"
+run = "cd spec/apps/svelte-mini && npm run dev"
+
+[tasks."e2e:serve"]
+description = "Start all e2e apps in parallel"
+depends = ["e2e:rails", "e2e:svelte"]

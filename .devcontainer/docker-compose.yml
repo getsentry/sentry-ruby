@@ -5,8 +5,8 @@ services:
       context: ..
       dockerfile: .devcontainer/Dockerfile
       args:
-        IMAGE: ${IMAGE}
-        VERSION: ${VERSION}
+        BASE_IMAGE: ${BASE_IMAGE:-ubuntu:latest}
+        RUBY_VERSION: ${RUBY_VERSION:-}
     volumes:
       - ..:/workspace/sentry:cached
     working_dir: /workspace/sentry
@@ -14,15 +14,19 @@ services:
 
   sentry-dev:
     <<: *sentry-build
-    entrypoint: ".devcontainer/run --service dev"
-    command: "sleep infinity"
+    entrypoint: [".devcontainer/run"]
     depends_on:
       - redis
 
   sentry-test:
     <<: *sentry-build
-    entrypoint: ".devcontainer/run --service test"
-    command: ["foreman", "start"]
+    entrypoint: [".devcontainer/run"]
+    command: ["mise", "run", "e2e:serve"]
+    environment:
+      BUNDLE_PATH: /home/sentry/bundle
+    volumes:
+      - ..:/workspace/sentry:cached
+      - bundle-gems:/home/sentry/bundle
     ports:
       - "${SENTRY_E2E_RAILS_APP_PORT}:4000"
       - "${SENTRY_E2E_SVELTE_APP_PORT}:4001"
@@ -33,3 +37,6 @@ services:
       - ALLOW_EMPTY_PASSWORD=yes
     ports:
       - "6379:6379"
+
+volumes:
+  bundle-gems:

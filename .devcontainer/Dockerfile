@@ -1,6 +1,5 @@
-ARG IMAGE="ruby"
-
-FROM ${IMAGE} AS build
+ARG BASE_IMAGE=ubuntu:24.04
+FROM ${BASE_IMAGE}
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
   sudo \
@@ -8,6 +7,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
   git \
   curl \
   wget \
+  ca-certificates \
   build-essential \
   pkg-config \
   libssl-dev \
@@ -21,27 +21,55 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
   libgdbm-dev \
   sqlite3 \
   libsqlite3-dev \
+  tzdata \
   && apt-get clean \
   && rm -rf /var/lib/apt/lists/*
 
 RUN echo "sentry ALL=(ALL) NOPASSWD:ALL" > /etc/sudoers.d/sentry \
   && chmod 0440 /etc/sudoers.d/sentry
 
-RUN groupadd --gid 1000 sentry \
+RUN userdel -r ubuntu 2>/dev/null || true \
+  && groupdel ubuntu 2>/dev/null || true \
+  && groupadd --gid 1000 sentry \
   && useradd --uid 1000 --gid sentry --shell /bin/bash --create-home sentry
 
 WORKDIR /workspace/sentry
 
 RUN chown -R sentry:sentry /workspace/sentry
 
-ARG VERSION
-ARG GEM_HOME="/workspace/sentry/vendor/gems/${VERSION}"
-
 ENV LANG=C.UTF-8 \
   BUNDLE_JOBS=4 \
   BUNDLE_RETRY=3 \
-  GEM_HOME=/workspace/sentry/vendor/gems/${VERSION} \
-  PATH=$PATH:${GEM_HOME}/bin \
-  REDIS_HOST=redis
+  REDIS_HOST=redis \
+  PATH=/home/sentry/.local/share/mise/shims:/home/sentry/.local/bin:$PATH
 
 USER sentry
+
+# Pre-create the bundle directory owned by sentry so that a Docker named volume
+# mounted here is initialised with the correct ownership (Docker copies image
+# directory content when a volume is first attached).
+RUN mkdir -p /home/sentry/bundle
+
+RUN curl https://mise.run | sh \
+  && echo 'eval "$(/home/sentry/.local/bin/mise activate bash)"' >> /home/sentry/.bashrc \
+  && echo 'eval "$(/home/sentry/.local/bin/mise activate zsh)"' >> /home/sentry/.zshenv
+
+# When RUBY_VERSION is provided at build time, pre-install that Ruby so the
+# container starts immediately without downloading it at runtime. When it is
+# empty (local dev builds) Ruby is installed lazily by the `run` entrypoint.
+ARG RUBY_VERSION=""
+RUN if [ -n "${RUBY_VERSION}" ]; then \
+    echo "📦 Pre-installing ruby@${RUBY_VERSION} (precompiled)..." && \
+    MISE_RUBY_COMPILE=0 /home/sentry/.local/bin/mise install "ruby@${RUBY_VERSION}" && \
+    /home/sentry/.local/bin/mise use --global "ruby@${RUBY_VERSION}"; \
+  fi
+
+# Node.js is always needed for the svelte-mini e2e app.
+RUN echo "📦 Pre-installing node@lts..." && \
+  /home/sentry/.local/bin/mise install "node@lts" && \
+  /home/sentry/.local/bin/mise use --global "node@lts"
+
+# Install headless Chromium via Playwright (includes all system dependencies).
+# Symlink the binary into ~/.local/bin which is already on PATH.
+RUN /home/sentry/.local/share/mise/shims/npx playwright install chromium --with-deps
+RUN bash -c 'ln -sf /home/sentry/.cache/ms-playwright/chromium-*/chrome-linux/chrome /home/sentry/.local/bin/chromium'

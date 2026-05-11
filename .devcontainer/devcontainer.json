@@ -5,12 +5,11 @@
   "workspaceFolder": "/workspace/sentry",
   "features": {
     "ghcr.io/devcontainers/features/github-cli:latest": {},
-    "ghcr.io/devcontainers-extra/features/mise:latest": {},
     "ghcr.io/nils-geistmann/devcontainers-features/zsh:latest": {},
     "ghcr.io/devcontainers/features/node:latest": {},
     "ghcr.io/devcontainers-extra/features/npm-packages:latest": {},
     "ghcr.io/rocker-org/devcontainer-features/apt-packages:latest": {
-      "packages": "inotify-tools"
+      "packages": "inotify-tools,tzdata"
     }
   },
   "customizations": {
