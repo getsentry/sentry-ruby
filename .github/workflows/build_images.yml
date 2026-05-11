@@ -26,10 +26,13 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - flavor: modern
-            base_image: ubuntu:latest
-            ruby_version: "3.4.8"
-          - flavor: legacy
+          - flavor: "4.0"
+            base_image: ubuntu:24.04
+            ruby_version: "4.0.3"
+          - flavor: "3.4"
+            base_image: ubuntu:24.04
+            ruby_version: "3.4.9"
+          - flavor: "2.7"
             base_image: ubuntu:22.04
             ruby_version: "2.7.8"
 
