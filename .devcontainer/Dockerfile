@@ -68,8 +68,8 @@ RUN echo "📦 Pre-installing java@temurin-21..." && \
     /home/sentry/.local/bin/mise use --global "java@temurin-21"
 
 RUN if [ -n "${RUBY_VERSION}" ]; then \
-    echo "📦 Pre-installing ruby@${RUBY_VERSION}..." && \
-    /home/sentry/.local/bin/mise install "ruby@${RUBY_VERSION}" && \
+    echo "📦 Pre-installing ruby@${RUBY_VERSION} (precompiled)..." && \
+    MISE_RUBY_COMPILE=0 /home/sentry/.local/bin/mise install "ruby@${RUBY_VERSION}" && \
     /home/sentry/.local/bin/mise use --global "ruby@${RUBY_VERSION}"; \
   fi
 

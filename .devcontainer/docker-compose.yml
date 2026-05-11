@@ -6,7 +6,6 @@ services:
       dockerfile: .devcontainer/Dockerfile
       args:
         BASE_IMAGE: ${BASE_IMAGE:-ubuntu:24.04}
-        RUBY_VERSION: ${RUBY_VERSION:-}
     volumes:
       - ..:/workspace/sentry:cached
     working_dir: /workspace/sentry
