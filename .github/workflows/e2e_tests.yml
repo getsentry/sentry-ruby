@@ -20,8 +20,6 @@ jobs:
     name: e2e tests
     runs-on: ubuntu-latest
     timeout-minutes: 5
-    env:
-      IMAGE_TAG: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || github.sha }}
 
     strategy:
       fail-fast: false
@@ -36,13 +34,17 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
 
+      - name: Read devcontainer version
+        id: devcontainer-version
+        run: echo "version=$(cat .devcontainer/VERSION)" >> $GITHUB_OUTPUT
+
       - name: Set up `.env` file
         run: |
           cd .devcontainer
           cp .env.example .env
           echo "RUBY_VERSION=${{ matrix.ruby_version }}" >> .env
           echo "DOCKER_IMAGE=ghcr.io/getsentry/sentry-ruby-devcontainer-${{ matrix.flavor }}" >> .env
-          echo "DOCKER_TAG=${{ env.IMAGE_TAG }}" >> .env
+          echo "DOCKER_TAG=${{ steps.devcontainer-version.outputs.version }}" >> .env
 
       - name: Log in to GHCR
         uses: docker/login-action@74a5d142397b4f367a81961eba4e8cd7edddf772 # v3
@@ -52,7 +54,7 @@ jobs:
           password: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Pull test container image
-        run: docker pull ghcr.io/getsentry/sentry-ruby-devcontainer-${{ matrix.flavor }}:${{ env.IMAGE_TAG }}
+        run: docker pull ghcr.io/getsentry/sentry-ruby-devcontainer-${{ matrix.flavor }}:${{ steps.devcontainer-version.outputs.version }}
 
       - name: Restore node_modules cache
         uses: actions/cache@6f8efc29b200d32929f49075959781ed54ec270c # v3

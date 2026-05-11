@@ -40,18 +40,31 @@ jobs:
       - name: Check out current commit
         uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
 
-      - name: Build and push devcontainer image
-        id: build
-        uses: getsentry/action-build-and-push-images@8fc75e483c09a68721f2c8951292ee17f8821766 # main
+      - name: Read devcontainer version
+        id: version
+        run: echo "version=$(cat .devcontainer/VERSION)" >> $GITHUB_OUTPUT
+
+      - name: Log in to GHCR
+        uses: docker/login-action@74a5d142397b4f367a81961eba4e8cd7edddf772 # v3
         with:
-          image_name: "sentry-ruby-devcontainer-${{ matrix.flavor }}"
-          dockerfile_path: ".devcontainer/Dockerfile"
-          ghcr: true
-          publish_on_pr: true
-          build_args: |
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@b5ca514318bd6ebac0fb2aedd5d36ec1b5c232a2 # v3
+
+      - name: Build and push devcontainer image
+        uses: docker/build-push-action@14487ce63c7a62a4a324b0bfb37086795e31c6c1 # v6
+        with:
+          context: .
+          file: .devcontainer/Dockerfile
+          push: true
+          tags: |
+            ghcr.io/getsentry/sentry-ruby-devcontainer-${{ matrix.flavor }}:${{ steps.version.outputs.version }}
+            ghcr.io/getsentry/sentry-ruby-devcontainer-${{ matrix.flavor }}:latest
+          build-args: |
             BASE_IMAGE=${{ matrix.base_image }}
             RUBY_VERSION=${{ matrix.ruby_version }}
-
-      - name: Use outputs
-        run: |
-          echo "GHCR URL: ${{ steps.build.outputs.ghcr_image_url }}"
+          cache-from: type=gha,scope=${{ matrix.flavor }}
+          cache-to: type=gha,mode=max,scope=${{ matrix.flavor }}
