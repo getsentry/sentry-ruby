@@ -20,8 +20,6 @@ MISE_BIN="/home/sentry/.local/bin/mise"
 # Git also refuses to operate in directories owned by a different user.
 git config --global --add safe.directory /workspace/sentry 2>/dev/null || true
 
-"$MISE_BIN" trust
-
 # ---- 1. mise setup -----------------------------------------------------------
 
 if [[ ! -x "$MISE_BIN" ]]; then
