@@ -1,7 +1,14 @@
 name: "Build & push devcontainer"
 
 on:
+  # This works only on the default branch. To trigger it in a topic branch:
+  #
+  #   gh workflow run build_images.yml --repo getsentry/sentry-ruby --ref your-branch
+  #
+  # IMPORTANT: update `.devcontainer/VERSION` for a topic branch build
+  #
   workflow_dispatch:
+
   push:
     branches:
       - master
