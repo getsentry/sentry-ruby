@@ -15,15 +15,14 @@ cd /workspace/sentry
 # then bind-mounted into the container where we run as sentry (UID 1000).
 # Fix ownership once here so bundler, git, etc. can write freely.
 sudo chown -R sentry:sentry /workspace/sentry 2>/dev/null || true
+MISE_BIN="/home/sentry/.local/bin/mise"
 
 # Git also refuses to operate in directories owned by a different user.
 git config --global --add safe.directory /workspace/sentry 2>/dev/null || true
 
-mise trust
+"$MISE_BIN" trust
 
 # ---- 1. mise setup -----------------------------------------------------------
-
-MISE_BIN="/home/sentry/.local/bin/mise"
 
 if [[ ! -x "$MISE_BIN" ]]; then
   echo "❌ mise not found at $MISE_BIN (it should be installed by the Dockerfile)"
