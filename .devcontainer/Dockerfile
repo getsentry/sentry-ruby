@@ -78,4 +78,6 @@ RUN echo "📦 Pre-installing node@lts..." && \
 # Install headless Chromium via Playwright (includes all system dependencies).
 # Symlink the binary into ~/.local/bin which is already on PATH.
 RUN /home/sentry/.local/share/mise/shims/npx playwright install chromium --with-deps
-RUN bash -c 'ln -sf /home/sentry/.cache/ms-playwright/chromium-*/chrome-linux/chrome /home/sentry/.local/bin/chromium'
+# Playwright lays out the binary under chrome-linux/ on arm64 and chrome-linux64/
+# on x86_64 (since Playwright 1.57), so the glob has to match both.
+RUN bash -c 'ln -sf /home/sentry/.cache/ms-playwright/chromium-*/chrome-linux*/chrome /home/sentry/.local/bin/chromium'
