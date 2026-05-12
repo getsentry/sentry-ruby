@@ -27,8 +27,10 @@ module Sentry
 
         begin
           sentry_data = {}
-          headers = Sentry.get_trace_propagation_headers
-          sentry_data["trace_propagation_headers"] = headers if headers && !headers.empty?
+          if Sentry.configuration.rails.active_job_propagate_traces
+            headers = Sentry.get_trace_propagation_headers
+            sentry_data["trace_propagation_headers"] = headers if headers && !headers.empty?
+          end
 
           if Sentry.configuration.send_default_pii
             user = Sentry.get_current_scope.user || {}
