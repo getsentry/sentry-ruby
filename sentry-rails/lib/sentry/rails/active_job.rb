@@ -104,6 +104,13 @@ module Sentry
               begin
                 scope.set_user(user) if user && !user.empty?
                 scope.set_transaction_name(job.class.name, source: :task)
+                scope.set_tags(queue: job.queue_name)
+                scope.set_contexts(active_job: {
+                  job_class: job.class.name,
+                  job_id: job.job_id,
+                  queue: job.queue_name,
+                  provider_job_id: job.provider_job_id
+                })
 
                 transaction_options = {
                   name: scope.transaction_name,
