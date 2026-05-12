@@ -7,7 +7,7 @@ module Sentry
     module ActiveJobExtensions
       SENTRY_PAYLOAD_KEY = "_sentry"
 
-      USER_FIELDS_WHITELIST = %w[id email username].freeze
+      USER_FIELDS_ALLOWLIST = %w[id email username].freeze
 
       def perform_now
         if !Sentry.initialized? || already_supported_by_sentry_integration?
@@ -34,10 +34,10 @@ module Sentry
 
           if Sentry.configuration.send_default_pii
             user = Sentry.get_current_scope.user || {}
-            whitelisted = user.each_with_object({}) do |(k, v), acc|
-              acc[k.to_s] = v if USER_FIELDS_WHITELIST.include?(k.to_s)
+            allowed = user.each_with_object({}) do |(k, v), acc|
+              acc[k.to_s] = v if USER_FIELDS_ALLOWLIST.include?(k.to_s)
             end
-            sentry_data["user"] = whitelisted unless whitelisted.empty?
+            sentry_data["user"] = allowed unless allowed.empty?
           end
 
           payload[SENTRY_PAYLOAD_KEY] = sentry_data unless sentry_data.empty?
@@ -98,7 +98,14 @@ module Sentry
           end
 
           def record(job, trace_headers: nil, user: nil, &block)
-            Sentry.clone_hub_to_current_thread if Thread.current != Thread.main
+            # Always give this thread a fresh hub cloned from the main hub so
+            # the job's events are fully isolated.  Save and restore whatever
+            # hub was on the thread before (e.g. the Rack request hub set by
+            # CaptureExceptions, or a stale hub left by a recycled thread-pool
+            # thread) so the outer context continues working correctly after
+            # the job finishes.
+            original_hub = Thread.current.thread_variable_get(Sentry::THREAD_LOCAL)
+            Sentry.clone_hub_to_current_thread
 
             Sentry.with_scope do |scope|
               begin
@@ -142,6 +149,8 @@ module Sentry
                 raise
               end
             end
+          ensure
+            Thread.current.thread_variable_set(Sentry::THREAD_LOCAL, original_hub)
           end
 
           def set_messaging_data(transaction, job)
