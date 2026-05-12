@@ -172,6 +172,11 @@ module Sentry
       # Set this option to true if you want Sentry to capture each retry failure
       attr_accessor :active_job_report_on_retry_error
 
+      # Whether we should inject trace propagation headers into the serialized job
+      # payload in order to have a connected trace between producer and consumer.
+      # Defaults to true. Set to false to opt out.
+      attr_accessor :active_job_propagate_traces
+
       # Configuration for structured logging feature
       # @return [StructuredLoggingConfiguration]
       attr_reader :structured_logging
@@ -193,6 +198,7 @@ module Sentry
         @db_query_source_threshold_ms = 100
         @active_support_logger_subscription_items = Sentry::Rails::ACTIVE_SUPPORT_LOGGER_SUBSCRIPTION_ITEMS_DEFAULT.dup
         @active_job_report_on_retry_error = false
+        @active_job_propagate_traces = true
         @structured_logging = StructuredLoggingConfiguration.new
       end
     end
