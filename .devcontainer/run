@@ -1,11 +1,8 @@
 #!/bin/bash
 #
-# Container entrypoint.
-#
-# Order of operations:
-#   1. Set up mise (the Ruby version manager) for this shell.
-#   2. Ensure the desired Ruby is installed (precompiled, no source build).
-#   3. Hand off to whatever docker-compose passes as `command`.
+# Container entrypoint. Ruby and other toolchains are pre-installed in the
+# image; this script only handles per-run setup (ownership, mise activation)
+# and hands off to whatever docker-compose passes as `command`.
 #
 set -euo pipefail
 
@@ -20,8 +17,6 @@ MISE_BIN="/home/sentry/.local/bin/mise"
 # Git also refuses to operate in directories owned by a different user.
 git config --global --add safe.directory /workspace/sentry 2>/dev/null || true
 
-# ---- 1. mise setup -----------------------------------------------------------
-
 if [[ ! -x "$MISE_BIN" ]]; then
   echo "❌ mise not found at $MISE_BIN (it should be installed by the Dockerfile)"
   exit 1
@@ -32,24 +27,6 @@ eval "$("$MISE_BIN" activate bash)"
 
 # Trust the workspace config so mise will use it without prompting.
 "$MISE_BIN" trust /workspace/sentry >/dev/null
-
-# ---- 2. Install Ruby (precompiled) -------------------------------------------
-
-# Default to the latest Ruby unless the caller pins a specific version.
-RUBY_VERSION="${RUBY_VERSION:-latest}"
-
-# Skip installation when the version is already present in the image (e.g. CI
-# images built with the RUBY_VERSION build arg in the Dockerfile).
-if "$MISE_BIN" list ruby 2>/dev/null | grep -qF "${RUBY_VERSION}"; then
-  echo "✅ ruby@${RUBY_VERSION} already installed, skipping download."
-else
-  echo "📦 Installing ruby@${RUBY_VERSION} (precompiled)..."
-  "$MISE_BIN" install "ruby@${RUBY_VERSION}"
-fi
-
-"$MISE_BIN" use --global "ruby@${RUBY_VERSION}"
-
-# ---- 3. Hand off -------------------------------------------------------------
 
 if [[ $# -eq 0 ]]; then
   exec sleep infinity
