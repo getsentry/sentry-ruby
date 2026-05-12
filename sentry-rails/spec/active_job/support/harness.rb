@@ -78,25 +78,35 @@ RSpec.shared_context "active_job backend harness" do |adapter:|
   def drain(at: nil)
     case adapter
     when :test
-      if RAILS_VERSION < 6.0
-        # Rails 5.2: perform_enqueued_jobs always requires a block and only runs
-        # jobs enqueued *inside* the block. Manually flush already-enqueued jobs.
-        # When using Rails52FullPayloadTestAdapter, each payload also carries a
-        # :_sentry_full_payload key with the complete serialize output.  Drive
-        # those jobs through Base.execute so our deserialize override runs and
-        # populates @_sentry_trace_headers / @_sentry_user before perform_now.
-        jobs = queue_adapter.enqueued_jobs.dup
-        queue_adapter.enqueued_jobs.clear
-        jobs.each do |payload|
-          if (full = payload[:_sentry_full_payload])
-            ::ActiveJob::Base.execute(full)
-          else
-            send(:instantiate_job, payload).perform_now
+      # Loop until the queue is empty so retries (which re-enqueue during a
+      # drain pass) are cascaded through to completion. Both Rails 5.2's
+      # manual flush and Rails 6+'s perform_enqueued_jobs(no block) operate
+      # on a snapshot, so a single pass would only run jobs that existed
+      # before draining started.
+      loop do
+        break if queue_adapter.enqueued_jobs.empty?
+
+        if RAILS_VERSION < 6.0
+          # Rails 5.2: perform_enqueued_jobs always requires a block and only
+          # runs jobs enqueued *inside* the block. Manually flush already-
+          # enqueued jobs. When using Rails52FullPayloadTestAdapter, each
+          # payload also carries a :_sentry_full_payload key with the complete
+          # serialize output. Drive those jobs through Base.execute so our
+          # deserialize override runs and populates @_sentry_trace_headers /
+          # @_sentry_user before perform_now.
+          jobs = queue_adapter.enqueued_jobs.dup
+          queue_adapter.enqueued_jobs.clear
+          jobs.each do |payload|
+            if (full = payload[:_sentry_full_payload])
+              ::ActiveJob::Base.execute(full)
+            else
+              send(:instantiate_job, payload).perform_now
+            end
           end
+        else
+          kwargs = at ? { at: at } : {}
+          perform_enqueued_jobs(**kwargs)
         end
-      else
-        kwargs = at ? { at: at } : {}
-        perform_enqueued_jobs(**kwargs)
       end
     else
       raise NotImplementedError, "active_job backend harness has no drain strategy for adapter: #{adapter.inspect}"

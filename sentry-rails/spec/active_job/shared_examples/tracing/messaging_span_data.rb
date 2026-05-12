@@ -21,10 +21,6 @@ RSpec.shared_examples "an ActiveJob backend that records messaging span data on 
   end
 
   it "records messaging.message.retry.count = 0 for non-retryable jobs" do
-    # Mirrors sentry-sidekiq's convention: retry.count is always emitted and
-    # derived directly from the job's execution counter. Gating on
-    # `rescue_handlers` would be imprecise because `rescue_from` declarations
-    # share that list with `retry_on`, even though only the latter retries.
     successful_job.perform_later
     drain
 
@@ -49,14 +45,21 @@ RSpec.shared_examples "an ActiveJob backend that records messaging span data on 
       expect(data["messaging.message.retry.count"]).to eq(0)
     end
 
-    it "records messaging.message.retry.count = executions - 1 on retried executions" do
-      allow_any_instance_of(retryable_job).to receive(:executions).and_return(3)
+    it "records messaging.message.retry.count across real retried executions", skip: RAILS_VERSION < 6.0 do
+      retried_job = job_fixture do
+        retry_on StandardError, attempts: 3, wait: 0
 
-      retryable_job.perform_later
+        def perform
+          raise StandardError, "trigger retry" if executions < 3
+        end
+      end
+
+      retried_job.perform_later
       drain
 
-      data = consumer_transaction.contexts.dig(:trace, :data)
-      expect(data["messaging.message.retry.count"]).to eq(2)
+      consumer_txns = transactions.select { |t| t.contexts.dig(:trace, :op) == "queue.active_job" }
+      retry_counts = consumer_txns.map { |t| t.contexts.dig(:trace, :data, "messaging.message.retry.count") }
+      expect(retry_counts).to eq([0, 0, 1])
     end
   end
 
