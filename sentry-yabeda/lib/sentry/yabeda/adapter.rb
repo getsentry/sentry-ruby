@@ -68,11 +68,8 @@ module Sentry
         [metric.group, metric.name].compact.join(".")
       end
 
-      # TODO: Normalize Yabeda unit symbols (e.g. :milliseconds) to Sentry's
-      # canonical singular strings (e.g. "millisecond") once units are visible
-      # in the Sentry product. See https://develop.sentry.dev/sdk/foundations/state-management/scopes/attributes/#units
       def unit_for(metric)
-        metric.unit&.to_s
+        metric.unit&.to_s&.chomp("s")
       end
     end
   end

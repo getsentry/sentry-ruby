@@ -85,7 +85,7 @@ RSpec.describe Sentry::Yabeda::Adapter do
       expect(Sentry.metrics).to receive(:gauge).with(
         "process.memory_usage",
         1024,
-        unit: "bytes",
+        unit: "byte",
         attributes: nil
       )
 
@@ -101,7 +101,7 @@ RSpec.describe Sentry::Yabeda::Adapter do
       expect(Sentry.metrics).to receive(:distribution).with(
         "rails.request_duration",
         150.5,
-        unit: "milliseconds",
+        unit: "millisecond",
         attributes: tags
       )
 
@@ -117,11 +117,57 @@ RSpec.describe Sentry::Yabeda::Adapter do
       expect(Sentry.metrics).to receive(:distribution).with(
         "http.response_size",
         2048,
-        unit: "bytes",
+        unit: "byte",
         attributes: tags
       )
 
       adapter.perform_summary_observe!(summary, tags, 2048)
+    end
+  end
+
+  describe "unit normalization" do
+    it "converts plural yabeda units to Sentry's singular form" do
+      perform_basic_setup
+
+      histogram = build_metric(:histogram, name: :duration, group: :rails, unit: :seconds)
+      expect(Sentry.metrics).to receive(:distribution).with(
+        "rails.duration", 1.5, unit: "second", attributes: nil
+      )
+
+      adapter.perform_histogram_measure!(histogram, {}, 1.5)
+    end
+
+    it "converts milliseconds to millisecond" do
+      perform_basic_setup
+
+      histogram = build_metric(:histogram, name: :latency, unit: :milliseconds)
+      expect(Sentry.metrics).to receive(:distribution).with(
+        "latency", 250.0, unit: "millisecond", attributes: nil
+      )
+
+      adapter.perform_histogram_measure!(histogram, {}, 250.0)
+    end
+
+    it "passes nil when unit is not set" do
+      perform_basic_setup
+
+      gauge = build_metric(:gauge, name: :threads)
+      expect(Sentry.metrics).to receive(:gauge).with(
+        "threads", 5, unit: nil, attributes: nil
+      )
+
+      adapter.perform_gauge_set!(gauge, {}, 5)
+    end
+
+    it "leaves already-singular units unchanged" do
+      perform_basic_setup
+
+      gauge = build_metric(:gauge, name: :uptime, unit: :second)
+      expect(Sentry.metrics).to receive(:gauge).with(
+        "uptime", 3600, unit: "second", attributes: nil
+      )
+
+      adapter.perform_gauge_set!(gauge, {}, 3600)
     end
   end
 

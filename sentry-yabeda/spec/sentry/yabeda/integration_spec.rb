@@ -78,7 +78,7 @@ RSpec.describe "Yabeda-Sentry integration" do
     expect(metric[:name]).to eq("myapp.response_time")
     expect(metric[:type]).to eq(:distribution)
     expect(metric[:value]).to eq(150.5)
-    expect(metric[:unit]).to eq("milliseconds")
+    expect(metric[:unit]).to eq("millisecond")
     expect(metric[:attributes][:controller]).to eq({ type: "string", value: "orders" })
     expect(metric[:attributes][:action]).to eq({ type: "string", value: "index" })
   end
