@@ -37,13 +37,25 @@ module Sentry
       # - auto_session_tracking
       block&.call(dummy_config)
 
+      # Install the testing clients on the *main* hub rather than the current
+      # thread's hub. `Sentry.clone_hub_to_current_thread` (used by
+      # Sentry::Rack::CaptureExceptions) always clones the main hub, so if we
+      # only mutated the thread-local hub a request-time clone would observe a
+      # stale transport.
+      main_hub = Sentry.get_main_hub
+
       # the base layer's client should already use the dummy config so nothing will be sent by accident
       base_client = Sentry::Client.new(dummy_config)
-      Sentry.get_current_hub.bind_client(base_client)
+      main_hub.bind_client(base_client)
       # create a new layer so mutations made to the testing scope or configuration could be simply popped later
-      Sentry.get_current_hub.push_scope
+      main_hub.push_scope
       test_client = Sentry::Client.new(dummy_config.dup)
-      Sentry.get_current_hub.bind_client(test_client)
+      main_hub.bind_client(test_client)
+
+      # Realign the current thread's hub with the main hub so direct
+      # `sentry_events` reads and any hub the Rack middleware clones from the
+      # main hub all observe the same DummyTransport.
+      Thread.current.thread_variable_set(Sentry::THREAD_LOCAL, main_hub)
     end
 
     # Clears all stored events and envelopes.
@@ -54,11 +66,15 @@ module Sentry
 
       clear_sentry_events
 
-      # pop testing layer created by `setup_sentry_test`
-      # but keep the base layer to avoid nil-pointer errors
+      # pop the testing layer created by `setup_sentry_test` off the *main*
+      # hub (that is where `setup_sentry_test` pushed it), keeping the base
+      # layer to avoid nil-pointer errors. Popping the current thread's hub
+      # would leave the test layer dangling on the main hub, which the next
+      # request-time clone would inherit.
       # TODO: find a way to notify users if they somehow popped the test layer before calling this method
-      if Sentry.get_current_hub.instance_variable_get(:@stack).size > 1
-        Sentry.get_current_hub.pop_scope
+      main_hub = Sentry.get_main_hub
+      if main_hub.instance_variable_get(:@stack).size > 1
+        main_hub.pop_scope
       end
       Sentry::Scope.global_event_processors.clear
     end
@@ -66,7 +82,13 @@ module Sentry
     def clear_sentry_events
       return unless Sentry.initialized?
 
-      sentry_transport.clear if sentry_transport.respond_to?(:clear)
+      # Clear every transport reachable from the current thread's hub and the
+      # main hub (including its base layer). A request-time clone shares the
+      # main hub's base-layer transport, so clearing only the current
+      # transport would let stale events survive into the next test.
+      sentry_test_transports.each do |transport|
+        transport.clear if transport.respond_to?(:clear)
+      end
 
       if Sentry.configuration.enable_logs && sentry_logger.respond_to?(:clear)
         sentry_logger.clear
@@ -81,6 +103,17 @@ module Sentry
     # @return [Transport]
     def sentry_transport
       Sentry.get_current_client.transport
+    end
+
+    # Every transport reachable from the current thread's hub and the main
+    # hub, across all stack layers. Used by `clear_sentry_events` so a stale
+    # DummyTransport (e.g. the main hub's base layer that a request-time clone
+    # shares) cannot carry leftover events into the next test.
+    # @return [Array<Transport>]
+    def sentry_test_transports
+      [Sentry.get_current_hub, Sentry.get_main_hub].compact.uniq.flat_map do |hub|
+        hub.instance_variable_get(:@stack).map { |layer| layer.client&.transport }
+      end.compact.uniq
     end
 
     # Returns the captured event objects.
