@@ -92,6 +92,48 @@ RSpec.describe Sentry::TestHelper do
     end
   end
 
+  describe "event leakage across clone_hub_to_current_thread (regression for #2951)" do
+    it "keeps sentry_events empty after setup_sentry_test even when an earlier request captured events through a cloned hub" do
+      # Cycle 1: a normal test that uses the test helper.
+      setup_sentry_test
+      Sentry.capture_message("event from a previous test")
+      teardown_sentry_test
+
+      # Simulate an unrelated request that runs *without* the test helper:
+      # Sentry::Rack::CaptureExceptions clones the main hub onto the request
+      # thread, then an event is captured through that cloned hub.
+      Sentry.clone_hub_to_current_thread
+      Sentry.capture_message("event from an unrelated request")
+
+      # Cycle 2: the next test sets the helper up again.
+      setup_sentry_test
+
+      expect(sentry_events).to be_empty
+
+      # The Rack middleware clones the hub again for *this* test's request.
+      Sentry.clone_hub_to_current_thread
+
+      expect(sentry_events).to be_empty
+
+      teardown_sentry_test
+    end
+  end
+
+  describe "request-captured events remain observable after clone_hub_to_current_thread" do
+    after { teardown_sentry_test }
+
+    it "still exposes events captured through a hub the Rack middleware cloned after setup_sentry_test" do
+      setup_sentry_test
+
+      # Sentry::Rack::CaptureExceptions clones the main hub onto the request
+      # thread before the request body runs.
+      Sentry.clone_hub_to_current_thread
+      Sentry.capture_message("event from the request")
+
+      expect(sentry_events.map(&:message)).to include("event from the request")
+    end
+  end
+
   describe "#teardown_sentry_test" do
     before do
       setup_sentry_test
