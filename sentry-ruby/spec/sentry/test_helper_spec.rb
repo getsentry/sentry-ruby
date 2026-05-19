@@ -94,23 +94,17 @@ RSpec.describe Sentry::TestHelper do
 
   describe "event leakage across clone_hub_to_current_thread (regression for #2951)" do
     it "keeps sentry_events empty after setup_sentry_test even when an earlier request captured events through a cloned hub" do
-      # Cycle 1: a normal test that uses the test helper.
       setup_sentry_test
       Sentry.capture_message("event from a previous test")
       teardown_sentry_test
 
-      # Simulate an unrelated request that runs *without* the test helper:
-      # Sentry::Rack::CaptureExceptions clones the main hub onto the request
-      # thread, then an event is captured through that cloned hub.
       Sentry.clone_hub_to_current_thread
       Sentry.capture_message("event from an unrelated request")
 
-      # Cycle 2: the next test sets the helper up again.
       setup_sentry_test
 
       expect(sentry_events).to be_empty
 
-      # The Rack middleware clones the hub again for *this* test's request.
       Sentry.clone_hub_to_current_thread
 
       expect(sentry_events).to be_empty
@@ -125,12 +119,52 @@ RSpec.describe Sentry::TestHelper do
     it "still exposes events captured through a hub the Rack middleware cloned after setup_sentry_test" do
       setup_sentry_test
 
-      # Sentry::Rack::CaptureExceptions clones the main hub onto the request
-      # thread before the request body runs.
       Sentry.clone_hub_to_current_thread
       Sentry.capture_message("event from the request")
 
       expect(sentry_events.map(&:message)).to include("event from the request")
+    end
+  end
+
+  describe "Sentry::Rack::CaptureExceptions across consecutive requests (regression for #2951)", when: :rack_available? do
+    # Drives a single request through the real Rack middleware. The middleware
+    # calls Sentry.clone_hub_to_current_thread before handing off to the app,
+    # exactly like a Rails request spec would.
+    def perform_request(exception_message)
+      exception = RuntimeError.new(exception_message)
+      app = lambda do |env|
+        env["rack.exception"] = exception
+        [200, {}, ["ok"]]
+      end
+      stack = Sentry::Rack::CaptureExceptions.new(app)
+      stack.call(Rack::MockRequest.env_for("/#{exception_message}"))
+    end
+
+    def captured_exception_messages
+      sentry_events.map { |event| event.to_h.dig(:exception, :values, 0, :value) }
+    end
+
+    it "isolates each request's events and keeps them observable via sentry_events" do
+      # First request, wrapped in the test helper just like a request spec.
+      setup_sentry_test
+      perform_request("first-request")
+      messages = captured_exception_messages
+      expect(messages.size).to eq(1)
+      expect(messages.first).to include("first-request")
+      teardown_sentry_test
+
+      # Second request: a fresh setup must not see the first request's event,
+      # even though the Rack middleware clones the main hub on every request.
+      setup_sentry_test
+      expect(sentry_events).to be_empty
+
+      perform_request("second-request")
+      messages = captured_exception_messages
+      expect(messages.size).to eq(1)
+      expect(messages.first).to include("second-request")
+      expect(messages).not_to include(a_string_including("first-request"))
+
+      teardown_sentry_test
     end
   end
 
