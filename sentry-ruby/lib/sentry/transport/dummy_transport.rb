@@ -18,5 +18,12 @@ module Sentry
     def send_envelope(envelope)
       @envelopes << envelope
     end
+
+    # Empties the captured events and envelopes so `TestHelper.clear_sentry_events`
+    # also clears the dummy transport instance
+    def clear
+      @events.clear
+      @envelopes.clear
+    end
   end
 end
