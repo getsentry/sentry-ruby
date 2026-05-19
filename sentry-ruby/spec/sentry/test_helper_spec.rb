@@ -93,6 +93,8 @@ RSpec.describe Sentry::TestHelper do
   end
 
   describe "event leakage across clone_hub_to_current_thread (regression for #2951)" do
+    after { teardown_sentry_test }
+
     it "keeps sentry_events empty after setup_sentry_test even when an earlier request captured events through a cloned hub" do
       setup_sentry_test
       Sentry.capture_message("event from a previous test")
@@ -108,8 +110,6 @@ RSpec.describe Sentry::TestHelper do
       Sentry.clone_hub_to_current_thread
 
       expect(sentry_events).to be_empty
-
-      teardown_sentry_test
     end
   end
 
@@ -127,6 +127,8 @@ RSpec.describe Sentry::TestHelper do
   end
 
   describe "Sentry::Rack::CaptureExceptions across consecutive requests (regression for #2951)", when: :rack_available? do
+    after { teardown_sentry_test }
+
     # Drives a single request through the real Rack middleware. The middleware
     # calls Sentry.clone_hub_to_current_thread before handing off to the app,
     # exactly like a Rails request spec would.
@@ -163,8 +165,6 @@ RSpec.describe Sentry::TestHelper do
       expect(messages.size).to eq(1)
       expect(messages.first).to include("second-request")
       expect(messages).not_to include(a_string_including("first-request"))
-
-      teardown_sentry_test
     end
   end
 

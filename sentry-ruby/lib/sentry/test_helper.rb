@@ -112,7 +112,7 @@ module Sentry
     # @return [Array<Transport>]
     def sentry_test_transports
       [Sentry.get_current_hub, Sentry.get_main_hub].compact.uniq.flat_map do |hub|
-        hub.instance_variable_get(:@stack).map { |layer| layer.client&.transport }
+        hub.clients.map(&:transport)
       end.compact.uniq
     end
 

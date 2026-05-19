@@ -537,6 +537,20 @@ RSpec.describe Sentry::Hub do
     end
   end
 
+  describe "#clients" do
+    it "returns the only client for a single-layer hub" do
+      expect(subject.clients).to eq([client])
+    end
+
+    it "returns every client across the scope stack, base layer first" do
+      new_client = Sentry::Client.new(configuration)
+      subject.push_scope
+      subject.bind_client(new_client)
+
+      expect(subject.clients).to eq([client, new_client])
+    end
+  end
+
   describe "#pop_scope" do
     it "pops the current scope" do
       prev_scope = subject.current_scope
