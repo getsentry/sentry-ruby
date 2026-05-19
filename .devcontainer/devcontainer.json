@@ -4,6 +4,10 @@
   "service": "sentry-dev",
   "workspaceFolder": "/workspace/sentry",
   "features": {
+    "ghcr.io/devcontainers/features/git:latest": {
+      "ppa": false,
+      "version": "2.54.0"
+    },
     "ghcr.io/devcontainers/features/github-cli:latest": {},
     "ghcr.io/nils-geistmann/devcontainers-features/zsh:latest": {},
     "ghcr.io/devcontainers/features/node:latest": {},
