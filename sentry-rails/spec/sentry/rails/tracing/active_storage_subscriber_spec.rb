@@ -2,7 +2,9 @@
 
 require "spec_helper"
 
-RSpec.describe Sentry::Rails::Tracing::ActiveStorageSubscriber, :subscriber, type: :request, skip: Rails.version.to_f <= 5.2 do
+# Skipped on JRuby because it's very flaky there due to shelling out to use imagemagick CLI
+RSpec.describe Sentry::Rails::Tracing::ActiveStorageSubscriber, :subscriber, type: :request,
+  skip: Rails.version.to_f <= 5.2 || RUBY_PLATFORM == "java" do
   let(:transport) do
     Sentry.get_current_client.transport
   end
