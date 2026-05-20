@@ -61,8 +61,7 @@ RSpec.shared_examples "an ActiveJob backend that propagates trace context throug
         successful_job.perform_later
       end
 
-      payload = queue_adapter.enqueued_jobs.last
-      sentry_payload = (payload[:_sentry_full_payload] || payload)["_sentry"]
+      sentry_payload = last_enqueued_payload["_sentry"]
       expect(sentry_payload&.dig("trace_propagation_headers")).to be_nil
     end
 
