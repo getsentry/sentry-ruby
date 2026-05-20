@@ -2,6 +2,9 @@
   let loading = false;
   let result = "";
 
+  let jobLoading = false;
+  let jobResult = "";
+
   async function triggerError() {
     loading = true;
     try {
@@ -24,6 +27,29 @@
       loading = false;
     }
   }
+
+  async function triggerJob() {
+    jobLoading = true;
+    try {
+      const response = await fetch(`${SENTRY_E2E_RAILS_APP_URL}/jobs/sample`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        jobResult = `Job: ${JSON.stringify(data)}`;
+      } else {
+        jobResult = `Error: ${response.status} ${response.statusText}`;
+      }
+    } catch (error) {
+      jobResult = `Error: ${error.message}`;
+    } finally {
+      jobLoading = false;
+    }
+  }
 </script>
 
 <main>
@@ -41,6 +67,23 @@
     <div class="result">
       <h3>Result:</h3>
       <pre>{result}</pre>
+    </div>
+  {/if}
+
+  <p>
+    Click the button to enqueue an ActiveJob in the Rails app — distributed
+    tracing should connect this fetch, the Rails controller, the
+    <code>queue.publish</code> span, and the async-executed job:
+  </p>
+
+  <button id="trigger-job-btn" on:click={triggerJob} disabled={jobLoading}>
+    {jobLoading ? "Loading..." : "Trigger Job"}
+  </button>
+
+  {#if jobResult}
+    <div class="result">
+      <h3>Job result:</h3>
+      <pre>{jobResult}</pre>
     </div>
   {/if}
 </main>
