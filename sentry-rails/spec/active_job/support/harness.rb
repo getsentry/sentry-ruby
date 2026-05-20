@@ -1,30 +1,18 @@
 # frozen_string_literal: true
 
-# Rails 5.2's TestAdapter stores a minimal hash per enqueued job (only job
-# class, args, queue) and its instantiate_job recreates jobs via `.new(*args)`
-# — never calling our `deserialize` override.  That means the `_sentry`
-# payload injected by `serialize` is silently discarded before the consumer
-# ever sees it, breaking distributed-tracing propagation.
+# Backend-agnostic harness for the common ActiveJob spec suite.
 #
-# This adapter subclass calls `job.serialize` a second time after `super` has
-# stored the minimal hash and saves the full output alongside it.  The drain
-# then drives each job through `ActiveJob::Base.execute(full_payload)`, which
-# goes through the normal deserialize → perform_now path and picks up the
-# Sentry trace headers and user context that were captured at enqueue time.
-class Rails52FullPayloadTestAdapter < ::ActiveJob::QueueAdapters::TestAdapter
-  def enqueue(job)
-    prev = enqueued_jobs.length
-    super
-    enqueued_jobs.last[:_sentry_full_payload] = job.serialize if enqueued_jobs.length > prev
-  end
-
-  def enqueue_at(job, timestamp)
-    prev = enqueued_jobs.length
-    super
-    enqueued_jobs.last[:_sentry_full_payload] = job.serialize if enqueued_jobs.length > prev
-  end
-end
-
+# This file contains zero knowledge of any specific queue adapter. Each
+# adapter spec composes this shared context with its own adapter shared
+# context (e.g. "test adapter", "sidekiq adapter") that fills in the
+# adapter-specific hooks below.
+#
+# Adapter selection goes through ActiveJob::TestHelper's official
+# +queue_adapter_for_test+ hook. TestHelper's +before_setup+ reads it
+# and installs the returned adapter as Base's +_test_adapter+, which the
+# +queue_adapter+ reader prefers over the underlying +_queue_adapter+.
+# This avoids fighting with the railtie/dummy-app defaults and keeps the
+# harness from reaching past TestHelper into private internals.
 RSpec.shared_context "active_job backend harness" do |adapter:|
   let(:adapter) { adapter }
   let(:configure_sentry) { proc { } }
@@ -33,90 +21,58 @@ RSpec.shared_context "active_job backend harness" do |adapter:|
     make_basic_app(&configure_sentry)
     setup_sentry_test
 
-    # Rails 5.2's TestAdapter discards the full serialize output (including the
-    # _sentry payload) when deferring jobs.  Use our augmented subclass instead
-    # so the drain can replay jobs through the proper deserialize path.
-    #
-    # NOTE: In Rails 5.2 test specs, ActiveJob::TestHelper installs a
-    # _test_adapter on ActiveJob::Base via an outer around hook (before_setup).
-    # The queue_adapter class method returns _test_adapter when present, so we
-    # must use enable_test_adapter (not queue_adapter=) to override it.
-    if RAILS_VERSION < 6.0 && adapter == :test
-      @_original_test_adapter = ::ActiveJob::Base._test_adapter
-      ::ActiveJob::Base.enable_test_adapter(Rails52FullPayloadTestAdapter.new)
-    else
-      ::ActiveJob::Base.queue_adapter = adapter
-    end
-
     boot_adapter(adapter)
 
-    example.run
+    with_adapter_active { example.run }
   ensure
-    if RAILS_VERSION < 6.0 && adapter == :test
-      if @_original_test_adapter
-        ::ActiveJob::Base.enable_test_adapter(@_original_test_adapter)
-      else
-        ::ActiveJob::Base.disable_test_adapter
-      end
-    end
-
     reset_adapter(adapter)
-
     teardown_sentry_test
   end
 
+  # ActiveJob::TestHelper hook. Returning a non-nil adapter instance
+  # causes TestHelper to install it as Base's +_test_adapter+ for the
+  # duration of each example. Adapter contexts override this.
+  def queue_adapter_for_test
+  end
+
+  # Optional block wrapper around +example.run+. The default just yields.
+  # Adapter contexts override this when the adapter needs a scoped
+  # runtime mode active during enqueue + drain (e.g. wrapping the
+  # example in +Sidekiq::Testing.fake!+ so fake mode is scoped per
+  # example without touching global state).
+  def with_adapter_active(&block)
+    yield
+  end
+
+  # Per-adapter environment setup hook. Backends extend this when they
+  # need to load schemas, start supervisors, or otherwise prepare the
+  # environment.
   def boot_adapter(_adapter)
-    # Per-adapter setup hook. Backends extend this when they need to load
-    # schemas, start supervisors, or otherwise prepare the environment.
   end
 
+  # Per-adapter environment teardown hook. Backends extend this to
+  # truncate tables or otherwise clean up state between examples.
   def reset_adapter(_adapter)
-    # Per-adapter teardown hook. Backends extend this to truncate tables
-    # or otherwise clean up state between examples.
   end
 
+  # Drive the adapter to completion. Each adapter context must override
+  # this with a strategy that drains its queue (and any retried/scheduled
+  # jobs cascaded by the drain) to completion.
   def drain(at: nil)
-    case adapter
-    when :test
-      # Loop until the queue is empty so retries (which re-enqueue during a
-      # drain pass) are cascaded through to completion. Both Rails 5.2's
-      # manual flush and Rails 6+'s perform_enqueued_jobs(no block) operate
-      # on a snapshot, so a single pass would only run jobs that existed
-      # before draining started.
-      loop do
-        break if queue_adapter.enqueued_jobs.empty?
+    raise NotImplementedError,
+          "active_job backend harness has no drain strategy for adapter: #{adapter.inspect}. " \
+          "Include the matching adapter shared context (e.g. 'test adapter', 'sidekiq adapter')."
+  end
 
-        if RAILS_VERSION < 6.1
-          # Rails 5.2 and 6.0 both need a manual flush:
-          #   - 5.2's perform_enqueued_jobs always requires a block and only
-          #     runs jobs enqueued *inside* the block, so it can't drain a
-          #     pre-existing queue at all.
-          #   - 6.0's flush_enqueued_jobs iterates with `perform_now` but
-          #     doesn't remove payloads from `enqueued_jobs` (the
-          #     `delete(payload)` call was only added in 6.1), so looping on
-          #     `enqueued_jobs.empty?` would spin forever.
-          # On 5.2 with Rails52FullPayloadTestAdapter, each payload also
-          # carries a :_sentry_full_payload key with the complete serialize
-          # output. Drive those jobs through Base.execute so our deserialize
-          # override runs and populates @_sentry_trace_headers /
-          # @_sentry_user before perform_now.
-          jobs = queue_adapter.enqueued_jobs.dup
-          queue_adapter.enqueued_jobs.clear
-          jobs.each do |payload|
-            if (full = payload[:_sentry_full_payload])
-              ::ActiveJob::Base.execute(full)
-            else
-              send(:instantiate_job, payload).perform_now
-            end
-          end
-        else
-          kwargs = at ? { at: at } : {}
-          perform_enqueued_jobs(**kwargs)
-        end
-      end
-    else
-      raise NotImplementedError, "active_job backend harness has no drain strategy for adapter: #{adapter.inspect}"
-    end
+  # Return the most recently enqueued job's serialized payload as a Hash
+  # keyed by ActiveJob's stringified field names (so callers can read
+  # +payload["_sentry"]+, +payload["arguments"]+, etc.). Each adapter
+  # context must override this since the on-the-wire shape differs per
+  # backend.
+  def last_enqueued_payload
+    raise NotImplementedError,
+          "active_job backend harness has no last_enqueued_payload accessor for adapter: #{adapter.inspect}. " \
+          "Include the matching adapter shared context (e.g. 'test adapter', 'sidekiq adapter')."
   end
 
   def job_fixture(name = nil, &block)
