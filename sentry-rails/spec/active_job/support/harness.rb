@@ -86,13 +86,19 @@ RSpec.shared_context "active_job backend harness" do |adapter:|
       loop do
         break if queue_adapter.enqueued_jobs.empty?
 
-        if RAILS_VERSION < 6.0
-          # Rails 5.2: perform_enqueued_jobs always requires a block and only
-          # runs jobs enqueued *inside* the block. Manually flush already-
-          # enqueued jobs. When using Rails52FullPayloadTestAdapter, each
-          # payload also carries a :_sentry_full_payload key with the complete
-          # serialize output. Drive those jobs through Base.execute so our
-          # deserialize override runs and populates @_sentry_trace_headers /
+        if RAILS_VERSION < 6.1
+          # Rails 5.2 and 6.0 both need a manual flush:
+          #   - 5.2's perform_enqueued_jobs always requires a block and only
+          #     runs jobs enqueued *inside* the block, so it can't drain a
+          #     pre-existing queue at all.
+          #   - 6.0's flush_enqueued_jobs iterates with `perform_now` but
+          #     doesn't remove payloads from `enqueued_jobs` (the
+          #     `delete(payload)` call was only added in 6.1), so looping on
+          #     `enqueued_jobs.empty?` would spin forever.
+          # On 5.2 with Rails52FullPayloadTestAdapter, each payload also
+          # carries a :_sentry_full_payload key with the complete serialize
+          # output. Drive those jobs through Base.execute so our deserialize
+          # override runs and populates @_sentry_trace_headers /
           # @_sentry_user before perform_now.
           jobs = queue_adapter.enqueued_jobs.dup
           queue_adapter.enqueued_jobs.clear
