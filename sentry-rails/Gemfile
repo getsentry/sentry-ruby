@@ -56,6 +56,26 @@ end
 
 gem "mini_magick"
 
+# Sidekiq is a dev-only dependency, used by the common ActiveJob spec
+# suite to verify the AJ tracing extension works against the :sidekiq
+# adapter independent of sentry-sidekiq's native middleware.
+#
+# Gated on Ruby/Rails/platform because:
+#   - The sidekiq_adapter_spec only passes on Rails > 7.0.
+#   - Sidekiq 8 requires Ruby >= 3.2; older Rubies fall back to Sidekiq 7.
+#   - Sidekiq does not reliably support JRuby.
+#
+# sidekiq_adapter_spec.rb also rescues LoadError and re-checks the
+# Rails version, so matrices that don't bundle Sidekiq skip the spec
+# cleanly without any other gating.
+unless RUBY_PLATFORM.include?("java")
+  if rails_version > Gem::Version.new("7.0.0") && ruby_version >= Gem::Version.new("3.2")
+    gem "sidekiq", "~> 8.0"
+  elsif rails_version > Gem::Version.new("7.0.0")
+    gem "sidekiq", "~> 7.0"
+  end
+end
+
 gem "sprockets-rails"
 
 gem "benchmark-ips"
