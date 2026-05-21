@@ -57,7 +57,7 @@ jobs:
         run: docker pull ghcr.io/getsentry/sentry-ruby-devcontainer-${{ matrix.flavor }}:${{ steps.devcontainer-version.outputs.version }}
 
       - name: Restore node_modules cache
-        uses: actions/cache@6f8efc29b200d32929f49075959781ed54ec270c # v3
+        uses: actions/cache@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5.0.5
         with:
           path: spec/apps/svelte-mini/node_modules
           key: ${{ runner.os }}-${{ runner.arch }}-node-modules-${{ hashFiles('spec/apps/svelte-mini/package-lock.json') }}
