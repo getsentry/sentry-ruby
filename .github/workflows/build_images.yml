@@ -46,7 +46,7 @@ jobs:
         run: echo "version=$(cat .devcontainer/VERSION)" >> $GITHUB_OUTPUT
 
       - name: Log in to GHCR
-        uses: docker/login-action@74a5d142397b4f367a81961eba4e8cd7edddf772 # v3
+        uses: docker/login-action@4907a6ddec9925e35a0a9e82d7399ccc52663121 # v4.1.0
         with:
           registry: ghcr.io
           username: ${{ github.actor }}
