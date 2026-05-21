@@ -17,8 +17,52 @@ RSpec.shared_context "active_job backend harness" do |adapter:|
   let(:adapter) { adapter }
   let(:configure_sentry) { proc { } }
 
+  # Boot the dummy Rails app ONCE per example group. Each +make_basic_app+
+  # call creates a new +Rails::Application+ subclass and re-runs every
+  # initializer — including Sidekiq's railtie (which appends two entries
+  # to +Sidekiq.@config_blocks+) and Rails' route-drawing (which also
+  # accumulates). Repeating that for every example caused per-example
+  # time to grow ~3× over the run, which is what pushed the
+  # Ruby 3.4 + Rails 8.1.3 CI matrix past the 15-min timeout.
+  #
+  # We reproduce the relevant per-example pieces of the Sentry/Rails
+  # railtie's +config.after_initialize+ block below (re-init Sentry,
+  # re-activate tracing/structured logging, re-register AJ event
+  # handlers) so each example still gets a fresh Sentry configuration.
+  before(:all) do
+    make_basic_app
+  end
+
   around do |example|
-    make_basic_app(&configure_sentry)
+    Sentry.init do |config|
+      config.release = "beta"
+      config.dsn = "http://12345:67890@sentry.localdomain:3000/sentry/42"
+      config.transport.transport_class = Sentry::DummyTransport
+      config.background_worker_threads = 0
+      config.include_local_variables = true
+      configure_sentry.call(config, ::Rails.application) if configure_sentry
+    end
+
+    # Mirror the bits of Sentry::Rails::Railtie's after_initialize hook
+    # that need to run AFTER Sentry.init each example — the one-time
+    # extensions (controller methods, streaming reporter, backtrace
+    # cleanup callback, etc.) were already wired up by the initial
+    # make_basic_app in before(:all) and persist for the rest of the
+    # group.
+    if Sentry.configuration.tracing_enabled? && Sentry.configuration.instrumenter == :sentry
+      Sentry::Rails::Tracing.register_subscribers(Sentry.configuration.rails.tracing_subscribers)
+      Sentry::Rails::Tracing.subscribe_tracing_events
+      Sentry::Rails::Tracing.patch_active_support_notifications
+    end
+
+    if Sentry.configuration.rails.structured_logging.enabled? && Sentry.configuration.enable_logs
+      Sentry::Rails::StructuredLogging.attach(Sentry.configuration.rails.structured_logging)
+    end
+
+    if defined?(Sentry::Rails::ActiveJobExtensions)
+      Sentry::Rails::ActiveJobExtensions::SentryReporter.register_event_handlers
+    end
+
     setup_sentry_test
 
     boot_adapter(adapter)

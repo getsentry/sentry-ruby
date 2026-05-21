@@ -30,8 +30,15 @@ rescue LoadError
 end
 
 RSpec.shared_context "sidekiq adapter" do
+  # Instantiated once. Each SidekiqAdapter.new appends blocks to
+  # Sidekiq's internal @config_blocks list (configure_server) and adds
+  # an on(:quiet) callback (configure_client). Creating a fresh
+  # adapter per example accumulated several hundred entries across a
+  # full suite run and showed up as compounding per-example slowdown.
+  SIDEKIQ_ADAPTER_FOR_TEST = ::ActiveJob::QueueAdapters::SidekiqAdapter.new
+
   def queue_adapter_for_test
-    ::ActiveJob::QueueAdapters::SidekiqAdapter.new
+    SIDEKIQ_ADAPTER_FOR_TEST
   end
 
   # Scope fake mode to this example only — the block form of +fake!+
