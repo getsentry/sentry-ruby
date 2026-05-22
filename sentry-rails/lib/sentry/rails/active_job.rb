@@ -9,14 +9,19 @@ module Sentry
 
       USER_FIELDS_ALLOWLIST = %w[id email username].freeze
 
+      def self.prepended(base)
+        base.attr_accessor :_sentry
+      end
+
       def perform_now
         if !Sentry.initialized? || already_supported_by_sentry_integration?
           super
         else
+          data = _sentry || {}
           SentryReporter.record(
             self,
-            trace_headers: @_sentry_trace_headers,
-            user: @_sentry_user
+            trace_headers: data["trace_propagation_headers"],
+            user: data["user"]
           ) { super }
         end
       end
@@ -53,11 +58,7 @@ module Sentry
         return if !Sentry.initialized? || already_supported_by_sentry_integration?
 
         begin
-          sentry_data = job_data[SENTRY_PAYLOAD_KEY]
-          return unless sentry_data
-
-          @_sentry_trace_headers = sentry_data["trace_propagation_headers"]
-          @_sentry_user = sentry_data["user"]
+          self._sentry = job_data[SENTRY_PAYLOAD_KEY]
         rescue StandardError => e
           Sentry.sdk_logger&.error("sentry-rails: failed to extract _sentry payload: #{e.class}: #{e.message}\n  #{Array(e.backtrace).first(5).join("\n  ")}")
         end
