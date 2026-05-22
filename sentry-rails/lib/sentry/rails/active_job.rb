@@ -42,7 +42,7 @@ module Sentry
 
           payload[SENTRY_PAYLOAD_KEY] = sentry_data unless sentry_data.empty?
         rescue StandardError => e
-          Sentry.sdk_logger&.error("sentry-rails: failed to inject _sentry payload: #{e}")
+          Sentry.sdk_logger&.error("sentry-rails: failed to inject _sentry payload: #{e.class}: #{e.message}\n  #{Array(e.backtrace).first(5).join("\n  ")}")
         end
 
         payload
@@ -59,7 +59,7 @@ module Sentry
           @_sentry_trace_headers = sentry_data["trace_propagation_headers"]
           @_sentry_user = sentry_data["user"]
         rescue StandardError => e
-          Sentry.sdk_logger&.error("sentry-rails: failed to extract _sentry payload: #{e}")
+          Sentry.sdk_logger&.error("sentry-rails: failed to extract _sentry payload: #{e.class}: #{e.message}\n  #{Array(e.backtrace).first(5).join("\n  ")}")
         end
       end
 
