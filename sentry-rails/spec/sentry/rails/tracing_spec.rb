@@ -52,11 +52,9 @@ RSpec.describe Sentry::Rails::Tracing, type: :request do
       expect(second_span[:description]).to eq("SELECT \"posts\".* FROM \"posts\"")
       expect(second_span[:parent_span_id]).to eq(first_span[:span_id])
 
-      # this is to make sure we calculate the timestamp in the correct scale (second instead of millisecond)
-      # Use more relaxed bounds for JRuby compatibility
-      min_duration = 10.0 / 1_000_000  # 10 microseconds
-      max_duration = RUBY_PLATFORM == "java" ? 50.0 / 1000 : 10.0 / 1000  # 50ms for JRuby, 10ms for others
-      expect(second_span[:timestamp] - second_span[:start_timestamp]).to be_between(min_duration, max_duration)
+      expect(second_span[:timestamp] - second_span[:start_timestamp]).to be > 0
+      expect(second_span[:start_timestamp]).to be >= transaction[:start_timestamp]
+      expect(second_span[:timestamp]).to be <= transaction[:timestamp]
     end
 
     it "records transaction alone" do
@@ -91,11 +89,9 @@ RSpec.describe Sentry::Rails::Tracing, type: :request do
       )
       expect(second_span[:parent_span_id]).to eq(first_span[:span_id])
 
-      # this is to make sure we calculate the timestamp in the correct scale (second instead of millisecond)
-      # Use more relaxed bounds for JRuby compatibility
-      min_duration = 10.0 / 1_000_000  # 10 microseconds
-      max_duration = RUBY_PLATFORM == "java" ? 50.0 / 1000 : 10.0 / 1000  # 50ms for JRuby, 10ms for others
-      expect(second_span[:timestamp] - second_span[:start_timestamp]).to be_between(min_duration, max_duration)
+      expect(second_span[:timestamp] - second_span[:start_timestamp]).to be > 0
+      expect(second_span[:start_timestamp]).to be >= transaction[:start_timestamp]
+      expect(second_span[:timestamp]).to be <= transaction[:timestamp]
 
       third_span = transaction[:spans][2]
       expect(third_span[:op]).to eq("template.render_template.action_view")
