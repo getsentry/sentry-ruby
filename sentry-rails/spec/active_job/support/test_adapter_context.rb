@@ -64,8 +64,8 @@ RSpec.shared_context "test adapter" do
         # On 5.2 with Rails52FullPayloadTestAdapter, each payload also
         # carries a +:_sentry_full_payload+ key with the complete
         # serialize output. Drive those jobs through +Base.execute+ so
-        # our deserialize override runs and populates
-        # +@_sentry_trace_headers+ / +@_sentry_user+ before +perform_now+.
+        # our deserialize override runs and populates +_sentry+
+        # before +perform_now+.
         jobs = queue_adapter.enqueued_jobs.dup
         queue_adapter.enqueued_jobs.clear
         jobs.each do |payload|
