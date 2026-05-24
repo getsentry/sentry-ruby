@@ -14,7 +14,17 @@ module Sentry
       def set_propagation_headers(req)
         Sentry.get_trace_propagation_headers&.each do |k, v|
           if k == BAGGAGE_HEADER_NAME && req[k]
-            req[k] = "#{v},#{req[k]}"
+            # Use Baggage.serialize_with_third_party to respect W3C limits
+            # Get the baggage object directly to avoid parse-serialize round-trip
+            scope = Sentry.get_current_scope
+            baggage = scope&.get_span&.transaction&.get_baggage || scope&.propagation_context&.get_baggage
+
+            if baggage
+              req[k] = Baggage.serialize_with_third_party(baggage.items, req[k])
+            else
+              # Fallback to preserve third-party baggage if baggage object is unavailable
+              req[k] = "#{v},#{req[k]}"
+            end
           else
             req[k] = v
           end
