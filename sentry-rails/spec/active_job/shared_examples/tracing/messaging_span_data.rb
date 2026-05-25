@@ -64,21 +64,13 @@ RSpec.shared_examples "an ActiveJob backend that records messaging span data on 
   end
 
   it "records messaging.message.receive.latency in milliseconds", skip: RAILS_VERSION < 6.1 do
-    successful_job.perform_later
+    base = Time.current
 
-    # Older Rails versions truncate Time.now to whole seconds inside `travel`
-    # (no `with_usec:` option until 7.0+), so the measured latency can be up
-    # to ~999ms below the travel delta. Widen the tolerance accordingly.
-    if RAILS_VERSION > 7.0
-      travel(5.seconds, with_usec: true) { drain }
-      tolerance = 50
-    else
-      travel(5.seconds) { drain }
-      tolerance = 1100
-    end
+    travel_to(base) { successful_job.perform_later }
+    travel_to(base + 5.seconds) { drain }
 
     latency = consumer_transaction.contexts.dig(:trace, :data, "messaging.message.receive.latency")
-    expect(latency).to be_a(Integer)
-    expect(latency).to be_within(tolerance).of(5_000)
+
+    expect(latency).to eq(5_000)
   end
 end
