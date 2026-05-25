@@ -115,6 +115,7 @@ module Sentry
             get "/not_found", to: "hello#not_found"
             get "/world", to: "hello#world"
             get "/with_custom_instrumentation", to: "hello#with_custom_instrumentation"
+            get "/inline_job", to: "hello#inline_job"
 
             resources :posts, only: [:index, :show] do
               member do
