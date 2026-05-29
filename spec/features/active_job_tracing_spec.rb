@@ -67,7 +67,7 @@ RSpec.describe "ActiveJob distributed tracing", type: :e2e do
 
       transactions.each do |http_txn|
         next unless http_txn.dig("contexts", "trace", "op") == "http.server"
-        next unless http_txn["transaction"] =~ /JobsController#sample_job/
+        next unless http_txn["transaction"] =~ /JobsController#enqueue/
 
         trace_id = http_txn.dig("contexts", "trace", "trace_id")
         job_txn = transactions.find do |t|
