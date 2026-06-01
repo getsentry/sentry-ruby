@@ -1,3 +1,63 @@
+## 6.6.0
+
+### New Features ✨
+
+- (yabeda) Add sentry-yabeda adapter gem by @dingsdax in [#2925](https://github.com/getsentry/sentry-ruby/pull/2925)
+- Add release detection from Kamal deployment by @t27duck in [#2895](https://github.com/getsentry/sentry-ruby/pull/2895)
+
+### Bug Fixes 🐛
+
+- (ci) Update validate-pr action to remove draft enforcement by @stephanie-anderson in [#2924](https://github.com/getsentry/sentry-ruby/pull/2924)
+- (sidekiq) Report error when retry limit is below attempt_threshold by @marcboquet in [#2940](https://github.com/getsentry/sentry-ruby/pull/2940)
+- (specs) Stop sidekiq-scheduler after each test by @solnic in [#2897](https://github.com/getsentry/sentry-ruby/pull/2897)
+- (stacktrace) Stop leaking internal frame state into event payload by @sl0thentr0py in [#2962](https://github.com/getsentry/sentry-ruby/pull/2962)
+- (tests) Proper dummy transport clean up for hub cloning by @solnic in [#2957](https://github.com/getsentry/sentry-ruby/pull/2957)
+- (yabeda) Normalize plural Yabeda units to Sentry's singular form by @sentry-junior in [#2953](https://github.com/getsentry/sentry-ruby/pull/2953)
+- Do not overwrite baggage header contents if it already exists by @jakubsomonday in [#2896](https://github.com/getsentry/sentry-ruby/pull/2896)
+
+### Internal Changes 🔧
+
+#### Deps
+
+- Bump devalue from 5.6.4 to 5.8.1 in /spec/apps/svelte-mini by @dependabot in [#2954](https://github.com/getsentry/sentry-ruby/pull/2954)
+- Bump devalue from 5.6.3 to 5.6.4 in /spec/apps/svelte-mini by @dependabot in [#2890](https://github.com/getsentry/sentry-ruby/pull/2890)
+
+#### Deps Dev
+
+- Bump svelte from 5.53.10 to 5.55.7 in /spec/apps/svelte-mini by @dependabot in [#2955](https://github.com/getsentry/sentry-ruby/pull/2955)
+- Bump svelte from 5.53.0 to 5.53.10 in /spec/apps/svelte-mini by @dependabot in [#2889](https://github.com/getsentry/sentry-ruby/pull/2889)
+- Bump rollup from 4.46.3 to 4.59.0 in /spec/apps/svelte-mini by @dependabot in [#2876](https://github.com/getsentry/sentry-ruby/pull/2876)
+- Bump vite from 7.1.3 to 7.3.2 in /spec/apps/svelte-mini by @dependabot in [#2929](https://github.com/getsentry/sentry-ruby/pull/2929)
+- Bump postcss from 8.5.6 to 8.5.13 in /spec/apps/svelte-mini by @dependabot in [#2944](https://github.com/getsentry/sentry-ruby/pull/2944)
+
+#### Devcontainer
+
+- Add latest git via feature by @solnic in [#2956](https://github.com/getsentry/sentry-ruby/pull/2956)
+- Update features and add mise by @solnic in [#2946](https://github.com/getsentry/sentry-ruby/pull/2946)
+
+#### Tests
+
+- Spec stability fixes by @solnic in [#2960](https://github.com/getsentry/sentry-ruby/pull/2960)
+- Rework active-job spec into shared spec by @solnic in [#2941](https://github.com/getsentry/sentry-ruby/pull/2941)
+
+#### Other
+
+- (ci) Add ruby 4.0 and bump rails 8.1.x to latest by @solnic in [#2958](https://github.com/getsentry/sentry-ruby/pull/2958)
+- Increase duration for jruby by @sl0thentr0py in [#2930](https://github.com/getsentry/sentry-ruby/pull/2930)
+- Update validate-pr workflow by @stephanie-anderson in [#2926](https://github.com/getsentry/sentry-ruby/pull/2926)
+- Use FilenameCache in profilers by @sl0thentr0py in [#2919](https://github.com/getsentry/sentry-ruby/pull/2919)
+- Add FilenameCache to cache compute_filename results by @HazAT in [#2904](https://github.com/getsentry/sentry-ruby/pull/2904)
+- Add PR validation workflow by @stephanie-anderson in [#2918](https://github.com/getsentry/sentry-ruby/pull/2918)
+- Fix flaky concurrent test in telemetry buffer by @sl0thentr0py in [#2920](https://github.com/getsentry/sentry-ruby/pull/2920)
+- Pin GitHub Actions to full-length commit SHAs by @joshuarli in [#2910](https://github.com/getsentry/sentry-ruby/pull/2910)
+- Optimize LineCache to reduce allocations by @HazAT in [#2903](https://github.com/getsentry/sentry-ruby/pull/2903)
+- Avoid unnecessary allocations in hot paths by @HazAT in [#2902](https://github.com/getsentry/sentry-ruby/pull/2902)
+- Optimize lowercase check in RequestInterface by @HazAT in [#2908](https://github.com/getsentry/sentry-ruby/pull/2908)
+
+### Other
+
+- refa(devcontainer): rework to use mise for fast switching by @solnic in [#2948](https://github.com/getsentry/sentry-ruby/pull/2948)
+
 ## 6.5.0
 
 ### New Features ✨
