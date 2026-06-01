@@ -1,3 +1,46 @@
+## 6.6.0
+
+### New Features ✨
+
+- (yabeda) Add sentry-yabeda adapter gem by @dingsdax in [#2925](https://github.com/getsentry/sentry-ruby/pull/2925)
+
+  There's a new `sentry-yabeda` gem that integrates Sentry Metrics with [Yabeda](https://github.com/yabeda-rb/yabeda).
+  Add the new gem to your `Gemfile`:
+
+  ```ruby
+  gem "sentry-yabeda"
+  ```
+
+  Initialize Sentry with metrics enabled. The Yabeda adapter registers itself automatically when `sentry-yabeda` is required — there's no extra setup:
+
+  ```ruby
+  Sentry.init do |config|
+    config.dsn = ENV["SENTRY_DSN"]
+    config.enable_metrics = true
+  end
+   ```
+
+- Add release detection from Kamal deployment by @t27duck in [#2895](https://github.com/getsentry/sentry-ruby/pull/2895)
+
+### Bug Fixes 🐛
+
+- (sidekiq) Report error when retry limit is below attempt_threshold by @marcboquet in [#2940](https://github.com/getsentry/sentry-ruby/pull/2940)
+- (specs) Stop sidekiq-scheduler after each test by @solnic in [#2897](https://github.com/getsentry/sentry-ruby/pull/2897)
+- (stacktrace) Stop leaking internal frame state into event payload by @sl0thentr0py in [#2962](https://github.com/getsentry/sentry-ruby/pull/2962)
+- (tests) Proper dummy transport clean up for hub cloning by @solnic in [#2957](https://github.com/getsentry/sentry-ruby/pull/2957)
+- (yabeda) Normalize plural Yabeda units to Sentry's singular form by @sentry-junior in [#2953](https://github.com/getsentry/sentry-ruby/pull/2953)
+- Do not overwrite baggage header contents if it already exists by @jakubsomonday in [#2896](https://github.com/getsentry/sentry-ruby/pull/2896)
+
+### Internal Changes 🔧
+
+  We made some memory performance and caching improvements with the help of pi-autoresearch. Enjoy the lower overhead!
+
+- Use FilenameCache in profilers by @sl0thentr0py in [#2919](https://github.com/getsentry/sentry-ruby/pull/2919)
+- Add FilenameCache to cache compute_filename results by @HazAT in [#2904](https://github.com/getsentry/sentry-ruby/pull/2904)
+- Optimize LineCache to reduce allocations by @HazAT in [#2903](https://github.com/getsentry/sentry-ruby/pull/2903)
+- Avoid unnecessary allocations in hot paths by @HazAT in [#2902](https://github.com/getsentry/sentry-ruby/pull/2902)
+- Optimize lowercase check in RequestInterface by @HazAT in [#2908](https://github.com/getsentry/sentry-ruby/pull/2908)
+
 ## 6.5.0
 
 ### New Features ✨
