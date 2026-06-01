@@ -30,6 +30,13 @@ RSpec.describe Sentry::StacktraceInterface::Frame do
       expect(second_frame.lineno).to eq(5)
     end
 
+    it "does not leak internal state into the serialized frame payload" do
+      frame = Sentry::StacktraceInterface::Frame.new(configuration.project_root, lines.last, true, filename_cache: filename_cache)
+
+      expect(frame.to_h.keys).to contain_exactly(:abs_path, :function, :lineno, :in_app, :filename)
+      expect(frame.to_h).not_to include(:project_root, :strip_backtrace_load_path, :filename_cache)
+    end
+
     it "does not strip load path when strip_backtrace_load_path is false" do
       first_frame = Sentry::StacktraceInterface::Frame.new(configuration.project_root, lines.first, false, filename_cache: filename_cache)
       expect(first_frame.filename).to eq(first_frame.abs_path)

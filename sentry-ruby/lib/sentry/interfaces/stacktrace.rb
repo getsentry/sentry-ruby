@@ -28,23 +28,16 @@ module Sentry
                   :lineno, :module, :pre_context, :post_context, :vars
 
       def initialize(project_root, line, strip_backtrace_load_path = true, filename_cache: nil)
-        @strip_backtrace_load_path = strip_backtrace_load_path
-        @filename_cache = filename_cache
-
         @abs_path = line.file
         @function = line.method if line.method
         @lineno = line.number
         @in_app = line.in_app
         @module = line.module_name if line.module_name
-        @filename = compute_filename
+        @filename = filename_cache&.compute_filename(@abs_path, @in_app, strip_backtrace_load_path)
       end
 
       def to_s
         "#{@filename}:#{@lineno}"
-      end
-
-      def compute_filename
-        @filename_cache&.compute_filename(abs_path, in_app, @strip_backtrace_load_path)
       end
 
       def set_context(linecache, context_lines)
