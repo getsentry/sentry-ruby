@@ -21,6 +21,13 @@ module Sentry
       ActiveSupport.on_load(:active_job) do
         require "sentry/rails/active_job"
         prepend Sentry::Rails::ActiveJobExtensions
+
+        unless Sentry::Rails::ActiveJobExtensions::SentryReporter.producer_callback_registered?
+          around_enqueue do |job, block|
+            Sentry::Rails::ActiveJobExtensions::SentryReporter.record_producer_span(job, &block)
+          end
+          Sentry::Rails::ActiveJobExtensions::SentryReporter.producer_callback_registered!
+        end
       end
     end
 
