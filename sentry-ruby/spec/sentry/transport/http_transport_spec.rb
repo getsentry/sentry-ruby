@@ -432,4 +432,42 @@ RSpec.describe Sentry::HTTPTransport do
       expect(subject.conn.use_ssl?).to eq(false)
     end
   end
+
+  describe ".sending?" do
+    it "returns false outside of send_data" do
+      expect(described_class.sending?).to eq(false)
+    end
+
+    it "returns true while send_data is executing the HTTP request" do
+      observed = nil
+
+      allow(subject).to receive(:do_request) do
+        observed = described_class.sending?
+        instance_double(Net::HTTPResponse, code: "200", body: "", []: nil,
+          to_hash: {})
+      end
+
+      subject.send_data("data")
+
+      expect(observed).to eq(true)
+    end
+
+    it "resets to false after send_data completes" do
+      allow(subject).to receive(:do_request).and_return(
+        instance_double(Net::HTTPResponse, code: "200", body: "", []: nil, to_hash: {})
+      )
+
+      subject.send_data("data")
+
+      expect(described_class.sending?).to eq(false)
+    end
+
+    it "resets to false even when send_data raises" do
+      allow(subject).to receive(:do_request).and_raise(SocketError, "connection failed")
+
+      expect { subject.send_data("data") }.to raise_error(Sentry::ExternalError)
+
+      expect(described_class.sending?).to eq(false)
+    end
+  end
 end

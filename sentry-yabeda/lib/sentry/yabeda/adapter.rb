@@ -13,6 +13,7 @@ module Sentry
 
       def perform_counter_increment!(counter, tags, increment)
         return unless enabled?
+        return if sentry_http_sending?
 
         Sentry.metrics.count(
           metric_name(counter),
@@ -23,6 +24,7 @@ module Sentry
 
       def perform_gauge_set!(gauge, tags, value)
         return unless enabled?
+        return if sentry_http_sending?
 
         Sentry.metrics.gauge(
           metric_name(gauge),
@@ -34,6 +36,7 @@ module Sentry
 
       def perform_histogram_measure!(histogram, tags, value)
         return unless enabled?
+        return if sentry_http_sending?
 
         Sentry.metrics.distribution(
           metric_name(histogram),
@@ -45,6 +48,7 @@ module Sentry
 
       def perform_summary_observe!(summary, tags, value)
         return unless enabled?
+        return if sentry_http_sending?
 
         Sentry.metrics.distribution(
           metric_name(summary),
@@ -58,6 +62,14 @@ module Sentry
 
       def enabled?
         Sentry.initialized? && Sentry.configuration.enable_metrics
+      end
+
+      # Returns true when the current thread is inside HTTPTransport#send_data.
+      # Skipping metric forwarding in this case prevents a re-entrant
+      # MetricEventBuffer mutex acquisition that would raise
+      # ThreadError: deadlock; recursive locking.
+      def sentry_http_sending?
+        Sentry::HTTPTransport.sending?
       end
 
       def attributes_for(tags)
