@@ -37,8 +37,6 @@ module Sentry
     end
 
     def flush
-      return self if @mutex.owned?
-
       @mutex.synchronize do
         return if empty?
 

@@ -154,6 +154,7 @@ RSpec.shared_examples "telemetry event buffer" do |event_factory:, max_items_con
       3.times { subject.add_item(event) }
 
       expect(items_sent).not_to be_empty
+      expect(string_io.string).not_to include("deadlock")
     end
   end
 
