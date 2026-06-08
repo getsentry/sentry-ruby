@@ -1,3 +1,9 @@
+## 6.6.1
+
+### Bug Fixes 🐛
+
+- Guard TelemetryEventBuffer against re-entrant mutex acquisition by @sentry-junior in [#2964](https://github.com/getsentry/sentry-ruby/pull/2964)
+
 ## 6.6.0
 
 ### New Features ✨
