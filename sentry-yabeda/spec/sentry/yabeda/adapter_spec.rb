@@ -234,39 +234,6 @@ RSpec.describe Sentry::Yabeda::Adapter do
       summary = build_metric(:summary, name: :response_size)
       adapter.perform_summary_observe!(summary, {}, 100)
     end
-
-    context "when Sentry is actively sending an HTTP request" do
-      it "does not forward any metrics to avoid deadlocking MetricEventBuffer" do
-        perform_basic_setup
-
-        allow(Sentry::HTTPTransport).to receive(:sending?).and_return(true)
-
-        expect(Sentry.metrics).not_to receive(:count)
-        expect(Sentry.metrics).not_to receive(:gauge)
-        expect(Sentry.metrics).not_to receive(:distribution)
-
-        counter   = build_metric(:counter,   name: :requests)
-        gauge     = build_metric(:gauge,     name: :queue_depth)
-        histogram = build_metric(:histogram, name: :duration)
-        summary   = build_metric(:summary,   name: :response_size)
-
-        adapter.perform_counter_increment!(counter,   {}, 1)
-        adapter.perform_gauge_set!(gauge,             {}, 42)
-        adapter.perform_histogram_measure!(histogram, {}, 100.0)
-        adapter.perform_summary_observe!(summary,     {}, 50)
-      end
-
-      it "resumes forwarding metrics once the HTTP send is complete" do
-        perform_basic_setup
-
-        allow(Sentry::HTTPTransport).to receive(:sending?).and_return(false)
-
-        counter = build_metric(:counter, name: :requests, group: :rails)
-        expect(Sentry.metrics).to receive(:count).with("rails.requests", value: 1, attributes: nil)
-
-        adapter.perform_counter_increment!(counter, {}, 1)
-      end
-    end
   end
 
   describe "tag passthrough" do

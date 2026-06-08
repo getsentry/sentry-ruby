@@ -126,12 +126,6 @@ RSpec.shared_examples "telemetry event buffer" do |event_factory:, max_items_con
     let(:max_items) { 3 }
 
     it "does not deadlock when add_item is called re-entrantly from send_items" do
-      # Simulates the pattern where transport instrumentation (e.g. yabeda-http_requests,
-      # a custom transport) calls Sentry.metrics.* during transport#send_data, which
-      # re-enters add_item on the same thread that already holds @mutex inside send_items.
-      #
-      # Without the @mutex.owned? guard this raises:
-      #   ThreadError: deadlock; recursive locking
       reentrant_calls = 0
 
       allow(client).to receive(:send_envelope) do

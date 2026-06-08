@@ -23,19 +23,6 @@ module Sentry
       Zlib::BufError, Errno::EHOSTUNREACH, Errno::ECONNREFUSED
     ].freeze
 
-    # Thread-local key used to signal that the current thread is actively
-    # sending a Sentry envelope via HTTP. Consulted by integrations (e.g.
-    # sentry-yabeda) to prevent re-entrant metric collection that would
-    # deadlock MetricEventBuffer's non-reentrant mutex.
-    SENTRY_SENDING_KEY = :sentry_http_transport_sending
-    private_constant :SENTRY_SENDING_KEY
-
-    # Returns true when the current thread is inside #send_data.
-    # @api private
-    def self.sending?
-      !!Thread.current[SENTRY_SENDING_KEY]
-    end
-
     def initialize(*args)
       super
       log_debug("Sentry HTTP Transport will connect to #{@dsn.server}") if @dsn
@@ -58,7 +45,7 @@ module Sentry
       auth_header = generate_auth_header
       headers["X-Sentry-Auth"] = auth_header if auth_header
 
-      response = with_sentry_sending { do_request(endpoint, headers, data) }
+      response = do_request(endpoint, headers, data)
 
       if response.code.match?(/\A2\d{2}/)
         handle_rate_limited_response(response) if has_rate_limited_header?(response)
@@ -125,13 +112,6 @@ module Sentry
     end
 
     private
-
-    def with_sentry_sending
-      Thread.current[SENTRY_SENDING_KEY] = true
-      yield
-    ensure
-      Thread.current[SENTRY_SENDING_KEY] = false
-    end
 
     def has_rate_limited_header?(headers)
       headers[RETRY_AFTER_HEADER] || headers[RATE_LIMIT_HEADER]
