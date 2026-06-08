@@ -443,8 +443,7 @@ RSpec.describe Sentry::HTTPTransport do
 
       allow(subject).to receive(:do_request) do
         observed = described_class.sending?
-        instance_double(Net::HTTPResponse, code: "200", body: "", []: nil,
-          to_hash: {})
+        build_fake_response("200")
       end
 
       subject.send_data("data")
@@ -453,9 +452,7 @@ RSpec.describe Sentry::HTTPTransport do
     end
 
     it "resets to false after send_data completes" do
-      allow(subject).to receive(:do_request).and_return(
-        instance_double(Net::HTTPResponse, code: "200", body: "", []: nil, to_hash: {})
-      )
+      allow(subject).to receive(:do_request).and_return(build_fake_response("200"))
 
       subject.send_data("data")
 
