@@ -50,6 +50,13 @@ module Sentry
     alias_method :run, :flush
 
     def add_item(item)
+      # Guard against re-entrant locking on the same thread.
+      # This can occur when transport instrumentation (e.g. Yabeda HTTP metrics,
+      # custom transport callbacks) calls Sentry.metrics.* from inside send_items,
+      # which already holds @mutex. Ruby's Mutex is not re-entrant and would raise
+      # ThreadError: deadlock; recursive locking. Silently drop the item instead.
+      return self if @mutex.owned?
+
       @mutex.synchronize do
         return unless ensure_thread
 
