@@ -50,6 +50,9 @@ module Sentry
     alias_method :run, :flush
 
     def add_item(item)
+      # Prevent ThreadError from re-entrant locking (e.g. transport instrumentation calling Sentry.metrics.*)
+      return self if @mutex.owned?
+
       @mutex.synchronize do
         return unless ensure_thread
 
