@@ -2,6 +2,6 @@
 
 module Sentry
   module DelayedJob
-    VERSION = "6.6.1"
+    VERSION = "6.6.2"
   end
 end

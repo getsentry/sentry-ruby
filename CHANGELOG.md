@@ -1,3 +1,9 @@
+## 6.6.2
+
+### Bug Fixes 🐛
+
+- (metrics) Dup attributes in capture_metric by @sl0thentr0py in [#2965](https://github.com/getsentry/sentry-ruby/pull/2965)
+
 ## 6.6.1
 
 ### Bug Fixes 🐛
