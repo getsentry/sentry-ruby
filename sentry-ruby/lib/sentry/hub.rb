@@ -249,7 +249,7 @@ module Sentry
         value: value,
         type: type,
         unit: unit,
-        attributes: attributes,
+        attributes: attributes&.dup,
       )
 
       current_client.buffer_metric_event(metric, current_scope)
