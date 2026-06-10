@@ -36,8 +36,7 @@ jobs:
       run:
         working-directory: sentry-ruby
     env:
-      BUNDLE_GEMFILE: ${{ github.workspace }}/sentry-ruby/Gemfile
-      BUNDLE_LOCKFILE: ${{ github.workspace }}/sentry-ruby/gemfiles/ruby-${{ matrix.ruby_version }}_rack-${{ matrix.rack_version }}_redis-${{ matrix.redis_rb_version }}.lock
+      BUNDLE_GEMFILE: ${{ github.workspace }}/sentry-ruby/gemfiles/ruby-${{ matrix.ruby_version }}_rack-${{ matrix.rack_version }}_redis-${{ matrix.redis_rb_version }}.gemfile
       RACK_VERSION: ${{ matrix.rack_version }}
       REDIS_RB_VERSION: ${{ matrix.redis_rb_version }}
     strategy:
@@ -62,18 +61,22 @@ jobs:
       - uses: ruby/setup-ruby@319994f95fa847cf3fb3cd3dbe89f6dcde9f178f # v1
         with:
           ruby-version: ${{ matrix.ruby_version }}
-          bundler: 2.6.9
+          bundler: latest
           bundler-cache: false
       - name: Resolve lockfile
         run: |
           mkdir -p gemfiles
-          bundle lock --update --add-checksums
+          # Wrapper keys the lock to this cell (<cell>.gemfile -> <cell>.gemfile.lock).
+          echo 'eval_gemfile "../Gemfile"' > "$BUNDLE_GEMFILE"
+          bundle lock --update
+          # Checksums need Bundler >= 2.5 (Ruby >= 3.0); older Rubies get version pinning only.
+          bundle lock --add-checksums || echo "::warning::--add-checksums unsupported on $(bundle --version); version pinning only for ${{ matrix.ruby_version }}"
       - uses: actions/upload-artifact@65c4c4a1ddee5b72f698fdd19549f0f0fb45cf08 # v4
         with:
           name: lock-sentry-ruby-${{ matrix.ruby_version }}-${{ matrix.rack_version }}-${{ matrix.redis_rb_version }}
           # Leading wildcard keeps the repo-relative path (sentry-ruby/gemfiles/...)
-          # inside the artifact, so the commit job can drop it straight back in place.
-          path: "*/gemfiles/ruby-${{ matrix.ruby_version }}_rack-${{ matrix.rack_version }}_redis-${{ matrix.redis_rb_version }}.lock"
+          # inside the artifact; trailing * grabs both .gemfile and .gemfile.lock.
+          path: "*/gemfiles/ruby-${{ matrix.ruby_version }}_rack-${{ matrix.rack_version }}_redis-${{ matrix.redis_rb_version }}.gemfile*"
           if-no-files-found: error
 
   gen-sentry-rails:
@@ -85,8 +88,7 @@ jobs:
       run:
         working-directory: sentry-rails
     env:
-      BUNDLE_GEMFILE: ${{ github.workspace }}/sentry-rails/Gemfile
-      BUNDLE_LOCKFILE: ${{ github.workspace }}/sentry-rails/gemfiles/ruby-${{ matrix.ruby_version }}_rails-${{ matrix.rails_version }}.lock
+      BUNDLE_GEMFILE: ${{ github.workspace }}/sentry-rails/gemfiles/ruby-${{ matrix.ruby_version }}_rails-${{ matrix.rails_version }}.gemfile
       RAILS_VERSION: ${{ matrix.rails_version }}
     strategy:
       fail-fast: false
@@ -118,16 +120,18 @@ jobs:
       - uses: ruby/setup-ruby@319994f95fa847cf3fb3cd3dbe89f6dcde9f178f # v1
         with:
           ruby-version: ${{ matrix.ruby_version }}
-          bundler: 2.6.9
+          bundler: latest
           bundler-cache: false
       - name: Resolve lockfile
         run: |
           mkdir -p gemfiles
-          bundle lock --update --add-checksums
+          echo 'eval_gemfile "../Gemfile"' > "$BUNDLE_GEMFILE"
+          bundle lock --update
+          bundle lock --add-checksums || echo "::warning::--add-checksums unsupported on $(bundle --version); version pinning only for ${{ matrix.ruby_version }}"
       - uses: actions/upload-artifact@65c4c4a1ddee5b72f698fdd19549f0f0fb45cf08 # v4
         with:
           name: lock-sentry-rails-${{ matrix.ruby_version }}-${{ matrix.rails_version }}
-          path: "*/gemfiles/ruby-${{ matrix.ruby_version }}_rails-${{ matrix.rails_version }}.lock"
+          path: "*/gemfiles/ruby-${{ matrix.ruby_version }}_rails-${{ matrix.rails_version }}.gemfile*"
           if-no-files-found: error
 
   gen-sentry-sidekiq:
@@ -139,8 +143,7 @@ jobs:
       run:
         working-directory: sentry-sidekiq
     env:
-      BUNDLE_GEMFILE: ${{ github.workspace }}/sentry-sidekiq/Gemfile
-      BUNDLE_LOCKFILE: ${{ github.workspace }}/sentry-sidekiq/gemfiles/ruby-${{ matrix.ruby_version }}_sidekiq-${{ matrix.sidekiq_version }}.lock
+      BUNDLE_GEMFILE: ${{ github.workspace }}/sentry-sidekiq/gemfiles/ruby-${{ matrix.ruby_version }}_sidekiq-${{ matrix.sidekiq_version }}.gemfile
       SIDEKIQ_VERSION: ${{ matrix.sidekiq_version }}
     strategy:
       fail-fast: false
@@ -164,16 +167,18 @@ jobs:
       - uses: ruby/setup-ruby@319994f95fa847cf3fb3cd3dbe89f6dcde9f178f # v1
         with:
           ruby-version: ${{ matrix.ruby_version }}
-          bundler: 2.6.9
+          bundler: latest
           bundler-cache: false
       - name: Resolve lockfile
         run: |
           mkdir -p gemfiles
-          bundle lock --update --add-checksums
+          echo 'eval_gemfile "../Gemfile"' > "$BUNDLE_GEMFILE"
+          bundle lock --update
+          bundle lock --add-checksums || echo "::warning::--add-checksums unsupported on $(bundle --version); version pinning only for ${{ matrix.ruby_version }}"
       - uses: actions/upload-artifact@65c4c4a1ddee5b72f698fdd19549f0f0fb45cf08 # v4
         with:
           name: lock-sentry-sidekiq-${{ matrix.ruby_version }}-${{ matrix.sidekiq_version }}
-          path: "*/gemfiles/ruby-${{ matrix.ruby_version }}_sidekiq-${{ matrix.sidekiq_version }}.lock"
+          path: "*/gemfiles/ruby-${{ matrix.ruby_version }}_sidekiq-${{ matrix.sidekiq_version }}.gemfile*"
           if-no-files-found: error
 
   gen-sentry-resque:
@@ -185,8 +190,7 @@ jobs:
       run:
         working-directory: sentry-resque
     env:
-      BUNDLE_GEMFILE: ${{ github.workspace }}/sentry-resque/Gemfile
-      BUNDLE_LOCKFILE: ${{ github.workspace }}/sentry-resque/gemfiles/ruby-${{ matrix.ruby_version }}.lock
+      BUNDLE_GEMFILE: ${{ github.workspace }}/sentry-resque/gemfiles/ruby-${{ matrix.ruby_version }}.gemfile
     strategy:
       fail-fast: false
       # Keep in sync with the matrix in sentry_resque_test.yml.
@@ -200,16 +204,18 @@ jobs:
       - uses: ruby/setup-ruby@319994f95fa847cf3fb3cd3dbe89f6dcde9f178f # v1
         with:
           ruby-version: ${{ matrix.ruby_version }}
-          bundler: 2.6.9
+          bundler: latest
           bundler-cache: false
       - name: Resolve lockfile
         run: |
           mkdir -p gemfiles
-          bundle lock --update --add-checksums
+          echo 'eval_gemfile "../Gemfile"' > "$BUNDLE_GEMFILE"
+          bundle lock --update
+          bundle lock --add-checksums || echo "::warning::--add-checksums unsupported on $(bundle --version); version pinning only for ${{ matrix.ruby_version }}"
       - uses: actions/upload-artifact@65c4c4a1ddee5b72f698fdd19549f0f0fb45cf08 # v4
         with:
           name: lock-sentry-resque-${{ matrix.ruby_version }}
-          path: "*/gemfiles/ruby-${{ matrix.ruby_version }}.lock"
+          path: "*/gemfiles/ruby-${{ matrix.ruby_version }}.gemfile*"
           if-no-files-found: error
 
   gen-sentry-delayed_job:
@@ -221,8 +227,7 @@ jobs:
       run:
         working-directory: sentry-delayed_job
     env:
-      BUNDLE_GEMFILE: ${{ github.workspace }}/sentry-delayed_job/Gemfile
-      BUNDLE_LOCKFILE: ${{ github.workspace }}/sentry-delayed_job/gemfiles/ruby-${{ matrix.ruby_version }}.lock
+      BUNDLE_GEMFILE: ${{ github.workspace }}/sentry-delayed_job/gemfiles/ruby-${{ matrix.ruby_version }}.gemfile
     strategy:
       fail-fast: false
       # Keep in sync with the matrix in sentry_delayed_job_test.yml.
@@ -236,16 +241,18 @@ jobs:
       - uses: ruby/setup-ruby@319994f95fa847cf3fb3cd3dbe89f6dcde9f178f # v1
         with:
           ruby-version: ${{ matrix.ruby_version }}
-          bundler: 2.6.9
+          bundler: latest
           bundler-cache: false
       - name: Resolve lockfile
         run: |
           mkdir -p gemfiles
-          bundle lock --update --add-checksums
+          echo 'eval_gemfile "../Gemfile"' > "$BUNDLE_GEMFILE"
+          bundle lock --update
+          bundle lock --add-checksums || echo "::warning::--add-checksums unsupported on $(bundle --version); version pinning only for ${{ matrix.ruby_version }}"
       - uses: actions/upload-artifact@65c4c4a1ddee5b72f698fdd19549f0f0fb45cf08 # v4
         with:
           name: lock-sentry-delayed_job-${{ matrix.ruby_version }}
-          path: "*/gemfiles/ruby-${{ matrix.ruby_version }}.lock"
+          path: "*/gemfiles/ruby-${{ matrix.ruby_version }}.gemfile*"
           if-no-files-found: error
 
   gen-sentry-opentelemetry:
@@ -257,8 +264,7 @@ jobs:
       run:
         working-directory: sentry-opentelemetry
     env:
-      BUNDLE_GEMFILE: ${{ github.workspace }}/sentry-opentelemetry/Gemfile
-      BUNDLE_LOCKFILE: ${{ github.workspace }}/sentry-opentelemetry/gemfiles/ruby-${{ matrix.ruby_version }}.lock
+      BUNDLE_GEMFILE: ${{ github.workspace }}/sentry-opentelemetry/gemfiles/ruby-${{ matrix.ruby_version }}.gemfile
     strategy:
       fail-fast: false
       # Keep in sync with the matrix in sentry_opentelemetry_test.yml.
@@ -271,16 +277,18 @@ jobs:
       - uses: ruby/setup-ruby@319994f95fa847cf3fb3cd3dbe89f6dcde9f178f # v1
         with:
           ruby-version: ${{ matrix.ruby_version }}
-          bundler: 2.6.9
+          bundler: latest
           bundler-cache: false
       - name: Resolve lockfile
         run: |
           mkdir -p gemfiles
-          bundle lock --update --add-checksums
+          echo 'eval_gemfile "../Gemfile"' > "$BUNDLE_GEMFILE"
+          bundle lock --update
+          bundle lock --add-checksums || echo "::warning::--add-checksums unsupported on $(bundle --version); version pinning only for ${{ matrix.ruby_version }}"
       - uses: actions/upload-artifact@65c4c4a1ddee5b72f698fdd19549f0f0fb45cf08 # v4
         with:
           name: lock-sentry-opentelemetry-${{ matrix.ruby_version }}
-          path: "*/gemfiles/ruby-${{ matrix.ruby_version }}.lock"
+          path: "*/gemfiles/ruby-${{ matrix.ruby_version }}.gemfile*"
           if-no-files-found: error
 
   gen-sentry-yabeda:
@@ -292,8 +300,7 @@ jobs:
       run:
         working-directory: sentry-yabeda
     env:
-      BUNDLE_GEMFILE: ${{ github.workspace }}/sentry-yabeda/Gemfile
-      BUNDLE_LOCKFILE: ${{ github.workspace }}/sentry-yabeda/gemfiles/ruby-${{ matrix.ruby_version }}.lock
+      BUNDLE_GEMFILE: ${{ github.workspace }}/sentry-yabeda/gemfiles/ruby-${{ matrix.ruby_version }}.gemfile
     strategy:
       fail-fast: false
       # Keep in sync with the matrix in sentry_yabeda_test.yml.
@@ -307,16 +314,18 @@ jobs:
       - uses: ruby/setup-ruby@319994f95fa847cf3fb3cd3dbe89f6dcde9f178f # v1
         with:
           ruby-version: ${{ matrix.ruby_version }}
-          bundler: 2.6.9
+          bundler: latest
           bundler-cache: false
       - name: Resolve lockfile
         run: |
           mkdir -p gemfiles
-          bundle lock --update --add-checksums
+          echo 'eval_gemfile "../Gemfile"' > "$BUNDLE_GEMFILE"
+          bundle lock --update
+          bundle lock --add-checksums || echo "::warning::--add-checksums unsupported on $(bundle --version); version pinning only for ${{ matrix.ruby_version }}"
       - uses: actions/upload-artifact@65c4c4a1ddee5b72f698fdd19549f0f0fb45cf08 # v4
         with:
           name: lock-sentry-yabeda-${{ matrix.ruby_version }}
-          path: "*/gemfiles/ruby-${{ matrix.ruby_version }}.lock"
+          path: "*/gemfiles/ruby-${{ matrix.ruby_version }}.gemfile*"
           if-no-files-found: error
 
   commit:
@@ -337,7 +346,7 @@ jobs:
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
       # Each artifact carries its repo-relative path, so merging them straight into
-      # the workspace lands every lock back at <gem>/gemfiles/*.lock — no routing.
+      # the workspace lands every pair back at <gem>/gemfiles/ — no routing.
       - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
         with:
           merge-multiple: true
@@ -350,7 +359,11 @@ jobs:
       - name: Create branch
         id: create-branch
         run: |
-          git add '**/gemfiles/*.lock'
+          # Stage first, then diff the index against HEAD. `git diff` alone only
+          # sees tracked files, so newly generated (untracked) pairs — i.e. the
+          # bootstrap run and any filled-in missing cell — would otherwise look
+          # like "no change" and never get pushed.
+          git add '**/gemfiles/*.gemfile' '**/gemfiles/*.gemfile.lock'
 
           if git diff --cached --quiet; then
             echo "No lockfile changes; nothing to do."
@@ -379,7 +392,7 @@ jobs:
           script: |
             const branchName = process.env.BRANCH_NAME;
             const commitTitle = process.env.COMMIT_TITLE;
-            const prBody = `Automated regeneration of the per-matrix, checksummed lockfiles used to pin CI dependencies (supply-chain hardening).
+            const prBody = `Automated regeneration of the per-matrix lockfiles used to pin CI dependencies (supply-chain hardening).
 
             ## Action required
             - If CI passes on this PR, it's safe to approve and merge: the refreshed pins resolve and the suite is green.
