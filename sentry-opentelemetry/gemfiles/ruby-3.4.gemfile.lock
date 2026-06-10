@@ -1,0 +1,341 @@
+GIT
+  remote: https://github.com/ruby/debug.git
+  revision: ce67347fd16bda4873731cdc8f68a99822981091
+  specs:
+    debug (1.11.1)
+      irb (~> 1.10)
+      reline (>= 0.3.8)
+
+PATH
+  remote: ../../sentry-ruby
+  specs:
+    sentry-ruby (6.6.2)
+      bigdecimal
+      concurrent-ruby (~> 1.0, >= 1.0.2)
+      logger
+
+PATH
+  remote: ..
+  specs:
+    sentry-opentelemetry (6.6.2)
+      opentelemetry-sdk (~> 1.0)
+      sentry-ruby (~> 6.6.2)
+
+GEM
+  remote: https://rubygems.org/
+  specs:
+    activesupport (8.1.3)
+      base64
+      bigdecimal
+      concurrent-ruby (~> 1.0, >= 1.3.1)
+      connection_pool (>= 2.2.5)
+      drb
+      i18n (>= 1.6, < 2)
+      json
+      logger (>= 1.4.2)
+      minitest (>= 5.1)
+      securerandom (>= 0.3)
+      tzinfo (~> 2.0, >= 2.0.5)
+      uri (>= 0.13.1)
+    ast (2.4.3)
+    base64 (0.3.0)
+    benchmark (0.5.0)
+    bigdecimal (4.1.2)
+    cgi (0.5.1)
+    concurrent-ruby (1.3.6)
+    connection_pool (3.0.2)
+    date (3.5.1)
+    diff-lcs (1.6.2)
+    docile (1.4.1)
+    drb (2.2.3)
+    erb (6.0.4)
+    google-protobuf (3.25.8)
+    googleapis-common-protos-types (1.20.0)
+      google-protobuf (>= 3.18, < 5.a)
+    i18n (1.14.8)
+      concurrent-ruby (~> 1.0)
+    io-console (0.8.2)
+    irb (1.18.0)
+      pp (>= 0.6.0)
+      prism (>= 1.3.0)
+      rdoc (>= 4.0.0)
+      reline (>= 0.4.2)
+    json (2.19.8)
+    language_server-protocol (3.17.0.5)
+    lint_roller (1.1.0)
+    logger (1.7.0)
+    minitest (6.0.6)
+      drb (~> 2.0)
+      prism (~> 1.5)
+    mutex_m (0.3.0)
+    opentelemetry-api (1.10.0)
+      logger
+    opentelemetry-common (0.25.0)
+      opentelemetry-api (~> 1.0)
+    opentelemetry-exporter-otlp (0.34.0)
+      google-protobuf (>= 3.18)
+      googleapis-common-protos-types (~> 1.3)
+      opentelemetry-api (~> 1.1)
+      opentelemetry-common (~> 0.20)
+      opentelemetry-sdk (~> 1.10)
+      opentelemetry-semantic_conventions
+    opentelemetry-instrumentation-action_mailer (0.8.1)
+      opentelemetry-instrumentation-active_support (~> 0.10)
+    opentelemetry-instrumentation-action_pack (0.18.0)
+      opentelemetry-instrumentation-rack (~> 0.29)
+    opentelemetry-instrumentation-action_view (0.13.0)
+      opentelemetry-instrumentation-active_support (~> 0.10)
+    opentelemetry-instrumentation-active_job (0.12.0)
+      opentelemetry-instrumentation-base (~> 0.25)
+    opentelemetry-instrumentation-active_record (0.13.0)
+      opentelemetry-instrumentation-base (~> 0.25)
+    opentelemetry-instrumentation-active_storage (0.5.1)
+      opentelemetry-instrumentation-active_support (~> 0.10)
+    opentelemetry-instrumentation-active_support (0.12.0)
+      opentelemetry-instrumentation-base (~> 0.25)
+    opentelemetry-instrumentation-base (0.26.1)
+      opentelemetry-api (~> 1.7)
+      opentelemetry-common (~> 0.21)
+      opentelemetry-registry (~> 0.1)
+    opentelemetry-instrumentation-concurrent_ruby (0.25.0)
+      opentelemetry-instrumentation-base (~> 0.25)
+    opentelemetry-instrumentation-rack (0.31.1)
+      opentelemetry-instrumentation-base (~> 0.25)
+    opentelemetry-instrumentation-rails (0.42.0)
+      opentelemetry-instrumentation-action_mailer (~> 0.7)
+      opentelemetry-instrumentation-action_pack (~> 0.17)
+      opentelemetry-instrumentation-action_view (~> 0.12)
+      opentelemetry-instrumentation-active_job (~> 0.11)
+      opentelemetry-instrumentation-active_record (~> 0.12)
+      opentelemetry-instrumentation-active_storage (~> 0.4)
+      opentelemetry-instrumentation-active_support (~> 0.11)
+      opentelemetry-instrumentation-concurrent_ruby (~> 0.25)
+    opentelemetry-registry (0.6.0)
+      opentelemetry-api (~> 1.1)
+    opentelemetry-sdk (1.12.0)
+      logger
+      opentelemetry-api (~> 1.1)
+      opentelemetry-common (~> 0.20)
+      opentelemetry-registry (~> 0.2)
+      opentelemetry-semantic_conventions
+    opentelemetry-semantic_conventions (1.40.0)
+      opentelemetry-api (~> 1.0)
+    ostruct (0.6.3)
+    parallel (2.1.0)
+    parser (3.3.11.1)
+      ast (~> 2.4.1)
+      racc
+    pp (0.6.3)
+      prettyprint
+    prettyprint (0.2.0)
+    prism (1.9.0)
+    psych (5.4.0)
+      date
+      stringio
+    racc (1.8.1)
+    rack (3.2.6)
+    rainbow (3.1.1)
+    rake (12.3.3)
+    rbs (4.0.2)
+      logger
+      prism (>= 1.6.0)
+      tsort
+    rdoc (7.2.0)
+      erb
+      psych (>= 4.0.0)
+      tsort
+    regexp_parser (2.12.0)
+    reline (0.6.3)
+      io-console (~> 0.5)
+    rexml (3.4.1)
+    rspec (3.13.2)
+      rspec-core (~> 3.13.0)
+      rspec-expectations (~> 3.13.0)
+      rspec-mocks (~> 3.13.0)
+    rspec-core (3.13.6)
+      rspec-support (~> 3.13.0)
+    rspec-expectations (3.13.5)
+      diff-lcs (>= 1.2.0, < 2.0)
+      rspec-support (~> 3.13.0)
+    rspec-mocks (3.13.8)
+      diff-lcs (>= 1.2.0, < 2.0)
+      rspec-support (~> 3.13.0)
+    rspec-retry (0.6.2)
+      rspec-core (> 3.3)
+    rspec-support (3.13.7)
+    rubocop (1.87.0)
+      json (~> 2.3)
+      language_server-protocol (~> 3.17.0.2)
+      lint_roller (~> 1.1.0)
+      parallel (>= 1.10)
+      parser (>= 3.3.0.2)
+      rainbow (>= 2.2.2, < 4.0)
+      regexp_parser (>= 2.9.3, < 3.0)
+      rubocop-ast (>= 1.49.0, < 2.0)
+      ruby-progressbar (~> 1.7)
+      unicode-display_width (>= 2.4.0, < 4.0)
+    rubocop-ast (1.49.1)
+      parser (>= 3.3.7.2)
+      prism (~> 1.7)
+    rubocop-packaging (0.6.0)
+      lint_roller (~> 1.1.0)
+      rubocop (>= 1.72.1, < 2.0)
+    rubocop-performance (1.26.1)
+      lint_roller (~> 1.1)
+      rubocop (>= 1.75.0, < 2.0)
+      rubocop-ast (>= 1.47.1, < 2.0)
+    rubocop-rails (2.35.4)
+      activesupport (>= 4.2.0)
+      lint_roller (~> 1.1)
+      rack (>= 1.1)
+      rubocop (>= 1.75.0, < 2.0)
+      rubocop-ast (>= 1.44.0, < 2.0)
+    rubocop-rails-omakase (1.1.0)
+      rubocop (>= 1.72)
+      rubocop-performance (>= 1.24)
+      rubocop-rails (>= 2.30)
+    ruby-lsp (0.26.9)
+      language_server-protocol (~> 3.17.0)
+      prism (>= 1.2, < 2.0)
+      rbs (>= 3, < 5)
+    ruby-lsp-rspec (0.1.29)
+      ruby-lsp (~> 0.26.0)
+    ruby-progressbar (1.13.0)
+    securerandom (0.4.1)
+    simplecov (0.22.0)
+      docile (~> 1.1)
+      simplecov-html (~> 0.11)
+      simplecov_json_formatter (~> 0.1)
+    simplecov-cobertura (3.1.0)
+      rexml
+      simplecov (~> 0.19)
+    simplecov-html (0.13.2)
+    simplecov_json_formatter (0.1.4)
+    stringio (3.2.0)
+    tsort (0.2.0)
+    tzinfo (2.0.6)
+      concurrent-ruby (~> 1.0)
+    unicode-display_width (3.2.0)
+      unicode-emoji (~> 4.1)
+    unicode-emoji (4.2.0)
+    uri (1.1.1)
+
+PLATFORMS
+  ruby
+  x86_64-linux
+
+DEPENDENCIES
+  base64
+  benchmark
+  cgi
+  debug!
+  drb
+  irb
+  mutex_m
+  opentelemetry-exporter-otlp
+  opentelemetry-instrumentation-rails
+  opentelemetry-sdk
+  ostruct
+  rake (~> 12.0)
+  rexml (= 3.4.1)
+  rspec
+  rspec-retry
+  rubocop-packaging
+  rubocop-rails-omakase
+  ruby-lsp-rspec
+  sentry-opentelemetry!
+  sentry-ruby!
+  simplecov
+  simplecov-cobertura (~> 3.0)
+
+CHECKSUMS
+  activesupport (8.1.3) sha256=21a5e0dfbd4c3ddd9e1317ec6a4d782fa226e7867dc70b0743acda81a1dca20e
+  ast (2.4.3) sha256=954615157c1d6a382bc27d690d973195e79db7f55e9765ac7c481c60bdb4d383
+  base64 (0.3.0) sha256=27337aeabad6ffae05c265c450490628ef3ebd4b67be58257393227588f5a97b
+  benchmark (0.5.0) sha256=465df122341aedcb81a2a24b4d3bd19b6c67c1530713fd533f3ff034e419236c
+  bigdecimal (4.1.2) sha256=53d217666027eab4280346fba98e7d5b66baaae1b9c3c1c0ffe89d48188a3fbd
+  bundler (4.0.14) sha256=d09a0a965cf772266a7e49e83610be7c2f4e49e61134c42a56804bb383cc24b8
+  cgi (0.5.1) sha256=e93fcafc69b8a934fe1e6146121fa35430efa8b4a4047c4893764067036f18e9
+  concurrent-ruby (1.3.6) sha256=6b56837e1e7e5292f9864f34b69c5a2cbc75c0cf5338f1ce9903d10fa762d5ab
+  connection_pool (3.0.2) sha256=33fff5ba71a12d2aa26cb72b1db8bba2a1a01823559fb01d29eb74c286e62e0a
+  date (3.5.1) sha256=750d06384d7b9c15d562c76291407d89e368dda4d4fff957eb94962d325a0dc0
+  debug (1.11.1)
+  diff-lcs (1.6.2) sha256=9ae0d2cba7d4df3075fe8cd8602a8604993efc0dfa934cff568969efb1909962
+  docile (1.4.1) sha256=96159be799bfa73cdb721b840e9802126e4e03dfc26863db73647204c727f21e
+  drb (2.2.3) sha256=0b00d6fdb50995fe4a45dea13663493c841112e4068656854646f418fda13373
+  erb (6.0.4) sha256=38e3803694be357fe2bfe312487c74beaf9fb4e5beb3e22498952fe1645b95d9
+  google-protobuf (3.25.8) sha256=102c8500502e224a5daa7447bdd2c458a25a6c7b0bf5d8496a559ada131952b7
+  googleapis-common-protos-types (1.20.0) sha256=5e374b06bcfc7e13556e7c0d87b99f1fa3d42de6396a1de3d8fc13aefb4dd07f
+  i18n (1.14.8) sha256=285778639134865c5e0f6269e0b818256017e8cde89993fdfcbfb64d088824a5
+  io-console (0.8.2) sha256=d6e3ae7a7cc7574f4b8893b4fca2162e57a825b223a177b7afa236c5ef9814cc
+  irb (1.18.0) sha256=de9454a0703a54704b9811a5ef31a60c86949fbf4013fcf244fabc7c775248e3
+  json (2.19.8) sha256=6354310fd76ef69b87d5bd1f38b40d730613baf90b6803d2d0a48f618d32dfaa
+  language_server-protocol (3.17.0.5) sha256=fd1e39a51a28bf3eec959379985a72e296e9f9acfce46f6a79d31ca8760803cc
+  lint_roller (1.1.0) sha256=2c0c845b632a7d172cb849cc90c1bce937a28c5c8ccccb50dfd46a485003cc87
+  logger (1.7.0) sha256=196edec7cc44b66cfb40f9755ce11b392f21f7967696af15d274dde7edff0203
+  minitest (6.0.6) sha256=153ea36d1d987a62942382b61075745042a2b3123b1cd48f4c3675af9cc7d6f1
+  mutex_m (0.3.0) sha256=cfcb04ac16b69c4813777022fdceda24e9f798e48092a2b817eb4c0a782b0751
+  opentelemetry-api (1.10.0) sha256=99ee7c829b18381c31a817ee9bf6a160d737542d99cb8da55d443336d266bfa9
+  opentelemetry-common (0.25.0) sha256=73915362e58d337fc92acbe1abfdaee1f725442527125fdb2af1420417f1149d
+  opentelemetry-exporter-otlp (0.34.0) sha256=3b3cdf4329ba30f4389d849c7f13b8f9f983ecb4a030031c03997dffae1e2a60
+  opentelemetry-instrumentation-action_mailer (0.8.1) sha256=2f2784ca41de0f284b4e3339181cf2ed24ce4e1dfc2751355f0939fcd0872b09
+  opentelemetry-instrumentation-action_pack (0.18.0) sha256=90ba2c826b15539f7d02a4f37898592a41317e5c02785a7c2e7a8f782cbd5681
+  opentelemetry-instrumentation-action_view (0.13.0) sha256=5b855610d1143972c527d4482d238ecc3d343c8d59e3c1390bad4056317f1568
+  opentelemetry-instrumentation-active_job (0.12.0) sha256=cb3f36fd385cd0806d601d9307116146b6a249f2c0a28c279c2574a40e0db992
+  opentelemetry-instrumentation-active_record (0.13.0) sha256=239fceaae5a42e82dd9dd87bc63b1888bea32058dac0779b5ea36110fcb3a299
+  opentelemetry-instrumentation-active_storage (0.5.1) sha256=7acbab82184db6bf00c52fdb4ce7e2f4e6a1c6e3e5585b100d43d5d3e2d69b5b
+  opentelemetry-instrumentation-active_support (0.12.0) sha256=29a2cbdcb3aad4a42f4c9e829dab11167b71ed8a5205ad54587fe4d59d8ee704
+  opentelemetry-instrumentation-base (0.26.1) sha256=49e8d35d565e1a13b4a6b794a4cca4ed8c590d9b33bda5244249bd98c8673775
+  opentelemetry-instrumentation-concurrent_ruby (0.25.0) sha256=722912e7078e3025a84a25d0b6085702417598c58187c19a762234702cbf7b2d
+  opentelemetry-instrumentation-rack (0.31.1) sha256=29a9c145ce6d3fa2938f30334209787c29b581a51fdb472e2098a1d69e15536a
+  opentelemetry-instrumentation-rails (0.42.0) sha256=5ea3808373ca73ee9fa4ecf337471bad1c28e98ea64460b89ab225f5b6eaf8b3
+  opentelemetry-registry (0.6.0) sha256=5d3ed32ab9eee0fbdb30d4f0d0bb61ad11a4040b267b475ae815b80a8498a728
+  opentelemetry-sdk (1.12.0) sha256=a224abe0c59023d41cb7ac1c634d9d28843907efcd045ed1ae320796c48b864b
+  opentelemetry-semantic_conventions (1.40.0) sha256=32839d4127102986447080098d1dbad9945d18ab96e9c8cb6657166baf64f441
+  ostruct (0.6.3) sha256=95a2ed4a4bd1d190784e666b47b2d3f078e4a9efda2fccf18f84ddc6538ed912
+  parallel (2.1.0) sha256=b35258865c2e31134c5ecb708beaaf6772adf9d5efae28e93e99260877b09356
+  parser (3.3.11.1) sha256=d17ace7aabe3e72c3cc94043714be27cc6f852f104d81aa284c2281aecc65d54
+  pp (0.6.3) sha256=2951d514450b93ccfeb1df7d021cae0da16e0a7f95ee1e2273719669d0ab9df6
+  prettyprint (0.2.0) sha256=2bc9e15581a94742064a3cc8b0fb9d45aae3d03a1baa6ef80922627a0766f193
+  prism (1.9.0) sha256=7b530c6a9f92c24300014919c9dcbc055bf4cdf51ec30aed099b06cd6674ef85
+  psych (5.4.0) sha256=14f72d69a611af663d7d70e4a7b67d9eb1f3ae9f8d916b478961d5a0075ba5b7
+  racc (1.8.1) sha256=4a7f6929691dbec8b5209a0b373bc2614882b55fc5d2e447a21aaa691303d62f
+  rack (3.2.6) sha256=5ed78e1f73b2e25679bec7d45ee2d4483cc4146eb1be0264fc4d94cb5ef212c2
+  rainbow (3.1.1) sha256=039491aa3a89f42efa1d6dec2fc4e62ede96eb6acd95e52f1ad581182b79bc6a
+  rake (12.3.3) sha256=f7694adb4fe638da35452300cee6c545e9c377a0e3190018ac04d590b3c26ab3
+  rbs (4.0.2) sha256=af75671e66cd03434cc546622741ebf83f6197ec4328375805306330bf78ef25
+  rdoc (7.2.0) sha256=8650f76cd4009c3b54955eb5d7e3a075c60a57276766ebf36f9085e8c9f23192
+  regexp_parser (2.12.0) sha256=35a916a1d63190ab5c9009457136ae5f3c0c7512d60291d0d1378ba18ce08ebb
+  reline (0.6.3) sha256=1198b04973565b36ec0f11542ab3f5cfeeec34823f4e54cebde90968092b1835
+  rexml (3.4.1) sha256=c74527a9a0a04b4ec31dbe0dc4ed6004b960af943d8db42e539edde3a871abca
+  rspec (3.13.2) sha256=206284a08ad798e61f86d7ca3e376718d52c0bc944626b2349266f239f820587
+  rspec-core (3.13.6) sha256=a8823c6411667b60a8bca135364351dda34cd55e44ff94c4be4633b37d828b2d
+  rspec-expectations (3.13.5) sha256=33a4d3a1d95060aea4c94e9f237030a8f9eae5615e9bd85718fe3a09e4b58836
+  rspec-mocks (3.13.8) sha256=086ad3d3d17533f4237643de0b5c42f04b66348c28bf6b9c2d3f4a3b01af1d47
+  rspec-retry (0.6.2) sha256=6101ba23a38809811ae3484acde4ab481c54d846ac66d5037ccb40131a60d858
+  rspec-support (3.13.7) sha256=0640e5570872aafefd79867901deeeeb40b0c9875a36b983d85f54fb7381c47c
+  rubocop (1.87.0) sha256=b9d9ddf55116a513f8ef2c7ae660662d8b49301f118d3f0df61865b33a5c188d
+  rubocop-ast (1.49.1) sha256=4412f3ee70f6fe4546cc489548e0f6fcf76cafcfa80fa03af67098ffed755035
+  rubocop-packaging (0.6.0) sha256=fb92bd0fb48e6f8cdb1648d2249b0cd51c2497dcc87340132d22f01edbf558a7
+  rubocop-performance (1.26.1) sha256=cd19b936ff196df85829d264b522fd4f98b6c89ad271fa52744a8c11b8f71834
+  rubocop-rails (2.35.4) sha256=3aeaa325439c89950e8327565682ea794065d08e2ecbbfe95032bfa295a35df5
+  rubocop-rails-omakase (1.1.0) sha256=2af73ac8ee5852de2919abbd2618af9c15c19b512c4cfc1f9a5d3b6ef009109d
+  ruby-lsp (0.26.9) sha256=33a01c001c00a76b4e821efc04ed7572983430f31ca5d6f3e343d0b6ccab4129
+  ruby-lsp-rspec (0.1.29) sha256=798be579723376cd56b17d32373288fb1163e4cfe2024c7d068516a1cf214ee5
+  ruby-progressbar (1.13.0) sha256=80fc9c47a9b640d6834e0dc7b3c94c9df37f08cb072b7761e4a71e22cff29b33
+  securerandom (0.4.1) sha256=cc5193d414a4341b6e225f0cb4446aceca8e50d5e1888743fac16987638ea0b1
+  sentry-opentelemetry (6.6.2)
+  sentry-ruby (6.6.2)
+  simplecov (0.22.0) sha256=fe2622c7834ff23b98066bb0a854284b2729a569ac659f82621fc22ef36213a5
+  simplecov-cobertura (3.1.0) sha256=6d7f38aa32c965ca2174b2e5bd88cb17138eaf629518854976ac50e628925dc5
+  simplecov-html (0.13.2) sha256=bd0b8e54e7c2d7685927e8d6286466359b6f16b18cb0df47b508e8d73c777246
+  simplecov_json_formatter (0.1.4) sha256=529418fbe8de1713ac2b2d612aa3daa56d316975d307244399fa4838c601b428
+  stringio (3.2.0) sha256=c37cb2e58b4ffbd33fe5cd948c05934af997b36e0b6ca6fdf43afa234cf222e1
+  tsort (0.2.0) sha256=9650a793f6859a43b6641671278f79cfead60ac714148aabe4e3f0060480089f
+  tzinfo (2.0.6) sha256=8daf828cc77bcf7d63b0e3bdb6caa47e2272dcfaf4fbfe46f8c3a9df087a829b
+  unicode-display_width (3.2.0) sha256=0cdd96b5681a5949cdbc2c55e7b420facae74c4aaf9a9815eee1087cb1853c42
+  unicode-emoji (4.2.0) sha256=519e69150f75652e40bf736106cfbc8f0f73aa3fb6a65afe62fefa7f80b0f80f
+  uri (1.1.1) sha256=379fa58d27ffb1387eaada68c749d1426738bd0f654d812fcc07e7568f5c57c6
+
+BUNDLED WITH
+  4.0.14
