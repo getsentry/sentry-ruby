@@ -5,8 +5,10 @@ ruby/
 log/
 .bundle
 *.gem
-# Per-matrix lockfiles under <gem>/gemfiles/ ARE committed (supply-chain pinning).
-# Only the locally-resolved default lockfiles stay ignored.
+# Per-matrix lockfiles (<gem>/gemfiles/*.gemfile.lock) ARE committed (supply-chain
+# pinning). The wrapper *.gemfile is regenerated on the fly (identical one-liner),
+# so ignore it. Default locally-resolved lockfiles also stay ignored.
+*/gemfiles/*.gemfile
 Gemfile.lock
 .coveralls.yml
 .ruby-version

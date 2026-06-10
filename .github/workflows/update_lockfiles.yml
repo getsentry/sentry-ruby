@@ -78,8 +78,9 @@ jobs:
         with:
           name: lock-sentry-ruby-${{ matrix.ruby_version }}-${{ matrix.rack_version }}-${{ matrix.redis_rb_version }}
           # Leading wildcard keeps the repo-relative path (sentry-ruby/gemfiles/...)
-          # inside the artifact; trailing * grabs both .gemfile and .gemfile.lock.
-          path: "*/gemfiles/ruby-${{ matrix.ruby_version }}_rack-${{ matrix.rack_version }}_redis-${{ matrix.redis_rb_version }}.gemfile*"
+          # inside the artifact. Only the lock is committed; the wrapper .gemfile is
+          # regenerated on the fly wherever it's needed.
+          path: "*/gemfiles/ruby-${{ matrix.ruby_version }}_rack-${{ matrix.rack_version }}_redis-${{ matrix.redis_rb_version }}.gemfile.lock"
           if-no-files-found: error
 
   gen-sentry-rails:
@@ -138,7 +139,7 @@ jobs:
       - uses: actions/upload-artifact@65c4c4a1ddee5b72f698fdd19549f0f0fb45cf08 # v4
         with:
           name: lock-sentry-rails-${{ matrix.ruby_version }}-${{ matrix.rails_version }}
-          path: "*/gemfiles/ruby-${{ matrix.ruby_version }}_rails-${{ matrix.rails_version }}.gemfile*"
+          path: "*/gemfiles/ruby-${{ matrix.ruby_version }}_rails-${{ matrix.rails_version }}.gemfile.lock"
           if-no-files-found: error
 
   gen-sentry-sidekiq:
@@ -189,7 +190,7 @@ jobs:
       - uses: actions/upload-artifact@65c4c4a1ddee5b72f698fdd19549f0f0fb45cf08 # v4
         with:
           name: lock-sentry-sidekiq-${{ matrix.ruby_version }}-${{ matrix.sidekiq_version }}
-          path: "*/gemfiles/ruby-${{ matrix.ruby_version }}_sidekiq-${{ matrix.sidekiq_version }}.gemfile*"
+          path: "*/gemfiles/ruby-${{ matrix.ruby_version }}_sidekiq-${{ matrix.sidekiq_version }}.gemfile.lock"
           if-no-files-found: error
 
   gen-sentry-resque:
@@ -230,7 +231,7 @@ jobs:
       - uses: actions/upload-artifact@65c4c4a1ddee5b72f698fdd19549f0f0fb45cf08 # v4
         with:
           name: lock-sentry-resque-${{ matrix.ruby_version }}
-          path: "*/gemfiles/ruby-${{ matrix.ruby_version }}.gemfile*"
+          path: "*/gemfiles/ruby-${{ matrix.ruby_version }}.gemfile.lock"
           if-no-files-found: error
 
   gen-sentry-delayed_job:
@@ -271,7 +272,7 @@ jobs:
       - uses: actions/upload-artifact@65c4c4a1ddee5b72f698fdd19549f0f0fb45cf08 # v4
         with:
           name: lock-sentry-delayed_job-${{ matrix.ruby_version }}
-          path: "*/gemfiles/ruby-${{ matrix.ruby_version }}.gemfile*"
+          path: "*/gemfiles/ruby-${{ matrix.ruby_version }}.gemfile.lock"
           if-no-files-found: error
 
   gen-sentry-opentelemetry:
@@ -311,7 +312,7 @@ jobs:
       - uses: actions/upload-artifact@65c4c4a1ddee5b72f698fdd19549f0f0fb45cf08 # v4
         with:
           name: lock-sentry-opentelemetry-${{ matrix.ruby_version }}
-          path: "*/gemfiles/ruby-${{ matrix.ruby_version }}.gemfile*"
+          path: "*/gemfiles/ruby-${{ matrix.ruby_version }}.gemfile.lock"
           if-no-files-found: error
 
   gen-sentry-yabeda:
@@ -352,7 +353,7 @@ jobs:
       - uses: actions/upload-artifact@65c4c4a1ddee5b72f698fdd19549f0f0fb45cf08 # v4
         with:
           name: lock-sentry-yabeda-${{ matrix.ruby_version }}
-          path: "*/gemfiles/ruby-${{ matrix.ruby_version }}.gemfile*"
+          path: "*/gemfiles/ruby-${{ matrix.ruby_version }}.gemfile.lock"
           if-no-files-found: error
 
   commit:
@@ -390,7 +391,7 @@ jobs:
           # sees tracked files, so newly generated (untracked) pairs — i.e. the
           # bootstrap run and any filled-in missing cell — would otherwise look
           # like "no change" and never get pushed.
-          git add '**/gemfiles/*.gemfile' '**/gemfiles/*.gemfile.lock'
+          git add '**/gemfiles/*.gemfile.lock'
 
           if git diff --cached --quiet; then
             echo "No lockfile changes; nothing to do."
