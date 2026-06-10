@@ -58,6 +58,12 @@ jobs:
           - ruby_version: 'jruby-head'
     steps:
       - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
+      # Wrapper keys the lock to this cell (<cell>.gemfile -> <cell>.gemfile.lock).
+      # Must exist before setup-ruby, which errors if BUNDLE_GEMFILE points at a missing file.
+      - name: Write wrapper gemfile
+        run: |
+          mkdir -p gemfiles
+          echo 'eval_gemfile "../Gemfile"' > "$BUNDLE_GEMFILE"
       - uses: ruby/setup-ruby@319994f95fa847cf3fb3cd3dbe89f6dcde9f178f # v1
         with:
           ruby-version: ${{ matrix.ruby_version }}
@@ -65,9 +71,6 @@ jobs:
           bundler-cache: false
       - name: Resolve lockfile
         run: |
-          mkdir -p gemfiles
-          # Wrapper keys the lock to this cell (<cell>.gemfile -> <cell>.gemfile.lock).
-          echo 'eval_gemfile "../Gemfile"' > "$BUNDLE_GEMFILE"
           bundle lock --update
           # Checksums need Bundler >= 2.5 (Ruby >= 3.0); older Rubies get version pinning only.
           bundle lock --add-checksums || echo "::warning::--add-checksums unsupported on $(bundle --version); version pinning only for ${{ matrix.ruby_version }}"
@@ -117,6 +120,12 @@ jobs:
           - { ruby_version: "3.4", rails_version: "7.0.0" }
     steps:
       - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
+      # Wrapper keys the lock to this cell (<cell>.gemfile -> <cell>.gemfile.lock).
+      # Must exist before setup-ruby, which errors if BUNDLE_GEMFILE points at a missing file.
+      - name: Write wrapper gemfile
+        run: |
+          mkdir -p gemfiles
+          echo 'eval_gemfile "../Gemfile"' > "$BUNDLE_GEMFILE"
       - uses: ruby/setup-ruby@319994f95fa847cf3fb3cd3dbe89f6dcde9f178f # v1
         with:
           ruby-version: ${{ matrix.ruby_version }}
@@ -124,8 +133,6 @@ jobs:
           bundler-cache: false
       - name: Resolve lockfile
         run: |
-          mkdir -p gemfiles
-          echo 'eval_gemfile "../Gemfile"' > "$BUNDLE_GEMFILE"
           bundle lock --update
           bundle lock --add-checksums || echo "::warning::--add-checksums unsupported on $(bundle --version); version pinning only for ${{ matrix.ruby_version }}"
       - uses: actions/upload-artifact@65c4c4a1ddee5b72f698fdd19549f0f0fb45cf08 # v4
@@ -164,6 +171,12 @@ jobs:
           - ruby_version: jruby-head
     steps:
       - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
+      # Wrapper keys the lock to this cell (<cell>.gemfile -> <cell>.gemfile.lock).
+      # Must exist before setup-ruby, which errors if BUNDLE_GEMFILE points at a missing file.
+      - name: Write wrapper gemfile
+        run: |
+          mkdir -p gemfiles
+          echo 'eval_gemfile "../Gemfile"' > "$BUNDLE_GEMFILE"
       - uses: ruby/setup-ruby@319994f95fa847cf3fb3cd3dbe89f6dcde9f178f # v1
         with:
           ruby-version: ${{ matrix.ruby_version }}
@@ -171,8 +184,6 @@ jobs:
           bundler-cache: false
       - name: Resolve lockfile
         run: |
-          mkdir -p gemfiles
-          echo 'eval_gemfile "../Gemfile"' > "$BUNDLE_GEMFILE"
           bundle lock --update
           bundle lock --add-checksums || echo "::warning::--add-checksums unsupported on $(bundle --version); version pinning only for ${{ matrix.ruby_version }}"
       - uses: actions/upload-artifact@65c4c4a1ddee5b72f698fdd19549f0f0fb45cf08 # v4
@@ -201,6 +212,12 @@ jobs:
           - ruby_version: 'jruby-head'
     steps:
       - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
+      # Wrapper keys the lock to this cell (<cell>.gemfile -> <cell>.gemfile.lock).
+      # Must exist before setup-ruby, which errors if BUNDLE_GEMFILE points at a missing file.
+      - name: Write wrapper gemfile
+        run: |
+          mkdir -p gemfiles
+          echo 'eval_gemfile "../Gemfile"' > "$BUNDLE_GEMFILE"
       - uses: ruby/setup-ruby@319994f95fa847cf3fb3cd3dbe89f6dcde9f178f # v1
         with:
           ruby-version: ${{ matrix.ruby_version }}
@@ -208,8 +225,6 @@ jobs:
           bundler-cache: false
       - name: Resolve lockfile
         run: |
-          mkdir -p gemfiles
-          echo 'eval_gemfile "../Gemfile"' > "$BUNDLE_GEMFILE"
           bundle lock --update
           bundle lock --add-checksums || echo "::warning::--add-checksums unsupported on $(bundle --version); version pinning only for ${{ matrix.ruby_version }}"
       - uses: actions/upload-artifact@65c4c4a1ddee5b72f698fdd19549f0f0fb45cf08 # v4
@@ -238,6 +253,12 @@ jobs:
           - ruby_version: jruby-head
     steps:
       - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
+      # Wrapper keys the lock to this cell (<cell>.gemfile -> <cell>.gemfile.lock).
+      # Must exist before setup-ruby, which errors if BUNDLE_GEMFILE points at a missing file.
+      - name: Write wrapper gemfile
+        run: |
+          mkdir -p gemfiles
+          echo 'eval_gemfile "../Gemfile"' > "$BUNDLE_GEMFILE"
       - uses: ruby/setup-ruby@319994f95fa847cf3fb3cd3dbe89f6dcde9f178f # v1
         with:
           ruby-version: ${{ matrix.ruby_version }}
@@ -245,8 +266,6 @@ jobs:
           bundler-cache: false
       - name: Resolve lockfile
         run: |
-          mkdir -p gemfiles
-          echo 'eval_gemfile "../Gemfile"' > "$BUNDLE_GEMFILE"
           bundle lock --update
           bundle lock --add-checksums || echo "::warning::--add-checksums unsupported on $(bundle --version); version pinning only for ${{ matrix.ruby_version }}"
       - uses: actions/upload-artifact@65c4c4a1ddee5b72f698fdd19549f0f0fb45cf08 # v4
@@ -274,6 +293,12 @@ jobs:
           - ruby_version: 'jruby-head'
     steps:
       - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
+      # Wrapper keys the lock to this cell (<cell>.gemfile -> <cell>.gemfile.lock).
+      # Must exist before setup-ruby, which errors if BUNDLE_GEMFILE points at a missing file.
+      - name: Write wrapper gemfile
+        run: |
+          mkdir -p gemfiles
+          echo 'eval_gemfile "../Gemfile"' > "$BUNDLE_GEMFILE"
       - uses: ruby/setup-ruby@319994f95fa847cf3fb3cd3dbe89f6dcde9f178f # v1
         with:
           ruby-version: ${{ matrix.ruby_version }}
@@ -281,8 +306,6 @@ jobs:
           bundler-cache: false
       - name: Resolve lockfile
         run: |
-          mkdir -p gemfiles
-          echo 'eval_gemfile "../Gemfile"' > "$BUNDLE_GEMFILE"
           bundle lock --update
           bundle lock --add-checksums || echo "::warning::--add-checksums unsupported on $(bundle --version); version pinning only for ${{ matrix.ruby_version }}"
       - uses: actions/upload-artifact@65c4c4a1ddee5b72f698fdd19549f0f0fb45cf08 # v4
@@ -311,6 +334,12 @@ jobs:
           - ruby_version: 'jruby-head'
     steps:
       - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
+      # Wrapper keys the lock to this cell (<cell>.gemfile -> <cell>.gemfile.lock).
+      # Must exist before setup-ruby, which errors if BUNDLE_GEMFILE points at a missing file.
+      - name: Write wrapper gemfile
+        run: |
+          mkdir -p gemfiles
+          echo 'eval_gemfile "../Gemfile"' > "$BUNDLE_GEMFILE"
       - uses: ruby/setup-ruby@319994f95fa847cf3fb3cd3dbe89f6dcde9f178f # v1
         with:
           ruby-version: ${{ matrix.ruby_version }}
@@ -318,8 +347,6 @@ jobs:
           bundler-cache: false
       - name: Resolve lockfile
         run: |
-          mkdir -p gemfiles
-          echo 'eval_gemfile "../Gemfile"' > "$BUNDLE_GEMFILE"
           bundle lock --update
           bundle lock --add-checksums || echo "::warning::--add-checksums unsupported on $(bundle --version); version pinning only for ${{ matrix.ruby_version }}"
       - uses: actions/upload-artifact@65c4c4a1ddee5b72f698fdd19549f0f0fb45cf08 # v4
