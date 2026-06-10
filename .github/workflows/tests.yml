@@ -13,6 +13,7 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  # needs to be kept in sync with the matrix in update_lockfiles.yml
   ruby-versions:
     uses: ruby/actions/.github/workflows/ruby_versions.yml@6d15c16f6259d657961bcdccf2598d3d53e90635
     with:

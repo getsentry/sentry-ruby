@@ -5,7 +5,8 @@ ruby/
 log/
 .bundle
 *.gem
-gemfiles/*.lock
+# Per-matrix lockfiles under <gem>/gemfiles/ ARE committed (supply-chain pinning).
+# Only the locally-resolved default lockfiles stay ignored.
 Gemfile.lock
 .coveralls.yml
 .ruby-version
