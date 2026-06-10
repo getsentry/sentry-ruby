@@ -422,6 +422,8 @@ jobs:
             const commitTitle = process.env.COMMIT_TITLE;
             const prBody = `Automated regeneration of the per-matrix lockfiles used to pin CI dependencies (supply-chain hardening).
 
+            #skip-changelog
+
             ## Action required
             - If CI passes on this PR, it's safe to approve and merge: the refreshed pins resolve and the suite is green.
             - If CI fails, a dependency update broke something — investigate before merging.
