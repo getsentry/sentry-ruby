@@ -26,7 +26,9 @@ jobs:
     timeout-minutes: 10
     env:
       RUBYOPT: ${{ matrix.options.rubyopt }}
-      BUNDLE_GEMFILE: ${{ github.workspace }}/sentry-yabeda/Gemfile
+      # Pin via the wrapper gemfile + its sibling .gemfile.lock (BUNDLE_LOCKFILE is unsupported on older bundlers).
+      BUNDLE_GEMFILE: ${{ github.workspace }}/sentry-yabeda/gemfiles/ruby-${{ matrix.ruby_version }}.gemfile
+      BUNDLE_FROZEN: "true"
       BUNDLE_WITHOUT: rubocop
       JRUBY_OPTS: "--debug" # for more accurate test coverage
     strategy:
@@ -43,10 +45,17 @@ jobs:
     steps:
       - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
 
+      # Wrapper keys the lock to this cell (<cell>.gemfile -> <cell>.gemfile.lock); must exist before setup-ruby.
+      - name: Write wrapper gemfile
+        run: |
+          mkdir -p gemfiles
+          echo 'eval_gemfile "../Gemfile"' > "$BUNDLE_GEMFILE"
+
       - name: Set up Ruby ${{ matrix.ruby_version }}
         uses: ruby/setup-ruby@319994f95fa847cf3fb3cd3dbe89f6dcde9f178f # v1
         with:
           ruby-version: ${{ matrix.ruby_version }}
+          bundler: latest
           bundler-cache: true
 
       - name: Run specs
