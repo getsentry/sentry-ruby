@@ -22,7 +22,7 @@ jobs:
     timeout-minutes: 10
     services:
       redis:
-        image: redis:6
+        image: ghcr.io/getsentry/image-mirror-library-redis:7.0.8-bullseye
         ports:
           - 6379:6379
         options: >-
