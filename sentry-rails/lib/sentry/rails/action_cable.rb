@@ -57,8 +57,13 @@ module Sentry
       end
 
       module Connection
-        private
-
+        # These overrides must stay public: Rails 8.2 decoupled the Action
+        # Cable connection from the socket (rails/rails#50979), and
+        # ActionCable::Server::Socket now invokes connection.handle_open and
+        # connection.handle_close from outside the connection. With private
+        # overrides every cable connection raises NoMethodError before the
+        # welcome message is sent. On older Rails versions these methods are
+        # only called internally, so public visibility is harmless there.
         def handle_open
           ErrorHandler.capture(self, transaction_name: "#{self.class.name}#connect") do
             super
