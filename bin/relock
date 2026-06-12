@@ -1,0 +1,255 @@
+#!/usr/bin/env ruby
+# frozen_string_literal: true
+
+# Regenerate the per-matrix CI lockfiles that pin our dependencies
+# (supply-chain hardening). Each test-matrix cell has a committed
+# `<gem>/gemfiles/<cell>.gemfile.lock`; this script re-resolves them.
+#
+# The committed lock set IS the matrix — we derive cells from the lockfiles on
+# disk rather than re-implementing GitHub Actions matrix expansion, so this can
+# never drift from what CI committed. CI creates/removes cells (it owns the
+# matrix); locally you refresh the cells you already have after a dep change.
+#
+# Each cell must resolve against its own Ruby (gemspecs gate on
+# required_ruby_version), so by default every cell runs in a matching Docker
+# image — you don't need 2.7/3.0/.../jruby installed. CI passes --native to
+# resolve a single cell with the Ruby setup-ruby already installed.
+#
+#   bin/relock                         # refresh every cell (Docker)
+#   bin/relock --gem sentry-ruby       # one gem
+#   bin/relock --ruby 3.2              # one Ruby across gems
+#   bin/relock --native --cell sentry-ruby/gemfiles/ruby-3.2_rack-3_redis-5.gemfile
+#   bin/relock -n                      # dry run: list the cells
+#
+# See --help for all options.
+
+require "optparse"
+require "shellwords"
+require "etc"
+
+ROOT = File.expand_path("..", __dir__)
+
+# Filename token (the part before the first "-") -> env var the Gemfile reads.
+# The token's VALUE is passed verbatim: it's already normalized the way GitHub
+# Actions renders the matrix (rack-2 not rack-2.0), and the Gemfiles wrap it in
+# Gem::Version.new(...), so "2" and "2.0" resolve identically — matching CI.
+TOKEN_ENV = {
+  "rack" => "RACK_VERSION",
+  "redis" => "REDIS_RB_VERSION",
+  "rails" => "RAILS_VERSION",
+  "sidekiq" => "SIDEKIQ_VERSION"
+}.freeze
+
+# Rubies Docker can't faithfully reproduce (nightly / unversioned). Skipped when
+# sweeping; attempted with a warning only if you target them explicitly.
+UNSTABLE_RUBIES = ["head", "jruby"].freeze
+
+Cell = Struct.new(:gem, :base, :ruby, :env, keyword_init: true) do
+  def wrapper = "#{gem}/gemfiles/#{base}.gemfile"
+  def lock = "#{wrapper}.lock"
+  def label = "#{gem} / #{base}"
+end
+
+# Parse a lock path like "sentry-ruby/gemfiles/ruby-3.2_rack-3_redis-5.gemfile.lock"
+# into the cell's Ruby version and the env vars its Gemfile expects.
+def parse_cell(gem, filename)
+  base = File.basename(filename, ".gemfile.lock")
+  segments = base.split("_")
+  ruby_seg = segments.shift
+  ruby = ruby_seg.sub(/\Aruby-/, "")
+
+  env = {}
+  segments.each do |seg|
+    key, value = seg.split("-", 2)
+    var = TOKEN_ENV[key]
+    abort "Unknown matrix axis '#{key}' in #{gem}/gemfiles/#{base}" unless var
+    env[var] = value
+  end
+
+  Cell.new(gem: gem, base: base, ruby: ruby, env: env)
+end
+
+def discover_cells(gems)
+  gems.flat_map do |gem|
+    dir = File.join(ROOT, gem, "gemfiles")
+    Dir.glob(File.join(dir, "*.gemfile.lock")).sort.map do |path|
+      parse_cell(gem, File.basename(path))
+    end
+  end
+end
+
+def all_gems
+  Dir.glob(File.join(ROOT, "*", "gemfiles")).map { |d| File.basename(File.dirname(d)) }.sort
+end
+
+# Docker image for a cell's Ruby. jruby-9.4.14.0 -> jruby:9.4.14.0; 3.2 -> ruby:3.2.
+def docker_image(ruby)
+  if ruby.start_with?("jruby")
+    version = ruby.sub(/\Ajruby-?/, "")
+    version.empty? ? "jruby:latest" : "jruby:#{version}"
+  elsif ruby == "head"
+    "ruby:latest"
+  else
+    "ruby:#{ruby}"
+  end
+end
+
+# Shell run inside the container (or host, for --native). Writes the wrapper,
+# re-resolves, and adds checksums where the bundler version supports them.
+RESOLVE = <<~SH
+  set -euo pipefail
+  mkdir -p "$(dirname "$BUNDLE_GEMFILE")"
+  echo 'eval_gemfile "../Gemfile"' > "$BUNDLE_GEMFILE"
+  bundle lock --update
+  # Checksums need Bundler >= 2.5 (Ruby >= 3.0); older Rubies get version pinning only.
+  bundle lock --add-checksums || echo "  (--add-checksums unsupported on $(bundle --version); version pinning only)"
+SH
+
+def run_docker(cell, opts)
+  image = docker_image(cell.ruby)
+  uid = Process.uid
+  gid = Process.gid
+  # ruby:2.7 etc. ship an older default bundler; install the newest one this
+  # Ruby supports (RubyGems honors required_ruby_version) to match CI's
+  # `bundler: latest` — older bundlers silently drop the CHECKSUMS section.
+  # safe.directory: bundler shells out to git on the root-owned bind mount.
+  # Finally chown outputs back so they aren't root-owned on the host.
+  inner = <<~SH
+    set -euo pipefail
+    git config --global --add safe.directory /repo
+    gem install bundler --no-document >/dev/null
+    #{RESOLVE}
+    chown #{uid}:#{gid} "$BUNDLE_GEMFILE" "$BUNDLE_GEMFILE.lock" 2>/dev/null || true
+  SH
+
+  cmd = [
+    "docker", "run", "--rm",
+    "--platform", opts[:platform],
+    "-v", "#{ROOT}:/repo",
+    "-w", "/repo/#{cell.gem}",
+    "-e", "BUNDLE_GEMFILE=/repo/#{cell.wrapper}"
+  ]
+  cell.env.each { |k, v| cmd += ["-e", "#{k}=#{v}"] }
+  cmd += [image, "bash", "-lc", inner]
+  cmd
+end
+
+def run_native(cell)
+  env = { "BUNDLE_GEMFILE" => File.join(ROOT, cell.wrapper) }.merge(cell.env)
+  [env, ["bash", "-lc", RESOLVE]]
+end
+
+# ---- options -------------------------------------------------------------
+
+opts = {
+  gems: [],
+  ruby: nil,
+  native: false,
+  cell: nil,
+  platform: "linux/amd64", # CI runs on x86_64 linux; pin so native-gem locks match.
+  jobs: 4,
+  dry_run: false
+}
+
+parser = OptionParser.new do |o|
+  o.banner = "Usage: bin/relock [options]"
+  o.on("--gem NAME", "Only this gem (repeatable). Default: all.") { |v| opts[:gems] << v }
+  o.on("--ruby VERSION", "Only cells for this Ruby (e.g. 3.2, jruby-9.4.14.0).") { |v| opts[:ruby] = v }
+  o.on("--native", "Use the host bundler instead of Docker (Ruby must match the cell).") { opts[:native] = true }
+  o.on("--cell PATH", "Resolve exactly one cell by its wrapper/lock path (implies --native).") do |v|
+    opts[:cell] = v
+    opts[:native] = true
+  end
+  o.on("--platform PLAT", "Docker --platform (default: linux/amd64).") { |v| opts[:platform] = v }
+  o.on("--jobs N", Integer, "Parallel Docker containers (default: 4).") { |v| opts[:jobs] = v }
+  o.on("-n", "--dry-run", "List the cells that would be regenerated; do nothing.") { opts[:dry_run] = true }
+  o.on("-h", "--help") { puts o; exit 0 }
+end
+parser.parse!(ARGV)
+
+# ---- select cells --------------------------------------------------------
+
+if opts[:cell]
+  # Single explicit cell (CI path). Derive gem + base by position
+  # (<gem>/gemfiles/<base>.gemfile) so it works for absolute, relative, or
+  # symlinked paths. Accept either the .gemfile or .gemfile.lock form.
+  parts = opts[:cell].sub(/\.lock\z/, "").split("/")
+  gi = parts.rindex("gemfiles")
+  abort "--cell must point at a <gem>/gemfiles/<cell>.gemfile path" unless gi&.positive?
+  gem = parts[gi - 1]
+  base = File.basename(parts[gi + 1], ".gemfile")
+  cells = [parse_cell(gem, "#{base}.gemfile.lock")]
+else
+  gems = opts[:gems].empty? ? all_gems : opts[:gems]
+  cells = discover_cells(gems)
+  cells.select! { |c| c.ruby == opts[:ruby] } if opts[:ruby]
+end
+
+if cells.empty?
+  warn "No matching lockfile cells found."
+  exit 1
+end
+
+# Skip Rubies Docker can't reproduce when sweeping (not when explicitly targeted).
+skipped = []
+unless opts[:native] || opts[:ruby] || opts[:cell]
+  cells, skipped = cells.partition { |c| !UNSTABLE_RUBIES.include?(c.ruby) }
+end
+
+# ---- dry run -------------------------------------------------------------
+
+if opts[:dry_run]
+  puts "Would regenerate #{cells.size} cell(s):"
+  cells.each { |c| puts "  #{c.lock}#{opts[:native] ? '' : "  [#{docker_image(c.ruby)}]"}" }
+  skipped.each { |c| puts "  (skip) #{c.lock} — Ruby '#{c.ruby}' not reproducible in Docker" }
+  exit 0
+end
+
+skipped.each do |c|
+  warn "Skipping #{c.label}: Ruby '#{c.ruby}' isn't reproducible in Docker. " \
+       "Run on a matching host with --native --cell #{c.wrapper} if you need it."
+end
+
+# ---- execute -------------------------------------------------------------
+
+failures = []
+mutex = Mutex.new
+
+run_one = lambda do |cell|
+  mutex.synchronize { puts "→ #{cell.label}" }
+  ok =
+    if opts[:native]
+      env, argv = run_native(cell)
+      # chdir into the gem dir to match CI's working-directory (avoids stray
+      # files and keeps any .bundle/ config local to the gem).
+      system(env, *argv, chdir: File.join(ROOT, cell.gem))
+    else
+      system(*run_docker(cell, opts))
+    end
+  mutex.synchronize { failures << cell unless ok }
+end
+
+if opts[:native] || opts[:jobs] <= 1 || cells.size <= 1
+  cells.each(&run_one)
+else
+  queue = Queue.new
+  cells.each { |c| queue << c }
+  workers = [opts[:jobs], cells.size].min.times.map do
+    Thread.new do
+      until queue.empty?
+        cell = queue.pop(true) rescue break
+        run_one.call(cell)
+      end
+    end
+  end
+  workers.each(&:join)
+end
+
+puts
+puts "Regenerated #{cells.size - failures.size}/#{cells.size} cell(s)." \
+     "#{skipped.empty? ? '' : " Skipped #{skipped.size}."}"
+unless failures.empty?
+  warn "Failed:"
+  failures.each { |c| warn "  #{c.lock}" }
+  exit 1
+end

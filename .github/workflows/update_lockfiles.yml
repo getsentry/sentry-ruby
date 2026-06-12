@@ -8,6 +8,10 @@ name: Update lockfiles
 # workflow (minus `options`/RUBYOPT, which don't change dependency resolution).
 # When a test matrix changes, mirror it here or the frozen install will fail for
 # the missing cell.
+#
+# To refresh locks locally (e.g. after a Gemfile change), run `bin/relock` — it
+# re-resolves every committed cell in matching Docker images. Resolve logic is
+# shared: this workflow calls `bin/relock --native --cell <wrapper>` per cell.
 
 on:
   workflow_dispatch:
@@ -69,11 +73,9 @@ jobs:
           ruby-version: ${{ matrix.ruby_version }}
           bundler: latest
           bundler-cache: false
+      # bin/relock owns the resolve logic so the local sweep and CI can't drift.
       - name: Resolve lockfile
-        run: |
-          bundle lock --update
-          # Checksums need Bundler >= 2.5 (Ruby >= 3.0); older Rubies get version pinning only.
-          bundle lock --add-checksums || echo "::warning::--add-checksums unsupported on $(bundle --version); version pinning only for ${{ matrix.ruby_version }}"
+        run: ruby "$GITHUB_WORKSPACE/bin/relock" --native --cell "$BUNDLE_GEMFILE"
       - uses: actions/upload-artifact@65c4c4a1ddee5b72f698fdd19549f0f0fb45cf08 # v4
         with:
           name: lock-sentry-ruby-${{ matrix.ruby_version }}-${{ matrix.rack_version }}-${{ matrix.redis_rb_version }}
@@ -133,9 +135,7 @@ jobs:
           bundler: latest
           bundler-cache: false
       - name: Resolve lockfile
-        run: |
-          bundle lock --update
-          bundle lock --add-checksums || echo "::warning::--add-checksums unsupported on $(bundle --version); version pinning only for ${{ matrix.ruby_version }}"
+        run: ruby "$GITHUB_WORKSPACE/bin/relock" --native --cell "$BUNDLE_GEMFILE"
       - uses: actions/upload-artifact@65c4c4a1ddee5b72f698fdd19549f0f0fb45cf08 # v4
         with:
           name: lock-sentry-rails-${{ matrix.ruby_version }}-${{ matrix.rails_version }}
@@ -184,9 +184,7 @@ jobs:
           bundler: latest
           bundler-cache: false
       - name: Resolve lockfile
-        run: |
-          bundle lock --update
-          bundle lock --add-checksums || echo "::warning::--add-checksums unsupported on $(bundle --version); version pinning only for ${{ matrix.ruby_version }}"
+        run: ruby "$GITHUB_WORKSPACE/bin/relock" --native --cell "$BUNDLE_GEMFILE"
       - uses: actions/upload-artifact@65c4c4a1ddee5b72f698fdd19549f0f0fb45cf08 # v4
         with:
           name: lock-sentry-sidekiq-${{ matrix.ruby_version }}-${{ matrix.sidekiq_version }}
@@ -225,9 +223,7 @@ jobs:
           bundler: latest
           bundler-cache: false
       - name: Resolve lockfile
-        run: |
-          bundle lock --update
-          bundle lock --add-checksums || echo "::warning::--add-checksums unsupported on $(bundle --version); version pinning only for ${{ matrix.ruby_version }}"
+        run: ruby "$GITHUB_WORKSPACE/bin/relock" --native --cell "$BUNDLE_GEMFILE"
       - uses: actions/upload-artifact@65c4c4a1ddee5b72f698fdd19549f0f0fb45cf08 # v4
         with:
           name: lock-sentry-resque-${{ matrix.ruby_version }}
@@ -266,9 +262,7 @@ jobs:
           bundler: latest
           bundler-cache: false
       - name: Resolve lockfile
-        run: |
-          bundle lock --update
-          bundle lock --add-checksums || echo "::warning::--add-checksums unsupported on $(bundle --version); version pinning only for ${{ matrix.ruby_version }}"
+        run: ruby "$GITHUB_WORKSPACE/bin/relock" --native --cell "$BUNDLE_GEMFILE"
       - uses: actions/upload-artifact@65c4c4a1ddee5b72f698fdd19549f0f0fb45cf08 # v4
         with:
           name: lock-sentry-delayed_job-${{ matrix.ruby_version }}
@@ -306,9 +300,7 @@ jobs:
           bundler: latest
           bundler-cache: false
       - name: Resolve lockfile
-        run: |
-          bundle lock --update
-          bundle lock --add-checksums || echo "::warning::--add-checksums unsupported on $(bundle --version); version pinning only for ${{ matrix.ruby_version }}"
+        run: ruby "$GITHUB_WORKSPACE/bin/relock" --native --cell "$BUNDLE_GEMFILE"
       - uses: actions/upload-artifact@65c4c4a1ddee5b72f698fdd19549f0f0fb45cf08 # v4
         with:
           name: lock-sentry-opentelemetry-${{ matrix.ruby_version }}
@@ -347,9 +339,7 @@ jobs:
           bundler: latest
           bundler-cache: false
       - name: Resolve lockfile
-        run: |
-          bundle lock --update
-          bundle lock --add-checksums || echo "::warning::--add-checksums unsupported on $(bundle --version); version pinning only for ${{ matrix.ruby_version }}"
+        run: ruby "$GITHUB_WORKSPACE/bin/relock" --native --cell "$BUNDLE_GEMFILE"
       - uses: actions/upload-artifact@65c4c4a1ddee5b72f698fdd19549f0f0fb45cf08 # v4
         with:
           name: lock-sentry-yabeda-${{ matrix.ruby_version }}
