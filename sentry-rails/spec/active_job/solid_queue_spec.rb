@@ -3,7 +3,15 @@
 require "spec_helper"
 
 if RAILS_VERSION >= 7.1 && RUBY_VERSION >= "3.1"
-  require "solid_queue"
+  # solid_queue is gated in the Gemfile by Ruby version and platform
+  # (skipped on JRuby). Matrices that don't bundle it — e.g. JRuby, whose
+  # RUBY_VERSION still satisfies the guard above — rescue LoadError and skip
+  # the whole file so they don't blow up on the describe below.
+  begin
+    require "solid_queue"
+  rescue LoadError
+    return
+  end
 
   RSpec.describe "Sentry + ActiveJob on SolidQueue", type: :job do
     include ActiveSupport::Testing::TimeHelpers
