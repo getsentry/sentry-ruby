@@ -45,6 +45,10 @@ module Sentry
           @schema_file ||= root_path.join("db/schema.rb")
         end
 
+        def self.queue_schema_file
+          @queue_schema_file ||= root_path.join("db/queue_schema.rb")
+        end
+
         def self.db_path
           @db_path ||= root_path.join("db", "db.sqlite3")
         end
@@ -73,6 +77,14 @@ module Sentry
             # Load schema from db/schema.rb into the current connection
             require Test::Application.schema_file
 
+            true
+          end
+        end
+
+        def self.load_queue_schema
+          @__queue_schema_loaded__ ||= begin
+            load_test_schema
+            require Test::Application.queue_schema_file
             true
           end
         end

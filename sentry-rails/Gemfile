@@ -103,6 +103,24 @@ unless RUBY_PLATFORM.include?("java")
   end
 end
 
+# solid_queue is a dev-only dependency, used by the common ActiveJob spec
+# suite to verify the AJ tracing extension works against the :solid_queue
+# adapter (backed by ActiveRecord, like delayed_job).
+#
+# Gated on Ruby/Rails/platform because:
+#   - solid_queue requires Rails >= 7.1 and Ruby >= 3.1; without this guard,
+#     older matrices backtrack to an ancient solid_queue (0.x) that doesn't
+#     match the spec's API.
+#   - solid_queue is not exercised on JRuby (mirroring the dj/resque specs).
+#
+# solid_queue_spec.rb also rescues LoadError, so matrices that don't bundle
+# the gem skip the spec cleanly.
+unless RUBY_PLATFORM.include?("java")
+  if rails_version >= Gem::Version.new("7.1.0") && ruby_version >= Gem::Version.new("3.1")
+    gem "solid_queue"
+  end
+end
+
 gem "sprockets-rails"
 
 gem "benchmark-ips"
