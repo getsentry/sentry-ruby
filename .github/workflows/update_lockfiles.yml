@@ -4,10 +4,9 @@ name: Update lockfiles
 # installs are fully pinned (supply-chain hardening). Run manually to create the
 # initial lockfiles, and on a schedule to refresh them deliberately.
 #
-# Each gen-<gem> job derives its cells from that gem's test-matrix.json — the
-# single source of truth, shared with the *_test.yml workflows. `options`/RUBYOPT
-# don't affect dependency resolution, so they're stripped and cells deduped here
-# (one lockfile per cell).
+# bin/relock sweeps every gem's test-matrix.json — the single source of truth,
+# shared with the *_test.yml workflows — installing each cell's Ruby via mise
+# and resolving every cell. One invocation regenerates the whole lock set.
 
 on:
   workflow_dispatch:
@@ -19,304 +18,10 @@ permissions:
   contents: write
 
 jobs:
-  matrix:
+  update:
     runs-on: ubuntu-latest
-    outputs:
-      sentry_ruby: ${{ steps.set.outputs.sentry_ruby }}
-      sentry_rails: ${{ steps.set.outputs.sentry_rails }}
-      sentry_sidekiq: ${{ steps.set.outputs.sentry_sidekiq }}
-      sentry_resque: ${{ steps.set.outputs.sentry_resque }}
-      sentry_delayed_job: ${{ steps.set.outputs.sentry_delayed_job }}
-      sentry_opentelemetry: ${{ steps.set.outputs.sentry_opentelemetry }}
-      sentry_yabeda: ${{ steps.set.outputs.sentry_yabeda }}
-    steps:
-      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
-      # Strip rubyopt (irrelevant to resolution) and dedup, so each cell maps to
-      # exactly one lockfile artifact (no name collisions on the rubyopt twins).
-      - id: set
-        run: |
-          for gem in sentry-ruby sentry-rails sentry-sidekiq sentry-resque sentry-delayed_job sentry-opentelemetry sentry-yabeda; do
-            cells=$(jq -c 'map(del(.options)) | unique' "$gem/test-matrix.json")
-            echo "${gem//-/_}=$cells" >> "$GITHUB_OUTPUT"
-          done
-
-  gen-sentry-ruby:
-    needs: matrix
-    name: lock sentry-ruby ${{ matrix.ruby_version }} / rack ${{ matrix.rack_version }} / redis ${{ matrix.redis_rb_version }}
-    runs-on: ubuntu-latest
-    timeout-minutes: 15
-    defaults:
-      run:
-        working-directory: sentry-ruby
-    env:
-      BUNDLE_GEMFILE: ${{ github.workspace }}/sentry-ruby/gemfiles/ruby-${{ matrix.ruby_version }}_rack-${{ matrix.rack_version }}_redis-${{ matrix.redis_rb_version }}.gemfile
-      RACK_VERSION: ${{ matrix.rack_version }}
-      REDIS_RB_VERSION: ${{ matrix.redis_rb_version }}
-    strategy:
-      fail-fast: false
-      matrix:
-        include: ${{ fromJson(needs.matrix.outputs.sentry_ruby) }}
-    steps:
-      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
-      # Wrapper keys the lock to this cell (<cell>.gemfile -> <cell>.gemfile.lock).
-      # Must exist before setup-ruby, which errors if BUNDLE_GEMFILE points at a missing file.
-      - name: Write wrapper gemfile
-        run: |
-          mkdir -p gemfiles
-          echo 'eval_gemfile "../Gemfile"' > "$BUNDLE_GEMFILE"
-      - uses: ruby/setup-ruby@319994f95fa847cf3fb3cd3dbe89f6dcde9f178f # v1
-        with:
-          ruby-version: ${{ matrix.ruby_version }}
-          bundler: latest
-          bundler-cache: false
-      - name: Resolve lockfile
-        run: |
-          bundle lock --update
-          # Checksums need Bundler >= 2.5 (Ruby >= 3.0); older Rubies get version pinning only.
-          bundle lock --add-checksums || echo "::warning::--add-checksums unsupported on $(bundle --version); version pinning only for ${{ matrix.ruby_version }}"
-      - uses: actions/upload-artifact@65c4c4a1ddee5b72f698fdd19549f0f0fb45cf08 # v4
-        with:
-          name: lock-sentry-ruby-${{ matrix.ruby_version }}-${{ matrix.rack_version }}-${{ matrix.redis_rb_version }}
-          # Leading wildcard keeps the repo-relative path (sentry-ruby/gemfiles/...)
-          # inside the artifact. Only the lock is committed; the wrapper .gemfile is
-          # regenerated on the fly wherever it's needed.
-          path: "*/gemfiles/ruby-${{ matrix.ruby_version }}_rack-${{ matrix.rack_version }}_redis-${{ matrix.redis_rb_version }}.gemfile.lock"
-          if-no-files-found: error
-
-  gen-sentry-rails:
-    needs: matrix
-    name: lock sentry-rails ${{ matrix.ruby_version }} / rails ${{ matrix.rails_version }}
-    runs-on: ubuntu-latest
-    timeout-minutes: 15
-    defaults:
-      run:
-        working-directory: sentry-rails
-    env:
-      BUNDLE_GEMFILE: ${{ github.workspace }}/sentry-rails/gemfiles/ruby-${{ matrix.ruby_version }}_rails-${{ matrix.rails_version }}.gemfile
-      RAILS_VERSION: ${{ matrix.rails_version }}
-    strategy:
-      fail-fast: false
-      matrix:
-        include: ${{ fromJson(needs.matrix.outputs.sentry_rails) }}
-    steps:
-      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
-      # Wrapper keys the lock to this cell (<cell>.gemfile -> <cell>.gemfile.lock).
-      # Must exist before setup-ruby, which errors if BUNDLE_GEMFILE points at a missing file.
-      - name: Write wrapper gemfile
-        run: |
-          mkdir -p gemfiles
-          echo 'eval_gemfile "../Gemfile"' > "$BUNDLE_GEMFILE"
-      - uses: ruby/setup-ruby@319994f95fa847cf3fb3cd3dbe89f6dcde9f178f # v1
-        with:
-          ruby-version: ${{ matrix.ruby_version }}
-          bundler: latest
-          bundler-cache: false
-      - name: Resolve lockfile
-        run: |
-          bundle lock --update
-          bundle lock --add-checksums || echo "::warning::--add-checksums unsupported on $(bundle --version); version pinning only for ${{ matrix.ruby_version }}"
-      - uses: actions/upload-artifact@65c4c4a1ddee5b72f698fdd19549f0f0fb45cf08 # v4
-        with:
-          name: lock-sentry-rails-${{ matrix.ruby_version }}-${{ matrix.rails_version }}
-          path: "*/gemfiles/ruby-${{ matrix.ruby_version }}_rails-${{ matrix.rails_version }}.gemfile.lock"
-          if-no-files-found: error
-
-  gen-sentry-sidekiq:
-    needs: matrix
-    name: lock sentry-sidekiq ${{ matrix.ruby_version }} / sidekiq ${{ matrix.sidekiq_version }}
-    runs-on: ubuntu-latest
-    timeout-minutes: 15
-    defaults:
-      run:
-        working-directory: sentry-sidekiq
-    env:
-      BUNDLE_GEMFILE: ${{ github.workspace }}/sentry-sidekiq/gemfiles/ruby-${{ matrix.ruby_version }}_sidekiq-${{ matrix.sidekiq_version }}.gemfile
-      SIDEKIQ_VERSION: ${{ matrix.sidekiq_version }}
-    strategy:
-      fail-fast: false
-      matrix:
-        include: ${{ fromJson(needs.matrix.outputs.sentry_sidekiq) }}
-    steps:
-      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
-      # Wrapper keys the lock to this cell (<cell>.gemfile -> <cell>.gemfile.lock).
-      # Must exist before setup-ruby, which errors if BUNDLE_GEMFILE points at a missing file.
-      - name: Write wrapper gemfile
-        run: |
-          mkdir -p gemfiles
-          echo 'eval_gemfile "../Gemfile"' > "$BUNDLE_GEMFILE"
-      - uses: ruby/setup-ruby@319994f95fa847cf3fb3cd3dbe89f6dcde9f178f # v1
-        with:
-          ruby-version: ${{ matrix.ruby_version }}
-          bundler: latest
-          bundler-cache: false
-      - name: Resolve lockfile
-        run: |
-          bundle lock --update
-          bundle lock --add-checksums || echo "::warning::--add-checksums unsupported on $(bundle --version); version pinning only for ${{ matrix.ruby_version }}"
-      - uses: actions/upload-artifact@65c4c4a1ddee5b72f698fdd19549f0f0fb45cf08 # v4
-        with:
-          name: lock-sentry-sidekiq-${{ matrix.ruby_version }}-${{ matrix.sidekiq_version }}
-          path: "*/gemfiles/ruby-${{ matrix.ruby_version }}_sidekiq-${{ matrix.sidekiq_version }}.gemfile.lock"
-          if-no-files-found: error
-
-  gen-sentry-resque:
-    needs: matrix
-    name: lock sentry-resque ${{ matrix.ruby_version }}
-    runs-on: ubuntu-latest
-    timeout-minutes: 15
-    defaults:
-      run:
-        working-directory: sentry-resque
-    env:
-      BUNDLE_GEMFILE: ${{ github.workspace }}/sentry-resque/gemfiles/ruby-${{ matrix.ruby_version }}.gemfile
-    strategy:
-      fail-fast: false
-      matrix:
-        include: ${{ fromJson(needs.matrix.outputs.sentry_resque) }}
-    steps:
-      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
-      # Wrapper keys the lock to this cell (<cell>.gemfile -> <cell>.gemfile.lock).
-      # Must exist before setup-ruby, which errors if BUNDLE_GEMFILE points at a missing file.
-      - name: Write wrapper gemfile
-        run: |
-          mkdir -p gemfiles
-          echo 'eval_gemfile "../Gemfile"' > "$BUNDLE_GEMFILE"
-      - uses: ruby/setup-ruby@319994f95fa847cf3fb3cd3dbe89f6dcde9f178f # v1
-        with:
-          ruby-version: ${{ matrix.ruby_version }}
-          bundler: latest
-          bundler-cache: false
-      - name: Resolve lockfile
-        run: |
-          bundle lock --update
-          bundle lock --add-checksums || echo "::warning::--add-checksums unsupported on $(bundle --version); version pinning only for ${{ matrix.ruby_version }}"
-      - uses: actions/upload-artifact@65c4c4a1ddee5b72f698fdd19549f0f0fb45cf08 # v4
-        with:
-          name: lock-sentry-resque-${{ matrix.ruby_version }}
-          path: "*/gemfiles/ruby-${{ matrix.ruby_version }}.gemfile.lock"
-          if-no-files-found: error
-
-  gen-sentry-delayed_job:
-    needs: matrix
-    name: lock sentry-delayed_job ${{ matrix.ruby_version }}
-    runs-on: ubuntu-latest
-    timeout-minutes: 15
-    defaults:
-      run:
-        working-directory: sentry-delayed_job
-    env:
-      BUNDLE_GEMFILE: ${{ github.workspace }}/sentry-delayed_job/gemfiles/ruby-${{ matrix.ruby_version }}.gemfile
-    strategy:
-      fail-fast: false
-      matrix:
-        include: ${{ fromJson(needs.matrix.outputs.sentry_delayed_job) }}
-    steps:
-      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
-      # Wrapper keys the lock to this cell (<cell>.gemfile -> <cell>.gemfile.lock).
-      # Must exist before setup-ruby, which errors if BUNDLE_GEMFILE points at a missing file.
-      - name: Write wrapper gemfile
-        run: |
-          mkdir -p gemfiles
-          echo 'eval_gemfile "../Gemfile"' > "$BUNDLE_GEMFILE"
-      - uses: ruby/setup-ruby@319994f95fa847cf3fb3cd3dbe89f6dcde9f178f # v1
-        with:
-          ruby-version: ${{ matrix.ruby_version }}
-          bundler: latest
-          bundler-cache: false
-      - name: Resolve lockfile
-        run: |
-          bundle lock --update
-          bundle lock --add-checksums || echo "::warning::--add-checksums unsupported on $(bundle --version); version pinning only for ${{ matrix.ruby_version }}"
-      - uses: actions/upload-artifact@65c4c4a1ddee5b72f698fdd19549f0f0fb45cf08 # v4
-        with:
-          name: lock-sentry-delayed_job-${{ matrix.ruby_version }}
-          path: "*/gemfiles/ruby-${{ matrix.ruby_version }}.gemfile.lock"
-          if-no-files-found: error
-
-  gen-sentry-opentelemetry:
-    needs: matrix
-    name: lock sentry-opentelemetry ${{ matrix.ruby_version }}
-    runs-on: ubuntu-latest
-    timeout-minutes: 15
-    defaults:
-      run:
-        working-directory: sentry-opentelemetry
-    env:
-      BUNDLE_GEMFILE: ${{ github.workspace }}/sentry-opentelemetry/gemfiles/ruby-${{ matrix.ruby_version }}.gemfile
-    strategy:
-      fail-fast: false
-      matrix:
-        include: ${{ fromJson(needs.matrix.outputs.sentry_opentelemetry) }}
-    steps:
-      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
-      # Wrapper keys the lock to this cell (<cell>.gemfile -> <cell>.gemfile.lock).
-      # Must exist before setup-ruby, which errors if BUNDLE_GEMFILE points at a missing file.
-      - name: Write wrapper gemfile
-        run: |
-          mkdir -p gemfiles
-          echo 'eval_gemfile "../Gemfile"' > "$BUNDLE_GEMFILE"
-      - uses: ruby/setup-ruby@319994f95fa847cf3fb3cd3dbe89f6dcde9f178f # v1
-        with:
-          ruby-version: ${{ matrix.ruby_version }}
-          bundler: latest
-          bundler-cache: false
-      - name: Resolve lockfile
-        run: |
-          bundle lock --update
-          bundle lock --add-checksums || echo "::warning::--add-checksums unsupported on $(bundle --version); version pinning only for ${{ matrix.ruby_version }}"
-      - uses: actions/upload-artifact@65c4c4a1ddee5b72f698fdd19549f0f0fb45cf08 # v4
-        with:
-          name: lock-sentry-opentelemetry-${{ matrix.ruby_version }}
-          path: "*/gemfiles/ruby-${{ matrix.ruby_version }}.gemfile.lock"
-          if-no-files-found: error
-
-  gen-sentry-yabeda:
-    needs: matrix
-    name: lock sentry-yabeda ${{ matrix.ruby_version }}
-    runs-on: ubuntu-latest
-    timeout-minutes: 15
-    defaults:
-      run:
-        working-directory: sentry-yabeda
-    env:
-      BUNDLE_GEMFILE: ${{ github.workspace }}/sentry-yabeda/gemfiles/ruby-${{ matrix.ruby_version }}.gemfile
-    strategy:
-      fail-fast: false
-      matrix:
-        include: ${{ fromJson(needs.matrix.outputs.sentry_yabeda) }}
-    steps:
-      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
-      # Wrapper keys the lock to this cell (<cell>.gemfile -> <cell>.gemfile.lock).
-      # Must exist before setup-ruby, which errors if BUNDLE_GEMFILE points at a missing file.
-      - name: Write wrapper gemfile
-        run: |
-          mkdir -p gemfiles
-          echo 'eval_gemfile "../Gemfile"' > "$BUNDLE_GEMFILE"
-      - uses: ruby/setup-ruby@319994f95fa847cf3fb3cd3dbe89f6dcde9f178f # v1
-        with:
-          ruby-version: ${{ matrix.ruby_version }}
-          bundler: latest
-          bundler-cache: false
-      - name: Resolve lockfile
-        run: |
-          bundle lock --update
-          bundle lock --add-checksums || echo "::warning::--add-checksums unsupported on $(bundle --version); version pinning only for ${{ matrix.ruby_version }}"
-      - uses: actions/upload-artifact@65c4c4a1ddee5b72f698fdd19549f0f0fb45cf08 # v4
-        with:
-          name: lock-sentry-yabeda-${{ matrix.ruby_version }}
-          path: "*/gemfiles/ruby-${{ matrix.ruby_version }}.gemfile.lock"
-          if-no-files-found: error
-
-  commit:
-    needs:
-      - gen-sentry-ruby
-      - gen-sentry-rails
-      - gen-sentry-sidekiq
-      - gen-sentry-resque
-      - gen-sentry-delayed_job
-      - gen-sentry-opentelemetry
-      - gen-sentry-yabeda
-    runs-on: ubuntu-latest
+    # Resolves every cell across all gems serially, each under its own Ruby.
+    timeout-minutes: 120
     permissions:
       contents: write
       pull-requests: write
@@ -324,11 +29,16 @@ jobs:
       - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
-      # Each artifact carries its repo-relative path, so merging them straight into
-      # the workspace lands every pair back at <gem>/gemfiles/ — no routing.
-      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
+
+      # mise installs every Ruby declared in .mise.toml (ruby.compile=false ->
+      # prebuilt binaries where available); bin/relock then resolves each cell
+      # against its matching Ruby.
+      - uses: jdx/mise-action@e6a8b3978addb5a52f2b4cd9d91eafa7f0ab959d # v4.2.0
         with:
-          merge-multiple: true
+          install: true
+
+      - name: Regenerate lockfiles
+        run: ruby bin/relock
 
       - name: Configure git
         run: |
@@ -339,7 +49,7 @@ jobs:
         id: create-branch
         run: |
           # Stage first, then diff the index against HEAD. `git diff` alone only
-          # sees tracked files, so newly generated (untracked) pairs — i.e. the
+          # sees tracked files, so newly generated (untracked) locks — i.e. the
           # bootstrap run and any filled-in missing cell — would otherwise look
           # like "no change" and never get pushed.
           git add '**/gemfiles/*.gemfile.lock'
@@ -353,6 +63,22 @@ jobs:
           COMMIT_TITLE="ci: 🤖 Update pinned CI lockfiles"
           BRANCH_NAME="lockfiles/update-$(date +%m-%d)"
 
+          # Which gems changed: the top-level dir of each touched lock.
+          GEMS=$(git diff --cached --name-only -- '**/gemfiles/*.gemfile.lock' | cut -d/ -f1 | sort -u)
+
+          # Aggregate dependency version changes across every touched lock. Pair
+          # the removed (-) and added (+) "name (version)" spec lines per gem so
+          # the summary reads "gem: old → new" (deduped across cells).
+          DEPS=$(git diff --cached -U0 -- '**/gemfiles/*.gemfile.lock' \
+            | grep -E '^[+-] +[A-Za-z0-9_.-]+ \([0-9]' \
+            | sed -E 's/^([+-]) +([A-Za-z0-9_.-]+) \(([^)]+)\).*/\1 \2 \3/' \
+            | awk '{ if ($1 == "-") old[$2] = $3; else neu[$2] = $3 }
+                   END {
+                     for (g in neu) if (neu[g] != old[g]) printf "- `%s`: %s → %s\n", g, (g in old ? old[g] : "new"), neu[g]
+                     for (g in old) if (!(g in neu)) printf "- `%s`: %s → removed\n", g, old[g]
+                   }' \
+            | sort -u)
+
           git checkout -B "$BRANCH_NAME"
           git commit -m "$COMMIT_TITLE"
           git push origin "$BRANCH_NAME" --force
@@ -360,6 +86,10 @@ jobs:
           echo "changed=true" >> "$GITHUB_OUTPUT"
           echo "branch_name=$BRANCH_NAME" >> "$GITHUB_OUTPUT"
           echo "commit_title=$COMMIT_TITLE" >> "$GITHUB_OUTPUT"
+          {
+            echo "gems<<EOF"; echo "$GEMS"; echo "EOF"
+            echo "deps<<EOF"; echo "$DEPS"; echo "EOF"
+          } >> "$GITHUB_OUTPUT"
 
       - name: Create pull request
         if: steps.create-branch.outputs.changed == 'true'
@@ -367,13 +97,25 @@ jobs:
         env:
           BRANCH_NAME: ${{ steps.create-branch.outputs.branch_name }}
           COMMIT_TITLE: ${{ steps.create-branch.outputs.commit_title }}
+          GEMS: ${{ steps.create-branch.outputs.gems }}
+          DEPS: ${{ steps.create-branch.outputs.deps }}
         with:
           script: |
             const branchName = process.env.BRANCH_NAME;
             const commitTitle = process.env.COMMIT_TITLE;
+            const gems = (process.env.GEMS || '').trim().split('\n').filter(Boolean);
+            const deps = (process.env.DEPS || '').trim();
+            const gemsList = gems.length ? gems.map(g => `\`${g}\``).join(', ') : '_none_';
+            const depsBlock = deps || '_No dependency version changes (checksum/metadata only)._';
             const prBody = `Automated regeneration of the per-matrix lockfiles used to pin CI dependencies (supply-chain hardening).
 
             #skip-changelog
+
+            ## Gems updated
+            ${gemsList}
+
+            ## Dependency changes
+            ${depsBlock}
 
             ## Action required
             - If CI passes on this PR, it's safe to approve and merge: the refreshed pins resolve and the suite is green.

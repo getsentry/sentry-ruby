@@ -48,6 +48,35 @@ This file defines which specific image and Ruby version will be used to run the 
 - Use example apps under the `example` or `examples` folder to test the change. (Remember to change the DSN first)
 - To learn more about `sentry-ruby`'s structure, you can read the [Sentry SDK spec]
 
+## Regenerating CI Lockfiles
+
+CI installs against a committed, checksummed lockfile per test-matrix cell (`<gem>/gemfiles/<cell>.gemfile.lock`) to keep dependencies fully pinned against supply chain attacks. Each gem's `test-matrix.json` is the source of truth; `bin/relock` materializes the gemfiles and locks from it.
+
+We use [mise](https://mise.jdx.dev) for managing the ruby versions, so first install that by following official instructions. The required Rubies are declared in `.mise.toml`, so provision them once:
+
+```bash
+mise install            # installs every Ruby the matrix needs
+```
+
+Then regenerate locks:
+
+```bash
+bin/relock                                   # every cell
+bin/relock --gem sentry-ruby                 # one gem
+bin/relock --cell sentry-ruby/gemfiles/ruby-3.2_rack-3_redis-5.gemfile  # one cell
+```
+
+In CI, the `Update lockfiles` workflow runs `relock` on a weekly schedule and opens a PR with the refreshed pins.
+
+### Ruby 3.0 on recent macOS
+
+Ruby 3.0 needs a [patch](https://bugs.ruby-lang.org/issues/20760#note-4) to compile:
+
+```bash
+MISE_RUBY_APPLY_PATCHES="https://github.com/ruby/ruby/commit/1dfe75b0beb7171b8154ff0856d5149be0207724.patch" \
+  mise install ruby@3.0
+```
+
 ## Write Your Sentry Extension
 
 Please read the [extension guideline] to learn more. Feel free to open an issue if you find anything missing.
