@@ -14,6 +14,10 @@ run = "cd spec/apps/rails-mini && bundle exec ruby app.rb"
 description = "Start the svelte-mini e2e app"
 run = "cd spec/apps/svelte-mini && npm run dev"
 
+[tasks."e2e:worker"]
+description = "Start the rails-mini ActiveJob worker (sidekiq/resque/delayed_job; idles for async/inline)"
+run = "cd spec/apps/rails-mini && bundle exec ruby worker.rb"
+
 [tasks."e2e:serve"]
 description = "Start all e2e apps in parallel"
-depends = ["e2e:rails", "e2e:svelte"]
+depends = ["e2e:rails", "e2e:svelte", "e2e:worker"]

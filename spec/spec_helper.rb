@@ -15,6 +15,11 @@ Capybara.configure do |config|
   config.default_driver = :selenium_headless_chrome
   config.javascript_driver = :selenium_headless_chrome
   config.app_host = ENV.fetch("SENTRY_E2E_SVELTE_APP_URL", "http://localhost:4001")
+  # The Svelte app is served by Vite, which compiles modules on demand on
+  # the first request, and the Rails app's first request is also cold. Give
+  # assertions enough time to absorb that one-time latency instead of
+  # flaking on the first interaction of a run.
+  config.default_max_wait_time = 10
 end
 
 Capybara.register_driver :selenium_headless_chrome do |app|
@@ -25,9 +30,17 @@ Capybara.register_driver :selenium_headless_chrome do |app|
   options.add_argument("--no-sandbox")
   options.add_argument("--disable-gpu")
   options.add_argument("--temp-profile")
-  options.binary = "/home/sentry/.local/bin/chromium" if File.exist?("/home/sentry/.local/bin/chromium")
 
-  Capybara::Selenium::Driver.new(app, browser: :chrome, options: options)
+  # Use custom chromium binary if available
+  chromium_path = "/home/sentry/.local/bin/chromium"
+  options.binary = chromium_path if File.exist?(chromium_path)
+
+  # Use a local chromedriver if provided, bypassing Selenium Manager's
+  # download (which only ships an x86 driver and fails on arm64).
+  chromedriver_path = ENV["SENTRY_E2E_CHROMEDRIVER"] || "/home/sentry/.local/bin/chromedriver"
+  service = File.exist?(chromedriver_path) ? Selenium::WebDriver::Service.chrome(path: chromedriver_path) : nil
+
+  Capybara::Selenium::Driver.new(app, browser: :chrome, options: options, service: service)
 end
 
 RSpec.configure do |config|

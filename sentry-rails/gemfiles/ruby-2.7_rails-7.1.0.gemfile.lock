@@ -120,6 +120,13 @@ GEM
     connection_pool (2.5.5)
     crass (1.0.6)
     date (3.5.1)
+    delayed_job (4.2.0)
+      activesupport (>= 3.0, < 9.0)
+      benchmark
+      logger
+    delayed_job_active_record (4.1.11)
+      activerecord (>= 3.0, < 9.0)
+      delayed_job (>= 3.0, < 5)
     diff-lcs (1.6.2)
     docile (1.4.1)
     drb (2.2.3)
@@ -167,6 +174,8 @@ GEM
     net-smtp (0.5.1)
       net-protocol
     nio4r (2.7.5)
+    nokogiri (1.15.7-aarch64-linux)
+      racc (~> 1.4)
     nokogiri (1.15.7-x86_64-linux)
       racc (~> 1.4)
     parallel (1.28.0)
@@ -225,6 +234,8 @@ GEM
       erb
       psych (>= 4.0.0)
       tsort
+    redis-client (0.30.0)
+      connection_pool
     regexp_parser (2.12.0)
     reline (0.6.3)
       io-console (~> 0.5)
@@ -287,6 +298,12 @@ GEM
     securerandom (0.3.2)
     sequel (5.105.0)
       bigdecimal
+    sidekiq (7.3.10)
+      base64
+      connection_pool (>= 2.3.0, < 3)
+      logger
+      rack (>= 2.2.4, < 3.3)
+      redis-client (>= 0.23.0, < 1)
     simplecov (0.22.0)
       docile (~> 1.1)
       simplecov-html (~> 0.11)
@@ -322,6 +339,7 @@ GEM
     zeitwerk (2.6.18)
 
 PLATFORMS
+  aarch64-linux
   x86_64-linux
 
 DEPENDENCIES
@@ -332,6 +350,8 @@ DEPENDENCIES
   benchmark_driver
   cgi
   debug!
+  delayed_job
+  delayed_job_active_record
   irb
   jdbc-sqlite3
   mini_magick
@@ -347,6 +367,7 @@ DEPENDENCIES
   sentry-rails!
   sentry-ruby!
   sequel
+  sidekiq (~> 7.0)
   simplecov
   simplecov-cobertura (~> 3.0)
   sprockets-rails

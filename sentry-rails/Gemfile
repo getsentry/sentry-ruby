@@ -56,6 +56,53 @@ end
 
 gem "mini_magick"
 
+# Sidekiq is a dev-only dependency, used by the common ActiveJob spec
+# suite to verify the AJ tracing extension works against the :sidekiq
+# adapter independent of sentry-sidekiq's native middleware.
+#
+# Gated on Ruby/Rails/platform because:
+#   - The sidekiq_adapter_spec only passes on Rails > 7.0.
+#   - Sidekiq 8 requires Ruby >= 3.2; older Rubies fall back to Sidekiq 7.
+#   - Sidekiq does not reliably support JRuby.
+#
+# sidekiq_adapter_spec.rb also rescues LoadError and re-checks the
+# Rails version, so matrices that don't bundle Sidekiq skip the spec
+# cleanly without any other gating.
+unless RUBY_PLATFORM.include?("java")
+  if rails_version > Gem::Version.new("7.0.0") && ruby_version >= Gem::Version.new("3.2")
+    gem "sidekiq", "~> 8.0"
+  elsif rails_version > Gem::Version.new("7.0.0")
+    gem "sidekiq", "~> 7.0"
+  end
+end
+
+# delayed_job and resque are dev-only dependencies, used by the common
+# ActiveJob spec suite to verify the AJ tracing extension works against
+# the :delayed_job and :resque adapters independent of the dedicated
+# sentry-delayed_job / sentry-resque integrations.
+#
+# Both spec files rescue LoadError and skip cleanly on matrices that
+# don't bundle the gem, so the gating below only needs to keep
+# `bundle install` resolvable — it doesn't have to be exact.
+unless RUBY_PLATFORM.include?("java")
+  # delayed_job is backed by ActiveRecord here (delayed_job_active_record),
+  # reusing the dummy app's SQLite database. It supports every Ruby/Rails
+  # combination in the matrix.
+  gem "delayed_job"
+  gem "delayed_job_active_record"
+
+  # resque has no in-memory test mode, so the spec drives it through
+  # mock_redis instead of a live Redis (mirroring how the sidekiq context
+  # uses Sidekiq's fake mode). resque 3 / resque-scheduler 5 / mock_redis
+  # all require Ruby >= 3.0, so gate them on that — older matrices skip
+  # the resque spec via its LoadError rescue.
+  if ruby_version >= Gem::Version.new("3.0")
+    gem "resque"
+    gem "resque-scheduler", "~> 5.0"
+    gem "mock_redis"
+  end
+end
+
 gem "sprockets-rails"
 
 gem "benchmark-ips"

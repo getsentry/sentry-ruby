@@ -72,6 +72,12 @@ RSpec.describe Sentry::Rails::Configuration do
     end
   end
 
+  describe "#active_job_propagate_traces" do
+    it "has correct default value" do
+      expect(subject.active_job_propagate_traces).to be(true)
+    end
+  end
+
   describe "#structured_logging" do
     let(:config) { Sentry.configuration.rails }
 

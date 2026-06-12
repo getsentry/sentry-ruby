@@ -25,6 +25,9 @@ services:
     command: ["mise", "run", "e2e:serve"]
     environment:
       BUNDLE_PATH: /home/sentry/bundle
+    depends_on:
+      redis:
+        condition: service_healthy
     volumes:
       - ..:/workspace/sentry:cached
       - bundle-gems:/home/sentry/bundle
@@ -38,6 +41,11 @@ services:
       - ALLOW_EMPTY_PASSWORD=yes
     ports:
       - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 2s
+      timeout: 3s
+      retries: 10
 
 volumes:
   bundle-gems:
