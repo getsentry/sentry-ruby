@@ -47,4 +47,30 @@ RSpec.shared_examples "an ActiveJob backend that emits a producer span on enqueu
       expect(publish_spans).to be_empty
     end
   end
+
+  context "when producer-span instrumentation raises" do
+    let(:configure_sentry) { proc { |config| config.traces_sample_rate = 1.0 } }
+
+    it "still enqueues the job and logs the error instead of breaking perform_later" do
+      allow(Sentry).to receive(:with_child_span).and_call_original
+      allow(Sentry).to receive(:with_child_span)
+        .with(hash_including(op: "queue.publish"))
+        .and_raise(StandardError, "boom from instrumentation")
+      expect(Sentry.sdk_logger).to receive(:error).with(/producer span/)
+
+      within_parent_transaction do
+        expect { successful_job.perform_later }.not_to raise_error
+      end
+
+      expect(last_enqueued_payload).not_to be_nil
+    end
+
+    it "does not swallow a failure raised by the real enqueue" do
+      allow(successful_job.queue_adapter).to receive(:enqueue).and_raise(StandardError, "boom from enqueue")
+
+      within_parent_transaction do
+        expect { successful_job.perform_later }.to raise_error(StandardError, /boom from enqueue/)
+      end
+    end
+  end
 end

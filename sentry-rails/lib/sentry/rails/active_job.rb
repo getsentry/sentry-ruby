@@ -85,17 +85,37 @@ module Sentry
             @producer_callback_registered = true
           end
 
-          def record_producer_span(job)
+          def record_producer_span(job, &enqueue)
             return yield if !Sentry.initialized? || job.already_supported_by_sentry_integration?
 
-            Sentry.with_child_span(op: "queue.publish", description: job.class.name) do |span|
-              if span
-                span.set_origin(SPAN_ORIGIN)
-                span.set_data(Sentry::Span::DataConventions::MESSAGING_MESSAGE_ID, job.job_id)
-                span.set_data(Sentry::Span::DataConventions::MESSAGING_DESTINATION_NAME, job.queue_name)
-              end
-              yield
+            enqueued = false
+
+            run_enqueue = lambda do
+              enqueued = true
+              enqueue.call
             end
+
+            begin
+              Sentry.with_child_span(op: "queue.publish", description: job.class.name) do |span|
+                if span
+                  span.set_origin(SPAN_ORIGIN)
+                  span.set_data(Sentry::Span::DataConventions::MESSAGING_MESSAGE_ID, job.job_id)
+                  span.set_data(Sentry::Span::DataConventions::MESSAGING_DESTINATION_NAME, job.queue_name)
+                end
+
+                run_enqueue.call
+              end
+            rescue StandardError => e
+              raise if enqueued
+
+              log_producer_span_error(e)
+
+              run_enqueue.call
+            end
+          end
+
+          def log_producer_span_error(e)
+            Sentry.sdk_logger&.error("sentry-rails: failed to record producer span: #{e.class}: #{e.message}\n  #{Array(e.backtrace).first(5).join("\n  ")}")
           end
 
           def record(job, trace_headers: nil, user: nil, &block)
