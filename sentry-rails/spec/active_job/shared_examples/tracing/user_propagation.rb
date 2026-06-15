@@ -48,9 +48,9 @@ RSpec.shared_examples "an ActiveJob backend that propagates Sentry user context 
 
       expect(consumer_transaction).not_to be_nil
       expect(consumer_transaction.user).to eq(
-        "id" => "u1",
-        "email" => "alice@example.com",
-        "username" => "alice"
+        id: "u1",
+        email: "alice@example.com",
+        username: "alice"
       )
     end
 
@@ -65,10 +65,45 @@ RSpec.shared_examples "an ActiveJob backend that propagates Sentry user context 
       error_event = sentry_events.find { |e| e.is_a?(Sentry::ErrorEvent) }
       expect(error_event).not_to be_nil
       expect(error_event.user).to eq(
-        "id" => "u1",
-        "email" => "alice@example.com",
-        "username" => "alice"
+        id: "u1",
+        email: "alice@example.com",
+        username: "alice"
       )
+    end
+  end
+
+  context "when send_default_pii is true and logs are enabled" do
+    let(:configure_sentry) do
+      proc do |config|
+        config.traces_sample_rate = 1.0
+        config.send_default_pii = true
+        config.enable_logs = true
+      end
+    end
+
+    let(:logging_job) do
+      job_fixture do
+        def perform
+          Sentry.logger.info("hello from user_propagation spec")
+        end
+      end
+    end
+
+    it "carries the propagated user as telemetry attributes on logs emitted inside the job" do
+      Sentry.set_user(full_user)
+
+      logging_job.perform_later
+      Sentry.set_user({})
+
+      drain
+      Sentry.get_current_client.flush
+
+      log = sentry_logs.find { |l| l[:body] == "hello from user_propagation spec" }
+
+      expect(log).not_to be_nil
+      expect(log[:attributes]["user.id"]).to eq(value: "u1", type: "string")
+      expect(log[:attributes]["user.email"]).to eq(value: "alice@example.com", type: "string")
+      expect(log[:attributes]["user.name"]).to eq(value: "alice", type: "string")
     end
   end
 

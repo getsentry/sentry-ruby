@@ -130,9 +130,11 @@ module Sentry
 
             Sentry.with_scope do |scope|
               begin
-                scope.set_user(user) if user && !user.empty?
+                scope.set_user(user.transform_keys(&:to_sym)) if user && !user.empty?
+
                 scope.set_transaction_name(job.class.name, source: :task)
                 scope.set_tags(queue: job.queue_name)
+
                 scope.set_contexts(active_job: {
                   job_class: job.class.name,
                   job_id: job.job_id,
