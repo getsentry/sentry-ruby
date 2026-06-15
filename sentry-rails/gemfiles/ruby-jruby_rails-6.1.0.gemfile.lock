@@ -1,6 +1,6 @@
 GIT
   remote: https://github.com/ruby/debug.git
-  revision: ce67347fd16bda4873731cdc8f68a99822981091
+  revision: 6510cfbc7496c55ebbefa437a25c17ca58f7c5eb
   specs:
 
 PATH
@@ -119,7 +119,7 @@ GEM
     jar-dependencies (0.5.7)
     jdbc-mysql (8.4.0.1)
     jdbc-sqlite3 (3.46.1.1)
-    json (2.19.8-java)
+    json (2.19.9-java)
     language_server-protocol (3.17.0.5)
     lint_roller (1.1.0)
     logger (1.7.0)
@@ -269,7 +269,7 @@ GEM
       docile (~> 1.1)
       simplecov-html (~> 0.11)
       simplecov_json_formatter (~> 0.1)
-    simplecov-cobertura (3.1.0)
+    simplecov-cobertura (3.2.0)
       rexml
       simplecov (~> 0.19)
     simplecov-html (0.13.2)
@@ -372,7 +372,7 @@ CHECKSUMS
   jar-dependencies (0.5.7) sha256=013ce5f4639414ac8cf1169cdbe763da164b81e2d2c983d11042b5ff7bfcce80
   jdbc-mysql (8.4.0.1) sha256=429cb7999d11c4f46a7153a382b6ac07935a4c10ddc52dd98e2d52b22c17fa13
   jdbc-sqlite3 (3.46.1.1) sha256=2498fea7d37c0d51c6bad1b95ffc909173c014ba6bd36825f37910113d0230cf
-  json (2.19.8-java) sha256=cffef98cdee2e2b6830662ea91e9212c4dd2cbd3059ebc44e90ede45132a20bf
+  json (2.19.9-java) sha256=7673280594a1060594f43496a6d773ee2a40ac7e6c0f2b6a639bd5a9e0cc3e7a
   language_server-protocol (3.17.0.5) sha256=fd1e39a51a28bf3eec959379985a72e296e9f9acfce46f6a79d31ca8760803cc
   lint_roller (1.1.0) sha256=2c0c845b632a7d172cb849cc90c1bce937a28c5c8ccccb50dfd46a485003cc87
   logger (1.7.0) sha256=196edec7cc44b66cfb40f9755ce11b392f21f7967696af15d274dde7edff0203
@@ -429,7 +429,7 @@ CHECKSUMS
   sentry-ruby (6.6.2)
   sequel (5.105.0) sha256=4191d5e5d011b7229ff8a3401ca6beac047c4d35b1ec6703376513b4b25b2e67
   simplecov (0.22.0) sha256=fe2622c7834ff23b98066bb0a854284b2729a569ac659f82621fc22ef36213a5
-  simplecov-cobertura (3.1.0) sha256=6d7f38aa32c965ca2174b2e5bd88cb17138eaf629518854976ac50e628925dc5
+  simplecov-cobertura (3.2.0) sha256=70d702658677fcb20e5aceb6915ccf8bc62ff2ccd38b62b3ad5c9db5c0888740
   simplecov-html (0.13.2) sha256=bd0b8e54e7c2d7685927e8d6286466359b6f16b18cb0df47b508e8d73c777246
   simplecov_json_formatter (0.1.4) sha256=529418fbe8de1713ac2b2d612aa3daa56d316975d307244399fa4838c601b428
   sprockets (4.2.2) sha256=761e5a49f1c288704763f73139763564c845a8f856d52fba013458f8af1b59b1

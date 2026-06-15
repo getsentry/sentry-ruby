@@ -1,6 +1,6 @@
 GIT
   remote: https://github.com/ruby/debug.git
-  revision: ce67347fd16bda4873731cdc8f68a99822981091
+  revision: 6510cfbc7496c55ebbefa437a25c17ca58f7c5eb
   specs:
 
 PATH
@@ -136,7 +136,7 @@ GEM
       rdoc (>= 4.0.0)
       reline (>= 0.4.2)
     jar-dependencies (0.5.7)
-    json (2.19.8-java)
+    json (2.19.9-java)
     language_server-protocol (3.17.0.5)
     lint_roller (1.1.0)
     logger (1.7.0)
@@ -294,7 +294,7 @@ GEM
       docile (~> 1.1)
       simplecov-html (~> 0.11)
       simplecov_json_formatter (~> 0.1)
-    simplecov-cobertura (3.1.0)
+    simplecov-cobertura (3.2.0)
       rexml
       simplecov (~> 0.19)
     simplecov-html (0.13.2)
@@ -378,7 +378,7 @@ CHECKSUMS
   io-console (0.8.2-java) sha256=837efefe96084c13ae91114917986ae6c6d1cf063b27b8419cc564a722a38af8
   irb (1.18.0) sha256=de9454a0703a54704b9811a5ef31a60c86949fbf4013fcf244fabc7c775248e3
   jar-dependencies (0.5.7) sha256=013ce5f4639414ac8cf1169cdbe763da164b81e2d2c983d11042b5ff7bfcce80
-  json (2.19.8-java) sha256=cffef98cdee2e2b6830662ea91e9212c4dd2cbd3059ebc44e90ede45132a20bf
+  json (2.19.9-java) sha256=7673280594a1060594f43496a6d773ee2a40ac7e6c0f2b6a639bd5a9e0cc3e7a
   language_server-protocol (3.17.0.5) sha256=fd1e39a51a28bf3eec959379985a72e296e9f9acfce46f6a79d31ca8760803cc
   lint_roller (1.1.0) sha256=2c0c845b632a7d172cb849cc90c1bce937a28c5c8ccccb50dfd46a485003cc87
   logger (1.7.0) sha256=196edec7cc44b66cfb40f9755ce11b392f21f7967696af15d274dde7edff0203
@@ -438,7 +438,7 @@ CHECKSUMS
   sidekiq-cron (2.4.0) sha256=25595c5aee0c16d13a89466e5108af047fa4cfbf388199b39e1a600ca39472d4
   sidekiq-scheduler (5.0.6) sha256=aa49fa982fb0d58e3e94d6bc2e2187be000414b9354a9f35e0cd06de204ad5be
   simplecov (0.22.0) sha256=fe2622c7834ff23b98066bb0a854284b2729a569ac659f82621fc22ef36213a5
-  simplecov-cobertura (3.1.0) sha256=6d7f38aa32c965ca2174b2e5bd88cb17138eaf629518854976ac50e628925dc5
+  simplecov-cobertura (3.2.0) sha256=70d702658677fcb20e5aceb6915ccf8bc62ff2ccd38b62b3ad5c9db5c0888740
   simplecov-html (0.13.2) sha256=bd0b8e54e7c2d7685927e8d6286466359b6f16b18cb0df47b508e8d73c777246
   simplecov_json_formatter (0.1.4) sha256=529418fbe8de1713ac2b2d612aa3daa56d316975d307244399fa4838c601b428
   thor (1.5.0) sha256=e3a9e55fe857e44859ce104a84675ab6e8cd59c650a49106a05f55f136425e73
