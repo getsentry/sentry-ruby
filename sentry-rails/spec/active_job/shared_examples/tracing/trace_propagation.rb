@@ -78,5 +78,19 @@ RSpec.shared_examples "an ActiveJob backend that propagates trace context throug
       expect(consumer_transaction).not_to be_nil
       expect(consumer_transaction.contexts.dig(:trace, :trace_id)).not_to eq(parent_trace_id)
     end
+
+    it "still emits a queue.publish producer span on the enqueuing transaction" do
+      within_parent_transaction do
+        successful_job.perform_later
+      end
+
+      parent = transactions.find { |t| t.contexts.dig(:trace, :op) == "test" }
+      expect(parent).not_to be_nil
+
+      publish_span = parent.spans.find { |s| s[:op] == "queue.publish" }
+      expect(publish_span).not_to be_nil
+      expect(publish_span[:description]).to eq(successful_job.name)
+      expect(publish_span[:origin]).to eq("auto.queue.active_job")
+    end
   end
 end
