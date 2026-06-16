@@ -738,6 +738,18 @@ RSpec.describe 'Sentry::Rack::CaptureExceptions', when: :rack_available? do
           expect(queue_time).to be_within(10).of(30)
         end
       end
+
+      it "handles Render nanosecond timestamp format" do
+        Timecop.freeze do
+          timestamp_ns = ((Time.now.to_f - 0.03) * 1_000_000_000).to_i
+          env["HTTP_X_REQUEST_START"] = "t=#{timestamp_ns}"
+
+          stack.call(env)
+
+          queue_time = transaction.contexts.dig(:trace, :data, 'http.server.request.time_in_queue')
+          expect(queue_time).to be_within(10).of(30)
+        end
+      end
     end
 
     context "without X-Request-Start header" do

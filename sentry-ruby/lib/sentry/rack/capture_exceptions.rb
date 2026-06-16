@@ -135,6 +135,7 @@ module Sentry
       # Parses X-Request-Start header value to extract a timestamp.
       # Supports multiple formats:
       #   - Nginx: "t=1234567890.123" (seconds with decimal)
+      #   - Render: "t=1234567890123456789" (nanoseconds)
       #   - Heroku, HAProxy 1.9+: "t=1234567890123456" (microseconds)
       #   - HAProxy < 1.9: "t=1234567890" (seconds)
       #   - Generic: "1234567890.123" (raw timestamp)
@@ -158,9 +159,12 @@ module Sentry
           return
         end
 
-        # normalize: timestamps can be in seconds, milliseconds or microseconds
-        # any timestamp > 10 trillion = microseconds
-        if timestamp > 10_000_000_000_000
+        # normalize: timestamps can be in seconds, milliseconds, microseconds or nanoseconds
+        # any timestamp > 10 quadrillion = nanoseconds
+        if timestamp > 10_000_000_000_000_000
+          timestamp / 1_000_000_000.0
+        # timestamp > 10 trillion & < 10 quadrillion = microseconds
+        elsif timestamp > 10_000_000_000_000
           timestamp / 1_000_000.0
         # timestamp > 10 billion & < 10 trillion = milliseconds
         elsif timestamp > 10_000_000_000
