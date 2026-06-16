@@ -6,4 +6,5 @@ RSpec.shared_examples "an ActiveJob backend that supports distributed tracing" d
   it_behaves_like "an ActiveJob backend that records messaging span data on the consumer transaction"
   it_behaves_like "an ActiveJob backend that propagates Sentry user context through job payloads"
   it_behaves_like "an ActiveJob backend that isolates Sentry context per worker thread"
+  it_behaves_like "an ActiveJob backend that survives Sentry instrumentation failures"
 end
