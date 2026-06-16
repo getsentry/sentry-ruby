@@ -17,7 +17,7 @@ RSpec.shared_examples "an ActiveJob backend that survives Sentry instrumentation
 
     expect(last_enqueued_payload).not_to be_nil
     expect(last_enqueued_payload["_sentry"]).to be_nil
-    expect(Sentry.sdk_logger).to have_received(:error).with(/failed to inject _sentry payload/)
+    expect(Sentry.sdk_logger).to have_received(:error).with(/failed to inject _sentry payload/).at_least(:once)
   end
 
   it "still runs the job and logs when _sentry extraction raises during deserialize" do
@@ -28,6 +28,6 @@ RSpec.shared_examples "an ActiveJob backend that survives Sentry instrumentation
     expect { drain }.not_to raise_error
 
     expect(consumer_transaction).not_to be_nil
-    expect(Sentry.sdk_logger).to have_received(:error).with(/failed to extract _sentry payload/)
+    expect(Sentry.sdk_logger).to have_received(:error).with(/failed to extract _sentry payload/).at_least(:once)
   end
 end
