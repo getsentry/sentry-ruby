@@ -22,7 +22,7 @@ RSpec.shared_examples "an ActiveJob backend that emits a consumer transaction" d
       successful_job.perform_later
       drain
 
-      transaction = sentry_events.find { |e| e.is_a?(Sentry::TransactionEvent) }
+      transaction = consumer_transaction
       expect(transaction).not_to be_nil
 
       expect(transaction.transaction).to eq(successful_job.name)
@@ -36,7 +36,7 @@ RSpec.shared_examples "an ActiveJob backend that emits a consumer transaction" d
       successful_job.set(queue: "important").perform_later
       drain
 
-      transaction = sentry_events.find { |e| e.is_a?(Sentry::TransactionEvent) }
+      transaction = consumer_transaction
       expect(transaction).not_to be_nil
       expect(transaction.tags[:queue]).to eq("important")
     end
@@ -45,7 +45,7 @@ RSpec.shared_examples "an ActiveJob backend that emits a consumer transaction" d
       successful_job.perform_later
       drain
 
-      transaction = sentry_events.find { |e| e.is_a?(Sentry::TransactionEvent) }
+      transaction = consumer_transaction
       expect(transaction).not_to be_nil
 
       ctx = transaction.contexts[:active_job]
@@ -79,7 +79,7 @@ RSpec.shared_examples "an ActiveJob backend that emits a consumer transaction" d
       query_job.perform_later
       drain
 
-      transaction = sentry_events.find { |e| e.is_a?(Sentry::TransactionEvent) }
+      transaction = consumer_transaction
       expect(transaction).not_to be_nil
 
       db_span = transaction.spans.find { |s| s[:op] == "db.sql.active_record" }
@@ -92,7 +92,7 @@ RSpec.shared_examples "an ActiveJob backend that emits a consumer transaction" d
         drain
       end.to raise_error(RuntimeError, /boom from tracing spec/)
 
-      transaction = sentry_events.find { |e| e.is_a?(Sentry::TransactionEvent) }
+      transaction = consumer_transaction
       error_event = sentry_events.find { |e| e.is_a?(Sentry::ErrorEvent) }
 
       expect(transaction.contexts.dig(:trace, :status)).to eq("internal_error")
