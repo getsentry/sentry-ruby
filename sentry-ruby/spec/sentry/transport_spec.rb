@@ -34,24 +34,28 @@ RSpec.describe Sentry::Transport do
       let(:envelope) { subject.envelope_from_event(event) }
 
       it "generates correct envelope content" do
-        result, _ = subject.serialize_envelope(envelope)
+        result = nil
 
-        envelope_header, item_header, item = result.split("\n")
-        envelope_header_parsed = JSON.parse(envelope_header)
+        Timecop.freeze do |frozen_time|
+          result, _ = subject.serialize_envelope(envelope)
 
-        expect(envelope_header_parsed).to eq({
-          "event_id" => event.event_id,
-          "dsn" => Sentry::TestHelper::DUMMY_DSN,
-          "sdk" => Sentry.sdk_meta,
-          "sent_at" => Time.now.utc.iso8601,
-          "trace" => dynamic_sampling_context
-        })
+          envelope_header, item_header, item = result.split("\n")
+          envelope_header_parsed = JSON.parse(envelope_header)
 
-        expect(item_header).to eq(
-          '{"type":"event","content_type":"application/json"}'
-        )
+          expect(envelope_header_parsed).to eq({
+            "event_id" => event.event_id,
+            "dsn" => Sentry::TestHelper::DUMMY_DSN,
+            "sdk" => Sentry.sdk_meta,
+            "sent_at" => frozen_time.utc.iso8601,
+            "trace" => dynamic_sampling_context
+          })
 
-        expect(item).to eq(event.to_h.to_json)
+          expect(item_header).to eq(
+            '{"type":"event","content_type":"application/json"}'
+          )
+
+          expect(item).to eq(event.to_h.to_json)
+        end
       end
     end
 
@@ -69,24 +73,26 @@ RSpec.describe Sentry::Transport do
       let(:envelope) { subject.envelope_from_event(event) }
 
       it "generates correct envelope content" do
-        result, _ = subject.serialize_envelope(envelope)
+        Timecop.freeze do |frozen_time|
+          result, _ = subject.serialize_envelope(envelope)
 
-        envelope_header, item_header, item = result.split("\n")
-        envelope_header_parsed = JSON.parse(envelope_header)
+          envelope_header, item_header, item = result.split("\n")
+          envelope_header_parsed = JSON.parse(envelope_header)
 
-        expect(envelope_header_parsed).to eq({
-          "event_id" => event.event_id,
-          "dsn" => Sentry::TestHelper::DUMMY_DSN,
-          "sdk" => Sentry.sdk_meta,
-          "sent_at" => Time.now.utc.iso8601,
-          "trace" => dynamic_sampling_context
-        })
+          expect(envelope_header_parsed).to eq({
+            "event_id" => event.event_id,
+            "dsn" => Sentry::TestHelper::DUMMY_DSN,
+            "sdk" => Sentry.sdk_meta,
+            "sent_at" => frozen_time.utc.iso8601,
+            "trace" => dynamic_sampling_context
+          })
 
-        expect(item_header).to eq(
-          '{"type":"transaction","content_type":"application/json"}'
-        )
+          expect(item_header).to eq(
+            '{"type":"transaction","content_type":"application/json"}'
+          )
 
-        expect(item).to eq(event.to_h.to_json)
+          expect(item).to eq(event.to_h.to_json)
+        end
       end
 
       context "with profiling on transaction" do
