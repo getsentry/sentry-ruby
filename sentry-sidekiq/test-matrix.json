@@ -1,0 +1,117 @@
+[
+  {
+    "ruby_version": "2.7",
+    "sidekiq_version": "5.0"
+  },
+  {
+    "ruby_version": "2.7",
+    "sidekiq_version": "6.5"
+  },
+  {
+    "ruby_version": "2.7",
+    "sidekiq_version": "7.0"
+  },
+  {
+    "ruby_version": "3.0",
+    "sidekiq_version": "5.0"
+  },
+  {
+    "ruby_version": "3.0",
+    "sidekiq_version": "6.5"
+  },
+  {
+    "ruby_version": "3.0",
+    "sidekiq_version": "7.0"
+  },
+  {
+    "ruby_version": "3.1",
+    "sidekiq_version": "5.0"
+  },
+  {
+    "ruby_version": "3.1",
+    "sidekiq_version": "6.5"
+  },
+  {
+    "ruby_version": "3.1",
+    "sidekiq_version": "7.0"
+  },
+  {
+    "ruby_version": "3.2",
+    "sidekiq_version": "5.0"
+  },
+  {
+    "ruby_version": "3.2",
+    "sidekiq_version": "6.5"
+  },
+  {
+    "ruby_version": "3.2",
+    "sidekiq_version": "7.0"
+  },
+  {
+    "ruby_version": "3.2",
+    "sidekiq_version": "8.0.0"
+  },
+  {
+    "ruby_version": "3.3",
+    "sidekiq_version": "5.0"
+  },
+  {
+    "ruby_version": "3.3",
+    "sidekiq_version": "6.5"
+  },
+  {
+    "ruby_version": "3.3",
+    "sidekiq_version": "7.0"
+  },
+  {
+    "ruby_version": "3.3",
+    "sidekiq_version": "8.0.0"
+  },
+  {
+    "ruby_version": "3.4",
+    "sidekiq_version": "5.0"
+  },
+  {
+    "ruby_version": "3.4",
+    "sidekiq_version": "6.5"
+  },
+  {
+    "ruby_version": "3.4",
+    "sidekiq_version": "7.0"
+  },
+  {
+    "ruby_version": "3.4",
+    "sidekiq_version": "8.0.0",
+    "options": {
+      "rubyopt": "--enable-frozen-string-literal --debug=frozen-string-literal"
+    }
+  },
+  {
+    "ruby_version": "4.0",
+    "sidekiq_version": "5.0"
+  },
+  {
+    "ruby_version": "4.0",
+    "sidekiq_version": "6.5"
+  },
+  {
+    "ruby_version": "4.0",
+    "sidekiq_version": "7.0"
+  },
+  {
+    "ruby_version": "jruby-9.4.14.0",
+    "sidekiq_version": "5.0"
+  },
+  {
+    "ruby_version": "jruby-9.4.14.0",
+    "sidekiq_version": "6.5"
+  },
+  {
+    "ruby_version": "jruby-9.4.14.0",
+    "sidekiq_version": "6"
+  },
+  {
+    "ruby_version": "jruby-9.4.14.0",
+    "sidekiq_version": "7.0"
+  }
+]

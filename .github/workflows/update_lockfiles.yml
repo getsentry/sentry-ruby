@@ -4,10 +4,10 @@ name: Update lockfiles
 # installs are fully pinned (supply-chain hardening). Run manually to create the
 # initial lockfiles, and on a schedule to refresh them deliberately.
 #
-# Each gen-<gem> job MUST keep its matrix in sync with that gem's *_test.yml
-# workflow (minus `options`/RUBYOPT, which don't change dependency resolution).
-# When a test matrix changes, mirror it here or the frozen install will fail for
-# the missing cell.
+# Each gen-<gem> job derives its cells from that gem's test-matrix.json — the
+# single source of truth, shared with the *_test.yml workflows. `options`/RUBYOPT
+# don't affect dependency resolution, so they're stripped and cells deduped here
+# (one lockfile per cell).
 
 on:
   workflow_dispatch:
@@ -19,16 +19,29 @@ permissions:
   contents: write
 
 jobs:
-  # Keep in sync with the matrix in tests.yml
-  ruby-versions:
-    uses: ruby/actions/.github/workflows/ruby_versions.yml@6d15c16f6259d657961bcdccf2598d3d53e90635
-    with:
-      engine: cruby-jruby
-      min_version: 2.7
-      versions: '["jruby-9.4.14.0"]'
+  matrix:
+    runs-on: ubuntu-latest
+    outputs:
+      sentry_ruby: ${{ steps.set.outputs.sentry_ruby }}
+      sentry_rails: ${{ steps.set.outputs.sentry_rails }}
+      sentry_sidekiq: ${{ steps.set.outputs.sentry_sidekiq }}
+      sentry_resque: ${{ steps.set.outputs.sentry_resque }}
+      sentry_delayed_job: ${{ steps.set.outputs.sentry_delayed_job }}
+      sentry_opentelemetry: ${{ steps.set.outputs.sentry_opentelemetry }}
+      sentry_yabeda: ${{ steps.set.outputs.sentry_yabeda }}
+    steps:
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
+      # Strip rubyopt (irrelevant to resolution) and dedup, so each cell maps to
+      # exactly one lockfile artifact (no name collisions on the rubyopt twins).
+      - id: set
+        run: |
+          for gem in sentry-ruby sentry-rails sentry-sidekiq sentry-resque sentry-delayed_job sentry-opentelemetry sentry-yabeda; do
+            cells=$(jq -c 'map(del(.options)) | unique' "$gem/test-matrix.json")
+            echo "${gem//-/_}=$cells" >> "$GITHUB_OUTPUT"
+          done
 
   gen-sentry-ruby:
-    needs: ruby-versions
+    needs: matrix
     name: lock sentry-ruby ${{ matrix.ruby_version }} / rack ${{ matrix.rack_version }} / redis ${{ matrix.redis_rb_version }}
     runs-on: ubuntu-latest
     timeout-minutes: 15
@@ -41,21 +54,8 @@ jobs:
       REDIS_RB_VERSION: ${{ matrix.redis_rb_version }}
     strategy:
       fail-fast: false
-      # Keep in sync with the matrix in sentry_ruby_test.yml.
       matrix:
-        ruby_version: ${{ fromJson(needs.ruby-versions.outputs.versions) }}
-        rack_version: [2.0, 3.0, 3.1]
-        redis_rb_version: [4.0]
-        include:
-          - { ruby_version: 3.2, rack_version: 0,   redis_rb_version: 5.0 }
-          - { ruby_version: 3.2, rack_version: 2.0, redis_rb_version: 5.0 }
-          - { ruby_version: 3.2, rack_version: 3.0, redis_rb_version: 5.0 }
-          - { ruby_version: 3.2, rack_version: 3.0, redis_rb_version: 4.0 }
-          - { ruby_version: 3.3, rack_version: 3.1, redis_rb_version: 5.3 }
-          - { ruby_version: 3.4, rack_version: 3.1, redis_rb_version: 5.3 }
-        exclude:
-          - ruby_version: 'jruby'
-          - ruby_version: 'jruby-head'
+        include: ${{ fromJson(needs.matrix.outputs.sentry_ruby) }}
     steps:
       - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
       # Wrapper keys the lock to this cell (<cell>.gemfile -> <cell>.gemfile.lock).
@@ -84,7 +84,7 @@ jobs:
           if-no-files-found: error
 
   gen-sentry-rails:
-    needs: ruby-versions
+    needs: matrix
     name: lock sentry-rails ${{ matrix.ruby_version }} / rails ${{ matrix.rails_version }}
     runs-on: ubuntu-latest
     timeout-minutes: 15
@@ -96,29 +96,8 @@ jobs:
       RAILS_VERSION: ${{ matrix.rails_version }}
     strategy:
       fail-fast: false
-      # Keep in sync with the matrix in sentry_rails_test.yml.
       matrix:
-        ruby_version: ${{ fromJson(needs.ruby-versions.outputs.versions) }}
-        rails_version: [6.1.0, 7.0.0, 7.1.0]
-        include:
-          - { ruby_version: "2.7", rails_version: 5.2.0 }
-          - { ruby_version: "2.7", rails_version: 6.0.0 }
-          - { ruby_version: "3.1", rails_version: 7.2.0 }
-          - { ruby_version: "3.2", rails_version: 7.2.0 }
-          - { ruby_version: "3.3", rails_version: 7.2.0 }
-          - { ruby_version: "3.4", rails_version: 7.2.0 }
-          - { ruby_version: "3.2", rails_version: "8.0.0" }
-          - { ruby_version: "3.3", rails_version: "8.0.0" }
-          - { ruby_version: "3.4", rails_version: "8.0.0" }
-          - { ruby_version: "4.0", rails_version: "8.0.0" }
-          - { ruby_version: "3.4", rails_version: "8.1.3" }
-          - { ruby_version: "4.0", rails_version: "8.1.3" }
-          - { ruby_version: "3.2", rails_version: 7.1.0 }
-        exclude:
-          - ruby_version: head
-          - ruby_version: jruby-head
-          - { ruby_version: "3.4", rails_version: "6.1.0" }
-          - { ruby_version: "3.4", rails_version: "7.0.0" }
+        include: ${{ fromJson(needs.matrix.outputs.sentry_rails) }}
     steps:
       - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
       # Wrapper keys the lock to this cell (<cell>.gemfile -> <cell>.gemfile.lock).
@@ -143,7 +122,7 @@ jobs:
           if-no-files-found: error
 
   gen-sentry-sidekiq:
-    needs: ruby-versions
+    needs: matrix
     name: lock sentry-sidekiq ${{ matrix.ruby_version }} / sidekiq ${{ matrix.sidekiq_version }}
     runs-on: ubuntu-latest
     timeout-minutes: 15
@@ -155,21 +134,8 @@ jobs:
       SIDEKIQ_VERSION: ${{ matrix.sidekiq_version }}
     strategy:
       fail-fast: false
-      # Keep in sync with the matrix in sentry_sidekiq_test.yml.
       matrix:
-        ruby_version: ${{ fromJson(needs.ruby-versions.outputs.versions) }}
-        sidekiq_version: ["5.0", "6.5", "7.0"]
-        include:
-          - { ruby_version: jruby-9.4.14.0, sidekiq_version: 5.0 }
-          - { ruby_version: jruby-9.4.14.0, sidekiq_version: 6.0 }
-          - { ruby_version: jruby-9.4.14.0, sidekiq_version: 7.0 }
-          - { ruby_version: "3.2", sidekiq_version: 8.0.0 }
-          - { ruby_version: "3.3", sidekiq_version: 8.0.0 }
-          - { ruby_version: "3.4", sidekiq_version: 8.0.0 }
-        exclude:
-          - ruby_version: head
-          - ruby_version: jruby
-          - ruby_version: jruby-head
+        include: ${{ fromJson(needs.matrix.outputs.sentry_sidekiq) }}
     steps:
       - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
       # Wrapper keys the lock to this cell (<cell>.gemfile -> <cell>.gemfile.lock).
@@ -194,7 +160,7 @@ jobs:
           if-no-files-found: error
 
   gen-sentry-resque:
-    needs: ruby-versions
+    needs: matrix
     name: lock sentry-resque ${{ matrix.ruby_version }}
     runs-on: ubuntu-latest
     timeout-minutes: 15
@@ -205,12 +171,8 @@ jobs:
       BUNDLE_GEMFILE: ${{ github.workspace }}/sentry-resque/gemfiles/ruby-${{ matrix.ruby_version }}.gemfile
     strategy:
       fail-fast: false
-      # Keep in sync with the matrix in sentry_resque_test.yml.
       matrix:
-        ruby_version: ${{ fromJson(needs.ruby-versions.outputs.versions) }}
-        exclude:
-          - ruby_version: 'jruby'
-          - ruby_version: 'jruby-head'
+        include: ${{ fromJson(needs.matrix.outputs.sentry_resque) }}
     steps:
       - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
       # Wrapper keys the lock to this cell (<cell>.gemfile -> <cell>.gemfile.lock).
@@ -235,7 +197,7 @@ jobs:
           if-no-files-found: error
 
   gen-sentry-delayed_job:
-    needs: ruby-versions
+    needs: matrix
     name: lock sentry-delayed_job ${{ matrix.ruby_version }}
     runs-on: ubuntu-latest
     timeout-minutes: 15
@@ -246,12 +208,8 @@ jobs:
       BUNDLE_GEMFILE: ${{ github.workspace }}/sentry-delayed_job/gemfiles/ruby-${{ matrix.ruby_version }}.gemfile
     strategy:
       fail-fast: false
-      # Keep in sync with the matrix in sentry_delayed_job_test.yml.
       matrix:
-        ruby_version: ${{ fromJson(needs.ruby-versions.outputs.versions) }}
-        exclude:
-          - ruby_version: head
-          - ruby_version: jruby-head
+        include: ${{ fromJson(needs.matrix.outputs.sentry_delayed_job) }}
     steps:
       - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
       # Wrapper keys the lock to this cell (<cell>.gemfile -> <cell>.gemfile.lock).
@@ -276,7 +234,7 @@ jobs:
           if-no-files-found: error
 
   gen-sentry-opentelemetry:
-    needs: ruby-versions
+    needs: matrix
     name: lock sentry-opentelemetry ${{ matrix.ruby_version }}
     runs-on: ubuntu-latest
     timeout-minutes: 15
@@ -287,11 +245,8 @@ jobs:
       BUNDLE_GEMFILE: ${{ github.workspace }}/sentry-opentelemetry/gemfiles/ruby-${{ matrix.ruby_version }}.gemfile
     strategy:
       fail-fast: false
-      # Keep in sync with the matrix in sentry_opentelemetry_test.yml.
       matrix:
-        ruby_version: ${{ fromJson(needs.ruby-versions.outputs.versions) }}
-        exclude:
-          - ruby_version: 'jruby-head'
+        include: ${{ fromJson(needs.matrix.outputs.sentry_opentelemetry) }}
     steps:
       - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
       # Wrapper keys the lock to this cell (<cell>.gemfile -> <cell>.gemfile.lock).
@@ -316,7 +271,7 @@ jobs:
           if-no-files-found: error
 
   gen-sentry-yabeda:
-    needs: ruby-versions
+    needs: matrix
     name: lock sentry-yabeda ${{ matrix.ruby_version }}
     runs-on: ubuntu-latest
     timeout-minutes: 15
@@ -327,12 +282,8 @@ jobs:
       BUNDLE_GEMFILE: ${{ github.workspace }}/sentry-yabeda/gemfiles/ruby-${{ matrix.ruby_version }}.gemfile
     strategy:
       fail-fast: false
-      # Keep in sync with the matrix in sentry_yabeda_test.yml.
       matrix:
-        ruby_version: ${{ fromJson(needs.ruby-versions.outputs.versions) }}
-        exclude:
-          - ruby_version: 'jruby'
-          - ruby_version: 'jruby-head'
+        include: ${{ fromJson(needs.matrix.outputs.sentry_yabeda) }}
     steps:
       - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
       # Wrapper keys the lock to this cell (<cell>.gemfile -> <cell>.gemfile.lock).

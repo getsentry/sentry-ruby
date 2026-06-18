@@ -7,17 +7,24 @@ on:
       matrix-result:
         description: "Matrix job result"
         value: ${{ jobs.test.outputs.matrix-result }}
-    inputs:
-      versions:
-        required: true
-        type: string
 # Cancel in progress workflows on pull_requests.
 # https://docs.github.com/en/actions/using-jobs/using-concurrency#example-using-a-fallback-value
 concurrency:
   group: sentry-opentelemetry-test-${{ github.head_ref || github.run_id }}
   cancel-in-progress: true
 jobs:
+  matrix:
+    runs-on: ubuntu-latest
+    outputs:
+      include: ${{ steps.set.outputs.include }}
+    steps:
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
+      # test-matrix.json is the single source of truth for this gem's matrix.
+      - id: set
+        run: echo "include=$(jq -c . sentry-opentelemetry/test-matrix.json)" >> "$GITHUB_OUTPUT"
+
   test:
+    needs: matrix
     defaults:
       run:
         working-directory: sentry-opentelemetry
@@ -35,14 +42,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        ruby_version: ${{ fromJson(inputs.versions) }}
-        # opentelemetry_version: [1.2.0]
-        include:
-          - ruby_version: 3.2
-            options:
-              rubyopt: "--enable-frozen-string-literal --debug=frozen-string-literal"
-        exclude:
-          - { ruby_version: 'jruby-head' }
+        include: ${{ fromJson(needs.matrix.outputs.include) }}
     steps:
       - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
 
