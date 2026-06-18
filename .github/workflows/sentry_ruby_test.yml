@@ -3,17 +3,24 @@ name: sentry-ruby Test
 on:
   workflow_dispatch:
   workflow_call:
-    inputs:
-      versions:
-        required: true
-        type: string
 # Cancel in progress workflows on pull_requests.
 # https://docs.github.com/en/actions/using-jobs/using-concurrency#example-using-a-fallback-value
 concurrency:
   group: sentry-ruby-test-${{ github.head_ref || github.run_id }}
   cancel-in-progress: true
 jobs:
+  matrix:
+    runs-on: ubuntu-latest
+    outputs:
+      include: ${{ steps.set.outputs.include }}
+    steps:
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
+      # test-matrix.json is the single source of truth for this gem's matrix.
+      - id: set
+        run: echo "include=$(jq -c . sentry-ruby/test-matrix.json)" >> "$GITHUB_OUTPUT"
+
   test:
+    needs: matrix
     defaults:
       run:
         working-directory: sentry-ruby
@@ -42,33 +49,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        ruby_version: ${{ fromJson(inputs.versions) }}
-        rack_version: [2.0, 3.0, 3.1]
-        redis_rb_version: [4.0]
-        include:
-          - ruby_version: 3.2
-            rack_version: 0
-            redis_rb_version: 5.0
-          - ruby_version: 3.2
-            rack_version: 2.0
-            redis_rb_version: 5.0
-          - ruby_version: 3.2
-            rack_version: 3.0
-            redis_rb_version: 5.0
-            options:
-              rubyopt: "--enable-frozen-string-literal --debug=frozen-string-literal"
-          - ruby_version: 3.2
-            rack_version: 3.0
-            redis_rb_version: 4.0
-          - ruby_version: 3.3
-            rack_version: 3.1
-            redis_rb_version: 5.3
-          - ruby_version: 3.4
-            rack_version: 3.1
-            redis_rb_version: 5.3
-        exclude:
-          - ruby_version: 'jruby'
-          - ruby_version: 'jruby-head'
+        include: ${{ fromJson(needs.matrix.outputs.include) }}
     steps:
       - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
 
