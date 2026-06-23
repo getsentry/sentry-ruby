@@ -36,6 +36,7 @@ jobs:
       - uses: jdx/mise-action@e6a8b3978addb5a52f2b4cd9d91eafa7f0ab959d # v4.2.0
         with:
           install: true
+          cache: true
 
       - name: Regenerate lockfiles
         run: ruby bin/relock
