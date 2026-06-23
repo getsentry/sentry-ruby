@@ -111,7 +111,7 @@ def discover_cells(gems)
   gems.flat_map do |gem|
     path = matrix_path(gem)
     abort "No test-matrix.json for gem '#{gem}'" unless File.exist?(path)
-    JSON.parse(File.read(path)).map { |entry| cell_from_entry(gem, entry) }
+    JSON.parse(File.read(path)).map { |entry| cell_from_entry(gem, entry) }.uniq(&:wrapper)
   end
 end
 
@@ -225,7 +225,7 @@ def color(text, code)
 end
 
 def fmt_duration(seconds)
-  seconds < 60 ? format("%.1fs", seconds) : format("%dm%02ds", seconds / 60, seconds % 60)
+  seconds < 60 ? format("%.1fs", seconds) : format("%dm%02ds", (seconds / 60).to_i, (seconds % 60).to_i)
 end
 
 # Serial: cells sharing a Ruby also share that Ruby's gem home, and git-sourced
