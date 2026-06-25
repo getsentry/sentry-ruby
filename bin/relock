@@ -13,9 +13,10 @@
 #
 # Each cell must resolve against its own Ruby (gemspecs gate on
 # required_ruby_version), so every cell runs under a matching Ruby provided by
-# mise (https://mise.jdx.dev). The required Rubies are declared in .mise.toml;
-# install them once with `mise install`. This script resolves against those
-# already-installed Rubies and aborts if any are missing.
+# mise (https://mise.jdx.dev). The required Rubies are declared in
+# .mise.ci.toml; install them once with `mise --env ci install`. This
+# script resolves against those already-installed Rubies and aborts if any are
+# missing.
 #
 #   bin/relock                         # refresh every cell
 #   bin/relock --gem sentry-ruby       # one gem
@@ -162,7 +163,7 @@ RESOLVE = <<~SH
 SH
 
 # Abort (don't auto-install) if any cell's Ruby is missing — the Rubies are
-# declared in .mise.toml and provisioned once via `mise install`.
+# declared in .mise.ci.toml and provisioned once via `mise --env ci install`.
 def ensure_installed(cells)
   missing = cells.map(&:ruby).uniq.reject do |spec|
     system(mise_bin, "where", "ruby@#{spec}", out: File::NULL, err: File::NULL)
@@ -170,7 +171,7 @@ def ensure_installed(cells)
   return if missing.empty?
 
   warn "Ruby not installed: #{missing.map { |s| "ruby@#{s}" }.join(', ')}."
-  abort "Run `mise install` first."
+  abort "Run `mise --env ci install` first."
 end
 
 def cell_env(cell, force: false)
@@ -236,7 +237,7 @@ if opts[:list]
   exit 0
 end
 
-# Resolve against already-installed Rubies (declared in .mise.toml) — never
+# Resolve against already-installed Rubies (declared in .mise.ci.toml) — never
 # auto-installs.
 ensure_installed(cells)
 

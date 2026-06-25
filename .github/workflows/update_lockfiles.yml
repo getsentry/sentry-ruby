@@ -4,10 +4,11 @@ name: Update lockfiles
 # installs are fully pinned (supply-chain hardening). Run manually to create the
 # initial lockfiles, and on a schedule to refresh them deliberately.
 #
-# The mise-action step installs every Ruby declared in .mise.toml; bin/relock
-# then sweeps every gem's test-matrix.json — the single source of truth, shared
-# with the *_test.yml workflows — resolving each cell against its matching Ruby
-# via `mise exec`. One invocation regenerates the whole lock set.
+# Under MISE_ENV=ci the mise-action step installs every Ruby declared in
+# .mise.ci.toml; bin/relock then sweeps every gem's test-matrix.json — the
+# single source of truth, shared with the *_test.yml workflows — resolving each
+# cell against its matching Ruby via `mise exec`. One invocation regenerates the
+# whole lock set.
 
 on:
   workflow_dispatch:
@@ -31,11 +32,14 @@ jobs:
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
 
-      # mise installs every Ruby declared in .mise.toml (ruby.compile=false ->
+      # mise installs every Ruby declared in .mise.ci.toml (ruby.compile=false ->
       # prebuilt binaries where available); bin/relock then resolves each cell
-      # against its matching Ruby.
+      # against its matching Ruby. MISE_ENV scopes the install to the ci profile;
+      # it also keys the action's tool cache, so the matrix Rubies are cached and
+      # restored across runs.
       - uses: jdx/mise-action@e6a8b3978addb5a52f2b4cd9d91eafa7f0ab959d # v4.2.0
         env:
+          MISE_ENV: ci
           MISE_JOBS: "2"
         with:
           install: true

@@ -52,10 +52,10 @@ This file defines which specific image and Ruby version will be used to run the 
 
 CI installs against a committed, checksummed lockfile per test-matrix cell (`<gem>/gemfiles/<cell>.gemfile.lock`) to keep dependencies fully pinned against supply chain attacks. Each gem's `test-matrix.json` is the source of truth; `bin/relock` materializes the gemfiles and locks from it.
 
-We use [mise](https://mise.jdx.dev) for managing the ruby versions, so first install that by following official instructions. The required Rubies are declared in `.mise.toml`, so provision them once:
+We use [mise](https://mise.jdx.dev) for managing the ruby versions, so first install that by following official instructions. The required Rubies are declared in `.mise.ci.toml`, so provision them once:
 
 ```bash
-mise install            # installs every Ruby the matrix needs
+mise --env ci install            # installs every Ruby the matrix needs
 ```
 
 Then regenerate locks:
