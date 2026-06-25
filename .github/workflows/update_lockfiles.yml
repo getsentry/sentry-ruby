@@ -4,9 +4,10 @@ name: Update lockfiles
 # installs are fully pinned (supply-chain hardening). Run manually to create the
 # initial lockfiles, and on a schedule to refresh them deliberately.
 #
-# bin/relock sweeps every gem's test-matrix.json — the single source of truth,
-# shared with the *_test.yml workflows — installing each cell's Ruby via mise
-# and resolving every cell. One invocation regenerates the whole lock set.
+# The mise-action step installs every Ruby declared in .mise.toml; bin/relock
+# then sweeps every gem's test-matrix.json — the single source of truth, shared
+# with the *_test.yml workflows — resolving each cell against its matching Ruby
+# via `mise exec`. One invocation regenerates the whole lock set.
 
 on:
   workflow_dispatch:
@@ -72,7 +73,7 @@ jobs:
           # Aggregate dependency version changes across every touched lock. Pair
           # the removed (-) and added (+) "name (version)" spec lines per gem so
           # the summary reads "gem: old → new" (deduped across cells).
-          DEPS=$(git diff --cached -U0 -- '**/gemfiles/*.gemfile.lock' \
+          DEPS=$(git diff --cached --text -U0 -- '**/gemfiles/*.gemfile.lock' \
             | { grep -E '^[+-] +[A-Za-z0-9_.-]+ \([0-9]' || true; } \
             | sed -E 's/^([+-]) +([A-Za-z0-9_.-]+) \(([^)]+)\).*/\1 \2 \3/' \
             | awk '{ if ($1 == "-") old[$2] = $3; else neu[$2] = $3 }
