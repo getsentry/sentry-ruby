@@ -20,6 +20,7 @@
 #   bin/relock                         # refresh every cell
 #   bin/relock --gem sentry-ruby       # one gem
 #   bin/relock --cell sentry-ruby/gemfiles/ruby-3.2_rack-3_redis-5.gemfile
+#   bin/relock --force                 # delete each lock before resolving
 #   bin/relock -l                      # list every cell's lock path
 #
 # The committed locks are multi-platform (the PLATFORMS section spans
@@ -132,11 +133,14 @@ def mise_bin
 end
 
 # Shell run under the cell's Ruby. Writes the wrapper, re-resolves, and adds
-# checksums where the bundler version supports them.
+# checksums where the bundler version supports them. When FORCE is set, the
+# existing lock is deleted first so bundler resolves from scratch — slower, but
+# sidesteps edge cases where an incremental update gets stuck on a stale lock.
 RESOLVE = <<~SH
   set -euo pipefail
   mkdir -p "$(dirname "$BUNDLE_GEMFILE")"
   echo 'eval_gemfile "../Gemfile"' > "$BUNDLE_GEMFILE"
+  [ -n "${FORCE:-}" ] && rm -f "$BUNDLE_GEMFILE.lock"
   # --add-checksums needs Bundler >= 2.5; fall back to a plain update on older Rubies.
   bundle lock --update --add-checksums || bundle lock --update
 SH
@@ -153,15 +157,17 @@ def ensure_installed(cells)
   abort "Run `mise install` first."
 end
 
-def cell_env(cell)
-  { "BUNDLE_GEMFILE" => File.join(ROOT, cell.wrapper) }.merge(cell.env)
+def cell_env(cell, force: false)
+  env = { "BUNDLE_GEMFILE" => File.join(ROOT, cell.wrapper) }.merge(cell.env)
+  env["FORCE"] = "1" if force
+  env
 end
 
-def run_mise(cell)
+def run_mise(cell, force: false)
   # bash -c (not -lc): inherit the PATH/env mise just set; a login shell would
   # re-source the profile and reset Ruby back to the host default.
   argv = [mise_bin, "exec", "ruby@#{cell.ruby}", "--", "bash", "-c", RESOLVE]
-  [cell_env(cell), argv]
+  [cell_env(cell, force: force), argv]
 end
 
 # ---- options -------------------------------------------------------------
@@ -169,7 +175,8 @@ end
 opts = {
   gems: [],
   cell: nil,
-  list: false
+  list: false,
+  force: false
 }
 
 parser = OptionParser.new do |o|
@@ -177,6 +184,7 @@ parser = OptionParser.new do |o|
   o.on("--gem NAME", "Only one gem (repeatable). Default: all.") { |v| opts[:gems] << v }
   o.on("--cell PATH", "Resolve exactly one cell by its wrapper/lock path.") { |v| opts[:cell] = v }
   o.on("-l", "--list", "List every cell's lock path, one per line; do nothing.") { opts[:list] = true }
+  o.on("--force", "Delete each lock before resolving (resolve from scratch).") { opts[:force] = true }
   o.on("-h", "--help") { puts o; exit 0 }
 end
 parser.parse!(ARGV)
@@ -238,7 +246,7 @@ cells.each_with_index do |cell, i|
   counter = color("[#{(i + 1).to_s.rjust(width)}/#{cells.size}]", "1;34")
   puts "#{counter} #{color('→', '36')} #{color(cell.label, '1')} #{color("(ruby #{cell.ruby})", '90')}"
 
-  env, argv = run_mise(cell)
+  env, argv = run_mise(cell, force: opts[:force])
   cell_started = Time.now
   # chdir into the gem dir to match CI's working-directory (avoids stray
   # files and keeps any .bundle/ config local to the gem).
