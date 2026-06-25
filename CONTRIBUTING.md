@@ -68,13 +68,21 @@ bin/relock --cell sentry-ruby/gemfiles/ruby-3.2_rack-3_redis-5.gemfile  # one ce
 
 In CI, the `Update lockfiles` workflow runs `relock` on a weekly schedule and opens a PR with the refreshed pins.
 
-### Ruby 3.0 on recent macOS
+### Compiling old rubies
 
-Ruby 3.0 needs a [patch](https://bugs.ruby-lang.org/issues/20760#note-4) to compile:
+Old rubies are not available pre-compiled by `mise` so you might need some additional flags depending on your system:
+
+On latest macos, Ruby 3.0 needs a [patch](https://bugs.ruby-lang.org/issues/20760#note-4) to compile:
 
 ```bash
 MISE_RUBY_APPLY_PATCHES="https://github.com/ruby/ruby/commit/1dfe75b0beb7171b8154ff0856d5149be0207724.patch" \
   mise install ruby@3.0
+```
+
+On new linuxes with a very new `gcc`, you might need:
+
+```bash
+CFLAGS="-std=gnu11" mise install ruby@2.7
 ```
 
 ## Write Your Sentry Extension
