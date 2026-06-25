@@ -31,117 +31,13 @@
 # See --help for all options.
 
 require "optparse"
-require "json"
-
-ROOT = File.expand_path("..", __dir__)
-
-# The gem each matrix axis pins -> env var the gem's Gemfile reads. The gem name
-# is also the filename segment (the part before the first "-"); the matrix key
-# is "<gem>_version" (redis is the exception: redis_rb_version), so we recover
-# the gem from a matrix key with key.split("_").first.
-#
-# Values pass through verbatim: the matrix already normalizes them the way
-# GitHub Actions renders the matrix (rack-2 not rack-2.0), and the Gemfiles wrap
-# them in Gem::Version.new(...), so "2" and "2.0" resolve identically — matching CI.
-GEM_ENV_MAPPING = {
-  "rack" => "RACK_VERSION",
-  "redis" => "REDIS_RB_VERSION",
-  "rails" => "RAILS_VERSION",
-  "sidekiq" => "SIDEKIQ_VERSION"
-}.freeze
-
-Cell = Struct.new(:gem, :base, :ruby, :env, keyword_init: true) do
-  def wrapper
-    "#{gem}/gemfiles/#{base}.gemfile"
-  end
-
-  def lock
-    "#{wrapper}.lock"
-  end
-
-  def label
-    "#{gem} / #{base}"
-  end
-end
-
-# Expand one test-matrix.json entry into a cell. The entry's keys (in file
-# order) become the filename segments and the env the Gemfile reads:
-#   {"ruby_version":"3.2","rack_version":"2","redis_rb_version":"4"}
-#   -> ruby-3.2_rack-2_redis-4, {RACK_VERSION=2, REDIS_RB_VERSION=4}
-# "options" (e.g. rubyopt) is a test-time concern and doesn't affect resolution.
-def cell_from_entry(gem, entry)
-  ruby = entry.fetch("ruby_version")
-  segments = ["ruby-#{ruby}"]
-  env = {}
-
-  entry.each do |key, value|
-    next if key == "ruby_version" || key == "options"
-
-    name = key.split("_").first
-    var = GEM_ENV_MAPPING[name]
-    abort "Unknown matrix key: '#{key}' in #{gem}/test-matrix.json" unless var
-    segments << "#{name}-#{value}"
-    env[var] = value
-  end
-
-  Cell.new(gem: gem, base: segments.join("_"), ruby: ruby, env: env)
-end
-
-# Parse a wrapper/lock path's base name like "ruby-3.2_rack-3_redis-5" back into
-# a cell (used by --cell, which addresses a single cell by path).
-def parse_cell(gem, base)
-  segments = base.split("_")
-  ruby = segments.shift.sub(/\Aruby-/, "")
-
-  env = {}
-  segments.each do |seg|
-    name, value = seg.split("-", 2)
-    var = GEM_ENV_MAPPING[name]
-    abort "Unknown matrix axis '#{name}' in #{gem}/gemfiles/#{base}" unless var
-    env[var] = value
-  end
-
-  Cell.new(gem: gem, base: base, ruby: ruby, env: env)
-end
-
-def matrix_path(gem)
-  File.join(ROOT, gem, "test-matrix.json")
-end
-
-def discover_cells(gems)
-  gems.flat_map do |gem|
-    path = matrix_path(gem)
-    abort "No test-matrix.json for gem '#{gem}'" unless File.exist?(path)
-    JSON.parse(File.read(path)).map { |entry| cell_from_entry(gem, entry) }.uniq(&:wrapper)
-  end
-end
-
-def all_gems
-  Dir.glob(File.join(ROOT, "*", "test-matrix.json")).map { |p| File.basename(File.dirname(p)) }.sort
-end
-
-# Absolute path to the mise binary. It's usually a shell function (so plain
-# `mise` won't resolve via execvp); ask a login shell where the real binary is.
-def mise_bin
-  @mise_bin ||= begin
-    # `command -v` can emit profile noise on earlier lines; the real path is last.
-    found = `sh -lc 'command -v mise' 2>/dev/null`.lines.last.to_s.strip
-    candidates = [
-      ENV["MISE_BIN"],
-      found,
-      "/opt/homebrew/bin/mise",
-      File.expand_path("~/.local/bin/mise"),
-      "/usr/local/bin/mise"
-    ]
-    candidates.compact.find { |c| File.executable?(c) } ||
-      abort("mise not found. Install it: https://mise.jdx.dev")
-  end
-end
+require_relative "lib/matrix"
+include Matrix
 
 # Shell run under the cell's Ruby. Writes the wrapper, re-resolves, and adds
-# checksums where the bundler version supports them. When FORCE is set, the
-# existing lock is deleted first so bundler resolves from scratch — slower, but
-# sidesteps edge cases where an incremental update gets stuck on a stale lock.
+# checksums where the bundler version supports them.
+#
+# When FORCE is set, the existing lock is deleted first so bundler resolves from scratch, use for edge cases.
 RESOLVE = <<~SH
   set -euo pipefail
   mkdir -p "$(dirname "$BUNDLE_GEMFILE")"
@@ -162,29 +58,13 @@ RESOLVE = <<~SH
   fi
 SH
 
-# Abort (don't auto-install) if any cell's Ruby is missing — the Rubies are
-# declared in .mise.ci.toml and provisioned once via `mise --env ci install`.
-def ensure_installed(cells)
-  missing = cells.map(&:ruby).uniq.reject do |spec|
-    system(mise_bin, "where", "ruby@#{spec}", out: File::NULL, err: File::NULL)
-  end
-  return if missing.empty?
-
-  warn "Ruby not installed: #{missing.map { |s| "ruby@#{s}" }.join(', ')}."
-  abort "Run `mise --env ci install` first."
-end
-
-def cell_env(cell, force: false)
-  env = { "BUNDLE_GEMFILE" => File.join(ROOT, cell.wrapper) }.merge(cell.env)
-  env["FORCE"] = "1" if force
-  env
-end
-
 def run_mise(cell, force: false)
   # bash -c (not -lc): inherit the PATH/env mise just set; a login shell would
   # re-source the profile and reset Ruby back to the host default.
   argv = [mise_bin, "exec", "ruby@#{cell.ruby}", "--", "bash", "-c", RESOLVE]
-  [cell_env(cell, force: force), argv]
+  env = cell_env(cell)
+  env = env.merge("FORCE" => "1") if force
+  [env, argv]
 end
 
 # ---- options -------------------------------------------------------------
@@ -209,15 +89,9 @@ parser.parse!(ARGV)
 # ---- select cells --------------------------------------------------------
 
 if opts[:cell]
-  # Single explicit cell. Derive gem + base by position
-  # (<gem>/gemfiles/<base>.gemfile) so it works for absolute, relative, or
-  # symlinked paths. Accept either the .gemfile or .gemfile.lock form.
-  parts = opts[:cell].sub(/\.lock\z/, "").split("/")
-  gi = parts.rindex("gemfiles")
-  # Positive (not just non-nil): we need a <gem> segment before "gemfiles".
-  abort "--cell must point at a <gem>/gemfiles/<cell>.gemfile path" unless gi&.positive?
-  gem = parts[gi - 1]
-  base = File.basename(parts[gi + 1], ".gemfile")
+  # single explicit cell
+  gem, base = cell_path_parts(opts[:cell])
+  abort "--cell must point at a <gem>/gemfiles/<cell>.gemfile path" unless gem && base
   cells = [parse_cell(gem, base)]
 else
   gems = opts[:gems].empty? ? all_gems : opts[:gems]

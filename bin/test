@@ -1,0 +1,141 @@
+#!/usr/bin/env ruby
+# frozen_string_literal: true
+
+# Run a gem's specs locally under one test-matrix cell — the local mirror of a
+# single CI job. CI expands test-matrix.json into a job per cell and runs each
+# under a matching Ruby with the cell's pinned deps; this picks one of those
+# cells by its wrapper path and reproduces it on your machine via mise
+# (https://mise.jdx.dev).
+#
+# A cell is keyed by its committed wrapper gemfile + sibling .gemfile.lock (run
+# bin/relock to (re)generate those). We exec under the cell's mise Ruby with the
+# cell's env (BUNDLE_GEMFILE, RACK_VERSION, REDIS_RB_VERSION, RUBYOPT) and run
+# `bundle exec rspec` (or rake) — the same BUNDLE_FROZEN/BUNDLE_WITHOUT setup CI
+# uses, so a green run here means the same as a green job there.
+#
+#   bin/test -l                                              # list every cell to choose from
+#   bin/test --gem sentry-rails                              # auto-pick the newest installed Ruby cell
+#   bin/test --gem <gem> spec/sentry/client_spec.rb          # forward args to rspec
+#   bin/test --cell sentry-ruby/gemfiles/ruby-3.3_rack-3_redis-4.gemfile
+#   bin/test --cell <cell> spec/sentry/client_spec.rb        # forward args to rspec
+#   bin/test --cell <cell> -- --tag foo                      # everything after -- goes to rspec
+#   bin/test --cell <cell> --rake                            # run `bundle exec rake` like CI
+#
+# The Ruby must already be installed (`mise --env ci install`).
+#
+# TODO-neel: Specs that need Redis expect it on localhost:6379 (CI runs one as a service) — start your own.
+
+require "optparse"
+require_relative "lib/matrix"
+include Matrix
+
+# Resolve the cell named by --cell PATH.
+# fallback_gem covers a gem-relative path (e.g. run from inside a gem dir).
+def cell_from_path(path, fallback_gem)
+  gem, base = cell_path_parts(path, fallback_gem: fallback_gem)
+  abort "--cell must point at a [<gem>/]gemfiles/<cell>.gemfile path" unless base
+  abort "Can't tell which gem; use a <gem>/gemfiles/... path, --gem, or run from a gem dir." unless gem
+
+  cell = discover_cells([gem]).find { |c| c.base == base }
+  abort "No cell '#{base}' in #{gem}/test-matrix.json. `bin/test -l` to list." unless cell
+  [cell, gem]
+end
+
+# --gem without --cell: auto-pick the cell on the newest installed MRI Ruby
+def cell_for_gem(gem)
+  cells = discover_cells([gem])
+  mri = cells.map(&:ruby).uniq.grep_v(/jruby/).sort_by(&Gem::Version.method(:new)).reverse
+  ruby = mri.find { |r| installed?(r) } || mri.first
+
+  cell = cells.find { |c| c.ruby == ruby }
+  abort "No cell for gem '#{gem}'. `bin/test --gem #{gem} -l` to list." unless cell
+  [cell, gem]
+end
+
+opts = {
+  cell: nil,
+  gem: nil,
+  rake: false,
+  list: false
+}
+
+parser = OptionParser.new do |o|
+  o.banner = "Usage: bin/test (--cell PATH | --gem NAME) [options] [rspec args]"
+  o.on("--cell PATH", "Cell to run, by its wrapper/lock path (see -l).") { |v| opts[:cell] = v }
+  o.on("--gem NAME", "Gem to run (auto-picks newest installed Ruby cell); scopes -l.") { |v| opts[:gem] = v }
+  o.on("--rake", "Run `bundle exec rake` (full CI task) instead of rspec.") { opts[:rake] = true }
+  o.on("-l", "--list", "List every cell's wrapper path, one per line; do nothing.") { opts[:list] = true }
+  o.on("-h", "--help") { puts o; exit 0 }
+end
+parser.parse!(ARGV)
+
+# Whatever is left after option parsing is forwarded verbatim to rspec.
+rspec_args = ARGV.dup
+
+TTY = $stdout.tty?
+def color(text, code)
+  TTY ? "\e[#{code}m#{text}\e[0m" : text
+end
+
+# Named SGR codes so the output below reads by intent, not magic numbers.
+BOLD = "1"
+DIM  = "90"
+CYAN = "36"
+
+# Bare wrapper paths, one per line — copy one into --cell. --gem scopes which
+# gems we enumerate.
+if opts[:list]
+  gems = opts[:gem] ? [opts[:gem]] : all_gems
+  discover_cells(gems).each { |c| puts c.wrapper }
+  exit 0
+end
+
+cell, gem =
+  if opts[:cell]
+    cell_from_path(opts[:cell], opts[:gem])
+  elsif opts[:gem]
+    cell_for_gem(opts[:gem])
+  else
+    abort "Pass --cell PATH or --gem NAME (see `bin/test -l`)."
+  end
+
+ensure_installed([cell])
+
+# Mirror CI's per-job env: pin to the committed lock (BUNDLE_FROZEN), skip the
+# rubocop group, and pass the matrix axes + rubyopt the Gemfile/specs read.
+env = cell_env(cell).merge(
+  "BUNDLE_FROZEN" => "true",
+  "BUNDLE_WITHOUT" => "rubocop"
+)
+env["RUBYOPT"] = cell.rubyopt if cell.rubyopt
+env["JRUBY_OPTS"] = "--debug" if cell.ruby.include?("jruby") # for more accurate coverage, as in CI
+
+# We chdir into the gem dir, so spec paths are gem-relative. Strip a leading
+# "<gem>/" (or "./<gem>/") so a repo-root-relative path the user copied from
+# `git` or tab-completion resolves too — both forms name the same file.
+rspec_args = rspec_args.map { |a| a.sub(%r{\A(?:\./)?#{Regexp.escape(gem)}/}, "") }
+
+test_cmd = opts[:rake] ? ["rake"] : ["rspec", *rspec_args]
+
+# Ensure the cell's gems are present before running. The wrapper is committed,
+# but write it if absent so a freshly added matrix row still works. Args reach
+# the test command as bash positionals ($@) — never interpolated into the
+# script — so spec paths with odd characters can't break the shell.
+RUN = <<~SH
+  set -euo pipefail
+  mkdir -p "$(dirname "$BUNDLE_GEMFILE")"
+  [ -f "$BUNDLE_GEMFILE" ] || echo 'eval_gemfile "../Gemfile"' > "$BUNDLE_GEMFILE"
+  bundle check >/dev/null 2>&1 || bundle install
+  exec bundle exec "$@"
+SH
+
+puts "#{color('→', CYAN)} #{color(cell.label, BOLD)} #{color("(ruby #{cell.ruby})", DIM)}"
+puts "  #{color(test_cmd.join(' '), DIM)}"
+
+# bash -c (not -lc): inherit the env mise just set; a login shell would reset
+# Ruby to the host default. $0 is a label; "$@" is the test command.
+argv = [mise_bin, "exec", "ruby@#{cell.ruby}", "--", "bash", "-c", RUN, "bin/test", *test_cmd]
+
+# chdir into the gem dir to match CI's working-directory.
+ok = system(env, *argv, chdir: File.join(ROOT, gem))
+exit(ok ? 0 : 1)

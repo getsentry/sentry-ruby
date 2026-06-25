@@ -42,7 +42,7 @@ This file defines which specific image and Ruby version will be used to run the 
   bundle install
   ```
 - Install any additional dependencies. `sentry-sidekiq` assumes you have `redis` running.
-- Use `bundle exec rake` to run tests.
+- Use the `./bin/test` helper to run tests.
   - In `sentry-rails`, you can use `RAILS_VERSION=version` to specify the Rails version to test against. Default is `8.0`
   - In `sentry-sidekiq`, you can use `SIDEKIQ_VERSION=version` to specify what version of Sidekiq to install when you run `bundle install`. Default is `7.0`
 - Use example apps under the `example` or `examples` folder to test the change. (Remember to change the DSN first)
