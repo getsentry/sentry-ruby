@@ -71,7 +71,7 @@ jobs:
           # the removed (-) and added (+) "name (version)" spec lines per gem so
           # the summary reads "gem: old → new" (deduped across cells).
           DEPS=$(git diff --cached -U0 -- '**/gemfiles/*.gemfile.lock' \
-            | grep -E '^[+-] +[A-Za-z0-9_.-]+ \([0-9]' \
+            | { grep -E '^[+-] +[A-Za-z0-9_.-]+ \([0-9]' || true; } \
             | sed -E 's/^([+-]) +([A-Za-z0-9_.-]+) \(([^)]+)\).*/\1 \2 \3/' \
             | awk '{ if ($1 == "-") old[$2] = $3; else neu[$2] = $3 }
                    END {
