@@ -96,7 +96,7 @@ GEM
     benchmark_driver (0.16.5)
     bigdecimal (4.1.2-java)
     builder (3.3.0)
-    cgi (0.5.1-java)
+    cgi (0.5.2-java)
     concurrent-ruby (1.3.7)
     crass (1.0.6)
     date (3.5.1-java)
@@ -105,7 +105,7 @@ GEM
     erb (4.0.4.1-java)
       cgi (>= 0.3.3)
     erubi (1.13.1)
-    globalid (1.3.0)
+    globalid (1.4.0)
       activesupport (>= 6.1)
     i18n (1.15.2)
       concurrent-ruby (~> 1.0)
@@ -118,7 +118,7 @@ GEM
     jar-dependencies (0.5.7)
     jdbc-mysql (8.4.0.1)
     jdbc-sqlite3 (3.46.1.1)
-    json (2.19.9-java)
+    json (2.20.0-java)
     language_server-protocol (3.17.0.5)
     lint_roller (1.1.0)
     logger (1.7.0)
@@ -285,7 +285,7 @@ GEM
     unicode-display_width (3.2.0)
       unicode-emoji (~> 4.1)
     unicode-emoji (4.2.0)
-    websocket-driver (0.8.1-java)
+    websocket-driver (0.8.2-java)
       base64
       websocket-extensions (>= 0.1.0)
     websocket-extensions (0.1.5)
@@ -293,6 +293,7 @@ GEM
 
 PLATFORMS
   universal-java-17
+  universal-java-21
 
 DEPENDENCIES
   activerecord-jdbcmysql-adapter
@@ -344,7 +345,7 @@ CHECKSUMS
   benchmark_driver (0.16.5) sha256=f675df0fe1de7e18e40df313ae24ebe4c7ee7814a4165f29a1a37b863a685831
   bigdecimal (4.1.2-java) sha256=ccc836eab720a525529f70ed0de26a206fdbc9a9e8ac67b3b4ac7318b03e114d
   builder (3.3.0) sha256=497918d2f9dca528fdca4b88d84e4ef4387256d984b8154e9d5d3fe5a9c8835f
-  cgi (0.5.1-java) sha256=e76a09434b840d6b156f0f24d8294624ff6f351c8f2e428104bb56a176295d9a
+  cgi (0.5.2-java) sha256=08bbfe06e10e771d36f10db6c1dfb81727ea2a25c3dbcd28d890a1794414a73d
   concurrent-ruby (1.3.7) sha256=4412caec3a5ea2e5fdc52076724c071a81f2c0593d83b2ac8cbb8ca63b3151b0
   crass (1.0.6) sha256=dc516022a56e7b3b156099abc81b6d2b08ea1ed12676ac7a5657617f012bd45d
   date (3.5.1-java) sha256=12e09477dc932afe45bf768cd362bf73026804e0db1e6c314186d6cd0bee3344
@@ -352,14 +353,14 @@ CHECKSUMS
   docile (1.4.1) sha256=96159be799bfa73cdb721b840e9802126e4e03dfc26863db73647204c727f21e
   erb (4.0.4.1-java) sha256=3e4805edebd25f48cdb43ad4ebf1d61c11538f29373f0a48716b688819e3f7ce
   erubi (1.13.1) sha256=a082103b0885dbc5ecf1172fede897f9ebdb745a4b97a5e8dc63953db1ee4ad9
-  globalid (1.3.0) sha256=05c639ad6eb4594522a0b07983022f04aa7254626ab69445a0e493aa3786ff11
+  globalid (1.4.0) sha256=037f12fbf1d9d7a014d501c2d5c77356fd4ddd96d7a7991d6700bba96706f427
   i18n (1.15.2) sha256=00f9eb62412fe593b2a65a97daa75300d37abb8f7202ec748e94b6d46a9dd1b5
   io-console (0.8.2-java) sha256=837efefe96084c13ae91114917986ae6c6d1cf063b27b8419cc564a722a38af8
   irb (1.18.0) sha256=de9454a0703a54704b9811a5ef31a60c86949fbf4013fcf244fabc7c775248e3
   jar-dependencies (0.5.7) sha256=013ce5f4639414ac8cf1169cdbe763da164b81e2d2c983d11042b5ff7bfcce80
   jdbc-mysql (8.4.0.1) sha256=429cb7999d11c4f46a7153a382b6ac07935a4c10ddc52dd98e2d52b22c17fa13
   jdbc-sqlite3 (3.46.1.1) sha256=2498fea7d37c0d51c6bad1b95ffc909173c014ba6bd36825f37910113d0230cf
-  json (2.19.9-java) sha256=7673280594a1060594f43496a6d773ee2a40ac7e6c0f2b6a639bd5a9e0cc3e7a
+  json (2.20.0-java) sha256=433ba4c76297364523761a935531dcd227aac8ab5dc7acb419ad9166af0e8a7c
   language_server-protocol (3.17.0.5) sha256=fd1e39a51a28bf3eec959379985a72e296e9f9acfce46f6a79d31ca8760803cc
   lint_roller (1.1.0) sha256=2c0c845b632a7d172cb849cc90c1bce937a28c5c8ccccb50dfd46a485003cc87
   logger (1.7.0) sha256=196edec7cc44b66cfb40f9755ce11b392f21f7967696af15d274dde7edff0203
@@ -425,7 +426,7 @@ CHECKSUMS
   tzinfo (2.0.6) sha256=8daf828cc77bcf7d63b0e3bdb6caa47e2272dcfaf4fbfe46f8c3a9df087a829b
   unicode-display_width (3.2.0) sha256=0cdd96b5681a5949cdbc2c55e7b420facae74c4aaf9a9815eee1087cb1853c42
   unicode-emoji (4.2.0) sha256=519e69150f75652e40bf736106cfbc8f0f73aa3fb6a65afe62fefa7f80b0f80f
-  websocket-driver (0.8.1-java) sha256=196e6b4ede300dfa4ba39ef43aeac3b262f3d823a11934c966472d863a8b4721
+  websocket-driver (0.8.2-java) sha256=f60120d1377cccf24100bcd1ebc25ceea6f3d5a013fc8e9d16b721016200946e
   websocket-extensions (0.1.5) sha256=1c6ba63092cda343eb53fc657110c71c754c56484aad42578495227d717a8241
   zeitwerk (2.6.18) sha256=bd2d213996ff7b3b364cd342a585fbee9797dbc1c0c6d868dc4150cc75739781
 
