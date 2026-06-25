@@ -22,10 +22,6 @@ if [[ ! -x "$MISE_BIN" ]]; then
   exit 1
 fi
 
-# .mise.toml lists the whole Ruby matrix for bin/relock; the devcontainer profile
-# overrides it to pin the single Ruby baked into the image.
-export MISE_ENV=devcontainer
-
 # Activate mise for this shell so PATH/shims are resolved correctly.
 eval "$("$MISE_BIN" activate bash)"
 

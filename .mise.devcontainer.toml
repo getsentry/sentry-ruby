@@ -1,4 +1,0 @@
-# Loaded only when MISE_ENV=devcontainer (set by .devcontainer/run). Pins Ruby to
-# the single version baked into the image, overriding the relock matrix in .mise.toml.
-[tools]
-ruby = "{{ env.RUBY_VERSION | default(value='latest') }}"

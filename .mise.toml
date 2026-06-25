@@ -2,18 +2,7 @@
 ruby.compile = false
 
 [tools]
-# postinstall ensures latest bundlers possible on each version
-ruby = [
-  { version = "4.0", postinstall = "gem install bundler" },
-  { version = "3.4", postinstall = "gem install bundler" },
-  { version = "3.3", postinstall = "gem install bundler" },
-  { version = "3.2", postinstall = "gem install bundler" },
-  { version = "3.1", postinstall = "gem install bundler" },
-  { version = "3.0", postinstall = "gem install bundler" },
-  # 2.7 is pinned because latest bundler fails to resolve
-  { version = "2.7", postinstall = "gem install bundler -v 2.4.22" },
-  { version = "jruby-9.4.14.0", postinstall = "gem install bundler" },
-]
+ruby = "latest"
 node = "lts"
 java = "temurin-21"
 
