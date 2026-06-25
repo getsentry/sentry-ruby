@@ -200,7 +200,10 @@ module Sentry
               tags: {
                 job_id: job.job_id,
                 provider_job_id: job.provider_job_id
-              }
+              },
+              # Send synchronously: a worker process may exit before the async
+              # background worker flushes its queue, which would drop the event.
+              hint: { background: false }
             )
           end
 

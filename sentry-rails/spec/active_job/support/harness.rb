@@ -16,6 +16,7 @@
 RSpec.shared_context "active_job backend harness" do |adapter:|
   let(:adapter) { adapter }
   let(:configure_sentry) { proc { } }
+  let(:sentry_test_config) { nil }
 
   # Boot the dummy Rails app ONCE per example group. Each +make_basic_app+
   # call creates a new +Rails::Application+ subclass and re-runs every
@@ -63,7 +64,7 @@ RSpec.shared_context "active_job backend harness" do |adapter:|
       Sentry::Rails::ActiveJobExtensions::SentryReporter.register_event_handlers
     end
 
-    setup_sentry_test
+    setup_sentry_test(&sentry_test_config)
 
     boot_adapter(adapter)
 
