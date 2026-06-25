@@ -30,7 +30,6 @@
 # See --help for all options.
 
 require "optparse"
-require "shellwords"
 require "json"
 
 ROOT = File.expand_path("..", __dir__)
@@ -124,9 +123,15 @@ end
 # `mise` won't resolve via execvp); ask a login shell where the real binary is.
 def mise_bin
   @mise_bin ||= begin
-    found = `sh -lc 'command -v mise' 2>/dev/null`.strip
-    found = found.lines.last.to_s.strip if found.include?("\n")
-    candidates = [ENV["MISE_BIN"], found, "/opt/homebrew/bin/mise", File.expand_path("~/.local/bin/mise"), "/usr/local/bin/mise"]
+    # `command -v` can emit profile noise on earlier lines; the real path is last.
+    found = `sh -lc 'command -v mise' 2>/dev/null`.lines.last.to_s.strip
+    candidates = [
+      ENV["MISE_BIN"],
+      found,
+      "/opt/homebrew/bin/mise",
+      File.expand_path("~/.local/bin/mise"),
+      "/usr/local/bin/mise"
+    ]
     candidates.compact.find { |c| File.executable?(c) } ||
       abort("mise not found. Install it: https://mise.jdx.dev")
   end
@@ -201,6 +206,7 @@ if opts[:cell]
   # symlinked paths. Accept either the .gemfile or .gemfile.lock form.
   parts = opts[:cell].sub(/\.lock\z/, "").split("/")
   gi = parts.rindex("gemfiles")
+  # Positive (not just non-nil): we need a <gem> segment before "gemfiles".
   abort "--cell must point at a <gem>/gemfiles/<cell>.gemfile path" unless gi&.positive?
   gem = parts[gi - 1]
   base = File.basename(parts[gi + 1], ".gemfile")
@@ -236,6 +242,16 @@ def color(text, code)
   TTY ? "\e[#{code}m#{text}\e[0m" : text
 end
 
+# Named SGR codes so the output below reads by intent, not magic numbers.
+BOLD       = "1"
+DIM        = "90"
+CYAN       = "36"
+BOLD_BLUE  = "1;34"
+GREEN      = "32"
+RED        = "31"
+BOLD_GREEN = "1;32"
+BOLD_RED   = "1;31"
+
 def fmt_duration(seconds)
   seconds < 60 ? format("%.1fs", seconds) : format("%dm%02ds", (seconds / 60).to_i, (seconds % 60).to_i)
 end
@@ -244,11 +260,12 @@ end
 # gems (e.g. debug) collide on .git locks when fetched concurrently.
 failures = []
 width = cells.size.to_s.length
+indent = " " * (width * 2 + 3)  # aligns the ✓/✗ under the "[n/m]" counter
 started = Time.now
 
 cells.each_with_index do |cell, i|
-  counter = color("[#{(i + 1).to_s.rjust(width)}/#{cells.size}]", "1;34")
-  puts "#{counter} #{color('→', '36')} #{color(cell.label, '1')} #{color("(ruby #{cell.ruby})", '90')}"
+  counter = color("[#{(i + 1).to_s.rjust(width)}/#{cells.size}]", BOLD_BLUE)
+  puts "#{counter} #{color('→', CYAN)} #{color(cell.label, BOLD)} #{color("(ruby #{cell.ruby})", DIM)}"
 
   env, argv = run_mise(cell, force: opts[:force])
   cell_started = Time.now
@@ -258,10 +275,10 @@ cells.each_with_index do |cell, i|
   elapsed = fmt_duration(Time.now - cell_started)
 
   if ok
-    puts "#{' ' * (width * 2 + 3)} #{color('✓', '32')} done #{color("in #{elapsed}", '90')}"
+    puts "#{indent} #{color('✓', GREEN)} done #{color("in #{elapsed}", DIM)}"
   else
     failures << cell
-    puts "#{' ' * (width * 2 + 3)} #{color('✗', '31')} #{color("failed after #{elapsed}", '31')}"
+    puts "#{indent} #{color('✗', RED)} #{color("failed after #{elapsed}", RED)}"
   end
 end
 
@@ -270,10 +287,10 @@ ok_count = cells.size - failures.size
 
 puts
 if failures.empty?
-  puts color("✓ Regenerated #{ok_count}/#{cells.size} cell(s) in #{total_elapsed}.", "1;32")
+  puts color("✓ Regenerated #{ok_count}/#{cells.size} cell(s) in #{total_elapsed}.", BOLD_GREEN)
 else
-  puts color("✗ Regenerated #{ok_count}/#{cells.size} cell(s) in #{total_elapsed}.", "1;31")
-  warn color("Failed:", "1;31")
-  failures.each { |c| warn color("  #{c.lock}", "31") }
+  puts color("✗ Regenerated #{ok_count}/#{cells.size} cell(s) in #{total_elapsed}.", BOLD_RED)
+  warn color("Failed:", BOLD_RED)
+  failures.each { |c| warn color("  #{c.lock}", RED) }
   exit 1
 end
