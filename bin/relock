@@ -145,12 +145,19 @@ RESOLVE = <<~SH
   set -euo pipefail
   mkdir -p "$(dirname "$BUNDLE_GEMFILE")"
   echo 'eval_gemfile "../Gemfile"' > "$BUNDLE_GEMFILE"
-  [ -n "${FORCE:-}" ] && rm -f "$BUNDLE_GEMFILE.lock"
-  bundle lock --update
-  # --add-checksums needs Bundler >= 2.5. Run it as a separate step, and only
-  # where supported, so older Rubies don't surface a flag-not-found error.
+  if [ -n "${FORCE:-}" ]; then
+    echo "+ FORCE: removing $BUNDLE_GEMFILE.lock"
+    rm -f "$BUNDLE_GEMFILE.lock"
+  fi
+  # --add-checksums needs Bundler >= 2.5; fold it into the update where
+  # supported, and fall back to a plain update on older Rubies so they don't
+  # surface a flag-not-found error.
   if bundle lock --help 2>&1 | grep -q -- --add-checksums; then
-    bundle lock --add-checksums
+    echo "+ bundle lock --update --add-checksums"
+    bundle lock --update --add-checksums
+  else
+    echo "+ bundle lock --update"
+    bundle lock --update
   fi
 SH
 
