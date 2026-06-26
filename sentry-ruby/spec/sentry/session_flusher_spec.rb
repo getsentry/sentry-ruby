@@ -172,8 +172,14 @@ RSpec.describe Sentry::SessionFlusher do
 
   describe "#kill" do
     it "logs message when killing the thread" do
+      subject.ensure_thread
       subject.kill
       expect(string_io.string).to include("[#{described_class.name}] thread killed")
+    end
+
+    it "stays silent when no thread was ever started" do
+      subject.kill
+      expect(string_io.string).not_to include("thread killed")
     end
   end
 end

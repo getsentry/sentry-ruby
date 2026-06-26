@@ -30,10 +30,15 @@ module Sentry
     end
 
     def kill
-      log_debug("[#{self.class.name}] thread killed")
-
       @exited = true
-      @thread&.kill
+
+      # Only a started worker has a thread to kill (and to log about).
+      # Guarding here keeps a never-started worker's teardown silent, so
+      # killing one during test reset can't emit a stray debug line.
+      return unless @thread
+
+      log_debug("[#{self.class.name}] thread killed")
+      @thread.kill
     end
   end
 end
