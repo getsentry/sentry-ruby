@@ -159,6 +159,9 @@ module Sentry
         # Don't check initialized? because sometimes we stub it in tests
         if Sentry.instance_variable_defined?(:@main_hub)
           Sentry::GLOBALS.each do |var|
+            worker = Sentry.instance_variable_get(:"@#{var}")
+            worker.kill if worker.respond_to?(:kill)
+
             Sentry.instance_variable_set(:"@#{var}", nil)
           end
 
