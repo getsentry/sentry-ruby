@@ -1,9 +1,11 @@
 # Agent Instructions
 
-## Package Manager
-Use **Bundler**. Each gem has its own `Gemfile`; run commands from within the gem subdirectory.
+## Toolchain (mise)
+[mise](https://mise.jdx.dev) manages Rubies and runs tasks. `.mise.toml` pins a single default Ruby for local work; `.mise.ci.toml` (loaded with `MISE_ENV=ci`) pins the full per-matrix Ruby set that CI, `bin/test`, and `bin/relock` resolve against.
+
 ```bash
-cd sentry-ruby && bundle install
+mise install              # install the default toolchain (.mise.toml)
+mise --env ci install     # install the full CI matrix of Rubies (needed for bin/test)
 ```
 
 ## Monorepo Structure
@@ -19,18 +21,30 @@ cd sentry-ruby && bundle install
 
 Shared test infrastructure lives in `lib/sentry/test/`. Root `Gemfile.dev` defines shared dev dependencies.
 
-## File-Scoped Commands
+## Testing
+Use `bin/test` (from the repo root) to run a gem's specs under a single CI test-matrix cell — the local mirror of one CI job. The Ruby must already be installed (`mise --env ci install`).
+You can also invoke `bin/test` from any of the gem directories themselves which automatically fills in the `--gem` part.
+
+| Task | Command |
+|------|---------|
+| List every cell to choose from | `bin/test -l` |
+| Run a gem (auto-picks newest installed Ruby cell) | `bin/test --gem sentry-rails` |
+| Run a single spec | `bin/test --gem sentry-ruby spec/sentry/client_spec.rb` |
+| Run a specific cell | `bin/test --cell sentry-ruby/gemfiles/ruby-3.3_rack-3_redis-4.gemfile` |
+| Forward args to rspec | `bin/test --cell <cell> -- --tag foo` |
+| Run full CI rake task | `bin/test --gem <gem> --rake` |
+
+Root-level `bundle exec rake` runs the E2E/integration spec suite (not individual gem tests).
+
+## Lint
 Run from within the target gem directory (e.g. `cd sentry-ruby`):
 
 | Task | Command |
 |------|---------|
-| Install deps | `bundle install` |
-| Run all tests | `bundle exec rake` |
-| Run single spec | `bundle exec rspec spec/sentry/client_spec.rb` |
 | Lint | `bundle exec rubocop path/to/file.rb` |
 | Lint (autofix) | `bundle exec rubocop -a path/to/file.rb` |
 
-Root-level `bundle exec rubocop` lints the entire repo. Root-level `bundle exec rake` runs the E2E/integration spec suite (not individual gem tests).
+Root-level `bundle exec rubocop` lints the entire repo.
 
 ## Testing Conventions
 - Framework: **RSpec**
