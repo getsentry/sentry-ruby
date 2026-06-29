@@ -62,6 +62,32 @@ jobs:
       - name: Set up Ruby
         uses: ./.github/actions/setup-mise
 
+      - name: Debug pkg-config environment
+        run: |
+          echo "::group::PATH"
+          echo "$PATH" | tr ':' '\n'
+          echo "::endgroup::"
+          echo "::group::pkg-config / pkgconf binaries"
+          command -v pkg-config || echo "pkg-config: NOT on PATH"
+          command -v pkgconf   || echo "pkgconf: NOT on PATH"
+          ls -l /usr/bin/pkg-config /usr/bin/pkgconf 2>&1 || true
+          pkg-config --version 2>&1 || true
+          dpkg -l | grep -iE 'pkg-config|pkgconf' || true
+          echo "::endgroup::"
+          echo "::group::absolute .pc path support (the sqlite3 1.7.3 check)"
+          tmpd="$(mktemp -d)"
+          printf 'Name: x\nDescription: x\nVersion: 1\n' > "$tmpd/foo.pc"
+          pkg-config --exists "$tmpd/foo.pc" && echo "ABS PATH ARG: SUPPORTED" || echo "ABS PATH ARG: REJECTED (exit $?)"
+          echo "::endgroup::"
+          echo "::group::same checks under 'mise exec' (the build env)"
+          mise exec ruby@3.4 -- bash -c '
+            echo "PATH:"; echo "$PATH" | tr ":" "\n";
+            echo "which pkg-config:"; command -v pkg-config || echo MISSING;
+            pkg-config --version 2>&1 || true;
+            ruby -rrbconfig -e "puts %{PKG_CONFIG=#{RbConfig::CONFIG[%{PKG_CONFIG}]}}"
+          ' || true
+          echo "::endgroup::"
+
       - name: Run specs
         env:
           MATRIX_ENTRY: ${{ toJson(matrix) }}
