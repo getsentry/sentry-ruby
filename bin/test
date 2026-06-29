@@ -52,16 +52,31 @@ def cell_for_gem(gem)
   [cell, gem]
 end
 
+# Build the cell straight from a test-matrix.json entry. CI already holds the
+# entry as its matrix context, so the workflow can hand us `toJson(matrix)`
+# verbatim instead of re-deriving a --cell path. Uses the same cell_from_entry as
+# bin/relock, so the wrapper/lock name and rubyopt resolve identically. Gem comes
+# from --gem, else the working directory (CI runs from the gem dir).
+def cell_from_entry_arg(json, gem)
+  gem ||= File.basename(Dir.pwd)
+  abort "No test-matrix.json for gem '#{gem}'; pass --gem or run from a gem dir." unless all_gems.include?(gem)
+  [cell_from_entry(gem, JSON.parse(json)), gem]
+rescue JSON::ParserError => e
+  abort "--entry is not valid JSON: #{e.message}"
+end
+
 opts = {
   cell: nil,
+  entry: nil,
   gem: nil,
   rake: false,
   list: false
 }
 
 parser = OptionParser.new do |o|
-  o.banner = "Usage: bin/test (--cell PATH | --gem NAME) [options] [rspec args]"
+  o.banner = "Usage: bin/test (--cell PATH | --entry JSON | --gem NAME) [options] [rspec args]"
   o.on("--cell PATH", "Cell to run, by its wrapper/lock path (see -l).") { |v| opts[:cell] = v }
+  o.on("--entry JSON", "Cell to run, from a test-matrix.json entry (pairs with --gem/cwd).") { |v| opts[:entry] = v }
   o.on("--gem NAME", "Gem to run (auto-picks newest installed Ruby cell); scopes -l.") { |v| opts[:gem] = v }
   o.on("--rake", "Run `bundle exec rake` (full CI task) instead of rspec.") { opts[:rake] = true }
   o.on("-l", "--list", "List every cell's wrapper path, one per line; do nothing.") { opts[:list] = true }
@@ -91,12 +106,14 @@ if opts[:list]
 end
 
 cell, gem =
-  if opts[:cell]
+  if opts[:entry]
+    cell_from_entry_arg(opts[:entry], opts[:gem])
+  elsif opts[:cell]
     cell_from_path(opts[:cell], opts[:gem])
   elsif opts[:gem]
     cell_for_gem(opts[:gem])
   else
-    abort "Pass --cell PATH or --gem NAME (see `bin/test -l`)."
+    abort "Pass --cell PATH, --entry JSON, or --gem NAME (see `bin/test -l`)."
   end
 
 ensure_installed([cell])

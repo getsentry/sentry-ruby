@@ -1,0 +1,73 @@
+name: Gem Test
+
+# Reusable, gem-agnostic test workflow. tests.yml invokes it once per gem via a
+# central matrix, passing the gem dir plus whatever optional service/packages
+# that gem needs. The per-cell matrix still comes from each gem's
+# test-matrix.json (the single source of truth), expanded here and run via
+# bin/test — so adding/removing a cell never touches this file.
+
+on:
+  workflow_call:
+    inputs:
+      gem:
+        description: Gem directory to test (e.g. sentry-ruby).
+        required: true
+        type: string
+      apt:
+        description: Space-separated apt packages to install before testing.
+        type: string
+        default: ""
+
+jobs:
+  matrix:
+    runs-on: ubuntu-latest
+    outputs:
+      include: ${{ steps.set.outputs.include }}
+    steps:
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
+      - id: set
+        run: echo "include=$(jq -c . ${{ inputs.gem }}/test-matrix.json)" >> "$GITHUB_OUTPUT"
+
+  test:
+    needs: matrix
+    defaults:
+      run:
+        working-directory: ${{ inputs.gem }}
+    name: ${{ toJson(matrix) }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    services:
+      redis:
+        image: ghcr.io/getsentry/image-mirror-library-redis:7.0.8-bullseye
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    strategy:
+      fail-fast: false
+      matrix:
+        include: ${{ fromJson(needs.matrix.outputs.include) }}
+    steps:
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
+
+      - name: Install apt packages
+        if: inputs.apt != ''
+        run: |
+          sudo apt-get update
+          sudo apt-get install --no-install-recommends ${{ inputs.apt }}
+
+      - name: Set up Ruby
+        uses: ./.github/actions/setup-mise
+
+      - name: Run specs
+        env:
+          MATRIX_ENTRY: ${{ toJson(matrix) }}
+        run: ruby ../bin/test --entry "$MATRIX_ENTRY" --rake
+
+      - name: Upload Coverage
+        uses: codecov/codecov-action@1af58845a975a7985b0beb0cbe6fbbb71a41dbad # v5
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}

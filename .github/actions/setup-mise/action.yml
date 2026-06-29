@@ -1,0 +1,17 @@
+name: Set up mise Ruby toolchain
+description: >-
+  Install all the CI matrix Rubies via mise with the per-version bundler pins from
+  .mise.ci.toml (MISE_ENV=ci) — the same toolchain bin/test and bin/relock use.
+  Config + cache key are shared across every caller (the *_test workflows and
+  update_lockfiles), so they all restore the one weekly-populated cache.
+
+runs:
+  using: composite
+  steps:
+    - uses: jdx/mise-action@e6a8b3978addb5a52f2b4cd9d91eafa7f0ab959d # v4.2.0
+      env:
+        MISE_ENV: ci
+        MISE_JOBS: "2"
+      with:
+        install: true
+        cache: true
