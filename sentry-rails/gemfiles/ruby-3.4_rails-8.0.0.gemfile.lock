@@ -328,7 +328,6 @@ GEM
     zeitwerk (2.8.2)
 
 PLATFORMS
-  ruby
   x86_64-linux
   x86_64-linux-gnu
 

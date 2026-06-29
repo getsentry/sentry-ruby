@@ -168,7 +168,6 @@ GEM
       dry-initializer
 
 PLATFORMS
-  ruby
   x86_64-linux
   x86_64-linux-gnu
 
