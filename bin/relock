@@ -24,9 +24,9 @@
 #   bin/relock --force                 # delete each lock before resolving
 #   bin/relock -l                      # list every cell's lock path
 #
-# The committed locks are multi-platform (the PLATFORMS section spans
-# linux/darwin/java); `bundle lock --update` preserves that list, so resolving
-# natively on any host keeps the locks valid for CI's x86_64-linux runners.
+# The committed locks are multi platform, so they include dev machine platforms and
+# more importantly, ALWAYS x86_64-linux-gnu so that CI runners (Ubuntu/glibc)
+# can install precompiled native gems (e.g. sqlite3) without recompiling.
 #
 # See --help for all options.
 
@@ -35,7 +35,7 @@ require_relative "lib/matrix"
 include Matrix
 
 # Shell run under the cell's Ruby. Writes the wrapper, re-resolves, adds
-# checksums, and normalizes platforms where the bundler version supports them.
+# checksums, and seeds x86_64-linux-gnu into PLATFORMS.
 #
 # When FORCE is set, the existing lock is deleted first so bundler resolves from scratch, use for edge cases.
 RESOLVE = <<~SH
@@ -46,18 +46,15 @@ RESOLVE = <<~SH
     echo "+ FORCE: removing $BUNDLE_GEMFILE.lock"
     rm -f "$BUNDLE_GEMFILE.lock"
   fi
+  platform_arg=""
+  if [ -z "${JRUBY:-}" ]; then platform_arg="--add-platform x86_64-linux-gnu"; fi
   lock_help="$(bundle lock --help 2>&1)"
   if echo "$lock_help" | grep -q -- --add-checksums; then
-    if echo "$lock_help" | grep -q -- --normalize-platforms; then
-      echo "+ bundle lock --update --add-checksums --normalize-platforms"
-      bundle lock --update --add-checksums --normalize-platforms
-    else
-      echo "+ bundle lock --update --add-checksums"
-      bundle lock --update --add-checksums
-    fi
+    echo "+ bundle lock --update --add-checksums $platform_arg"
+    bundle lock --update --add-checksums $platform_arg
   else
-    echo "+ bundle lock --update"
-    bundle lock --update
+    echo "+ bundle lock --update $platform_arg"
+    bundle lock --update $platform_arg
   fi
 SH
 
@@ -67,6 +64,7 @@ def run_mise(cell, force: false)
   argv = [mise_bin, "exec", "ruby@#{cell.ruby}", "--", "bash", "-c", RESOLVE]
   env = cell_env(cell)
   env = env.merge("FORCE" => "1") if force
+  env = env.merge("JRUBY" => "1") if cell.ruby.start_with?("jruby")
   [env, argv]
 end
 
