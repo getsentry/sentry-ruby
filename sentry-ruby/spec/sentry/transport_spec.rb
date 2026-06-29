@@ -191,7 +191,7 @@ RSpec.describe Sentry::Transport do
       end
 
       it "incudes client report in envelope" do
-        Timecop.travel(Time.now + 90) do
+        Timecop.freeze(Time.now + 90) do
           result, _ = subject.serialize_envelope(envelope)
 
           client_report_header, client_report_payload = result.split("\n").last(2)
