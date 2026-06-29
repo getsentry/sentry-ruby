@@ -157,8 +157,7 @@ GEM
       dry-initializer
 
 PLATFORMS
-  universal-java-17
-  universal-java-21
+  universal-java
 
 DEPENDENCIES
   cgi

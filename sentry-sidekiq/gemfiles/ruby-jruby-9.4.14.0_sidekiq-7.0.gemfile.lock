@@ -321,8 +321,7 @@ GEM
     zeitwerk (2.6.18)
 
 PLATFORMS
-  universal-java-17
-  universal-java-21
+  universal-java
 
 DEPENDENCIES
   cgi

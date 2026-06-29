@@ -208,6 +208,7 @@ GEM
 PLATFORMS
   ruby
   x86_64-linux
+  x86_64-linux-gnu
 
 DEPENDENCIES
   activerecord-jdbcmysql-adapter

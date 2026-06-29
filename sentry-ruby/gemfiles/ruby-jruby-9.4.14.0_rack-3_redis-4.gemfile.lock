@@ -199,8 +199,7 @@ GEM
     yard (0.9.44)
 
 PLATFORMS
-  universal-java-17
-  universal-java-21
+  universal-java
 
 DEPENDENCIES
   activerecord-jdbcmysql-adapter
