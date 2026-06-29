@@ -34,8 +34,8 @@ require "optparse"
 require_relative "lib/matrix"
 include Matrix
 
-# Shell run under the cell's Ruby. Writes the wrapper, re-resolves, and adds
-# checksums where the bundler version supports them.
+# Shell run under the cell's Ruby. Writes the wrapper, re-resolves, adds
+# checksums, and normalizes platforms where the bundler version supports them.
 #
 # When FORCE is set, the existing lock is deleted first so bundler resolves from scratch, use for edge cases.
 RESOLVE = <<~SH
@@ -46,12 +46,15 @@ RESOLVE = <<~SH
     echo "+ FORCE: removing $BUNDLE_GEMFILE.lock"
     rm -f "$BUNDLE_GEMFILE.lock"
   fi
-  # --add-checksums needs Bundler >= 2.5; fold it into the update where
-  # supported, and fall back to a plain update on older Rubies so they don't
-  # surface a flag-not-found error.
-  if bundle lock --help 2>&1 | grep -q -- --add-checksums; then
-    echo "+ bundle lock --update --add-checksums"
-    bundle lock --update --add-checksums
+  lock_help="$(bundle lock --help 2>&1)"
+  if echo "$lock_help" | grep -q -- --add-checksums; then
+    if echo "$lock_help" | grep -q -- --normalize-platforms; then
+      echo "+ bundle lock --update --add-checksums --normalize-platforms"
+      bundle lock --update --add-checksums --normalize-platforms
+    else
+      echo "+ bundle lock --update --add-checksums"
+      bundle lock --update --add-checksums
+    fi
   else
     echo "+ bundle lock --update"
     bundle lock --update
