@@ -15,3 +15,11 @@ runs:
       with:
         install: true
         cache: true
+
+    # Precompiled rubies bake a nonexistent build path into RbConfig["PKG_CONFIG"]
+    # (jdx/ruby#48), breaking native gems like sqlite3. Reset it to PATH's pkg-config.
+    - name: Fix baked PKG_CONFIG path in precompiled rubies
+      shell: bash
+      run: |
+        find ~/.local/share/mise/installs/ruby -name rbconfig.rb \
+          -exec sed -i 's#\(CONFIG\["PKG_CONFIG"\] = \).*#\1"pkg-config"#' {} +
