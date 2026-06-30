@@ -32,6 +32,7 @@ GEM
     docile (1.4.1)
     erb (4.0.4.1)
       cgi (>= 0.3.3)
+    google-protobuf (3.25.8)
     google-protobuf (3.25.8-aarch64-linux)
     google-protobuf (3.25.8-x86_64-linux)
     googleapis-common-protos-types (1.18.0)
@@ -140,6 +141,7 @@ GEM
 
 PLATFORMS
   aarch64-linux
+  ruby
   x86_64-linux
 
 DEPENDENCIES

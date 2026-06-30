@@ -117,6 +117,7 @@ GEM
     mini_magick (5.3.1)
       logger
     mini_mime (1.1.5)
+    mini_portile2 (2.8.9)
     minitest (5.26.1)
     net-imap (0.4.24)
       date
@@ -128,6 +129,9 @@ GEM
     net-smtp (0.5.1)
       net-protocol
     nio4r (2.7.5)
+    nokogiri (1.15.7)
+      mini_portile2 (~> 2.8.2)
+      racc (~> 1.4)
     nokogiri (1.15.7-aarch64-linux)
       racc (~> 1.4)
     nokogiri (1.15.7-x86_64-linux)
@@ -195,7 +199,7 @@ GEM
     rspec-retry (0.6.2)
       rspec-core (> 3.3)
     rspec-support (3.13.7)
-    sequel (5.105.0)
+    sequel (5.106.0)
       bigdecimal
     simplecov (0.22.0)
       docile (~> 1.1)
@@ -227,6 +231,7 @@ GEM
 
 PLATFORMS
   aarch64-linux
+  ruby
   x86_64-linux
 
 DEPENDENCIES

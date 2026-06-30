@@ -154,6 +154,7 @@ GEM
       net-smtp
     marcel (1.2.1)
     mini_mime (1.1.5)
+    mini_portile2 (2.8.9)
     minitest (5.26.1)
     mutex_m (0.3.0)
     net-imap (0.4.24)
@@ -166,6 +167,9 @@ GEM
     net-smtp (0.5.1)
       net-protocol
     nio4r (2.7.5)
+    nokogiri (1.15.7)
+      mini_portile2 (~> 2.8.2)
+      racc (~> 1.4)
     nokogiri (1.15.7-aarch64-linux)
       racc (~> 1.4)
     nokogiri (1.15.7-x86_64-linux)
@@ -250,8 +254,8 @@ GEM
       simplecov (~> 0.19)
     simplecov-html (0.13.2)
     simplecov_json_formatter (0.1.4)
-    sqlite3 (1.6.9-aarch64-linux)
-    sqlite3 (1.6.9-x86_64-linux)
+    sqlite3 (1.6.9)
+      mini_portile2 (~> 2.8.0)
     stringio (3.2.0)
     thor (1.5.0)
     timeout (0.6.1)
@@ -266,6 +270,7 @@ GEM
 
 PLATFORMS
   aarch64-linux
+  ruby
   x86_64-linux
 
 DEPENDENCIES
