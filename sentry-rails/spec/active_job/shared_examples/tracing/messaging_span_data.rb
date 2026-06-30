@@ -3,12 +3,6 @@
 RSpec.shared_examples "an ActiveJob backend that records messaging span data on the consumer transaction" do
   include ActiveSupport::Testing::TimeHelpers
 
-  let(:successful_job) do
-    job_fixture do
-      def perform; end
-    end
-  end
-
   let(:configure_sentry) { proc { |config| config.traces_sample_rate = 1.0 } }
 
   it "records messaging.message.id and messaging.destination.name on the consumer transaction" do

@@ -1,12 +1,6 @@
 # frozen_string_literal: true
 
 RSpec.shared_examples "an ActiveJob backend that propagates trace context through the job payload" do
-  let(:successful_job) do
-    job_fixture do
-      def perform; end
-    end
-  end
-
   let(:configure_sentry) { proc { |config| config.traces_sample_rate = 1.0 } }
 
   it "produces a consumer transaction whose trace_id matches the parent transaction" do

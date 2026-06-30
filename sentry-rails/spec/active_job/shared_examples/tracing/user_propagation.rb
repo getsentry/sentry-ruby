@@ -1,20 +1,6 @@
 # frozen_string_literal: true
 
 RSpec.shared_examples "an ActiveJob backend that propagates Sentry user context through job payloads" do
-  let(:successful_job) do
-    job_fixture do
-      def perform; end
-    end
-  end
-
-  let(:failing_job) do
-    job_fixture do
-      def perform
-        raise "boom from user_propagation spec"
-      end
-    end
-  end
-
   let(:full_user) do
     {
       id: "u1",
@@ -60,7 +46,7 @@ RSpec.shared_examples "an ActiveJob backend that propagates Sentry user context 
       failing_job.perform_later
       Sentry.set_user({})
 
-      expect { drain }.to raise_error(RuntimeError, /boom from user_propagation spec/)
+      expect { drain }.to raise_error(RuntimeError, /boom from failing_job spec/)
 
       error_event = sentry_events.find { |e| e.is_a?(Sentry::ErrorEvent) }
       expect(error_event).not_to be_nil

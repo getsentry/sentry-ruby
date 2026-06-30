@@ -18,6 +18,23 @@ RSpec.shared_context "active_job backend harness" do |adapter:|
   let(:configure_sentry) { proc { } }
   let(:sentry_test_config) { nil }
 
+  # Canonical job fixtures shared by every backend's example suite. Specs
+  # that need a custom body (e.g. local variables in the failing frame)
+  # override these locally.
+  let(:successful_job) do
+    job_fixture do
+      def perform; end
+    end
+  end
+
+  let(:failing_job) do
+    job_fixture do
+      def perform(*_args, **_kwargs)
+        raise "boom from failing_job spec"
+      end
+    end
+  end
+
   # Boot the dummy Rails app ONCE per example group. Each +make_basic_app+
   # call creates a new +Rails::Application+ subclass and re-runs every
   # initializer — including Sidekiq's railtie (which appends two entries

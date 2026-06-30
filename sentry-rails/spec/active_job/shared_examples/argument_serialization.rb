@@ -1,14 +1,6 @@
 # frozen_string_literal: true
 
 RSpec.shared_examples "an ActiveJob backend that serializes complex arguments" do
-  let(:failing_job) do
-    job_fixture do
-      def perform(*_args, **_kwargs)
-        raise "boom from argument_serialization spec"
-      end
-    end
-  end
-
   def event_arguments
     last_sentry_event.extra[:arguments]
   end
@@ -19,7 +11,7 @@ RSpec.shared_examples "an ActiveJob backend that serializes complex arguments" d
     expect do
       failing_job.perform_later(post)
       drain
-    end.to raise_error(RuntimeError, /boom from argument_serialization spec/)
+    end.to raise_error(RuntimeError, /boom from failing_job spec/)
 
     expect(event_arguments).to eq([post.to_global_id.to_s])
   end
@@ -30,7 +22,7 @@ RSpec.shared_examples "an ActiveJob backend that serializes complex arguments" d
     expect do
       failing_job.perform_later(wrapper: { post: post })
       drain
-    end.to raise_error(RuntimeError, /boom from argument_serialization spec/)
+    end.to raise_error(RuntimeError, /boom from failing_job spec/)
 
     expect(event_arguments).to eq([{ wrapper: { post: post.to_global_id.to_s } }])
   end
@@ -39,7 +31,7 @@ RSpec.shared_examples "an ActiveJob backend that serializes complex arguments" d
     expect do
       failing_job.perform_later(1..3)
       drain
-    end.to raise_error(RuntimeError, /boom from argument_serialization spec/)
+    end.to raise_error(RuntimeError, /boom from failing_job spec/)
 
     expect(event_arguments).to eq([[1, 2, 3]])
   end
@@ -50,7 +42,7 @@ RSpec.shared_examples "an ActiveJob backend that serializes complex arguments" d
     expect do
       failing_job.perform_later(range)
       drain
-    end.to raise_error(RuntimeError, /boom from argument_serialization spec/)
+    end.to raise_error(RuntimeError, /boom from failing_job spec/)
 
     serialized = event_arguments.first
     expect(serialized).to be_a(String)
@@ -66,14 +58,14 @@ RSpec.shared_examples "an ActiveJob backend that serializes complex arguments" d
           raise "intentional"
         end
 
-        raise "boom from argument_serialization spec"
+        raise "boom from failing_job spec"
       end
     end
 
     expect do
       problematic_job.perform_later(post)
       drain
-    end.to raise_error(RuntimeError, /boom from argument_serialization spec/)
+    end.to raise_error(RuntimeError, /boom from failing_job spec/)
 
     expect(event_arguments).to eq([post])
   end
@@ -83,13 +75,13 @@ RSpec.shared_examples "an ActiveJob backend that serializes complex arguments" d
 
     module_job = job_fixture do
       def perform(_mod)
-        raise "boom from argument_serialization spec"
+        raise "boom from failing_job spec"
       end
     end
 
     expect do
       module_job.perform_now(mod)
-    end.to raise_error(RuntimeError, /boom from argument_serialization spec/)
+    end.to raise_error(RuntimeError, /boom from failing_job spec/)
 
     expect(event_arguments).to eq([mod])
   end

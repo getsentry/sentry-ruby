@@ -1,20 +1,6 @@
 # frozen_string_literal: true
 
 RSpec.shared_examples "an ActiveJob backend that emits a consumer transaction" do
-  let(:successful_job) do
-    job_fixture do
-      def perform; end
-    end
-  end
-
-  let(:failing_job) do
-    job_fixture do
-      def perform
-        raise "boom from tracing spec"
-      end
-    end
-  end
-
   context "with traces_sample_rate = 1.0" do
     let(:configure_sentry) { proc { |config| config.traces_sample_rate = 1.0 } }
 
@@ -59,7 +45,7 @@ RSpec.shared_examples "an ActiveJob backend that emits a consumer transaction" d
       expect do
         failing_job.perform_later
         drain
-      end.to raise_error(RuntimeError, /boom from tracing spec/)
+      end.to raise_error(RuntimeError, /boom from failing_job spec/)
 
       error_event = sentry_events.find { |e| e.is_a?(Sentry::ErrorEvent) }
       expect(error_event).not_to be_nil
@@ -90,7 +76,7 @@ RSpec.shared_examples "an ActiveJob backend that emits a consumer transaction" d
       expect do
         failing_job.perform_later
         drain
-      end.to raise_error(RuntimeError, /boom from tracing spec/)
+      end.to raise_error(RuntimeError, /boom from failing_job spec/)
 
       transaction = consumer_transaction
       error_event = sentry_events.find { |e| e.is_a?(Sentry::ErrorEvent) }
@@ -107,7 +93,7 @@ RSpec.shared_examples "an ActiveJob backend that emits a consumer transaction" d
       expect do
         failing_job.perform_later
         drain
-      end.to raise_error(RuntimeError, /boom from tracing spec/)
+      end.to raise_error(RuntimeError, /boom from failing_job spec/)
 
       transactions = sentry_events.select { |e| e.is_a?(Sentry::TransactionEvent) }
       expect(transactions).to be_empty

@@ -1,14 +1,6 @@
 # frozen_string_literal: true
 
 RSpec.shared_examples "an ActiveJob backend that captures errors" do
-  let(:failing_job) do
-    job_fixture do
-      def perform
-        raise "boom from failing_job spec"
-      end
-    end
-  end
-
   it "captures an error event when a job fails" do
     expect do
       failing_job.perform_later
