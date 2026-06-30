@@ -371,6 +371,8 @@ GEM
       rack-protection (= 4.2.1)
       rack-session (>= 2.0.0, < 3)
       tilt (~> 2.0)
+    solid_queue (0.2.2)
+      rails (~> 7.1)
     sprockets (4.2.2)
       concurrent-ruby (~> 1.0)
       logger
@@ -441,6 +443,7 @@ DEPENDENCIES
   sidekiq (~> 7.0)
   simplecov
   simplecov-cobertura (~> 3.0)
+  solid_queue
   sprockets-rails
   sqlite3 (~> 1.7.3)
 
