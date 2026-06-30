@@ -206,8 +206,8 @@ GEM
     yard (0.9.44)
 
 PLATFORMS
+  aarch64-linux
   ruby
-  x86_64-linux
   x86_64-linux-gnu
 
 DEPENDENCIES

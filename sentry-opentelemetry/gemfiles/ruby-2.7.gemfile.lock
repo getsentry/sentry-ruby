@@ -50,6 +50,7 @@ GEM
     drb (2.2.3)
     erb (4.0.4.1)
       cgi (>= 0.3.3)
+    google-protobuf (3.25.8-aarch64-linux)
     google-protobuf (3.25.8-x86_64-linux)
     googleapis-common-protos-types (1.18.0)
       google-protobuf (>= 3.18, < 5.a)
@@ -209,6 +210,7 @@ GEM
     unicode-emoji (4.2.0)
 
 PLATFORMS
+  aarch64-linux
   x86_64-linux
 
 DEPENDENCIES
