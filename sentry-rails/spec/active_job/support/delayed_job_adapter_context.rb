@@ -5,20 +5,9 @@
 # Composes with "active_job backend harness" to drive delayed_job via its
 # ActiveRecord backend, reusing the dummy app's SQLite database (the
 # +delayed_jobs+ table lives in spec/dummy/test_rails_app/db/schema.rb).
-# No external service is required.
 #
-# This context deliberately does NOT require sentry-delayed_job. Loading
-# it would install delayed_job's own plugin (which emits its own
-# transactions / error reporting) and could register DelayedJobAdapter in
-# skippable_job_adapters, short-circuiting the AJ extension under test.
-
-# delayed_job 4.2+ ships an ActiveJob adapter that inherits from
-# ActiveJob::QueueAdapters::AbstractAdapter, which only exists in Rails
-# 7.2+. Requiring delayed_job on older Rails drags that adapter in (the
-# railtie pulls it during app initialization), raising NameError, so don't
-# even load the gem there. The matching spec file applies the same
-# Rails-version guard and skips. RAILS_VERSION isn't defined yet at
-# support-load time, so read Rails.version directly.
+# Adapter specs guard on Rails version (some adapters need AbstractAdapter
+# from 7.2+) and rescue `LoadError` for gems not bundled in every matrix.
 return if ::Rails.version.to_f < 7.2
 
 begin

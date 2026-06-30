@@ -10,18 +10,9 @@
 # delayed schedule has to be functional for the shared retry/scheduled
 # examples to pass.
 #
-# This context deliberately does NOT require sentry-resque. Loading it
-# would install resque's own Sentry integration (its server-side error
-# capture) and could register ResqueAdapter in skippable_job_adapters,
-# short-circuiting the AJ extension under test.
-
-# resque 3+ ships an ActiveJob adapter that inherits from
-# ActiveJob::QueueAdapters::AbstractAdapter, which only exists in Rails
-# 7.2+. Requiring resque on older Rails drags that adapter in (it pulls it
-# during app initialization), raising NameError, so don't even load the gem
-# there. The matching spec file applies the same Rails-version guard and
-# skips. RAILS_VERSION isn't defined yet at support-load time, so read
-# Rails.version directly.
+# Adapter specs guard on Rails version (some adapters need AbstractAdapter
+# from 7.2+) and rescue `LoadError` for gems not bundled in every matrix.
+#
 return if ::Rails.version.to_f < 7.2
 
 begin
