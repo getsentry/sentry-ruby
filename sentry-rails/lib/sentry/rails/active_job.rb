@@ -39,9 +39,7 @@ module Sentry
 
           if Sentry.configuration.send_default_pii
             user = Sentry.get_current_scope.user
-            allowed = user.each_with_object({}) do |(k, v), acc|
-              acc[k.to_s] = v if USER_FIELDS_ALLOWLIST.include?(k.to_s)
-            end
+            allowed = user.transform_keys(&:to_s).slice(*USER_FIELDS_ALLOWLIST)
             sentry_data["user"] = allowed unless allowed.empty?
           end
 
