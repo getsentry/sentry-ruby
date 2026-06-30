@@ -17,18 +17,24 @@ concurrency:
 
 jobs:
   e2e-tests:
-    name: e2e tests
+    name: e2e tests (ruby ${{ matrix.ruby.flavor }}, ${{ matrix.adapter }})
     runs-on: ubuntu-latest
-    timeout-minutes: 5
+    timeout-minutes: 8
 
     strategy:
       fail-fast: false
       matrix:
-        include:
-          - ruby_version: "3.4.9"
+        ruby:
+          - version: "3.4.9"
             flavor: "3.4"
-          - ruby_version: "4.0.3"
+          - version: "4.0.3"
             flavor: "4.0"
+        adapter:
+          - async
+          - inline
+          - sidekiq
+          - resque
+          - delayed_job
 
     steps:
       - name: Checkout code
@@ -42,9 +48,10 @@ jobs:
         run: |
           cd .devcontainer
           cp .env.example .env
-          echo "RUBY_VERSION=${{ matrix.ruby_version }}" >> .env
-          echo "DOCKER_IMAGE=ghcr.io/getsentry/sentry-ruby-devcontainer-${{ matrix.flavor }}" >> .env
+          echo "RUBY_VERSION=${{ matrix.ruby.version }}" >> .env
+          echo "DOCKER_IMAGE=ghcr.io/getsentry/sentry-ruby-devcontainer-${{ matrix.ruby.flavor }}" >> .env
           echo "DOCKER_TAG=${{ steps.devcontainer-version.outputs.version }}" >> .env
+          echo "SENTRY_E2E_ACTIVE_JOB_ADAPTER=${{ matrix.adapter }}" >> .env
 
       - name: Log in to GHCR
         uses: docker/login-action@74a5d142397b4f367a81961eba4e8cd7edddf772 # v3
@@ -54,7 +61,7 @@ jobs:
           password: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Pull test container image
-        run: docker pull ghcr.io/getsentry/sentry-ruby-devcontainer-${{ matrix.flavor }}:${{ steps.devcontainer-version.outputs.version }}
+        run: docker pull ghcr.io/getsentry/sentry-ruby-devcontainer-${{ matrix.ruby.flavor }}:${{ steps.devcontainer-version.outputs.version }}
 
       - name: Restore node_modules cache
         uses: actions/cache@6f8efc29b200d32929f49075959781ed54ec270c # v3
@@ -114,7 +121,7 @@ jobs:
         if: failure()
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
-          name: e2e-test-logs-ruby-${{ matrix.ruby_version }}
+          name: e2e-test-logs-ruby-${{ matrix.ruby.version }}-${{ matrix.adapter }}
           path: |
             log/sentry_debug_events.log
           retention-days: 7

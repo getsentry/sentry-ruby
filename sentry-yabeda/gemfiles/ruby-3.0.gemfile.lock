@@ -170,6 +170,7 @@ GEM
       dry-initializer
 
 PLATFORMS
+  aarch64-linux
   ruby
   x86_64-linux
 

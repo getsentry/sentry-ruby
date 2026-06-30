@@ -38,4 +38,11 @@ class HelloController < ActionController::Base
   def not_found
     raise ActionController::BadRequest
   end
+
+  def inline_job
+    Sentry.get_current_scope.set_tags(layer: "request")
+    InlineJob.perform_now
+    Sentry.capture_message("from-request-after")
+    head :ok
+  end
 end

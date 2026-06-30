@@ -1,20 +1,6 @@
 # frozen_string_literal: true
 
 RSpec.shared_examples "an ActiveJob backend that emits a consumer transaction" do
-  let(:successful_job) do
-    job_fixture do
-      def perform; end
-    end
-  end
-
-  let(:failing_job) do
-    job_fixture do
-      def perform
-        raise "boom from tracing spec"
-      end
-    end
-  end
-
   context "with traces_sample_rate = 1.0" do
     let(:configure_sentry) { proc { |config| config.traces_sample_rate = 1.0 } }
 
@@ -22,7 +8,7 @@ RSpec.shared_examples "an ActiveJob backend that emits a consumer transaction" d
       successful_job.perform_later
       drain
 
-      transaction = sentry_events.find { |e| e.is_a?(Sentry::TransactionEvent) }
+      transaction = consumer_transaction
       expect(transaction).not_to be_nil
 
       expect(transaction.transaction).to eq(successful_job.name)
@@ -30,6 +16,43 @@ RSpec.shared_examples "an ActiveJob backend that emits a consumer transaction" d
       expect(transaction.contexts.dig(:trace, :op)).to eq("queue.active_job")
       expect(transaction.contexts.dig(:trace, :origin)).to eq("auto.queue.active_job")
       expect(transaction.contexts.dig(:trace, :status)).to eq("ok")
+    end
+
+    it "sets queue scope tag on the consumer transaction" do
+      successful_job.set(queue: "important").perform_later
+      drain
+
+      transaction = consumer_transaction
+      expect(transaction).not_to be_nil
+      expect(transaction.tags[:queue]).to eq("important")
+    end
+
+    it "sets active_job context on the consumer transaction" do
+      successful_job.perform_later
+      drain
+
+      transaction = consumer_transaction
+      expect(transaction).not_to be_nil
+
+      ctx = transaction.contexts[:active_job]
+      expect(ctx).not_to be_nil
+      expect(ctx[:job_class]).to eq(successful_job.name)
+      expect(ctx[:job_id]).to be_a(String).and(satisfy { |v| !v.empty? })
+      expect(ctx[:queue]).to eq("default")
+    end
+
+    it "sets active_job context on the error event" do
+      expect do
+        failing_job.perform_later
+        drain
+      end.to raise_error(RuntimeError, /boom from failing_job spec/)
+
+      error_event = sentry_events.find { |e| e.is_a?(Sentry::ErrorEvent) }
+      expect(error_event).not_to be_nil
+
+      ctx = error_event.contexts[:active_job]
+      expect(ctx).not_to be_nil
+      expect(ctx[:job_class]).to eq(failing_job.name)
     end
 
     it "records a db.sql.active_record child span when the job performs a query" do
@@ -42,7 +65,7 @@ RSpec.shared_examples "an ActiveJob backend that emits a consumer transaction" d
       query_job.perform_later
       drain
 
-      transaction = sentry_events.find { |e| e.is_a?(Sentry::TransactionEvent) }
+      transaction = consumer_transaction
       expect(transaction).not_to be_nil
 
       db_span = transaction.spans.find { |s| s[:op] == "db.sql.active_record" }
@@ -53,9 +76,9 @@ RSpec.shared_examples "an ActiveJob backend that emits a consumer transaction" d
       expect do
         failing_job.perform_later
         drain
-      end.to raise_error(RuntimeError, /boom from tracing spec/)
+      end.to raise_error(RuntimeError, /boom from failing_job spec/)
 
-      transaction = sentry_events.find { |e| e.is_a?(Sentry::TransactionEvent) }
+      transaction = consumer_transaction
       error_event = sentry_events.find { |e| e.is_a?(Sentry::ErrorEvent) }
 
       expect(transaction.contexts.dig(:trace, :status)).to eq("internal_error")
@@ -70,7 +93,7 @@ RSpec.shared_examples "an ActiveJob backend that emits a consumer transaction" d
       expect do
         failing_job.perform_later
         drain
-      end.to raise_error(RuntimeError, /boom from tracing spec/)
+      end.to raise_error(RuntimeError, /boom from failing_job spec/)
 
       transactions = sentry_events.select { |e| e.is_a?(Sentry::TransactionEvent) }
       expect(transactions).to be_empty

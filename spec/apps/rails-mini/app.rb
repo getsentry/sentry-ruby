@@ -10,6 +10,13 @@ ENV["DATABASE_URL"] = "sqlite3:tmp/rails_mini_development.sqlite3"
 require "action_controller/railtie"
 require "active_record/railtie"
 require "active_job/railtie"
+require "time"
+
+# Point the broker-backed adapters at Redis. Sidekiq reads REDIS_URL on
+# its own; Resque does not, so wire it up explicitly. Defaults to a local
+# Redis when REDIS_URL is unset (e.g. running outside Docker Compose).
+redis_url = ENV.fetch("REDIS_URL", "redis://localhost:6379")
+Resque.redis = redis_url if defined?(Resque)
 
 class RailsMiniApp < Rails::Application
   config.hosts = nil
@@ -19,6 +26,29 @@ class RailsMiniApp < Rails::Application
   config.log_level = :debug
   config.api_only = true
   config.force_ssl = false
+
+  # Select the ActiveJob queue adapter from the environment. This must be
+  # assigned in the application body (not inside an `initializer` block):
+  # ActiveJob's own `active_job.set_configs` initializer reads
+  # `config.active_job.queue_adapter` and applies it via an `on_load`
+  # hook that fires during boot, before app-defined initializers run. An
+  # assignment made from an initializer would therefore be a silent no-op
+  # and every adapter would fall back to the default :async.
+  SUPPORTED_ACTIVE_JOB_ADAPTERS = {
+    "async" => :async,
+    "inline" => :inline,
+    "sidekiq" => :sidekiq,
+    "resque" => :resque,
+    "delayed_job" => :delayed_job
+  }.freeze
+
+  adapter_name = ENV.fetch("SENTRY_E2E_ACTIVE_JOB_ADAPTER", "async").to_s.downcase
+  unless SUPPORTED_ACTIVE_JOB_ADAPTERS.key?(adapter_name)
+    raise "Unsupported ActiveJob adapter: #{adapter_name}"
+  end
+
+  config.active_job.queue_adapter = SUPPORTED_ACTIVE_JOB_ADAPTERS[adapter_name]
+  config.x.active_job_adapter_name = adapter_name
 
   def debug_log_path
     @log_path ||= begin
@@ -211,47 +241,63 @@ end
 class JobsController < ActionController::Base
   before_action :set_cors_headers
 
-  def sample_job
-    job = SampleJob.perform_later("Hello from Rails mini app!")
+  JOB_CLASSES = {
+    "sample" => SampleJob,
+    "database" => DatabaseJob,
+    "failing" => FailingJob
+  }.freeze
 
-    Sentry.logger.info("SampleJob enqueued", job_id: job.job_id)
+  def enqueue
+    job_type = params[:job_type] || params[:id] || params[:job] || "sample"
+    job_class = JOB_CLASSES[job_type.to_s]
+    raise ActionController::BadRequest.new("Unsupported job type: #{job_type}") unless job_class
 
-    render json: {
-      message: "SampleJob enqueued successfully",
-      job_id: job.job_id,
-      job_class: job.class.name
-    }
-  end
+    args = Array(params[:args] || [])
+    args = JSON.parse(args) if args.is_a?(String) && args.strip.start_with?("[")
 
-  def database_job
-    title = params[:title] || "Test Post from Job"
-    job = DatabaseJob.perform_later(title)
+    job = schedule_job(job_class, args)
 
-    Sentry.logger.info("DatabaseJob enqueued", job_id: job.job_id, post_title: title)
-
-    render json: {
-      message: "DatabaseJob enqueued successfully",
+    Sentry.logger.info(
+      "#{job_class.name} enqueued",
       job_id: job.job_id,
       job_class: job.class.name,
-      post_title: title
-    }
-  end
+      args: args
+    )
 
-  def failing_job
-    should_fail = params[:should_fail] != "false"
-    job = FailingJob.perform_later(should_fail)
-
-    Sentry.logger.info("FailingJob enqueued", job_id: job.job_id, should_fail: should_fail)
-
-    render json: {
-      message: "FailingJob enqueued successfully",
+    response_body = {
+      message: "#{job_class.name} enqueued successfully",
       job_id: job.job_id,
       job_class: job.class.name,
-      should_fail: should_fail
+      args: args
+    }
+
+    if job_type.to_s == "database"
+      response_body[:post_title] = args[0] || "Test Post from Job"
+    elsif job_type.to_s == "failing"
+      response_body[:should_fail] = args.empty? ? true : args.first
+    end
+
+    render json: response_body
+  end
+
+  def active_job_adapter
+    render json: {
+      adapter: Rails.configuration.x.active_job_adapter_name,
+      queue_adapter: ActiveJob::Base.queue_adapter.class.name
     }
   end
 
   private
+
+  def schedule_job(job_class, args)
+    if params[:wait_seconds].present?
+      job_class.set(wait: params[:wait_seconds].to_i.seconds).perform_later(*args)
+    elsif params[:wait_until].present?
+      job_class.set(wait_until: Time.parse(params[:wait_until])).perform_later(*args)
+    else
+      job_class.perform_later(*args)
+    end
+  end
 
   def set_cors_headers
     response.headers['Access-Control-Allow-Origin'] = '*'
@@ -262,23 +308,45 @@ end
 
 RailsMiniApp.initialize!
 
-ActiveRecord::Schema.define do
-  create_table :posts, force: true do |t|
-    t.string :title, null: false
-    t.text :content
-    t.timestamps
+# The web process owns schema setup. The worker (worker.rb) boots the same
+# app in parallel and sets SENTRY_E2E_SKIP_DB_SETUP=true to skip this block,
+# avoiding a concurrent `force: true` drop/create race on the shared SQLite
+# file; it waits for these tables to appear before processing jobs.
+unless ENV["SENTRY_E2E_SKIP_DB_SETUP"] == "true"
+  ActiveRecord::Schema.define do
+    create_table :posts, force: true do |t|
+      t.string :title, null: false
+      t.text :content
+      t.timestamps
+    end
+
+    create_table :users, force: true do |t|
+      t.string :name, null: false
+      t.string :email
+      t.timestamps
+    end
+
+    # Backing store for the :delayed_job adapter. Created unconditionally so
+    # the same schema works regardless of which adapter the worker uses.
+    create_table :delayed_jobs, force: true do |t|
+      t.integer :priority, default: 0, null: false
+      t.integer :attempts, default: 0, null: false
+      t.text :handler, null: false
+      t.text :last_error
+      t.datetime :run_at
+      t.datetime :locked_at
+      t.datetime :failed_at
+      t.string :locked_by
+      t.string :queue
+      t.timestamps null: true
+    end
+    add_index :delayed_jobs, [:priority, :run_at], name: "delayed_jobs_priority"
   end
 
-  create_table :users, force: true do |t|
-    t.string :name, null: false
-    t.string :email
-    t.timestamps
-  end
+  Post.create!(title: "Welcome Post", content: "Welcome to the Rails mini app!")
+  Post.create!(title: "Sample Post", content: "This is a sample post for testing.")
+  User.create!(name: "Test User", email: "test@example.com")
 end
-
-Post.create!(title: "Welcome Post", content: "Welcome to the Rails mini app!")
-Post.create!(title: "Sample Post", content: "This is a sample post for testing.")
-User.create!(name: "Test User", email: "test@example.com")
 
 RailsMiniApp.routes.draw do
   get '/health', to: 'events#health'
@@ -291,9 +359,9 @@ RailsMiniApp.routes.draw do
   post '/posts', to: 'posts#create'
   get '/posts/:id', to: 'posts#show'
 
-  post '/jobs/sample', to: 'jobs#sample_job'
-  post '/jobs/database', to: 'jobs#database_job'
-  post '/jobs/failing', to: 'jobs#failing_job'
+  post '/jobs/enqueue', to: 'jobs#enqueue'
+  post '/jobs/:job_type', to: 'jobs#enqueue'
+  get '/jobs/adapter', to: 'jobs#active_job_adapter'
 
   match '*path', to: proc { |env|
     [200, {
