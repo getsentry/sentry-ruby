@@ -185,6 +185,34 @@ RSpec.describe Sentry::StructuredLogger do
       end
     end
 
+    describe "with attributes on scope" do
+      it "includes scope attributes with inferred types in the log" do
+        Sentry.set_attribute("app.flag", true)
+        Sentry.set_attribute("app.duration", 3600, unit: "second")
+
+        Sentry.logger.info("Hello World")
+
+        expect(sentry_logs).to_not be_empty
+
+        attributes = sentry_logs.last[:attributes]
+
+        expect(attributes["app.flag"]).to eql({ value: true, type: "boolean" })
+        expect(attributes["app.duration"]).to eql({ value: 3600, type: "integer", unit: "second" })
+      end
+
+      it "lets log attributes take precedence over scope attributes" do
+        Sentry.set_attribute(:shared, "from_scope")
+
+        Sentry.logger.info("Hello World", shared: "from_log")
+
+        expect(sentry_logs).to_not be_empty
+
+        attributes = sentry_logs.last[:attributes]
+
+        expect(attributes[:shared]).to eql({ value: "from_log", type: "string" })
+      end
+    end
+
     describe "using config.before_send_log" do
       let(:transport) do
         Sentry.get_current_client.transport

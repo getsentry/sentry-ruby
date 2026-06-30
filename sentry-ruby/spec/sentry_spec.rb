@@ -791,6 +791,37 @@ RSpec.describe Sentry do
     end
   end
 
+  describe ".set_attributes" do
+    it "adds attributes to the current scope" do
+      described_class.set_attributes("foo" => "bar", "baz" => 42)
+
+      expect(described_class.get_current_scope.attributes).to eq("foo" => "bar", "baz" => 42)
+    end
+  end
+
+  describe ".set_attribute" do
+    it "adds a single attribute to the current scope" do
+      described_class.set_attribute("foo", "bar")
+
+      expect(described_class.get_current_scope.attributes).to eq("foo" => "bar")
+    end
+
+    it "wraps the value when given the optional unit: param" do
+      described_class.set_attribute("duration", 3600, unit: "second")
+
+      expect(described_class.get_current_scope.attributes).to eq("duration" => { value: 3600, unit: "second" })
+    end
+  end
+
+  describe ".remove_attribute" do
+    it "removes an attribute from the current scope" do
+      described_class.set_attribute("foo", "bar")
+      described_class.remove_attribute("foo")
+
+      expect(described_class.get_current_scope.attributes).to eq({})
+    end
+  end
+
   describe ".add_attachment" do
     it "adds a new attachment to the current scope with provided filename and bytes" do
       described_class.add_attachment(filename: "test.txt", bytes: "test")

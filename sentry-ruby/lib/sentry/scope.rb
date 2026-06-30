@@ -1,5 +1,6 @@
 # frozen_string_literal: true
 
+require "set"
 require "sentry/breadcrumb_buffer"
 require "sentry/propagation_context"
 require "sentry/attachment"
@@ -24,7 +25,8 @@ module Sentry
       :span,
       :session,
       :attachments,
-      :propagation_context
+      :propagation_context,
+      :attributes
     ]
 
     attr_reader(*ATTRIBUTES)
@@ -84,7 +86,15 @@ module Sentry
     # @param telemetry [MetricEvent, LogEvent] the telemetry event to apply scope context to
     # @return [MetricEvent, LogEvent] the telemetry event with scope context applied
     def apply_to_telemetry(telemetry)
-      # TODO-neel when new scope set_attribute api is added: add them here
+      # Compare as strings since String and Symbol keys serialize to the same wire key.
+      existing_keys = telemetry.attributes.keys.map(&:to_s).to_set
+
+      attributes.each do |key, value|
+        next if existing_keys.include?(key)
+
+        telemetry.attributes[key] = value
+      end
+
       trace_context = get_trace_context
       telemetry.trace_id = trace_context[:trace_id]
       telemetry.span_id = trace_context[:span_id]
@@ -136,6 +146,7 @@ module Sentry
       copy.propagation_context = propagation_context.deep_dup
       copy.attachments = attachments.dup
       copy.event_processors = event_processors.dup
+      copy.attributes = attributes.deep_dup
       copy
     end
 
@@ -154,6 +165,7 @@ module Sentry
       self.span = scope.span
       self.propagation_context = scope.propagation_context
       self.attachments = scope.attachments
+      self.attributes = scope.attributes
     end
 
     # Updates the scope's data from the given options.
@@ -254,6 +266,32 @@ module Sentry
     def set_context(key, value)
       check_argument_type!(value, Hash)
       set_contexts(key => value)
+    end
+
+    # Updates the scope's attributes by merging with the old value.
+    # @param attributes_hash [Hash]
+    # @return [Hash]
+    def set_attributes(attributes_hash)
+      check_argument_type!(attributes_hash, Hash)
+      attributes_hash.each { |key, value| @attributes[key.to_s] = value }
+      @attributes
+    end
+
+    # Sets a single attribute on the scope.
+    # @param key [String, Symbol]
+    # @param value [Object]
+    # @param unit [String, Symbol, nil] an optional measurement unit for the value
+    # @return [Hash]
+    def set_attribute(key, value, unit: nil)
+      value = { value: value, unit: unit } unless unit.nil?
+      set_attributes(key => value)
+    end
+
+    # Removes a single attribute from the scope. No-op if the attribute is not set.
+    # @param key [String, Symbol]
+    # @return [void]
+    def remove_attribute(key)
+      @attributes.delete(key.to_s)
     end
 
     # Sets the scope's level attribute.
@@ -361,6 +399,7 @@ module Sentry
       @span = nil
       @session = nil
       @attachments = []
+      @attributes = {}
       generate_propagation_context
       set_new_breadcrumb_buffer
     end
