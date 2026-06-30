@@ -93,9 +93,16 @@ RSpec.configure do |config|
     reset_sentry_globals!
   end
 
-  RSpec::Matchers.define :have_recorded_lost_event do |reason, data_category, num: 1|
+  RSpec::Matchers.define :have_recorded_lost_event do |reason, data_category, num: 1, num_bytes: nil|
     match do |transport|
       expect(transport.discarded_events[[reason, data_category]]).to eq(num)
+
+      next true unless num_bytes
+
+      byte_category = Sentry::Envelope::Item.byte_data_category(data_category)
+      expect(transport.discarded_events[[reason, byte_category]]).to match(num_bytes)
+
+      true
     end
   end
 end

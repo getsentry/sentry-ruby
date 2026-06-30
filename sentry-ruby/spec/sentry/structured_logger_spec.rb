@@ -241,6 +241,7 @@ RSpec.describe Sentry::StructuredLogger do
           expect(sentry_logs.size).to be(1)
 
           expect(transport.discarded_events).to include([:before_send, "log_item"] => 2)
+          expect(transport.discarded_events[[:before_send, "log_byte"]]).to be > 0
         end
       end
     end

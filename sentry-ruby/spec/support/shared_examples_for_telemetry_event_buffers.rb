@@ -109,7 +109,7 @@ RSpec.shared_examples "telemetry event buffer" do |event_factory:, max_items_con
     it "records lost event when dropping due to queue overflow" do
       max_items_before_drop.times { subject.add_item(event) }
 
-      expect(client.transport).to receive(:record_lost_event).with(:queue_overflow, subject.data_category)
+      expect(client.transport).to receive(:record_lost_event).with(:queue_overflow, subject.data_category, num_bytes: a_value > 0)
 
       subject.add_item(event)
     end

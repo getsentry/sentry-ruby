@@ -313,7 +313,7 @@ RSpec.describe "Sentry Metrics" do
 
           expect(sentry_metrics.count).to eq(1)
           expect(sentry_metrics.first[:name]).to eq("test.allowed")
-          expect(Sentry.get_current_client.transport).to have_recorded_lost_event(:before_send, 'trace_metric', num: 2)
+          expect(Sentry.get_current_client.transport).to have_recorded_lost_event(:before_send, 'trace_metric', num: 2, num_bytes: a_value > 0)
         end
       end
     end
