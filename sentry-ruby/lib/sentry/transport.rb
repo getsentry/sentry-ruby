@@ -64,7 +64,7 @@ module Sentry
       end
     rescue Sentry::SizeExceededError
       serialized_items&.each do |item|
-        record_lost_event(:send_error, item.data_category)
+        record_lost_event(:send_error, item.data_category, num: item.item_count, num_bytes: item.lost_event_byte_size)
       end
     end
 
@@ -167,11 +167,16 @@ module Sentry
       envelope
     end
 
-    def record_lost_event(reason, data_category, num: 1)
+    def record_lost_event(reason, data_category, num: 1, num_bytes: nil)
       return unless @send_client_reports
       return unless CLIENT_REPORT_REASONS.include?(reason)
 
       @discarded_events[[reason, data_category]] += num
+
+      return unless num_bytes
+
+      byte_category = Envelope::Item.byte_data_category(data_category)
+      @discarded_events[[reason, byte_category]] += num_bytes if byte_category
     end
 
     def flush
@@ -211,7 +216,13 @@ module Sentry
       envelope.items.reject! do |item|
         if is_rate_limited?(item.data_category)
           log_debug("[Transport] Envelope item [#{item.type}] not sent: rate limiting")
-          record_lost_event(:ratelimit_backoff, item.data_category)
+
+          record_lost_event(
+            :ratelimit_backoff,
+            item.data_category,
+            num: item.item_count,
+            num_bytes: item.lost_event_byte_size
+          )
 
           true
         else

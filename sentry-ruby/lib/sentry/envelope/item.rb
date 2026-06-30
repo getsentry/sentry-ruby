@@ -25,12 +25,33 @@ module Sentry
       end
     end
 
+    def self.byte_data_category(data_category)
+      case data_category
+      when "log_item" then "log_byte"
+      when "trace_metric" then "trace_metric_byte"
+      end
+    end
+
     def initialize(headers, payload)
       @headers = headers
       @payload = payload
       @type = headers[:type] || "event"
       @data_category = self.class.data_category(type)
       @size_limit = SIZE_LIMITS[type]
+    end
+
+    def byte_data_category
+      self.class.byte_data_category(data_category)
+    end
+
+    def item_count
+      headers[:item_count] || 1
+    end
+
+    def lost_event_byte_size
+      return unless byte_data_category
+
+      (payload.is_a?(String) ? payload : JSON.generate(payload)).bytesize
     end
 
     def to_s

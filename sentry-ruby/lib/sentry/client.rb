@@ -304,8 +304,13 @@ module Sentry
     rescue => e
       log_error("Envelope sending failed", e, debug: configuration.debug)
 
-      envelope.items.map(&:data_category).each do |data_category|
-        transport.record_lost_event(:network_error, data_category)
+      envelope.items.each do |item|
+        transport.record_lost_event(
+          :network_error,
+          item.data_category,
+          num: item.item_count,
+          num_bytes: item.lost_event_byte_size
+        )
       end
 
       raise
