@@ -7,11 +7,6 @@
 # into Sidekiq's class-keyed jobs hash at enqueue time and run in-process
 # by drain_all.
 #
-# This context deliberately does NOT require sentry-sidekiq. Loading
-# sentry-sidekiq would install Sidekiq's client/server middleware (which
-# emits its own queue.process transactions) and register SidekiqAdapter
-# in skippable_job_adapters (which short-circuits the AJ extension under
-# test).
 begin
   require "sidekiq"
   # Sidekiq 8.1+ deprecates `require "sidekiq/testing"` in favor of
