@@ -44,18 +44,21 @@ module Matrix
   #   -> ruby-3.2_rack-2_redis-4, {RACK_VERSION=2, REDIS_RB_VERSION=4}
   def cell_from_entry(gem, entry)
     ruby = entry.fetch("ruby_version")
-    segments = ["ruby-#{ruby}"]
     env = {}
 
-    entry.each do |key, value|
+    axes = entry.filter_map do |key, value|
       next if key == "ruby_version" || key == "options"
 
       name = key.split("_").first
       var = GEM_ENV_MAPPING[name]
       abort "Unknown matrix key: '#{key}' in #{gem}/test-matrix.json" unless var
-      segments << "#{name}-#{value}"
       env[var] = value
+      [name, value]
     end
+
+    # Sort axes by name so the wrapper/lock filename is canonical regardless of
+    # key order in the source entry — CI hands us the matrix object verbatim.
+    segments = ["ruby-#{ruby}"] + axes.sort_by(&:first).map { |name, value| "#{name}-#{value}" }
 
     Cell.new(gem: gem,
              base: segments.join("_"),

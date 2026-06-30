@@ -12,7 +12,5 @@ gem "sentry-ruby", path: "../sentry-ruby"
 
 gem "resque-retry", "~> 1.8"
 
-group :rails do
-  gem "sentry-rails", path: "../sentry-rails"
-  gem "rails", "> 5.2.0"
-end
+gem "sentry-rails", path: "../sentry-rails"
+gem "rails", "> 5.2.0"

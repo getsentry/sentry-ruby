@@ -32,18 +32,10 @@ jobs:
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
 
-      # mise installs every Ruby declared in .mise.ci.toml (ruby.compile=false ->
-      # prebuilt binaries where available); bin/relock then resolves each cell
-      # against its matching Ruby. MISE_ENV scopes the install to the ci profile;
-      # it also keys the action's tool cache, so the matrix Rubies are cached and
-      # restored across runs.
-      - uses: jdx/mise-action@e6a8b3978addb5a52f2b4cd9d91eafa7f0ab959d # v4.2.0
-        env:
-          MISE_ENV: ci
-          MISE_JOBS: "2"
-        with:
-          install: true
-          cache: true
+      # Install every Ruby in .mise.ci.toml and restore the shared cache; bin/relock
+      # then resolves each cell against its matching Ruby. Same setup the *_test
+      # workflows use, so they all share one mise tool cache.
+      - uses: ./.github/actions/setup-mise
 
       - name: Regenerate lockfiles
         run: ruby bin/relock

@@ -10,7 +10,7 @@
 ---
 
 [![Gem Version](https://img.shields.io/gem/v/sentry-yabeda.svg)](https://rubygems.org/gems/sentry-yabeda)
-![Build Status](https://github.com/getsentry/sentry-ruby/actions/workflows/sentry_yabeda_test.yml/badge.svg)
+![Build Status](https://github.com/getsentry/sentry-ruby/actions/workflows/tests.yml/badge.svg)
 [![Coverage Status](https://img.shields.io/codecov/c/github/getsentry/sentry-ruby/master?logo=codecov)](https://codecov.io/gh/getsentry/sentry-ruby/branch/master)
 [![Gem](https://img.shields.io/gem/dt/sentry-yabeda.svg)](https://rubygems.org/gems/sentry-yabeda/)
 

@@ -13,45 +13,39 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  delayed_job-tests:
-    uses: ./.github/workflows/sentry_delayed_job_test.yml
-    secrets: inherit
+  # Prewarm mise cache in case it was evicted recently.
+  # Each specific test needs this to exist.
+  setup-mise:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
+      - uses: ./.github/actions/setup-mise
 
-  opentelemetry-tests:
-    uses: ./.github/workflows/sentry_opentelemetry_test.yml
-    secrets: inherit
-
-  rails-tests:
-    uses: ./.github/workflows/sentry_rails_test.yml
-    secrets: inherit
-
-  resque-tests:
-    uses: ./.github/workflows/sentry_resque_test.yml
-    secrets: inherit
-
-  ruby-tests:
-    uses: ./.github/workflows/sentry_ruby_test.yml
-    secrets: inherit
-
-  sidekiq-tests:
-    uses: ./.github/workflows/sentry_sidekiq_test.yml
-    secrets: inherit
-
-  yabeda-tests:
-    uses: ./.github/workflows/sentry_yabeda_test.yml
+  test:
+    needs: setup-mise
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - gem: sentry-ruby
+          - gem: sentry-rails
+            apt: libsqlite3-dev imagemagick
+          - gem: sentry-sidekiq
+          - gem: sentry-delayed_job
+            apt: libsqlite3-dev
+          - gem: sentry-resque
+          - gem: sentry-opentelemetry
+          - gem: sentry-yabeda
+    uses: ./.github/workflows/gem_test.yml
+    with:
+      gem: ${{ matrix.gem }}
+      apt: ${{ matrix.apt || '' }}
     secrets: inherit
 
   codecov:
     name: CodeCov
     runs-on: ubuntu-latest
-    needs:
-      - ruby-tests
-      - rails-tests
-      - sidekiq-tests
-      - delayed_job-tests
-      - resque-tests
-      - opentelemetry-tests
-      - yabeda-tests
+    needs: test
     steps:
       - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
 
