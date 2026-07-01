@@ -220,6 +220,35 @@ module Sentry
       get_current_scope.set_context(*args)
     end
 
+    # @!method set_attributes
+    #   Updates the current scope's attributes by merging with the old value.
+    #   @param attributes_hash [Hash]
+    #   @return [Hash]
+    def set_attributes(attributes_hash)
+      return unless initialized?
+      get_current_scope.set_attributes(attributes_hash)
+    end
+
+    # @!method set_attribute
+    #   Sets a single attribute on the current scope.
+    #   @param key [String, Symbol]
+    #   @param value [Object]
+    #   @param unit [String, Symbol, nil] an optional measurement unit for the value
+    #   @return [Hash]
+    def set_attribute(key, value, unit: nil)
+      return unless initialized?
+      get_current_scope.set_attribute(key, value, unit: unit)
+    end
+
+    # @!method remove_attribute
+    #   Removes a single attribute from the current scope.
+    #   @param key [String, Symbol]
+    #   @return [void]
+    def remove_attribute(key)
+      return unless initialized?
+      get_current_scope.remove_attribute(key)
+    end
+
     # @!method add_attachment
     #   @!macro add_attachment
     def add_attachment(**opts)

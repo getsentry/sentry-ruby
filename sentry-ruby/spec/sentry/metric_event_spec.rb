@@ -117,6 +117,59 @@ RSpec.describe Sentry::MetricEvent do
       expect(attributes["unknown"][:value]).to include("Object")
     end
 
+    it "carries units through the object form" do
+      event = described_class.new(
+        name: "test.metric",
+        type: "counter",
+        value: 1.0,
+        attributes: {
+          "duration_int" => { value: 3600, unit: "second" },
+          "duration_float" => { value: 1.5, unit: "millisecond" },
+          "version" => { value: "v1", unit: "version" },
+          "symbol_unit" => { value: 3600, unit: :second },
+          "invalid_unit" => { value: 1, unit: 5 }
+        }
+      )
+
+      attributes = event.to_h[:attributes]
+
+      expect(attributes["duration_int"]).to eq({ type: "integer", value: 3600, unit: "second" })
+      expect(attributes["duration_float"]).to eq({ type: "double", value: 1.5, unit: "millisecond" })
+      expect(attributes["version"]).to eq({ type: "string", value: "v1", unit: "version" })
+      expect(attributes["symbol_unit"]).to eq({ type: "integer", value: 3600, unit: "second" })
+      expect(attributes["invalid_unit"]).to eq({ type: "integer", value: 1 })
+    end
+
+    it "carries units through the object form with string keys" do
+      event = described_class.new(
+        name: "test.metric",
+        type: "counter",
+        value: 1.0,
+        attributes: {
+          "duration" => { "value" => 3600, "unit" => "second" },
+          "version" => { "value" => "v1" }
+        }
+      )
+
+      attributes = event.to_h[:attributes]
+
+      expect(attributes["duration"]).to eq({ type: "integer", value: 3600, unit: "second" })
+      expect(attributes["version"]).to eq({ type: "string", value: "v1" })
+    end
+
+    it "treats a hash without a value key as a plain JSON string value" do
+      event = described_class.new(
+        name: "test.metric",
+        type: "counter",
+        value: 1.0,
+        attributes: { "obj" => { "foo" => "bar" } }
+      )
+
+      attributes = event.to_h[:attributes]
+
+      expect(attributes["obj"]).to eq({ type: "string", value: "{\"foo\":\"bar\"}" })
+    end
+
     it "does not mutate the original attributes hash" do
       attributes = { "foo" => "bar" }
       event1 = described_class.new(name: "test.metric", type: :counter, value: 1, attributes: attributes)

@@ -44,6 +44,7 @@ RSpec.describe Sentry::Scope do
       copy.user.merge!(foo: "bar")
       copy.set_transaction_name("foo", source: :url)
       copy.fingerprint << "bar"
+      copy.set_attribute("foo", "bar")
 
       expect(subject.breadcrumbs.to_h).to eq({ values: [] })
       expect(subject.contexts[:os].keys).to match_array([:name, :version, :build, :kernel_version, :machine])
@@ -55,6 +56,7 @@ RSpec.describe Sentry::Scope do
       expect(subject.transaction_name).to eq(nil)
       expect(subject.transaction_source).to eq(nil)
       expect(subject.span).to eq(nil)
+      expect(subject.attributes).to eq({})
     end
 
     it "copies event_processors so mutations don't affect the original" do
@@ -140,6 +142,7 @@ RSpec.describe Sentry::Scope do
       subject.set_transaction_name("WelcomeController#index")
       subject.set_span(Sentry::Transaction.new(op: "foo"))
       subject.set_fingerprint(["foo"])
+      subject.set_attribute("foo", "bar")
       scope_id = subject.object_id
 
       subject.clear
@@ -155,6 +158,7 @@ RSpec.describe Sentry::Scope do
       expect(subject.transaction_name).to eq(nil)
       expect(subject.transaction_source).to eq(nil)
       expect(subject.span).to eq(nil)
+      expect(subject.attributes).to eq({})
     end
   end
 
@@ -543,6 +547,58 @@ RSpec.describe Sentry::Scope do
       end
     end
 
+    shared_examples "telemetry event scope attributes" do
+      it "applies scope attributes with inferred types" do
+        subject.set_attribute("app.flag", true)
+        subject.set_attribute("app.count", 3)
+
+        subject.apply_to_telemetry(telemetry_event)
+        attributes = telemetry_event.to_h[:attributes]
+
+        expect(attributes["app.flag"]).to eq({ value: true, type: "boolean" })
+        expect(attributes["app.count"]).to eq({ value: 3, type: "integer" })
+      end
+
+      it "carries the unit through when set via the object form" do
+        subject.set_attribute("app.duration", { value: 3600, unit: "second" })
+
+        subject.apply_to_telemetry(telemetry_event)
+        attributes = telemetry_event.to_h[:attributes]
+
+        expect(attributes["app.duration"]).to eq({ value: 3600, type: "integer", unit: "second" })
+      end
+
+      it "carries the unit through when set via the unit: param" do
+        subject.set_attribute("app.duration", 3600, unit: "second")
+
+        subject.apply_to_telemetry(telemetry_event)
+        attributes = telemetry_event.to_h[:attributes]
+
+        expect(attributes["app.duration"]).to eq({ value: 3600, type: "integer", unit: "second" })
+      end
+
+      it "does not overwrite an attribute already set on the telemetry item" do
+        telemetry_event.attributes["app.flag"] = false
+        subject.set_attribute("app.flag", true)
+
+        subject.apply_to_telemetry(telemetry_event)
+        attributes = telemetry_event.to_h[:attributes]
+
+        expect(attributes["app.flag"]).to eq({ value: false, type: "boolean" })
+      end
+
+      it "treats String and Symbol keys as the same when applying precedence" do
+        telemetry_event.attributes[:user_id] = 1
+        subject.set_attribute("user_id", 2)
+
+        subject.apply_to_telemetry(telemetry_event)
+        attributes = telemetry_event.to_h[:attributes]
+
+        expect(attributes.keys.map(&:to_s).count("user_id")).to eq(1)
+        expect(attributes[:user_id]).to eq({ value: 1, type: "integer" })
+      end
+    end
+
     context "with MetricEvent" do
       let(:telemetry_event) do
         Sentry::MetricEvent.new(name: "test.metric", type: :counter, value: 1)
@@ -551,6 +607,7 @@ RSpec.describe Sentry::Scope do
       include_examples "telemetry event user data"
       include_examples "telemetry event trace data"
       include_examples "telemetry event default attributes"
+      include_examples "telemetry event scope attributes"
     end
 
     context "with LogEvent" do
@@ -561,6 +618,7 @@ RSpec.describe Sentry::Scope do
       include_examples "telemetry event user data"
       include_examples "telemetry event trace data"
       include_examples "telemetry event default attributes"
+      include_examples "telemetry event scope attributes"
     end
   end
 end

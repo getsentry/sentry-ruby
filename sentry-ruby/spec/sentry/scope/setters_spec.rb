@@ -228,4 +228,85 @@ RSpec.describe Sentry::Scope do
       expect(subject.fingerprint).to eq(["bar"])
     end
   end
+
+  describe "#set_attributes" do
+    it "merges the given attributes into the scope" do
+      subject.set_attributes("foo" => "bar")
+      subject.set_attributes("baz" => 42)
+
+      expect(subject.attributes).to eq({ "foo" => "bar", "baz" => 42 })
+    end
+
+    it "overwrites an existing attribute with the same key" do
+      subject.set_attributes("foo" => "bar")
+      subject.set_attributes("foo" => "qux")
+
+      expect(subject.attributes).to eq({ "foo" => "qux" })
+    end
+
+    it "normalizes symbol keys to strings" do
+      subject.set_attributes(foo: "bar")
+      subject.set_attributes("foo" => "qux")
+
+      expect(subject.attributes).to eq({ "foo" => "qux" })
+    end
+
+    it "raises when the argument is not a Hash" do
+      expect { subject.set_attributes("foo") }.to raise_error(ArgumentError)
+    end
+  end
+
+  describe "#set_attribute" do
+    it "sets a single attribute" do
+      subject.set_attribute("foo", "bar")
+
+      expect(subject.attributes).to eq({ "foo" => "bar" })
+    end
+
+    it "overwrites an existing attribute" do
+      subject.set_attribute("foo", "bar")
+      subject.set_attribute("foo", "qux")
+
+      expect(subject.attributes).to eq({ "foo" => "qux" })
+    end
+
+    it "supports the object form with a unit" do
+      subject.set_attribute("duration", { value: 3600, unit: "second" })
+
+      expect(subject.attributes).to eq({ "duration" => { value: 3600, unit: "second" } })
+    end
+
+    it "wraps the value when given the optional unit: param" do
+      subject.set_attribute("duration", 3600, unit: "second")
+
+      expect(subject.attributes).to eq({ "duration" => { value: 3600, unit: "second" } })
+    end
+
+    it "normalizes a symbol key to a string" do
+      subject.set_attribute(:foo, "bar")
+
+      expect(subject.attributes).to eq({ "foo" => "bar" })
+    end
+  end
+
+  describe "#remove_attribute" do
+    it "removes the attribute" do
+      subject.set_attribute("foo", "bar")
+      subject.remove_attribute("foo")
+
+      expect(subject.attributes).to eq({})
+    end
+
+    it "is a no-op when the attribute is not set" do
+      expect { subject.remove_attribute("missing") }.not_to raise_error
+      expect(subject.attributes).to eq({})
+    end
+
+    it "removes an attribute set with a symbol key" do
+      subject.set_attribute(:foo, "bar")
+      subject.remove_attribute(:foo)
+
+      expect(subject.attributes).to eq({})
+    end
+  end
 end

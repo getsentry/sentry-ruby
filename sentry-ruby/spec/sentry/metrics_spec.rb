@@ -188,6 +188,34 @@ RSpec.describe "Sentry Metrics" do
         end
       end
 
+      context "with attributes on scope" do
+        it "includes scope attributes with inferred types in the metric" do
+          Sentry.set_attribute("app.flag", true)
+          Sentry.set_attribute("app.duration", 3600, unit: "second")
+
+          Sentry.metrics.count("test.counter")
+
+          Sentry.get_current_client.flush
+
+          attributes = sentry_metrics.first[:attributes]
+
+          expect(attributes["app.flag"]).to eq({ type: "boolean", value: true })
+          expect(attributes["app.duration"]).to eq({ type: "integer", value: 3600, unit: "second" })
+        end
+
+        it "lets metric attributes take precedence over scope attributes" do
+          Sentry.set_attribute("shared", "from_scope")
+
+          Sentry.metrics.count("test.counter", attributes: { "shared" => "from_metric" })
+
+          Sentry.get_current_client.flush
+
+          attributes = sentry_metrics.first[:attributes]
+
+          expect(attributes["shared"]).to eq({ type: "string", value: "from_metric" })
+        end
+      end
+
       it "includes default attributes from configuration" do
         Sentry.metrics.count("test.counter")
 
