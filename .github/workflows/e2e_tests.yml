@@ -38,7 +38,7 @@ jobs:
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
 
       - name: Read devcontainer version
         id: devcontainer-version
@@ -54,7 +54,7 @@ jobs:
           echo "SENTRY_E2E_ACTIVE_JOB_ADAPTER=${{ matrix.adapter }}" >> .env
 
       - name: Log in to GHCR
-        uses: docker/login-action@74a5d142397b4f367a81961eba4e8cd7edddf772 # v3
+        uses: docker/login-action@650006c6eb7dba73a995cc03b0b2d7f5ca915bee # v4.2.0
         with:
           registry: ghcr.io
           username: ${{ github.actor }}
@@ -64,7 +64,7 @@ jobs:
         run: docker pull ghcr.io/getsentry/sentry-ruby-devcontainer-${{ matrix.ruby.flavor }}:${{ steps.devcontainer-version.outputs.version }}
 
       - name: Restore node_modules cache
-        uses: actions/cache@6f8efc29b200d32929f49075959781ed54ec270c # v3
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
           path: spec/apps/svelte-mini/node_modules
           key: ${{ runner.os }}-${{ runner.arch }}-node-modules-${{ hashFiles('spec/apps/svelte-mini/package-lock.json') }}
@@ -89,7 +89,7 @@ jobs:
             up -d --no-build sentry-test
 
       - name: "Wait for rails-mini app to be ready"
-        uses: nev7n/wait_for_response@81b0b0eded16435202e126beb3e704fc00430f5b # v1
+        uses: nev7n/wait_for_response@8bfc0523300e46e24e1b42d6783680aa921ee6cc # v1.2.0
         with:
           url: 'http://localhost:4000/health'
           responseCode: 200
@@ -97,7 +97,7 @@ jobs:
           interval: 500
 
       - name: "Wait for svelte-mini app to be ready"
-        uses: nev7n/wait_for_response@81b0b0eded16435202e126beb3e704fc00430f5b # v1
+        uses: nev7n/wait_for_response@8bfc0523300e46e24e1b42d6783680aa921ee6cc # v1.2.0
         with:
           url: 'http://localhost:4001/health'
           responseCode: 200
@@ -119,7 +119,7 @@ jobs:
 
       - name: Upload test artifacts
         if: failure()
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: e2e-test-logs-ruby-${{ matrix.ruby.version }}-${{ matrix.adapter }}
           path: |
