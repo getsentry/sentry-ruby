@@ -37,8 +37,3 @@ gem "simplecov"
 # passes in all projects
 gem "rexml", "3.4.1"
 gem "simplecov-cobertura", "~> 3.0"
-
-group :rubocop do
-  gem "rubocop-rails-omakase"
-  gem "rubocop-packaging"
-end

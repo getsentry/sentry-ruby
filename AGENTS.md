@@ -37,14 +37,14 @@ You can also invoke `bin/test` from any of the gem directories themselves which 
 Root-level `bundle exec rake` runs the E2E/integration spec suite (not individual gem tests).
 
 ## Lint
-Run from within the target gem directory (e.g. `cd sentry-ruby`):
+Linting runs through mise tasks from the repo root. Rubocop lives in its own
+`Gemfile.rubocop` (not the test matrix), which the tasks select automatically.
 
 | Task | Command |
 |------|---------|
-| Lint | `bundle exec rubocop path/to/file.rb` |
-| Lint (autofix) | `bundle exec rubocop -a path/to/file.rb` |
-
-Root-level `bundle exec rubocop` lints the entire repo.
+| Lint the whole repo | `mise run lint` |
+| Lint + autocorrect | `mise run lint:fix` |
+| Lint specific paths | `mise run lint path/to/file.rb` |
 
 ## Testing Conventions
 - Framework: **RSpec**

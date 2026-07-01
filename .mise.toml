@@ -6,6 +6,24 @@ ruby = "latest"
 node = "lts"
 java = "temurin-21"
 
+[tasks.lint]
+description = "Lint the whole repo with rubocop"
+dir = "{{ config_root }}"
+env.BUNDLE_GEMFILE = "{{ config_root }}/Gemfile.rubocop"
+run = [
+  "bundle check >/dev/null 2>&1 || bundle install",
+  "bundle exec rubocop"
+]
+
+[tasks."lint:fix"]
+description = "Lint the whole repo with rubocop and autocorrect"
+dir = "{{ config_root }}"
+env.BUNDLE_GEMFILE = "{{ config_root }}/Gemfile.rubocop"
+run = [
+  "bundle check >/dev/null 2>&1 || bundle install",
+  "bundle exec rubocop -a"
+]
+
 [tasks."e2e:rails"]
 description = "Start the rails-mini e2e app"
 run = "cd spec/apps/rails-mini && bundle exec ruby app.rb"
