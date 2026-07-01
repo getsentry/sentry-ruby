@@ -97,7 +97,6 @@ GEM
       mutex_m
       securerandom (>= 0.3)
       tzinfo (~> 2.0)
-    ast (2.4.3)
     base64 (0.3.0)
     benchmark (0.5.0)
     benchmark-ips (2.5.0)
@@ -136,14 +135,11 @@ GEM
       prism (>= 1.3.0)
       rdoc (>= 4.0.0)
       reline (>= 0.4.2)
-    json (2.20.0)
-    language_server-protocol (3.17.0.5)
-    lint_roller (1.1.0)
     logger (1.7.0)
     loofah (2.25.1)
       crass (~> 1.0.2)
       nokogiri (>= 1.12.0)
-    mail (2.9.0)
+    mail (2.9.1)
       logger
       mini_mime (>= 0.1.1)
       net-imap
@@ -172,10 +168,6 @@ GEM
       racc (~> 1.4)
     nokogiri (1.15.7-x86_64-linux)
       racc (~> 1.4)
-    parallel (1.28.0)
-    parser (3.3.11.1)
-      ast (~> 2.4.1)
-      racc
     pp (0.6.4)
       prettyprint
     prettyprint (0.2.0)
@@ -215,13 +207,11 @@ GEM
       rake (>= 12.2)
       thor (~> 1.0)
       zeitwerk (~> 2.5)
-    rainbow (3.1.1)
     rake (12.3.3)
     rdoc (7.2.0)
       erb
       psych (>= 4.0.0)
       tsort
-    regexp_parser (2.12.0)
     reline (0.6.3)
       io-console (~> 0.5)
     rexml (3.4.1)
@@ -248,38 +238,6 @@ GEM
     rspec-retry (0.6.2)
       rspec-core (> 3.3)
     rspec-support (3.13.7)
-    rubocop (1.88.0)
-      json (~> 2.3)
-      language_server-protocol (~> 3.17.0.2)
-      lint_roller (~> 1.1.0)
-      parallel (>= 1.10)
-      parser (>= 3.3.0.2)
-      rainbow (>= 2.2.2, < 4.0)
-      regexp_parser (>= 2.9.3, < 3.0)
-      rubocop-ast (>= 1.49.0, < 2.0)
-      ruby-progressbar (~> 1.7)
-      unicode-display_width (>= 2.4.0, < 4.0)
-    rubocop-ast (1.49.1)
-      parser (>= 3.3.7.2)
-      prism (~> 1.7)
-    rubocop-packaging (0.6.0)
-      lint_roller (~> 1.1.0)
-      rubocop (>= 1.72.1, < 2.0)
-    rubocop-performance (1.26.1)
-      lint_roller (~> 1.1)
-      rubocop (>= 1.75.0, < 2.0)
-      rubocop-ast (>= 1.47.1, < 2.0)
-    rubocop-rails (2.35.5)
-      activesupport (>= 4.2.0)
-      lint_roller (~> 1.1)
-      rack (>= 1.1)
-      rubocop (>= 1.75.0, < 2.0)
-      rubocop-ast (>= 1.44.0, < 2.0)
-    rubocop-rails-omakase (1.1.0)
-      rubocop (>= 1.72)
-      rubocop-performance (>= 1.24)
-      rubocop-rails (>= 2.30)
-    ruby-progressbar (1.13.0)
     securerandom (0.3.2)
     sequel (5.105.0)
       bigdecimal
@@ -308,9 +266,6 @@ GEM
     tsort (0.2.0)
     tzinfo (2.0.6)
       concurrent-ruby (~> 1.0)
-    unicode-display_width (3.2.0)
-      unicode-emoji (~> 4.1)
-    unicode-emoji (4.2.0)
     websocket-driver (0.8.2)
       base64
       websocket-extensions (>= 0.1.0)
@@ -340,8 +295,6 @@ DEPENDENCIES
   rspec
   rspec-rails (~> 6.0)
   rspec-retry
-  rubocop-packaging
-  rubocop-rails-omakase
   sentry-rails!
   sentry-ruby!
   sequel
