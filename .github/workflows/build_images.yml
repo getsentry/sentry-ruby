@@ -67,5 +67,3 @@ jobs:
           build-args: |
             BASE_IMAGE=${{ matrix.base_image }}
             RUBY_VERSION=${{ matrix.ruby_version }}
-          cache-from: type=gha,scope=${{ matrix.flavor }}
-          cache-to: type=gha,mode=max,scope=${{ matrix.flavor }}
