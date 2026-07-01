@@ -10,8 +10,8 @@
 # A cell is keyed by its committed wrapper gemfile + sibling .gemfile.lock (run
 # bin/relock to (re)generate those). We exec under the cell's mise Ruby with the
 # cell's env (BUNDLE_GEMFILE, RACK_VERSION, REDIS_RB_VERSION, RUBYOPT) and run
-# `bundle exec rspec` (or rake) — the same BUNDLE_FROZEN/BUNDLE_WITHOUT setup CI
-# uses, so a green run here means the same as a green job there.
+# `bundle exec rspec` (or rake) — the same BUNDLE_FROZEN setup CI uses, so a
+# green run here means the same as a green job there.
 #
 #   bin/test -l                                              # list every cell to choose from
 #   bin/test --gem sentry-rails                              # auto-pick the newest installed Ruby cell
@@ -118,11 +118,10 @@ cell, gem =
 
 ensure_installed([cell])
 
-# Mirror CI's per-job env: pin to the committed lock (BUNDLE_FROZEN), skip the
-# rubocop group, and pass the matrix axes + rubyopt the Gemfile/specs read.
+# Mirror CI's per-job env: pin to the committed lock (BUNDLE_FROZEN) and pass
+# the matrix axes + rubyopt the Gemfile/specs read.
 env = cell_env(cell).merge(
-  "BUNDLE_FROZEN" => "true",
-  "BUNDLE_WITHOUT" => "rubocop"
+  "BUNDLE_FROZEN" => "true"
 )
 env["RUBYOPT"] = cell.rubyopt if cell.rubyopt
 env["JRUBY_OPTS"] = "--debug" if cell.ruby.include?("jruby") # for more accurate coverage, as in CI

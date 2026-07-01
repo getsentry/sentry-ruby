@@ -7,10 +7,10 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
-      - name: Set up Ruby
-        uses: ruby/setup-ruby@319994f95fa847cf3fb3cd3dbe89f6dcde9f178f # v1
+      - name: Set up mise
+        uses: jdx/mise-action@e6a8b3978addb5a52f2b4cd9d91eafa7f0ab959d # v4.2.0
         with:
-          ruby-version: "3.4"
-          bundler-cache: true
+          install: true
+          cache: false # don't cache this single ruby one since it will evict the CI with all rubies
       - name: Run rubocop
-        run: bundle exec rubocop
+        run: mise run lint

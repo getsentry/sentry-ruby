@@ -1,0 +1,10 @@
+# frozen_string_literal: true
+
+# Standalone gemfile for linting. Kept out of Gemfile.dev so rubocop and its
+# dependency tree never enter the per-matrix test lockfiles. Used by the `lint`
+# mise task via BUNDLE_GEMFILE.
+
+source "https://rubygems.org"
+
+gem "rubocop-rails-omakase"
+gem "rubocop-packaging"
