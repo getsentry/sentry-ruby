@@ -1,9 +1,9 @@
 # frozen_string_literal: true
 
 # Background worker entrypoint for the worker-based ActiveJob adapters
-# (:sidekiq, :resque, :delayed_job). These adapters enqueue onto an
-# external broker (Redis / the DB) and rely on a separate process to
-# execute the job. The worker boots the same Rails + Sentry app as the
+# (:sidekiq, :resque, :delayed_job, :solid_queue). These adapters enqueue
+# onto an external broker (Redis / the DB) and rely on a separate process
+# to execute the job. The worker boots the same Rails + Sentry app as the
 # web process, so the job's consumer transaction is emitted into the
 # shared debug-transport log the e2e suite reads.
 #
@@ -42,6 +42,15 @@ when "resque"
   worker.work(ENV.fetch("RESQUE_INTERVAL", "0.5").to_f)
 when "delayed_job"
   Delayed::Worker.new(sleep_delay: 0.5, quiet: false).start
+when "solid_queue"
+  # Boot Solid Queue's supervisor, which forks a dispatcher (promotes
+  # scheduled -> ready executions) and a worker (claims ready executions
+  # and runs the jobs). No config/queue.yml exists, so it falls back to
+  # the built-in single-worker + single-dispatcher defaults over the "*"
+  # queues. The forked children inherit the Sentry SDK initialized when
+  # this process booted the app above, so their consumer transactions land
+  # in the shared debug-transport log.
+  SolidQueue::Supervisor.start
 else
   # :async and :inline run jobs inside the web process. Stay alive as an
   # idle no-op so this stays a uniform, long-running service under process

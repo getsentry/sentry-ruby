@@ -16,3 +16,4 @@ gem 'sentry-rails', path: Pathname(__dir__).join("../../..").realpath
 gem 'sidekiq'
 gem 'resque'
 gem 'delayed_job_active_record'
+gem 'solid_queue'

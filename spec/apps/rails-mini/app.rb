@@ -5,7 +5,7 @@ require "bundler/setup"
 Bundler.require
 
 ENV["RAILS_ENV"] = "development"
-ENV["DATABASE_URL"] = "sqlite3:tmp/rails_mini_development.sqlite3"
+ENV["DATABASE_URL"] = "sqlite3:tmp/rails_mini_development.sqlite3?timeout=5000"
 
 require "action_controller/railtie"
 require "active_record/railtie"
@@ -39,7 +39,8 @@ class RailsMiniApp < Rails::Application
     "inline" => :inline,
     "sidekiq" => :sidekiq,
     "resque" => :resque,
-    "delayed_job" => :delayed_job
+    "delayed_job" => :delayed_job,
+    "solid_queue" => :solid_queue
   }.freeze
 
   adapter_name = ENV.fetch("SENTRY_E2E_ACTIVE_JOB_ADAPTER", "async").to_s.downcase
@@ -313,6 +314,13 @@ RailsMiniApp.initialize!
 # avoiding a concurrent `force: true` drop/create race on the shared SQLite
 # file; it waits for these tables to appear before processing jobs.
 unless ENV["SENTRY_E2E_SKIP_DB_SETUP"] == "true"
+  # Backing store for the :solid_queue adapter. Loaded first (before :posts)
+  # unconditionally, for the same reason as :delayed_jobs below: the schema
+  # stays adapter-agnostic, and since the worker waits for :posts as its
+  # readiness signal, creating these tables first guarantees they exist by
+  # the time the worker starts polling.
+  load Pathname(__dir__).join("db/queue_schema.rb")
+
   ActiveRecord::Schema.define do
     create_table :posts, force: true do |t|
       t.string :title, null: false

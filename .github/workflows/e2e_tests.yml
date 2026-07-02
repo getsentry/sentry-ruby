@@ -35,6 +35,7 @@ jobs:
           - sidekiq
           - resque
           - delayed_job
+          - solid_queue
 
     steps:
       - name: Checkout code
