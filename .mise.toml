@@ -6,6 +6,12 @@ ruby = "latest"
 node = "lts"
 java = "temurin-21"
 
+[env]
+SENTRY_E2E_RAILS_APP_PORT = "{{ env.SENTRY_E2E_RAILS_APP_PORT | default(value='4000') }}"
+SENTRY_E2E_SVELTE_APP_PORT = "{{ env.SENTRY_E2E_SVELTE_APP_PORT | default(value='4001') }}"
+SENTRY_E2E_RAILS_APP_URL = "{{ env.SENTRY_E2E_RAILS_APP_URL | default(value='http://localhost:4000') }}"
+SENTRY_E2E_SVELTE_APP_URL = "{{ env.SENTRY_E2E_SVELTE_APP_URL | default(value='http://localhost:4001') }}"
+
 [tasks.lint]
 description = "Lint the whole repo with rubocop"
 dir = "{{ config_root }}"
