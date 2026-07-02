@@ -22,7 +22,7 @@ class RailsMiniApp < Rails::Application
   config.hosts = nil
   config.secret_key_base = "test_secret_key_base_for_rails_mini_app"
   config.eager_load = false
-  config.logger = Logger.new($stdout)
+  config.logger = ActiveSupport::Logger.new($stdout)
   config.log_level = :debug
   config.api_only = true
   config.force_ssl = false
