@@ -157,7 +157,7 @@ GEM
     multi_json (1.15.0)
     mustermann (3.1.1)
     mutex_m (0.3.0)
-    net-imap (0.4.24)
+    net-imap (0.4.25)
       date
       net-protocol
     net-pop (0.1.2)

@@ -96,7 +96,7 @@ GEM
       rspec-core (> 3.3)
     rspec-support (3.13.7)
     ruby2_keywords (0.0.5)
-    sequel (5.105.0)
+    sequel (5.106.0)
       bigdecimal
     simplecov (0.22.0)
       docile (~> 1.1)

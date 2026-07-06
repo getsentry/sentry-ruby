@@ -118,7 +118,7 @@ GEM
       logger
     mini_mime (1.1.5)
     minitest (5.26.1)
-    net-imap (0.4.24)
+    net-imap (0.4.25)
       date
       net-protocol
     net-pop (0.1.2)
@@ -195,7 +195,7 @@ GEM
     rspec-retry (0.6.2)
       rspec-core (> 3.3)
     rspec-support (3.13.7)
-    sequel (5.105.0)
+    sequel (5.106.0)
       bigdecimal
     simplecov (0.22.0)
       docile (~> 1.1)

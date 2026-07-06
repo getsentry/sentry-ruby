@@ -160,7 +160,7 @@ GEM
     mini_portile2 (2.8.9)
     minitest (5.26.1)
     mutex_m (0.3.0)
-    net-imap (0.4.24)
+    net-imap (0.4.25)
       date
       net-protocol
     net-pop (0.1.2)
@@ -254,7 +254,7 @@ GEM
       rspec-core (> 3.3)
     rspec-support (3.13.7)
     securerandom (0.3.2)
-    sequel (5.105.0)
+    sequel (5.106.0)
       bigdecimal
     sidekiq (7.3.10)
       base64
