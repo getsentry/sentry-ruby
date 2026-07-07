@@ -445,6 +445,61 @@ RSpec.describe Sentry do
   end
 
   describe ".start_transaction" do
+    describe "when not continuing an existing trace" do
+      before do
+        perform_basic_setup do |config|
+          config.traces_sample_rate = 1.0
+        end
+      end
+
+      it "does not adopt the scope's propagation context when it wasn't established for this call" do
+        propagation_context = Sentry.get_current_scope.propagation_context
+
+        transaction = described_class.start_transaction(name: "test", op: "test.op")
+
+        # each independent call gets its own, unrelated trace_id by default - only
+        # calls made with established: true (e.g. a Rack request that went through
+        # Sentry::Rails::CaptureContext) adopt the scope's propagation context
+        expect(transaction.trace_id).not_to eq(propagation_context.trace_id)
+      end
+
+      context "when the scope's propagation context was established for this call" do
+        before do
+          Sentry.get_current_scope.generate_propagation_context
+        end
+
+        it "adopts the scope's propagation context trace_id and sample_rand" do
+          propagation_context = Sentry.get_current_scope.propagation_context
+
+          transaction = described_class.start_transaction(
+            name: "test", op: "test.op", established: true
+          )
+
+          expect(transaction.trace_id).to eq(propagation_context.trace_id)
+          expect(transaction.sample_rand).to eq(propagation_context.sample_rand)
+        end
+
+        it "does not override an explicitly provided trace_id" do
+          transaction = described_class.start_transaction(
+            name: "test", op: "test.op", trace_id: "a" * 32, established: true
+          )
+
+          expect(transaction.trace_id).to eq("a" * 32)
+        end
+
+        it "does not override an explicitly provided sample_rand" do
+          propagation_context = Sentry.get_current_scope.propagation_context
+
+          transaction = described_class.start_transaction(
+            name: "test", op: "test.op", sample_rand: 0.999999, established: true
+          )
+
+          expect(transaction.trace_id).to eq(propagation_context.trace_id)
+          expect(transaction.sample_rand).to eq(0.999999)
+        end
+      end
+    end
+
     describe "sampler example" do
       before do
         perform_basic_setup do |config|
@@ -1037,6 +1092,17 @@ RSpec.describe Sentry do
 
         propagation_context = Sentry.get_current_scope.propagation_context
         expect(propagation_context.incoming_trace).to eq(false)
+      end
+
+      context "when trace context was already established for this call" do
+        it "does not regenerate the scope's propagation context" do
+          existing_propagation_context = Sentry.get_current_scope.propagation_context
+
+          expect(Sentry.get_current_scope).not_to receive(:generate_propagation_context)
+          described_class.continue_trace(env, established: true)
+
+          expect(Sentry.get_current_scope.propagation_context).to eq(existing_propagation_context)
+        end
       end
     end
 

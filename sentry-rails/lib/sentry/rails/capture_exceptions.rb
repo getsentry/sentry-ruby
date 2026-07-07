@@ -35,7 +35,7 @@ module Sentry
         end
       end
 
-      def start_transaction(env, scope)
+      def start_transaction(env, scope, established)
         options = {
           name: scope.transaction_name,
           source: scope.transaction_source,
@@ -45,8 +45,8 @@ module Sentry
 
         options.merge!(sampled: false) if @assets_regexp && scope.transaction_name.match?(@assets_regexp)
 
-        transaction = Sentry.continue_trace(env, **options)
-        transaction = Sentry.start_transaction(transaction: transaction, custom_sampling_context: { env: env }, **options)
+        transaction = Sentry.continue_trace(env, established: established, **options)
+        transaction = Sentry.start_transaction(transaction: transaction, custom_sampling_context: { env: env }, established: established, **options)
         attach_queue_time(transaction, env)
         transaction
       end
