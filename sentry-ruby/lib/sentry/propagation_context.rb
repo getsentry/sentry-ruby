@@ -13,6 +13,11 @@ module Sentry
       "-?([01])?\\z"         # sampled
     )
 
+    # Rack env key signaling that trace context was already established earlier in
+    # the middleware stack (e.g. by +Sentry::Rails::CaptureContext+); consumed once by
+    # +Sentry::Rack::CaptureExceptions+.
+    ESTABLISHED_ENV_KEY = "sentry.trace_context_established"
+
     # An uuid that can be used to identify a trace.
     # @return [String]
     attr_reader :trace_id
