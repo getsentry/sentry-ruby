@@ -1,5 +1,6 @@
 # frozen_string_literal: true
 
+require "sentry/rails/capture_context"
 require "sentry/rails/capture_exceptions"
 require "sentry/rails/rescued_exception_interceptor"
 require "sentry/rails/backtrace_cleaner"
@@ -8,6 +9,8 @@ module Sentry
   class Railtie < ::Rails::Railtie
     # middlewares can't be injected after initialize
     initializer "sentry.use_rack_middleware" do |app|
+      # placed first so anything logged before CaptureExceptions shares the same trace context
+      app.config.middleware.unshift Sentry::Rails::CaptureContext
       # placed after all the file-sending middlewares so we can avoid unnecessary transactions
       app.config.middleware.insert_after ActionDispatch::ShowExceptions, Sentry::Rails::CaptureExceptions
       # need to place as close to DebugExceptions as possible to intercept most of the exceptions, including those raised by middlewares

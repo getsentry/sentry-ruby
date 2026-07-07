@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+require "sentry/propagation_context"
+
 module Sentry
   module Rack
     class CaptureExceptions
@@ -14,8 +16,11 @@ module Sentry
       def call(env)
         return @app.call(env) unless Sentry.initialized?
 
-        # make sure the current thread has a clean hub
-        Sentry.clone_hub_to_current_thread
+        # consumed atomically, first, so it can't leak into later reuses of this env
+        established = env.delete(Sentry::PropagationContext::ESTABLISHED_ENV_KEY)
+
+        # make sure the current thread has a clean hub, unless it was already established
+        Sentry.clone_hub_to_current_thread unless established
 
         Sentry.with_scope do |scope|
           Sentry.with_session_tracking do
@@ -23,7 +28,7 @@ module Sentry
             scope.set_transaction_name(env["PATH_INFO"], source: :url) if env["PATH_INFO"]
             scope.set_rack_env(env)
 
-            transaction = start_transaction(env, scope)
+            transaction = start_transaction(env, scope, established)
             scope.set_span(transaction) if transaction
 
             begin
@@ -63,7 +68,7 @@ module Sentry
         end
       end
 
-      def start_transaction(env, scope)
+      def start_transaction(env, scope, established)
         options = {
           name: scope.transaction_name,
           source: scope.transaction_source,
@@ -71,8 +76,8 @@ module Sentry
           origin: SPAN_ORIGIN
         }
 
-        transaction = Sentry.continue_trace(env, **options)
-        transaction = Sentry.start_transaction(transaction: transaction, custom_sampling_context: { env: env }, **options)
+        transaction = Sentry.continue_trace(env, established: established, **options)
+        transaction = Sentry.start_transaction(transaction: transaction, custom_sampling_context: { env: env }, established: established, **options)
         attach_queue_time(transaction, env)
         transaction
       end
