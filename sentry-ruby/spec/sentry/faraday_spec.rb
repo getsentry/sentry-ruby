@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require "faraday"
+require "faraday/net_http_persistent"
 require "contexts/with_request_mock"
 
 require_relative "../spec_helper"
@@ -271,6 +272,35 @@ RSpec.describe Sentry::Faraday do
         Faraday.new(url) do |f|
           f.request :json
           f.adapter :net_http
+        end
+      end
+
+      let(:url) { "http://example.com" }
+
+      it "skips instrumentation" do
+        stub_normal_response(code: "200")
+
+        transaction = Sentry.start_transaction
+        Sentry.get_current_scope.set_span(transaction)
+
+        _response = http.get("/test")
+
+        request_span = transaction.span_recorder.spans.last
+
+        expect(request_span.op).to eq("http.client")
+        expect(request_span.origin).to eq("auto.http.net_http")
+
+        expect(transaction.span_recorder.spans.map(&:origin)).not_to include("auto.http.faraday")
+      end
+    end
+
+    context "when adapter is net/http/persistent" do
+      include_context "with request mock"
+
+      let(:http) do
+        Faraday.new(url) do |f|
+          f.request :json
+          f.adapter :net_http_persistent
         end
       end
 
