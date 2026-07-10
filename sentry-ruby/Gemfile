@@ -33,6 +33,7 @@ gem "benchmark-memory"
 gem "yard"
 gem "webrick"
 gem "faraday"
+gem "faraday-net_http_persistent"
 gem "excon"
 gem "webmock"
 
