@@ -123,7 +123,7 @@ module Sentry
             # CaptureExceptions, or a stale hub left by a recycled thread-pool
             # thread) so the outer context continues working correctly after
             # the job finishes.
-            original_hub = Thread.current.thread_variable_get(Sentry::THREAD_LOCAL)
+            original_hub = Sentry::HubStorage.get
             Sentry.clone_hub_to_current_thread
 
             Sentry.with_scope do |scope|
@@ -171,7 +171,7 @@ module Sentry
               end
             end
           ensure
-            Thread.current.thread_variable_set(Sentry::THREAD_LOCAL, original_hub)
+            Sentry::HubStorage.set(original_hub)
           end
 
           def set_messaging_data(transaction, job)
