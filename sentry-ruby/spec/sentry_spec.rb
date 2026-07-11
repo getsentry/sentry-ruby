@@ -110,6 +110,50 @@ RSpec.describe Sentry do
     end
   end
 
+  describe "fiber isolation", when: { fiber_storage?: [] } do
+    before do
+      perform_basic_setup { |config| config.isolation_level = :fiber }
+    end
+
+    after do
+      Sentry::HubStorage.isolation_level = :thread
+    end
+
+    # Regression for cross-request contamination on fiber-based servers (Falcon,
+    # async), where many concurrent requests run as sibling fibers on one thread.
+    # With thread-local storage they share a single hub, so a scope opened by one
+    # request and held across a reactor yield is visible to (and clobbered by) the
+    # others. Fiber storage gives each request fiber its own hub.
+    it "keeps each sibling fiber's scope isolated across a yield" do
+      transport = described_class.get_main_hub.current_client.transport
+      transport.events.clear
+
+      requests = 3.times.map do |i|
+        Fiber.new do
+          described_class.clone_hub_to_current_thread
+          described_class.configure_scope { |scope| scope.set_user(id: i) }
+          Fiber.yield # simulate yielding to the reactor mid-request
+          described_class.capture_message("request #{i}")
+        end
+      end
+
+      requests.each(&:resume) # every request sets its user, then yields
+      requests.each(&:resume) # every request now captures its event
+
+      attributed = transport.events.to_h { |e| [e.message[/request (\d+)/, 1].to_i, e.user[:id]] }
+      expect(attributed).to eq({ 0 => 0, 1 => 1, 2 => 2 })
+    end
+
+    it "lets a child fiber inherit the parent request's hub" do
+      described_class.clone_hub_to_current_thread
+      parent_hub = described_class.get_current_hub
+
+      inherited = Fiber.new { described_class.get_current_hub }.resume
+
+      expect(inherited).to eq(parent_hub)
+    end
+  end
+
   shared_examples "capture_helper" do
     context "with sending_allowed? condition" do
       before do

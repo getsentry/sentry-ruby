@@ -696,6 +696,46 @@ RSpec.describe Sentry::Configuration do
     end
   end
 
+  describe "#isolation_level" do
+    it "defaults to :thread" do
+      expect(subject.isolation_level).to eq(:thread)
+    end
+
+    it "accepts :thread and :fiber" do
+      subject.isolation_level = :fiber
+      expect(subject.isolation_level).to eq(:fiber)
+
+      subject.isolation_level = :thread
+      expect(subject.isolation_level).to eq(:thread)
+    end
+
+    it "coerces string values" do
+      subject.isolation_level = "fiber"
+      expect(subject.isolation_level).to eq(:fiber)
+    end
+
+    it "raises ArgumentError for an unknown level" do
+      expect { subject.isolation_level = :process }
+        .to raise_error(ArgumentError, /isolation_level must be one of/)
+    end
+
+    context "when Fiber storage is unavailable" do
+      it "falls back to :thread with a warning" do
+        allow(Sentry::HubStorage).to receive(:fiber_storage_available?).and_return(false)
+        expect(subject).to receive(:log_warn).with(/requires Ruby 3\.2\+ Fiber Storage/)
+        subject.isolation_level = :fiber
+        expect(subject.isolation_level).to eq(:thread)
+      end
+    end
+
+    context "when Fiber storage is available", when: { fiber_storage?: [] } do
+      it "keeps :fiber" do
+        subject.isolation_level = :fiber
+        expect(subject.isolation_level).to eq(:fiber)
+      end
+    end
+  end
+
   describe "#validate" do
     it "logs a warning if StackProf is not installed" do
       allow(Sentry).to receive(:dependency_installed?).with(:StackProf).and_return(false)

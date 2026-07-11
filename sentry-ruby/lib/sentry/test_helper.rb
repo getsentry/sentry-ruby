@@ -52,10 +52,10 @@ module Sentry
       test_client = Sentry::Client.new(dummy_config.dup)
       main_hub.bind_client(test_client)
 
-      # Realign the current thread's hub with the main hub so direct
+      # Realign the current execution context's hub with the main hub so direct
       # `sentry_events` reads and any hub the Rack middleware clones from the
       # main hub all observe the same DummyTransport.
-      Thread.current.thread_variable_set(Sentry::THREAD_LOCAL, main_hub)
+      Sentry::HubStorage.set(main_hub)
     end
 
     # Clears all stored events and envelopes.
@@ -165,7 +165,11 @@ module Sentry
             Sentry.instance_variable_set(:"@#{var}", nil)
           end
 
-          Thread.current.thread_variable_set(Sentry::THREAD_LOCAL, nil)
+          # Clear the hub using the level that is still in effect, then restore
+          # the default so a `:fiber` test cannot leak its isolation level into
+          # subsequent tests that expect the default.
+          Sentry::HubStorage.clear
+          Sentry::HubStorage.isolation_level = :thread
         end
       end
     end

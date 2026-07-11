@@ -21,6 +21,7 @@ require "sentry/check_in_event"
 require "sentry/span"
 require "sentry/transaction"
 require "sentry/hub"
+require "sentry/hub_storage"
 require "sentry/background_worker"
 require "sentry/threaded_periodic_worker"
 require "sentry/session_flusher"
@@ -271,7 +272,8 @@ module Sentry
       client = Client.new(config)
       scope = Scope.new(max_breadcrumbs: config.max_breadcrumbs)
       hub = Hub.new(client, scope)
-      Thread.current.thread_variable_set(THREAD_LOCAL, hub)
+      HubStorage.isolation_level = config.isolation_level
+      HubStorage.set(hub)
       @main_hub = hub
       @background_worker = Sentry::BackgroundWorker.new(config)
       @session_flusher = config.session_tracking? ? Sentry::SessionFlusher.new(config, client) : nil
@@ -309,7 +311,7 @@ module Sentry
 
       MUTEX.synchronize do
         @main_hub = nil
-        Thread.current.thread_variable_set(THREAD_LOCAL, nil)
+        HubStorage.clear
       end
     end
 
@@ -362,7 +364,7 @@ module Sentry
       # ideally, we should do this proactively whenever a new thread is created
       # but it's impossible for the SDK to keep track every new thread
       # so we need to use this rather passive way to make sure the app doesn't crash
-      Thread.current.thread_variable_get(THREAD_LOCAL) || clone_hub_to_current_thread
+      HubStorage.get || clone_hub_to_current_thread
     end
 
     # Returns the current active client.
@@ -380,12 +382,14 @@ module Sentry
       get_current_hub.current_scope
     end
 
-    # Clones the main thread's active hub and stores it to the current thread.
+    # Clones the main hub and stores it for the current execution context
+    # (the current thread, or the current fiber when +config.isolation_level+
+    # is +:fiber+).
     #
     # @return [void]
     def clone_hub_to_current_thread
       return unless initialized?
-      Thread.current.thread_variable_set(THREAD_LOCAL, get_main_hub.clone)
+      HubStorage.set(get_main_hub.clone)
     end
 
     # Takes a block and yields the current active scope.
