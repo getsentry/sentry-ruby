@@ -555,7 +555,10 @@ module Sentry
       self.capture_queue_time = true
       self.org_id = nil
       self.strict_trace_continuation = false
-      self.isolation_level = :thread
+      # Assign the ivar directly rather than through the setter: the default must
+      # not sync HubStorage (a throwaway Configuration.new would otherwise clobber
+      # the active isolation level). init and the setter handle syncing.
+      @isolation_level = :thread
 
       spotlight_env = ENV["SENTRY_SPOTLIGHT"]
       spotlight_bool = Sentry::Utils::EnvHelper.env_to_bool(spotlight_env, strict: true)
@@ -634,6 +637,11 @@ module Sentry
       end
 
       @isolation_level = applied
+
+      # Keep the active hub storage in sync when the level is changed after the
+      # SDK is initialized. During `Sentry.init` the config block runs before the
+      # SDK is initialized, so init applies the level to HubStorage itself.
+      Sentry::HubStorage.isolation_level = applied if Sentry.initialized?
     end
 
     def breadcrumbs_logger=(logger)

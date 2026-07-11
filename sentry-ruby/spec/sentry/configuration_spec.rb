@@ -702,6 +702,9 @@ RSpec.describe Sentry::Configuration do
     end
 
     it "accepts :thread and :fiber" do
+      # stub availability so the :fiber assertion is deterministic on Rubies < 3.2
+      allow(Sentry::HubStorage).to receive(:fiber_storage_available?).and_return(true)
+
       subject.isolation_level = :fiber
       expect(subject.isolation_level).to eq(:fiber)
 
@@ -710,6 +713,7 @@ RSpec.describe Sentry::Configuration do
     end
 
     it "coerces string values" do
+      allow(Sentry::HubStorage).to receive(:fiber_storage_available?).and_return(true)
       subject.isolation_level = "fiber"
       expect(subject.isolation_level).to eq(:fiber)
     end
@@ -719,19 +723,20 @@ RSpec.describe Sentry::Configuration do
         .to raise_error(ArgumentError, /isolation_level must be one of/)
     end
 
+    context "when Fiber storage is available" do
+      it "keeps :fiber" do
+        allow(Sentry::HubStorage).to receive(:fiber_storage_available?).and_return(true)
+        subject.isolation_level = :fiber
+        expect(subject.isolation_level).to eq(:fiber)
+      end
+    end
+
     context "when Fiber storage is unavailable" do
       it "falls back to :thread with a warning" do
         allow(Sentry::HubStorage).to receive(:fiber_storage_available?).and_return(false)
         expect(subject).to receive(:log_warn).with(/requires Ruby 3\.2\+ Fiber Storage/)
         subject.isolation_level = :fiber
         expect(subject.isolation_level).to eq(:thread)
-      end
-    end
-
-    context "when Fiber storage is available", when: { fiber_storage?: [] } do
-      it "keeps :fiber" do
-        subject.isolation_level = :fiber
-        expect(subject.isolation_level).to eq(:fiber)
       end
     end
   end

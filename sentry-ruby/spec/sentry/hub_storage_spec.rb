@@ -16,9 +16,16 @@ RSpec.describe Sentry::HubStorage do
       expect(described_class.isolation_level).to eq(:thread)
     end
 
-    it "accepts :fiber" do
+    it "accepts :fiber when Fiber storage is available" do
+      allow(described_class).to receive(:fiber_storage_available?).and_return(true)
       described_class.isolation_level = :fiber
       expect(described_class.isolation_level).to eq(:fiber)
+    end
+
+    it "downgrades :fiber to :thread when Fiber storage is unavailable" do
+      allow(described_class).to receive(:fiber_storage_available?).and_return(false)
+      described_class.isolation_level = :fiber
+      expect(described_class.isolation_level).to eq(:thread)
     end
 
     it "raises ArgumentError for an unknown level" do

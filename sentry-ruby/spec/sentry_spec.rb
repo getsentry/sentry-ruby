@@ -110,6 +110,20 @@ RSpec.describe Sentry do
     end
   end
 
+  describe "changing isolation_level after init", when: { fiber_storage?: [] } do
+    before { perform_basic_setup }
+
+    after { Sentry::HubStorage.isolation_level = :thread }
+
+    it "applies the change to the active hub storage" do
+      expect(Sentry::HubStorage.isolation_level).to eq(:thread)
+
+      Sentry.configuration.isolation_level = :fiber
+
+      expect(Sentry::HubStorage.isolation_level).to eq(:fiber)
+    end
+  end
+
   describe "fiber isolation", when: { fiber_storage?: [] } do
     before do
       perform_basic_setup { |config| config.isolation_level = :fiber }
