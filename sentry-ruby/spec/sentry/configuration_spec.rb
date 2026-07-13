@@ -696,47 +696,38 @@ RSpec.describe Sentry::Configuration do
     end
   end
 
-  describe "#isolation_level" do
+  describe "#hub_isolation_level" do
     it "defaults to :thread" do
-      expect(subject.isolation_level).to eq(:thread)
+      expect(subject.hub_isolation_level).to eq(:thread)
     end
 
-    it "accepts :thread and :fiber" do
-      # stub availability so the :fiber assertion is deterministic on Rubies < 3.2
-      allow(Sentry::HubStorage).to receive(:fiber_storage_available?).and_return(true)
-
-      subject.isolation_level = :fiber
-      expect(subject.isolation_level).to eq(:fiber)
-
-      subject.isolation_level = :thread
-      expect(subject.isolation_level).to eq(:thread)
-    end
-
-    it "coerces string values" do
-      allow(Sentry::HubStorage).to receive(:fiber_storage_available?).and_return(true)
-      subject.isolation_level = "fiber"
-      expect(subject.isolation_level).to eq(:fiber)
+    it "accepts :thread" do
+      subject.hub_isolation_level = :thread
+      expect(subject.hub_isolation_level).to eq(:thread)
     end
 
     it "raises ArgumentError for an unknown level" do
-      expect { subject.isolation_level = :process }
-        .to raise_error(ArgumentError, /isolation_level must be one of/)
+      expect { subject.hub_isolation_level = :process }
+        .to raise_error(ArgumentError, /hub_isolation_level must be one of/)
     end
 
-    context "when Fiber storage is available" do
-      it "keeps :fiber" do
-        allow(Sentry::HubStorage).to receive(:fiber_storage_available?).and_return(true)
-        subject.isolation_level = :fiber
-        expect(subject.isolation_level).to eq(:fiber)
+    context "when Fiber storage is available", when: { fiber_storage?: [] } do
+      it "accepts :fiber" do
+        subject.hub_isolation_level = :fiber
+        expect(subject.hub_isolation_level).to eq(:fiber)
+      end
+
+      it "coerces string values" do
+        subject.hub_isolation_level = "fiber"
+        expect(subject.hub_isolation_level).to eq(:fiber)
       end
     end
 
-    context "when Fiber storage is unavailable" do
+    context "when Fiber storage is unavailable", when: { no_fiber_storage?: [] } do
       it "falls back to :thread with a warning" do
-        allow(Sentry::HubStorage).to receive(:fiber_storage_available?).and_return(false)
         expect(subject).to receive(:log_warn).with(/requires Ruby 3\.2\+ Fiber Storage/)
-        subject.isolation_level = :fiber
-        expect(subject.isolation_level).to eq(:thread)
+        subject.hub_isolation_level = :fiber
+        expect(subject.hub_isolation_level).to eq(:thread)
       end
     end
   end

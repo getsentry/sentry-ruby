@@ -117,13 +117,7 @@ module Sentry
           end
 
           def record(job, trace_headers: nil, user: nil, &block)
-            # Always give this thread a fresh hub cloned from the main hub so
-            # the job's events are fully isolated.  Save and restore whatever
-            # hub was on the thread before (e.g. the Rack request hub set by
-            # CaptureExceptions, or a stale hub left by a recycled thread-pool
-            # thread) so the outer context continues working correctly after
-            # the job finishes.
-            original_hub = Sentry::HubStorage.get
+            original_hub = Sentry.get_current_hub_internal
             Sentry.clone_hub_to_current_thread
 
             Sentry.with_scope do |scope|
@@ -171,7 +165,7 @@ module Sentry
               end
             end
           ensure
-            Sentry::HubStorage.set(original_hub)
+            Sentry.set_current_hub_internal(original_hub)
           end
 
           def set_messaging_data(transaction, job)

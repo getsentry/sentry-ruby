@@ -21,7 +21,6 @@ require "sentry/check_in_event"
 require "sentry/span"
 require "sentry/transaction"
 require "sentry/hub"
-require "sentry/hub_storage"
 require "sentry/background_worker"
 require "sentry/threaded_periodic_worker"
 require "sentry/session_flusher"
@@ -272,8 +271,8 @@ module Sentry
       client = Client.new(config)
       scope = Scope.new(max_breadcrumbs: config.max_breadcrumbs)
       hub = Hub.new(client, scope)
-      HubStorage.isolation_level = config.isolation_level
-      HubStorage.set(hub)
+      @hub_isolation_level = config.hub_isolation_level
+      set_current_hub_internal(hub)
       @main_hub = hub
       @background_worker = Sentry::BackgroundWorker.new(config)
       @session_flusher = config.session_tracking? ? Sentry::SessionFlusher.new(config, client) : nil
@@ -311,7 +310,7 @@ module Sentry
 
       MUTEX.synchronize do
         @main_hub = nil
-        HubStorage.clear
+        set_current_hub_internal(nil)
       end
     end
 
@@ -364,7 +363,7 @@ module Sentry
       # ideally, we should do this proactively whenever a new thread is created
       # but it's impossible for the SDK to keep track every new thread
       # so we need to use this rather passive way to make sure the app doesn't crash
-      HubStorage.get || clone_hub_to_current_thread
+      get_current_hub_internal || clone_hub_to_current_thread
     end
 
     # Returns the current active client.
@@ -383,13 +382,13 @@ module Sentry
     end
 
     # Clones the main hub and stores it for the current execution context
-    # (the current thread, or the current fiber when +config.isolation_level+
+    # (the current thread, or the current fiber when +config.hub_isolation_level+
     # is +:fiber+).
     #
     # @return [void]
     def clone_hub_to_current_thread
       return unless initialized?
-      HubStorage.set(get_main_hub.clone)
+      set_current_hub_internal(get_main_hub.clone)
     end
 
     # Takes a block and yields the current active scope.
@@ -740,6 +739,35 @@ module Sentry
     # @!visibility private
     def dependency_installed?(name)
       Object.const_defined?(name)
+    end
+
+    # Reads the hub stored for the current execution context. The active
+    # isolation level (cached from +config.hub_isolation_level+ at init) decides
+    # whether that context is the current thread or the current fiber. Reads the
+    # cached level rather than the configuration to avoid recursing back through
+    # hub resolution.
+    #
+    # @!visibility private
+    # @return [Hub, nil]
+    def get_current_hub_internal
+      if @hub_isolation_level == :fiber
+        ::Fiber[THREAD_LOCAL]
+      else
+        ::Thread.current.thread_variable_get(THREAD_LOCAL)
+      end
+    end
+
+    # Stores +hub+ for the current execution context (thread or fiber).
+    #
+    # @!visibility private
+    # @param hub [Hub, nil]
+    # @return [Hub, nil]
+    def set_current_hub_internal(hub)
+      if @hub_isolation_level == :fiber
+        ::Fiber[THREAD_LOCAL] = hub
+      else
+        ::Thread.current.thread_variable_set(THREAD_LOCAL, hub)
+      end
     end
   end
 end

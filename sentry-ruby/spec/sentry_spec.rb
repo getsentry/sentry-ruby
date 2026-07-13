@@ -110,27 +110,14 @@ RSpec.describe Sentry do
     end
   end
 
-  describe "changing isolation_level after init", when: { fiber_storage?: [] } do
-    before { perform_basic_setup }
-
-    after { Sentry::HubStorage.isolation_level = :thread }
-
-    it "applies the change to the active hub storage" do
-      expect(Sentry::HubStorage.isolation_level).to eq(:thread)
-
-      Sentry.configuration.isolation_level = :fiber
-
-      expect(Sentry::HubStorage.isolation_level).to eq(:fiber)
-    end
-  end
-
   describe "fiber isolation", when: { fiber_storage?: [] } do
     before do
-      perform_basic_setup { |config| config.isolation_level = :fiber }
+      perform_basic_setup { |config| config.hub_isolation_level = :fiber }
     end
 
     after do
-      Sentry::HubStorage.isolation_level = :thread
+      described_class.set_current_hub_internal(nil)
+      described_class.instance_variable_set(:@hub_isolation_level, :thread)
     end
 
     # Regression for cross-request contamination on fiber-based servers (Falcon,
@@ -147,14 +134,14 @@ RSpec.describe Sentry do
           described_class.clone_hub_to_current_thread
           described_class.configure_scope { |scope| scope.set_user(id: i) }
           Fiber.yield # simulate yielding to the reactor mid-request
-          described_class.capture_message("request #{i}")
+          described_class.capture_message(i.to_s)
         end
       end
 
       requests.each(&:resume) # every request sets its user, then yields
       requests.each(&:resume) # every request now captures its event
 
-      attributed = transport.events.to_h { |e| [e.message[/request (\d+)/, 1].to_i, e.user[:id]] }
+      attributed = transport.events.to_h { |e| [e.message.to_i, e.user[:id]] }
       expect(attributed).to eq({ 0 => 0, 1 => 1, 2 => 2 })
     end
 
@@ -165,6 +152,21 @@ RSpec.describe Sentry do
       inherited = Fiber.new { described_class.get_current_hub }.resume
 
       expect(inherited).to eq(parent_hub)
+    end
+
+    it "stores the hub in a fiber variable (instead of a thread variable)" do
+      described_class.set_tags(outside_fiber: true)
+
+      fiber = Fiber.new do
+        described_class.clone_hub_to_current_thread
+        described_class.set_tags(inside_fiber: true)
+        described_class.get_current_scope.tags
+      end
+
+      inside_tags = fiber.resume
+
+      expect(inside_tags).to eq({ outside_fiber: true, inside_fiber: true })
+      expect(described_class.get_current_scope.tags).to eq({ outside_fiber: true })
     end
   end
 
