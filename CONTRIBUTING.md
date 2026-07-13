@@ -32,7 +32,7 @@ The devcontainer is configured with `.devcontainer/.env` file, that you need to 
 cp .devcontainer/.env.example .devcontainer/.env
 ```
 
-This file defines which specific image and Ruby version will be used to run the code. Edit it whenever you need to use a different image or Ruby version.
+This file defines runtime settings for local e2e apps and devcontainer workflows.
 
 ## Contribute To Individual Gems
 

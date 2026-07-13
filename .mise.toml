@@ -2,7 +2,7 @@
 ruby.compile = false
 
 [tools]
-ruby = "latest"
+ruby = "4.0"
 node = "lts"
 java = "temurin-21"
 

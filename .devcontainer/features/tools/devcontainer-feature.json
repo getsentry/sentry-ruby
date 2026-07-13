@@ -1,0 +1,13 @@
+{
+  "name": "sentry-ruby toolchain",
+  "id": "tools",
+  "version": "1.0.0",
+  "description": "Installs mise and pre-installs the sentry-ruby toolchain (Java, Ruby, Node) via mise plus headless Chromium via Playwright, baked into the image so the container starts without downloading anything.",
+  "options": {
+    "rubyVersion": {
+      "type": "string",
+      "default": "4.0",
+      "description": "Ruby version to pre-install and set as the global default (latest 4.0.x by default). Switching versions requires an image rebuild."
+    }
+  }
+}

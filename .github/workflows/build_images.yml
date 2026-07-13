@@ -55,15 +55,19 @@ jobs:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@d7f5e7f509e45cec5c76c4d5afdd7de93d0b3df5 # v4.1.0
 
+      # Build with the dev container CLI (not a plain `docker build`) so the dev
+      # container features — mise and the local `tools` feature that bakes the
+      # Ruby/Node/Java/Chromium toolchain — are applied to the pushed image.
+      # BASE_IMAGE and RUBY_VERSION are consumed via ${localEnv:...} in
+      # devcontainer.json, so they are passed as env vars to the CLI here.
       - name: Build and push devcontainer image
-        uses: docker/build-push-action@53b7df96c91f9c12dcc8a07bcb9ccacbed38856a # v7.3.0
+        uses: devcontainers/ci@513af61f4de4f75d37e4438f184ba4358f0fc1ca # v0.3.1900000450
+        env:
+          BASE_IMAGE: ${{ matrix.base_image }}
+          RUBY_VERSION: ${{ matrix.ruby_version }}
         with:
-          context: .
-          file: .devcontainer/Dockerfile
-          push: true
-          tags: |
-            ghcr.io/getsentry/sentry-ruby-devcontainer-${{ matrix.flavor }}:${{ steps.version.outputs.version }}
-            ${{ github.ref == 'refs/heads/master' && format('ghcr.io/getsentry/sentry-ruby-devcontainer-{0}:latest', matrix.flavor) || '' }}
-          build-args: |
-            BASE_IMAGE=${{ matrix.base_image }}
-            RUBY_VERSION=${{ matrix.ruby_version }}
+          subFolder: .
+          configFile: .devcontainer/devcontainer.json
+          imageName: ghcr.io/getsentry/sentry-ruby-devcontainer-${{ matrix.flavor }}
+          imageTag: ${{ github.ref == 'refs/heads/master' && format('{0},latest', steps.version.outputs.version) || steps.version.outputs.version }}
+          push: always

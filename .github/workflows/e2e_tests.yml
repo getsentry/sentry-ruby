@@ -49,10 +49,8 @@ jobs:
         run: |
           cd .devcontainer
           cp .env.example .env
-          echo "RUBY_VERSION=${{ matrix.ruby.version }}" >> .env
-          echo "DOCKER_IMAGE=ghcr.io/getsentry/sentry-ruby-devcontainer-${{ matrix.ruby.flavor }}" >> .env
-          echo "DOCKER_TAG=${{ steps.devcontainer-version.outputs.version }}" >> .env
           echo "SENTRY_E2E_ACTIVE_JOB_ADAPTER=${{ matrix.adapter }}" >> .env
+          echo "REDIS_URL=redis://redis:6379" >> .env
 
       - name: Log in to GHCR
         uses: docker/login-action@650006c6eb7dba73a995cc03b0b2d7f5ca915bee # v4.2.0
@@ -64,6 +62,37 @@ jobs:
       - name: Pull test container image
         run: docker pull ghcr.io/getsentry/sentry-ruby-devcontainer-${{ matrix.ruby.flavor }}:${{ steps.devcontainer-version.outputs.version }}
 
+      - name: Prepare docker resources
+        run: |
+          network="sentry-ruby-e2e-${{ github.run_id }}-${{ matrix.ruby.flavor }}-${{ matrix.adapter }}"
+          bundle_volume="sentry-ruby-e2e-bundle-${{ github.run_id }}-${{ matrix.ruby.flavor }}-${{ matrix.adapter }}"
+          redis_container="sentry-ruby-e2e-redis-${{ github.run_id }}-${{ matrix.ruby.flavor }}-${{ matrix.adapter }}"
+          test_container="sentry-ruby-e2e-test-${{ github.run_id }}-${{ matrix.ruby.flavor }}-${{ matrix.adapter }}"
+
+          echo "E2E_NETWORK=${network}" >> "$GITHUB_ENV"
+          echo "E2E_BUNDLE_VOLUME=${bundle_volume}" >> "$GITHUB_ENV"
+          echo "E2E_REDIS_CONTAINER=${redis_container}" >> "$GITHUB_ENV"
+          echo "E2E_TEST_CONTAINER=${test_container}" >> "$GITHUB_ENV"
+
+          docker network create "${network}"
+          docker volume create "${bundle_volume}"
+
+          docker run -d \
+            --name "${redis_container}" \
+            --network "${network}" \
+            --network-alias redis \
+            redis:latest
+
+          for _ in $(seq 1 30); do
+            if docker exec "${redis_container}" redis-cli ping | grep -q PONG; then
+              exit 0
+            fi
+            sleep 1
+          done
+
+          echo "Redis failed to become ready" >&2
+          exit 1
+
       - name: Restore node_modules cache
         uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
@@ -74,49 +103,80 @@ jobs:
 
       - name: Set up test container
         run: |
-          docker compose \
-            --file .devcontainer/docker-compose.yml \
+          docker run --rm \
+            --network "${E2E_NETWORK}" \
             --env-file .devcontainer/.env \
-            --profile e2e \
-            run --rm sentry-test \
-            .devcontainer/setup --only .,spec/apps/rails-mini
+            --env BUNDLE_PATH=/home/sentry/bundle \
+            --env MISE_RUBY_VERSION=${{ matrix.ruby.version }} \
+            --volume "${PWD}:/workspaces/sentry-ruby" \
+            --volume "${E2E_BUNDLE_VOLUME}:/home/sentry/bundle" \
+            "ghcr.io/getsentry/sentry-ruby-devcontainer-${{ matrix.ruby.flavor }}:${{ steps.devcontainer-version.outputs.version }}" \
+            .devcontainer/run .devcontainer/setup --only .,spec/apps/rails-mini
 
       - name: Start test services
         run: |
-          docker compose \
-            --file .devcontainer/docker-compose.yml \
+          docker run -d \
+            --name "${E2E_TEST_CONTAINER}" \
+            --network "${E2E_NETWORK}" \
+            --publish 4000:4000 \
+            --publish 4001:4001 \
             --env-file .devcontainer/.env \
-            --profile e2e \
-            up -d --no-build sentry-test
+            --env BUNDLE_PATH=/home/sentry/bundle \
+            --env MISE_RUBY_VERSION=${{ matrix.ruby.version }} \
+            --volume "${PWD}:/workspaces/sentry-ruby" \
+            --volume "${E2E_BUNDLE_VOLUME}:/home/sentry/bundle" \
+            "ghcr.io/getsentry/sentry-ruby-devcontainer-${{ matrix.ruby.flavor }}:${{ steps.devcontainer-version.outputs.version }}" \
+            .devcontainer/run mise run e2e:serve
 
+      # Poll from the runner host, not a container action: the apps' ports are
+      # published to the host (`--publish`), so `localhost` here reaches them,
+      # whereas a Docker container action's `localhost` is its own container.
       - name: "Wait for rails-mini app to be ready"
-        uses: nev7n/wait_for_response@8bfc0523300e46e24e1b42d6783680aa921ee6cc # v1.2.0
-        with:
-          url: 'http://localhost:4000/health'
-          responseCode: 200
-          timeout: 90000
-          interval: 500
+        run: |
+          for _ in $(seq 1 180); do
+            if curl -sf http://localhost:4000/health >/dev/null; then
+              echo "rails-mini is ready"
+              exit 0
+            fi
+            sleep 1
+          done
+          echo "❌ rails-mini did not become ready in time" >&2
+          docker logs "${E2E_TEST_CONTAINER}" 2>&1 | tail -n 200 || true
+          exit 1
 
       - name: "Wait for svelte-mini app to be ready"
-        uses: nev7n/wait_for_response@8bfc0523300e46e24e1b42d6783680aa921ee6cc # v1.2.0
-        with:
-          url: 'http://localhost:4001/health'
-          responseCode: 200
-          timeout: 90000
-          interval: 500
+        run: |
+          for _ in $(seq 1 180); do
+            if curl -sf http://localhost:4001/health >/dev/null; then
+              echo "svelte-mini is ready"
+              exit 0
+            fi
+            sleep 1
+          done
+          echo "❌ svelte-mini did not become ready in time" >&2
+          docker logs "${E2E_TEST_CONTAINER}" 2>&1 | tail -n 200 || true
+          exit 1
 
       - name: Run e2e tests via sentry-test
         run: |
-          docker compose \
-            --file .devcontainer/docker-compose.yml \
-            --env-file .devcontainer/.env \
-            --profile e2e \
-            exec sentry-test \
-            bundle exec rake
+          docker exec "${E2E_TEST_CONTAINER}" bundle exec rake
+
+      - name: Dump service logs
+        if: failure()
+        run: |
+          echo "===== docker ps -a ====="
+          docker ps -a
+          echo "===== test container logs ====="
+          docker logs "${E2E_TEST_CONTAINER}" 2>&1 || true
+          echo "===== redis container logs ====="
+          docker logs "${E2E_REDIS_CONTAINER}" 2>&1 || true
 
       - name: Stop e2e services
         if: always()
-        run: docker compose --file .devcontainer/docker-compose.yml --profile e2e down
+        run: |
+          docker rm -f "${E2E_TEST_CONTAINER}" "${E2E_REDIS_CONTAINER}" 2>/dev/null || true
+          docker network rm "${E2E_NETWORK}" 2>/dev/null || true
+          docker volume rm "${E2E_BUNDLE_VOLUME}" 2>/dev/null || true
 
       - name: Upload test artifacts
         if: failure()

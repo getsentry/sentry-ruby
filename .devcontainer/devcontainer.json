@@ -1,8 +1,29 @@
 {
   "name": "sentry-ruby",
-  "dockerComposeFile": "docker-compose.yml",
-  "service": "sentry-dev",
-  "workspaceFolder": "/workspace/sentry",
+  "build": {
+    "dockerfile": "Dockerfile",
+    "context": "..",
+    "args": {
+      "BASE_IMAGE": "${localEnv:BASE_IMAGE:ubuntu:24.04}"
+    }
+  },
+  "runArgs": ["--init"],
+  "mounts": [
+    "source=sentry-ruby-bundle,target=/home/sentry/bundle,type=volume"
+  ],
+  "forwardPorts": [4000, 4001, 6379],
+  "containerEnv": {
+    "BUNDLE_PATH": "/home/sentry/bundle",
+    "SENTRY_DSN": "http://user:pass@sentry.localhost/project/42",
+    "SENTRY_DSN_JS": "",
+    "SENTRY_E2E_RAILS_APP_PORT": "4000",
+    "SENTRY_E2E_SVELTE_APP_PORT": "4001",
+    "SENTRY_E2E_RAILS_APP_URL": "http://localhost:4000",
+    "SENTRY_E2E_SVELTE_APP_URL": "http://localhost:4001",
+    "SENTRY_E2E_ACTIVE_JOB_ADAPTER": "async",
+    "REDIS_URL": "redis://localhost:6379"
+  },
+  "postCreateCommand": "mise trust /workspaces/sentry-ruby",
   "features": {
     "ghcr.io/devcontainers/features/git:latest": {
       "ppa": false,
@@ -10,8 +31,9 @@
     },
     "ghcr.io/devcontainers/features/github-cli:latest": {},
     "ghcr.io/nils-geistmann/devcontainers-features/zsh:latest": {},
-    "ghcr.io/devcontainers/features/node:latest": {},
-    "ghcr.io/devcontainers-extra/features/npm-packages:latest": {},
+    "./features/tools": {
+      "rubyVersion": "${localEnv:RUBY_VERSION:4.0}"
+    },
     "ghcr.io/rocker-org/devcontainer-features/apt-packages:latest": {
       "packages": "inotify-tools,tzdata"
     }

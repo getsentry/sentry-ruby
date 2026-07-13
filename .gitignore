@@ -26,6 +26,7 @@ node_modules
 mise.toml
 
 .devcontainer/.env
+
 vendor/gems
 
 sentry-rails/Gemfile-*.lock

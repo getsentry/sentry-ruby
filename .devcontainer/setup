@@ -25,7 +25,7 @@ class SetupScript
       only_npm: false,
       with_foreman: false
     }
-    @workspace_root = '/workspace/sentry'
+    @workspace_root = '/workspaces/sentry-ruby'
   end
 
   def run(args)
