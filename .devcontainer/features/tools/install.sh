@@ -53,7 +53,7 @@ as_user "$MISE_BIN" use --global "node@lts"
 # Install headless Chromium via Playwright (includes all system dependencies)
 # and symlink the binary into ~/.local/bin which is already on PATH.
 echo "📦 Installing headless Chromium via Playwright..."
-as_user "${USER_HOME}/.local/share/mise/shims/npx" playwright install chromium --with-deps
+as_user "${USER_HOME}/.local/share/mise/shims/npx" playwright install chromium --with-deps --only-shell
 # Playwright lays out the binary under chrome-linux/ on arm64 and chrome-linux64/
 # on x86_64 (since Playwright 1.57), so the glob has to match both.
 as_user bash -c "ln -sf ${USER_HOME}/.cache/ms-playwright/chromium-*/chrome-linux*/chrome ${USER_HOME}/.local/bin/chromium"
