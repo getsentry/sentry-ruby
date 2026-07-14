@@ -30,8 +30,22 @@ run = [
   "bundle exec rubocop -a"
 ]
 
+[tasks."services:redis"]
+description = "Start a local Redis server for specs and e2e apps; waits until ready, no-op if already running"
+run = """
+redis-cli ping >/dev/null 2>&1 && exit 0
+redis-server --daemonize yes --save '' --dir /tmp --pidfile /tmp/redis.pid
+for _ in $(seq 1 30); do
+  redis-cli ping >/dev/null 2>&1 && exit 0
+  sleep 0.2
+done
+echo 'redis did not become ready' >&2
+exit 1
+"""
+
 [tasks."e2e:rails"]
 description = "Start the rails-mini e2e app"
+depends = ["services:redis"]
 dir = "{{ config_root }}/spec/apps/rails-mini"
 run = [
   "bundle check >/dev/null 2>&1 || bundle install",
@@ -48,6 +62,7 @@ run = [
 
 [tasks."e2e:worker"]
 description = "Start the rails-mini ActiveJob worker (sidekiq/resque/delayed_job/solid_queue; idles for async/inline)"
+depends = ["services:redis"]
 dir = "{{ config_root }}/spec/apps/rails-mini"
 run = [
   "bundle check >/dev/null 2>&1 || bundle install",

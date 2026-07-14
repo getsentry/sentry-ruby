@@ -24,6 +24,7 @@
     "REDIS_URL": "redis://localhost:6379"
   },
   "postCreateCommand": "mise trust /workspaces/sentry-ruby",
+  "postStartCommand": "mise run services:redis",
   "features": {
     "ghcr.io/devcontainers/features/git:latest": {
       "ppa": false,
@@ -35,7 +36,7 @@
       "rubyVersion": "${localEnv:RUBY_VERSION:4.0}"
     },
     "ghcr.io/rocker-org/devcontainer-features/apt-packages:latest": {
-      "packages": "inotify-tools,tzdata"
+      "packages": "inotify-tools,tzdata,redis-server"
     }
   },
   "customizations": {

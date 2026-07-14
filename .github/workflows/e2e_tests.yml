@@ -50,7 +50,6 @@ jobs:
           cd .devcontainer
           cp .env.example .env
           echo "SENTRY_E2E_ACTIVE_JOB_ADAPTER=${{ matrix.adapter }}" >> .env
-          echo "REDIS_URL=redis://redis:6379" >> .env
 
       - name: Log in to GHCR
         uses: docker/login-action@650006c6eb7dba73a995cc03b0b2d7f5ca915bee # v4.2.0
@@ -64,34 +63,13 @@ jobs:
 
       - name: Prepare docker resources
         run: |
-          network="sentry-ruby-e2e-${{ github.run_id }}-${{ matrix.ruby.flavor }}-${{ matrix.adapter }}"
           bundle_volume="sentry-ruby-e2e-bundle-${{ github.run_id }}-${{ matrix.ruby.flavor }}-${{ matrix.adapter }}"
-          redis_container="sentry-ruby-e2e-redis-${{ github.run_id }}-${{ matrix.ruby.flavor }}-${{ matrix.adapter }}"
           test_container="sentry-ruby-e2e-test-${{ github.run_id }}-${{ matrix.ruby.flavor }}-${{ matrix.adapter }}"
 
-          echo "E2E_NETWORK=${network}" >> "$GITHUB_ENV"
           echo "E2E_BUNDLE_VOLUME=${bundle_volume}" >> "$GITHUB_ENV"
-          echo "E2E_REDIS_CONTAINER=${redis_container}" >> "$GITHUB_ENV"
           echo "E2E_TEST_CONTAINER=${test_container}" >> "$GITHUB_ENV"
 
-          docker network create "${network}"
           docker volume create "${bundle_volume}"
-
-          docker run -d \
-            --name "${redis_container}" \
-            --network "${network}" \
-            --network-alias redis \
-            redis:latest
-
-          for _ in $(seq 1 30); do
-            if docker exec "${redis_container}" redis-cli ping | grep -q PONG; then
-              exit 0
-            fi
-            sleep 1
-          done
-
-          echo "Redis failed to become ready" >&2
-          exit 1
 
       - name: Restore node_modules cache
         uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
@@ -104,7 +82,6 @@ jobs:
       - name: Set up test container
         run: |
           docker run --rm \
-            --network "${E2E_NETWORK}" \
             --env-file .devcontainer/.env \
             --env BUNDLE_PATH=/home/sentry/bundle \
             --env MISE_RUBY_VERSION=${{ matrix.ruby.version }} \
@@ -117,7 +94,6 @@ jobs:
         run: |
           docker run -d \
             --name "${E2E_TEST_CONTAINER}" \
-            --network "${E2E_NETWORK}" \
             --publish 4000:4000 \
             --publish 4001:4001 \
             --env-file .devcontainer/.env \
@@ -168,14 +144,11 @@ jobs:
           docker ps -a
           echo "===== test container logs ====="
           docker logs "${E2E_TEST_CONTAINER}" 2>&1 || true
-          echo "===== redis container logs ====="
-          docker logs "${E2E_REDIS_CONTAINER}" 2>&1 || true
 
       - name: Stop e2e services
         if: always()
         run: |
-          docker rm -f "${E2E_TEST_CONTAINER}" "${E2E_REDIS_CONTAINER}" 2>/dev/null || true
-          docker network rm "${E2E_NETWORK}" 2>/dev/null || true
+          docker rm -f "${E2E_TEST_CONTAINER}" 2>/dev/null || true
           docker volume rm "${E2E_BUNDLE_VOLUME}" 2>/dev/null || true
 
       - name: Upload test artifacts
