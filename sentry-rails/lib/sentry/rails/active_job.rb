@@ -67,7 +67,7 @@ module Sentry
       end
 
       class SentryReporter
-        OP_NAME = "queue.active_job"
+        OP_NAME = "queue.process"
         SPAN_ORIGIN = "auto.queue.active_job"
 
         EVENT_HANDLERS = {

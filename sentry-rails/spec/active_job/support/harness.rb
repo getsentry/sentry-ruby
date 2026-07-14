@@ -149,7 +149,7 @@ RSpec.shared_context "active_job backend harness" do |adapter:|
   end
 
   def consumer_transaction
-    transactions.find { |t| t.contexts.dig(:trace, :op) == "queue.active_job" }
+    transactions.find { |t| t.contexts.dig(:trace, :op) == "queue.process" }
   end
 
   def within_parent_transaction(name: "parent.test", op: "test")

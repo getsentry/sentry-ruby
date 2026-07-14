@@ -13,7 +13,7 @@ RSpec.shared_examples "an ActiveJob backend that emits a consumer transaction" d
 
       expect(transaction.transaction).to eq(successful_job.name)
       expect(transaction.transaction_info).to eq(source: :task)
-      expect(transaction.contexts.dig(:trace, :op)).to eq("queue.active_job")
+      expect(transaction.contexts.dig(:trace, :op)).to eq("queue.process")
       expect(transaction.contexts.dig(:trace, :origin)).to eq("auto.queue.active_job")
       expect(transaction.contexts.dig(:trace, :status)).to eq("ok")
     end

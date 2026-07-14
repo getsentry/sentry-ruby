@@ -28,7 +28,7 @@ RSpec.describe "ActiveJob hub isolation through the Rails request stack", type: 
     job_event = events.find { |e| e.is_a?(Sentry::ErrorEvent) && e.message == "from-job" }
     request_event = events.find { |e| e.is_a?(Sentry::ErrorEvent) && e.message == "from-request-after" }
     consumer_transaction = events.find do |e|
-      e.is_a?(Sentry::TransactionEvent) && e.contexts.dig(:trace, :op) == "queue.active_job"
+      e.is_a?(Sentry::TransactionEvent) && e.contexts.dig(:trace, :op) == "queue.process"
     end
 
     expect(job_event).not_to be_nil

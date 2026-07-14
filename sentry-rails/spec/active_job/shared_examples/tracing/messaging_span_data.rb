@@ -51,7 +51,7 @@ RSpec.shared_examples "an ActiveJob backend that records messaging span data on 
       retried_job.perform_later
       drain
 
-      consumer_txns = transactions.select { |t| t.contexts.dig(:trace, :op) == "queue.active_job" }
+      consumer_txns = transactions.select { |t| t.contexts.dig(:trace, :op) == "queue.process" }
       retry_counts = consumer_txns.map { |t| t.contexts.dig(:trace, :data, "messaging.message.retry.count") }
       expect(retry_counts).to eq([0, 0, 1])
     end

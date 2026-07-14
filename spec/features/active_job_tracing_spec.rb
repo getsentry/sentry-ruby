@@ -6,7 +6,7 @@
 # The browser SDK's browserTracing integration propagates sentry-trace +
 # baggage to the Rails request; the Rails AJ extension emits a
 # queue.publish span on the http.server transaction at enqueue, and a
-# queue.active_job consumer transaction when the :async pool runs the
+# queue.process consumer transaction when the :async pool runs the
 # job. All three rails-side artifacts must share one trace.
 RSpec.describe "ActiveJob distributed tracing", type: :e2e do
   it "links the browser fetch, the controller, the producer span, and the consumer transaction into one trace" do
@@ -43,7 +43,7 @@ RSpec.describe "ActiveJob distributed tracing", type: :e2e do
     # Consumer transaction continued the same trace and is parented on
     # the publish span.
     expect(job_txn.dig("contexts", "trace", "trace_id")).to eq(incoming_trace_id)
-    expect(job_txn.dig("contexts", "trace", "op")).to eq("queue.active_job")
+    expect(job_txn.dig("contexts", "trace", "op")).to eq("queue.process")
     expect(job_txn.dig("contexts", "trace", "parent_span_id")).to eq(publish_span["span_id"])
     expect(job_txn.dig("contexts", "trace", "data", "messaging.message.id"))
       .to eq(publish_span.dig("data", "messaging.message.id"))
@@ -71,7 +71,7 @@ RSpec.describe "ActiveJob distributed tracing", type: :e2e do
 
         trace_id = http_txn.dig("contexts", "trace", "trace_id")
         job_txn = transactions.find do |t|
-          t.dig("contexts", "trace", "op") == "queue.active_job" &&
+          t.dig("contexts", "trace", "op") == "queue.process" &&
             t.dig("contexts", "trace", "trace_id") == trace_id
         end
         return [http_txn, job_txn] if job_txn
