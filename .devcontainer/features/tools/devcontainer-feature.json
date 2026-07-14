@@ -2,7 +2,7 @@
   "name": "sentry-ruby toolchain",
   "id": "tools",
   "version": "1.0.0",
-  "description": "Installs Chromium, ChromeDriver, mise, and the sentry-ruby toolchain (Java, Ruby, Node).",
+  "description": "Installs development dependencies required by the Ruby SDK to run all tests",
   "installsAfter": [
     "ghcr.io/devcontainers/features/git",
     "ghcr.io/devcontainers/features/github-cli",
@@ -12,8 +12,8 @@
   "options": {
     "rubyVersion": {
       "type": "string",
-      "default": "4.0",
-      "description": "Ruby version to pre-install (latest 4.0.x by default). Switching versions requires an image rebuild."
+      "default": "latest",
+      "description": "Ruby version to pre-install. Switching versions requires an image rebuild."
     }
   }
 }
