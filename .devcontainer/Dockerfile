@@ -52,6 +52,6 @@ USER sentry
 # directory content when a volume is first attached).
 RUN mkdir -p /home/sentry/bundle
 
-# mise and the toolchain (Java, Ruby, Node, Chromium) are installed by the local
-# `./features/tools` dev container feature, which runs after this Dockerfile —
-# see devcontainer.json.
+# Chromium, ChromeDriver, mise, and the toolchain (Java, Ruby, Node) are
+# installed by the local `./features/tools` dev container feature, which runs
+# after this Dockerfile — see devcontainer.json.

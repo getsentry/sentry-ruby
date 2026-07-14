@@ -31,13 +31,12 @@ Capybara.register_driver :selenium_headless_chrome do |app|
   options.add_argument("--disable-gpu")
   options.add_argument("--temp-profile")
 
-  # Use custom chromium binary if available
-  chromium_path = "/home/sentry/.local/bin/chromium"
+  chromium_path = ENV.fetch("SENTRY_E2E_CHROME", "/usr/bin/chromium")
   options.binary = chromium_path if File.exist?(chromium_path)
 
   # Use a local chromedriver if provided, bypassing Selenium Manager's
   # download (which only ships an x86 driver and fails on arm64).
-  chromedriver_path = ENV["SENTRY_E2E_CHROMEDRIVER"] || "/home/sentry/.local/bin/chromedriver"
+  chromedriver_path = ENV.fetch("SENTRY_E2E_CHROMEDRIVER", "/usr/bin/chromedriver")
   service = File.exist?(chromedriver_path) ? Selenium::WebDriver::Service.chrome(path: chromedriver_path) : nil
 
   Capybara::Selenium::Driver.new(app, browser: :chrome, options: options, service: service)
