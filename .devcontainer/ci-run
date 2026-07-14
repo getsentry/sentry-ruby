@@ -1,0 +1,12 @@
+#!/usr/bin/env bash
+
+set -euo pipefail
+
+readonly WORKSPACE=/workspaces/sentry-ruby
+
+sudo chown -R sentry:sentry "$WORKSPACE"
+
+cd "$WORKSPACE"
+mise trust "$WORKSPACE" >/dev/null
+
+exec "$@"

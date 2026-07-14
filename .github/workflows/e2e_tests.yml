@@ -111,7 +111,7 @@ jobs:
             --volume "${PWD}:/workspaces/sentry-ruby" \
             --volume "${E2E_BUNDLE_VOLUME}:/home/sentry/bundle" \
             "ghcr.io/getsentry/sentry-ruby-devcontainer-${{ matrix.ruby.flavor }}:${{ steps.devcontainer-version.outputs.version }}" \
-            .devcontainer/run .devcontainer/setup --only .,spec/apps/rails-mini
+            .devcontainer/ci-run .devcontainer/setup --only .,spec/apps/rails-mini
 
       - name: Start test services
         run: |
@@ -126,7 +126,7 @@ jobs:
             --volume "${PWD}:/workspaces/sentry-ruby" \
             --volume "${E2E_BUNDLE_VOLUME}:/home/sentry/bundle" \
             "ghcr.io/getsentry/sentry-ruby-devcontainer-${{ matrix.ruby.flavor }}:${{ steps.devcontainer-version.outputs.version }}" \
-            .devcontainer/run mise run e2e:serve
+            .devcontainer/ci-run mise run e2e:serve
 
       # Poll from the runner host, not a container action: the apps' ports are
       # published to the host (`--publish`), so `localhost` here reaches them,
