@@ -16,6 +16,7 @@ require "sentry/logger"
 require "sentry/structured_logger"
 require "sentry/log_event_buffer"
 require "sentry/metric_event_buffer"
+require "sentry/data_collection"
 
 module Sentry
   class Configuration
@@ -132,6 +133,7 @@ module Sentry
     attr_accessor :max_breadcrumbs
 
     # Number of lines of code context to capture, or nil for none
+    # @deprecated Use {#data_collection} and `frame_context_lines` instead.
     # @return [Integer, nil]
     attr_accessor :context_lines
 
@@ -167,6 +169,7 @@ module Sentry
     alias inspect_exception_causes_for_exclusion? inspect_exception_causes_for_exclusion
 
     # Whether to capture local variables from the raised exception's frame. Default is false.
+    # @deprecated Use {#data_collection} and `stack_frame_variables` instead.
     # @return [Boolean]
     attr_accessor :include_local_variables
 
@@ -232,8 +235,14 @@ module Sentry
     # - request body
     # - query string
     # will not be sent to Sentry.
+    # @deprecated Use {#data_collection} instead.
     # @return [Boolean]
-    attr_accessor :send_default_pii
+    attr_reader :send_default_pii
+
+    # Controls which categories of data may be collected.
+    # Replacement for send_default_pii.
+    # @return [DataCollection]
+    attr_accessor :data_collection
 
     # Capture queue time from X-Request-Start header set by reverse proxies.
     # Works with any Rack app behind Nginx, HAProxy, Heroku router, etc.
@@ -537,6 +546,7 @@ module Sentry
       self.breadcrumbs_logger = []
       self.context_lines = 3
       self.include_local_variables = false
+
       self.environment = environment_from_env
       self.enabled_environments = nil
       self.exclude_loggers = []
@@ -549,6 +559,7 @@ module Sentry
 
       self.sample_rate = 1.0
       self.send_modules = true
+      self.data_collection = DataCollection.new
       self.send_default_pii = false
       self.skip_rake_integration = false
       self.send_client_reports = true
@@ -596,6 +607,8 @@ module Sentry
 
       yield(self) if block_given?
 
+      log_deprecations
+
       run_callbacks(:after, :configured)
     end
 
@@ -619,6 +632,11 @@ module Sentry
 
     def dsn=(value)
       @dsn = init_dsn(value)
+    end
+
+    def send_default_pii=(value)
+      @send_default_pii = value
+      self.data_collection = DataCollection.backfill(self)
     end
 
     alias server= dsn=
@@ -802,6 +820,13 @@ module Sentry
         uri += "&sentry_environment=#{CGI.escape(environment)}" if environment && !environment.empty?
         uri
       end
+    end
+
+    # @api private
+    def log_deprecations
+      log_warn("`send_default_pii` is deprecated; use `data_collection` instead.") if self.send_default_pii
+      log_warn("`include_local_variables` is deprecated; use `data_collection.stack_frame_variables` instead.") if include_local_variables
+      log_warn("`context_lines` is deprecated; use `data_collection.frame_context_lines` instead.") if context_lines != 3
     end
 
     # @api private

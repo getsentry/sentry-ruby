@@ -1,6 +1,46 @@
 # frozen_string_literal: true
 
 RSpec.describe Sentry::Configuration do
+  describe "#data_collection" do
+    it "allows explicit data collection configuration after enabling send_default_pii" do
+      configuration = Sentry::Configuration.new do |config|
+        config.send_default_pii = true
+        config.data_collection.user_info = false
+      end
+
+      expect(configuration.data_collection.user_info).to eq(false)
+    end
+  end
+
+  describe "deprecated configuration warnings" do
+    it "warns when send_default_pii is enabled" do
+      allow(subject).to receive(:log_warn)
+      subject.send_default_pii = true
+
+      subject.send(:log_deprecations)
+
+      expect(subject).to have_received(:log_warn).with("`send_default_pii` is deprecated; use `data_collection` instead.")
+    end
+
+    it "warns when include_local_variables is enabled" do
+      allow(subject).to receive(:log_warn)
+      subject.include_local_variables = true
+
+      subject.send(:log_deprecations)
+
+      expect(subject).to have_received(:log_warn).with("`include_local_variables` is deprecated; use `data_collection.stack_frame_variables` instead.")
+    end
+
+    it "warns when context_lines is changed" do
+      allow(subject).to receive(:log_warn)
+      subject.context_lines = 4
+
+      subject.send(:log_deprecations)
+
+      expect(subject).to have_received(:log_warn).with("`context_lines` is deprecated; use `data_collection.frame_context_lines` instead.")
+    end
+  end
+
   describe "#background_worker_threads" do
     it "sets to have of the processors count" do
       allow_any_instance_of(Sentry::Configuration).to receive(:processor_count).and_return(8)
