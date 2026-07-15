@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 #
-# Installs mise, the sentry-ruby toolchain, and Chromium with ChromeDriver.
+# Installs the sentry-ruby toolchain.
 #
 set -euo pipefail
 
@@ -21,13 +21,7 @@ apt-get update
 apt-get install -y --no-install-recommends chromium chromium-driver
 rm -rf /var/lib/apt/lists/* /var/cache/apt/* /etc/apt/sources.list.d/debian.list
 
-# Install mise system-wide via the official installer. This downloads a prebuilt
-# binary from mise's CDN rather than the GitHub API, avoiding the API rate
-# limits the gh-release-based community feature hits on shared CI runners.
-echo "📦 Installing mise..."
-export MISE_INSTALL_PATH=/usr/local/bin/mise
-curl https://mise.run | sh
-MISE_BIN=/usr/local/bin/mise
+MISE_BIN="$(command -v mise || echo /usr/local/bin/mise)"
 "$MISE_BIN" --version
 
 # Activate mise for the remote user's interactive shells.

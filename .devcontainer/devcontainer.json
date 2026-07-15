@@ -32,6 +32,7 @@
     },
     "ghcr.io/devcontainers/features/github-cli:latest": {},
     "ghcr.io/nils-geistmann/devcontainers-features/zsh:latest": {},
+    "ghcr.io/devcontainers-extra/features/mise:latest": {},
     "./features/tools": {
       "rubyVersion": "${localEnv:RUBY_VERSION:4.0}"
     },
