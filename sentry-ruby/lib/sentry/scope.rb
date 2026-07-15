@@ -170,7 +170,7 @@ module Sentry
 
     # Updates the scope's data from the given options.
     # @param contexts [Hash]
-    # @param extras [Hash]
+    # @param extra [Hash]
     # @param tags [Hash]
     # @param user [Hash]
     # @param level [String, Symbol]
