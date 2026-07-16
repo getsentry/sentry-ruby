@@ -373,6 +373,15 @@ RSpec.describe Sentry::Rails, type: :request do
 
         expect(transport.events.count).to eq(0)
       end
+
+      it "includes Rails.error.set_context data attached before an unhandled request exception" do
+        get "/exception_with_error_context"
+
+        expect(transport.events.count).to eq(1)
+
+        event = transport.events.first
+        expect(event.contexts).to include("rails.error" => hash_including(debug_key: "important_value"))
+      end
     end
   end
 end

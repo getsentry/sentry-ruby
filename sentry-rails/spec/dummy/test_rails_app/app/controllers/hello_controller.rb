@@ -7,6 +7,11 @@ class HelloController < ActionController::Base
     raise "An unhandled exception!"
   end
 
+  def exception_with_error_context
+    Rails.error.set_context(debug_key: "important_value")
+    raise "An unhandled exception with Rails.error context!"
+  end
+
   def reporting
     render plain: Sentry.last_event_id
   end

@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+require "sentry/rails/error_reporter_context"
+
 module Sentry
   module Rails
     class CaptureExceptions < Sentry::Rack::CaptureExceptions
@@ -30,7 +32,7 @@ module Sentry
         return unless Sentry.initialized?
         return if show_exceptions?(exception, env) && !Sentry.configuration.rails.report_rescued_exceptions
 
-        Sentry::Rails.capture_exception(exception).tap do |event|
+        Sentry::Rails.capture_exception(exception, contexts: ErrorReporterContext.contexts).tap do |event|
           env[ERROR_EVENT_ID_KEY] = event.event_id if event
         end
       end

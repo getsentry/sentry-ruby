@@ -122,6 +122,7 @@ module Sentry
 
           routes.append do
             get "/exception", to: "hello#exception"
+            get "/exception_with_error_context", to: "hello#exception_with_error_context"
             get "/view_exception", to: "hello#view_exception"
             get "/view", to: "hello#view"
             get "/not_found", to: "hello#not_found"
