@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require "set"
+require "sentry/rails/error_reporter_context"
 
 module Sentry
   module Rails
@@ -223,6 +224,7 @@ module Sentry
                 job_id: job.job_id,
                 provider_job_id: job.provider_job_id
               },
+              contexts: ErrorReporterContext.contexts,
               # Send synchronously: a worker process may exit before the async
               # background worker flushes its queue, which would drop the event.
               hint: { background: false }
