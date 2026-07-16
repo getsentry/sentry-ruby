@@ -1,21 +1,25 @@
 # frozen_string_literal: true
 
+require "sentry/rails/serializer"
+
 module Sentry
   module Rails
     module ErrorReporterContext
-      PRIMITIVE_CLASSES = [String, Numeric, Symbol, NilClass, TrueClass, FalseClass].freeze
+      SUPPORTS_EXECUTION_CONTEXT = Gem::Version.new(::Rails.version) >= Gem::Version.new("7.0.0")
 
-      def self.contexts
-        return {} unless defined?(::ActiveSupport::ExecutionContext)
+      class << self
+        if SUPPORTS_EXECUTION_CONTEXT
+          def contexts
+            execution_context = ::ActiveSupport::ExecutionContext.to_h
+            return {} if execution_context.empty?
 
-        execution_context = ::ActiveSupport::ExecutionContext.to_h
-        return {} if execution_context.empty?
-
-        { "rails.error" => execution_context.transform_values { |value| sanitize(value) } }
-      end
-
-      def self.sanitize(value)
-        PRIMITIVE_CLASSES.any? { |klass| value.is_a?(klass) } ? value : value.class.name
+            { "rails.error" => Sentry::Rails::Serializer.serialize(execution_context) }
+          end
+        else
+          def contexts
+            {}
+          end
+        end
       end
     end
   end

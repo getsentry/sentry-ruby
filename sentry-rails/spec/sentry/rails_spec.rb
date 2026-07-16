@@ -380,7 +380,14 @@ RSpec.describe Sentry::Rails, type: :request do
         expect(transport.events.count).to eq(1)
 
         event = transport.events.first
-        expect(event.contexts).to include("rails.error" => hash_including(debug_key: "important_value"))
+        expect(event.contexts).to include(
+          "rails.error" => hash_including(
+            debug_key: "important_value",
+            timestamp: Time.utc(2026, 7, 21, 12, 34, 56),
+            zoned_timestamp: ActiveSupport::TimeZone["Eastern Time (US & Canada)"].parse("2026-07-21 12:34:56"),
+            date: Date.new(2026, 7, 21)
+          )
+        )
       end
     end
   end

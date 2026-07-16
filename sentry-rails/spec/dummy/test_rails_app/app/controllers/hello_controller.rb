@@ -8,7 +8,12 @@ class HelloController < ActionController::Base
   end
 
   def exception_with_error_context
-    Rails.error.set_context(debug_key: "important_value")
+    Rails.error.set_context(
+      debug_key: "important_value",
+      timestamp: Time.utc(2026, 7, 21, 12, 34, 56),
+      zoned_timestamp: ActiveSupport::TimeZone["Eastern Time (US & Canada)"].parse("2026-07-21 12:34:56"),
+      date: Date.new(2026, 7, 21)
+    )
     raise "An unhandled exception with Rails.error context!"
   end
 
