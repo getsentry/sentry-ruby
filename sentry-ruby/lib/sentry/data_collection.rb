@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+require "sentry/data_collection/key_value_collection"
+
 module Sentry
   class DataCollection
     # Configuration for the categories of data collected by the SDK.
@@ -33,25 +35,6 @@ module Sentry
       incoming_response
       outgoing_response
     ].freeze
-
-    # Configuration for key-value data collection.
-    class KeyValueCollection
-      # `mode` controls whether values are collected:
-      # - `:off` disables collection.
-      # - `:deny_list` collects values except those matching `terms`.
-      # - `:allow_list` collects only values matching `terms`.
-      # @return [:off, :deny_list, :allow_list]
-      attr_accessor :mode
-
-      # `terms` contains the keys or patterns used by the selected mode.
-      # @return [Array<String>, nil]
-      attr_accessor :terms
-
-      def initialize(mode:, terms:)
-        @mode = mode
-        @terms = terms
-      end
-    end
 
     class HttpHeaders
       # @return [KeyValueCollection]
