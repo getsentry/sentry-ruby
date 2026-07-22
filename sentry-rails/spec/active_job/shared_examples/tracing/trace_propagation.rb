@@ -20,6 +20,17 @@ RSpec.shared_examples "an ActiveJob backend that propagates trace context throug
     expect(consumer_transaction.contexts.dig(:trace, :parent_span_id)).to eq(publish_span_id)
   end
 
+  it "injects both sentry-trace and baggage propagation headers into the serialized payload" do
+    within_parent_transaction do
+      successful_job.perform_later
+    end
+
+    headers = last_enqueued_payload["_sentry"]["trace_propagation_headers"]
+    expect(headers.keys).to include("sentry-trace", "baggage")
+    expect(headers["sentry-trace"]).not_to be_empty
+    expect(headers["baggage"]).not_to be_empty
+  end
+
   it "captures a consumer transaction without raising when no parent transaction was active at enqueue" do
     expect { successful_job.perform_later }.not_to raise_error
     expect { drain }.not_to raise_error

@@ -70,5 +70,43 @@ if RAILS_VERSION >= 7.1 && RUBY_VERSION >= "3.1"
 
     it_behaves_like "a Sentry-instrumented ActiveJob backend"
     it_behaves_like "an ActiveJob backend that supports distributed tracing"
+
+    context "adapter-generated span parentage" do
+      let(:configure_sentry) { proc { |config| config.traces_sample_rate = 1.0 } }
+
+      it "nests the Solid Queue enqueue DB span directly under the queue.publish span" do
+        within_parent_transaction do
+          successful_job.perform_later
+        end
+
+        parent = transactions.find { |t| t.contexts.dig(:trace, :op) == "test" }
+        publish_span = parent.spans.find { |s| s[:op] == "queue.publish" }
+        expect(publish_span).not_to be_nil
+
+        enqueue_db_span = parent.spans.find do |s|
+          s[:op] == "db.sql.active_record" && s[:parent_span_id] == publish_span[:span_id]
+        end
+        expect(enqueue_db_span).not_to be_nil
+      end
+
+      it "nests a job-body DB span directly under the queue.process consumer transaction" do
+        db_job = job_fixture do
+          def perform
+            SolidQueue::Job.count
+          end
+        end
+
+        db_job.perform_later
+        drain
+
+        expect(consumer_transaction).not_to be_nil
+
+        consumer_span_id = consumer_transaction.contexts.dig(:trace, :span_id)
+        body_db_span = consumer_transaction.spans.find do |s|
+          s[:op] == "db.sql.active_record" && s[:parent_span_id] == consumer_span_id
+        end
+        expect(body_db_span).not_to be_nil
+      end
+    end
   end
 end

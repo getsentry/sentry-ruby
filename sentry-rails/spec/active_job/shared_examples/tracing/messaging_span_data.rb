@@ -5,13 +5,14 @@ RSpec.shared_examples "an ActiveJob backend that records messaging span data on 
 
   let(:configure_sentry) { proc { |config| config.traces_sample_rate = 1.0 } }
 
-  it "records messaging.message.id and messaging.destination.name on the consumer transaction" do
+  it "records the required messaging attribute set on the consumer transaction" do
     successful_job.set(queue: "critical").perform_later
     drain
 
     data = consumer_transaction.contexts.dig(:trace, :data)
     expect(data["messaging.message.id"]).to be_a(String).and(satisfy { |v| !v.empty? })
     expect(data["messaging.destination.name"]).to eq("critical")
+    expect(data["messaging.system"]).to be_a(String).and(satisfy { |v| !v.empty? })
   end
 
   it "records messaging.system derived from the configured queue adapter on the consumer transaction" do
