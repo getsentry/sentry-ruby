@@ -62,7 +62,7 @@ module Sentry
         command_set = { command: command.to_s.upcase }
         command_set[:key] = key if Utils::EncodingHelper.valid_utf_8?(key)
 
-        if Sentry.configuration.send_default_pii
+        if Sentry.configuration.data_collection.database_query_data
           command_set[:arguments] = arguments
                                     .select { |a| Utils::EncodingHelper.valid_utf_8?(a) }
                                     .join(" ")

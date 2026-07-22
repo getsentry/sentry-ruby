@@ -56,6 +56,85 @@ RSpec.describe "Sentry::Excon" do
       end
     end
 
+    describe "data collection" do
+      describe "query parameters" do
+        def perform_get_request(query: "token=secret&page=5")
+          transaction = Sentry.start_transaction
+          Sentry.get_current_scope.set_span(transaction)
+          Excon.stub({}, { body: "", status: 200 })
+          Excon.get("http://example.com/path?#{query}", mock: true)
+          transaction
+        end
+
+        it "does not collect them when the mode is off" do
+          Sentry.configuration.data_collection.url_query_params.mode = :off
+          transaction = perform_get_request
+
+          expect(transaction.span_recorder.spans.last.data).not_to have_key("http.query")
+          expect(transaction.span_recorder.spans.last.data["url"]).to eq("http://example.com/path")
+        end
+
+        it "filters sensitive values in deny-list mode" do
+          Sentry.configuration.data_collection.url_query_params.mode = :deny_list
+          transaction = perform_get_request
+
+          expect(transaction.span_recorder.spans.last.data["http.query"]).to eq(
+            "token=[Filtered]&page=5"
+          )
+          expect(transaction.span_recorder.spans.last.data["url"]).to eq(
+            "http://example.com/path?token=[Filtered]&page=5"
+          )
+        end
+
+        it "collects only allowed values in allow-list mode" do
+          Sentry.configuration.data_collection.url_query_params.mode = :allow_list
+          Sentry.configuration.data_collection.url_query_params.terms = ["page"]
+          transaction = perform_get_request(query: "another=value&page=5")
+
+          expect(transaction.span_recorder.spans.last.data["http.query"]).to eq(
+            "another=[Filtered]&page=5"
+          )
+          expect(transaction.span_recorder.spans.last.data["url"]).to eq(
+            "http://example.com/path?another=[Filtered]&page=5"
+          )
+        end
+      end
+
+      describe "request bodies" do
+        before do
+          Sentry.configuration.breadcrumbs_logger = [:http_logger]
+        end
+
+        def perform_post_request
+          transaction = Sentry.start_transaction
+          Sentry.get_current_scope.set_span(transaction)
+          Excon.stub({}, { body: "", status: 200 })
+          Excon.post("http://example.com/path", body: "secret body", mock: true)
+        end
+
+        it "collects them when all body types are enabled" do
+          Sentry.configuration.data_collection.http_bodies = nil
+          perform_post_request
+
+          expect(Sentry.get_current_scope.breadcrumbs.peek.data[:body]).to eq("secret body")
+        end
+
+        it "collects them when outgoing requests are enabled" do
+          Sentry.configuration.data_collection.http_bodies = [:outgoing_request]
+          perform_post_request
+
+          expect(Sentry.get_current_scope.breadcrumbs.peek.data[:body]).to eq("secret body")
+        end
+
+        it "does not collect them when body types are disabled" do
+          Sentry.configuration.data_collection.http_bodies = []
+          perform_post_request
+
+          expect(Sentry.get_current_scope.breadcrumbs.peek.data).not_to have_key(:body)
+        end
+      end
+    end
+
     context "with config.send_default_pii = true" do
       before do
         Sentry.configuration.send_default_pii = true
@@ -82,7 +161,7 @@ RSpec.describe "Sentry::Excon" do
         expect(request_span.description).to eq("GET http://example.com/path")
         expect(request_span.data).to eq({
           "http.response.status_code" => 200,
-          "url" => "http://example.com/path",
+          "url" => "http://example.com/path?foo=bar",
           "http.request.method" => "GET",
           "http.query" => "foo=bar"
         })
@@ -95,7 +174,7 @@ RSpec.describe "Sentry::Excon" do
         Sentry.get_current_scope.set_span(transaction)
 
         connection = Excon.new("http://example.com/path")
-        response = connection.get(mock: true, query: build_nested_query({ foo: "bar", baz: [1, 2], qux: { a: 1, b: 2 } }))
+        response = connection.get(mock: true, query: "foo=bar&baz[]=1&baz[]=2&qux[a]=1&qux[b]=2")
 
         expect(response.status).to eq(200)
         expect(transaction.span_recorder.spans.count).to eq(2)
@@ -109,9 +188,9 @@ RSpec.describe "Sentry::Excon" do
         expect(request_span.description).to eq("GET http://example.com/path")
         expect(request_span.data).to eq({
           "http.response.status_code" => 200,
-          "url" => "http://example.com/path",
+          "url" => "http://example.com/path?foo=bar&baz[]=1&baz[]=2&qux[a]=1&qux[b]=2",
           "http.request.method" => "GET",
-          "http.query" => "foo=bar&baz%5B%5D=1&baz%5B%5D=2&qux%5Ba%5D=1&qux%5Bb%5D=2"
+          "http.query" => "foo=bar&baz[]=1&baz[]=2&qux[a]=1&qux[b]=2"
         })
       end
 

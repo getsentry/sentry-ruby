@@ -157,9 +157,15 @@ module Sentry
     end
 
     # Returns whether incoming HTTP request bodies should be collected.
-    # nil imples all BODY_TYPES according to spec
+    # nil implies all BODY_TYPES according to spec
     def collect_incoming_http_body?
       http_bodies.nil? || http_bodies.include?(:incoming_request)
+    end
+
+    # Returns whether outgoing HTTP request bodies should be collected.
+    # nil implies all BODY_TYPES according to spec
+    def collect_outgoing_http_body?
+      http_bodies.nil? || http_bodies.include?(:outgoing_request)
     end
   end
 end

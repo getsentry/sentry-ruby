@@ -61,14 +61,9 @@ module Sentry
         url = env[:scheme] + "://" + env[:hostname] + env[:path]
         result = { method: env[:method].to_s.upcase, url: url }
 
-        if Sentry.configuration.send_default_pii
-          result[:query] = env[:query]
-
-          # Handle excon 1.0.0+
-          result[:query] = build_nested_query(result[:query]) unless result[:query].is_a?(String)
-
-          result[:body] = env[:body]
-        end
+        query = filter_query_params(env[:query])
+        result[:query] = query if query
+        result[:body] = env[:body] if Sentry.configuration.data_collection.collect_outgoing_http_body?
 
         result
       end

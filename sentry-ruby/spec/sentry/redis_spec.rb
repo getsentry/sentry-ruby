@@ -10,6 +10,28 @@ RSpec.describe Sentry::Redis do
       end
     end
 
+    describe "data collection" do
+      describe "database query data" do
+        it "collects Redis arguments when database query data is enabled" do
+        Sentry.configuration.data_collection.database_query_data = true
+        transaction = Sentry.start_transaction
+        Sentry.get_current_scope.set_span(transaction)
+
+        expect(redis.set("key", "value")).to eq("OK")
+        expect(transaction.span_recorder.spans.last.description).to eq("SET key value")
+      end
+
+        it "does not collect Redis arguments when database query data is disabled" do
+          Sentry.configuration.data_collection.database_query_data = false
+          transaction = Sentry.start_transaction
+          Sentry.get_current_scope.set_span(transaction)
+
+          expect(redis.set("key", "value")).to eq("OK")
+          expect(transaction.span_recorder.spans.last.description).to eq("SET key")
+        end
+      end
+    end
+
     context "config.send_default_pii = true" do
       before { Sentry.configuration.send_default_pii = true }
 

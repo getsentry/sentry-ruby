@@ -1,11 +1,39 @@
 # frozen_string_literal: true
 
+require "uri"
+
 module Sentry
   module Utils
     module HttpTracing
+      def filter_query_params(query)
+        return nil unless query
+        return nil unless query.is_a?(String) || query.is_a?(Hash)
+
+        query_hash = if query.is_a?(String)
+          URI.decode_www_form(query).each_with_object({}) do |(key, value), params|
+            params[key] = params.key?(key) ? Array(params[key]) + [value] : value
+          end
+        else
+          query
+        end
+
+        filtered_query_hash = Sentry.configuration.data_collection.url_query_params.filter(query_hash)
+        return nil if filtered_query_hash.empty?
+
+        format_query(filtered_query_hash)
+      rescue
+        nil
+      end
+
+      def format_query(query)
+        query.flat_map do |key, value|
+          Array(value).map { |item| "#{key}=#{item}" }
+        end.join("&")
+      end
+
       def set_span_info(sentry_span, request_info, response_status)
         sentry_span.set_description("#{request_info[:method]} #{request_info[:url]}")
-        sentry_span.set_data(Span::DataConventions::URL, request_info[:url])
+        sentry_span.set_data(Span::DataConventions::URL, url_with_query(request_info))
         sentry_span.set_data(Span::DataConventions::HTTP_METHOD, request_info[:method])
         sentry_span.set_data(Span::DataConventions::HTTP_QUERY, request_info[:query]) if request_info[:query]
         sentry_span.set_data(Span::DataConventions::HTTP_STATUS_CODE, response_status)
@@ -43,37 +71,25 @@ module Sentry
           Sentry.configuration.trace_propagation_targets.any? { |target| url.match?(target) }
       end
 
-      # Kindly borrowed from Rack::Utils
-      def build_nested_query(value, prefix = nil)
-        case value
-        when Array
-          value.map { |v|
-            build_nested_query(v, "#{prefix}[]")
-          }.join("&")
-        when Hash
-          value.map { |k, v|
-            build_nested_query(v, prefix ? "#{prefix}[#{k}]" : k)
-          }.delete_if(&:empty?).join("&")
-        when nil
-          URI.encode_www_form_component(prefix)
-        else
-          raise ArgumentError, "value must be a Hash" if prefix.nil?
-          "#{URI.encode_www_form_component(prefix)}=#{URI.encode_www_form_component(value)}"
-        end
-      end
 
       private
+
+      def url_with_query(request_info)
+        return request_info[:url] unless request_info[:query]
+
+        "#{request_info[:url]}?#{request_info[:query]}"
+      end
 
       def get_level(status)
         return :info unless status && status.is_a?(Integer)
 
-if status >= 500
-  :error
-elsif status >= 400
-  :warning
-else
-  :info
-end
+        if status >= 500
+          :error
+        elsif status >= 400
+          :warning
+        else
+          :info
+        end
       end
     end
   end
