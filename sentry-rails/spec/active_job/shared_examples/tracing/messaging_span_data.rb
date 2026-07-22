@@ -14,6 +14,14 @@ RSpec.shared_examples "an ActiveJob backend that records messaging span data on 
     expect(data["messaging.destination.name"]).to eq("critical")
   end
 
+  it "records messaging.system derived from the configured queue adapter on the consumer transaction" do
+    successful_job.perform_later
+    drain
+
+    data = consumer_transaction.contexts.dig(:trace, :data)
+    expect(data["messaging.system"]).to eq(successful_job.queue_adapter_name)
+  end
+
   it "records messaging.message.retry.count = 0 for non-retryable jobs" do
     successful_job.perform_later
     drain

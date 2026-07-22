@@ -45,6 +45,7 @@ module Sentry
       FUNCTION = "code.function"
       NAMESPACE = "code.namespace"
 
+      MESSAGING_SYSTEM = "messaging.system"
       MESSAGING_MESSAGE_ID = "messaging.message.id"
       MESSAGING_DESTINATION_NAME = "messaging.destination.name"
       MESSAGING_MESSAGE_RECEIVE_LATENCY = "messaging.message.receive.latency"

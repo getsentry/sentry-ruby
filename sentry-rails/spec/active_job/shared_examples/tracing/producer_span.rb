@@ -16,9 +16,28 @@ RSpec.shared_examples "an ActiveJob backend that emits a producer span on enqueu
       expect(publish_span).not_to be_nil
       expect(publish_span[:description]).to eq(successful_job.name)
       expect(publish_span[:origin]).to eq("auto.queue.active_job")
+      expect(publish_span[:data]["messaging.system"]).to be_a(String).and(satisfy { |v| !v.empty? })
+      expect(publish_span[:data]["messaging.system"]).to eq(successful_job.queue_adapter_name)
       expect(publish_span[:data]["messaging.message.id"]).to be_a(String).and(satisfy { |v| !v.empty? })
       expect(publish_span[:data]["messaging.destination.name"]).to eq("events")
       expect(publish_span[:timestamp]).not_to be_nil
+    end
+
+    it "records the same messaging.system on the producer span and the consumer transaction" do
+      within_parent_transaction do
+        successful_job.perform_later
+      end
+      drain
+
+      parent = transactions.find { |t| t.contexts.dig(:trace, :op) == "test" }
+      publish_span = parent.spans.find { |s| s[:op] == "queue.publish" }
+      consumer = transactions.find { |t| t.contexts.dig(:trace, :op) == "queue.process" }
+
+      producer_system = publish_span[:data]["messaging.system"]
+      consumer_system = consumer.contexts.dig(:trace, :data, "messaging.system")
+
+      expect(producer_system).not_to be_empty
+      expect(consumer_system).to eq(producer_system)
     end
 
     it "does not raise or capture an orphan span when no parent transaction is active" do
