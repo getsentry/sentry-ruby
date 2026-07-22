@@ -61,7 +61,24 @@ RSpec.shared_examples "an ActiveJob backend that records messaging span data on 
 
       consumer_txns = transactions.select { |t| t.contexts.dig(:trace, :op) == "queue.process" }
       retry_counts = consumer_txns.map { |t| t.contexts.dig(:trace, :data, "messaging.message.retry.count") }
-      expect(retry_counts).to eq([0, 0, 1])
+      expect(retry_counts).to eq([0, 1, 2])
+    end
+
+    it "records messaging.message.retry.count on the producer spans emitted for retry enqueues", skip: RAILS_VERSION < 6.0 do
+      retried_job = job_fixture do
+        retry_on StandardError, attempts: 3, wait: 0
+
+        def perform
+          raise StandardError, "trigger retry" if executions < 3
+        end
+      end
+
+      retried_job.perform_later
+      drain
+
+      publish_spans = transactions.flat_map(&:spans).select { |s| s[:op] == "queue.publish" }
+      retry_counts = publish_spans.map { |s| s[:data]["messaging.message.retry.count"] }
+      expect(retry_counts).to eq([1, 2])
     end
   end
 
@@ -73,6 +90,7 @@ RSpec.shared_examples "an ActiveJob backend that records messaging span data on 
 
     latency = consumer_transaction.contexts.dig(:trace, :data, "messaging.message.receive.latency")
 
-    expect(latency).to eq(5_000)
+    expect(latency).to be_a(Float)
+    expect(latency).to be_within(1.0).of(5_000.0)
   end
 end

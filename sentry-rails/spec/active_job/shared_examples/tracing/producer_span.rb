@@ -20,6 +20,7 @@ RSpec.shared_examples "an ActiveJob backend that emits a producer span on enqueu
       expect(publish_span[:data]["messaging.system"]).to eq(successful_job.queue_adapter_name)
       expect(publish_span[:data]["messaging.message.id"]).to be_a(String).and(satisfy { |v| !v.empty? })
       expect(publish_span[:data]["messaging.destination.name"]).to eq("events")
+      expect(publish_span[:data]["messaging.message.retry.count"]).to eq(0)
       expect(publish_span[:timestamp]).not_to be_nil
     end
 
