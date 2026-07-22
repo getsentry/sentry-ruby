@@ -39,7 +39,7 @@ module Sentry
             sentry_data["trace_propagation_headers"] = headers if headers && !headers.empty?
           end
 
-          if Sentry.configuration.send_default_pii
+          if Sentry.configuration.data_collection.user_info
             user = Sentry.get_current_scope.user
             allowed = user.transform_keys(&:to_s).slice(*USER_FIELDS_ALLOWLIST)
             sentry_data["user"] = allowed unless allowed.empty?

@@ -170,6 +170,30 @@ RSpec.describe Sentry::Event do
         end
       end
     end
+
+    context "data collection" do
+      it "does not auto-populate user information when user_info is disabled" do
+        Sentry.configuration.data_collection.user_info = false
+        Sentry.get_current_scope.apply_to_event(event)
+
+        expect(event.to_h[:user][:ip_address]).to be_nil
+      end
+
+      it "auto-populates user information when user_info is enabled" do
+        Sentry.configuration.data_collection.user_info = true
+        Sentry.get_current_scope.apply_to_event(event)
+
+        expect(event.to_h[:user][:ip_address]).to eq("2.2.2.2")
+      end
+
+      it "preserves explicitly set user data set on the scope even when user_info is disabled" do
+        Sentry.configuration.data_collection.user_info = false
+        Sentry.set_user(id: "user-1", username: "alice")
+        Sentry.get_current_scope.apply_to_event(event)
+
+        expect(event.to_h[:user]).to include(id: "user-1", username: "alice")
+      end
+    end
   end
 
   describe '#to_json_compatible' do

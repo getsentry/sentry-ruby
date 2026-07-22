@@ -108,8 +108,10 @@ module Sentry
       def call(worker_class, job, queue, _redis_pool)
         return yield unless Sentry.initialized?
 
-        user = Sentry.get_current_scope.user
-        job["sentry_user"] = user unless user.empty?
+        if Sentry.configuration.data_collection.user_info
+          user = Sentry.get_current_scope.user
+          job["sentry_user"] = user unless user.empty?
+        end
 
         if Sentry.configuration.sidekiq.propagate_traces
           job["trace_propagation_headers"] ||= Sentry.get_trace_propagation_headers

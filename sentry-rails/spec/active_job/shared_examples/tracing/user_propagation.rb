@@ -113,4 +113,52 @@ RSpec.shared_examples "an ActiveJob backend that propagates Sentry user context 
       expect(consumer_transaction.user).to eq({})
     end
   end
+
+  context "data collection" do
+    context "when user_info is enabled" do
+      let(:configure_sentry) do
+        proc do |config|
+          config.traces_sample_rate = 1.0
+          config.data_collection.user_info = true
+        end
+      end
+
+      it "propagates user context to the consumer transaction" do
+        Sentry.set_user(full_user)
+
+        successful_job.perform_later
+        Sentry.set_user({})
+
+        drain
+
+        expect(consumer_transaction).not_to be_nil
+        expect(consumer_transaction.user).to eq(
+          id: "u1",
+          email: "alice@example.com",
+          username: "alice"
+        )
+      end
+    end
+
+    context "when user_info is disabled" do
+      let(:configure_sentry) do
+        proc do |config|
+          config.traces_sample_rate = 1.0
+          config.data_collection.user_info = false
+        end
+      end
+
+      it "does not propagate user context to the consumer transaction" do
+        Sentry.set_user(full_user)
+
+        successful_job.perform_later
+        Sentry.set_user({})
+
+        drain
+
+        expect(consumer_transaction).not_to be_nil
+        expect(consumer_transaction.user).to eq({})
+      end
+    end
+  end
 end
