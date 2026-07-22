@@ -28,7 +28,7 @@ module Sentry
 
     MAX_MESSAGE_SIZE_IN_BYTES = 1024 * 8
 
-    SKIP_INSPECTION_ATTRIBUTES = [:@modules, :@stacktrace_builder, :@send_default_pii, :@data_collection, :@trusted_proxies, :@rack_env_whitelist]
+    SKIP_INSPECTION_ATTRIBUTES = [:@modules, :@stacktrace_builder, :@data_collection, :@trusted_proxies, :@rack_env_whitelist]
 
     include CustomInspection
 
@@ -73,7 +73,6 @@ module Sentry
       @modules = configuration.gem_specs if configuration.send_modules
 
       # configuration options to help events process data
-      @send_default_pii = configuration.send_default_pii
       @data_collection = configuration.data_collection
       @trusted_proxies = configuration.trusted_proxies
       @stacktrace_builder = configuration.stacktrace_builder
@@ -128,7 +127,11 @@ module Sentry
     private
 
     def add_request_interface(env)
-      @request = Sentry::RequestInterface.new(env: env, send_default_pii: @send_default_pii, rack_env_whitelist: @rack_env_whitelist)
+      @request = Sentry::RequestInterface.new(
+        env: env,
+        data_collection: @data_collection,
+        rack_env_whitelist: @rack_env_whitelist
+      )
     end
 
     def serialize_attributes

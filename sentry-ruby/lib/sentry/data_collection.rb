@@ -28,7 +28,11 @@ module Sentry
     #     data_collection.stack_frame_variables = true
     #     data_collection.frame_context_lines = 5
     #   end
+
     MODES = %i[off deny_list allow_list].freeze
+
+    PII_HEADER_SNIPPETS = %w[forwarded -ip _ip remote via _user -user].freeze
+
     BODY_TYPES = %i[
       incoming_request
       outgoing_request
@@ -102,6 +106,15 @@ module Sentry
     # @default `3`
     attr_accessor :frame_context_lines
 
+    # Filters key-value data using the default sensitive denylist.
+    def self.filter(values)
+      default_filter.filter(values)
+    end
+
+    def self.default_filter
+      @default_filter ||= KeyValueCollection.new(mode: :deny_list, terms: nil)
+    end
+
     # Builds data collection settings compatible with the legacy send_default_pii
     # configuration.
     def self.backfill(configuration)
@@ -112,8 +125,10 @@ module Sentry
       # TODO-neel-data map to exact ruby behaviour for backwards compat behavior
       data_collection.user_info = false
       data_collection.cookies.mode = :off
-      data_collection.http_headers.request.mode = :off
-      data_collection.http_headers.response.mode = :off
+      data_collection.http_headers.request.mode = :deny_list
+      data_collection.http_headers.request.terms = PII_HEADER_SNIPPETS
+      data_collection.http_headers.response.mode = :deny_list
+      data_collection.http_headers.response.terms = PII_HEADER_SNIPPETS
       data_collection.http_bodies = []
       data_collection.url_query_params.mode = :off
       data_collection.graphql.document = false
@@ -132,13 +147,19 @@ module Sentry
         request: KeyValueCollection.new(mode: :deny_list, terms: nil),
         response: KeyValueCollection.new(mode: :deny_list, terms: nil)
       )
-      @http_bodies = nil
+      @http_bodies = BODY_TYPES.dup
       @url_query_params = KeyValueCollection.new(mode: :deny_list, terms: nil)
       @database_query_data = true
       @graphql = GraphQL.new(document: true, variables: true)
       @queues = true
       @stack_frame_variables = false
       @frame_context_lines = 3
+    end
+
+    # Returns whether incoming HTTP request bodies should be collected.
+    # nil imples all BODY_TYPES according to spec
+    def collect_incoming_http_body?
+      http_bodies.nil? || http_bodies.include?(:incoming_request)
     end
   end
 end

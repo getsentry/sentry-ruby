@@ -212,6 +212,7 @@ module Sentry
     attr_accessor :propagate_traces
 
     # Array of rack env parameters to be included in the event sent to sentry.
+    # @deprecated Use `data_collection.http_headers.request` to control request data collection instead.
     # @return [Array<String>]
     attr_accessor :rack_env_whitelist
 
@@ -827,6 +828,7 @@ module Sentry
       log_warn("`send_default_pii` is deprecated; use `data_collection` instead.") if self.send_default_pii
       log_warn("`include_local_variables` is deprecated; use `data_collection.stack_frame_variables` instead.") if include_local_variables
       log_warn("`context_lines` is deprecated; use `data_collection.frame_context_lines` instead.") if context_lines != 3
+      log_warn("`rack_env_whitelist` is deprecated; use `data_collection.http_headers.request` to control request data collection instead.") if rack_env_whitelist != RACK_ENV_WHITELIST_DEFAULT
     end
 
     # @api private

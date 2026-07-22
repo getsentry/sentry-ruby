@@ -57,7 +57,7 @@ RSpec.describe Sentry::DataCollection::KeyValueCollection do
       it "normalizes terms assigned after initialization" do
         collection.terms = ["USER"]
 
-        expect(collection.filter("user_id" => "1")).to eq("user_id" => "[Filtered]")
+        expect(collection.filter({ "user_id" => "1" })).to eq("user_id" => "[Filtered]")
       end
 
       it "covers every built-in sensitive term (case insensitive) and leaves other keys unchanged" do

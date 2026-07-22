@@ -3,6 +3,15 @@
 RSpec.describe Sentry::DataCollection do
   subject(:data_collection) { described_class.new }
 
+  describe ".filter" do
+    it "applies the default sensitive denylist" do
+      expect(described_class.filter("token" => "secret", "page" => "2")).to eq(
+        "token" => "[Filtered]",
+        "page" => "2"
+      )
+    end
+  end
+
   describe ".backfill" do
     it "uses the send_default_pii=false defaults" do
       configuration = Sentry::Configuration.new
@@ -10,8 +19,10 @@ RSpec.describe Sentry::DataCollection do
 
       expect(data_collection.user_info).to eq(false)
       expect(data_collection.cookies.mode).to eq(:off)
-      expect(data_collection.http_headers.request.mode).to eq(:off)
-      expect(data_collection.http_headers.response.mode).to eq(:off)
+      expect(data_collection.http_headers.request.mode).to eq(:deny_list)
+      expect(data_collection.http_headers.request.terms).to eq(described_class::PII_HEADER_SNIPPETS)
+      expect(data_collection.http_headers.response.mode).to eq(:deny_list)
+      expect(data_collection.http_headers.response.terms).to eq(described_class::PII_HEADER_SNIPPETS)
       expect(data_collection.http_bodies).to eq([])
       expect(data_collection.url_query_params.mode).to eq(:off)
       expect(data_collection.database_query_data).to eq(false)
@@ -31,16 +42,43 @@ RSpec.describe Sentry::DataCollection do
     end
   end
 
+  describe "#collect_incoming_http_body?" do
+    it "collects the body when http_bodies is nil" do
+      data_collection.http_bodies = nil
+
+      expect(data_collection.collect_incoming_http_body?).to eq(true)
+    end
+
+    it "collects the body when incoming requests are configured" do
+      data_collection.http_bodies = [:incoming_request]
+
+      expect(data_collection.collect_incoming_http_body?).to eq(true)
+    end
+
+    it "does not collect the body when incoming requests are not configured" do
+      data_collection.http_bodies = [:outgoing_request]
+
+      expect(data_collection.collect_incoming_http_body?).to eq(false)
+    end
+  end
+
   describe "defaults" do
+    it "uses a mutable copy of the body type defaults" do
+      data_collection.http_bodies.delete(:incoming_request)
+
+      expect(data_collection.http_bodies).not_to include(:incoming_request)
+      expect(described_class::BODY_TYPES).to include(:incoming_request)
+    end
+
     it "uses the defaults from the Data Collection specification" do
       expect(data_collection.user_info).to eq(true)
       expect(data_collection.cookies.mode).to eq(:deny_list)
       expect(data_collection.cookies.terms).to be_nil
       expect(data_collection.http_headers.request.mode).to eq(:deny_list)
-      expect(data_collection.http_headers.request.terms).to be_nil
+      expect(data_collection.http_headers.request.terms).to eq(nil)
       expect(data_collection.http_headers.response.mode).to eq(:deny_list)
-      expect(data_collection.http_headers.response.terms).to be_nil
-      expect(data_collection.http_bodies).to be_nil
+      expect(data_collection.http_headers.request.terms).to eq(nil)
+      expect(data_collection.http_bodies).to eq(described_class::BODY_TYPES)
       expect(data_collection.url_query_params.mode).to eq(:deny_list)
       expect(data_collection.url_query_params.terms).to be_nil
       expect(data_collection.database_query_data).to eq(true)

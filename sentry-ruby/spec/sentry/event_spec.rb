@@ -98,24 +98,21 @@ RSpec.describe Sentry::Event do
         scope.apply_to_event(event)
 
         expect(event.to_h[:request]).to eq(
-          env: { 'SERVER_NAME' => 'localhost', 'SERVER_PORT' => '80' },
-          headers: { 'Host' => 'localhost', 'X-Request-Id' => 'abcd-1234-abcd-1234' },
+          env: { 'REMOTE_ADDR' => '[Filtered]', 'SERVER_NAME' => 'localhost', 'SERVER_PORT' => '80' },
+          headers: { 'Host' => 'localhost', 'X-Forwarded-For' => '[Filtered]', 'X-Request-Id' => 'abcd-1234-abcd-1234' },
           method: 'POST',
           url: 'http://localhost/lol',
+          cookies: {}
         )
         expect(event.to_h[:tags][:request_id]).to eq("abcd-1234-abcd-1234")
         expect(event.to_h[:user][:ip_address]).to eq(nil)
       end
 
-      it "removes ip address headers" do
+      it "filters ip address headers from headers and env" do
         scope.apply_to_event(event)
 
-        # doesn't affect scope's rack_env
-        expect(scope.rack_env).to include("REMOTE_ADDR")
-        expect(event.request.headers.keys).not_to include("REMOTE_ADDR")
-        expect(event.request.headers.keys).not_to include("Client-Ip")
-        expect(event.request.headers.keys).not_to include("X-Real-Ip")
-        expect(event.request.headers.keys).not_to include("X-Forwarded-For")
+        expect(event.request.env).to include("REMOTE_ADDR" => "[Filtered]")
+        expect(event.request.headers).to include("X-Forwarded-For" => "[Filtered]")
       end
     end
 
@@ -132,7 +129,7 @@ RSpec.describe Sentry::Event do
           env: { 'SERVER_NAME' => 'localhost', 'SERVER_PORT' => '80', "REMOTE_ADDR" => "192.168.1.1" },
           headers: { 'Host' => 'localhost', "X-Forwarded-For" => "1.1.1.1, 2.2.2.2", "X-Request-Id" => "abcd-1234-abcd-1234" },
           method: 'POST',
-          query_string: 'biz=baz',
+          query_string: { 'biz' => 'baz' },
           url: 'http://localhost/lol',
           cookies: {}
         )
@@ -160,7 +157,7 @@ RSpec.describe Sentry::Event do
             env: { 'SERVER_NAME' => 'localhost', 'SERVER_PORT' => '80', "REMOTE_ADDR" => "192.168.1.1" },
             headers: { 'Host' => 'localhost', "X-Forwarded-For" => "1.1.1.1, 2.2.2.2", "X-Request-Id" => "abcd-1234-abcd-1234" },
             method: 'POST',
-            query_string: 'biz=baz',
+            query_string: { 'biz' => 'baz' },
             url: 'http://localhost/lol',
             cookies: {}
           )

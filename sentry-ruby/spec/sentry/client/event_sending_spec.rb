@@ -348,6 +348,21 @@ RSpec.describe Sentry::Client do
         end
       end
 
+      context "when scope contains a malformed query string", when: :rack_available? do
+        before do
+          configuration.background_worker_threads = 0
+          stub_request(:post, "http://sentry.localdomain/sentry/api/42/envelope/").to_return(status: 200)
+          env = Rack::MockRequest.env_for("/test")
+          env["QUERY_STRING"] = "a=%"
+          scope.set_rack_env(env)
+        end
+
+        it "still captures the event" do
+          expect(client.capture_event(event, scope)).to eq(event)
+          expect(event.request.query_string).to be_nil
+        end
+      end
+
       context "when scope.apply_to_event fails" do
         before do
           scope.add_event_processor do
