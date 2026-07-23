@@ -3,7 +3,6 @@
 require "spec_helper"
 
 require "sentry/rails/log_subscriber"
-require "sentry/rails/log_subscribers/parameter_filter"
 
 RSpec.describe Sentry::Rails::LogSubscriber, type: :request do
   let!(:test_subscriber) { test_subscriber_class.new }
@@ -215,11 +214,9 @@ RSpec.describe Sentry::Rails::LogSubscriber, type: :request do
     end
   end
 
-  context "parameter filtering integration" do
+  context "data collection integration" do
     let(:test_subscriber_class) do
       Class.new(described_class) do
-        include Sentry::Rails::LogSubscribers::ParameterFilter
-
         attach_to :filtering_test
 
         def filtering_event(event)
@@ -228,9 +225,9 @@ RSpec.describe Sentry::Rails::LogSubscriber, type: :request do
             component: "filtering_test"
           }
 
-          if Sentry.configuration.send_default_pii && event.payload[:params]
-            filtered_params = filter_sensitive_params(event.payload[:params])
-            attributes[:params] = filtered_params unless filtered_params.empty?
+          if event.payload[:params]
+            params = Sentry.configuration.data_collection.url_query_params.filter(event.payload[:params])
+            attributes[:params] = params unless params.empty?
           end
 
           log_structured_event(
@@ -245,12 +242,47 @@ RSpec.describe Sentry::Rails::LogSubscriber, type: :request do
       make_basic_app do |config, app|
         config.enable_logs = true
         config.structured_logging.logger_class = Sentry::DebugStructuredLogger
-        config.send_default_pii = true
+        config.data_collection.url_query_params.mode = :deny_list
       end
     end
 
-    it_behaves_like "parameter filtering" do
-      let(:test_instance) { test_subscriber }
+    it "filters sensitive top-level parameters" do
+      ActiveSupport::Notifications.instrument(
+        "filtering_event.filtering_test",
+        params: {
+          "name" => "Ada",
+          "password" => "secret",
+          "api_token" => "token",
+          "nested" => { "password" => "nested secret" }
+        }
+      ) do
+        sleep(0.01)
+      end
+
+      log_event = Sentry.logger.logged_events.find { |event| event["message"] == "Filtering event occurred" }
+      params = log_event["attributes"]["params"]
+
+      expect(params).to include(
+        "name" => "Ada",
+        "password" => "[Filtered]",
+        "api_token" => "[Filtered]",
+        "nested" => { "password" => "nested secret" }
+      )
+    end
+
+    it "does not include parameters when collection is off" do
+      Sentry.configuration.data_collection.url_query_params.mode = :off
+
+      ActiveSupport::Notifications.instrument(
+        "filtering_event.filtering_test",
+        params: { "name" => "Ada" }
+      ) do
+        sleep(0.01)
+      end
+
+      log_event = Sentry.logger.logged_events.find { |event| event["message"] == "Filtering event occurred" }
+
+      expect(log_event["attributes"]).not_to have_key("params")
     end
   end
 end

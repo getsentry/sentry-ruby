@@ -1,7 +1,6 @@
 # frozen_string_literal: true
 
 require "sentry/rails/log_subscriber"
-require "sentry/rails/log_subscribers/parameter_filter"
 
 module Sentry
   module Rails
@@ -20,8 +19,6 @@ module Sentry
       #     config.rails.structured_logging.subscribers = { action_mailer: Sentry::Rails::LogSubscribers::ActionMailerSubscriber }
       #   end
       class ActionMailerSubscriber < Sentry::Rails::LogSubscriber
-        include ParameterFilter
-
         # Handle deliver.action_mailer events
         #
         # @param event [ActiveSupport::Notifications::Event] The email delivery event
@@ -41,8 +38,8 @@ module Sentry
           attributes[:delivery_method] = payload[:delivery_method] if payload[:delivery_method]
           attributes[:date] = payload[:date].to_s if payload[:date]
 
-          if Sentry.configuration.send_default_pii
-            attributes[:message_id] = payload[:message_id] if payload[:message_id]
+          if Sentry.configuration.data_collection.user_info && payload[:message_id]
+            attributes[:message_id] = payload[:message_id]
           end
 
           message = "Email delivered via #{mailer}"
@@ -73,9 +70,9 @@ module Sentry
             duration_ms: duration
           }
 
-          if Sentry.configuration.send_default_pii && payload[:params]
-            filtered_params = filter_sensitive_params(payload[:params])
-            attributes[:params] = filtered_params unless filtered_params.empty?
+          if payload[:params].is_a?(Hash)
+            params = Sentry.configuration.data_collection.url_query_params.filter(payload[:params])
+            attributes[:params] = params unless params.empty?
           end
 
           message = "#{mailer}##{action}"

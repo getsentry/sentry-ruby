@@ -4,9 +4,12 @@ require "spec_helper"
 
 RSpec.describe Sentry::Rails::LogSubscribers::ActiveJobSubscriber, skip: Rails.version.to_f < 5.1 do
   context "when logging is enabled" do
+    let(:send_default_pii) { false }
+
     before do
       make_basic_app do |config|
         config.enable_logs = true
+        config.send_default_pii = send_default_pii
 
         config.rails.structured_logging.enabled = true
         config.rails.structured_logging.subscribers = { active_job: Sentry::Rails::LogSubscribers::ActiveJobSubscriber }
@@ -96,13 +99,7 @@ RSpec.describe Sentry::Rails::LogSubscribers::ActiveJobSubscriber, skip: Rails.v
 
     describe "argument filtering" do
       context "when send_default_pii is enabled" do
-        before do
-          Sentry.configuration.send_default_pii = true
-        end
-
-        after do
-          Sentry.configuration.send_default_pii = false
-        end
+        let(:send_default_pii) { true }
 
         it "includes filtered job arguments" do
           test_job_class = Class.new(ActiveJob::Base) do
@@ -136,11 +133,16 @@ RSpec.describe Sentry::Rails::LogSubscribers::ActiveJobSubscriber, skip: Rails.v
               "TestJobWithSensitiveArgs"
             end
 
-            def perform(password:, token:, safe_data:)
+            def perform(password:, token:, credit_card:, safe_data:)
             end
           end
 
-          test_job_class.perform_now(password: "secret123", token: "abc123", safe_data: "public")
+          test_job_class.perform_now(
+            password: "secret123",
+            token: "abc123",
+            credit_card: "4111111111111111",
+            safe_data: "public"
+          )
 
           Sentry.get_current_client.flush
 
@@ -151,8 +153,9 @@ RSpec.describe Sentry::Rails::LogSubscribers::ActiveJobSubscriber, skip: Rails.v
           arguments = JSON.parse(attributes[:arguments][:value])
 
           expect(arguments.first).to include("safe_data" => "public")
-          expect(arguments.first).to include("password" => "[FILTERED]")
-          expect(arguments.first).to include("token" => "[FILTERED]")
+          expect(arguments.first).to include("password" => "[Filtered]")
+          expect(arguments.first).to include("token" => "[Filtered]")
+          expect(arguments.first).to include("credit_card" => "[Filtered]")
 
           Rails.application.config.filter_parameters = original_filter_params
         end
@@ -179,7 +182,7 @@ RSpec.describe Sentry::Rails::LogSubscribers::ActiveJobSubscriber, skip: Rails.v
           arguments = JSON.parse(attributes[:arguments][:value])
 
           expect(arguments).to include("short")
-          expect(arguments).to include("[FILTERED: 150 chars]")
+          expect(arguments).to include("[Filtered: 150 chars]")
         end
 
         it "handles mixed argument types" do
@@ -194,7 +197,7 @@ RSpec.describe Sentry::Rails::LogSubscribers::ActiveJobSubscriber, skip: Rails.v
 
           test_job_class.perform_now(
             "string_value",
-            { safe_key: "value", password: "secret" },
+            { safe_var: "value", password: "secret" },
             42,
             [1, 2, 3]
           )
@@ -208,19 +211,31 @@ RSpec.describe Sentry::Rails::LogSubscribers::ActiveJobSubscriber, skip: Rails.v
           arguments = JSON.parse(attributes[:arguments][:value])
 
           expect(arguments[0]).to eq("string_value")
-          expect(arguments[1]).to include("safe_key" => "value")
-          expect(arguments[1]).to include("password" => "[FILTERED]")
+          expect(arguments[1]).to include("safe_var" => "value")
+          expect(arguments[1]).to include("password" => "[Filtered]")
           expect(arguments[2]).to eq(42)
           expect(arguments[3]).to eq([1, 2, 3])
         end
 
-        it "handles non-array arguments gracefully" do
-          subscriber = described_class.new
-          result = subscriber.send(:filter_sensitive_arguments, "not_an_array")
-          expect(result).to eq([])
+        it "handles mixed argument types gracefully" do
+          test_job_class = Class.new(ActiveJob::Base) do
+            def self.name
+              "TestJobWithMixedArgumentTypes"
+            end
 
-          result = subscriber.send(:filter_sensitive_arguments, nil)
-          expect(result).to eq([])
+            def perform(*args)
+            end
+          end
+
+          test_job_class.perform_now("short", 42, [1, 2, 3], { safe_data: "public" })
+
+          Sentry.get_current_client.flush
+
+          log_event = sentry_logs.find { |log| log[:body]&.include?("Job performed") }
+          expect(log_event).not_to be_nil
+
+          arguments = JSON.parse(log_event[:attributes][:arguments][:value])
+          expect(arguments).to eq(["short", 42, [1, 2, 3], { "safe_data" => "public" }])
         end
       end
 
@@ -348,6 +363,4 @@ RSpec.describe Sentry::Rails::LogSubscribers::ActiveJobSubscriber, skip: Rails.v
       expect(sentry_logs.count).to eq(initial_log_count)
     end
   end
-
-  include_examples "parameter filtering", described_class
 end

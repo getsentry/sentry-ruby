@@ -107,9 +107,9 @@ RSpec.describe Sentry::Rails, type: :request do
 
   context "data collection" do
     before do
-      make_basic_app do |config|
+      make_basic_app do |config, app|
         config.data_collection.url_query_params.mode = :deny_list
-        Rails.application.config.filter_parameters << proc { |_key, _value| }
+        app.config.filter_parameters << proc { |_key, _value| }
       end
     end
 
