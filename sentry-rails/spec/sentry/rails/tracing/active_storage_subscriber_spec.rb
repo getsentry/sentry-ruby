@@ -79,6 +79,54 @@ RSpec.describe Sentry::Rails::Tracing::ActiveStorageSubscriber, :subscriber, typ
     end
   end
 
+  context "data collection" do
+    context "with database query data enabled" do
+      before do
+        make_basic_app do |config|
+          config.traces_sample_rate = 1.0
+          config.rails.tracing_subscribers = [described_class]
+          config.data_collection.database_query_data = true
+        end
+      end
+
+      it "records the :key in span.data" do
+        ActiveStorage::AnalyzeJob.queue_adapter.perform_enqueued_jobs = true
+
+        p = Post.create!
+        get "/posts/#{p.id}/attach"
+
+        request_transaction = transport.events.last.to_h
+        upload_span = request_transaction[:spans].find { |s| s[:op] == "file.service_upload.active_storage" }
+
+        expect(upload_span).not_to be_nil
+        expect(upload_span.dig(:data, :key)).to eq(p.cover.key)
+      end
+    end
+
+    context "with database query data disabled" do
+      before do
+        make_basic_app do |config|
+          config.traces_sample_rate = 1.0
+          config.rails.tracing_subscribers = [described_class]
+          config.data_collection.database_query_data = false
+        end
+      end
+
+      it "does not record the :key in span.data" do
+        ActiveStorage::AnalyzeJob.queue_adapter.perform_enqueued_jobs = true
+
+        p = Post.create!
+        get "/posts/#{p.id}/attach"
+
+        request_transaction = transport.events.last.to_h
+        upload_span = request_transaction[:spans].find { |s| s[:op] == "file.service_upload.active_storage" }
+
+        expect(upload_span).not_to be_nil
+        expect(upload_span.dig(:data, :key)).to be_nil
+      end
+    end
+  end
+
   context "when transaction is not sampled" do
     before do
       make_basic_app

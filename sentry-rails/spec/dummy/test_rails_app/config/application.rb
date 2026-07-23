@@ -109,8 +109,10 @@ module Sentry
             :custom_secret,
             :api_key,
             :credit_card,
+            /billing_reference/,
             :authorization,
-            :token
+            :token,
+            proc { |_key, _value| }
           ]
 
           # Eager load namespaces can be accumulated after repeated initializations and make initialization

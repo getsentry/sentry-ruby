@@ -61,7 +61,7 @@ module Sentry
       attr_accessor :mode
 
       # `terms` contains the keys or patterns used by the selected mode.
-      # @return [Array<String>, nil]
+      # @return [Array<String, Regexp>, nil]
       attr_reader :terms
 
       def initialize(mode:, terms:)
@@ -70,7 +70,8 @@ module Sentry
       end
 
       def terms=(terms)
-        @terms = terms&.map { |term| term.to_s.downcase }&.reject { |term| term.strip.empty? }
+        @terms = terms&.map { |term| term.is_a?(Regexp) ? term : term.to_s.downcase }
+          &.reject { |term| !term.is_a?(Regexp) && term.strip.empty? }
       end
 
       # Applies this collection configuration without changing the input hash.
@@ -90,14 +91,15 @@ module Sentry
       private
 
       def safe_value?(key, cookie: false)
-        key_downcase = key.to_s.downcase
+        key_string = key.to_s
+        key_downcase = key_string.downcase
         return false if sensitive?(key_downcase, cookie: cookie)
 
         case mode
         when :deny_list
-          !matches_any_term?(key_downcase)
+          !matches_any_term?(key_string, key_downcase)
         when :allow_list
-          matches_any_term?(key_downcase)
+          matches_any_term?(key_string, key_downcase)
         else
           false
         end
@@ -108,8 +110,10 @@ module Sentry
           (cookie && SENSITIVE_COOKIE_NAME_DENY_LIST.any? { |term| key.include?(term) })
       end
 
-      def matches_any_term?(key)
-        @terms&.any? { |term| key.include?(term) }
+      def matches_any_term?(key, key_downcase)
+        @terms&.any? do |term|
+          term.is_a?(Regexp) ? term.match?(key) : key_downcase.include?(term)
+        end
       end
     end
   end

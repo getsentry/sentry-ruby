@@ -105,6 +105,38 @@ RSpec.describe Sentry::Rails, type: :request do
     end
   end
 
+  context "data collection" do
+    before do
+      make_basic_app do |config|
+        config.data_collection.url_query_params.mode = :deny_list
+        Rails.application.config.filter_parameters << proc { |_key, _value| }
+      end
+    end
+
+    it "adds Rails filter parameters to URL query parameter data collection" do
+      expect(Sentry.configuration.data_collection.url_query_params.terms).to include(
+        "password",
+        "custom_secret"
+      )
+    end
+
+    it "preserves and applies Regexp Rails filter parameters" do
+      expect(Sentry.configuration.data_collection.url_query_params.terms).to include(/billing_reference/)
+      expect(Sentry.configuration.data_collection.url_query_params.filter(
+        { "billing_reference_id" => "secret", "public" => "visible" }
+      )).to eq(
+        "billing_reference_id" => "[Filtered]",
+        "public" => "visible"
+      )
+    end
+
+    it "only adds String, Symbol, and Regexp Rails filter parameters" do
+      terms = Sentry.configuration.data_collection.url_query_params.terms
+
+      expect(terms).to all(satisfy { |term| term.is_a?(String) || term.is_a?(Symbol) || term.is_a?(Regexp) })
+    end
+  end
+
   context "at exit" do
     before do
       make_basic_app
