@@ -395,9 +395,10 @@ module Sentry
     #   thread-based servers (Puma, Unicorn) and background processors (Sidekiq,
     #   Resque). Every fiber on a thread shares one hub.
     # [+:fiber+] Store the hub in Fiber Storage (Ruby 3.2+). Each fiber gets its
-    #   own hub and child fibers inherit it, so concurrent requests on a
-    #   fiber-based server (Falcon/async) are isolated instead of sharing and
-    #   corrupting one another's scope. Requested on a Ruby without Fiber
+    #   own hub, so concurrent requests on a fiber-based server (Falcon/async)
+    #   are isolated instead of sharing and corrupting one another's scope. A
+    #   fiber or thread started from another inherits its context and trace, but
+    #   its own scope changes stay local. Requested on a Ruby without Fiber
     #   Storage (< 3.2), the SDK logs a warning and falls back to +:thread+.
     #
     # @return [Symbol]

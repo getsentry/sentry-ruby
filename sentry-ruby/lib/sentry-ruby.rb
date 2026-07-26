@@ -751,10 +751,33 @@ module Sentry
     # @return [Hub, nil]
     def get_current_hub_internal
       if @hub_isolation_level == :fiber
-        ::Fiber[THREAD_LOCAL]
+        owner, hub = ::Fiber[THREAD_LOCAL]
+
+        # Child fibers, and threads started from them, inherit fiber storage
+        # holding the same Hub object rather than a copy.
+        if owner.equal?(::Fiber.current)
+          hub
+        elsif hub
+          set_current_hub_internal(fork_hub(hub))
+        end
       else
         ::Thread.current.thread_variable_get(THREAD_LOCAL)
       end
+    end
+
+    # Copies +hub+ for a context that inherited it. The span is re-attached
+    # because Scope#dup deep-copies it, and spans recorded on a detached
+    # transaction copy are never sent.
+    #
+    # @!visibility private
+    # @param hub [Hub]
+    # @return [Hub]
+    def fork_hub(hub)
+      span = hub.current_scope.span
+      forked = hub.clone
+      forked.current_scope.set_span(span) if span
+
+      forked
     end
 
     # Stores +hub+ for the current execution context (thread or fiber).
@@ -764,7 +787,8 @@ module Sentry
     # @return [Hub, nil]
     def set_current_hub_internal(hub)
       if @hub_isolation_level == :fiber
-        ::Fiber[THREAD_LOCAL] = hub
+        ::Fiber[THREAD_LOCAL] = [::Fiber.current, hub]
+        hub # callers use the return value, so don't return the pair
       else
         ::Thread.current.thread_variable_set(THREAD_LOCAL, hub)
       end

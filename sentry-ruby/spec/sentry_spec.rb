@@ -121,17 +121,16 @@ RSpec.describe Sentry do
     end
 
     # Regression for cross-request contamination on fiber-based servers (Falcon,
-    # async), where many concurrent requests run as sibling fibers on one thread.
-    # With thread-local storage they share a single hub, so a scope opened by one
-    # request and held across a reactor yield is visible to (and clobbered by) the
-    # others. Fiber storage gives each request fiber its own hub.
+    # async), where concurrent requests are sibling fibers on one thread: a scope
+    # held across a reactor yield must not be visible to the others.
     it "keeps each sibling fiber's scope isolated across a yield" do
       transport = described_class.get_main_hub.current_client.transport
       transport.events.clear
 
+      # Deliberately no clone_hub_to_current_thread: real request fibers never
+      # call it, so the implicit path is the one that has to isolate.
       requests = 3.times.map do |i|
         Fiber.new do
-          described_class.clone_hub_to_current_thread
           described_class.configure_scope { |scope| scope.set_user(id: i) }
           Fiber.yield # simulate yielding to the reactor mid-request
           described_class.capture_message(i.to_s)
@@ -145,13 +144,72 @@ RSpec.describe Sentry do
       expect(attributed).to eq({ 0 => 0, 1 => 1, 2 => 2 })
     end
 
-    it "lets a child fiber inherit the parent request's hub" do
+    it "gives a child fiber the parent's context in its own hub" do
+      described_class.clone_hub_to_current_thread
+      described_class.set_tags(request: "req-1")
+      parent_hub = described_class.get_current_hub
+
+      child_tags, child_hub = Fiber.new do
+        described_class.set_tags(subtask: true)
+        [described_class.get_current_scope.tags, described_class.get_current_hub]
+      end.resume
+
+      expect(child_tags).to eq({ request: "req-1", subtask: true })
+      expect(child_hub).not_to be(parent_hub)
+      expect(described_class.get_current_scope.tags).to eq({ request: "req-1" })
+    end
+
+    # Fiber storage is inherited by Thread.new too, so a worker pool started
+    # after anything seeded a hub would otherwise share it across every worker.
+    it "gives a thread started from a fiber its own hub" do
       described_class.clone_hub_to_current_thread
       parent_hub = described_class.get_current_hub
 
-      inherited = Fiber.new { described_class.get_current_hub }.resume
+      hubs = 4.times.map { Thread.new { described_class.get_current_hub } }.map(&:value)
 
-      expect(inherited).to eq(parent_hub)
+      expect(hubs.uniq.size).to eq(4)
+      expect(hubs).not_to include(parent_hub)
+    end
+
+    # Isolating the scope must not detach the trace: on Async servers the
+    # fan-out inside a request is exactly what we need spans for.
+    it "records a child fiber's spans on the parent's transaction" do
+      perform_basic_setup do |config|
+        config.hub_isolation_level = :fiber
+        config.traces_sample_rate = 1.0
+      end
+
+      transaction = described_class.start_transaction(name: "req", op: "http.server")
+      described_class.get_current_scope.set_span(transaction)
+
+      Fiber.new { described_class.with_child_span(op: "child.in.fiber") { } }.resume
+      Thread.new { described_class.with_child_span(op: "child.in.thread") { } }.join
+      transaction.finish
+
+      expect(transaction.span_recorder.spans.map(&:op))
+        .to eq(["http.server", "child.in.fiber", "child.in.thread"])
+    end
+
+    it "keeps concurrent threads' with_scope blocks from seeing each other's tags" do
+      described_class.clone_hub_to_current_thread
+      ready = Queue.new
+      gate = Queue.new
+
+      threads = 4.times.map do |i|
+        Thread.new do
+          described_class.with_scope do |scope|
+            scope.set_tags(job: i)
+            ready << :in
+            gate.pop # hold every job open inside its own scope
+            described_class.get_current_scope.tags[:job]
+          end
+        end
+      end
+
+      4.times { ready.pop }
+      4.times { gate << :go }
+
+      expect(threads.map(&:value)).to eq([0, 1, 2, 3])
     end
 
     it "stores the hub in a fiber variable (instead of a thread variable)" do
