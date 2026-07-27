@@ -36,4 +36,34 @@ RSpec.shared_examples "an ActiveJob backend that attaches job context to error e
     last_frame = event.exception.values.first.stacktrace.frames.last
     expect(last_frame.vars).to include(a: "1", b: "0")
   end
+
+  it "includes Rails.error.set_context data attached before the job raises", skip: RAILS_VERSION < 7.0 do
+    job_with_context = job_fixture do
+      def perform
+        Rails.error.set_context(
+          debug_key: "important_value",
+          timestamp: Time.utc(2026, 7, 21, 12, 34, 56),
+          zoned_timestamp: ActiveSupport::TimeZone["Eastern Time (US & Canada)"].parse("2026-07-21 12:34:56"),
+          date: Date.new(2026, 7, 21)
+        )
+        raise "boom with rails error context"
+      end
+    end
+
+    expect do
+      job_with_context.perform_later
+      drain
+    end.to raise_error(RuntimeError, /boom with rails error context/)
+
+    event = last_sentry_event
+
+    expect(event.contexts).to include(
+      "rails.error" => hash_including(
+        debug_key: "important_value",
+        timestamp: Time.utc(2026, 7, 21, 12, 34, 56),
+        zoned_timestamp: ActiveSupport::TimeZone["Eastern Time (US & Canada)"].parse("2026-07-21 12:34:56"),
+        date: Date.new(2026, 7, 21)
+      )
+    )
+  end
 end

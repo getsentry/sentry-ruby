@@ -1,6 +1,8 @@
 # frozen_string_literal: true
 
 require "set"
+require "sentry/rails/serializer"
+require "sentry/rails/error_reporter_context"
 
 module Sentry
   module Rails
@@ -81,6 +83,8 @@ module Sentry
         }
 
         class << self
+          include ErrorReporterContext
+
           def producer_callback_registered?
             @producer_callback_registered ||= false
           end
@@ -223,6 +227,7 @@ module Sentry
                 job_id: job.job_id,
                 provider_job_id: job.provider_job_id
               },
+              contexts: execution_context,
               # Send synchronously: a worker process may exit before the async
               # background worker flushes its queue, which would drop the event.
               hint: { background: false }
@@ -278,22 +283,7 @@ module Sentry
           end
 
           def sentry_serialize_arguments(argument)
-            case argument
-            when Range
-              if (argument.begin || argument.end).is_a?(ActiveSupport::TimeWithZone)
-                argument.to_s
-              else
-                argument.map { |v| sentry_serialize_arguments(v) }
-              end
-            when Hash
-              argument.transform_values { |v| sentry_serialize_arguments(v) }
-            when Array, Enumerable
-              argument.map { |v| sentry_serialize_arguments(v) }
-            when ->(v) { v.respond_to?(:to_global_id) }
-              argument.to_global_id.to_s rescue argument
-            else
-              argument
-            end
+            Sentry::Rails::Serializer.serialize(argument)
           end
 
           private
