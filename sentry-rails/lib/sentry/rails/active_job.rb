@@ -83,6 +83,8 @@ module Sentry
         }
 
         class << self
+          include ErrorReporterContext
+
           def producer_callback_registered?
             @producer_callback_registered ||= false
           end
@@ -225,7 +227,7 @@ module Sentry
                 job_id: job.job_id,
                 provider_job_id: job.provider_job_id
               },
-              contexts: ErrorReporterContext.contexts,
+              contexts: execution_context,
               # Send synchronously: a worker process may exit before the async
               # background worker flushes its queue, which would drop the event.
               hint: { background: false }

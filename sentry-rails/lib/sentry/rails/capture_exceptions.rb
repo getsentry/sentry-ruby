@@ -5,6 +5,8 @@ require "sentry/rails/error_reporter_context"
 module Sentry
   module Rails
     class CaptureExceptions < Sentry::Rack::CaptureExceptions
+      include ErrorReporterContext
+
       RAILS_7_1 = Gem::Version.new(::Rails.version) >= Gem::Version.new("7.1.0.alpha")
       SPAN_ORIGIN = "auto.http.rails"
 
@@ -32,7 +34,7 @@ module Sentry
         return unless Sentry.initialized?
         return if show_exceptions?(exception, env) && !Sentry.configuration.rails.report_rescued_exceptions
 
-        Sentry::Rails.capture_exception(exception, contexts: ErrorReporterContext.contexts).tap do |event|
+        Sentry::Rails.capture_exception(exception, contexts: execution_context).tap do |event|
           env[ERROR_EVENT_ID_KEY] = event.event_id if event
         end
       end
