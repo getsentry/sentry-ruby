@@ -194,7 +194,7 @@ GEM
     psych (5.4.0)
       date
       stringio
-    raabro (1.4.0)
+    raabro (1.5.0)
     racc (1.8.1)
     rack (2.2.23)
     rack-protection (3.2.0)
@@ -239,7 +239,7 @@ GEM
       tsort
     redis (5.4.1)
       redis-client (>= 0.22.0)
-    redis-client (0.30.0)
+    redis-client (0.30.1)
       connection_pool
     redis-namespace (1.11.0)
       redis (>= 4)
