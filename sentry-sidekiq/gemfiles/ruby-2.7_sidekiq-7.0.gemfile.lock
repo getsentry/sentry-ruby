@@ -182,7 +182,7 @@ GEM
     psych (5.4.0)
       date
       stringio
-    raabro (1.4.0)
+    raabro (1.5.0)
     racc (1.8.1)
     rack (3.2.6)
     rack-session (2.1.2)
@@ -228,7 +228,7 @@ GEM
       erb
       psych (>= 4.0.0)
       tsort
-    redis-client (0.30.0)
+    redis-client (0.30.1)
       connection_pool
     reline (0.6.3)
       io-console (~> 0.5)
