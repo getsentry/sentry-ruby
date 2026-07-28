@@ -3,7 +3,7 @@
 require "spec_helper"
 
 require "sentry/rails/log_subscriber"
-require "sentry/rails/log_subscribers/parameter_filter"
+require "sentry/rails/parameter_filter"
 
 RSpec.describe Sentry::Rails::LogSubscriber, type: :request do
   let!(:test_subscriber) { test_subscriber_class.new }
@@ -218,7 +218,7 @@ RSpec.describe Sentry::Rails::LogSubscriber, type: :request do
   context "parameter filtering integration" do
     let(:test_subscriber_class) do
       Class.new(described_class) do
-        include Sentry::Rails::LogSubscribers::ParameterFilter
+        include Sentry::Rails::ParameterFilter
 
         attach_to :filtering_test
 

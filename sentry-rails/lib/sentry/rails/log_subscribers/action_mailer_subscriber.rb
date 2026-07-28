@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 require "sentry/rails/log_subscriber"
-require "sentry/rails/log_subscribers/parameter_filter"
+require "sentry/rails/parameter_filter"
 
 module Sentry
   module Rails
@@ -20,7 +20,7 @@ module Sentry
       #     config.rails.structured_logging.subscribers = { action_mailer: Sentry::Rails::LogSubscribers::ActionMailerSubscriber }
       #   end
       class ActionMailerSubscriber < Sentry::Rails::LogSubscriber
-        include ParameterFilter
+        include Sentry::Rails::ParameterFilter
 
         # Handle deliver.action_mailer events
         #

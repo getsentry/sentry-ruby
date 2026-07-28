@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require "sentry/rails/serializer"
+require "sentry/rails/parameter_filter"
 
 module Sentry
   module Rails
@@ -12,7 +13,10 @@ module Sentry
           context = ::ActiveSupport::ExecutionContext.to_h
           return {} if context.empty?
 
-          { "rails.error" => Sentry::Rails::Serializer.serialize(context) }
+          # Serialize first: the serializer expands Enumerables and Ranges into arrays the
+          # filter can descend into, and it preserves hash keys, so filtering its output is
+          # strictly more thorough than filtering the raw context.
+          { "rails.error" => Sentry::Rails::ParameterFilter.filter_sensitive_params(Sentry::Rails::Serializer.serialize(context)) }
         end
       else
         def execution_context

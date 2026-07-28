@@ -10,6 +10,8 @@ class HelloController < ActionController::Base
   def exception_with_error_context
     Rails.error.set_context(
       debug_key: "important_value",
+      api_key: "secret-api-key",
+      nested: { password: "hunter2", safe: "kept" },
       timestamp: Time.utc(2026, 7, 21, 12, 34, 56),
       zoned_timestamp: ActiveSupport::TimeZone["Eastern Time (US & Canada)"].parse("2026-07-21 12:34:56"),
       date: Date.new(2026, 7, 21)

@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 require "sentry/rails/log_subscriber"
-require "sentry/rails/log_subscribers/parameter_filter"
+require "sentry/rails/parameter_filter"
 
 module Sentry
   module Rails
@@ -21,7 +21,7 @@ module Sentry
       #     config.rails.structured_logging.subscribers = { active_record: Sentry::Rails::LogSubscribers::ActiveRecordSubscriber }
       #   end
       class ActiveRecordSubscriber < Sentry::Rails::LogSubscriber
-        include ParameterFilter
+        include Sentry::Rails::ParameterFilter
 
         EXCLUDED_NAMES = ["SCHEMA", "TRANSACTION"].freeze
         EMPTY_ARRAY = [].freeze

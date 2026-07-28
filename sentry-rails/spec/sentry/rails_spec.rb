@@ -383,6 +383,8 @@ RSpec.describe Sentry::Rails, type: :request do
         expect(event.contexts).to include(
           "rails.error" => hash_including(
             debug_key: "important_value",
+            api_key: "[FILTERED]",
+            nested: { password: "[FILTERED]", safe: "kept" },
             timestamp: Time.utc(2026, 7, 21, 12, 34, 56),
             zoned_timestamp: ActiveSupport::TimeZone["Eastern Time (US & Canada)"].parse("2026-07-21 12:34:56"),
             date: Date.new(2026, 7, 21)
