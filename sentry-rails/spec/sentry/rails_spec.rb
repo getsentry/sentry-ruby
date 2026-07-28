@@ -366,6 +366,27 @@ RSpec.describe Sentry::Rails, type: :request do
         expect(event.contexts).to include({ "rails.error" => { foo: "bar" } })
       end
 
+      it "filters Rails.error.set_context data attached before a handled exception" do
+        Rails.error.set_context(
+          debug_key: "important_value",
+          api_key: "secret-api-key",
+          nested: { password: "hunter2" }
+        )
+
+        Rails.error.handle(severity: :info) { 1/0 }
+
+        expect(transport.events.count).to eq(1)
+
+        event = transport.events.first
+        expect(event.contexts).to include(
+          "rails.error" => hash_including(
+            debug_key: "important_value",
+            api_key: "[FILTERED]",
+            nested: { password: "[FILTERED]" }
+          )
+        )
+      end
+
       it "skips cache storage sources", skip: Rails.version.to_f < 7.1 do
         Rails.error.handle(severity: :info, source: "mem_cache_store.active_support") do
           1/0

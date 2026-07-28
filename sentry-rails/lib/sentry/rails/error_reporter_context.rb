@@ -8,15 +8,26 @@ module Sentry
     module ErrorReporterContext
       SUPPORTS_EXECUTION_CONTEXT = Gem::Version.new(::Rails.version) >= Gem::Version.new("7.0.0")
 
+      # Prepare a context hash for the "rails.error" context entry, so that user data attached
+      # via `Rails.error.set_context` gets the same treatment regardless of whether the
+      # exception was handled.
+      #
+      # Serialization runs first: the serializer expands Enumerables and Ranges into arrays the
+      # filter can descend into, and it preserves hash keys, so filtering its output is strictly
+      # more thorough than filtering the raw context.
+      #
+      # @param context [Hash] the raw context
+      # @return [Hash] the serialized context with sensitive values redacted
+      def error_context(context)
+        Sentry::Rails::ParameterFilter.filter_sensitive_params(Sentry::Rails::Serializer.serialize(context))
+      end
+
       if SUPPORTS_EXECUTION_CONTEXT
         def execution_context
           context = ::ActiveSupport::ExecutionContext.to_h
           return {} if context.empty?
 
-          # Serialize first: the serializer expands Enumerables and Ranges into arrays the
-          # filter can descend into, and it preserves hash keys, so filtering its output is
-          # strictly more thorough than filtering the raw context.
-          { "rails.error" => Sentry::Rails::ParameterFilter.filter_sensitive_params(Sentry::Rails::Serializer.serialize(context)) }
+          { "rails.error" => error_context(context) }
         end
       else
         def execution_context
