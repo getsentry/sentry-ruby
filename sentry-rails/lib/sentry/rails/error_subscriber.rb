@@ -33,7 +33,7 @@ module Sentry
 
         hint[:mechanism] ||= Sentry::Mechanism.new(type: Sentry::Rails.integration_name, handled: handled)
 
-        Sentry::Rails.capture_exception(error, level: severity, contexts: { "rails.error" => error_context(context) }, tags: tags, hint: hint)
+        Sentry::Rails.capture_exception(error, level: severity, contexts: { "rails.error" => sanitize_context(context) }, tags: tags, hint: hint)
       end
     end
   end
