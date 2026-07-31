@@ -37,33 +37,51 @@ RSpec.shared_examples "an ActiveJob backend that attaches job context to error e
     expect(last_frame.vars).to include(a: "1", b: "0")
   end
 
-  it "includes Rails.error.set_context data attached before the job raises", skip: RAILS_VERSION < 7.0 do
-    job_with_context = job_fixture do
-      def perform
-        Rails.error.set_context(
-          debug_key: "important_value",
-          timestamp: Time.utc(2026, 7, 21, 12, 34, 56),
-          zoned_timestamp: ActiveSupport::TimeZone["Eastern Time (US & Canada)"].parse("2026-07-21 12:34:56"),
-          date: Date.new(2026, 7, 21)
-        )
-        raise "boom with rails error context"
+  context "with Rails.error.set_context data attached before the job raises", skip: RAILS_VERSION < 7.0 do
+    let(:job_with_context) do
+      job_fixture do
+        def perform
+          Rails.error.set_context(
+            debug_key: "important_value",
+            timestamp: Time.utc(2026, 7, 21, 12, 34, 56),
+            zoned_timestamp: ActiveSupport::TimeZone["Eastern Time (US & Canada)"].parse("2026-07-21 12:34:56"),
+            date: Date.new(2026, 7, 21)
+          )
+          raise "boom with rails error context"
+        end
       end
     end
 
-    expect do
-      job_with_context.perform_later
-      drain
-    end.to raise_error(RuntimeError, /boom with rails error context/)
+    def capture_job_error
+      expect do
+        job_with_context.perform_later
+        drain
+      end.to raise_error(RuntimeError, /boom with rails error context/)
 
-    event = last_sentry_event
+      last_sentry_event
+    end
 
-    expect(event.contexts).to include(
-      "rails.error" => hash_including(
-        debug_key: "important_value",
-        timestamp: Time.utc(2026, 7, 21, 12, 34, 56),
-        zoned_timestamp: ActiveSupport::TimeZone["Eastern Time (US & Canada)"].parse("2026-07-21 12:34:56"),
-        date: Date.new(2026, 7, 21)
-      )
-    )
+    it "omits the context from the captured event" do
+      expect(capture_job_error.contexts).not_to have_key("rails.error")
+    end
+
+    context "when send_default_pii is enabled" do
+      let(:configure_sentry) do
+        proc do |config|
+          config.send_default_pii = true
+        end
+      end
+
+      it "includes the context in the captured event" do
+        expect(capture_job_error.contexts).to include(
+          "rails.error" => hash_including(
+            debug_key: "important_value",
+            timestamp: Time.utc(2026, 7, 21, 12, 34, 56),
+            zoned_timestamp: ActiveSupport::TimeZone["Eastern Time (US & Canada)"].parse("2026-07-21 12:34:56"),
+            date: Date.new(2026, 7, 21)
+          )
+        )
+      end
+    end
   end
 end
