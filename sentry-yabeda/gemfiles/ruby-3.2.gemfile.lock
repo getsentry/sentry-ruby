@@ -46,7 +46,7 @@ GEM
     prettyprint (0.2.0)
     prism (1.9.0)
     rake (12.3.3)
-    rbs (4.0.3)
+    rbs (4.1.2)
       logger
       prism (>= 1.6.0)
       tsort
@@ -135,7 +135,7 @@ CHECKSUMS
   prettyprint (0.2.0) sha256=2bc9e15581a94742064a3cc8b0fb9d45aae3d03a1baa6ef80922627a0766f193
   prism (1.9.0) sha256=7b530c6a9f92c24300014919c9dcbc055bf4cdf51ec30aed099b06cd6674ef85
   rake (12.3.3) sha256=f7694adb4fe638da35452300cee6c545e9c377a0e3190018ac04d590b3c26ab3
-  rbs (4.0.3) sha256=5a7bf70e2628549d9a1f44eae447b2cfe55968a9c60cfff52693a4bdcc020e14
+  rbs (4.1.2) sha256=050eb1d8b508f1233bed929c0f2c7052302f7adf295230d9cb314e9024078f48
   rdoc (8.0.0) sha256=03bf8c08a9639658855a0cfd77c0abca8325c227693f7f33f82957811348c469
   reline (0.6.3) sha256=1198b04973565b36ec0f11542ab3f5cfeeec34823f4e54cebde90968092b1835
   rexml (3.4.1) sha256=c74527a9a0a04b4ec31dbe0dc4ed6004b960af943d8db42e539edde3a871abca

@@ -48,7 +48,7 @@ GEM
     faraday-net_http (3.4.4)
       net-http (~> 0.5)
     fiber-storage (1.0.1)
-    graphql (2.6.6)
+    graphql (2.6.7)
       base64
       fiber-storage
       logger
@@ -59,7 +59,7 @@ GEM
       prism (>= 1.3.0)
       rdoc (>= 4.0.0)
       reline (>= 0.4.2)
-    json (2.21.1)
+    json (2.21.2)
     language_server-protocol (3.17.0.6)
     logger (1.7.0)
     memory_profiler (0.9.14)
@@ -78,7 +78,7 @@ GEM
       nio4r (~> 2.0)
     rack (3.2.6)
     rake (12.3.3)
-    rbs (4.0.3)
+    rbs (4.1.2)
       logger
       prism (>= 1.6.0)
       tsort
@@ -115,7 +115,7 @@ GEM
       rbs (>= 3, < 5)
     ruby-lsp-rspec (0.1.29)
       ruby-lsp (~> 0.26.0)
-    sequel (5.106.0)
+    sequel (5.107.0)
       bigdecimal
     simplecov (0.22.0)
       docile (~> 1.1)
@@ -206,11 +206,11 @@ CHECKSUMS
   faraday (2.14.3) sha256=1882247e6766615c8220b4392bf1d27f6ebb63d8e28267587cef1fb0bf37f278
   faraday-net_http (3.4.4) sha256=0e78af151747ed1b00f33e25973b4bc220d7f16c00c39676817c8b12331eb588
   fiber-storage (1.0.1) sha256=f48e5b6d8b0be96dac486332b55cee82240057065dc761c1ea692b2e719240e1
-  graphql (2.6.6) sha256=7438e2036b571c884377eb1529225470ba959365f26dc47152953c213bc38c31
+  graphql (2.6.7) sha256=759755ce5819c965b6459c5039605cf2e4d876bb8ba5e03451676870ea787c45
   hashdiff (1.2.1) sha256=9c079dbc513dfc8833ab59c0c2d8f230fa28499cc5efb4b8dd276cf931457cd1
   io-console (0.8.2) sha256=d6e3ae7a7cc7574f4b8893b4fca2162e57a825b223a177b7afa236c5ef9814cc
   irb (1.18.0) sha256=de9454a0703a54704b9811a5ef31a60c86949fbf4013fcf244fabc7c775248e3
-  json (2.21.1) sha256=13a43df75d95641443f5702dff350f237164a9d811ff0f2c2800d4d980220583
+  json (2.21.2) sha256=1f1d3b7cf2b3ba1a69beca0bb6db13d5438b80bff3cd54cdaaa620b9b07c1c6a
   language_server-protocol (3.17.0.6) sha256=5ef2c0c138f8267e1bc631d3328347d354f96724b0af22f2c79516120443b7f0
   logger (1.7.0) sha256=196edec7cc44b66cfb40f9755ce11b392f21f7967696af15d274dde7edff0203
   memory_profiler (0.9.14) sha256=de558cf6525d8d56d2c0ea465b1664517fbe45560f892dc7a898d3b8c2863b12
@@ -226,7 +226,7 @@ CHECKSUMS
   puma (8.0.2) sha256=c8ed871dfbbe66448ea9ffd46692342d9804d4071522b52b5331b7b6e7b686fb
   rack (3.2.6) sha256=5ed78e1f73b2e25679bec7d45ee2d4483cc4146eb1be0264fc4d94cb5ef212c2
   rake (12.3.3) sha256=f7694adb4fe638da35452300cee6c545e9c377a0e3190018ac04d590b3c26ab3
-  rbs (4.0.3) sha256=5a7bf70e2628549d9a1f44eae447b2cfe55968a9c60cfff52693a4bdcc020e14
+  rbs (4.1.2) sha256=050eb1d8b508f1233bed929c0f2c7052302f7adf295230d9cb314e9024078f48
   rdoc (8.0.0) sha256=03bf8c08a9639658855a0cfd77c0abca8325c227693f7f33f82957811348c469
   redis (5.4.1) sha256=b5e675b57ad22b15c9bcc765d5ac26f60b675408af916d31527af9bd5a81faae
   redis-client (0.30.1) sha256=5151bc5c7bbfe48623732cdae3b900d8a22dc691cc7cdfacfb351ac55116522d
@@ -241,7 +241,7 @@ CHECKSUMS
   ruby-lsp (0.26.10) sha256=e67284af94423531f6b9a583350596421b5a6a4dd93083f1c2ba03da7c23bbed
   ruby-lsp-rspec (0.1.29) sha256=798be579723376cd56b17d32373288fb1163e4cfe2024c7d068516a1cf214ee5
   sentry-ruby (6.6.2)
-  sequel (5.106.0) sha256=0e6677f230e724ecbc9b4d5fc95ef9a69997cfb24c60fff84268185e0bb254cd
+  sequel (5.107.0) sha256=019629313205295b007f6df2c5eab19ddc40710d549fd445ac300f2853a370db
   simplecov (0.22.0) sha256=fe2622c7834ff23b98066bb0a854284b2729a569ac659f82621fc22ef36213a5
   simplecov-cobertura (3.2.0) sha256=70d702658677fcb20e5aceb6915ccf8bc62ff2ccd38b62b3ad5c9db5c0888740
   simplecov-html (0.13.2) sha256=bd0b8e54e7c2d7685927e8d6286466359b6f16b18cb0df47b508e8d73c777246
