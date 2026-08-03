@@ -132,7 +132,7 @@ GEM
     erb (4.0.4.1)
       cgi (>= 0.3.3)
     erubi (1.13.1)
-    et-orbi (1.4.0)
+    et-orbi (1.4.1)
       tzinfo
     fugit (1.11.2)
       et-orbi (~> 1, >= 1.2.11)
@@ -263,7 +263,7 @@ GEM
       rspec-core (> 3.3)
     rspec-support (3.13.7)
     securerandom (0.3.2)
-    sequel (5.106.0)
+    sequel (5.107.0)
       bigdecimal
     sidekiq (7.3.10)
       base64

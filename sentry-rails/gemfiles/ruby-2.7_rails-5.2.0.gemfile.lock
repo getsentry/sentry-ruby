@@ -199,7 +199,7 @@ GEM
     rspec-retry (0.6.2)
       rspec-core (> 3.3)
     rspec-support (3.13.7)
-    sequel (5.106.0)
+    sequel (5.107.0)
       bigdecimal
     simplecov (0.22.0)
       docile (~> 1.1)
