@@ -40,7 +40,8 @@ jobs:
     with:
       gem: ${{ matrix.gem }}
       apt: ${{ matrix.apt || '' }}
-    secrets: inherit
+    secrets:
+      CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
 
   codecov:
     name: CodeCov
