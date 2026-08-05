@@ -73,6 +73,20 @@ if defined?(ActionCable) && ActionCable.version >= Gem::Version.new('6.0.0')
       transport.events = []
     end
 
+    describe "Connection method visibility" do
+      before do
+        make_basic_app
+      end
+
+      # Rails 8.2 (rails/rails#50979) invokes connection.handle_open and
+      # connection.handle_close from ActionCable::Server::Socket, outside the
+      # connection — private overrides break every cable connection there.
+      it "keeps handle_open and handle_close public" do
+        expect(Sentry::Rails::ActionCableExtensions::Connection.public_method_defined?(:handle_open)).to eq(true)
+        expect(Sentry::Rails::ActionCableExtensions::Connection.public_method_defined?(:handle_close)).to eq(true)
+      end
+    end
+
     describe "Connection" do
       before do
         make_basic_app

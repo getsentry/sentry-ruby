@@ -1,3 +1,9 @@
+## Unreleased
+
+### Bug Fixes 🐛
+
+- (rails) Make Action Cable `handle_open`/`handle_close` overrides public so Rails 8.2's `ActionCable::Server::Socket` can invoke them ([rails/rails#50979](https://github.com/rails/rails/pull/50979)); the private overrides raised `NoMethodError` on every cable connection, killing all websocket traffic
+
 ## 6.6.2
 
 ### Bug Fixes 🐛
