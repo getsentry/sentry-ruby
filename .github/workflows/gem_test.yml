@@ -17,6 +17,9 @@ on:
         description: Space-separated apt packages to install before testing.
         type: string
         default: ""
+    secrets:
+      CODECOV_TOKEN:
+        required: false
 
 jobs:
   matrix:
