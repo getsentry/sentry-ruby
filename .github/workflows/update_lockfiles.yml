@@ -12,12 +12,24 @@ name: Update lockfiles
 
 on:
   workflow_dispatch:
+  push:
+    branches:
+      - master
+    # Releases update the path gemspecs and version files. Regenerate the
+    # committed locks immediately after those changes land on master.
+    paths:
+      - "**/*.gemspec"
+      - "**/lib/sentry/**/version.rb"
   schedule:
     # Weekly: refresh pins so we keep getting security patches.
     - cron: "0 4 * * 1"
 
 permissions:
   contents: write
+
+concurrency:
+  group: update-lockfiles
+  cancel-in-progress: false
 
 jobs:
   update:
@@ -61,7 +73,8 @@ jobs:
           fi
 
           COMMIT_TITLE="ci: 🤖 Update pinned CI lockfiles"
-          BRANCH_NAME="lockfiles/update-$(date +%m-%d)"
+          SHORT_SHA="${GITHUB_SHA:0:12}"
+          BRANCH_NAME="lockfiles/update-$(date +%m-%d)-${SHORT_SHA}"
 
           # Which gems changed: the top-level dir of each touched lock.
           GEMS=$(git diff --cached --name-only -- '**/gemfiles/*.gemfile.lock' | cut -d/ -f1 | sort -u)
