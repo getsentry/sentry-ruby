@@ -9,14 +9,14 @@ GIT
 PATH
   remote: ../../sentry-rails
   specs:
-    sentry-rails (6.6.2)
+    sentry-rails (6.7.0)
       railties (>= 5.2.0)
-      sentry-ruby (~> 6.6.2)
+      sentry-ruby (~> 6.7.0)
 
 PATH
   remote: ../../sentry-ruby
   specs:
-    sentry-ruby (6.6.2)
+    sentry-ruby (6.7.0)
       bigdecimal
       concurrent-ruby (~> 1.0, >= 1.0.2)
       logger
@@ -24,8 +24,8 @@ PATH
 PATH
   remote: ..
   specs:
-    sentry-sidekiq (6.6.2)
-      sentry-ruby (~> 6.6.2)
+    sentry-sidekiq (6.7.0)
+      sentry-ruby (~> 6.7.0)
       sidekiq (>= 5.0)
 
 GEM
@@ -416,9 +416,9 @@ CHECKSUMS
   ruby-lsp-rspec (0.1.29) sha256=798be579723376cd56b17d32373288fb1163e4cfe2024c7d068516a1cf214ee5
   rufus-scheduler (3.9.2) sha256=55fa9e4db0ff69d7f38c804f17baba0c9bce5cba39984ae3c5cf6c039d1323b9
   securerandom (0.4.1) sha256=cc5193d414a4341b6e225f0cb4446aceca8e50d5e1888743fac16987638ea0b1
-  sentry-rails (6.6.2)
-  sentry-ruby (6.6.2)
-  sentry-sidekiq (6.6.2)
+  sentry-rails (6.7.0)
+  sentry-ruby (6.7.0)
+  sentry-sidekiq (6.7.0)
   sidekiq (7.3.10) sha256=781eb4f65ef36042534ad73d72f211283afb7fee82eec786ada4ed1972ef8e3c
   sidekiq-cron (2.4.0) sha256=25595c5aee0c16d13a89466e5108af047fa4cfbf388199b39e1a600ca39472d4
   sidekiq-scheduler (5.0.6) sha256=aa49fa982fb0d58e3e94d6bc2e2187be000414b9354a9f35e0cd06de204ad5be
