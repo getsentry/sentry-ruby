@@ -3,22 +3,22 @@
 ### New Features ✨
 
 - (active_job) Support for tracing by @solnic in [#2947](https://github.com/getsentry/sentry-ruby/pull/2947)
-- (client-reports) Record log_byte and trace_metric_byte outcomes by @sl0thentr0py in [#2997](https://github.com/getsentry/sentry-ruby/pull/2997)
-- (rails) Support for solid queue by @solnic in [#2942](https://github.com/getsentry/sentry-ruby/pull/2942)
+- (active_job) Support for Solid Queue by @solnic in [#2942](https://github.com/getsentry/sentry-ruby/pull/2942)
+- (client-reports) Record `log_byte` and `trace_metric_byte` outcomes by @sl0thentr0py in [#2997](https://github.com/getsentry/sentry-ruby/pull/2997)
 - Add Fiber support new `config.hub_isolation_level` which can be set to `:fiber` or `:thread`. Use this in case you use Fiber based servers like [Falcon](https://github.com/socketry/falcon) by @SeanLF in [#3018](https://github.com/getsentry/sentry-ruby/pull/3018)
-- New set_attribute api by @sl0thentr0py in [#2998](https://github.com/getsentry/sentry-ruby/pull/2998)
+- New `set_attribute` api by @sl0thentr0py in [#2998](https://github.com/getsentry/sentry-ruby/pull/2998)
 
 ### Bug Fixes 🐛
 
 #### Rails
 
-- Guard execution context with send_default_pii by @solnic in [#3043](https://github.com/getsentry/sentry-ruby/pull/3043)
-- Ensure Rails.error.set_context is not lost by @solnic in [#3024](https://github.com/getsentry/sentry-ruby/pull/3024)
+- Guard execution context with `send_default_pii` by @solnic in [#3043](https://github.com/getsentry/sentry-ruby/pull/3043)
+- Ensure `Rails.error.set_context` is not lost by @solnic in [#3024](https://github.com/getsentry/sentry-ruby/pull/3024)
 
 #### Other
 
 - (test) Kill threaded global workers before clearing Sentry globals by @solnic in [#2990](https://github.com/getsentry/sentry-ruby/pull/2990)
-- Isolate inherited hubs under hub_isolation_level = :fiber by @SeanLF in [#3036](https://github.com/getsentry/sentry-ruby/pull/3036)
+- Isolate inherited hubs under `hub_isolation_level = :fiber` by @SeanLF in [#3036](https://github.com/getsentry/sentry-ruby/pull/3036)
 
 ### Internal Changes 🔧
 
