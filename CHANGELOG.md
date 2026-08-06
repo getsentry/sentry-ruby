@@ -22,9 +22,7 @@
 
 ### Internal Changes 🔧
 
-- (deps) Bump postcss from 8.5.15 to 8.5.25 in /spec/apps/svelte-mini by @dependabot in [#3044](https://github.com/getsentry/sentry-ruby/pull/3044)
-- (lockgen) Use generated gemfiles in test workflows by @sl0thentr0py in [#2971](https://github.com/getsentry/sentry-ruby/pull/2971)
-- Replace secrets: inherit with explicit CODECOV_TOKEN pass by @oioki in [#3047](https://github.com/getsentry/sentry-ruby/pull/3047)
+- Use generated gemfiles in test workflows by @sl0thentr0py in [#2971](https://github.com/getsentry/sentry-ruby/pull/2971)
 - Weekly lockfile generation CI job by @sl0thentr0py in [#2966](https://github.com/getsentry/sentry-ruby/pull/2966)
 
 ## 6.6.2
