@@ -29,17 +29,19 @@ jobs:
         include:
           - gem: sentry-ruby
           - gem: sentry-rails
-            apt: libsqlite3-dev imagemagick
+            sqlite: true
+            imagemagick: true
           - gem: sentry-sidekiq
           - gem: sentry-delayed_job
-            apt: libsqlite3-dev
+            sqlite: true
           - gem: sentry-resque
           - gem: sentry-opentelemetry
           - gem: sentry-yabeda
     uses: ./.github/workflows/gem_test.yml
     with:
       gem: ${{ matrix.gem }}
-      apt: ${{ matrix.apt || '' }}
+      sqlite: ${{ matrix.sqlite || false }}
+      imagemagick: ${{ matrix.imagemagick || false }}
     secrets:
       CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
 

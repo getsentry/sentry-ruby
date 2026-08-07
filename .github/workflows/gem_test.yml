@@ -13,10 +13,14 @@ on:
         description: Gem directory to test (e.g. sentry-ruby).
         required: true
         type: string
-      apt:
-        description: Space-separated apt packages to install before testing.
-        type: string
-        default: ""
+      sqlite:
+        description: Install SQLite development headers.
+        type: boolean
+        default: false
+      imagemagick:
+        description: Install ImageMagick.
+        type: boolean
+        default: false
     secrets:
       CODECOV_TOKEN:
         required: false
@@ -57,10 +61,17 @@ jobs:
       - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
 
       - name: Install apt packages
-        if: inputs.apt != ''
+        if: inputs.sqlite || inputs.imagemagick
         run: |
           sudo apt-get update
-          sudo apt-get install --no-install-recommends ${{ inputs.apt }}
+          packages=()
+          if [[ "${{ inputs.sqlite }}" == "true" ]]; then
+            packages+=(libsqlite3-dev)
+          fi
+          if [[ "${{ inputs.imagemagick }}" == "true" ]]; then
+            packages+=(imagemagick)
+          fi
+          sudo apt-get install --no-install-recommends "${packages[@]}"
 
       - name: Set up Ruby
         uses: ./.github/actions/setup-mise
