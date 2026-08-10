@@ -125,7 +125,7 @@ GEM
       activesupport (>= 6.1)
     i18n (1.15.2)
       concurrent-ruby (~> 1.0)
-    io-console (0.8.2-java)
+    io-console (0.9.1-java)
     irb (1.18.0)
       pp (>= 0.6.0)
       prism (>= 1.3.0)
@@ -223,7 +223,7 @@ GEM
       connection_pool
     redis-namespace (1.11.0)
       redis (>= 4)
-    reline (0.6.3)
+    reline (0.7.0)
       io-console (~> 0.5)
     resque (2.7.0)
       mono_logger (~> 1)
@@ -336,7 +336,7 @@ CHECKSUMS
   fugit (1.13.0) sha256=a4f093fce740da52f216740a5041e2a594ea763cdb89e8b2754ca4399634ab18
   globalid (1.4.0) sha256=037f12fbf1d9d7a014d501c2d5c77356fd4ddd96d7a7991d6700bba96706f427
   i18n (1.15.2) sha256=00f9eb62412fe593b2a65a97daa75300d37abb8f7202ec748e94b6d46a9dd1b5
-  io-console (0.8.2-java) sha256=837efefe96084c13ae91114917986ae6c6d1cf063b27b8419cc564a722a38af8
+  io-console (0.9.1-java) sha256=3358a0b3f7094ee4c68e42641839d52c3d69fce2b44e1a9e22cfd6bdecc9278b
   irb (1.18.0) sha256=de9454a0703a54704b9811a5ef31a60c86949fbf4013fcf244fabc7c775248e3
   jar-dependencies (0.5.7) sha256=013ce5f4639414ac8cf1169cdbe763da164b81e2d2c983d11042b5ff7bfcce80
   logger (1.7.0) sha256=196edec7cc44b66cfb40f9755ce11b392f21f7967696af15d274dde7edff0203
@@ -374,7 +374,7 @@ CHECKSUMS
   redis (5.4.1) sha256=b5e675b57ad22b15c9bcc765d5ac26f60b675408af916d31527af9bd5a81faae
   redis-client (0.30.1) sha256=5151bc5c7bbfe48623732cdae3b900d8a22dc691cc7cdfacfb351ac55116522d
   redis-namespace (1.11.0) sha256=e91a1aa2b2d888b6dea1d4ab8d39e1ae6fac3426161feb9d91dd5cca598a2239
-  reline (0.6.3) sha256=1198b04973565b36ec0f11542ab3f5cfeeec34823f4e54cebde90968092b1835
+  reline (0.7.0) sha256=5b012d8e55dbf9d450f12bde2cf7d15ff546ae80b3f8f3b30e570d431815583d
   resque (2.7.0) sha256=685fdc8889b0a649183ff9b23c96817f42a1e1d47c0ea64c77c5e1dd69b961b0
   resque-retry (1.8.1) sha256=a1c1a910619a3484a35a8294e0b190e577156090735d4083078f2a4ff87ff728
   resque-scheduler (4.11.0) sha256=4e8bf3acdccc2cfe02141d2717fc03dc6e0cdd887c0d6c0fa92b394aa70f32a1
