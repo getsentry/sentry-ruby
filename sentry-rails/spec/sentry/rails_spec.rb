@@ -64,11 +64,14 @@ RSpec.describe Sentry::Rails, type: :request do
       end
 
       it "doesn't cause error if Rails::Logger is not present during SDK initialization" do
+        rails_logger = Rails.logger
         Rails.logger = nil
 
         Sentry.init
 
         expect(Sentry.configuration.sdk_logger).to be_a(Sentry::Logger)
+      ensure
+        Rails.logger = rails_logger
       end
     end
 

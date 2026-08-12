@@ -283,10 +283,6 @@ module Sentry
     # @return [Proc]
     attr_accessor :traces_sampler
 
-    # Enable Structured Logging
-    # @return [Boolean]
-    attr_accessor :enable_logs
-
     # Structured logging configuration.
     # @return [StructuredLoggingConfiguration]
     attr_reader :structured_logging
@@ -590,7 +586,6 @@ module Sentry
       self.std_lib_logger_filter = nil
       self.rack_env_whitelist = RACK_ENV_WHITELIST_DEFAULT
       self.traces_sampler = nil
-      self.enable_logs = false
       self.enable_metrics = true
 
       self.profiler_class = Sentry::Profiler

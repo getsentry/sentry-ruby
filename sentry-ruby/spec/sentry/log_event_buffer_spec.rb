@@ -12,6 +12,5 @@ RSpec.describe Sentry::LogEventBuffer do
         body: "Test message"
       )
     },
-    max_items_config: :max_log_events,
-    enable_config: :enable_logs
+    max_items_config: :max_log_events
 end

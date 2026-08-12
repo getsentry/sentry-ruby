@@ -8,9 +8,7 @@ RSpec.describe Sentry::Rails::LogSubscribers::ActiveRecordSubscriber do
 
     before do
       make_basic_app do |config|
-        config.enable_logs = true
         config.send_default_pii = send_default_pii
-
         config.rails.structured_logging.enabled = true
         config.rails.structured_logging.subscribers = { active_record: Sentry::Rails::LogSubscribers::ActiveRecordSubscriber }
       end
@@ -59,7 +57,7 @@ RSpec.describe Sentry::Rails::LogSubscribers::ActiveRecordSubscriber do
           sentry_transport.events.clear
           sentry_transport.envelopes.clear
 
-          created_at = Time.new(2025, 10, 28, 13, 11, 44)
+          created_at = Time.utc(2025, 10, 28, 13, 11, 44)
           Post.where(id: post.id, title: post.title, created_at: created_at).to_a
 
           Sentry.get_current_client.flush
@@ -347,8 +345,6 @@ RSpec.describe Sentry::Rails::LogSubscribers::ActiveRecordSubscriber do
   context "when logger is silenced" do
     before do
       make_basic_app do |config, app|
-        config.enable_logs = true
-
         config.rails.structured_logging.enabled = true
         config.rails.structured_logging.subscribers = {
           active_record: Sentry::Rails::LogSubscribers::ActiveRecordSubscriber
@@ -377,9 +373,7 @@ RSpec.describe Sentry::Rails::LogSubscribers::ActiveRecordSubscriber do
   context "when logging is disabled" do
     before do
       make_basic_app do |config|
-        config.enable_logs = false
-
-        config.rails.structured_logging.enabled = true
+        config.rails.structured_logging.enabled = false
         config.rails.structured_logging.subscribers = { active_record: Sentry::Rails::LogSubscribers::ActiveRecordSubscriber }
       end
     end

@@ -5,25 +5,9 @@ SimpleCov.command_name "StdLibLogger"
 RSpec.describe Sentry::StdLibLogger do
   let(:logger) { ::Logger.new($stdout) }
 
-  context "when logger patch is enabled but enable_logs is turned off" do
-    it "logs a warning message" do
-      string_io = StringIO.new
-
-      perform_basic_setup do |config|
-        config.enable_logs = false
-        config.enabled_patches = [:logger]
-        config.sdk_logger = ::Logger.new(string_io)
-      end
-
-      expect(string_io.string).to include("WARN -- : :logger patch enabled but `enable_logs` is turned off - skipping applying patch")
-    end
-  end
-
-  context "when enable_logs is set to true but logger patch is not enabled" do
+  context "when logger patch is not enabled" do
     before do
-      perform_basic_setup do |config|
-        config.enable_logs = true
-      end
+      perform_basic_setup
     end
 
     it "does not send log using stdlib logger" do
@@ -35,11 +19,10 @@ RSpec.describe Sentry::StdLibLogger do
     end
   end
 
-  context "when enable_logs is set to true and logger patch is set" do
+  context "when logger patch is enabled" do
     before do
       perform_basic_setup do |config|
         config.max_log_events = 1
-        config.enable_logs = true
         config.enabled_patches = [:redis, :puma, :http, :logger]
       end
     end

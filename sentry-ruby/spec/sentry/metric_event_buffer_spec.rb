@@ -13,6 +13,5 @@ RSpec.describe Sentry::MetricEventBuffer do
         value: 1
       )
     },
-    max_items_config: :max_metric_events,
-    enable_config: :enable_metrics
+    max_items_config: :max_metric_events
 end

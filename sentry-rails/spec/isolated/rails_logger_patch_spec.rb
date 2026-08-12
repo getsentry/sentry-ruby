@@ -10,7 +10,6 @@ RSpec.describe "Rails.logger with :logger patch" do
   context "when :logger patch is enabled" do
     before do
       make_basic_app do |config, app|
-        config.enable_logs = true
         config.enabled_patches = [:logger]
         config.max_log_events = 10
         config.sdk_logger = Logger.new(nil)
@@ -202,7 +201,6 @@ RSpec.describe "Rails.logger with :logger patch" do
     let(:broadcast_logger) { ActiveSupport::BroadcastLogger.new(logger1, logger2) }
     let(:broadcast_app) do
       make_basic_app do |config|
-        config.enable_logs = true
         config.enabled_patches = [:logger]
         config.max_log_events = 10
         config.sdk_logger = Logger.new(nil)

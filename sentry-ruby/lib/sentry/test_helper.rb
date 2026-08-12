@@ -90,9 +90,7 @@ module Sentry
         transport.clear if transport.respond_to?(:clear)
       end
 
-      if Sentry.configuration.enable_logs && sentry_logger.respond_to?(:clear)
-        sentry_logger.clear
-      end
+      sentry_logger.clear if sentry_logger.respond_to?(:clear)
     end
 
     # @return [Sentry::StructuredLogger, Sentry::DebugStructuredLogger]

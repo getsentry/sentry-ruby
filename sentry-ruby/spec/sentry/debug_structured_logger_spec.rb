@@ -3,7 +3,6 @@
 RSpec.describe Sentry::DebugStructuredLogger do
   let(:configuration) do
     config = Sentry::Configuration.new
-    config.enable_logs = true
     config.dsn = Sentry::TestHelper::DUMMY_DSN
     config
   end
@@ -25,19 +24,6 @@ RSpec.describe Sentry::DebugStructuredLogger do
 
     it "creates a log file" do
       expect(debug_logger.log_file).to be_a(Pathname)
-    end
-
-    context "when logs are disabled" do
-      let(:configuration) do
-        config = Sentry::Configuration.new
-        config.enable_logs = false
-        config.dsn = Sentry::TestHelper::DUMMY_DSN
-        config
-      end
-
-      it "creates a no-op logger backend" do
-        expect(debug_logger.backend).to be_a(Sentry::DebugStructuredLogger::NoOpLogger)
-      end
     end
   end
 

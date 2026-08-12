@@ -35,8 +35,6 @@ module Sentry
     end
 
     after(:configured) do
-      rails.structured_logging.enabled = enable_logs if rails.structured_logging.enabled.nil?
-
       collection = data_collection.url_query_params
       if collection.mode == :deny_list
         filter_parameters = ::Rails.application.config.filter_parameters.select do |filter|
@@ -226,7 +224,7 @@ module Sentry
       }.freeze
 
       def initialize
-        @enabled = nil
+        @enabled = true
         @subscribers = DEFAULT_SUBSCRIBERS.dup
       end
 

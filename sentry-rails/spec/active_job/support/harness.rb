@@ -48,7 +48,11 @@ RSpec.shared_context "active_job backend harness" do |adapter:|
   # re-activate tracing/structured logging, re-register AJ event
   # handlers) so each example still gets a fresh Sentry configuration.
   before(:all) do
-    make_basic_app
+    make_basic_app do |config|
+      # The app is booted once to set up shared Rails infrastructure. Structured
+      # logging is configured and attached separately for each example below.
+      config.rails.structured_logging.enabled = false
+    end
   end
 
   around do |example|
@@ -73,7 +77,7 @@ RSpec.shared_context "active_job backend harness" do |adapter:|
       Sentry::Rails::Tracing.patch_active_support_notifications
     end
 
-    if Sentry.configuration.rails.structured_logging.enabled? && Sentry.configuration.enable_logs
+    if Sentry.configuration.rails.structured_logging.enabled?
       Sentry::Rails::StructuredLogging.attach(Sentry.configuration.rails.structured_logging)
     end
 

@@ -1,23 +1,10 @@
 # frozen_string_literal: true
 
 RSpec.describe Sentry::StructuredLogger do
-  context "when enable_logs is set to false" do
-    before do
-      perform_basic_setup do |config|
-        config.enable_logs = false
-      end
-    end
-
-    it "initializes" do
-      expect(Sentry.logger).to be_a(described_class)
-    end
-  end
-
   context "when log events are enabled" do
     before do
       perform_basic_setup do |config|
         config.max_log_events = 1
-        config.enable_logs = true
       end
     end
 
@@ -220,7 +207,6 @@ RSpec.describe Sentry::StructuredLogger do
 
       before do
         perform_basic_setup do |config|
-          config.enable_logs = true
           config.send_client_reports = send_client_reports
           config.max_log_events = 1
           config.before_send_log = before_send_log
