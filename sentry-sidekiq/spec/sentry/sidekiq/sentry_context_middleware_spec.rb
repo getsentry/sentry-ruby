@@ -168,16 +168,25 @@ RSpec.describe Sentry::Sidekiq::SentryContextClientMiddleware do
     expect(queue.first["sentry_user"]).to be_nil
   end
 
-  describe "with user" do
+  context "user data collection" do
     before do
       Sentry.set_user(user)
     end
 
-    it "sets user of the current scope to the job" do
+    it "propagates user information when user_info is enabled" do
+      Sentry.configuration.data_collection.user_info = true
+
       client.push('queue' => 'default', 'class' => HappyWorker, 'args' => [])
 
-      expect(queue.size).to be(1)
       expect(queue.first["sentry_user"]).to eq(user)
+    end
+
+    it "does not propagate user information when user_info is disabled" do
+      Sentry.configuration.data_collection.user_info = false
+
+      client.push('queue' => 'default', 'class' => HappyWorker, 'args' => [])
+
+      expect(queue.first["sentry_user"]).to be_nil
     end
   end
 

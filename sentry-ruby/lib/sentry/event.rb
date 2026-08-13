@@ -28,7 +28,7 @@ module Sentry
 
     MAX_MESSAGE_SIZE_IN_BYTES = 1024 * 8
 
-    SKIP_INSPECTION_ATTRIBUTES = [:@modules, :@stacktrace_builder, :@send_default_pii, :@trusted_proxies, :@rack_env_whitelist]
+    SKIP_INSPECTION_ATTRIBUTES = [:@modules, :@stacktrace_builder, :@send_default_pii, :@data_collection, :@trusted_proxies, :@rack_env_whitelist]
 
     include CustomInspection
 
@@ -74,6 +74,7 @@ module Sentry
 
       # configuration options to help events process data
       @send_default_pii = configuration.send_default_pii
+      @data_collection = configuration.data_collection
       @trusted_proxies = configuration.trusted_proxies
       @stacktrace_builder = configuration.stacktrace_builder
       @rack_env_whitelist = configuration.rack_env_whitelist
@@ -103,7 +104,7 @@ module Sentry
       unless request || env.empty?
         add_request_interface(env)
 
-        user[:ip_address] ||= calculate_real_ip_from_rack(env) if @send_default_pii
+        user[:ip_address] ||= calculate_real_ip_from_rack(env) if @data_collection.user_info
 
         if request_id = Utils::RequestId.read_from(env)
           tags[:request_id] = request_id
