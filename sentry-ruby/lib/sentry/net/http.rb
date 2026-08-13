@@ -72,10 +72,9 @@ module Sentry
 
         result = { method: req.method, url: url }
 
-        if Sentry.configuration.send_default_pii
-          result[:query] = uri.query
-          result[:body] = req.body
-        end
+        query = filter_query_params(uri.query)
+        result[:query] = query if query
+        result[:body] = req.body if Sentry.configuration.data_collection.collect_outgoing_http_body?
 
         result
       end

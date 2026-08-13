@@ -57,6 +57,95 @@ RSpec.describe Sentry::Faraday do
       end
     end
 
+    describe "data collection" do
+      describe "query parameters" do
+        let(:http) do
+          Faraday.new("http://example.com") do |f|
+            f.adapter Faraday::Adapter::Test do |stub|
+              stub.get("/test") { [200, {}, ""] }
+            end
+          end
+        end
+
+        it "does not collect them when the mode is off" do
+          Sentry.configuration.data_collection.url_query_params.mode = :off
+          transaction = Sentry.start_transaction
+          Sentry.get_current_scope.set_span(transaction)
+
+          http.get("/test?token=secret&page=5")
+
+          expect(transaction.span_recorder.spans.last.data).not_to have_key("http.query")
+          expect(transaction.span_recorder.spans.last.data["url"]).to eq("http://example.com/test")
+        end
+
+        it "filters sensitive values in deny-list mode" do
+          Sentry.configuration.data_collection.url_query_params.mode = :deny_list
+          transaction = Sentry.start_transaction
+          Sentry.get_current_scope.set_span(transaction)
+
+          http.get("/test?token=secret&page=5")
+
+          expect(transaction.span_recorder.spans.last.data["http.query"]).to eq(
+            "page=5&token=[Filtered]"
+          )
+          expect(transaction.span_recorder.spans.last.data["url"]).to eq(
+            "http://example.com/test?page=5&token=[Filtered]"
+          )
+        end
+
+        it "collects only allowed values in allow-list mode" do
+          Sentry.configuration.data_collection.url_query_params.mode = :allow_list
+          Sentry.configuration.data_collection.url_query_params.terms = ["page"]
+          transaction = Sentry.start_transaction
+          Sentry.get_current_scope.set_span(transaction)
+
+          http.get("/test?another=value&page=5")
+
+          expect(transaction.span_recorder.spans.last.data["http.query"]).to eq(
+            "another=[Filtered]&page=5"
+          )
+          expect(transaction.span_recorder.spans.last.data["url"]).to eq(
+            "http://example.com/test?another=[Filtered]&page=5"
+          )
+        end
+      end
+
+      describe "request bodies" do
+        let(:http) do
+          Faraday.new("http://example.com") do |f|
+            f.adapter Faraday::Adapter::Test do |stub|
+              stub.post("/test") { [200, {}, ""] }
+            end
+          end
+        end
+
+        before do
+          Sentry.configuration.breadcrumbs_logger = [:http_logger]
+        end
+
+        it "collects them when all body types are enabled" do
+          Sentry.configuration.data_collection.http_bodies = nil
+          http.post("/test", "secret body")
+
+          expect(Sentry.get_current_scope.breadcrumbs.peek.data[:body]).to eq("secret body")
+        end
+
+        it "collects them when outgoing requests are enabled" do
+          Sentry.configuration.data_collection.http_bodies = [:outgoing_request]
+          http.post("/test", "secret body")
+
+          expect(Sentry.get_current_scope.breadcrumbs.peek.data[:body]).to eq("secret body")
+        end
+
+        it "does not collect them when body types are disabled" do
+          Sentry.configuration.data_collection.http_bodies = []
+          http.post("/test", "secret body")
+
+          expect(Sentry.get_current_scope.breadcrumbs.peek.data).not_to have_key(:body)
+        end
+      end
+    end
+
     context "with config.send_default_pii = true" do
       let(:http) do
         Faraday.new(url) do |f|
@@ -103,7 +192,7 @@ RSpec.describe Sentry::Faraday do
 
         expect(request_span.data).to eq({
           "http.response.status_code" => 200,
-          "url" => "http://example.com/test",
+          "url" => "http://example.com/test?foo=bar",
           "http.request.method" => "GET",
           "http.query" => "foo=bar"
         })
@@ -157,7 +246,7 @@ RSpec.describe Sentry::Faraday do
 
         expect(request_span.data).to eq({
           "http.response.status_code" => 200,
-          "url" => "http://example.com/test",
+          "url" => "http://example.com/test?foo=bar",
           "http.request.method" => "POST",
           "http.query" => "foo=bar"
         })
