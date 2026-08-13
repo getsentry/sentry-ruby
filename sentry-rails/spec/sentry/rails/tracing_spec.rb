@@ -201,17 +201,15 @@ RSpec.describe Sentry::Rails::Tracing, type: :request do
         end
       end
 
-      it "does not record sensitive params" do
+      it "does not record any params" do
         get "/posts?foo=bar&password=42&secret=baz"
         transaction = transport.events.last.to_h
 
         params = transaction[:spans][0][:data][:params]
-        expect(params["foo"]).to eq("bar")
-        expect(params["password"]).to eq("[FILTERED]")
-        expect(params["secret"]).to eq("[FILTERED]")
+        expect(params).to be_empty
 
         path = transaction[:spans][0][:data][:path]
-        expect(path).to eq("/posts?foo=bar&password=[FILTERED]&secret=[FILTERED]")
+        expect(path).to eq("/posts")
       end
     end
 
@@ -223,17 +221,61 @@ RSpec.describe Sentry::Rails::Tracing, type: :request do
         end
       end
 
-      it "records all params" do
+      it "records all params except sensitive params" do
         get "/posts?foo=bar&password=42&secret=baz"
         transaction = transport.events.last.to_h
 
         params = transaction[:spans][0][:data][:params]
         expect(params["foo"]).to eq("bar")
-        expect(params["password"]).to eq("42")
-        expect(params["secret"]).to eq("baz")
+        expect(params["password"]).to eq("[Filtered]")
+        expect(params["secret"]).to eq("[Filtered]")
 
         path = transaction[:spans][0][:data][:path]
-        expect(path).to eq("/posts?foo=bar&password=42&secret=baz")
+        expect(path).to eq("/posts?foo=bar&password=[Filtered]&secret=[Filtered]")
+      end
+    end
+  end
+
+  context "data collection" do
+    context "with url query params enabled" do
+      before do
+        make_basic_app do |config|
+          config.traces_sample_rate = 1.0
+          config.data_collection.url_query_params.mode = :deny_list
+        end
+      end
+
+      it "records query params except sensitive params" do
+        get "/posts?foo=bar&password=42&secret=baz"
+        transaction = transport.events.last.to_h
+
+        params = transaction[:spans][0][:data][:params]
+        expect(params["foo"]).to eq("bar")
+        expect(params["password"]).to eq("[Filtered]")
+        expect(params["secret"]).to eq("[Filtered]")
+
+        path = transaction[:spans][0][:data][:path]
+        expect(path).to eq("/posts?foo=bar&password=[Filtered]&secret=[Filtered]")
+      end
+    end
+
+    context "with url query params disabled" do
+      before do
+        make_basic_app do |config|
+          config.traces_sample_rate = 1.0
+          config.data_collection.url_query_params.mode = :off
+        end
+      end
+
+      it "does not record query params" do
+        get "/posts?foo=bar&password=42&secret=baz"
+        transaction = transport.events.last.to_h
+
+        params = transaction[:spans][0][:data][:params]
+        expect(params).to be_empty
+
+        path = transaction[:spans][0][:data][:path]
+        expect(path).to eq("/posts")
       end
     end
   end

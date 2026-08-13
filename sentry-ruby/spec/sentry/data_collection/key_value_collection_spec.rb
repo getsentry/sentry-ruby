@@ -54,6 +54,23 @@ RSpec.describe Sentry::DataCollection::KeyValueCollection do
         )
       end
 
+      it "matches regular expression terms" do
+        expect(described_class.new(mode: :deny_list, terms: [/private[-_]data/]).filter(
+          { "private_data" => "secret", "PRIVATE_DATA" => "visible", "public_data" => "visible" }
+        )).to eq(
+          "private_data" => "[Filtered]",
+          "PRIVATE_DATA" => "visible",
+          "public_data" => "visible"
+        )
+      end
+
+      it "preserves regular expression terms when assigning terms" do
+        regexp = /private/i
+        collection.terms = [regexp]
+
+        expect(collection.terms).to eq([regexp])
+      end
+
       it "normalizes terms assigned after initialization" do
         collection.terms = ["USER"]
 

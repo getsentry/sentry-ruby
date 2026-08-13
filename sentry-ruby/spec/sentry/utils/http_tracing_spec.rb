@@ -21,7 +21,7 @@ RSpec.describe Sentry::Utils::HttpTracing do
         "tags[]" => ["ruby", "sentry"]
       }
 
-      expect(http_tracing.format_query(query)).to eq(
+      expect(described_class.format_query(query)).to eq(
         "token=[Filtered]&page=5&tags[]=ruby&tags[]=sentry"
       )
     end

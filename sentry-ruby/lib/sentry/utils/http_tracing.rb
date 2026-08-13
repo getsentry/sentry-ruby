@@ -20,12 +20,12 @@ module Sentry
         filtered_query_hash = Sentry.configuration.data_collection.url_query_params.filter(query_hash)
         return nil if filtered_query_hash.empty?
 
-        format_query(filtered_query_hash)
+        HttpTracing.format_query(filtered_query_hash)
       rescue
         nil
       end
 
-      def format_query(query)
+      def self.format_query(query)
         query.flat_map do |key, value|
           Array(value).map { |item| "#{key}=#{item}" }
         end.join("&")

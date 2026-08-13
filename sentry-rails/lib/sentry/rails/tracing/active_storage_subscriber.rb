@@ -34,7 +34,10 @@ module Sentry
             ) do |span|
               payload.each do |key, value|
                 next if key == START_TIMESTAMP_NAME
-                next if key == :key && !Sentry.configuration.send_default_pii
+                # Active Storage keys are automatically generated storage data,
+                # rather than URL/query data. Use the database query-data switch
+                # for the legacy PII-compatible on/off behavior.
+                next if key == :key && !Sentry.configuration.data_collection.database_query_data
 
                 span.set_data(key, value)
               end
