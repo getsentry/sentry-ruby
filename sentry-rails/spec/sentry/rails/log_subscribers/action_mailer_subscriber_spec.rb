@@ -4,9 +4,12 @@ require "spec_helper"
 
 RSpec.describe Sentry::Rails::LogSubscribers::ActionMailerSubscriber do
   context "when logging is enabled" do
+    let(:send_default_pii) { false }
+
     before do
       make_basic_app do |config|
         config.enable_logs = true
+        config.send_default_pii = send_default_pii
 
         config.rails.structured_logging.enabled = true
         config.rails.structured_logging.subscribers = { action_mailer: Sentry::Rails::LogSubscribers::ActionMailerSubscriber }
@@ -133,13 +136,7 @@ RSpec.describe Sentry::Rails::LogSubscribers::ActionMailerSubscriber do
       end
 
       context "when send_default_pii is enabled" do
-        before do
-          Sentry.configuration.send_default_pii = true
-        end
-
-        after do
-          Sentry.configuration.send_default_pii = false
-        end
+        let(:send_default_pii) { true }
 
         it "includes message_id for deliver events" do
           ActiveSupport::Notifications.instrument("deliver.action_mailer",
@@ -182,8 +179,8 @@ RSpec.describe Sentry::Rails::LogSubscribers::ActionMailerSubscriber do
           params = JSON.parse(log_event[:attributes][:params][:value])
 
           expect(params).to include("user_id" => 123, "safe_param" => "value")
-          expect(params["password"]).to eq("[FILTERED]")
-          expect(params["api_key"]).to eq("[FILTERED]")
+          expect(params["password"]).to eq("[Filtered]")
+          expect(params["api_key"]).to eq("[Filtered]")
           expect(params).to include("email_address" => "user@example.com", "subject" => "Welcome!")
         end
       end
@@ -250,6 +247,4 @@ RSpec.describe Sentry::Rails::LogSubscribers::ActionMailerSubscriber do
       expect(sentry_logs.count).to eq(initial_log_count)
     end
   end
-
-  include_examples "parameter filtering", described_class
 end

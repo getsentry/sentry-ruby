@@ -108,7 +108,7 @@ module Sentry
 
     # Filters key-value data using the default sensitive denylist.
     def self.filter(values)
-      default_filter.filter(values)
+      default_filter.filter(values, cookie: false)
     end
 
     def self.default_filter

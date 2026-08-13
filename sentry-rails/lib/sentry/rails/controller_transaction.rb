@@ -27,15 +27,27 @@ module Sentry
                 child_span.set_data(:method, request.method)
 
                 data_collection = Sentry.configuration.data_collection
-                query = data_collection.url_query_params.filter(request.query_parameters)
+
                 path = request.path
-                path = "#{path}?#{Sentry::Utils::HttpTracing.format_query(query)}" unless query.empty?
+                query_parameters = request.query_parameters
+
+                if query_parameters.is_a?(Hash)
+                  filtered_query_parameters = data_collection.url_query_params.filter(query_parameters)
+
+                  unless filtered_query_parameters.empty?
+                    formatted_query = Sentry::Utils::HttpTracing.format_query(filtered_query_parameters)
+                    path = "#{path}?#{formatted_query}"
+                  end
+                end
 
                 child_span.set_data(:path, path)
-                child_span.set_data(
-                  :params,
-                  data_collection.url_query_params.filter(request.params)
-                )
+
+                # all params request + body
+                params = request.params
+                if params.is_a?(Hash)
+                  filtered_params = data_collection.url_query_params.filter(params)
+                  child_span.set_data(:params, filtered_params)
+                end
               end
 
               result

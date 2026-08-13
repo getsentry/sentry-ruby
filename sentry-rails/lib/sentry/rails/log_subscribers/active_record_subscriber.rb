@@ -1,7 +1,6 @@
 # frozen_string_literal: true
 
 require "sentry/rails/log_subscriber"
-require "sentry/rails/log_subscribers/parameter_filter"
 
 module Sentry
   module Rails
@@ -21,8 +20,6 @@ module Sentry
       #     config.rails.structured_logging.subscribers = { active_record: Sentry::Rails::LogSubscribers::ActiveRecordSubscriber }
       #   end
       class ActiveRecordSubscriber < Sentry::Rails::LogSubscriber
-        include ParameterFilter
-
         EXCLUDED_NAMES = ["SCHEMA", "TRANSACTION"].freeze
         EMPTY_ARRAY = [].freeze
 
@@ -49,7 +46,7 @@ module Sentry
 
           binds = event.payload[:binds]
 
-          if Sentry.configuration.send_default_pii && (binds && !binds.empty?)
+          if Sentry.configuration.data_collection.database_query_data && (binds && !binds.empty?)
             type_casted_binds = type_casted_binds(event)
 
             type_casted_binds.each_with_index do |value, index|

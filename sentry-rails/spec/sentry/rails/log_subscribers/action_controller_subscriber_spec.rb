@@ -4,9 +4,12 @@ require "spec_helper"
 
 RSpec.describe Sentry::Rails::LogSubscribers::ActionControllerSubscriber, type: :request do
   context "when logging is enabled" do
+    let(:send_default_pii) { false }
+
     before do
       make_basic_app do |config, app|
         config.enable_logs = true
+        config.send_default_pii = send_default_pii
 
         config.rails.structured_logging.enabled = true
         config.rails.structured_logging.subscribers = { action_controller: Sentry::Rails::LogSubscribers::ActionControllerSubscriber }
@@ -257,13 +260,7 @@ RSpec.describe Sentry::Rails::LogSubscribers::ActionControllerSubscriber, type: 
       end
 
       context "when send_default_pii is enabled" do
-        before do
-          Sentry.configuration.send_default_pii = true
-        end
-
-        after do
-          Sentry.configuration.send_default_pii = false
-        end
+        let(:send_default_pii) { true }
 
         it "includes filtered request parameters" do
           get "/world", params: { safe_param: "value", password: "secret" }
@@ -278,7 +275,7 @@ RSpec.describe Sentry::Rails::LogSubscribers::ActionControllerSubscriber, type: 
 
           params = JSON.parse(log_event[:attributes][:params][:value])
           expect(params).to include("safe_param" => "value")
-          expect(params).to include("password" => "[FILTERED]")
+          expect(params).to include("password" => "[Filtered]")
         end
 
         it "filters sensitive parameter names" do
@@ -299,10 +296,10 @@ RSpec.describe Sentry::Rails::LogSubscribers::ActionControllerSubscriber, type: 
 
           params = JSON.parse(log_event[:attributes][:params][:value])
           expect(params).to include("normal_param" => "value")
-          expect(params).to include("password" => "[FILTERED]")
-          expect(params).to include("api_key" => "[FILTERED]")
-          expect(params).to include("credit_card" => "[FILTERED]")
-          expect(params).to include("authorization" => "[FILTERED]")
+          expect(params).to include("password" => "[Filtered]")
+          expect(params).to include("api_key" => "[Filtered]")
+          expect(params).to include("credit_card" => "[Filtered]")
+          expect(params).to include("authorization" => "[Filtered]")
         end
 
         it "handles nested parameters correctly" do
@@ -398,9 +395,5 @@ RSpec.describe Sentry::Rails::LogSubscribers::ActionControllerSubscriber, type: 
 
       expect(sentry_logs.count).to eq(initial_log_count)
     end
-  end
-
-  describe "ParameterFilter functionality" do
-    include_examples "parameter filtering", described_class
   end
 end
