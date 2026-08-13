@@ -39,6 +39,15 @@ RSpec.describe Sentry::Configuration do
 
       expect(subject).to have_received(:log_warn).with("`context_lines` is deprecated; use `data_collection.frame_context_lines` instead.")
     end
+
+    it "warns when rack_env_whitelist is changed" do
+      allow(subject).to receive(:log_warn)
+      subject.rack_env_whitelist = ["REMOTE_ADDR"]
+
+      subject.send(:log_deprecations)
+
+      expect(subject).to have_received(:log_warn).with("`rack_env_whitelist` is deprecated; use `data_collection.http_headers.request` to control request data collection instead.")
+    end
   end
 
   describe "#background_worker_threads" do

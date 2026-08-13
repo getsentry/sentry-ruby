@@ -267,7 +267,7 @@ RSpec.describe 'Sentry::Rack::CaptureExceptions', when: :rack_available? do
           { "REQUEST_METHOD" => "POST", "CONTENT_TYPE" => "application/text", ::Rack::RACK_INPUT => StringIO.new("stuff") }
         end
 
-        it "captures the exception with request form data" do
+        it "captures the exception request text body" do
           app = ->(_e) { raise exception }
           stack = Sentry::Rack::CaptureExceptions.new(app)
 
@@ -287,7 +287,7 @@ RSpec.describe 'Sentry::Rack::CaptureExceptions', when: :rack_available? do
         end
       end
 
-      context "with non rewindable non form data" do
+      context "with non rewindable body" do
         let(:dbl) { double }
         let(:additional_headers) do
           { "REQUEST_METHOD" => "POST", "CONTENT_TYPE" => "application/text", ::Rack::RACK_INPUT => dbl }

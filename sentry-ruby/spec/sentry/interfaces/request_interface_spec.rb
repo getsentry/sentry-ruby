@@ -5,10 +5,20 @@ return unless defined?(Rack)
 RSpec.describe Sentry::RequestInterface do
   let(:env) { Rack::MockRequest.env_for("/test") }
   let(:send_default_pii) { false }
+  let(:configuration) do
+    Sentry::Configuration.new do |config|
+      config.send_default_pii = send_default_pii
+    end
+  end
+  let(:data_collection) { configuration.data_collection }
   let(:rack_env_whitelist) { Sentry::Configuration::RACK_ENV_WHITELIST_DEFAULT }
 
   subject do
-    described_class.new(env: env, send_default_pii: send_default_pii, rack_env_whitelist: rack_env_whitelist)
+    described_class.new(
+      env: env,
+      data_collection: data_collection,
+      rack_env_whitelist: rack_env_whitelist
+    )
   end
 
   describe "rack_env_whitelist" do
@@ -33,8 +43,8 @@ RSpec.describe Sentry::RequestInterface do
     context "with empty whitelist" do
       let(:rack_env_whitelist) { [] }
 
-      it 'keeps the original env intact' do
-        expect(subject.env).to eq(env)
+      it 'keeps the original env values intact' do
+        expect(subject.env).to include(env)
       end
     end
   end
@@ -45,7 +55,7 @@ RSpec.describe Sentry::RequestInterface do
 
     it 'transforms headers to conform with the interface' do
       expect(subject.headers).to include("Version" => "HTTP/1.1", "X-Request-Id" => "12345678")
-      expect(subject.headers).not_to include("Cookie")
+      expect(subject.headers).to include("Cookie" => "[Filtered]")
     end
 
     context 'from Rails middleware' do
@@ -80,9 +90,9 @@ RSpec.describe Sentry::RequestInterface do
   end
 
   it "doesn't capture cookies info" do
-    env.merge!(::Rack::RACK_REQUEST_COOKIE_HASH => "cookies!")
+    env.merge!(::Rack::RACK_REQUEST_COOKIE_HASH => { "my" => "cookies!" })
 
-    expect(subject.cookies).to eq(nil)
+    expect(subject.cookies).to eq({})
     expect(subject.env["COOKIE"]).to eq(nil)
   end
 
@@ -90,7 +100,7 @@ RSpec.describe Sentry::RequestInterface do
     it "filters out HTTP_COOKIE header" do
       env.merge!("HTTP_COOKIE" => "cookies!")
 
-      expect(subject.headers["Cookie"]).to eq(nil)
+      expect(subject.headers["Cookie"]).to eq("[Filtered]")
     end
 
     it "filters out non-http headers" do
@@ -118,10 +128,10 @@ RSpec.describe Sentry::RequestInterface do
       expect(subject.headers).to include("Http-Custom-Http-Header" => "test")
     end
 
-    it "skips Authorization header" do
+    it "filters Authorization header" do
       env.merge!("HTTP_AUTHORIZATION" => "Basic YWxhZGRpbjpvcGVuc2VzYW1l")
 
-      expect(subject.headers["Authorization"]).to eq(nil)
+      expect(subject.headers["Authorization"]).to eq("[Filtered]")
     end
 
     it 'does not fail if an object in the env cannot be cast to string' do
@@ -133,7 +143,13 @@ RSpec.describe Sentry::RequestInterface do
 
       env.merge!("HTTP_FOO" => "BAR", "rails_object" => obj)
 
-      expect { described_class.new(env: env, send_default_pii: send_default_pii, rack_env_whitelist: rack_env_whitelist) }.to_not raise_error
+      expect do
+        described_class.new(
+          env: env,
+          data_collection: data_collection,
+          rack_env_whitelist: rack_env_whitelist
+        )
+      end.to_not raise_error
     end
   end
 
@@ -155,31 +171,234 @@ RSpec.describe Sentry::RequestInterface do
     expect(subject.query_string).to eq(nil)
   end
 
+  it "doesn't fail on a malformed query string" do
+    env.merge!("QUERY_STRING" => "a=%")
+
+    expect { subject }.not_to raise_error
+    expect(subject.query_string).to eq(nil)
+  end
+
+  it "doesn't fail on query parameters with conflicting types" do
+    env.merge!("QUERY_STRING" => "a[]=1&a[x]=2")
+
+    expect { subject }.not_to raise_error
+    expect(subject.query_string).to eq(nil)
+  end
+
+  describe "data_collection" do
+    context "when cookies are disabled" do
+      before do
+        data_collection.cookies.mode = :off
+        env.merge!(::Rack::RACK_REQUEST_COOKIE_HASH => { "session" => "secret", "name" => "Ada" })
+      end
+
+      it "does not collect cookies" do
+        expect(subject.cookies).to eq({})
+      end
+    end
+
+    context "when cookies use an allow list" do
+      before do
+        data_collection.cookies.mode = :allow_list
+        data_collection.cookies.terms = ["name"]
+        env.merge!(::Rack::RACK_REQUEST_COOKIE_HASH => { "session" => "secret", "name" => "Ada" })
+      end
+
+      it "only collects allowed cookies" do
+        expect(subject.cookies).to eq("session" => "[Filtered]", "name" => "Ada")
+      end
+    end
+
+    context "when cookies use a deny list" do
+      before do
+        data_collection.cookies.mode = :deny_list
+        data_collection.cookies.terms = ["private"]
+        env.merge!(::Rack::RACK_REQUEST_COOKIE_HASH => { "private_data" => "secret", "name" => "Ada" })
+      end
+
+      it "filters matching cookies and collects the others" do
+        expect(subject.cookies).to eq("private_data" => "[Filtered]", "name" => "Ada")
+      end
+    end
+
+    context "when query parameters use an allow list" do
+      before do
+        data_collection.url_query_params.mode = :allow_list
+        data_collection.url_query_params.terms = ["page"]
+        env.merge!("QUERY_STRING" => "token=secret&page=2")
+      end
+
+      it "only collects allowed query parameters" do
+        expect(subject.query_string).to eq("token" => "[Filtered]", "page" => "2")
+      end
+    end
+
+    context "when query parameters use a deny list" do
+      before do
+        data_collection.url_query_params.mode = :deny_list
+        data_collection.url_query_params.terms = ["private"]
+        env.merge!("QUERY_STRING" => "private_data=secret&page=2")
+      end
+
+      it "filters matching query parameters and collects the others" do
+        expect(subject.query_string).to eq("private_data" => "[Filtered]", "page" => "2")
+      end
+    end
+
+    context "when request headers use an allow list" do
+      before do
+        data_collection.http_headers.request.mode = :allow_list
+        data_collection.http_headers.request.terms = ["public"]
+        env.merge!(
+          "HTTP_X_PUBLIC" => "visible",
+          "HTTP_X_PRIVATE" => "private",
+          "HTTP_AUTHORIZATION" => "secret"
+        )
+      end
+
+      it "only collects allowed headers and always filters sensitive values" do
+        expect(subject.headers).to include(
+          "X-Public" => "visible",
+          "X-Private" => "[Filtered]",
+          "Authorization" => "[Filtered]"
+        )
+      end
+    end
+
+    context "when request headers use a deny list" do
+      before do
+        data_collection.http_headers.request.mode = :deny_list
+        data_collection.http_headers.request.terms = ["private"]
+        env.merge!(
+          "HTTP_X_PUBLIC" => "visible",
+          "HTTP_X_PRIVATE" => "private",
+          "HTTP_AUTHORIZATION" => "secret"
+        )
+      end
+
+      it "filters matching headers, collects the others, and always filters sensitive values" do
+        expect(subject.headers).to include(
+          "X-Public" => "visible",
+          "X-Private" => "[Filtered]",
+          "Authorization" => "[Filtered]"
+        )
+      end
+    end
+
+    context "when incoming request bodies are configured" do
+      before do
+        data_collection.http_bodies = [:incoming_request]
+        env.merge!(
+          "REQUEST_METHOD" => "POST",
+          ::Rack::RACK_INPUT => StringIO.new("name=Ada")
+        )
+      end
+
+      it "collects the request body" do
+        expect(subject.data).to eq("name" => "Ada")
+      end
+
+      it "collects and filters a JSON request body" do
+        env.merge!(
+          "CONTENT_TYPE" => "application/json",
+          ::Rack::RACK_INPUT => StringIO.new('{"password":"secret","name":"Ada"}')
+        )
+
+        expect(subject.data).to eq("password" => "[Filtered]", "name" => "Ada")
+      end
+    end
+
+    context "when incoming request bodies are not configured" do
+      before do
+        data_collection.http_bodies = [:outgoing_request]
+        env.merge!(
+          "REQUEST_METHOD" => "POST",
+          ::Rack::RACK_INPUT => StringIO.new("name=Ada")
+        )
+      end
+
+      it "does not collect the request body" do
+        expect(subject.data).to be_nil
+      end
+    end
+
+    context "when request data collection is disabled" do
+      let(:rack_env_whitelist) { [] }
+
+      before do
+        data_collection.cookies.mode = :off
+        data_collection.http_headers.request.mode = :off
+        data_collection.http_bodies = []
+        data_collection.url_query_params.mode = :off
+        env.merge!(
+          "QUERY_STRING" => "page=2",
+          "HTTP_X_PUBLIC" => "visible",
+          ::Rack::RACK_REQUEST_COOKIE_HASH => { "name" => "Ada" },
+          ::Rack::RACK_INPUT => StringIO.new("name=Ada")
+        )
+      end
+
+      it "does not collect cookies, query parameters, headers, env, or body" do
+        expect(subject.cookies).to eq({})
+        expect(subject.query_string).to be_nil
+        expect(subject.headers).to eq({})
+        expect(subject.env).to eq({})
+        expect(subject.data).to be_nil
+      end
+    end
+  end
+
   context "with config.send_default_pii = true" do
     let(:send_default_pii) { true }
 
     it "stores cookies" do
-      env.merge!(::Rack::RACK_REQUEST_COOKIE_HASH => "cookies!")
+      env.merge!(::Rack::RACK_REQUEST_COOKIE_HASH => { "my" => "cookies!" })
 
-      expect(subject.cookies).to eq("cookies!")
+      expect(subject.cookies).to eq({ "my" => "cookies!" })
     end
 
-    it "stores form data" do
-      env.merge!("REQUEST_METHOD" => "POST", ::Rack::RACK_INPUT => StringIO.new("data=catch me"))
+    it "stores and filters form data" do
+      env.merge!(
+        "REQUEST_METHOD" => "POST",
+        ::Rack::RACK_INPUT => StringIO.new("password=secret&name=Ada")
+      )
 
-      expect(subject.data).to eq({ "data" => "catch me" })
+      expect(subject.data).to eq("password" => "[Filtered]", "name" => "Ada")
     end
 
-    it "stores query string" do
-      env.merge!("QUERY_STRING" => "token=xxxx")
+    it "stores and filters query string values" do
+      env.merge!("QUERY_STRING" => "token=xxxx&page=2")
 
-      expect(subject.query_string).to eq("token=xxxx")
+      expect(subject.query_string).to eq("token" => "[Filtered]", "page" => "2")
     end
 
-    it "stores request body" do
-      env.merge!(::Rack::RACK_INPUT => StringIO.new("catch me"))
+    it "stores text request bodies" do
+      env.merge!("CONTENT_TYPE" => "application/text", ::Rack::RACK_INPUT => StringIO.new("catch me"))
 
       expect(subject.data).to eq("catch me")
+    end
+
+    it "filters invalid JSON request bodies" do
+      env.merge!("CONTENT_TYPE" => "application/json", ::Rack::RACK_INPUT => StringIO.new("invalid"))
+
+      expect(subject.data).to include("unexpected")
+    end
+
+    it "filters sensitive values in JSON request bodies" do
+      env.merge!(
+        "CONTENT_TYPE" => "application/json",
+        ::Rack::RACK_INPUT => StringIO.new('{"password":"secret","name":"Ada"}')
+      )
+
+      expect(subject.data).to eq("password" => "[Filtered]", "name" => "Ada")
+    end
+
+    ["null", "true", "42", '"text"', '["value"]'].each do |body|
+      it "stores non-object JSON request body: #{body}" do
+        env.merge!("CONTENT_TYPE" => "application/json", ::Rack::RACK_INPUT => StringIO.new(body))
+
+        expect(subject.data).to eq(JSON.parse(body))
+      end
     end
 
     it "does not try to read non rewindable body" do
@@ -188,19 +407,19 @@ RSpec.describe Sentry::RequestInterface do
       expect(subject.data).to eq("Skipped non-rewindable request body")
     end
 
-    it "reads rewindable body" do
+    it "stores rewindable text bodies" do
       dbl = double
       allow(dbl).to receive(:rewind)
       allow(dbl).to receive(:read).and_return("stuff")
-      env.merge!(::Rack::RACK_INPUT => dbl)
+      env.merge!("CONTENT_TYPE" => "application/text", ::Rack::RACK_INPUT => dbl)
 
       expect(subject.data).to eq("stuff")
     end
 
-    it "stores Authorization header" do
+    it "Authorization header is sensitive and still filtered" do
       env.merge!("HTTP_AUTHORIZATION" => "Basic YWxhZGRpbjpvcGVuc2VzYW1l")
 
-      expect(subject.headers["Authorization"]).to eq("Basic YWxhZGRpbjpvcGVuc2VzYW1l")
+      expect(subject.headers["Authorization"]).to eq("[Filtered]")
     end
 
     it "force encodes request body to avoid encoding issue" do

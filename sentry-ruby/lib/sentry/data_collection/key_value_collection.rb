@@ -7,7 +7,6 @@ module Sentry
       FILTERED_VALUE = "[Filtered]"
 
       # Keys from this list are ALWAYS filtered, regardless of :mode
-      # TODO-neel-data cookies have separate list, see JS
       SENSITIVE_DENY_LIST = %w[
         auth
         token
@@ -28,6 +27,30 @@ module Sentry
         identity
         cookie
         set-cookie
+      ].freeze
+
+      # Additional terms applied to cookie names only. These cover common
+      # opaque session, identity-provider, and load-balancer cookies without
+      # making the general header denylist overly broad.
+      SENSITIVE_COOKIE_NAME_DENY_LIST = %w[
+        .sid
+        sessid
+        remember
+        oidc
+        pkce
+        nonce
+        __secure-
+        __host-
+        awsalb
+        awselb
+        akamai
+        __stripe
+        cognito
+        firebase
+        supabase
+        sb-
+        mfa
+        2fa
       ].freeze
 
       # `mode` controls whether values are collected:
@@ -56,19 +79,19 @@ module Sentry
       #
       # @param values [Hash] key-value data to filter
       # @return [Hash] a new filtered hash, or an empty hash when collection is off
-      def filter(values)
+      def filter(values, cookie: false)
         return {} if mode == :off
 
         values.each_with_object({}) do |(key, value), filtered|
-          filtered[key] = safe_value?(key) ? value : FILTERED_VALUE
+          filtered[key] = safe_value?(key, cookie: cookie) ? value : FILTERED_VALUE
         end
       end
 
       private
 
-      def safe_value?(key)
+      def safe_value?(key, cookie: false)
         key_downcase = key.to_s.downcase
-        return false if sensitive?(key_downcase)
+        return false if sensitive?(key_downcase, cookie: cookie)
 
         case mode
         when :deny_list
@@ -80,8 +103,9 @@ module Sentry
         end
       end
 
-      def sensitive?(key)
-        SENSITIVE_DENY_LIST.any? { |term| key.include?(term) }
+      def sensitive?(key, cookie: false)
+        SENSITIVE_DENY_LIST.any? { |term| key.include?(term) } ||
+          (cookie && SENSITIVE_COOKIE_NAME_DENY_LIST.any? { |term| key.include?(term) })
       end
 
       def matches_any_term?(key)
