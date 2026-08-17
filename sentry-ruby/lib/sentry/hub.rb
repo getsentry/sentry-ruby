@@ -171,6 +171,7 @@ module Sentry
 
       options[:hint] ||= {}
       options[:hint][:exception] = exception
+      Sentry.wololo&.record(exception)
 
       event = current_client.event_from_exception(exception, options[:hint])
 

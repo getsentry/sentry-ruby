@@ -25,6 +25,7 @@ require "sentry/background_worker"
 require "sentry/threaded_periodic_worker"
 require "sentry/session_flusher"
 require "sentry/backpressure_monitor"
+require "sentry/wololo"
 require "sentry/cron/monitor_check_ins"
 require "sentry/vernier/profiler"
 require "sentry/metrics"
@@ -59,6 +60,7 @@ module Sentry
     logger
     session_flusher
     backpressure_monitor
+    wololo
     exception_locals_tp
   ].freeze
 
@@ -91,6 +93,10 @@ module Sentry
     # @!attribute [r] backpressure_monitor
     #   @return [BackpressureMonitor, nil]
     attr_reader :backpressure_monitor
+
+    # @!attribute [r] wololo
+    #   @return [Wololo, nil]
+    attr_reader :wololo
 
     ##### Patch Registration #####
 
@@ -277,6 +283,7 @@ module Sentry
       @background_worker = Sentry::BackgroundWorker.new(config)
       @session_flusher = config.session_tracking? ? Sentry::SessionFlusher.new(config, client) : nil
       @backpressure_monitor = config.enable_backpressure_handling ? Sentry::BackpressureMonitor.new(config, client) : nil
+      @wololo = config.wololo ? Sentry::Wololo.new(config) : nil
       exception_locals_tp.enable if config.include_local_variables
       at_exit { close }
     end
@@ -295,6 +302,11 @@ module Sentry
       if @backpressure_monitor
         @backpressure_monitor.kill
         @backpressure_monitor = nil
+      end
+
+      if @wololo
+        @wololo.kill
+        @wololo = nil
       end
 
       if client = get_current_client

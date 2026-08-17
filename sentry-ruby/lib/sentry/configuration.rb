@@ -50,6 +50,15 @@ module Sentry
     # @return [Integer]
     attr_accessor :background_worker_max_queue
 
+    # Enables the experimental Wololo exception repair worker. Wololo is
+    # disabled by default and requires the optional `ruby_llm` gem.
+    # @return [Boolean]
+    attr_accessor :wololo
+
+    # The OpenRouter API key used by Wololo and ruby_llm.
+    # @return [String, nil]
+    attr_accessor :wololo_openrouter_api_key
+
     # a proc/lambda that takes an array of stack traces
     # it'll be used to silence (reduce) backtrace of the exception
     #
@@ -452,7 +461,7 @@ module Sentry
 
     LOG_PREFIX = "** [Sentry] "
     MODULE_SEPARATOR = "::"
-    SKIP_INSPECTION_ATTRIBUTES = [:@linecache, :@stacktrace_builder]
+    SKIP_INSPECTION_ATTRIBUTES = [:@linecache, :@stacktrace_builder, :@wololo_openrouter_api_key]
 
     INSTRUMENTERS = [:sentry, :otel]
 
@@ -541,6 +550,8 @@ module Sentry
       self.debug = Sentry::Utils::EnvHelper.env_to_bool(ENV["SENTRY_DEBUG"])
       self.background_worker_threads = (processor_count / 2.0).ceil
       self.background_worker_max_queue = BackgroundWorker::DEFAULT_MAX_QUEUE
+      self.wololo = false
+      self.wololo_openrouter_api_key = nil
       self.backtrace_cleanup_callback = nil
       self.strip_backtrace_load_path = true
       self.max_breadcrumbs = BreadcrumbBuffer::DEFAULT_SIZE
