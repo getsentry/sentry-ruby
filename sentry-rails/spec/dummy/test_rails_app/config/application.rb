@@ -24,11 +24,11 @@ module Sentry
 
           yield(klass) if block_given?
 
+          ::Rails.application = klass
+
           klass.before_initialize!
           klass.initialize!
           klass.after_initialize!
-
-          ::Rails.application = klass
 
           klass
         end
