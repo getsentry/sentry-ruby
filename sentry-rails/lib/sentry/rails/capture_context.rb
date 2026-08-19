@@ -14,7 +14,7 @@ module Sentry
 
         Sentry.clone_hub_to_current_thread
         Sentry.get_current_scope.generate_propagation_context(env)
-        env[Sentry::PropagationContext::ESTABLISHED_ENV_KEY] = true
+        env[Sentry::PropagationContext::ESTABLISHED_ENV_KEY] = Sentry.get_current_scope.propagation_context
 
         @app.call(env)
       end

@@ -16,8 +16,11 @@ module Sentry
       def call(env)
         return @app.call(env) unless Sentry.initialized?
 
-        # consumed atomically, first, so it can't leak into later reuses of this env
-        established = env.delete(Sentry::PropagationContext::ESTABLISHED_ENV_KEY)
+        # consumed atomically, first, so it can't leak into later reuses of this env.
+        # the env is request-scoped but the hub it certifies is not, so the context only
+        # counts as established while it still belongs to the execution context we are on
+        context = env.delete(Sentry::PropagationContext::ESTABLISHED_ENV_KEY)
+        established = !context.nil? && context.equal?(Sentry.get_current_scope&.propagation_context)
 
         # make sure the current thread has a clean hub, unless it was already established
         Sentry.clone_hub_to_current_thread unless established

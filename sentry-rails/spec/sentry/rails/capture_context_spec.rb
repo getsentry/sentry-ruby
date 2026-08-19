@@ -20,6 +20,20 @@ RSpec.describe Sentry::Rails::CaptureContext do
     end
   end
 
+  # The shape used by hard-timeout and bulkhead middleware: the downstream stack
+  # runs on a different thread than the one that entered. Permitting concurrent
+  # loads around the join is what ActionController::Live does for the same reason.
+  class ThreadHandoffMiddleware
+    def initialize(app)
+      @app = app
+    end
+
+    def call(env)
+      thread = Thread.new { @app.call(env) }
+      ActiveSupport::Dependencies.interlock.permit_concurrent_loads { thread.value }
+    end
+  end
+
   describe "#call" do
     before do
       make_basic_app
@@ -36,7 +50,8 @@ RSpec.describe Sentry::Rails::CaptureContext do
       env = Rack::MockRequest.env_for("/test")
       described_class.new(app).call(env)
 
-      expect(env[Sentry::PropagationContext::ESTABLISHED_ENV_KEY]).to eq(true)
+      expect(env[Sentry::PropagationContext::ESTABLISHED_ENV_KEY])
+        .to be(Sentry.get_current_scope.propagation_context)
       expect(trace_id_in_app).to be_a(String)
     end
 
@@ -54,6 +69,29 @@ RSpec.describe Sentry::Rails::CaptureContext do
 
       expect(called).to eq(true)
       expect(env[Sentry::PropagationContext::ESTABLISHED_ENV_KEY]).to be_nil
+    end
+  end
+
+  context "when a middleware hands the request to another thread", type: :request do
+    let(:transport) { Sentry.get_current_client.transport }
+
+    let(:incoming_transaction) do
+      Sentry::Transaction.new(op: "pageload", status: "ok", sampled: true, name: "a/path")
+    end
+
+    before do
+      make_basic_app do |config, app|
+        config.traces_sample_rate = 1.0
+        app.config.middleware.insert_before(Sentry::Rails::CaptureExceptions, ThreadHandoffMiddleware)
+      end
+    end
+
+    it "continues the incoming trace" do
+      get "/world", headers: { "sentry-trace" => incoming_transaction.to_sentry_trace }
+
+      trace = transport.events.last.contexts[:trace]
+      expect(trace[:trace_id]).to eq(incoming_transaction.trace_id)
+      expect(trace[:parent_span_id]).to eq(incoming_transaction.span_id)
     end
   end
 
