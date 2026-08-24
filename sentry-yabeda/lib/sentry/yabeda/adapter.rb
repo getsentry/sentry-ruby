@@ -57,7 +57,7 @@ module Sentry
       private
 
       def enabled?
-        Sentry.initialized? && Sentry.configuration.enable_metrics
+        Sentry.initialized?
       end
 
       def attributes_for(tags)

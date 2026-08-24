@@ -196,44 +196,6 @@ RSpec.describe Sentry::Yabeda::Adapter do
       counter = build_metric(:counter, name: :requests, group: :rails)
       adapter.perform_counter_increment!(counter, {}, 1)
     end
-
-    it "does not emit metrics when metrics are disabled" do
-      perform_basic_setup do |config|
-        config.enable_metrics = false
-      end
-
-      expect(Sentry.metrics).not_to receive(:count)
-
-      counter = build_metric(:counter, name: :requests, group: :rails)
-      adapter.perform_counter_increment!(counter, {}, 1)
-    end
-
-    it "does not emit gauge when metrics are disabled" do
-      perform_basic_setup { |c| c.enable_metrics = false }
-
-      expect(Sentry.metrics).not_to receive(:gauge)
-
-      gauge = build_metric(:gauge, name: :queue_depth)
-      adapter.perform_gauge_set!(gauge, {}, 1)
-    end
-
-    it "does not emit histogram when metrics are disabled" do
-      perform_basic_setup { |c| c.enable_metrics = false }
-
-      expect(Sentry.metrics).not_to receive(:distribution)
-
-      histogram = build_metric(:histogram, name: :duration)
-      adapter.perform_histogram_measure!(histogram, {}, 1.0)
-    end
-
-    it "does not emit summary when metrics are disabled" do
-      perform_basic_setup { |c| c.enable_metrics = false }
-
-      expect(Sentry.metrics).not_to receive(:distribution)
-
-      summary = build_metric(:summary, name: :response_size)
-      adapter.perform_summary_observe!(summary, {}, 100)
-    end
   end
 
   describe "tag passthrough" do

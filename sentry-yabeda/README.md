@@ -29,12 +29,11 @@ gem "sentry-ruby"
 gem "sentry-yabeda"
 ```
 
-Then initialize Sentry with metrics enabled:
+Then initialize Sentry:
 
 ```ruby
 Sentry.init do |config|
   config.dsn = ENV["SENTRY_DSN"]
-  config.enable_metrics = true
 end
 ```
 

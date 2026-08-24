@@ -56,7 +56,6 @@ def perform_basic_setup
     config.sdk_logger = ::Logger.new(nil)
     config.background_worker_threads = 0
     config.transport.transport_class = Sentry::DummyTransport
-    config.enable_metrics = true
 
     yield config if block_given?
   end

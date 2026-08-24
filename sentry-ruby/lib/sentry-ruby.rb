@@ -655,12 +655,6 @@ module Sentry
 
     # Returns the metrics API for capturing custom metrics.
     #
-    # @example Enable metrics
-    #   Sentry.init do |config|
-    #     config.dsn = "YOUR_DSN"
-    #     config.enable_metrics = true
-    #   end
-    #
     # @example Usage
     #   Sentry.metrics.count("button.click", 1, attributes: { button_id: "submit" })
     #   Sentry.metrics.distribution("response.time", 120.5, unit: "millisecond")
