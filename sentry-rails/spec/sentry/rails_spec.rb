@@ -366,12 +366,12 @@ RSpec.describe Sentry::Rails, type: :request do
     end
 
     context "when config.register_error_subscriber = true" do
-      let(:send_default_pii) { false }
+      let(:user_info) { false }
 
       before do
         make_basic_app do |config|
           config.rails.register_error_subscriber = true
-          config.send_default_pii = send_default_pii
+          config.data_collection.user_info = user_info
         end
       end
 
@@ -420,8 +420,8 @@ RSpec.describe Sentry::Rails, type: :request do
         expect(transport.events.first.contexts).not_to have_key("rails.error")
       end
 
-      context "when send_default_pii is enabled" do
-        let(:send_default_pii) { true }
+      context "when user data collection is enabled" do
+        let(:user_info) { true }
 
         it "includes Rails.error.set_context data attached before an unhandled request exception" do
           get "/exception_with_error_context"

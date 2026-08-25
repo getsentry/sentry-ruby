@@ -9,8 +9,6 @@ module Sentry
 
       if SUPPORTS_EXECUTION_CONTEXT
         def execution_context
-          return {} unless Sentry.configuration.send_default_pii
-
           context = ::ActiveSupport::ExecutionContext.to_h
           return {} if context.empty?
 

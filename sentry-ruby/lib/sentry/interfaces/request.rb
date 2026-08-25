@@ -37,12 +37,10 @@ module Sentry
 
     # @param env [Hash]
     # @param data_collection [DataCollection]
-    # @param send_default_pii [Boolean] Deprecated compatibility input, unused.
     # @param rack_env_whitelist [Array]
     # @see Configuration#data_collection
-    # @see Configuration#send_default_pii
     # @see Configuration#rack_env_whitelist
-    def initialize(env:, data_collection:, rack_env_whitelist:, send_default_pii: nil)
+    def initialize(env:, data_collection:, rack_env_whitelist:)
       env = env.dup
       request = ::Rack::Request.new(env)
       query = data_collection.url_query_params.filter(request.GET) rescue nil

@@ -34,7 +34,10 @@ module Sentry
         return unless Sentry.initialized?
         return if show_exceptions?(exception, env) && !Sentry.configuration.rails.report_rescued_exceptions
 
-        Sentry::Rails.capture_exception(exception, contexts: execution_context).tap do |event|
+        options = {}
+        options[:contexts] = execution_context if Sentry.configuration.data_collection.user_info
+
+        Sentry::Rails.capture_exception(exception, **options).tap do |event|
           env[ERROR_EVENT_ID_KEY] = event.event_id if event
         end
       end

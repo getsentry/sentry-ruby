@@ -1,6 +1,10 @@
 # frozen_string_literal: true
 
 RSpec.shared_examples "an ActiveJob backend that serializes complex arguments" do
+  before do
+    Sentry.configuration.data_collection.queues = true
+  end
+
   def event_arguments
     last_sentry_event.extra[:arguments]
   end
