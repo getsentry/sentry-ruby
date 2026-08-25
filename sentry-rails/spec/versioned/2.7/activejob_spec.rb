@@ -7,7 +7,9 @@ SimpleCov.command_name "RSpecVersioned_2.7_ActiveJob"
 
 RSpec.describe "ActiveJob integration", type: :job do
   before do
-    make_basic_app
+    make_basic_app do |config|
+      config.data_collection.queues = true
+    end
   end
 
   let(:event) do
