@@ -8,8 +8,7 @@ require "delegate"
 module Sentry
   # DebugStructuredLogger is a logger that captures structured log events to a file for debugging purposes.
   #
-  # It can optionally also send log events to Sentry via the normal structured logger if logging
-  # is enabled.
+  # It also sends log events to Sentry via the normal structured logger.
   class DebugStructuredLogger < SimpleDelegator
     DEFAULT_LOG_FILE_PATH = File.join("log", "sentry_debug_logs.log")
 
@@ -68,12 +67,7 @@ module Sentry
     private
 
     def initialize_backend(configuration)
-      if configuration.enable_logs
-        StructuredLogger.new(configuration)
-      else
-        # Create a no-op logger if logging is disabled
-        NoOpLogger.new
-      end
+      StructuredLogger.new(configuration)
     end
 
     def initialize_log_file(log_file_path)
@@ -82,13 +76,6 @@ module Sentry
       FileUtils.mkdir_p(log_file.dirname) unless log_file.dirname.exist?
 
       log_file
-    end
-
-    # No-op logger for when structured logging is disabled
-    class NoOpLogger
-      %i[trace debug info warn error fatal log].each do |method|
-        define_method(method) { |*args, **kwargs| nil }
-      end
     end
   end
 end

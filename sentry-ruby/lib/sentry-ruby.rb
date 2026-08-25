@@ -527,7 +527,7 @@ module Sentry
     #   Sentry.capture_log("User logged in", level: :info, user_id: 123)
     #
     # @see https://develop.sentry.dev/sdk/telemetry/logs/ Sentry SDK Telemetry Logs Protocol
-    # @return [LogEvent, nil] The created log event or nil if logging is disabled
+    # @return [LogEvent, nil] The created log event or nil if Sentry is not initialized
     def capture_log(message, **options)
       return unless initialized?
       get_current_hub.capture_log_event(message, **options)
@@ -639,14 +639,6 @@ module Sentry
 
     # Returns the structured logger instance that implements Sentry's SDK telemetry logs protocol.
     #
-    # This logger is only available when logs are enabled in the configuration.
-    #
-    # @example Enable logs in configuration
-    #   Sentry.init do |config|
-    #     config.dsn = "YOUR_DSN"
-    #     config.enable_logs = true
-    #   end
-    #
     # @example Basic usage
     #   Sentry.logger.info("User logged in successfully", user_id: 123)
     #   Sentry.logger.error("Failed to process payment",
@@ -656,7 +648,7 @@ module Sentry
     #
     # @see https://develop.sentry.dev/sdk/telemetry/logs/ Sentry SDK Telemetry Logs Protocol
     #
-    # @return [StructuredLogger] The structured logger instance or nil if logs are disabled
+    # @return [StructuredLogger] The structured logger instance
     def logger
       @logger ||= configuration.structured_logging.logger_class.new(configuration)
     end

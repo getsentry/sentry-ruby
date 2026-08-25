@@ -8,9 +8,7 @@ RSpec.describe Sentry::Rails::LogSubscribers::ActionMailerSubscriber do
 
     before do
       make_basic_app do |config|
-        config.enable_logs = true
         config.send_default_pii = send_default_pii
-
         config.rails.structured_logging.enabled = true
         config.rails.structured_logging.subscribers = { action_mailer: Sentry::Rails::LogSubscribers::ActionMailerSubscriber }
       end
@@ -227,9 +225,7 @@ RSpec.describe Sentry::Rails::LogSubscribers::ActionMailerSubscriber do
   context "when logging is disabled" do
     before do
       make_basic_app do |config|
-        config.enable_logs = false
-
-        config.rails.structured_logging.enabled = true
+        config.rails.structured_logging.enabled = false
         config.rails.structured_logging.subscribers = { action_mailer: Sentry::Rails::LogSubscribers::ActionMailerSubscriber }
       end
     end

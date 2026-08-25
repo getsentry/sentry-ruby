@@ -42,7 +42,6 @@ RSpec.describe Sentry::Rails::LogSubscriber, type: :request do
 
     before do
       make_basic_app do |config|
-        config.enable_logs = true
         config.structured_logging.logger_class = Sentry::DebugStructuredLogger
         # Disable default structured logging subscribers to avoid interference
         config.rails.structured_logging.enabled = false
@@ -240,7 +239,6 @@ RSpec.describe Sentry::Rails::LogSubscriber, type: :request do
 
     before do
       make_basic_app do |config, app|
-        config.enable_logs = true
         config.structured_logging.logger_class = Sentry::DebugStructuredLogger
         config.data_collection.url_query_params.mode = :deny_list
       end

@@ -15,7 +15,6 @@ module Sentry
       # @example Usage
       #   # Automatically attached when structured logging is enabled for :active_record
       #   Sentry.init do |config|
-      #     config.enable_logs = true
       #     config.rails.structured_logging = true
       #     config.rails.structured_logging.subscribers = { active_record: Sentry::Rails::LogSubscribers::ActiveRecordSubscriber }
       #   end

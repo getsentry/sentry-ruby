@@ -6,7 +6,6 @@ RSpec.describe "Sentry::Breadcrumbs::SentryLogger" do
   before do
     perform_basic_setup do |config|
       config.breadcrumbs_logger = [:sentry_logger]
-      config.enable_logs = true
       config.max_log_events = 1
       config.enabled_patches = [:logger]
     end

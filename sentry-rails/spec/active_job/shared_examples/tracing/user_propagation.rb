@@ -63,7 +63,6 @@ RSpec.shared_examples "an ActiveJob backend that propagates Sentry user context 
       proc do |config|
         config.traces_sample_rate = 1.0
         config.send_default_pii = true
-        config.enable_logs = true
       end
     end
 

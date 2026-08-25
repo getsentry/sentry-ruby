@@ -48,9 +48,7 @@ module Sentry
 
       @spotlight_transport = SpotlightTransport.new(configuration) if configuration.spotlight
 
-      if configuration.enable_logs
-        @log_event_buffer = LogEventBuffer.new(configuration, self)
-      end
+      @log_event_buffer = LogEventBuffer.new(configuration, self)
 
       if configuration.enable_metrics
         @metric_event_buffer = MetricEventBuffer.new(configuration, self)

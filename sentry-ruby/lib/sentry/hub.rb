@@ -224,7 +224,7 @@ module Sentry
     end
 
     def capture_log_event(message, **options)
-      return unless current_client && current_client.configuration.enable_logs
+      return unless current_client
 
       event = current_client.event_from_log(message, **options)
 

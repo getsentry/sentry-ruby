@@ -99,26 +99,15 @@ RSpec.describe Sentry::Rails::Configuration do
       expect(config.structured_logging.subscribers).to be_a(Hash)
     end
 
-    it "auto-enables when enable_logs is true and not explicitly set" do
-      make_basic_app do |config|
-        config.enable_logs = true
-      end
+    it "enables structured logging by default" do
+      make_basic_app
 
       expect(config.structured_logging.enabled?).to be(true)
     end
 
-    it "remains disabled when enable_logs is false" do
-      make_basic_app do |config|
-        config.enable_logs = false
-      end
-
-      expect(config.structured_logging.enabled?).to be(false)
-    end
-
-    it "respects explicit disable even when enable_logs is true" do
+    it "respects explicit disable" do
       make_basic_app do |config|
         config.rails.structured_logging.enabled = false
-        config.enable_logs = true
       end
 
       expect(config.structured_logging.enabled?).to be(false)

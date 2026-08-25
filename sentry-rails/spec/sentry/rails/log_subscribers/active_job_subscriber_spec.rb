@@ -8,9 +8,7 @@ RSpec.describe Sentry::Rails::LogSubscribers::ActiveJobSubscriber, skip: Rails.v
 
     before do
       make_basic_app do |config|
-        config.enable_logs = true
         config.send_default_pii = send_default_pii
-
         config.rails.structured_logging.enabled = true
         config.rails.structured_logging.subscribers = { active_job: Sentry::Rails::LogSubscribers::ActiveJobSubscriber }
       end
@@ -344,9 +342,7 @@ RSpec.describe Sentry::Rails::LogSubscribers::ActiveJobSubscriber, skip: Rails.v
   context "when logging is disabled" do
     before do
       make_basic_app do |config|
-        config.enable_logs = false
-
-        config.rails.structured_logging.enabled = true
+        config.rails.structured_logging.enabled = false
         config.rails.structured_logging.subscribers = { active_job: Sentry::Rails::LogSubscribers::ActiveJobSubscriber }
       end
     end

@@ -3,7 +3,6 @@
 RSpec.shared_examples "an ActiveJob backend that produces structured logs" do
   let(:configure_sentry) do
     proc do |config, _app|
-      config.enable_logs = true
       config.rails.structured_logging.enabled = true
       config.rails.structured_logging.subscribers = {
         active_job: Sentry::Rails::LogSubscribers::ActiveJobSubscriber

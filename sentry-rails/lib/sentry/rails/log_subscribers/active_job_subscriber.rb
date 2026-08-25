@@ -14,7 +14,6 @@ module Sentry
       # @example Usage
       #   # Enable structured logging for ActiveJob
       #   Sentry.init do |config|
-      #     config.enable_logs = true
       #     config.rails.structured_logging = true
       #     config.rails.structured_logging.subscribers = { active_job: Sentry::Rails::LogSubscribers::ActiveJobSubscriber }
       #   end

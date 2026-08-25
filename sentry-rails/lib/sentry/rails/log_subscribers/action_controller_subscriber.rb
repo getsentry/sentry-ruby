@@ -15,7 +15,6 @@ module Sentry
       # @example Usage
       #   # Enable structured logging for ActionController
       #   Sentry.init do |config|
-      #     config.enable_logs = true
       #     config.rails.structured_logging = true
       #     config.rails.structured_logging.subscribers = { action_controller: Sentry::Rails::LogSubscribers::ActionControllerSubscriber }
       #   end

@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-RSpec.shared_examples "telemetry event buffer" do |event_factory:, max_items_config:, enable_config:|
+RSpec.shared_examples "telemetry event buffer" do |event_factory:, max_items_config:|
   let(:string_io) { StringIO.new }
   let(:sdk_logger) { ::Logger.new(string_io) }
   let(:client) { Sentry.get_current_client }
@@ -11,7 +11,6 @@ RSpec.shared_examples "telemetry event buffer" do |event_factory:, max_items_con
       config.sdk_logger = sdk_logger
       config.background_worker_threads = 0
       config.public_send(:"#{max_items_config}=", max_items)
-      config.public_send(:"#{enable_config}=", true)
     end
 
     Sentry.background_worker = Sentry::BackgroundWorker.new(Sentry.configuration)

@@ -8,9 +8,7 @@ RSpec.describe Sentry::Rails::LogSubscribers::ActionControllerSubscriber, type: 
 
     before do
       make_basic_app do |config, app|
-        config.enable_logs = true
         config.send_default_pii = send_default_pii
-
         config.rails.structured_logging.enabled = true
         config.rails.structured_logging.subscribers = { action_controller: Sentry::Rails::LogSubscribers::ActionControllerSubscriber }
       end
@@ -377,9 +375,7 @@ RSpec.describe Sentry::Rails::LogSubscribers::ActionControllerSubscriber, type: 
   context "when logging is disabled" do
     before do
       make_basic_app do |config|
-        config.enable_logs = false
-
-        config.rails.structured_logging.enabled = true
+        config.rails.structured_logging.enabled = false
         config.rails.structured_logging.subscribers = { action_controller: Sentry::Rails::LogSubscribers::ActionControllerSubscriber }
       end
     end
