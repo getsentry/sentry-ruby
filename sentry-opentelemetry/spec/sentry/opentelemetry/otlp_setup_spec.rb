@@ -12,10 +12,28 @@ RSpec.describe Sentry::OpenTelemetry::OTLPSetup do
   end
 
   describe '.setup' do
+    context 'with setup_propagator disabled by default' do
+      before do
+        perform_basic_setup do |config|
+          config.otlp.enabled = true
+          config.otlp.setup_otlp_traces_exporter = false
+        end
+      end
+
+      it 'does not replace the configured propagator' do
+        propagator = ::OpenTelemetry.propagation
+
+        described_class.setup(Sentry.configuration)
+
+        expect(::OpenTelemetry.propagation).to equal(propagator)
+      end
+    end
+
     context 'with setup_propagator enabled' do
       before do
         perform_basic_setup do |config|
           config.otlp.enabled = true
+          config.otlp.setup_otlp_traces_exporter = false
           config.otlp.setup_propagator = true
         end
       end

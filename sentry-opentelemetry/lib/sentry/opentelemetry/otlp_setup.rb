@@ -1,6 +1,5 @@
 # frozen_string_literal: true
 
-#
 require "sentry/opentelemetry/otlp_propagator"
 
 module Sentry

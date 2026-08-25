@@ -26,9 +26,9 @@ module Sentry
 
       def initialize
         @enabled = false
-        @setup_otlp_traces_exporter = true
+        @setup_otlp_traces_exporter = false
         @collector_url = nil
-        @setup_propagator = true
+        @setup_propagator = false
       end
     end
   end
