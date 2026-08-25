@@ -3,10 +3,8 @@
 module Sentry
   class Configuration
     after(:configured) do
-      if enable_metrics
-        Sentry::Yabeda.collector&.kill
-        Sentry::Yabeda.collector = Sentry::Yabeda::Collector.new(self)
-      end
+      Sentry::Yabeda.collector&.kill
+      Sentry::Yabeda.collector = Sentry::Yabeda::Collector.new(self)
     end
 
     after(:closed) do

@@ -50,9 +50,7 @@ module Sentry
 
       @log_event_buffer = LogEventBuffer.new(configuration, self)
 
-      if configuration.enable_metrics
-        @metric_event_buffer = MetricEventBuffer.new(configuration, self)
-      end
+      @metric_event_buffer = MetricEventBuffer.new(configuration, self)
     end
 
     # Applies the given scope's data to the event and sends it to Sentry.

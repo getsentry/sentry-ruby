@@ -41,21 +41,8 @@ RSpec.describe Sentry::Yabeda::Collector do
   end
 
   describe "auto-start" do
-    it "starts automatically when Sentry is initialized with enable_metrics" do
+    it "starts automatically when Sentry is initialized" do
       expect(Sentry::Yabeda.collector).to be_a(described_class)
-    end
-
-    it "does not start when enable_metrics is false" do
-      Sentry.close
-
-      Sentry.init do |config|
-        config.dsn = DUMMY_DSN
-        config.sdk_logger = ::Logger.new(nil)
-        config.transport.transport_class = Sentry::DummyTransport
-        config.enable_metrics = false
-      end
-
-      expect(Sentry::Yabeda.collector).to be_nil
     end
 
     it "replaces an existing collector on re-initialization via close" do

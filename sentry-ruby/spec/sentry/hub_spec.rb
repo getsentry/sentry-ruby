@@ -684,28 +684,11 @@ RSpec.describe Sentry::Hub do
   end
 
   describe "#capture_metric" do
-    context "when metrics are disabled" do
-      before do
-        configuration.enable_metrics = false
-      end
-
-      it "doesn't buffer the metric" do
-        expect(subject.current_client).not_to receive(:buffer_metric_event)
+    it "creates and buffers a MetricEvent" do
+      expect(subject.current_client).to receive(:buffer_metric_event).and_call_original
+      expect do
         subject.capture_metric(name: "test", type: :counter, value: 1)
-      end
-    end
-
-    context "when metrics are enabled" do
-      before do
-        configuration.enable_metrics = true
-      end
-
-      it "creates and buffers a MetricEvent" do
-        expect(subject.current_client).to receive(:buffer_metric_event).and_call_original
-        expect do
-          subject.capture_metric(name: "test", type: :counter, value: 1)
-        end.to change { subject.current_client.metric_event_buffer.size }.by(1)
-      end
+      end.to change { subject.current_client.metric_event_buffer.size }.by(1)
     end
   end
 

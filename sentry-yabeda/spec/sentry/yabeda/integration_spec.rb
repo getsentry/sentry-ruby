@@ -123,20 +123,6 @@ RSpec.describe "Yabeda-Sentry integration" do
     metric = sentry_metrics.first
     expect(metric[:trace_id]).to eq(transaction.trace_id)
   end
-
-  context "when metrics are disabled" do
-    before do
-      Sentry.configuration.enable_metrics = false
-    end
-
-    it "does not send metrics to Sentry" do
-      ::Yabeda.myapp.orders_created.increment({ region: "us-east" })
-
-      Sentry.get_current_client.flush
-
-      expect(sentry_metrics).to be_empty
-    end
-  end
 end
 
 RSpec.describe "Yabeda-Sentry integration when Sentry is not initialized" do
