@@ -6,9 +6,9 @@ RSpec.describe Sentry::OTLP::Configuration do
   describe "#initialize" do
     it "sets default values" do
       expect(subject.enabled).to eq(false)
-      expect(subject.setup_otlp_traces_exporter).to eq(true)
+      expect(subject.setup_otlp_traces_exporter).to eq(false)
       expect(subject.collector_url).to be_nil
-      expect(subject.setup_propagator).to eq(true)
+      expect(subject.setup_propagator).to eq(false)
     end
   end
 
@@ -29,8 +29,8 @@ RSpec.describe Sentry::OTLP::Configuration do
     end
 
     it "allows setting setup_propagator" do
-      subject.setup_propagator = false
-      expect(subject.setup_propagator).to eq(false)
+      subject.setup_propagator = true
+      expect(subject.setup_propagator).to eq(true)
     end
   end
 end
