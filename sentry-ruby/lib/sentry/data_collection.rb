@@ -42,14 +42,22 @@ module Sentry
 
     class HttpHeaders
       # @return [KeyValueCollection]
-      attr_accessor :request
+      attr_reader :request
 
       # @return [KeyValueCollection]
-      attr_accessor :response
+      attr_reader :response
 
       def initialize(request:, response:)
-        @request = request
-        @response = response
+        self.request = request
+        self.response = response
+      end
+
+      def request=(value)
+        @request = KeyValueCollection.from(value)
+      end
+
+      def response=(value)
+        @response = KeyValueCollection.from(value)
       end
     end
 
@@ -70,9 +78,10 @@ module Sentry
     # @default `true`
     attr_accessor :user_info
 
-    # @return [KeyValueCollection]
+    # @return [Boolean, KeyValueCollection]
+    # A boolean is shorthand for `mode: :deny_list` (`true`) or `mode: :off` (`false`).
     # @default `mode: :deny_list, terms: nil`
-    attr_accessor :cookies
+    attr_reader :cookies
 
     # @return [HttpHeaders]
     # @default request and response use `mode: :deny_list, terms: nil`
@@ -82,9 +91,10 @@ module Sentry
     # @default `nil` (all valid body types)
     attr_accessor :http_bodies
 
-    # @return [KeyValueCollection]
+    # @return [Boolean, KeyValueCollection]
+    # A boolean is shorthand for `mode: :deny_list` (`true`) or `mode: :off` (`false`).
     # @default `mode: :deny_list, terms: nil`
-    attr_accessor :url_query_params
+    attr_reader :url_query_params
 
     # @return [Boolean]
     # @default `true`
@@ -142,18 +152,26 @@ module Sentry
 
     def initialize
       @user_info = true
-      @cookies = KeyValueCollection.new(mode: :deny_list, terms: nil)
+      self.cookies = KeyValueCollection.new(mode: :deny_list, terms: nil)
       @http_headers = HttpHeaders.new(
         request: KeyValueCollection.new(mode: :deny_list, terms: nil),
         response: KeyValueCollection.new(mode: :deny_list, terms: nil)
       )
       @http_bodies = BODY_TYPES.dup
-      @url_query_params = KeyValueCollection.new(mode: :deny_list, terms: nil)
+      self.url_query_params = KeyValueCollection.new(mode: :deny_list, terms: nil)
       @database_query_data = true
       @graphql = GraphQL.new(document: true, variables: true)
       @queues = true
       @stack_frame_variables = false
       @frame_context_lines = 3
+    end
+
+    def cookies=(value)
+      @cookies = KeyValueCollection.from(value)
+    end
+
+    def url_query_params=(value)
+      @url_query_params = KeyValueCollection.from(value)
     end
 
     # Returns whether incoming HTTP request bodies should be collected.

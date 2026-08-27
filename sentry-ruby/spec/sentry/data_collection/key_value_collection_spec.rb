@@ -16,6 +16,34 @@ RSpec.describe Sentry::DataCollection::KeyValueCollection do
   let(:mode) { :deny_list }
   let(:terms) { nil }
 
+  describe ".from" do
+    it "maps true to deny-list mode" do
+      expect(described_class.from(true).mode).to eq(:deny_list)
+    end
+
+    it "maps false to off mode" do
+      expect(described_class.from(false).mode).to eq(:off)
+    end
+
+    it "returns an existing collection unchanged" do
+      expect(described_class.from(collection)).to be(collection)
+    end
+  end
+
+  describe "#mode=" do
+    it "maps true to deny-list mode" do
+      collection.mode = true
+
+      expect(collection.mode).to eq(:deny_list)
+    end
+
+    it "maps false to off mode" do
+      collection.mode = false
+
+      expect(collection.mode).to eq(:off)
+    end
+  end
+
   describe "#filter" do
     it "uses the collection configuration" do
       expect(collection.filter(values)).to eq(

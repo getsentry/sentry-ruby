@@ -111,6 +111,18 @@ RSpec.describe Sentry::DataCollection do
       expect(data_collection.cookies.terms).to eq(["page"])
     end
 
+    it "supports using booleans as a shorthand for key-value collections" do
+      data_collection.cookies = true
+      data_collection.http_headers.request = false
+      data_collection.http_headers.response = true
+      data_collection.url_query_params = false
+
+      expect(data_collection.cookies.mode).to eq(:deny_list)
+      expect(data_collection.http_headers.request.mode).to eq(:off)
+      expect(data_collection.http_headers.response.mode).to eq(:deny_list)
+      expect(data_collection.url_query_params.mode).to eq(:off)
+    end
+
     it "supports configuring request and response headers independently" do
       data_collection.http_headers.request.mode = :off
       data_collection.http_headers.response.terms = ["x-request-id"]

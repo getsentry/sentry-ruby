@@ -57,16 +57,32 @@ module Sentry
       # - `:off` disables collection.
       # - `:deny_list` collects values except those matching `terms`.
       # - `:allow_list` collects only values matching `terms`.
+      # Boolean values are accepted as shorthand for `:deny_list` and `:off`.
       # @return [:off, :deny_list, :allow_list]
-      attr_accessor :mode
+      attr_reader :mode
 
       # `terms` contains the keys or patterns used by the selected mode.
       # @return [Array<String, Regexp>, nil]
       attr_reader :terms
 
       def initialize(mode:, terms:)
-        @mode = mode
+        self.mode = mode
         self.terms = terms
+      end
+
+      def mode=(mode)
+        @mode = case mode
+        when true then :deny_list
+        when false then :off
+        else mode
+        end
+      end
+
+      # Converts the boolean shorthand into a collection configuration.
+      def self.from(value)
+        return new(mode: value, terms: nil) if value.equal?(true) || value.equal?(false)
+
+        value
       end
 
       def terms=(terms)
