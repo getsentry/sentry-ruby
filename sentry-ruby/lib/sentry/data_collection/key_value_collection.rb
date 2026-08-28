@@ -73,14 +73,14 @@ module Sentry
       def mode=(mode)
         @mode = case mode
         when true then :deny_list
-        when false then :off
+        when false, nil then :off
         else mode
         end
       end
 
       # Converts the boolean shorthand into a collection configuration.
       def self.from(value)
-        return new(mode: value, terms: nil) if value.equal?(true) || value.equal?(false)
+        return new(mode: value, terms: nil) if value.equal?(true) || value.equal?(false) || value.nil?
 
         value
       end

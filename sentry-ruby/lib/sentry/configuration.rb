@@ -171,7 +171,12 @@ module Sentry
     # Whether to capture local variables from the raised exception's frame. Default is false.
     # @deprecated Use {#data_collection} and `stack_frame_variables` instead.
     # @return [Boolean]
-    attr_accessor :include_local_variables
+    attr_reader :include_local_variables
+
+    def include_local_variables=(value)
+      @include_local_variables = value
+      @data_collection.backfill_stack_frame_variables(self)
+    end
 
     # Whether to capture events and traces into Spotlight. Default is false.
     # If you set this to true, Sentry will send events and traces to the local
@@ -529,6 +534,7 @@ module Sentry
     def initialize
       run_callbacks(:before, :initialize)
 
+      self.data_collection = DataCollection.new
       self.app_dirs_pattern = APP_DIRS_PATTERN
       self.debug = Sentry::Utils::EnvHelper.env_to_bool(ENV["SENTRY_DEBUG"])
       self.background_worker_threads = (processor_count / 2.0).ceil
@@ -552,7 +558,6 @@ module Sentry
 
       self.sample_rate = 1.0
       self.send_modules = true
-      self.data_collection = DataCollection.new
       self.send_default_pii = false
       self.skip_rake_integration = false
       self.send_client_reports = true

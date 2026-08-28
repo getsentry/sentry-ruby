@@ -608,8 +608,9 @@ RSpec.describe Sentry::Client do
 
       context "if local variable contains illegal/malformed encoding characters" do
         before do
+          configuration.data_collection.stack_frame_variables = true
           perform_basic_setup do |config|
-            config.include_local_variables = true
+            config.data_collection.stack_frame_variables = true
           end
         end
 

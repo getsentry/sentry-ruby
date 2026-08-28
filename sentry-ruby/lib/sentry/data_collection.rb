@@ -108,9 +108,10 @@ module Sentry
     # @default `true`
     attr_accessor :queues
 
-    # @return [Boolean]
-    # @default `false`
-    attr_accessor :stack_frame_variables
+    # @return [Boolean, KeyValueCollection]
+    # A boolean is shorthand for `mode: :deny_list` (`true`) or `mode: :off` (`false`).
+    # @default `false` (Ruby-specific to avoid TracePoint overhead)
+    attr_reader :stack_frame_variables
 
     # @return [Integer]
     # @default `3`
@@ -128,8 +129,8 @@ module Sentry
     # Builds data collection settings compatible with the legacy send_default_pii
     # configuration.
     def self.backfill(configuration)
-      # the new DataCollection defaults are already correct if pii is enabled
       data_collection = new
+      data_collection.backfill_stack_frame_variables(configuration)
       return data_collection if configuration.send_default_pii
 
       # TODO-neel-data map to exact ruby behaviour for backwards compat behavior
@@ -145,7 +146,6 @@ module Sentry
       data_collection.graphql.variables = false
       data_collection.database_query_data = false
       data_collection.queues = false
-      data_collection.stack_frame_variables = configuration.include_local_variables
       data_collection.frame_context_lines = configuration.context_lines
       data_collection
     end
@@ -162,8 +162,22 @@ module Sentry
       @database_query_data = true
       @graphql = GraphQL.new(document: true, variables: true)
       @queues = true
-      @stack_frame_variables = false
+      self.stack_frame_variables = false
       @frame_context_lines = 3
+    end
+
+    # Copies the legacy stack frame variable configuration.
+    def backfill_stack_frame_variables(configuration)
+      self.stack_frame_variables = configuration.include_local_variables
+    end
+
+    # Returns whether stack frame local variables should be captured.
+    def collect_stack_frame_variables?
+      stack_frame_variables.mode != :off
+    end
+
+    def stack_frame_variables=(value)
+      @stack_frame_variables = KeyValueCollection.from(value)
     end
 
     def cookies=(value)
