@@ -10,6 +10,49 @@ RSpec.describe Sentry::Configuration do
 
       expect(configuration.data_collection.user_info).to eq(false)
     end
+
+    it "falls back to include_local_variables for stack frame variables" do
+      configuration = Sentry::Configuration.new do |config|
+        config.include_local_variables = true
+      end
+
+      expect(configuration.data_collection.stack_frame_variables.mode).to eq(:deny_list)
+    end
+
+    it "disables stack frame variables when include_local_variables is false" do
+      configuration = Sentry::Configuration.new do |config|
+        config.include_local_variables = false
+      end
+
+      expect(configuration.data_collection.stack_frame_variables.mode).to eq(:off)
+    end
+
+    it "treats nil include_local_variables as disabled" do
+      configuration = Sentry::Configuration.new do |config|
+        config.include_local_variables = nil
+      end
+
+      expect(configuration.data_collection.stack_frame_variables.mode).to eq(:off)
+    end
+
+    it "only backfills stack frame variables when include_local_variables changes" do
+      configuration = Sentry::Configuration.new do |config|
+        config.data_collection.user_info = true
+        config.include_local_variables = true
+      end
+
+      expect(configuration.data_collection.user_info).to eq(true)
+      expect(configuration.data_collection.stack_frame_variables.mode).to eq(:deny_list)
+    end
+
+    it "preserves include_local_variables when send_default_pii is set later" do
+      configuration = Sentry::Configuration.new do |config|
+        config.include_local_variables = true
+        config.send_default_pii = true
+      end
+
+      expect(configuration.data_collection.stack_frame_variables.mode).to eq(:deny_list)
+    end
   end
 
   describe "deprecated configuration warnings" do

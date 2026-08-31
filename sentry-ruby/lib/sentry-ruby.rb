@@ -277,7 +277,7 @@ module Sentry
       @background_worker = Sentry::BackgroundWorker.new(config)
       @session_flusher = config.session_tracking? ? Sentry::SessionFlusher.new(config, client) : nil
       @backpressure_monitor = config.enable_backpressure_handling ? Sentry::BackpressureMonitor.new(config, client) : nil
-      exception_locals_tp.enable if config.include_local_variables
+      exception_locals_tp.enable if config.data_collection.collect_stack_frame_variables?
       at_exit { close }
     end
 
@@ -301,7 +301,7 @@ module Sentry
         client.configuration.run_after_close_callbacks
         client.flush
 
-        if client.configuration.include_local_variables
+        if client.configuration.data_collection.collect_stack_frame_variables?
           exception_locals_tp.disable
         end
       end

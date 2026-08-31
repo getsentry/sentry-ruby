@@ -32,7 +32,12 @@ module Sentry
         @extra.merge!(exception.sentry_context)
       end
 
-      @exception = Sentry::ExceptionInterface.build(exception: exception, stacktrace_builder: @stacktrace_builder, mechanism: mechanism)
+      @exception = Sentry::ExceptionInterface.build(
+        exception: exception,
+        stacktrace_builder: @stacktrace_builder,
+        mechanism: mechanism,
+        data_collection: @data_collection
+      )
     end
   end
 end

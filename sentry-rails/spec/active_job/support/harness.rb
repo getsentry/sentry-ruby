@@ -61,7 +61,7 @@ RSpec.shared_context "active_job backend harness" do |adapter:|
       config.dsn = "http://12345:67890@sentry.localdomain:3000/sentry/42"
       config.transport.transport_class = Sentry::DummyTransport
       config.background_worker_threads = 0
-      config.include_local_variables = true
+      config.data_collection.stack_frame_variables = true
       configure_sentry.call(config, ::Rails.application) if configure_sentry
     end
 

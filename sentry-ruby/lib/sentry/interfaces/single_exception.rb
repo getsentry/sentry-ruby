@@ -41,7 +41,7 @@ module Sentry
 
     # patch this method if you want to change an exception's stacktrace frames
     # also see `StacktraceBuilder.build`.
-    def self.build_with_stacktrace(exception:, stacktrace_builder:, mechanism:)
+    def self.build_with_stacktrace(exception:, stacktrace_builder:, mechanism:, data_collection:)
       stacktrace = stacktrace_builder.build(backtrace: exception.backtrace)
 
       if locals = exception.instance_variable_get(:@sentry_locals)
@@ -60,7 +60,7 @@ module Sentry
             end
         end
 
-        stacktrace.frames.last&.vars = locals
+        stacktrace.frames.last&.vars = data_collection.stack_frame_variables.filter(locals)
       end
 
       new(exception: exception, stacktrace: stacktrace, mechanism: mechanism)

@@ -25,15 +25,21 @@ module Sentry
     # @see SingleExceptionInterface#build_with_stacktrace
     # @see SingleExceptionInterface#initialize
     # @param mechanism [Mechanism]
+    # @param data_collection [DataCollection]
     # @return [ExceptionInterface]
-    def self.build(exception:, stacktrace_builder:, mechanism:)
+    def self.build(exception:, stacktrace_builder:, mechanism:, data_collection:)
       exceptions = Sentry::Utils::ExceptionCauseChain.exception_to_array(exception).reverse
       processed_backtrace_ids = Set.new
 
       exceptions = exceptions.map do |e|
         if e.backtrace && !processed_backtrace_ids.include?(e.backtrace.object_id)
           processed_backtrace_ids << e.backtrace.object_id
-          SingleExceptionInterface.build_with_stacktrace(exception: e, stacktrace_builder: stacktrace_builder, mechanism: mechanism)
+          SingleExceptionInterface.build_with_stacktrace(
+            exception: e,
+            stacktrace_builder: stacktrace_builder,
+            mechanism: mechanism,
+            data_collection: data_collection
+          )
         else
           SingleExceptionInterface.new(exception: exception, mechanism: mechanism)
         end

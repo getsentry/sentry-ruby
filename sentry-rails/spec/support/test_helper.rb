@@ -20,7 +20,7 @@ module Sentry
 
               # For sending events synchronously
               config.background_worker_threads = 0
-              config.include_local_variables = true
+              config.data_collection.stack_frame_variables = true
 
               yield(config, app) if block_given?
             end

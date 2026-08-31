@@ -391,7 +391,7 @@ RSpec.describe Sentry do
       end
     end
 
-    context "with include_local_variables = false (default)" do
+    context "with data_collection.stack_frame_variables = false (default)" do
       it "doens't capture local variables" do
         begin
           1/0
@@ -405,10 +405,10 @@ RSpec.describe Sentry do
       end
     end
 
-    context "with include_local_variables = true" do
+    context "with data_collection.stack_frame_variables = true" do
       before do
         perform_basic_setup do |config|
-          config.include_local_variables = true
+          config.data_collection.stack_frame_variables = true
         end
       end
 
@@ -1575,7 +1575,7 @@ RSpec.describe Sentry do
 
       it "disables Tracepoint" do
         perform_basic_setup do |config|
-          config.include_local_variables = true
+          config.data_collection.stack_frame_variables = true
         end
 
         expect(described_class.exception_locals_tp).to receive(:disable).and_call_original

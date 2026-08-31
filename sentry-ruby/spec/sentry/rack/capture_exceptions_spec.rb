@@ -93,10 +93,10 @@ RSpec.describe 'Sentry::Rack::CaptureExceptions', when: :rack_available? do
       expect(env.key?("sentry.error_event_id")).to eq(false)
     end
 
-    context "with config.include_local_variables = true" do
+    context "with config.data_collection.stack_frame_variables = true" do
       before do
         perform_basic_setup do |config|
-          config.include_local_variables = true
+          config.data_collection.stack_frame_variables = true
         end
       end
 
@@ -119,6 +119,43 @@ RSpec.describe 'Sentry::Rack::CaptureExceptions', when: :rack_available? do
         expect(event.dig(:request, :url)).to eq("http://example.org/test")
         last_frame = event.dig(:exception, :values, 0, :stacktrace, :frames).last
         expect(last_frame[:vars]).to include({ a: "1", b: "0" })
+      end
+
+      it 'filters locals by name' do
+        perform_basic_setup do |config|
+          config.data_collection.stack_frame_variables.mode = :allow_list
+          config.data_collection.stack_frame_variables.terms = ["safe"]
+        end
+
+        app = ->(_e) do
+          safe = "visible"
+          foo = "bar"
+          raise "boom"
+        end
+
+        stack = Sentry::Rack::CaptureExceptions.new(app)
+
+        expect { stack.call(env) }.to raise_error(RuntimeError, "boom")
+
+        event = last_sentry_event.to_h
+        last_frame = event.dig(:exception, :values, 0, :stacktrace, :frames).last
+        expect(last_frame[:vars]).to include(safe: "visible", foo: "[Filtered]")
+      end
+
+      it 'filters locals matching the sensitive denylist by default' do
+        app = ->(_e) do
+          safe = "visible"
+          password = "filtered"
+          raise "boom"
+        end
+
+        stack = Sentry::Rack::CaptureExceptions.new(app)
+
+        expect { stack.call(env) }.to raise_error(RuntimeError, "boom")
+
+        event = last_sentry_event.to_h
+        last_frame = event.dig(:exception, :values, 0, :stacktrace, :frames).last
+        expect(last_frame[:vars]).to include(safe: "visible", password: "[Filtered]")
       end
 
       it 'ignores problematic locals' do

@@ -29,7 +29,7 @@ RSpec.describe Sentry::DataCollection do
       expect(data_collection.graphql.document).to eq(false)
       expect(data_collection.graphql.variables).to eq(false)
       expect(data_collection.queues).to eq(false)
-      expect(data_collection.stack_frame_variables).to eq(false)
+      expect(data_collection.stack_frame_variables.mode).to eq(:off)
       expect(data_collection.frame_context_lines).to eq(3)
     end
 
@@ -85,7 +85,7 @@ RSpec.describe Sentry::DataCollection do
       expect(data_collection.graphql.document).to eq(true)
       expect(data_collection.graphql.variables).to eq(true)
       expect(data_collection.queues).to eq(true)
-      expect(data_collection.stack_frame_variables).to eq(false)
+      expect(data_collection.stack_frame_variables.mode).to eq(:off)
       expect(data_collection.frame_context_lines).to eq(3)
     end
   end
@@ -116,11 +116,28 @@ RSpec.describe Sentry::DataCollection do
       data_collection.http_headers.request = false
       data_collection.http_headers.response = true
       data_collection.url_query_params = false
+      data_collection.stack_frame_variables = false
 
       expect(data_collection.cookies.mode).to eq(:deny_list)
       expect(data_collection.http_headers.request.mode).to eq(:off)
       expect(data_collection.http_headers.response.mode).to eq(:deny_list)
       expect(data_collection.url_query_params.mode).to eq(:off)
+      expect(data_collection.stack_frame_variables.mode).to eq(:off)
+
+      data_collection.stack_frame_variables = true
+      expect(data_collection.stack_frame_variables.mode).to eq(:deny_list)
+    end
+
+    it "supports configuring stack frame variables by name" do
+      data_collection.stack_frame_variables.mode = :allow_list
+      data_collection.stack_frame_variables.terms = ["user"]
+
+      expect(data_collection.stack_frame_variables.mode).to eq(:allow_list)
+      expect(data_collection.stack_frame_variables.terms).to eq(["user"])
+    end
+
+    it "does not collect stack frame variables by default" do
+      expect(data_collection.collect_stack_frame_variables?).to eq(false)
     end
 
     it "supports configuring request and response headers independently" do

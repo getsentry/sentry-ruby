@@ -33,7 +33,7 @@ module Sentry
       dummy_config.background_worker_threads = 0
 
       # user can overwrite some of the configs, with a few exceptions like:
-      # - include_local_variables
+      # - data_collection
       # - auto_session_tracking
       block&.call(dummy_config)
 
