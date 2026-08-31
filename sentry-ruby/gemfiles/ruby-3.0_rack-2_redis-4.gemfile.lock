@@ -47,7 +47,7 @@ GEM
     faraday-net_http (3.4.4)
       net-http (~> 0.5)
     fiber-storage (1.0.0)
-    graphql (2.6.9)
+    graphql (2.6.10)
       base64
       fiber-storage
       logger
@@ -125,7 +125,7 @@ GEM
     timecop (0.9.11)
     tsort (0.2.0)
     uri (1.1.1)
-    webmock (3.26.3)
+    webmock (3.26.4)
       addressable (>= 2.8.0)
       crack (>= 0.3.2)
       hashdiff (>= 0.4.0, < 2.0.0)
