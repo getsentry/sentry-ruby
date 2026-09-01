@@ -9,14 +9,14 @@ GIT
 PATH
   remote: ../../sentry-rails
   specs:
-    sentry-rails (6.7.0)
+    sentry-rails (7.0.0)
       railties (>= 5.2.0)
-      sentry-ruby (~> 6.7.0)
+      sentry-ruby (~> 7.0.0)
 
 PATH
   remote: ../../sentry-ruby
   specs:
-    sentry-ruby (6.7.0)
+    sentry-ruby (7.0.0)
       bigdecimal
       concurrent-ruby (~> 1.0, >= 1.0.2)
       logger
@@ -24,9 +24,9 @@ PATH
 PATH
   remote: ..
   specs:
-    sentry-delayed_job (6.7.0)
+    sentry-delayed_job (7.0.0)
       delayed_job (>= 4.0)
-      sentry-ruby (~> 6.7.0)
+      sentry-ruby (~> 7.0.0)
 
 GEM
   remote: https://rubygems.org/
@@ -162,7 +162,7 @@ GEM
       net-protocol
     net-pop (0.1.2)
       net-protocol
-    net-protocol (0.2.2)
+    net-protocol (0.3.0)
       timeout
     net-smtp (0.5.1)
       net-protocol

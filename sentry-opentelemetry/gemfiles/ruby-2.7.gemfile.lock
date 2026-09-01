@@ -9,7 +9,7 @@ GIT
 PATH
   remote: ../../sentry-ruby
   specs:
-    sentry-ruby (6.7.0)
+    sentry-ruby (7.0.0)
       bigdecimal
       concurrent-ruby (~> 1.0, >= 1.0.2)
       logger
@@ -17,9 +17,9 @@ PATH
 PATH
   remote: ..
   specs:
-    sentry-opentelemetry (6.7.0)
+    sentry-opentelemetry (7.0.0)
       opentelemetry-sdk (~> 1.0)
-      sentry-ruby (~> 6.7.0)
+      sentry-ruby (~> 7.0.0)
 
 GEM
   remote: https://rubygems.org/

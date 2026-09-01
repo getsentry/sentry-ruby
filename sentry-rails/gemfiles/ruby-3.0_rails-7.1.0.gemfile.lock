@@ -9,7 +9,7 @@ GIT
 PATH
   remote: ../../sentry-ruby
   specs:
-    sentry-ruby (6.7.0)
+    sentry-ruby (7.0.0)
       bigdecimal
       concurrent-ruby (~> 1.0, >= 1.0.2)
       logger
@@ -17,9 +17,9 @@ PATH
 PATH
   remote: ..
   specs:
-    sentry-rails (6.7.0)
+    sentry-rails (7.0.0)
       railties (>= 5.2.0)
-      sentry-ruby (~> 6.7.0)
+      sentry-ruby (~> 7.0.0)
 
 GEM
   remote: https://rubygems.org/
@@ -132,7 +132,7 @@ GEM
     erb (4.0.4.1)
       cgi (>= 0.3.3)
     erubi (1.13.1)
-    et-orbi (1.4.1)
+    et-orbi (1.4.2)
       tzinfo
     fugit (1.13.0)
       et-orbi (~> 1.4)
@@ -160,7 +160,7 @@ GEM
       net-smtp
     marcel (1.2.1)
     memory_profiler (0.9.14)
-    mini_magick (5.3.3)
+    mini_magick (5.4.0)
       logger
     mini_mime (1.1.5)
     minitest (5.26.1)
@@ -175,7 +175,7 @@ GEM
       net-protocol
     net-pop (0.1.2)
       net-protocol
-    net-protocol (0.2.2)
+    net-protocol (0.3.0)
       timeout
     net-smtp (0.5.1)
       net-protocol
@@ -258,7 +258,7 @@ GEM
       redis (>= 4)
     reline (0.7.0)
       io-console (~> 0.5)
-    resque (3.0.0)
+    resque (3.0.2)
       base64 (~> 0.1)
       logger
       mono_logger (~> 1)
@@ -332,7 +332,7 @@ GEM
       tilt (~> 2.0)
     solid_queue (0.2.2)
       rails (~> 7.1)
-    sprockets (4.4.0)
+    sprockets (4.4.1)
       concurrent-ruby (~> 1.1)
       logger
       rack (>= 2.2.4, < 4)
