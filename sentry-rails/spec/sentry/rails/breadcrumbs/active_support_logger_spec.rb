@@ -43,7 +43,6 @@ RSpec.describe "Sentry::Breadcrumbs::ActiveSupportLogger", type: :request do
         {
           "controller" => "HelloController",
           "action" => "exception",
-          "params" => { "controller" => "hello", "action" => "exception" },
           "format" => "html",
           "method" => "GET", "path" => "/exception"
         }
@@ -83,7 +82,6 @@ RSpec.describe "Sentry::Breadcrumbs::ActiveSupportLogger", type: :request do
         expect(breadcrumb["data"]).to include(
           {
             "action" => "exception",
-            "params" => { "controller" => "hello", "action" => "exception" },
             "format" => "html",
             "method" => "GET", "path" => "/exception"
           }
@@ -112,11 +110,50 @@ RSpec.describe "Sentry::Breadcrumbs::ActiveSupportLogger", type: :request do
         {
           "controller" => "HelloController",
           "action" => "exception",
-          "params" => { "controller" => "hello", "action" => "exception" },
           "format" => "html",
           "method" => "GET", "path" => "/exception"
         }
       )
+    end
+  end
+
+  context "with data collection" do
+    before do
+      make_basic_app do |sentry_config|
+        sentry_config.breadcrumbs_logger = [:active_support_logger]
+        sentry_config.data_collection.url_query_params.mode = :deny_list
+      end
+    end
+
+    it "filters request params and query params in the path" do
+      get "/exception?foo=bar&password=42"
+
+      breadcrumb = event.dig("breadcrumbs", "values").detect { |b| b["category"] == "process_action.action_controller" }
+
+      expect(breadcrumb["data"]).to include(
+        "params" => {
+          "controller" => "hello",
+          "action" => "exception",
+          "foo" => "bar",
+          "password" => "[Filtered]"
+        },
+        "path" => "/exception?foo=bar&password=[Filtered]"
+      )
+    end
+
+    context "when URL query params collection is disabled" do
+      before do
+        Sentry.configuration.data_collection.url_query_params.mode = :off
+      end
+
+      it "does not include request params or query params in the path" do
+        get "/exception?foo=bar&password=42"
+
+        breadcrumb = event.dig("breadcrumbs", "values").detect { |b| b["category"] == "process_action.action_controller" }
+
+        expect(breadcrumb["data"]).not_to have_key("params")
+        expect(breadcrumb["data"]["path"]).to eq("/exception")
+      end
     end
   end
 
@@ -140,7 +177,6 @@ RSpec.describe "Sentry::Breadcrumbs::ActiveSupportLogger", type: :request do
         {
           "controller" => "PostsController",
           "action" => "show",
-          "params" => { "controller" => "posts", "action" => "show", "id" => p.id.to_s },
           "format" => "html",
           "method" => "GET", "path" => "/posts/#{p.id}"
         }
