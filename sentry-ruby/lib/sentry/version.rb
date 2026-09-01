@@ -1,5 +1,5 @@
 # frozen_string_literal: true
 
 module Sentry
-  VERSION = "6.7.0"
+  VERSION = "7.0.0"
 end

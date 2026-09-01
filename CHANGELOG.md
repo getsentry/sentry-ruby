@@ -1,3 +1,38 @@
+## 7.0.0
+
+### Breaking Changes 🛠
+
+- [Logs](https://docs.sentry.io/product/logs/) are now enabled by default and `enable_logs` is removed. Using `sentry-rails` will automatically turn on automatic structured logging from Rails. if you want to turn it off, use: by @sl0thentr0py in [#3053](https://github.com/getsentry/sentry-ruby/pull/3053)
+  ```ruby
+  Sentry.init do |config
+    # ...
+    config.rails.structured_logging.enabled = false
+  end
+  ```
+- Resolves: #2943 by @sl0thentr0py in [#3053](https://github.com/getsentry/sentry-ruby/pull/3053)
+- Resolves: RUBY-177 by @sl0thentr0py in [#3053](https://github.com/getsentry/sentry-ruby/pull/3053)
+
+### New Features ✨
+
+#### Data Collection
+
+- Make rails breadcrumbs respect data collection by @sl0thentr0py in [#3068](https://github.com/getsentry/sentry-ruby/pull/3068)
+- Change stack_frame_variables to KeyValueCollection by @sl0thentr0py in [#3066](https://github.com/getsentry/sentry-ruby/pull/3066)
+- Allow booleans as shorthand for KeyValueCollection fields by @sl0thentr0py in [#3065](https://github.com/getsentry/sentry-ruby/pull/3065)
+- Gate ActiveJob arguments and ExecutionContext inclusion by @sl0thentr0py in [#3064](https://github.com/getsentry/sentry-ruby/pull/3064)
+- Port Rails log subscriber by @sl0thentr0py in [#3034](https://github.com/getsentry/sentry-ruby/pull/3034)
+- Port Rails controller and ActiveStorage by @sl0thentr0py in [#3033](https://github.com/getsentry/sentry-ruby/pull/3033)
+- Port redis, net:http, faraday and excon by @sl0thentr0py in [#3032](https://github.com/getsentry/sentry-ruby/pull/3032)
+- Request data collection by @sl0thentr0py in [#3030](https://github.com/getsentry/sentry-ruby/pull/3030)
+- User data collection by @sl0thentr0py in [#3028](https://github.com/getsentry/sentry-ruby/pull/3028)
+- Add sensitive key-value collection filter by @sl0thentr0py in [#3025](https://github.com/getsentry/sentry-ruby/pull/3025)
+- Add base DataCollection configuration with defaults and backfill by @sl0thentr0py in [#3022](https://github.com/getsentry/sentry-ruby/pull/3022)
+
+### Other
+
+- feat!(otlp): setup_otlp_traces_exporter and setup_propagator now default to false by @sl0thentr0py in [#3063](https://github.com/getsentry/sentry-ruby/pull/3063)
+- [Metrics](https://docs.sentry.io/product/metrics/) are now enabled by default and `enable_metrics` is removed. by @sl0thentr0py in [#3061](https://github.com/getsentry/sentry-ruby/pull/3061)
+
 ## 6.7.0
 
 ### New Features ✨
