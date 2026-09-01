@@ -2,19 +2,55 @@
 
 ### Breaking Changes 🛠
 
-- [Logs](https://docs.sentry.io/product/logs/) are now enabled by default and `enable_logs` is removed. Using `sentry-rails` will automatically turn on automatic structured logging from Rails. if you want to turn it off, use: by @sl0thentr0py in [#3053](https://github.com/getsentry/sentry-ruby/pull/3053)
+- [Logs](https://docs.sentry.io/product/logs/) are now enabled by default and `enable_logs` is removed. by @sl0thentr0py in [#3053](https://github.com/getsentry/sentry-ruby/pull/3053)
+
+  Using `sentry-rails` will automatically turn on automatic structured logging from Rails. if you want to turn it off, use:
+
   ```ruby
   Sentry.init do |config
     # ...
     config.rails.structured_logging.enabled = false
   end
   ```
-- Resolves: #2943 by @sl0thentr0py in [#3053](https://github.com/getsentry/sentry-ruby/pull/3053)
-- Resolves: RUBY-177 by @sl0thentr0py in [#3053](https://github.com/getsentry/sentry-ruby/pull/3053)
+- [Metrics](https://docs.sentry.io/product/metrics/) are now enabled by default and `enable_metrics` is removed. by @sl0thentr0py in [#3061](https://github.com/getsentry/sentry-ruby/pull/3061)
+- `config.otlp.setup_otlp_traces_exporter` and `config.otlp.setup_propagator` now default to false. by @sl0thentr0py in [#3063](https://github.com/getsentry/sentry-ruby/pull/3063)
 
 ### New Features ✨
 
 #### Data Collection
+
+We are moving away from `send_default_pii` to a more granular configuration called [`data_collection`](https://docs.sentry.io/platforms/ruby/configuration/options/#data_collection).  
+It allows you to precisely control the data that Sentry collects from your app.
+
+```ruby
+Sentry.init do |config|
+  # ...
+  config.data_collection.user_info = false
+  config.data_collection.http_bodies = []
+end
+```
+
+`send_default_pii` is deprecated but will continue to default to `false`.  
+`data_collection` will be backfilled when `send_default_pii = false` with the following values in 7.0.0:
+
+```ruby
+data_collection.user_info = false
+data_collection.cookies.mode = :off
+data_collection.http_headers.request.mode = :deny_list
+data_collection.http_headers.request.terms = %w[forwarded -ip _ip remote via _user -user]
+data_collection.http_headers.response.mode = :deny_list
+data_collection.http_headers.response.terms = %w[forwarded -ip _ip remote via _user -user]
+data_collection.http_bodies = []
+data_collection.url_query_params.mode = :off
+data_collection.graphql.document = false
+data_collection.graphql.variables = false
+data_collection.database_query_data = false
+data_collection.queues = false
+data_collection.frame_context_lines = 3
+```
+
+In 8.0.0, `send_default_pii` will be removed and we will move to more permissive defaults for `data_collection`.  
+We recommend migrating to `data_collection` to match the behavior you want eventually.
 
 - Make rails breadcrumbs respect data collection by @sl0thentr0py in [#3068](https://github.com/getsentry/sentry-ruby/pull/3068)
 - Change stack_frame_variables to KeyValueCollection by @sl0thentr0py in [#3066](https://github.com/getsentry/sentry-ruby/pull/3066)
@@ -27,11 +63,6 @@
 - User data collection by @sl0thentr0py in [#3028](https://github.com/getsentry/sentry-ruby/pull/3028)
 - Add sensitive key-value collection filter by @sl0thentr0py in [#3025](https://github.com/getsentry/sentry-ruby/pull/3025)
 - Add base DataCollection configuration with defaults and backfill by @sl0thentr0py in [#3022](https://github.com/getsentry/sentry-ruby/pull/3022)
-
-### Other
-
-- feat!(otlp): setup_otlp_traces_exporter and setup_propagator now default to false by @sl0thentr0py in [#3063](https://github.com/getsentry/sentry-ruby/pull/3063)
-- [Metrics](https://docs.sentry.io/product/metrics/) are now enabled by default and `enable_metrics` is removed. by @sl0thentr0py in [#3061](https://github.com/getsentry/sentry-ruby/pull/3061)
 
 ## 6.7.0
 
