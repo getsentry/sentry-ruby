@@ -56,8 +56,6 @@ RSpec.describe Sentry::Rails::CaptureContext do
     end
 
     it "is a no-op when Sentry is not initialized" do
-      allow(Sentry).to receive(:initialized?).and_return(false)
-
       called = false
       app = lambda do |env|
         called = true
@@ -65,7 +63,14 @@ RSpec.describe Sentry::Rails::CaptureContext do
       end
 
       env = Rack::MockRequest.env_for("/test")
-      described_class.new(app).call(env)
+
+      # the stub has to be gone before the suite's after hooks run: they skip
+      # clearing events and detaching the log subscribers unless Sentry reports
+      # itself initialized, which would leak log events into later examples
+      RSpec::Mocks.with_temporary_scope do
+        allow(Sentry).to receive(:initialized?).and_return(false)
+        described_class.new(app).call(env)
+      end
 
       expect(called).to eq(true)
       expect(env[Sentry::PropagationContext::ESTABLISHED_ENV_KEY]).to be_nil
