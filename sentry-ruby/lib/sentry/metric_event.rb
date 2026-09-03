@@ -6,7 +6,7 @@ module Sentry
   class MetricEvent
     include Sentry::Utils::TelemetryAttributes
 
-    attr_reader :name, :type, :value, :unit, :timestamp, :trace_id, :span_id, :attributes, :sdk_meta
+    attr_reader :name, :type, :value, :unit, :timestamp, :trace_id, :span_id, :attributes, :integration_meta
     attr_writer :trace_id, :span_id, :attributes
 
     def initialize(
@@ -15,19 +15,14 @@ module Sentry
       value:,
       unit: nil,
       attributes: nil,
-      sdk_meta: nil
+      integration_meta: nil
     )
       @name = name
       @type = type
       @value = value
       @unit = unit
       @attributes = attributes || {}
-      @sdk_meta = sdk_meta || Sentry.sdk_meta
-
-      if sdk_meta
-        @attributes["sentry.sdk.name"] = sdk_meta[:name] || sdk_meta["name"]
-        @attributes["sentry.sdk.version"] = sdk_meta[:version] || sdk_meta["version"]
-      end
+      @integration_meta = integration_meta
 
       @timestamp = Sentry.utc_now
       @trace_id = nil

@@ -251,7 +251,7 @@ module Sentry
         type: type,
         unit: unit,
         attributes: attributes&.dup,
-        sdk_meta: Sentry.integrations[integration.to_s]
+        integration_meta: Sentry.integrations[integration.to_s]
       )
 
       current_client.buffer_metric_event(metric, current_scope)

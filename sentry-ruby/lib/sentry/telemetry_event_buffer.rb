@@ -134,7 +134,8 @@ module Sentry
     end
 
     def sdk_meta_for(item)
-      item.respond_to?(:sdk_meta) ? item.sdk_meta : Sentry.sdk_meta
+      integration_meta = item.respond_to?(:integration_meta) ? item.integration_meta : nil
+      integration_meta || Sentry.sdk_meta
     end
   end
 end

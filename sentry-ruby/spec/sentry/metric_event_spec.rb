@@ -50,6 +50,19 @@ RSpec.describe Sentry::MetricEvent do
 
       expect(event.attributes).to eq({ "foo" => "bar" })
     end
+
+    it "holds integration metadata without applying sdk attributes" do
+      integration_meta = { name: "sentry.ruby.test", version: "1.2.3" }
+      event = described_class.new(
+        name: "test.metric",
+        type: :counter,
+        value: 1,
+        integration_meta: integration_meta
+      )
+
+      expect(event.integration_meta).to eq(integration_meta)
+      expect(event.attributes).to eq({})
+    end
   end
 
   describe "#to_h" do
