@@ -32,5 +32,17 @@ module Sentry
       options[:hint][:integration] = integration_name
       Sentry.capture_check_in(slug, status, **options, &block)
     end
+
+    def count(name, value: 1, attributes: nil)
+      Sentry.metrics.count(name, value: value, attributes: attributes, integration: integration_name)
+    end
+
+    def gauge(name, value, unit: nil, attributes: nil)
+      Sentry.metrics.gauge(name, value, unit: unit, attributes: attributes, integration: integration_name)
+    end
+
+    def distribution(name, value, unit: nil, attributes: nil)
+      Sentry.metrics.distribution(name, value, unit: unit, attributes: attributes, integration: integration_name)
+    end
   end
 end

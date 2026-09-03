@@ -14,7 +14,7 @@ module Sentry
       def perform_counter_increment!(counter, tags, increment)
         return unless enabled?
 
-        Sentry.metrics.count(
+        Sentry::Yabeda.count(
           metric_name(counter),
           value: increment,
           attributes: attributes_for(tags)
@@ -24,7 +24,7 @@ module Sentry
       def perform_gauge_set!(gauge, tags, value)
         return unless enabled?
 
-        Sentry.metrics.gauge(
+        Sentry::Yabeda.gauge(
           metric_name(gauge),
           value,
           unit: unit_for(gauge),
@@ -35,7 +35,7 @@ module Sentry
       def perform_histogram_measure!(histogram, tags, value)
         return unless enabled?
 
-        Sentry.metrics.distribution(
+        Sentry::Yabeda.distribution(
           metric_name(histogram),
           value,
           unit: unit_for(histogram),
@@ -46,7 +46,7 @@ module Sentry
       def perform_summary_observe!(summary, tags, value)
         return unless enabled?
 
-        Sentry.metrics.distribution(
+        Sentry::Yabeda.distribution(
           metric_name(summary),
           value,
           unit: unit_for(summary),

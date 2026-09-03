@@ -240,8 +240,9 @@ module Sentry
     # @param value [Numeric] the metric value
     # @param unit [String, nil] (optional) the metric unit
     # @param attributes [Hash, nil] (optional) additional attributes for the metric
+    # @param integration [String, Symbol, nil] (optional) registered integration emitting the metric
     # @return [void]
-    def capture_metric(name:, type:, value:, unit: nil, attributes: nil)
+    def capture_metric(name:, type:, value:, unit: nil, attributes: nil, integration: nil)
       return unless current_client
 
       metric = MetricEvent.new(
@@ -250,6 +251,7 @@ module Sentry
         type: type,
         unit: unit,
         attributes: attributes&.dup,
+        integration_meta: Sentry.integrations[integration.to_s]
       )
 
       current_client.buffer_metric_event(metric, current_scope)

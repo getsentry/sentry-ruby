@@ -102,8 +102,10 @@ module Sentry
       configuration = Sentry.configuration
       return telemetry unless configuration
 
-      telemetry.attributes["sentry.sdk.name"] ||= Sentry.sdk_meta["name"]
-      telemetry.attributes["sentry.sdk.version"] ||= Sentry.sdk_meta["version"]
+      sdk_meta = telemetry.respond_to?(:integration_meta) ? telemetry.integration_meta : nil
+      sdk_meta ||= Sentry.sdk_meta
+      telemetry.attributes["sentry.sdk.name"] ||= sdk_meta[:name] || sdk_meta["name"]
+      telemetry.attributes["sentry.sdk.version"] ||= sdk_meta[:version] || sdk_meta["version"]
       telemetry.attributes["sentry.environment"] ||= configuration.environment if configuration.environment
       telemetry.attributes["sentry.release"] ||= configuration.release if configuration.release
       telemetry.attributes["server.address"] ||= configuration.server_name if configuration.server_name

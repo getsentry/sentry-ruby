@@ -229,6 +229,42 @@ RSpec.describe "Sentry Metrics" do
       expect(metric_names).to contain_exactly("test.counter1", "test.counter2", "test.gauge")
     end
 
+    context "with integration attribution" do
+      let(:integration_meta) { { name: "sentry.ruby.test", version: "1.2.3" }.freeze }
+
+      before do
+        Sentry.integrations["test"] = integration_meta
+      end
+
+      after do
+        Sentry.integrations.delete("test")
+      end
+
+      it "sets metric sdk attributes from the integration" do
+        Sentry.metrics.count("test.counter", integration: :test)
+
+        Sentry.get_current_client.flush
+
+        expect(sentry_metrics.first[:attributes]["sentry.sdk.name"]).to eq(
+          { type: "string", value: "sentry.ruby.test" }
+        )
+        expect(sentry_metrics.first[:attributes]["sentry.sdk.version"]).to eq(
+          { type: "string", value: "1.2.3" }
+        )
+      end
+
+      it "batches metrics with different sdk attributes into one envelope" do
+        Sentry.metrics.count("test.manual")
+        Sentry.metrics.count("test.integration", integration: "test")
+
+        Sentry.get_current_client.flush
+
+        expect(sentry_envelopes.count).to eq(1)
+        sdk_names = sentry_metrics.map { |metric| metric[:attributes]["sentry.sdk.name"][:value] }
+        expect(sdk_names).to contain_exactly("sentry.ruby", "sentry.ruby.test")
+      end
+    end
+
     describe "envelope structure" do
       it "includes correct envelope headers" do
         Sentry.metrics.count("test.counter")
@@ -237,10 +273,8 @@ RSpec.describe "Sentry Metrics" do
         envelope = sentry_envelopes.first
         headers = envelope.headers
 
-        expect(headers[:event_id]).to match(/\A[0-9a-f]{32}\z/) # UUID format
+        expect(headers.keys).to contain_exactly(:sent_at)
         expect(headers[:sent_at]).to match(/\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}/) # ISO8601 timestamp
-        expect(headers[:dsn]).to eq(Sentry.configuration.dsn)
-        expect(headers[:sdk]).to eq(Sentry.sdk_meta)
       end
 
       it "includes correct envelope item headers" do

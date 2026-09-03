@@ -89,12 +89,7 @@ module Sentry
     private
 
     def send_items
-      envelope = Envelope.new(
-        event_id: Sentry::Utils.uuid,
-        sent_at: Sentry.utc_now.iso8601,
-        dsn: @dsn,
-        sdk: Sentry.sdk_meta
-      )
+      envelope = Envelope.new(sent_at: Sentry.utc_now.iso8601)
 
       discarded_count = 0
       discarded_bytes = 0

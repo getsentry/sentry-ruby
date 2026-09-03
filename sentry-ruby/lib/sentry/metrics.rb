@@ -9,15 +9,17 @@ module Sentry
       # @param name [String] the metric name
       # @param value [Numeric] the value to increment by (default: 1)
       # @param attributes [Hash, nil] additional attributes for the metric (optional)
+      # @param integration [String, Symbol, nil] registered integration emitting the metric (optional)
       # @return [void]
-      def count(name, value: 1, attributes: nil)
+      def count(name, value: 1, attributes: nil, integration: nil)
         return unless Sentry.initialized?
 
         Sentry.get_current_hub.capture_metric(
           name: name,
           type: :counter,
           value: value,
-          attributes: attributes
+          attributes: attributes,
+          integration: integration
         )
       end
 
@@ -26,8 +28,9 @@ module Sentry
       # @param value [Numeric] the gauge value
       # @param unit [String, nil] the metric unit (optional)
       # @param attributes [Hash, nil] additional attributes for the metric (optional)
+      # @param integration [String, Symbol, nil] registered integration emitting the metric (optional)
       # @return [void]
-      def gauge(name, value, unit: nil, attributes: nil)
+      def gauge(name, value, unit: nil, attributes: nil, integration: nil)
         return unless Sentry.initialized?
 
         Sentry.get_current_hub.capture_metric(
@@ -35,7 +38,8 @@ module Sentry
           type: :gauge,
           value: value,
           unit: unit,
-          attributes: attributes
+          attributes: attributes,
+          integration: integration
         )
       end
 
@@ -44,8 +48,9 @@ module Sentry
       # @param value [Numeric] the distribution value
       # @param unit [String, nil] the metric unit (optional)
       # @param attributes [Hash, nil] additional attributes for the metric (optional)
+      # @param integration [String, Symbol, nil] registered integration emitting the metric (optional)
       # @return [void]
-      def distribution(name, value, unit: nil, attributes: nil)
+      def distribution(name, value, unit: nil, attributes: nil, integration: nil)
         return unless Sentry.initialized?
 
         Sentry.get_current_hub.capture_metric(
@@ -53,7 +58,8 @@ module Sentry
           type: :distribution,
           value: value,
           unit: unit,
-          attributes: attributes
+          attributes: attributes,
+          integration: integration
         )
       end
     end

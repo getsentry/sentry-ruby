@@ -20,7 +20,9 @@ RSpec.describe Sentry::Yabeda::Adapter do
       perform_basic_setup
 
       counter = build_metric(:counter, name: :orders_created, group: :myapp)
-      expect(Sentry.metrics).to receive(:count).with("myapp.orders_created", value: 1, attributes: nil)
+      expect(Sentry::Yabeda).to receive(:count).with(
+        "myapp.orders_created", value: 1, attributes: nil
+      )
 
       adapter.perform_counter_increment!(counter, {}, 1)
     end
@@ -29,18 +31,20 @@ RSpec.describe Sentry::Yabeda::Adapter do
       perform_basic_setup
 
       counter = build_metric(:counter, name: :total_requests)
-      expect(Sentry.metrics).to receive(:count).with("total_requests", value: 1, attributes: nil)
+      expect(Sentry::Yabeda).to receive(:count).with(
+        "total_requests", value: 1, attributes: nil
+      )
 
       adapter.perform_counter_increment!(counter, {}, 1)
     end
   end
 
   describe "#perform_counter_increment!" do
-    it "calls Sentry.metrics.count with correct arguments" do
+    it "calls Sentry::Yabeda.count with correct arguments" do
       perform_basic_setup
 
       counter = build_metric(:counter, name: :requests, group: :rails)
-      expect(Sentry.metrics).to receive(:count).with(
+      expect(Sentry::Yabeda).to receive(:count).with(
         "rails.requests",
         value: 5,
         attributes: tags
@@ -53,7 +57,7 @@ RSpec.describe Sentry::Yabeda::Adapter do
       perform_basic_setup
 
       counter = build_metric(:counter, name: :requests, group: :rails)
-      expect(Sentry.metrics).to receive(:count).with(
+      expect(Sentry::Yabeda).to receive(:count).with(
         "rails.requests",
         value: 1,
         attributes: nil
@@ -64,11 +68,11 @@ RSpec.describe Sentry::Yabeda::Adapter do
   end
 
   describe "#perform_gauge_set!" do
-    it "calls Sentry.metrics.gauge with correct arguments" do
+    it "calls Sentry::Yabeda.gauge with correct arguments" do
       perform_basic_setup
 
       gauge = build_metric(:gauge, name: :queue_depth, group: :sidekiq)
-      expect(Sentry.metrics).to receive(:gauge).with(
+      expect(Sentry::Yabeda).to receive(:gauge).with(
         "sidekiq.queue_depth",
         42,
         unit: nil,
@@ -82,7 +86,7 @@ RSpec.describe Sentry::Yabeda::Adapter do
       perform_basic_setup
 
       gauge = build_metric(:gauge, name: :memory_usage, group: :process, unit: :bytes)
-      expect(Sentry.metrics).to receive(:gauge).with(
+      expect(Sentry::Yabeda).to receive(:gauge).with(
         "process.memory_usage",
         1024,
         unit: "byte",
@@ -94,11 +98,11 @@ RSpec.describe Sentry::Yabeda::Adapter do
   end
 
   describe "#perform_histogram_measure!" do
-    it "calls Sentry.metrics.distribution with correct arguments" do
+    it "calls Sentry::Yabeda.distribution with correct arguments" do
       perform_basic_setup
 
       histogram = build_metric(:histogram, name: :request_duration, group: :rails, unit: :milliseconds)
-      expect(Sentry.metrics).to receive(:distribution).with(
+      expect(Sentry::Yabeda).to receive(:distribution).with(
         "rails.request_duration",
         150.5,
         unit: "millisecond",
@@ -110,11 +114,11 @@ RSpec.describe Sentry::Yabeda::Adapter do
   end
 
   describe "#perform_summary_observe!" do
-    it "calls Sentry.metrics.distribution with correct arguments" do
+    it "calls Sentry::Yabeda.distribution with correct arguments" do
       perform_basic_setup
 
       summary = build_metric(:summary, name: :response_size, group: :http, unit: :bytes)
-      expect(Sentry.metrics).to receive(:distribution).with(
+      expect(Sentry::Yabeda).to receive(:distribution).with(
         "http.response_size",
         2048,
         unit: "byte",
@@ -130,7 +134,7 @@ RSpec.describe Sentry::Yabeda::Adapter do
       perform_basic_setup
 
       histogram = build_metric(:histogram, name: :duration, group: :rails, unit: :seconds)
-      expect(Sentry.metrics).to receive(:distribution).with(
+      expect(Sentry::Yabeda).to receive(:distribution).with(
         "rails.duration", 1.5, unit: "second", attributes: nil
       )
 
@@ -141,7 +145,7 @@ RSpec.describe Sentry::Yabeda::Adapter do
       perform_basic_setup
 
       histogram = build_metric(:histogram, name: :latency, unit: :milliseconds)
-      expect(Sentry.metrics).to receive(:distribution).with(
+      expect(Sentry::Yabeda).to receive(:distribution).with(
         "latency", 250.0, unit: "millisecond", attributes: nil
       )
 
@@ -152,7 +156,7 @@ RSpec.describe Sentry::Yabeda::Adapter do
       perform_basic_setup
 
       gauge = build_metric(:gauge, name: :threads)
-      expect(Sentry.metrics).to receive(:gauge).with(
+      expect(Sentry::Yabeda).to receive(:gauge).with(
         "threads", 5, unit: nil, attributes: nil
       )
 
@@ -163,7 +167,7 @@ RSpec.describe Sentry::Yabeda::Adapter do
       perform_basic_setup
 
       gauge = build_metric(:gauge, name: :uptime, unit: :second)
-      expect(Sentry.metrics).to receive(:gauge).with(
+      expect(Sentry::Yabeda).to receive(:gauge).with(
         "uptime", 3600, unit: "second", attributes: nil
       )
 
@@ -191,10 +195,28 @@ RSpec.describe Sentry::Yabeda::Adapter do
 
   describe "guard conditions" do
     it "does not emit metrics when Sentry is not initialized" do
-      expect(Sentry.metrics).not_to receive(:count)
+      expect(Sentry::Yabeda).not_to receive(:count)
 
       counter = build_metric(:counter, name: :requests, group: :rails)
       adapter.perform_counter_increment!(counter, {}, 1)
+    end
+  end
+
+  describe "integration attribution" do
+    it "emits metrics with the Yabeda sdk identity" do
+      perform_basic_setup
+
+      counter = build_metric(:counter, name: :requests, group: :rails)
+      adapter.perform_counter_increment!(counter, {}, 1)
+      Sentry.get_current_client.flush
+
+      envelope = sentry_envelopes.first
+      metric = envelope.items.first.payload[:items].first
+
+      expect(envelope.headers.keys).to contain_exactly(:sent_at)
+      expect(metric[:attributes]["sentry.sdk.name"]).to eq(
+        { type: "string", value: "sentry.ruby.yabeda" }
+      )
     end
   end
 
@@ -205,7 +227,7 @@ RSpec.describe Sentry::Yabeda::Adapter do
       complex_tags = { controller: "orders", action: "create", region: "eu-west", status: 200 }
       counter = build_metric(:counter, name: :requests, group: :rails)
 
-      expect(Sentry.metrics).to receive(:count).with(
+      expect(Sentry::Yabeda).to receive(:count).with(
         "rails.requests",
         value: 1,
         attributes: complex_tags
