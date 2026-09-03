@@ -101,5 +101,21 @@ RSpec.describe Sentry::Integrable do
       event = Sentry.capture_message(message)
       expect(event.sdk).to eq(Sentry.sdk_meta)
     end
+
+    it "generates integration-attributed metric helpers" do
+      expect(Sentry.metrics).to receive(:count).with(
+        "test.count", value: 2, attributes: { source: "test" }, integration: "fake_integration"
+      )
+      expect(Sentry.metrics).to receive(:gauge).with(
+        "test.gauge", 3, unit: "item", attributes: { source: "test" }, integration: "fake_integration"
+      )
+      expect(Sentry.metrics).to receive(:distribution).with(
+        "test.distribution", 4, unit: "second", attributes: { source: "test" }, integration: "fake_integration"
+      )
+
+      Sentry::FakeIntegration.count("test.count", value: 2, attributes: { source: "test" })
+      Sentry::FakeIntegration.gauge("test.gauge", 3, unit: "item", attributes: { source: "test" })
+      Sentry::FakeIntegration.distribution("test.distribution", 4, unit: "second", attributes: { source: "test" })
+    end
   end
 end
