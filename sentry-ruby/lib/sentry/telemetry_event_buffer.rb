@@ -89,53 +89,47 @@ module Sentry
     private
 
     def send_items
+      envelope = Envelope.new(sent_at: Sentry.utc_now.iso8601)
+
       discarded_count = 0
       discarded_bytes = 0
-      processed_items = []
+      envelope_items = []
 
-      @pending_items.each do |item|
-        processed_item = @before_send ? @before_send.call(item) : item
+      if @before_send
+        @pending_items.each do |item|
+          processed_item = @before_send.call(item)
 
-        if processed_item
-          processed_items << processed_item
-        else
-          discarded_count += 1
-          discarded_bytes += JSON.generate(item.to_h).bytesize
+          if processed_item
+            envelope_items << processed_item.to_h
+          else
+            discarded_count += 1
+            discarded_bytes += JSON.generate(item.to_h).bytesize
+          end
         end
+      else
+        envelope_items = @pending_items.map(&:to_h)
       end
 
       unless discarded_count.zero?
         @client.transport.record_lost_event(:before_send, @data_category, num: discarded_count, num_bytes: discarded_bytes)
       end
 
-      processed_items.group_by { |item| sdk_meta_for(item) }.each do |sdk_meta, items|
-        envelope = Envelope.new(
-          event_id: Sentry::Utils.uuid,
-          sent_at: Sentry.utc_now.iso8601,
-          dsn: @dsn,
-          sdk: sdk_meta
-        )
+      return if envelope_items.empty?
 
-        envelope.add_item(
-          {
-            type: @envelope_type,
-            item_count: items.size,
-            content_type: @envelope_content_type
-          },
-          { items: items.map(&:to_h) }
-        )
+      envelope.add_item(
+        {
+          type: @envelope_type,
+          item_count: envelope_items.size,
+          content_type: @envelope_content_type
+        },
+        { items: envelope_items }
+      )
 
-        @client.send_envelope(envelope)
-      end
+      @client.send_envelope(envelope)
     rescue => e
       log_error("[#{self.class}] Failed to send #{@event_class}", e, debug: @debug)
     ensure
       clear!
-    end
-
-    def sdk_meta_for(item)
-      integration_meta = item.respond_to?(:integration_meta) ? item.integration_meta : nil
-      integration_meta || Sentry.sdk_meta
     end
   end
 end

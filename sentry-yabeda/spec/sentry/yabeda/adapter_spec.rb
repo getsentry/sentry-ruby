@@ -213,7 +213,7 @@ RSpec.describe Sentry::Yabeda::Adapter do
       envelope = sentry_envelopes.first
       metric = envelope.items.first.payload[:items].first
 
-      expect(envelope.headers[:sdk]).to eq(Sentry.integrations["yabeda"])
+      expect(envelope.headers.keys).to contain_exactly(:sent_at)
       expect(metric[:attributes]["sentry.sdk.name"]).to eq(
         { type: "string", value: "sentry.ruby.yabeda" }
       )
