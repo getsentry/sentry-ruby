@@ -17,7 +17,8 @@ module Sentry
         Sentry.metrics.count(
           metric_name(counter),
           value: increment,
-          attributes: attributes_for(tags)
+          attributes: attributes_for(tags),
+          integration: :yabeda
         )
       end
 
@@ -28,7 +29,8 @@ module Sentry
           metric_name(gauge),
           value,
           unit: unit_for(gauge),
-          attributes: attributes_for(tags)
+          attributes: attributes_for(tags),
+          integration: :yabeda
         )
       end
 
@@ -39,7 +41,8 @@ module Sentry
           metric_name(histogram),
           value,
           unit: unit_for(histogram),
-          attributes: attributes_for(tags)
+          attributes: attributes_for(tags),
+          integration: :yabeda
         )
       end
 
@@ -50,7 +53,8 @@ module Sentry
           metric_name(summary),
           value,
           unit: unit_for(summary),
-          attributes: attributes_for(tags)
+          attributes: attributes_for(tags),
+          integration: :yabeda
         )
       end
 

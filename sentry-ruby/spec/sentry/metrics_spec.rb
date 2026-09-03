@@ -229,6 +229,45 @@ RSpec.describe "Sentry Metrics" do
       expect(metric_names).to contain_exactly("test.counter1", "test.counter2", "test.gauge")
     end
 
+    context "with integration attribution" do
+      let(:integration_meta) { { name: "sentry.ruby.test", version: "1.2.3" }.freeze }
+
+      before do
+        Sentry.integrations["test"] = integration_meta
+      end
+
+      after do
+        Sentry.integrations.delete("test")
+      end
+
+      it "sets metric attributes and the envelope sdk from the integration" do
+        Sentry.metrics.count("test.counter", integration: :test)
+
+        Sentry.get_current_client.flush
+
+        expect(sentry_envelopes.first.headers[:sdk]).to eq(integration_meta)
+        expect(sentry_metrics.first[:attributes]["sentry.sdk.name"]).to eq(
+          { type: "string", value: "sentry.ruby.test" }
+        )
+        expect(sentry_metrics.first[:attributes]["sentry.sdk.version"]).to eq(
+          { type: "string", value: "1.2.3" }
+        )
+      end
+
+      it "partitions mixed metrics into envelopes by sdk" do
+        Sentry.metrics.count("test.manual")
+        Sentry.metrics.count("test.integration", integration: "test")
+
+        Sentry.get_current_client.flush
+
+        expect(sentry_envelopes.count).to eq(2)
+        expect(sentry_envelopes.map { |envelope| envelope.headers[:sdk] }).to contain_exactly(
+          Sentry.sdk_meta,
+          integration_meta
+        )
+      end
+    end
+
     describe "envelope structure" do
       it "includes correct envelope headers" do
         Sentry.metrics.count("test.counter")

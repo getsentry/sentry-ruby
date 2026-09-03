@@ -20,7 +20,9 @@ RSpec.describe Sentry::Yabeda::Adapter do
       perform_basic_setup
 
       counter = build_metric(:counter, name: :orders_created, group: :myapp)
-      expect(Sentry.metrics).to receive(:count).with("myapp.orders_created", value: 1, attributes: nil)
+      expect(Sentry.metrics).to receive(:count).with(
+        "myapp.orders_created", value: 1, attributes: nil, integration: :yabeda
+      )
 
       adapter.perform_counter_increment!(counter, {}, 1)
     end
@@ -29,7 +31,9 @@ RSpec.describe Sentry::Yabeda::Adapter do
       perform_basic_setup
 
       counter = build_metric(:counter, name: :total_requests)
-      expect(Sentry.metrics).to receive(:count).with("total_requests", value: 1, attributes: nil)
+      expect(Sentry.metrics).to receive(:count).with(
+        "total_requests", value: 1, attributes: nil, integration: :yabeda
+      )
 
       adapter.perform_counter_increment!(counter, {}, 1)
     end
@@ -43,7 +47,7 @@ RSpec.describe Sentry::Yabeda::Adapter do
       expect(Sentry.metrics).to receive(:count).with(
         "rails.requests",
         value: 5,
-        attributes: tags
+        attributes: tags, integration: :yabeda
       )
 
       adapter.perform_counter_increment!(counter, tags, 5)
@@ -56,7 +60,7 @@ RSpec.describe Sentry::Yabeda::Adapter do
       expect(Sentry.metrics).to receive(:count).with(
         "rails.requests",
         value: 1,
-        attributes: nil
+        attributes: nil, integration: :yabeda
       )
 
       adapter.perform_counter_increment!(counter, {}, 1)
@@ -72,7 +76,7 @@ RSpec.describe Sentry::Yabeda::Adapter do
         "sidekiq.queue_depth",
         42,
         unit: nil,
-        attributes: tags
+        attributes: tags, integration: :yabeda
       )
 
       adapter.perform_gauge_set!(gauge, tags, 42)
@@ -86,7 +90,7 @@ RSpec.describe Sentry::Yabeda::Adapter do
         "process.memory_usage",
         1024,
         unit: "byte",
-        attributes: nil
+        attributes: nil, integration: :yabeda
       )
 
       adapter.perform_gauge_set!(gauge, {}, 1024)
@@ -102,7 +106,7 @@ RSpec.describe Sentry::Yabeda::Adapter do
         "rails.request_duration",
         150.5,
         unit: "millisecond",
-        attributes: tags
+        attributes: tags, integration: :yabeda
       )
 
       adapter.perform_histogram_measure!(histogram, tags, 150.5)
@@ -118,7 +122,7 @@ RSpec.describe Sentry::Yabeda::Adapter do
         "http.response_size",
         2048,
         unit: "byte",
-        attributes: tags
+        attributes: tags, integration: :yabeda
       )
 
       adapter.perform_summary_observe!(summary, tags, 2048)
@@ -131,7 +135,7 @@ RSpec.describe Sentry::Yabeda::Adapter do
 
       histogram = build_metric(:histogram, name: :duration, group: :rails, unit: :seconds)
       expect(Sentry.metrics).to receive(:distribution).with(
-        "rails.duration", 1.5, unit: "second", attributes: nil
+        "rails.duration", 1.5, unit: "second", attributes: nil, integration: :yabeda
       )
 
       adapter.perform_histogram_measure!(histogram, {}, 1.5)
@@ -142,7 +146,7 @@ RSpec.describe Sentry::Yabeda::Adapter do
 
       histogram = build_metric(:histogram, name: :latency, unit: :milliseconds)
       expect(Sentry.metrics).to receive(:distribution).with(
-        "latency", 250.0, unit: "millisecond", attributes: nil
+        "latency", 250.0, unit: "millisecond", attributes: nil, integration: :yabeda
       )
 
       adapter.perform_histogram_measure!(histogram, {}, 250.0)
@@ -153,7 +157,7 @@ RSpec.describe Sentry::Yabeda::Adapter do
 
       gauge = build_metric(:gauge, name: :threads)
       expect(Sentry.metrics).to receive(:gauge).with(
-        "threads", 5, unit: nil, attributes: nil
+        "threads", 5, unit: nil, attributes: nil, integration: :yabeda
       )
 
       adapter.perform_gauge_set!(gauge, {}, 5)
@@ -164,7 +168,7 @@ RSpec.describe Sentry::Yabeda::Adapter do
 
       gauge = build_metric(:gauge, name: :uptime, unit: :second)
       expect(Sentry.metrics).to receive(:gauge).with(
-        "uptime", 3600, unit: "second", attributes: nil
+        "uptime", 3600, unit: "second", attributes: nil, integration: :yabeda
       )
 
       adapter.perform_gauge_set!(gauge, {}, 3600)
@@ -198,6 +202,24 @@ RSpec.describe Sentry::Yabeda::Adapter do
     end
   end
 
+  describe "integration attribution" do
+    it "emits metrics with the Yabeda sdk identity" do
+      perform_basic_setup
+
+      counter = build_metric(:counter, name: :requests, group: :rails)
+      adapter.perform_counter_increment!(counter, {}, 1)
+      Sentry.get_current_client.flush
+
+      envelope = sentry_envelopes.first
+      metric = envelope.items.first.payload[:items].first
+
+      expect(envelope.headers[:sdk]).to eq(Sentry.integrations["yabeda"])
+      expect(metric[:attributes]["sentry.sdk.name"]).to eq(
+        { type: "string", value: "sentry.ruby.yabeda" }
+      )
+    end
+  end
+
   describe "tag passthrough" do
     it "passes all tags as Sentry attributes" do
       perform_basic_setup
@@ -208,7 +230,7 @@ RSpec.describe Sentry::Yabeda::Adapter do
       expect(Sentry.metrics).to receive(:count).with(
         "rails.requests",
         value: 1,
-        attributes: complex_tags
+        attributes: complex_tags, integration: :yabeda
       )
 
       adapter.perform_counter_increment!(counter, complex_tags, 1)

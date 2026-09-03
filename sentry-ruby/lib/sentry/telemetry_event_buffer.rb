@@ -89,52 +89,52 @@ module Sentry
     private
 
     def send_items
-      envelope = Envelope.new(
-        event_id: Sentry::Utils.uuid,
-        sent_at: Sentry.utc_now.iso8601,
-        dsn: @dsn,
-        sdk: Sentry.sdk_meta
-      )
-
       discarded_count = 0
       discarded_bytes = 0
-      envelope_items = []
+      processed_items = []
 
-      if @before_send
-        @pending_items.each do |item|
-          processed_item = @before_send.call(item)
+      @pending_items.each do |item|
+        processed_item = @before_send ? @before_send.call(item) : item
 
-          if processed_item
-            envelope_items << processed_item.to_h
-          else
-            discarded_count += 1
-            discarded_bytes += JSON.generate(item.to_h).bytesize
-          end
+        if processed_item
+          processed_items << processed_item
+        else
+          discarded_count += 1
+          discarded_bytes += JSON.generate(item.to_h).bytesize
         end
-      else
-        envelope_items = @pending_items.map(&:to_h)
       end
 
       unless discarded_count.zero?
         @client.transport.record_lost_event(:before_send, @data_category, num: discarded_count, num_bytes: discarded_bytes)
       end
 
-      return if envelope_items.empty?
+      processed_items.group_by { |item| sdk_meta_for(item) }.each do |sdk_meta, items|
+        envelope = Envelope.new(
+          event_id: Sentry::Utils.uuid,
+          sent_at: Sentry.utc_now.iso8601,
+          dsn: @dsn,
+          sdk: sdk_meta
+        )
 
-      envelope.add_item(
-        {
-          type: @envelope_type,
-          item_count: envelope_items.size,
-          content_type: @envelope_content_type
-        },
-        { items: envelope_items }
-      )
+        envelope.add_item(
+          {
+            type: @envelope_type,
+            item_count: items.size,
+            content_type: @envelope_content_type
+          },
+          { items: items.map(&:to_h) }
+        )
 
-      @client.send_envelope(envelope)
+        @client.send_envelope(envelope)
+      end
     rescue => e
       log_error("[#{self.class}] Failed to send #{@event_class}", e, debug: @debug)
     ensure
       clear!
+    end
+
+    def sdk_meta_for(item)
+      item.respond_to?(:sdk_meta) ? item.sdk_meta : Sentry.sdk_meta
     end
   end
 end
