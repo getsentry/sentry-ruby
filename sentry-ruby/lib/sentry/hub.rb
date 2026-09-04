@@ -123,9 +123,11 @@ module Sentry
       return unless instrumenter == configuration.instrumenter
 
       if transaction.nil? && !options.key?(:trace_id) && established
-        # reuse the already-established trace_id instead of generating an unrelated one
+        # adopt the already-established trace and span rather than generating unrelated
+        # ones, so anything already logged against them resolves to this transaction
         propagation_context = current_scope.propagation_context
         options[:trace_id] = propagation_context.trace_id
+        options[:span_id] ||= propagation_context.span_id
         options[:sample_rand] ||= propagation_context.sample_rand
       end
 
@@ -393,6 +395,7 @@ module Sentry
 
       Transaction.new(
         trace_id: propagation_context.trace_id,
+        span_id: propagation_context.span_id,
         parent_span_id: propagation_context.parent_span_id,
         parent_sampled: propagation_context.parent_sampled,
         baggage: propagation_context.baggage,
