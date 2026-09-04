@@ -93,6 +93,90 @@ RSpec.describe 'Sentry::Rack::CaptureExceptions', when: :rack_available? do
       expect(env.key?("sentry.error_event_id")).to eq(false)
     end
 
+    context "when trace context was already established earlier in the stack" do
+      it "does not re-clone the hub and reuses the existing propagation context" do
+        Sentry.clone_hub_to_current_thread
+        Sentry.get_current_scope.generate_propagation_context(env)
+        env[Sentry::PropagationContext::ESTABLISHED_ENV_KEY] = Sentry.get_current_scope.propagation_context
+
+        established_propagation_context = Sentry.get_current_scope.propagation_context
+
+        expect(Sentry).not_to receive(:clone_hub_to_current_thread)
+
+        trace_id_in_app = nil
+        app = lambda do |e|
+          trace_id_in_app = Sentry.get_current_scope.get_trace_context[:trace_id]
+          [200, {}, ['okay']]
+        end
+
+        stack = Sentry::Rack::CaptureExceptions.new(app)
+        stack.call(env)
+
+        expect(trace_id_in_app).to eq(established_propagation_context.trace_id)
+      end
+
+      it "deletes the established flag from env so it doesn't leak into later reuses of the same env" do
+        Sentry.clone_hub_to_current_thread
+        Sentry.get_current_scope.generate_propagation_context(env)
+        env[Sentry::PropagationContext::ESTABLISHED_ENV_KEY] = Sentry.get_current_scope.propagation_context
+
+        app = ->(_e) { [200, {}, ['okay']] }
+        stack = Sentry::Rack::CaptureExceptions.new(app)
+        stack.call(env)
+
+        expect(env.key?(Sentry::PropagationContext::ESTABLISHED_ENV_KEY)).to eq(false)
+      end
+
+      it "honors the incoming trace when the established context belongs to another execution context" do
+        external_transaction = Sentry::Transaction.new(op: "pageload", status: "ok", sampled: true, name: "a/path")
+        env["HTTP_SENTRY_TRACE"] = external_transaction.to_sentry_trace
+
+        Sentry.clone_hub_to_current_thread
+        Sentry.get_current_scope.generate_propagation_context(env)
+        env[Sentry::PropagationContext::ESTABLISHED_ENV_KEY] = Sentry.get_current_scope.propagation_context
+
+        trace_id_in_app = nil
+        app = lambda do |_e|
+          trace_id_in_app = Sentry.get_current_scope.get_trace_context[:trace_id]
+          [200, {}, ['okay']]
+        end
+
+        stack = Sentry::Rack::CaptureExceptions.new(app)
+        Thread.new { stack.call(env) }.join
+
+        expect(trace_id_in_app).to eq(external_transaction.trace_id)
+      end
+
+      it "does not reuse a stale established context on a later, unrelated call with the same env" do
+        # Simulates a long-lived connection (e.g. Action Cable) that stores the handshake's
+        # env and reuses it for many separate operations over its lifetime - only the very
+        # first operation immediately following CaptureContext should honor the flag.
+        Sentry.clone_hub_to_current_thread
+        Sentry.get_current_scope.generate_propagation_context(env)
+        env[Sentry::PropagationContext::ESTABLISHED_ENV_KEY] = Sentry.get_current_scope.propagation_context
+
+        app = ->(_e) { [200, {}, ['okay']] }
+        stack = Sentry::Rack::CaptureExceptions.new(app)
+        stack.call(env)
+
+        Sentry.clone_hub_to_current_thread
+        propagation_context_before_second_call = Sentry.get_current_scope.propagation_context
+
+        trace_id_in_second_call = nil
+        second_app = lambda do |e|
+          trace_id_in_second_call = Sentry.get_current_scope.get_trace_context[:trace_id]
+          [200, {}, ['okay']]
+        end
+
+        expect(Sentry).to receive(:clone_hub_to_current_thread).and_call_original
+
+        second_stack = Sentry::Rack::CaptureExceptions.new(second_app)
+        second_stack.call(env)
+
+        expect(trace_id_in_second_call).not_to eq(propagation_context_before_second_call.trace_id)
+      end
+    end
+
     context "with config.data_collection.stack_frame_variables = true" do
       before do
         perform_basic_setup do |config|

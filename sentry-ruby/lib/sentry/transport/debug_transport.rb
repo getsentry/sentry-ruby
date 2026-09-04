@@ -27,6 +27,11 @@ module Sentry
       backend.send_event(event)
     end
 
+    def send_envelope(envelope)
+      log_envelope(envelope)
+      backend.send_envelope(envelope)
+    end
+
     def log_envelope(envelope)
       envelope_json = {
         timestamp: Time.now.utc.iso8601,
