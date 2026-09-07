@@ -108,7 +108,7 @@ GEM
       rbs (>= 3, < 5)
     ruby-lsp-rspec (0.1.29)
       ruby-lsp (~> 0.26.0)
-    sequel (5.107.0)
+    sequel (5.108.0)
       bigdecimal
     simplecov (0.22.0)
       docile (~> 1.1)
