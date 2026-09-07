@@ -306,7 +306,7 @@ GEM
     rufus-scheduler (3.9.2)
       fugit (~> 1.1, >= 1.11.1)
     securerandom (0.3.2)
-    sequel (5.107.0)
+    sequel (5.108.0)
       bigdecimal
     sidekiq (7.3.10)
       base64
