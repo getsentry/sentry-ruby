@@ -27,25 +27,44 @@ module Sentry
       # Recursively walks a Hash/Array/String structure and returns a copy
       # with every String forced into valid UTF-8 encoding.
       #
-      # This is needed because `JSON.generate`/`JSON.dump` on json 3.0+ raise
-      # an `Encoding::UndefinedConversionError` (previously just a
-      # deprecation warning on json 2.8+) when they encounter a String
-      # tagged with a non-UTF-8 encoding (e.g. `ASCII-8BIT`/`BINARY`) that
-      # contains bytes invalid for the target encoding. Use this to sanitize
-      # payloads before handing them to the JSON generator.
+      # Circular Hash and Array references are replaced with nil in the
+      # returned copy.
       #
       # @param value [Object]
       # @return [Object]
-      def self.deep_encode_utf_8(value)
+      def self.deep_encode_utf_8(value, seen = {})
         case value
         when String
           encode_to_utf_8(value)
         when Hash
-          value.each_with_object({}) do |(key, val), memo|
-            memo[deep_encode_utf_8(key)] = deep_encode_utf_8(val)
+          return nil if seen.key?(value.object_id)
+
+          seen[value.object_id] = true
+          encoded_value = {}
+
+          begin
+            value.each do |key, val|
+              encoded_key = deep_encode_utf_8(key, seen)
+              encoded_value[encoded_key] = deep_encode_utf_8(val, seen)
+            end
+            encoded_value
+          ensure
+            seen.delete(value.object_id)
           end
         when Array
-          value.map { |val| deep_encode_utf_8(val) }
+          return nil if seen.key?(value.object_id)
+
+          seen[value.object_id] = true
+          encoded_value = []
+
+          begin
+            value.each do |val|
+              encoded_value << deep_encode_utf_8(val, seen)
+            end
+            encoded_value
+          ensure
+            seen.delete(value.object_id)
+          end
         else
           value
         end

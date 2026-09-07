@@ -2,9 +2,6 @@
 
 module Sentry
   class Breadcrumb
-    MAX_NESTING = 10
-    DATA_SERIALIZATION_ERROR_MESSAGE = "[data were removed due to serialization issues]"
-
     # @return [String, nil]
     attr_accessor :category
     # @return [Hash, nil]
@@ -37,7 +34,7 @@ module Sentry
     def to_h
       {
         category: @category,
-        data: serialized_data,
+        data: @data,
         level: @level,
         message: @message,
         timestamp: @timestamp,
@@ -51,8 +48,7 @@ module Sentry
       @message = message && Utils::EncodingHelper.valid_utf_8?(message) ? message.byteslice(0..Event::MAX_MESSAGE_SIZE_IN_BYTES) : ""
     end
 
-    # Sanitizes the breadcrumb's arbitrary, user-supplied data so it doesn't
-    # carry a String with an invalid/non-UTF-8 encoding into JSON generation.
+    # Sanitizes the breadcrumb's arbitrary, user-supplied data encoding.
     # @param data [Hash, nil]
     # @return [void]
     def data=(data)
@@ -63,23 +59,6 @@ module Sentry
     # @return [void]
     def level=(level) # needed to meet the Sentry spec
       @level = level == "warn" ? "warning" : level
-    end
-
-    private
-
-    def serialized_data
-      begin
-        ::JSON.parse(::JSON.generate(@data, max_nesting: MAX_NESTING))
-      rescue Exception => e
-        Sentry.sdk_logger.debug(LOGGER_PROGNAME) do
-          <<~MSG
-can't serialize breadcrumb data because of error: #{e}
-data: #{@data}
-          MSG
-        end
-
-        { error: DATA_SERIALIZATION_ERROR_MESSAGE }
-      end
     end
   end
 end

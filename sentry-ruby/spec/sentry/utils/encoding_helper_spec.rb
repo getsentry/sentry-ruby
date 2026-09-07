@@ -55,5 +55,15 @@ RSpec.describe Sentry::Utils::EncodingHelper do
 
       expect(value[:message].encoding).to eq(Encoding::BINARY)
     end
+
+    it "replaces circular references without recursing forever" do
+      value = []
+      value << value
+
+      result = described_class.deep_encode_utf_8(value)
+
+      expect(result).to eq([nil])
+      expect(value.first).to equal(value)
+    end
   end
 end

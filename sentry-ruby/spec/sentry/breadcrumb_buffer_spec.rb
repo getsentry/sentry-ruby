@@ -23,20 +23,6 @@ RSpec.describe Sentry::BreadcrumbBuffer do
     )
   end
 
-  let(:problematic_crumb) do
-    # circular reference
-    a = []
-    b = []
-    a.push(b)
-    b.push(a)
-
-    Sentry::Breadcrumb.new(
-      category: "baz",
-      message: "crumb_3",
-      data: a
-    )
-  end
-
   describe "#record" do
     subject do
       described_class.new(1)
@@ -56,18 +42,15 @@ RSpec.describe Sentry::BreadcrumbBuffer do
   end
 
   describe "#to_h" do
-    it "doesn't break because of 1 problematic crumb" do
+    it "serializes breadcrumbs" do
       subject.record(crumb_1)
       subject.record(crumb_2)
-      subject.record(problematic_crumb)
 
       result = subject.to_h[:values]
 
       expect(result[0][:category]).to eq("foo")
-      expect(result[0][:data]).to eq({ "name" => "John", "age" => 25 })
+      expect(result[0][:data]).to eq({ name: "John", age: 25 })
       expect(result[1][:category]).to eq("bar")
-      expect(result[2][:category]).to eq("baz")
-      expect(result[2][:data][:error]).to eq("[data were removed due to serialization issues]")
     end
   end
 end

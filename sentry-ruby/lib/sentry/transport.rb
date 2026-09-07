@@ -67,20 +67,6 @@ module Sentry
       serialized_items&.each do |item|
         record_lost_event(:send_error, item.data_category, num: item.item_count, num_bytes: item.lost_event_byte_size)
       end
-    rescue EncodingError, JSON::GeneratorError => e
-      # As of json 3.0, `JSON.generate` raises instead of warning when it
-      # encounters a String with an invalid/non-UTF-8 encoding (e.g. a
-      # BINARY-tagged String). We sanitize known data-entry points (e.g.
-      # breadcrumb data, log attributes), but this is a last resort so an
-      # unexpected case can't crash the background worker.
-      log_error("[Transport] Failed to serialize envelope", e, debug: @debug)
-
-      # `serialized_items` may still be nil here if the error was raised
-      # while serializing the envelope itself (rather than while sending
-      # already-serialized data), so fall back to the envelope's own items.
-      (serialized_items || envelope.items).each do |item|
-        record_lost_event(:send_error, item.data_category, num: item.item_count)
-      end
     end
 
     def serialize_envelope(envelope)
@@ -88,7 +74,14 @@ module Sentry
       serialized_results = []
 
       envelope.items.each do |item|
-        result, oversized = item.serialize
+        result, oversized, serialization_error = item.serialize
+
+        if serialization_error
+          log_error("[Transport] Failed to serialize envelope item [#{item.type}]", serialization_error, debug: @debug)
+          record_lost_event(:send_error, item.data_category, num: item.item_count)
+
+          next
+        end
 
         if oversized
           log_debug("Envelope item [#{item.type}] is still oversized after size reduction: {#{item.size_breakdown}}")

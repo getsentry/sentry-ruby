@@ -79,40 +79,21 @@ RSpec.describe Sentry::Breadcrumb do
       )
     end
 
-    let(:very_deep_crumb) do
-      data = [[[[[ { a: [{ b: [[{ c: 4 }]] }] }]]]]]
-
-      Sentry::Breadcrumb.new(
-        category: "cow",
-        message: "I cause too much recursion",
-        data: data
-      )
-    end
-
-    it "serializes data correctly" do
+    it "returns the sanitized data" do
       result = crumb.to_h
 
       expect(result[:category]).to eq("foo")
       expect(result[:message]).to eq("crumb")
-      expect(result[:data]).to eq({ "name" => "John", "age" => 25 })
+      expect(result[:data]).to eq({ name: "John", age: 25 })
     end
 
-    it "rescues data serialization issue and ditch the data" do
+    it "handles a circular breadcrumb without recursing forever" do
       result = problematic_crumb.to_h
 
       expect(result[:category]).to eq("baz")
       expect(result[:message]).to eq("I cause issues")
-      expect(result[:data][:error]).to eq("[data were removed due to serialization issues]")
-      expect(stringio.string).to match(/can't serialize breadcrumb data because of error: nesting of 10 is too deep/)
-    end
-
-    it "rescues data serialization issue for extremely nested data and ditch the data" do
-      result = very_deep_crumb.to_h
-
-      expect(result[:category]).to eq("cow")
-      expect(result[:message]).to eq("I cause too much recursion")
-      expect(result[:data][:error]).to eq("[data were removed due to serialization issues]")
-      expect(stringio.string).to match(/can't serialize breadcrumb data because of error: nesting of 10 is too deep/)
+      expect(result[:data]).to eq([[nil]])
+      expect { JSON.generate(result[:data]) }.not_to raise_error
     end
 
     it "sanitizes non-UTF-8 encoded strings in data at assignment time (json 3.0+ behavior)" do
@@ -128,7 +109,8 @@ RSpec.describe Sentry::Breadcrumb do
       expect(crumb.data[:note].valid_encoding?).to eq(true)
 
       result = crumb.to_h
-      expect(result[:data]).not_to eq({ error: Sentry::Breadcrumb::DATA_SERIALIZATION_ERROR_MESSAGE })
+      expect(result[:data][:note].encoding).to eq(Encoding::UTF_8)
+      expect(result[:data][:note].valid_encoding?).to eq(true)
     end
   end
 end

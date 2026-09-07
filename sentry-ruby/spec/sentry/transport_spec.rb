@@ -499,6 +499,20 @@ RSpec.describe Sentry::Transport do
       end
     end
 
+    context "when sending raises an encoding error" do
+      let(:event) { client.event_from_exception(ZeroDivisionError.new("divided by 0")) }
+      let(:envelope) { subject.envelope_from_event(event) }
+
+      before do
+        allow(subject).to receive(:send_data).and_raise(EncodingError, "simulated send error")
+      end
+
+      it "does not handle the error as a serialization failure" do
+        expect { subject.send_envelope(envelope) }.to raise_error(EncodingError, "simulated send error")
+        expect(io.string).not_to match(/Failed to serialize envelope/)
+      end
+    end
+
     context "transaction event" do
       let(:transaction) do
         Sentry::Transaction.new(name: "test transaction", op: "rack.request")
@@ -652,27 +666,33 @@ RSpec.describe Sentry::Transport do
       end
     end
 
-    context "when JSON.generate raises an encoding error (json 3.0+ behavior)" do
-      # json 3.0+ raises Encoding::UndefinedConversionError (a subclass of
-      # EncodingError) instead of just warning when JSON.generate encounters
-      # a String tagged with a non-UTF-8 encoding that contains bytes invalid
-      # for the target encoding. Simulate that here regardless of the json
-      # gem version actually loaded, as a last-resort safety net for cases
-      # not already covered by sanitizing data at the point it's filled in
-      # (e.g. breadcrumb data, log attributes).
-      let(:event) { client.event_from_exception(ZeroDivisionError.new("divided by 0")) }
-      let(:envelope) { subject.envelope_from_event(event) }
-
-      before do
-        allow(JSON).to receive(:generate).and_raise(EncodingError, "simulated json 3.0 encoding error")
+    context "when JSON.generate raises an encoding error for an item (json 3.0+ behavior)" do
+      let(:bad_payload) { { message: "bad payload" } }
+      let(:good_payload) { { message: "good payload" } }
+      let(:envelope) do
+        Sentry::Envelope.new.tap do |new_envelope|
+          new_envelope.add_item({ type: "event" }, bad_payload)
+          new_envelope.add_item({ type: "event" }, good_payload)
+        end
       end
 
-      it "does not raise, logs the failure, and records a lost event instead of sending" do
-        expect(subject).not_to receive(:send_data)
+      before do
+        allow(JSON).to receive(:generate).and_wrap_original do |original, value|
+          raise EncodingError, "simulated json 3.0 encoding error" if value.equal?(bad_payload)
+
+          original.call(value)
+        end
+      end
+
+      it "skips the failed item, sends the remaining items, and records the loss" do
+        expect(subject).to receive(:send_data) do |data|
+          expect(data).to include("good payload")
+          expect(data).not_to include("bad payload")
+        end
 
         expect { subject.send_envelope(envelope) }.not_to raise_error
 
-        expect(io.string).to match(/Failed to serialize envelope/)
+        expect(io.string).to match(/Failed to serialize envelope item/)
         expect(subject).to have_recorded_lost_event(:send_error, 'error')
       end
     end

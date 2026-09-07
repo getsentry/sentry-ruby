@@ -72,6 +72,8 @@ module Sentry
       end
 
       [result, result.bytesize > size_limit]
+    rescue EncodingError, JSON::GeneratorError => e
+      [nil, false, e]
     end
 
     def size_breakdown
