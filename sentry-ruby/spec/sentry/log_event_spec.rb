@@ -204,7 +204,7 @@ RSpec.describe Sentry::LogEvent do
 
       hash = event.to_h
       expect { JSON.generate(hash) }.not_to raise_error
-      expect(hash[:attributes]["payload"][:type]).to eq("string")
+      expect(hash[:attributes][:payload][:type]).to eq("string")
     end
   end
 end
