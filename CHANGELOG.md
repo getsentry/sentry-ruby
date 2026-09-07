@@ -66,7 +66,7 @@ We recommend migrating to `data_collection` to match the behavior you want event
 
 ### Bug Fixes 🐛
 
-- Sanitize payload encodings and rescue `EncodingError`/`JSON::GeneratorError` during envelope/event JSON serialization to support the `json` gem 3.0, which now raises instead of warning when generating JSON from a String tagged with a non-UTF-8 encoding. Fixes #2462
+- Sanitize breadcrumb data and structured-log attribute values to valid UTF-8 where they're filled in, and add a last-resort rescue for `EncodingError`/`JSON::GeneratorError` in `Transport#send_envelope`, to support the `json` gem 3.0, which now raises instead of warning when generating JSON from a String tagged with a non-UTF-8 encoding. Fixes #2462
 
 ## 6.7.0
 

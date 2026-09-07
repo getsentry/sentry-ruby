@@ -115,22 +115,17 @@ RSpec.describe Sentry::Breadcrumb do
       expect(stringio.string).to match(/can't serialize breadcrumb data because of error: nesting of 10 is too deep/)
     end
 
-    it "sanitizes and retries when JSON.generate raises an encoding error (json 3.0+ behavior)" do
-      # json 3.0+ raises Encoding::UndefinedConversionError (a subclass of
-      # EncodingError) instead of just warning when JSON.generate encounters
-      # a String tagged with a non-UTF-8 encoding that contains bytes
-      # invalid for the target encoding. Simulate that here regardless of
-      # the json gem version actually loaded.
+    it "sanitizes non-UTF-8 encoded strings in data at assignment time (json 3.0+ behavior)" do
+      # json 3.0+ raises Encoding::UndefinedConversionError instead of just
+      # warning when JSON.generate encounters a String tagged with a
+      # non-UTF-8 encoding that contains bytes invalid for the target
+      # encoding. Breadcrumb#data= sanitizes proactively so this never
+      # reaches JSON.generate in the first place.
       invalid_string = "\xFF\xFEinvalid".dup.force_encoding(Encoding::BINARY)
       crumb = Sentry::Breadcrumb.new(category: "foo", message: "crumb", data: { note: invalid_string })
 
-      call_count = 0
-      allow(JSON).to receive(:generate).and_wrap_original do |original, *args|
-        call_count += 1
-        raise EncodingError, "simulated json 3.0 encoding error" if call_count == 1
-
-        original.call(*args)
-      end
+      expect(crumb.data[:note].encoding).to eq(Encoding::UTF_8)
+      expect(crumb.data[:note].valid_encoding?).to eq(true)
 
       result = crumb.to_h
       expect(result[:data]).not_to eq({ error: Sentry::Breadcrumb::DATA_SERIALIZATION_ERROR_MESSAGE })

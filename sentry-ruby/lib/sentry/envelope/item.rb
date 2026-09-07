@@ -51,14 +51,11 @@ module Sentry
     def lost_event_byte_size
       return unless byte_data_category
 
-      (payload.is_a?(String) ? payload : safe_json_generate(payload)).bytesize
+      (payload.is_a?(String) ? payload : JSON.generate(payload)).bytesize
     end
 
     def to_s
-      [
-        safe_json_generate(@headers),
-        @payload.is_a?(String) ? @payload : safe_json_generate(@payload)
-      ].join("\n")
+      [JSON.generate(@headers), @payload.is_a?(String) ? @payload : JSON.generate(@payload)].join("\n")
     end
 
     def serialize
@@ -79,23 +76,11 @@ module Sentry
 
     def size_breakdown
       payload.map do |key, value|
-        "#{key}: #{safe_json_generate(value).bytesize}"
+        "#{key}: #{JSON.generate(value).bytesize}"
       end.join(", ")
     end
 
     private
-
-    # Sanitizes `value` (removing invalid UTF-8 byte sequences from any
-    # tagged strings) before generating JSON, and retries once if
-    # `JSON.generate` still raises an encoding related error.
-    #
-    # See `Utils::EncodingHelper.deep_encode_utf_8` for details on why this
-    # is necessary as of json 3.0.
-    def safe_json_generate(value)
-      JSON.generate(value)
-    rescue EncodingError, JSON::GeneratorError
-      JSON.generate(Utils::EncodingHelper.deep_encode_utf_8(value))
-    end
 
     def remove_breadcrumbs!
       if payload.key?(:breadcrumbs)

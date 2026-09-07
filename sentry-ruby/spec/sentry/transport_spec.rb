@@ -657,8 +657,9 @@ RSpec.describe Sentry::Transport do
       # EncodingError) instead of just warning when JSON.generate encounters
       # a String tagged with a non-UTF-8 encoding that contains bytes invalid
       # for the target encoding. Simulate that here regardless of the json
-      # gem version actually loaded, as a last-resort safety net beyond the
-      # per-item sanitization.
+      # gem version actually loaded, as a last-resort safety net for cases
+      # not already covered by sanitizing data at the point it's filled in
+      # (e.g. breadcrumb data, log attributes).
       let(:event) { client.event_from_exception(ZeroDivisionError.new("divided by 0")) }
       let(:envelope) { subject.envelope_from_event(event) }
 

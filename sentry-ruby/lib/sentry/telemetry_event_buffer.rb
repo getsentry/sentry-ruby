@@ -62,7 +62,7 @@ module Sentry
           @client.transport.record_lost_event(
             :queue_overflow,
             @data_category,
-            num_bytes: safe_json_bytesize(item.to_h)
+            num_bytes: JSON.generate(item.to_h).bytesize
           )
         else
           @pending_items << item
@@ -103,7 +103,7 @@ module Sentry
             envelope_items << processed_item.to_h
           else
             discarded_count += 1
-            discarded_bytes += safe_json_bytesize(item.to_h)
+            discarded_bytes += JSON.generate(item.to_h).bytesize
           end
         end
       else
@@ -130,15 +130,6 @@ module Sentry
       log_error("[#{self.class}] Failed to send #{@event_class}", e, debug: @debug)
     ensure
       clear!
-    end
-
-    # Sanitizes `value` before generating JSON so that a String tagged with
-    # an invalid/non-UTF-8 encoding (which raises with json 3.0+) doesn't
-    # crash telemetry buffering.
-    def safe_json_bytesize(value)
-      JSON.generate(value).bytesize
-    rescue EncodingError, JSON::GeneratorError
-      JSON.generate(Utils::EncodingHelper.deep_encode_utf_8(value)).bytesize
     end
   end
 end

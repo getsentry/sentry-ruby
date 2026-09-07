@@ -187,5 +187,24 @@ RSpec.describe Sentry::LogEvent do
 
       expect(hash[:attributes]).not_to have_key("sentry.origin")
     end
+
+    it "sanitizes non-UTF-8 encoded strings in a non-scalar attribute value (json 3.0+ behavior)" do
+      # json 3.0+ raises Encoding::UndefinedConversionError instead of just
+      # warning when JSON.generate encounters a String tagged with a
+      # non-UTF-8 encoding that contains bytes invalid for the target
+      # encoding. `attribute_hash` sanitizes non-scalar values proactively
+      # before generating.
+      invalid_string = "\xFF\xFEinvalid".dup.force_encoding(Encoding::BINARY)
+
+      event = described_class.new(
+        level: :info,
+        body: "Manual log message",
+        attributes: { payload: { note: invalid_string } }
+      )
+
+      hash = event.to_h
+      expect { JSON.generate(hash) }.not_to raise_error
+      expect(hash[:attributes]["payload"][:type]).to eq("string")
+    end
   end
 end

@@ -70,9 +70,9 @@ module Sentry
     rescue EncodingError, JSON::GeneratorError => e
       # As of json 3.0, `JSON.generate` raises instead of warning when it
       # encounters a String with an invalid/non-UTF-8 encoding (e.g. a
-      # BINARY-tagged String). Individual envelope items already sanitize
-      # their own payloads, but this is a last resort so a single bad
-      # event can't crash the background worker.
+      # BINARY-tagged String). We sanitize known data-entry points (e.g.
+      # breadcrumb data, log attributes), but this is a last resort so an
+      # unexpected case can't crash the background worker.
       log_error("[Transport] Failed to serialize envelope", e, debug: @debug)
 
       # `serialized_items` may still be nil here if the error was raised
@@ -101,13 +101,7 @@ module Sentry
       end
 
       unless serialized_results.empty?
-        headers = begin
-          JSON.generate(envelope.headers)
-        rescue EncodingError, JSON::GeneratorError
-          JSON.generate(Utils::EncodingHelper.deep_encode_utf_8(envelope.headers))
-        end
-
-        data = [headers, *serialized_results].join("\n")
+        data = [JSON.generate(envelope.headers), *serialized_results].join("\n")
       end
 
       [data, serialized_items]

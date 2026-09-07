@@ -19,7 +19,7 @@ module Sentry
         result =
           case value
           when String
-            { value: value, type: "string" }
+            { value: Utils::EncodingHelper.encode_to_utf_8(value), type: "string" }
           when TrueClass, FalseClass
             { value: value, type: "boolean" }
           when Integer
@@ -27,18 +27,12 @@ module Sentry
           when Float
             { value: value, type: "double" }
           else
+            # `value` may be an arbitrary object (e.g. a Hash/Array) that
+            # contains a String with an invalid/non-UTF-8 encoding, which
+            # `JSON.generate` raises on as of json 3.0+. Sanitize it before
+            # generating rather than reacting to the error.
             begin
-              { value: JSON.generate(value), type: "string" }
-            rescue EncodingError, JSON::GeneratorError
-              # As of json 3.0, `JSON.generate` raises instead of warning
-              # when it encounters a String with an invalid/non-UTF-8
-              # encoding (e.g. a BINARY-tagged String). Sanitize and retry
-              # once before giving up.
-              begin
-                { value: JSON.generate(Sentry::Utils::EncodingHelper.deep_encode_utf_8(value)), type: "string" }
-              rescue
-                { value: value, type: "string" }
-              end
+              { value: JSON.generate(Utils::EncodingHelper.deep_encode_utf_8(value)), type: "string" }
             rescue
               { value: value, type: "string" }
             end
