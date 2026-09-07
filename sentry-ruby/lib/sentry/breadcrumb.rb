@@ -62,6 +62,11 @@ module Sentry
     def serialized_data
       begin
         ::JSON.parse(::JSON.generate(@data, max_nesting: MAX_NESTING))
+      rescue EncodingError, ::JSON::GeneratorError
+        # As of json 3.0, `JSON.generate` raises instead of warning when it
+        # encounters a String with an invalid/non-UTF-8 encoding (e.g. a
+        # BINARY-tagged String). Sanitize and retry once before giving up.
+        ::JSON.parse(::JSON.generate(Utils::EncodingHelper.deep_encode_utf_8(@data), max_nesting: MAX_NESTING))
       rescue Exception => e
         Sentry.sdk_logger.debug(LOGGER_PROGNAME) do
           <<~MSG

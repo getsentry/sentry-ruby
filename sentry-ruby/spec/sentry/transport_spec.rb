@@ -651,6 +651,30 @@ RSpec.describe Sentry::Transport do
         expect(io.string).to match(/Sending envelope with items \[log\]/)
       end
     end
+
+    context "when JSON.generate raises an encoding error (json 3.0+ behavior)" do
+      # json 3.0+ raises Encoding::UndefinedConversionError (a subclass of
+      # EncodingError) instead of just warning when JSON.generate encounters
+      # a String tagged with a non-UTF-8 encoding that contains bytes invalid
+      # for the target encoding. Simulate that here regardless of the json
+      # gem version actually loaded, as a last-resort safety net beyond the
+      # per-item sanitization.
+      let(:event) { client.event_from_exception(ZeroDivisionError.new("divided by 0")) }
+      let(:envelope) { subject.envelope_from_event(event) }
+
+      before do
+        allow(JSON).to receive(:generate).and_raise(EncodingError, "simulated json 3.0 encoding error")
+      end
+
+      it "does not raise, logs the failure, and records a lost event instead of sending" do
+        expect(subject).not_to receive(:send_data)
+
+        expect { subject.send_envelope(envelope) }.not_to raise_error
+
+        expect(io.string).to match(/Failed to serialize envelope/)
+        expect(subject).to have_recorded_lost_event(:send_error, 'error')
+      end
+    end
   end
 
   describe "#send_event" do

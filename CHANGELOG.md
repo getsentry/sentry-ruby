@@ -64,6 +64,10 @@ We recommend migrating to `data_collection` to match the behavior you want event
 - Add sensitive key-value collection filter by @sl0thentr0py in [#3025](https://github.com/getsentry/sentry-ruby/pull/3025)
 - Add base DataCollection configuration with defaults and backfill by @sl0thentr0py in [#3022](https://github.com/getsentry/sentry-ruby/pull/3022)
 
+### Bug Fixes 🐛
+
+- Sanitize payload encodings and rescue `EncodingError`/`JSON::GeneratorError` during envelope/event JSON serialization to support the `json` gem 3.0, which now raises instead of warning when generating JSON from a String tagged with a non-UTF-8 encoding. Fixes #2462
+
 ## 6.7.0
 
 ### New Features ✨

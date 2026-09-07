@@ -66,6 +66,20 @@ module Sentry
       serialized_items&.each do |item|
         record_lost_event(:send_error, item.data_category, num: item.item_count, num_bytes: item.lost_event_byte_size)
       end
+    rescue EncodingError, JSON::GeneratorError => e
+      # As of json 3.0, `JSON.generate` raises instead of warning when it
+      # encounters a String with an invalid/non-UTF-8 encoding (e.g. a
+      # BINARY-tagged String). Individual envelope items already sanitize
+      # their own payloads, but this is a last resort so a single bad
+      # event can't crash the background worker.
+      log_error("[Transport] Failed to serialize envelope", e, debug: @transport_configuration.debug)
+
+      # `serialized_items` may still be nil here if the error was raised
+      # while serializing the envelope itself (rather than while sending
+      # already-serialized data), so fall back to the envelope's own items.
+      (serialized_items || envelope.items).each do |item|
+        record_lost_event(:send_error, item.data_category, num: item.item_count)
+      end
     end
 
     def serialize_envelope(envelope)
@@ -85,7 +99,15 @@ module Sentry
         serialized_items << item
       end
 
-      data = [JSON.generate(envelope.headers), *serialized_results].join("\n") unless serialized_results.empty?
+      unless serialized_results.empty?
+        headers = begin
+          JSON.generate(envelope.headers)
+        rescue EncodingError, JSON::GeneratorError
+          JSON.generate(Utils::EncodingHelper.deep_encode_utf_8(envelope.headers))
+        end
+
+        data = [headers, *serialized_results].join("\n")
+      end
 
       [data, serialized_items]
     end

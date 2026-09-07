@@ -29,6 +29,16 @@ module Sentry
           else
             begin
               { value: JSON.generate(value), type: "string" }
+            rescue EncodingError, JSON::GeneratorError
+              # As of json 3.0, `JSON.generate` raises instead of warning
+              # when it encounters a String with an invalid/non-UTF-8
+              # encoding (e.g. a BINARY-tagged String). Sanitize and retry
+              # once before giving up.
+              begin
+                { value: JSON.generate(Sentry::Utils::EncodingHelper.deep_encode_utf_8(value)), type: "string" }
+              rescue
+                { value: value, type: "string" }
+              end
             rescue
               { value: value, type: "string" }
             end

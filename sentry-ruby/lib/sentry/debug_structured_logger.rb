@@ -47,7 +47,7 @@ module Sentry
         attributes: attributes
       }
 
-      File.open(log_file, "a") { |file| file << JSON.dump(log_event_json) << "\n" }
+      File.open(log_file, "a") { |file| file << safe_json_dump(log_event_json) << "\n" }
       log_event_json
     end
 
@@ -65,6 +65,15 @@ module Sentry
     end
 
     private
+
+    # Sanitizes `value` before dumping to JSON so a String tagged with an
+    # invalid/non-UTF-8 encoding (which raises with json 3.0+) doesn't
+    # crash debug logging.
+    def safe_json_dump(value)
+      JSON.dump(value)
+    rescue EncodingError, JSON::GeneratorError
+      JSON.dump(Sentry::Utils::EncodingHelper.deep_encode_utf_8(value))
+    end
 
     def initialize_backend(configuration)
       StructuredLogger.new(configuration)

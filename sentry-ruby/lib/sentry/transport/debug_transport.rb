@@ -36,7 +36,7 @@ module Sentry
         end
       }
 
-      File.open(log_file, "a") { |file| file << JSON.dump(envelope_json) << "\n" }
+      File.open(log_file, "a") { |file| file << safe_json_dump(envelope_json) << "\n" }
     end
 
     def logged_envelopes
@@ -53,6 +53,15 @@ module Sentry
     end
 
     private
+
+    # Sanitizes `value` before dumping to JSON so a String tagged with an
+    # invalid/non-UTF-8 encoding (which raises with json 3.0+) doesn't
+    # crash debug logging.
+    def safe_json_dump(value)
+      JSON.dump(value)
+    rescue EncodingError, JSON::GeneratorError
+      JSON.dump(Utils::EncodingHelper.deep_encode_utf_8(value))
+    end
 
     def initialize_backend(configuration)
       backend = configuration.dsn.local? ? DummyTransport : HTTPTransport

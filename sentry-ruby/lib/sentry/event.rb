@@ -121,7 +121,11 @@ module Sentry
 
     # @return [Hash]
     def to_json_compatible
-      JSON.parse(JSON.generate(to_h))
+      hash = to_h
+
+      JSON.parse(JSON.generate(hash))
+    rescue EncodingError, JSON::GeneratorError
+      JSON.parse(JSON.generate(Utils::EncodingHelper.deep_encode_utf_8(hash)))
     end
 
     private
