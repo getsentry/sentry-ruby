@@ -11,6 +11,11 @@
 # so the locks can never drift from the matrix CI actually runs. Edit the matrix
 # to add/remove a cell, then run this to materialize the gemfiles and locks.
 #
+# The e2e apps under `spec/apps` are covered too. They are ordinary Bundler
+# projects — a committed Gemfile, no matrix axes, one lock each — so there is no
+# wrapper to generate; only the lock is regenerated. One lock serves every Ruby
+# in the e2e job matrix, so each app resolves under the oldest of them.
+#
 # Each cell must resolve against its own Ruby (gemspecs gate on
 # required_ruby_version), so every cell runs under a matching Ruby provided by
 # mise (https://mise.jdx.dev). The required Rubies are declared in
@@ -18,9 +23,11 @@
 # script resolves against those already-installed Rubies and aborts if any are
 # missing.
 #
-#   bin/relock                         # refresh every cell
+#   bin/relock                         # refresh every cell, apps included
 #   bin/relock --gem sentry-ruby       # one gem
+#   bin/relock --app rails-mini        # one e2e app
 #   bin/relock --cell sentry-ruby/gemfiles/ruby-3.2_rack-3_redis-5.gemfile
+#   bin/relock --cell spec/apps/rails-mini/Gemfile
 #   bin/relock --force                 # delete each lock before resolving
 #   bin/relock -l                      # list every cell's lock path
 #
@@ -34,14 +41,19 @@ require "optparse"
 require_relative "lib/matrix"
 include Matrix
 
-# Shell run under the cell's Ruby. Writes the wrapper, re-resolves, adds
-# checksums, and seeds x86_64-linux-gnu into PLATFORMS.
+# Shell run under the cell's Ruby. Re-resolves, adds checksums, and seeds
+# x86_64-linux-gnu into PLATFORMS.
+#
+# WRAPPER is set only for per-matrix cells; an app's Gemfile is committed rather
+# than generated, so writing one would clobber it.
 #
 # When FORCE is set, the existing lock is deleted first so bundler resolves from scratch, use for edge cases.
 RESOLVE = <<~SH
   set -euo pipefail
   mkdir -p "$(dirname "$BUNDLE_GEMFILE")"
-  echo 'eval_gemfile "../Gemfile"' > "$BUNDLE_GEMFILE"
+  if [ -n "${WRAPPER:-}" ]; then
+    echo 'eval_gemfile "../Gemfile"' > "$BUNDLE_GEMFILE"
+  fi
   if [ -n "${FORCE:-}" ]; then
     echo "+ FORCE: removing $BUNDLE_GEMFILE.lock"
     rm -f "$BUNDLE_GEMFILE.lock"
@@ -63,6 +75,7 @@ def run_mise(cell, force: false)
   # re-source the profile and reset Ruby back to the host default.
   argv = [mise_bin, "exec", "ruby@#{cell.ruby}", "--", "bash", "-c", RESOLVE]
   env = cell_env(cell)
+  env = env.merge("WRAPPER" => "1") if cell.generated_wrapper?
   env = env.merge("FORCE" => "1") if force
   env = env.merge("JRUBY" => "1") if cell.ruby.start_with?("jruby")
   [env, argv]
@@ -72,6 +85,7 @@ end
 
 opts = {
   gems: [],
+  apps: [],
   cell: nil,
   list: false,
   force: false
@@ -80,6 +94,7 @@ opts = {
 parser = OptionParser.new do |o|
   o.banner = "Usage: bin/relock [options]"
   o.on("--gem NAME", "Only one gem (repeatable). Default: all.") { |v| opts[:gems] << v }
+  o.on("--app NAME", "Only one e2e app (repeatable). Default: all.") { |v| opts[:apps] << v }
   o.on("--cell PATH", "Resolve exactly one cell by its wrapper/lock path.") { |v| opts[:cell] = v }
   o.on("-l", "--list", "List every cell's lock path, one per line; do nothing.") { opts[:list] = true }
   o.on("--force", "Delete each lock before resolving (resolve from scratch).") { opts[:force] = true }
@@ -90,13 +105,16 @@ parser.parse!(ARGV)
 # ---- select cells --------------------------------------------------------
 
 if opts[:cell]
-  # single explicit cell
-  gem, base = cell_path_parts(opts[:cell])
-  abort "--cell must point at a <gem>/gemfiles/<cell>.gemfile path" unless gem && base
-  cells = [parse_cell(gem, base)]
+  cells = [app_cell_for(opts[:cell])].compact
+  if cells.empty?
+    gem, base = cell_path_parts(opts[:cell])
+    abort "--cell must point at a <gem>/gemfiles/<cell>.gemfile or <app>/Gemfile path" unless gem && base
+    cells = [parse_cell(gem, base)]
+  end
+elsif opts[:gems].empty? && opts[:apps].empty?
+  cells = discover_cells(all_gems) + app_cells
 else
-  gems = opts[:gems].empty? ? all_gems : opts[:gems]
-  cells = discover_cells(gems)
+  cells = discover_cells(opts[:gems]) + app_cells(opts[:apps])
 end
 
 if cells.empty?
@@ -152,9 +170,9 @@ cells.each_with_index do |cell, i|
 
   env, argv = run_mise(cell, force: opts[:force])
   cell_started = Time.now
-  # chdir into the gem dir to match CI's working-directory (avoids stray
-  # files and keeps any .bundle/ config local to the gem).
-  ok = system(env, *argv, chdir: File.join(ROOT, cell.gem))
+  # chdir into the gem/app dir to match CI's working-directory (avoids stray
+  # files and keeps any .bundle/ config local to it).
+  ok = system(env, *argv, chdir: File.join(ROOT, cell.dir))
   elapsed = fmt_duration(Time.now - cell_started)
 
   if ok

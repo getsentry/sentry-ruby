@@ -11,8 +11,8 @@ gem 'activerecord'
 gem 'activejob'
 gem 'sqlite3'
 
-gem 'sentry-ruby', path: Pathname(__dir__).join("../../..").realpath
-gem 'sentry-rails', path: Pathname(__dir__).join("../../..").realpath
+gem 'sentry-ruby', path: '../../..'
+gem 'sentry-rails', path: '../../..'
 gem 'sidekiq'
 gem 'resque'
 gem 'delayed_job_active_record'

@@ -7,9 +7,12 @@ log/
 *.gem
 # Per-matrix lockfiles (<gem>/gemfiles/*.gemfile.lock) ARE committed (supply-chain
 # pinning). The wrapper *.gemfile is regenerated on the fly (identical one-liner),
-# so ignore it. Default locally-resolved lockfiles also stay ignored.
+# so ignore it. Default locally-resolved lockfiles also stay ignored, except the
+# e2e rails-mini app: its lock IS committed so every e2e run pins the same
+# dependency set rather than resolving whatever is newest.
 */gemfiles/*.gemfile
 Gemfile.lock
+!spec/apps/rails-mini/Gemfile.lock
 .coveralls.yml
 .ruby-version
 .ruby-gemset

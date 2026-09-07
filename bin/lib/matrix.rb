@@ -8,8 +8,13 @@
 # Each cell runs under a matching Ruby provided by mise (https://mise.jdx.dev);
 # the required Rubies are declared in .mise.ci.toml and installed with
 # `mise --env ci install`.
+#
+# The e2e apps under spec/apps are cells too, of a second shape: they have a
+# Gemfile of their own rather than a generated wrapper, and no matrix axes. Only
+# bin/relock expands them (bin/test runs gem specs, not the apps).
 
 require "json"
+require "yaml"
 
 module Matrix
   ROOT = File.expand_path("../..", __dir__)
@@ -22,9 +27,27 @@ module Matrix
     "sidekiq" => "SIDEKIQ_VERSION"
   }.freeze
 
-  Cell = Struct.new(:gem, :base, :ruby, :env, :rubyopt, keyword_init: true) do
+  # Apps whose lock is committed, so that an e2e run pins its dependencies
+  # instead of resolving whatever is newest — the same reason the gems do.
+  APP_DIRS = ["spec/apps/rails-mini"].freeze
+
+  # The e2e job matrix, i.e. which Rubies the app locks must satisfy.
+  E2E_WORKFLOW = ".github/workflows/e2e_tests.yml"
+
+  Cell = Struct.new(:gem, :base, :ruby, :env, :rubyopt, :dir, :gemfile, keyword_init: true) do
+    def dir
+      self[:dir] || gem
+    end
+
+    # Matrix cells resolve through a generated wrapper that eval_gemfile's the
+    # gem's own Gemfile; apps point straight at theirs.
     def wrapper
-      "#{gem}/gemfiles/#{base}.gemfile"
+      self[:gemfile] || "#{gem}/gemfiles/#{base}.gemfile"
+    end
+
+    # An app's Gemfile is committed, so only wrappers are ours to (re)write.
+    def generated_wrapper?
+      self[:gemfile].nil?
     end
 
     def lock
@@ -32,7 +55,7 @@ module Matrix
     end
 
     def label
-      "#{gem} / #{base}"
+      generated_wrapper? ? "#{gem} / #{base}" : base
     end
   end
 
@@ -114,6 +137,40 @@ module Matrix
 
   def all_gems
     Dir.glob(File.join(ROOT, "*", "test-matrix.json")).map { |p| File.basename(File.dirname(p)) }.sort
+  end
+
+  def all_apps
+    APP_DIRS.map { |dir| File.basename(dir) }
+  end
+
+  # One committed lock per app serves every Ruby in the e2e matrix, so resolve
+  # under the OLDEST of them: a resolution that installs there installs on the
+  # newer ones too, not the other way round. The workflow's own matrix is the
+  # source of truth here, the way test-matrix.json is for the gems.
+  def oldest_e2e_ruby
+    @oldest_e2e_ruby ||= begin
+      rubies = YAML.load_file(File.join(ROOT, E2E_WORKFLOW), aliases: true)
+                   .dig("jobs", "e2e-tests", "strategy", "matrix", "ruby")
+      abort "Could not read the e2e Ruby matrix from #{E2E_WORKFLOW}" unless rubies.is_a?(Array) && rubies.any?
+
+      rubies.map { |r| r.fetch("flavor") }.min_by { |flavor| Gem::Version.new(flavor) }
+    end
+  end
+
+  def app_cells(apps = all_apps)
+    apps.map do |app|
+      dir = APP_DIRS.find { |d| File.basename(d) == app }
+      abort "Unknown app '#{app}'. Known apps: #{all_apps.join(', ')}" unless dir
+
+      Cell.new(base: app, ruby: oldest_e2e_ruby, env: {}, dir: dir, gemfile: "#{dir}/Gemfile")
+    end
+  end
+
+  # Resolve a --cell path against the apps. Their lock is <dir>/Gemfile.lock, so
+  # there's no gemfiles/<base> segment for cell_path_parts to key off.
+  def app_cell_for(path)
+    dir = path.delete_prefix("./").sub(%r{/Gemfile(\.lock)?\z}, "")
+    app_cells.find { |cell| cell.dir == dir }
   end
 
   def mise_bin
