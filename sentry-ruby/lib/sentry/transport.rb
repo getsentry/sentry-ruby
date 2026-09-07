@@ -31,6 +31,7 @@ module Sentry
       @sdk_logger = configuration.sdk_logger
       @transport_configuration = configuration.transport
       @dsn = configuration.dsn
+      @debug = configuration.debug
       @rate_limits = {}
       @send_client_reports = configuration.send_client_reports
 
@@ -72,7 +73,7 @@ module Sentry
       # BINARY-tagged String). Individual envelope items already sanitize
       # their own payloads, but this is a last resort so a single bad
       # event can't crash the background worker.
-      log_error("[Transport] Failed to serialize envelope", e, debug: @transport_configuration.debug)
+      log_error("[Transport] Failed to serialize envelope", e, debug: @debug)
 
       # `serialized_items` may still be nil here if the error was raised
       # while serializing the envelope itself (rather than while sending
