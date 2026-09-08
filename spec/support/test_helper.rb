@@ -11,8 +11,12 @@ module Test
       ENV.fetch("SENTRY_E2E_RAILS_APP_URL")
     end
 
-    def make_request(path)
-      Net::HTTP.get_response(URI("#{rails_app_url}#{path}"))
+    def make_request(path, headers = {})
+      uri = URI("#{rails_app_url}#{path}")
+
+      Net::HTTP.start(uri.host, uri.port) do |http|
+        http.request(Net::HTTP::Get.new(uri, headers))
+      end
     end
 
     def logged_events
@@ -39,6 +43,31 @@ module Test
           event_count: extracted_events.length,
           envelope_count: envelopes.length
         }
+      end
+    end
+
+    # The SDK instruments Net::HTTP and stamps its own sentry-trace on every outgoing
+    # request, so by default the app continues this process's trace. Turn that off to
+    # exercise requests that arrive without an incoming trace.
+    def without_trace_propagation
+      original = Sentry.configuration.propagate_traces
+      Sentry.configuration.propagate_traces = false
+      yield
+    ensure
+      Sentry.configuration.propagate_traces = original
+    end
+
+    def propagated_trace_id
+      Sentry.get_trace_propagation_headers["sentry-trace"].split("-").first
+    end
+
+    # Log events travel in their own envelope type rather than as events, so they are
+    # not part of logged_events[:events].
+    def logged_log_events
+      logged_events[:envelopes].flat_map do |envelope|
+        envelope["items"]
+          .select { |item| item["headers"]["type"] == "log" }
+          .flat_map { |item| item["payload"]["items"] }
       end
     end
 
