@@ -28,6 +28,9 @@ end
 
 rails_version = Gem::Version.new(rails_version)
 
+# Rails 7.1+ passes the removed `quirks_mode` option to JSON 2.x APIs.
+gem "json", "< 3" if rails_version >= Gem::Version.new("7.1.0")
+
 gem "rails", "~> #{rails_version}"
 
 if rails_version >= Gem::Version.new("8.1.0")

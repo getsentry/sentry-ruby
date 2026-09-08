@@ -10,6 +10,8 @@ gem 'actionpack'
 gem 'activerecord'
 gem 'activejob'
 gem 'sqlite3'
+# Active Support still relies on the JSON 2.x API.
+gem 'json', '< 3'
 
 gem 'sentry-ruby', path: '../../..'
 gem 'sentry-rails', path: '../../..'
