@@ -21,7 +21,7 @@ module Sentry
         max_items_before_drop: MAX_METRICS_BEFORE_DROP,
         envelope_type: "trace_metric",
         envelope_content_type: "application/vnd.sentry.items.trace-metric+json",
-        before_send: configuration.before_send_metric
+        before_send: :before_send_metric
       )
     end
   end

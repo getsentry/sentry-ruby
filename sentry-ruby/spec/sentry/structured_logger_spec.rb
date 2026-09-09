@@ -258,6 +258,24 @@ RSpec.describe Sentry::StructuredLogger do
           expect(transport.discarded_events[[:before_send, "log_byte"]]).to be > 0
         end
       end
+
+      context "when the callback raises" do
+        let(:send_client_reports) { true }
+        let(:before_send_log) { ->(_log) { raise TypeError } }
+        let(:string_io) { StringIO.new }
+
+        before do
+          Sentry.configuration.sdk_logger = Logger.new(string_io)
+        end
+
+        it "drops the log and records a discarded event" do
+          expect { Sentry.logger.info("Hello World") }.not_to raise_error
+
+          expect(sentry_logs).to be_empty
+          expect(transport.discarded_events).to include([:before_send, "log_item"] => 1)
+          expect(string_io.string).to include("Error in before_send_log callback: TypeError")
+        end
+      end
     end
   end
 end

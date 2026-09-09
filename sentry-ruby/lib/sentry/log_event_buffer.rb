@@ -21,7 +21,7 @@ module Sentry
         max_items_before_drop: MAX_EVENTS_BEFORE_DROP,
         envelope_type: "log",
         envelope_content_type: "application/vnd.sentry.items.log+json",
-        before_send: configuration.before_send_log
+        before_send: :before_send_log
       )
     end
   end

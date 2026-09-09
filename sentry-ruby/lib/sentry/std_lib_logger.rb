@@ -4,6 +4,8 @@ module Sentry
   # Ruby Logger support Add commentMore actions
   # intercepts any logger instance and send the log to Sentry too.
   module StdLibLogger
+    include CallbackHelper
+
     SEVERITY_MAP = {
       0 => :debug,
       1 => :info,
@@ -37,8 +39,12 @@ module Sentry
         message = message.to_s.strip
 
         if !message.nil? && message != Sentry::Logger::PROGNAME && method = SEVERITY_MAP[severity]
-          if (filter = Sentry.configuration.std_lib_logger_filter) && !filter.call(self, message, method)
-            return result
+          if filter = Sentry.configuration.std_lib_logger_filter
+            return result unless safe_dispatch_callback(
+              "std_lib_logger_filter",
+              filter,
+              [self, message, method]
+            )
           end
 
           Sentry.logger.send(method, message, origin: ORIGIN)
