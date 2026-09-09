@@ -209,6 +209,19 @@ RSpec.describe Sentry::Transaction do
           expect(subject.effective_sample_rate).to eq(0.0)
         end
 
+        it "falls back to traces_sample_rate when traces_sampler raises" do
+          Sentry.configuration.traces_sample_rate = 1.0
+          Sentry.configuration.traces_sampler = ->(_) { raise TypeError }
+
+          expect do
+            subject.set_initial_sample_decision(sampling_context: {})
+          end.not_to raise_error
+
+          expect(subject.sampled).to eq(true)
+          expect(subject.effective_sample_rate).to eq(1.0)
+          expect(string_io.string).to include("Error in traces_sampler callback: TypeError")
+        end
+
         it "prioritizes traces_sampler over inherited decision" do
           Sentry.configuration.traces_sampler = ->(_) { false }
 

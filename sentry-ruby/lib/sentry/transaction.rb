@@ -14,6 +14,7 @@ module Sentry
     SOURCES = %i[custom url route view component task]
 
     include LoggingHelper
+    include CallbackHelper
 
     # The name of the transaction.
     # @return [String]
@@ -142,7 +143,12 @@ module Sentry
 
       sample_rate =
         if configuration.traces_sampler.is_a?(Proc)
-          configuration.traces_sampler.call(sampling_context)
+          safe_dispatch_callback(
+            "traces_sampler",
+            configuration.traces_sampler,
+            [sampling_context],
+            fallback: configuration.traces_sample_rate
+          )
         elsif !sampling_context[:parent_sampled].nil?
           sampling_context[:parent_sampled]
         else

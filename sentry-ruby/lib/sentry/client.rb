@@ -11,6 +11,7 @@ require "sentry/utils/encoding_helper"
 module Sentry
   class Client
     include LoggingHelper
+    include CallbackHelper
 
     # The Transport object that'll send events for the client.
     # @return [Transport]
@@ -89,7 +90,7 @@ module Sentry
           transport.record_lost_event(:queue_overflow, "span", num: spans_before + 1) if is_transaction
         end
       else
-        send_event(event, hint)
+        event = send_event(event, hint)
       end
 
       event
@@ -237,7 +238,11 @@ module Sentry
       spans_before = event.is_a?(TransactionEvent) ? event.spans.size : 0
 
       if event.is_a?(ErrorEvent) && configuration.before_send
-        event = configuration.before_send.call(event, hint)
+        event = safe_dispatch_callback(
+          "before_send",
+          configuration.before_send,
+          [event, hint]
+        )
 
         if !event.is_a?(ErrorEvent)
           # Avoid serializing the event object in this case because we aren't sure what it is and what it contains
@@ -250,7 +255,11 @@ module Sentry
       end
 
       if event.is_a?(TransactionEvent) && configuration.before_send_transaction
-        event = configuration.before_send_transaction.call(event, hint)
+        event = safe_dispatch_callback(
+          "before_send_transaction",
+          configuration.before_send_transaction,
+          [event, hint]
+        )
 
         if !event.is_a?(TransactionEvent)
           # Avoid serializing the event object in this case because we aren't sure what it is and what it contains
@@ -268,7 +277,11 @@ module Sentry
       end
 
       if event.is_a?(CheckInEvent) && configuration.before_send_check_in
-        event = configuration.before_send_check_in.call(event, hint)
+        event = safe_dispatch_callback(
+          "before_send_check_in",
+          configuration.before_send_check_in,
+          [event, hint]
+        )
 
         if !event.is_a?(CheckInEvent)
           # Avoid serializing the event object in this case because we aren't sure what it is and what it contains

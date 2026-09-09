@@ -9,6 +9,7 @@ require "etc"
 module Sentry
   class Scope
     include ArgumentCheckingHelper
+    include CallbackHelper
 
     ATTRIBUTES = [
       :transaction_name,
@@ -71,7 +72,8 @@ module Sentry
 
       unless all_event_processors.empty?
         all_event_processors.each do |processor_block|
-          event = processor_block.call(event, hint)
+          event = safe_dispatch_callback("event_processor", processor_block, [event, hint])
+          return unless event
         end
       end
 

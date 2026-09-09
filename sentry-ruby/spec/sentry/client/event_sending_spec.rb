@@ -12,6 +12,11 @@ RSpec.describe Sentry::Client do
   before do
     stub_request(:post, Sentry::TestHelper::DUMMY_DSN)
     allow(Sentry).to receive(:configuration).and_return configuration
+    allow(Sentry).to receive(:initialized?).and_return(true)
+  end
+
+  after do
+    allow(Sentry).to receive(:initialized?).and_call_original
   end
 
   subject(:client) { Sentry::Client.new(configuration) }
@@ -373,7 +378,7 @@ RSpec.describe Sentry::Client do
         it "swallows the event and logs the failure" do
           expect(client.capture_event(event, scope)).to be_nil
 
-          expect(string_io.string).to match(/Event capturing failed: TypeError/)
+          expect(string_io.string).to match(/Error in event_processor callback: TypeError/)
           expect(string_io.string).not_to match(__FILE__)
         end
 
@@ -384,7 +389,7 @@ RSpec.describe Sentry::Client do
           it "logs the error with backtrace" do
             expect(client.capture_event(event, scope)).to be_nil
 
-            expect(string_io.string).to match(/Event capturing failed: TypeError/)
+            expect(string_io.string).to match(/Error in event_processor callback: TypeError/)
             expect(string_io.string).to match(__FILE__)
           end
         end
@@ -411,7 +416,9 @@ RSpec.describe Sentry::Client do
 
           expect(client.capture_event(event, scope)).to be_nil
 
-          expect(string_io.string).to match(/Event sending failed: TypeError/)
+          expect(string_io.string).to match(/Error in before_send callback: TypeError/)
+          expect(client.transport).to have_recorded_lost_event(:before_send, "error")
+          expect(client.transport).not_to have_recorded_lost_event(:network_error, "error")
         end
 
         it "captures client report for error event" do
@@ -447,7 +454,9 @@ RSpec.describe Sentry::Client do
           expect(client.capture_event(event, scope)).to be_a(Sentry::ErrorEvent)
           sleep(0.2)
 
-          expect(string_io.string).to match(/Event sending failed: TypeError/)
+          expect(string_io.string).to match(/Error in before_send callback: TypeError/)
+          expect(client.transport).to have_recorded_lost_event(:before_send, "error")
+          expect(client.transport).not_to have_recorded_lost_event(:network_error, "error")
         end
 
         it "captures client report for error event" do
@@ -486,12 +495,12 @@ RSpec.describe Sentry::Client do
           end
         end
 
-        it "raises the error" do
-          expect do
-            client.send_event(event)
-          end.to raise_error(TypeError)
+        it "swallows and logs the error" do
+          expect(client.send_event(event)).to be_nil
 
-          expect(string_io.string).to match(/Event sending failed: TypeError/)
+          expect(string_io.string).to match(/Error in before_send callback: TypeError/)
+          expect(client.transport).to have_recorded_lost_event(:before_send, "error")
+          expect(client.transport).not_to have_recorded_lost_event(:network_error, "error")
         end
 
         context "with config.debug = true" do
@@ -500,11 +509,9 @@ RSpec.describe Sentry::Client do
           end
 
           it "logs the error with backtrace" do
-            expect do
-              client.send_event(event)
-            end.to raise_error(TypeError)
+            expect(client.send_event(event)).to be_nil
 
-            expect(string_io.string).to match(/Event sending failed: TypeError/)
+            expect(string_io.string).to match(/Error in before_send callback: TypeError/)
             expect(string_io.string).to match(__FILE__)
           end
         end
