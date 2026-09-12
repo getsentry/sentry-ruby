@@ -1,3 +1,9 @@
+## Unreleased
+
+### Bug Fixes 🐛
+
+- Send buffered logs and metrics on the background worker instead of the thread that filled the buffer by @ikraamg in [#3079](https://github.com/getsentry/sentry-ruby/pull/3079)
+
 ## 7.0.0
 
 ### Breaking Changes 🛠

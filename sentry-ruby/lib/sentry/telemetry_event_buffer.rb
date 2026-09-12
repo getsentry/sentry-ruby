@@ -125,7 +125,16 @@ module Sentry
         { items: envelope_items }
       )
 
-      @client.send_envelope(envelope)
+      # Off the calling thread: send_items runs under @mutex, so a request thread that filled the
+      # buffer would otherwise hold every other add_item caller behind its HTTP round trip.
+      queued = Sentry.background_worker.perform do
+        @client.send_envelope(envelope)
+      rescue => e
+        log_error("[#{self.class}] Failed to send #{@event_class}", e, debug: @debug)
+      end
+
+      # A full worker queue discards the block without raising, the same way it drops an event.
+      @client.transport.record_lost_event(:queue_overflow, @data_category, num: envelope_items.size) unless queued
     rescue => e
       log_error("[#{self.class}] Failed to send #{@event_class}", e, debug: @debug)
     ensure
