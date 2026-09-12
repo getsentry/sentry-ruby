@@ -58,6 +58,46 @@ RSpec.shared_examples "telemetry event buffer" do |event_factory:, max_items_con
     end
   end
 
+  describe "sending" do
+    let(:max_items) { 3 }
+
+    before do
+      Sentry.configuration.background_worker_threads = 1
+      Sentry.background_worker = Sentry::BackgroundWorker.new(Sentry.configuration)
+    end
+
+    it "sends the envelope on the background worker, not on the thread that filled the buffer" do
+      sending_thread = nil
+      allow(client).to receive(:send_envelope) { sending_thread = Thread.current }
+
+      3.times { subject.add_item(event) }
+      Sentry.background_worker.shutdown
+
+      expect(sending_thread).not_to be_nil
+      expect(sending_thread).not_to eq(Thread.current)
+    end
+
+    it "records the batch as lost when the background worker's queue is full" do
+      allow(Sentry.background_worker).to receive(:perform).and_return(false)
+      expect(client.transport).to receive(:record_lost_event).with(:queue_overflow, subject.data_category, num: 3)
+
+      3.times { subject.add_item(event) }
+
+      expect(subject).to be_empty
+    end
+
+    it "flushes on the background worker too" do
+      sending_thread = nil
+      allow(client).to receive(:send_envelope) { sending_thread = Thread.current }
+
+      subject.add_item(event)
+      subject.flush
+      Sentry.background_worker.shutdown
+
+      expect(sending_thread).not_to eq(Thread.current)
+    end
+  end
+
   describe "multi-threaded access" do
     let(:max_items) { 30 }
 
