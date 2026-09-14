@@ -7,6 +7,7 @@ require "sentry/session"
 module Sentry
   class Hub
     include ArgumentCheckingHelper
+    include CallbackHelper
 
     MUTEX = Mutex.new
 
@@ -296,7 +297,11 @@ module Sentry
       return unless configuration.enabled_in_current_env?
 
       if before_breadcrumb = current_client.configuration.before_breadcrumb
-        breadcrumb = before_breadcrumb.call(breadcrumb, hint)
+        breadcrumb = safe_dispatch_callback(
+          "before_breadcrumb",
+          before_breadcrumb,
+          [breadcrumb, hint]
+        )
       end
 
       return unless breadcrumb

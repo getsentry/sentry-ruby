@@ -7,6 +7,8 @@ require "sentry/backtrace/line"
 module Sentry
   # @api private
   class Backtrace
+    extend CallbackHelper
+
     # holder for an Array of Backtrace::Line instances
     attr_reader :lines
 
@@ -15,7 +17,14 @@ module Sentry
     def self.parse(backtrace, project_root, app_dirs_pattern, in_app_pattern: nil, &backtrace_cleanup_callback)
       ruby_lines = backtrace.is_a?(Array) ? backtrace : backtrace.split(/\n\s*/)
 
-      ruby_lines = backtrace_cleanup_callback.call(ruby_lines) if backtrace_cleanup_callback
+      if backtrace_cleanup_callback
+        ruby_lines = safe_dispatch_callback(
+          "backtrace_cleanup_callback",
+          backtrace_cleanup_callback,
+          [ruby_lines],
+          fallback: ruby_lines
+        )
+      end
 
       # in_app_pattern is now passed in from StacktraceBuilder, so this regex won't be triggered
       # only here for backwards compat and will be deleted

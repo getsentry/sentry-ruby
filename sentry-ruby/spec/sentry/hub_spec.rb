@@ -481,6 +481,25 @@ RSpec.describe Sentry::Hub do
           expect(peek_crumb).to eq(nil)
         end
       end
+
+      context "when before_breadcrumb raises" do
+        before do
+          allow(Sentry).to receive(:configuration).and_return(configuration)
+          allow(Sentry).to receive(:initialized?).and_return(true)
+          configuration.before_breadcrumb = ->(_breadcrumb, _hint) { raise TypeError }
+        end
+
+        after do
+          allow(Sentry).to receive(:initialized?).and_call_original
+        end
+
+        it "logs the error and doesn't add anything" do
+          expect { subject.add_breadcrumb(new_breadcrumb) }.not_to raise_error
+
+          expect(peek_crumb).to eq(nil)
+          expect(string_io.string).to include("Error in before_breadcrumb callback: TypeError")
+        end
+      end
     end
 
     context "when the SDK is not activated in the current environment" do
@@ -609,7 +628,7 @@ RSpec.describe Sentry::Hub do
     let(:message) { "Test message" }
 
     it 'sends the result of Event.capture_type' do
-      expect(client).to receive(:send_event)
+      expect(client).to receive(:send_event).and_call_original
 
       event = subject.capture_message("Test message")
 

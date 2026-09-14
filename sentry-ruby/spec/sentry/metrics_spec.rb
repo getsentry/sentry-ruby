@@ -316,6 +316,8 @@ RSpec.describe "Sentry Metrics" do
     end
 
     context "with before_send_metric callback" do
+      let(:string_io) { StringIO.new }
+
       it "receives MetricEvent" do
         perform_basic_setup do |config|
           config.before_send_metric = lambda do |metric|
@@ -360,6 +362,20 @@ RSpec.describe "Sentry Metrics" do
         expect(sentry_metrics.count).to eq(1)
         expect(sentry_metrics.first[:name]).to eq("test.allowed")
         expect(Sentry.get_current_client.transport).to have_recorded_lost_event(:before_send, 'trace_metric', num: 2, num_bytes: a_value > 0)
+      end
+
+      it "drops metrics when the callback raises" do
+        perform_basic_setup do |config|
+          config.sdk_logger = Logger.new(string_io)
+          config.before_send_metric = ->(_metric) { raise TypeError }
+        end
+
+        expect { Sentry.metrics.count("test.failed") }.not_to raise_error
+        Sentry.get_current_client.flush
+
+        expect(sentry_metrics).to be_empty
+        expect(Sentry.get_current_client.transport).to have_recorded_lost_event(:before_send, 'trace_metric', num: 1, num_bytes: a_value > 0)
+        expect(string_io.string).to include("Error in before_send_metric callback: TypeError")
       end
     end
   end

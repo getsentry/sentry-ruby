@@ -12,6 +12,8 @@ module Sentry
   #
   # @!visibility private
   class TelemetryEventBuffer < ThreadedPeriodicWorker
+    include CallbackHelper
+
     FLUSH_INTERVAL = 5 # seconds
 
     # @!visibility private
@@ -21,6 +23,7 @@ module Sentry
       super(configuration.sdk_logger, FLUSH_INTERVAL)
 
       @client = client
+      @configuration = configuration
       @dsn = configuration.dsn
       @debug = configuration.debug
       @event_class = event_class
@@ -95,9 +98,9 @@ module Sentry
       discarded_bytes = 0
       envelope_items = []
 
-      if @before_send
+      if callback = @configuration.send(@before_send)
         @pending_items.each do |item|
-          processed_item = @before_send.call(item)
+          processed_item = safe_dispatch_callback(@before_send.to_s, callback, [item])
 
           if processed_item
             envelope_items << processed_item.to_h
