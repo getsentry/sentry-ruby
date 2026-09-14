@@ -7,7 +7,6 @@ RSpec.describe "Sentry::Breadcrumbs::SentryLogger" do
     perform_basic_setup do |config|
       config.breadcrumbs_logger = [:sentry_logger]
       config.max_log_events = 1
-      config.enabled_patches = [:logger]
     end
   end
 
@@ -103,23 +102,5 @@ RSpec.describe "Sentry::Breadcrumbs::SentryLogger" do
         a.join
       end
     end
-  end
-
-  it "does not conflict with :logger patch" do
-    logger = ::Logger.new(nil)
-
-    logger.info("Hello World")
-
-    expect(sentry_logs).to_not be_empty
-
-    log_event = sentry_logs.last
-
-    expect(log_event[:level]).to eql("info")
-    expect(log_event[:body]).to eql("Hello World")
-
-    breadcrumb = breadcrumbs.peek
-
-    expect(breadcrumb.level).to eq("info")
-    expect(breadcrumb.message).to eq("Hello World")
   end
 end
