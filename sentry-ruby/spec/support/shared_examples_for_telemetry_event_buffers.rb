@@ -49,11 +49,16 @@ RSpec.shared_examples "telemetry event buffer" do |event_factory:, max_items_con
       2.times { subject.add_item(event) }
     end
 
-    it "auto-flushes pending items to the client when the number of items reaches max_items" do
-      expect(client).to receive(:send_envelope)
+    it "auto-flushes pending items to the client using the buffer thread when the number of items reaches max_items" do
+      thread = nil
+      expect(client).to receive(:send_envelope) do
+        thread = Thread.current
+      end
 
       3.times { subject.add_item(event) }
 
+      subject.flush
+      expect(thread).to eq(subject.thread)
       expect(subject).to be_empty
     end
   end
@@ -95,7 +100,7 @@ RSpec.shared_examples "telemetry event buffer" do |event_factory:, max_items_con
     let(:max_items) { 30 }
 
     it "thread-safely handles concurrent access" do
-      expect(client).to receive(:send_envelope).exactly(3).times
+      expect(client).to receive(:send_envelope).at_least(:once)
 
       threads = 3.times.map do
         Thread.new do
@@ -169,6 +174,7 @@ RSpec.shared_examples "telemetry event buffer" do |event_factory:, max_items_con
         3.times { subject.add_item(event) }
       }.not_to raise_error
 
+      subject.flush
       expect(reentrant_calls).to be >= 1
     end
 
@@ -182,8 +188,24 @@ RSpec.shared_examples "telemetry event buffer" do |event_factory:, max_items_con
 
       3.times { subject.add_item(event) }
 
+      subject.flush
       expect(items_sent).not_to be_empty
       expect(string_io.string).not_to include("deadlock")
+    end
+
+    it "does not add items from the buffer thread" do
+      worker_thread = Queue.new
+
+      allow(client).to receive(:send_envelope) do
+        worker_thread << Thread.current
+        subject.add_item(event)
+      end
+
+      3.times { subject.add_item(event) }
+
+      expect(worker_thread.pop).to eq(subject.thread)
+      subject.wait_until_idle
+      expect(subject).to be_empty
     end
   end
 
@@ -214,12 +236,14 @@ RSpec.shared_examples "telemetry event buffer" do |event_factory:, max_items_con
       it "logs the error to sdk_logger" do
         3.times { subject.add_item(event) }
 
+        subject.flush
         expect(string_io.string).to include("Failed to send #{event.class}")
       end
 
       it "clears the buffer after a failed send to avoid memory buildup" do
         3.times { subject.add_item(event) }
 
+        subject.flush
         expect(subject).to be_empty
       end
     end
