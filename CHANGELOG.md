@@ -7,7 +7,7 @@
   Using `sentry-rails` will automatically turn on automatic structured logging from Rails. if you want to turn it off, use:
 
   ```ruby
-  Sentry.init do |config
+  Sentry.init do |config|
     # ...
     config.rails.structured_logging.enabled = false
   end
