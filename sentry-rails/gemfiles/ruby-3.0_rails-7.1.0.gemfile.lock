@@ -112,7 +112,7 @@ GEM
     benchmark-memory (0.1.2)
       memory_profiler (~> 0.9)
     benchmark_driver (0.16.5)
-    bigdecimal (4.1.2)
+    bigdecimal (4.1.3)
     builder (3.3.0)
     cgi (0.5.2)
     concurrent-ruby (1.3.8)
@@ -259,7 +259,7 @@ GEM
       redis (>= 4)
     reline (0.7.0)
       io-console (~> 0.5)
-    resque (3.0.2)
+    resque (3.0.3)
       base64 (~> 0.1)
       logger
       mono_logger (~> 1)
