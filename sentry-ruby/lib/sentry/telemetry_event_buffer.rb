@@ -41,14 +41,18 @@ module Sentry
     end
 
     def flush
-      @mutex.synchronize do
-        return if empty?
+      pending_items = @mutex.synchronize do
+        next if @pending_items.empty?
 
-        log_debug("[#{self.class}] flushing #{size} #{@event_class}")
-
-        send_items
+        items = @pending_items
+        @pending_items = []
+        items
       end
 
+      return unless pending_items
+
+      log_debug("[#{self.class}] flushing #{pending_items.size} #{@event_class}")
+      send_items(pending_items)
       self
     end
     alias_method :run, :flush
@@ -57,23 +61,29 @@ module Sentry
       # Prevent ThreadError from re-entrant locking (e.g. transport instrumentation calling Sentry.metrics.*)
       return self if @mutex.owned?
 
-      @mutex.synchronize do
+      dropped = false
+      size_exceeded = @mutex.synchronize do
         return unless ensure_thread
 
         if size >= @max_items_before_drop
-          log_debug("[#{self.class}] exceeded max capacity, dropping event")
-          @client.transport.record_lost_event(
-            :queue_overflow,
-            @data_category,
-            num_bytes: JSON.generate(item.to_h).bytesize
-          )
+          dropped = true
         else
           @pending_items << item
         end
 
-        send_items if size >= @max_items
+        size >= @max_items
       end
 
+      if dropped
+        log_debug("[#{self.class}] exceeded max capacity, dropping event")
+        @client.transport.record_lost_event(
+          :queue_overflow,
+          @data_category,
+          num_bytes: JSON.generate(item.to_h).bytesize
+        )
+      end
+
+      flush if size_exceeded
       self
     end
 
@@ -91,7 +101,7 @@ module Sentry
 
     private
 
-    def send_items
+    def send_items(pending_items)
       envelope = Envelope.new(sent_at: Sentry.utc_now.iso8601)
 
       discarded_count = 0
@@ -99,7 +109,7 @@ module Sentry
       envelope_items = []
 
       if callback = @configuration.send(@before_send)
-        @pending_items.each do |item|
+        pending_items.each do |item|
           processed_item = safe_dispatch_callback(@before_send.to_s, callback, [item])
 
           if processed_item
@@ -110,7 +120,7 @@ module Sentry
           end
         end
       else
-        envelope_items = @pending_items.map(&:to_h)
+        envelope_items = pending_items.map(&:to_h)
       end
 
       unless discarded_count.zero?
@@ -131,8 +141,6 @@ module Sentry
       @client.send_envelope(envelope)
     rescue => e
       log_error("[#{self.class}] Failed to send #{@event_class}", e, debug: @debug)
-    ensure
-      clear!
     end
   end
 end

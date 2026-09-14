@@ -58,6 +58,39 @@ RSpec.shared_examples "telemetry event buffer" do |event_factory:, max_items_con
     end
   end
 
+  describe "sending" do
+    let(:max_items) { 3 }
+
+    it "does not hold the mutex while sending" do
+      send_started = Queue.new
+      continue_send = Queue.new
+      add_finished = Queue.new
+
+      allow(client).to receive(:send_envelope) do
+        send_started << true
+        continue_send.pop
+      end
+
+      # trigger a flush
+      sender = Thread.new do
+        max_items.times { subject.add_item(event) }
+      end
+
+      # start sending, will block till continue_send
+      send_started.pop
+
+      Thread.new do
+        subject.add_item(event)
+        add_finished << true
+      end
+
+      # sending shouldn't block the add
+      expect(add_finished.pop).to be(true)
+      continue_send << true
+      sender.join
+    end
+  end
+
   describe "multi-threaded access" do
     let(:max_items) { 30 }
 
@@ -79,14 +112,11 @@ RSpec.shared_examples "telemetry event buffer" do |event_factory:, max_items_con
   end
 
   describe "max capacity and dropping events" do
-    let(:max_items) { 3 }
+    let(:max_items) { max_items_before_drop + 1 }
     let(:max_items_before_drop) { 10 }
 
     before do
       subject.instance_variable_set(:@max_items_before_drop, max_items_before_drop)
-
-      # don't clear pending items to allow buffer to grow
-      allow(subject).to receive(:clear!)
     end
 
     it "adds items up to max_items_before_drop capacity" do
