@@ -127,6 +127,8 @@ module Sentry
     end
 
     def sentry_logs
+      Sentry.get_current_client&.log_event_buffer&.flush
+
       sentry_envelopes
         .flat_map(&:items)
         .select { |item| item.headers[:type] == "log" }
@@ -134,6 +136,8 @@ module Sentry
     end
 
     def sentry_metrics
+      Sentry.get_current_client&.metric_event_buffer&.flush
+
       sentry_envelopes
         .flat_map(&:items)
         .select { |item| item.headers[:type] == "trace_metric" }
