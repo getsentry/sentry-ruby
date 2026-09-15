@@ -20,6 +20,27 @@ RSpec.describe Sentry::Faraday do
     end
 
     context "with tracing enabled" do
+      it "does not insert instrumentation more than once when a builder is reused" do
+        stubs = Faraday::Adapter::Test::Stubs.new do |stub|
+          stub.get("/") { [200, {}, "ok"] }
+        end
+
+        builder = Faraday::RackBuilder.new do |connection|
+          connection.adapter :test, stubs
+        end
+
+        primary = Faraday.new("https://primary.example", builder: builder)
+        Faraday.new("https://secondary.example", builder: builder)
+
+        expect(builder.handlers.count { |handler| handler == Faraday::Request::Instrumentation }).to eq(1)
+
+        primary.get("/")
+
+        expect {
+          Faraday.new("https://fallback.example", builder: builder)
+        }.not_to raise_error
+      end
+
       let(:http) do
         Faraday.new(url) do |f|
           f.request :json
