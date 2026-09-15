@@ -18,6 +18,24 @@ require "time"
 redis_url = ENV.fetch("REDIS_URL", "redis://localhost:6379")
 Resque.redis = redis_url if defined?(Resque)
 
+# Emits a Sentry log from above Sentry::Rails::CaptureExceptions - the same window
+# Rails::Rack::Logger writes its "Started GET ..." line from, and the window where a
+# request used to pick up an unrelated or stale trace_id. Scoped to one path so the
+# other e2e scenarios keep a quiet log stream.
+class EarlyRequestLogMiddleware
+  PATH = "/trace_context"
+
+  def initialize(app)
+    @app = app
+  end
+
+  def call(env)
+    Sentry.logger.info("early middleware log", source: "middleware") if env["PATH_INFO"] == PATH
+
+    @app.call(env)
+  end
+end
+
 class RailsMiniApp < Rails::Application
   config.hosts = nil
   config.secret_key_base = "test_secret_key_base_for_rails_mini_app"
@@ -49,6 +67,8 @@ class RailsMiniApp < Rails::Application
   end
 
   config.active_job.queue_adapter = SUPPORTED_ACTIVE_JOB_ADAPTERS[adapter_name]
+
+  config.middleware.insert_before Rails::Rack::Logger, EarlyRequestLogMiddleware
   config.x.active_job_adapter_name = adapter_name
 
   def debug_log_path
@@ -74,6 +94,7 @@ class RailsMiniApp < Rails::Application
       config.sdk_debug_transport_log_file = debug_log_path.join("sentry_debug_events.log")
       config.background_worker_threads = 0
 
+      config.max_log_events = 1
       config.structured_logging.logger_class = Sentry::DebugStructuredLogger
       config.structured_logging.file_path = debug_log_path.join("sentry_e2e_tests.log")
 
@@ -238,6 +259,24 @@ class PostsController < ActionController::Base
   end
 end
 
+class TraceContextController < ActionController::Base
+  before_action :set_cors_headers
+
+  def show
+    Sentry.logger.info("controller log", source: "controller")
+
+    render json: { trace: Sentry.get_current_scope.get_trace_context }
+  end
+
+  private
+
+  def set_cors_headers
+    response.headers["Access-Control-Allow-Origin"] = "*"
+    response.headers["Access-Control-Allow-Methods"] = "GET, POST, PUT, DELETE, OPTIONS"
+    response.headers["Access-Control-Allow-Headers"] = "Content-Type, Authorization, sentry-trace, baggage"
+  end
+end
+
 class JobsController < ActionController::Base
   before_action :set_cors_headers
 
@@ -359,6 +398,7 @@ RailsMiniApp.routes.draw do
   get '/health', to: 'events#health'
   get '/error', to: 'error#error'
   get '/trace_headers', to: 'events#trace_headers'
+  get '/trace_context', to: 'trace_context#show'
   get '/logged_events', to: 'events#logged_events'
   post '/clear_logged_events', to: 'events#clear_logged_events'
 
