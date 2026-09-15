@@ -3,11 +3,15 @@
 require "spec_helper"
 
 RSpec.describe Sentry::Rails::CaptureContext do
-  # Records the current scope's trace_id every time it's called, so specs can
+  # Records the current scope's trace context every time it's called, so specs can
   # compare what a piece of middleware would see at different points in the stack.
   class CaptureContextSpecProbe
     def self.captured_trace_ids
       @captured_trace_ids ||= []
+    end
+
+    def self.captured_span_ids
+      @captured_span_ids ||= []
     end
 
     def initialize(app)
@@ -15,7 +19,9 @@ RSpec.describe Sentry::Rails::CaptureContext do
     end
 
     def call(env)
-      self.class.captured_trace_ids << Sentry.get_current_scope.get_trace_context[:trace_id]
+      trace_context = Sentry.get_current_scope.get_trace_context
+      self.class.captured_trace_ids << trace_context[:trace_id]
+      self.class.captured_span_ids << trace_context[:span_id]
       @app.call(env)
     end
   end
@@ -103,6 +109,7 @@ RSpec.describe Sentry::Rails::CaptureContext do
   context "when composed with CaptureExceptions", type: :request do
     before do
       CaptureContextSpecProbe.captured_trace_ids.clear
+      CaptureContextSpecProbe.captured_span_ids.clear
     end
 
     context "without tracing enabled" do
@@ -130,6 +137,15 @@ RSpec.describe Sentry::Rails::CaptureContext do
           app.config.middleware.insert_before(Sentry::Rails::CaptureExceptions, CaptureContextSpecProbe)
           app.config.middleware.insert_after(Sentry::Rails::CaptureExceptions, CaptureContextSpecProbe)
         end
+      end
+
+      it "points a span_id captured before CaptureExceptions at the started transaction" do
+        get "/world"
+
+        transaction = Sentry.get_current_client.transport.events.last
+        early_span_id = CaptureContextSpecProbe.captured_span_ids.first
+
+        expect(early_span_id).to eq(transaction.contexts.dig(:trace, :span_id))
       end
 
       it "keeps the same trace_id from before CaptureExceptions through the started transaction" do
