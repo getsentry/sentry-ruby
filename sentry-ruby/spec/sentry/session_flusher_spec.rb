@@ -105,7 +105,7 @@ RSpec.describe Sentry::SessionFlusher do
         subject.add_session(session)
       end.to change { Thread.list.count }.by(1)
 
-      expect(subject.instance_variable_get(:@thread)).to be_a(Thread)
+      expect(subject.thread).to be_a(Thread)
     end
 
     it "spawns only one thread" do
@@ -113,7 +113,7 @@ RSpec.describe Sentry::SessionFlusher do
         subject.add_session(session)
       end.to change { Thread.list.count }.by(1)
 
-      thread = subject.instance_variable_get(:@thread)
+      thread = subject.thread
       expect(thread).to receive(:alive?).and_return(true)
 
       expect do
