@@ -48,6 +48,8 @@ module Sentry
             cron_config = Sentry.configuration.cron
             monitor_config.checkin_margin ||= cron_config.default_checkin_margin
             monitor_config.max_runtime ||= cron_config.default_max_runtime
+            monitor_config.failure_issue_threshold ||= cron_config.default_failure_issue_threshold
+            monitor_config.recovery_threshold ||= cron_config.default_recovery_threshold
             monitor_config.timezone ||= cron_config.default_timezone
           end
 
