@@ -22,6 +22,10 @@ RSpec.describe Sentry::Cron::MonitorConfig do
 
   describe '.from_interval' do
     it 'returns nil without valid unit' do
+      expect(Sentry.configuration).to receive(:log_warn).with(
+        'Invalid monitor interval unit :bla; expected one of :year, :month, :week, :day, :hour, :minute.'
+      )
+
       expect(described_class.from_interval(5, :bla)).to eq(nil)
     end
 

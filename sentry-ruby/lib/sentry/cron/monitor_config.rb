@@ -35,7 +35,13 @@ module Sentry
       end
 
       def self.from_interval(num, unit, **options)
-        return nil unless MonitorSchedule::Interval::VALID_UNITS.include?(unit)
+        unless MonitorSchedule::Interval::VALID_UNITS.include?(unit)
+          valid_units = MonitorSchedule::Interval::VALID_UNITS.map(&:inspect).join(", ")
+          Sentry.configuration.log_warn(
+            "Invalid monitor interval unit #{unit.inspect}; expected one of #{valid_units}."
+          )
+          return nil
+        end
 
         new(MonitorSchedule::Interval.new(num, unit), **options)
       end
