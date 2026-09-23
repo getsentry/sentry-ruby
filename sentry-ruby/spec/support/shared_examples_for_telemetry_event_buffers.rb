@@ -17,6 +17,8 @@ RSpec.shared_examples "telemetry event buffer" do |event_factory:, max_items_con
   end
 
   after do
+    subject.kill
+    subject.thread&.join
     Sentry.background_worker = Class.new { def shutdown; end; }.new
   end
 
@@ -49,12 +51,130 @@ RSpec.shared_examples "telemetry event buffer" do |event_factory:, max_items_con
       2.times { subject.add_item(event) }
     end
 
-    it "auto-flushes pending items to the client when the number of items reaches max_items" do
-      expect(client).to receive(:send_envelope)
+    it "auto-flushes pending items to the client using the buffer thread when the number of items reaches max_items" do
+      thread = nil
+      expect(client).to receive(:send_envelope) do
+        thread = Thread.current
+      end
 
       3.times { subject.add_item(event) }
 
+      subject.flush
+      expect(thread).to eq(subject.thread)
       expect(subject).to be_empty
+    end
+  end
+
+  describe "#flush" do
+    let(:max_items) { 3 }
+
+    it "does not start a thread for an unused buffer" do
+      expect(subject).not_to receive(:ensure_thread)
+      expect(subject).not_to receive(:wake)
+      expect(subject).not_to receive(:wait_until_idle)
+
+      subject.flush
+
+      expect(subject.thread).to be_nil
+    end
+
+    it "flushes remaining items on the buffer thread with a two-second timeout" do
+      sending_thread = nil
+      expect(client).to receive(:send_envelope) do
+        sending_thread = Thread.current
+      end
+      expect(subject).to receive(:wait_until_idle).with(2).and_call_original
+
+      subject.add_item(event)
+      expect(subject.flush).to be(true)
+
+      expect(sending_thread).to eq(subject.thread)
+      expect(subject).to be_empty
+    end
+
+    it "does nothing when the buffer thread is dead" do
+      subject.add_item(event)
+      subject.thread.kill.join
+
+      expect(subject).not_to receive(:ensure_thread)
+      expect(subject).not_to receive(:wake)
+      expect(subject).not_to receive(:wait_until_idle)
+      expect(client).not_to receive(:send_envelope)
+
+      subject.flush
+
+      expect(subject.size).to eq(1)
+      expect(subject.thread).not_to be_alive
+    end
+
+    it "waits for an in-flight send and then flushes remaining items" do
+      send_started = Queue.new
+      continue_send = Queue.new
+      allow(client).to receive(:send_envelope) do |envelope|
+        send_started << envelope
+        continue_send.pop
+      end
+
+      max_items.times { subject.add_item(event) }
+      expect(send_started.pop.items.first.headers[:item_count]).to eq(max_items)
+      subject.add_item(event)
+
+      flusher = Thread.new { subject.flush }
+      continue_send << true
+
+      expect(send_started.pop.items.first.headers[:item_count]).to eq(1)
+      expect(flusher.join(0.01)).to be_nil
+      continue_send << true
+
+      expect(flusher.join(1)).to eq(flusher)
+      expect(flusher.value).to be(true)
+      expect(subject).to be_empty
+    ensure
+      flusher&.kill
+      flusher&.join
+    end
+
+    context "when sending stalls" do
+      let(:send_started) { Queue.new }
+      let(:continue_send) { Queue.new }
+
+      before do
+        stub_const("Sentry::TelemetryEventBuffer::FLUSH_TIMEOUT", 0.01)
+        allow(client).to receive(:send_envelope) do
+          send_started << true
+          continue_send.pop
+        end
+      end
+
+      it "returns after the timeout when flushing remaining items" do
+        subject.add_item(event)
+
+        flusher = Thread.new { subject.flush }
+        send_started.pop
+
+        expect(flusher.join(1)).to eq(flusher)
+        expect(flusher.value).to be(false)
+        expect(subject.thread).to be_alive
+      ensure
+        flusher&.kill
+        flusher&.join
+      end
+
+      it "returns after the timeout when a send is already in flight" do
+        max_items.times { subject.add_item(event) }
+        send_started.pop
+        subject.add_item(event)
+
+        flusher = Thread.new { subject.flush }
+
+        expect(flusher.join(1)).to eq(flusher)
+        expect(flusher.value).to be(false)
+        expect(subject.size).to eq(1)
+        expect(subject.thread).to be_alive
+      ensure
+        flusher&.kill
+        flusher&.join
+      end
     end
   end
 
@@ -95,7 +215,7 @@ RSpec.shared_examples "telemetry event buffer" do |event_factory:, max_items_con
     let(:max_items) { 30 }
 
     it "thread-safely handles concurrent access" do
-      expect(client).to receive(:send_envelope).exactly(3).times
+      expect(client).to receive(:send_envelope).at_least(:once)
 
       threads = 3.times.map do
         Thread.new do
@@ -169,6 +289,7 @@ RSpec.shared_examples "telemetry event buffer" do |event_factory:, max_items_con
         3.times { subject.add_item(event) }
       }.not_to raise_error
 
+      subject.flush
       expect(reentrant_calls).to be >= 1
     end
 
@@ -182,8 +303,24 @@ RSpec.shared_examples "telemetry event buffer" do |event_factory:, max_items_con
 
       3.times { subject.add_item(event) }
 
+      subject.flush
       expect(items_sent).not_to be_empty
       expect(string_io.string).not_to include("deadlock")
+    end
+
+    it "does not add items from the buffer thread" do
+      worker_thread = Queue.new
+
+      allow(client).to receive(:send_envelope) do
+        worker_thread << Thread.current
+        subject.add_item(event)
+      end
+
+      3.times { subject.add_item(event) }
+
+      expect(worker_thread.pop).to eq(subject.thread)
+      subject.wait_until_idle
+      expect(subject).to be_empty
     end
   end
 
@@ -214,12 +351,14 @@ RSpec.shared_examples "telemetry event buffer" do |event_factory:, max_items_con
       it "logs the error to sdk_logger" do
         3.times { subject.add_item(event) }
 
+        subject.flush
         expect(string_io.string).to include("Failed to send #{event.class}")
       end
 
       it "clears the buffer after a failed send to avoid memory buildup" do
         3.times { subject.add_item(event) }
 
+        subject.flush
         expect(subject).to be_empty
       end
     end

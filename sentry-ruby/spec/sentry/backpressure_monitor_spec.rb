@@ -30,12 +30,12 @@ RSpec.describe Sentry::BackpressureMonitor do
 
     it 'spawns new thread' do
       expect { subject.healthy? }.to change { Thread.list.count }.by(1)
-      expect(subject.instance_variable_get(:@thread)).to be_a(Thread)
+      expect(subject.thread).to be_a(Thread)
     end
 
     it 'spawns only one thread' do
       expect { subject.healthy? }.to change { Thread.list.count }.by(1)
-      thread = subject.instance_variable_get(:@thread)
+      thread = subject.thread
       expect(thread).to receive(:alive?).and_return(true)
       expect { subject.healthy? }.to change { Thread.list.count }.by(0)
     end
@@ -109,7 +109,7 @@ RSpec.describe Sentry::BackpressureMonitor do
   describe '#kill' do
     it 'kills the thread and logs a message' do
       subject.healthy?
-      expect(subject.instance_variable_get(:@thread)).to receive(:kill)
+      expect(subject.thread).to receive(:kill)
       subject.kill
       expect(string_io.string).to include("[#{described_class.name}] thread killed")
     end

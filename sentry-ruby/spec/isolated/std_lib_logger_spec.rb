@@ -2,7 +2,7 @@
 
 SimpleCov.command_name "StdLibLogger"
 
-RSpec.describe Sentry::StdLibLogger do
+RSpec.describe Sentry::StdLibLogger, order: :defined do
   let(:logger) { ::Logger.new($stdout) }
 
   context "when logger patch is not enabled" do
@@ -223,6 +223,24 @@ RSpec.describe Sentry::StdLibLogger do
           expect(sentry_logs).to be_empty
         end
       end
+    end
+
+    it "does not conflict with the Sentry logger patch" do
+      Sentry.configuration.breadcrumbs_logger = [:sentry_logger]
+      logger = ::Logger.new(nil)
+      logger.info("Hello World")
+
+      expect(sentry_logs).to_not be_empty
+
+      log_event = sentry_logs.last
+
+      expect(log_event[:level]).to eql("info")
+      expect(log_event[:body]).to eql("Hello World")
+
+      breadcrumb = Sentry.get_current_scope.breadcrumbs.peek
+
+      expect(breadcrumb.level).to eq("info")
+      expect(breadcrumb.message).to eq("Hello World")
     end
   end
 end

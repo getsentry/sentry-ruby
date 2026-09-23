@@ -15,6 +15,7 @@ module Sentry
     include CallbackHelper
 
     FLUSH_INTERVAL = 5 # seconds
+    FLUSH_TIMEOUT = 2 # seconds
 
     # @!visibility private
     attr_reader :pending_items, :envelope_type, :data_category, :thread
@@ -41,30 +42,25 @@ module Sentry
     end
 
     def flush
-      pending_items = @mutex.synchronize do
-        next if @pending_items.empty?
+      return unless thread&.alive? && wake
 
-        items = @pending_items
-        @pending_items = []
-        items
-      end
-
-      return unless pending_items
-
-      log_debug("[#{self.class}] flushing #{pending_items.size} #{@event_class}")
-      send_items(pending_items)
-      self
+      wait_until_idle(FLUSH_TIMEOUT)
     end
-    alias_method :run, :flush
+
+    def run
+      flush_pending_items
+    end
 
     def add_item(item)
+      # the buffer thread can never add telemetry itself to prevent recursion
+      return self if Thread.current == thread
       # Prevent ThreadError from re-entrant locking (e.g. transport instrumentation calling Sentry.metrics.*)
       return self if @mutex.owned?
 
+      return unless ensure_thread
+
       dropped = false
       size_exceeded = @mutex.synchronize do
-        return unless ensure_thread
-
         if size >= @max_items_before_drop
           dropped = true
         else
@@ -83,7 +79,7 @@ module Sentry
         )
       end
 
-      flush if size_exceeded
+      wake if size_exceeded
       self
     end
 
@@ -100,6 +96,22 @@ module Sentry
     end
 
     private
+
+    def flush_pending_items
+      pending_items = @mutex.synchronize do
+        next if @pending_items.empty?
+
+        items = @pending_items
+        @pending_items = []
+        items
+      end
+
+      return unless pending_items
+
+      log_debug("[#{self.class}] flushing #{pending_items.size} #{@event_class}")
+      send_items(pending_items)
+      self
+    end
 
     def send_items(pending_items)
       envelope = Envelope.new(sent_at: Sentry.utc_now.iso8601)
