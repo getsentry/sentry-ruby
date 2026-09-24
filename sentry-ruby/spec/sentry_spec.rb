@@ -1594,6 +1594,21 @@ RSpec.describe Sentry do
         described_class.close
       end
 
+      it "kills telemetry workers" do
+        client = described_class.get_current_client
+        client.log_event_buffer.add_item(Sentry::LogEvent.new(level: :info, body: "log"))
+        client.metric_event_buffer.add_item(Sentry::MetricEvent.new(name: "metric", type: :counter, value: 1))
+        log_thread = client.log_event_buffer.thread
+        metric_thread = client.metric_event_buffer.thread
+
+        described_class.close
+
+        expect(log_thread.join(1)).to eq(log_thread)
+        expect(metric_thread.join(1)).to eq(metric_thread)
+        expect(log_thread).not_to be_alive
+        expect(metric_thread).not_to be_alive
+      end
+
       it "flushes session flusher" do
         expect(described_class.session_flusher).to receive(:flush)
         described_class.close

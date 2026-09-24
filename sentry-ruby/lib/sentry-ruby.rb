@@ -301,6 +301,8 @@ module Sentry
       if client = get_current_client
         client.configuration.run_after_close_callbacks
         client.flush
+        client.log_event_buffer.kill
+        client.metric_event_buffer.kill
 
         if client.configuration.data_collection.collect_stack_frame_variables?
           exception_locals_tp.disable
