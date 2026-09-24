@@ -130,8 +130,8 @@ module Sentry
     def flush
       transport.flush if configuration.sending_to_dsn_allowed?
       spotlight_transport.flush if spotlight_transport
-      @log_event_buffer&.flush
-      @metric_event_buffer&.flush
+      @log_event_buffer.flush
+      @metric_event_buffer.flush
     end
 
     # Initializes an Event object with the given exception. Returns `nil` if the exception's class is excluded from reporting.
