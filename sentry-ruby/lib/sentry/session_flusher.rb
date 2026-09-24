@@ -35,6 +35,13 @@ module Sentry
 
     private
 
+    def reset_if_forked
+      return unless super
+
+      @mutex = Mutex.new
+      @pending_aggregates = {}
+    end
+
     def init_aggregates(aggregation_key)
       aggregates = { started: aggregation_key.iso8601 }
       Session::AGGREGATE_STATUSES.each { |k| aggregates[k] = 0 }

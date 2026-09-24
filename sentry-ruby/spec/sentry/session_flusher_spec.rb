@@ -128,6 +128,21 @@ RSpec.describe Sentry::SessionFlusher do
       expect(pending_aggregates.values.first).to include({ errored: 0, exited: 1 })
     end
 
+    context "when a child adds a session after a fork", when: { ruby_engine?: "ruby" } do
+      it "discards aggregates inherited from the parent" do
+        subject.add_session(session)
+
+        result = capture_in_separate_process do |writer|
+          subject.add_session(session)
+          aggregate = subject.instance_variable_get(:@pending_aggregates).values.first
+          writer.puts aggregate[:exited]
+        end
+
+        expect(result.to_i).to eq(1)
+        expect(subject.instance_variable_get(:@pending_aggregates).values.first[:exited]).to eq(1)
+      end
+    end
+
     context "when thread creation fails" do
       before do
         allow(Thread).to receive(:new).and_raise(ThreadError)
