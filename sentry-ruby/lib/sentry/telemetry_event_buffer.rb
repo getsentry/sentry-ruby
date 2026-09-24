@@ -54,10 +54,10 @@ module Sentry
     def add_item(item)
       # the buffer thread can never add telemetry itself to prevent recursion
       return self if Thread.current == thread
+      return unless ensure_thread
+
       # Prevent ThreadError from re-entrant locking (e.g. transport instrumentation calling Sentry.metrics.*)
       return self if @mutex.owned?
-
-      return unless ensure_thread
 
       dropped = false
       size_exceeded = @mutex.synchronize do
@@ -96,6 +96,14 @@ module Sentry
     end
 
     private
+
+    def reset_if_forked
+      return unless super
+
+      # Discard items inherited from the parent to avoid duplicate delivery.
+      @mutex = Mutex.new
+      @pending_items = []
+    end
 
     def flush_pending_items
       pending_items = @mutex.synchronize do
