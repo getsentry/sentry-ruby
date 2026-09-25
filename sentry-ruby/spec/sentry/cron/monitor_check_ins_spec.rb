@@ -250,6 +250,8 @@ RSpec.describe Sentry::Cron::MonitorCheckIns do
         perform_basic_setup do |config|
           config.cron.default_checkin_margin = 10
           config.cron.default_max_runtime = 20
+          config.cron.default_failure_issue_threshold = 3
+          config.cron.default_recovery_threshold = 5
           config.cron.default_timezone = 'Europe/Vienna'
         end
 
@@ -294,6 +296,8 @@ RSpec.describe Sentry::Cron::MonitorCheckIns do
         expect(in_progress_event.status).to eq(:in_progress)
         expect(in_progress_event.monitor_config.checkin_margin).to eq(10)
         expect(in_progress_event.monitor_config.max_runtime).to eq(20)
+        expect(in_progress_event.monitor_config.failure_issue_threshold).to eq(3)
+        expect(in_progress_event.monitor_config.recovery_threshold).to eq(5)
         expect(in_progress_event.monitor_config.timezone).to eq('Europe/Vienna')
 
         ok_event = sentry_events.last
@@ -302,6 +306,8 @@ RSpec.describe Sentry::Cron::MonitorCheckIns do
         expect(ok_event.status).to eq(:ok)
         expect(ok_event.monitor_config.checkin_margin).to eq(10)
         expect(ok_event.monitor_config.max_runtime).to eq(20)
+        expect(ok_event.monitor_config.failure_issue_threshold).to eq(3)
+        expect(ok_event.monitor_config.recovery_threshold).to eq(5)
         expect(ok_event.monitor_config.timezone).to eq('Europe/Vienna')
       end
     end

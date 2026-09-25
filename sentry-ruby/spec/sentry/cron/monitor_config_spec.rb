@@ -9,6 +9,8 @@ RSpec.describe Sentry::Cron::MonitorConfig do
         '5 * * * *',
         checkin_margin: 10,
         max_runtime: 20,
+        failure_issue_threshold: 3,
+        recovery_threshold: 5,
         timezone: 'Europe/Vienna'
       )
 
@@ -16,6 +18,8 @@ RSpec.describe Sentry::Cron::MonitorConfig do
       expect(subject.schedule.value).to eq('5 * * * *')
       expect(subject.checkin_margin).to eq(10)
       expect(subject.max_runtime).to eq(20)
+      expect(subject.failure_issue_threshold).to eq(3)
+      expect(subject.recovery_threshold).to eq(5)
       expect(subject.timezone).to eq('Europe/Vienna')
     end
   end
@@ -31,6 +35,8 @@ RSpec.describe Sentry::Cron::MonitorConfig do
         :hour,
         checkin_margin: 10,
         max_runtime: 20,
+        failure_issue_threshold: 3,
+        recovery_threshold: 5,
         timezone: 'Europe/Vienna'
       )
 
@@ -39,6 +45,8 @@ RSpec.describe Sentry::Cron::MonitorConfig do
       expect(subject.schedule.unit).to eq(:hour)
       expect(subject.checkin_margin).to eq(10)
       expect(subject.max_runtime).to eq(20)
+      expect(subject.failure_issue_threshold).to eq(3)
+      expect(subject.recovery_threshold).to eq(5)
       expect(subject.timezone).to eq('Europe/Vienna')
     end
   end
@@ -49,6 +57,8 @@ RSpec.describe Sentry::Cron::MonitorConfig do
         '5 * * * *',
         checkin_margin: 10,
         max_runtime: 20,
+        failure_issue_threshold: 3,
+        recovery_threshold: 5,
         timezone: 'Europe/Vienna'
       )
 
@@ -57,6 +67,8 @@ RSpec.describe Sentry::Cron::MonitorConfig do
         schedule: { type: :crontab, value: '5 * * * *' },
         checkin_margin: 10,
         max_runtime: 20,
+        failure_issue_threshold: 3,
+        recovery_threshold: 5,
         timezone: 'Europe/Vienna'
       })
     end
@@ -67,6 +79,8 @@ RSpec.describe Sentry::Cron::MonitorConfig do
         :hour,
         checkin_margin: 10,
         max_runtime: 20,
+        failure_issue_threshold: 3,
+        recovery_threshold: 5,
         timezone: 'Europe/Vienna'
       )
 
@@ -75,8 +89,17 @@ RSpec.describe Sentry::Cron::MonitorConfig do
         schedule: { type: :interval, value: 5, unit: :hour },
         checkin_margin: 10,
         max_runtime: 20,
+        failure_issue_threshold: 3,
+        recovery_threshold: 5,
         timezone: 'Europe/Vienna'
       })
+    end
+
+    it 'omits nil attributes' do
+      subject = described_class.from_crontab('5 * * * *')
+
+      hash = subject.to_h
+      expect(hash).to eq({ schedule: { type: :crontab, value: '5 * * * *' } })
     end
   end
 end

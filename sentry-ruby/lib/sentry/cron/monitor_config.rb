@@ -19,14 +19,24 @@ module Sentry
       # @return [Integer, nil]
       attr_accessor :max_runtime
 
+      # How many consecutive failed check-ins it takes to create an issue.
+      # @return [Integer, nil]
+      attr_accessor :failure_issue_threshold
+
+      # How many consecutive OK check-ins it takes to resolve an issue.
+      # @return [Integer, nil]
+      attr_accessor :recovery_threshold
+
       # tz database style timezone string
       # @return [String, nil]
       attr_accessor :timezone
 
-      def initialize(schedule, checkin_margin: nil, max_runtime: nil, timezone: nil)
+      def initialize(schedule, checkin_margin: nil, max_runtime: nil, failure_issue_threshold: nil, recovery_threshold: nil, timezone: nil)
         @schedule = schedule
         @checkin_margin = checkin_margin
         @max_runtime = max_runtime
+        @failure_issue_threshold = failure_issue_threshold
+        @recovery_threshold = recovery_threshold
         @timezone = timezone
       end
 
@@ -45,6 +55,8 @@ module Sentry
           schedule: schedule.to_h,
           checkin_margin: checkin_margin,
           max_runtime: max_runtime,
+          failure_issue_threshold: failure_issue_threshold,
+          recovery_threshold: recovery_threshold,
           timezone: timezone
         }.compact
       end
