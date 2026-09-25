@@ -18,6 +18,13 @@ RSpec.describe "Trace context", type: :e2e do
       .to eq(request_transaction.dig("contexts", "trace", "trace_id"))
   end
 
+  it "points a log emitted before CaptureExceptions at the transaction's span" do
+    without_trace_propagation { make_request("/trace_context") }
+
+    expect(early_middleware_logs.first["span_id"])
+      .to eq(request_transaction.dig("contexts", "trace", "span_id"))
+  end
+
   it "continues an incoming distributed trace in a log emitted before CaptureExceptions" do
     incoming_trace_id = propagated_trace_id
 
