@@ -8,6 +8,7 @@ module Sentry
     attr_reader :thread, :thread_mutex, :idle_condition
 
     def initialize(sdk_logger, interval)
+      @process_id = Process.pid
       @thread = nil
       @exited = false
       @interval = interval
@@ -22,6 +23,8 @@ module Sentry
     end
 
     def ensure_thread
+      reset_if_forked
+
       @thread_mutex.synchronize do
         return false if @exited
         return true if @thread&.alive?
@@ -79,6 +82,20 @@ module Sentry
     end
 
     private
+
+    def reset_if_forked
+      return false if @process_id == Process.pid
+
+      @process_id = Process.pid
+      @thread = nil
+      @exited = false
+      @woken = false
+      @running = false
+      @thread_mutex = Mutex.new
+      @wake_condition = ConditionVariable.new
+      @idle_condition = ConditionVariable.new
+      true
+    end
 
     def worker_loop
       loop do

@@ -146,12 +146,9 @@ RSpec.describe Sentry::Rails, type: :request do
       Rails.application.load_runner
     end
 
-    def capture_in_separate_process(exit_code:)
-      pipe_in, pipe_out = IO.pipe
-
-      fork do
-        pipe_in.close
-
+    it "captures exception if exit code is non-zero" do
+      skip('fork not supported in jruby') if RUBY_PLATFORM == 'java'
+      captured_message = capture_in_separate_process(exit_code: 1) do |pipe_out|
         allow(Sentry::Rails).to receive(:capture_exception) do |event|
           pipe_out.puts event
         end
@@ -159,27 +156,24 @@ RSpec.describe Sentry::Rails, type: :request do
         # silence process
         $stderr.reopen('/dev/null', 'w')
         $stdout.reopen('/dev/null', 'w')
-
-        exit exit_code
       end
-
-      pipe_out.close
-      captured_messages = pipe_in.read
-      pipe_in.close
-      # sometimes the at_exit hook was registered multiple times
-      captured_messages.split("\n").last
-    end
-
-    it "captures exception if exit code is non-zero" do
-      skip('fork not supported in jruby') if RUBY_PLATFORM == 'java'
-      captured_message = capture_in_separate_process(exit_code: 1)
+      captured_message = captured_message.split("\n").last
 
       expect(captured_message).to eq('exit')
     end
 
     it "does not capture exception if exit code is zero" do
       skip('fork not supported in jruby') if RUBY_PLATFORM == 'java'
-      captured_message = capture_in_separate_process(exit_code: 0)
+      captured_message = capture_in_separate_process(exit_code: 0) do |pipe_out|
+        allow(Sentry::Rails).to receive(:capture_exception) do |event|
+          pipe_out.puts event
+        end
+
+        # silence process
+        $stderr.reopen('/dev/null', 'w')
+        $stdout.reopen('/dev/null', 'w')
+      end
+      captured_message = captured_message.split("\n").last
 
       expect(captured_message).to be_nil
     end

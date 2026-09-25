@@ -11,6 +11,7 @@ end
 
 require "sentry-ruby"
 require "sentry-rails"
+require_relative "../../spec/support/fork_helper"
 
 require "simplecov"
 
@@ -48,6 +49,8 @@ RSpec.configure do |config|
 
   # Disable RSpec exposing methods globally on `Module` and `main`
   config.disable_monkey_patching!
+
+  config.include(Test::ForkHelper)
 
   config.expect_with :rspec do |c|
     c.syntax = :expect
