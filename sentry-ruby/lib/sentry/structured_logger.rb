@@ -59,8 +59,8 @@ module Sentry
     # @param attributes [Hash] Additional attributes to include with the log
     #
     # @return [LogEvent, nil] The created log event or nil if logging is disabled
-    def trace(message, parameters = [], **attributes)
-      log(__method__, message, parameters: parameters, **attributes)
+    def trace(message = nil, parameters = [], **attributes, &block)
+      log(__method__, message, parameters: parameters, **attributes, &block)
     end
 
     # Logs a message at DEBUG level
@@ -70,8 +70,8 @@ module Sentry
     # @param attributes [Hash] Additional attributes to include with the log
     #
     # @return [LogEvent, nil] The created log event or nil if logging is disabled
-    def debug(message, parameters = [], **attributes)
-      log(__method__, message, parameters: parameters, **attributes)
+    def debug(message = nil, parameters = [], **attributes, &block)
+      log(__method__, message, parameters: parameters, **attributes, &block)
     end
 
     # Logs a message at INFO level
@@ -81,8 +81,8 @@ module Sentry
     # @param attributes [Hash] Additional attributes to include with the log
     #
     # @return [LogEvent, nil] The created log event or nil if logging is disabled
-    def info(message, parameters = [], **attributes)
-      log(__method__, message, parameters: parameters, **attributes)
+    def info(message = nil, parameters = [], **attributes, &block)
+      log(__method__, message, parameters: parameters, **attributes, &block)
     end
 
     # Logs a message at WARN level
@@ -92,8 +92,8 @@ module Sentry
     # @param attributes [Hash] Additional attributes to include with the log
     #
     # @return [LogEvent, nil] The created log event or nil if logging is disabled
-    def warn(message, parameters = [], **attributes)
-      log(__method__, message, parameters: parameters, **attributes)
+    def warn(message = nil, parameters = [], **attributes, &block)
+      log(__method__, message, parameters: parameters, **attributes, &block)
     end
 
     # Logs a message at ERROR level
@@ -103,8 +103,8 @@ module Sentry
     # @param attributes [Hash] Additional attributes to include with the log
     #
     # @return [LogEvent, nil] The created log event or nil if logging is disabled
-    def error(message, parameters = [], **attributes)
-      log(__method__, message, parameters: parameters, **attributes)
+    def error(message = nil, parameters = [], **attributes, &block)
+      log(__method__, message, parameters: parameters, **attributes, &block)
     end
 
     # Logs a message at FATAL level
@@ -114,8 +114,8 @@ module Sentry
     # @param attributes [Hash] Additional attributes to include with the log
     #
     # @return [LogEvent, nil] The created log event or nil if logging is disabled
-    def fatal(message, parameters = [], **attributes)
-      log(__method__, message, parameters: parameters, **attributes)
+    def fatal(message = nil, parameters = [], **attributes, &block)
+      log(__method__, message, parameters: parameters, **attributes, &block)
     end
 
     # Logs a message at the specified level
@@ -126,7 +126,8 @@ module Sentry
     # @param attributes [Hash] Additional attributes to include with the log
     #
     # @return [LogEvent, nil] The created log event or nil if logging is disabled
-    def log(level, message, parameters:, **attributes)
+    def log(level, message = nil, parameters:, **attributes, &block)
+      message = yield if message.nil? && block_given?
       case parameters
       when Array then
         Sentry.capture_log(message, level: level, severity: LEVELS[level], parameters: parameters, **attributes)
