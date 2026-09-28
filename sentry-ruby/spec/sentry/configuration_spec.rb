@@ -873,7 +873,7 @@ RSpec.describe Sentry::Configuration do
 
   describe "#trace_ignore_status_codes" do
     it "has default values" do
-      expect(subject.trace_ignore_status_codes).to eq([(301..303), (305..399), (401..404)])
+      expect(subject.trace_ignore_status_codes).to eq([301, (305..399), (401..404)])
     end
 
     it "can be configured with individual status codes" do

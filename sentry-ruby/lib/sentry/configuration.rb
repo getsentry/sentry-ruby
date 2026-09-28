@@ -442,7 +442,7 @@ module Sentry
       SERVER_PORT
     ].freeze
 
-    TRACE_IGNORE_STATUS_CODES_DEFAULT = [(301..303), (305..399), (401..404)]
+    TRACE_IGNORE_STATUS_CODES_DEFAULT = [301, (305..399), (401..404)]
 
     HEROKU_DYNO_METADATA_MESSAGE = "You are running on Heroku but haven't enabled Dyno Metadata. For Sentry's "\
     "release detection to work correctly, please run `heroku labs:enable runtime-dyno-metadata`"
