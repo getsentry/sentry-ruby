@@ -224,7 +224,7 @@ module Sentry
       }.freeze
 
       def initialize
-        @enabled = true
+        @enabled = false
         @subscribers = DEFAULT_SUBSCRIBERS.dup
       end
 
