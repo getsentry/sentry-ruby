@@ -99,10 +99,10 @@ RSpec.describe Sentry::Rails::Configuration do
       expect(config.structured_logging.subscribers).to be_a(Hash)
     end
 
-    it "enables structured logging by default" do
+    it "disables structured logging by default" do
       make_basic_app
 
-      expect(config.structured_logging.enabled?).to be(true)
+      expect(config.structured_logging.enabled?).to be(false)
     end
 
     it "respects explicit disable" do
