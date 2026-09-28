@@ -15,9 +15,24 @@ RSpec.describe Sentry::Rails::Tracing, type: :request do
     before do
       expect(described_class).to receive(:subscribe_tracing_events).and_call_original
 
-      make_basic_app do |config|
+      make_basic_app do |config, app|
         config.traces_sample_rate = 1.0
+        app.routes.append do
+          post "/malformed", to: "posts#webhook"
+        end
       end
+    end
+
+    it "does not replace a response when request parameters cannot be parsed" do
+      skip "Rails parses request parameters before controller callbacks" if Rails::VERSION::MAJOR < 6
+
+      response = Rack::MockRequest.new(Rails.application).post(
+        "/malformed",
+        input: "not json",
+        "CONTENT_TYPE" => "application/json"
+      )
+
+      expect(response.status).to eq(200)
     end
 
     it "records transaction with exception" do
