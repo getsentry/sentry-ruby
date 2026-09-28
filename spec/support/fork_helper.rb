@@ -31,7 +31,7 @@ module Test
       loop do
         remaining = deadline - Process.clock_gettime(Process::CLOCK_MONOTONIC)
         raise "child did not respond" if remaining <= 0
-        raise "child did not respond" unless IO.select([reader], nil, nil, remaining)
+        raise "child did not respond: IO.select timed out" unless IO.select([reader], nil, nil, remaining)
 
         begin
           output << reader.read_nonblock(4096)

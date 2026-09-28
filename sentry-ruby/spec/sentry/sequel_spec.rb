@@ -28,6 +28,8 @@ RSpec.describe Sentry::Sequel do
 
   after do
     db.drop_table?(:posts)
+  ensure
+    db.disconnect
   end
 
   context "with tracing enabled" do
