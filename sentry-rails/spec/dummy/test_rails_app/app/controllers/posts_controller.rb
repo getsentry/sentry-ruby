@@ -12,6 +12,11 @@ class PostsController < ActionController::Base
     render plain: p.id
   end
 
+  def webhook
+    request.raw_post
+    head :ok
+  end
+
   def attach
     p = Post.find(params[:id])
 

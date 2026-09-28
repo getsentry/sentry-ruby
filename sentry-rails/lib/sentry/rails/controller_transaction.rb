@@ -29,7 +29,7 @@ module Sentry
                 data_collection = Sentry.configuration.data_collection
 
                 path = request.path
-                query_parameters = request.query_parameters
+                query_parameters = request.query_parameters rescue nil
 
                 if query_parameters.is_a?(Hash)
                   filtered_query_parameters = data_collection.url_query_params.filter(query_parameters)
@@ -43,7 +43,7 @@ module Sentry
                 child_span.set_data(:path, path)
 
                 # all params request + body
-                params = request.params
+                params = request.params rescue nil
                 if params.is_a?(Hash)
                   filtered_params = data_collection.url_query_params.filter(params)
                   child_span.set_data(:params, filtered_params)
