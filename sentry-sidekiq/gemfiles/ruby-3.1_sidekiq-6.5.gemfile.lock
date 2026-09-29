@@ -9,14 +9,14 @@ GIT
 PATH
   remote: ../../sentry-rails
   specs:
-    sentry-rails (7.0.0)
+    sentry-rails (7.1.0)
       railties (>= 5.2.0)
-      sentry-ruby (~> 7.0.0)
+      sentry-ruby (~> 7.1.0)
 
 PATH
   remote: ../../sentry-ruby
   specs:
-    sentry-ruby (7.0.0)
+    sentry-ruby (7.1.0)
       bigdecimal
       concurrent-ruby (~> 1.0, >= 1.0.2)
       logger
@@ -24,36 +24,36 @@ PATH
 PATH
   remote: ..
   specs:
-    sentry-sidekiq (7.0.0)
-      sentry-ruby (~> 7.0.0)
+    sentry-sidekiq (7.1.0)
+      sentry-ruby (~> 7.1.0)
       sidekiq (>= 5.0)
 
 GEM
   remote: https://rubygems.org/
   specs:
-    actioncable (7.2.3.2)
-      actionpack (= 7.2.3.2)
-      activesupport (= 7.2.3.2)
+    actioncable (7.2.4)
+      actionpack (= 7.2.4)
+      activesupport (= 7.2.4)
       nio4r (~> 2.0)
       websocket-driver (>= 0.6.1)
       zeitwerk (~> 2.6)
-    actionmailbox (7.2.3.2)
-      actionpack (= 7.2.3.2)
-      activejob (= 7.2.3.2)
-      activerecord (= 7.2.3.2)
-      activestorage (= 7.2.3.2)
-      activesupport (= 7.2.3.2)
+    actionmailbox (7.2.4)
+      actionpack (= 7.2.4)
+      activejob (= 7.2.4)
+      activerecord (= 7.2.4)
+      activestorage (= 7.2.4)
+      activesupport (= 7.2.4)
       mail (>= 2.8.0)
-    actionmailer (7.2.3.2)
-      actionpack (= 7.2.3.2)
-      actionview (= 7.2.3.2)
-      activejob (= 7.2.3.2)
-      activesupport (= 7.2.3.2)
+    actionmailer (7.2.4)
+      actionpack (= 7.2.4)
+      actionview (= 7.2.4)
+      activejob (= 7.2.4)
+      activesupport (= 7.2.4)
       mail (>= 2.8.0)
       rails-dom-testing (~> 2.2)
-    actionpack (7.2.3.2)
-      actionview (= 7.2.3.2)
-      activesupport (= 7.2.3.2)
+    actionpack (7.2.4)
+      actionview (= 7.2.4)
+      activesupport (= 7.2.4)
       cgi
       nokogiri (>= 1.8.5)
       racc
@@ -63,41 +63,41 @@ GEM
       rails-dom-testing (~> 2.2)
       rails-html-sanitizer (~> 1.6)
       useragent (~> 0.16)
-    actiontext (7.2.3.2)
-      actionpack (= 7.2.3.2)
-      activerecord (= 7.2.3.2)
-      activestorage (= 7.2.3.2)
-      activesupport (= 7.2.3.2)
+    actiontext (7.2.4)
+      actionpack (= 7.2.4)
+      activerecord (= 7.2.4)
+      activestorage (= 7.2.4)
+      activesupport (= 7.2.4)
       globalid (>= 0.6.0)
       nokogiri (>= 1.8.5)
-    actionview (7.2.3.2)
-      activesupport (= 7.2.3.2)
+    actionview (7.2.4)
+      activesupport (= 7.2.4)
       builder (~> 3.1)
       cgi
       erubi (~> 1.11)
       rails-dom-testing (~> 2.2)
       rails-html-sanitizer (~> 1.6)
-    activejob (7.2.3.2)
-      activesupport (= 7.2.3.2)
+    activejob (7.2.4)
+      activesupport (= 7.2.4)
       globalid (>= 0.3.6)
-    activemodel (7.2.3.2)
-      activesupport (= 7.2.3.2)
-    activerecord (7.2.3.2)
-      activemodel (= 7.2.3.2)
-      activesupport (= 7.2.3.2)
+    activemodel (7.2.4)
+      activesupport (= 7.2.4)
+    activerecord (7.2.4)
+      activemodel (= 7.2.4)
+      activesupport (= 7.2.4)
       timeout (>= 0.4.0)
-    activestorage (7.2.3.2)
-      actionpack (= 7.2.3.2)
-      activejob (= 7.2.3.2)
-      activerecord (= 7.2.3.2)
-      activesupport (= 7.2.3.2)
+    activestorage (7.2.4)
+      actionpack (= 7.2.4)
+      activejob (= 7.2.4)
+      activerecord (= 7.2.4)
+      activesupport (= 7.2.4)
       marcel (~> 1.0)
-    activesupport (7.2.3.2)
+    activesupport (7.2.4)
       base64
       benchmark (>= 0.3)
       bigdecimal
       concurrent-ruby (~> 1.0, >= 1.3.1)
-      connection_pool (>= 2.2.5)
+      connection_pool (>= 2.2.5, < 3)
       drb
       i18n (>= 1.6, < 2)
       logger (>= 1.4.2)
@@ -194,20 +194,20 @@ GEM
     rackup (1.0.1)
       rack (< 3)
       webrick
-    rails (7.2.3.2)
-      actioncable (= 7.2.3.2)
-      actionmailbox (= 7.2.3.2)
-      actionmailer (= 7.2.3.2)
-      actionpack (= 7.2.3.2)
-      actiontext (= 7.2.3.2)
-      actionview (= 7.2.3.2)
-      activejob (= 7.2.3.2)
-      activemodel (= 7.2.3.2)
-      activerecord (= 7.2.3.2)
-      activestorage (= 7.2.3.2)
-      activesupport (= 7.2.3.2)
+    rails (7.2.4)
+      actioncable (= 7.2.4)
+      actionmailbox (= 7.2.4)
+      actionmailer (= 7.2.4)
+      actionpack (= 7.2.4)
+      actiontext (= 7.2.4)
+      actionview (= 7.2.4)
+      activejob (= 7.2.4)
+      activemodel (= 7.2.4)
+      activerecord (= 7.2.4)
+      activestorage (= 7.2.4)
+      activesupport (= 7.2.4)
       bundler (>= 1.15.0)
-      railties (= 7.2.3.2)
+      railties (= 7.2.4)
     rails-dom-testing (2.3.0)
       activesupport (>= 5.0.0)
       minitest
@@ -215,9 +215,9 @@ GEM
     rails-html-sanitizer (1.7.1)
       loofah (~> 2.25, >= 2.25.2)
       nokogiri (>= 1.15.7, != 1.16.7, != 1.16.6, != 1.16.5, != 1.16.4, != 1.16.3, != 1.16.2, != 1.16.1, != 1.16.0.rc1, != 1.16.0)
-    railties (7.2.3.2)
-      actionpack (= 7.2.3.2)
-      activesupport (= 7.2.3.2)
+    railties (7.2.4)
+      actionpack (= 7.2.4)
+      activesupport (= 7.2.4)
       cgi
       irb (~> 1.13)
       rackup (>= 1.0.0)
@@ -331,17 +331,17 @@ DEPENDENCIES
   timecop
 
 CHECKSUMS
-  actioncable (7.2.3.2) sha256=04ffd91519942bae45f443bfc166308e6eb17870870cdfc1ca36bc95273c6b57
-  actionmailbox (7.2.3.2) sha256=d19f6e98c5b630c391e14ce1a830f199f249bf3fd6208392f92d232a7a6d8ca5
-  actionmailer (7.2.3.2) sha256=45a6c326872867cdb28d2960d236c3c8fa4ff1198e9bc7ece4ddc3810b67b759
-  actionpack (7.2.3.2) sha256=c1fbb1c4df0f2473ee064ab1412fc2a44c2c2ef337924c5ba3c7998c8529652b
-  actiontext (7.2.3.2) sha256=19ab7e2a07ab976a5456a9aa98b93e1b899a7729b931ca1e9e01a3e8bd33f0b0
-  actionview (7.2.3.2) sha256=42bfd966040c93271dfa9f3243d73c40aa0228108696f956e1f287f3b02edc01
-  activejob (7.2.3.2) sha256=b83fa070898911823f0c4cb8c0d1d25dabb5d00f18379d5b4fe01b84e173a93a
-  activemodel (7.2.3.2) sha256=3777c67cd8dd1560f30387523013dacb370a0a1cf532037410887819e4416927
-  activerecord (7.2.3.2) sha256=e62d24ba7e5f820d24ed122eb9225491b0aaa8398778783b400067c3467285c7
-  activestorage (7.2.3.2) sha256=863cb4b21b83505555be2addb939fefb856ab05f6c6d24bab00d6f1a7e4edbfc
-  activesupport (7.2.3.2) sha256=ddc90d11dd88086d78ace03407fe3c2a3f5c8853c3c3046313db5ed823ef3312
+  actioncable (7.2.4) sha256=053e939f728eac986ff5321e42ba5b884de6ab64a392af0e8d45866d0d3fb63a
+  actionmailbox (7.2.4) sha256=92d4d107554eb29cdffce9aaaf41daf07b9e6579d5a0d4cc9b64de6e87eadee9
+  actionmailer (7.2.4) sha256=9c58352e79df660aecddb1cdfbe1e6e555169c3328ae15ec06b6eae611de8917
+  actionpack (7.2.4) sha256=c7acf80263cf09125e5c4d866abda3536cc941f436e81673f17be11ad407a4eb
+  actiontext (7.2.4) sha256=49b0a18a387e983d48fa559ef8aa8d9c37c21399998b59984d87c387d81f3c9c
+  actionview (7.2.4) sha256=6005a3427881b2e8f509a5f7ed894e66f256410f734f7a227d01c4d3d9cb06a2
+  activejob (7.2.4) sha256=a83376234173c67e2d7b155132b79750776215ab16f1a0a2f20ad59a50a7054b
+  activemodel (7.2.4) sha256=c6a2f2290fdf8728b596fba1fc528e65852c6e015ccc385ddf0f93c455588773
+  activerecord (7.2.4) sha256=b3549deb6a4c469e0cb652194cf566b6010f1f1796404b4213d8b47469d411e5
+  activestorage (7.2.4) sha256=cc82c0d1c50cfcd52197067a61ca16e5b3716c0ac2eba666b30449ba3532bddc
+  activesupport (7.2.4) sha256=b97027b31e111675dba67b86edcd589acc25a0dddf8eecacca18d33a703a0788
   base64 (0.3.0) sha256=27337aeabad6ffae05c265c450490628ef3ebd4b67be58257393227588f5a97b
   benchmark (0.5.0) sha256=465df122341aedcb81a2a24b4d3bd19b6c67c1530713fd533f3ff034e419236c
   bigdecimal (4.1.3) sha256=61ebe1e5e559bdc3cc6f2c0ee7f427321fc838f59611c294356eb04d6e21cf66
@@ -394,10 +394,10 @@ CHECKSUMS
   rack-session (1.0.2) sha256=a02115e5420b4de036839b9811e3f7967d73446a554b42aa45106af335851d76
   rack-test (2.2.0) sha256=005a36692c306ac0b4a9350355ee080fd09ddef1148a5f8b2ac636c720f5c463
   rackup (1.0.1) sha256=ba86604a28989fe1043bff20d819b360944ca08156406812dca6742b24b3c249
-  rails (7.2.3.2) sha256=279290679f9005b0f79514f953a2af613f95de7baa94cbd87744c09122c1113c
+  rails (7.2.4) sha256=28b530f2db9dc112ce896fd93a00863d7e9ee98c4e7dbd02ea5b7647cb63738e
   rails-dom-testing (2.3.0) sha256=8acc7953a7b911ca44588bf08737bc16719f431a1cc3091a292bca7317925c1d
   rails-html-sanitizer (1.7.1) sha256=e797a7c9b01e567307e317c576b49ab4168017e63eea4dba9ce3cb587e2f22c2
-  railties (7.2.3.2) sha256=f626c6dfcc00a9f85b139619cfac4a648934c93e36fe5b9242184b9f45ffc29e
+  railties (7.2.4) sha256=e4b754edc7b42c9f3d6cc3048832efe634d727aa59093a03bf8a78096917f121
   rake (12.3.3) sha256=f7694adb4fe638da35452300cee6c545e9c377a0e3190018ac04d590b3c26ab3
   rbs (3.10.4) sha256=b17d7c4be4bb31a11a3b529830f0aa206a807ca42f2e7921a3027dfc6b7e5ce8
   rdoc (7.2.0) sha256=8650f76cd4009c3b54955eb5d7e3a075c60a57276766ebf36f9085e8c9f23192
@@ -414,9 +414,9 @@ CHECKSUMS
   ruby-lsp-rspec (0.1.29) sha256=798be579723376cd56b17d32373288fb1163e4cfe2024c7d068516a1cf214ee5
   rufus-scheduler (3.9.2) sha256=55fa9e4db0ff69d7f38c804f17baba0c9bce5cba39984ae3c5cf6c039d1323b9
   securerandom (0.4.1) sha256=cc5193d414a4341b6e225f0cb4446aceca8e50d5e1888743fac16987638ea0b1
-  sentry-rails (7.0.0)
-  sentry-ruby (7.0.0)
-  sentry-sidekiq (7.0.0)
+  sentry-rails (7.1.0)
+  sentry-ruby (7.1.0)
+  sentry-sidekiq (7.1.0)
   sidekiq (6.5.12) sha256=b4f93b2204c42220d0b526a7b8e0c49b5f9da82c1ce1a05d2baf1e8f744c197f
   sidekiq-cron (2.4.0) sha256=25595c5aee0c16d13a89466e5108af047fa4cfbf388199b39e1a600ca39472d4
   sidekiq-scheduler (5.0.6) sha256=aa49fa982fb0d58e3e94d6bc2e2187be000414b9354a9f35e0cd06de204ad5be

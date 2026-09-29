@@ -9,14 +9,14 @@ GIT
 PATH
   remote: ../../sentry-rails
   specs:
-    sentry-rails (7.0.0)
+    sentry-rails (7.1.0)
       railties (>= 5.2.0)
-      sentry-ruby (~> 7.0.0)
+      sentry-ruby (~> 7.1.0)
 
 PATH
   remote: ../../sentry-ruby
   specs:
-    sentry-ruby (7.0.0)
+    sentry-ruby (7.1.0)
       bigdecimal
       concurrent-ruby (~> 1.0, >= 1.0.2)
       logger
@@ -24,9 +24,9 @@ PATH
 PATH
   remote: ..
   specs:
-    sentry-resque (7.0.0)
+    sentry-resque (7.1.0)
       resque (>= 1.24)
-      sentry-ruby (~> 7.0.0)
+      sentry-ruby (~> 7.1.0)
 
 GEM
   remote: https://rubygems.org/
