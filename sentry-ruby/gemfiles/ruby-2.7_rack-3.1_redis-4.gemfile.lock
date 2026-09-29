@@ -9,7 +9,7 @@ GIT
 PATH
   remote: ..
   specs:
-    sentry-ruby (7.0.0)
+    sentry-ruby (7.1.0)
       bigdecimal
       concurrent-ruby (~> 1.0, >= 1.0.2)
       logger
@@ -46,7 +46,7 @@ GEM
       ruby2_keywords (>= 0.0.4)
     faraday-net_http (3.0.2)
     fiber-storage (1.0.0)
-    graphql (2.6.10)
+    graphql (2.6.11)
       base64
       fiber-storage
       logger

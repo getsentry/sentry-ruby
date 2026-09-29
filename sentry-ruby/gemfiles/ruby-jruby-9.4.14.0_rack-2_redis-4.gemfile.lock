@@ -6,7 +6,7 @@ GIT
 PATH
   remote: ..
   specs:
-    sentry-ruby (7.0.0)
+    sentry-ruby (7.1.0)
       bigdecimal
       concurrent-ruby (~> 1.0, >= 1.0.2)
       logger
@@ -14,23 +14,23 @@ PATH
 GEM
   remote: https://rubygems.org/
   specs:
-    activemodel (7.2.3.2)
-      activesupport (= 7.2.3.2)
-    activerecord (7.2.3.2)
-      activemodel (= 7.2.3.2)
-      activesupport (= 7.2.3.2)
+    activemodel (7.2.4)
+      activesupport (= 7.2.4)
+    activerecord (7.2.4)
+      activemodel (= 7.2.4)
+      activesupport (= 7.2.4)
       timeout (>= 0.4.0)
     activerecord-jdbc-adapter (72.1-java)
       activerecord (~> 7.2.2)
     activerecord-jdbcmysql-adapter (72.1-java)
       activerecord-jdbc-adapter (= 72.1)
       jdbc-mysql (>= 5.1.36, < 9)
-    activesupport (7.2.3.2)
+    activesupport (7.2.4)
       base64
       benchmark (>= 0.3)
       bigdecimal
       concurrent-ruby (~> 1.0, >= 1.3.1)
-      connection_pool (>= 2.2.5)
+      connection_pool (>= 2.2.5, < 3)
       drb
       i18n (>= 1.6, < 2)
       logger (>= 1.4.2)
@@ -70,7 +70,7 @@ GEM
     faraday-net_http (3.4.4)
       net-http (~> 0.5)
     fiber-storage (1.0.1)
-    graphql (2.6.10)
+    graphql (2.6.11)
       base64
       fiber-storage
       logger
@@ -188,11 +188,11 @@ DEPENDENCIES
   yard
 
 CHECKSUMS
-  activemodel (7.2.3.2) sha256=3777c67cd8dd1560f30387523013dacb370a0a1cf532037410887819e4416927
-  activerecord (7.2.3.2) sha256=e62d24ba7e5f820d24ed122eb9225491b0aaa8398778783b400067c3467285c7
+  activemodel (7.2.4) sha256=c6a2f2290fdf8728b596fba1fc528e65852c6e015ccc385ddf0f93c455588773
+  activerecord (7.2.4) sha256=b3549deb6a4c469e0cb652194cf566b6010f1f1796404b4213d8b47469d411e5
   activerecord-jdbc-adapter (72.1-java) sha256=4487cb4606b5d76913b5abaaf681ef21b7aa9478ed201918f48da6b3f7fcec70
   activerecord-jdbcmysql-adapter (72.1-java) sha256=094d6e074e23668dff143f5c69cda0f0fc29468d9634b3c5e5884a3345e3d166
-  activesupport (7.2.3.2) sha256=ddc90d11dd88086d78ace03407fe3c2a3f5c8853c3c3046313db5ed823ef3312
+  activesupport (7.2.4) sha256=b97027b31e111675dba67b86edcd589acc25a0dddf8eecacca18d33a703a0788
   addressable (2.9.0) sha256=7fdf6ac3660f7f4e867a0838be3f6cf722ace541dd97767fa42bc6cfa980c7af
   base64 (0.3.0) sha256=27337aeabad6ffae05c265c450490628ef3ebd4b67be58257393227588f5a97b
   benchmark (0.5.0) sha256=465df122341aedcb81a2a24b4d3bd19b6c67c1530713fd533f3ff034e419236c
@@ -214,7 +214,7 @@ CHECKSUMS
   faraday (2.14.4) sha256=9bb4408c44621b0dbaaaa39e5dbfc4dbe58cc6751b6eb94d16ae9e1f2f2fab6e
   faraday-net_http (3.4.4) sha256=0e78af151747ed1b00f33e25973b4bc220d7f16c00c39676817c8b12331eb588
   fiber-storage (1.0.1) sha256=f48e5b6d8b0be96dac486332b55cee82240057065dc761c1ea692b2e719240e1
-  graphql (2.6.10) sha256=9b7c8633767f516ff9d48a8d6305b2a00a2101c82aa871b92e69086944f9f83e
+  graphql (2.6.11) sha256=9a9cde910e805c4c08fdf8d22bf129e935affc9ca8b4f9b2ec26b4b63666b15d
   hashdiff (1.2.1) sha256=9c079dbc513dfc8833ab59c0c2d8f230fa28499cc5efb4b8dd276cf931457cd1
   i18n (1.15.2) sha256=00f9eb62412fe593b2a65a97daa75300d37abb8f7202ec748e94b6d46a9dd1b5
   io-console (0.9.4-java) sha256=789188c38b937fc2d04400e35fd3b2838ffdf061e846571e51524036bc1bc185
@@ -247,7 +247,7 @@ CHECKSUMS
   rspec-retry (0.6.2) sha256=6101ba23a38809811ae3484acde4ab481c54d846ac66d5037ccb40131a60d858
   rspec-support (3.13.7) sha256=0640e5570872aafefd79867901deeeeb40b0c9875a36b983d85f54fb7381c47c
   securerandom (0.4.1) sha256=cc5193d414a4341b6e225f0cb4446aceca8e50d5e1888743fac16987638ea0b1
-  sentry-ruby (7.0.0)
+  sentry-ruby (7.1.0)
   sequel (5.108.0) sha256=ae5996d1196775427916a2fa36e02f99762ead9affb8ea9b1aec2c0b16bdb3a3
   simplecov (0.22.0) sha256=fe2622c7834ff23b98066bb0a854284b2729a569ac659f82621fc22ef36213a5
   simplecov-cobertura (3.2.0) sha256=70d702658677fcb20e5aceb6915ccf8bc62ff2ccd38b62b3ad5c9db5c0888740

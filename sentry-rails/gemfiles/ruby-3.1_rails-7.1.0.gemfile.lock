@@ -9,7 +9,7 @@ GIT
 PATH
   remote: ../../sentry-ruby
   specs:
-    sentry-ruby (7.0.0)
+    sentry-ruby (7.1.0)
       bigdecimal
       concurrent-ruby (~> 1.0, >= 1.0.2)
       logger
@@ -17,9 +17,9 @@ PATH
 PATH
   remote: ..
   specs:
-    sentry-rails (7.0.0)
+    sentry-rails (7.1.0)
       railties (>= 5.2.0)
-      sentry-ruby (~> 7.0.0)
+      sentry-ruby (~> 7.1.0)
 
 GEM
   remote: https://rubygems.org/
@@ -519,8 +519,8 @@ CHECKSUMS
   ruby-lsp-rspec (0.1.29) sha256=798be579723376cd56b17d32373288fb1163e4cfe2024c7d068516a1cf214ee5
   rufus-scheduler (3.9.2) sha256=55fa9e4db0ff69d7f38c804f17baba0c9bce5cba39984ae3c5cf6c039d1323b9
   securerandom (0.4.1) sha256=cc5193d414a4341b6e225f0cb4446aceca8e50d5e1888743fac16987638ea0b1
-  sentry-rails (7.0.0)
-  sentry-ruby (7.0.0)
+  sentry-rails (7.1.0)
+  sentry-ruby (7.1.0)
   sequel (5.108.0) sha256=ae5996d1196775427916a2fa36e02f99762ead9affb8ea9b1aec2c0b16bdb3a3
   sidekiq (7.3.10) sha256=781eb4f65ef36042534ad73d72f211283afb7fee82eec786ada4ed1972ef8e3c
   simplecov (0.22.0) sha256=fe2622c7834ff23b98066bb0a854284b2729a569ac659f82621fc22ef36213a5

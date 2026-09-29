@@ -35,6 +35,7 @@ RSpec.describe 'GraphQL' do
         before do
           perform_basic_setup do |config|
             config.traces_sample_rate = 1.0
+            config.data_collection.graphql.document = true
             config.enabled_patches << :graphql
           end
         end
