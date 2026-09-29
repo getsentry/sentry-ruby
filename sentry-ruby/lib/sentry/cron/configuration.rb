@@ -15,6 +15,14 @@ module Sentry
       # @return [Integer, nil]
       attr_accessor :default_max_runtime
 
+      # How many consecutive failed check-ins it takes to create an issue.
+      # @return [Integer, nil]
+      attr_accessor :default_failure_issue_threshold
+
+      # How many consecutive OK check-ins it takes to resolve an issue.
+      # @return [Integer, nil]
+      attr_accessor :default_recovery_threshold
+
       # tz database style timezone string
       # @return [String, nil]
       attr_accessor :default_timezone
