@@ -28,6 +28,20 @@ RSpec.describe Sentry::Rails, type: :request do
       expect(app.middleware.find_index(Sentry::Rails::RescuedExceptionInterceptor)).to eq(index_of_debug_exceptions + 1)
     end
 
+    it "establishes the trace context before the request is logged" do
+      middleware = Rails.application.middleware
+
+      expect(middleware.find_index(Sentry::Rails::CaptureContext))
+        .to be < middleware.find_index(Rails::Rack::Logger)
+    end
+
+    it "leaves requests served above the app boundary untouched" do
+      middleware = Rails.application.middleware
+
+      expect(middleware.find_index(Sentry::Rails::CaptureContext))
+        .to be > middleware.find_index(ActionDispatch::Executor)
+    end
+
     it "propagates timezone to cron config" do
       # cron.default_timezone is set to nil by default
       expect(Sentry.configuration.cron.default_timezone).to eq("Etc/UTC")
