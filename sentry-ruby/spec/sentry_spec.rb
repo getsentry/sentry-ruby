@@ -597,6 +597,24 @@ RSpec.describe Sentry do
           expect(transaction.sample_rand).to eq(propagation_context.sample_rand)
         end
 
+        it "adopts the scope's propagation context span_id" do
+          propagation_context = Sentry.get_current_scope.propagation_context
+
+          transaction = described_class.start_transaction(
+            name: "test", op: "test.op", established: true
+          )
+
+          expect(transaction.span_id).to eq(propagation_context.span_id)
+        end
+
+        it "does not override an explicitly provided span_id" do
+          transaction = described_class.start_transaction(
+            name: "test", op: "test.op", span_id: "b" * 16, established: true
+          )
+
+          expect(transaction.span_id).to eq("b" * 16)
+        end
+
         it "does not override an explicitly provided trace_id" do
           transaction = described_class.start_transaction(
             name: "test", op: "test.op", trace_id: "a" * 32, established: true
@@ -1260,6 +1278,14 @@ RSpec.describe Sentry do
         expect(transaction.parent_span_id).to eq(incoming_prop_context.span_id)
         expect(transaction.baggage.items).to eq(incoming_prop_context.get_baggage.items)
         expect(transaction.baggage.mutable).to eq(false)
+      end
+
+      it "gives the Transaction the propagation context's span_id" do
+        Sentry.configuration.traces_sample_rate = 1.0
+
+        transaction = described_class.continue_trace(env, name: "foobar")
+
+        expect(transaction.span_id).to eq(Sentry.get_current_scope.propagation_context.span_id)
       end
 
       describe "sample_rand propagation" do
