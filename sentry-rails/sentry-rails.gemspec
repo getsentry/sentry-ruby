@@ -31,7 +31,7 @@ Gem::Specification.new do |spec|
   spec.require_paths = ["lib"]
 
   spec.add_dependency "railties", ">= 5.2.0"
-  spec.add_dependency "sentry-ruby", "~> 7.0.0"
+  spec.add_dependency "sentry-ruby", "~> 7.1.0"
 
   spec.post_install_message = <<~MSG
     Starting with sentry-rails 7.1.0, Rails structured logging is disabled by default.
