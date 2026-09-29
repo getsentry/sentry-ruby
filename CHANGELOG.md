@@ -1,3 +1,56 @@
+## 7.1.0
+
+### Breaking Changes 🛠
+
+- Since `enable_logs` was removed in [7.0.0](https://github.com/getsentry/sentry-ruby/releases/tag/7.0.0) and the community did not like the automatic enabling of Rails structured logging, we are disabling it in this minor. We apologize for the confusion caused. If you want to turn it on, please use: by @sl0thentr0py in [#3102](https://github.com/getsentry/sentry-ruby/pull/3102)
+  ```ruby
+  Sentry.init do |config|
+    # ...
+    config.rails.structured_logging.enabled = true
+  end
+  ```
+- Resolves: #3101 by @sl0thentr0py in [#3102](https://github.com/getsentry/sentry-ruby/pull/3102)
+- Resolves: RUBY-219 by @sl0thentr0py in [#3102](https://github.com/getsentry/sentry-ruby/pull/3102)
+
+### New Features ✨
+
+- (metrics) Attribute integration-emitted metrics by @sentry-junior in [#3071](https://github.com/getsentry/sentry-ruby/pull/3071)
+- The SDK now wraps user callbacks so that they don't unintentionally break your application if they raise inside the callback. by @sl0thentr0py in [#3077](https://github.com/getsentry/sentry-ruby/pull/3077)
+- `before_send`: return nil and drop the event by @sl0thentr0py in [#3077](https://github.com/getsentry/sentry-ruby/pull/3077)
+- `before_send_transaction`: return nil and drop the transaction by @sl0thentr0py in [#3077](https://github.com/getsentry/sentry-ruby/pull/3077)
+- `before_send_check_in`: return nil and drop the transaction by @sl0thentr0py in [#3077](https://github.com/getsentry/sentry-ruby/pull/3077)
+- `before_send_check_in`: return nil and drop the check-in by @sl0thentr0py in [#3077](https://github.com/getsentry/sentry-ruby/pull/3077)
+- `event_processor`: return nil and drop the event by @sl0thentr0py in [#3077](https://github.com/getsentry/sentry-ruby/pull/3077)
+- `before_send_log`: return nil and drop the log item by @sl0thentr0py in [#3077](https://github.com/getsentry/sentry-ruby/pull/3077)
+- `before_send_metric`: return nil and drop the metric item by @sl0thentr0py in [#3077](https://github.com/getsentry/sentry-ruby/pull/3077)
+- `before_breadcrumb`: return nil and drop the breadcrumb by @sl0thentr0py in [#3077](https://github.com/getsentry/sentry-ruby/pull/3077)
+- `traces_sampler`: fall back to `traces_sample_rate` by @sl0thentr0py in [#3077](https://github.com/getsentry/sentry-ruby/pull/3077)
+- `backtrace_cleanup_callback`: fall back to the original backtrace by @sl0thentr0py in [#3077](https://github.com/getsentry/sentry-ruby/pull/3077)
+- `std_lib_logger_filter`: return nil and skip the log by @sl0thentr0py in [#3077](https://github.com/getsentry/sentry-ruby/pull/3077)
+- Resolves: #3072 by @sl0thentr0py in [#3077](https://github.com/getsentry/sentry-ruby/pull/3077)
+- Resolves: RUBY-211 by @sl0thentr0py in [#3077](https://github.com/getsentry/sentry-ruby/pull/3077)
+
+### Bug Fixes 🐛
+
+#### Logs, Metrics
+
+- Make ThreadedPeriodicWorker and TelemetryEventBuffer fork friendly by @sl0thentr0py in [#3097](https://github.com/getsentry/sentry-ruby/pull/3097)
+- Reduce mutex surface area for TelemetryEventBuffer by @sl0thentr0py in [#3083](https://github.com/getsentry/sentry-ruby/pull/3083)
+
+#### Metrics, Logs
+
+- Kill telemetry buffer threads on close by @sl0thentr0py in [#3094](https://github.com/getsentry/sentry-ruby/pull/3094)
+- Ensure TelemetryBuffer uses own thread for both size based and periodic flushing by @sl0thentr0py in [#3084](https://github.com/getsentry/sentry-ruby/pull/3084)
+
+#### Other
+
+- (faraday) Don't double instrument builder by @sl0thentr0py in [#3082](https://github.com/getsentry/sentry-ruby/pull/3082)
+- (rails) Read query params safely in around_action by @sl0thentr0py in [#3106](https://github.com/getsentry/sentry-ruby/pull/3106)
+
+### Other
+
+- fix!(tracing): Remove 302/303 from default `trace_ignore_status_codes` by @sl0thentr0py in [#3103](https://github.com/getsentry/sentry-ruby/pull/3103)
+
 ## 7.0.0
 
 ### Breaking Changes 🛠
