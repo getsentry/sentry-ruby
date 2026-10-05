@@ -40,6 +40,9 @@ module Sentry
         return @sentry_monitor if defined?(@sentry_monitor)
 
         @sentry_monitor = Sentry::RufusScheduler.monitor_for(self)
+      rescue StandardError => e
+        Sentry.sdk_logger.error(Sentry::LOGGER_PROGNAME) { "Not monitoring rufus-scheduler job #{id}: #{e.class}: #{e.message}" }
+        @sentry_monitor = nil
       end
     end
 
@@ -54,7 +57,13 @@ module Sentry
         return if sidekiq_scheduler_job?(job)
 
         slug = slug_for(job)
-        return unless slug
+        unless slug
+          Sentry.sdk_logger.warn(Sentry::LOGGER_PROGNAME) do
+            "Not monitoring rufus-scheduler job #{job.id} at #{job.source_location&.join(":")}: " \
+              "pass `name:` to give it a stable monitor slug."
+          end
+          return
+        end
 
         [slug, monitor_config_for(job)]
       end
@@ -68,21 +77,23 @@ module Sentry
       end
 
       # Job ids are random per process, so the slug comes from the `name:` option,
-      # then the handler class, then the block's file and line.
+      # then the handler method or class. Blocks have no stable name: their file
+      # path can change on every deploy.
       def slug_for(job)
+        handler = job.handler
         source =
           if job.name
             job.name.to_s
-          elsif !job.handler.is_a?(Proc) && job.handler.class.name
-            job.handler.class.name.gsub("::", "-")
-          elsif job.callable.respond_to?(:source_location) && job.callable.source_location
-            file, line = job.callable.source_location
-            "#{file.delete_prefix("#{Dir.pwd}/")}:#{line}"
+          elsif handler.is_a?(Method)
+            owner = handler.receiver.is_a?(Module) ? handler.receiver : handler.owner
+            [owner == Object ? nil : owner.name, handler.name].compact.join("::")
+          elsif !handler.is_a?(Proc)
+            handler.class.name
           end
         return unless source
 
         slug = source.downcase.gsub(/[^a-z0-9_-]+/, "-").gsub(/\A-+|-+\z/, "")
-        slug = slug[-MAX_SLUG_LENGTH..-1] || slug
+        slug = slug[0, MAX_SLUG_LENGTH].delete_suffix("-")
         slug.empty? ? nil : slug
       end
 
@@ -93,7 +104,7 @@ module Sentry
         case job
         when ::Rufus::Scheduler::CronJob
           crontab = crontab_for(job.cron_line)
-          timezone = timezone_for(job.cron_line) || cron_config.default_timezone
+          timezone = timezone_for(job.cron_line)
           Sentry::Cron::MonitorConfig.from_crontab(crontab, timezone: timezone, **options) if crontab && timezone
         when ::Rufus::Scheduler::EveryJob
           interval_for(job.frequency, options)
@@ -148,9 +159,12 @@ module Sentry
         values.chunk_while { |a, b| b == a + 1 }.map { |run| run.size > 1 ? "#{run.first}-#{run.last}" : run.first.to_s }.join(",")
       end
 
+      # Sentry only accepts IANA names, so offsets such as "+05:30" get no config.
       def timezone_for(cron)
         zone = cron.timezone || ::EtOrbi.determine_local_tzone
-        zone.name if defined?(::TZInfo::Timezone) && zone.is_a?(::TZInfo::Timezone)
+        return Sentry.configuration.cron.default_timezone unless zone
+
+        ::TZInfo::Timezone.get(zone.name).identifier
       rescue StandardError
         nil
       end

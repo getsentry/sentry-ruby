@@ -86,6 +86,17 @@ RSpec.describe Sentry::RufusScheduler do
       end
     end
 
+    it "sends no config for an offset time zone" do
+      expect(monitor_config(:cron, "0 9 * * * +05:30", name: "job")).to be_nil
+      expect(sentry_events.count).to eq(2)
+    end
+
+    it "sends no config when the local time zone is an offset" do
+      allow(EtOrbi).to receive(:determine_local_tzone).and_return(EtOrbi.get_tzone("+05:30"))
+
+      expect(monitor_config(:cron, "0 9 * * *", name: "job")).to be_nil
+    end
+
     it "uses the local time zone when the cron line has none" do
       allow(EtOrbi).to receive(:determine_local_tzone).and_return(TZInfo::Timezone.get("Asia/Tokyo"))
 
@@ -151,11 +162,45 @@ RSpec.describe Sentry::RufusScheduler do
       expect(sentry_events.first.monitor_slug).to eq("reports-handler")
     end
 
-    it "falls back to the block's source location" do
-      line = __LINE__ + 1
-      schedule(:every, "10m") { 42 }.call(true)
+    it "keeps the first 50 characters of long names" do
+      schedule(:every, "10m", name: "#{"a" * 45}-#{"b" * 10}").call(true)
 
-      expect(sentry_events.first.monitor_slug).to eq("spec-sentry-rufus_scheduler_spec-rb-#{line}")
+      expect(sentry_events.first.monitor_slug).to eq("#{"a" * 45}-bbbb")
     end
+
+    it "uses the method name for method handlers" do
+      handler = Object.new
+      def handler.sync_accounts; end
+      stub_const("Reports", Module.new { def self.run; end })
+      stub_const("Reports::Daily", Class.new { def build; end })
+
+      scheduler.every("10m", handler.method(:sync_accounts), job: true, first_in: "1h").call(true)
+      scheduler.every("10m", Reports.method(:run), job: true, first_in: "1h").call(true)
+      scheduler.every("10m", Reports::Daily.new.method(:build), job: true, first_in: "1h").call(true)
+
+      expect(sentry_events.map(&:monitor_slug).uniq).to eq(["sync_accounts", "reports-run", "reports-daily-build"])
+    end
+
+    it "does not monitor unnamed blocks and says to pass a name" do
+      string_io = StringIO.new
+      Sentry.configuration.sdk_logger = ::Logger.new(string_io)
+
+      job = schedule(:every, "10m") { 42 }
+      expect(job.call(true)).to eq(42)
+      job.call(true)
+
+      expect(sentry_events).to be_empty
+      expect(string_io.string.scan("pass `name:`").size).to eq(1)
+    end
+  end
+
+  it "runs the job unmonitored when building the monitor fails" do
+    string_io = StringIO.new
+    Sentry.configuration.sdk_logger = ::Logger.new(string_io)
+    allow(Sentry::RufusScheduler).to receive(:monitor_for).and_raise("boom")
+
+    expect(schedule(:cron, "0 9 * * *", name: "job").call(true)).to eq(42)
+    expect(sentry_events).to be_empty
+    expect(string_io.string).to include("RuntimeError: boom")
   end
 end
