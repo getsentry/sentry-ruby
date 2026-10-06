@@ -27,6 +27,11 @@ module Sentry
       backend.send_event(event)
     end
 
+    def send_envelope(envelope)
+      log_envelope(envelope)
+      backend.send_envelope(envelope)
+    end
+
     def log_envelope(envelope)
       envelope_json = {
         timestamp: Time.now.utc.iso8601,
@@ -36,13 +41,13 @@ module Sentry
         end
       }
 
-      File.open(log_file, "a") { |file| file << JSON.dump(envelope_json) << "\n" }
+      File.open(log_file, "a") { |file| file.write("#{JSON.dump(envelope_json)}\n") }
     end
 
     def logged_envelopes
       return [] unless File.exist?(log_file)
 
-      File.readlines(log_file).map do |line|
+      File.readlines(log_file).select { |line| fully_written?(line) }.map do |line|
         JSON.parse(line)
       end
     end
@@ -53,6 +58,10 @@ module Sentry
     end
 
     private
+
+    def fully_written?(line)
+      line.end_with?("\n")
+    end
 
     def initialize_backend(configuration)
       backend = configuration.dsn.local? ? DummyTransport : HTTPTransport
