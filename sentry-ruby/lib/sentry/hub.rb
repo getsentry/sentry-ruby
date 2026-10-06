@@ -119,16 +119,9 @@ module Sentry
       end
     end
 
-    def start_transaction(transaction: nil, custom_sampling_context: {}, instrumenter: :sentry, established: false, **options)
+    def start_transaction(transaction: nil, custom_sampling_context: {}, instrumenter: :sentry, **options)
       return unless configuration.tracing_enabled?
       return unless instrumenter == configuration.instrumenter
-
-      if transaction.nil? && !options.key?(:trace_id) && established
-        # reuse the already-established trace_id instead of generating an unrelated one
-        propagation_context = current_scope.propagation_context
-        options[:trace_id] = propagation_context.trace_id
-        options[:sample_rand] ||= propagation_context.sample_rand
-      end
 
       transaction ||= Transaction.new(**options)
 
@@ -387,23 +380,15 @@ module Sentry
       end.join("\n")
     end
 
-    def continue_trace(env, established: false, **options)
-      # don't clobber context an earlier point in the stack already established
-      configure_scope { |s| s.generate_propagation_context(env) } unless established
+    def continue_trace(env, **options)
+      configure_scope { |s| s.generate_propagation_context(env) }
 
       return nil unless configuration.tracing_enabled?
 
       propagation_context = current_scope.propagation_context
       return nil unless propagation_context.incoming_trace
 
-      Transaction.new(
-        trace_id: propagation_context.trace_id,
-        parent_span_id: propagation_context.parent_span_id,
-        parent_sampled: propagation_context.parent_sampled,
-        baggage: propagation_context.baggage,
-        sample_rand: propagation_context.sample_rand,
-        **options
-      )
+      Transaction.new(**propagation_context.transaction_options, **options)
     end
 
     private
