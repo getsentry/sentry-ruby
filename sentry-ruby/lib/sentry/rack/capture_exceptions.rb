@@ -14,8 +14,7 @@ module Sentry
       def call(env)
         return @app.call(env) unless Sentry.initialized?
 
-        # make sure the current thread has a clean hub
-        Sentry.clone_hub_to_current_thread
+        establish_propagation_context(env)
 
         Sentry.with_scope do |scope|
           Sentry.with_session_tracking do
@@ -63,6 +62,11 @@ module Sentry
         end
       end
 
+      def establish_propagation_context(env)
+        Sentry.clone_hub_to_current_thread
+        Sentry.get_current_scope.generate_propagation_context(env)
+      end
+
       def start_transaction(env, scope)
         options = {
           name: scope.transaction_name,
@@ -71,8 +75,16 @@ module Sentry
           origin: SPAN_ORIGIN
         }
 
-        transaction = Sentry.continue_trace(env, **options)
-        transaction = Sentry.start_transaction(transaction: transaction, custom_sampling_context: { env: env }, **options)
+        start_request_transaction(env, scope, options)
+      end
+
+      def start_request_transaction(env, scope, options)
+        transaction = Sentry.start_transaction(
+          custom_sampling_context: { env: env },
+          **scope.propagation_context.transaction_options,
+          **options
+        )
+
         attach_queue_time(transaction, env)
         transaction
       end

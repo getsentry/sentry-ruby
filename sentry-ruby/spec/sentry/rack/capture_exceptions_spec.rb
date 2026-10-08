@@ -93,6 +93,46 @@ RSpec.describe 'Sentry::Rack::CaptureExceptions', when: :rack_available? do
       expect(env.key?("sentry.error_event_id")).to eq(false)
     end
 
+    context "propagation context" do
+      def propagation_context_in_app(stack_env)
+        context_in_app = nil
+
+        app = lambda do |_e|
+          context_in_app = Sentry.get_current_scope.propagation_context
+          [200, {}, ['okay']]
+        end
+
+        Sentry::Rack::CaptureExceptions.new(app).call(stack_env)
+
+        context_in_app
+      end
+
+      it "starts a new trace for every request served by the same thread" do
+        first = propagation_context_in_app(env)
+        second = propagation_context_in_app(Rack::MockRequest.env_for("/test"))
+
+        expect(second.trace_id).not_to eq(first.trace_id)
+      end
+
+      context "with tracing enabled" do
+        before do
+          perform_basic_setup do |config|
+            config.traces_sample_rate = 1.0
+          end
+        end
+
+        it "starts the transaction from the request's propagation context" do
+          context_in_app = propagation_context_in_app(env)
+
+          transaction = last_sentry_event
+
+          expect(transaction.type).to eq("transaction")
+          expect(transaction.contexts.dig(:trace, :trace_id)).to eq(context_in_app.trace_id)
+          expect(transaction.contexts.dig(:trace, :parent_span_id)).to be_nil
+        end
+      end
+    end
+
     context "with config.data_collection.stack_frame_variables = true" do
       before do
         perform_basic_setup do |config|
