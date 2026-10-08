@@ -161,7 +161,7 @@ GEM
       net-protocol
     net-protocol (0.4.0)
       timeout
-    net-smtp (0.5.1)
+    net-smtp (0.5.2)
       net-protocol
     nio4r (2.7.5)
     nokogiri (1.15.7)
@@ -242,7 +242,7 @@ GEM
       rspec-core (> 3.3)
     rspec-support (3.13.7)
     securerandom (0.3.2)
-    sequel (5.108.0)
+    sequel (5.109.0)
       bigdecimal
     simplecov (0.22.0)
       docile (~> 1.1)
