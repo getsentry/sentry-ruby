@@ -1196,6 +1196,14 @@ RSpec.describe Sentry do
         expect(transaction.baggage.mutable).to eq(false)
       end
 
+      it "gives the Transaction the propagation context's span_id" do
+        Sentry.configuration.traces_sample_rate = 1.0
+
+        transaction = described_class.continue_trace(env, name: "foobar")
+
+        expect(transaction.span_id).to eq(Sentry.get_current_scope.propagation_context.span_id)
+      end
+
       describe "sample_rand propagation" do
         before do
           Sentry.configuration.traces_sample_rate = 1.0

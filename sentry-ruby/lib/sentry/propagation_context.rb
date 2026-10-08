@@ -163,6 +163,7 @@ module Sentry
     def transaction_options
       {
         trace_id: trace_id,
+        span_id: span_id,
         parent_span_id: parent_span_id,
         parent_sampled: parent_sampled,
         baggage: baggage,
