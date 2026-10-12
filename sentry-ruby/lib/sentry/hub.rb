@@ -388,14 +388,7 @@ module Sentry
       propagation_context = current_scope.propagation_context
       return nil unless propagation_context.incoming_trace
 
-      Transaction.new(
-        trace_id: propagation_context.trace_id,
-        parent_span_id: propagation_context.parent_span_id,
-        parent_sampled: propagation_context.parent_sampled,
-        baggage: propagation_context.baggage,
-        sample_rand: propagation_context.sample_rand,
-        **options
-      )
+      Transaction.new(**propagation_context.transaction_options, **options)
     end
 
     private

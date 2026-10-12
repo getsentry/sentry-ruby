@@ -160,6 +160,16 @@ module Sentry
       @sample_rand ||= self.class.generate_sample_rand(@baggage, @trace_id, @parent_sampled)
     end
 
+    def transaction_options
+      {
+        trace_id: trace_id,
+        parent_span_id: parent_span_id,
+        parent_sampled: parent_sampled,
+        baggage: baggage,
+        sample_rand: sample_rand
+      }
+    end
+
     # Returns the trace context that can be used to embed in an Event.
     # @return [Hash]
     def get_trace_context
