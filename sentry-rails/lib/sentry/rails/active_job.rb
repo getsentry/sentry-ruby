@@ -194,7 +194,7 @@ module Sentry
               rescue Exception => e # rubocop:disable Lint/RescueException
                 finish_sentry_transaction(transaction, 500)
 
-                capture_exception(job, e)
+                capture_exception(job, e) if report_exception?(job, e)
 
                 raise
               end
@@ -243,7 +243,26 @@ module Sentry
           # runs after the failed attempt bumped +executions+, so it observes the
           # same progression.
           def retry_count(job)
-            job.executions.to_i if job.respond_to?(:executions)
+            if (info = call_hook(job, :retry_info))
+              info[:count]
+            elsif job.respond_to?(:executions)
+              job.executions.to_i
+            end
+          end
+
+          def backend_will_retry?(job)
+            info = call_hook(job, :retry_info)
+            info ? info[:will_retry] : false
+          end
+
+          def report_exception?(job, exception)
+            decision = call_hook(job, :report_exception?, exception: exception)
+            decision.nil? ? !backend_will_retry?(job) : decision
+          end
+
+          def report_retried_exception?(job, exception)
+            decision = call_hook(job, :report_retried_exception?, exception: exception)
+            decision.nil? ? Sentry.configuration.rails.active_job_report_on_retry_error : decision
           end
 
           def compute_latency(job)
@@ -311,7 +330,7 @@ module Sentry
             handle_error_event(*args) do |job, error|
               return if error.nil?
               return if !Sentry.initialized? || job.already_supported_by_sentry_integration?
-              return unless Sentry.configuration.rails.active_job_report_on_retry_error
+              return unless report_retried_exception?(job, error)
 
               capture_exception(job, error)
             end

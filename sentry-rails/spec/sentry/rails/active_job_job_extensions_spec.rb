@@ -211,6 +211,101 @@ RSpec.describe "Sentry + ActiveJob with a registered job extension", type: :job 
     end
   end
 
+  describe "retry info" do
+    def register_retrying_extension(count:, will_retry:)
+      register_extension do
+        define_method(:retry_info) { |job:| { count: count, will_retry: will_retry } }
+      end
+    end
+
+    it "reports the extension's retry count on the producer span and the consumer transaction" do
+      register_retrying_extension(count: 4, will_retry: false)
+
+      within_parent_transaction { successful_job.perform_later }
+      drain
+
+      expect(publish_span[:data]).to include("messaging.message.retry.count" => 4)
+      expect(consumer_transaction.contexts.dig(:trace, :data)).to include("messaging.message.retry.count" => 4)
+    end
+
+    it "does not capture the job's exception but still fails the transaction when the backend will retry" do
+      register_retrying_extension(count: 1, will_retry: true)
+
+      expect do
+        failing_job.perform_later
+        drain
+      end.to raise_error(RuntimeError, /boom from failing_job spec/)
+
+      expect(error_event).to be_nil
+      expect(consumer_transaction.contexts.dig(:trace, :status)).to eq("internal_error")
+    end
+
+    it "captures the job's exception when the backend will not retry" do
+      register_retrying_extension(count: 5, will_retry: false)
+
+      expect(perform_failing_job).not_to be_nil
+    end
+  end
+
+  describe "exception reporting" do
+    def register_deciding_extension(report:, will_retry:)
+      register_extension do
+        define_method(:retry_info) { |job:| { count: 1, will_retry: will_retry } }
+        define_method(:report_exception?) { |job:, exception:| report }
+      end
+    end
+
+    it "captures the job's exception when the extension reports it, even though the backend will retry" do
+      register_deciding_extension(report: true, will_retry: true)
+
+      expect(perform_failing_job).not_to be_nil
+    end
+
+    it "does not capture the job's exception when the extension declines it, but still fails the transaction" do
+      register_deciding_extension(report: false, will_retry: false)
+
+      expect(perform_failing_job).to be_nil
+      expect(consumer_transaction.contexts.dig(:trace, :status)).to eq("internal_error")
+    end
+  end
+
+  describe "retried exception reporting" do
+    let(:retrying_job) do
+      job_fixture do
+        retry_on StandardError, attempts: 2, wait: 0
+
+        def perform
+          raise "boom from retrying_job spec" if executions == 1
+        end
+      end
+    end
+
+    def register_retry_deciding_extension(report)
+      register_extension do
+        define_method(:report_retried_exception?) { |job:, exception:| report }
+      end
+    end
+
+    def perform_retrying_job
+      retrying_job.perform_later
+      drain
+      error_event
+    end
+
+    it "does not capture an exception ActiveJob retries when the extension declines it, even with active_job_report_on_retry_error" do
+      Sentry.configuration.rails.active_job_report_on_retry_error = true
+      register_retry_deciding_extension(false)
+
+      expect(perform_retrying_job).to be_nil
+    end
+
+    it "captures an exception ActiveJob retries when the extension reports it, even without active_job_report_on_retry_error" do
+      register_retry_deciding_extension(true)
+
+      expect(perform_retrying_job&.exception&.values&.first&.value).to include("boom from retrying_job spec")
+    end
+  end
+
   describe "naming" do
     let(:backend_integration) do
       Module.new do
