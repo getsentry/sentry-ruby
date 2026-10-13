@@ -48,7 +48,9 @@ module Sentry
       end
 
       def will_retry?(job)
-        retryable?(job) && (retry_count(job) || 0) < limit(job)
+        count = retry_count(job)
+        next_count = count.nil? ? 0 : count + 1
+        retryable?(job) && next_count < limit(job)
       end
 
       private

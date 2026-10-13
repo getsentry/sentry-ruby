@@ -50,7 +50,7 @@ RSpec.describe Sentry::Sidekiq::JobExtension do
   end
 
   it "reports a first attempt as zero retries that Sidekiq will retry" do
-    expect(call_hook(:retry_info, delivered_job)).to eq(count: 0, will_retry: true)
+    expect(call_hook(:retry_info, delivered_job(retry: 1))).to eq(count: 0, will_retry: true)
   end
 
   it "reports the retries a retried job has gone through" do
@@ -60,6 +60,10 @@ RSpec.describe Sentry::Sidekiq::JobExtension do
   it "reports that Sidekiq will not retry a job with retries disabled or exhausted" do
     expect(call_hook(:retry_info, delivered_job(retry: false))).to eq(count: 0, will_retry: false)
     expect(call_hook(:retry_info, delivered_job(retry: 3, retry_count: 3))).to eq(count: 3, will_retry: false)
+  end
+
+  it "reports that Sidekiq will not retry the final delivered attempt" do
+    expect(call_hook(:retry_info, delivered_job(retry: 1, retry_count: 0))).to eq(count: 0, will_retry: false)
   end
 
   it "describes the job as the sidekiq context with queue, jid and sidekiq tags" do
