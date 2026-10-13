@@ -305,7 +305,7 @@ RSpec.describe "Sentry + ActiveJob with a registered job extension", type: :job 
     end
   end
 
-  describe "retried exception reporting" do
+  describe "retried exception reporting", skip: RAILS_VERSION < 6.0 do
     let(:retrying_job) do
       job_fixture do
         retry_on StandardError, attempts: 2, wait: 0
