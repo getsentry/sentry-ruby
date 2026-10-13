@@ -311,7 +311,7 @@ module Sentry
             }
 
             contexts = error_data[:contexts]
-            contexts = contexts.merge(execution_context) if Sentry.configuration.data_collection.queues
+            contexts = contexts.merge(matching_keys(execution_context, contexts)) if Sentry.configuration.data_collection.queues
             options[:contexts] = contexts if Sentry.configuration.data_collection.queues || !contexts.empty?
 
             integration = call_hook(job, :integration) || Sentry::Rails
@@ -322,13 +322,19 @@ module Sentry
             scope = Sentry.get_current_scope
 
             {
-              contexts: data.fetch(:contexts, {}).to_h do |name, context|
+              contexts: matching_keys(data.fetch(:contexts, {}), scope.contexts).to_h do |name, context|
                 scope_context = scope.contexts.fetch(name, {})
-                [name, scope_context.merge(context).merge(values_not_supplied_by(scope_context, extension_scope_contexts.fetch(name, {})))]
+                context = matching_keys(context, scope_context)
+                [name, context.merge(scope_context)]
               end,
-              tags: data.fetch(:tags, {}).reject { |key, _value| scope.tags.key?(key) },
-              extra: data.fetch(:extra, {}).reject { |key, _value| scope.extra.key?(key) }
+              tags: matching_keys(data.fetch(:tags, {}), scope.tags).reject { |key, _value| scope.tags.key?(key) },
+              extra: matching_keys(data.fetch(:extra, {}), scope.extra).reject { |key, _value| scope.extra.key?(key) }
             }
+          end
+
+          def matching_keys(data, reference)
+            keys = reference.keys.to_h { |key| [key.to_s, key] }
+            data.transform_keys { |key| keys.fetch(key.to_s, key) }
           end
 
 

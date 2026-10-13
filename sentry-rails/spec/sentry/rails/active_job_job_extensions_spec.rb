@@ -119,6 +119,26 @@ RSpec.describe "Sentry + ActiveJob with a registered job extension", type: :job 
     end
   end
 
+  describe "string-keyed error context" do
+    it "preserves serialized ActiveJob metadata while adding backend fields" do
+      register_extension do
+        def error_data(job:, exception:)
+          { contexts: { "active_job" => { "job_id" => "backend-id", "attempt" => 3 } } }
+        end
+      end
+
+      event = JSON.parse(JSON.generate(perform_failing_job.to_h))
+
+      expect(event.dig("contexts", "active_job")).to include(
+        "job_id" => event.dig("extra", "job_id"),
+        "job_class" => failing_job.name,
+        "queue" => "default",
+        "provider_job_id" => event.dig("extra", "provider_job_id"),
+        "attempt" => 3
+      )
+    end
+  end
+
   describe "error data overlapping the job's scope" do
     it "does not let the extension's error data replace tags and extra already on the job's scope" do
       register_extension do
