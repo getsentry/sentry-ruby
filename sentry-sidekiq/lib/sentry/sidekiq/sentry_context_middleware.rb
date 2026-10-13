@@ -18,11 +18,14 @@ module Sentry
 
         Sentry.clone_hub_to_current_thread
         scope = Sentry.get_current_scope
-        consumer.apply_scope_data(scope, sidekiq_job)
+        consumer.apply_scope_data(scope, sidekiq_job, default_scope_data: job_extension.scope_data(job: sidekiq_job))
         scope.set_transaction_name(job_extension.transaction_name(job: job), source: :task)
         transaction = consumer.start_transaction(
           scope, sidekiq_job,
           payload: sidekiq_job,
+          trace_headers: job_extension.extract_trace_headers(job: sidekiq_job, payload: sidekiq_job),
+          messaging_data: -> { job_extension.messaging_data(job: sidekiq_job) },
+          default_retry_count: job_extension.retry_info(job: sidekiq_job)[:count],
           always_continue_trace: true
         )
 
@@ -64,13 +67,16 @@ module Sentry
         end
 
         if Sentry.configuration.sidekiq.propagate_traces
-          job.replace(producer.inject_trace_headers(job, job, Sentry.get_trace_propagation_headers))
+          headers = Sentry.get_trace_propagation_headers
+          payload = Sentry::Sidekiq.job_extension.inject_trace_headers(job: job, payload: job, headers: headers)
+          job.replace(producer.inject_trace_headers(job, payload, headers))
         end
 
         producer.record_span(
           job,
           description: worker_class.to_s,
           extension_messaging_keys: %i[message_id],
+          default_messaging_data: { message_id: job["jid"] },
           messaging_data: { destination: queue },
           retry_count: false
         ) { yield }

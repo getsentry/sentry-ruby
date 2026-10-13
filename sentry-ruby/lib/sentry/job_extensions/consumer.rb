@@ -14,12 +14,10 @@ module Sentry
         @origin = origin
       end
 
-      def apply_scope_data(scope, job)
+      def apply_scope_data(scope, job, default_scope_data: {})
+        apply_scope_values(scope, default_scope_data)
         data = registry.call(registry.for(job), :scope_data, job: job)
-        scope.set_contexts(data[:contexts]) if data[:contexts]
-        scope.set_tags(data[:tags]) if data[:tags]
-        scope.set_extras(data[:extra]) if data[:extra]
-        scope.set_user(data[:user]) if data[:user]
+        apply_scope_values(scope, data)
       end
 
       def transaction_name(job)
@@ -101,6 +99,13 @@ module Sentry
       end
 
       private
+
+      def apply_scope_values(scope, data)
+        scope.set_contexts(data[:contexts]) if data[:contexts]
+        scope.set_tags(data[:tags]) if data[:tags]
+        scope.set_extras(data[:extra]) if data[:extra]
+        scope.set_user(data[:user]) if data[:user]
+      end
 
       def additive_error_data(data)
         scope = Sentry.get_current_scope

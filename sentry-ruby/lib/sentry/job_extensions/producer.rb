@@ -42,7 +42,7 @@ module Sentry
 
       private
 
-      def with_span(job, description:, messaging_data: {}, extension_messaging_keys: nil, retry_count: true, default_retry_count: nil)
+      def with_span(job, description:, messaging_data: {}, default_messaging_data: {}, extension_messaging_keys: nil, retry_count: true, default_retry_count: nil)
         extension = registry.for(job)
         span_description = registry.call(extension, :publish_description, job: job) || description
 
@@ -51,6 +51,7 @@ module Sentry
             span_origin = registry.call(extension, :span_origin, job: job) || origin
             span.set_origin(span_origin) if span_origin
 
+            set_messaging_data(span, resolve(default_messaging_data))
             extension_data = registry.call(extension, :messaging_data, job: job)
             extension_data = extension_data.slice(*extension_messaging_keys) if extension_messaging_keys
             set_messaging_data(span, extension_data)
