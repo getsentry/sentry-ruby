@@ -320,6 +320,18 @@ RSpec.describe Sentry::Sidekiq do
       expect(event.contexts.dig(:trace, :trace_id)).to eq(transaction.contexts.dig(:trace, :trace_id))
     end
 
+    it "does not log Sidekiq deprecation warnings while processing a job" do
+      log = StringIO.new
+      logger = Logger.new(log)
+      WITH_SIDEKIQ_7 ? Sidekiq.instance_variable_get(:@config).logger = logger : Sidekiq.logger = logger
+
+      execute_worker(processor, HappyWorker)
+
+      expect(log.string).not_to include("deprecated")
+    ensure
+      silence_sidekiq
+    end
+
     context "with instrumenter :otel" do
       before do
         perform_basic_setup do |config|

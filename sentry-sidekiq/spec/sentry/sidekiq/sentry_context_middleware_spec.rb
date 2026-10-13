@@ -30,6 +30,26 @@ RSpec.describe Sentry::Sidekiq::SentryContextServerMiddleware do
     expect(event.user).to eq(user)
   end
 
+  it "starts a new trace for a job without trace propagation headers" do
+    perform_basic_setup
+    worker_trace_id = Sentry.get_main_hub.current_scope.propagation_context.trace_id
+
+    execute_worker(processor, SadWorker)
+
+    event = transport.events.last
+    expect(event.contexts.dig(:trace, :trace_id)).to be_a(String)
+    expect(event.contexts.dig(:trace, :trace_id)).not_to eq(worker_trace_id)
+  end
+
+  it "continues the trace from trace propagation headers when tracing is disabled" do
+    perform_basic_setup
+    trace_id = "a" * 32
+
+    execute_worker(processor, SadWorker, trace_propagation_headers: { "sentry-trace" => "#{trace_id}-#{"b" * 16}-1" })
+
+    expect(transport.events.last.contexts.dig(:trace, :trace_id)).to eq(trace_id)
+  end
+
   context "with tracing enabled" do
     before do
       perform_basic_setup { |config| config.traces_sample_rate = 1.0 }
@@ -91,6 +111,18 @@ RSpec.describe Sentry::Sidekiq::SentryContextServerMiddleware do
         expect(trace[:data]['messaging.destination.name']).to eq('default')
         expect(trace[:data]['messaging.message.retry.count']).to eq(0)
         expect(trace[:data]['messaging.message.receive.latency']).to be_within(20).of(expected_latency)
+      end
+
+      it "does not set messaging.system on the queue.process transaction" do
+        execute_worker(processor, HappyWorker)
+
+        expect(transport.events[0].contexts.dig(:trace, :data)).not_to have_key('messaging.system')
+      end
+
+      it "reports the job's retry count on the queue.process transaction" do
+        execute_worker(processor, HappyWorker, retry_count: 3)
+
+        expect(transport.events[0].contexts.dig(:trace, :data)['messaging.message.retry.count']).to eq(3)
       end
 
       if MIN_SIDEKIQ_6

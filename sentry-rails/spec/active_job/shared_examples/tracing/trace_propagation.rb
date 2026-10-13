@@ -98,4 +98,20 @@ RSpec.shared_examples "an ActiveJob backend that propagates trace context throug
       expect(publish_span[:origin]).to eq("auto.queue.active_job")
     end
   end
+
+  context "when tracing is disabled and the job carries no trace headers" do
+    let(:configure_sentry) { proc { |config| config.rails.active_job_propagate_traces = false } }
+
+    it "keeps the worker's trace on the captured error event" do
+      worker_trace_id = Sentry.get_main_hub.current_scope.propagation_context.trace_id
+
+      expect do
+        failing_job.perform_later
+        drain
+      end.to raise_error(RuntimeError, /boom from failing_job spec/)
+
+      error_event = sentry_events.find { |e| e.is_a?(Sentry::ErrorEvent) }
+      expect(error_event.contexts.dig(:trace, :trace_id)).to eq(worker_trace_id)
+    end
+  end
 end
