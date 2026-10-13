@@ -14,6 +14,7 @@ module Sentry
       def initialize
         @mutex = Mutex.new
         @extensions = [].freeze
+        @hooks = Hooks.new
       end
 
       # Registers an extension.
@@ -53,6 +54,38 @@ module Sentry
         @extensions.find { |extension| handles?(extension, job) }
       end
 
+      # Calls a hook on an extension and returns its result, or the hook's
+      # fallback result when the extension cannot supply valid data.
+      #
+      # The fallback result is returned when the extension is nil, when the hook
+      # raises a StandardError, or when it returns data that does not match the
+      # shape documented on the corresponding {Extension} method. Keys a Hash
+      # result carries beyond those documented are dropped. Failures and
+      # malformed results are logged through the SDK logger. Exceptions outside
+      # StandardError propagate.
+      #
+      # Arguments are passed to the extension as given. Not mutating them is
+      # the extension's obligation, documented on {Extension}.
+      #
+      # @example Applying an extension's scope data
+      #   extension = Sentry.job_extensions.for(job)
+      #   data = Sentry.job_extensions.call(extension, :scope_data, job: job)
+      #   scope.set_contexts(data[:contexts]) if data[:contexts]
+      #
+      # @param extension [Extension, nil] the extension returned by {#for}
+      # @param hook [Symbol] the name of a hook method documented on {Extension}
+      # @param arguments [Array] the arguments documented on the hook's
+      #   {Extension} method
+      # @return [Object] the extension's result or the hook's fallback result
+      # @raise [ArgumentError] if the hook is not a hook documented on {Extension}
+      def call(extension, hook, **arguments)
+        hooks = extension ? extension.hooks : @hooks
+        fallback_result = hooks.fallback_result(hook, arguments)
+        return fallback_result unless extension
+
+        invoke(extension, hook, hooks, arguments, fallback_result)
+      end
+
       # @!visibility private
       def clear
         @mutex.synchronize { @extensions = [].freeze }
@@ -65,6 +98,18 @@ module Sentry
       rescue StandardError => e
         log_error("Job extension #{extension.name.inspect} failed to check whether it handles a job", e)
         false
+      end
+
+      def invoke(extension, hook, hooks, arguments, fallback_result)
+        result = extension.public_send(hook, **arguments)
+        normalized = hooks.normalize(hook, result, arguments)
+        return normalized unless normalized.equal?(Hooks::MALFORMED)
+
+        log_warn("Job extension #{extension.name.inspect} returned malformed data from #{hook}: a #{result.class}")
+        fallback_result
+      rescue StandardError => e
+        log_error("Job extension #{extension.name.inspect} failed in #{hook}", e)
+        fallback_result
       end
 
       def sdk_logger

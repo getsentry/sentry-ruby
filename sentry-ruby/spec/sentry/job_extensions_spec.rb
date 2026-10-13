@@ -146,4 +146,323 @@ RSpec.describe "Sentry job extensions" do
       expect { Sentry.job_extensions.for(sidekiq_job) }.to raise_error(Interrupt)
     end
   end
+
+  describe "#call" do
+    let(:hooked_extension_class) do
+      Class.new(Sentry::JobExtensions::Extension) do
+        def initialize(name:, hooks:)
+          super(name: name)
+          hooks.each { |hook, implementation| define_singleton_method(hook, &implementation) }
+        end
+      end
+    end
+
+    let(:job) { double("job", jid: "abc123", queue: "default", retry_count: 2) }
+    let(:exception) { RuntimeError.new("job failed") }
+    let(:payload) { { "class" => "HardJob", "args" => [1] } }
+    let(:headers) { { "sentry-trace" => "trace-value", "baggage" => "baggage-value" } }
+    let(:string_io) { StringIO.new }
+    let(:backend_integration) do
+      Module.new do
+        extend Sentry::Integrable
+
+        def self.integration_name
+          "backend"
+        end
+      end
+    end
+
+    let(:hook_arguments) do
+      {
+        scope_data: { job: job },
+        error_data: { job: job, exception: exception },
+        retry_info: { job: job },
+        report_retried_exception?: { job: job, exception: exception },
+        inject_trace_headers: { job: job, payload: payload, headers: headers },
+        extract_trace_headers: { job: job, payload: payload },
+        messaging_data: { job: job },
+        transaction_name: { job: job },
+        span_origin: { job: job },
+        publish_description: { job: job },
+        integration: { job: job },
+        instruments_enqueue?: { job: job }
+      }
+    end
+
+    let(:fallback_results) do
+      {
+        scope_data: {},
+        error_data: {},
+        retry_info: nil,
+        report_retried_exception?: nil,
+        inject_trace_headers: payload,
+        extract_trace_headers: nil,
+        messaging_data: {},
+        transaction_name: nil,
+        span_origin: nil,
+        publish_description: nil,
+        integration: nil,
+        instruments_enqueue?: nil
+      }
+    end
+
+    def build_hooked_extension(**hooks)
+      hooked_extension_class.new(name: "sidekiq", hooks: hooks)
+    end
+
+    def call_hook(extension, hook)
+      Sentry.job_extensions.call(extension, hook, **hook_arguments.fetch(hook))
+    end
+
+    def call_every_hook(extension)
+      hook_arguments.keys.to_h { |hook| [hook, call_hook(extension, hook)] }
+    end
+
+    before do
+      perform_basic_setup { |config| config.sdk_logger = Logger.new(string_io) }
+    end
+
+    it "uses custom validators without changing validation for other extensions" do
+      validators = Class.new(Sentry::JobExtensions::Validators) do
+        def label(result, **)
+          super(result.is_a?(Symbol) ? result.to_s : result)
+        end
+      end.new
+      custom = Class.new(Sentry::JobExtensions::Extension) do
+        def transaction_name(job:)
+          :CustomJob
+        end
+      end
+      extension = custom.new(name: "custom", validators: validators)
+      default_extension = custom.new(name: "default")
+
+      expect(call_hook(extension, :transaction_name)).to eq("CustomJob")
+      expect(call_hook(default_extension, :transaction_name)).to be_nil
+      expect(call_hook(nil, :transaction_name)).to be_nil
+    end
+
+    it "uses configured metadata keys without following later changes to the supplied rules" do
+      scope_keys = [:tags]
+      event_keys = [:extra]
+      validators = Sentry::JobExtensions::Validators.new(scope_keys: scope_keys, event_keys: event_keys)
+      custom = Class.new(Sentry::JobExtensions::Extension) do
+        def scope_data(job:)
+          { tags: { queue: "default" }, user: { id: "42" } }
+        end
+
+        def error_data(job:, exception:)
+          { tags: { failed: true }, extra: { attempt: 2 } }
+        end
+      end
+      extension = custom.new(name: "custom", validators: validators)
+      scope_keys << :user
+      event_keys << :tags
+
+      expect(call_hook(extension, :scope_data)).to eq(tags: { queue: "default" })
+      expect(call_hook(extension, :error_data)).to eq(extra: { attempt: 2 })
+      expect(call_hook(custom.new(name: "default"), :scope_data))
+        .to eq(tags: { queue: "default" }, user: { id: "42" })
+    end
+
+    it "uses configured messaging validators without changing other extensions or following rule mutations" do
+      fields = Sentry::JobExtensions::Validators::MESSAGING_DATA_VALIDATORS.merge(
+        message_id: ->(value) { value.is_a?(String) && !value.empty? }
+      )
+      validators = Sentry::JobExtensions::Validators.new(messaging_fields: fields)
+      custom = Class.new(Sentry::JobExtensions::Extension) do
+        def messaging_data(job:)
+          { system: "sidekiq", message_id: job }
+        end
+      end
+      extension = custom.new(name: "custom", validators: validators)
+      default_extension = custom.new(name: "default")
+      fields[:message_id] = ->(**) { true }
+
+      expect(Sentry.job_extensions.call(extension, :messaging_data, job: "abc123"))
+        .to eq(system: "sidekiq", message_id: "abc123")
+      expect(Sentry.job_extensions.call(extension, :messaging_data, job: "")).to eq({})
+      expect(Sentry.job_extensions.call(default_extension, :messaging_data, job: ""))
+        .to eq(system: "sidekiq", message_id: "")
+    end
+
+    it "returns the scope contexts and tags an extension derives from the job" do
+      extension = build_hooked_extension(
+        scope_data: lambda do |job:|
+          { contexts: { sidekiq: { jid: job.jid } }, tags: { queue: job.queue } }
+        end
+      )
+
+      expect(call_hook(extension, :scope_data))
+        .to eq(contexts: { sidekiq: { jid: "abc123" } }, tags: { queue: "default" })
+    end
+
+    it "returns the event tags, extra and contexts an extension derives from the job and exception" do
+      extension = build_hooked_extension(
+        error_data: lambda do |job:, exception:|
+          {
+            tags: { queue: job.queue },
+            extra: { error_message: exception.message },
+            contexts: { sidekiq: { jid: job.jid } }
+          }
+        end
+      )
+
+      expect(call_hook(extension, :error_data)).to eq(
+        tags: { queue: "default" },
+        extra: { error_message: "job failed" },
+        contexts: { sidekiq: { jid: "abc123" } }
+      )
+    end
+
+    it "returns the retry count and policy an extension derives from the job" do
+      extension = build_hooked_extension(
+        retry_info: ->(job:) { { count: job.retry_count, will_retry: job.retry_count < 5 } }
+      )
+
+      expect(call_hook(extension, :retry_info)).to eq(count: 2, will_retry: true)
+    end
+
+    it "returns a payload carrying the trace headers" do
+      extension = build_hooked_extension(
+        inject_trace_headers: ->(job:, payload:, headers:) { payload.merge("sentry" => headers) }
+      )
+
+      expect(call_hook(extension, :inject_trace_headers))
+        .to eq("class" => "HardJob", "args" => [1], "sentry" => headers)
+    end
+
+    it "returns the trace headers an extension reads from the payload" do
+      carrying_payload = { "class" => "HardJob", "sentry" => headers }
+      extension = build_hooked_extension(extract_trace_headers: ->(job:, payload:) { payload["sentry"] })
+
+      expect(Sentry.job_extensions.call(extension, :extract_trace_headers, job: job, payload: carrying_payload)).to eq(headers)
+    end
+
+    it "returns the messaging span data an extension derives from the job" do
+      extension = build_hooked_extension(
+        messaging_data: lambda do |job:|
+          { system: "sidekiq", message_id: job.jid, destination: job.queue, receive_latency: 1500 }
+        end
+      )
+
+      expect(call_hook(extension, :messaging_data))
+        .to eq(system: "sidekiq", message_id: "abc123", destination: "default", receive_latency: 1500)
+    end
+
+    it "returns the names an extension gives the job and the integration it captures errors under" do
+      integration = backend_integration
+      extension = build_hooked_extension(
+        transaction_name: ->(job:) { "Backend/#{job.queue}" },
+        span_origin: ->(job:) { "auto.queue.backend" },
+        publish_description: ->(job:) { "publish #{job.jid}" },
+        integration: ->(job:) { integration }
+      )
+
+      expect(call_every_hook(extension)).to include(
+        transaction_name: "Backend/default",
+        span_origin: "auto.queue.backend",
+        publish_description: "publish abc123",
+        integration: backend_integration
+      )
+    end
+
+    it "returns whether an extension instruments enqueueing the job itself" do
+      extension = build_hooked_extension(instruments_enqueue?: ->(job:) { job.queue == "default" })
+
+      expect(call_hook(extension, :instruments_enqueue?)).to be(true)
+    end
+
+    it "returns the fallback result of every hook an extension does not override" do
+      extension = build_hooked_extension(scope_data: ->(job:) { { tags: { queue: "default" } } })
+
+      expect(call_every_hook(extension))
+        .to eq(fallback_results.merge(scope_data: { tags: { queue: "default" } }))
+    end
+
+    it "returns the fallback result of every hook for a bare extension" do
+      extension = Sentry::JobExtensions::Extension.new(name: "noop")
+
+      expect(call_every_hook(extension)).to eq(fallback_results)
+    end
+
+    it "returns the fallback result of every hook when no extension claims the job" do
+      expect(call_every_hook(nil)).to eq(fallback_results)
+    end
+
+    it "rejects a hook that is not part of the contract" do
+      expect { Sentry.job_extensions.call(build_hooked_extension, :handles?, job: job) }
+        .to raise_error(ArgumentError, /handles\?/)
+    end
+
+    it "logs and returns the fallback result when a hook raises a StandardError" do
+      failing_hooks = hook_arguments.keys.to_h { |hook| [hook, ->(**) { raise "#{hook} exploded" }] }
+      extension = build_hooked_extension(**failing_hooks)
+
+      expect(call_every_hook(extension)).to eq(fallback_results)
+      hook_arguments.each_key do |hook|
+        expect(string_io.string).to include("sidekiq", hook.to_s, "#{hook} exploded")
+      end
+    end
+
+    it "returns the fallback result when a hook raises and Sentry is not initialized" do
+      reset_sentry_globals!
+      extension = build_hooked_extension(scope_data: ->(job:) { raise "scope exploded" })
+
+      expect(call_hook(extension, :scope_data)).to eq({})
+    end
+
+    it "propagates exceptions outside StandardError from a hook" do
+      extension = build_hooked_extension(retry_info: ->(job:) { raise Interrupt })
+
+      expect { call_hook(extension, :retry_info) }.to raise_error(Interrupt)
+    end
+
+    {
+      scope_data: [{ tags: { queue: "default" }, body: "x" }, { tags: { queue: "default" } }],
+      error_data: [{ extra: { attempt: 1 }, unknown: nil }, { extra: { attempt: 1 } }],
+      retry_info: [{ count: 2, will_retry: true, backoff: 30 }, { count: 2, will_retry: true }],
+      messaging_data: [{ system: "sidekiq", payload: "{}" }, { system: "sidekiq" }]
+    }.each do |hook, (result, known_data)|
+      it "keeps the documented data and drops unknown keys when #{hook} returns #{result.inspect}" do
+        extension = build_hooked_extension(hook => ->(**) { result })
+
+        expect(call_hook(extension, hook)).to eq(known_data)
+        expect(string_io.string).not_to include("malformed")
+      end
+    end
+
+    it "does not write a malformed result into the log" do
+      extension = build_hooked_extension(inject_trace_headers: ->(job:, payload:, headers:) { payload["args"].map(&:to_s) })
+
+      expect(call_hook(extension, :inject_trace_headers)).to eq(payload)
+      expect(string_io.string).to include("sidekiq", "inject_trace_headers", "Array")
+      expect(string_io.string).not_to include('"1"')
+    end
+
+    {
+      scope_data: [nil, [], { contexts: { sidekiq: "jid" } }, { tags: [] }, { user: "42" }],
+      error_data: [nil, "tags", { extra: nil }, { contexts: { sidekiq: 1 } }],
+      retry_info: [{}, 2, { count: "2", will_retry: true }, { count: -1, will_retry: true },
+                   { count: 2, will_retry: "yes" }, { count: 2 }],
+      inject_trace_headers: [nil, "payload"],
+      extract_trace_headers: ["sentry-trace", [], { "sentry-trace" => 1 }, { sentry_trace: "trace" }],
+      messaging_data: [nil, [], { system: :sidekiq }, { message_id: 1 }, { destination: nil },
+                       { receive_latency: "fast" }],
+      transaction_name: ["", :HardJob, 1],
+      span_origin: ["", :"auto.queue.backend"],
+      publish_description: ["", :HardJob],
+      integration: ["backend", Module.new, Kernel],
+      instruments_enqueue?: ["yes", 1],
+      report_retried_exception?: ["yes", 1]
+    }.each do |hook, malformed_results|
+      malformed_results.each do |malformed|
+        it "logs and returns the fallback result when #{hook} returns #{malformed.inspect}" do
+          extension = build_hooked_extension(hook => ->(**) { malformed })
+
+          expect(call_hook(extension, hook)).to eq(fallback_results.fetch(hook))
+          expect(string_io.string).to include("sidekiq", hook.to_s)
+        end
+      end
+    end
+  end
 end
