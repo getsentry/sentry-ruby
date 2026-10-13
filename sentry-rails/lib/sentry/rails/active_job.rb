@@ -65,7 +65,7 @@ module Sentry
       end
 
       def already_supported_by_sentry_integration?
-        Sentry.configuration.rails.skippable_job_adapters.include?(self.class.queue_adapter.class.to_s)
+        !Sentry::Rails.active_job_owns_adapter?(self.class.queue_adapter.class)
       end
 
       class SentryReporter
@@ -78,12 +78,27 @@ module Sentry
         # normally derived from the adapter itself; this is only the last resort.
         MESSAGING_SYSTEM_FALLBACK = "activejob"
 
+        MESSAGING_DATA_ATTRIBUTES = {
+          system: Sentry::Span::DataConventions::MESSAGING_SYSTEM,
+          message_id: Sentry::Span::DataConventions::MESSAGING_MESSAGE_ID,
+          destination: Sentry::Span::DataConventions::MESSAGING_DESTINATION_NAME,
+          receive_latency: Sentry::Span::DataConventions::MESSAGING_MESSAGE_RECEIVE_LATENCY
+        }.freeze
+
         EVENT_HANDLERS = {
           "enqueue_retry.active_job" => :retry_handler
         }
 
         class << self
           include ErrorReporterContext
+
+          def job_extensions
+            @job_extensions ||= Sentry.job_extensions
+          end
+
+          def call_hook(job, hook, **arguments)
+            job_extensions.call(job_extensions.for(job), hook, job: job, **arguments)
+          end
 
           def producer_callback_registered?
             @producer_callback_registered ||= false
@@ -104,9 +119,11 @@ module Sentry
             end
 
             begin
-              Sentry.with_child_span(op: "queue.publish", description: job.class.name) do |span|
+              description = call_hook(job, :publish_description) || job.class.name
+              Sentry.with_child_span(op: "queue.publish", description: description) do |span|
                 if span
-                  span.set_origin(SPAN_ORIGIN)
+                  span.set_origin(call_hook(job, :span_origin) || SPAN_ORIGIN)
+                  set_extension_messaging_data(span, job)
                   span.set_data(Sentry::Span::DataConventions::MESSAGING_SYSTEM, messaging_system(job))
                   span.set_data(Sentry::Span::DataConventions::MESSAGING_MESSAGE_ID, job.job_id)
                   span.set_data(Sentry::Span::DataConventions::MESSAGING_DESTINATION_NAME, job.queue_name)
@@ -139,7 +156,9 @@ module Sentry
               begin
                 scope.set_user(user.transform_keys(&:to_sym)) if user && !user.empty?
 
-                scope.set_transaction_name(job.class.name, source: :task)
+                apply_extension_scope_data(scope, job)
+
+                scope.set_transaction_name(call_hook(job, :transaction_name) || job.class.name, source: :task)
                 scope.set_tags(queue: job.queue_name)
 
                 scope.set_contexts(active_job: {
@@ -153,7 +172,7 @@ module Sentry
                   name: scope.transaction_name,
                   source: scope.transaction_source,
                   op: OP_NAME,
-                  origin: SPAN_ORIGIN
+                  origin: call_hook(job, :span_origin) || SPAN_ORIGIN
                 }
 
                 transaction = if trace_headers && !trace_headers.empty?
@@ -165,6 +184,7 @@ module Sentry
 
                 if transaction
                   set_messaging_data(transaction, job)
+                  set_extension_messaging_data(transaction, job)
                   scope.set_span(transaction)
                 end
 
@@ -196,6 +216,20 @@ module Sentry
             end
           end
 
+          def apply_extension_scope_data(scope, job)
+            data = call_hook(job, :scope_data)
+            scope.set_contexts(data[:contexts]) if data[:contexts]
+            scope.set_tags(data[:tags]) if data[:tags]
+            scope.set_extras(data[:extra]) if data[:extra]
+            scope.set_user(data[:user]) if data[:user]
+          end
+
+          def set_extension_messaging_data(span, job)
+            call_hook(job, :messaging_data).each do |key, value|
+              span.set_data(MESSAGING_DATA_ATTRIBUTES.fetch(key), value)
+            end
+          end
+
           def messaging_system(job)
             name = job.class.queue_adapter_name if job.class.respond_to?(:queue_adapter_name)
             name = name.to_s
@@ -220,20 +254,42 @@ module Sentry
           end
 
           def capture_exception(job, e)
+            error_data = additive_error_data(
+              call_hook(job, :error_data, exception: e)
+            )
+
             options = {
-              extra: sentry_context(job),
-              tags: {
+              extra: error_data[:extra].merge(sentry_context(job)),
+              tags: error_data[:tags].merge(
                 job_id: job.job_id,
                 provider_job_id: job.provider_job_id
-              },
+              ),
               # Send synchronously: a worker process may exit before the async
               # background worker flushes its queue, which would drop the event.
               hint: { background: false }
             }
-            options[:contexts] = execution_context if Sentry.configuration.data_collection.queues
 
-            Sentry::Rails.capture_exception(e, **options)
+            contexts = error_data[:contexts]
+            contexts = contexts.merge(execution_context) if Sentry.configuration.data_collection.queues
+            options[:contexts] = contexts if Sentry.configuration.data_collection.queues || !contexts.empty?
+
+            integration = call_hook(job, :integration) || Sentry::Rails
+            integration.capture_exception(e, **options)
           end
+
+          def additive_error_data(data)
+            scope = Sentry.get_current_scope
+
+            {
+              contexts: data.fetch(:contexts, {}).to_h do |name, context|
+                scope_context = scope.contexts.fetch(name, {})
+                [name, scope_context.merge(context).merge(values_not_supplied_by(scope_context, extension_scope_contexts.fetch(name, {})))]
+              end,
+              tags: data.fetch(:tags, {}).reject { |key, _value| scope.tags.key?(key) },
+              extra: data.fetch(:extra, {}).reject { |key, _value| scope.extra.key?(key) }
+            }
+          end
+
 
           def register_event_handlers
             EVENT_HANDLERS.each do |name, handler|
