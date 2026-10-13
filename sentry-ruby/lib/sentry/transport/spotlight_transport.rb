@@ -39,11 +39,11 @@ module Sentry
       @failed += 1
     end
 
-    # Similar to HTTPTransport connection, but does not support Proxy and SSL
+    # Similar to HTTPTransport connection, but does not support Proxy
     def conn
       sidecar = URI(@sidecar_url)
       connection = ::Net::HTTP.new(sidecar.hostname, sidecar.port, nil)
-      connection.use_ssl = false
+      connection.use_ssl = sidecar.scheme == "https"
       connection
     end
   end
