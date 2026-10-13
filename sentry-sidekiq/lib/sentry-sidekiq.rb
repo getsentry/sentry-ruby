@@ -5,6 +5,7 @@ require "sentry-ruby"
 require "sentry/integrable"
 require "sentry/sidekiq/version"
 require "sentry/sidekiq/configuration"
+require "sentry/sidekiq/job_extension"
 require "sentry/sidekiq/error_handler"
 require "sentry/sidekiq/sentry_context_middleware"
 
@@ -13,6 +14,12 @@ module Sentry
     extend Sentry::Integrable
 
     register_integration name: "sidekiq", version: Sentry::Sidekiq::VERSION
+
+    def self.job_extension
+      @job_extension ||= JobExtension.new
+    end
+
+    Sentry.register_job_extension(job_extension)
 
     if defined?(::Rails::Railtie)
       class Railtie < ::Rails::Railtie
