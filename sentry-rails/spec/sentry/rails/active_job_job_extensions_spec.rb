@@ -103,6 +103,22 @@ RSpec.describe "Sentry + ActiveJob with a registered job extension", type: :job 
     end
   end
 
+  describe "error data from a changing job" do
+    it "keeps extension context values from before execution when the job fails" do
+      register_extension do
+        def scope_data(job:)
+          { contexts: { backend: { attempt: job.executions } } }
+        end
+
+        def error_data(job:, exception:)
+          { contexts: { backend: { attempt: job.executions } } }
+        end
+      end
+
+      expect(perform_failing_job.contexts[:backend]).to eq(attempt: 0)
+    end
+  end
+
   describe "error data overlapping the job's scope" do
     it "does not let the extension's error data replace tags and extra already on the job's scope" do
       register_extension do
