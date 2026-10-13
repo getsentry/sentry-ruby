@@ -33,7 +33,7 @@ module Sentry
       def serialize
         payload = super
         return payload if !Sentry.initialized? || already_supported_by_sentry_integration?
-        return payload if SentryReporter.instrumented_by_extension?(self)
+        return payload if SentryReporter.producer.instrumented_by_extension?(self)
 
         begin
           sentry_data = {}
@@ -41,7 +41,7 @@ module Sentry
             headers = Sentry.get_trace_propagation_headers
             if headers && !headers.empty?
               sentry_data["trace_propagation_headers"] = headers
-              payload = SentryReporter.call_hook(self, :inject_trace_headers, payload: payload, headers: headers)
+              payload = SentryReporter.producer.inject_trace_headers(self, payload, headers)
             end
           end
 
@@ -84,13 +84,6 @@ module Sentry
         # normally derived from the adapter itself; this is only the last resort.
         MESSAGING_SYSTEM_FALLBACK = "activejob"
 
-        MESSAGING_DATA_ATTRIBUTES = {
-          system: Sentry::Span::DataConventions::MESSAGING_SYSTEM,
-          message_id: Sentry::Span::DataConventions::MESSAGING_MESSAGE_ID,
-          destination: Sentry::Span::DataConventions::MESSAGING_DESTINATION_NAME,
-          receive_latency: Sentry::Span::DataConventions::MESSAGING_MESSAGE_RECEIVE_LATENCY
-        }.freeze
-
         EVENT_HANDLERS = {
           "enqueue_retry.active_job" => :retry_handler
         }
@@ -100,6 +93,10 @@ module Sentry
 
           def consumer
             @consumer ||= Sentry::JobExtensions::Consumer.new(integration: Sentry::Rails, origin: SPAN_ORIGIN)
+          end
+
+          def producer
+            @producer ||= Sentry::JobExtensions::Producer.new(origin: SPAN_ORIGIN)
           end
 
           def job_extensions
@@ -118,60 +115,24 @@ module Sentry
             @producer_callback_registered = true
           end
 
-          def instrumented_by_extension?(job)
-            call_hook(job, :instruments_enqueue?) == true
-          end
-
           def record_producer_span(job, &enqueue)
             return yield if !Sentry.initialized? || job.already_supported_by_sentry_integration?
+            return yield if producer.instrumented_by_extension?(job)
 
-            return yield if instrumented_by_extension?(job)
-
-            enqueued = false
-
-            run_enqueue = lambda do
-              enqueued = true
-              enqueue.call
-            end
-
-            begin
-              description = call_hook(job, :publish_description) || job.class.name
-              Sentry.with_child_span(op: "queue.publish", description: description) do |span|
-                if span
-                  span.set_origin(call_hook(job, :span_origin) || SPAN_ORIGIN)
-                  set_extension_messaging_data(span, job)
-                  span.set_data(Sentry::Span::DataConventions::MESSAGING_SYSTEM, messaging_system(job))
-                  span.set_data(Sentry::Span::DataConventions::MESSAGING_MESSAGE_ID, job.job_id)
-                  span.set_data(Sentry::Span::DataConventions::MESSAGING_DESTINATION_NAME, job.queue_name)
-
-                  if (count = retry_count(job))
-                    span.set_data(Sentry::Span::DataConventions::MESSAGING_MESSAGE_RETRY_COUNT, count)
-                  end
-                end
-
-                run_enqueue.call
-              end
-            rescue StandardError => e
-              raise if enqueued
-
-              log_producer_span_error(e)
-
-              run_enqueue.call
-            end
-          end
-
-          def retry_count(job)
-            if (info = call_hook(job, :retry_info))
-              info[:count]
-            elsif job.respond_to?(:executions)
-              job.executions.to_i
-            end
-          end
-
-          def set_extension_messaging_data(span, job)
-            call_hook(job, :messaging_data).each do |key, value|
-              span.set_data(MESSAGING_DATA_ATTRIBUTES.fetch(key), value)
-            end
+            producer.record_span(
+              job,
+              description: job.class.name,
+              messaging_data: -> {
+                {
+                  system: messaging_system(job),
+                  message_id: job.job_id,
+                  destination: job.queue_name
+                }.compact
+              },
+              default_retry_count: -> { executions(job) },
+              on_instrumentation_error: method(:log_producer_span_error),
+              &enqueue
+            )
           end
 
           def log_producer_span_error(e)

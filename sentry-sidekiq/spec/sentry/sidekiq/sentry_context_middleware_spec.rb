@@ -213,6 +213,18 @@ RSpec.describe Sentry::Sidekiq::SentryContextClientMiddleware do
       expect(queue.first["sentry_user"]).to eq(user)
     end
 
+    context "when the scope user has fields beyond id, email and username" do
+      let(:user) { { "id" => 1, "ip_address" => "1.2.3.4", "segment" => "vip" } }
+
+      it "propagates the whole user" do
+        Sentry.configuration.data_collection.user_info = true
+
+        client.push('queue' => 'default', 'class' => HappyWorker, 'args' => [])
+
+        expect(queue.first["sentry_user"]).to eq(user)
+      end
+    end
+
     it "does not propagate user information when user_info is disabled" do
       Sentry.configuration.data_collection.user_info = false
 
@@ -269,6 +281,67 @@ RSpec.describe Sentry::Sidekiq::SentryContextClientMiddleware do
       expect(span[:op]).to eq("queue.publish")
       expect(span[:data]['messaging.message.id']).to eq(message_id)
       expect(span[:data]['messaging.destination.name']).to eq('default')
+    end
+
+    context "when an earlier client middleware reroutes the job" do
+      let(:rerouted_queue) { Sidekiq::Queue.new("rerouted") }
+
+      let(:rerouting_middleware) do
+        Class.new do
+          def call(_worker_class, job, _queue, _redis_pool)
+            job["queue"] = "rerouted"
+            yield
+          end
+        end
+      end
+
+      let(:client) do
+        Sidekiq::Client.new.tap do |client|
+          client.middleware do |chain|
+            chain.add rerouting_middleware
+            chain.add described_class
+          end
+        end
+      end
+
+      after do
+        client.middleware { |chain| chain.remove(rerouting_middleware) }
+        ensure_queue_empty(rerouted_queue)
+      end
+
+      it "reports the queue the push was made to as the destination" do
+        client.push('queue' => 'default', 'class' => HappyWorker, 'args' => [])
+
+        transaction.finish
+
+        span = transport.events.last.spans.detect { |span| span[:op] == "queue.publish" }
+        expect(span[:data]['messaging.destination.name']).to eq('default')
+      end
+    end
+
+    it "names the queue.publish span after the worker without an origin, messaging system or retry count" do
+      client.push('queue' => 'default', 'class' => HappyWorker, 'args' => [], 'retry_count' => 2)
+
+      transaction.finish
+
+      span = transport.events.last.spans.detect { |span| span[:op] == "queue.publish" }
+      expect(span[:description]).to eq("HappyWorker")
+      expect(span[:origin]).to eq("manual")
+      expect(span[:data]).not_to have_key('messaging.system')
+      expect(span[:data]).not_to have_key('messaging.message.retry.count')
+    end
+
+    it "does not enqueue the job when recording the queue.publish span raises" do
+      allow(Sentry).to receive(:with_child_span).and_call_original
+      allow(Sentry).to receive(:with_child_span)
+        .with(hash_including(op: "queue.publish"))
+        .and_raise(StandardError, "boom from instrumentation")
+
+      expect do
+        client.push('queue' => 'default', 'class' => HappyWorker, 'args' => [])
+      end.to raise_error(StandardError, /boom from instrumentation/)
+
+      expect(queue.size).to be(0)
     end
 
     it "does not propagate headers with propagate_traces = false" do
