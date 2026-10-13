@@ -13,6 +13,7 @@ module Sentry
 
       def self.prepended(base)
         base.attr_accessor :_sentry
+        base.attr_reader :_sentry_job_data
       end
 
       def perform_now
@@ -23,7 +24,8 @@ module Sentry
           SentryReporter.record(
             self,
             trace_headers: data["trace_propagation_headers"],
-            user: data["user"]
+            user: data["user"],
+            payload: _sentry_job_data
           ) { super }
         end
       end
@@ -31,12 +33,16 @@ module Sentry
       def serialize
         payload = super
         return payload if !Sentry.initialized? || already_supported_by_sentry_integration?
+        return payload if SentryReporter.instrumented_by_extension?(self)
 
         begin
           sentry_data = {}
           if Sentry.configuration.rails.active_job_propagate_traces
             headers = Sentry.get_trace_propagation_headers
-            sentry_data["trace_propagation_headers"] = headers if headers && !headers.empty?
+            if headers && !headers.empty?
+              sentry_data["trace_propagation_headers"] = headers
+              payload = SentryReporter.call_hook(self, :inject_trace_headers, payload: payload, headers: headers)
+            end
           end
 
           if Sentry.configuration.data_collection.user_info
@@ -58,6 +64,7 @@ module Sentry
         return if !Sentry.initialized? || already_supported_by_sentry_integration?
 
         begin
+          @_sentry_job_data = job_data
           self._sentry = job_data[SENTRY_PAYLOAD_KEY]
         rescue StandardError => e
           Sentry.sdk_logger&.error("sentry-rails: failed to extract _sentry payload: #{e.class}: #{e.message}\n  #{Array(e.backtrace).first(5).join("\n  ")}")
@@ -108,8 +115,14 @@ module Sentry
             @producer_callback_registered = true
           end
 
+          def instrumented_by_extension?(job)
+            call_hook(job, :instruments_enqueue?) == true
+          end
+
           def record_producer_span(job, &enqueue)
             return yield if !Sentry.initialized? || job.already_supported_by_sentry_integration?
+
+            return yield if instrumented_by_extension?(job)
 
             enqueued = false
 
@@ -148,7 +161,7 @@ module Sentry
             Sentry.sdk_logger&.error("sentry-rails: failed to record producer span: #{e.class}: #{e.message}\n  #{Array(e.backtrace).first(5).join("\n  ")}")
           end
 
-          def record(job, trace_headers: nil, user: nil, &block)
+          def record(job, trace_headers: nil, user: nil, payload: nil, &block)
             original_hub = Sentry.get_current_hub_internal
             Sentry.clone_hub_to_current_thread
 
@@ -175,7 +188,16 @@ module Sentry
                   origin: call_hook(job, :span_origin) || SPAN_ORIGIN
                 }
 
-                transaction = if trace_headers && !trace_headers.empty?
+                extracted_trace = false
+                if (trace_headers.nil? || trace_headers.empty?) && payload
+                  extracted_headers = call_hook(job, :extract_trace_headers, payload: payload)
+                  unless extracted_headers.nil?
+                    trace_headers = extracted_headers
+                    extracted_trace = true
+                  end
+                end
+
+                transaction = if extracted_trace || (trace_headers && !trace_headers.empty?)
                   continued = Sentry.continue_trace(trace_headers, **transaction_options)
                   Sentry.start_transaction(transaction: continued, **transaction_options)
                 else

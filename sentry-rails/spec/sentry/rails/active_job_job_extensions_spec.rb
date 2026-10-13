@@ -306,6 +306,62 @@ RSpec.describe "Sentry + ActiveJob with a registered job extension", type: :job 
     end
   end
 
+  describe "trace headers" do
+    let(:foreign_trace_id) { "a" * 32 }
+    let(:foreign_trace_headers) { { "sentry-trace" => "#{foreign_trace_id}-#{"b" * 16}-1" } }
+
+    def register_extension_extracting(headers)
+      register_extension do
+        define_method(:extract_trace_headers) { |job:, payload:| headers }
+      end
+    end
+
+    it "lets the extension carry the trace headers in the serialized payload alongside _sentry" do
+      register_extension do
+        def inject_trace_headers(job:, payload:, headers:)
+          payload.merge("backend_trace" => headers["sentry-trace"])
+        end
+      end
+
+      within_parent_transaction { successful_job.perform_later }
+
+      payload = last_enqueued_payload
+      expect(payload["backend_trace"]).not_to be_nil
+      expect(payload["backend_trace"]).to eq(payload["_sentry"]["trace_propagation_headers"]["sentry-trace"])
+    end
+
+    context "when the job carries no _sentry trace headers" do
+      let(:configure_sentry) do
+        proc do |config|
+          config.traces_sample_rate = 1.0
+          config.rails.active_job_propagate_traces = false
+        end
+      end
+
+      it "continues the trace the extension extracts" do
+        register_extension_extracting(foreign_trace_headers)
+
+        successful_job.perform_later
+        drain
+
+        expect(consumer_transaction.contexts.dig(:trace, :trace_id)).to eq(foreign_trace_id)
+      end
+    end
+
+    it "continues the _sentry trace even when the extension extracts different headers" do
+      register_extension_extracting(foreign_trace_headers)
+      parent_trace_id = nil
+
+      within_parent_transaction do |parent|
+        parent_trace_id = parent.trace_id
+        successful_job.perform_later
+      end
+      drain
+
+      expect(consumer_transaction.contexts.dig(:trace, :trace_id)).to eq(parent_trace_id)
+    end
+  end
+
   describe "naming" do
     let(:backend_integration) do
       Module.new do
@@ -354,6 +410,29 @@ RSpec.describe "Sentry + ActiveJob with a registered job extension", type: :job 
 
       expect(mechanism_type(event)).to eq("backend")
       expect(event.transaction).to eq("Backend/#{failing_job.name}")
+    end
+  end
+
+  describe "enqueue instrumentation" do
+    let(:configure_sentry) do
+      proc do |config|
+        config.traces_sample_rate = 1.0
+        config.data_collection.user_info = true
+      end
+    end
+
+    it "leaves the producer span, trace headers and user to an extension that instruments enqueueing the job" do
+      register_extension do
+        def instruments_enqueue?(job:)
+          true
+        end
+      end
+      Sentry.set_user(id: "42")
+
+      within_parent_transaction { successful_job.perform_later }
+
+      expect(publish_span).to be_nil
+      expect(last_enqueued_payload).not_to have_key("_sentry")
     end
   end
 
