@@ -117,6 +117,18 @@ RSpec.describe Sentry::Sidekiq do
   end
 
   context "with attempt_threshold" do
+    [false, 0].each do |retry_option|
+      it "reports the first failure below the threshold when retry is #{retry_option}" do
+        worker = Class.new(SadWorker)
+        worker.sidekiq_options attempt_threshold: 3, retry: retry_option
+
+        execute_worker(processor, worker)
+
+        expect(transport.events.count).to eq(1)
+        expect(retry_set.count).to eq(0)
+      end
+    end
+
     it "doesn't report the error until attempts equal the threshold" do
       worker = Class.new(SadWorker)
       worker.sidekiq_options attempt_threshold: 3
@@ -318,6 +330,18 @@ RSpec.describe Sentry::Sidekiq do
 
       event = transport.events.last
       expect(event.contexts.dig(:trace, :trace_id)).to eq(transaction.contexts.dig(:trace, :trace_id))
+    end
+
+    it "does not log Sidekiq deprecation warnings while processing a job" do
+      log = StringIO.new
+      logger = Logger.new(log)
+      WITH_SIDEKIQ_7 ? Sidekiq.instance_variable_get(:@config).logger = logger : Sidekiq.logger = logger
+
+      execute_worker(processor, HappyWorker)
+
+      expect(log.string).not_to include("deprecated")
+    ensure
+      silence_sidekiq
     end
 
     context "with instrumenter :otel" do
