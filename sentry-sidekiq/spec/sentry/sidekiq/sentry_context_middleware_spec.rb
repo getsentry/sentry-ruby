@@ -30,6 +30,26 @@ RSpec.describe Sentry::Sidekiq::SentryContextServerMiddleware do
     expect(event.user).to eq(user)
   end
 
+  it "starts a new trace for a job without trace propagation headers" do
+    perform_basic_setup
+    worker_trace_id = Sentry.get_main_hub.current_scope.propagation_context.trace_id
+
+    execute_worker(processor, SadWorker)
+
+    event = transport.events.last
+    expect(event.contexts.dig(:trace, :trace_id)).to be_a(String)
+    expect(event.contexts.dig(:trace, :trace_id)).not_to eq(worker_trace_id)
+  end
+
+  it "continues the trace from trace propagation headers when tracing is disabled" do
+    perform_basic_setup
+    trace_id = "a" * 32
+
+    execute_worker(processor, SadWorker, trace_propagation_headers: { "sentry-trace" => "#{trace_id}-#{"b" * 16}-1" })
+
+    expect(transport.events.last.contexts.dig(:trace, :trace_id)).to eq(trace_id)
+  end
+
   context "with tracing enabled" do
     before do
       perform_basic_setup { |config| config.traces_sample_rate = 1.0 }
@@ -58,7 +78,8 @@ RSpec.describe Sentry::Sidekiq::SentryContextServerMiddleware do
     it "sets sidekiq tags to the event" do
       execute_worker(processor, TagsWorker)
       event = transport.events.last
-      expect(event.tags.keys).to include(:"sidekiq.marvel", :"sidekiq.dc")
+      expect(event.tags).to include(queue: "default", jid: "123123", "sidekiq.marvel": true, "sidekiq.dc": true)
+      expect(event.contexts[:sidekiq]).to include("class" => "TagsWorker", "jid" => "123123", "queue" => "default", "tags" => ["marvel", "dc"])
     end
 
     it "has the correct origin" do
@@ -91,6 +112,38 @@ RSpec.describe Sentry::Sidekiq::SentryContextServerMiddleware do
         expect(trace[:data]['messaging.destination.name']).to eq('default')
         expect(trace[:data]['messaging.message.retry.count']).to eq(0)
         expect(trace[:data]['messaging.message.receive.latency']).to be_within(20).of(expected_latency)
+      end
+
+      it "reports sidekiq as the messaging system on the queue.process transaction" do
+        execute_worker(processor, HappyWorker)
+
+        expect(transport.events[0].contexts.dig(:trace, :data)['messaging.system']).to eq('sidekiq')
+      end
+
+      it "reports the job's retry count on the queue.process transaction" do
+        execute_worker(processor, HappyWorker, retry_count: 3)
+
+        expect(transport.events[0].contexts.dig(:trace, :data)['messaging.message.retry.count']).to eq(3)
+      end
+
+      it "reports the byte length of the job encoded as JSON as the message body size on the queue.process transaction" do
+        message = Sidekiq.dump_json("jid" => "123456", "class" => "HappyWorker", "args" => ["héllo"], "queue" => "default")
+
+        process_work(processor, Sidekiq::BasicFetch::UnitOfWork.new("queue:default", message))
+
+        expect(transport.events[0].contexts.dig(:trace, :data)['messaging.message.body.size']).to eq(message.bytesize)
+      end
+
+      it "performs the job and omits the message body size when the job cannot be encoded as JSON" do
+        job = { "jid" => "123456", "class" => "HappyWorker", "args" => ["\xFF".dup.force_encoding(Encoding::UTF_8)], "queue" => "default" }
+        performed = false
+
+        described_class.new.call(HappyWorker.new, job, "default") { performed = true }
+
+        trace_data = transport.events[0].contexts.dig(:trace, :data)
+        expect(performed).to be(true)
+        expect(trace_data).to include('messaging.message.id' => '123456', 'messaging.system' => 'sidekiq')
+        expect(trace_data).not_to have_key('messaging.message.body.size')
       end
 
       if MIN_SIDEKIQ_6
@@ -181,6 +234,18 @@ RSpec.describe Sentry::Sidekiq::SentryContextClientMiddleware do
       expect(queue.first["sentry_user"]).to eq(user)
     end
 
+    context "when the scope user has fields beyond id, email and username" do
+      let(:user) { { "id" => 1, "ip_address" => "1.2.3.4", "segment" => "vip" } }
+
+      it "propagates the whole user" do
+        Sentry.configuration.data_collection.user_info = true
+
+        client.push('queue' => 'default', 'class' => HappyWorker, 'args' => [])
+
+        expect(queue.first["sentry_user"]).to eq(user)
+      end
+    end
+
     it "does not propagate user information when user_info is disabled" do
       Sentry.configuration.data_collection.user_info = false
 
@@ -237,6 +302,77 @@ RSpec.describe Sentry::Sidekiq::SentryContextClientMiddleware do
       expect(span[:op]).to eq("queue.publish")
       expect(span[:data]['messaging.message.id']).to eq(message_id)
       expect(span[:data]['messaging.destination.name']).to eq('default')
+    end
+
+    it "only reports a producer body size that matches the finalized queued message" do
+      client.push('queue' => 'default', 'class' => HappyWorker, 'args' => ["héllo"])
+
+      transaction.finish
+
+      pushed_job = queue.first.item
+      span = transport.events.last.spans.detect { |span| span[:op] == "queue.publish" }
+      expect(span[:data]['messaging.message.body.size']).to be_nil.or eq(Sidekiq.dump_json(pushed_job).bytesize)
+    end
+
+    context "when an earlier client middleware reroutes the job" do
+      let(:rerouted_queue) { Sidekiq::Queue.new("rerouted") }
+
+      let(:rerouting_middleware) do
+        Class.new do
+          def call(_worker_class, job, _queue, _redis_pool)
+            job["queue"] = "rerouted"
+            yield
+          end
+        end
+      end
+
+      let(:client) do
+        Sidekiq::Client.new.tap do |client|
+          client.middleware do |chain|
+            chain.add rerouting_middleware
+            chain.add described_class
+          end
+        end
+      end
+
+      after do
+        client.middleware { |chain| chain.remove(rerouting_middleware) }
+        ensure_queue_empty(rerouted_queue)
+      end
+
+      it "reports the queue the push was made to as the destination" do
+        client.push('queue' => 'default', 'class' => HappyWorker, 'args' => [])
+
+        transaction.finish
+
+        span = transport.events.last.spans.detect { |span| span[:op] == "queue.publish" }
+        expect(span[:data]['messaging.destination.name']).to eq('default')
+      end
+    end
+
+    it "names the queue.publish span after the worker with the sidekiq messaging system and without an origin or retry count" do
+      client.push('queue' => 'default', 'class' => HappyWorker, 'args' => [], 'retry_count' => 2)
+
+      transaction.finish
+
+      span = transport.events.last.spans.detect { |span| span[:op] == "queue.publish" }
+      expect(span[:description]).to eq("HappyWorker")
+      expect(span[:origin]).to eq("manual")
+      expect(span[:data]['messaging.system']).to eq('sidekiq')
+      expect(span[:data]).not_to have_key('messaging.message.retry.count')
+    end
+
+    it "does not enqueue the job when recording the queue.publish span raises" do
+      allow(Sentry).to receive(:with_child_span).and_call_original
+      allow(Sentry).to receive(:with_child_span)
+        .with(hash_including(op: "queue.publish"))
+        .and_raise(StandardError, "boom from instrumentation")
+
+      expect do
+        client.push('queue' => 'default', 'class' => HappyWorker, 'args' => [])
+      end.to raise_error(StandardError, /boom from instrumentation/)
+
+      expect(queue.size).to be(0)
     end
 
     it "does not propagate headers with propagate_traces = false" do
