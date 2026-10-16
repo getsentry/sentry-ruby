@@ -10,7 +10,13 @@ if RAILS_VERSION >= 7.1 && RUBY_VERSION >= "3.1"
   RSpec.describe Sentry::Rails::SolidQueueRecurring, type: :job do
     include_context "active_job backend harness", adapter: :solid_queue
 
-    let(:configure_sentry) { proc { |config| config.enabled_patches << :solid_queue_recurring } }
+    let(:excluded_tasks) { [] }
+    let(:configure_sentry) do
+      proc do |config|
+        config.enabled_patches << :solid_queue_recurring
+        config.rails.solid_queue_exclude_recurring_tasks = excluded_tasks
+      end
+    end
 
     def queue_adapter_for_test
       SOLID_QUEUE_RECURRING_ADAPTER
@@ -140,6 +146,32 @@ if RAILS_VERSION >= 7.1 && RUBY_VERSION >= "3.1"
       run_task("unconfigured", class: "::UnconfiguredJob", schedule: "0 9 * * *")
 
       expect(check_ins.map(&:monitor_slug)).to eq(["unconfigured", "unconfigured"])
+    end
+
+    it "excludes nothing by default" do
+      expect(Sentry.configuration.rails.solid_queue_exclude_recurring_tasks).to eq([])
+    end
+
+    context "with excluded tasks" do
+      let(:excluded_tasks) { ["clear_cache", /\Atmp_/] }
+
+      it "skips tasks whose key matches a string" do
+        run_task("clear_cache", class: "ReportJob", schedule: "0 9 * * *")
+
+        expect(check_ins).to be_empty
+      end
+
+      it "skips tasks whose key matches a regexp" do
+        run_task("tmp_cleanup", class: "ReportJob", schedule: "0 9 * * *")
+
+        expect(check_ins).to be_empty
+      end
+
+      it "monitors tasks that do not match" do
+        run_task("clear_cache_daily", class: "ReportJob", schedule: "0 9 * * *")
+
+        expect(check_ins.map(&:monitor_slug)).to eq(["clear_cache_daily", "clear_cache_daily"])
+      end
     end
 
     it "does not monitor jobs enqueued outside a recurring task" do

@@ -10,7 +10,7 @@ module Sentry
 
       module RecurringTask
         def enqueue(at:)
-          Thread.current[CURRENT_TASK] = self
+          Thread.current[CURRENT_TASK] = self unless Sentry::Rails::SolidQueueRecurring.excluded?(self)
           super
         ensure
           Thread.current[CURRENT_TASK] = nil
@@ -32,6 +32,10 @@ module Sentry
       end
 
       class << self
+        def excluded?(task)
+          Sentry.initialized? && Sentry.configuration.rails.solid_queue_exclude_recurring_tasks.any? { |pattern| pattern === task.key.to_s }
+        end
+
         # Runs in the scheduler, which is where Solid Queue evaluates the schedule.
         def monitor_for(task, job)
           return unless task && Sentry.initialized?
