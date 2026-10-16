@@ -27,6 +27,7 @@ require "sentry/threaded_periodic_worker"
 require "sentry/session_flusher"
 require "sentry/backpressure_monitor"
 require "sentry/cron/monitor_check_ins"
+require "sentry/cron/fugit_schedule"
 require "sentry/vernier/profiler"
 require "sentry/metrics"
 

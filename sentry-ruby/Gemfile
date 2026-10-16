@@ -35,6 +35,7 @@ gem "webrick"
 gem "faraday"
 gem "excon"
 gem "webmock"
+gem "fugit"
 
 group :sequel do
   gem "sequel"

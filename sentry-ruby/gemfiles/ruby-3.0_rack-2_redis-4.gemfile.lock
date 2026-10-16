@@ -38,6 +38,8 @@ GEM
     docile (1.4.1)
     erb (4.0.4.1)
       cgi (>= 0.3.3)
+    et-orbi (1.4.2)
+      tzinfo
     excon (1.2.5)
       logger
     faraday (2.14.4)
@@ -47,6 +49,9 @@ GEM
     faraday-net_http (3.4.4)
       net-http (~> 0.5)
     fiber-storage (1.0.0)
+    fugit (1.14.0)
+      et-orbi (~> 1.4)
+      raabro (~> 1.4)
     graphql (2.6.11)
       base64
       fiber-storage
@@ -78,6 +83,7 @@ GEM
     public_suffix (6.0.2)
     puma (8.0.2)
       nio4r (~> 2.0)
+    raabro (1.5.0)
     rack (2.2.24)
     rake (12.3.3)
     rbs (3.6.1)
@@ -128,6 +134,8 @@ GEM
     timecop (0.9.11)
     timeout (0.6.1)
     tsort (0.2.0)
+    tzinfo (2.0.6)
+      concurrent-ruby (~> 1.0)
     uri (1.1.2)
     webmock (3.29.0)
       addressable (>= 2.8.0)
@@ -151,6 +159,7 @@ DEPENDENCIES
   debug!
   excon
   faraday
+  fugit
   graphql (>= 2.2.6)
   irb
   jdbc-sqlite3
