@@ -104,8 +104,8 @@ if RAILS_VERSION >= 7.1 && RUBY_VERSION >= "3.1"
       expect(check_ins.first.monitor_config.to_h[:schedule]).to eq(type: :crontab, value: "*/15 * * * *")
     end
 
-    it "sends check-ins without a config for schedules Sentry would read differently" do
-      run_task("month_end", class: "ReportJob", schedule: "0 12 L * *")
+    it "sends check-ins without a config for schedules Crons cannot express" do
+      run_task("every_ten_seconds", class: "ReportJob", schedule: "every 10 seconds")
 
       expect(check_ins.map(&:status)).to eq([:in_progress, :ok])
       expect(check_ins.map(&:monitor_config)).to all(be_nil)
