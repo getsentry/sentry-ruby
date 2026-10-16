@@ -110,6 +110,12 @@ module Sentry
 end
 
 Sentry.register_patch(:rufus_scheduler) do |config|
+  # Load rufus-scheduler in case it's required after Sentry.init.
+  begin
+    require "rufus-scheduler"
+  rescue LoadError
+  end
+
   if defined?(::Rufus::Scheduler::RepeatJob)
     ::Rufus::Scheduler::Job.prepend(Sentry::RufusScheduler::Job) unless ::Rufus::Scheduler::Job.ancestors.include?(Sentry::RufusScheduler::Job)
   else
