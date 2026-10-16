@@ -33,7 +33,12 @@ module Sentry
 
       class << self
         def excluded?(task)
-          Sentry.initialized? && Sentry.configuration.rails.solid_queue_exclude_recurring_tasks.any? { |pattern| pattern === task.key.to_s }
+          return false unless Sentry.initialized?
+
+          Array(Sentry.configuration.rails.solid_queue_exclude_recurring_tasks).any? { |pattern| pattern === task.key.to_s }
+        rescue StandardError => e
+          Sentry.sdk_logger.error(Sentry::LOGGER_PROGNAME) { "Could not check solid_queue_exclude_recurring_tasks for #{task.key}: #{e.class}: #{e.message}" }
+          false
         end
 
         # Runs in the scheduler, which is where Solid Queue evaluates the schedule.

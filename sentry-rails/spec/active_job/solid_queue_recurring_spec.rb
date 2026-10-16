@@ -174,6 +174,26 @@ if RAILS_VERSION >= 7.1 && RUBY_VERSION >= "3.1"
       end
     end
 
+    context "with no excluded tasks set" do
+      let(:excluded_tasks) { nil }
+
+      it "monitors the task" do
+        run_task("daily_report", class: "ReportJob", schedule: "0 9 * * *")
+
+        expect(check_ins.map(&:monitor_slug)).to eq(["daily_report", "daily_report"])
+      end
+    end
+
+    context "with an exclusion pattern that raises" do
+      let(:excluded_tasks) { [->(_key) { raise "boom" }] }
+
+      it "still enqueues and monitors the task" do
+        run_task("daily_report", class: "ReportJob", schedule: "0 9 * * *")
+
+        expect(check_ins.map(&:monitor_slug)).to eq(["daily_report", "daily_report"])
+      end
+    end
+
     it "does not monitor jobs enqueued outside a recurring task" do
       report_job.perform_later
       drain
