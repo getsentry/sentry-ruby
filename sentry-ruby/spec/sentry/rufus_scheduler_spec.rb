@@ -59,8 +59,8 @@ RSpec.describe Sentry::RufusScheduler do
     expect(sentry_events.map(&:status)).to eq([:in_progress, :error])
   end
 
-  it "sends no config for cron lines Sentry would read differently" do
-    expect(monitor_config(:cron, "0 12 L * *", name: "job")).to be_nil
+  it "sends no config for cron lines Crons can't express" do
+    expect(monitor_config(:cron, "*/10 * * * * *", name: "job")).to be_nil
     expect(sentry_events.count).to eq(2)
   end
 
