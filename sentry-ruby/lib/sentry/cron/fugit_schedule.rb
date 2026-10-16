@@ -2,9 +2,14 @@
 
 module Sentry
   module Cron
-    # Converts fugit schedules into monitor configs. Returns nil for schedules
-    # Sentry would read differently.
+    # Converts fugit schedules into monitor configs. Returns nil when the
+    # schedule can't be expressed in the Crons schedule format.
     module FugitSchedule
+      # `#n` and `#-1` (last) have Crons equivalents; other `#-n` don't.
+      WEEKDAY_HASHES = [1, 2, 3, 4, 5, -1].freeze
+      # The names et-orbi gives its constant-offset zones, such as "+05:00".
+      OFFSET = /\A([+-]\d{1,2}):?(\d{2})?\z/.freeze
+
       class << self
         def from_cron(cron)
           crontab = crontab_for(cron)
@@ -34,24 +39,49 @@ module Sentry
         end
 
         # Rebuilds a 5-field crontab from fugit's expanded fields so Sentry
-        # (Debian cron rules) reads it the same way. Returns nil for fugit-only
-        # syntax: sub-minute seconds, `L`, `#`, `%` and `&`.
+        # (Debian cron rules) reads it the same way. Converts `L` (last day of
+        # the month), `#n` and `#-1` (nth or last weekday). Returns nil for
+        # other fugit-only syntax: sub-minute seconds, `-n` days, `#-n`, `%` and `&`.
         def crontab_for(cron)
           return unless defined?(::Fugit::Cron) && cron.is_a?(::Fugit::Cron)
           return unless cron.seconds&.size == 1
-          return if cron.monthdays&.any?(&:negative?)
-          return if cron.weekdays&.any? { |day| day.size > 1 }
           return if cron.monthdays && cron.weekdays && cron.instance_variable_get(:@day_and)
+
+          monthdays = monthday_field(cron.monthdays)
+          weekdays = weekday_field(cron.weekdays)
+          return unless monthdays && weekdays
 
           [
             crontab_field(cron.minutes, 0, 59, step: true),
             crontab_field(cron.hours, 0, 23, step: true),
-            # Day fields never use `*/n`: Debian cron treats a field starting
-            # with `*` as unrestricted when combining day-of-month and weekday.
-            crontab_field(cron.monthdays, 1, 31),
+            monthdays,
             crontab_field(cron.months, 1, 12, step: true),
-            crontab_field(cron.weekdays&.map(&:first), 0, 6)
+            weekdays
           ].join(" ")
+        end
+
+        # Day fields never use `*/n`: Debian cron treats a field starting with
+        # `*` as unrestricted when combining day-of-month and weekday.
+        def monthday_field(monthdays)
+          return "*" unless monthdays
+
+          last, days = monthdays.partition(&:negative?)
+          return unless last.all? { |day| day == -1 }
+
+          fields = days.empty? ? [] : [crontab_field(days, 1, 31)]
+          fields << "L" unless last.empty?
+          fields.join(",")
+        end
+
+        def weekday_field(weekdays)
+          return "*" unless weekdays
+
+          days, hashed = weekdays.partition { |day| day.size == 1 }
+          return unless hashed.all? { |_, hash| WEEKDAY_HASHES.include?(hash) }
+
+          fields = days.empty? ? [] : [crontab_field(days.map(&:first), 0, 6)]
+          hashed.each { |day, hash| fields << (hash == -1 ? "#{day}L" : "#{day}##{hash}") }
+          fields.join(",")
         end
 
         def crontab_field(values, min, max, step: false)
@@ -65,14 +95,24 @@ module Sentry
           values.chunk_while { |a, b| b == a + 1 }.map { |run| run.size > 1 ? "#{run.first}-#{run.last}" : run.first.to_s }.join(",")
         end
 
-        # Sentry only accepts IANA names, so offsets such as "+05:30" get no config.
+        # Sentry only accepts IANA names. Whole-hour offsets such as "+05:00"
+        # map to Etc/GMT zones; other offsets such as "+05:30" get no config.
         def timezone_for(cron)
           zone = cron.timezone || ::EtOrbi.determine_local_tzone
           return Sentry.configuration.cron.default_timezone unless zone
 
-          ::TZInfo::Timezone.get(zone.name).identifier
+          offset = OFFSET.match(zone.name)
+          offset ? offset_timezone(offset[1].to_i, offset[2].to_i) : ::TZInfo::Timezone.get(zone.name).identifier
         rescue StandardError
           nil
+        end
+
+        def offset_timezone(hours, minutes)
+          return unless minutes.zero? && hours.between?(-12, 14)
+          return "Etc/UTC" if hours.zero?
+
+          # Etc/GMT signs are inverted: UTC+5 is Etc/GMT-5.
+          "Etc/GMT#{hours.positive? ? "-" : "+"}#{hours.abs}"
         end
       end
     end

@@ -29,20 +29,33 @@ RSpec.describe Sentry::Cron::FugitSchedule do
       "0 9 * * mon-fri" => "0 9 * * 1-5",
       "0 0 */2 * 1" => "0 0 1,3,5,7,9,11,13,15,17,19,21,23,25,27,29,31 * 1",
       "30 0 9 * * *" => "0 9 * * *",
-      "@daily" => "0 0 * * *"
+      "@daily" => "0 0 * * *",
+      "0 9 L * *" => "0 9 L * *",
+      "0 9 1-5,L * *" => "0 9 1-5,L * *",
+      "0 9 * * mon#2" => "0 9 * * 1#2",
+      "0 9 * * fri#-1" => "0 9 * * 5L",
+      "0 9 * * fri#L" => "0 9 * * 5L",
+      "0 9 * * mon-wed,mon#2,fri#-1" => "0 9 * * 1-3,1#2,5L",
+      "0 9 L * fri" => "0 9 L * 5"
     }.each do |cron, crontab|
       it "sends #{crontab.inspect} for #{cron.inspect}" do
         expect(from_cron("#{cron} UTC")[:schedule]).to eq(type: :crontab, value: crontab)
       end
     end
 
-    ["0 12 L * *", "0 12 * * mon#2", "0 12 * * mon%2", "0 0 1-7 * mon&", "*/10 * * * * *"].each do |cron|
+    ["0 12 -2 * *", "0 12 1,-2 * *", "0 12 * * fri#-2", "0 12 * * mon#2,fri#-2", "0 12 * * mon%2", "0 0 1-7 * mon&", "0 9 L * fri&", "*/10 * * * * *"].each do |cron|
       it "returns nil for #{cron.inspect}" do
         expect(from_cron(cron)).to be_nil
       end
     end
 
-    it "returns nil for an offset time zone" do
+    { "+05:00" => "Etc/GMT-5", "-03:00" => "Etc/GMT+3", "+00:00" => "Etc/UTC", "+0900" => "Etc/GMT-9" }.each do |offset, timezone|
+      it "sends #{timezone} for the #{offset} offset" do
+        expect(from_cron("0 9 * * * #{offset}")[:timezone]).to eq(timezone)
+      end
+    end
+
+    it "returns nil for an offset that isn't a whole hour" do
       expect(from_cron("0 9 * * * +05:30")).to be_nil
     end
 
