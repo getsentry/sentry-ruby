@@ -82,8 +82,9 @@ module Sentry
           if job.name
             job.name.to_s
           elsif handler.is_a?(Method)
-            owner = handler.receiver.is_a?(Module) ? handler.receiver : handler.owner
-            [owner == Object ? nil : owner.name, handler.name].compact.join("::")
+            # The receiver's class, not the method owner, so inherited and mixin methods get distinct slugs.
+            namespace = handler.receiver.is_a?(Module) ? handler.receiver : handler.receiver.class
+            [namespace == Object ? nil : namespace.name, handler.name].compact.join("::")
           elsif !handler.is_a?(Proc)
             handler.class.name
           end

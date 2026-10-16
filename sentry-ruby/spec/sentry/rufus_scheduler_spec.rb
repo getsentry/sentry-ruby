@@ -128,6 +128,20 @@ RSpec.describe Sentry::RufusScheduler do
       expect(sentry_events.map(&:monitor_slug).uniq).to eq(["sync_accounts", "reports-run", "reports-daily-build"])
     end
 
+    it "uses the receiver's class for inherited and mixin methods" do
+      stub_const("BaseTask", Class.new { def run; end })
+      stub_const("DailyReport", Class.new(BaseTask))
+      stub_const("WeeklyReport", Class.new(BaseTask))
+      stub_const("Syncable", Module.new { def sync; end })
+      stub_const("AccountSync", Class.new { include Syncable })
+
+      scheduler.every("10m", DailyReport.new.method(:run), job: true, first_in: "1h").call(true)
+      scheduler.every("10m", WeeklyReport.new.method(:run), job: true, first_in: "1h").call(true)
+      scheduler.every("10m", AccountSync.new.method(:sync), job: true, first_in: "1h").call(true)
+
+      expect(sentry_events.map(&:monitor_slug).uniq).to eq(["dailyreport-run", "weeklyreport-run", "accountsync-sync"])
+    end
+
     it "does not monitor unnamed blocks and says to pass a name" do
       string_io = StringIO.new
       Sentry.configuration.sdk_logger = ::Logger.new(string_io)
