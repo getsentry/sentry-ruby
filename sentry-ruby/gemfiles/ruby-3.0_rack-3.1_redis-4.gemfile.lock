@@ -117,6 +117,8 @@ GEM
       rbs (>= 3, < 5)
     ruby-lsp-rspec (0.1.29)
       ruby-lsp (~> 0.26.0)
+    rufus-scheduler (3.9.2)
+      fugit (~> 1.1, >= 1.11.1)
     sequel (5.109.0)
       bigdecimal
     simplecov (0.22.0)
@@ -171,6 +173,7 @@ DEPENDENCIES
   rspec
   rspec-retry
   ruby-lsp-rspec
+  rufus-scheduler
   sentry-ruby!
   sequel
   simplecov
