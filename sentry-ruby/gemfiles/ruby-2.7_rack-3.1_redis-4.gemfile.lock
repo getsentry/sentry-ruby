@@ -102,6 +102,8 @@ GEM
       rspec-core (> 3.3)
     rspec-support (3.13.7)
     ruby2_keywords (0.0.5)
+    rufus-scheduler (3.9.2)
+      fugit (~> 1.1, >= 1.11.1)
     sequel (5.109.0)
       bigdecimal
     simplecov (0.22.0)
@@ -153,6 +155,7 @@ DEPENDENCIES
   rexml (= 3.4.1)
   rspec
   rspec-retry
+  rufus-scheduler
   sentry-ruby!
   sequel
   simplecov
