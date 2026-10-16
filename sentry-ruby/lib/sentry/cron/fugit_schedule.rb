@@ -7,7 +7,7 @@ module Sentry
     module FugitSchedule
       # `#n` and `#-1` (last) have Crons equivalents; other `#-n` don't.
       WEEKDAY_HASHES = [1, 2, 3, 4, 5, -1].freeze
-      # The names et-orbi gives its constant-offset zones, such as "+05:00".
+      # et-orbi names offset zones like "+05:00".
       OFFSET = /\A([+-]\d{1,2}):?(\d{2})?\z/.freeze
 
       class << self
@@ -38,10 +38,8 @@ module Sentry
           { checkin_margin: cron_config.default_checkin_margin, max_runtime: cron_config.default_max_runtime }
         end
 
-        # Rebuilds a 5-field crontab from fugit's expanded fields so Sentry
-        # (Debian cron rules) reads it the same way. Converts `L` (last day of
-        # the month), `#n` and `#-1` (nth or last weekday). Returns nil for
-        # other fugit-only syntax: sub-minute seconds, `-n` days, `#-n`, `%` and `&`.
+        # Rebuilds a 5-field crontab from fugit's expanded fields. Returns nil for
+        # sub-minute seconds, `%`, `&`, and negative days other than `L` and `#-1`.
         def crontab_for(cron)
           return unless defined?(::Fugit::Cron) && cron.is_a?(::Fugit::Cron)
           return unless cron.seconds&.size == 1
@@ -95,8 +93,7 @@ module Sentry
           values.chunk_while { |a, b| b == a + 1 }.map { |run| run.size > 1 ? "#{run.first}-#{run.last}" : run.first.to_s }.join(",")
         end
 
-        # Sentry only accepts IANA names. Whole-hour offsets such as "+05:00"
-        # map to Etc/GMT zones; other offsets such as "+05:30" get no config.
+        # Sentry only accepts IANA names, so only whole-hour offsets get a zone.
         def timezone_for(cron)
           zone = cron.timezone || ::EtOrbi.determine_local_tzone
           return Sentry.configuration.cron.default_timezone unless zone
