@@ -15,8 +15,7 @@ module Sentry
         start = Process.clock_gettime(Process::CLOCK_MONOTONIC)
 
         begin
-          # Rescue here instead of inside rufus so the error is seen; the
-          # rescue below mirrors Rufus::Scheduler::Job#do_call.
+          # Run without rufus's rescue so the error is seen, then handle it like Job#do_call.
           ret = super(time, false)
         rescue Exception => e
           duration = Process.clock_gettime(Process::CLOCK_MONOTONIC) - start
@@ -49,8 +48,7 @@ module Sentry
     MAX_SLUG_LENGTH = 50
 
     class << self
-      # Returns [slug, monitor_config] for repeating jobs, nil for jobs that
-      # are not monitored. one-off (`at`/`in`) jobs are never monitored.
+      # Returns [slug, monitor_config], or nil for jobs that aren't monitored (like `at`/`in`).
       def monitor_for(job)
         return unless job.is_a?(::Rufus::Scheduler::RepeatJob)
         return if job.opts[:sentry_monitor] == false
@@ -76,9 +74,8 @@ module Sentry
         file&.end_with?("sidekiq-scheduler/scheduler.rb")
       end
 
-      # Job ids are random per process, so the slug comes from the `name:` option,
-      # then the handler method or class. Blocks have no stable name: their file
-      # path can change on every deploy.
+      # Job ids are random per process and block paths change between deploys,
+      # so the slug comes from `name:`, then the handler method or class.
       def slug_for(job)
         handler = job.handler
         source =
