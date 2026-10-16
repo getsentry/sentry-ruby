@@ -221,6 +221,16 @@ module Sentry
       get_current_scope.set_context(*args)
     end
 
+    # Records a feature flag evaluation on the current scope and active span.
+    # Only boolean results are recorded.
+    # @param name [String, Symbol] the flag name
+    # @param result [Boolean] the evaluation result
+    # @return [void]
+    def add_feature_flag(name, result)
+      return unless initialized?
+      get_current_scope.add_feature_flag(name, result)
+    end
+
     # @!method set_attributes
     #   Updates the current scope's attributes by merging with the old value.
     #   @param attributes_hash [Hash]
