@@ -313,6 +313,7 @@ DEPENDENCIES
   rails (> 5.2.0)
   rake (~> 12.0)
   resque-retry (~> 1.8)
+  resque-scheduler
   rexml (= 3.4.1)
   rspec
   rspec-retry

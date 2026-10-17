@@ -6,6 +6,7 @@ require "sentry/integrable"
 require "sentry/resque/configuration"
 require "sentry/resque/version"
 require "sentry/resque"
+require "sentry/resque/scheduler"
 
 module Sentry
   module Resque
