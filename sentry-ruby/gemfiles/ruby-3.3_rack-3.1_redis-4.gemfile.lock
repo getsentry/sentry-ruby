@@ -36,16 +36,16 @@ GEM
     diff-lcs (1.6.2)
     docile (1.4.1)
     erb (6.0.7)
-    excon (1.7.2)
+    excon (1.7.3)
       logger
-    faraday (2.14.4)
-      faraday-net_http (>= 2.0, < 3.5)
+    faraday (2.15.0)
+      faraday-net_http (>= 2.0, < 3.6)
       json
       logger
-    faraday-net_http (3.4.4)
+    faraday-net_http (3.5.0)
       net-http (~> 0.5)
     fiber-storage (1.0.1)
-    graphql (2.6.11)
+    graphql (2.6.12)
       base64
       fiber-storage
       logger
@@ -56,7 +56,7 @@ GEM
       prism (>= 1.3.0)
       rdoc (>= 4.0.0)
       reline (>= 0.4.2)
-    json (3.0.2)
+    json (3.1.0)
     language_server-protocol (3.17.0.6)
     logger (1.7.0)
     memory_profiler (0.9.14)
@@ -136,7 +136,7 @@ GEM
     tsort (0.2.0)
     uri (1.1.2)
     vernier (1.11.0)
-    webmock (3.29.0)
+    webmock (3.34.0)
       addressable (>= 2.8.0)
       crack (>= 0.3.2)
       hashdiff (>= 0.4.0, < 2.0.0)
@@ -204,15 +204,15 @@ CHECKSUMS
   diff-lcs (1.6.2) sha256=9ae0d2cba7d4df3075fe8cd8602a8604993efc0dfa934cff568969efb1909962
   docile (1.4.1) sha256=96159be799bfa73cdb721b840e9802126e4e03dfc26863db73647204c727f21e
   erb (6.0.7) sha256=c5ca6dc25b0ef974a44dc8f59fe847577122483b1968a38dec305c60bf91ee92
-  excon (1.7.2) sha256=2557b17420f134f00de79cc52abd325d5767291e23af7ddd03ee07952189a569
-  faraday (2.14.4) sha256=9bb4408c44621b0dbaaaa39e5dbfc4dbe58cc6751b6eb94d16ae9e1f2f2fab6e
-  faraday-net_http (3.4.4) sha256=0e78af151747ed1b00f33e25973b4bc220d7f16c00c39676817c8b12331eb588
+  excon (1.7.3) sha256=ea13fabcab2b5f5bb64e2952a0ac018bf9882832fe7a58206630be18ba888fa9
+  faraday (2.15.0) sha256=3be0eff0187ed913a1b4f679e9fcfe845b542cdd4f75b76cd6181a4ae1335fff
+  faraday-net_http (3.5.0) sha256=2e7094c34e38754ee048cc3df47376f8657005d9375f8473bce1c3b526a22e36
   fiber-storage (1.0.1) sha256=f48e5b6d8b0be96dac486332b55cee82240057065dc761c1ea692b2e719240e1
-  graphql (2.6.11) sha256=9a9cde910e805c4c08fdf8d22bf129e935affc9ca8b4f9b2ec26b4b63666b15d
+  graphql (2.6.12) sha256=262ddb700d27c53ffbd4878376b20337d4d084d79da567c675536b7a50ddc102
   hashdiff (1.2.1) sha256=9c079dbc513dfc8833ab59c0c2d8f230fa28499cc5efb4b8dd276cf931457cd1
   io-console (0.9.4) sha256=a403304f32928ee85e56d457b4612ca43f2703b561a3258844992bd24085fbb1
   irb (1.18.0) sha256=de9454a0703a54704b9811a5ef31a60c86949fbf4013fcf244fabc7c775248e3
-  json (3.0.2) sha256=8e6d7e7b11384c21230430cef90b71f14849a34a1f4452796670f7c981bd19df
+  json (3.1.0) sha256=3ce7ccf8fde58960177a3a756c31f292a4c1e1dedee884547096a5b0604e3bd8
   language_server-protocol (3.17.0.6) sha256=5ef2c0c138f8267e1bc631d3328347d354f96724b0af22f2c79516120443b7f0
   logger (1.7.0) sha256=196edec7cc44b66cfb40f9755ce11b392f21f7967696af15d274dde7edff0203
   memory_profiler (0.9.14) sha256=de558cf6525d8d56d2c0ea465b1664517fbe45560f892dc7a898d3b8c2863b12
@@ -261,7 +261,7 @@ CHECKSUMS
   tsort (0.2.0) sha256=9650a793f6859a43b6641671278f79cfead60ac714148aabe4e3f0060480089f
   uri (1.1.2) sha256=89292e98eabbef6248b0a0ed5e7e398e152f83f17560023a6d94a7f492b169fb
   vernier (1.11.0) sha256=ffc3859da1d53df96a109c6609892dab9f1d96ffbdd77cf13fa4d74032331216
-  webmock (3.29.0) sha256=a854b243019d503d3446ab7807c9192f41826d5b673b5dfe0d287ced9606ecbc
+  webmock (3.34.0) sha256=72eed29dc8c00148d592acaedaaa6b869e2e397de57dfc8602b84aa834f46b33
   webrick (1.9.2) sha256=beb4a15fc474defed24a3bda4ffd88a490d517c9e4e6118c3edce59e45864131
   yard (0.9.45) sha256=52e211493f7cb8a3ebf7e104a25a1e73937a3103092545d34cb88fafebb3dc51
 
