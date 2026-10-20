@@ -114,6 +114,24 @@ if defined?(::Resque::Scheduler)
       expect(Resque::Scheduler.scheduled_jobs["nightly_report"].opts[:sentry_monitor]).to eq(false)
     end
 
+    it "does not monitor jobs pushed by the scheduled job's enqueue hooks" do
+      stub_const("FollowUpJob", Class.new { @queue = :default; def self.perform; end })
+      stub_const("HookedScheduledJob", Class.new do
+        @queue = :default
+        def self.perform; end
+
+        def self.after_enqueue_follow_up(*)
+          Resque.enqueue(FollowUpJob)
+        end
+      end)
+
+      Resque::Scheduler.load_schedule_job("hooked", "cron" => "0 9 * * *", "class" => "HookedScheduledJob")
+      Resque::Scheduler.scheduled_jobs.fetch("hooked").callable.call
+      2.times { worker.work_one_job(worker.reserve) }
+
+      expect(check_ins.map(&:monitor_slug)).to eq(["hooked", "hooked"])
+    end
+
     it "does not monitor jobs enqueued outside a schedule" do
       Resque.enqueue(ScheduledReportJob)
       worker.work_one_job(worker.reserve)
