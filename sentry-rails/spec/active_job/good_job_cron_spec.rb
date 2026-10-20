@@ -75,6 +75,23 @@ if defined?(::GoodJob)
       expect(check_ins.first.monitor_config.to_h[:schedule]).to eq(type: :crontab, value: "0 * * * *")
     end
 
+    it "checks in again when a failed run is retried" do
+      job_fixture("FlakyReportJob") do
+        retry_on RuntimeError, wait: 0, attempts: 2
+
+        def perform
+          raise "boom" if executions == 1
+        end
+      end
+
+      run_entry(:flaky_report, class: "FlakyReportJob", cron: "0 9 * * *")
+      drain
+
+      expect(check_ins.map(&:status)).to eq([:in_progress, :error, :in_progress, :ok])
+      expect(check_ins.map(&:monitor_slug).uniq).to eq(["flaky_report"])
+      expect(check_ins[2].monitor_config.to_h[:schedule]).to eq(type: :crontab, value: "0 9 * * *")
+    end
+
     it "uses each entry's key and schedule when entries share a job class" do
       run_entry(:report_eu, class: "ReportJob", args: ["eu"], cron: "0 9 * * * Europe/Berlin")
       run_entry(:report_us, class: ReportJob, args: ["us"], cron: "0 9 * * * America/New_York")
