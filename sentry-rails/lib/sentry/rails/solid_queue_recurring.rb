@@ -48,9 +48,8 @@ module Sentry
           return unless job.instance_of?(job_class)
           return if job_class < Sentry::Cron::MonitorCheckIns::Patch
 
-          slug = task.key.to_s.downcase.gsub(/[^a-z0-9_-]+/, "-").gsub(/\A-+|-+\z/, "")
-          slug = slug[0, Sentry::Cron::MonitorCheckIns::MAX_SLUG_LENGTH].delete_suffix("-")
-          return if slug.empty?
+          slug = Sentry::Cron::Slug.from(task.key)
+          return unless slug
 
           config = Sentry::Cron::FugitSchedule.from_cron(cron_for(task))
           { "slug" => slug, "crontab" => config&.schedule&.value, "timezone" => config&.timezone }.compact
