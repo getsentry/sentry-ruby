@@ -4,6 +4,8 @@ module Sentry
   module Rails
     module Overrides
       module StreamingReporter
+        private
+
         def log_error(exception)
           Sentry::Rails.capture_exception(exception)
           super
