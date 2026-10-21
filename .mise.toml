@@ -1,6 +1,3 @@
-[settings]
-ruby.compile = false
-
 [tools]
 ruby = "latest"
 node = "lts"

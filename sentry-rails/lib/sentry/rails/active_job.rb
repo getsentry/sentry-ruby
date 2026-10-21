@@ -253,6 +253,7 @@ module Sentry
           # This handler does not capture error unless `active_job_report_on_retry_error` is true
           def retry_handler(*args)
             handle_error_event(*args) do |job, error|
+              return if error.nil?
               return if !Sentry.initialized? || job.already_supported_by_sentry_integration?
               return unless Sentry.configuration.rails.active_job_report_on_retry_error
 

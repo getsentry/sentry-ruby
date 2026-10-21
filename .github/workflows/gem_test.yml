@@ -37,6 +37,9 @@ jobs:
 
   test:
     needs: matrix
+    env:
+      CC: gcc-13
+      CXX: g++-13
     defaults:
       run:
         working-directory: ${{ inputs.gem }}

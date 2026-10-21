@@ -121,7 +121,7 @@ GEM
     cronex (0.15.0)
       tzinfo
       unicode (>= 0.4.4.5)
-    date (3.5.1)
+    date (3.6.0)
     diff-lcs (1.6.2)
     docile (1.4.1)
     drb (2.2.3)
@@ -165,7 +165,7 @@ GEM
       net-protocol
     net-protocol (0.4.0)
       timeout
-    net-smtp (0.5.1)
+    net-smtp (0.5.2)
       net-protocol
     nio4r (2.7.5)
     nokogiri (1.17.2-aarch64-linux)
@@ -182,7 +182,7 @@ GEM
       racc (~> 1.4)
     pp (0.6.4)
       prettyprint
-    prettyprint (0.2.0)
+    prettyprint (0.2.1)
     prism (1.9.0)
     psych (5.5.0)
       date

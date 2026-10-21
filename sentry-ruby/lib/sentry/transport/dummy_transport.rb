@@ -8,22 +8,25 @@ module Sentry
       super
       @events = []
       @envelopes = []
+      @mutex = Mutex.new
     end
 
     def send_event(event)
-      @events << event
+      @mutex.synchronize { @events << event }
       super
     end
 
     def send_envelope(envelope)
-      @envelopes << envelope
+      @mutex.synchronize { @envelopes << envelope }
     end
 
     # Empties the captured events and envelopes so `TestHelper.clear_sentry_events`
     # also clears the dummy transport instance
     def clear
-      @events.clear
-      @envelopes.clear
+      @mutex.synchronize do
+        @events.clear
+        @envelopes.clear
+      end
     end
   end
 end

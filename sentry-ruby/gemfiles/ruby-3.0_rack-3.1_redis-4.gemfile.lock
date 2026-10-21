@@ -33,11 +33,13 @@ GEM
     crack (1.0.1)
       bigdecimal
       rexml
-    date (3.5.1)
+    date (3.6.0)
     diff-lcs (1.6.2)
     docile (1.4.1)
     erb (4.0.4.1)
       cgi (>= 0.3.3)
+    et-orbi (1.4.2)
+      tzinfo
     excon (1.2.5)
       logger
     faraday (2.14.4)
@@ -47,6 +49,9 @@ GEM
     faraday-net_http (3.4.4)
       net-http (~> 0.5)
     fiber-storage (1.0.0)
+    fugit (1.14.0)
+      et-orbi (~> 1.4)
+      raabro (~> 1.4)
     graphql (2.6.11)
       base64
       fiber-storage
@@ -62,12 +67,15 @@ GEM
     language_server-protocol (3.17.0.6)
     logger (1.7.0)
     memory_profiler (0.9.14)
-    net-http (0.9.1)
+    net-http (0.10.0)
+      net-protocol (>= 0.3.0)
       uri (>= 0.11.1)
+    net-protocol (0.4.0)
+      timeout
     nio4r (2.7.5)
     pp (0.6.4)
       prettyprint
-    prettyprint (0.2.0)
+    prettyprint (0.2.1)
     prism (1.9.0)
     psych (5.5.0)
       date
@@ -75,6 +83,7 @@ GEM
     public_suffix (6.0.2)
     puma (8.0.2)
       nio4r (~> 2.0)
+    raabro (1.5.0)
     rack (3.2.7)
     rake (12.3.3)
     rbs (3.6.1)
@@ -108,7 +117,7 @@ GEM
       rbs (>= 3, < 5)
     ruby-lsp-rspec (0.1.29)
       ruby-lsp (~> 0.26.0)
-    sequel (5.108.0)
+    sequel (5.109.0)
       bigdecimal
     simplecov (0.22.0)
       docile (~> 1.1)
@@ -123,9 +132,12 @@ GEM
     stackprof (0.2.28)
     stringio (3.2.0)
     timecop (0.9.11)
+    timeout (0.6.1)
     tsort (0.2.0)
-    uri (1.1.1)
-    webmock (3.26.4)
+    tzinfo (2.0.6)
+      concurrent-ruby (~> 1.0)
+    uri (1.1.2)
+    webmock (3.29.0)
       addressable (>= 2.8.0)
       crack (>= 0.3.2)
       hashdiff (>= 0.4.0, < 2.0.0)
@@ -147,6 +159,7 @@ DEPENDENCIES
   debug!
   excon
   faraday
+  fugit
   graphql (>= 2.2.6)
   irb
   jdbc-sqlite3
