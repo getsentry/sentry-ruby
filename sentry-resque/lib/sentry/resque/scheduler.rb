@@ -61,9 +61,13 @@ module Sentry
           return unless rufus_job && Sentry.initialized?
           return if excluded?(name)
 
-          slug = name.to_s.downcase.gsub(/[^a-z0-9_-]+/, "-").gsub(/\A-+|-+\z/, "")
-          slug = slug[0, Sentry::Cron::MonitorCheckIns::MAX_SLUG_LENGTH].delete_suffix("-")
-          return if slug.empty?
+          slug = name.to_s.downcase.gsub(/[^a-z0-9_-]+/, "-").sub(/\A-+/, "")
+          slug = slug[0, Sentry::Cron::MonitorCheckIns::MAX_SLUG_LENGTH]
+          # rindex instead of /-+\z/, which backtracks on long runs of dashes.
+          last = slug.rindex(/[^-]/)
+          return unless last
+
+          slug = slug[0..last]
 
           config =
             case rufus_job

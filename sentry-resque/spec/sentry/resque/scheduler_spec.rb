@@ -74,6 +74,12 @@ if defined?(::Resque::Scheduler)
       expect(check_ins.first.monitor_config.to_h[:schedule]).to eq(type: :interval, value: 2, unit: :hour)
     end
 
+    it "strips leading and trailing dashes from the slug" do
+      run_schedule("--Hourly Sync!-", "every" => "1h", "class" => "ScheduledReportJob")
+
+      expect(check_ins.map(&:monitor_slug)).to eq(["hourly-sync", "hourly-sync"])
+    end
+
     it "uses the scheduler's local zone for zoneless crons" do
       original = ENV["TZ"]
       ENV["TZ"] = "Asia/Tokyo"
