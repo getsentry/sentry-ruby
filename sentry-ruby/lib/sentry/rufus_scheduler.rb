@@ -45,8 +45,6 @@ module Sentry
       end
     end
 
-    MAX_SLUG_LENGTH = 50
-
     class << self
       # Returns [slug, monitor_config], or nil for jobs that aren't monitored (like `at`/`in`).
       def monitor_for(job)
@@ -90,9 +88,7 @@ module Sentry
           end
         return unless source
 
-        slug = source.downcase.gsub(/[^a-z0-9_-]+/, "-").gsub(/\A-+|-+\z/, "")
-        slug = slug[0, MAX_SLUG_LENGTH].delete_suffix("-")
-        slug.empty? ? nil : slug
+        Sentry::Cron::Slug.from(source)
       end
 
       def monitor_config_for(job)
