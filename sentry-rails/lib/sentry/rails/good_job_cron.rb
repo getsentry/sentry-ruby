@@ -52,9 +52,8 @@ module Sentry
           return unless job_class.respond_to?(:call) || job.class.name == job_class.to_s.delete_prefix("::")
           return if job.class < Sentry::Cron::MonitorCheckIns::Patch
 
-          slug = entry.key.to_s.downcase.gsub(/[^a-z0-9_-]+/, "-").gsub(/\A-+|-+\z/, "")
-          slug = slug[0, Sentry::Cron::MonitorCheckIns::MAX_SLUG_LENGTH].delete_suffix("-")
-          return if slug.empty?
+          slug = Sentry::Cron::Slug.from(entry.key)
+          return unless slug
 
           # Entries whose cron is a proc can change schedule between runs.
           cron = entry.params[:cron]
