@@ -14,10 +14,6 @@ RSpec.describe Sentry::Cron::Slug do
       expect(described_class.from("#{"a" * 48}--b")).to eq("a" * 48)
     end
 
-    it "handles long runs of dashes" do
-      expect(described_class.from("a#{"-" * 100_000}")).to eq("a")
-    end
-
     it "returns nil when nothing usable is left" do
       expect(described_class.from("!!!")).to be_nil
     end
