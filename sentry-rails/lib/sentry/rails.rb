@@ -8,6 +8,7 @@ require "sentry/rails/configuration"
 require "sentry/rails/structured_logging"
 require "sentry/rails/engine"
 require "sentry/rails/railtie"
+require "sentry/rails/good_job_cron"
 
 module Sentry
   module Rails
