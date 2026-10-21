@@ -12,6 +12,8 @@ runs:
       env:
         MISE_ENV: ci
         MISE_JOBS: "2"
+        CC: gcc-13
+        CXX: g++-13
       with:
         install: true
         cache: true
