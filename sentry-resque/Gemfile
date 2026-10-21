@@ -11,6 +11,7 @@ gemspec
 gem "sentry-ruby", path: "../sentry-ruby"
 
 gem "resque-retry", "~> 1.8"
+gem "resque-scheduler"
 
 gem "sentry-rails", path: "../sentry-rails"
 gem "rails", "> 5.2.0"
