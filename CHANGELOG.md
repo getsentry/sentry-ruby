@@ -1,3 +1,7 @@
+### New Features ✨
+
+- Add feature flag support by @jespersandnielsen [#3108](https://github.com/getsentry/sentry-ruby/pull/3108)
+
 ## 7.1.0
 
 ### Breaking Changes 🛠
