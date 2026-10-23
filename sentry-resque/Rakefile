@@ -3,8 +3,24 @@
 require "bundler/gem_tasks"
 require "rspec/core/rake_task"
 
-RSpec::Core::RakeTask.new(:spec).tap do |task|
+RSpec::Core::RakeTask.new(:spec) do |task|
+  task.pattern = "spec/sentry/**/*_spec.rb"
   task.rspec_opts = "--order rand"
 end
 
-task default: :spec
+namespace :spec do
+  isolated_tasks = Dir["spec/isolated/**/*_spec.rb"].sort.map do |file|
+    task_name = "isolated:#{file.delete_prefix("spec/isolated/").delete_suffix("_spec.rb")}"
+
+    RSpec::Core::RakeTask.new(task_name) do |task|
+      task.pattern = file
+      task.rspec_opts = "--format progress"
+    end
+
+    task_name
+  end
+
+  task isolated: isolated_tasks
+end
+
+task default: [:spec, :"spec:isolated"]

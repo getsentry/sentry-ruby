@@ -5,28 +5,68 @@ require "resque"
 module Sentry
   module Resque
     def perform
-      if Sentry.initialized?
+      if !Sentry.initialized?
+        super
+      elsif Sentry::Resque.performed_by_active_job?(payload)
+        perform_with_active_job_hand_off { super }
+      else
         SentryReporter.record(queue, worker, payload) do
           super
         end
-      else
-        super
       end
+    end
+
+    private
+
+    def perform_with_active_job_hand_off
+      start_timestamp = Sentry.utc_now.to_f
+      args = payload["args"]
+      begin
+        payload["args"] = Sentry::Resque.active_job_args(queue: queue, worker: worker, payload: payload)
+        yield
+      ensure
+        payload["args"] = args
+      end
+    rescue Exception => exception
+      unless Sentry.exception_captured?(exception)
+        SentryReporter.capture_exception(queue, worker, payload, exception, start_timestamp: start_timestamp)
+      end
+      raise
     end
 
     class SentryReporter
       SPAN_ORIGIN = "auto.queue.resque"
 
       class << self
+        def capture_exception(queue, worker, payload, exception, start_timestamp:)
+          Sentry.with_scope do |scope|
+            apply_job_scope(scope, queue, worker, payload)
+            job_data = payload["args"].first
+            options = {
+              name: scope.transaction_name,
+              source: scope.transaction_source,
+              op: "queue.process",
+              origin: SPAN_ORIGIN,
+              start_timestamp: start_timestamp
+            }
+            continued = Sentry.continue_trace(job_data.dig("_sentry", "trace_propagation_headers") || {}, **options)
+            transaction = Sentry.start_transaction(transaction: continued, **options)
+            if transaction
+              scope.set_span(transaction)
+              transaction.set_data(Span::DataConventions::MESSAGING_SYSTEM, "resque")
+              transaction.set_data(Span::DataConventions::MESSAGING_MESSAGE_ID, job_data["job_id"])
+              transaction.set_data(Span::DataConventions::MESSAGING_DESTINATION_NAME, queue)
+            end
+
+            ::Sentry::Resque.capture_exception(exception, hint: { background: false })
+            finish_transaction(transaction, 500)
+          end
+        end
+
         def record(queue, worker, payload, &block)
           Sentry.with_scope do |scope|
             begin
-              contexts = generate_contexts(queue, worker, payload)
-              scope.set_contexts(**contexts)
-              scope.set_tags("resque.queue" => queue)
-
-              name = contexts.dig(:"Active-Job", :job_class) || contexts.dig(:"Resque", :job_class)
-              scope.set_transaction_name(name, source: :task)
+              apply_job_scope(scope, queue, worker, payload)
               transaction = Sentry.start_transaction(
                 name: scope.transaction_name,
                 source: scope.transaction_source,
@@ -86,6 +126,15 @@ module Sentry
         end
 
         private
+
+        def apply_job_scope(scope, queue, worker, payload)
+          contexts = generate_contexts(queue, worker, payload)
+          scope.set_contexts(**contexts)
+          scope.set_tags("resque.queue" => queue)
+
+          name = contexts.dig(:"Active-Job", :job_class) || contexts.dig(:"Resque", :job_class)
+          scope.set_transaction_name(name, source: :task)
+        end
 
         def raise_if_retries_remain(klass, exception)
           return unless Sentry.configuration.resque.report_after_job_retries &&

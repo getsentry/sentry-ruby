@@ -38,7 +38,7 @@ RSpec.shared_examples "an ActiveJob backend that records messaging span data on 
     drain
 
     data = consumer_transaction.contexts.dig(:trace, :data)
-    expect(data["messaging.message.body.size"]).to eq(JSON.generate(delivered_job_data.last).bytesize)
+    expect(data["messaging.message.body.size"]).to eq(expected_message_body_size(delivered_job_data.last))
   end
 
   it "records messaging.message.retry.count = 0 for non-retryable jobs" do
