@@ -14,7 +14,8 @@ module Sentry
         system: ->(value) { value.is_a?(String) },
         message_id: ->(value) { value.is_a?(String) },
         destination: ->(value) { value.is_a?(String) },
-        receive_latency: ->(value) { value.is_a?(Numeric) }
+        receive_latency: ->(value) { value.is_a?(Numeric) },
+        body_size: ->(value) { value.is_a?(Integer) && value >= 0 }
       }.freeze
 
       def initialize(event_keys: EVENT_DATA_KEYS, scope_keys: SCOPE_DATA_KEYS, messaging_fields: MESSAGING_DATA_VALIDATORS)

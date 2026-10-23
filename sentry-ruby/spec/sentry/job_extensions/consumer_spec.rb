@@ -48,7 +48,7 @@ RSpec.describe Sentry::JobExtensions::Consumer do
 
   def enriching_consumer
     consumer(
-      messaging_data: ->(job:) { { system: "backend", message_id: job.id, destination: job.queue, receive_latency: 42.5 } },
+      messaging_data: ->(job:) { { system: "backend", message_id: job.id, destination: job.queue, receive_latency: 42.5, body_size: 128 } },
       retry_info: ->(job:) { { count: 3, will_retry: true } },
       scope_data: ->(job:) { { contexts: { backend: { "jid" => "backend-jid" } }, tags: { "backend.queue" => "low" }, extra: { size: 12 } } }
     )
@@ -112,6 +112,7 @@ RSpec.describe Sentry::JobExtensions::Consumer do
         "messaging.message.id" => "job-1",
         "messaging.destination.name" => "critical",
         "messaging.message.receive.latency" => 42.5,
+        "messaging.message.body.size" => 128,
         "messaging.message.retry.count" => 3
       )
     end

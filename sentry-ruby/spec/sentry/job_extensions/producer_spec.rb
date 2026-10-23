@@ -18,7 +18,7 @@ RSpec.describe Sentry::JobExtensions::Producer do
   def enriching_producer(origin: nil)
     producer(
       origin: origin,
-      messaging_data: ->(job:) { { system: "backend", message_id: job.id, destination: job.queue, receive_latency: 42.5 } },
+      messaging_data: ->(job:) { { system: "backend", message_id: job.id, destination: job.queue, receive_latency: 42.5, body_size: 128 } },
       retry_info: ->(job:) { { count: 3, will_retry: true } }
     )
   end
@@ -62,6 +62,7 @@ RSpec.describe Sentry::JobExtensions::Producer do
         "messaging.message.id" => "job-1",
         "messaging.destination.name" => "critical",
         "messaging.message.receive.latency" => 42.5,
+        "messaging.message.body.size" => 128,
         "messaging.message.retry.count" => 3
       )
     end
