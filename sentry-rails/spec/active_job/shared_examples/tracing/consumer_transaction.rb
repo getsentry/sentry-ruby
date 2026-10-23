@@ -89,14 +89,51 @@ RSpec.shared_examples "an ActiveJob backend that emits a consumer transaction" d
   context "with traces_sample_rate = 0" do
     before { Sentry.configuration.traces_sample_rate = 0 }
 
-    it "does not capture a transaction" do
+    it "reports job errors with messaging data without capturing a transaction" do
       expect do
         failing_job.perform_later
         drain
       end.to raise_error(RuntimeError, /boom from failing_job spec/)
 
+      error_event = sentry_events.find { |event| event.is_a?(Sentry::ErrorEvent) }
+      expect(error_event.contexts.dig(:trace, :data)).to include(
+        "messaging.message.id" => a_kind_of(String),
+        "messaging.destination.name" => "default",
+        "messaging.system" => successful_job.queue_adapter_name,
+        "messaging.message.retry.count" => 0
+      )
+
       transactions = sentry_events.select { |e| e.is_a?(Sentry::TransactionEvent) }
       expect(transactions).to be_empty
+    end
+  end
+
+  context "when the transaction is unsampled" do
+    let(:configure_sentry) { proc { |config| config.traces_sample_rate = 0.0 } }
+
+    it "performs the enqueued job without reporting transactions" do
+      performed_arguments = []
+      recording_job = job_fixture do
+        define_method(:perform) { |argument| performed_arguments << argument }
+      end
+
+      within_parent_transaction { recording_job.perform_later("hello") }
+      drain
+
+      expect(performed_arguments).to eq(["hello"])
+      expect(transactions).to be_empty
+    end
+  end
+
+  context "when tracing is disabled" do
+    it "reports job errors without messaging.message.body.size" do
+      expect do
+        failing_job.perform_later("hello")
+        drain
+      end.to raise_error(RuntimeError, /boom from failing_job spec/)
+
+      trace_data = last_sentry_event.contexts.dig(:trace, :data) || {}
+      expect(trace_data).not_to have_key("messaging.message.body.size")
     end
   end
 end
