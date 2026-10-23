@@ -1,109 +1,74 @@
 # frozen_string_literal: true
 
-require "sentry/sidekiq/context_filter"
+require "sentry/sidekiq/job_extension"
+require "sentry/sidekiq/active_job_support/server_middleware"
 
 module Sentry
   module Sidekiq
-    module Helpers
-      def set_span_data(span, id:, queue:, latency: nil, retry_count: nil)
-        return unless span
-
-        span.set_data(Span::DataConventions::MESSAGING_MESSAGE_ID, id)
-        span.set_data(Span::DataConventions::MESSAGING_DESTINATION_NAME, queue)
-        span.set_data(Span::DataConventions::MESSAGING_MESSAGE_RECEIVE_LATENCY, latency) if latency
-        span.set_data(Span::DataConventions::MESSAGING_MESSAGE_RETRY_COUNT, retry_count) if retry_count
-      end
-
-      if ::Gem::Version.new(::Sidekiq::VERSION) >= ::Gem::Version.new("8.0.0")
-        def calculate_latency(job)
-          now_in_ms - job["enqueued_at"] if job["enqueued_at"]
-        end
-      else
-        def calculate_latency(job)
-          ((Time.now.to_f - job["enqueued_at"]) * 1000).round if job["enqueued_at"]
-        end
-      end
-
-      def now_in_ms
-        ::Process.clock_gettime(::Process::CLOCK_REALTIME, :millisecond)
-      end
-    end
-
     class SentryContextServerMiddleware
-      include Sentry::Sidekiq::Helpers
+      prepend ActiveJobSupport::ServerMiddleware
 
-      OP_NAME = "queue.process"
-      SPAN_ORIGIN = "auto.queue.sidekiq"
+      SPAN_ORIGIN = JobExtension::SPAN_ORIGIN
+
+      def self.consumer
+        @consumer ||= Sentry::JobExtensions::Consumer.new(integration: Sentry::Sidekiq, origin: SPAN_ORIGIN)
+      end
 
       def call(worker, job, queue)
         return yield unless Sentry.initialized?
 
-        context_filter = Sentry::Sidekiq::ContextFilter.new(job)
+        sidekiq_job = job.merge("queue" => queue)
 
         Sentry.clone_hub_to_current_thread
         scope = Sentry.get_current_scope
-        if (user = job["sentry_user"])
-          scope.set_user(user)
-        end
-        scope.set_tags(queue: queue, jid: job["jid"])
-        scope.set_tags(build_tags(job["tags"]))
-        scope.set_contexts(sidekiq: job.merge("queue" => queue))
-        scope.set_transaction_name(context_filter.transaction_name, source: :task)
-        transaction = start_transaction(scope, job["trace_propagation_headers"])
-
-        if transaction
-          scope.set_span(transaction)
-
-          latency = calculate_latency(job)
-
-          set_span_data(
-            transaction,
-            id: job["jid"],
-            queue: queue,
-            latency: latency,
-            retry_count: job["retry_count"] || 0
-          )
-        end
+        consumer.apply_scope_data(scope, sidekiq_job, default_scope_data: job_extension.scope_data(job: sidekiq_job))
+        scope.set_transaction_name(job_extension.transaction_name(job: job), source: :task)
+        trace_headers = execution_trace_headers(job, sidekiq_job)
+        transaction = consumer.start_transaction(
+          scope, sidekiq_job,
+          payload: sidekiq_job,
+          trace_headers: trace_headers,
+          messaging_data: -> { job_extension.consumer_messaging_data(sidekiq_job) },
+          default_retry_count: job_extension.retry_info(job: sidekiq_job)[:count],
+          always_continue_trace: true
+        )
 
         begin
-          yield
+          perform_job(job, sidekiq_job, scope: scope) { yield }
         rescue
-          finish_transaction(transaction, 500)
+          consumer.finish_transaction(transaction, 500)
           raise
         end
 
-        finish_transaction(transaction, 200)
+        consumer.finish_transaction(transaction, 200)
         # don't need to use ensure here
         # if the job failed, we need to keep the scope for error handler. and the scope will be cleared there
         scope.clear
       end
 
-      def build_tags(tags)
-        Array(tags).each_with_object({}) { |name, tags_hash| tags_hash[:"sidekiq.#{name}"] = true }
+      private
+
+      def execution_trace_headers(job, sidekiq_job)
+        job_extension.extract_trace_headers(job: sidekiq_job, payload: sidekiq_job)
       end
 
-      def start_transaction(scope, env)
-        options = {
-          name: scope.transaction_name,
-          source: scope.transaction_source,
-          op: OP_NAME,
-          origin: SPAN_ORIGIN
-        }
-
-        transaction = Sentry.continue_trace(env, **options)
-        Sentry.start_transaction(transaction: transaction, **options)
+      def perform_job(job, sidekiq_job, scope:)
+        yield
       end
 
-      def finish_transaction(transaction, status)
-        return unless transaction
+      def consumer
+        self.class.consumer
+      end
 
-        transaction.set_http_status(status)
-        transaction.finish
+      def job_extension
+        Sentry::Sidekiq.job_extension
       end
     end
 
     class SentryContextClientMiddleware
-      include Sentry::Sidekiq::Helpers
+      def self.producer
+        @producer ||= Sentry::JobExtensions::Producer.new
+      end
 
       def call(worker_class, job, queue, _redis_pool)
         return yield unless Sentry.initialized?
@@ -114,14 +79,25 @@ module Sentry
         end
 
         if Sentry.configuration.sidekiq.propagate_traces
-          job["trace_propagation_headers"] ||= Sentry.get_trace_propagation_headers
+          headers = Sentry.get_trace_propagation_headers
+          payload = Sentry::Sidekiq.job_extension.inject_trace_headers(job: job, payload: job, headers: headers)
+          job.replace(producer.inject_trace_headers(job, payload, headers))
         end
 
-        Sentry.with_child_span(op: "queue.publish", description: worker_class.to_s) do |span|
-          set_span_data(span, id: job["jid"], queue: queue)
+        producer.record_span(
+          job,
+          description: worker_class.to_s,
+          extension_messaging_keys: %i[system message_id],
+          default_messaging_data: { system: Sentry::Sidekiq.job_extension.name, message_id: job["jid"] },
+          messaging_data: { destination: queue },
+          retry_count: false
+        ) { yield }
+      end
 
-          yield
-        end
+      private
+
+      def producer
+        self.class.producer
       end
     end
   end

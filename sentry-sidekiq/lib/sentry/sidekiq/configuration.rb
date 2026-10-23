@@ -27,10 +27,13 @@ module Sentry
       # Whether we should inject headers while enqueuing the job in order to have a connected trace
       attr_accessor :propagate_traces
 
+      attr_accessor :active_job_integration
+
       def initialize
         @report_after_job_retries = false
         @report_only_dead_jobs = false
         @propagate_traces = true
+        @active_job_integration = :sidekiq
       end
     end
   end
