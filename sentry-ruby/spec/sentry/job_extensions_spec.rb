@@ -431,12 +431,12 @@ RSpec.describe "Sentry job extensions" do
     it "returns the messaging span data an extension derives from the job" do
       extension = build_hooked_extension(
         messaging_data: lambda do |job:|
-          { system: "sidekiq", message_id: job.jid, destination: job.queue, receive_latency: 1500 }
+          { system: "sidekiq", message_id: job.jid, destination: job.queue, receive_latency: 1500, body_size: 42 }
         end
       )
 
       expect(call_hook(extension, :messaging_data))
-        .to eq(system: "sidekiq", message_id: "abc123", destination: "default", receive_latency: 1500)
+        .to eq(system: "sidekiq", message_id: "abc123", destination: "default", receive_latency: 1500, body_size: 42)
     end
 
     it "returns the names an extension gives the job and the integration it captures errors under" do
@@ -538,7 +538,7 @@ RSpec.describe "Sentry job extensions" do
       inject_trace_headers: [nil, "payload"],
       extract_trace_headers: ["sentry-trace", [], { "sentry-trace" => 1 }, { sentry_trace: "trace" }],
       messaging_data: [nil, [], { system: :sidekiq }, { message_id: 1 }, { destination: nil },
-                       { receive_latency: "fast" }],
+                       { receive_latency: "fast" }, { body_size: -1 }, { body_size: 1.5 }, { body_size: "42" }],
       transaction_name: ["", :HardJob, 1],
       span_origin: ["", :"auto.queue.backend"],
       publish_description: ["", :HardJob],
