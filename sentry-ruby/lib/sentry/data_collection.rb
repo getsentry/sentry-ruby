@@ -131,6 +131,7 @@ module Sentry
     def self.backfill(configuration)
       data_collection = new
       data_collection.backfill_stack_frame_variables(configuration)
+      data_collection.backfill_frame_context_lines(configuration)
       return data_collection if configuration.send_default_pii
 
       # TODO-neel-data map to exact ruby behaviour for backwards compat behavior
@@ -146,7 +147,6 @@ module Sentry
       data_collection.graphql.variables = false
       data_collection.database_query_data = false
       data_collection.queues = false
-      data_collection.frame_context_lines = configuration.context_lines
       data_collection
     end
 
@@ -169,6 +169,11 @@ module Sentry
     # Copies the legacy stack frame variable configuration.
     def backfill_stack_frame_variables(configuration)
       self.stack_frame_variables = configuration.include_local_variables
+    end
+
+    # Copies the legacy context_lines configuration.
+    def backfill_frame_context_lines(configuration)
+      self.frame_context_lines = configuration.context_lines
     end
 
     # Returns whether stack frame local variables should be captured.

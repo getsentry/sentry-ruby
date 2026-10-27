@@ -53,6 +53,41 @@ RSpec.describe Sentry::Configuration do
 
       expect(configuration.data_collection.stack_frame_variables.mode).to eq(:deny_list)
     end
+
+    it "falls back to context_lines for frame context lines" do
+      configuration = Sentry::Configuration.new do |config|
+        config.context_lines = nil
+      end
+
+      expect(configuration.data_collection.frame_context_lines).to be_nil
+    end
+
+    it "preserves context_lines when send_default_pii is set later" do
+      configuration = Sentry::Configuration.new do |config|
+        config.context_lines = 5
+        config.send_default_pii = true
+      end
+
+      expect(configuration.data_collection.frame_context_lines).to eq(5)
+    end
+  end
+
+  describe "#stacktrace_builder" do
+    it "uses data_collection.frame_context_lines" do
+      configuration = Sentry::Configuration.new do |config|
+        config.data_collection.frame_context_lines = nil
+      end
+
+      expect(configuration.stacktrace_builder.context_lines).to be_nil
+    end
+
+    it "uses the deprecated context_lines" do
+      configuration = Sentry::Configuration.new do |config|
+        config.context_lines = 1
+      end
+
+      expect(configuration.stacktrace_builder.context_lines).to eq(1)
+    end
   end
 
   describe "deprecated configuration warnings" do

@@ -135,7 +135,12 @@ module Sentry
     # Number of lines of code context to capture, or nil for none
     # @deprecated Use {#data_collection} and `frame_context_lines` instead.
     # @return [Integer, nil]
-    attr_accessor :context_lines
+    attr_reader :context_lines
+
+    def context_lines=(value)
+      @context_lines = value
+      @data_collection.backfill_frame_context_lines(self)
+    end
 
     # RACK_ENV by default.
     # @return [String]
@@ -832,7 +837,7 @@ module Sentry
         project_root: @project_root.to_s,
         app_dirs_pattern: @app_dirs_pattern,
         linecache: @linecache,
-        context_lines: @context_lines,
+        context_lines: @data_collection.frame_context_lines,
         backtrace_cleanup_callback: @backtrace_cleanup_callback,
         strip_backtrace_load_path: @strip_backtrace_load_path
       )
