@@ -9,7 +9,7 @@ GIT
 PATH
   remote: ../../sentry-ruby
   specs:
-    sentry-ruby (7.1.0)
+    sentry-ruby (7.2.0)
       bigdecimal
       concurrent-ruby (~> 1.0, >= 1.0.2)
       logger
@@ -17,8 +17,8 @@ PATH
 PATH
   remote: ..
   specs:
-    sentry-yabeda (7.1.0)
-      sentry-ruby (~> 7.1.0)
+    sentry-yabeda (7.2.0)
+      sentry-ruby (~> 7.2.0)
       yabeda (>= 0.11)
 
 GEM
@@ -35,7 +35,7 @@ GEM
     dry-initializer (3.1.1)
     erb (4.0.4.1)
       cgi (>= 0.3.3)
-    io-console (0.9.4)
+    io-console (0.9.5)
     irb (1.18.0)
       pp (>= 0.6.0)
       prism (>= 1.3.0)
@@ -45,7 +45,7 @@ GEM
     pp (0.6.4)
       prettyprint
     prettyprint (0.2.1)
-    prism (2.0.0)
+    prism (2.1.0)
     psych (5.5.0)
       date
       stringio
