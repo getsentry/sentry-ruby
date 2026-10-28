@@ -53,6 +53,24 @@ RSpec.describe Sentry::SpotlightTransport do
       expect(subject.conn.port).to eq(80)
       expect(subject.conn.use_ssl?).to eq(false)
     end
+
+    it 'returns an SSL connection with the default HTTPS port' do
+      configuration.spotlight = 'https://foobar@test.com'
+      connection = described_class.new(configuration).conn
+
+      expect(connection.address).to eq('test.com')
+      expect(connection.port).to eq(443)
+      expect(connection.use_ssl?).to eq(true)
+    end
+
+    it 'preserves an explicitly specified HTTPS port' do
+      configuration.spotlight = 'https://foobar@test.com:8443'
+      connection = described_class.new(configuration).conn
+
+      expect(connection.address).to eq('test.com')
+      expect(connection.port).to eq(8443)
+      expect(connection.use_ssl?).to eq(true)
+    end
   end
 
   describe '#send_data' do
