@@ -6,6 +6,11 @@ require "sentry/rails/backtrace_cleaner"
 
 module Sentry
   class Railtie < ::Rails::Railtie
+    # Referencing ActionController::Live loads ActionDispatch::Response, and Rails
+    # warns when that happens before the application has initialized. Rails 8.1.4
+    # added the :action_controller_live load hook so we can wait for it instead.
+    SUPPORTS_ACTION_CONTROLLER_LIVE_LOAD_HOOK = Gem::Version.new(::Rails.version) >= Gem::Version.new("8.1.4")
+
     # middlewares can't be injected after initialize
     initializer "sentry.use_rack_middleware" do |app|
       # placed after all the file-sending middlewares so we can avoid unnecessary transactions
@@ -99,7 +104,16 @@ module Sentry
       ActiveSupport.on_load :action_controller do
         include Sentry::Rails::ControllerMethods
         include Sentry::Rails::ControllerTransaction
-        ActionController::Live.send(:prepend, Sentry::Rails::Overrides::StreamingReporter)
+      end
+
+      if SUPPORTS_ACTION_CONTROLLER_LIVE_LOAD_HOOK
+        ActiveSupport.on_load :action_controller_live do
+          prepend Sentry::Rails::Overrides::StreamingReporter
+        end
+      else
+        ActiveSupport.on_load :action_controller do
+          ActionController::Live.send(:prepend, Sentry::Rails::Overrides::StreamingReporter)
+        end
       end
     end
 
