@@ -97,7 +97,7 @@ GEM
     builder (3.3.0)
     cgi (0.5.2-java)
     concurrent-ruby (1.3.8)
-    crass (1.0.7)
+    crass (1.0.8)
     date (3.6.0-java)
     diff-lcs (1.6.2)
     docile (1.4.1)
@@ -149,13 +149,13 @@ GEM
     pp (0.6.4)
       prettyprint
     prettyprint (0.2.1)
-    prism (1.9.0)
+    prism (2.0.0)
     psych (5.5.0-java)
       date
       jar-dependencies (>= 0.1.7)
     racc (1.8.1-java)
     rack (2.2.24)
-    rack-test (2.2.0)
+    rack-test (2.3.0)
       rack (>= 1.3)
     rails (6.1.7.10)
       actioncable (= 6.1.7.10)
@@ -298,7 +298,7 @@ CHECKSUMS
   builder (3.3.0) sha256=497918d2f9dca528fdca4b88d84e4ef4387256d984b8154e9d5d3fe5a9c8835f
   cgi (0.5.2-java) sha256=08bbfe06e10e771d36f10db6c1dfb81727ea2a25c3dbcd28d890a1794414a73d
   concurrent-ruby (1.3.8) sha256=b2f1be836e968ccc78ccfce277ea79c72a88633f22306782c16ff23fb415d1e1
-  crass (1.0.7) sha256=94868719948664c89ddcaf0a37c65048413dfcb1c869470a5f7a7ceb5390b295
+  crass (1.0.8) sha256=7a0145c7a2c59f8e7923b3a69ce819c444823a00a5127d805298fea13be24efe
   date (3.6.0-java) sha256=7276986bbacc2357d0c6d41a863be5906e2f745ea2ccb47eed84bf761f6a7806
   diff-lcs (1.6.2) sha256=9ae0d2cba7d4df3075fe8cd8602a8604993efc0dfa934cff568969efb1909962
   docile (1.4.1) sha256=96159be799bfa73cdb721b840e9802126e4e03dfc26863db73647204c727f21e
@@ -328,11 +328,11 @@ CHECKSUMS
   nokogiri (1.18.10-java) sha256=cd431a09c45d84a2f870ba0b7e8f571199b3727d530f2b4888a73639f76510b5
   pp (0.6.4) sha256=dfcb0fce700c41456265922884f9fe195d7fbb0674a3578e6c0f69588e82b570
   prettyprint (0.2.1) sha256=d555d57ea6d7cf001d4774b693546a6bd88bec1e778ddffb5c60b68ceec4b7d4
-  prism (1.9.0) sha256=7b530c6a9f92c24300014919c9dcbc055bf4cdf51ec30aed099b06cd6674ef85
+  prism (2.0.0) sha256=fd551446f0c6ca71455ef8d1d40bd2ca1538044834fa22df8837e5095f3a5a39
   psych (5.5.0-java) sha256=3b7cf3684c44d049c3dee87ec4118ec9cd6ac714cbdcfba386997f96dbbd36ab
   racc (1.8.1-java) sha256=54f2e6d1e1b91c154013277d986f52a90e5ececbe91465d29172e49342732b98
   rack (2.2.24) sha256=ef16526a0d871c43753452338c754040a664c8b41bf0dd7450b85f7772adca5f
-  rack-test (2.2.0) sha256=005a36692c306ac0b4a9350355ee080fd09ddef1148a5f8b2ac636c720f5c463
+  rack-test (2.3.0) sha256=b118d177cc002c572fc1b6fd8d19c9ed5881a36e8d6f689f9e618f9f861241e8
   rails (6.1.7.10) sha256=809692b3ec91fe1407b160e65203ef41c0b19b27bc5b836a515d6f4b969188d1
   rails-dom-testing (2.3.0) sha256=8acc7953a7b911ca44588bf08737bc16719f431a1cc3091a292bca7317925c1d
   rails-html-sanitizer (1.7.1) sha256=e797a7c9b01e567307e317c576b49ab4168017e63eea4dba9ce3cb587e2f22c2

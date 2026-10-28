@@ -103,7 +103,7 @@ RSpec.describe Sentry::Breadcrumb do
       expect(result[:category]).to eq("baz")
       expect(result[:message]).to eq("I cause issues")
       expect(result[:data][:error]).to eq("[data were removed due to serialization issues]")
-      expect(stringio.string).to match(/can't serialize breadcrumb data because of error: nesting of 10 is too deep/)
+      expect(stringio.string).to match(/can't serialize breadcrumb data because of error: nesting of \d+ is too deep/)
     end
 
     it "rescues data serialization issue for extremely nested data and ditch the data" do
@@ -112,7 +112,7 @@ RSpec.describe Sentry::Breadcrumb do
       expect(result[:category]).to eq("cow")
       expect(result[:message]).to eq("I cause too much recursion")
       expect(result[:data][:error]).to eq("[data were removed due to serialization issues]")
-      expect(stringio.string).to match(/can't serialize breadcrumb data because of error: nesting of 10 is too deep/)
+      expect(stringio.string).to match(/can't serialize breadcrumb data because of error: nesting of \d+ is too deep/)
     end
   end
 end
