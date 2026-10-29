@@ -183,6 +183,11 @@ module Sentry
       # Defaults to true. Set to false to opt out.
       attr_accessor :active_job_propagate_traces
 
+      # GoodJob cron keys to skip when the :good_job_cron patch is enabled.
+      # Strings and Symbols match the key exactly; Regexps are matched against it.
+      # @return [Array<String, Symbol, Regexp>]
+      attr_accessor :good_job_exclude_cron_jobs
+
       # Solid Queue recurring task keys to skip when the :solid_queue_recurring patch is enabled.
       # Strings match the key exactly; Regexps are matched against it.
       # @return [Array<String, Regexp>]
@@ -210,6 +215,7 @@ module Sentry
         @active_support_logger_subscription_items = Sentry::Rails::ACTIVE_SUPPORT_LOGGER_SUBSCRIPTION_ITEMS_DEFAULT.dup
         @active_job_report_on_retry_error = false
         @active_job_propagate_traces = true
+        @good_job_exclude_cron_jobs = []
         @solid_queue_exclude_recurring_tasks = []
         @structured_logging = StructuredLoggingConfiguration.new
       end
