@@ -857,12 +857,6 @@ module Sentry
     end
 
     # @api private
-    def error_messages
-      @errors = [@errors[0]] + @errors[1..-1].map(&:downcase) # fix case of all but first
-      @errors.join(", ")
-    end
-
-    # @api private
     def run_after_close_callbacks
       run_callbacks(:after, :closed)
     end
