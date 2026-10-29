@@ -30,3 +30,17 @@ gem "sentry-sidekiq"
 ```
 
 Then you're all set! `sentry-sidekiq` will automatically insert a custom middleware and error handler to capture exceptions from your workers!
+
+### ActiveJob on Sidekiq
+
+By default, `config.sidekiq.active_job_integration = :sidekiq` keeps ActiveJob jobs running on Sidekiq reported by `sentry-sidekiq`, exactly as before. Rails apps can opt in to the `sentry-rails` ActiveJob integration instead:
+
+```ruby
+Sentry.init do |config|
+  config.sidekiq.active_job_integration = :rails
+end
+```
+
+Once opted in, `sentry-rails` reports those jobs and `sentry-sidekiq` enriches them with Sidekiq data. If `ActiveJob::QueueAdapters::SidekiqAdapter` is listed in `config.rails.skippable_job_adapters`, `sentry-sidekiq` keeps reporting those jobs itself. Plain Sidekiq jobs are not affected by this setting.
+
+Errors from ActiveJob jobs on Sidekiq that `retry_on` retries are not reported, regardless of `config.rails.active_job_report_on_retry_error`.

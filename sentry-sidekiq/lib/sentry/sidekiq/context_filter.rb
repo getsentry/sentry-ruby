@@ -35,17 +35,7 @@ module Sentry
       end
 
       def transaction_name
-        class_name = (context["wrapped"] || context["class"] ||
-                      (context[:job] && (context[:job]["wrapped"] || context[:job]["class"]))
-                    )
-
-        if class_name
-          "#{SIDEKIQ_NAME}/#{class_name}"
-        elsif context[:event]
-          "#{SIDEKIQ_NAME}/#{context[:event]}"
-        else
-          SIDEKIQ_NAME
-        end
+        Sentry::Sidekiq.job_extension.error_context_transaction_name(context)
       end
 
       private
