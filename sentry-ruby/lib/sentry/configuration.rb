@@ -421,7 +421,7 @@ module Sentry
 
     # these are not config options
     # @!visibility private
-    attr_reader :errors, :gem_specs
+    attr_reader :gem_specs
 
     # These exceptions could enter Puma's `lowlevel_error_handler` callback and the SDK's Puma integration
     # But they are mostly considered as noise and should be ignored by default
@@ -764,9 +764,7 @@ module Sentry
     end
 
     def sending_to_dsn_allowed?
-      @errors = []
-
-      valid? && capture_in_environment?
+      !!@dsn&.valid? && enabled_in_current_env?
     end
 
     def sample_allowed?
@@ -900,22 +898,6 @@ module Sentry
       Object.const_get(x)
     rescue NameError # There's no way to safely ask if a constant exist for an unknown string
       nil
-    end
-
-    def capture_in_environment?
-      return true if enabled_in_current_env?
-
-      @errors << "Not configured to send/capture in environment '#{environment}'"
-      false
-    end
-
-    def valid?
-      if @dsn&.valid?
-        true
-      else
-        @errors << "DSN not set or not valid"
-        false
-      end
     end
 
     def environment_from_env

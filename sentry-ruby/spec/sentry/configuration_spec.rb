@@ -476,13 +476,11 @@ RSpec.describe Sentry::Configuration do
     it 'should send events if test is whitelisted' do
       subject.enabled_environments = %w[test]
       expect(subject.sending_allowed?).to eq(true)
-      expect(subject.errors).to be_empty
     end
 
     it 'should not send events if test is not whitelisted' do
       subject.enabled_environments = %w[not_test]
       expect(subject.sending_allowed?).to eq(false)
-      expect(subject.errors).to eq(["Not configured to send/capture in environment 'test'"])
     end
   end
 
@@ -551,7 +549,6 @@ RSpec.describe Sentry::Configuration do
 
     it 'captured_allowed returns false' do
       expect(subject.sending_allowed?).to eq(false)
-      expect(subject.errors).to eq(["DSN not set or not valid"])
     end
   end
 
