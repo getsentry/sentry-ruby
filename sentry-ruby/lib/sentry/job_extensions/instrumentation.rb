@@ -8,7 +8,8 @@ module Sentry
         system: Span::DataConventions::MESSAGING_SYSTEM,
         message_id: Span::DataConventions::MESSAGING_MESSAGE_ID,
         destination: Span::DataConventions::MESSAGING_DESTINATION_NAME,
-        receive_latency: Span::DataConventions::MESSAGING_MESSAGE_RECEIVE_LATENCY
+        receive_latency: Span::DataConventions::MESSAGING_MESSAGE_RECEIVE_LATENCY,
+        body_size: Span::DataConventions::MESSAGING_MESSAGE_BODY_SIZE
       }.freeze
 
       attr_reader :registry

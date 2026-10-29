@@ -175,7 +175,9 @@ module Sentry
       # @return [Hash] a Hash with any of the keys +:system+ (a String naming
       #   the backend), +:message_id+ (a String), +:destination+ (a String,
       #   such as the queue name), +:receive_latency+ (a Numeric, the
-      #   milliseconds between enqueueing and the start of the job). The fallback result is an empty Hash.
+      #   milliseconds between enqueueing and the start of the job) and
+      #   +:body_size+ (a non-negative Integer, the size of the message body
+      #   in bytes). The fallback result is an empty Hash.
       def messaging_data(job:)
         {}
       end
