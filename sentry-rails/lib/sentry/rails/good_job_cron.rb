@@ -58,7 +58,9 @@ module Sentry
           # Entries whose cron is a proc can change schedule between runs.
           cron = entry.params[:cron]
           config = Sentry::Cron::FugitSchedule.from_cron(::Fugit.parse(cron)) if cron.is_a?(String)
-          { "slug" => slug, "crontab" => config&.schedule&.value, "timezone" => config&.timezone }.compact
+          return unless config
+
+          { "slug" => slug, "crontab" => config.schedule.value, "timezone" => config.timezone }.compact
         rescue StandardError => e
           Sentry.sdk_logger.error(Sentry::LOGGER_PROGNAME) { "Not monitoring GoodJob cron entry #{entry.key}: #{e.class}: #{e.message}" }
           nil

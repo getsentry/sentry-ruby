@@ -110,18 +110,16 @@ if defined?(::GoodJob)
       expect(check_ins.first.monitor_config.timezone).to eq("Asia/Tokyo")
     end
 
-    it "sends check-ins without a config for schedules Crons cannot express" do
+    it "skips schedules Crons cannot express" do
       run_entry(:every_ten_seconds, class: "ReportJob", cron: "every 10 seconds")
 
-      expect(check_ins.map(&:status)).to eq([:in_progress, :ok])
-      expect(check_ins.map(&:monitor_config)).to all(be_nil)
+      expect(check_ins).to be_empty
     end
 
-    it "sends check-ins without a config for proc schedules" do
+    it "skips proc schedules" do
       run_entry(:dynamic_report, class: "ReportJob", cron: ->(_last_ran) { "0 9 * * *" })
 
-      expect(check_ins.map(&:monitor_slug)).to eq(["dynamic_report", "dynamic_report"])
-      expect(check_ins.map(&:monitor_config)).to all(be_nil)
+      expect(check_ins).to be_empty
     end
 
     it "leaves jobs that include Sentry::Cron::MonitorCheckIns alone" do
