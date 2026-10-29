@@ -58,6 +58,49 @@ RSpec.shared_examples "an ActiveJob backend that attaches job context to error e
 
       expect(last_sentry_event.extra[:arguments]).to eq(["sensitive argument"])
     end
+
+    it "should redact sensitive argument fields recursively when a queued job fails" do
+      job = job_fixture do
+        def perform(_payload)
+          raise "boom from job with credentials"
+        end
+      end
+      payload = {
+        password: "example-password",
+        deliveries: [{ "access_token" => "example-token", "recipient_count" => 2 }],
+        customer_reference: "private-reference",
+        delivery_id: "delivery-42"
+      }
+      original_filters = Rails.application.config.filter_parameters
+      Rails.application.config.filter_parameters = original_filters + [:customer_reference]
+      job.perform_later(payload)
+
+      expect { drain }.to raise_error(RuntimeError, "boom from job with credentials")
+
+      expect(last_sentry_event.extra[:arguments]).to eq([{
+        password: "[Filtered]",
+        deliveries: [{ "access_token" => "[Filtered]", "recipient_count" => 2 }],
+        customer_reference: "[Filtered]",
+        delivery_id: "delivery-42"
+      }])
+      expect(payload[:password]).to eq("example-password")
+      expect(payload[:deliveries].first["access_token"]).to eq("example-token")
+    ensure
+      Rails.application.config.filter_parameters = original_filters
+    end
+
+    it "captures the original job error exactly once when an argument is a decimal range", skip: !defined?(::ActiveJob::Serializers::RangeSerializer) do
+      original = RuntimeError.new("boom from decimal range job")
+      job = job_fixture do
+        define_method(:perform) { |_range| raise original }
+      end
+      job.perform_later(1.5..2.5)
+
+      expect { drain }.to raise_error { |error| expect(error).to equal(original) }
+
+      expect(sentry_events.size).to eq(1)
+      expect(sentry_events.first.exception.values.first.value).to include(original.message)
+    end
   end
 
   context "with Rails.error.set_context data attached before the job raises", skip: RAILS_VERSION < 7.0 do
