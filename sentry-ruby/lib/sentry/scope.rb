@@ -159,7 +159,7 @@ module Sentry
       copy.attachments = attachments.dup
       copy.event_processors = event_processors.dup
       copy.attributes = attributes.deep_dup
-      copy.flags = flags.dup
+      copy.flags = flags.deep_dup
       copy
     end
 
@@ -179,7 +179,7 @@ module Sentry
       self.propagation_context = scope.propagation_context
       self.attachments = scope.attachments
       self.attributes = scope.attributes
-      self.flags = scope.flags
+      self.flags = scope.flags.deep_dup
     end
 
     # Updates the scope's data from the given options.

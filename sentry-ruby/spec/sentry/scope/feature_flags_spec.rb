@@ -44,11 +44,18 @@ RSpec.describe Sentry::Scope do
       expect(event.contexts).not_to have_key(:flags)
     end
 
-    it "is isolated in duplicated scopes and cleared by #clear" do
+    it "is isolated in duplicated and updated scopes and cleared by #clear" do
       scope.add_feature_flag("a", true)
       copy = scope.dup
       copy.add_feature_flag("b", true)
-      expect(scope.flags.size).to eq(1)
+      copy.flags.first[:result] = false
+      expect(scope.flags).to eq([{ flag: "a", result: true }])
+
+      updated = described_class.new
+      updated.update_from_scope(scope)
+      updated.add_feature_flag("b", true)
+      expect(scope.flags).to eq([{ flag: "a", result: true }])
+
       scope.clear
       expect(scope.flags).to be_empty
     end
