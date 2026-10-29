@@ -59,18 +59,26 @@ RSpec.describe Sentry::RufusScheduler do
     expect(sentry_events.map(&:status)).to eq([:in_progress, :error])
   end
 
-  it "sends no config for cron lines Crons can't express" do
-    expect(monitor_config(:cron, "*/10 * * * * *", name: "job")).to be_nil
-    expect(sentry_events.count).to eq(2)
+  it "does not monitor cron lines Crons can't express" do
+    expect(schedule(:cron, "*/10 * * * * *", name: "job").call(true)).to eq(42)
+
+    expect(sentry_events).to be_empty
   end
 
   it "sends an interval config for every jobs" do
     expect(monitor_config(:every, "2h", name: "job")[:schedule]).to eq(type: :interval, value: 2, unit: :hour)
   end
 
-  it "sends check-ins without config for interval jobs" do
-    expect(monitor_config(:interval, "5m", name: "job")).to be_nil
-    expect(sentry_events.count).to eq(2)
+  it "does not monitor every jobs Crons can't express" do
+    schedule(:every, "90s", name: "job").call(true)
+
+    expect(sentry_events).to be_empty
+  end
+
+  it "does not monitor interval jobs" do
+    expect(schedule(:interval, "5m", name: "job").call(true)).to eq(42)
+
+    expect(sentry_events).to be_empty
   end
 
   it "does not monitor one-off jobs" do

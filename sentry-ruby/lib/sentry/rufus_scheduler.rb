@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 module Sentry
-  # Sends Crons check-ins for rufus-scheduler `cron`, `every` and `interval` jobs.
+  # Sends Crons check-ins for rufus-scheduler `cron` and `every` jobs.
   # Enable with `config.enabled_patches << :rufus_scheduler`.
   module RufusScheduler
     module Job
@@ -46,7 +46,7 @@ module Sentry
     end
 
     class << self
-      # Returns [slug, monitor_config], or nil for jobs that aren't monitored (like `at`/`in`).
+      # Returns [slug, monitor_config], or nil for jobs that aren't monitored (like `at`/`in`, or unsupported schedules).
       def monitor_for(job)
         return unless job.is_a?(::Rufus::Scheduler::RepeatJob)
         return if job.opts[:sentry_monitor] == false
@@ -61,7 +61,13 @@ module Sentry
           return
         end
 
-        [slug, monitor_config_for(job)]
+        monitor_config = monitor_config_for(job)
+        unless monitor_config
+          Sentry.sdk_logger.debug(Sentry::LOGGER_PROGNAME) { "Not monitoring rufus-scheduler job #{slug}: its schedule can't be expressed as a Crons schedule." }
+          return
+        end
+
+        [slug, monitor_config]
       end
 
       private
@@ -98,8 +104,7 @@ module Sentry
         when ::Rufus::Scheduler::EveryJob
           Sentry::Cron::FugitSchedule.from_seconds(job.frequency)
         end
-        # IntervalJob waits `interval` after each run ends, so it has no fixed
-        # schedule to monitor against.
+        # IntervalJob waits `interval` after each run ends, so no fixed schedule matches it.
       end
     end
   end
