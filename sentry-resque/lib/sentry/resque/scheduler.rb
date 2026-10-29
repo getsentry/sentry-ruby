@@ -69,7 +69,9 @@ module Sentry
             when ::Rufus::Scheduler::CronJob then Sentry::Cron::FugitSchedule.from_cron(rufus_job.cron_line)
             when ::Rufus::Scheduler::EveryJob then Sentry::Cron::FugitSchedule.from_seconds(rufus_job.frequency)
             end
-          { "slug" => slug, "schedule" => config&.schedule&.to_h, "timezone" => config&.timezone }.compact
+          return unless config
+
+          { "slug" => slug, "schedule" => config.schedule.to_h, "timezone" => config.timezone }.compact
         rescue StandardError => e
           Sentry.sdk_logger.error(Sentry::LOGGER_PROGNAME) { "Not monitoring resque-scheduler job #{name}: #{e.class}: #{e.message}" }
           nil

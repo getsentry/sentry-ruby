@@ -107,11 +107,10 @@ if defined?(::Resque::Scheduler)
       )
     end
 
-    it "sends check-ins without a config for schedules Crons cannot express" do
+    it "skips schedules Crons cannot express" do
       run_schedule("every_ten_seconds", "every" => "10s", "class" => "ScheduledReportJob")
 
-      expect(check_ins.map(&:status)).to eq([:in_progress, :ok])
-      expect(check_ins.map(&:monitor_config)).to all(be_nil)
+      expect(check_ins).to be_empty
     end
 
     it "marks its rufus jobs so the rufus-scheduler patch skips them" do
