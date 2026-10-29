@@ -52,7 +52,9 @@ module Sentry
           return unless slug
 
           config = Sentry::Cron::FugitSchedule.from_cron(cron_for(task))
-          { "slug" => slug, "crontab" => config&.schedule&.value, "timezone" => config&.timezone }.compact
+          return unless config
+
+          { "slug" => slug, "crontab" => config.schedule.value, "timezone" => config.timezone }.compact
         rescue StandardError => e
           Sentry.sdk_logger.error(Sentry::LOGGER_PROGNAME) { "Not monitoring Solid Queue recurring task #{task.key}: #{e.class}: #{e.message}" }
           nil
@@ -62,18 +64,17 @@ module Sentry
           data = job.instance_variable_get(:@_sentry_recurring_task)
           return yield unless data && Sentry.initialized?
 
-          slug = data["slug"]
-          if data["crontab"]
-            cron_config = Sentry.configuration.cron
-            monitor_config = Sentry::Cron::MonitorConfig.from_crontab(
-              data["crontab"],
-              timezone: data["timezone"],
-              checkin_margin: cron_config.default_checkin_margin,
-              max_runtime: cron_config.default_max_runtime
-            )
-          end
+          return yield unless data["crontab"]
 
-          Sentry::Cron::MonitorCheckIns.with_check_in(slug, monitor_config: monitor_config) { yield }
+          cron_config = Sentry.configuration.cron
+          monitor_config = Sentry::Cron::MonitorConfig.from_crontab(
+            data["crontab"],
+            timezone: data["timezone"],
+            checkin_margin: cron_config.default_checkin_margin,
+            max_runtime: cron_config.default_max_runtime
+          )
+
+          Sentry::Cron::MonitorCheckIns.with_check_in(data["slug"], monitor_config: monitor_config) { yield }
         end
 
         def patch
