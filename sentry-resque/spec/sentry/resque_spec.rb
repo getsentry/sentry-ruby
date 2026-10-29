@@ -315,6 +315,178 @@ RSpec.describe Sentry::Resque do
         expect(event[:contexts][:"Active-Job"][:job_class]).to eq("AJFailedJob")
       end
     end
+
+    context "with tracing enabled" do
+      let(:transactions) { transport.events.select { |event| event.is_a?(Sentry::TransactionEvent) } }
+      let(:errors) { transport.events.reject { |event| event.is_a?(Sentry::TransactionEvent) } }
+
+      {
+        "the Resque adapter is skippable" => [:resque, ["ActiveJob::QueueAdapters::ResqueAdapter"]],
+        "opted in to the sentry-rails ActiveJob integration" => [:rails, []]
+      }.each do |mode, (active_job_integration, skippable_job_adapters)|
+        it "should record a plain Resque job in a queue.resque transaction when #{mode}" do
+          perform_basic_setup do |config|
+            config.traces_sample_rate = 1.0
+            config.resque.active_job_integration = active_job_integration
+            config.rails.skippable_job_adapters = skippable_job_adapters
+          end
+          Resque::Job.create(:default, FailedJob)
+
+          process_job(worker)
+
+          expect(transactions.count).to eq(1)
+          expect(transactions.first.to_h.dig(:contexts, :trace)).to include(op: "queue.resque", origin: "auto.queue.resque")
+          expect(errors.count).to eq(1)
+          expect(errors.first.to_h.dig(:contexts, :Resque)).to include(job_class: "FailedJob", queue: "default", worker: worker.to_s)
+        end
+      end
+
+      it "should keep the Resque transaction and error event of an ActiveJob job when the adapter is skippable" do
+        perform_basic_setup do |config|
+          config.traces_sample_rate = 1.0
+          config.rails.skippable_job_adapters = ["ActiveJob::QueueAdapters::ResqueAdapter"]
+        end
+        AJFailedJob.perform_later
+
+        process_job(worker)
+
+        expect(transactions.count).to eq(1)
+        transaction = transactions.first.to_h
+        expect(transaction[:transaction]).to eq("AJFailedJob")
+        expect(transaction.dig(:contexts, :trace)).to include(op: "queue.resque", origin: "auto.queue.resque", status: "internal_error")
+        expect(errors.count).to eq(1)
+        error = errors.first.to_h
+        expect(error[:sdk][:name]).to eq("sentry.ruby.resque")
+        expect(error[:tags]).to eq("resque.queue" => "default", number: 2)
+        expect(error[:contexts][:"Active-Job"]).to include(job_class: "AJFailedJob", queue: "default", worker: worker.to_s)
+      end
+
+      {
+        "by default when the adapter is not skippable" => [nil, []],
+        "when set to :rails but the adapter is skippable" => [:rails, ["ActiveJob::QueueAdapters::ResqueAdapter"]]
+      }.each do |mode, (active_job_integration, skippable_job_adapters)|
+        it "should keep the Resque transaction of an ActiveJob job #{mode}" do
+          perform_basic_setup do |config|
+            config.traces_sample_rate = 1.0
+            config.resque.active_job_integration = active_job_integration if active_job_integration
+            config.rails.skippable_job_adapters = skippable_job_adapters
+          end
+          AJFailedJob.perform_later
+
+          process_job(worker)
+
+          resque_transaction = transactions.find { |transaction| transaction.contexts.dig(:trace, :op) == "queue.resque" }
+          expect(resque_transaction.to_h.dig(:contexts, :trace)).to include(origin: "auto.queue.resque", status: "internal_error")
+          expect(errors.count).to eq(1)
+        end
+      end
+    end
+
+    context "when opted in to the sentry-rails ActiveJob integration" do
+      before do
+        perform_basic_setup do |config|
+          config.traces_sample_rate = 1.0
+          config.resque.active_job_integration = :rails
+          config.rails.skippable_job_adapters = []
+        end
+      end
+
+      let(:transactions) { transport.events.select { |event| event.is_a?(Sentry::TransactionEvent) } }
+      let(:errors) { transport.events.reject { |event| event.is_a?(Sentry::TransactionEvent) } }
+
+      it "should report a failed job once in a single queue.process transaction" do
+        AJFailedJob.perform_later
+
+        expect do
+          process_job(worker)
+        end.to change { Resque::Stat.get("failed") }.by(1)
+
+        expect(errors.count).to eq(1)
+        expect(errors.first.to_h[:sdk][:name]).to eq("sentry.ruby.resque")
+        expect(transactions.count).to eq(1)
+        expect(transactions.first.to_h.dig(:contexts, :trace)).to include(op: "queue.process", origin: "auto.queue.resque")
+      end
+
+      it "should describe the Resque job that performed the ActiveJob job" do
+        AJFailedJob.perform_later
+        raw_resque_message = Resque.redis.lindex("queue:default", 0)
+
+        process_job(worker)
+
+        expect(errors.first.to_h.dig(:contexts, :"Active-Job")).to include(
+          job_class: "AJFailedJob",
+          queue: "default",
+          worker: worker.to_s
+        )
+        expect(transactions.first.to_h.dig(:contexts, :trace, :data)).to include(
+          "messaging.message.body.size" => raw_resque_message.bytesize
+        )
+      end
+
+      it "should report a job whose class can no longer be loaded" do
+        AJMessageJob.perform_later("report from ActiveJob")
+        payload = Resque.decode(Resque.redis.lpop("queue:default"))
+        payload["args"].first["job_class"] = "RemovedJob"
+        Resque.redis.rpush("queue:default", Resque.encode(payload))
+
+        expect do
+          process_job(worker)
+        end.to change { Resque::Stat.get("failed") }.by(1)
+
+        expect(errors.count).to eq(1)
+        error = errors.first.to_h
+        expect(error[:sdk][:name]).to eq("sentry.ruby.resque")
+        expect(error.dig(:exception, :values, 0, :value)).to include("RemovedJob")
+        expect(error[:tags]).to include("resque.queue" => "default")
+        expect(error[:contexts][:"Active-Job"]).to include(job_class: "RemovedJob", queue: "default", worker: worker.to_s)
+      end
+
+      it "should leave the Resque payload of a failed job unchanged" do
+        AJFailedJob.perform_later
+        enqueued_payload = Resque.decode(Resque.redis.lindex("queue:default", 0))
+
+        process_job(worker)
+
+        expect(Resque::Failure.all(Resque::Failure.count - 1)["payload"]).to eq(enqueued_payload)
+      end
+
+      it "should report a failed job on its first run when report_after_job_retries is true" do
+        Sentry.configuration.resque.report_after_job_retries = true
+        AJFailedJob.perform_later
+
+        process_job(worker)
+
+        expect(errors.count).to eq(1)
+      end
+
+      context "when ActiveJob retries the job" do
+        class AJRetriedJob < ActiveJob::Base
+          self.queue_adapter = :resque
+          retry_on ZeroDivisionError, attempts: 2, wait: ->(_executions) { nil }
+
+          def perform
+            1 / 0
+          end
+        end
+
+        around do |example|
+          Sentry::Rails::ActiveJobExtensions::SentryReporter.register_event_handlers
+          example.run
+        ensure
+          Sentry::Rails::ActiveJobExtensions::SentryReporter.detach_event_handlers
+        end
+
+        it "should not report the retried exception even when active_job_report_on_retry_error is true" do
+          Sentry.configuration.rails.active_job_report_on_retry_error = true
+          AJRetriedJob.perform_later
+
+          process_job(worker)
+
+          expect(Resque.size("default")).to eq(1)
+          expect(errors).to be_empty
+        end
+      end
+    end
   end if rails_gems
 end
 

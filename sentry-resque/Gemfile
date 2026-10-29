@@ -14,3 +14,12 @@ gem "resque-retry", "~> 1.8"
 
 gem "sentry-rails", path: "../sentry-rails"
 gem "rails", "> 5.2.0"
+
+unless RUBY_PLATFORM.include?("java")
+  if Gem::Version.new(RUBY_VERSION) >= Gem::Version.new("3.2")
+    gem "resque-scheduler", "~> 5.0"
+    gem "mock_redis"
+    gem "sqlite3"
+    gem "rspec-rails"
+  end
+end

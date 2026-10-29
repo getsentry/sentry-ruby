@@ -28,13 +28,13 @@ RSpec.shared_examples "an ActiveJob backend that respects retry semantics" do
       Sentry.configuration.rails.active_job_report_on_retry_error = true
     end
 
-    it "captures one error event per attempt", skip: RAILS_VERSION < 6.0 do
+    it "captures one error event per attempt unless the backend reports only exhausted retries", skip: RAILS_VERSION < 6.0 do
       expect do
         retryable_job.perform_later
         3.times { drain }
       end.to raise_error(RuntimeError, /boom from retryable_job spec/)
 
-      expect(sentry_events.size).to eq(3)
+      expect(sentry_events.size).to eq(reports_retried_exceptions ? 3 : 1)
     end
   end
 end

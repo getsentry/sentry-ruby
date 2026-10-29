@@ -6,7 +6,8 @@ Gem::Specification.new do |spec|
   spec.name          = "sentry-resque"
   spec.version       = Sentry::Resque::VERSION
   spec.authors = ["Sentry Team"]
-  spec.description = spec.summary = "A gem that provides Resque integration for the Sentry error logger"
+  spec.summary = "A gem that provides Resque integration for the Sentry error logger (maintenance mode)"
+  spec.description = "Maintenance-mode Resque integration for the Sentry error logger. ActiveJob users should use the ActiveJob integration in sentry-rails, which sentry-resque enriches with Resque data."
   spec.email = "accounts@sentry.io"
   spec.license = 'MIT'
 

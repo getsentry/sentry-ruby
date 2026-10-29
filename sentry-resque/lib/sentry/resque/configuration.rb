@@ -15,8 +15,11 @@ module Sentry
       # retry if it fails.
       attr_accessor :report_after_job_retries
 
+      attr_accessor :active_job_integration
+
       def initialize
         @report_after_job_retries = false
+        @active_job_integration = :resque
       end
     end
   end

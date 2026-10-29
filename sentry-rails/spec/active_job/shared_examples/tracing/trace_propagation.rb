@@ -110,7 +110,7 @@ RSpec.shared_examples "an ActiveJob backend that propagates trace context throug
       publish_span = parent.spans.find { |s| s[:op] == "queue.publish" }
       expect(publish_span).not_to be_nil
       expect(publish_span[:description]).to eq(successful_job.name)
-      expect(publish_span[:origin]).to eq("auto.queue.active_job")
+      expect(publish_span[:origin]).to eq(job_span_origin)
     end
   end
 
