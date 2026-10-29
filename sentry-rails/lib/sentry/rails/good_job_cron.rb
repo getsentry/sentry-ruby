@@ -79,20 +79,7 @@ module Sentry
             )
           end
 
-          check_in_id = Sentry.capture_check_in(slug, :in_progress, monitor_config: monitor_config)
-          start = Process.clock_gettime(Process::CLOCK_MONOTONIC)
-
-          begin
-            ret = yield
-          rescue Exception
-            duration = Process.clock_gettime(Process::CLOCK_MONOTONIC) - start
-            Sentry.capture_check_in(slug, :error, check_in_id: check_in_id, duration: duration, monitor_config: monitor_config)
-            raise
-          end
-
-          duration = Process.clock_gettime(Process::CLOCK_MONOTONIC) - start
-          Sentry.capture_check_in(slug, :ok, check_in_id: check_in_id, duration: duration, monitor_config: monitor_config)
-          ret
+          Sentry::Cron::MonitorCheckIns.with_check_in(slug, monitor_config: monitor_config) { yield }
         end
 
         def patch
