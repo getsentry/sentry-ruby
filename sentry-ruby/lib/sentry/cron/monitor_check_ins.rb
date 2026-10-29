@@ -5,39 +5,45 @@ module Sentry
     module MonitorCheckIns
       MAX_SLUG_LENGTH = 50
 
+      def self.with_check_in(slug, monitor_config: nil)
+        check_in_id = Sentry.capture_check_in(slug,
+                                              :in_progress,
+                                              monitor_config: monitor_config)
+
+        start = Process.clock_gettime(Process::CLOCK_MONOTONIC)
+
+        begin
+          ret = yield
+          duration = Process.clock_gettime(Process::CLOCK_MONOTONIC) - start
+
+          Sentry.capture_check_in(slug,
+                                  :ok,
+                                  check_in_id: check_in_id,
+                                  duration: duration,
+                                  monitor_config: monitor_config)
+
+          ret
+        rescue Exception
+          duration = Process.clock_gettime(Process::CLOCK_MONOTONIC) - start
+
+          Sentry.capture_check_in(slug,
+                                  :error,
+                                  check_in_id: check_in_id,
+                                  duration: duration,
+                                  monitor_config: monitor_config)
+
+          raise
+        end
+      end
+
       module Patch
         def perform(*args, **opts)
           slug = self.class.sentry_monitor_slug
           monitor_config = self.class.sentry_monitor_config
 
-          check_in_id = Sentry.capture_check_in(slug,
-                                                :in_progress,
-                                                monitor_config: monitor_config)
-
-          start = Process.clock_gettime(Process::CLOCK_MONOTONIC)
-
-          begin
+          MonitorCheckIns.with_check_in(slug, monitor_config: monitor_config) do
             # need to do this on ruby <= 2.6 sadly
-            ret = method(:perform).super_method.arity == 0 ? super() : super
-            duration = Process.clock_gettime(Process::CLOCK_MONOTONIC) - start
-
-            Sentry.capture_check_in(slug,
-                                    :ok,
-                                    check_in_id: check_in_id,
-                                    duration: duration,
-                                    monitor_config: monitor_config)
-
-            ret
-          rescue Exception
-            duration = Process.clock_gettime(Process::CLOCK_MONOTONIC) - start
-
-            Sentry.capture_check_in(slug,
-                                    :error,
-                                    check_in_id: check_in_id,
-                                    duration: duration,
-                                    monitor_config: monitor_config)
-
-            raise
+            method(:perform).super_method.arity == 0 ? super() : super
           end
         end
       end

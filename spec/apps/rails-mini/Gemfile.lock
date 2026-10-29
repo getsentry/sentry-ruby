@@ -1,10 +1,10 @@
 PATH
   remote: ../../..
   specs:
-    sentry-rails (7.1.0)
+    sentry-rails (7.2.0)
       railties (>= 5.2.0)
-      sentry-ruby (~> 7.1.0)
-    sentry-ruby (7.1.0)
+      sentry-ruby (~> 7.2.0)
+    sentry-ruby (7.2.0)
       bigdecimal
       concurrent-ruby (~> 1.0, >= 1.0.2)
       logger
@@ -56,7 +56,7 @@ GEM
     builder (3.3.0)
     concurrent-ruby (1.3.8)
     connection_pool (3.0.2)
-    crass (1.0.7)
+    crass (1.0.8)
     delayed_job (4.2.0)
       activesupport (>= 3.0, < 9.0)
       benchmark
@@ -76,7 +76,7 @@ GEM
       activesupport (>= 6.1)
     i18n (1.15.2)
       concurrent-ruby (~> 1.0)
-    io-console (0.9.4)
+    io-console (0.9.5)
     irb (1.18.0)
       pp (>= 0.6.0)
       prism (>= 1.3.0)
@@ -126,7 +126,7 @@ GEM
     rack-session (2.1.2)
       base64 (>= 0.1.0)
       rack (>= 3.0.0)
-    rack-test (2.2.0)
+    rack-test (2.3.0)
       rack (>= 1.3)
     rackup (2.3.1)
       rack (>= 3)
@@ -164,7 +164,7 @@ GEM
       redis (>= 4)
     reline (0.7.0)
       io-console (~> 0.5)
-    resque (3.1.0)
+    resque (3.2.0)
       base64 (~> 0.1)
       logger
       mono_logger (~> 1)
@@ -193,14 +193,14 @@ GEM
       fugit (~> 1.11)
       railties (>= 7.1)
       thor (>= 1.3.1)
-    sqlite3 (2.9.6-aarch64-linux-gnu)
-    sqlite3 (2.9.6-aarch64-linux-musl)
-    sqlite3 (2.9.6-arm-linux-gnu)
-    sqlite3 (2.9.6-arm-linux-musl)
-    sqlite3 (2.9.6-arm64-darwin)
-    sqlite3 (2.9.6-x86_64-darwin)
-    sqlite3 (2.9.6-x86_64-linux-gnu)
-    sqlite3 (2.9.6-x86_64-linux-musl)
+    sqlite3 (2.10.2-aarch64-linux-gnu)
+    sqlite3 (2.10.2-aarch64-linux-musl)
+    sqlite3 (2.10.2-arm-linux-gnu)
+    sqlite3 (2.10.2-arm-linux-musl)
+    sqlite3 (2.10.2-arm64-darwin)
+    sqlite3 (2.10.2-x86_64-darwin)
+    sqlite3 (2.10.2-x86_64-linux-gnu)
+    sqlite3 (2.10.2-x86_64-linux-musl)
     thor (1.5.0)
     tilt (2.9.0)
     timeout (0.6.1)
@@ -248,10 +248,10 @@ CHECKSUMS
   benchmark (0.5.0) sha256=465df122341aedcb81a2a24b4d3bd19b6c67c1530713fd533f3ff034e419236c
   bigdecimal (4.1.3) sha256=61ebe1e5e559bdc3cc6f2c0ee7f427321fc838f59611c294356eb04d6e21cf66
   builder (3.3.0) sha256=497918d2f9dca528fdca4b88d84e4ef4387256d984b8154e9d5d3fe5a9c8835f
-  bundler (4.0.16) sha256=d6ca5dd440c24f9abce9844cf44cc8e18c6a553de65a47efb4544137af92c47d
+  bundler (4.0.23) sha256=407ba8a1d928f412847f819aa5f8b6aef7c59fb51feb517112af8a165487287b
   concurrent-ruby (1.3.8) sha256=b2f1be836e968ccc78ccfce277ea79c72a88633f22306782c16ff23fb415d1e1
   connection_pool (3.0.2) sha256=33fff5ba71a12d2aa26cb72b1db8bba2a1a01823559fb01d29eb74c286e62e0a
-  crass (1.0.7) sha256=94868719948664c89ddcaf0a37c65048413dfcb1c869470a5f7a7ceb5390b295
+  crass (1.0.8) sha256=7a0145c7a2c59f8e7923b3a69ce819c444823a00a5127d805298fea13be24efe
   delayed_job (4.2.0) sha256=51dc1f68bb9084398317884c2178debd38c13a7eb48d8aa4ff4775465d7713ef
   delayed_job_active_record (4.1.11) sha256=64f34a6d50316dd7a7df1daf7c6e04ad888c0e86938762318f6f52522b7c1ba8
   drb (2.2.3) sha256=0b00d6fdb50995fe4a45dea13663493c841112e4068656854646f418fda13373
@@ -261,7 +261,7 @@ CHECKSUMS
   fugit (1.14.0) sha256=e311a9cc85a54bb67649df45060e721282a1e2c8ebad40e41874a3a7d576f37e
   globalid (1.4.0) sha256=037f12fbf1d9d7a014d501c2d5c77356fd4ddd96d7a7991d6700bba96706f427
   i18n (1.15.2) sha256=00f9eb62412fe593b2a65a97daa75300d37abb8f7202ec748e94b6d46a9dd1b5
-  io-console (0.9.4) sha256=a403304f32928ee85e56d457b4612ca43f2703b561a3258844992bd24085fbb1
+  io-console (0.9.5) sha256=83dd9bbf4c4680416629245b39cd4212eb5f4d9a4ea91804870c1f6b846414d5
   irb (1.18.0) sha256=de9454a0703a54704b9811a5ef31a60c86949fbf4013fcf244fabc7c775248e3
   json (2.21.2) sha256=1f1d3b7cf2b3ba1a69beca0bb6db13d5438b80bff3cd54cdaaa620b9b07c1c6a
   logger (1.7.0) sha256=196edec7cc44b66cfb40f9755ce11b392f21f7967696af15d274dde7edff0203
@@ -288,7 +288,7 @@ CHECKSUMS
   rack (3.2.7) sha256=93e13e1c24f93556671d85d2d79fa228c3485815c50d7e2f265b5330c6528fb7
   rack-protection (4.2.1) sha256=cf6e2842df8c55f5e4d1a4be015e603e19e9bc3a7178bae58949ccbb58558bac
   rack-session (2.1.2) sha256=595434f8c0c3473ae7d7ac56ecda6cc6dfd9d37c0b2b5255330aa1576967ffe8
-  rack-test (2.2.0) sha256=005a36692c306ac0b4a9350355ee080fd09ddef1148a5f8b2ac636c720f5c463
+  rack-test (2.3.0) sha256=b118d177cc002c572fc1b6fd8d19c9ed5881a36e8d6f689f9e618f9f861241e8
   rackup (2.3.1) sha256=6c79c26753778e90983761d677a48937ee3192b3ffef6bc963c0950f94688868
   rails-dom-testing (2.3.0) sha256=8acc7953a7b911ca44588bf08737bc16719f431a1cc3091a292bca7317925c1d
   rails-html-sanitizer (1.7.1) sha256=e797a7c9b01e567307e317c576b49ab4168017e63eea4dba9ce3cb587e2f22c2
@@ -300,21 +300,21 @@ CHECKSUMS
   redis-client (0.30.1) sha256=5151bc5c7bbfe48623732cdae3b900d8a22dc691cc7cdfacfb351ac55116522d
   redis-namespace (1.11.0) sha256=e91a1aa2b2d888b6dea1d4ab8d39e1ae6fac3426161feb9d91dd5cca598a2239
   reline (0.7.0) sha256=5b012d8e55dbf9d450f12bde2cf7d15ff546ae80b3f8f3b30e570d431815583d
-  resque (3.1.0) sha256=b3cc063308c8bc0e0a2faf132bc92c7dbfce0bacd9f09c86576f49a51f56cf8c
+  resque (3.2.0) sha256=0eb8bb50948f0f2847778e83fc3c23dff0b10acc0274e2398272c688fd9809b3
   securerandom (0.4.1) sha256=cc5193d414a4341b6e225f0cb4446aceca8e50d5e1888743fac16987638ea0b1
-  sentry-rails (7.1.0)
-  sentry-ruby (7.1.0)
+  sentry-rails (7.2.0)
+  sentry-ruby (7.2.0)
   sidekiq (8.1.7) sha256=91ad48c7e6c32e1846bf1d5b74c27948758049b93fed0cb539f8d586c7de3415
   sinatra (4.2.1) sha256=b7aeb9b11d046b552972ade834f1f9be98b185fa8444480688e3627625377080
   solid_queue (1.7.0) sha256=6566b70b801d1c317c81bba7bcdd5677c019afac584a30374b4164002ca356d3
-  sqlite3 (2.9.6-aarch64-linux-gnu) sha256=d8b1f7d23efd7abac285775a9566562fc7debfef79d594e3a20354406fb7907c
-  sqlite3 (2.9.6-aarch64-linux-musl) sha256=3579e1c98cdc7ff5c3722847bb63ed4e1efb7ff675cb5e1e48ef2d4da5fb3bc9
-  sqlite3 (2.9.6-arm-linux-gnu) sha256=33541500e3615da02afe54a9cc38b17a6985d3cf9d8b76d6d0a83002f114e7ec
-  sqlite3 (2.9.6-arm-linux-musl) sha256=c5490af48bb228fefa54314e9541375c3907e70f8109f3881b5ff97e1c93ae33
-  sqlite3 (2.9.6-arm64-darwin) sha256=849b5d7f795e60fe25076d62c72dd722beb45b3850b516ad978d60ee848ec15b
-  sqlite3 (2.9.6-x86_64-darwin) sha256=b5842fea77781c14da03fa7bc0feb82db03a69e135affcb6f5399cbd2797a5f3
-  sqlite3 (2.9.6-x86_64-linux-gnu) sha256=613188ce02f614126ddbc38c5e217ccffd6306d0dcd9adca9764547aa890a634
-  sqlite3 (2.9.6-x86_64-linux-musl) sha256=d493b11818a3573387a1d56e1ee8fa00da23a683a7a1cc063e7a0feeed843abf
+  sqlite3 (2.10.2-aarch64-linux-gnu) sha256=e9aea2c2b3476fc875dd8a89313a9a2862818519c0186bfb5b56d6f57bb08d98
+  sqlite3 (2.10.2-aarch64-linux-musl) sha256=4986fc40cdf21342362b72a941df28e95cfe0e644f3ad2532d948b157c39dbee
+  sqlite3 (2.10.2-arm-linux-gnu) sha256=762f609ef891463226b472d3df66aea84d5466ff4376d3ccf4a059718c4ce9c9
+  sqlite3 (2.10.2-arm-linux-musl) sha256=833623eaf1157b1b85d1c0830e3e8f9beb3bb95a9bec3d252f20557a50e9803a
+  sqlite3 (2.10.2-arm64-darwin) sha256=5b0d235ea037e6dcd1b8387a19d73be571917db9f93044d35741cf933a21a37d
+  sqlite3 (2.10.2-x86_64-darwin) sha256=fd2c67b49d313031af112e172c83ab321681a2b4996bf882eefac50be7bea08f
+  sqlite3 (2.10.2-x86_64-linux-gnu) sha256=ca92731ab464df9cae503fa1a439a549e2724f6953c8c05a7769b59366e38f15
+  sqlite3 (2.10.2-x86_64-linux-musl) sha256=b9f8fc62f3e0eb8966b41de251b492b4c8e9d1b23559beb6e150ad7f8d590941
   thor (1.5.0) sha256=e3a9e55fe857e44859ce104a84675ab6e8cd59c650a49106a05f55f136425e73
   tilt (2.9.0) sha256=da5735d0280bba96e9a91041bb14aee435ccad5c17b0fa519249ae543d9aa3a5
   timeout (0.6.1) sha256=78f57368a7e7bbadec56971f78a3f5ecbcfb59b7fcbb0a3ed6ddc08a5094accb
@@ -325,4 +325,4 @@ CHECKSUMS
   zeitwerk (2.8.3) sha256=2c85125a8467ce069e20123d1e709a08955c9d29c118c25b46b7b7fafdbb92e5
 
 BUNDLED WITH
-  4.0.16
+  4.0.23

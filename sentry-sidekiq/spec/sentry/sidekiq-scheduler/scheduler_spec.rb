@@ -1,12 +1,16 @@
 # frozen_string_literal: true
 
 require 'spec_helper'
+require 'sidekiq/api'
 
 return unless defined?(SidekiqScheduler::Scheduler)
 
 RSpec.describe Sentry::SidekiqScheduler::Scheduler do
   before do
-    perform_basic_setup { |c| c.enabled_patches += [:sidekiq_scheduler] }
+    perform_basic_setup do |c|
+      c.enabled_patches += [:sidekiq_scheduler]
+      c.traces_sample_rate = 1.0
+    end
   end
 
   before do
@@ -75,4 +79,45 @@ RSpec.describe Sentry::SidekiqScheduler::Scheduler do
     expect(VeryLongOuterModule::VeryVeryVeryVeryLongInnerModule::Job.sentry_monitor_config.schedule).to be_a(Sentry::Cron::MonitorSchedule::Crontab)
     expect(VeryLongOuterModule::VeryVeryVeryVeryLongInnerModule::Job.sentry_monitor_config.schedule.value).to eq('* * * * *')
  end
+
+  describe '#enqueue_job' do
+    let(:transport) { Sentry.get_current_client.transport }
+    let(:scheduler) { SidekiqScheduler::Scheduler.instance }
+
+    before do
+      Sidekiq::Queue.all.each(&:clear)
+    end
+
+    it 'adds job to sidekiq within transaction' do
+      scheduler.enqueue_job({ 'class' => 'HappyWorkerForScheduler' })
+
+      expect(::Sidekiq::Queue.new.size).to eq(1)
+      expect(transport.events.count).to eq(1)
+
+      transaction = transport.events.last
+      expect(transaction.transaction).to eq('HappyWorkerForScheduler')
+      expect(transaction.contexts.dig(:trace, :op)).to eq('queue.sidekiq-scheduler')
+      expect(transaction.contexts.dig(:trace, :origin)).to eq('auto.queue.sidekiq.scheduler')
+
+      span = transaction.spans.detect { |span| span[:op] == 'queue.publish' }
+      expect(span).not_to be_nil
+      expect(span[:data]['messaging.destination.name']).to eq('default')
+    end
+
+    it 'starts a new trace for each enqueue' do
+      scheduler.enqueue_job({ 'class' => 'HappyWorkerForScheduler' })
+      scheduler.enqueue_job({ 'class' => 'HappyWorkerForScheduler' })
+
+      events = transport.events
+      expect(events.count).to eq(2)
+      expect(events[0].dynamic_sampling_context['trace_id']).not_to eq(events[1].dynamic_sampling_context['trace_id'])
+
+      jobs = ::Sidekiq::Queue.new.map(&:item)
+      trace_ids = jobs.map { |job| job.dig('trace_propagation_headers', 'sentry-trace').split('-').first }
+      sample_rands = jobs.map { |job| job.dig('trace_propagation_headers', 'baggage')[/sentry-sample_rand=([^,]+)/, 1] }
+
+      expect(trace_ids).to match_array(events.map { |event| event.dynamic_sampling_context['trace_id'] })
+      expect(sample_rands.uniq.size).to eq(2)
+    end
+  end
 end

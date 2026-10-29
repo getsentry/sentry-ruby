@@ -61,6 +61,46 @@ module Sentry
 
         rufus_job
       end
+
+      def enqueue_job(job_config, *args)
+        # make sure the current thread has a clean hub
+        Sentry.clone_hub_to_current_thread
+
+        Sentry.with_scope do |scope|
+          Sentry.with_session_tracking do
+            begin
+              scope.set_transaction_name(job_config["class"].to_s)
+
+              transaction = sentry_start_transaction(scope)
+              scope.set_span(transaction) if transaction
+              super
+
+              sentry_finish_transaction(transaction, 200)
+            rescue
+              sentry_finish_transaction(transaction, 500)
+              raise
+            end
+          end
+        end
+      end
+
+      private
+
+      def sentry_start_transaction(scope)
+        Sentry.start_transaction(
+          name: scope.transaction_name,
+          source: scope.transaction_source,
+          op: "queue.sidekiq-scheduler",
+          origin: "auto.queue.sidekiq.scheduler"
+        )
+      end
+
+      def sentry_finish_transaction(transaction, status_code)
+        return unless transaction
+
+        transaction.set_http_status(status_code)
+        transaction.finish
+      end
     end
   end
 end

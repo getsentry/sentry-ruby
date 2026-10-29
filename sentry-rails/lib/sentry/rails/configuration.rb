@@ -188,6 +188,11 @@ module Sentry
       # @return [Array<String, Symbol, Regexp>]
       attr_accessor :good_job_exclude_cron_jobs
 
+      # Solid Queue recurring task keys to skip when the :solid_queue_recurring patch is enabled.
+      # Strings match the key exactly; Regexps are matched against it.
+      # @return [Array<String, Regexp>]
+      attr_accessor :solid_queue_exclude_recurring_tasks
+
       # Configuration for structured logging feature
       # @return [StructuredLoggingConfiguration]
       attr_reader :structured_logging
@@ -211,6 +216,7 @@ module Sentry
         @active_job_report_on_retry_error = false
         @active_job_propagate_traces = true
         @good_job_exclude_cron_jobs = []
+        @solid_queue_exclude_recurring_tasks = []
         @structured_logging = StructuredLoggingConfiguration.new
       end
     end

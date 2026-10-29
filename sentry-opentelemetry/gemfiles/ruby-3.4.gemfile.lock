@@ -9,7 +9,7 @@ GIT
 PATH
   remote: ../../sentry-ruby
   specs:
-    sentry-ruby (7.1.0)
+    sentry-ruby (7.2.0)
       bigdecimal
       concurrent-ruby (~> 1.0, >= 1.0.2)
       logger
@@ -17,9 +17,9 @@ PATH
 PATH
   remote: ..
   specs:
-    sentry-opentelemetry (7.1.0)
+    sentry-opentelemetry (7.2.0)
       opentelemetry-sdk (~> 1.0)
-      sentry-ruby (~> 7.1.0)
+      sentry-ruby (~> 7.2.0)
 
 GEM
   remote: https://rubygems.org/
@@ -36,7 +36,7 @@ GEM
     google-protobuf (3.25.8)
     googleapis-common-protos-types (1.20.0)
       google-protobuf (>= 3.18, < 5.a)
-    io-console (0.9.4)
+    io-console (0.9.5)
     irb (1.18.0)
       pp (>= 0.6.0)
       prism (>= 1.3.0)
@@ -57,7 +57,7 @@ GEM
       opentelemetry-exporter-otlp-common (~> 0.2)
       opentelemetry-sdk (~> 1.10)
       opentelemetry-semantic_conventions
-    opentelemetry-exporter-otlp-common (0.3.0)
+    opentelemetry-exporter-otlp-common (0.4.0)
       google-protobuf (>= 3.18)
       googleapis-common-protos-types (~> 1.3)
       opentelemetry-api (~> 1.1)
@@ -95,9 +95,9 @@ GEM
       opentelemetry-instrumentation-active_storage (~> 0.4)
       opentelemetry-instrumentation-active_support (~> 0.11)
       opentelemetry-instrumentation-concurrent_ruby (~> 0.25)
-    opentelemetry-logs-api (0.6.0)
+    opentelemetry-logs-api (0.7.0)
       opentelemetry-api (~> 1.0)
-    opentelemetry-metrics-api (0.9.0)
+    opentelemetry-metrics-api (0.10.0)
       opentelemetry-api (~> 1.0)
     opentelemetry-registry (0.6.3)
       opentelemetry-api (~> 1.1)
@@ -190,7 +190,7 @@ CHECKSUMS
   base64 (0.3.0) sha256=27337aeabad6ffae05c265c450490628ef3ebd4b67be58257393227588f5a97b
   benchmark (0.5.0) sha256=465df122341aedcb81a2a24b4d3bd19b6c67c1530713fd533f3ff034e419236c
   bigdecimal (4.1.3) sha256=61ebe1e5e559bdc3cc6f2c0ee7f427321fc838f59611c294356eb04d6e21cf66
-  bundler (4.0.16) sha256=d6ca5dd440c24f9abce9844cf44cc8e18c6a553de65a47efb4544137af92c47d
+  bundler (4.0.23) sha256=407ba8a1d928f412847f819aa5f8b6aef7c59fb51feb517112af8a165487287b
   cgi (0.5.2) sha256=61ca30298171190fd4fa0d8018e57ada456eae9b7a2b78526debf7f0a0e6f8bb
   concurrent-ruby (1.3.8) sha256=b2f1be836e968ccc78ccfce277ea79c72a88633f22306782c16ff23fb415d1e1
   debug (1.11.1)
@@ -200,7 +200,7 @@ CHECKSUMS
   erb (6.0.7) sha256=c5ca6dc25b0ef974a44dc8f59fe847577122483b1968a38dec305c60bf91ee92
   google-protobuf (3.25.8) sha256=102c8500502e224a5daa7447bdd2c458a25a6c7b0bf5d8496a559ada131952b7
   googleapis-common-protos-types (1.20.0) sha256=5e374b06bcfc7e13556e7c0d87b99f1fa3d42de6396a1de3d8fc13aefb4dd07f
-  io-console (0.9.4) sha256=a403304f32928ee85e56d457b4612ca43f2703b561a3258844992bd24085fbb1
+  io-console (0.9.5) sha256=83dd9bbf4c4680416629245b39cd4212eb5f4d9a4ea91804870c1f6b846414d5
   irb (1.18.0) sha256=de9454a0703a54704b9811a5ef31a60c86949fbf4013fcf244fabc7c775248e3
   language_server-protocol (3.17.0.6) sha256=5ef2c0c138f8267e1bc631d3328347d354f96724b0af22f2c79516120443b7f0
   logger (1.7.0) sha256=196edec7cc44b66cfb40f9755ce11b392f21f7967696af15d274dde7edff0203
@@ -208,7 +208,7 @@ CHECKSUMS
   opentelemetry-api (1.11.1) sha256=d07f9987ea6240b3fd5ed5dd7450f93c58e403e0553e804069c23ae18ba61ff7
   opentelemetry-common (0.25.2) sha256=c035d44987789356fe8feeeb870708b44fe7564ffc032dec7200c39da92a911d
   opentelemetry-exporter-otlp (0.37.0) sha256=edc8bda657dce5f4d527ac735f75d44043bb5924de6df0e3f01260108aa76136
-  opentelemetry-exporter-otlp-common (0.3.0) sha256=855d10d788a7272dfe5b14efa229507619abbef29085ef4a8acfd2c0d3af6171
+  opentelemetry-exporter-otlp-common (0.4.0) sha256=a52eee35b18267b960b107dbd875cdd6d66d0f8e09e91332a87983ca0f645cd8
   opentelemetry-instrumentation-action_mailer (0.8.1) sha256=2f2784ca41de0f284b4e3339181cf2ed24ce4e1dfc2751355f0939fcd0872b09
   opentelemetry-instrumentation-action_pack (0.18.1) sha256=0b827d703baa2951458e36f2bdfa4a2cdb17a0130cfb0e1b6fe5d67fadc85c2d
   opentelemetry-instrumentation-action_view (0.13.0) sha256=5b855610d1143972c527d4482d238ecc3d343c8d59e3c1390bad4056317f1568
@@ -220,8 +220,8 @@ CHECKSUMS
   opentelemetry-instrumentation-concurrent_ruby (0.25.0) sha256=722912e7078e3025a84a25d0b6085702417598c58187c19a762234702cbf7b2d
   opentelemetry-instrumentation-rack (0.31.2) sha256=4a183066110455711a0c77754e3f46652f646221d7704d968a48d155b47f8309
   opentelemetry-instrumentation-rails (0.42.0) sha256=5ea3808373ca73ee9fa4ecf337471bad1c28e98ea64460b89ab225f5b6eaf8b3
-  opentelemetry-logs-api (0.6.0) sha256=b889ac61d90326bffadb83bf7278d246d1086e2349c9052aeb072ed375ce73d0
-  opentelemetry-metrics-api (0.9.0) sha256=e11a12055113e11421313f71c758e5e10e4662e9e5c3b91786218a692e81206d
+  opentelemetry-logs-api (0.7.0) sha256=53ea80e36b830bf068d6e44ec3776da7bf42f62ccc1d5a5944cc221999febe5d
+  opentelemetry-metrics-api (0.10.0) sha256=bbeeba7606886d7a918b3e4edeb96ac51eb8d3308630d610eee12be53836c755
   opentelemetry-registry (0.6.3) sha256=568fa8eaea94394f29f4fce3f0339ab10c3bf6d6c8beed6b3cfee6fd37fcc608
   opentelemetry-sdk (1.13.1) sha256=91c9cc315ac7ef30243549eeff8b27cd0d39bd02bdf9c9ae481ab96a1cec6754
   opentelemetry-semantic_conventions (1.44.0) sha256=b09b8793422f13b01c08f7a6f29b5f511f47f37bcdb57c0513465a0464168513
@@ -242,8 +242,8 @@ CHECKSUMS
   rspec-support (3.13.7) sha256=0640e5570872aafefd79867901deeeeb40b0c9875a36b983d85f54fb7381c47c
   ruby-lsp (0.26.11) sha256=4cc8f1587237ff8c9031680b5491df901a82559eeaa1ae96863ffe700b32583d
   ruby-lsp-rspec (0.1.29) sha256=798be579723376cd56b17d32373288fb1163e4cfe2024c7d068516a1cf214ee5
-  sentry-opentelemetry (7.1.0)
-  sentry-ruby (7.1.0)
+  sentry-opentelemetry (7.2.0)
+  sentry-ruby (7.2.0)
   simplecov (0.22.0) sha256=fe2622c7834ff23b98066bb0a854284b2729a569ac659f82621fc22ef36213a5
   simplecov-cobertura (3.2.0) sha256=70d702658677fcb20e5aceb6915ccf8bc62ff2ccd38b62b3ad5c9db5c0888740
   simplecov-html (0.13.2) sha256=bd0b8e54e7c2d7685927e8d6286466359b6f16b18cb0df47b508e8d73c777246
@@ -251,4 +251,4 @@ CHECKSUMS
   tsort (0.2.0) sha256=9650a793f6859a43b6641671278f79cfead60ac714148aabe4e3f0060480089f
 
 BUNDLED WITH
-  4.0.16
+  4.0.23

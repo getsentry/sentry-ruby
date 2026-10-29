@@ -1,3 +1,36 @@
+## 7.2.0
+
+### New Features ✨
+
+#### Crons
+
+- Add Solid Queue recurring task monitoring by @wedamija, @claude and @sl0thentr0py in [#3140](https://github.com/getsentry/sentry-ruby/pull/3140)
+- Add rufus-scheduler cron monitoring by @wedamija in [#3110](https://github.com/getsentry/sentry-ruby/pull/3110)
+
+### Bug Fixes 🐛
+
+#### Rails
+
+- Don't load ActionController::Live before initialization by @ajaynomics in [#3109](https://github.com/getsentry/sentry-ruby/pull/3109)
+- Ignore error-less ActiveJob retry enqueues by @solnic in [#3125](https://github.com/getsentry/sentry-ruby/pull/3125)
+
+#### Transport
+
+- Log directly sent envelopes in DebugTransport by @solnic in [#3113](https://github.com/getsentry/sentry-ruby/pull/3113)
+- Make DummyTransport thread-safe by @solnic in [#3112](https://github.com/getsentry/sentry-ruby/pull/3112)
+
+#### Other
+
+- (data-collection) Use frame_context_lines in stacktrace builder by @sl0thentr0py with @sentry-junior in [#3158](https://github.com/getsentry/sentry-ruby/pull/3158)
+- (sidekiq) Start a new trace for each sidekiq-scheduler enqueue by @sl0thentr0py with @sentry-junior in [#3159](https://github.com/getsentry/sentry-ruby/pull/3159)
+- Https support spotlight transport by @sandstrom and @Copilot in [#3136](https://github.com/getsentry/sentry-ruby/pull/3136)
+- Keep StreamingReporter#log_error private by @sean0407 and @codex in [#3150](https://github.com/getsentry/sentry-ruby/pull/3150)
+
+### Internal Changes 🔧
+
+- (crons) Add Fugit schedule conversion helper by @wedamija and @claude in [#3141](https://github.com/getsentry/sentry-ruby/pull/3141)
+- Remove ruby.compile from mise and use gcc 13 by @sl0thentr0py in [#3149](https://github.com/getsentry/sentry-ruby/pull/3149)
+
 ## 7.1.0
 
 ### Breaking Changes 🛠

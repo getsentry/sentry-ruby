@@ -16,6 +16,10 @@ RSpec.describe Sentry::Vernier::Profiler, when: :vernier_installed? do
     end
   end
 
+  after do
+    Vernier.stop_profile if Vernier.instance_variable_get(:@collector)
+  end
+
   let(:profiles_sample_rate) { 1.0 }
   let(:traces_sample_rate) { 1.0 }
 
@@ -147,7 +151,7 @@ RSpec.describe Sentry::Vernier::Profiler, when: :vernier_installed? do
     it 'stops Vernier if sampled and started' do
       profiler.set_initial_sample_decision(true)
       profiler.start
-      expect(Vernier).to receive(:stop_profile)
+      expect(Vernier).to receive(:stop_profile).and_call_original
       profiler.stop
     end
 
@@ -161,7 +165,10 @@ RSpec.describe Sentry::Vernier::Profiler, when: :vernier_installed? do
     it 'does not crash when stopping Vernier crashed' do
       profiler.set_initial_sample_decision(true)
       profiler.start
-      expect(Vernier).to receive(:stop_profile).and_raise(RuntimeError.new("Profile not started"))
+      expect(Vernier).to receive(:stop_profile).and_wrap_original do |stop_profile|
+        stop_profile.call
+        raise RuntimeError.new("Profile not started")
+      end
       profiler.stop
     end
   end

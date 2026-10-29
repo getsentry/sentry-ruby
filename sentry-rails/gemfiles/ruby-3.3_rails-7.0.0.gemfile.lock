@@ -9,7 +9,7 @@ GIT
 PATH
   remote: ../../sentry-ruby
   specs:
-    sentry-ruby (7.1.0)
+    sentry-ruby (7.2.0)
       bigdecimal
       concurrent-ruby (~> 1.0, >= 1.0.2)
       logger
@@ -17,9 +17,9 @@ PATH
 PATH
   remote: ..
   specs:
-    sentry-rails (7.1.0)
+    sentry-rails (7.2.0)
       railties (>= 5.2.0)
-      sentry-ruby (~> 7.1.0)
+      sentry-ruby (~> 7.2.0)
 
 GEM
   remote: https://rubygems.org/
@@ -111,7 +111,7 @@ GEM
     cgi (0.5.2)
     concurrent-ruby (1.3.8)
     connection_pool (3.0.2)
-    crass (1.0.7)
+    crass (1.0.8)
     date (3.6.0)
     delayed_job (4.2.0)
       activesupport (>= 3.0, < 9.0)
@@ -141,7 +141,7 @@ GEM
       thor (>= 1.0.0)
     i18n (1.15.2)
       concurrent-ruby (~> 1.0)
-    io-console (0.9.4)
+    io-console (0.9.5)
     irb (1.18.0)
       pp (>= 0.6.0)
       prism (>= 1.3.0)
@@ -173,7 +173,7 @@ GEM
     multi_json (1.21.2)
     mustermann (3.1.1)
     mutex_m (0.3.0)
-    net-imap (0.6.7)
+    net-imap (0.6.8)
       date
       net-protocol
     net-pop (0.1.2)
@@ -209,7 +209,7 @@ GEM
     rack-protection (3.2.0)
       base64 (>= 0.1.0)
       rack (~> 2.2, >= 2.2.4)
-    rack-test (2.2.0)
+    rack-test (2.3.0)
       rack (>= 1.3)
     rails (7.0.10)
       actioncable (= 7.0.10)
@@ -257,7 +257,7 @@ GEM
       redis (>= 4)
     reline (0.7.0)
       io-console (~> 0.5)
-    resque (3.1.0)
+    resque (3.2.0)
       base64 (~> 0.1)
       logger
       mono_logger (~> 1)
@@ -410,11 +410,11 @@ CHECKSUMS
   benchmark_driver (0.17.0) sha256=381ff431222bf616869a2a67f6dfb97a1ff2694291a7e313a7387fcc5ec3df58
   bigdecimal (4.1.3) sha256=61ebe1e5e559bdc3cc6f2c0ee7f427321fc838f59611c294356eb04d6e21cf66
   builder (3.3.0) sha256=497918d2f9dca528fdca4b88d84e4ef4387256d984b8154e9d5d3fe5a9c8835f
-  bundler (4.0.16) sha256=d6ca5dd440c24f9abce9844cf44cc8e18c6a553de65a47efb4544137af92c47d
+  bundler (4.0.23) sha256=407ba8a1d928f412847f819aa5f8b6aef7c59fb51feb517112af8a165487287b
   cgi (0.5.2) sha256=61ca30298171190fd4fa0d8018e57ada456eae9b7a2b78526debf7f0a0e6f8bb
   concurrent-ruby (1.3.8) sha256=b2f1be836e968ccc78ccfce277ea79c72a88633f22306782c16ff23fb415d1e1
   connection_pool (3.0.2) sha256=33fff5ba71a12d2aa26cb72b1db8bba2a1a01823559fb01d29eb74c286e62e0a
-  crass (1.0.7) sha256=94868719948664c89ddcaf0a37c65048413dfcb1c869470a5f7a7ceb5390b295
+  crass (1.0.8) sha256=7a0145c7a2c59f8e7923b3a69ce819c444823a00a5127d805298fea13be24efe
   date (3.6.0) sha256=18ac945c4e24ebd93534f8eab8c2fd8c5604b3e977105b3798d62a1e8d27b580
   debug (1.11.1)
   delayed_job (4.2.0) sha256=51dc1f68bb9084398317884c2178debd38c13a7eb48d8aa4ff4775465d7713ef
@@ -429,7 +429,7 @@ CHECKSUMS
   globalid (1.4.0) sha256=037f12fbf1d9d7a014d501c2d5c77356fd4ddd96d7a7991d6700bba96706f427
   good_job (4.22.1) sha256=20b0531f49167786e4ddbe68ddc1c249079dfc9bbd674866fdc289375cfa62d2
   i18n (1.15.2) sha256=00f9eb62412fe593b2a65a97daa75300d37abb8f7202ec748e94b6d46a9dd1b5
-  io-console (0.9.4) sha256=a403304f32928ee85e56d457b4612ca43f2703b561a3258844992bd24085fbb1
+  io-console (0.9.5) sha256=83dd9bbf4c4680416629245b39cd4212eb5f4d9a4ea91804870c1f6b846414d5
   irb (1.18.0) sha256=de9454a0703a54704b9811a5ef31a60c86949fbf4013fcf244fabc7c775248e3
   language_server-protocol (3.17.0.6) sha256=5ef2c0c138f8267e1bc631d3328347d354f96724b0af22f2c79516120443b7f0
   logger (1.7.0) sha256=196edec7cc44b66cfb40f9755ce11b392f21f7967696af15d274dde7edff0203
@@ -446,7 +446,7 @@ CHECKSUMS
   multi_json (1.21.2) sha256=245531eaf54bdba57aba515ff08b4503505c5e09911daa89c5a561e2f85bea8e
   mustermann (3.1.1) sha256=4c6170c7234d5499c345562ba7c7dfe73e1754286dcc1abb053064d66a127198
   mutex_m (0.3.0) sha256=cfcb04ac16b69c4813777022fdceda24e9f798e48092a2b817eb4c0a782b0751
-  net-imap (0.6.7) sha256=b5c9573be975d856de252ee851871724da66aa2d449b2482d5690bd12bc23660
+  net-imap (0.6.8) sha256=eb30bb62227b64a3af6b518b04b2375113d69f68f15de59b0193b07d98acf6d9
   net-pop (0.1.2) sha256=848b4e982013c15b2f0382792268763b748cce91c9e91e36b0f27ed26420dff3
   net-protocol (0.4.0) sha256=f9f90c8c6f64794a45160bf422177a336db12809de3beeeaa26b88fcd2e8c853
   net-smtp (0.5.2) sha256=35103cc04d6b2d94632f9928ede07483c24b70b9c0db1f231fea43909b678f3c
@@ -466,7 +466,7 @@ CHECKSUMS
   racc (1.8.1) sha256=4a7f6929691dbec8b5209a0b373bc2614882b55fc5d2e447a21aaa691303d62f
   rack (2.2.24) sha256=ef16526a0d871c43753452338c754040a664c8b41bf0dd7450b85f7772adca5f
   rack-protection (3.2.0) sha256=3c74ba7fc59066453d61af9bcba5b6fe7a9b3dab6f445418d3b391d5ea8efbff
-  rack-test (2.2.0) sha256=005a36692c306ac0b4a9350355ee080fd09ddef1148a5f8b2ac636c720f5c463
+  rack-test (2.3.0) sha256=b118d177cc002c572fc1b6fd8d19c9ed5881a36e8d6f689f9e618f9f861241e8
   rails (7.0.10) sha256=866eb2c53d3184543fdb770d7ea308e4ee518063226a9e176229f3c7a9537c25
   rails-dom-testing (2.3.0) sha256=8acc7953a7b911ca44588bf08737bc16719f431a1cc3091a292bca7317925c1d
   rails-html-sanitizer (1.7.1) sha256=e797a7c9b01e567307e317c576b49ab4168017e63eea4dba9ce3cb587e2f22c2
@@ -478,7 +478,7 @@ CHECKSUMS
   redis-client (0.31.0) sha256=6820cb2a21e6795a823141f50fd25e655de2b8dc8ff833b43509a27b0263fd75
   redis-namespace (1.11.0) sha256=e91a1aa2b2d888b6dea1d4ab8d39e1ae6fac3426161feb9d91dd5cca598a2239
   reline (0.7.0) sha256=5b012d8e55dbf9d450f12bde2cf7d15ff546ae80b3f8f3b30e570d431815583d
-  resque (3.1.0) sha256=b3cc063308c8bc0e0a2faf132bc92c7dbfce0bacd9f09c86576f49a51f56cf8c
+  resque (3.2.0) sha256=0eb8bb50948f0f2847778e83fc3c23dff0b10acc0274e2398272c688fd9809b3
   resque-scheduler (5.0.1) sha256=4466be3d37dbcac4008c435749070063575927f1a48b9a78941e28cbcfc61a49
   rexml (3.4.1) sha256=c74527a9a0a04b4ec31dbe0dc4ed6004b960af943d8db42e539edde3a871abca
   rspec (3.13.2) sha256=206284a08ad798e61f86d7ca3e376718d52c0bc944626b2349266f239f820587
@@ -492,8 +492,8 @@ CHECKSUMS
   ruby-lsp-rspec (0.1.29) sha256=798be579723376cd56b17d32373288fb1163e4cfe2024c7d068516a1cf214ee5
   rufus-scheduler (3.9.2) sha256=55fa9e4db0ff69d7f38c804f17baba0c9bce5cba39984ae3c5cf6c039d1323b9
   securerandom (0.4.1) sha256=cc5193d414a4341b6e225f0cb4446aceca8e50d5e1888743fac16987638ea0b1
-  sentry-rails (7.1.0)
-  sentry-ruby (7.1.0)
+  sentry-rails (7.2.0)
+  sentry-ruby (7.2.0)
   sequel (5.109.0) sha256=e0d1d474442d620c8497d7f4851c0cc3a277920519051b8014b2877aa55efffe
   simplecov (0.22.0) sha256=fe2622c7834ff23b98066bb0a854284b2729a569ac659f82621fc22ef36213a5
   simplecov-cobertura (3.2.0) sha256=70d702658677fcb20e5aceb6915ccf8bc62ff2ccd38b62b3ad5c9db5c0888740
@@ -517,4 +517,4 @@ CHECKSUMS
   zeitwerk (2.8.3) sha256=2c85125a8467ce069e20123d1e709a08955c9d29c118c25b46b7b7fafdbb92e5
 
 BUNDLED WITH
-  4.0.16
+  4.0.23
