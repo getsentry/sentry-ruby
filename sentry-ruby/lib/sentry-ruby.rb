@@ -577,7 +577,11 @@ module Sentry
     # @return [Boolean]
     def exception_captured?(exc)
       return false unless initialized?
-      !!exc.instance_variable_get(CAPTURED_SIGNATURE)
+      # An event already carries the whole cause chain, so capturing any part of a
+      # chain that was captured would duplicate it.
+      Utils::ExceptionCauseChain.exception_to_array(exc).any? do |e|
+        e.instance_variable_get(CAPTURED_SIGNATURE)
+      end
     end
 
     # Add a global event processor [Proc].

@@ -1009,6 +1009,37 @@ RSpec.describe Sentry do
 
       expect(described_class.exception_captured?(exception)).to eq(true)
     end
+
+    context "with an exception that has a cause" do
+      let(:cause) { RuntimeError.new("boom") }
+      let(:wrapper) do
+        raise cause
+      rescue
+        begin
+          raise ArgumentError, "wrapper"
+        rescue => e
+          e
+        end
+      end
+
+      it "does not capture the cause after the wrapper was captured" do
+        expect(wrapper.cause).to eq(cause)
+
+        described_class.capture_exception(wrapper)
+        described_class.capture_exception(cause)
+
+        expect(sentry_events.count).to eq(1)
+      end
+
+      it "does not capture the wrapper after its cause was captured" do
+        expect(wrapper.cause).to eq(cause)
+
+        described_class.capture_exception(cause)
+        described_class.capture_exception(wrapper)
+
+        expect(sentry_events.count).to eq(1)
+      end
+    end
   end
 
   describe ".get_traceparent" do
