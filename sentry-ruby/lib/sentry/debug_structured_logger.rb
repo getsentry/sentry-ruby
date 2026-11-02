@@ -52,6 +52,10 @@ module Sentry
       @log.entries
     end
 
+    def start_run
+      @log.start_run
+    end
+
     def clear
       @log.clear
       if backend.respond_to?(:config)

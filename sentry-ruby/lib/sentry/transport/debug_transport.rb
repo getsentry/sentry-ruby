@@ -18,6 +18,7 @@ module Sentry
 
       @path = Pathname(path || @temporary_file.path)
       @offset = 0
+      @generation = nil
       FileUtils.mkdir_p(@path.dirname) unless @path.dirname.exist?
     end
 
@@ -34,6 +35,9 @@ module Sentry
 
       lines = File.open(path, "r") do |file|
         file.flock(File::LOCK_SH)
+        current_generation = file.stat.ino
+        @offset = 0 if @generation != current_generation
+        @generation = current_generation
         file.seek(@offset)
         file.readlines
       end
@@ -45,7 +49,22 @@ module Sentry
       File.open(path, "a") do |file|
         file.flock(File::LOCK_SH)
         @offset = file.size
+        @generation = file.stat.ino
       end
+    end
+
+    def start_run
+      return if @temporary_file
+
+      File.open(path, "a") do |file|
+        file.flock(File::LOCK_EX)
+        previous = Pathname("#{path}.1")
+        previous.rename("#{path}.2") if previous.exist?
+        path.rename("#{path}.1")
+        FileUtils.touch(path)
+      end
+      @offset = 0
+      @generation = nil
     end
   end
 
@@ -90,6 +109,10 @@ module Sentry
 
     def logged_envelopes
       @log.entries
+    end
+
+    def start_run
+      @log.start_run
     end
 
     def clear

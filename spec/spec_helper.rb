@@ -53,6 +53,8 @@ RSpec.configure do |config|
       config.structured_logging.logger_class = Sentry::DebugStructuredLogger
       config.structured_logging.file_path = Test::Helper.debug_log_path.join("sentry_e2e_tests.log")
     end
+    Sentry.get_current_client.transport.start_run
+    Sentry.logger.start_run
   end
 
   config.before(:each) do
