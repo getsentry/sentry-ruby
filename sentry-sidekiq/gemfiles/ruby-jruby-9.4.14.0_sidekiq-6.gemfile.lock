@@ -169,7 +169,7 @@ GEM
       jar-dependencies (>= 0.1.7)
     raabro (1.5.0)
     racc (1.8.1-java)
-    rack (2.2.24)
+    rack (2.2.25)
     rack-session (1.0.2)
       rack (< 3)
     rack-test (2.3.0)
@@ -348,7 +348,7 @@ CHECKSUMS
   psych (5.5.0-java) sha256=3b7cf3684c44d049c3dee87ec4118ec9cd6ac714cbdcfba386997f96dbbd36ab
   raabro (1.5.0) sha256=3f998a7bc84f9c84df3ab580634d2e0a5bda4f0841168d56035f529c9877440a
   racc (1.8.1-java) sha256=54f2e6d1e1b91c154013277d986f52a90e5ececbe91465d29172e49342732b98
-  rack (2.2.24) sha256=ef16526a0d871c43753452338c754040a664c8b41bf0dd7450b85f7772adca5f
+  rack (2.2.25) sha256=a5b3cd8f2df29c36ede21aa797c21e643f06792fae7487926102e06abe6da0b8
   rack-session (1.0.2) sha256=a02115e5420b4de036839b9811e3f7967d73446a554b42aa45106af335851d76
   rack-test (2.3.0) sha256=b118d177cc002c572fc1b6fd8d19c9ed5881a36e8d6f689f9e618f9f861241e8
   rackup (1.0.1) sha256=ba86604a28989fe1043bff20d819b360944ca08156406812dca6742b24b3c249

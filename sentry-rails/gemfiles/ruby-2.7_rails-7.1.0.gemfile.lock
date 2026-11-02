@@ -191,7 +191,7 @@ GEM
       stringio
     raabro (1.5.0)
     racc (1.8.1)
-    rack (3.2.7)
+    rack (3.2.8)
     rack-session (2.1.2)
       base64 (>= 0.1.0)
       rack (>= 3.0.0)
@@ -264,7 +264,7 @@ GEM
       rspec-core (> 3.3)
     rspec-support (3.13.7)
     securerandom (0.3.2)
-    sequel (5.109.0)
+    sequel (5.110.0)
       bigdecimal
     sidekiq (7.3.10)
       base64

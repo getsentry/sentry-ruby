@@ -196,7 +196,7 @@ GEM
       stringio
     raabro (1.5.0)
     racc (1.8.1)
-    rack (2.2.24)
+    rack (2.2.25)
     rack-protection (3.2.0)
       base64 (>= 0.1.0)
       rack (~> 2.2, >= 2.2.4)
@@ -293,7 +293,7 @@ GEM
     rufus-scheduler (3.9.2)
       fugit (~> 1.1, >= 1.11.1)
     securerandom (0.3.2)
-    sequel (5.109.0)
+    sequel (5.110.0)
       bigdecimal
     simplecov (0.22.0)
       docile (~> 1.1)

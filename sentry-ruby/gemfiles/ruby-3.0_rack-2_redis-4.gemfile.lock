@@ -17,7 +17,7 @@ PATH
 GEM
   remote: https://rubygems.org/
   specs:
-    addressable (2.9.0)
+    addressable (2.9.2)
       public_suffix (>= 2.0.2, < 8.0)
     base64 (0.3.0)
     benchmark-ips (2.5.0)
@@ -52,7 +52,7 @@ GEM
     fugit (1.14.0)
       et-orbi (~> 1.4)
       raabro (~> 1.4)
-    graphql (2.6.13)
+    graphql (2.6.14)
       base64
       fiber-storage
       logger
@@ -84,7 +84,7 @@ GEM
     puma (8.0.2)
       nio4r (~> 2.0)
     raabro (1.5.0)
-    rack (2.2.24)
+    rack (2.2.25)
     rake (12.3.3)
     rbs (3.6.1)
       logger
@@ -119,7 +119,7 @@ GEM
       ruby-lsp (~> 0.26.0)
     rufus-scheduler (3.9.2)
       fugit (~> 1.1, >= 1.11.1)
-    sequel (5.109.0)
+    sequel (5.110.0)
       bigdecimal
     simplecov (0.22.0)
       docile (~> 1.1)
