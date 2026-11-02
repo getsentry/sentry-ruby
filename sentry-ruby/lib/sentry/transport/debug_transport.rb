@@ -3,9 +3,52 @@
 require "json"
 require "fileutils"
 require "pathname"
+require "tempfile"
 require "delegate"
 
 module Sentry
+  class DebugLogFile
+    attr_reader :path
+
+    def initialize(path, prefix)
+      unless path
+        @temporary_file = Tempfile.new([prefix, ".log"])
+        @temporary_file.close
+      end
+
+      @path = Pathname(path || @temporary_file.path)
+      @offset = 0
+      FileUtils.mkdir_p(@path.dirname) unless @path.dirname.exist?
+    end
+
+    def append(entry)
+      json = "#{JSON.dump(entry)}\n"
+      File.open(path, "a") do |file|
+        file.flock(File::LOCK_EX)
+        file.write(json)
+      end
+    end
+
+    def entries
+      return [] unless path.exist?
+
+      lines = File.open(path, "r") do |file|
+        file.flock(File::LOCK_SH)
+        file.seek(@offset)
+        file.readlines
+      end
+
+      lines.select { |line| line.end_with?("\n") }.map { |line| JSON.parse(line) }
+    end
+
+    def clear
+      File.open(path, "a") do |file|
+        file.flock(File::LOCK_SH)
+        @offset = file.size
+      end
+    end
+  end
+
   # DebugTransport is a transport that logs events to a file for debugging purposes.
   #
   # It can optionally also send events to Sentry via HTTP transport if a real DSN
@@ -16,7 +59,8 @@ module Sentry
     attr_reader :log_file, :backend
 
     def initialize(configuration)
-      @log_file = initialize_log_file(configuration)
+      @log = DebugLogFile.new(configuration.sdk_debug_transport_log_file, File.basename(DEFAULT_LOG_FILE_PATH, ".log"))
+      @log_file = @log.path
       @backend = initialize_backend(configuration)
 
       super(@backend)
@@ -41,39 +85,23 @@ module Sentry
         end
       }
 
-      File.open(log_file, "a") { |file| file.write("#{JSON.dump(envelope_json)}\n") }
+      @log.append(envelope_json)
     end
 
     def logged_envelopes
-      return [] unless File.exist?(log_file)
-
-      File.readlines(log_file).select { |line| fully_written?(line) }.map do |line|
-        JSON.parse(line)
-      end
+      @log.entries
     end
 
     def clear
-      File.write(log_file, "")
+      @log.clear
       log_debug("DebugTransport: Cleared events from #{log_file}")
     end
 
     private
 
-    def fully_written?(line)
-      line.end_with?("\n")
-    end
-
     def initialize_backend(configuration)
       backend = configuration.dsn.local? ? DummyTransport : HTTPTransport
       backend.new(configuration)
-    end
-
-    def initialize_log_file(configuration)
-      log_file = Pathname(configuration.sdk_debug_transport_log_file || DEFAULT_LOG_FILE_PATH)
-
-      FileUtils.mkdir_p(log_file.dirname) unless log_file.dirname.exist?
-
-      log_file
     end
   end
 end

@@ -1,8 +1,6 @@
 # frozen_string_literal: true
 
-require "json"
-require "fileutils"
-require "pathname"
+require "sentry/transport/debug_transport"
 require "delegate"
 
 module Sentry
@@ -15,9 +13,8 @@ module Sentry
     attr_reader :log_file, :backend
 
     def initialize(configuration)
-      @log_file = initialize_log_file(
-        configuration.structured_logging.file_path || DEFAULT_LOG_FILE_PATH
-      )
+      @log = DebugLogFile.new(configuration.structured_logging.file_path, File.basename(DEFAULT_LOG_FILE_PATH, ".log"))
+      @log_file = @log.path
       @backend = initialize_backend(configuration)
 
       super(@backend)
@@ -47,18 +44,16 @@ module Sentry
         attributes: attributes
       }
 
-      File.open(log_file, "a") { |file| file << JSON.dump(log_event_json) << "\n" }
+      @log.append(log_event_json)
       log_event_json
     end
 
     def logged_events
-      File.readlines(log_file).map do |line|
-        JSON.parse(line)
-      end
+      @log.entries
     end
 
     def clear
-      File.write(log_file, "")
+      @log.clear
       if backend.respond_to?(:config)
         backend.config.sdk_logger.debug("DebugStructuredLogger: Cleared events from #{log_file}")
       end
@@ -68,14 +63,6 @@ module Sentry
 
     def initialize_backend(configuration)
       StructuredLogger.new(configuration)
-    end
-
-    def initialize_log_file(log_file_path)
-      log_file = Pathname(log_file_path)
-
-      FileUtils.mkdir_p(log_file.dirname) unless log_file.dirname.exist?
-
-      log_file
     end
   end
 end

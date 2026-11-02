@@ -9,14 +9,6 @@ RSpec.describe Sentry::DebugStructuredLogger do
 
   let(:debug_logger) { described_class.new(configuration) }
 
-  before do
-    debug_logger.clear
-  end
-
-  after do
-    debug_logger.clear
-  end
-
   describe "#initialize" do
     it "creates a debug logger with structured logger backend" do
       expect(debug_logger.backend).to be_a(Sentry::StructuredLogger)
