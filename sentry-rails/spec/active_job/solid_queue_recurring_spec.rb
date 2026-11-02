@@ -104,11 +104,10 @@ if RAILS_VERSION >= 7.1 && RUBY_VERSION >= "3.1"
       expect(check_ins.first.monitor_config.to_h[:schedule]).to eq(type: :crontab, value: "*/15 * * * *")
     end
 
-    it "sends check-ins without a config for schedules Crons cannot express" do
+    it "does not monitor schedules Crons cannot express" do
       run_task("every_ten_seconds", class: "ReportJob", schedule: "every 10 seconds")
 
-      expect(check_ins.map(&:status)).to eq([:in_progress, :ok])
-      expect(check_ins.map(&:monitor_config)).to all(be_nil)
+      expect(check_ins).to be_empty
     end
 
     it "applies SolidQueue.time_zone to schedules without a zone" do
