@@ -48,6 +48,16 @@ RSpec.describe Sentry::Rails::CaptureExceptions do
     expect(transport.events.count).to eq(1)
   end
 
+  it "doesn't mark the causes as captured when the wrapper is not reported" do
+    wrapper, cause = wrapper_with_cause
+    Sentry.configuration.excluded_exceptions += ["ArgumentError"]
+
+    run_middleware(wrapper)
+    Sentry::Rails::ErrorSubscriber.new.report(cause, handled: false, severity: :error, context: {})
+
+    expect(transport.events.count).to eq(1)
+  end
+
   it "still captures unrelated exceptions" do
     wrapper, _cause = wrapper_with_cause
 
