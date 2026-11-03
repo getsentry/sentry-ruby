@@ -1,4 +1,4 @@
-minVersion: 2.21.1
+minVersion: 3.9.0
 changelog:
   policy: auto
 preReleaseCommand: ruby .scripts/batch_release.rb
