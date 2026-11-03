@@ -14,10 +14,6 @@ module Sentry
       @items << Item.new(headers, payload)
     end
 
-    def item_types
-      @items.map(&:type)
-    end
-
     def event_id
       @headers[:event_id]
     end
