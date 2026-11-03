@@ -181,9 +181,7 @@ module Sentry
 
       capture_event(event, **options, &block).tap do
         # mark the exception as captured so we can use this information to avoid duplicated capturing
-        Utils::ExceptionCauseChain.exception_to_array(exception).each do |e|
-          e.instance_variable_set(Sentry::CAPTURED_SIGNATURE, true)
-        end
+        exception.instance_variable_set(Sentry::CAPTURED_SIGNATURE, true)
       end
     end
 
