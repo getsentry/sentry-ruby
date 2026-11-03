@@ -128,6 +128,26 @@ RSpec.describe Sentry::SessionFlusher do
       expect(pending_aggregates.values.first).to include({ errored: 0, exited: 1 })
     end
 
+    it "doesn't race with a concurrent flush swapping pending_aggregates" do
+      swap_thread = nil
+
+      # Start the flush swap from another thread while add_session is between
+      # its two lookups. The swap must wait for add_session instead of
+      # replacing the hash underneath it.
+      allow(subject).to receive(:init_aggregates).and_wrap_original do |original, *args|
+        original.call(*args).tap do
+          swap_thread = Thread.new { subject.send(:pending_envelope) }
+          swap_thread.join(0.1)
+        end
+      end
+
+      expect { subject.add_session(session) }.not_to raise_error
+
+      aggregates = swap_thread.value.items.first.payload[:aggregates]
+      expect(aggregates).to match([include(exited: 1, errored: 0)])
+      expect(subject.instance_variable_get(:@pending_aggregates)).to eq({})
+    end
+
     context "when thread creation fails" do
       before do
         allow(Thread).to receive(:new).and_raise(ThreadError)

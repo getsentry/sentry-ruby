@@ -29,8 +29,11 @@ module Sentry
       return unless ensure_thread
 
       return unless Session::AGGREGATE_STATUSES.include?(session.status)
-      @pending_aggregates[session.aggregation_key] ||= init_aggregates(session.aggregation_key)
-      @pending_aggregates[session.aggregation_key][session.status] += 1
+
+      @mutex.synchronize do
+        @pending_aggregates[session.aggregation_key] ||= init_aggregates(session.aggregation_key)
+        @pending_aggregates[session.aggregation_key][session.status] += 1
+      end
     end
 
     private
