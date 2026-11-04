@@ -126,8 +126,10 @@ module Sentry
     # @param attributes [Hash] Additional attributes to include with the log
     #
     # @return [LogEvent, nil] The created log event or nil if logging is disabled
-    def log(level, message = nil, parameters:, **attributes, &block)
+    def log(level, message = nil, parameters:, **attributes)
       message = yield if message.nil? && block_given?
+      raise ArgumentError, "message or block is required" if message.nil?
+
       case parameters
       when Array then
         Sentry.capture_log(message, level: level, severity: LEVELS[level], parameters: parameters, **attributes)
