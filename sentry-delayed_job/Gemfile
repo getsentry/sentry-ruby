@@ -29,3 +29,9 @@ elsif ruby_version >= Gem::Version.new("3.0.0") && ruby_version < Gem::Version.n
 elsif ruby_version >= Gem::Version.new("3.1.0")
   gem "sqlite3", "~> 2.2", platform: :ruby
 end
+
+unless RUBY_PLATFORM.include?("java")
+  if Gem::Version.new(RUBY_VERSION) >= Gem::Version.new("3.2")
+    gem "rspec-rails"
+  end
+end

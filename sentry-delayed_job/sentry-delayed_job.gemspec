@@ -6,7 +6,8 @@ Gem::Specification.new do |spec|
   spec.name          = "sentry-delayed_job"
   spec.version       = Sentry::DelayedJob::VERSION
   spec.authors = ["Sentry Team"]
-  spec.description = spec.summary = "A gem that provides DelayedJob integration for the Sentry error logger"
+  spec.summary = "A gem that provides DelayedJob integration for the Sentry error logger (maintenance mode)"
+  spec.description = "Maintenance-mode DelayedJob integration for the Sentry error logger. ActiveJob users should use the ActiveJob integration in sentry-rails, which sentry-delayed_job enriches with delayed_job data."
   spec.email = "accounts@sentry.io"
   spec.license = 'MIT'
 
