@@ -15,7 +15,7 @@ RSpec.shared_examples "an ActiveJob backend that emits a producer span on enqueu
       publish_span = parent.spans.find { |s| s[:op] == "queue.publish" }
       expect(publish_span).not_to be_nil
       expect(publish_span[:description]).to eq(successful_job.name)
-      expect(publish_span[:origin]).to eq("auto.queue.active_job")
+      expect(publish_span[:origin]).to eq(job_span_origin)
       expect(publish_span[:data]["messaging.system"]).to be_a(String).and(satisfy { |v| !v.empty? })
       expect(publish_span[:data]["messaging.system"]).to eq(successful_job.queue_adapter_name)
       expect(publish_span[:data]["messaging.message.id"]).to be_a(String).and(satisfy { |v| !v.empty? })

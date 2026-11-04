@@ -35,4 +35,22 @@ gem "sentry-ruby"
 gem "sentry-resque"
 ```
 
-Then you're all set! `sentry-resque` will automatically insert a custom middleware and error handler to capture exceptions from your workers!
+Then you're all set! `sentry-resque` captures exceptions and starts a `queue.resque` transaction for every job your Resque workers perform.
+
+## Maintenance Mode
+
+`sentry-resque` is in maintenance mode. The integration for plain Resque jobs keeps receiving fixes, but new background job features land in `sentry-rails` through its ActiveJob integration.
+
+### ActiveJob on Resque
+
+By default, `ActiveJob::QueueAdapters::ResqueAdapter` is listed in `config.rails.skippable_job_adapters`, so ActiveJob jobs running on Resque are reported by `sentry-resque`. Rails apps can opt in to the `sentry-rails` ActiveJob integration instead by removing the adapter from that list:
+
+```ruby
+# config/initializers/sentry.rb
+Sentry.init do |config|
+  # ...
+  config.rails.skippable_job_adapters.delete("ActiveJob::QueueAdapters::ResqueAdapter")
+end
+```
+
+Once opted in, `sentry-rails` reports those jobs with Resque data: the `resque.queue` tag, the `Active-Job` context, and the `messaging.*` span data for the Resque queue. `sentry-resque` only reports errors raised before an ActiveJob job starts, such as a job class that can no longer be loaded. Plain Resque jobs are not affected.
