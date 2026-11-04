@@ -60,6 +60,12 @@ RSpec.describe Sentry::DebugStructuredLogger do
           expect(log_event["message"]).to eq("Test #{level} block message")
         end
 
+        it "uses the block over the positional argument" do
+          debug_logger.public_send(level, "progname") { "from block" }
+
+          expect(debug_logger.logged_events.last["message"]).to eq("from block")
+        end
+
         it "raises ArgumentError when neither message nor block is given" do
           expect { debug_logger.public_send(level) }
             .to raise_error(ArgumentError, "message or block is required")

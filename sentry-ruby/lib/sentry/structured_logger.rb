@@ -127,7 +127,7 @@ module Sentry
     #
     # @return [LogEvent, nil] The created log event or nil if logging is disabled
     def log(level, message = nil, parameters:, **attributes)
-      message = yield if message.nil? && block_given?
+      message = yield if block_given?
       raise ArgumentError, "message or block is required" if message.nil?
 
       case parameters

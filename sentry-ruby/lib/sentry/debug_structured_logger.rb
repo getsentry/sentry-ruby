@@ -26,7 +26,7 @@ module Sentry
     # Override all log level methods to capture events
     %i[trace debug info warn error fatal].each do |level|
       define_method(level) do |message = nil, parameters = [], **attributes, &block|
-        message = block.call if message.nil? && block
+        message = block.call if block
         raise ArgumentError, "message or block is required" if message.nil?
 
         log_event = capture_log_event(level, message, parameters, **attributes)
@@ -36,7 +36,7 @@ module Sentry
     end
 
     def log(level, message = nil, parameters:, **attributes)
-      message = yield if message.nil? && block_given?
+      message = yield if block_given?
       raise ArgumentError, "message or block is required" if message.nil?
 
       log_event = capture_log_event(level, message, parameters, **attributes)

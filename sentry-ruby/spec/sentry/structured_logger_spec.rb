@@ -133,10 +133,10 @@ RSpec.describe Sentry::StructuredLogger do
           expect(log_event[:body]).to eql("Hello world")
         end
 
-        it "prefers the message argument over the block, like ruby Logger" do
-          Sentry.logger.public_send(level, "from argument") { "from block" }
+        it "uses the block over the positional argument, like ruby Logger" do
+          Sentry.logger.public_send(level, "progname") { "from block" }
 
-          expect(sentry_logs.last[:body]).to eql("from argument")
+          expect(sentry_logs.last[:body]).to eql("from block")
         end
 
         it "raises ArgumentError when neither message nor block is given" do
