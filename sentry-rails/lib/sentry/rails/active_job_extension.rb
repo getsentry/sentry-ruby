@@ -41,7 +41,7 @@ module Sentry
           headers = Sentry.get_trace_propagation_headers
           if headers && !headers.empty?
             sentry_data["trace_propagation_headers"] = headers
-            payload = inject_trace_headers(job: job, payload: payload, headers: headers)
+            payload = safely("inject trace headers", fallback: payload) { inject_trace_headers(job: job, payload: payload, headers: headers) }
           end
         end
 
