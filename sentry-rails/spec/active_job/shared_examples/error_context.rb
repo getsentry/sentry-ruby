@@ -58,6 +58,19 @@ RSpec.shared_examples "an ActiveJob backend that attaches job context to error e
 
       expect(last_sentry_event.extra[:arguments]).to eq(["sensitive argument"])
     end
+
+    it "captures the original job error exactly once when an argument is a decimal range", skip: !defined?(::ActiveJob::Serializers::RangeSerializer) do
+      original = RuntimeError.new("boom from decimal range job")
+      job = job_fixture do
+        define_method(:perform) { |_range| raise original }
+      end
+      job.perform_later(1.5..2.5)
+
+      expect { drain }.to raise_error { |error| expect(error).to equal(original) }
+
+      expect(sentry_events.size).to eq(1)
+      expect(sentry_events.first.exception.values.first.value).to include(original.message)
+    end
   end
 
   context "with Rails.error.set_context data attached before the job raises", skip: RAILS_VERSION < 7.0 do
