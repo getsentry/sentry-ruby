@@ -122,6 +122,28 @@ RSpec.describe Sentry::StructuredLogger do
           expect(log_event[:attributes]["sentry.message.parameter.day"]).to eql({ value: "Monday", type: "string" })
         end
 
+        it "logs with block syntax for compatibility with ruby Logger" do
+          Sentry.logger.public_send(level) { "Hello world" }
+
+          expect(sentry_logs).to_not be_empty
+
+          log_event = sentry_logs.last
+
+          expect(log_event[:level]).to eql(level)
+          expect(log_event[:body]).to eql("Hello world")
+        end
+
+        it "uses the block over the positional argument, like ruby Logger" do
+          Sentry.logger.public_send(level, "progname") { "from block" }
+
+          expect(sentry_logs.last[:body]).to eql("from block")
+        end
+
+        it "raises ArgumentError when neither message nor block is given" do
+          expect { Sentry.logger.public_send(level) }
+            .to raise_error(ArgumentError, "message or block is required")
+        end
+
         context "handling of malformed strings" do
           let(:malformed_string_default) do
             Sentry::Utils::EncodingHelper::MALFORMED_STRING
