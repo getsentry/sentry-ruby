@@ -4,6 +4,7 @@ require "set"
 require "sentry/breadcrumb_buffer"
 require "sentry/propagation_context"
 require "sentry/attachment"
+require "sentry/utils/ring_buffer"
 require "etc"
 
 module Sentry
@@ -33,9 +34,6 @@ module Sentry
 
     # Maximum number of feature flag evaluations kept on a scope.
     MAX_FLAGS = 100
-    # Maximum number of feature flag evaluations recorded on a single span.
-    MAX_FLAGS_PER_SPAN = 10
-    SPAN_FLAG_ATTRIBUTE_PREFIX = "flag.evaluation."
 
     attr_reader(*ATTRIBUTES)
 
@@ -159,7 +157,7 @@ module Sentry
       copy.attachments = attachments.dup
       copy.event_processors = event_processors.dup
       copy.attributes = attributes.deep_dup
-      copy.flags = flags.deep_dup
+      copy.flags = flags.dup
       copy
     end
 
@@ -179,7 +177,7 @@ module Sentry
       self.propagation_context = scope.propagation_context
       self.attachments = scope.attachments
       self.attributes = scope.attributes
-      self.flags = scope.flags.deep_dup
+      self.flags = scope.flags.dup
     end
 
     # Updates the scope's data from the given options.
@@ -318,9 +316,7 @@ module Sentry
       return unless result == true || result == false
 
       name = name.to_s
-      flags.reject! { |flag| flag[:flag] == name }
-      flags.shift if flags.size >= MAX_FLAGS
-      flags << { flag: name, result: result }
+      flags.set(name, result)
 
       add_feature_flag_to_span(name, result)
       nil
@@ -420,17 +416,14 @@ module Sentry
     def add_feature_flag_to_span(name, result)
       return unless span
 
-      key = "#{SPAN_FLAG_ATTRIBUTE_PREFIX}#{name}"
-      flag_count = span.data.count { |k, _| k.to_s.start_with?(SPAN_FLAG_ATTRIBUTE_PREFIX) }
-      return if flag_count >= MAX_FLAGS_PER_SPAN && !span.data.key?(key)
-
-      span.set_data(key, result)
+      span.set_flag(name, result)
     end
 
     def apply_flags_to_event(event)
-      return if flags.empty? || event.is_a?(TransactionEvent)
+      return unless event.is_a?(ErrorEvent) && !flags.empty?
 
-      event.contexts[:flags] = { values: flags.map(&:dup) }
+      values = flags.values.map { |flag, result| { flag: flag, result: result } }
+      event.contexts[:flags] = { values: values }
     end
 
     def set_default_value
@@ -448,7 +441,7 @@ module Sentry
       @session = nil
       @attachments = []
       @attributes = {}
-      @flags = []
+      @flags = Utils::RingBuffer.new(MAX_FLAGS)
       generate_propagation_context
       set_new_breadcrumb_buffer
     end

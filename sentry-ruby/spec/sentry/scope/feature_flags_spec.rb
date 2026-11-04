@@ -21,20 +21,20 @@ RSpec.describe Sentry::Scope do
     it "ignores non-boolean results" do
       scope.add_feature_flag("a", "yes")
       scope.add_feature_flag("b", nil)
-      expect(scope.flags).to be_empty
+      expect(scope.flags.values).to be_empty
     end
 
     it "moves a re-evaluated flag to the end with its new result" do
       scope.add_feature_flag("a", true)
       scope.add_feature_flag("b", true)
       scope.add_feature_flag("a", false)
-      expect(scope.flags).to eq([{ flag: "b", result: true }, { flag: "a", result: false }])
+      expect(scope.flags.values).to eq("b" => true, "a" => false)
     end
 
     it "evicts the oldest flag beyond the limit" do
       (Sentry::Scope::MAX_FLAGS + 1).times { |i| scope.add_feature_flag("f#{i}", true) }
-      expect(scope.flags.size).to eq(Sentry::Scope::MAX_FLAGS)
-      expect(scope.flags.first[:flag]).to eq("f1")
+      expect(scope.flags.values.size).to eq(Sentry::Scope::MAX_FLAGS)
+      expect(scope.flags.values.first.first).to eq("f1")
     end
 
     it "does not add flags to transaction events" do
@@ -44,20 +44,27 @@ RSpec.describe Sentry::Scope do
       expect(event.contexts).not_to have_key(:flags)
     end
 
+    it "does not add flags to check-in events" do
+      scope.add_feature_flag("a", true)
+      event = Sentry::CheckInEvent.new(configuration: Sentry.configuration, slug: "foo", status: :ok)
+      scope.apply_to_event(event)
+      expect(event.contexts).not_to have_key(:flags)
+    end
+
     it "is isolated in duplicated and updated scopes and cleared by #clear" do
       scope.add_feature_flag("a", true)
       copy = scope.dup
       copy.add_feature_flag("b", true)
-      copy.flags.first[:result] = false
-      expect(scope.flags).to eq([{ flag: "a", result: true }])
+      copy.add_feature_flag("a", false)
+      expect(scope.flags.values).to eq("a" => true)
 
       updated = described_class.new
       updated.update_from_scope(scope)
       updated.add_feature_flag("b", true)
-      expect(scope.flags).to eq([{ flag: "a", result: true }])
+      expect(scope.flags.values).to eq("a" => true)
 
       scope.clear
-      expect(scope.flags).to be_empty
+      expect(scope.flags.values).to be_empty
     end
 
     context "with an active span" do
@@ -66,14 +73,14 @@ RSpec.describe Sentry::Scope do
 
       it "records flag.evaluation.* span data, capped per span" do
         scope.add_feature_flag("a", true)
-        expect(span.data["flag.evaluation.a"]).to eq(true)
+        expect(span.to_h[:data]["flag.evaluation.a"]).to eq(true)
 
         12.times { |i| scope.add_feature_flag("g#{i}", true) }
-        keys = span.data.keys.select { |k| k.start_with?("flag.evaluation.") }
-        expect(keys.size).to eq(Sentry::Scope::MAX_FLAGS_PER_SPAN)
+        keys = span.to_h[:data].keys.select { |k| k.start_with?("flag.evaluation.") }
+        expect(keys.size).to eq(Sentry::Span::MAX_FLAGS)
 
         scope.add_feature_flag("a", false)
-        expect(span.data["flag.evaluation.a"]).to eq(false)
+        expect(span.to_h[:data]["flag.evaluation.a"]).to eq(true)
       end
     end
   end
@@ -81,7 +88,7 @@ RSpec.describe Sentry::Scope do
   describe "Sentry.add_feature_flag" do
     it "adds to the current scope" do
       Sentry.add_feature_flag("x", true)
-      expect(Sentry.get_current_scope.flags).to eq([{ flag: "x", result: true }])
+      expect(Sentry.get_current_scope.flags.values).to eq("x" => true)
     end
   end
 end
