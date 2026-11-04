@@ -49,6 +49,7 @@ gem "sentry-ruby"
 and depends on the integrations you want to have, you might also want to install these:
 
 ```ruby
+gem "sentry-agents"
 gem "sentry-rails"
 gem "sentry-sidekiq"
 gem "sentry-delayed_job"
@@ -90,6 +91,7 @@ To learn more about sampling transactions, please visit the [official documentat
 ### Integrations
 
 - [Rack](https://docs.sentry.io/platforms/ruby/guides/rack/)
+- [RubyLLM](https://github.com/crmne/ruby_llm)
 - [Rails](https://docs.sentry.io/platforms/ruby/guides/rails/)
 - [Sidekiq](https://docs.sentry.io/platforms/ruby/guides/sidekiq/)
 - [DelayedJob](https://docs.sentry.io/platforms/ruby/guides/delayed_job/)
