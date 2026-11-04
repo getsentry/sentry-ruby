@@ -74,6 +74,19 @@ module Sentry
       end
     end
 
+    class GenAI
+      # @return [Boolean]
+      attr_accessor :inputs
+
+      # @return [Boolean]
+      attr_accessor :outputs
+
+      def initialize(inputs:, outputs:)
+        @inputs = inputs
+        @outputs = outputs
+      end
+    end
+
     # @return [Boolean]
     # @default `true`
     attr_accessor :user_info
@@ -103,6 +116,10 @@ module Sentry
     # @return [GraphQL]
     # @default `document: true, variables: true`
     attr_accessor :graphql
+
+    # @return [GenAI]
+    # @default `inputs: true, outputs: true`
+    attr_accessor :gen_ai
 
     # @return [Boolean]
     # @default `true`
@@ -145,6 +162,8 @@ module Sentry
       data_collection.url_query_params.mode = :off
       data_collection.graphql.document = false
       data_collection.graphql.variables = false
+      data_collection.gen_ai.inputs = false
+      data_collection.gen_ai.outputs = false
       data_collection.database_query_data = false
       data_collection.queues = false
       data_collection
@@ -161,6 +180,7 @@ module Sentry
       self.url_query_params = KeyValueCollection.new(mode: :deny_list, terms: nil)
       @database_query_data = true
       @graphql = GraphQL.new(document: true, variables: true)
+      @gen_ai = GenAI.new(inputs: true, outputs: true)
       @queues = true
       self.stack_frame_variables = false
       @frame_context_lines = 3

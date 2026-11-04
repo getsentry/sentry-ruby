@@ -11,6 +11,17 @@ RSpec.describe Sentry::Configuration do
       expect(configuration.data_collection.user_info).to eq(false)
     end
 
+    it "allows explicit GenAI configuration after send_default_pii backfill" do
+      configuration = Sentry::Configuration.new do |config|
+        config.send_default_pii = false
+        config.data_collection.gen_ai.inputs = true
+        config.data_collection.gen_ai.outputs = false
+      end
+
+      expect(configuration.data_collection.gen_ai.inputs).to eq(true)
+      expect(configuration.data_collection.gen_ai.outputs).to eq(false)
+    end
+
     it "falls back to include_local_variables for stack frame variables" do
       configuration = Sentry::Configuration.new do |config|
         config.include_local_variables = true
