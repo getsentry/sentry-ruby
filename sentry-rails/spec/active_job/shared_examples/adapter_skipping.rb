@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 RSpec.shared_examples "an ActiveJob backend that respects skippable_job_adapters" do
-  it "captures no events when the adapter is in skippable_job_adapters" do
+  it "leaves error reporting to the backend when the adapter is in skippable_job_adapters" do
     Sentry.configuration.rails.skippable_job_adapters = [
       failing_job.queue_adapter.class.to_s
     ]
@@ -11,6 +11,6 @@ RSpec.shared_examples "an ActiveJob backend that respects skippable_job_adapters
       drain
     end.to raise_error(RuntimeError, /boom from failing_job spec/)
 
-    expect(sentry_events).to be_empty
+    expect(sentry_events.size).to eq(skipped_adapter_error_events)
   end
 end

@@ -12,15 +12,7 @@ module Sentry
     extend Sentry::Integrable
 
     register_integration name: "resque", version: Sentry::Resque::VERSION
-
-    if defined?(::Rails::Railtie)
-      class Railtie < ::Rails::Railtie
-        config.after_initialize do
-          next unless Sentry.initialized? && defined?(::Sentry::Rails)
-
-          Sentry.configuration.rails.skippable_job_adapters << "ActiveJob::QueueAdapters::ResqueAdapter"
-        end
-      end
-    end
   end
 end
+
+require "sentry/resque/railtie" if defined?(::Rails::Railtie)
