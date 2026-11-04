@@ -7,6 +7,7 @@ require "sentry/agents/version"
 require "sentry/span/data_conventions"
 require "sentry/agents/ruby_llm/instrumenter"
 require "sentry/agents/ruby_llm/tool_concurrency"
+require "sentry/agents/ruby_llm/agent_runs"
 
 module Sentry
   module Agents
@@ -16,6 +17,7 @@ module Sentry
 
     module RubyLLM
       def self.install(ruby_llm_config = ::RubyLLM.config)
+        AgentRuns.install
         ToolConcurrency.install
         Instrumenter.install(ruby_llm_config)
       end

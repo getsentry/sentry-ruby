@@ -24,6 +24,10 @@ Add the gem to your bundle:
 gem "sentry-agents"
 ```
 
+## Agent runs
+
+`RubyLLM::Agent` runs create `gen_ai.invoke_agent` spans. Nested agent runs are preserved, while calls on the same agent chat are grouped into one run.
+
 ## Workflows
 
 `RubyLLM.workflow` and its steps create pipeline grouping spans. Chat and tool descendants carry `gen_ai.pipeline.name` without being labeled as agent runs.

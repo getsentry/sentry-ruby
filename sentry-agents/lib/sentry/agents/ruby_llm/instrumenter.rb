@@ -102,6 +102,7 @@ module Sentry
         def set_chat_request_data(span, payload)
           span.set_data(Sentry::Span::DataConventions::GEN_AI_OPERATION_NAME, "chat")
           set_pipeline_data(span, payload)
+          set_agent_data(span, payload)
 
           if provider = provider_name(payload[:provider])
             span.set_data(Sentry::Span::DataConventions::GEN_AI_PROVIDER_NAME, provider)
@@ -146,6 +147,7 @@ module Sentry
         def set_tool_request_data(span, payload)
           span.set_data(Sentry::Span::DataConventions::GEN_AI_OPERATION_NAME, "execute_tool")
           set_pipeline_data(span, payload)
+          set_agent_data(span, payload)
 
           if tool_name = payload[:tool_name] || payload[:tool]&.name
             span.set_data(Sentry::Span::DataConventions::GEN_AI_TOOL_NAME, tool_name.to_s)
@@ -161,6 +163,13 @@ module Sentry
         def set_pipeline_data(span, payload)
           if pipeline_name = payload[:workflow_name]
             span.set_data(Sentry::Span::DataConventions::GEN_AI_PIPELINE_NAME, pipeline_name.to_s)
+          end
+        end
+
+        def set_agent_data(span, payload)
+          chat = payload[:chat]
+          if agent_name = chat&.instance_variable_get(:@sentry_agents_agent_name)
+            span.set_data(Sentry::Span::DataConventions::GEN_AI_AGENT_NAME, agent_name.to_s)
           end
         end
 
