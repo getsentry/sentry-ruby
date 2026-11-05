@@ -53,6 +53,18 @@ RSpec.describe Sentry::Redis do
           expect(Sentry.get_current_scope.breadcrumbs.peek.data[:commands]).to eq([{ command: command.first }])
         end
       end
+
+      it "does not record arguments of admin commands" do
+        transaction = Sentry.start_transaction
+        Sentry.get_current_scope.set_span(transaction)
+
+        redis.call("ACL", "SETUSER", "sentry-test-user", ">secret")
+
+        expect(transaction.span_recorder.spans.last.description).to eq("ACL SETUSER")
+        expect(Sentry.get_current_scope.breadcrumbs.peek.data[:commands]).to eq([{ command: "ACL", key: "SETUSER" }])
+      ensure
+        redis.call("ACL", "DELUSER", "sentry-test-user")
+      end
     end
 
     context "config.send_default_pii = true" do
