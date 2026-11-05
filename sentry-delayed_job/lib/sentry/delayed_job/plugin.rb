@@ -63,6 +63,7 @@ module Sentry
 
       def self.generate_contexts(job)
         context = {}
+        collect_arguments = Sentry.configuration.data_collection.queues
 
         context[DELAYED_JOB_CONTEXT_KEY] = {
           id: job.id.to_s,
@@ -74,14 +75,16 @@ module Sentry
           queue: job.queue,
           created_at: job.created_at,
           last_error: job.last_error&.byteslice(0..1000),
-          handler: job.handler&.byteslice(0..1000),
           job_class: compute_job_class(job.payload_object)
         }
+        context[DELAYED_JOB_CONTEXT_KEY][:handler] = job.handler&.byteslice(0..1000) if collect_arguments
 
         if job.payload_object.respond_to?(:job_data)
           context[ACTIVE_JOB_CONTEXT_KEY] = {}
 
           job.payload_object.job_data.each do |key, value|
+            next if key.to_s == "arguments" && !collect_arguments
+
             context[ACTIVE_JOB_CONTEXT_KEY][key.to_sym] = value
           end
         end

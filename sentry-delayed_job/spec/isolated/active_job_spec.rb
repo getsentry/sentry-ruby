@@ -67,7 +67,7 @@ RSpec.describe "ActiveJob jobs on delayed_job with sentry-delayed_job loaded", t
     end
 
     it "should report an error raised before a job runs with the plugin's Active-Job context, without sentry's internal payload data" do
-      Sentry.configuration.data_collection.queues = false
+      Sentry.configuration.data_collection.queues = true
       job = successful_job.set(queue: "events").perform_later("job argument")
       expect(Delayed::Job.order(:id).last.payload_object.job_data).to have_key("_sentry")
       hide_const(job.class.name)
@@ -77,6 +77,22 @@ RSpec.describe "ActiveJob jobs on delayed_job with sentry-delayed_job loaded", t
       context = error_events.first.contexts[:"Active-Job"]
       expect(context).to include(job_class: job.class.name, job_id: job.job_id, arguments: ["job argument"])
       expect(context).not_to have_key(:_sentry)
+      expect(error_events.first.contexts[:"Delayed-Job"][:handler]).to include("job argument")
+    end
+
+    it "should leave the job handler and arguments out of an error raised before a job runs when queue data collection is off" do
+      Sentry.configuration.data_collection.queues = false
+      job = successful_job.set(queue: "events").perform_later("job argument")
+      record_id = Delayed::Job.order(:id).last.id.to_s
+      hide_const(job.class.name)
+
+      work_off
+
+      contexts = error_events.first.contexts
+      expect(contexts[:"Active-Job"]).to include(job_class: job.class.name, job_id: job.job_id, queue_name: "events")
+      expect(contexts[:"Active-Job"]).not_to have_key(:arguments)
+      expect(contexts[:"Delayed-Job"]).to include(id: record_id, queue: "events")
+      expect(contexts[:"Delayed-Job"]).not_to have_key(:handler)
     end
 
     it "includes the job arguments in the Active-Job context only when queue data collection is on" do
