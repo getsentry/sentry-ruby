@@ -45,6 +45,16 @@ module Sentry
 
         private
 
+        def without_arguments(context)
+          return context if Sentry.configuration.data_collection.queues
+
+          super.merge(context.slice("args").transform_values { |args| without_active_job_arguments(args) })
+        end
+
+        def without_active_job_arguments(args)
+          Array(args).grep(Hash).map { |payload| payload.reject { |key, _value| key.to_s == "arguments" } }
+        end
+
         def strip_reserved_keys(value)
           case value
           when Array
