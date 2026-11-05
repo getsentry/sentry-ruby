@@ -60,7 +60,14 @@ RSpec.describe Sentry::Resque do
     Resque::Worker.new(:default)
   end
 
+  class FailedJobWithArguments
+    def self.perform(card_number, cvv)
+      1/0
+    end
+  end
+
   it "sets correct extra/tags context for each job" do
+    Sentry.configuration.data_collection.queues = true
     Resque::Job.create(:default, MessageJob, "report")
 
     process_job(worker)
@@ -139,6 +146,50 @@ RSpec.describe Sentry::Resque do
       expect(event[:tags]).to eq({ "resque.queue" => "default" })
       expect(Sentry.get_current_scope.extra).to eq({})
       expect(Sentry.get_current_scope.tags).to eq({})
+    end
+  end
+
+  context "when a job with arguments failed and transactions are sampled" do
+    let(:transactions) { transport.events.select { |event| event.is_a?(Sentry::TransactionEvent) } }
+    let(:errors) { transport.events.reject { |event| event.is_a?(Sentry::TransactionEvent) } }
+
+    before do
+      perform_basic_setup do |config|
+        config.traces_sample_rate = 1.0
+      end
+    end
+
+    it "should leave the job arguments out of the Resque context when queue data collection is off" do
+      Sentry.configuration.data_collection.queues = false
+      Resque::Job.create(:default, FailedJobWithArguments, "4111111111111111", "123")
+
+      process_job(worker)
+
+      expect(errors.count).to eq(1)
+      expect(transactions.count).to eq(1)
+      [errors.first, transactions.first].each do |event|
+        context = event.to_h.dig(:contexts, :Resque)
+        expect(context).to eq(job_class: "FailedJobWithArguments", queue: "default", worker: worker.to_s)
+      end
+    end
+
+    it "should report the job arguments in the Resque context when queue data collection is on" do
+      Sentry.configuration.data_collection.queues = true
+      Resque::Job.create(:default, FailedJobWithArguments, "4111111111111111", "123")
+
+      process_job(worker)
+
+      expect(errors.count).to eq(1)
+      expect(transactions.count).to eq(1)
+      [errors.first, transactions.first].each do |event|
+        context = event.to_h.dig(:contexts, :Resque)
+        expect(context).to eq(
+          job_class: "FailedJobWithArguments",
+          arguments: ["4111111111111111", "123"],
+          queue: "default",
+          worker: worker.to_s
+        )
+      end
     end
   end
 
@@ -353,6 +404,63 @@ RSpec.describe Sentry::Resque do
         expect(error[:sdk][:name]).to eq("sentry.ruby.resque")
         expect(error[:tags]).to eq("resque.queue" => "default", number: 2)
         expect(error[:contexts][:"Active-Job"]).to include(job_class: "AJFailedJob", queue: "default", worker: worker.to_s)
+      end
+
+      context "when an ActiveJob job with arguments failed" do
+        class AJFailedJobWithArguments < ActiveJob::Base
+          self.queue_adapter = :resque
+
+          def perform(card_number, cvv)
+            1 / 0
+          end
+        end
+
+        before do
+          perform_basic_setup do |config|
+            config.traces_sample_rate = 1.0
+            config.rails.skippable_job_adapters = ["ActiveJob::QueueAdapters::ResqueAdapter"]
+          end
+        end
+
+        let(:job_metadata_keys) do
+          [:job_class, :job_id, :executions, :exception_executions, :locale, :enqueued_at, :queue, :worker]
+        end
+
+        it "should leave the job arguments out of the Active-Job context when queue data collection is off" do
+          Sentry.configuration.data_collection.queues = false
+          job = AJFailedJobWithArguments.perform_later("4111111111111111", "123")
+
+          process_job(worker)
+
+          expect(errors.count).to eq(1)
+          expect(transactions.count).to eq(1)
+          [errors.first, transactions.first].each do |event|
+            context = event.to_h.dig(:contexts, :"Active-Job")
+            expect(context.keys).to match_array(job_metadata_keys)
+            expect(context).to include(job_class: "AJFailedJobWithArguments", job_id: job.job_id, queue: "default", worker: worker.to_s)
+          end
+        end
+
+        it "should report the job arguments in the Active-Job context when queue data collection is on" do
+          Sentry.configuration.data_collection.queues = true
+          job = AJFailedJobWithArguments.perform_later("4111111111111111", "123")
+
+          process_job(worker)
+
+          expect(errors.count).to eq(1)
+          expect(transactions.count).to eq(1)
+          [errors.first, transactions.first].each do |event|
+            context = event.to_h.dig(:contexts, :"Active-Job")
+            expect(context.keys).to match_array(job_metadata_keys + [:arguments])
+            expect(context).to include(
+              job_class: "AJFailedJobWithArguments",
+              job_id: job.job_id,
+              arguments: ["4111111111111111", "123"],
+              queue: "default",
+              worker: worker.to_s
+            )
+          end
+        end
       end
     end
   end if rails_gems
