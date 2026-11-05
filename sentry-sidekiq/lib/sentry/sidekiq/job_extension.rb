@@ -39,7 +39,7 @@ module Sentry
       # @param context [Hash]
       # @return [Hash]
       def error_context(context)
-        ContextFilter.new(context).filtered
+        without_arguments(ContextFilter.new(context).filtered)
       end
 
       # Adds the job as the `sidekiq` context, and its queue, jid, tags and user.
@@ -47,7 +47,7 @@ module Sentry
       # @see Sentry::JobExtensions::Extension#scope_data
       def scope_data(job:, **)
         data = {
-          contexts: { sidekiq: job },
+          contexts: { sidekiq: without_arguments(job) },
           tags: { queue: job["queue"], jid: job["jid"] }.merge(job_tags(job))
         }
         user = job["sentry_user"]
@@ -130,6 +130,25 @@ module Sentry
       end
 
       private
+
+      def without_arguments(context)
+        return context if Sentry.configuration.data_collection.queues
+
+        context.each_with_object({}) do |(key, value), redacted|
+          case key.to_s
+          when "jobstr"
+            next
+          when "args"
+            redacted[key] = active_job_payloads_without_arguments(value) if ActiveJobSupport.handles?(context)
+          else
+            redacted[key] = value
+          end
+        end
+      end
+
+      def active_job_payloads_without_arguments(args)
+        Array(args).grep(Hash).map { |payload| payload.reject { |key, _value| key.to_s == "arguments" } }
+      end
 
       def job_class(job)
         job["class"] if job.is_a?(Hash)
