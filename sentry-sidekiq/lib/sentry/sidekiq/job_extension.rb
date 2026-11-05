@@ -15,6 +15,7 @@ module Sentry
       SIDEKIQ_NAME = "Sidekiq"
       MESSAGING_SYSTEM = "sidekiq"
       ENQUEUED_AT_IN_MILLISECONDS = ::Gem::Version.new(::Sidekiq::VERSION) >= ::Gem::Version.new("8.0.0")
+      ARGUMENT_KEYS = %w[args jobstr].freeze
 
       # @param retry_policy [RetryPolicy]
       # @param failure_reporting [FailureReporting]
@@ -134,20 +135,7 @@ module Sentry
       def without_arguments(context)
         return context if Sentry.configuration.data_collection.queues
 
-        context.each_with_object({}) do |(key, value), redacted|
-          case key.to_s
-          when "jobstr"
-            next
-          when "args"
-            redacted[key] = active_job_payloads_without_arguments(value) if ActiveJobSupport.handles?(context)
-          else
-            redacted[key] = value
-          end
-        end
-      end
-
-      def active_job_payloads_without_arguments(args)
-        Array(args).grep(Hash).map { |payload| payload.reject { |key, _value| key.to_s == "arguments" } }
+        context.reject { |key, _value| ARGUMENT_KEYS.include?(key.to_s) }
       end
 
       def job_class(job)
