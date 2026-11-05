@@ -48,6 +48,8 @@ module Sentry
       return if match.nil?
 
       trace_id, parent_span_id, sampled_flag = match[1..3]
+      return if trace_id.nil?
+
       parent_sampled = sampled_flag.nil? ? nil : sampled_flag != "0"
 
       [trace_id, parent_span_id, parent_sampled]
