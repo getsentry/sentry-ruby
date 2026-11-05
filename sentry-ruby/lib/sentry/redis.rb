@@ -6,10 +6,9 @@ module Sentry
     OP_NAME = "db.redis"
     SPAN_ORIGIN = "auto.db.redis"
     LOGGER_NAME = :redis_logger
-    # Commands that carry credentials from their first argument on. Only the command name is recorded.
+    # Commands that carry credentials from their first argument on.
     SENSITIVE_COMMANDS = %w[AUTH HELLO].freeze
-    # Admin commands whose later arguments can carry credentials, e.g. CONFIG SET requirepass,
-    # ACL SETUSER, MIGRATE ... AUTH, SENTINEL SET ... auth-pass. Arguments are never recorded.
+    # Commands whose later arguments can carry credentials. Arguments are never recorded.
     ARGUMENTLESS_COMMANDS = %w[ACL CONFIG MIGRATE SENTINEL].freeze
 
     def initialize(commands, host, port, db)
