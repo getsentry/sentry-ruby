@@ -53,6 +53,16 @@ RSpec.describe Sentry::Redis do
           expect(Sentry.get_current_scope.breadcrumbs.peek.data[:commands]).to eq([{ command: command.first }])
         end
       end
+
+      it "records only the subcommand of commands that are not allowlisted" do
+        transaction = Sentry.start_transaction
+        Sentry.get_current_scope.set_span(transaction)
+
+        redis.call("CONFIG", "GET", "maxmemory")
+
+        expect(transaction.span_recorder.spans.last.description).to eq("CONFIG GET")
+        expect(Sentry.get_current_scope.breadcrumbs.peek.data[:commands]).to eq([{ command: "CONFIG", key: "GET" }])
+      end
     end
 
     context "config.send_default_pii = true" do

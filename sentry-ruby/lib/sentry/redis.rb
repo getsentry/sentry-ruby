@@ -8,6 +8,10 @@ module Sentry
     LOGGER_NAME = :redis_logger
     # Commands whose arguments carry credentials and must never be recorded.
     SENSITIVE_COMMANDS = %w[AUTH HELLO].freeze
+    # Commands whose arguments may be recorded when database query data collection is enabled.
+    # The command prefixes come from OpenTelemetry's redis-common serializer, which sentry-javascript uses.
+    # Other commands, such as CONFIG SET, ACL SETUSER and MIGRATE, can carry credentials and only record their key.
+    ARGUMENTS_ALLOWLIST = /\A(?:GETSET|LPUSH|MSET|PFA|PSETEX|PUBLISH|RPUSH|SADD|SET|SPUBLISH|XADD|ZADD|HSET|HMSET|LSET|LINSERT|BIT|B[LRZ]|CLIENT|CLUSTER|COMMAND|DECR|DEL|EVAL|EX|FUNCTION|GEO|GET|HINCR|HMGET|HSCAN|INCR|L[TRLM]|MEMORY|P[EFISTU]|RPOP|S[CDIMORSU]|XACK|X[CDGILPRT]|Z[CDILMPRS])/
 
     def initialize(commands, host, port, db)
       @commands, @host, @port, @db = commands, host, port, db
@@ -66,7 +70,7 @@ module Sentry
 
         command_set[:key] = key if Utils::EncodingHelper.valid_utf_8?(key)
 
-        if Sentry.configuration.data_collection.database_query_data
+        if Sentry.configuration.data_collection.database_query_data && ARGUMENTS_ALLOWLIST.match?(command_set[:command])
           command_set[:arguments] = arguments
                                     .select { |a| Utils::EncodingHelper.valid_utf_8?(a) }
                                     .join(" ")
