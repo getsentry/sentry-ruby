@@ -6,6 +6,8 @@ module Sentry
     OP_NAME = "db.redis"
     SPAN_ORIGIN = "auto.db.redis"
     LOGGER_NAME = :redis_logger
+    # Commands whose arguments carry credentials and must never be recorded.
+    SENSITIVE_COMMANDS = %w[AUTH HELLO].freeze
 
     def initialize(commands, host, port, db)
       @commands, @host, @port, @db = commands, host, port, db
@@ -60,6 +62,8 @@ module Sentry
       commands.map do |statement|
         command, key, *arguments = statement
         command_set = { command: command.to_s.upcase }
+        next command_set if SENSITIVE_COMMANDS.include?(command_set[:command])
+
         command_set[:key] = key if Utils::EncodingHelper.valid_utf_8?(key)
 
         if Sentry.configuration.data_collection.database_query_data

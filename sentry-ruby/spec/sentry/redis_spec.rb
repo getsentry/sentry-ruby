@@ -32,6 +32,29 @@ RSpec.describe Sentry::Redis do
       end
     end
 
+    describe "credentials" do
+      before do
+        Sentry.configuration.data_collection.database_query_data = true
+        Sentry.configuration.breadcrumbs_logger = [:redis_logger]
+      end
+
+      # The test Redis has no password, so the default user accepts any password.
+      [
+        ["AUTH", "default", "secret"],
+        ["HELLO", "2", "AUTH", "default", "secret"]
+      ].each do |command|
+        it "does not record #{command.first} arguments" do
+          transaction = Sentry.start_transaction
+          Sentry.get_current_scope.set_span(transaction)
+
+          redis.call(*command)
+
+          expect(transaction.span_recorder.spans.last.description).to eq(command.first)
+          expect(Sentry.get_current_scope.breadcrumbs.peek.data[:commands]).to eq([{ command: command.first }])
+        end
+      end
+    end
+
     context "config.send_default_pii = true" do
       before { Sentry.configuration.send_default_pii = true }
 
