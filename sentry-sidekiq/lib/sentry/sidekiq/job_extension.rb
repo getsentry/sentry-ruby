@@ -15,6 +15,7 @@ module Sentry
       SIDEKIQ_NAME = "Sidekiq"
       MESSAGING_SYSTEM = "sidekiq"
       ENQUEUED_AT_IN_MILLISECONDS = ::Gem::Version.new(::Sidekiq::VERSION) >= ::Gem::Version.new("8.0.0")
+      ARGUMENT_KEYS = %w[args jobstr].freeze
 
       # @param retry_policy [RetryPolicy]
       # @param failure_reporting [FailureReporting]
@@ -39,7 +40,7 @@ module Sentry
       # @param context [Hash]
       # @return [Hash]
       def error_context(context)
-        ContextFilter.new(context).filtered
+        without_arguments(ContextFilter.new(context).filtered)
       end
 
       # Adds the job as the `sidekiq` context, and its queue, jid, tags and user.
@@ -47,7 +48,7 @@ module Sentry
       # @see Sentry::JobExtensions::Extension#scope_data
       def scope_data(job:, **)
         data = {
-          contexts: { sidekiq: job },
+          contexts: { sidekiq: without_arguments(job) },
           tags: { queue: job["queue"], jid: job["jid"] }.merge(job_tags(job))
         }
         user = job["sentry_user"]
@@ -130,6 +131,12 @@ module Sentry
       end
 
       private
+
+      def without_arguments(context)
+        return context if Sentry.configuration.data_collection.queues
+
+        context.reject { |key, _value| ARGUMENT_KEYS.include?(key.to_s) }
+      end
 
       def job_class(job)
         job["class"] if job.is_a?(Hash)

@@ -127,6 +127,7 @@ RSpec.describe Sentry::Sidekiq::SentryContextServerMiddleware do
     end
 
     it "sets the job exactly as Sidekiq delivered it as the sidekiq context of the transaction" do
+      Sentry.configuration.data_collection.queues = true
       job = { "jid" => "123456", "class" => "HappyWorker", "args" => [{ "_aj_symbol_keys" => ["id"], "id" => 1 }] }
 
       described_class.new.call(HappyWorker.new, job, "default") { }
