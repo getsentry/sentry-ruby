@@ -36,12 +36,14 @@ module Sentry
       # @param payload [Hash]
       # @return [Hash]
       def prepare_payload(job:, payload:)
+        prepared = payload
         sentry_data = {}
         if Sentry.configuration.rails.active_job_propagate_traces
           headers = Sentry.get_trace_propagation_headers
           if headers && !headers.empty?
             sentry_data["trace_propagation_headers"] = headers
-            payload = safely("inject trace headers", fallback: payload) { inject_trace_headers(job: job, payload: payload, headers: headers) }
+            injected = safely("inject trace headers", fallback: payload) { inject_trace_headers(job: job, payload: payload, headers: headers) }
+            prepared = injected if injected.is_a?(Hash)
           end
         end
 
@@ -50,7 +52,7 @@ module Sentry
           sentry_data["user"] = user unless user.empty?
         end
 
-        sentry_data.empty? ? payload : payload.merge(ActiveJobExtensions::SENTRY_PAYLOAD_KEY => sentry_data)
+        sentry_data.empty? ? prepared : prepared.merge(ActiveJobExtensions::SENTRY_PAYLOAD_KEY => sentry_data)
       rescue StandardError => e
         Sentry.sdk_logger&.error("sentry-rails: failed to inject _sentry payload: #{e.class}: #{e.message}\n  #{Array(e.backtrace).first(5).join("\n  ")}")
         payload
