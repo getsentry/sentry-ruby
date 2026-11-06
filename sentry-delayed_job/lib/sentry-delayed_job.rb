@@ -12,15 +12,7 @@ module Sentry
     extend Sentry::Integrable
 
     register_integration name: "delayed_job", version: Sentry::DelayedJob::VERSION
-
-    if defined?(::Rails::Railtie)
-      class Railtie < ::Rails::Railtie
-        config.after_initialize do
-          next unless Sentry.initialized? && defined?(::Sentry::Rails)
-
-          Sentry.configuration.rails.skippable_job_adapters << "ActiveJob::QueueAdapters::DelayedJobAdapter"
-        end
-      end
-    end
   end
 end
+
+require "sentry/delayed_job/railtie" if defined?(::Rails::Railtie)
