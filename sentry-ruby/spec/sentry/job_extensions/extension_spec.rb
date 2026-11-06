@@ -398,6 +398,18 @@ RSpec.describe Sentry::JobExtensions::Extension do
       expect(event.extra).to include(attempts: 5)
     end
 
+    it "lets the caller's contexts, tags and extra win over values already on the scope" do
+      scope.set_contexts(job: { "id" => "scope" })
+      scope.set_tags(queue: "default")
+      scope.set_extras(size: 12)
+
+      event = capture(error_extension, contexts: { job: { "id" => "caller" } }, tags: { queue: "caller" }, extra: { size: 5 })
+
+      expect(event.contexts[:job]).to eq("id" => "caller")
+      expect(event.tags).to include(queue: "caller")
+      expect(event.extra).to include(size: 5)
+    end
+
     it "captures the exception with the caller's data through its own integration when a hook raises" do
       failing = build_extension(error_data: ->(**) { raise "broken error data" })
 
@@ -422,6 +434,14 @@ RSpec.describe Sentry::JobExtensions::Extension do
 
       expect(event.exception.values.last.type).to eq("RuntimeError")
       expect(event.tags).to include(job_id: "caller")
+    end
+
+    it "captures nothing and raises nothing when the SDK is not initialized" do
+      reset_sentry_globals!
+
+      result = error_extension.capture_exception(job: job, exception: exception, tags: { job_id: "caller" })
+
+      expect(result).to be_nil
     end
   end
 end
