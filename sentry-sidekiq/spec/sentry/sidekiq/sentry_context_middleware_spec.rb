@@ -444,6 +444,27 @@ RSpec.describe Sentry::Sidekiq::SentryContextClientMiddleware do
       end
     end
 
+    context "when the extension returns no payload from inject_trace_headers" do
+      let(:extension) do
+        Class.new(Sentry::Sidekiq::JobExtension) do
+          def inject_trace_headers(**)
+            nil
+          end
+        end.new(name: :nil_payload)
+      end
+
+      it "enqueues the job unchanged" do
+        middleware = described_class.new(extension)
+        job = { "jid" => "123456", "class" => "HappyWorker", "args" => [], "queue" => "default" }
+        enqueued = 0
+
+        middleware.call(HappyWorker, job, "default", nil) { enqueued += 1 }
+
+        expect(enqueued).to eq(1)
+        expect(job).to include("jid" => "123456", "class" => "HappyWorker", "args" => [])
+      end
+    end
+
     it "does not propagate headers with propagate_traces = false" do
       perform_basic_setup do |config|
         config.traces_sample_rate = 1.0

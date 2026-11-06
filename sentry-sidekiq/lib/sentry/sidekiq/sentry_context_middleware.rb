@@ -66,7 +66,8 @@ module Sentry
 
         if Sentry.configuration.sidekiq.propagate_traces
           headers = Sentry.get_trace_propagation_headers
-          job.replace(@extension.safely("inject trace headers", fallback: job) { @extension.inject_trace_headers(job: job, payload: job, headers: headers) })
+          injected = @extension.safely("inject trace headers", fallback: job) { @extension.inject_trace_headers(job: job, payload: job, headers: headers) }
+          job.replace(injected) if injected.is_a?(Hash)
         end
 
         @extension.instrument_enqueue(job: job.merge("queue" => queue)) { yield }
