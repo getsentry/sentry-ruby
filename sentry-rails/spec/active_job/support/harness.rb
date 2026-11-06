@@ -27,6 +27,12 @@ RSpec.shared_context "active_job backend harness" do |adapter:|
     end
   end
 
+  let(:greeting_job) do
+    job_fixture do
+      def perform(_greeting); end
+    end
+  end
+
   let(:failing_job) do
     job_fixture do
       def perform(*_args, **_kwargs)
