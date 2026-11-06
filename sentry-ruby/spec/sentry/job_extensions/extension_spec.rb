@@ -246,6 +246,12 @@ RSpec.describe Sentry::JobExtensions::Extension do
       expect(event.contexts.dig(:trace, :data).values).not_to include("value")
     end
 
+    it "records a messaging attribute the extension supplies with a nil value" do
+      event = finished_job(build_extension(messaging_data: ->(**) { { system: "backend", retry_count: nil } }))
+
+      expect(event.contexts.dig(:trace, :data)).to include("messaging.system" => "backend", "messaging.message.retry.count" => nil)
+    end
+
     it "keeps the transaction and logs the failure when a hook raises" do
       failing = build_extension(
         scope_data: ->(**) { raise "broken scope data" },
