@@ -128,6 +128,7 @@ RSpec.describe 'Sentry::Rack::CaptureExceptions', when: :rack_available? do
 
           expect(transaction.type).to eq("transaction")
           expect(transaction.contexts.dig(:trace, :trace_id)).to eq(context_in_app.trace_id)
+          expect(transaction.contexts.dig(:trace, :span_id)).to eq(context_in_app.span_id)
           expect(transaction.contexts.dig(:trace, :parent_span_id)).to be_nil
         end
       end
