@@ -154,6 +154,7 @@ module Sentry
       def set_chat_request_data(span, payload)
         safe_set_data(span, "gen_ai.operation.name", "chat")
         set_pipeline_data(span, payload)
+        set_agent_data(span, payload)
         set_data_if_present(span, "gen_ai.provider.name", string_value(payload[:provider]))
         set_data_if_present(span, "gen_ai.request.model", string_value(payload[:model]))
         set_data_if_present(span, "gen_ai.request.temperature", payload[:temperature])
@@ -171,6 +172,7 @@ module Sentry
       def set_tool_request_data(span, payload)
         safe_set_data(span, "gen_ai.operation.name", "execute_tool")
         set_pipeline_data(span, payload)
+        set_agent_data(span, payload)
         set_data_if_present(span, "gen_ai.tool.name", string_value(payload[:tool_name] || Serializer.value(payload[:tool], :name)))
         return unless collect_inputs?
 
@@ -187,6 +189,12 @@ module Sentry
 
       def set_pipeline_data(span, payload)
         set_data_if_present(span, "gen_ai.pipeline.name", string_value(payload[:workflow_name]))
+      end
+
+      def set_agent_data(span, payload)
+        chat = payload[:chat]
+        agent_name = chat&.instance_variable_get(:@sentry_agents_agent_name)
+        set_data_if_present(span, "gen_ai.agent.name", string_value(agent_name))
       end
 
       def set_response_data(span, payload, operation)
