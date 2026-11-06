@@ -12,6 +12,8 @@ module Sentry
         next unless defined?(::Sentry::Rails)
 
         Sentry::Configuration.after(:initialize) { rails.skippable_job_adapters << ActiveJobSupport::ACTIVE_JOB_ADAPTER }
+        # The callback only covers configurations created from here on, so an app that
+        # initialized Sentry earlier gets the adapter added to its current configuration.
         Sentry.configuration.rails.skippable_job_adapters << ActiveJobSupport::ACTIVE_JOB_ADAPTER if Sentry.initialized?
       end
 
