@@ -1,13 +1,26 @@
 # frozen_string_literal: true
 
 require "bundler/gem_tasks"
-require_relative "../lib/sentry/test/rake_tasks"
+require "rspec/core/rake_task"
 
-Sentry::Test::RakeTasks.define_spec_tasks(
-  spec_pattern: "spec/sentry/**/*_spec.rb",
-  spec_rspec_opts: "--order rand --format progress",
-  isolated_specs_pattern: "spec/isolated/**/*_spec.rb",
-  isolated_rspec_opts: "--format progress"
-)
+RSpec::Core::RakeTask.new(:spec) do |task|
+  task.pattern = "spec/sentry/**/*_spec.rb"
+  task.rspec_opts = "--order rand --format progress"
+end
+
+namespace :spec do
+  isolated_tasks = Dir["spec/isolated/**/*_spec.rb"].sort.map do |file|
+    task_name = "isolated:#{file.delete_prefix("spec/isolated/").delete_suffix("_spec.rb")}"
+
+    RSpec::Core::RakeTask.new(task_name) do |task|
+      task.pattern = file
+      task.rspec_opts = "--format progress"
+    end
+
+    task_name
+  end
+
+  task isolated: isolated_tasks
+end
 
 task default: [:spec, :"spec:isolated"]
