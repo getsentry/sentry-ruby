@@ -28,6 +28,7 @@ jobs:
       matrix:
         include:
           - gem: sentry-ruby
+          - gem: sentry-agents
           - gem: sentry-rails
             sqlite: true
             imagemagick: true

@@ -1,0 +1,15 @@
+#!/usr/bin/env bash
+
+# Thin wrapper so you can run this gem's specs from inside its own directory:
+# forwards to the repo-root bin/test scoped to this gem (--gem <thisgem>). All
+# args pass through, so spec paths and flags work as documented there.
+#
+#   bin/test                          # auto-pick the newest installed Ruby cell
+#   bin/test spec/.../foo_spec.rb     # forward args to rspec
+#   bin/test --cell <path>            # pin an exact cell
+#   bin/test --rake                   # run `bundle exec rake` like CI
+#
+# See `../../bin/test --help` for the full interface.
+set -euo pipefail
+gem_dir="$(cd "$(dirname "$0")/.." && pwd)"
+exec "$(dirname "$gem_dir")/bin/test" --gem "$(basename "$gem_dir")" "$@"
