@@ -19,6 +19,9 @@ module Sentry
         retry_count: Span::DataConventions::MESSAGING_MESSAGE_RETRY_COUNT
       }.freeze
 
+      EMPTY_ERROR_DATA = { contexts: {}.freeze, tags: {}.freeze, extra: {}.freeze }.freeze
+      private_constant :EMPTY_ERROR_DATA
+
       # The extension's name, used in SDK log messages.
       # @return [Symbol]
       attr_reader :name
@@ -95,7 +98,9 @@ module Sentry
       # @param exception [Exception]
       # @return [Event, nil]
       def capture_exception(job:, exception:, contexts: {}, tags: {}, extra: {}, **context)
-        data = safely("collect the error data", fallback: {}) { normalized_error_data(error_data(job: job, exception: exception, **context)) }
+        return unless Sentry.initialized?
+
+        data = safely("collect the error data", fallback: EMPTY_ERROR_DATA) { normalized_error_data(error_data(job: job, exception: exception, **context)) }
         capturing_integration = safely("pick the capturing integration", fallback: @integration) { integration(job: job, **context) }
 
         capturing_integration.capture_exception(exception, **merged_error_data(data, contexts: contexts, tags: tags, extra: extra))
@@ -289,17 +294,34 @@ module Sentry
         }
       end
 
+      # Builds the capture options so that the caller's contexts, tags and extra
+      # take precedence over the scope's, and the scope's over the extension's.
+      #
+      # Every value passed to capture_exception becomes event data, and
+      # Scope#apply_to_event lets event data beat scope data. It also merges
+      # contexts by name, so an event context replaces the scope context of the
+      # same name entirely. The extension's tags and extra therefore leave out
+      # keys the scope already has, and each extension context absorbs the scope
+      # context of the same name before the caller's values are merged on top.
       def merged_error_data(data, contexts:, tags:, extra:)
         scope = Sentry.get_current_scope
 
-        merged_contexts = data.fetch(:contexts, {}).to_h { |context_name, context| [context_name, context.merge(scope.contexts.fetch(context_name, {}))] }.merge(contexts)
+        merged_contexts = contexts_with_scope_values(data[:contexts], scope.contexts).merge(contexts)
         options = {
-          extra: data.fetch(:extra, {}).reject { |key, _value| scope.extra.key?(key) }.merge(extra),
-          tags: data.fetch(:tags, {}).reject { |key, _value| scope.tags.key?(key) }.merge(tags),
+          extra: without_scope_keys(data[:extra], scope.extra).merge(extra),
+          tags: without_scope_keys(data[:tags], scope.tags).merge(tags),
           hint: { background: false }
         }
         options[:contexts] = merged_contexts unless merged_contexts.empty?
         options
+      end
+
+      def without_scope_keys(values, scope_values)
+        values.reject { |key, _value| scope_values.key?(key) }
+      end
+
+      def contexts_with_scope_values(contexts, scope_contexts)
+        contexts.to_h { |name, context| [name, context.merge(scope_contexts.fetch(name, {}))] }
       end
 
       def log_failure(context, error)
