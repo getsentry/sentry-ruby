@@ -436,6 +436,21 @@ RSpec.describe "Sentry + ActiveJob with a registered job extension", type: :job 
         expect(sentry_data["trace_propagation_headers"]).to include("sentry-trace")
         expect(sentry_data["user"]).to eq("id" => "web-user")
       end
+
+      it "enqueues the job with the trace headers and user when the extension returns no payload" do
+        register_extension do
+          def inject_trace_headers(**)
+            nil
+          end
+        end
+        Sentry.set_user(id: "web-user")
+
+        within_parent_transaction { successful_job.perform_later }
+
+        sentry_data = last_enqueued_payload["_sentry"]
+        expect(sentry_data["trace_propagation_headers"]).to include("sentry-trace")
+        expect(sentry_data["user"]).to eq("id" => "web-user")
+      end
     end
 
     context "when the job carries no _sentry trace headers" do
