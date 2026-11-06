@@ -58,7 +58,7 @@ module Sentry
         event.tags = tags.merge(event.tags)
         event.user = user.merge(event.user)
         event.extra = extra.merge(event.extra)
-        event.contexts = contexts.merge(event.contexts)
+        event.contexts = { runtime: self.class.runtime_context }.merge(contexts).merge(event.contexts)
         event.transaction = transaction_name if transaction_name
         event.transaction_info = { source: transaction_source } if transaction_source
         event.fingerprint = fingerprint
@@ -427,7 +427,7 @@ module Sentry
     end
 
     def set_default_value
-      @contexts = { os: self.class.os_context, runtime: self.class.runtime_context }
+      @contexts = { os: self.class.os_context }
       @extra = {}
       @tags = {}
       @user = {}
@@ -468,10 +468,7 @@ module Sentry
 
       # @return [Hash]
       def runtime_context
-        @runtime_context ||= {
-          name: RbConfig::CONFIG["ruby_install_name"],
-          version: RUBY_DESCRIPTION || Sentry.sys_command("ruby -v")
-        }
+        { name: RbConfig::CONFIG["ruby_install_name"], version: RUBY_DESCRIPTION }
       end
 
       # Returns the global event processors array.
