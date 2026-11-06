@@ -19,6 +19,9 @@ module Sentry
         retry_count: Span::DataConventions::MESSAGING_MESSAGE_RETRY_COUNT
       }.freeze
 
+      EMPTY_HASH = {}.freeze
+      private_constant :EMPTY_HASH
+
       EMPTY_ERROR_DATA = { contexts: {}.freeze, tags: {}.freeze, extra: {}.freeze }.freeze
       private_constant :EMPTY_ERROR_DATA
 
@@ -51,7 +54,7 @@ module Sentry
           if span
             span.set_description(safely("describe the producer span") { publish_description(job: job, **context) })
             span.set_origin(safely("set the producer span origin", fallback: @origin) { publish_span_origin(job: job, **context) })
-            set_messaging_data(span, safely("collect the producer messaging data", fallback: {}) { Hash(publish_messaging_data(job: job, **context)) })
+            set_messaging_data(span, hook_hash("collect the producer messaging data") { publish_messaging_data(job: job, **context) })
           end
 
           enqueue.call
@@ -65,18 +68,18 @@ module Sentry
       # @param job [Object]
       # @return [Transaction, nil]
       def start_job(scope:, job:, **context)
-        apply_scope_data(scope, safely("collect the scope data", fallback: {}) { Hash(scope_data(job: job, **context)) })
+        apply_scope_data(scope, hook_hash("collect the scope data") { scope_data(job: job, **context) })
 
         job_name = safely("name the transaction") { transaction_name(job: job, **context) }
         scope.set_transaction_name(job_name, source: :task) if job_name
 
-        trace_headers = safely("extract trace headers", fallback: {}) { Hash(extract_trace_headers(job: job, **context)) }
+        trace_headers = hook_hash("extract trace headers") { extract_trace_headers(job: job, **context) }
         origin = safely("set the transaction origin", fallback: @origin) { span_origin(job: job, **context) }
         transaction = start_transaction(scope, trace_headers, origin)
         return unless transaction
 
         scope.set_span(transaction)
-        set_messaging_data(transaction, safely("collect the messaging data", fallback: {}) { Hash(messaging_data(job: job, **context)) })
+        set_messaging_data(transaction, hook_hash("collect the messaging data") { messaging_data(job: job, **context) })
         transaction
       end
 
@@ -256,6 +259,13 @@ module Sentry
 
       private
 
+      def hook_hash(description)
+        safely(description, fallback: EMPTY_HASH) do
+          value = yield
+          value.nil? ? EMPTY_HASH : Hash(value)
+        end
+      end
+
       def start_transaction(scope, trace_headers, origin)
         options = {
           name: scope.transaction_name,
@@ -279,8 +289,8 @@ module Sentry
       end
 
       def set_messaging_data(span, data)
-        data.slice(*MESSAGING_DATA_ATTRIBUTES.keys).each do |key, value|
-          span.set_data(MESSAGING_DATA_ATTRIBUTES[key], value)
+        MESSAGING_DATA_ATTRIBUTES.each do |key, attribute|
+          span.set_data(attribute, data[key]) if data.key?(key)
         end
       end
 
