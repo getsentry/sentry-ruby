@@ -56,6 +56,17 @@ RSpec.describe Sentry::Sidekiq::SentryContextServerMiddleware do
     expect(event.contexts.dig(:trace, :trace_id)).not_to eq(worker_trace_id)
   end
 
+  it "starts a new trace for a job with empty trace propagation headers" do
+    perform_basic_setup
+    worker_trace_id = Sentry.get_main_hub.current_scope.propagation_context.trace_id
+
+    execute_worker(processor, SadWorker, trace_propagation_headers: {})
+
+    event = transport.events.last
+    expect(event.contexts.dig(:trace, :trace_id)).to be_a(String)
+    expect(event.contexts.dig(:trace, :trace_id)).not_to eq(worker_trace_id)
+  end
+
   it "continues the trace from trace propagation headers when tracing is disabled" do
     perform_basic_setup
     trace_id = "a" * 32
