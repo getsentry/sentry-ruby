@@ -17,7 +17,6 @@ RSpec.describe Sentry::Scope do
     it "contains correct defaults" do
       expect(subject.breadcrumbs).to be_a(Sentry::BreadcrumbBuffer)
       expect(subject.contexts[:os].keys).to match_array([:name, :version, :build, :kernel_version, :machine])
-      expect(subject.contexts.dig(:runtime, :version)).to match(/ruby/)
       expect(subject.extra).to eq({})
       expect(subject.tags).to eq({})
       expect(subject.user).to eq({})
@@ -48,7 +47,6 @@ RSpec.describe Sentry::Scope do
 
       expect(subject.breadcrumbs.to_h).to eq({ values: [] })
       expect(subject.contexts[:os].keys).to match_array([:name, :version, :build, :kernel_version, :machine])
-      expect(subject.contexts.dig(:runtime, :version)).to match(/ruby/)
       expect(subject.extra).to eq({})
       expect(subject.tags).to eq({})
       expect(subject.user).to eq({})
@@ -150,7 +148,6 @@ RSpec.describe Sentry::Scope do
       expect(subject.object_id).to eq(scope_id)
       expect(subject.breadcrumbs).to be_a(Sentry::BreadcrumbBuffer)
       expect(subject.contexts[:os].keys).to match_array([:name, :version, :build, :kernel_version, :machine])
-      expect(subject.contexts.dig(:runtime, :version)).to match(/ruby/)
       expect(subject.extra).to eq({})
       expect(subject.tags).to eq({})
       expect(subject.user).to eq({})
@@ -335,6 +332,13 @@ RSpec.describe Sentry::Scope do
       expect(event.user).to eq({ id: 2 })
       expect(event.extra[:additional_info]).to eq("nothing")
       expect(event.contexts[:os]).to eq(nil)
+    end
+
+    it "doesn't override a runtime context set on the scope" do
+      subject.set_context(:runtime, { name: "custom", version: "1.0" })
+
+      subject.apply_to_event(event)
+      expect(event.contexts[:runtime]).to eq({ name: "custom", version: "1.0" })
     end
 
     it "applies event processors to the event" do
