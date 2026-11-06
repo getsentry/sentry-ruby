@@ -16,7 +16,8 @@ module Sentry
         message_id: Span::DataConventions::MESSAGING_MESSAGE_ID,
         destination: Span::DataConventions::MESSAGING_DESTINATION_NAME,
         receive_latency: Span::DataConventions::MESSAGING_MESSAGE_RECEIVE_LATENCY,
-        retry_count: Span::DataConventions::MESSAGING_MESSAGE_RETRY_COUNT
+        retry_count: Span::DataConventions::MESSAGING_MESSAGE_RETRY_COUNT,
+        body_size: Span::DataConventions::MESSAGING_MESSAGE_BODY_SIZE
       }.freeze
 
       EMPTY_HASH = {}.freeze
@@ -202,7 +203,7 @@ module Sentry
       #
       # @param job [Object]
       # @return [Hash] with optional `:system`, `:message_id`, `:destination`,
-      #   `:receive_latency` and `:retry_count`
+      #   `:receive_latency`, `:retry_count` and `:body_size`
       def messaging_data(job:, **)
         {}
       end
