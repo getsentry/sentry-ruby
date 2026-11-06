@@ -24,8 +24,8 @@ module Sentry
 
         Sentry.clone_hub_to_current_thread
         scope = Sentry.get_current_scope
-        scope.generate_propagation_context
         extension = Sentry::Sidekiq.job_extension_for(sidekiq_job, default: @extension)
+        scope.generate_propagation_context unless continues_trace?(extension, sidekiq_job)
         transaction = extension.start_job(scope: scope, job: sidekiq_job)
 
         begin
@@ -39,6 +39,12 @@ module Sentry
         # don't need to use ensure here
         # if the job failed, we need to keep the scope for error handler. and the scope will be cleared there
         scope.clear
+      end
+
+      private
+
+      def continues_trace?(extension, job)
+        extension.safely("extract trace headers", fallback: false) { !Hash(extension.extract_trace_headers(job: job)).empty? }
       end
     end
 
