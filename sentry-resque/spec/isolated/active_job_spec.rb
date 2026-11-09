@@ -86,6 +86,21 @@ RSpec.describe "ActiveJob jobs on Resque with sentry-resque loaded", type: :job 
       end
     end
 
+    context "with Resque.inline = true" do
+      around do |example|
+        Resque.inline = true
+        example.run
+      ensure
+        Resque.inline = false
+      end
+
+      it "reports an inline job once, in one consumer transaction" do
+        successful_job.set(queue: "events").perform_later
+
+        expect(transactions.map { |event| event.contexts.dig(:trace, :op) }).to eq(["queue.process"])
+      end
+    end
+
     it "should keep recording plain Resque jobs in a queue.resque transaction" do
       plain_job = Class.new { def self.perform; end }
       stub_const("PlainResqueJob", plain_job)

@@ -20,7 +20,7 @@ module Sentry
       # @param payload [Hash]
       # @return [Boolean]
       def self.handles?(payload)
-        payload.is_a?(Hash) && payload["class"] == ACTIVE_JOB_WRAPPER
+        payload.is_a?(Hash) && payload["class"].to_s == ACTIVE_JOB_WRAPPER
       end
 
       # Prepended to {SentryReporter} when sentry-rails reports ActiveJob jobs on
