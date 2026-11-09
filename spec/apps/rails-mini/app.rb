@@ -4,6 +4,17 @@ require "bundler/setup"
 
 Bundler.require
 
+BACKEND_GEM = ENV.fetch("SENTRY_E2E_BACKEND_GEM", "reporting").to_s.downcase
+unless %w[reporting opted_out not_installed].include?(BACKEND_GEM)
+  raise "Unsupported backend gem mode: #{BACKEND_GEM}"
+end
+
+unless BACKEND_GEM == "not_installed"
+  require "sentry-sidekiq"
+  require "sentry-resque"
+  require "sentry-delayed_job"
+end
+
 ENV["RAILS_ENV"] = "development"
 ENV["DATABASE_URL"] = "sqlite3:tmp/rails_mini_development.sqlite3?timeout=5000"
 
@@ -73,6 +84,7 @@ class RailsMiniApp < Rails::Application
       config.transport.transport_class = Sentry::DebugTransport
       config.sdk_debug_transport_log_file = debug_log_path.join("sentry_debug_events.log")
       config.background_worker_threads = 0
+      config.rails.skippable_job_adapters.clear if BACKEND_GEM == "opted_out"
 
       config.structured_logging.logger_class = Sentry::DebugStructuredLogger
       config.structured_logging.file_path = debug_log_path.join("sentry_e2e_tests.log")

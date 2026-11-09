@@ -15,6 +15,9 @@ gem 'json', '< 3'
 
 gem 'sentry-ruby', path: '../../..'
 gem 'sentry-rails', path: '../../..'
+gem 'sentry-sidekiq', path: '../../..', require: false
+gem 'sentry-resque', path: '../../..', require: false
+gem 'sentry-delayed_job', path: '../../..', require: false
 gem 'sidekiq'
 gem 'resque'
 gem 'delayed_job_active_record'
