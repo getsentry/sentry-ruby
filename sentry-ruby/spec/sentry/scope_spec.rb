@@ -341,6 +341,13 @@ RSpec.describe Sentry::Scope do
       expect(event.contexts[:runtime]).to eq({ name: "custom", version: "1.0" })
     end
 
+    it "merges extra runtime context into the default one" do
+      subject.set_context(:runtime, { build: "custom" })
+
+      subject.apply_to_event(event)
+      expect(event.contexts[:runtime]).to include(name: "ruby", version: RUBY_DESCRIPTION, build: "custom")
+    end
+
     it "applies event processors to the event" do
       subject.add_event_processor do |event, hint|
         event.tags = { processed: true }

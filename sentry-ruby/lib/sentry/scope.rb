@@ -58,7 +58,8 @@ module Sentry
         event.tags = tags.merge(event.tags)
         event.user = user.merge(event.user)
         event.extra = extra.merge(event.extra)
-        event.contexts = { runtime: self.class.runtime_context }.merge(contexts).merge(event.contexts)
+        runtime = self.class.runtime_context.merge(contexts.fetch(:runtime, {}))
+        event.contexts = contexts.merge(runtime: runtime).merge(event.contexts)
         event.transaction = transaction_name if transaction_name
         event.transaction_info = { source: transaction_source } if transaction_source
         event.fingerprint = fingerprint
