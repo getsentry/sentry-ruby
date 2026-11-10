@@ -21,6 +21,16 @@ module Sentry
         false
       end
 
+      # Identifies the message by its Sidekiq jid, as the `queue.publish` span
+      # recorded by {SentryContextClientMiddleware} does.
+      #
+      # @see Sentry::JobExtensions::Extension#messaging_data
+      def messaging_data(job:, **context)
+        data = super
+        data[:message_id] = job.provider_job_id if job.provider_job_id
+        data
+      end
+
       # Names the transaction `Sidekiq/<ActiveJob class>`.
       #
       # @see Sentry::JobExtensions::Extension#transaction_name

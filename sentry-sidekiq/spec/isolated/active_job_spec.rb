@@ -182,6 +182,20 @@ RSpec.describe "ActiveJob jobs on Sidekiq when the Sidekiq adapter is not skippa
     expect(transaction.contexts[:trace]).to include(trace_id: parent.trace_id)
   end
 
+  it "gives the consumer transaction the message id of the job's queue.publish span" do
+    parent = Sentry.start_transaction(name: "enqueuer", op: "test")
+    Sentry.get_current_scope.set_span(parent)
+    message = enqueued_message(succeeding_job)
+    parent.finish
+    Sentry.get_current_scope.clear
+
+    publish_span = parent.span_recorder.spans.find { |span| span.op == "queue.publish" }
+    transaction = consumer_transactions(deliver(message)).first
+
+    expect(publish_span.data["messaging.message.id"]).to eq(message["jid"])
+    expect(transaction.contexts.dig(:trace, :data, "messaging.message.id")).to eq(publish_span.data["messaging.message.id"])
+  end
+
   it "keeps reporting plain Sidekiq workers through sentry-sidekiq" do
     transport.events.clear
 
