@@ -32,8 +32,6 @@ mise.toml
 
 vendor/gems
 
-sentry-rails/Gemfile-*.lock
-
 sentry-yabeda/.DS_Store
 sentry-yabeda/.rspec_status
 sentry-yabeda/Gemfile-*.lock
