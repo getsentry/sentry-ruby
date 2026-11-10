@@ -29,6 +29,8 @@ require "time"
 redis_url = ENV.fetch("REDIS_URL", "redis://localhost:6379")
 Resque.redis = redis_url if defined?(Resque)
 
+Delayed::Worker.max_attempts = 1 if defined?(Delayed::Worker)
+
 class RailsMiniApp < Rails::Application
   config.hosts = nil
   config.secret_key_base = "test_secret_key_base_for_rails_mini_app"
@@ -142,6 +144,7 @@ end
 
 class FailingJob < ApplicationJob
   queue_as :default
+  sidekiq_options retry: false if respond_to?(:sidekiq_options)
 
   def perform(should_fail = true)
     Rails.logger.info("FailingJob started")
