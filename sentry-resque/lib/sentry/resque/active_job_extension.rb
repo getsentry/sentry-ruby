@@ -42,14 +42,15 @@ module Sentry
       # @see Sentry::JobExtensions::Extension#messaging_data
       def messaging_data(job:, **)
         job_data = job._sentry_job_data
-        {
+        data = {
           system: MESSAGING_SYSTEM,
           message_id: job.job_id,
           destination: job.queue_name,
           retry_count: (job.executions.to_i if job.respond_to?(:executions)),
-          body_size: body_size(job_data),
           receive_latency: Sentry::Utils::Latency.milliseconds_since(job_data&.[]("enqueued_at"))
-        }.compact
+        }
+        data[:body_size] = body_size(job_data) if Sentry.get_current_scope.get_span&.sampled
+        data.compact
       end
 
       private

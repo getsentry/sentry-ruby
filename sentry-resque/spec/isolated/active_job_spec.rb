@@ -122,6 +122,20 @@ RSpec.describe "ActiveJob jobs on Resque with sentry-resque loaded", type: :job 
       )
     end
 
+    context "when the consumer transaction is not sampled" do
+      let(:configure_sentry) { proc { |config| config.traces_sample_rate = 0.0 } }
+
+      it "reports job errors without messaging.message.body.size" do
+        failing_job.set(queue: "events").perform_later("hello")
+
+        expect { drain }.to raise_error(RuntimeError, /boom from failing_job spec/)
+
+        trace_data = error_events.first.contexts.dig(:trace, :data)
+        expect(trace_data).to include("messaging.system" => "resque")
+        expect(trace_data).not_to have_key("messaging.message.body.size")
+      end
+    end
+
     it "records messaging.system resque on the queue.publish producer span" do
       within_parent_transaction { successful_job.perform_later }
 
