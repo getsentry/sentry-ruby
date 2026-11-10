@@ -293,6 +293,31 @@ RSpec.describe "Sentry + ActiveJob with a registered job extension", type: :job 
     end
   end
 
+  describe "messaging data from an extension whose producer data builds on its consumer data" do
+    before do
+      register_extension do
+        def messaging_data(job:, **context)
+          super.merge(destination: "backend-destination")
+        end
+
+        def publish_messaging_data(job:, **context)
+          messaging_data(job: job, **context).merge(message_id: "published-id")
+        end
+      end
+    end
+
+    it "records the extension's data on the producer span and the consumer transaction" do
+      within_parent_transaction { successful_job.perform_later }
+      drain
+
+      expect(publish_span[:data]).to include(
+        "messaging.destination.name" => "backend-destination",
+        "messaging.message.id" => "published-id"
+      )
+      expect(consumer_transaction.contexts.dig(:trace, :data)).to include("messaging.destination.name" => "backend-destination")
+    end
+  end
+
   describe "retries" do
     def register_retrying_extension(count:, will_retry:)
       register_extension do

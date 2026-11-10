@@ -108,11 +108,12 @@ module Sentry
         job._sentry&.[]("trace_propagation_headers") || {}
       end
 
-      # Extends {#publish_messaging_data} with the job's receive latency and body size.
+      # Describes the job with its ActiveJob messaging attributes, its receive
+      # latency and body size.
       #
       # @see Sentry::JobExtensions::Extension#messaging_data
-      def messaging_data(job:, **context)
-        data = publish_messaging_data(job: job, **context)
+      def messaging_data(job:, **)
+        data = active_job_messaging_data(job)
         data[:receive_latency] = Sentry::Utils::Latency.milliseconds_since(job.enqueued_at) if job.respond_to?(:enqueued_at)
         data[:body_size] = body_size(job._sentry_job_data) if Sentry.get_current_scope.get_span&.sampled
         data.compact
@@ -122,13 +123,7 @@ module Sentry
       #
       # @see Sentry::JobExtensions::Extension#publish_messaging_data
       def publish_messaging_data(job:, **)
-        name = job.class.queue_adapter_name if job.class.respond_to?(:queue_adapter_name)
-        {
-          system: name.to_s.empty? ? "activejob" : name.to_s,
-          message_id: job.job_id,
-          destination: job.queue_name,
-          retry_count: (job.executions.to_i if job.respond_to?(:executions))
-        }.compact
+        active_job_messaging_data(job)
       end
 
       # Follows `config.rails.active_job_report_on_retry_error`.
@@ -142,6 +137,16 @@ module Sentry
 
       def log_failure(context, error)
         Sentry.sdk_logger&.error("sentry-rails: job extension #{name.inspect} failed to #{context}: #{error.class}: #{error.message}\n  #{Array(error.backtrace).first(5).join("\n  ")}")
+      end
+
+      def active_job_messaging_data(job)
+        name = job.class.queue_adapter_name if job.class.respond_to?(:queue_adapter_name)
+        {
+          system: name.to_s.empty? ? "activejob" : name.to_s,
+          message_id: job.job_id,
+          destination: job.queue_name,
+          retry_count: (job.executions.to_i if job.respond_to?(:executions))
+        }.compact
       end
 
       def body_size(payload)
