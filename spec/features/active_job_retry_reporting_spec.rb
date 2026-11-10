@@ -44,4 +44,29 @@ RSpec.describe "ActiveJob retry reporting", type: :e2e, if: Test::Helper.backend
       .to eq([request.dig("contexts", "trace", "trace_id")])
     expect(executions.map { |execution| execution.dig("contexts", "trace", "parent_span_id") }.uniq.size).to eq(1)
   end
+
+  it "reports only the failed attempt of a job that succeeds on its retry" do
+    response = post_request("/jobs/eventually_succeeding")
+    expect(response.code).to eq("200")
+
+    executions, errors = wait_for("both attempts of the eventually succeeding job", timeout: 60, settle: 2) do
+      executions = job_transactions("EventuallySucceedingJob").sort_by { |execution| execution["start_timestamp"] }
+      errors = logged_payloads("event").select do |event|
+        Array(event.dig("exception", "values")).last.to_h["value"].to_s.start_with?("Intentional first attempt failure")
+      end
+      [executions, errors] if executions.size >= 2 && errors.size >= 1
+    end
+
+    expect(executions.size).to eq(2)
+    expect(executions.map { |execution| execution.dig("contexts", "trace", "status") }).to eq(%w[internal_error ok])
+    expect(executions.map { |execution| execution.dig("contexts", "trace", "op") }.uniq).to eq([expected_job_op])
+
+    expect(errors.size).to eq(1)
+    expect(errors.first.dig("contexts", "trace", "span_id")).to eq(executions.first.dig("contexts", "trace", "span_id"))
+
+    expect(executions.map { |execution| execution.dig("contexts", "trace", "data", "messaging.message.id") }.uniq.size).to eq(1)
+    if job_executions_share_a_trace?
+      expect(executions.map { |execution| execution.dig("contexts", "trace", "trace_id") }.uniq.size).to eq(1)
+    end
+  end
 end

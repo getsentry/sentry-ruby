@@ -129,6 +129,9 @@ end
 class User < ActiveRecord::Base
 end
 
+class JobAttempt < ActiveRecord::Base
+end
+
 class ApplicationJob < ActiveJob::Base
   retry_on ActiveRecord::Deadlocked
 
@@ -177,6 +180,27 @@ class RetriedJob < ApplicationJob
 
   def perform
     raise StandardError, "Intentional retried job failure for testing"
+  end
+end
+
+class EventuallySucceedingJob < ApplicationJob
+  queue_as :default
+
+  if respond_to?(:sidekiq_options)
+    sidekiq_options retry: 1
+    sidekiq_retry_in { 1 }
+  end
+
+  def self.delayed_job_max_attempts
+    2
+  end
+
+  def perform
+    JobAttempt.create!(job_id: job_id)
+
+    if JobAttempt.where(job_id: job_id).count == 1
+      raise StandardError, "Intentional first attempt failure for testing"
+    end
   end
 end
 
@@ -298,7 +322,8 @@ class JobsController < ActionController::Base
     "sample" => SampleJob,
     "database" => DatabaseJob,
     "failing" => FailingJob,
-    "retried" => RetriedJob
+    "retried" => RetriedJob,
+    "eventually_succeeding" => EventuallySucceedingJob
   }.freeze
 
   def enqueue
@@ -375,6 +400,11 @@ unless ENV["SENTRY_E2E_SKIP_DB_SETUP"] == "true"
   load Pathname(__dir__).join("db/queue_schema.rb")
 
   ActiveRecord::Schema.define do
+    create_table :job_attempts, force: true do |t|
+      t.string :job_id, null: false
+      t.timestamps
+    end
+
     create_table :posts, force: true do |t|
       t.string :title, null: false
       t.text :content
