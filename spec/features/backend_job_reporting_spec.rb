@@ -28,7 +28,11 @@ RSpec.describe "ActiveJob jobs on a queue backend with a Sentry integration", ty
       [request, execution] if execution
     end
 
+    publish_span = request["spans"].find { |span| span["op"] == "queue.publish" }
+
     expect(execution.dig("contexts", "trace", "op")).to eq("queue.process")
-    expect(request["spans"].map { |span| span["op"] }).to include("queue.publish")
+    expect(publish_span).not_to be_nil
+    expect(execution.dig("contexts", "trace", "data", "messaging.message.id"))
+      .to eq(publish_span.dig("data", "messaging.message.id"))
   end
 end
