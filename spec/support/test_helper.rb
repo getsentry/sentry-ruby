@@ -55,6 +55,14 @@ module Test
       active_job_adapter == "inline"
     end
 
+    def backend_retries_jobs?
+      %w[sidekiq delayed_job].include?(active_job_adapter)
+    end
+
+    def job_executions_share_a_trace?
+      !backend_reports_jobs? || active_job_adapter == "sidekiq"
+    end
+
     def expected_job_origin
       backend_gem_loaded? ? BACKEND_JOB_REPORTING.fetch(active_job_adapter)[:origin] : ACTIVE_JOB_REPORTING[:origin]
     end

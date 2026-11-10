@@ -29,7 +29,28 @@ require "time"
 redis_url = ENV.fetch("REDIS_URL", "redis://localhost:6379")
 Resque.redis = redis_url if defined?(Resque)
 
-Delayed::Worker.max_attempts = 1 if defined?(Delayed::Worker)
+if defined?(Delayed::Worker)
+  require "active_job/queue_adapters/delayed_job_adapter"
+
+  Delayed::Worker.max_attempts = 1
+
+  ActiveJob::QueueAdapters::DelayedJobAdapter::JobWrapper.prepend(Module.new do
+    def max_attempts
+      job_class = job_data["job_class"].safe_constantize
+      job_class.delayed_job_max_attempts if job_class.respond_to?(:delayed_job_max_attempts)
+    end
+
+    def reschedule_at(now, _attempts)
+      now
+    end
+  end)
+end
+
+if defined?(Sidekiq)
+  require "active_job/queue_adapters/sidekiq_adapter"
+
+  Sidekiq.configure_server { |config| config[:poll_interval_average] = 1 }
+end
 
 class RailsMiniApp < Rails::Application
   config.hosts = nil
@@ -139,6 +160,23 @@ class DatabaseJob < ApplicationJob
     Rails.logger.info("DatabaseJob found post: #{found_post.title}")
 
     found_post
+  end
+end
+
+class RetriedJob < ApplicationJob
+  queue_as :default
+
+  if respond_to?(:sidekiq_options)
+    sidekiq_options retry: 2
+    sidekiq_retry_in { 1 }
+  end
+
+  def self.delayed_job_max_attempts
+    3
+  end
+
+  def perform
+    raise StandardError, "Intentional retried job failure for testing"
   end
 end
 
@@ -259,7 +297,8 @@ class JobsController < ActionController::Base
   JOB_CLASSES = {
     "sample" => SampleJob,
     "database" => DatabaseJob,
-    "failing" => FailingJob
+    "failing" => FailingJob,
+    "retried" => RetriedJob
   }.freeze
 
   def enqueue
