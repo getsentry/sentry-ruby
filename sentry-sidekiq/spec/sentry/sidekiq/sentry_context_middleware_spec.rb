@@ -94,6 +94,20 @@ RSpec.describe Sentry::Sidekiq::SentryContextServerMiddleware do
     end
   end
 
+  context "when the queue.process transaction is not sampled" do
+    before do
+      perform_basic_setup { |config| config.traces_sample_rate = 0.0 }
+    end
+
+    it "reports job errors without messaging.message.body.size" do
+      execute_worker(processor, SadWorker)
+
+      trace_data = transport.events.last.contexts.dig(:trace, :data)
+      expect(trace_data).to include('messaging.system' => 'sidekiq')
+      expect(trace_data).not_to have_key('messaging.message.body.size')
+    end
+  end
+
   context "with tracing enabled" do
     before do
       perform_basic_setup { |config| config.traces_sample_rate = 1.0 }

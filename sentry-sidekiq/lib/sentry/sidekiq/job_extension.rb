@@ -59,14 +59,15 @@ module Sentry
       #
       # @see Sentry::JobExtensions::Extension#messaging_data
       def messaging_data(job:, **)
-        {
+        data = {
           system: MESSAGING_SYSTEM,
           message_id: job["jid"],
           destination: job["queue"],
           receive_latency: receive_latency(job),
-          retry_count: @retry_policy.retry_count(job) || 0,
-          body_size: body_size(job)
-        }.compact
+          retry_count: @retry_policy.retry_count(job) || 0
+        }
+        data[:body_size] = body_size(job) if Sentry.get_current_scope.get_span&.sampled
+        data.compact
       end
 
       # Describes the Sidekiq message being enqueued.
