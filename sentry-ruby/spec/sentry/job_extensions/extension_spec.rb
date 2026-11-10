@@ -277,6 +277,15 @@ RSpec.describe Sentry::JobExtensions::Extension do
       expect(string_io.string).to include("Job extension :test_backend failed to collect the messaging data")
     end
 
+    it "starts the transaction and logs the failure when scope data holds values that are not Hashes" do
+      extension = build_extension(scope_data: ->(**) { { contexts: { backend: nil }, tags: "low" } })
+
+      event = finished_job(extension)
+
+      expect(event.contexts.dig(:trace, :op)).to eq("queue.process")
+      expect(string_io.string).to include("Job extension :test_backend failed to apply the scope data")
+    end
+
     it "continues the trace described by the extracted trace headers" do
       transaction = tracing_extension.start_job(scope: scope, job: job, trace_headers: foreign_trace_headers)
 

@@ -68,7 +68,8 @@ module Sentry
       # @param job [Object]
       # @return [Transaction, nil]
       def start_job(scope:, job:, **context)
-        apply_scope_data(scope, hook_hash("collect the scope data") { scope_data(job: job, **context) })
+        data = hook_hash("collect the scope data") { scope_data(job: job, **context) }
+        safely("apply the scope data") { apply_scope_data(scope, data) }
 
         job_name = safely("name the transaction") { transaction_name(job: job, **context) }
         scope.set_transaction_name(job_name, source: :task) if job_name
