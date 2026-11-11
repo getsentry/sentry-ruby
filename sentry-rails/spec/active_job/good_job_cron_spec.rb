@@ -13,6 +13,7 @@ if defined?(::GoodJob)
     include_context "test adapter"
 
     let(:excluded_jobs) { [] }
+    let(:cron) { {} }
     let(:configure_sentry) do
       proc do |config|
         config.enabled_patches << :good_job_cron
@@ -31,8 +32,17 @@ if defined?(::GoodJob)
       jobs.each { |payload| ::ActiveJob::Base.execute(payload[:_sentry_full_payload]) }
     end
 
+    around do |example|
+      configuration = GoodJob.configuration
+      GoodJob.configuration = GoodJob::Configuration.new({ cron: cron })
+      example.run
+    ensure
+      GoodJob.configuration = configuration
+    end
+
     def run_entry(key, **params)
-      GoodJob::CronEntry.new(params.merge(key: key)).enqueue(Time.now)
+      cron[key] = params unless params.empty?
+      GoodJob::CronEntry.find(key).enqueue(Time.now)
       drain
     end
 
@@ -102,12 +112,24 @@ if defined?(::GoodJob)
       )
     end
 
-    it "uses the zone GoodJob evaluates zoneless schedules in" do
-      Time.use_zone("Tokyo") do
-        run_entry(:tokyo_report, class: "ReportJob", cron: "0 9 * * *")
+    context "with an app time zone" do
+      around do |example|
+        zone_default = Time.zone_default
+        tz = ENV.delete("TZ")
+        Time.zone_default = Time.find_zone!("Asia/Tokyo")
+        example.run
+      ensure
+        Time.zone_default = zone_default
+        ENV["TZ"] = tz
       end
 
-      expect(check_ins.first.monitor_config.timezone).to eq("Asia/Tokyo")
+      it "uses it for zoneless schedules, whatever zone the enqueue runs in" do
+        Time.use_zone("America/Chicago") do
+          run_entry(:tokyo_report, class: "ReportJob", cron: "0 9 * * *")
+        end
+
+        expect(check_ins.first.monitor_config.timezone).to eq("Asia/Tokyo")
+      end
     end
 
     it "skips schedules Crons cannot express" do
@@ -133,6 +155,37 @@ if defined?(::GoodJob)
       run_entry(:monitored, class: "MonitoredJob", cron: "0 9 * * *")
 
       expect(check_ins.map(&:monitor_slug)).to eq(["own-slug", "own-slug"])
+    end
+
+    context "when GoodJob runs jobs inline" do
+      # GoodJob's inline mode runs the job inside the cron enqueue and resets its thread state first.
+      def queue_adapter_for_test
+        Class.new(::ActiveJob::QueueAdapters::TestAdapter) do
+          def enqueue(job)
+            payload = job.serialize
+            ::GoodJob::CurrentThread.within do |thread|
+              thread.reset
+              ::ActiveJob::Base.execute(payload)
+            end
+          end
+
+          def enqueue_at(job, _timestamp)
+            enqueue(job)
+          end
+        end.new
+      end
+
+      it "does not monitor a job the cron job enqueues of its own class" do
+        job_fixture("ChainedReportJob") do
+          def perform(again = true)
+            self.class.perform_later(false) if again
+          end
+        end
+
+        run_entry(:chained_report, class: "ChainedReportJob", cron: "0 9 * * *")
+
+        expect(check_ins.map(&:status)).to eq([:in_progress, :ok])
+      end
     end
 
     it "does not monitor jobs enqueued outside a cron entry" do
@@ -179,26 +232,13 @@ if defined?(::GoodJob)
         }
       end
 
-      around do |example|
-        configuration = GoodJob.configuration
-        GoodJob.configuration = GoodJob::Configuration.new({ cron: cron })
-        example.run
-      ensure
-        GoodJob.configuration = configuration
-      end
-
-      def run_configured(key)
-        GoodJob::CronEntry.find(key).enqueue(Time.now)
-        drain
-      end
-
       it "skips all of them and warns" do
         string_io = StringIO.new
         Sentry.configuration.sdk_logger = ::Logger.new(string_io)
 
-        run_configured(:"#{long_key}_daily")
-        run_configured(:"#{long_key}_weekly")
-        run_configured(:nightly_report)
+        run_entry(:"#{long_key}_daily")
+        run_entry(:"#{long_key}_weekly")
+        run_entry(:nightly_report)
 
         expect(check_ins.map(&:monitor_slug).uniq).to eq(["nightly_report"])
         expect(string_io.string).to include("Not monitoring GoodJob cron entry #{long_key}_daily", "#{long_key}_weekly")
@@ -208,7 +248,7 @@ if defined?(::GoodJob)
         let(:excluded_jobs) { [:"#{long_key}_weekly"] }
 
         it "monitors the other" do
-          run_configured(:"#{long_key}_daily")
+          run_entry(:"#{long_key}_daily")
 
           expect(check_ins.map(&:monitor_slug).uniq).to eq([long_key])
         end
