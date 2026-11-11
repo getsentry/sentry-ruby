@@ -48,13 +48,13 @@ module Sentry
 
           slug = Sentry::Cron::Slug.from(entry.key)
           return unless slug
-          return if slug_shared?(entry.key, slug)
 
           config = schedule_for(entry)
           unless config
             Sentry.sdk_logger.debug(Sentry::LOGGER_PROGNAME) { "Not monitoring GoodJob cron entry #{entry.key}: its schedule can't be expressed as a Crons schedule." }
             return
           end
+          return if slug_shared?(entry.key, slug)
 
           { "slug" => slug, "crontab" => config.schedule.value, "timezone" => config.timezone }.compact
         rescue StandardError => e
@@ -104,8 +104,9 @@ module Sentry
         # Different keys can share a slug, like long keys cut at the same length.
         # One monitor can't follow two schedules, so none of them are monitored.
         def slug_shared?(key, slug)
-          others = ::GoodJob.configuration.cron.keys.reject { |other| other.to_s == key.to_s || excluded?(other) }
-          colliding = others.select { |other| Sentry::Cron::Slug.from(other) == slug }
+          colliding = ::GoodJob::CronEntry.all.select do |other|
+            other.key.to_s != key.to_s && Sentry::Cron::Slug.from(other.key) == slug && monitored?(other)
+          end.map(&:key)
           return false if colliding.empty?
 
           @slug_warnings ||= Concurrent::Map.new
@@ -115,6 +116,14 @@ module Sentry
             end
           end
           true
+        end
+
+        def monitored?(entry)
+          return false if excluded?(entry.key) || !schedule_for(entry)
+
+          job_class = entry.job_class
+          job_class = job_class.safe_constantize if job_class.is_a?(String)
+          !(job_class.is_a?(Class) && job_class < Sentry::Cron::MonitorCheckIns::Patch)
         end
       end
     end

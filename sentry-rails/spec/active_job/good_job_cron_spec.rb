@@ -244,6 +244,39 @@ if defined?(::GoodJob)
         expect(string_io.string).to include("Not monitoring GoodJob cron entry #{long_key}_daily", "#{long_key}_weekly")
       end
 
+      context "when the others sharing its slug aren't monitored" do
+        let(:excluded_jobs) { [:"#{long_key}_weekly"] }
+        let(:cron) do
+          {
+            "#{long_key}_daily": { class: "ReportJob", cron: "0 9 * * *" },
+            "#{long_key}_weekly": { class: "ReportJob", cron: "0 9 * * 1" },
+            "#{long_key}_fast": { class: "ReportJob", cron: "every 10 seconds" },
+            "#{long_key}_dynamic": { class: "ReportJob", cron: ->(_last_ran) { "0 9 * * *" } },
+            "#{long_key}_self": { class: "SelfMonitoredJob", cron: "0 9 * * *" }
+          }
+        end
+
+        before do
+          job_fixture("SelfMonitoredJob") do
+            include Sentry::Cron::MonitorCheckIns
+            sentry_monitor_check_ins slug: "self-monitored"
+
+            def perform; end
+          end
+        end
+
+        it "monitors it and doesn't warn about the others" do
+          string_io = StringIO.new
+          Sentry.configuration.sdk_logger = ::Logger.new(string_io)
+
+          run_entry(:"#{long_key}_daily")
+          run_entry(:"#{long_key}_fast")
+
+          expect(check_ins.map(&:monitor_slug)).to eq([long_key, long_key])
+          expect(string_io.string).not_to include("Rename or exclude")
+        end
+      end
+
       context "when one of them is excluded" do
         let(:excluded_jobs) { [:"#{long_key}_weekly"] }
 
