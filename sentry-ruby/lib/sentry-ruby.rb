@@ -12,6 +12,7 @@ require "sentry/utils/encoding_helper"
 require "sentry/utils/logging_helper"
 require "sentry/utils/callback_helper"
 require "sentry/utils/sample_rand"
+require "sentry/utils/latency"
 require "sentry/configuration"
 require "sentry/structured_logger"
 require "sentry/debug_structured_logger"
@@ -31,6 +32,7 @@ require "sentry/cron/fugit_schedule"
 require "sentry/cron/slug"
 require "sentry/vernier/profiler"
 require "sentry/metrics"
+require "sentry/job_extensions/extension"
 
 [
   "sentry/rake",
@@ -221,6 +223,16 @@ module Sentry
     def set_context(*args)
       return unless initialized?
       get_current_scope.set_context(*args)
+    end
+
+    # Records a feature flag evaluation on the current scope and active span.
+    # Only boolean results are recorded.
+    # @param name [String, Symbol] the flag name
+    # @param result [Boolean] the evaluation result
+    # @return [void]
+    def add_feature_flag(name, result)
+      return unless initialized?
+      get_current_scope.add_feature_flag(name, result)
     end
 
     # @!method set_attributes

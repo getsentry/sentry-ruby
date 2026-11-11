@@ -38,6 +38,64 @@ RSpec.describe Sentry::DelayedJob do
 
     def do_nothing_with_args(a)
     end
+
+    def charge(card_number, cvv)
+      1 / 0
+    end
+  end
+
+  let(:delayed_job_metadata_keys) do
+    [:id, :priority, :attempts, :run_at, :locked_at, :locked_by, :queue, :created_at, :last_error, :job_class]
+  end
+
+  context "when a job with arguments failed and transactions are sampled" do
+    let(:transactions) { transport.events.select { |event| event.is_a?(Sentry::TransactionEvent) } }
+    let(:errors) { transport.events.reject { |event| event.is_a?(Sentry::TransactionEvent) } }
+
+    before do
+      perform_basic_setup do |config|
+        config.traces_sample_rate = 1.0
+      end
+    end
+
+    def run_failing_job
+      Post.new.delay.charge("4111111111111111", "123")
+      enqueued_job = Delayed::Backend::ActiveRecord::Job.last
+
+      expect { enqueued_job.invoke_job }.to raise_error(ZeroDivisionError)
+
+      enqueued_job
+    end
+
+    it "should leave the job handler out of the Delayed-Job context when queue data collection is off" do
+      Sentry.configuration.data_collection.queues = false
+
+      enqueued_job = run_failing_job
+
+      expect(errors.count).to eq(1)
+      expect(transactions.count).to eq(1)
+      [errors.first, transactions.first].each do |event|
+        context = event.to_h.dig(:contexts, :"Delayed-Job")
+        expect(context.keys).to match_array(delayed_job_metadata_keys)
+        expect(context).to include(id: enqueued_job.id.to_s, job_class: "Post#charge")
+        expect(context.to_s).not_to include("4111111111111111")
+      end
+    end
+
+    it "should report the job handler in the Delayed-Job context when queue data collection is on" do
+      Sentry.configuration.data_collection.queues = true
+
+      enqueued_job = run_failing_job
+
+      expect(errors.count).to eq(1)
+      expect(transactions.count).to eq(1)
+      [errors.first, transactions.first].each do |event|
+        context = event.to_h.dig(:contexts, :"Delayed-Job")
+        expect(context.keys).to match_array(delayed_job_metadata_keys + [:handler])
+        expect(context).to include(id: enqueued_job.id.to_s, job_class: "Post#charge", handler: enqueued_job.handler.byteslice(0..1000))
+        expect(context[:handler]).to include("4111111111111111")
+      end
+    end
   end
 
   it "sets correct extra/tags context for each job" do
@@ -268,6 +326,71 @@ RSpec.describe Sentry::DelayedJob do
         expect(event.dig(:exception, :values, 0, :type)).to eq("ZeroDivisionError")
         expect(event[:tags]).to match({ "delayed_job.id" => anything, "delayed_job.queue" => "default", number: 2 })
         expect(event[:contexts][:"Active-Job"][:job_class]).to eq("FailedJob")
+      end
+    end
+
+    context "when a job with arguments failed and transactions are sampled" do
+      class FailedJobWithArguments < ActiveJob::Base
+        self.queue_adapter = :delayed_job
+
+        def perform(card_number, cvv)
+          1 / 0
+        end
+      end
+
+      let(:transactions) { transport.events.select { |event| event.is_a?(Sentry::TransactionEvent) } }
+      let(:errors) { transport.events.reject { |event| event.is_a?(Sentry::TransactionEvent) } }
+
+      before do
+        perform_basic_setup do |config|
+          config.traces_sample_rate = 1.0
+          config.rails.skippable_job_adapters << "ActiveJob::QueueAdapters::DelayedJobAdapter"
+        end
+      end
+
+      def run_failing_job
+        FailedJobWithArguments.perform_later("4111111111111111", "123")
+        enqueued_job = Delayed::Backend::ActiveRecord::Job.last
+
+        expect { enqueued_job.invoke_job }.to raise_error(ZeroDivisionError)
+
+        enqueued_job
+      end
+
+      def serialized_job_data(enqueued_job)
+        Delayed::Backend::ActiveRecord::Job.find(enqueued_job.id).payload_object.job_data.transform_keys(&:to_sym)
+      end
+
+      it "should leave the job handler and arguments out of the job contexts when queue data collection is off" do
+        Sentry.configuration.data_collection.queues = false
+
+        enqueued_job = run_failing_job
+
+        expect(errors.count).to eq(1)
+        expect(transactions.count).to eq(1)
+        [errors.first, transactions.first].each do |event|
+          contexts = event.to_h[:contexts]
+          expect(contexts[:"Delayed-Job"].keys).to match_array(delayed_job_metadata_keys)
+          expect(contexts[:"Delayed-Job"]).to include(id: enqueued_job.id.to_s)
+          expect(contexts[:"Active-Job"]).to eq(serialized_job_data(enqueued_job).except(:arguments))
+          expect(contexts[:"Active-Job"]).to include(job_class: "FailedJobWithArguments", queue_name: "default")
+        end
+      end
+
+      it "should report the job handler and arguments in the job contexts when queue data collection is on" do
+        Sentry.configuration.data_collection.queues = true
+
+        enqueued_job = run_failing_job
+
+        expect(errors.count).to eq(1)
+        expect(transactions.count).to eq(1)
+        [errors.first, transactions.first].each do |event|
+          contexts = event.to_h[:contexts]
+          expect(contexts[:"Delayed-Job"].keys).to match_array(delayed_job_metadata_keys + [:handler])
+          expect(contexts[:"Delayed-Job"][:handler]).to eq(enqueued_job.handler.byteslice(0..1000))
+          expect(contexts[:"Active-Job"]).to eq(serialized_job_data(enqueued_job))
+          expect(contexts[:"Active-Job"][:arguments]).to eq(["4111111111111111", "123"])
+        end
       end
     end
 

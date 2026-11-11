@@ -50,6 +50,7 @@ module Sentry
       MESSAGING_DESTINATION_NAME = "messaging.destination.name"
       MESSAGING_MESSAGE_RECEIVE_LATENCY = "messaging.message.receive.latency"
       MESSAGING_MESSAGE_RETRY_COUNT = "messaging.message.retry.count"
+      MESSAGING_MESSAGE_BODY_SIZE = "messaging.message.body.size"
 
       # Time in ms the request spent in the server queue before processing began.
       HTTP_QUEUE_TIME_MS = "http.server.request.time_in_queue"
@@ -70,6 +71,8 @@ module Sentry
     }
 
     DEFAULT_SPAN_ORIGIN = "manual"
+    MAX_FLAGS = 10
+    SPAN_FLAG_ATTRIBUTE_PREFIX = "flag.evaluation."
 
     # An uuid that can be used to identify a trace.
     # @return [String]
@@ -104,6 +107,9 @@ module Sentry
     # Span data
     # @return [Hash]
     attr_reader :data
+    # Feature flag data
+    # @return [Hash]
+    attr_reader :flags
     # Span origin that tracks what kind of instrumentation created a span
     # @return [String]
     attr_reader :origin
@@ -142,6 +148,7 @@ module Sentry
       @op = op
       @status = status
       @data = {}
+      @flags = {}
       @tags = {}
       @origin = origin || DEFAULT_SPAN_ORIGIN
     end
@@ -187,7 +194,7 @@ module Sentry
         op: @op,
         status: @status,
         tags: @tags,
-        data: @data,
+        data: serialized_data,
         origin: @origin
       }
     end
@@ -203,7 +210,7 @@ module Sentry
         op: @op,
         status: @status,
         origin: @origin,
-        data: @data
+        data: serialized_data
       }
     end
 
@@ -293,6 +300,14 @@ module Sentry
       @data[key] = value
     end
 
+    # Sets a feature flag on the span.
+    # @param name [String] the flag name
+    # @param result [Boolean] the evaluation result
+    def set_flag(name, result)
+      flag = "#{SPAN_FLAG_ATTRIBUTE_PREFIX}#{name}"
+      @flags[flag] = result if @flags.size < MAX_FLAGS
+    end
+
     # Sets a tag to the span.
     # @param key [String, Symbol]
     # @param value [String]
@@ -304,6 +319,14 @@ module Sentry
     # @param origin [String]
     def set_origin(origin)
       @origin = origin
+    end
+
+    private
+
+    def serialized_data
+      return @data if @flags.empty?
+
+      @flags.merge(@data)
     end
   end
 end

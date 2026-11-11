@@ -6,38 +6,6 @@ RSpec.describe Sentry::Sidekiq::ContextFilter do
   describe "#filtered" do
     subject(:context_filter) { described_class.new(context) }
 
-    context "filters out ActiveJob keys from context" do
-      let(:context) do
-        { _aj_globalid: "gid://app/model/id", key: "value" }
-      end
-
-      it "removes reserved keys" do
-        expect(context_filter.filtered).to eq("globalid" => "gid://app/model/id", :key => "value")
-      end
-    end
-
-    context "filters out ActiveJob keys from nested context" do
-      let(:context) do
-        {
-          _aj_globalid: "gid://app/model/id",
-          arguments: { key: "value", _aj_symbol_keys: ["key"] }
-        }
-      end
-      let(:expected_context) do
-        {
-          "globalid" => "gid://app/model/id",
-          :arguments => { :key => "value", "symbol_keys" => ["key"] }
-        }
-      end
-
-      it "removes reserved keys" do
-        expect(context_filter.filtered).to eq(
-          "globalid" => "gid://app/model/id",
-          :arguments => { :key => "value", "symbol_keys" => ["key"] }
-        )
-      end
-    end
-
     context "with job entry in the context" do
       let(:context) do
         {

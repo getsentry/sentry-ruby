@@ -49,18 +49,15 @@ RSpec.configure do |config|
   config.before(:suite) do
     Test::Helper.perform_basic_setup do |config|
       config.transport.transport_class = Sentry::DebugTransport
+      config.sdk_debug_transport_log_file = Test::Helper.debug_log_path.join("sentry_debug_events.log")
       config.structured_logging.logger_class = Sentry::DebugStructuredLogger
       config.structured_logging.file_path = Test::Helper.debug_log_path.join("sentry_e2e_tests.log")
     end
-
-    Test::Helper.clear_logged_events
+    Sentry.get_current_client.transport.start_run
+    Sentry.logger.start_run
   end
 
-  config.after(:each) do
-    Test::Helper.clear_logged_events
-  end
-
-  config.after(:each) do
+  config.before(:each) do
     Test::Helper.clear_logs
   end
 end

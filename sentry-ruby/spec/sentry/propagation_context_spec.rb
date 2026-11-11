@@ -87,6 +87,16 @@ RSpec.describe Sentry::PropagationContext do
       expect(subject.baggage.mutable).to eq(false)
       expect(subject.baggage.items).to eq({})
     end
+
+    it "ignores incoming sentry-trace without a trace_id" do
+      subject = described_class.new(scope, { "sentry-trace" => "-1" })
+
+      expect(subject.trace_id.length).to eq(32)
+      expect(subject.parent_span_id).to be_nil
+      expect(subject.parent_sampled).to be_nil
+      expect(subject.baggage).to be_nil
+      expect(subject.incoming_trace).to eq(false)
+    end
   end
 
   describe "#get_trace_context" do
@@ -336,6 +346,12 @@ RSpec.describe Sentry::PropagationContext do
       expect(described_class.extract_sentry_trace("invalid")).to be_nil
       expect(described_class.extract_sentry_trace("000-000-0")).to be_nil
       expect(described_class.extract_sentry_trace("")).to be_nil
+    end
+
+    it "returns nil for sentry-trace without a trace_id" do
+      ["-1", "1", "--1", "-0", "7c51afd529da4a2a-1"].each do |sentry_trace|
+        expect(described_class.extract_sentry_trace(sentry_trace)).to be_nil
+      end
     end
 
     it "allows whitespace" do

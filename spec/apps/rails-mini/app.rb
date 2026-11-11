@@ -4,6 +4,17 @@ require "bundler/setup"
 
 Bundler.require
 
+BACKEND_GEM = ENV.fetch("SENTRY_E2E_BACKEND_GEM", "reporting").to_s.downcase
+unless %w[reporting opted_out not_installed].include?(BACKEND_GEM)
+  raise "Unsupported backend gem mode: #{BACKEND_GEM}"
+end
+
+unless BACKEND_GEM == "not_installed"
+  require "sentry-sidekiq"
+  require "sentry-resque"
+  require "sentry-delayed_job"
+end
+
 ENV["RAILS_ENV"] = "development"
 ENV["DATABASE_URL"] = "sqlite3:tmp/rails_mini_development.sqlite3?timeout=5000"
 
@@ -17,6 +28,29 @@ require "time"
 # Redis when REDIS_URL is unset (e.g. running outside Docker Compose).
 redis_url = ENV.fetch("REDIS_URL", "redis://localhost:6379")
 Resque.redis = redis_url if defined?(Resque)
+
+if defined?(Delayed::Worker)
+  require "active_job/queue_adapters/delayed_job_adapter"
+
+  Delayed::Worker.max_attempts = 1
+
+  ActiveJob::QueueAdapters::DelayedJobAdapter::JobWrapper.prepend(Module.new do
+    def max_attempts
+      job_class = job_data["job_class"].safe_constantize
+      job_class.delayed_job_max_attempts if job_class.respond_to?(:delayed_job_max_attempts)
+    end
+
+    def reschedule_at(now, _attempts)
+      now
+    end
+  end)
+end
+
+if defined?(Sidekiq)
+  require "active_job/queue_adapters/sidekiq_adapter"
+
+  Sidekiq.configure_server { |config| config[:poll_interval_average] = 1 }
+end
 
 class RailsMiniApp < Rails::Application
   config.hosts = nil
@@ -73,6 +107,7 @@ class RailsMiniApp < Rails::Application
       config.transport.transport_class = Sentry::DebugTransport
       config.sdk_debug_transport_log_file = debug_log_path.join("sentry_debug_events.log")
       config.background_worker_threads = 0
+      config.rails.skippable_job_adapters.clear if BACKEND_GEM == "opted_out"
 
       config.structured_logging.logger_class = Sentry::DebugStructuredLogger
       config.structured_logging.file_path = debug_log_path.join("sentry_e2e_tests.log")
@@ -92,6 +127,9 @@ class Post < ActiveRecord::Base
 end
 
 class User < ActiveRecord::Base
+end
+
+class JobAttempt < ActiveRecord::Base
 end
 
 class ApplicationJob < ActiveJob::Base
@@ -128,8 +166,47 @@ class DatabaseJob < ApplicationJob
   end
 end
 
+class RetriedJob < ApplicationJob
+  queue_as :default
+
+  if respond_to?(:sidekiq_options)
+    sidekiq_options retry: 2
+    sidekiq_retry_in { 1 }
+  end
+
+  def self.delayed_job_max_attempts
+    3
+  end
+
+  def perform
+    raise StandardError, "Intentional retried job failure for testing"
+  end
+end
+
+class EventuallySucceedingJob < ApplicationJob
+  queue_as :default
+
+  if respond_to?(:sidekiq_options)
+    sidekiq_options retry: 1
+    sidekiq_retry_in { 1 }
+  end
+
+  def self.delayed_job_max_attempts
+    2
+  end
+
+  def perform
+    JobAttempt.create!(job_id: job_id)
+
+    if JobAttempt.where(job_id: job_id).count == 1
+      raise StandardError, "Intentional first attempt failure for testing"
+    end
+  end
+end
+
 class FailingJob < ApplicationJob
   queue_as :default
+  sidekiq_options retry: false if respond_to?(:sidekiq_options)
 
   def perform(should_fail = true)
     Rails.logger.info("FailingJob started")
@@ -244,7 +321,9 @@ class JobsController < ActionController::Base
   JOB_CLASSES = {
     "sample" => SampleJob,
     "database" => DatabaseJob,
-    "failing" => FailingJob
+    "failing" => FailingJob,
+    "retried" => RetriedJob,
+    "eventually_succeeding" => EventuallySucceedingJob
   }.freeze
 
   def enqueue
@@ -321,6 +400,11 @@ unless ENV["SENTRY_E2E_SKIP_DB_SETUP"] == "true"
   load Pathname(__dir__).join("db/queue_schema.rb")
 
   ActiveRecord::Schema.define do
+    create_table :job_attempts, force: true do |t|
+      t.string :job_id, null: false
+      t.timestamps
+    end
+
     create_table :posts, force: true do |t|
       t.string :title, null: false
       t.text :content

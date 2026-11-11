@@ -95,6 +95,7 @@ RSpec.describe Sentry::Sidekiq do
   end
 
   it "has some context when capturing, even if no exception raised" do
+    Sentry.configuration.data_collection.queues = true
     execute_worker(processor, ReportingWorker)
 
     event = transport.events.last.to_json_compatible
@@ -117,6 +118,18 @@ RSpec.describe Sentry::Sidekiq do
   end
 
   context "with attempt_threshold" do
+    [false, 0].each do |retry_option|
+      it "reports the first failure below the threshold when retry is #{retry_option}" do
+        worker = Class.new(SadWorker)
+        worker.sidekiq_options attempt_threshold: 3, retry: retry_option
+
+        execute_worker(processor, worker)
+
+        expect(transport.events.count).to eq(1)
+        expect(retry_set.count).to eq(0)
+      end
+    end
+
     it "doesn't report the error until attempts equal the threshold" do
       worker = Class.new(SadWorker)
       worker.sidekiq_options attempt_threshold: 3
@@ -318,6 +331,47 @@ RSpec.describe Sentry::Sidekiq do
 
       event = transport.events.last
       expect(event.contexts.dig(:trace, :trace_id)).to eq(transaction.contexts.dig(:trace, :trace_id))
+    end
+
+    context "when a job with arguments fails" do
+      let(:error) { transport.events.grep(Sentry::ErrorEvent).first }
+      let(:transaction) { transport.events.grep(Sentry::TransactionEvent).first }
+
+      it "leaves the job arguments out of the sidekiq context when queue data collection is off" do
+        Sentry.configuration.data_collection.queues = false
+
+        execute_worker(processor, SadWorkerWithArguments, args: ["4111111111111111", "123"])
+
+        [error, transaction].each do |event|
+          context = event.to_h.dig(:contexts, :sidekiq)
+          expect(context.keys.map(&:to_s)).not_to include("args", "jobstr")
+          expect(context).to include("class" => "SadWorkerWithArguments", "jid" => "123123")
+          expect(event.tags).to include(queue: "default", jid: "123123")
+        end
+      end
+
+      it "reports the job arguments in the sidekiq context when queue data collection is on" do
+        Sentry.configuration.data_collection.queues = true
+
+        execute_worker(processor, SadWorkerWithArguments, args: ["4111111111111111", "123"])
+
+        [error, transaction].each do |event|
+          context = event.to_h.dig(:contexts, :sidekiq)
+          expect(context).to include("args" => ["4111111111111111", "123"], "class" => "SadWorkerWithArguments", "jid" => "123123")
+        end
+      end
+    end
+
+    it "does not log Sidekiq deprecation warnings while processing a job" do
+      log = StringIO.new
+      logger = Logger.new(log)
+      WITH_SIDEKIQ_7 ? Sidekiq.instance_variable_get(:@config).logger = logger : Sidekiq.logger = logger
+
+      execute_worker(processor, HappyWorker)
+
+      expect(log.string).not_to include("deprecated")
+    ensure
+      silence_sidekiq
     end
 
     context "with instrumenter :otel" do

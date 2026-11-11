@@ -160,6 +160,14 @@ class SadWorker
   end
 end
 
+class SadWorkerWithArguments
+  include Sidekiq::Worker
+
+  def perform(_card_number, _cvv)
+    raise "I'm sad!"
+  end
+end
+
 class HappyWorkerForCron < HappyWorker; end
 class HappyWorkerForCronWithTimezone < HappyWorker; end
 class HappyWorkerForScheduler < HappyWorker; end

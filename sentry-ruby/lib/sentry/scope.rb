@@ -4,6 +4,7 @@ require "set"
 require "sentry/breadcrumb_buffer"
 require "sentry/propagation_context"
 require "sentry/attachment"
+require "sentry/utils/ring_buffer"
 require "etc"
 
 module Sentry
@@ -27,8 +28,12 @@ module Sentry
       :session,
       :attachments,
       :propagation_context,
-      :attributes
+      :attributes,
+      :flags
     ]
+
+    # Maximum number of feature flag evaluations kept on a scope.
+    MAX_FLAGS = 100
 
     attr_reader(*ATTRIBUTES)
 
@@ -61,6 +66,7 @@ module Sentry
         event.breadcrumbs = breadcrumbs
         event.rack_env = rack_env if rack_env
         event.attachments = attachments
+        apply_flags_to_event(event)
       end
 
       trace_context = get_trace_context
@@ -151,6 +157,7 @@ module Sentry
       copy.attachments = attachments.dup
       copy.event_processors = event_processors.dup
       copy.attributes = attributes.deep_dup
+      copy.flags = flags.dup
       copy
     end
 
@@ -170,6 +177,7 @@ module Sentry
       self.propagation_context = scope.propagation_context
       self.attachments = scope.attachments
       self.attributes = scope.attributes
+      self.flags = scope.flags.dup
     end
 
     # Updates the scope's data from the given options.
@@ -298,6 +306,22 @@ module Sentry
       @attributes.delete(key.to_s)
     end
 
+    # Records a feature flag evaluation on the scope (and the active span, if any).
+    # Only boolean results are supported; other values are ignored.
+    # The scope keeps the most recent {MAX_FLAGS} distinct flags (oldest evicted first).
+    # @param name [String, Symbol] the flag name
+    # @param result [Boolean] the evaluation result
+    # @return [void]
+    def add_feature_flag(name, result)
+      return unless result == true || result == false
+
+      name = name.to_s
+      flags.set(name, result)
+
+      add_feature_flag_to_span(name, result)
+      nil
+    end
+
     # Sets the scope's level attribute.
     # @param level [String, Symbol]
     # @return [void]
@@ -389,6 +413,19 @@ module Sentry
 
     private
 
+    def add_feature_flag_to_span(name, result)
+      return unless span
+
+      span.set_flag(name, result)
+    end
+
+    def apply_flags_to_event(event)
+      return unless event.is_a?(ErrorEvent) && !flags.empty?
+
+      values = flags.values.map { |flag, result| { flag: flag, result: result } }
+      event.contexts[:flags] = { values: values }
+    end
+
     def set_default_value
       @contexts = { os: self.class.os_context, runtime: self.class.runtime_context }
       @extra = {}
@@ -404,6 +441,7 @@ module Sentry
       @session = nil
       @attachments = []
       @attributes = {}
+      @flags = Utils::RingBuffer.new(MAX_FLAGS)
       generate_propagation_context
       set_new_breadcrumb_buffer
     end

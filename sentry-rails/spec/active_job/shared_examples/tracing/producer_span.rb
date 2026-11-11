@@ -15,7 +15,7 @@ RSpec.shared_examples "an ActiveJob backend that emits a producer span on enqueu
       publish_span = parent.spans.find { |s| s[:op] == "queue.publish" }
       expect(publish_span).not_to be_nil
       expect(publish_span[:description]).to eq(successful_job.name)
-      expect(publish_span[:origin]).to eq("auto.queue.active_job")
+      expect(publish_span[:origin]).to eq(job_span_origin)
       expect(publish_span[:data]["messaging.system"]).to be_a(String).and(satisfy { |v| !v.empty? })
       expect(publish_span[:data]["messaging.system"]).to eq(successful_job.queue_adapter_name)
       expect(publish_span[:data]["messaging.message.id"]).to be_a(String).and(satisfy { |v| !v.empty? })
@@ -59,6 +59,26 @@ RSpec.shared_examples "an ActiveJob backend that emits a producer span on enqueu
 
       publish_spans = transactions.flat_map(&:spans).select { |s| s[:op] == "queue.publish" }
       expect(publish_spans).to be_empty
+    end
+  end
+
+  context "when tracing is disabled" do
+    let(:routed_job) do
+      job_fixture do
+        attr_accessor :routed_queue
+
+        queue_as { routed_queue || "unrouted" }
+
+        before_enqueue { |job| job.routed_queue = "routed" }
+
+        def perform; end
+      end
+    end
+
+    it "resolves a queue_as block after the job's own enqueue callbacks" do
+      routed_job.perform_later
+
+      expect(last_enqueued_payload["queue_name"]).to eq("routed")
     end
   end
 

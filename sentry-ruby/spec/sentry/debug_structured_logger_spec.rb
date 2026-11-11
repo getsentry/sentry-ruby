@@ -9,14 +9,6 @@ RSpec.describe Sentry::DebugStructuredLogger do
 
   let(:debug_logger) { described_class.new(configuration) }
 
-  before do
-    debug_logger.clear
-  end
-
-  after do
-    debug_logger.clear
-  end
-
   describe "#initialize" do
     it "creates a debug logger with structured logger backend" do
       expect(debug_logger.backend).to be_a(Sentry::StructuredLogger)
@@ -52,6 +44,24 @@ RSpec.describe Sentry::DebugStructuredLogger do
           expect(log_event["parameters"]).to eq(["param1", "param2"])
           expect(log_event["attributes"]["extra_attr"]).to eq("extra")
         end
+
+        it "supports block syntax" do
+          debug_logger.public_send(level) { "Test #{level} block message" }
+
+          log_event = debug_logger.logged_events.last
+          expect(log_event["message"]).to eq("Test #{level} block message")
+        end
+
+        it "uses the block over the positional argument" do
+          debug_logger.public_send(level, "progname") { "from block" }
+
+          expect(debug_logger.logged_events.last["message"]).to eq("from block")
+        end
+
+        it "raises ArgumentError when neither message nor block is given" do
+          expect { debug_logger.public_send(level) }
+            .to raise_error(ArgumentError, "message or block is required")
+        end
       end
     end
   end
@@ -67,6 +77,14 @@ RSpec.describe Sentry::DebugStructuredLogger do
       expect(log_event["level"]).to eq("info")
       expect(log_event["message"]).to eq("Test log message")
       expect(log_event["attributes"]["custom_attr"]).to eq("custom_value")
+    end
+
+    it "supports block syntax" do
+      debug_logger.log(:info, parameters: []) { "Test log block message" }
+
+      log_event = debug_logger.logged_events.last
+      expect(log_event["level"]).to eq("info")
+      expect(log_event["message"]).to eq("Test log block message")
     end
   end
 
