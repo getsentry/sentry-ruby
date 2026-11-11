@@ -6,20 +6,10 @@ module Sentry
     # Enable with `config.enabled_patches << :good_job_cron`.
     module GoodJobCron
       PAYLOAD_KEY = "_sentry_good_job_cron"
-      CURRENT_ENTRY = :sentry_good_job_cron_entry
-
-      module CronEntry
-        def enqueue(*args)
-          Thread.current[CURRENT_ENTRY] = self unless Sentry::Rails::GoodJobCron.excluded?(key)
-          super
-        ensure
-          Thread.current[CURRENT_ENTRY] = nil
-        end
-      end
 
       module Job
         def serialize
-          @_sentry_good_job_cron ||= Sentry::Rails::GoodJobCron.monitor_for(Thread.current[CURRENT_ENTRY], self)
+          @_sentry_good_job_cron ||= Sentry::Rails::GoodJobCron.monitor_for(self)
           payload = super
           payload[PAYLOAD_KEY] = @_sentry_good_job_cron if @_sentry_good_job_cron
           payload
@@ -44,11 +34,15 @@ module Sentry
           false
         end
 
-        # Runs where GoodJob evaluates the schedule, so the time zone matches.
-        def monitor_for(entry, job)
-          return unless entry && Sentry.initialized?
+        # GoodJob sets the cron key while an entry enqueues its job and clears it while jobs run.
+        def monitor_for(job)
+          key = ::GoodJob::CurrentThread.cron_key
+          return unless key && Sentry.initialized?
+          return if excluded?(key)
 
+          entry = ::GoodJob::CronEntry.find(key)
           job_class = entry.job_class
+          # A callable class can't be checked without calling it again.
           return unless job_class.respond_to?(:call) || job.class.name == job_class.to_s.delete_prefix("::")
           return if job.class < Sentry::Cron::MonitorCheckIns::Patch
 
@@ -56,9 +50,7 @@ module Sentry
           return unless slug
           return if slug_shared?(entry.key, slug)
 
-          # Entries whose cron is a proc can change schedule between runs.
-          cron = entry.params[:cron]
-          config = Sentry::Cron::FugitSchedule.from_cron(::Fugit.parse(cron)) if cron.is_a?(String)
+          config = schedule_for(entry)
           unless config
             Sentry.sdk_logger.debug(Sentry::LOGGER_PROGNAME) { "Not monitoring GoodJob cron entry #{entry.key}: its schedule can't be expressed as a Crons schedule." }
             return
@@ -66,7 +58,7 @@ module Sentry
 
           { "slug" => slug, "crontab" => config.schedule.value, "timezone" => config.timezone }.compact
         rescue StandardError => e
-          Sentry.sdk_logger.error(Sentry::LOGGER_PROGNAME) { "Not monitoring GoodJob cron entry #{entry.key}: #{e.class}: #{e.message}" }
+          Sentry.sdk_logger.error(Sentry::LOGGER_PROGNAME) { "Not monitoring GoodJob cron entry #{key}: #{e.class}: #{e.message}" }
           nil
         end
 
@@ -95,19 +87,19 @@ module Sentry
             prepend Sentry::Rails::GoodJobCron::Job
             around_perform { |job, block| Sentry::Rails::GoodJobCron.perform(job, &block) }
           end
-
-          apply = proc do
-            # safe_constantize also loads it under the classic autoloader.
-            entry_class = "GoodJob::CronEntry".safe_constantize
-            if entry_class && !(entry_class < Sentry::Rails::GoodJobCron::CronEntry)
-              entry_class.prepend(Sentry::Rails::GoodJobCron::CronEntry)
-            end
-          end
-          ::Rails.application.reloader.to_prepare(&apply)
-          apply.call if ::Rails.application.initialized?
         end
 
         private
+
+        # Entries whose cron is a proc can change schedule between runs. GoodJob's
+        # scheduler threads read zoneless schedules in the app's time zone, which
+        # an enqueue from a request using Time.use_zone wouldn't see.
+        def schedule_for(entry)
+          cron = entry.params[:cron]
+          return unless cron.is_a?(String)
+
+          Time.use_zone(Time.zone_default) { Sentry::Cron::FugitSchedule.from_cron(::Fugit.parse(cron)) }
+        end
 
         # Different keys can share a slug, like long keys cut at the same length.
         # One monitor can't follow two schedules, so none of them are monitored.
