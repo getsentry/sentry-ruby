@@ -62,6 +62,26 @@ RSpec.shared_examples "an ActiveJob backend that emits a producer span on enqueu
     end
   end
 
+  context "when tracing is disabled" do
+    let(:routed_job) do
+      job_fixture do
+        attr_accessor :routed_queue
+
+        queue_as { routed_queue || "unrouted" }
+
+        before_enqueue { |job| job.routed_queue = "routed" }
+
+        def perform; end
+      end
+    end
+
+    it "resolves a queue_as block after the job's own enqueue callbacks" do
+      routed_job.perform_later
+
+      expect(last_enqueued_payload["queue_name"]).to eq("routed")
+    end
+  end
+
   context "when producer-span instrumentation raises" do
     let(:configure_sentry) { proc { |config| config.traces_sample_rate = 1.0 } }
 

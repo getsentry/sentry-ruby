@@ -23,6 +23,24 @@ RSpec.shared_examples "an ActiveJob backend that records messaging span data on 
     expect(data["messaging.system"]).to eq(successful_job.queue_adapter_name)
   end
 
+  it "records the byte length of the delivered job data encoded as JSON as messaging.message.body.size" do
+    delivered_job_data = []
+    recording_job = job_fixture do
+      define_method(:deserialize) do |job_data|
+        delivered_job_data << job_data
+        super(job_data)
+      end
+
+      def perform(_greeting); end
+    end
+
+    recording_job.perform_later("héllo")
+    drain
+
+    data = consumer_transaction.contexts.dig(:trace, :data)
+    expect(data["messaging.message.body.size"]).to eq(JSON.generate(delivered_job_data.last).bytesize)
+  end
+
   it "records messaging.message.retry.count = 0 for non-retryable jobs" do
     successful_job.perform_later
     drain
