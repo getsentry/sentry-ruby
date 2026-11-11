@@ -35,7 +35,7 @@ as_user() {
 }
 
 echo "📦 Pre-installing toolchain..."
-as_user env MISE_RUBY_COMPILE=0 "$MISE_BIN" install \
+as_user "$MISE_BIN" install \
   "java@temurin-21" \
   "ruby@${RUBY_VERSION}" \
   "node@lts"
