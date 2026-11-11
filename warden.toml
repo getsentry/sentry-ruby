@@ -11,6 +11,7 @@ reportOn = "medium"
 
 [[skills]]
 name = "code-review"
+ignorePaths = ["**/gemfiles/*.gemfile.lock"]
 incremental = true
 
 [[skills.triggers]]
