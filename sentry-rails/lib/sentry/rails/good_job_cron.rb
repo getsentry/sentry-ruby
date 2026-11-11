@@ -56,7 +56,7 @@ module Sentry
           end
           return if slug_shared?(entry.key, slug)
 
-          { "slug" => slug, "crontab" => config.schedule.value, "timezone" => config.timezone }.compact
+          { "slug" => slug, "crontab" => config.schedule.value, "timezone" => config.timezone }
         rescue StandardError => e
           Sentry.sdk_logger.error(Sentry::LOGGER_PROGNAME) { "Not monitoring GoodJob cron entry #{key}: #{e.class}: #{e.message}" }
           nil
@@ -65,8 +65,6 @@ module Sentry
         def perform(job)
           data = job.instance_variable_get(:@_sentry_good_job_cron)
           return yield unless data && Sentry.initialized?
-
-          return yield unless data["crontab"]
 
           cron_config = Sentry.configuration.cron
           monitor_config = Sentry::Cron::MonitorConfig.from_crontab(
