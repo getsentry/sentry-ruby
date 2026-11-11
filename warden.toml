@@ -1,0 +1,27 @@
+# Warden Configuration
+# https://github.com/getsentry/warden
+#
+# The org-wide base config already runs security-review on every PR.
+
+version = 1
+
+[defaults]
+failOn = "off"
+reportOn = "medium"
+
+[[skills]]
+name = "code-review"
+incremental = true
+
+[[skills.triggers]]
+type = "pull_request"
+actions = ["opened", "synchronize", "reopened"]
+
+[[skills]]
+name = "sdk-review"
+paths = ["sentry-*/lib/**"]
+incremental = true
+
+[[skills.triggers]]
+type = "pull_request"
+actions = ["opened", "synchronize", "reopened"]
