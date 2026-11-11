@@ -10,7 +10,7 @@ module Sentry
 
       module CronEntry
         def enqueue(*args)
-          Thread.current[CURRENT_ENTRY] = self unless Sentry::Rails::GoodJobCron.excluded?(self)
+          Thread.current[CURRENT_ENTRY] = self unless Sentry::Rails::GoodJobCron.excluded?(key)
           super
         ensure
           Thread.current[CURRENT_ENTRY] = nil
@@ -32,15 +32,15 @@ module Sentry
       end
 
       class << self
-        def excluded?(entry)
+        def excluded?(key)
           return false unless Sentry.initialized?
 
-          key = entry.key.to_s
+          key = key.to_s
           Array(Sentry.configuration.rails.good_job_exclude_cron_jobs).any? do |pattern|
             (pattern.is_a?(Symbol) ? pattern.to_s : pattern) === key
           end
         rescue StandardError => e
-          Sentry.sdk_logger.error(Sentry::LOGGER_PROGNAME) { "Could not check good_job_exclude_cron_jobs for #{entry.key}: #{e.class}: #{e.message}" }
+          Sentry.sdk_logger.error(Sentry::LOGGER_PROGNAME) { "Could not check good_job_exclude_cron_jobs for #{key}: #{e.class}: #{e.message}" }
           false
         end
 
@@ -54,11 +54,15 @@ module Sentry
 
           slug = Sentry::Cron::Slug.from(entry.key)
           return unless slug
+          return if slug_shared?(entry.key, slug)
 
           # Entries whose cron is a proc can change schedule between runs.
           cron = entry.params[:cron]
           config = Sentry::Cron::FugitSchedule.from_cron(::Fugit.parse(cron)) if cron.is_a?(String)
-          return unless config
+          unless config
+            Sentry.sdk_logger.debug(Sentry::LOGGER_PROGNAME) { "Not monitoring GoodJob cron entry #{entry.key}: its schedule can't be expressed as a Crons schedule." }
+            return
+          end
 
           { "slug" => slug, "crontab" => config.schedule.value, "timezone" => config.timezone }.compact
         rescue StandardError => e
@@ -70,18 +74,17 @@ module Sentry
           data = job.instance_variable_get(:@_sentry_good_job_cron)
           return yield unless data && Sentry.initialized?
 
-          slug = data["slug"]
-          if data["crontab"]
-            cron_config = Sentry.configuration.cron
-            monitor_config = Sentry::Cron::MonitorConfig.from_crontab(
-              data["crontab"],
-              timezone: data["timezone"],
-              checkin_margin: cron_config.default_checkin_margin,
-              max_runtime: cron_config.default_max_runtime
-            )
-          end
+          return yield unless data["crontab"]
 
-          Sentry::Cron::MonitorCheckIns.with_check_in(slug, monitor_config: monitor_config) { yield }
+          cron_config = Sentry.configuration.cron
+          monitor_config = Sentry::Cron::MonitorConfig.from_crontab(
+            data["crontab"],
+            timezone: data["timezone"],
+            checkin_margin: cron_config.default_checkin_margin,
+            max_runtime: cron_config.default_max_runtime
+          )
+
+          Sentry::Cron::MonitorCheckIns.with_check_in(data["slug"], monitor_config: monitor_config) { yield }
         end
 
         def patch
@@ -102,6 +105,24 @@ module Sentry
           end
           ::Rails.application.reloader.to_prepare(&apply)
           apply.call if ::Rails.application.initialized?
+        end
+
+        private
+
+        # Different keys can share a slug, like long keys cut at the same length.
+        # One monitor can't follow two schedules, so none of them are monitored.
+        def slug_shared?(key, slug)
+          others = ::GoodJob.configuration.cron.keys.reject { |other| other.to_s == key.to_s || excluded?(other) }
+          colliding = others.select { |other| Sentry::Cron::Slug.from(other) == slug }
+          return false if colliding.empty?
+
+          @slug_warnings ||= Concurrent::Map.new
+          if @slug_warnings.put_if_absent(key.to_s, true).nil?
+            Sentry.sdk_logger.warn(Sentry::LOGGER_PROGNAME) do
+              "Not monitoring GoodJob cron entry #{key}: its monitor slug #{slug} is also used by #{colliding.join(", ")}. Rename or exclude one of them."
+            end
+          end
+          true
         end
       end
     end

@@ -169,6 +169,52 @@ if defined?(::GoodJob)
       end
     end
 
+    context "with cron keys that share a slug" do
+      let(:long_key) { "sync_salesforce_accounts_with_the_billing_provider" }
+      let(:cron) do
+        {
+          "#{long_key}_daily": { class: "ReportJob", cron: "0 9 * * *" },
+          "#{long_key}_weekly": { class: "ReportJob", cron: "0 9 * * 1" },
+          nightly_report: { class: "ReportJob", cron: "0 2 * * *" }
+        }
+      end
+
+      around do |example|
+        configuration = GoodJob.configuration
+        GoodJob.configuration = GoodJob::Configuration.new({ cron: cron })
+        example.run
+      ensure
+        GoodJob.configuration = configuration
+      end
+
+      def run_configured(key)
+        GoodJob::CronEntry.find(key).enqueue(Time.now)
+        drain
+      end
+
+      it "skips all of them and warns" do
+        string_io = StringIO.new
+        Sentry.configuration.sdk_logger = ::Logger.new(string_io)
+
+        run_configured(:"#{long_key}_daily")
+        run_configured(:"#{long_key}_weekly")
+        run_configured(:nightly_report)
+
+        expect(check_ins.map(&:monitor_slug).uniq).to eq(["nightly_report"])
+        expect(string_io.string).to include("Not monitoring GoodJob cron entry #{long_key}_daily", "#{long_key}_weekly")
+      end
+
+      context "when one of them is excluded" do
+        let(:excluded_jobs) { [:"#{long_key}_weekly"] }
+
+        it "monitors the other" do
+          run_configured(:"#{long_key}_daily")
+
+          expect(check_ins.map(&:monitor_slug).uniq).to eq([long_key])
+        end
+      end
+    end
+
     context "with an exclusion pattern that raises" do
       let(:excluded_jobs) { [->(_key) { raise "boom" }] }
 
