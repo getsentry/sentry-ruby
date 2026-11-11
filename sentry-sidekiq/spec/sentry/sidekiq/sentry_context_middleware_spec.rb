@@ -7,6 +7,21 @@ require 'sidekiq/api'
 RSpec.shared_context "sidekiq", shared_context: :metadata do
   let(:user) { { "id" => rand(10_000) } }
 
+  let(:sdk_log) { StringIO.new }
+
+  let(:failing_extension_class) do
+    Class.new(Sentry::Sidekiq::JobExtension) do
+      %i[
+        scope_data transaction_name extract_trace_headers inject_trace_headers messaging_data
+        publish_messaging_data publish_description publish_span_origin will_retry? span_origin
+      ].each do |hook|
+        define_method(hook) { |**| raise "extension failure" }
+      end
+    end
+  end
+
+  let(:failing_extension) { failing_extension_class.new(name: :failing) }
+
   let(:processor) do
     new_processor
   end
@@ -28,6 +43,69 @@ RSpec.describe Sentry::Sidekiq::SentryContextServerMiddleware do
     expect(transport.events.count).to eq(1)
     event = transport.events[0]
     expect(event.user).to eq(user)
+  end
+
+  it "starts a new trace for a job without trace propagation headers" do
+    perform_basic_setup
+    worker_trace_id = Sentry.get_main_hub.current_scope.propagation_context.trace_id
+
+    execute_worker(processor, SadWorker)
+
+    event = transport.events.last
+    expect(event.contexts.dig(:trace, :trace_id)).to be_a(String)
+    expect(event.contexts.dig(:trace, :trace_id)).not_to eq(worker_trace_id)
+  end
+
+  it "starts a new trace for a job with empty trace propagation headers" do
+    perform_basic_setup
+    worker_trace_id = Sentry.get_main_hub.current_scope.propagation_context.trace_id
+
+    execute_worker(processor, SadWorker, trace_propagation_headers: {})
+
+    event = transport.events.last
+    expect(event.contexts.dig(:trace, :trace_id)).to be_a(String)
+    expect(event.contexts.dig(:trace, :trace_id)).not_to eq(worker_trace_id)
+  end
+
+  it "continues the trace from trace propagation headers when tracing is disabled" do
+    perform_basic_setup
+    trace_id = "a" * 32
+
+    execute_worker(processor, SadWorker, trace_propagation_headers: { "sentry-trace" => "#{trace_id}-#{"b" * 16}-1" })
+
+    expect(transport.events.last.contexts.dig(:trace, :trace_id)).to eq(trace_id)
+  end
+
+  context "when the extension handling the job raises" do
+    before do
+      perform_basic_setup do |config|
+        config.traces_sample_rate = 1.0
+        config.sdk_logger = Logger.new(sdk_log)
+      end
+    end
+
+    it "performs the job once and logs the extension's failure" do
+      performed = 0
+
+      described_class.new(failing_extension).call(HappyWorker.new, { "jid" => "123456", "class" => "HappyWorker", "args" => [] }, "default") { performed += 1 }
+
+      expect(performed).to eq(1)
+      expect(sdk_log.string).to include("Job extension :failing failed")
+    end
+  end
+
+  context "when the queue.process transaction is not sampled" do
+    before do
+      perform_basic_setup { |config| config.traces_sample_rate = 0.0 }
+    end
+
+    it "reports job errors without messaging.message.body.size" do
+      execute_worker(processor, SadWorker)
+
+      trace_data = transport.events.last.contexts.dig(:trace, :data)
+      expect(trace_data).to include('messaging.system' => 'sidekiq')
+      expect(trace_data).not_to have_key('messaging.message.body.size')
+    end
   end
 
   context "with tracing enabled" do
@@ -58,7 +136,16 @@ RSpec.describe Sentry::Sidekiq::SentryContextServerMiddleware do
     it "sets sidekiq tags to the event" do
       execute_worker(processor, TagsWorker)
       event = transport.events.last
-      expect(event.tags.keys).to include(:"sidekiq.marvel", :"sidekiq.dc")
+      expect(event.tags).to include(queue: "default", jid: "123123", "sidekiq.marvel": true, "sidekiq.dc": true)
+      expect(event.contexts[:sidekiq]).to include("class" => "TagsWorker", "jid" => "123123", "queue" => "default", "tags" => ["marvel", "dc"])
+    end
+
+    it "sets the job exactly as Sidekiq delivered it as the sidekiq context of the transaction" do
+      job = { "jid" => "123456", "class" => "HappyWorker", "args" => [{ "_aj_symbol_keys" => ["id"], "id" => 1 }] }
+
+      described_class.new.call(HappyWorker.new, job, "default") { }
+
+      expect(transport.events.last.contexts[:sidekiq]).to eq(job.merge("queue" => "default"))
     end
 
     it "has the correct origin" do
@@ -91,6 +178,38 @@ RSpec.describe Sentry::Sidekiq::SentryContextServerMiddleware do
         expect(trace[:data]['messaging.destination.name']).to eq('default')
         expect(trace[:data]['messaging.message.retry.count']).to eq(0)
         expect(trace[:data]['messaging.message.receive.latency']).to be_within(20).of(expected_latency)
+      end
+
+      it "reports sidekiq as the messaging system on the queue.process transaction" do
+        execute_worker(processor, HappyWorker)
+
+        expect(transport.events[0].contexts.dig(:trace, :data)['messaging.system']).to eq('sidekiq')
+      end
+
+      it "reports the job's retry count on the queue.process transaction" do
+        execute_worker(processor, HappyWorker, retry_count: 3)
+
+        expect(transport.events[0].contexts.dig(:trace, :data)['messaging.message.retry.count']).to eq(3)
+      end
+
+      it "reports the byte length of the job encoded as JSON as the message body size on the queue.process transaction" do
+        message = Sidekiq.dump_json("jid" => "123456", "class" => "HappyWorker", "args" => ["héllo"], "queue" => "default")
+
+        process_work(processor, Sidekiq::BasicFetch::UnitOfWork.new("queue:default", message))
+
+        expect(transport.events[0].contexts.dig(:trace, :data)['messaging.message.body.size']).to eq(message.bytesize)
+      end
+
+      it "performs the job and omits the message body size when the job cannot be encoded as JSON" do
+        job = { "jid" => "123456", "class" => "HappyWorker", "args" => ["\xFF".dup.force_encoding(Encoding::UTF_8)], "queue" => "default" }
+        performed = false
+
+        described_class.new.call(HappyWorker.new, job, "default") { performed = true }
+
+        trace_data = transport.events[0].contexts.dig(:trace, :data)
+        expect(performed).to be(true)
+        expect(trace_data).to include('messaging.message.id' => '123456', 'messaging.system' => 'sidekiq')
+        expect(trace_data).not_to have_key('messaging.message.body.size')
       end
 
       if MIN_SIDEKIQ_6
@@ -181,6 +300,18 @@ RSpec.describe Sentry::Sidekiq::SentryContextClientMiddleware do
       expect(queue.first["sentry_user"]).to eq(user)
     end
 
+    context "when the scope user has fields beyond id, email and username" do
+      let(:user) { { "id" => 1, "ip_address" => "1.2.3.4", "segment" => "vip" } }
+
+      it "propagates the whole user" do
+        Sentry.configuration.data_collection.user_info = true
+
+        client.push('queue' => 'default', 'class' => HappyWorker, 'args' => [])
+
+        expect(queue.first["sentry_user"]).to eq(user)
+      end
+    end
+
     it "does not propagate user information when user_info is disabled" do
       Sentry.configuration.data_collection.user_info = false
 
@@ -237,6 +368,115 @@ RSpec.describe Sentry::Sidekiq::SentryContextClientMiddleware do
       expect(span[:op]).to eq("queue.publish")
       expect(span[:data]['messaging.message.id']).to eq(message_id)
       expect(span[:data]['messaging.destination.name']).to eq('default')
+    end
+
+    it "only reports a producer body size that matches the finalized queued message" do
+      client.push('queue' => 'default', 'class' => HappyWorker, 'args' => ["héllo"])
+
+      transaction.finish
+
+      pushed_job = queue.first.item
+      span = transport.events.last.spans.detect { |span| span[:op] == "queue.publish" }
+      expect(span[:data]['messaging.message.body.size']).to be_nil.or eq(Sidekiq.dump_json(pushed_job).bytesize)
+    end
+
+    context "when an earlier client middleware reroutes the job" do
+      let(:rerouted_queue) { Sidekiq::Queue.new("rerouted") }
+
+      let(:rerouting_middleware) do
+        Class.new do
+          def call(_worker_class, job, _queue, _redis_pool)
+            job["queue"] = "rerouted"
+            yield
+          end
+        end
+      end
+
+      let(:client) do
+        Sidekiq::Client.new.tap do |client|
+          client.middleware do |chain|
+            chain.add rerouting_middleware
+            chain.add described_class
+          end
+        end
+      end
+
+      after do
+        client.middleware { |chain| chain.remove(rerouting_middleware) }
+        ensure_queue_empty(rerouted_queue)
+      end
+
+      it "reports the queue the push was made to as the destination" do
+        client.push('queue' => 'default', 'class' => HappyWorker, 'args' => [])
+
+        transaction.finish
+
+        span = transport.events.last.spans.detect { |span| span[:op] == "queue.publish" }
+        expect(span[:data]['messaging.destination.name']).to eq('default')
+      end
+    end
+
+    it "names the queue.publish span after the worker with the sidekiq messaging system and without an origin or retry count" do
+      client.push('queue' => 'default', 'class' => HappyWorker, 'args' => [], 'retry_count' => 2)
+
+      transaction.finish
+
+      span = transport.events.last.spans.detect { |span| span[:op] == "queue.publish" }
+      expect(span[:description]).to eq("HappyWorker")
+      expect(span[:origin]).to eq("manual")
+      expect(span[:data]['messaging.system']).to eq('sidekiq')
+      expect(span[:data]).not_to have_key('messaging.message.retry.count')
+    end
+
+    it "does not enqueue the job when recording the queue.publish span raises" do
+      allow(Sentry).to receive(:with_child_span).and_call_original
+      allow(Sentry).to receive(:with_child_span)
+        .with(hash_including(op: "queue.publish"))
+        .and_raise(StandardError, "boom from instrumentation")
+
+      expect do
+        client.push('queue' => 'default', 'class' => HappyWorker, 'args' => [])
+      end.to raise_error(StandardError, /boom from instrumentation/)
+
+      expect(queue.size).to be(0)
+    end
+
+    context "when the extension handling the job raises" do
+      before do
+        Sentry.configuration.sdk_logger = Logger.new(sdk_log)
+      end
+
+      it "enqueues the job once and logs the extension's failure" do
+        middleware = described_class.new(failing_extension)
+        job = { "jid" => "123456", "class" => "HappyWorker", "args" => [], "queue" => "default" }
+        enqueued = 0
+
+        middleware.call(HappyWorker, job, "default", nil) { enqueued += 1 }
+
+        expect(enqueued).to eq(1)
+        expect(sdk_log.string).to include("Job extension :failing failed")
+      end
+    end
+
+    context "when the extension returns no payload from inject_trace_headers" do
+      let(:extension) do
+        Class.new(Sentry::Sidekiq::JobExtension) do
+          def inject_trace_headers(**)
+            nil
+          end
+        end.new(name: :nil_payload)
+      end
+
+      it "enqueues the job unchanged" do
+        middleware = described_class.new(extension)
+        job = { "jid" => "123456", "class" => "HappyWorker", "args" => [], "queue" => "default" }
+        enqueued = 0
+
+        middleware.call(HappyWorker, job, "default", nil) { enqueued += 1 }
+
+        expect(enqueued).to eq(1)
+        expect(job).to include("jid" => "123456", "class" => "HappyWorker", "args" => [])
+      end
     end
 
     it "does not propagate headers with propagate_traces = false" do
