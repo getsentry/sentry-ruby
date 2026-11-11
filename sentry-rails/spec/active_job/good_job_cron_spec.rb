@@ -157,6 +157,54 @@ if defined?(::GoodJob)
       expect(check_ins.map(&:monitor_slug)).to eq(["own-slug", "own-slug"])
     end
 
+    it "monitors jobs that include Sentry::Cron::MonitorCheckIns without configuring it" do
+      job_fixture("UnconfiguredJob") do
+        include Sentry::Cron::MonitorCheckIns
+
+        def perform; end
+      end
+
+      run_entry(:unconfigured, class: "UnconfiguredJob", cron: "0 9 * * *")
+
+      expect(check_ins.map(&:monitor_slug)).to eq(["unconfigured", "unconfigured"])
+    end
+
+    it "monitors entries whose class is callable" do
+      skip "GoodJob #{GoodJob::VERSION} has no callable classes" if Gem::Version.new(GoodJob::VERSION) < Gem::Version.new("4.19.3")
+
+      run_entry(:callable_report, class: -> { ReportJob }, cron: "0 9 * * *")
+
+      expect(check_ins.map(&:monitor_slug)).to eq(["callable_report", "callable_report"])
+    end
+
+    it "does not monitor other jobs enqueued while an entry enqueues" do
+      job_fixture("AuditJob") do
+        def perform; end
+      end
+      job_fixture("AuditedReportJob") do
+        before_enqueue { AuditJob.perform_later }
+
+        def perform; end
+      end
+
+      run_entry(:audited_report, class: "AuditedReportJob", cron: "0 9 * * *")
+
+      expect(check_ins.map(&:monitor_slug)).to eq(["audited_report", "audited_report"])
+    end
+
+    it "still enqueues the job when monitoring it fails" do
+      string_io = StringIO.new
+      Sentry.configuration.sdk_logger = ::Logger.new(string_io)
+
+      # find raises for an entry missing from GoodJob's configuration.
+      GoodJob::CronEntry.new(key: :unlisted_report, class: "ReportJob", cron: "0 9 * * *").enqueue(Time.now)
+
+      expect(queue_adapter.enqueued_jobs.size).to eq(1)
+      drain
+      expect(check_ins).to be_empty
+      expect(string_io.string).to include("Not monitoring GoodJob cron entry unlisted_report")
+    end
+
     context "when GoodJob runs jobs inline" do
       # GoodJob's inline mode runs the job inside the cron enqueue and resets its thread state first.
       def queue_adapter_for_test
@@ -285,6 +333,16 @@ if defined?(::GoodJob)
 
           expect(check_ins.map(&:monitor_slug).uniq).to eq([long_key])
         end
+      end
+    end
+
+    context "with no excluded jobs set" do
+      let(:excluded_jobs) { nil }
+
+      it "monitors the entry" do
+        run_entry(:daily_report, class: "ReportJob", cron: "0 9 * * *")
+
+        expect(check_ins.map(&:monitor_slug)).to eq(["daily_report", "daily_report"])
       end
     end
 
