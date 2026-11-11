@@ -51,7 +51,7 @@ GEM
     fugit (1.14.0)
       et-orbi (~> 1.4)
       raabro (~> 1.4)
-    graphql (2.6.14)
+    graphql (2.6.15)
       base64
       fiber-storage
       logger
