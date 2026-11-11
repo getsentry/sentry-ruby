@@ -36,6 +36,7 @@ module Sentry
 
       if @send_client_reports
         @discarded_events = Hash.new(0)
+        @discarded_events_mutex = Mutex.new
         @last_client_report_sent = Time.now
       end
     end
@@ -171,12 +172,12 @@ module Sentry
       return unless @send_client_reports
       return unless CLIENT_REPORT_REASONS.include?(reason)
 
-      @discarded_events[[reason, data_category]] += num
+      byte_category = Envelope::Item.byte_data_category(data_category) if num_bytes
 
-      return unless num_bytes
-
-      byte_category = Envelope::Item.byte_data_category(data_category)
-      @discarded_events[[reason, byte_category]] += num_bytes if byte_category
+      synchronize_discarded_events do
+        @discarded_events[[reason, data_category]] += num
+        @discarded_events[[reason, byte_category]] += num_bytes if byte_category
+      end
     end
 
     def flush
@@ -193,9 +194,17 @@ module Sentry
     def fetch_pending_client_report(force: false)
       return nil unless @send_client_reports
       return nil if !force && @last_client_report_sent > Time.now - CLIENT_REPORT_INTERVAL
-      return nil if @discarded_events.empty?
 
-      discarded_events_hash = @discarded_events.map do |key, val|
+      discarded_events = synchronize_discarded_events do
+        next if @discarded_events.empty?
+
+        pending = @discarded_events
+        @discarded_events = Hash.new(0)
+        pending
+      end
+      return nil unless discarded_events
+
+      discarded_events_hash = discarded_events.map do |key, val|
         reason, category = key
         { reason: reason, category: category, quantity: val }
       end
@@ -206,10 +215,16 @@ module Sentry
         discarded_events: discarded_events_hash
       }
 
-      @discarded_events = Hash.new(0)
       @last_client_report_sent = Time.now
 
       [item_header, item_payload]
+    end
+
+    def synchronize_discarded_events(&block)
+      @discarded_events_mutex.synchronize(&block)
+    rescue ThreadError
+      # Mutex#synchronize can't be called from a trap context, so fall back to unsynchronized access there
+      yield
     end
 
     def reject_rate_limited_items(envelope)
