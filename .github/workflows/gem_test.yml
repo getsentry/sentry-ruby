@@ -21,6 +21,10 @@ on:
         description: Install ImageMagick.
         type: boolean
         default: false
+      postgres:
+        description: Start a PostgreSQL service and expose its URL as POSTGRES_URL.
+        type: boolean
+        default: false
     secrets:
       CODECOV_TOKEN:
         required: false
@@ -56,6 +60,19 @@ jobs:
           --health-interval 10s
           --health-timeout 5s
           --health-retries 5
+      postgres:
+        image: ${{ inputs.postgres && 'ghcr.io/getsentry/image-mirror-library-postgres:18-alpine' || '' }}
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: sentry_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d sentry_test"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
     strategy:
       fail-fast: false
       matrix:
@@ -82,6 +99,7 @@ jobs:
       - name: Run specs
         env:
           MATRIX_ENTRY: ${{ toJson(matrix) }}
+          POSTGRES_URL: ${{ inputs.postgres && 'postgres://postgres:postgres@localhost:5432/sentry_test' || '' }}
         run: ruby ../bin/test --entry "$MATRIX_ENTRY" --rake
 
       - name: Upload Coverage

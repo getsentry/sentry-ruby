@@ -107,6 +107,11 @@ unless RUBY_PLATFORM.include?("java")
     gem "resque-scheduler", "~> 5.0"
     gem "mock_redis"
   end
+
+  if ruby_version >= Gem::Version.new("3.0") && rails_version >= Gem::Version.new("6.1.0")
+    gem "good_job", "~> 4.0"
+    gem "pg", "~> 1.1"
+  end
 end
 
 gem "sprockets-rails"
