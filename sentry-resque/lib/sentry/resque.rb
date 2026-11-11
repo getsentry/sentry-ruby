@@ -70,7 +70,9 @@ module Sentry
             }
           end
 
-          context
+          return context if Sentry.configuration.data_collection.queues
+
+          context.transform_values { |job_context| job_context.reject { |key, _| key == :arguments } }
         end
 
         def finish_transaction(transaction, status)

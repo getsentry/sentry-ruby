@@ -66,6 +66,7 @@ RSpec.describe Sentry::Sidekiq::ErrorHandler do
   end
 
   it "should capture exceptions based on Sidekiq context" do
+    Sentry.configuration.data_collection.queues = true
     exception = build_exception
 
     subject.call(exception, context)
@@ -75,7 +76,37 @@ RSpec.describe Sentry::Sidekiq::ErrorHandler do
     expect(event[:contexts][:sidekiq]).to eq(context)
   end
 
+  context "when queue data collection is off" do
+    before do
+      Sentry.configuration.data_collection.queues = false
+    end
+
+    it "leaves the job arguments and the raw job out of the Sidekiq context" do
+      subject.call(build_exception, { context: "Internal exception!", job: context, jobstr: Sidekiq.dump_json(context) })
+
+      expect(transport.events.count).to eq(1)
+      expect(transport.events.first.to_h[:contexts][:sidekiq]).to eq(context.except("args").merge(context: "Internal exception!"))
+    end
+
+    it "leaves the raw job out of the Sidekiq context of a job that could not be parsed" do
+      subject.call(build_exception, { context: "Invalid JSON for job", jobstr: "{\"args\":[\"4111111111111111\"" })
+
+      expect(transport.events.count).to eq(1)
+      expect(transport.events.first.to_h[:contexts][:sidekiq]).to eq(context: "Invalid JSON for job")
+    end
+  end
+
+  it "keeps the raw job in the Sidekiq context when queue data collection is on" do
+    Sentry.configuration.data_collection.queues = true
+    jobstr = Sidekiq.dump_json(context)
+
+    subject.call(build_exception, { context: "Internal exception!", job: context, jobstr: jobstr })
+
+    expect(transport.events.first.to_h[:contexts][:sidekiq]).to eq(context.merge(context: "Internal exception!", jobstr: jobstr))
+  end
+
   it "filters out ActiveJob keys from an ActiveJob job" do
+    Sentry.configuration.data_collection.queues = true
     require "active_job"
     exception = build_exception
     aj_job = context.merge("wrapped" => "HardJob", "_aj_globalid" => GlobalID.new('gid://app/model/id'))
