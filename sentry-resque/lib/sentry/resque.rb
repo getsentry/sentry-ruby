@@ -21,12 +21,7 @@ module Sentry
         def record(queue, worker, payload, &block)
           Sentry.with_scope do |scope|
             begin
-              contexts = generate_contexts(queue, worker, payload)
-              scope.set_contexts(**contexts)
-              scope.set_tags("resque.queue" => queue)
-
-              name = contexts.dig(:"Active-Job", :job_class) || contexts.dig(:"Resque", :job_class)
-              scope.set_transaction_name(name, source: :task)
+              apply_job_scope(scope, queue, worker, payload)
               transaction = Sentry.start_transaction(
                 name: scope.transaction_name,
                 source: scope.transaction_source,
@@ -86,6 +81,15 @@ module Sentry
         end
 
         private
+
+        def apply_job_scope(scope, queue, worker, payload)
+          contexts = generate_contexts(queue, worker, payload)
+          scope.set_contexts(**contexts)
+          scope.set_tags("resque.queue" => queue)
+
+          name = contexts.dig(:"Active-Job", :job_class) || contexts.dig(:"Resque", :job_class)
+          scope.set_transaction_name(name, source: :task)
+        end
 
         def raise_if_retries_remain(klass, exception)
           return unless Sentry.configuration.resque.report_after_job_retries &&

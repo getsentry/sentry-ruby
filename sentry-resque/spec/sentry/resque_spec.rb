@@ -315,6 +315,46 @@ RSpec.describe Sentry::Resque do
         expect(event[:contexts][:"Active-Job"][:job_class]).to eq("AJFailedJob")
       end
     end
+
+    context "with tracing enabled" do
+      let(:transactions) { transport.events.select { |event| event.is_a?(Sentry::TransactionEvent) } }
+      let(:errors) { transport.events.reject { |event| event.is_a?(Sentry::TransactionEvent) } }
+
+      it "should record a plain Resque job in a queue.resque transaction" do
+        perform_basic_setup do |config|
+          config.traces_sample_rate = 1.0
+          config.rails.skippable_job_adapters = ["ActiveJob::QueueAdapters::ResqueAdapter"]
+        end
+        Resque::Job.create(:default, FailedJob)
+
+        process_job(worker)
+
+        expect(transactions.count).to eq(1)
+        expect(transactions.first.to_h.dig(:contexts, :trace)).to include(op: "queue.resque", origin: "auto.queue.resque")
+        expect(errors.count).to eq(1)
+        expect(errors.first.to_h.dig(:contexts, :Resque)).to include(job_class: "FailedJob", queue: "default", worker: worker.to_s)
+      end
+
+      it "should keep the Resque transaction and error event of an ActiveJob job when the adapter is skippable" do
+        perform_basic_setup do |config|
+          config.traces_sample_rate = 1.0
+          config.rails.skippable_job_adapters = ["ActiveJob::QueueAdapters::ResqueAdapter"]
+        end
+        AJFailedJob.perform_later
+
+        process_job(worker)
+
+        expect(transactions.count).to eq(1)
+        transaction = transactions.first.to_h
+        expect(transaction[:transaction]).to eq("AJFailedJob")
+        expect(transaction.dig(:contexts, :trace)).to include(op: "queue.resque", origin: "auto.queue.resque", status: "internal_error")
+        expect(errors.count).to eq(1)
+        error = errors.first.to_h
+        expect(error[:sdk][:name]).to eq("sentry.ruby.resque")
+        expect(error[:tags]).to eq("resque.queue" => "default", number: 2)
+        expect(error[:contexts][:"Active-Job"]).to include(job_class: "AJFailedJob", queue: "default", worker: worker.to_s)
+      end
+    end
   end if rails_gems
 end
 
