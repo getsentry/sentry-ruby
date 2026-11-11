@@ -17,30 +17,48 @@ module Sentry
         end
 
         lifecycle.around(:invoke_job) do |job, *args, &block|
-          env = extract_trace_data(job)
-          next block.call(job, *args) unless Sentry.initialized?
+          record(job, *args, &block)
+        end
+      end
 
-          Sentry.with_scope do |scope|
-            contexts = generate_contexts(job)
-            name = contexts.dig(ACTIVE_JOB_CONTEXT_KEY, :job_class) || contexts.dig(DELAYED_JOB_CONTEXT_KEY, :job_class)
-            scope.set_transaction_name(name, source: :task)
-            scope.set_contexts(**contexts)
-            scope.set_tags("delayed_job.queue" => job.queue, "delayed_job.id" => job.id.to_s)
+      # Runs the job in its own scope and transaction, capturing its errors.
+      #
+      # @param job [Delayed::Job]
+      # @return [Object] the block's result
+      def self.record(job, *args, &block)
+        env = extract_trace_data(job)
+        return block.call(job, *args) unless Sentry.initialized?
 
-            transaction = start_transaction(scope, env, contexts)
-            scope.set_span(transaction) if transaction
+        Sentry.with_scope do |scope|
+          contexts = apply_job_scope(scope, job)
 
-            begin
-              block.call(job, *args)
+          transaction = start_transaction(scope, env, contexts)
+          scope.set_span(transaction) if transaction
 
-              finish_transaction(transaction, 200)
-            rescue Exception => e
-              capture_exception(e, job)
-              finish_transaction(transaction, 500)
-              raise
-            end
+          begin
+            block.call(job, *args)
+
+            finish_transaction(transaction, 200)
+          rescue Exception => e
+            capture_exception(e, job)
+            finish_transaction(transaction, 500)
+            raise
           end
         end
+      end
+
+      # Applies the job's transaction name, contexts and tags to the scope.
+      #
+      # @param scope [Scope]
+      # @param job [Delayed::Job]
+      # @param contexts [Hash]
+      # @return [Hash] the applied contexts
+      def self.apply_job_scope(scope, job, contexts = generate_contexts(job))
+        name = contexts.dig(ACTIVE_JOB_CONTEXT_KEY, :job_class) || contexts.dig(DELAYED_JOB_CONTEXT_KEY, :job_class)
+        scope.set_transaction_name(name, source: :task)
+        scope.set_contexts(**contexts)
+        scope.set_tags("delayed_job.queue" => job.queue, "delayed_job.id" => job.id.to_s)
+        contexts
       end
 
       def self.generate_contexts(job)

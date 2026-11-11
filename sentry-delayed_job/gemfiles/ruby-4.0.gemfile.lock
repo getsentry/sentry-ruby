@@ -249,6 +249,14 @@ GEM
     rspec-mocks (3.13.9)
       diff-lcs (>= 1.2.0, < 2.0)
       rspec-support (~> 3.13.0)
+    rspec-rails (8.1.0)
+      actionpack (>= 7.2)
+      activesupport (>= 7.2)
+      railties (>= 7.2)
+      rspec-core (>= 3.13.0, < 5.0.0)
+      rspec-expectations (>= 3.13.0, < 5.0.0)
+      rspec-mocks (>= 3.13.0, < 5.0.0)
+      rspec-support (>= 3.13.0, < 5.0.0)
     rspec-retry (0.6.2)
       rspec-core (> 3.3)
     rspec-support (3.13.8)
@@ -316,6 +324,7 @@ DEPENDENCIES
   rake (~> 12.0)
   rexml (= 3.4.1)
   rspec
+  rspec-rails
   rspec-retry
   ruby-lsp-rspec
   sentry-delayed_job!
@@ -404,6 +413,7 @@ CHECKSUMS
   rspec-core (3.13.7) sha256=c64ff16d9788119805cbc6a3f4b6d87cc22417c2d25976a3330de136896b5469
   rspec-expectations (3.13.6) sha256=bf538ca6d367ff5b0d85a87fdb5c0c6038f2cd1308a0eeba07476caa02d22f35
   rspec-mocks (3.13.9) sha256=ea5c7ff3054a6098ca6039aacef80aec69d5a8a3ef80be8fc88337359b672a30
+  rspec-rails (8.1.0) sha256=5e6c6a4e7f7d644b56e412d410824f6480c1e5a9c61b8448998236b4a4dbf3be
   rspec-retry (0.6.2) sha256=6101ba23a38809811ae3484acde4ab481c54d846ac66d5037ccb40131a60d858
   rspec-support (3.13.8) sha256=e4160030309b7e3e9d9863dfe720a35dfcc577162f5402cd68fc8c5258a0ffd6
   ruby-lsp (0.26.11) sha256=4cc8f1587237ff8c9031680b5491df901a82559eeaa1ae96863ffe700b32583d
