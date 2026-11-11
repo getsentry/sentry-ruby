@@ -107,7 +107,7 @@ RSpec.describe "Tracing", type: :e2e do
 
         expect(dsc["sampled"]).to eq("true")
         expect(dsc["environment"]).to eql("production")
-        expect(dsc["public_key"]).to eql("user")
+        expect(dsc["public_key"]).to eql(Sentry::DSN.new(ENV.fetch("SENTRY_DSN")).public_key)
       end
 
       transactions_with_headers = get_http_server_transactions_with_headers

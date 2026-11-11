@@ -17,7 +17,7 @@ concurrency:
 
 jobs:
   e2e-tests:
-    name: e2e tests (ruby ${{ matrix.ruby.flavor }}, ${{ matrix.adapter }})
+    name: e2e tests (ruby ${{ matrix.ruby.flavor }}, ${{ matrix.adapter }}, backend gem ${{ matrix.backend_gem }})
     runs-on: ubuntu-latest
     timeout-minutes: 8
 
@@ -36,6 +36,21 @@ jobs:
           - resque
           - delayed_job
           - solid_queue
+        backend_gem:
+          - reporting
+        include:
+          - { ruby: { version: "3.4.9", flavor: "3.4" }, adapter: sidekiq, backend_gem: opted_out }
+          - { ruby: { version: "3.4.9", flavor: "3.4" }, adapter: resque, backend_gem: opted_out }
+          - { ruby: { version: "3.4.9", flavor: "3.4" }, adapter: delayed_job, backend_gem: opted_out }
+          - { ruby: { version: "4.0.3", flavor: "4.0" }, adapter: sidekiq, backend_gem: opted_out }
+          - { ruby: { version: "4.0.3", flavor: "4.0" }, adapter: resque, backend_gem: opted_out }
+          - { ruby: { version: "4.0.3", flavor: "4.0" }, adapter: delayed_job, backend_gem: opted_out }
+          - { ruby: { version: "3.4.9", flavor: "3.4" }, adapter: sidekiq, backend_gem: not_installed }
+          - { ruby: { version: "3.4.9", flavor: "3.4" }, adapter: resque, backend_gem: not_installed }
+          - { ruby: { version: "3.4.9", flavor: "3.4" }, adapter: delayed_job, backend_gem: not_installed }
+          - { ruby: { version: "4.0.3", flavor: "4.0" }, adapter: sidekiq, backend_gem: not_installed }
+          - { ruby: { version: "4.0.3", flavor: "4.0" }, adapter: resque, backend_gem: not_installed }
+          - { ruby: { version: "4.0.3", flavor: "4.0" }, adapter: delayed_job, backend_gem: not_installed }
 
     steps:
       - name: Checkout code
@@ -50,6 +65,7 @@ jobs:
           cd .devcontainer
           cp .env.example .env
           echo "SENTRY_E2E_ACTIVE_JOB_ADAPTER=${{ matrix.adapter }}" >> .env
+          echo "SENTRY_E2E_BACKEND_GEM=${{ matrix.backend_gem }}" >> .env
 
       - name: Log in to GHCR
         uses: docker/login-action@650006c6eb7dba73a995cc03b0b2d7f5ca915bee # v4.2.0
@@ -63,8 +79,8 @@ jobs:
 
       - name: Prepare docker resources
         run: |
-          bundle_volume="sentry-ruby-e2e-bundle-${{ github.run_id }}-${{ matrix.ruby.flavor }}-${{ matrix.adapter }}"
-          test_container="sentry-ruby-e2e-test-${{ github.run_id }}-${{ matrix.ruby.flavor }}-${{ matrix.adapter }}"
+          bundle_volume="sentry-ruby-e2e-bundle-${{ github.run_id }}-${{ matrix.ruby.flavor }}-${{ matrix.adapter }}-${{ matrix.backend_gem }}"
+          test_container="sentry-ruby-e2e-test-${{ github.run_id }}-${{ matrix.ruby.flavor }}-${{ matrix.adapter }}-${{ matrix.backend_gem }}"
 
           echo "E2E_BUNDLE_VOLUME=${bundle_volume}" >> "$GITHUB_ENV"
           echo "E2E_TEST_CONTAINER=${test_container}" >> "$GITHUB_ENV"
@@ -155,7 +171,7 @@ jobs:
         if: failure()
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
-          name: e2e-test-logs-ruby-${{ matrix.ruby.version }}-${{ matrix.adapter }}
+          name: e2e-test-logs-ruby-${{ matrix.ruby.version }}-${{ matrix.adapter }}-${{ matrix.backend_gem }}
           path: |
             log/sentry_debug_events.log
           retention-days: 7

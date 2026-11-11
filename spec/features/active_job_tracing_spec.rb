@@ -8,7 +8,7 @@
 # queue.publish span on the http.server transaction at enqueue, and a
 # queue.process consumer transaction when the :async pool runs the
 # job. All three rails-side artifacts must share one trace.
-RSpec.describe "ActiveJob distributed tracing", type: :e2e do
+RSpec.describe "ActiveJob distributed tracing", type: :e2e, if: Test::Helper.active_job_records_publish_span? do
   it "links the browser fetch, the controller, the producer span, and the consumer transaction into one trace" do
     visit "/"
 
@@ -44,6 +44,7 @@ RSpec.describe "ActiveJob distributed tracing", type: :e2e do
     # the publish span.
     expect(job_txn.dig("contexts", "trace", "trace_id")).to eq(incoming_trace_id)
     expect(job_txn.dig("contexts", "trace", "op")).to eq("queue.process")
+    expect(job_txn.dig("contexts", "trace", "origin")).to eq(expected_job_origin)
     expect(job_txn.dig("contexts", "trace", "parent_span_id")).to eq(publish_span["span_id"])
     expect(job_txn.dig("contexts", "trace", "data", "messaging.message.id"))
       .to eq(publish_span.dig("data", "messaging.message.id"))
