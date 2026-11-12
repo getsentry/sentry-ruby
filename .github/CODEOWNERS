@@ -1,1 +1,4 @@
-* @sl0thentr0py @solnic
+# Members of @getsentry/owners-ruby-sdk: getsentry/security-as-code, rbac/env/prod-github/team/owners-ruby-sdk.tf
+# Contractors are listed by handle, because a GitHub team holds only org members:
+# - @solnic (Peter Solnica)
+* @getsentry/owners-ruby-sdk @solnic
