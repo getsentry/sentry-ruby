@@ -40,6 +40,19 @@ echo 'redis did not become ready' >&2
 exit 1
 """
 
+[tasks."services:postgres"]
+description = "Start a local PostgreSQL server for the GoodJob specs; waits until ready, no-op if already running"
+run = """
+set -e
+pg_bin="$(ls -d /usr/lib/postgresql/*/bin 2>/dev/null | sort -V | tail -n 1)"
+[ -n "$pg_bin" ] && PATH="$pg_bin:$PATH"
+pg_isready -q -h localhost -p 5432 && exit 0
+data_dir=/tmp/postgres-data
+[ -s "$data_dir/PG_VERSION" ] || initdb --auth=trust --username=postgres --encoding=UTF8 -D "$data_dir" >/dev/null
+pg_ctl -D "$data_dir" -l /tmp/postgres.log -o "-c listen_addresses=localhost -c port=5432 -k /tmp" -w start >/dev/null
+createdb -h localhost -U postgres sentry_test 2>/dev/null || true
+"""
+
 [tasks."e2e:rails"]
 description = "Start the rails-mini e2e app"
 depends = ["services:redis"]

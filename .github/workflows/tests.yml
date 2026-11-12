@@ -31,6 +31,7 @@ jobs:
           - gem: sentry-rails
             sqlite: true
             imagemagick: true
+            postgres: true
           - gem: sentry-sidekiq
           - gem: sentry-delayed_job
             sqlite: true
@@ -42,6 +43,7 @@ jobs:
       gem: ${{ matrix.gem }}
       sqlite: ${{ matrix.sqlite || false }}
       imagemagick: ${{ matrix.imagemagick || false }}
+      postgres: ${{ matrix.postgres || false }}
     secrets:
       CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
 
