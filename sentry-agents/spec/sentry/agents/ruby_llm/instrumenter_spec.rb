@@ -104,6 +104,38 @@ RSpec.describe Sentry::Agents::RubyLLM::Instrumenter do
     expect(data["gen_ai.usage.reasoning.output_tokens"]).to eq(1)
   end
 
+  it "creates a tool span with gated arguments and results" do
+    payload = tool_payload
+    result = described_class.new(nil).instrument("tool_call.ruby_llm", payload) do |event|
+      event[:result] = { temperature: 20 }
+      :ok
+    end
+
+    expect(result).to eq(:ok)
+    event = transaction_event
+    data = model_data(event)
+    expect(model_op(event)).to eq("gen_ai.execute_tool")
+    expect(model_description(event)).to eq("execute_tool weather")
+    expect(data["gen_ai.operation.name"]).to eq("execute_tool")
+    expect(data["gen_ai.tool.name"]).to eq("weather")
+    expect(JSON.parse(data["gen_ai.tool.call.arguments"])).to eq("city" => "Paris")
+    expect(JSON.parse(data["gen_ai.tool.call.result"])).to eq("temperature" => 20)
+  end
+
+  it "gates tool arguments and results independently" do
+    Sentry.configuration.data_collection.gen_ai.inputs = false
+    Sentry.configuration.data_collection.gen_ai.outputs = false
+
+    described_class.new(nil).instrument("tool_call.ruby_llm", tool_payload) do |event|
+      event[:result] = { temperature: 20 }
+    end
+
+    data = model_data(transaction_event)
+    expect(data["gen_ai.tool.name"]).to eq("weather")
+    expect(data).not_to have_key("gen_ai.tool.call.arguments")
+    expect(data).not_to have_key("gen_ai.tool.call.result")
+  end
+
   it "gates input and output content independently" do
     Sentry.configuration.data_collection.gen_ai.inputs = false
     Sentry.configuration.data_collection.gen_ai.outputs = false
@@ -162,6 +194,13 @@ RSpec.describe Sentry::Agents::RubyLLM::Instrumenter do
   def transaction_event
     Sentry.get_current_client.flush
     sentry_events.find { |event| event.is_a?(Sentry::TransactionEvent) }
+  end
+
+  def tool_payload
+    {
+      tool_name: "weather",
+      tool_arguments: { city: "Paris" }
+    }
   end
 
   def chat_payload
