@@ -5,6 +5,7 @@ preReleaseCommand: ruby .scripts/batch_release.rb
 requireNames:
   - /^sentry-ruby-.*\.gem$/
   - /^sentry-ruby-core-.*\.gem$/
+  - /^sentry-agents-.*\.gem$/
   - /^sentry-rails-.*\.gem$/
   - /^sentry-sidekiq-.*\.gem$/
   - /^sentry-resque-.*\.gem$/
@@ -17,6 +18,10 @@ targets:
       sdks:
         'gem:sentry-ruby':
         'gem:sentry-ruby-core':
+        'gem:sentry-agents':
+          name: 'Sentry Agents SDK'
+          sdkName: 'sentry.ruby.agents'
+          packageUrl: 'https://rubygems.org/gems/sentry-agents'
         'gem:sentry-rails':
         'gem:sentry-sidekiq':
         'gem:sentry-delayed_job':

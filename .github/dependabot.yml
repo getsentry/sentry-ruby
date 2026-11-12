@@ -12,6 +12,7 @@ updates:
     allow:
       - dependency-type: "direct"
     directories:
+      - "sentry-agents"
       - "sentry-delayed_job"
       - "sentry-opentelemetry"
       - "sentry-rails"
