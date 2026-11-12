@@ -345,7 +345,7 @@ RSpec.describe Sentry::Scope do
       subject.set_context(:runtime, { build: "custom" })
 
       subject.apply_to_event(event)
-      expect(event.contexts[:runtime]).to include(name: "ruby", version: RUBY_DESCRIPTION, build: "custom")
+      expect(event.contexts[:runtime]).to include(name: RbConfig::CONFIG["ruby_install_name"], version: RUBY_DESCRIPTION, build: "custom")
     end
 
     it "applies event processors to the event" do
