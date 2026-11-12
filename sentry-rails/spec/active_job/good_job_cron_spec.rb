@@ -71,6 +71,7 @@ if defined?(::GoodJob)
       )
       expect(ok.status).to eq(:ok)
       expect(ok.check_in_id).to eq(in_progress.check_in_id)
+      expect(ok.monitor_config).to be_nil
     end
 
     it "sends an error check-in when the job fails" do
@@ -83,6 +84,7 @@ if defined?(::GoodJob)
       expect { run_entry(:failing_report, class: "FailingReportJob", cron: "every hour") }.to raise_error("boom")
       expect(check_ins.map(&:status)).to eq([:in_progress, :error])
       expect(check_ins.first.monitor_config.to_h[:schedule]).to eq(type: :crontab, value: "0 * * * *")
+      expect(check_ins.last.monitor_config).to be_nil
     end
 
     it "checks in again when a failed run is retried" do

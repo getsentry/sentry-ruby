@@ -82,7 +82,7 @@ module Sentry
             max_runtime: cron_config.default_max_runtime
           )
 
-          Sentry::Cron::MonitorCheckIns.with_check_in(data["slug"], monitor_config: monitor_config) { yield }
+          with_check_in(data["slug"], monitor_config) { yield }
         end
 
         def patch
@@ -95,6 +95,24 @@ module Sentry
         end
 
         private
+
+        def with_check_in(slug, monitor_config)
+          check_in_id = Sentry.capture_check_in(slug, :in_progress, monitor_config: monitor_config)
+          start = monotonic_now
+
+          begin
+            result = yield
+            Sentry.capture_check_in(slug, :ok, check_in_id: check_in_id, duration: monotonic_now - start)
+            result
+          rescue Exception
+            Sentry.capture_check_in(slug, :error, check_in_id: check_in_id, duration: monotonic_now - start)
+            raise
+          end
+        end
+
+        def monotonic_now
+          Process.clock_gettime(Process::CLOCK_MONOTONIC)
+        end
 
         # Entries whose cron is a proc can change schedule between runs. GoodJob's
         # scheduler threads read zoneless schedules in the app's time zone, which
