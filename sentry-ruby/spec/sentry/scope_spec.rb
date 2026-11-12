@@ -348,6 +348,13 @@ RSpec.describe Sentry::Scope do
       expect(event.contexts[:runtime]).to include(name: RbConfig::CONFIG["ruby_install_name"], version: RUBY_DESCRIPTION, build: "custom")
     end
 
+    it "keeps a non-hash runtime context set on the scope" do
+      subject.contexts[:runtime] = nil
+
+      subject.apply_to_event(event)
+      expect(event.contexts[:runtime]).to eq(nil)
+    end
+
     it "applies event processors to the event" do
       subject.add_event_processor do |event, hint|
         event.tags = { processed: true }
