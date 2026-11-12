@@ -8,9 +8,13 @@ module Sentry
       class Instrumenter
       CHAT_EVENT = "chat.ruby_llm"
       TOOL_EVENT = "tool_call.ruby_llm"
+      WORKFLOW_EVENT = "workflow.ruby_llm"
+      WORKFLOW_STEP_EVENT = "workflow_step.ruby_llm"
       USAGE_EVENT = "usage.ruby_llm"
       OPERATION = "gen_ai.chat"
       TOOL_OPERATION = "gen_ai.execute_tool"
+      WORKFLOW_OPERATION = "ai.pipeline"
+      WORKFLOW_STEP_OPERATION = "ai.run"
       ORIGIN = "auto.ai.ruby_llm"
 
       attr_reader :delegate
@@ -27,7 +31,8 @@ module Sentry
 
       def instrument(name, payload = {}, &block)
         event_name = name.to_s
-        return delegate_instrument(name, payload, &block) unless [CHAT_EVENT, TOOL_EVENT, USAGE_EVENT].include?(event_name)
+        instrumented_events = [CHAT_EVENT, TOOL_EVENT, WORKFLOW_EVENT, WORKFLOW_STEP_EVENT, USAGE_EVENT]
+        return delegate_instrument(name, payload, &block) unless instrumented_events.include?(event_name)
 
         if event_name == USAGE_EVENT
           update_usage(payload)
@@ -38,10 +43,15 @@ module Sentry
 
         delegate_instrument(name, payload) do |event|
           event = event || payload
-          if event_name == CHAT_EVENT
+          case event_name
+          when CHAT_EVENT
             with_chat_span(event) { yield(event) }
-          else
+          when TOOL_EVENT
             with_tool_span(event) { yield(event) }
+          when WORKFLOW_EVENT
+            with_operation_span(event, WORKFLOW_OPERATION, workflow_description(event)) { yield(event) }
+          when WORKFLOW_STEP_EVENT
+            with_operation_span(event, WORKFLOW_STEP_OPERATION, workflow_step_description(event)) { yield(event) }
           end
         end
       end
@@ -134,6 +144,8 @@ module Sentry
           set_chat_request_data(span, payload)
         when TOOL_OPERATION
           set_tool_request_data(span, payload)
+        when WORKFLOW_OPERATION, WORKFLOW_STEP_OPERATION
+          set_pipeline_data(span, payload)
         end
       rescue StandardError => error
         report_instrumentation_error(error)
@@ -141,6 +153,7 @@ module Sentry
 
       def set_chat_request_data(span, payload)
         safe_set_data(span, "gen_ai.operation.name", "chat")
+        set_pipeline_data(span, payload)
         set_data_if_present(span, "gen_ai.provider.name", string_value(payload[:provider]))
         set_data_if_present(span, "gen_ai.request.model", string_value(payload[:model]))
         set_data_if_present(span, "gen_ai.request.temperature", payload[:temperature])
@@ -157,6 +170,7 @@ module Sentry
 
       def set_tool_request_data(span, payload)
         safe_set_data(span, "gen_ai.operation.name", "execute_tool")
+        set_pipeline_data(span, payload)
         set_data_if_present(span, "gen_ai.tool.name", string_value(payload[:tool_name] || Serializer.value(payload[:tool], :name)))
         return unless collect_inputs?
 
@@ -169,6 +183,10 @@ module Sentry
         return if arguments.nil?
 
         set_json_data(span, "gen_ai.tool.call.arguments", arguments)
+      end
+
+      def set_pipeline_data(span, payload)
+        set_data_if_present(span, "gen_ai.pipeline.name", string_value(payload[:workflow_name]))
       end
 
       def set_response_data(span, payload, operation)
@@ -254,6 +272,14 @@ module Sentry
       def tool_description(payload)
         tool = payload[:tool_name] || Serializer.value(payload[:tool], :name)
         tool ? "execute_tool #{tool}" : "execute_tool"
+      end
+
+      def workflow_description(payload)
+        payload[:workflow_name] || "workflow"
+      end
+
+      def workflow_step_description(payload)
+        payload[:workflow_step_name] || "workflow step"
       end
 
       def collect_inputs?
