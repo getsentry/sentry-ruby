@@ -356,4 +356,76 @@ if defined?(::GoodJob)
       end
     end
   end
+
+  if RAILS_VERSION >= 7.1
+    RSpec.describe "Sentry::Rails::GoodJobCron on a GoodJob database", type: :job do
+      include_context "active_job backend harness", adapter: :good_job
+      include_context "good_job database"
+
+      let(:cron) { {} }
+      let(:configure_sentry) do
+        proc { |config| config.enabled_patches << :good_job_cron }
+      end
+
+      def queue_adapter_for_test
+        @queue_adapter_for_test ||= ::ActiveJob::QueueAdapters::GoodJobAdapter.new(execution_mode: :external)
+      end
+
+      def boot_adapter(_adapter)
+        Sentry::Rails::Test::GoodJobDatabase.connect
+      end
+
+      def reset_adapter(_adapter)
+        GoodJob::Execution.delete_all
+        GoodJob::Job.delete_all
+      end
+
+      around do |example|
+        configuration = GoodJob.configuration
+        GoodJob.configuration = GoodJob::Configuration.new({ cron: cron })
+        example.run
+      ensure
+        GoodJob.configuration = configuration
+      end
+
+      def drain
+        lock_id = SecureRandom.uuid
+
+        loop do
+          result = GoodJob::Job.perform_with_advisory_lock(lock_id: lock_id)
+          break if result.nil?
+          raise result.unhandled_error if result.unhandled_error
+        end
+      end
+
+      def run_entry(key, at: Time.now.change(usec: 0), **params)
+        cron[key] = params unless params.empty?
+        GoodJob::CronEntry.find(key).enqueue(at)
+        drain
+      end
+
+      def check_ins
+        sentry_events.select { |event| event.is_a?(Sentry::CheckInEvent) }
+      end
+
+      it "sends no check-ins for an overlapping run that GoodJob's concurrency limit rejects" do
+        overlapping_run = method(:run_entry)
+        overlapping_at = 1.hour.from_now.change(usec: 0)
+        job_fixture("ExclusiveReportJob") do
+          include GoodJob::ActiveJobExtensions::Concurrency
+          self.good_job_labels = ["exclusive_report"]
+          good_job_concurrency_rule(label: "exclusive_report", perform_limit: 1)
+
+          define_method(:perform) do
+            Thread.new { overlapping_run.call(:exclusive_report, at: overlapping_at) }.join
+          end
+        end
+
+        run_entry(:exclusive_report, class: "ExclusiveReportJob", cron: "0 * * * * UTC")
+
+        expect(GoodJob::Execution.where("error LIKE ?", "%ConcurrencyExceededError%")).to exist
+        expect(check_ins.map(&:status)).to eq([:in_progress, :ok, :in_progress, :ok])
+      end
+    end
+  end
 end
