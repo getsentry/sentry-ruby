@@ -18,7 +18,15 @@ module Sentry
         def deserialize(job_data)
           super
           @_sentry_good_job_cron = job_data[PAYLOAD_KEY]
+          singleton_class.prepend(Perform) if @_sentry_good_job_cron
         end
+      end
+
+      module Perform
+        def perform(*args, &block)
+          Sentry::Rails::GoodJobCron.perform(self) { super(*args, &block) }
+        end
+        ruby2_keywords(:perform)
       end
 
       class << self
@@ -83,7 +91,6 @@ module Sentry
           @patched = true
           ActiveSupport.on_load(:active_job) do
             prepend Sentry::Rails::GoodJobCron::Job
-            around_perform { |job, block| Sentry::Rails::GoodJobCron.perform(job, &block) }
           end
         end
 
