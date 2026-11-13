@@ -33,13 +33,42 @@ module Sentry
         # the exception will be swallowed by ShowExceptions middleware
         return unless Sentry.initialized?
         return if show_exceptions?(exception, env) && !Sentry.configuration.rails.report_rescued_exceptions
+        # Rails' error reporter (see ErrorSubscriber) may already have reported the cause of
+        # this exception, e.g. ActionView::Template::Error's cause. The event carries the
+        # whole cause chain, so capturing the wrapper too would produce a duplicate.
+        return if cause_captured?(exception)
 
         options = {}
         options[:contexts] = execution_context if Sentry.configuration.data_collection.user_info
 
         Sentry::Rails.capture_exception(exception, **options).tap do |event|
-          env[ERROR_EVENT_ID_KEY] = event.event_id if event
+          next unless event
+
+          env[ERROR_EVENT_ID_KEY] = event.event_id
+          mark_causes_as_captured(exception)
         end
+      end
+
+      def cause_captured?(exception)
+        each_cause(exception).any? { |cause| Sentry.exception_captured?(cause) }
+      end
+
+      # The event already includes the causes, so Rails.error reports of a cause
+      # (ErrorSubscriber) shouldn't be sent as separate events.
+      def mark_causes_as_captured(exception)
+        each_cause(exception).each { |cause| cause.instance_variable_set(Sentry::CAPTURED_SIGNATURE, true) }
+      end
+
+      def each_cause(exception)
+        causes = []
+        cause = exception.cause
+
+        while cause && !causes.include?(cause)
+          causes << cause
+          cause = cause.cause
+        end
+
+        causes
       end
 
       def start_transaction(env, scope)
