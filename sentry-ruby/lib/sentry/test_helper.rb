@@ -21,6 +21,10 @@ module Sentry
     # @return [void]
     def setup_sentry_test(&block)
       raise "please make sure the SDK is initialized for testing" unless Sentry.initialized?
+
+      # Keep application processors while isolating changes made by each test.
+      @sentry_test_global_event_processors = Sentry::Scope.global_event_processors.dup
+
       dummy_config = Sentry.configuration.dup
       # configure dummy DSN, so the events will not be sent to the actual service
       dummy_config.dsn = DUMMY_DSN
@@ -58,7 +62,7 @@ module Sentry
       Sentry.set_current_hub_internal(main_hub)
     end
 
-    # Clears all stored events and envelopes.
+    # Clears all stored events and envelopes, and restores global event processors.
     # It should be called **after** every test case.
     # @return [void]
     def teardown_sentry_test
@@ -76,7 +80,7 @@ module Sentry
       if main_hub.instance_variable_get(:@stack).size > 1
         main_hub.pop_scope
       end
-      Sentry::Scope.global_event_processors.clear
+      Sentry::Scope.global_event_processors.replace(@sentry_test_global_event_processors || [])
     end
 
     def clear_sentry_events

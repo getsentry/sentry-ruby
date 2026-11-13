@@ -168,6 +168,67 @@ RSpec.describe Sentry::TestHelper do
     end
   end
 
+  describe "global event processor isolation" do
+    around do |example|
+      processors = Sentry::Scope.global_event_processors.dup
+      example.run
+    ensure
+      Sentry::Scope.global_event_processors.replace(processors)
+    end
+
+    after { teardown_sentry_test }
+
+    it "preserves application processors across consecutive tests" do
+      processor = proc do |event|
+        event.tags[:application] = "configured"
+        event
+      end
+      Sentry.add_global_event_processor(&processor)
+
+      2.times do
+        setup_sentry_test
+        Sentry.add_global_event_processor do |event|
+          event.tags[:test_only] = true
+          event
+        end
+        Sentry.capture_message("inside test")
+        expect(last_sentry_event.tags).to include(application: "configured", test_only: true)
+
+        teardown_sentry_test
+        expect(Sentry::Scope.global_event_processors).to eq([processor])
+      end
+
+      setup_sentry_test
+      Sentry.capture_message("next test")
+      expect(last_sentry_event.tags).to include(application: "configured")
+      expect(last_sentry_event.tags).not_to have_key(:test_only)
+    end
+
+    it "restores processors removed during a test" do
+      processor = proc { |event| event }
+      Sentry.add_global_event_processor(&processor)
+      processors = Sentry::Scope.global_event_processors
+      setup_sentry_test
+      processors.clear
+
+      teardown_sentry_test
+
+      expect(Sentry::Scope.global_event_processors).to equal(processors)
+      expect(processors).to eq([processor])
+    end
+
+    it "removes processors registered by the setup block" do
+      setup_sentry_test do |_config|
+        Sentry.add_global_event_processor { |event| event }
+      end
+      expect(Sentry::Scope.global_event_processors.size).to eq(1)
+
+      teardown_sentry_test
+
+      expect(Sentry::Scope.global_event_processors).to be_empty
+    end
+  end
+
   describe "#teardown_sentry_test" do
     before do
       setup_sentry_test
