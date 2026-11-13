@@ -8,15 +8,15 @@ Review only the changed code. Report a finding only if you can point to the exac
 ## Core SDK rules (same in every SDK repo)
 
 1. **Never break the host app** (high). SDK code that can raise, block, or change the user's behavior: exceptions, return values, signatures, job or request flow.
-2. **Data collected without its gate** (high). Bodies, headers, cookies, user info, `gen_ai` inputs/outputs or DB results recorded without their data-collection option. Header and cookie names match case-insensitively. Gate on `config.data_collection`; deprecated `send_default_pii=` only writes through to it. Automatically collected header, cookie, query or body values must go through the denylist filter in `sentry-ruby/lib/sentry/data_collection/key_value_collection.rb`; a new path that sends them raw is a finding. Data the user set explicitly (scope, span, `before_send`) is never gated or scrubbed: don't flag reading it back from the scope, but do flag new code that gates or rewrites it.
-3. **Supported versions** (high). Language, runtime, target or dependency APIs newer than the repo's declared minimum, used without a guard. Minimums come from `required_ruby_version` and the dependency constraints in each `sentry-*/sentry-*.gemspec`.
+2. **Data collected without its gate** (high). Request or response bodies, headers, cookies, user info, `gen_ai` inputs/outputs or DB results that the SDK collects automatically and sends without the matching data-collection option or its filtering. The [data collection spec](https://develop.sentry.dev/sdk/foundations/client/data-collection/) defines the options; data the user sets explicitly is never gated.
+3. **Supported versions** (high). Language, runtime, target or dependency APIs newer than the repo's declared minimum, used without a guard. MRI minimums come from `required_ruby_version` and the dependency constraints in each `sentry-*/sentry-*.gemspec`. JRuby is also supported, but its versions come from the CI matrix (`sentry-*/test-matrix.json`, `.mise.ci.toml`), not the gemspec, and its extra dependencies sit in `platform :jruby` blocks in the Gemfiles. MRI-only APIs or gems used without a JRuby guard are a finding.
 4. **Public API** (medium). Breaking public changes without a deprecation path, or internals exposed as public API.
 
 ## Do not report (same in every SDK repo)
 
 - Style, naming, refactors, or anything the repo's linters, type checkers or analyzers catch.
 - Pre-existing code the diff does not change.
-- Behavior that matches the spec, Relay or other SDKs, or a trade-off the PR or its threads explain.
+- Behavior that an issue, the PR description or official Sentry documentation specifies, or a trade-off the PR or its threads explain. Other SDKs are a reference, not proof of the expected behavior.
 - Follow-ups the PR says are handled in a stacked PR or the major branch.
 - Tests, samples and examples, unless they can't fail or they teach wrong SDK usage.
 - Edge cases that need misuse or very unlikely timing.

@@ -31,7 +31,7 @@ actions = ["opened", "synchronize", "reopened"]
 
 [[skills]]
 name = "sdk-review"
-paths = ["sentry-*/lib/**"]
+paths = ["sentry-*/lib/**", "sentry-*/*.gemspec"]
 incremental = true
 
 [[skills.triggers]]
