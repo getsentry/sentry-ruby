@@ -1,0 +1,40 @@
+# Warden Configuration
+# https://github.com/getsentry/warden
+#
+# The org-wide base config already runs security-review on every PR.
+
+version = 1
+
+[defaults]
+failOn = "off"
+reportOn = "medium"
+
+[[skills]]
+name = "code-review"
+ignorePaths = ["**/gemfiles/*.gemfile.lock"]
+incremental = true
+
+[[skills.triggers]]
+type = "pull_request"
+actions = ["opened", "synchronize", "reopened"]
+draft = false
+
+[[skills]]
+name = "skill-scanner"
+incremental = true
+remote = "getsentry/skills"
+paths = [".agents/**", ".claude/**", "**/SKILL.md", "AGENTS.md", "CLAUDE.md", "agents.toml"]
+
+[[skills.triggers]]
+type = "pull_request"
+actions = ["opened", "synchronize", "reopened"]
+
+[[skills]]
+name = "sdk-review"
+paths = ["sentry-*/lib/**", "sentry-*/*.gemspec"]
+incremental = true
+
+[[skills.triggers]]
+type = "pull_request"
+actions = ["opened", "synchronize", "reopened"]
+draft = false
