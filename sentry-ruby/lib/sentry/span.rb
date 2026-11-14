@@ -240,13 +240,16 @@ module Sentry
     def with_child_span(**attributes, &block)
       child_span = start_child(**attributes)
 
-      yield(child_span)
+      begin
+        yield(child_span)
+      rescue
+        child_span.set_http_status(500)
+        raise
+      ensure
+        child_span.finish
+      end
 
-      child_span.finish
-    rescue
-      child_span.set_http_status(500)
-      child_span.finish
-      raise
+      child_span
     end
 
     def deep_dup
