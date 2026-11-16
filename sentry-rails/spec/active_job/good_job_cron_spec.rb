@@ -459,20 +459,31 @@ if defined?(::GoodJob) && RAILS_VERSION >= 7.1
       end
 
       it "reports concurrency-rejected attempts as errors and monitors their subsequent retry" do
-        overlapping_run = method(:run_entry)
-        overlapping_at = 1.hour.from_now.change(usec: 0)
+        overlapping_result = nil
+        started = false
         job_fixture("ExclusiveReportJob") do
           include GoodJob::ActiveJobExtensions::Concurrency
           self.good_job_labels = ["exclusive_report"]
           good_job_concurrency_rule(label: "exclusive_report", perform_limit: 1)
+          retry_on GoodJob::ActiveJobExtensions::Concurrency::ConcurrencyExceededError, wait: 0, attempts: 2
 
           define_method(:perform) do
-            Thread.new { overlapping_run.call(:exclusive_report, at: overlapping_at) }.join
+            unless started
+              started = true
+              overlapping_result = Thread.new do
+                GoodJob::Job.perform_with_advisory_lock(lock_id: SecureRandom.uuid)
+              end.value
+            end
           end
         end
 
-        run_entry(:exclusive_report, class: "ExclusiveReportJob", cron: "0 * * * * UTC")
+        cron[:exclusive_report] = { class: "ExclusiveReportJob", cron: "0 * * * * UTC" }
+        entry = GoodJob::CronEntry.find(:exclusive_report)
+        entry.enqueue(Time.now.change(usec: 0))
+        entry.enqueue(1.hour.from_now.change(usec: 0))
+        drain
 
+        expect(overlapping_result.handled_error).to be_a(GoodJob::ActiveJobExtensions::Concurrency::ConcurrencyExceededError)
         expect(GoodJob::Execution.where("error LIKE ?", "%ConcurrencyExceededError%")).to exist
         expect(check_ins.map(&:status)).to eq([:in_progress, :in_progress, :error, :ok, :in_progress, :ok])
       end
