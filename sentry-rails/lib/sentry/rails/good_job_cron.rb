@@ -6,6 +6,7 @@ module Sentry
     # Enable with `config.enabled_patches << :good_job_cron`.
     module GoodJobCron
       EVENT_STATE = :sentry_good_job_cron
+      MINIMUM_GOOD_JOB_VERSION = Gem::Version.new("4.0")
 
       class << self
         def excluded?(key)
@@ -138,7 +139,13 @@ end
 
 Sentry.register_patch(:good_job_cron) do |config|
   if defined?(::GoodJob) && defined?(::Rails.application) && ::Rails.application
-    Sentry::Rails::GoodJobCron.patch
+    if Gem::Version.new(::GoodJob::VERSION) < Sentry::Rails::GoodJobCron::MINIMUM_GOOD_JOB_VERSION
+      config.sdk_logger.warn(Sentry::LOGGER_PROGNAME) do
+        "The GoodJob cron integration requires good_job #{Sentry::Rails::GoodJobCron::MINIMUM_GOOD_JOB_VERSION} or later, but #{::GoodJob::VERSION} is installed."
+      end
+    else
+      Sentry::Rails::GoodJobCron.patch
+    end
   else
     config.sdk_logger.warn(Sentry::LOGGER_PROGNAME) { "You tried to enable the GoodJob cron integration but the `good_job` gem was not detected." }
   end
