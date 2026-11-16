@@ -571,6 +571,13 @@ RSpec.describe Sentry::Transport do
           expect(io.string).not_to match(/Sending envelope with items \[event\]/)
         end
 
+        it "records the dropped event as lost and logs a warning" do
+          subject.send_envelope(envelope)
+
+          expect(subject.discarded_events[[:send_error, "error"]]).to eq(1)
+          expect(io.string).to match(/WARN -- sentry: Envelope item \[event\] is still oversized after size reduction/)
+        end
+
         context "with other types of items" do
           before do
             5.times { subject.record_lost_event(:ratelimit_backoff, 'error') }

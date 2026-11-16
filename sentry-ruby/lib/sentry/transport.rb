@@ -76,7 +76,8 @@ module Sentry
         result, oversized = item.serialize
 
         if oversized
-          log_debug("Envelope item [#{item.type}] is still oversized after size reduction: {#{item.size_breakdown}}")
+          log_warn("Envelope item [#{item.type}] is still oversized after size reduction: {#{item.size_breakdown}}")
+          record_lost_event(:send_error, item.data_category, num: item.item_count, num_bytes: item.lost_event_byte_size)
 
           next
         end
