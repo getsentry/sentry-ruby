@@ -5,29 +5,7 @@ module Sentry
     # Sends Crons check-ins for GoodJob cron entries.
     # Enable with `config.enabled_patches << :good_job_cron`.
     module GoodJobCron
-      PAYLOAD_KEY = "_sentry_good_job_cron"
-
-      module Job
-        def serialize
-          @_sentry_good_job_cron ||= Sentry::Rails::GoodJobCron.monitor_for(self)
-          payload = super
-          payload[PAYLOAD_KEY] = @_sentry_good_job_cron if @_sentry_good_job_cron
-          payload
-        end
-
-        def deserialize(job_data)
-          super
-          @_sentry_good_job_cron = job_data[PAYLOAD_KEY]
-          singleton_class.prepend(Perform) if @_sentry_good_job_cron
-        end
-      end
-
-      module Perform
-        def perform(*args, &block)
-          Sentry::Rails::GoodJobCron.perform(self) { super(*args, &block) }
-        end
-        ruby2_keywords(:perform)
-      end
+      EVENT_STATE = :sentry_good_job_cron
 
       class << self
         def excluded?(key)
@@ -42,17 +20,15 @@ module Sentry
           false
         end
 
-        # GoodJob sets the cron key while an entry enqueues its job and clears it while jobs run.
+        # The persisted record identifies the cron run, including retries and callable classes.
         def monitor_for(job)
-          key = ::GoodJob::CurrentThread.cron_key
+          key = job.cron_key
           return unless key && Sentry.initialized?
           return if excluded?(key)
 
           entry = ::GoodJob::CronEntry.find(key)
-          job_class = entry.job_class
-          # A callable class can't be checked without calling it again.
-          return unless job_class.respond_to?(:call) || job.class.name == job_class.to_s.delete_prefix("::")
-          return if job.class < Sentry::Cron::MonitorCheckIns::Patch
+          job_class = job.job_class.safe_constantize
+          return if job_class && job_class < Sentry::Cron::MonitorCheckIns::Patch
 
           slug = Sentry::Cron::Slug.from(entry.key)
           return unless slug
@@ -64,50 +40,57 @@ module Sentry
           end
           return if slug_shared?(entry.key, slug)
 
-          { "slug" => slug, "crontab" => config.schedule.value, "timezone" => config.timezone }
+          [slug, config]
         rescue StandardError => e
           Sentry.sdk_logger.error(Sentry::LOGGER_PROGNAME) { "Not monitoring GoodJob cron entry #{key}: #{e.class}: #{e.message}" }
           nil
         end
 
-        def perform(job)
-          data = job.instance_variable_get(:@_sentry_good_job_cron)
-          return yield unless data && Sentry.initialized?
+        # Evented subscribers receive start before execution and finish afterwards.
+        # State belongs to the notification payload, so nested and concurrent runs are independent.
+        def start(_name, _id, payload)
+          return unless Sentry.initialized? && Sentry.configuration.enabled_patches.include?(:good_job_cron)
 
+          monitor = monitor_for(payload[:job])
+          return unless monitor
+
+          slug, schedule = monitor
           cron_config = Sentry.configuration.cron
-          monitor_config = Sentry::Cron::MonitorConfig.from_crontab(
-            data["crontab"],
-            timezone: data["timezone"],
+          config = Sentry::Cron::MonitorConfig.from_crontab(
+            schedule.schedule.value,
+            timezone: schedule.timezone,
             checkin_margin: cron_config.default_checkin_margin,
             max_runtime: cron_config.default_max_runtime
           )
+          check_in_id = Sentry.capture_check_in(slug, :in_progress, monitor_config: config)
+          payload[EVENT_STATE] = { slug: slug, check_in_id: check_in_id, started_at: monotonic_now }
+        rescue StandardError => e
+          log_error(e)
+        end
 
-          with_check_in(data["slug"], monitor_config) { yield }
+        def finish(_name, _id, payload)
+          state = payload.delete(EVENT_STATE)
+          return unless state && Sentry.initialized?
+
+          error = payload[:handled_error] || payload[:unhandled_error] || payload[:error] || payload[:exception]
+          Sentry.capture_check_in(
+            state[:slug], error ? :error : :ok,
+            check_in_id: state[:check_in_id], duration: monotonic_now - state[:started_at]
+          )
+        rescue StandardError => e
+          log_error(e)
         end
 
         def patch
-          return if @patched
+          return if @subscriber
 
-          @patched = true
-          ActiveSupport.on_load(:active_job) do
-            prepend Sentry::Rails::GoodJobCron::Job
-          end
+          @subscriber = ActiveSupport::Notifications.subscribe("perform_job.good_job", self)
         end
 
         private
 
-        def with_check_in(slug, monitor_config)
-          check_in_id = Sentry.capture_check_in(slug, :in_progress, monitor_config: monitor_config)
-          start = monotonic_now
-
-          begin
-            result = yield
-            Sentry.capture_check_in(slug, :ok, check_in_id: check_in_id, duration: monotonic_now - start)
-            result
-          rescue Exception
-            Sentry.capture_check_in(slug, :error, check_in_id: check_in_id, duration: monotonic_now - start)
-            raise
-          end
+        def log_error(error)
+          Sentry.sdk_logger.error(Sentry::LOGGER_PROGNAME) { "Could not send GoodJob cron check-in: #{error.class}: #{error.message}" }
         end
 
         def monotonic_now

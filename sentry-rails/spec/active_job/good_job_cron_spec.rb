@@ -7,10 +7,10 @@ begin
 rescue LoadError
 end
 
-if defined?(::GoodJob)
+if defined?(::GoodJob) && RAILS_VERSION >= 7.1
   RSpec.describe Sentry::Rails::GoodJobCron, type: :job do
-    include_context "active_job backend harness", adapter: :test
-    include_context "test adapter"
+    include_context "active_job backend harness", adapter: :good_job
+    include_context "good_job database"
 
     let(:excluded_jobs) { [] }
     let(:cron) { {} }
@@ -21,15 +21,26 @@ if defined?(::GoodJob)
       end
     end
 
-    # Runs jobs from their full serialized payload, like GoodJob does.
     def queue_adapter_for_test
-      Rails52FullPayloadTestAdapter.new
+      @queue_adapter_for_test ||= ::ActiveJob::QueueAdapters::GoodJobAdapter.new(execution_mode: :external)
+    end
+
+    def boot_adapter(_adapter)
+      Sentry::Rails::Test::GoodJobDatabase.connect
+    end
+
+    def reset_adapter(_adapter)
+      GoodJob::Execution.delete_all
+      GoodJob::Job.delete_all
     end
 
     def drain
-      jobs = queue_adapter.enqueued_jobs.dup
-      queue_adapter.enqueued_jobs.clear
-      jobs.each { |payload| ::ActiveJob::Base.execute(payload[:_sentry_full_payload]) }
+      lock_id = SecureRandom.uuid
+      loop do
+        result = GoodJob::Job.perform_with_advisory_lock(lock_id: lock_id)
+        break if result.nil?
+        raise result.unhandled_error if result.unhandled_error
+      end
     end
 
     around do |example|
@@ -179,7 +190,7 @@ if defined?(::GoodJob)
       expect(check_ins.map(&:monitor_slug)).to eq(["callable_report", "callable_report"])
     end
 
-    it "does not monitor other jobs enqueued while an entry enqueues" do
+    it "monitors only the cron record GoodJob persists when a callback enqueues another job" do
       job_fixture("AuditJob") do
         def perform; end
       end
@@ -191,7 +202,33 @@ if defined?(::GoodJob)
 
       run_entry(:audited_report, class: "AuditedReportJob", cron: "0 9 * * *")
 
+      # GoodJob gives the nested job the cron key and its unique cron slot;
+      # the parent enqueue is rejected as a duplicate. Sentry follows that persisted run.
+      expect(GoodJob::Job.pluck(:job_class, :cron_key)).to eq([["AuditJob", "audited_report"]])
       expect(check_ins.map(&:monitor_slug)).to eq(["audited_report", "audited_report"])
+    end
+
+    it "uses the persisted cron record for callable classes without reevaluating the callable" do
+      skip "GoodJob #{GoodJob::VERSION} has no callable classes" if Gem::Version.new(GoodJob::VERSION) < Gem::Version.new("4.19.3")
+
+      job_fixture("AuditJob") do
+        def perform; end
+      end
+      job_fixture("AuditedReportJob") do
+        before_enqueue { AuditJob.perform_later }
+
+        def perform; end
+      end
+      job_class = double("callable job class")
+      expect(job_class).to receive(:call).once.and_return(AuditedReportJob)
+
+      run_entry(:audited_report, class: job_class, cron: "0 9 * * *")
+
+      # GoodJob gives the nested job the cron key and its unique cron slot;
+      # the parent enqueue is rejected as a duplicate. Sentry follows that persisted run.
+      expect(GoodJob::Job.pluck(:job_class, :cron_key)).to eq([["AuditJob", "audited_report"]])
+      expect(check_ins.map(&:monitor_slug)).to eq(["audited_report", "audited_report"])
+      expect(check_ins.map(&:status)).to eq([:in_progress, :ok])
     end
 
     it "still enqueues the job when monitoring it fails" do
@@ -201,28 +238,15 @@ if defined?(::GoodJob)
       # find raises for an entry missing from GoodJob's configuration.
       GoodJob::CronEntry.new(key: :unlisted_report, class: "ReportJob", cron: "0 9 * * *").enqueue(Time.now)
 
-      expect(queue_adapter.enqueued_jobs.size).to eq(1)
+      expect(GoodJob::Job.count).to eq(1)
       drain
       expect(check_ins).to be_empty
       expect(string_io.string).to include("Not monitoring GoodJob cron entry unlisted_report")
     end
 
     context "when GoodJob runs jobs inline" do
-      # GoodJob's inline mode runs the job inside the cron enqueue and resets its thread state first.
       def queue_adapter_for_test
-        Class.new(::ActiveJob::QueueAdapters::TestAdapter) do
-          def enqueue(job)
-            payload = job.serialize
-            ::GoodJob::CurrentThread.within do |thread|
-              thread.reset
-              ::ActiveJob::Base.execute(payload)
-            end
-          end
-
-          def enqueue_at(job, _timestamp)
-            enqueue(job)
-          end
-        end.new
+        @inline_adapter ||= ::ActiveJob::QueueAdapters::GoodJobAdapter.new(execution_mode: :inline)
       end
 
       it "does not monitor a job the cron job enqueues of its own class" do
@@ -243,6 +267,30 @@ if defined?(::GoodJob)
       drain
 
       expect(check_ins).to be_empty
+    end
+
+    it "keeps running the job if sending the initial check-in fails" do
+      performed = false
+      job_fixture("SafeReportJob") { define_method(:perform) { performed = true } }
+      allow(Sentry).to receive(:capture_check_in).and_raise("transport failed")
+
+      expect { run_entry(:safe_report, class: "SafeReportJob", cron: "0 9 * * *") }.not_to raise_error
+      expect(performed).to be(true)
+      expect(GoodJob::Job.first.error).to be_nil
+    end
+
+    it "does not fail a successful job if sending the final check-in fails" do
+      allow(Sentry).to receive(:capture_check_in).and_call_original
+      allow(Sentry).to receive(:capture_check_in).with(anything, :ok, any_args).and_raise("transport failed")
+
+      expect { run_entry(:safe_report, class: "ReportJob", cron: "0 9 * * *") }.not_to raise_error
+      expect(GoodJob::Job.first.error).to be_nil
+    end
+
+    it "does not attach Sentry cron metadata to serialized jobs" do
+      run_entry(:daily_report, class: "ReportJob", cron: "0 9 * * *")
+
+      expect(GoodJob::Job.first.serialized_params).not_to have_key("_sentry_good_job_cron")
     end
 
     it "excludes nothing by default" do
@@ -410,7 +458,7 @@ if defined?(::GoodJob)
         sentry_events.select { |event| event.is_a?(Sentry::CheckInEvent) }
       end
 
-      it "sends no check-ins for an overlapping run that GoodJob's concurrency limit rejects" do
+      it "reports concurrency-rejected attempts as errors and monitors their subsequent retry" do
         overlapping_run = method(:run_entry)
         overlapping_at = 1.hour.from_now.change(usec: 0)
         job_fixture("ExclusiveReportJob") do
@@ -426,7 +474,7 @@ if defined?(::GoodJob)
         run_entry(:exclusive_report, class: "ExclusiveReportJob", cron: "0 * * * * UTC")
 
         expect(GoodJob::Execution.where("error LIKE ?", "%ConcurrencyExceededError%")).to exist
-        expect(check_ins.map(&:status)).to eq([:in_progress, :ok, :in_progress, :ok])
+        expect(check_ins.map(&:status)).to eq([:in_progress, :in_progress, :error, :ok, :in_progress, :ok])
       end
     end
   end
