@@ -263,7 +263,7 @@ RSpec.describe Sentry do
           config.transport.transport_class = Sentry::HTTPTransport
         end
 
-        Sentry.get_current_client.transport.rate_limits.merge!("error" => Time.now + 100)
+        Sentry.get_current_client.transport.instance_variable_get(:@rate_limits).update("error", Time.now + 100)
       end
 
       it "stops the event and logs correct message" do

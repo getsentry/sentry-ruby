@@ -20,12 +20,14 @@ RSpec.describe "rate limiting" do
 
   subject { Sentry::HTTPTransport.new(configuration) }
 
+  let(:rate_limits) { subject.instance_variable_get(:@rate_limits) }
+
   describe "#is_rate_limited?" do
     context "with only category limits" do
       it "returns true for still limited category" do
-        subject.rate_limits.merge!("error" => Time.now + 60,
-                                   "transaction" => Time.now + 60,
-                                   "session" => Time.now + 60)
+        rate_limits.update("error", Time.now + 60)
+        rate_limits.update("transaction", Time.now + 60)
+        rate_limits.update("session", Time.now + 60)
 
         expect(subject.is_rate_limited?("error")).to eq(true)
         expect(subject.is_rate_limited?("transaction")).to eq(true)
@@ -33,9 +35,9 @@ RSpec.describe "rate limiting" do
       end
 
       it "returns false for passed limited category" do
-        subject.rate_limits.merge!("error" => Time.now - 10,
-                                   "transaction" => Time.now - 10,
-                                   "session" => Time.now - 10)
+        rate_limits.update("error", Time.now - 10)
+        rate_limits.update("transaction", Time.now - 10)
+        rate_limits.update("session", Time.now - 10)
 
         expect(subject.is_rate_limited?("error")).to eq(false)
         expect(subject.is_rate_limited?("transaction")).to eq(false)
@@ -43,7 +45,7 @@ RSpec.describe "rate limiting" do
       end
 
       it "returns false for not listed category" do
-        subject.rate_limits.merge!("transaction" => Time.now + 10)
+        rate_limits.update("transaction", Time.now + 10)
 
         expect(subject.is_rate_limited?("error")).to eq(false)
         expect(subject.is_rate_limited?("session")).to eq(false)
@@ -52,31 +54,29 @@ RSpec.describe "rate limiting" do
 
     context "with only universal limits" do
       it "returns true when still limited" do
-        subject.rate_limits.merge!(nil => Time.now + 60)
+        rate_limits.update(nil, Time.now + 60)
 
         expect(subject.is_rate_limited?("error")).to eq(true)
       end
 
       it "returns false when passed limit" do
-        subject.rate_limits.merge!(nil => Time.now - 10)
+        rate_limits.update(nil, Time.now - 10)
 
         expect(subject.is_rate_limited?("error")).to eq(false)
       end
     end
 
     context "with both category-based and universal limits" do
-      it "checks both limits and picks the greater value" do
-        subject.rate_limits.merge!(
-          "error" => Time.now + 60,
-          nil => Time.now - 10
-        )
+      it "returns true when only the category limit is active" do
+        rate_limits.update("error", Time.now + 60)
+        rate_limits.update(nil, Time.now - 10)
 
         expect(subject.is_rate_limited?("error")).to eq(true)
+      end
 
-        subject.rate_limits.merge!(
-          "error" => Time.now - 60,
-          nil => Time.now + 10
-        )
+      it "returns true when only the universal limit is active" do
+        rate_limits.update("error", Time.now - 60)
+        rate_limits.update(nil, Time.now + 10)
 
         expect(subject.is_rate_limited?("error")).to eq(true)
       end
@@ -89,17 +89,17 @@ RSpec.describe "rate limiting" do
     end
 
     it "returns true for category limits" do
-      subject.rate_limits.merge!("error" => Time.now + 60)
+      rate_limits.update("error", Time.now + 60)
       expect(subject.any_rate_limited?).to eq(true)
     end
 
     it "returns true for universal limits" do
-      subject.rate_limits.merge!(nil => Time.now + 60)
+      rate_limits.update(nil, Time.now + 60)
       expect(subject.any_rate_limited?).to eq(true)
     end
 
     it "returns false for expired limits" do
-      subject.rate_limits.merge!("error" => Time.now - 60)
+      rate_limits.update("error", Time.now - 60)
       expect(subject.any_rate_limited?).to eq(false)
     end
   end
@@ -130,6 +130,9 @@ RSpec.describe "rate limiting" do
             header: ",,foo,", expected_limits: {}
           },
           {
+            header: "3600:error:organization, 10:error:project", expected_limits: { "error" => now + 3600 }
+          },
+          {
             header: "42::organization, invalid, 4711:foobar;transaction;security:project",
             expected_limits: {
               nil => now + 42,
@@ -156,7 +159,7 @@ RSpec.describe "rate limiting" do
           end
 
           before do
-            subject.rate_limits.merge!("error" => now + 10)
+            rate_limits.update("error", now + 10)
           end
 
           it "overrides the current limit" do
@@ -171,7 +174,7 @@ RSpec.describe "rate limiting" do
           end
 
           before do
-            subject.rate_limits.merge!("error" => now + 120)
+            rate_limits.update("error", now + 120)
           end
 
           it "keeps the current limit" do
