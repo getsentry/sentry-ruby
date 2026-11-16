@@ -109,7 +109,7 @@ GEM
       date
       jar-dependencies (>= 0.1.7)
     public_suffix (6.0.2)
-    puma (8.0.2-java)
+    puma (8.1.1-java)
       nio4r (~> 2.0)
     raabro (1.5.0)
     rack (2.2.25)
@@ -249,7 +249,7 @@ CHECKSUMS
   prism (2.1.0) sha256=1c0a7c6dea0e93183390fb123f007564dbe663198e2f86ad87204151147601f3
   psych (5.5.0-java) sha256=3b7cf3684c44d049c3dee87ec4118ec9cd6ac714cbdcfba386997f96dbbd36ab
   public_suffix (6.0.2) sha256=bfa7cd5108066f8c9602e0d6d4114999a5df5839a63149d3e8b0f9c1d3558394
-  puma (8.0.2-java) sha256=37392e0dbd01e2a157748b92b818bfacf801bb32628e41680e9ab1171dea2b3d
+  puma (8.1.1-java) sha256=1ea716d494a73dce87478096ac5b3cf3ad9d3b063a0280b0c74f3a73d03ab37c
   raabro (1.5.0) sha256=3f998a7bc84f9c84df3ab580634d2e0a5bda4f0841168d56035f529c9877440a
   rack (2.2.25) sha256=a5b3cd8f2df29c36ede21aa797c21e643f06792fae7487926102e06abe6da0b8
   rake (12.3.3) sha256=f7694adb4fe638da35452300cee6c545e9c377a0e3190018ac04d590b3c26ab3
