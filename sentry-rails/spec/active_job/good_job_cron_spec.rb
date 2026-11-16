@@ -185,6 +185,16 @@ if defined?(::GoodJob)
       end
     end
 
+    it "monitors entries whose schedule is an already parsed Fugit cron" do
+      run_entry(:parsed_report, class: "ReportJob", cron: Fugit.parse("0 9 * * 1-5 Europe/Vienna"))
+
+      expect(check_ins.map(&:status)).to eq([:in_progress, :ok])
+      expect(check_ins.first.monitor_config.to_h).to eq(
+        schedule: { type: :crontab, value: "0 9 * * 1-5" },
+        timezone: "Europe/Vienna"
+      )
+    end
+
     it "skips schedules Crons cannot express" do
       run_entry(:every_ten_seconds, class: "ReportJob", cron: "every 10 seconds")
 

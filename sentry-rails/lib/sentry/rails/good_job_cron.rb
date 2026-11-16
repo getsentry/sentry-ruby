@@ -103,7 +103,7 @@ module Sentry
         # A request's temporary Time.use_zone must not change the monitor's zone.
         def schedule_for(entry)
           cron = entry.params[:cron]
-          return unless cron.is_a?(String)
+          return if cron.respond_to?(:call)
 
           Time.use_zone(Time.zone_default) { Sentry::Cron::FugitSchedule.from_cron(::Fugit.parse(cron)) }
         end
