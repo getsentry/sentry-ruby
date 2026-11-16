@@ -7,8 +7,12 @@ begin
 rescue LoadError
 end
 
-if defined?(::GoodJob) && RAILS_VERSION >= 7.1
+if defined?(::GoodJob)
   RSpec.describe Sentry::Rails::GoodJobCron, type: :job do
+    before(:all) do
+      skip "GoodJob cron specs run the real GoodJob adapter, which ActiveJob::TestHelper supports from Rails 7.1" if RAILS_VERSION < 7.1
+    end
+
     include_context "active_job backend harness", adapter: :good_job
     include_context "good_job database"
 
