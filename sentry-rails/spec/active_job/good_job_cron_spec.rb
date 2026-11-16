@@ -145,6 +145,42 @@ if defined?(::GoodJob) && RAILS_VERSION >= 7.1
       end
     end
 
+    context "when the process and Rails time zones differ" do
+      around do |example|
+        previous_tz = ENV["TZ"]
+        previous_zone = Time.zone_default
+        ENV["TZ"] = "America/Los_Angeles"
+        Time.zone_default = Time.find_zone!("Asia/Tokyo")
+        example.run
+      ensure
+        ENV["TZ"] = previous_tz
+        Time.zone_default = previous_zone
+      end
+
+      it "matches GoodJob's scheduler timezone rather than overriding ENV TZ" do
+        Time.use_zone("America/Chicago") do
+          run_entry(:daily_report, class: "ReportJob", cron: "0 9 * * *")
+        end
+
+        timezone = check_ins.first.monitor_config.timezone
+        # Scheduler threads have the app's default zone, independent of the request's zone.
+        scheduled_at = Thread.new { GoodJob::CronEntry.find(:daily_report).next_at }.value
+
+        expect(timezone).to eq("America/Los_Angeles")
+        expect(scheduled_at.in_time_zone(timezone).hour).to eq(9)
+      end
+
+      it "keeps an explicit cron timezone ahead of both process and Rails zones" do
+        run_entry(:daily_report, class: "ReportJob", cron: "0 9 * * * Europe/Vienna")
+
+        timezone = check_ins.first.monitor_config.timezone
+        scheduled_at = Thread.new { GoodJob::CronEntry.find(:daily_report).next_at }.value
+
+        expect(timezone).to eq("Europe/Vienna")
+        expect(scheduled_at.in_time_zone(timezone).hour).to eq(9)
+      end
+    end
+
     it "skips schedules Crons cannot express" do
       run_entry(:every_ten_seconds, class: "ReportJob", cron: "every 10 seconds")
 

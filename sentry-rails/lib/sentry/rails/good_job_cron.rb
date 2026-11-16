@@ -97,9 +97,9 @@ module Sentry
           Process.clock_gettime(Process::CLOCK_MONOTONIC)
         end
 
-        # Entries whose cron is a proc can change schedule between runs. GoodJob's
-        # scheduler threads read zoneless schedules in the app's time zone, which
-        # an enqueue from a request using Time.use_zone wouldn't see.
+        # Proc schedules can change between runs. Match the scheduler's local-zone
+        # resolution: EtOrbi prefers ENV['TZ'], then the Rails app's default zone.
+        # A request's temporary Time.use_zone must not change the monitor's zone.
         def schedule_for(entry)
           cron = entry.params[:cron]
           return unless cron.is_a?(String)
