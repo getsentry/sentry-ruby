@@ -1,24 +1,14 @@
 # frozen_string_literal: true
 
-begin
-  require "good_job"
-rescue LoadError
-end
+require "open3"
 
-if defined?(::GoodJob)
-  RSpec.describe "Enabling GoodJob cron monitoring during Rails boot" do
-    it "registers its subscriber without loading CronEntry during Sentry.init" do
-      expect(Sentry::Rails::GoodJobCron).to receive(:patch).and_wrap_original do |original|
-        expect($LOADED_FEATURES.grep(%r{/good_job/cron_entry\.rb\z})).to be_empty
-        original.call
-        expect($LOADED_FEATURES.grep(%r{/good_job/cron_entry\.rb\z})).to be_empty
-      end
+RSpec.describe "GoodJob cron boot in a fresh Rails process" do
+  it "passes the boot regression without sharing Rails or GoodJob state" do
+    skip "GoodJob is not bundled in this matrix cell" unless Gem.loaded_specs.key?("good_job")
 
-      make_basic_app do |config|
-        config.enabled_patches << :good_job_cron
-      end
+    fixture = File.expand_path("../fixtures/good_job_cron_boot.rb", __dir__)
+    stdout, stderr, status = Open3.capture3(RbConfig.ruby, "-S", "rspec", fixture)
 
-      expect(Sentry).to be_initialized
-    end
+    expect(status.exitstatus).to eq(0), stdout + stderr
   end
 end

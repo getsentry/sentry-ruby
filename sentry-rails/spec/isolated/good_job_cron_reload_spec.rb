@@ -1,37 +1,14 @@
 # frozen_string_literal: true
 
-begin
-  require "good_job"
-rescue LoadError
-end
+require "open3"
 
-if defined?(::GoodJob)
-  RSpec.describe "GoodJob cron monitoring across Rails reloads" do
-    it "continues monitoring after Rails replaces CronEntry" do
-      app = Sentry::Rails::Test::Application.define do |application|
-        application.config.cache_classes = false
-        application.config.eager_load = false
-        application.initializer :configure_sentry do
-          Sentry.init do |config|
-            config.dsn = "http://12345:67890@sentry.localdomain:3000/sentry/42"
-            config.transport.transport_class = Sentry::DummyTransport
-            config.background_worker_threads = 0
-            config.enabled_patches << :good_job_cron
-          end
-        end
-      end
+RSpec.describe "GoodJob cron reload in a fresh Rails process" do
+  it "passes the reload regression without sharing Rails or GoodJob state" do
+    skip "GoodJob is not bundled in this matrix cell" unless Gem.loaded_specs.key?("good_job")
 
-      old_entry_class = GoodJob::CronEntry
-      app.reloader.reload!
-      expect(GoodJob::CronEntry).not_to equal(old_entry_class)
+    fixture = File.expand_path("../fixtures/good_job_cron_reload.rb", __dir__)
+    stdout, stderr, status = Open3.capture3(RbConfig.ruby, "-S", "rspec", fixture)
 
-      GoodJob.configuration = GoodJob::Configuration.new({ cron: { report: { class: "ActiveJob::Base", cron: "0 9 * * *" } } })
-      record = Struct.new(:cron_key, :job_class).new("report", "ActiveJob::Base")
-      ActiveSupport::Notifications.instrument("perform_job.good_job", job: record) { }
-
-      check_ins = sentry_events.grep(Sentry::CheckInEvent)
-      expect(check_ins.map(&:status)).to eq([:in_progress, :ok])
-      expect(check_ins.map(&:monitor_slug)).to eq(["report", "report"])
-    end
+    expect(status.exitstatus).to eq(0), stdout + stderr
   end
 end
