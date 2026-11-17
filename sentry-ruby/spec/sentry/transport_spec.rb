@@ -578,6 +578,15 @@ RSpec.describe Sentry::Transport do
           expect(io.string).to match(/WARN -- sentry: Envelope item \[event\] is still oversized after size reduction/)
         end
 
+        it "warns only once per item type but records every drop" do
+          subject.send_envelope(envelope)
+          subject.send_envelope(subject.envelope_from_event(event))
+
+          expect(subject.discarded_events[[:send_error, "error"]]).to eq(2)
+          expect(io.string.scan(/WARN -- sentry: Envelope item \[event\] is still oversized/).size).to eq(1)
+          expect(io.string.scan(/DEBUG -- sentry: Envelope item \[event\] is still oversized/).size).to eq(1)
+        end
+
         context "with other types of items" do
           before do
             5.times { subject.record_lost_event(:ratelimit_backoff, 'error') }
