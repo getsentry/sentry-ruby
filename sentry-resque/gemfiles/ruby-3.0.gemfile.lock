@@ -9,14 +9,14 @@ GIT
 PATH
   remote: ../../sentry-rails
   specs:
-    sentry-rails (7.2.0)
+    sentry-rails (7.3.0)
       railties (>= 5.2.0)
-      sentry-ruby (~> 7.2.0)
+      sentry-ruby (~> 7.3.0)
 
 PATH
   remote: ../../sentry-ruby
   specs:
-    sentry-ruby (7.2.0)
+    sentry-ruby (7.3.0)
       bigdecimal
       concurrent-ruby (~> 1.0, >= 1.0.2)
       logger
@@ -24,9 +24,9 @@ PATH
 PATH
   remote: ..
   specs:
-    sentry-resque (7.2.0)
+    sentry-resque (7.3.0)
       resque (>= 1.24)
-      sentry-ruby (~> 7.2.0)
+      sentry-ruby (~> 7.3.0)
 
 GEM
   remote: https://rubygems.org/
@@ -190,7 +190,7 @@ GEM
     raabro (1.5.0)
     racc (1.8.1)
     rack (3.2.8)
-    rack-protection (4.2.1)
+    rack-protection (4.2.2)
       base64 (>= 0.1.0)
       logger (>= 1.6.0)
       rack (>= 3.0.0, < 4)
@@ -294,11 +294,11 @@ GEM
       simplecov (~> 0.19)
     simplecov-html (0.13.2)
     simplecov_json_formatter (0.1.4)
-    sinatra (4.2.1)
+    sinatra (4.2.2)
       logger (>= 1.6.0)
       mustermann (~> 3.0)
       rack (>= 3.0.0, < 4)
-      rack-protection (= 4.2.1)
+      rack-protection (= 4.2.2)
       rack-session (>= 2.0.0, < 3)
       tilt (~> 2.0)
     stringio (3.2.0)
@@ -308,10 +308,10 @@ GEM
     tsort (0.2.0)
     tzinfo (2.0.6)
       concurrent-ruby (~> 1.0)
-    websocket-driver (0.8.2)
+    websocket-driver (0.9.0)
       base64
-      websocket-extensions (>= 0.1.0)
-    websocket-extensions (0.1.5)
+      websocket-extensions (>= 0.2.0)
+    websocket-extensions (0.2.0)
     zeitwerk (2.6.18)
 
 PLATFORMS
