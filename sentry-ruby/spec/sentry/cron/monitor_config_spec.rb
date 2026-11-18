@@ -43,6 +43,24 @@ RSpec.describe Sentry::Cron::MonitorConfig do
     end
   end
 
+  describe 'tolerances' do
+    it 'accepts failure_issue_threshold and recovery_threshold' do
+      subject = described_class.from_crontab(
+        '5 * * * *',
+        failure_issue_threshold: 3,
+        recovery_threshold: 2
+      )
+
+      expect(subject.failure_issue_threshold).to eq(3)
+      expect(subject.recovery_threshold).to eq(2)
+      expect(subject.to_h).to eq({
+        schedule: { type: :crontab, value: '5 * * * *' },
+        failure_issue_threshold: 3,
+        recovery_threshold: 2
+      })
+    end
+  end
+
   describe '#to_h' do
     it 'returns hash with correct attributes for crontab' do
       subject = described_class.from_crontab(
