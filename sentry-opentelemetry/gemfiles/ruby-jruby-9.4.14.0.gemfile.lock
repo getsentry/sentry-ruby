@@ -6,7 +6,7 @@ GIT
 PATH
   remote: ../../sentry-ruby
   specs:
-    sentry-ruby (7.2.0)
+    sentry-ruby (7.3.0)
       bigdecimal
       concurrent-ruby (~> 1.0, >= 1.0.2)
       logger
@@ -14,9 +14,9 @@ PATH
 PATH
   remote: ..
   specs:
-    sentry-opentelemetry (7.2.0)
+    sentry-opentelemetry (7.3.0)
       opentelemetry-sdk (~> 1.0)
-      sentry-ruby (~> 7.2.0)
+      sentry-ruby (~> 7.3.0)
 
 GEM
   remote: https://rubygems.org/
@@ -183,8 +183,8 @@ CHECKSUMS
   rspec-mocks (3.13.9) sha256=ea5c7ff3054a6098ca6039aacef80aec69d5a8a3ef80be8fc88337359b672a30
   rspec-retry (0.6.2) sha256=6101ba23a38809811ae3484acde4ab481c54d846ac66d5037ccb40131a60d858
   rspec-support (3.13.8) sha256=e4160030309b7e3e9d9863dfe720a35dfcc577162f5402cd68fc8c5258a0ffd6
-  sentry-opentelemetry (7.2.0)
-  sentry-ruby (7.2.0)
+  sentry-opentelemetry (7.3.0)
+  sentry-ruby (7.3.0)
   simplecov (0.22.0) sha256=fe2622c7834ff23b98066bb0a854284b2729a569ac659f82621fc22ef36213a5
   simplecov-cobertura (3.2.0) sha256=70d702658677fcb20e5aceb6915ccf8bc62ff2ccd38b62b3ad5c9db5c0888740
   simplecov-html (0.13.2) sha256=bd0b8e54e7c2d7685927e8d6286466359b6f16b18cb0df47b508e8d73c777246
