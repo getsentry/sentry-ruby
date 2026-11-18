@@ -2,8 +2,7 @@
 
 ### New Features ✨
 
-- Support for GoodJob cron check-ins by @solnic and @wedamija in [#3200](https://github.com/getsentry/sentry-ruby/pull/3200)
-- Support for GoodJob + postgres test infra by @solnic in [#3199](https://github.com/getsentry/sentry-ruby/pull/3199)
+- Support for GoodJob including Cron check-ins by @solnic and @wedamija in [#3199](https://github.com/getsentry/sentry-ruby/pull/3199) + [#3200](https://github.com/getsentry/sentry-ruby/pull/3200)
 - Add job extensions and shared instrumentation as a first-class integration interface for instrumenting background job backends by @solnic in [#3129](https://github.com/getsentry/sentry-ruby/pull/3129)
 - Job traces may now include `messaging.message.receive.latency` and `messaging.message.body.size` to conform with the [Queue spec](https://develop.sentry.dev/sdk/telemetry/traces/modules/queues/#span-conventions) by @solnic in [#3133](https://github.com/getsentry/sentry-ruby/pull/3133)
 - Add feature flag support by @jespersandnielsen and @sl0thentr0py in [#3108](https://github.com/getsentry/sentry-ruby/pull/3108)
