@@ -1,3 +1,49 @@
+## 7.3.0
+
+### New Features ✨
+
+#### Jobs
+
+- Support for good job cron check-ins by @solnic, @wedamija and @claude in [#3200](https://github.com/getsentry/sentry-ruby/pull/3200)
+- Support for good job + postgres test infra by @solnic in [#3199](https://github.com/getsentry/sentry-ruby/pull/3199)
+
+#### Ruby
+
+- Add job extensions and shared instrumentation by @solnic in [#3129](https://github.com/getsentry/sentry-ruby/pull/3129)
+- Add feature flag support by @jespersandnielsen and @sl0thentr0py in [#3108](https://github.com/getsentry/sentry-ruby/pull/3108)
+
+#### Other
+
+- (delayed_job) Add opt-in ActiveJob reporting through sentry-rails by @solnic in [#3173](https://github.com/getsentry/sentry-ruby/pull/3173)
+- (queues) Improve core queue conformance by @solnic in [#3133](https://github.com/getsentry/sentry-ruby/pull/3133)
+- (rails) Run ActiveJob reporting through job extensions by @solnic in [#3130](https://github.com/getsentry/sentry-ruby/pull/3130)
+- (resque) Add opt-in ActiveJob reporting through sentry-rails by @solnic in [#3145](https://github.com/getsentry/sentry-ruby/pull/3145)
+- (sidekiq) Add opt-in ActiveJob reporting through sentry-rails by @solnic in [#3134](https://github.com/getsentry/sentry-ruby/pull/3134)
+
+### Bug Fixes 🐛
+
+- (crons) Skip scheduled jobs with unsupported schedules by @wedamija in [#3165](https://github.com/getsentry/sentry-ruby/pull/3165)
+- (devcontainer) Make it work with 2.7 again by @solnic in [#3197](https://github.com/getsentry/sentry-ruby/pull/3197)
+- (jobs) Gate job args by @solnic in [#3187](https://github.com/getsentry/sentry-ruby/pull/3187)
+- (logs) Support Logger block syntax in Sentry.logger by @dingsdax, @jeromepl and @claude in [#3178](https://github.com/getsentry/sentry-ruby/pull/3178)
+- (redis) Do not record credentials from AUTH and admin commands by @dingsdax with @sentry-junior in [#3189](https://github.com/getsentry/sentry-ruby/pull/3189)
+- (sessions) Lock pending aggregates in SessionFlusher#add_session by @dingsdax with @sentry-junior in [#3172](https://github.com/getsentry/sentry-ruby/pull/3172)
+- (tests) Isolate debug log files by @solnic in [#3169](https://github.com/getsentry/sentry-ruby/pull/3169)
+- (tracing) Ignore sentry-trace headers without a trace_id by @dingsdax with @sentry-junior in [#3188](https://github.com/getsentry/sentry-ruby/pull/3188)
+
+### Documentation 📚
+
+- Use dark-mode-aware Sentry logo in READMEs by @szokeasaurusrex with @sentry-junior in [#3160](https://github.com/getsentry/sentry-ruby/pull/3160)
+
+### Internal Changes 🔧
+
+- (rails) Remove superseded bin/test_old runner by @sentry-junior in [#3195](https://github.com/getsentry/sentry-ruby/pull/3195)
+- (release) Bump craft to 3.9.0 and update config by @BYK with @sentry-junior in [#3175](https://github.com/getsentry/sentry-ruby/pull/3175)
+- (ruby) Remove unused Configuration error tracking by @sl0thentr0py with @sentry-junior in [#3164](https://github.com/getsentry/sentry-ruby/pull/3164)
+- (tests) E2e coverage for backend job gems by @solnic in [#3194](https://github.com/getsentry/sentry-ruby/pull/3194)
+- (warden) Add code-review and sdk-review skills by @dingsdax with @sentry-junior in [#3198](https://github.com/getsentry/sentry-ruby/pull/3198)
+- Add CODEOWNERS by @dingsdax with @sentry-junior in [#3204](https://github.com/getsentry/sentry-ruby/pull/3204)
+
 ## 7.2.0
 
 ### New Features ✨
