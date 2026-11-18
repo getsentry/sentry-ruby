@@ -16,3 +16,16 @@ Add the gem to your bundle:
 ```ruby
 gem "sentry-agents"
 ```
+
+## GenAI data collection
+
+Configure prompt and completion content independently:
+
+```ruby
+Sentry.init do |config|
+  config.data_collection.gen_ai.inputs = true
+  config.data_collection.gen_ai.outputs = false
+end
+```
+
+These settings only control GenAI content. HTTP body, breadcrumb, and exception-local collection have separate controls; disabling GenAI content is not a blanket redaction switch.
