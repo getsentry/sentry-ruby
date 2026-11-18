@@ -7,8 +7,10 @@ module Sentry
     module RubyLLM
       class Instrumenter
       CHAT_EVENT = "chat.ruby_llm"
+      TOOL_EVENT = "tool_call.ruby_llm"
       USAGE_EVENT = "usage.ruby_llm"
       OPERATION = "gen_ai.chat"
+      TOOL_OPERATION = "gen_ai.execute_tool"
       ORIGIN = "auto.ai.ruby_llm"
 
       attr_reader :delegate
@@ -24,9 +26,10 @@ module Sentry
       end
 
       def instrument(name, payload = {}, &block)
-        return delegate_instrument(name, payload, &block) unless name.to_s == CHAT_EVENT || name.to_s == USAGE_EVENT
+        event_name = name.to_s
+        return delegate_instrument(name, payload, &block) unless [CHAT_EVENT, TOOL_EVENT, USAGE_EVENT].include?(event_name)
 
-        if name.to_s == USAGE_EVENT
+        if event_name == USAGE_EVENT
           update_usage(payload)
           return delegate_instrument(name, payload, &block)
         end
@@ -34,7 +37,12 @@ module Sentry
         return delegate_instrument(name, payload, &block) unless block
 
         delegate_instrument(name, payload) do |event|
-          with_chat_span(event || payload) { yield(event || payload) }
+          event = event || payload
+          if event_name == CHAT_EVENT
+            with_chat_span(event) { yield(event) }
+          else
+            with_tool_span(event) { yield(event) }
+          end
         end
       end
 
@@ -46,23 +54,27 @@ module Sentry
       end
 
       def with_chat_span(payload)
+        with_operation_span(payload, OPERATION, span_description(payload)) { yield }
+      end
+
+      def with_tool_span(payload)
+        with_operation_span(payload, TOOL_OPERATION, tool_description(payload)) { yield }
+      end
+
+      def with_operation_span(payload, operation, description)
         return yield unless Sentry.initialized?
 
         scope = Sentry.get_current_scope
         current_span = scope&.get_span
-        return with_child_span(scope, current_span, payload) { yield } if current_span
+        return with_child_span(scope, current_span, payload, operation, description) { yield } if current_span
 
-        with_root_transaction(payload) { yield }
+        with_root_transaction(payload, operation, description) { yield }
       end
 
-      def with_child_span(scope, current_span, payload)
+      def with_child_span(scope, current_span, payload, operation, description)
         span = nil
         begin
-          span = current_span.start_child(
-            op: OPERATION,
-            description: span_description(payload),
-            origin: ORIGIN
-          )
+          span = current_span.start_child(op: operation, description: description, origin: ORIGIN)
           scope.set_span(span)
         rescue StandardError => error
           safe_finish(span)
@@ -70,16 +82,12 @@ module Sentry
           return yield
         end
 
-        execute_span(span, payload, scope: scope, previous_span: current_span) { yield }
+        execute_span(span, payload, operation: operation, scope: scope, previous_span: current_span) { yield }
       end
 
-      def with_root_transaction(payload)
+      def with_root_transaction(payload, operation, description)
         transaction = begin
-          Sentry.start_transaction(
-            name: span_description(payload),
-            op: OPERATION,
-            origin: ORIGIN
-          )
+          Sentry.start_transaction(name: description, op: operation, origin: ORIGIN)
         rescue StandardError => error
           report_instrumentation_error(error)
           nil
@@ -90,7 +98,7 @@ module Sentry
         begin
           Sentry.with_scope do |scope|
             scope.set_span(transaction)
-            execute_span(transaction, payload) do
+            execute_span(transaction, payload, operation: operation) do
               application_called = true
               yield
             end
@@ -104,23 +112,34 @@ module Sentry
         end
       end
 
-      def execute_span(span, payload, scope: nil, previous_span: nil)
+      def execute_span(span, payload, operation:, scope: nil, previous_span: nil)
         result = nil
         begin
-          set_request_data(span, payload)
+          set_request_data(span, payload, operation)
           result = yield
         rescue StandardError => error
           set_error(span, error)
           raise
         ensure
-          set_response_data(span, payload)
+          set_response_data(span, payload, operation)
           safe_restore_scope(scope, previous_span) if scope && previous_span
           safe_finish(span)
         end
         result
       end
 
-      def set_request_data(span, payload)
+      def set_request_data(span, payload, operation)
+        case operation
+        when OPERATION
+          set_chat_request_data(span, payload)
+        when TOOL_OPERATION
+          set_tool_request_data(span, payload)
+        end
+      rescue StandardError => error
+        report_instrumentation_error(error)
+      end
+
+      def set_chat_request_data(span, payload)
         safe_set_data(span, "gen_ai.operation.name", "chat")
         set_data_if_present(span, "gen_ai.provider.name", string_value(payload[:provider]))
         set_data_if_present(span, "gen_ai.request.model", string_value(payload[:model]))
@@ -134,11 +153,36 @@ module Sentry
 
         definitions = Serializer.tool_definitions(payload)
         set_json_data(span, "gen_ai.tool.definitions", definitions) unless definitions.empty?
+      end
+
+      def set_tool_request_data(span, payload)
+        safe_set_data(span, "gen_ai.operation.name", "execute_tool")
+        set_data_if_present(span, "gen_ai.tool.name", string_value(payload[:tool_name] || Serializer.value(payload[:tool], :name)))
+        return unless collect_inputs?
+
+        arguments =
+          if payload.key?(:tool_arguments)
+            payload[:tool_arguments]
+          else
+            Serializer.value(payload[:tool_call], :arguments)
+          end
+        return if arguments.nil?
+
+        set_json_data(span, "gen_ai.tool.call.arguments", arguments)
+      end
+
+      def set_response_data(span, payload, operation)
+        case operation
+        when OPERATION
+          set_chat_response_data(span, payload)
+        when TOOL_OPERATION
+          set_tool_response_data(span, payload)
+        end
       rescue StandardError => error
         report_instrumentation_error(error)
       end
 
-      def set_response_data(span, payload)
+      def set_chat_response_data(span, payload)
         response = payload[:response] || Array(payload[:messages_after]).last
         response_model = payload[:response_model] || Serializer.value(response, :model)
         finish_reason = Serializer.value(response, :finish_reason)
@@ -149,8 +193,14 @@ module Sentry
 
         messages = Serializer.messages([response]).first
         set_json_data(span, "gen_ai.output.messages", messages) unless messages.empty?
-      rescue StandardError => error
-        report_instrumentation_error(error)
+      end
+
+      def set_tool_response_data(span, payload)
+        return unless collect_outputs?
+        return unless payload.key?(:result) || payload.key?(:result_content)
+
+        result = payload.key?(:result) ? payload[:result] : payload[:result_content]
+        set_json_data(span, "gen_ai.tool.call.result", result)
       end
 
       def update_usage(payload)
@@ -199,6 +249,11 @@ module Sentry
       def span_description(payload)
         model = payload[:model]
         model ? "chat #{model}" : "chat"
+      end
+
+      def tool_description(payload)
+        tool = payload[:tool_name] || Serializer.value(payload[:tool], :name)
+        tool ? "execute_tool #{tool}" : "execute_tool"
       end
 
       def collect_inputs?
