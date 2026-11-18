@@ -181,7 +181,9 @@ def build_exception_with_shared_backtrace_cause
 
   begin
     begin
-      raise TypeError, "exception b", inner.backtrace, cause: inner
+      middle = TypeError.new("exception b")
+      middle.set_backtrace(inner.backtrace)
+      raise middle, cause: inner
     rescue TypeError
       raise "exception c"
     end
