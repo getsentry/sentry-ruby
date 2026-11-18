@@ -7,7 +7,8 @@
       "BASE_IMAGE": "${localEnv:BASE_IMAGE:ubuntu:24.04}"
     }
   },
-  "runArgs": ["--init"],
+  "overrideCommand": false,
+  "runArgs": ["--init", "--stop-timeout=60"],
   "mounts": [
     "source=sentry-ruby-bundle,target=/home/sentry/bundle,type=volume"
   ],
