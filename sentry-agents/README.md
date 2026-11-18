@@ -2,7 +2,14 @@
 
 [![Build Status](https://github.com/getsentry/sentry-ruby/actions/workflows/tests.yml/badge.svg)](https://github.com/getsentry/sentry-ruby/actions/workflows/tests.yml)
 
-`sentry-agents` integrates [RubyLLM](https://github.com/crmne/ruby_llm) with Sentry.
+`sentry-agents` integrates [RubyLLM](https://github.com/crmne/ruby_llm) with Sentry. Loading the gem instruments the global RubyLLM configuration when Sentry is initialized.
+
+For an isolated RubyLLM context, install the adapter explicitly:
+
+```ruby
+context = RubyLLM.context
+Sentry::Agents::RubyLLM.install(context)
+```
 
 ## Requirements
 
