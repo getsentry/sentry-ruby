@@ -41,7 +41,7 @@ module Sentry
             data_collection: data_collection
           )
         else
-          SingleExceptionInterface.new(exception: exception, mechanism: mechanism)
+          SingleExceptionInterface.new(exception: e, mechanism: mechanism)
         end
       end
 

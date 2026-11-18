@@ -172,6 +172,30 @@ rescue RuntimeError => e
   e
 end
 
+def build_exception_with_shared_backtrace_cause
+  inner = begin
+    raise ArgumentError, "exception a"
+  rescue ArgumentError => e
+    e
+  end
+
+  begin
+    begin
+      raise TypeError, "exception b", inner.backtrace, cause: inner
+    rescue TypeError
+      raise "exception c"
+    end
+  rescue RuntimeError => e
+    e
+  end
+end
+
+def build_exception_with_stackless_cause
+  raise "exception b", cause: Errno::ENOENT.new("exception a")
+rescue RuntimeError => e
+  e
+end
+
 def build_exception_with_recursive_cause
   backtrace = []
 

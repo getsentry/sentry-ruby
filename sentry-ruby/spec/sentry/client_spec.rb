@@ -485,6 +485,30 @@ RSpec.describe Sentry::Client do
         end
       end
 
+      context 'when a cause shares its backtrace with its own cause' do
+        let(:exception) { build_exception_with_shared_backtrace_cause }
+
+        it 'captures the type and message of each cause' do
+          expect(hash[:exception][:values].map { |value| value[:type] }).to eq(["ArgumentError", "TypeError", "RuntimeError"])
+          expect(hash[:exception][:values][1][:value]).to match("exception b")
+        end
+
+        it 'captures the shared stacktrace once' do
+          expect(hash[:exception][:values][0][:stacktrace]).not_to be_nil
+          expect(hash[:exception][:values][1][:stacktrace]).to be_nil
+        end
+      end
+
+      context 'when a cause has no backtrace' do
+        let(:exception) { build_exception_with_stackless_cause }
+
+        it 'captures the type and message of the cause' do
+          expect(hash[:exception][:values][0][:type]).to eq("Errno::ENOENT")
+          expect(hash[:exception][:values][0][:module]).to eq("Errno")
+          expect(hash[:exception][:values][0][:value]).to match("exception a")
+        end
+      end
+
       context 'when the exception has a recursive cause' do
         let(:exception) { build_exception_with_recursive_cause }
 
