@@ -55,3 +55,6 @@ RUN mkdir -p /home/sentry/bundle
 # Chromium, ChromeDriver, mise, and the toolchain (Java, Ruby, Node) are
 # installed by the local `./features/tools` dev container feature, which runs
 # after this Dockerfile — see devcontainer.json.
+
+COPY .devcontainer/keep-alive /usr/local/bin/sentry-devcontainer-keep-alive
+CMD ["/usr/local/bin/sentry-devcontainer-keep-alive"]

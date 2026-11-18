@@ -1,0 +1,19 @@
+#!/usr/bin/env bash
+
+stop_postgres() {
+  local data_dir=/tmp/postgres-data
+  local pid version
+
+  [[ -s "$data_dir/postmaster.pid" ]] || return 0
+  read -r pid < "$data_dir/postmaster.pid" || return 0
+  [[ "$pid" =~ ^[1-9][0-9]*$ && /proc/$pid/cwd -ef "$data_dir" ]] || return 0
+  read -r version < "$data_dir/PG_VERSION" || return 1
+  local pg_bin="/usr/lib/postgresql/$version/bin"
+  [[ /proc/$pid/exe -ef "$pg_bin/postgres" ]] || return 0
+  "$pg_bin/pg_ctl" -D "$data_dir" -m fast -w stop
+}
+
+trap 'stop_postgres; exit $?' TERM INT
+
+sleep infinity &
+wait "$!"
