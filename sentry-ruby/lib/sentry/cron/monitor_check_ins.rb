@@ -65,7 +65,7 @@ module Sentry
 
         def sentry_monitor_slug(name: self.name)
           @sentry_monitor_slug ||= begin
-            format = Sentry.configuration&.cron&.monitor_slug_format || :legacy
+            format = Sentry.configuration&.cron&.monitor_slug_format || :mashed
             Slug.from_class_name(name, format: format)
           end
         end

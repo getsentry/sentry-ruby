@@ -20,7 +20,7 @@ RSpec.describe Sentry::Cron::Slug do
   end
 
   describe ".from_class_name" do
-    it "defaults to legacy mashed formatting" do
+    it "defaults to mashed formatting" do
       expect(described_class.from_class_name("HappyWorkerWithCron"))
         .to eq("happyworkerwithcron")
     end
@@ -30,9 +30,9 @@ RSpec.describe Sentry::Cron::Slug do
         .to eq("happy_worker_with_cron")
     end
 
-    it "legacy-truncates from the start without hashing" do
+    it "mashed-truncates from the start without hashing" do
       name = "VeryLongOuterModule::VeryVeryVeryVeryLongInnerModule::Job"
-      expect(described_class.from_class_name(name, format: :legacy))
+      expect(described_class.from_class_name(name, format: :mashed))
         .to eq("ongoutermodule-veryveryveryverylonginnermodule-job")
     end
 

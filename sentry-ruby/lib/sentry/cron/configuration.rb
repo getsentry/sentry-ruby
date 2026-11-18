@@ -22,7 +22,7 @@ module Sentry
       # How default (class-name-derived) cron monitor slugs are formatted.
       # Explicit `sentry_monitor_check_ins(slug: ...)` always wins over this.
       #
-      # - +:legacy+ - CamelCase mashed to lowercase (`HappyWorker` -> `happyworker`)
+      # - +:mashed+ - CamelCase mashed to lowercase (`HappyWorker` -> `happyworker`)
       # - +:underscore+ - Rails-style word breaks (`HappyWorker` -> `happy_worker`)
       #
       # Only one format is active per process; check-ins are not dual-emitted.
@@ -30,7 +30,7 @@ module Sentry
       attr_accessor :monitor_slug_format
 
       def initialize
-        @monitor_slug_format = :legacy
+        @monitor_slug_format = :mashed
       end
     end
   end

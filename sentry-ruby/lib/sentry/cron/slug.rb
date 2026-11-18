@@ -22,19 +22,19 @@ module Sentry
       # Derive a monitor slug from a Ruby class name.
       #
       # @param name [String] fully-qualified class name
-      # @param format [Symbol] +:legacy+ (mashed downcase) or +:underscore+ (word breaks)
+      # @param format [Symbol] +:mashed+ (downcase, no word breaks) or +:underscore+ (word breaks)
       # @return [String]
-      def from_class_name(name, format: :legacy)
+      def from_class_name(name, format: :mashed)
         case format
         when :underscore
           underscore_class_name(name)
         else
-          legacy_class_name(name)
+          mashed_class_name(name)
         end
       end
 
       # Current behavior: CamelCase -> lowercased token, +::+ -> +-+, right-truncated.
-      def legacy_class_name(name)
+      def mashed_class_name(name)
         slug = name.to_s.gsub("::", "-").downcase
         slug[-MonitorCheckIns::MAX_SLUG_LENGTH..-1] || slug
       end

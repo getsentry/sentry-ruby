@@ -181,7 +181,7 @@ RSpec.describe Sentry::Cron::MonitorCheckIns do
         stub_const('VeryLongOuterModule::VeryVeryVeryVeryLongInnerModule::Job', job_class)
       end
 
-      it 'truncates from the beginning with legacy format by default' do
+      it 'truncates from the beginning with mashed format by default' do
         slug = VeryLongOuterModule::VeryVeryVeryVeryLongInnerModule::Job.sentry_monitor_slug
         expect(slug).to eq('ongoutermodule-veryveryveryverylonginnermodule-job')
       end
