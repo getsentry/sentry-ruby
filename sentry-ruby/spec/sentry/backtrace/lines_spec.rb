@@ -40,6 +40,64 @@ RSpec.describe Sentry::Backtrace::Line do
       expect(line.module_name).to eq(nil)
       expect(line.in_app).to eq(false)
     end
+
+    it "converts JRuby .class files to .rb" do
+      2.times do
+        line = described_class.parse("uri:classloader:/gems/foo/lib/foo.class:7:in `bar'")
+
+        expect(line.file).to eq("/gems/foo/lib/foo.rb")
+        expect(line.number).to eq(7)
+        expect(line.method).to eq("bar")
+      end
+    end
+
+    context "parse cache" do
+      let(:parse_cache) { described_class.instance_variable_get(:@parse_cache) }
+
+      before { parse_cache.clear }
+
+      it "reuses frozen parsed strings for a repeated line" do
+        first = described_class.parse(unparsed_gem_line.dup, in_app_pattern)
+        second = described_class.parse(unparsed_gem_line.dup, in_app_pattern)
+
+        expect(second.file).to equal(first.file)
+        expect(second.method).to equal(first.method)
+        expect(second.file).to be_frozen
+        expect(second.method).to be_frozen
+        expect(second).not_to equal(first)
+      end
+
+      it "computes in_app from the pattern of each call, not the cached one" do
+        other_pattern = /sinatra/
+
+        expect(described_class.parse(unparsed_gem_line, in_app_pattern).in_app).to eq(false)
+        expect(described_class.parse(unparsed_gem_line, other_pattern).in_app).to eq(true)
+        expect(described_class.parse(unparsed_gem_line).in_app).to eq(false)
+      end
+
+      it "caches lines that don't match any format" do
+        2.times do
+          line = described_class.parse("not a backtrace line")
+
+          expect(line.file).to be_nil
+          expect(line.number).to eq(0)
+        end
+        expect(parse_cache.size).to eq(1)
+      end
+
+      it "clears itself once it reaches PARSE_CACHE_LIMIT" do
+        stub_const("#{described_class}::PARSE_CACHE_LIMIT", 2)
+
+        described_class.parse("a.rb:1:in `a'")
+        described_class.parse("b.rb:2:in `b'")
+        expect(parse_cache.size).to eq(2)
+
+        line = described_class.parse("c.rb:3:in `c'")
+        expect(parse_cache.size).to eq(1)
+        expect(line.file).to eq("c.rb")
+        expect(line.number).to eq(3)
+      end
+    end
   end
 
   describe ".from_source_location", skip: !Thread.respond_to?(:each_caller_location) do

@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+require "concurrent/map"
+
 module Sentry
   # @api private
   class Backtrace
@@ -31,10 +33,26 @@ module Sentry
 
       attr_reader :in_app_pattern
 
+      # Parsed [file, number, method, module_name] by raw backtrace line.
+      # A recurring error produces the same lines on every capture, so a hit
+      # skips the regex match and its substring allocations. Parsing doesn't
+      # depend on in_app_pattern, so the pattern isn't part of the key.
+      # The cache is cleared once it reaches PARSE_CACHE_LIMIT entries.
+      PARSE_CACHE_LIMIT = 4096
+      @parse_cache = Concurrent::Map.new
+
       # Parses a single line of a given backtrace
       # @param [String] unparsed_line The raw line from +caller+ or some backtrace
       # @return [Line] The parsed backtrace line
       def self.parse(unparsed_line, in_app_pattern = nil)
+        file, number, method, module_name = @parse_cache[unparsed_line] || parse_and_cache(unparsed_line)
+        new(file, number, method, module_name, in_app_pattern)
+      end
+
+      # The parsed strings are shared by every Line (and event frame) created
+      # from the same raw line, so they're frozen to keep one caller's in-place
+      # mutation from leaking into later events.
+      def self.parse_and_cache(unparsed_line)
         ruby_match = unparsed_line.match(RUBY_INPUT_FORMAT)
 
         if ruby_match
@@ -54,8 +72,12 @@ module Sentry
             number = java_match[4]
           end
         end
-        new(file, number, method, module_name, in_app_pattern)
+
+        parsed = [file&.freeze, number&.freeze, method&.freeze, module_name&.freeze].freeze
+        @parse_cache.clear if @parse_cache.size >= PARSE_CACHE_LIMIT
+        @parse_cache[unparsed_line] = parsed
       end
+      private_class_method :parse_and_cache
 
       # Creates a Line from a Thread::Backtrace::Location object
       # This is more efficient than converting to string and parsing with regex
