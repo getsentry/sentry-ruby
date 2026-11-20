@@ -18,4 +18,30 @@ RSpec.describe Sentry::Cron::Slug do
       expect(described_class.from("!!!")).to be_nil
     end
   end
+
+  describe ".from_class_name" do
+    it "defaults to mashed formatting" do
+      expect(described_class.from_class_name("HappyWorkerWithCron"))
+        .to eq("happyworkerwithcron")
+    end
+
+    it "underscores CamelCase and keeps :: as -" do
+      expect(described_class.from_class_name("HappyWorkerWithCron", format: :underscore))
+        .to eq("happy_worker_with_cron")
+    end
+
+    it "mashed-truncates from the start without hashing" do
+      name = "VeryLongOuterModule::VeryVeryVeryVeryLongInnerModule::Job"
+      expect(described_class.from_class_name(name, format: :mashed))
+        .to eq("ongoutermodule-veryveryveryverylonginnermodule-job")
+    end
+
+    it "hash-truncates long underscore slugs and stays within max length" do
+      name = "VeryLongOuterModule::VeryVeryVeryVeryLongInnerModule::Job"
+      slug = described_class.from_class_name(name, format: :underscore)
+
+      expect(slug.length).to be <= Sentry::Cron::MonitorCheckIns::MAX_SLUG_LENGTH
+      expect(slug).to eq("675905e0c9_very_very_very_long_inner_module-job")
+    end
+  end
 end

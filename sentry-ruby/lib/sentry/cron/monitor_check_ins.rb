@@ -65,8 +65,8 @@ module Sentry
 
         def sentry_monitor_slug(name: self.name)
           @sentry_monitor_slug ||= begin
-            slug = name.gsub("::", "-").downcase
-            slug[-MAX_SLUG_LENGTH..-1] || slug
+            format = Sentry.configuration&.cron&.monitor_slug_format || :mashed
+            Slug.from_class_name(name, format: format)
           end
         end
 
