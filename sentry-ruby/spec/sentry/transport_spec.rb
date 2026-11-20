@@ -728,5 +728,32 @@ RSpec.describe Sentry::Transport do
       subject.flush
       expect(io.string).to match(/Sending envelope with items \[client_report\]/)
     end
+
+    it "does not let a concurrent record_lost_event raise while the client report is built" do
+      subject.record_lost_event(:ratelimit_backoff, "error")
+
+      transport = subject
+      writer = nil
+      writer_error = nil
+      discarded_events = transport.discarded_events
+      # Record a new lost event from another thread while the client report is still iterating.
+      discarded_events.define_singleton_method(:each) do |&block|
+        super() do |*args|
+          block.call(*args)
+          writer ||= Thread.new do
+            transport.record_lost_event(:queue_overflow, "transaction")
+          rescue => e
+            writer_error = e
+          end.tap { |thread| thread.join(0.1) }
+        end
+      end
+
+      allow(subject).to receive(:send_data)
+      subject.flush
+      writer.join
+
+      expect(writer_error).to be_nil
+      expect(subject.discarded_events).to eq({ [:queue_overflow, "transaction"] => 1 })
+    end
   end
 end
