@@ -571,6 +571,13 @@ RSpec.describe Sentry::Transport do
           expect(io.string).not_to match(/Sending envelope with items \[event\]/)
         end
 
+        it "records every dropped event as lost" do
+          subject.send_envelope(envelope)
+          subject.send_envelope(subject.envelope_from_event(event))
+
+          expect(subject.discarded_events[[:send_error, "error"]]).to eq(2)
+        end
+
         context "with other types of items" do
           before do
             5.times { subject.record_lost_event(:ratelimit_backoff, 'error') }
