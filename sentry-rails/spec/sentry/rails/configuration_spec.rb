@@ -21,14 +21,14 @@ RSpec.describe Sentry::Rails::Configuration do
     expect(config.excluded_exceptions).to include("ActionController::TooManyRequests")
   end
 
-  it "ignores ActionController::InvalidAuthenticityToken by default before Rails 8.2", skip: Gem::Version.new(Rails.version) >= Gem::Version.new("8.2.0.alpha") do
+  it "ignores ActionController::InvalidAuthenticityToken by default before Rails 8.2", skip: Gem::Version.new(Rails.version) >= Gem::Version.new("8.2.0") do
     config = Sentry::Configuration.new
 
     expect(config.excluded_exceptions).to include("ActionController::InvalidAuthenticityToken")
   end
 
   it "does not list ActionController::InvalidAuthenticityToken on Rails 8.2+" do
-    allow(Rails).to receive(:version).and_return("8.2.0.alpha")
+    allow(Rails).to receive(:version).and_return("8.2.0")
 
     config = Sentry::Configuration.new
 
