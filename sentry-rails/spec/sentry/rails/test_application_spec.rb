@@ -24,6 +24,8 @@ RSpec.describe Sentry::Rails::Test::Application do
     end
 
     it "releases the app's filter parameters from ActiveRecord" do
+      skip "ActiveRecord::Base.filter_attributes is not available" unless ActiveRecord::Base.respond_to?(:filter_attributes)
+
       app = make_basic_app
       expect(ActiveRecord::Base.filter_attributes).not_to be_empty
 
