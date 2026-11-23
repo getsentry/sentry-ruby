@@ -13,10 +13,10 @@ module Sentry
   module Rails
     module Test
       class Application < ::Rails::Application
-        LOAD_HOOK_IVARS = %i[@load_hooks @loaded].freeze
+        LOAD_HOOK_IVARS = %i[@load_hooks @loaded @run_once].freeze
 
         def self.snapshot_load_hook_state
-          @load_hook_snapshot ||= LOAD_HOOK_IVARS.to_h do |name|
+          @load_hook_snapshot ||= LOAD_HOOK_IVARS.select { |name| ActiveSupport.instance_variable_defined?(name) }.to_h do |name|
             [name, ActiveSupport.instance_variable_get(name).transform_values(&:dup)]
           end
         end
@@ -209,6 +209,19 @@ module Sentry
         def cleanup!
           Test::Application.restore_load_hook_state
 
+          ::ActiveRecord::Base.filter_attributes = []
+          ::ActiveRecord::Encryption.encrypted_attribute_declaration_listeners = nil if defined?(::ActiveRecord::Encryption)
+          if defined?(::ActiveRecord::FilterAttributeHandler)
+            ::ActiveRecord::FilterAttributeHandler.remove_instance_variable(:@sensitive_attribute_declaration_listeners) if ::ActiveRecord::FilterAttributeHandler.instance_variable_defined?(:@sensitive_attribute_declaration_listeners)
+          end
+          ::ActionCable.remove_instance_variable(:@server) if ::ActionCable.instance_variable_defined?(:@server)
+          mounted_helpers = ::ActionDispatch::Routing::RouteSet::MountedHelpers
+          %i[main_app _main_app].each do |name|
+            mounted_helpers.send(:remove_method, name) if mounted_helpers.method_defined?(name, false)
+          end
+
+          ::Rails.cache = nil
+          ::ActionView::PartialRenderer.collection_cache = ::ActiveSupport::Cache::MemoryStore.new
           ::Rails.application = nil
         end
 
