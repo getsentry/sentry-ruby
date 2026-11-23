@@ -23,6 +23,9 @@ end
 
 REDIS_HOST = ENV.fetch("REDIS_HOST", "127.0.0.1")
 
+# The suite may itself run under a coding agent. The agent hint specs turn hints back on.
+ENV["SENTRY_AGENT_HINTS"] = "0"
+
 if ENV["CI"]
   require 'simplecov-cobertura'
   SimpleCov.formatter = SimpleCov::Formatter::CoberturaFormatter

@@ -297,6 +297,12 @@ module Sentry
     # @return [StructuredLoggingConfiguration]
     attr_reader :structured_logging
 
+    # Set to true once the setup has been checked against SETUP_CHECKLIST.md in this gem.
+    # Coding agents running the app are then no longer pointed at the checklist.
+    # Default is false.
+    # @return [Boolean]
+    attr_accessor :agent_setup_complete
+
     # Send diagnostic client reports about dropped events, true by default
     # tries to attach to an existing envelope max once every 30s
     # @return [Boolean]
@@ -592,6 +598,7 @@ module Sentry
       self.std_lib_logger_filter = nil
       self.rack_env_whitelist = RACK_ENV_WHITELIST_DEFAULT
       self.traces_sampler = nil
+      self.agent_setup_complete = false
 
       self.profiler_class = Sentry::Profiler
       self.profiles_sample_interval = DEFAULT_PROFILES_SAMPLE_INTERVAL

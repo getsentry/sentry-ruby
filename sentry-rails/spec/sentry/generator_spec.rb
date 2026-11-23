@@ -76,6 +76,18 @@ RSpec.describe SentryGenerator do
     expect(content).not_to include("Sentry.get_trace_propagation_meta.html_safe")
   end
 
+  it "points a coding agent at the setup checklist" do
+    allow(Sentry::AgentHint).to receive(:coding_agent?).and_return(true)
+
+    expect(run_generator).to include(Sentry::AgentHint::CHECKLIST_PATH)
+  end
+
+  it "doesn't mention the checklist to people" do
+    allow(Sentry::AgentHint).to receive(:coding_agent?).and_return(false)
+
+    expect(run_generator).not_to include(Sentry::AgentHint::CHECKLIST_PATH)
+  end
+
   context "with a DSN option" do
     it "creates a initializer file with the DSN" do
       run_generator %w[--dsn foobarbaz]

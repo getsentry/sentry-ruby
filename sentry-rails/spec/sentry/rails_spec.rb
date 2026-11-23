@@ -41,6 +41,13 @@ RSpec.describe Sentry::Rails, type: :request do
       expect(Sentry.configuration.background_worker_threads).to eq(0)
     end
 
+    it "logs the coding agent hint when the server loads", skip: !Rails::Railtie.respond_to?(:server) && "needs Rails 6.1+" do
+      allow(Sentry::AgentHint).to receive(:take).and_return("[sentry] hint")
+      expect(Rails.logger).to receive(:warn).with("[sentry] hint")
+
+      Rails.application.load_server
+    end
+
     describe "logger detection" do
       it "sets a duplicated Rails logger as the SDK's logger" do
         if Gem::Version.new(Rails.version) > Gem::Version.new("7.1.0.beta")

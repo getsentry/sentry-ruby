@@ -33,6 +33,7 @@ require "sentry/cron/slug"
 require "sentry/vernier/profiler"
 require "sentry/metrics"
 require "sentry/job_extensions/extension"
+require "sentry/agent_hint"
 
 [
   "sentry/rake",
@@ -294,6 +295,7 @@ module Sentry
       @backpressure_monitor = config.enable_backpressure_handling ? Sentry::BackpressureMonitor.new(config, client) : nil
       exception_locals_tp.enable if config.data_collection.collect_stack_frame_variables?
       at_exit { close }
+      AgentHint.register(config, caller_locations(1, 1).first)
     end
 
     # Flushes pending events and cleans up SDK state.

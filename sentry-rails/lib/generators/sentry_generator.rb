@@ -28,4 +28,13 @@ class SentryGenerator < ::Rails::Generators::Base
       "  <%= Sentry.get_trace_propagation_meta.html_safe %>\n  "
     end
   end
+
+  # The generator only runs while Sentry is being set up, so a coding agent running
+  # it gets pointed at the checklist right away.
+  def point_coding_agent_to_checklist
+    return unless Sentry::AgentHint.coding_agent?
+
+    say_status :checklist, "Check the setup against Sentry's official setup checklist before you finish: " \
+                           "#{Sentry::AgentHint::CHECKLIST_PATH}", :yellow
+  end
 end
