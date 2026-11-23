@@ -186,6 +186,8 @@ module Sentry
       envelope = Envelope.new
       envelope.add_item(client_report_headers, client_report_payload)
       send_envelope(envelope)
+    rescue Sentry::ExternalError => e
+      log_debug("[Transport] Failed to send client report on flush: #{e.message}")
     end
 
     private

@@ -728,5 +728,25 @@ RSpec.describe Sentry::Transport do
       subject.flush
       expect(io.string).to match(/Sending envelope with items \[client_report\]/)
     end
+
+    context "when sending the client report fails" do
+      before do
+        subject.record_lost_event(:network_error, 'error')
+      end
+
+      it "does not raise when Sentry responds with an error" do
+        allow(subject).to receive(:send_data).and_raise(Sentry::ExternalError, "the server responded with status 503")
+
+        expect { subject.flush }.not_to raise_error
+        expect(io.string).to match(/Failed to send client report on flush: the server responded with status 503/)
+      end
+
+      it "does not raise when Sentry cannot be reached" do
+        stub_request(:post, "http://sentry.localdomain/sentry/api/42/envelope/").to_raise(SocketError)
+
+        expect { subject.flush }.not_to raise_error
+        expect(io.string).to match(/Failed to send client report on flush/)
+      end
+    end
   end
 end

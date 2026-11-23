@@ -1613,6 +1613,16 @@ RSpec.describe Sentry do
         expect(described_class.session_flusher).to receive(:flush)
         described_class.close
       end
+
+      it "finishes closing when the client report cannot be sent" do
+        transport = described_class.get_current_client.transport
+        transport.record_lost_event(:network_error, "error")
+        allow(transport).to receive(:send_envelope).and_raise(Sentry::ExternalError, "the server responded with status 503")
+        expect(described_class.background_worker).to receive(:shutdown).and_call_original
+
+        expect { described_class.close }.not_to raise_error
+        expect(described_class.get_main_hub).to eq(nil)
+      end
     end
 
     it "can reinitialize closed SDK" do
