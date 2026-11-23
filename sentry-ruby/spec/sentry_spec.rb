@@ -784,6 +784,57 @@ RSpec.describe Sentry do
       end
     end
 
+    context "when the block exits early" do
+      let(:transaction) { described_class.start_transaction(name: "request", sampled: true) }
+
+      before do
+        perform_basic_setup { |config| config.traces_sample_rate = 1.0 }
+        described_class.get_current_scope.set_span(transaction)
+      end
+
+      def return_from_child_span
+        Sentry.with_child_span(op: "child") { return :returned }
+      end
+
+      def expect_finished_child_span
+        expect(Sentry.get_current_scope.get_span).to equal(transaction)
+        transaction.finish
+        expect(last_sentry_event.spans.size).to eq(1)
+        expect(last_sentry_event.spans.first).to include(op: "child", timestamp: be_a(Float))
+      end
+
+      it "records the span when the block breaks" do
+        result = described_class.with_child_span(op: "child") { break :returned }
+
+        expect(result).to eq(:returned)
+        expect_finished_child_span
+      end
+
+      it "records the span when the block returns from its enclosing method" do
+        expect(return_from_child_span).to eq(:returned)
+        expect_finished_child_span
+      end
+
+      it "records the span when the block throws" do
+        result = catch(:finished) do
+          described_class.with_child_span(op: "child") { throw :finished, :returned }
+        end
+
+        expect(result).to eq(:returned)
+        expect_finished_child_span
+      end
+
+      it "finishes the span and propagates exceptions outside StandardError" do
+        exception = Class.new(Exception).new("stop")
+
+        expect do
+          described_class.with_child_span(op: "child") { raise exception }
+        end.to raise_error { |raised| expect(raised).to equal(exception) }
+
+        expect_finished_child_span
+      end
+    end
+
     context "when the current span is present" do
       let(:parent_span) do
         transaction = described_class.start_transaction(op: "foo")
