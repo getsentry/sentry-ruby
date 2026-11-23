@@ -1,7 +1,6 @@
 # frozen_string_literal: true
 
 require "json"
-require "concurrent/map"
 require "sentry/envelope"
 
 module Sentry
@@ -77,7 +76,7 @@ module Sentry
         result, oversized = item.serialize
 
         if oversized
-          log_oversized_item(item)
+          log_debug("Envelope item [#{item.type}] is still oversized after size reduction: {#{item.size_breakdown}}")
           record_lost_event(:send_error, item.data_category, num: item.item_count, num_bytes: item.lost_event_byte_size)
 
           next
@@ -191,20 +190,6 @@ module Sentry
     end
 
     private
-
-    # Warns once per item type, then logs at debug level, so an app that keeps
-    # producing oversized items doesn't flood its logs. Every drop is still
-    # recorded as a lost event.
-    def log_oversized_item(item)
-      message = "Envelope item [#{item.type}] is still oversized after size reduction: {#{item.size_breakdown}}"
-      @oversized_item_types_warned ||= Concurrent::Map.new
-
-      if @oversized_item_types_warned.put_if_absent(item.type, true).nil?
-        log_warn("#{message}. Further oversized [#{item.type}] items are dropped with a debug log only.")
-      else
-        log_debug(message)
-      end
-    end
 
     def fetch_pending_client_report(force: false)
       return nil unless @send_client_reports
