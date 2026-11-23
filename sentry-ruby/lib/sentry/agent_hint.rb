@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+require "open3"
+
 module Sentry
   # Points a coding agent at SETUP_CHECKLIST.md while it sets up Sentry and
   # leaves tracing or logs off. People running the app never see it.
@@ -109,9 +111,10 @@ module Sentry
 
     # Returns nil when git isn't installed or the file isn't in a repo. Read only:
     # no index lock, since the agent may be running git at the same time.
+    # Open3 leaves the app's $? alone.
     def git(*args)
-      output = IO.popen(["git", "--no-optional-locks", *args], chdir: File.dirname(@init_file), err: File::NULL, &:read)
-      output.strip if $CHILD_STATUS.success?
+      output, status = Open3.capture2("git", "--no-optional-locks", *args, chdir: File.dirname(@init_file), err: File::NULL)
+      output.strip if status.success?
     rescue SystemCallError
       nil
     end

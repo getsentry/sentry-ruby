@@ -41,7 +41,7 @@ RSpec.describe Sentry::Rails, type: :request do
       expect(Sentry.configuration.background_worker_threads).to eq(0)
     end
 
-    it "logs the coding agent hint when the server loads", skip: !Rails::Railtie.respond_to?(:server) && "needs Rails 6.1+" do
+    it "logs the coding agent hint when the server loads", skip: !Sentry::Railtie.respond_to?(:server) && "needs Rails 6.1+" do
       allow(Sentry::AgentHint).to receive(:take).and_return("[sentry] hint")
       expect(Rails.logger).to receive(:warn).with("[sentry] hint")
 
