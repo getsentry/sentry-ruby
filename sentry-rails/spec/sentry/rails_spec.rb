@@ -20,6 +20,13 @@ RSpec.describe Sentry::Rails, type: :request do
       expect(described_class::VERSION).to be_a(String)
     end
 
+    it "keeps a single ActiveJob reloader hook when the test app is booted again" do
+      Rails.application.cleanup!
+      make_basic_app
+
+      expect(ActiveJob::Callbacks.singleton_class._execute_callbacks.count).to eq(1)
+    end
+
     it "inserts middleware to a correct position" do
       app = Rails.application
       index_of_executor = app.middleware.find_index { |m| m == ActionDispatch::ShowExceptions }
