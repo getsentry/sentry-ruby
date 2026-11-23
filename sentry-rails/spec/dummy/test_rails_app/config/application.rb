@@ -13,7 +13,25 @@ module Sentry
   module Rails
     module Test
       class Application < ::Rails::Application
+        LOAD_HOOK_IVARS = %i[@load_hooks @loaded].freeze
+
+        def self.snapshot_load_hook_state
+          @load_hook_snapshot ||= LOAD_HOOK_IVARS.to_h do |name|
+            [name, ActiveSupport.instance_variable_get(name).transform_values(&:dup)]
+          end
+        end
+
+        def self.restore_load_hook_state
+          snapshot_load_hook_state.each do |name, saved|
+            current = ActiveSupport.instance_variable_get(name)
+            current.clear
+            saved.each { |key, entries| current[key] = entries.dup }
+          end
+        end
+
         def self.define
+          snapshot_load_hook_state
+
           klass = Class.new(Sentry::TestRailsApp)
 
           klass.define_singleton_method(:name) {
@@ -189,6 +207,8 @@ module Sentry
         end
 
         def cleanup!
+          Test::Application.restore_load_hook_state
+
           ::Rails.application = nil
         end
 
