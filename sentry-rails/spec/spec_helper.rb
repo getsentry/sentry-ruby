@@ -2,6 +2,9 @@
 
 require "bundler/setup"
 
+# The suite may itself run under a coding agent. Don't print the Sentry agent hint.
+ENV["SENTRY_AGENT_HINTS"] = "0"
+
 ENV["RAILS_ENV"] = "test"
 
 begin

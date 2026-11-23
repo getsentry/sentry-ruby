@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require "open3"
+require "rbconfig"
 
 module Sentry
   # Points a coding agent at SETUP_CHECKLIST.md while it sets up Sentry and
@@ -21,46 +22,92 @@ module Sentry
     # the setting names doesn't open the checklist.
     NOT_SHOWN = { tracing: "the request trace around them", logs: "its logs" }.freeze
 
+    @mutex = Mutex.new
+    @registered = false
+    @hint = nil
+
     class << self
       # Called by Sentry.init with the location that called it. The hint prints at
       # exit, unless an integration takes it earlier.
       def register(config, caller_location)
         init_file = caller_location&.absolute_path || caller_location&.path
-        return unless @hint.nil? && init_file && coding_agent?
+        return if @registered || init_file.nil? || external_source?(init_file) || !coding_agent?
 
         hint = new(config, init_file)
         return unless hint.applies?
 
-        @hint = hint
-        pid = Process.pid
+        @mutex.synchronize do
+          return if @registered
 
+          @registered = true
+          @hint = hint
+        end
+
+        pid = Process.pid
         at_exit do
           # Forked workers inherit at_exit blocks, so only the process that called init prints.
-          next unless Process.pid == pid && (message = take)
+          next unless Process.pid == pid
 
-          # Piped stdout is only flushed at exit. Flush it first so the hint stays
-          # last for agents that cut the output with `| tail`.
-          $stdout.flush
-          warn(message)
+          print_hint(config)
         end
-      rescue StandardError
+      rescue StandardError => e
         # Best effort: the hint must never break Sentry.init.
-        nil
+        log_failure(config, e)
       end
 
       # Returns the hint once, or nil when there's nothing to show.
       def take
-        hint = @hint
-        @hint = false
-        hint.message if hint
+        hint = @mutex.synchronize { @hint.tap { @hint = nil } }
+        hint&.message
       end
 
       def coding_agent?
-        return false if ENV["CI"]
-        return false unless Utils::EnvHelper.env_to_bool(ENV.fetch("SENTRY_AGENT_HINTS", "1"))
-        return Utils::EnvHelper.env_to_bool(ENV["AI_AGENT"]) if ENV.key?("AI_AGENT")
+        return false if Utils::EnvHelper.env_to_bool(ENV["CI"])
+        # Only an explicit falsy value turns hints off, so SENTRY_AGENT_HINTS= keeps them on.
+        return false if Utils::EnvHelper.env_to_bool(ENV["SENTRY_AGENT_HINTS"], strict: true) == false
 
-        AGENT_ENV_VARS.any? { |name| ENV.key?(name) }
+        # An empty AI_AGENT doesn't count, so it can't hide the agent-specific vars below.
+        ai_agent = ENV["AI_AGENT"].to_s
+        return Utils::EnvHelper.env_to_bool(ai_agent, strict: true) != false unless ai_agent.empty?
+
+        AGENT_ENV_VARS.any? { |name| !ENV[name].to_s.empty? }
+      end
+
+      private
+
+      def print_hint(config)
+        message = take
+        return unless message
+
+        # Piped stdout is only flushed at exit. Flush it first so the hint stays
+        # last for agents that cut the output with `| tail`.
+        $stdout.flush
+        # Not Kernel#warn: it prints nothing when warnings are off (ruby -W0).
+        $stderr.puts(message)
+      rescue StandardError => e
+        log_failure(config, e)
+      end
+
+      # An installed gem or tool that calls Sentry.init itself isn't the user's app,
+      # even when it was installed a moment ago.
+      def external_source?(path)
+        path = real_path(path)
+        [*Gem.path, RbConfig::CONFIG["rubylibdir"]].compact.any? do |dir|
+          path.start_with?(File.join(real_path(dir), ""))
+        end
+      end
+
+      # Gem dirs and tmp dirs are often symlinks (/var -> /private/var on macOS).
+      def real_path(path)
+        File.realpath(path)
+      rescue SystemCallError
+        File.expand_path(path)
+      end
+
+      def log_failure(config, error)
+        config.sdk_logger&.debug(LOGGER_PROGNAME) { "Skipped the coding agent hint: #{error.class}: #{error.message}" }
+      rescue StandardError
+        nil
       end
     end
 
@@ -85,10 +132,17 @@ module Sentry
     private
 
     def missing
-      @missing ||= [].tap do |products|
-        products << :tracing unless @config.traces_sampler || @config.traces_sample_rate.to_f.positive?
+      @missing ||= NOT_SHOWN.keys.reject { |product| enabled?(product) }
+    end
+
+    def enabled?(product)
+      case product
+      when :tracing
+        # Configuration#validate already rejects a non-numeric rate.
+        !@config.traces_sampler.nil? || @config.traces_sample_rate.to_f.positive?
+      when :logs
         # Rails.logger is a ::Logger too, so the :logger patch covers Rails apps.
-        products << :logs unless @config.enabled_patches.include?(:logger)
+        @config.enabled_patches.include?(:logger)
       end
     end
 
@@ -110,10 +164,14 @@ module Sentry
     end
 
     # Returns nil when git isn't installed or the file isn't in a repo. Read only:
-    # no index lock, since the agent may be running git at the same time.
+    # no index lock, since the agent may be running git at the same time, and no
+    # fsmonitor, which would run a command configured in the repo.
     # Open3 leaves the app's $? alone.
     def git(*args)
-      output, status = Open3.capture2("git", "--no-optional-locks", *args, chdir: File.dirname(@init_file), err: File::NULL)
+      output, status = Open3.capture2(
+        "git", "--no-optional-locks", "-c", "core.fsmonitor=false", *args,
+        chdir: File.dirname(@init_file), err: File::NULL
+      )
       output.strip if status.success?
     rescue SystemCallError
       nil

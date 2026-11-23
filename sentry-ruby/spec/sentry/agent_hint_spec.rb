@@ -26,6 +26,7 @@ RSpec.describe Sentry::AgentHint do
 
   before do
     described_class.instance_variable_set(:@hint, nil)
+    described_class.instance_variable_set(:@registered, false)
     allow(described_class).to receive(:at_exit) { |&hook| at_exit_hooks << hook }
   end
 
@@ -67,7 +68,13 @@ RSpec.describe Sentry::AgentHint do
       {} => false,
       { "AI_AGENT" => "0" } => false,
       { "AI_AGENT" => "claude-code", "CI" => "true" } => false,
-      { "CLAUDECODE" => "1", "SENTRY_AGENT_HINTS" => "0" } => false
+      { "CLAUDECODE" => "1", "SENTRY_AGENT_HINTS" => "0" } => false,
+      { "CLAUDECODE" => "" } => false,
+      { "AI_AGENT" => "", "CLAUDECODE" => "1" } => true,
+      { "CI" => "", "CLAUDECODE" => "1" } => true,
+      { "CI" => "false", "CLAUDECODE" => "1" } => true,
+      { "SENTRY_AGENT_HINTS" => "", "CLAUDECODE" => "1" } => true,
+      { "SENTRY_AGENT_HINTS" => "off", "CLAUDECODE" => "1" } => false
     }.each do |env, shown|
       it "is #{"not " unless shown}shown for #{env}" do
         expect(run_app(env).include?(checklist)).to be(shown)
@@ -114,6 +121,30 @@ RSpec.describe Sentry::AgentHint do
     expect(described_class.take).to include(checklist)
     expect(described_class.take).to be_nil
     expect(capture_stderr { at_exit_hooks.each(&:call) }).to eq("")
+  end
+
+  it "is printed when Ruby warnings are off" do
+    load_app({ "AI_AGENT" => "claude-code" })
+    verbose, $VERBOSE = $VERBOSE, nil
+
+    expect(capture_stderr { at_exit_hooks.each(&:call) }).to include(checklist)
+  ensure
+    $VERBOSE = verbose
+  end
+
+  it "isn't shown when an installed gem calls Sentry.init" do
+    allow(Gem).to receive(:path).and_return([@dir])
+
+    expect(run_app({ "AI_AGENT" => "claude-code" })).to eq("")
+  end
+
+  it "runs git without fsmonitor or optional locks" do
+    allow(Open3).to receive(:capture2).and_call_original
+
+    run_app({ "AI_AGENT" => "claude-code" })
+
+    expect(Open3).to have_received(:capture2)
+      .with("git", "--no-optional-locks", "-c", "core.fsmonitor=false", "status", any_args)
   end
 
   it "isn't printed by a forked child" do
