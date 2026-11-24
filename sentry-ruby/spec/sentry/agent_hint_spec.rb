@@ -82,13 +82,22 @@ RSpec.describe Sentry::AgentHint do
     end
   end
 
+  # Gives the config the config.rails.structured_logging.enabled? that sentry-rails adds.
+  def self.rails_config(structured_logging:)
+    "logging = Struct.new(:enabled?).new(#{structured_logging}); " \
+      "config.define_singleton_method(:rails) { Struct.new(:structured_logging).new(logging) }"
+  end
+
   describe "what it says" do
     {
       "" => "not the request trace around them, or its logs.",
       "config.enabled_patches << :logger" => "not the request trace around them.",
       "config.traces_sample_rate = 0.1" => "not its logs.",
       "config.traces_sampler = ->(_) { 1.0 }" => "not its logs.",
-      "config.traces_sample_rate = 0.0" => "not the request trace around them, or its logs."
+      "config.traces_sample_rate = 0.0" => "not the request trace around them, or its logs.",
+      "#{rails_config(structured_logging: true)}" => "not the request trace around them.",
+      "#{rails_config(structured_logging: false)}; config.enabled_patches << :logger" =>
+        "not the request trace around them, or its logs."
     }.each do |config, missing|
       it "says what's missing with #{config.inspect}" do
         expect(run_app({ "AI_AGENT" => "claude-code" }, config))
@@ -145,6 +154,37 @@ RSpec.describe Sentry::AgentHint do
 
     expect(Open3).to have_received(:capture2)
       .with("git", "--no-optional-locks", "-c", "core.fsmonitor=false", "status", any_args)
+  end
+
+  it "does no file or git work outside a coding agent" do
+    expect(File).not_to receive(:realpath)
+    expect(Open3).not_to receive(:capture2)
+
+    expect(run_app({})).to eq("")
+  end
+
+  it "doesn't raise or print when building the message fails" do
+    load_app({ "AI_AGENT" => "claude-code" })
+    allow(Open3).to receive(:capture2).and_raise(IOError, "closed stream")
+
+    expect(capture_stderr { at_exit_hooks.each(&:call) }).to eq("")
+  end
+
+  it "doesn't raise when stderr is closed" do
+    load_app({ "AI_AGENT" => "claude-code" })
+    closed = StringIO.new.tap(&:close)
+    original, $stderr = $stderr, closed
+
+    expect { at_exit_hooks.each(&:call) }.not_to raise_error
+  ensure
+    $stderr = original
+  end
+
+  it "doesn't break Sentry.init when registering fails" do
+    allow(described_class).to receive(:new).and_raise(NoMethodError, "boom")
+
+    expect { load_app({ "AI_AGENT" => "claude-code" }) }.not_to raise_error
+    expect(Sentry.initialized?).to be(true)
   end
 
   it "isn't printed by a forked child" do

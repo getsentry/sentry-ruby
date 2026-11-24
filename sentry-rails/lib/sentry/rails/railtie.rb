@@ -71,14 +71,11 @@ module Sentry
       end
     end
 
-    # `rails server` runs until it's stopped, so the agent hint that Sentry.init would
-    # print at exit goes to the Rails logger once the app is loaded. In development the
-    # server logs to the console. Server blocks exist since Rails 6.1.
+    # `rails server` runs until it's stopped, so show the agent hint while it boots.
+    # Not via Rails.logger: server blocks run before `rails server` sends it to the
+    # console, so the hint would only reach log/development.log. Rails 6.1+.
     if respond_to?(:server)
-      server do
-        hint = Sentry::AgentHint.take
-        ::Rails.logger.warn(hint) if hint
-      end
+      server { Sentry::AgentHint.show }
     end
 
     runner do

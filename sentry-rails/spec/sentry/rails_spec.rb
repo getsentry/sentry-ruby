@@ -41,11 +41,21 @@ RSpec.describe Sentry::Rails, type: :request do
       expect(Sentry.configuration.background_worker_threads).to eq(0)
     end
 
-    it "logs the coding agent hint when the server loads", skip: !Sentry::Railtie.respond_to?(:server) && "needs Rails 6.1+" do
+    it "prints the coding agent hint to stderr when the server loads", skip: !Sentry::Railtie.respond_to?(:server) && "needs Rails 6.1+" do
       allow(Sentry::AgentHint).to receive(:take).and_return("[sentry] hint")
-      expect(Rails.logger).to receive(:warn).with("[sentry] hint")
 
-      Rails.application.load_server
+      expect { Rails.application.load_server }.to output("[sentry] hint\n").to_stderr
+    end
+
+    it "counts Rails structured logging, not the :logger patch, as logs for the coding agent hint" do
+      config = Sentry.configuration
+      missing = -> { Sentry::AgentHint.new(config, __FILE__).send(:missing) }
+
+      config.enabled_patches << :logger
+      expect(missing.call).to include(:logs)
+
+      config.rails.structured_logging.enabled = true
+      expect(missing.call).not_to include(:logs)
     end
 
     describe "logger detection" do

@@ -6,6 +6,9 @@ require "rbconfig"
 module Sentry
   # Points a coding agent at SETUP_CHECKLIST.md while it sets up Sentry and
   # leaves tracing or logs off. People running the app never see it.
+  #
+  # Best effort throughout: failures are logged at debug level and swallowed, so
+  # the hint can never break Sentry.init, a Rails boot or the app's exit status.
   # @!visibility private
   class AgentHint
     CHECKLIST_PATH = File.expand_path("SETUP_CHECKLIST.md", __dir__)
@@ -27,11 +30,14 @@ module Sentry
     @hint = nil
 
     class << self
-      # Called by Sentry.init with the location that called it. The hint prints at
-      # exit, unless an integration takes it earlier.
+      # Called by Sentry.init. The hint is shown at exit, unless an integration
+      # shows it earlier.
       def register(config, caller_location)
+        # ENV checks first: outside a coding agent this is the only work done.
+        return if @registered || !coding_agent?
+
         init_file = caller_location&.absolute_path || caller_location&.path
-        return if @registered || init_file.nil? || external_source?(init_file) || !coding_agent?
+        return if init_file.nil? || external_source?(init_file)
 
         hint = new(config, init_file)
         return unless hint.applies?
@@ -46,18 +52,32 @@ module Sentry
         pid = Process.pid
         at_exit do
           # Forked workers inherit at_exit blocks, so only the process that called init prints.
-          next unless Process.pid == pid
-
-          print_hint(config)
+          show if Process.pid == pid
         end
       rescue StandardError => e
-        # Best effort: the hint must never break Sentry.init.
         log_failure(config, e)
       end
 
-      # Returns the hint once, or nil when there's nothing to show.
+      def show
+        message = take
+        return unless message
+
+        # Piped stdout is only flushed at exit. Flush it first so the hint stays
+        # last for agents that cut the output with `| tail`.
+        $stdout.flush
+        # Not Kernel#warn: it prints nothing when warnings are off (ruby -W0).
+        $stderr.puts(message)
+      rescue StandardError
+        # stderr may be closed. An error raised in at_exit would set exit status 1.
+        nil
+      end
+
+      # Returns the message at most once per process.
       def take
-        hint = @mutex.synchronize { @hint.tap { @hint = nil } }
+        hint = @mutex.synchronize do
+          taken, @hint = @hint, nil
+          taken
+        end
         hint&.message
       end
 
@@ -73,22 +93,15 @@ module Sentry
         AGENT_ENV_VARS.any? { |name| !ENV[name].to_s.empty? }
       end
 
-      private
-
-      def print_hint(config)
-        message = take
-        return unless message
-
-        # Piped stdout is only flushed at exit. Flush it first so the hint stays
-        # last for agents that cut the output with `| tail`.
-        $stdout.flush
-        # Not Kernel#warn: it prints nothing when warnings are off (ruby -W0).
-        $stderr.puts(message)
-      rescue StandardError => e
-        log_failure(config, e)
+      def log_failure(config, error)
+        config.sdk_logger&.debug(LOGGER_PROGNAME) { "Skipped the coding agent hint: #{error.class}: #{error.message}" }
+      rescue StandardError
+        nil
       end
 
-      # An installed gem or tool that calls Sentry.init itself isn't the user's app,
+      private
+
+      # An installed gem or tool that calls Sentry.init isn't the user's app,
       # even when it was installed a moment ago.
       def external_source?(path)
         path = real_path(path)
@@ -103,12 +116,6 @@ module Sentry
       rescue SystemCallError
         File.expand_path(path)
       end
-
-      def log_failure(config, error)
-        config.sdk_logger&.debug(LOGGER_PROGNAME) { "Skipped the coding agent hint: #{error.class}: #{error.message}" }
-      rescue StandardError
-        nil
-      end
     end
 
     def initialize(config, init_file)
@@ -116,6 +123,7 @@ module Sentry
       @init_file = File.expand_path(init_file)
     end
 
+    # Runs during Sentry.init, so the slower git checks wait for #message.
     def applies?
       @config.dsn && !@config.agent_setup_complete && missing.any? && changed_within?(SETUP_WINDOW)
     end
@@ -127,6 +135,9 @@ module Sentry
         "If you're setting up Sentry, check the setup against Sentry's official setup checklist. If you leave " \
         "it as is, tell the user. The checklist is included in the sentry-ruby gem you installed: " \
         "#{CHECKLIST_PATH} (hide with SENTRY_AGENT_HINTS=0)"
+    rescue StandardError => e
+      self.class.log_failure(@config, e)
+      nil
     end
 
     private
@@ -138,11 +149,15 @@ module Sentry
     def enabled?(product)
       case product
       when :tracing
-        # Configuration#validate already rejects a non-numeric rate.
         !@config.traces_sampler.nil? || @config.traces_sample_rate.to_f.positive?
       when :logs
-        # Rails.logger is a ::Logger too, so the :logger patch covers Rails apps.
-        @config.enabled_patches.include?(:logger)
+        # sentry-rails adds config.rails. There, logs means Rails structured logging;
+        # the :logger patch would send every Rails.logger line, which is noisy.
+        if @config.respond_to?(:rails)
+          @config.rails.structured_logging.enabled?
+        else
+          @config.enabled_patches.include?(:logger)
+        end
       end
     end
 
@@ -152,8 +167,8 @@ module Sentry
       false
     end
 
-    # Whether this user changed the file a short time ago. A checkout or a
-    # teammate's commit also gives the file a new mtime, so ask git.
+    # Whether this user changed the file recently. A checkout or a teammate's
+    # commit also gives the file a new mtime, so ask git.
     def setup_in_progress?
       status = git("status", "--porcelain", "--", @init_file)
       return changed_within?(SETUP_WINDOW_WITHOUT_GIT) if status.nil?
@@ -163,9 +178,9 @@ module Sentry
       !committer.to_s.empty? && committer == git("config", "user.email")
     end
 
-    # Returns nil when git isn't installed or the file isn't in a repo. Read only:
-    # no index lock, since the agent may be running git at the same time, and no
-    # fsmonitor, which would run a command configured in the repo.
+    # Returns nil when git isn't installed or the file isn't in a repo.
+    # --no-optional-locks: the agent may be running git at the same time.
+    # core.fsmonitor=false: an fsmonitor would run a command configured in the repo.
     # Open3 leaves the app's $? alone.
     def git(*args)
       output, status = Open3.capture2(
