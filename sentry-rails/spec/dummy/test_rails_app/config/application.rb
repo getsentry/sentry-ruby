@@ -26,6 +26,12 @@ module Sentry
 
           ::Rails.application = klass
 
+          # Each boot runs ActiveJob's "active_job.set_reloader_hook" initializer, which
+          # prepends another reloader wrap to ActiveJob's global execute callbacks.
+          # Across a suite run that stacked hundreds of wraps around every job, deep
+          # enough to overflow a thread's stack. Keep only the current app's hook.
+          ::ActiveJob::Callbacks.singleton_class.reset_callbacks(:execute)
+
           klass.before_initialize!
           klass.initialize!
           klass.after_initialize!
