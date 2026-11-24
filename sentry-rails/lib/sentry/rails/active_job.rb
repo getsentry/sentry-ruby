@@ -50,7 +50,6 @@ module Sentry
       class SentryReporter
         OP_NAME = Sentry::JobExtensions::Extension::PROCESS_OP
         SPAN_ORIGIN = ActiveJobExtension::SPAN_ORIGIN
-        MESSAGING_SYSTEM_FALLBACK = "activejob"
 
         EVENT_HANDLERS = {
           "enqueue_retry.active_job" => :retry_handler
