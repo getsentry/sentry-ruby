@@ -151,6 +151,25 @@ RSpec.describe Sentry::Rails::Tracing::ActiveRecordSubscriber, :subscriber do
       expect(data["db.name"]).to include("db.sqlite3")
       expect(data["db.system"]).to eq("sqlite3")
     end
+
+    it "records database query events reported through Instrumenter#build_handle", skip: Rails.version.to_f < 7.1 do
+      transaction = Sentry.start_transaction(sampled: true)
+      Sentry.get_current_scope.set_span(transaction)
+
+      handle = ActiveSupport::Notifications.instrumenter.build_handle("sql.active_record", sql: "SELECT 1", name: "SQL")
+      handle.start
+      handle.finish
+
+      transaction.finish
+
+      transaction = transport.events.first.to_h
+      expect(transaction[:spans].count).to eq(1)
+
+      span = transaction[:spans][0]
+      expect(span[:op]).to eq("db.sql.active_record")
+      expect(span[:description]).to eq("SELECT 1")
+      expect(span[:start_timestamp]).to be <= span[:timestamp]
+    end
   end
 
   context "when transaction is not sampled" do

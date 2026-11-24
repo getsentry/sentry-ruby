@@ -55,6 +55,17 @@ module Sentry
 
             super(name, payload, &block)
           end
+
+          # Rails 8.2 reports Active Record queries through build_handle, bypassing instrument
+          if ::ActiveSupport::Notifications::Instrumenter.method_defined?(:build_handle)
+            def build_handle(name, payload)
+              if Tracing.subscribed_tracing_events.include?(name)
+                payload[START_TIMESTAMP_NAME] ||= Time.now.utc.to_f if name[0] != "!" && payload.is_a?(Hash)
+              end
+
+              super
+            end
+          end
         end
       end
 
@@ -63,6 +74,12 @@ module Sentry
           SentryNotificationExtension.module_eval do
             def instrument(name, payload = {}, &block)
               super
+            end
+
+            if ::ActiveSupport::Notifications::Instrumenter.method_defined?(:build_handle)
+              def build_handle(name, payload)
+                super
+              end
             end
           end
         end
