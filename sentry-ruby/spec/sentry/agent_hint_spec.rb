@@ -27,6 +27,7 @@ RSpec.describe Sentry::AgentHint do
   before do
     described_class.instance_variable_set(:@hint, nil)
     described_class.instance_variable_set(:@registered, false)
+    described_class.instance_variable_set(:@init, nil)
     allow(described_class).to receive(:at_exit) { |&hook| at_exit_hooks << hook }
   end
 
@@ -148,24 +149,24 @@ RSpec.describe Sentry::AgentHint do
   end
 
   it "runs git without fsmonitor or optional locks" do
-    allow(Open3).to receive(:capture2).and_call_original
+    allow(Open3).to receive(:popen2).and_call_original
 
     run_app({ "AI_AGENT" => "claude-code" })
 
-    expect(Open3).to have_received(:capture2)
+    expect(Open3).to have_received(:popen2)
       .with("git", "--no-optional-locks", "-c", "core.fsmonitor=false", "status", any_args)
   end
 
   it "does no file or git work outside a coding agent" do
     expect(File).not_to receive(:realpath)
-    expect(Open3).not_to receive(:capture2)
+    expect(Open3).not_to receive(:popen2)
 
     expect(run_app({})).to eq("")
   end
 
   it "doesn't raise or print when building the message fails" do
     load_app({ "AI_AGENT" => "claude-code" })
-    allow(Open3).to receive(:capture2).and_raise(IOError, "closed stream")
+    allow(Open3).to receive(:popen2).and_raise(RuntimeError, "unexpected")
 
     expect(capture_stderr { at_exit_hooks.each(&:call) }).to eq("")
   end
@@ -185,6 +186,57 @@ RSpec.describe Sentry::AgentHint do
 
     expect { load_app({ "AI_AGENT" => "claude-code" }) }.not_to raise_error
     expect(Sentry.initialized?).to be(true)
+  end
+
+  it "isn't shown when git is too slow, and stops git", skip: Gem.win_platform? && "needs a shell script as git" do
+    fake_bin = File.join(@dir, "bin")
+    child_pid_file = File.join(@dir, "git_child.pid")
+    Dir.mkdir(fake_bin)
+    File.write(File.join(fake_bin, "git"), "#!/bin/sh\nsleep 5 &\necho $! > #{child_pid_file}.tmp\nmv #{child_pid_file}.tmp #{child_pid_file}\nwait\n")
+    File.chmod(0o755, File.join(fake_bin, "git"))
+    stub_const("#{described_class}::GIT_TIMEOUT", 0.5)
+    path = ENV["PATH"]
+    load_app({ "AI_AGENT" => "claude-code", "PATH" => "#{fake_bin}#{File::PATH_SEPARATOR}#{path}" })
+
+    started = Process.clock_gettime(Process::CLOCK_MONOTONIC)
+    expect(capture_stderr { at_exit_hooks.each(&:call) }).to eq("")
+    expect(Process.clock_gettime(Process::CLOCK_MONOTONIC) - started).to be < 2
+
+    child_pid = Integer(File.read(child_pid_file))
+    sleep 0.1
+    expect { Process.kill(0, child_pid) }.to raise_error(Errno::ESRCH)
+  ensure
+    ENV["PATH"] = path
+  end
+
+  describe "under Spring" do
+    it "is shown by a forked command when Spring was started outside the agent" do
+      load_app({})
+      expect(at_exit_hooks).to be_empty
+
+      ENV["AI_AGENT"] = "claude-code"
+      allow(Process).to receive(:pid).and_return(Process.pid + 1)
+      described_class.after_fork
+
+      expect(capture_stderr { at_exit_hooks.each(&:call) }).to include(checklist)
+    end
+
+    it "is shown by the forked command, not only the preloaded app" do
+      load_app({ "AI_AGENT" => "claude-code" })
+      allow(Process).to receive(:pid).and_return(Process.pid + 1)
+      described_class.after_fork
+
+      expect(capture_stderr { at_exit_hooks.each(&:call) }.scan(checklist).size).to eq(1)
+    end
+
+    it "isn't shown by a forked command run outside the agent" do
+      load_app({ "AI_AGENT" => "claude-code" })
+      ENV.delete("AI_AGENT")
+      allow(Process).to receive(:pid).and_return(Process.pid + 1)
+      described_class.after_fork
+
+      expect(capture_stderr { at_exit_hooks.each(&:call) }).to eq("")
+    end
   end
 
   it "isn't printed by a forked child" do

@@ -21,6 +21,13 @@ module Sentry
     SETUP_WINDOW = 60 * 60
     SETUP_WINDOW_WITHOUT_GIT = 10 * 60
 
+    # Per git call. A slow repo must not hold up the app's exit or a Rails boot.
+    GIT_TIMEOUT = 2
+    # Its own process group, so a timeout also kills anything git started.
+    GIT_SPAWN_OPTIONS = Gem.win_platform? ? {} : { pgroup: true }
+
+    class GitTimeout < StandardError; end
+
     # Say what Sentry won't show, not which settings are off. An agent that sees
     # the setting names doesn't open the checklist.
     NOT_SHOWN = { tracing: "the request trace around them", logs: "its logs" }.freeze
@@ -33,29 +40,18 @@ module Sentry
       # Called by Sentry.init. The hint is shown at exit, unless an integration
       # shows it earlier.
       def register(config, caller_location)
-        # ENV checks first: outside a coding agent this is the only work done.
-        return if @registered || !coding_agent?
+        @init = [config, caller_location&.absolute_path || caller_location&.path]
+        arm
+      end
 
-        init_file = caller_location&.absolute_path || caller_location&.path
-        return if init_file.nil? || external_source?(init_file)
-
-        hint = new(config, init_file)
-        return unless hint.applies?
-
-        @mutex.synchronize do
-          return if @registered
-
-          @registered = true
-          @hint = hint
-        end
-
-        pid = Process.pid
-        at_exit do
-          # Forked workers inherit at_exit blocks, so only the process that called init prints.
-          show if Process.pid == pid
-        end
-      rescue StandardError => e
-        log_failure(config, e)
+      # Spring runs Sentry.init once in its preloaded app, with the ENV Spring was
+      # started with, then forks each command with the caller's ENV. Decide again
+      # in the fork, so a command run by an agent shows the hint.
+      def after_fork
+        @mutex = Mutex.new
+        @registered = false
+        @hint = nil
+        arm
       end
 
       def show
@@ -94,12 +90,37 @@ module Sentry
       end
 
       def log_failure(config, error)
-        config.sdk_logger&.debug(LOGGER_PROGNAME) { "Skipped the coding agent hint: #{error.class}: #{error.message}" }
+        config&.sdk_logger&.debug(LOGGER_PROGNAME) { "Skipped the coding agent hint: #{error.class}: #{error.message}" }
       rescue StandardError
         nil
       end
 
       private
+
+      def arm
+        config, init_file = @init
+        # ENV checks first: outside a coding agent this is the only work done.
+        return if config.nil? || @registered || !coding_agent?
+        return if init_file.nil? || external_source?(init_file)
+
+        hint = new(config, init_file)
+        return unless hint.applies?
+
+        @mutex.synchronize do
+          return if @registered
+
+          @registered = true
+          @hint = hint
+        end
+
+        pid = Process.pid
+        at_exit do
+          # Forked workers inherit at_exit blocks, so only the process that registered prints.
+          show if Process.pid == pid
+        end
+      rescue StandardError => e
+        log_failure(config, e)
+      end
 
       # An installed gem or tool that calls Sentry.init isn't the user's app,
       # even when it was installed a moment ago.
@@ -178,17 +199,33 @@ module Sentry
       !committer.to_s.empty? && committer == git("config", "user.email")
     end
 
-    # Returns nil when git isn't installed or the file isn't in a repo.
+    # Returns nil when git isn't installed or the file isn't in a repo, and raises
+    # GitTimeout when git is too slow, which skips the hint.
     # --no-optional-locks: the agent may be running git at the same time.
     # core.fsmonitor=false: an fsmonitor would run a command configured in the repo.
     # Open3 leaves the app's $? alone.
     def git(*args)
-      output, status = Open3.capture2(
+      Open3.popen2(
         "git", "--no-optional-locks", "-c", "core.fsmonitor=false", *args,
-        chdir: File.dirname(@init_file), err: File::NULL
-      )
-      output.strip if status.success?
-    rescue SystemCallError
+        chdir: File.dirname(@init_file), err: File::NULL, **GIT_SPAWN_OPTIONS
+      ) do |stdin, stdout, wait_thread|
+        stdin.close
+        # Read while waiting, so a full pipe can't stall git until the timeout.
+        # Closing stdout after a timeout makes the read raise, which is expected.
+        reader = Thread.new do
+          Thread.current.report_on_exception = false
+          stdout.read
+        end
+
+        unless wait_thread.join(GIT_TIMEOUT)
+          Process.kill(:KILL, Gem.win_platform? ? wait_thread.pid : -wait_thread.pid)
+          raise GitTimeout, "git #{args.first} took over #{GIT_TIMEOUT}s"
+        end
+
+        output = reader.value
+        output.strip if wait_thread.value.success?
+      end
+    rescue SystemCallError, IOError
       nil
     end
   end

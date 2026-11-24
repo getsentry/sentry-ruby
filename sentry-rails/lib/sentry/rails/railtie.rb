@@ -78,6 +78,11 @@ module Sentry
       server { Sentry::AgentHint.show }
     end
 
+    # Spring forks each command (rails runner, rspec, ...) from its preloaded app.
+    if defined?(::Spring) && ::Spring.respond_to?(:after_fork)
+      ::Spring.after_fork { Sentry::AgentHint.after_fork }
+    end
+
     runner do
       next unless Sentry.initialized?
       Sentry.configuration.background_worker_threads = 0
