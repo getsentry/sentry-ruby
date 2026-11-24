@@ -16,6 +16,7 @@ module Sentry
       @rails = Sentry::Rails::Configuration.new
       @excluded_exceptions = @excluded_exceptions.concat(Sentry::Rails::IGNORE_DEFAULT)
       @excluded_exceptions = @excluded_exceptions.concat(Sentry::Rails::RAILS_8_1_1_IGNORE_DEFAULT) if Gem::Version.new(::Rails.version) >= Gem::Version.new("8.1.1")
+      @excluded_exceptions = @excluded_exceptions.concat(Sentry::Rails::PRE_RAILS_8_2_IGNORE_DEFAULT) if Gem::Version.new(::Rails.version) < Gem::Version.new("8.2.0")
 
       if ::Rails.logger
         if defined?(::ActiveSupport::BroadcastLogger) && ::Rails.logger.is_a?(::ActiveSupport::BroadcastLogger)
@@ -49,7 +50,6 @@ module Sentry
     IGNORE_DEFAULT = [
       "AbstractController::ActionNotFound",
       "ActionController::BadRequest",
-      "ActionController::InvalidAuthenticityToken",
       "ActionController::InvalidCrossOriginRequest",
       "ActionController::MethodNotAllowed",
       "ActionController::NotImplemented",
@@ -67,6 +67,11 @@ module Sentry
     # https://github.com/rails/rails/commit/73ecd0ced634e5177496677a2986ec3731c7e2ee
     RAILS_8_1_1_IGNORE_DEFAULT = [
       "ActionController::TooManyRequests"
+    ].freeze
+
+    # Rails 8.2 deprecated InvalidAuthenticityToken as an alias of the already ignored InvalidCrossOriginRequest
+    PRE_RAILS_8_2_IGNORE_DEFAULT = [
+      "ActionController::InvalidAuthenticityToken"
     ].freeze
 
     ACTIVE_SUPPORT_LOGGER_SUBSCRIPTION_ITEMS_DEFAULT = {
