@@ -20,6 +20,7 @@
 #   bin/test --cell <cell> spec/sentry/client_spec.rb        # forward args to rspec
 #   bin/test --cell <cell> -- --tag foo                      # everything after -- goes to rspec
 #   bin/test --cell <cell> --rake                            # run `bundle exec rake` like CI
+#   bin/test --cell <cell> --install-only                    # install the cell's gems, run nothing
 #
 # The Ruby must already be installed (`mise --env ci install`).
 #
@@ -70,6 +71,7 @@ opts = {
   entry: nil,
   gem: nil,
   rake: false,
+  install_only: false,
   list: false
 }
 
@@ -79,6 +81,7 @@ parser = OptionParser.new do |o|
   o.on("--entry JSON", "Cell to run, from a test-matrix.json entry (pairs with --gem/cwd).") { |v| opts[:entry] = v }
   o.on("--gem NAME", "Gem to run (auto-picks newest installed Ruby cell); scopes -l.") { |v| opts[:gem] = v }
   o.on("--rake", "Run `bundle exec rake` (full CI task) instead of rspec.") { opts[:rake] = true }
+  o.on("--install-only", "Install the cell's gems and exit without running anything.") { opts[:install_only] = true }
   o.on("-l", "--list", "List every cell's wrapper path, one per line; do nothing.") { opts[:list] = true }
   o.on("-h", "--help") { puts o; exit 0 }
 end
@@ -131,7 +134,14 @@ env["JRUBY_OPTS"] = "--debug" if cell.ruby.include?("jruby") # for more accurate
 # `git` or tab-completion resolves too — both forms name the same file.
 rspec_args = rspec_args.map { |a| a.sub(%r{\A(?:\./)?#{Regexp.escape(gem)}/}, "") }
 
-test_cmd = opts[:rake] ? ["rake"] : ["rspec", *rspec_args]
+test_cmd =
+  if opts[:install_only]
+    []
+  elsif opts[:rake]
+    ["rake"]
+  else
+    ["rspec", *rspec_args]
+  end
 
 # Ensure the cell's gems are present before running. The wrapper is committed,
 # but write it if absent so a freshly added matrix row still works. Args reach
@@ -142,11 +152,11 @@ RUN = <<~SH
   mkdir -p "$(dirname "$BUNDLE_GEMFILE")"
   [ -f "$BUNDLE_GEMFILE" ] || echo 'eval_gemfile "../Gemfile"' > "$BUNDLE_GEMFILE"
   bundle check >/dev/null 2>&1 || bundle install
-  exec bundle exec "$@"
+  [ "$#" -eq 0 ] || exec bundle exec "$@"
 SH
 
 puts "#{color('→', CYAN)} #{color(cell.label, BOLD)} #{color("(ruby #{cell.ruby})", DIM)}"
-puts "  #{color(test_cmd.join(' '), DIM)}"
+puts "  #{color(test_cmd.empty? ? "bundle install" : test_cmd.join(' '), DIM)}"
 
 # bash -c (not -lc): inherit the env mise just set; a login shell would reset
 # Ruby to the host default. $0 is a label; "$@" is the test command.
