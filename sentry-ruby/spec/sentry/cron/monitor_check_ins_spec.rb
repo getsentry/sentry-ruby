@@ -181,9 +181,37 @@ RSpec.describe Sentry::Cron::MonitorCheckIns do
         stub_const('VeryLongOuterModule::VeryVeryVeryVeryLongInnerModule::Job', job_class)
       end
 
-      it 'truncates from the beginning and parameterizes slug' do
+      it 'truncates from the beginning with mashed format by default' do
         slug = VeryLongOuterModule::VeryVeryVeryVeryLongInnerModule::Job.sentry_monitor_slug
         expect(slug).to eq('ongoutermodule-veryveryveryverylonginnermodule-job')
+      end
+
+      it 'uses underscore format with hash truncation when configured' do
+        Sentry.configuration.cron.monitor_slug_format = :underscore
+
+        job_class = Class.new do
+          include Sentry::Cron::MonitorCheckIns
+          sentry_monitor_check_ins
+          def perform; end
+        end
+        stub_const('VeryLongOuterModule::VeryVeryVeryVeryLongInnerModule::UnderscoreJob', job_class)
+
+        slug = VeryLongOuterModule::VeryVeryVeryVeryLongInnerModule::UnderscoreJob.sentry_monitor_slug
+        expect(slug.length).to be <= described_class::MAX_SLUG_LENGTH
+        expect(slug).to eq('994055c06d_very_long_inner_module-underscore_job')
+      end
+
+      it 'ignores monitor_slug_format when an explicit slug is set' do
+        Sentry.configuration.cron.monitor_slug_format = :underscore
+
+        job_class = Class.new do
+          include Sentry::Cron::MonitorCheckIns
+          sentry_monitor_check_ins slug: 'custom_slug'
+          def perform; end
+        end
+        stub_const('ExplicitSlugJob', job_class)
+
+        expect(ExplicitSlugJob.sentry_monitor_slug).to eq('custom_slug')
       end
     end
 
