@@ -8,8 +8,10 @@ module Sentry
     module RubyLLM
       class Instrumenter
         CHAT_EVENT = "chat.ruby_llm"
+        TOOL_EVENT = "tool_call.ruby_llm"
         USAGE_EVENT = "usage.ruby_llm"
         OPERATION = "gen_ai.chat"
+        TOOL_OPERATION = "gen_ai.execute_tool"
         ORIGIN = "auto.ai.ruby_llm"
 
         def self.install(config)
@@ -20,6 +22,8 @@ module Sentry
           case name.to_s
           when CHAT_EVENT
             with_chat_span(payload) { yield } if block_given?
+          when TOOL_EVENT
+            with_tool_span(payload) { yield } if block_given?
           when USAGE_EVENT
             update_usage(payload)
             yield if block_given?
@@ -31,50 +35,61 @@ module Sentry
         private
 
         def with_chat_span(payload)
+          with_operation_span(payload, OPERATION, span_description(payload)) { yield }
+        end
+
+        def with_tool_span(payload)
+          with_operation_span(payload, TOOL_OPERATION, tool_description(payload)) { yield }
+        end
+
+        def with_operation_span(payload, operation, description)
           return yield unless Sentry.initialized?
 
           if Sentry.get_current_scope.get_span
-            with_child_span(payload) { yield }
+            with_child_span(payload, operation, description) { yield }
           else
-            with_root_transaction(payload) { yield }
+            with_root_transaction(payload, operation, description) { yield }
           end
         end
 
-        def with_child_span(payload)
-          Sentry.with_child_span(
-            op: OPERATION,
-            description: span_description(payload),
-            origin: ORIGIN
-          ) do |span|
-            execute_span(span, payload) { yield }
+        def with_child_span(payload, operation, description)
+          Sentry.with_child_span(op: operation, description: description, origin: ORIGIN) do |span|
+            execute_span(span, payload, operation) { yield }
           end
         end
 
-        def with_root_transaction(payload)
-          transaction = Sentry.start_transaction(
-            name: span_description(payload),
-            op: OPERATION,
-            origin: ORIGIN
-          )
+        def with_root_transaction(payload, operation, description)
+          transaction = Sentry.start_transaction(name: description, op: operation, origin: ORIGIN)
 
           begin
             Sentry.with_scope do |scope|
               scope.set_span(transaction)
-              execute_span(transaction, payload) { yield }
+              execute_span(transaction, payload, operation) { yield }
             end
           ensure
             transaction.finish
           end
         end
 
-        def execute_span(span, payload)
-          set_request_data(span, payload)
+        def execute_span(span, payload, operation)
+          set_request_data(span, payload, operation)
           yield
         ensure
-          set_response_data(span, payload)
+          set_response_data(span, payload, operation)
         end
 
-        def set_request_data(span, payload)
+        def set_request_data(span, payload, operation)
+          case operation
+          when OPERATION
+            set_chat_request_data(span, payload)
+          when TOOL_OPERATION
+            set_tool_request_data(span, payload)
+          end
+        rescue => e
+          Sentry.sdk_logger.debug(Sentry::LOGGER_PROGNAME) { "Failed to set RubyLLM request data: #{e}" }
+        end
+
+        def set_chat_request_data(span, payload)
           span.set_data(Sentry::Span::DataConventions::GEN_AI_OPERATION_NAME, "chat")
 
           if provider = provider_name(payload[:provider])
@@ -115,11 +130,34 @@ module Sentry
           if definitions.any?
             span.set_data(Sentry::Span::DataConventions::GEN_AI_TOOL_DEFINITIONS, JSON.generate(definitions))
           end
-        rescue => e
-          Sentry.sdk_logger.debug(Sentry::LOGGER_PROGNAME) { "Failed to set RubyLLM request data: #{e}" }
         end
 
-        def set_response_data(span, payload)
+        def set_tool_request_data(span, payload)
+          span.set_data(Sentry::Span::DataConventions::GEN_AI_OPERATION_NAME, "execute_tool")
+
+          if tool_name = payload[:tool_name] || payload[:tool]&.name
+            span.set_data(Sentry::Span::DataConventions::GEN_AI_TOOL_NAME, tool_name.to_s)
+          end
+
+          return unless collect_inputs?
+
+          if arguments = payload[:tool_arguments]
+            span.set_data(Sentry::Span::DataConventions::GEN_AI_TOOL_CALL_ARGUMENTS, JSON.generate(arguments))
+          end
+        end
+
+        def set_response_data(span, payload, operation)
+          case operation
+          when OPERATION
+            set_chat_response_data(span, payload)
+          when TOOL_OPERATION
+            set_tool_response_data(span, payload)
+          end
+        rescue => e
+          Sentry.sdk_logger.debug(Sentry::LOGGER_PROGNAME) { "Failed to set RubyLLM response data: #{e}" }
+        end
+
+        def set_chat_response_data(span, payload)
           response = payload[:response]
           response_model = payload[:response_model] || response&.model
           finish_reason = response&.finish_reason
@@ -138,8 +176,14 @@ module Sentry
           if messages.any?
             span.set_data(Sentry::Span::DataConventions::GEN_AI_OUTPUT_MESSAGES, JSON.generate(messages))
           end
-        rescue => e
-          Sentry.sdk_logger.debug(Sentry::LOGGER_PROGNAME) { "Failed to set RubyLLM response data: #{e}" }
+        end
+
+        def set_tool_response_data(span, payload)
+          return unless collect_outputs?
+          return unless payload.key?(:result) || payload.key?(:result_content)
+
+          result = payload.key?(:result) ? payload[:result] : payload[:result_content]
+          span.set_data(Sentry::Span::DataConventions::GEN_AI_TOOL_CALL_RESULT, JSON.generate(result))
         end
 
         def update_usage(payload)
@@ -175,6 +219,11 @@ module Sentry
 
         def provider_name(provider)
           ::RubyLLM::OpenTelemetry::Attributes.provider_name(provider)
+        end
+
+        def tool_description(payload)
+          tool = payload[:tool_name] || payload[:tool]&.name
+          tool ? "execute_tool #{tool}" : "execute_tool"
         end
 
         def collect_inputs?
