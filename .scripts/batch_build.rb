@@ -1,4 +1,4 @@
-INTEGRATIONS = %w(sentry-rails sentry-sidekiq sentry-delayed_job sentry-resque sentry-opentelemetry sentry-yabeda)
+INTEGRATIONS = %w(sentry-agents sentry-rails sentry-sidekiq sentry-delayed_job sentry-resque sentry-opentelemetry sentry-yabeda)
 GEMS = %w(sentry-ruby) + INTEGRATIONS
 
 success = GEMS.map do |gem_name|
