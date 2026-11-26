@@ -1,0 +1,11 @@
+# frozen_string_literal: true
+
+require "bundler/gem_tasks"
+require_relative "../lib/sentry/test/rake_tasks"
+
+Sentry::Test::RakeTasks.define_spec_tasks(
+  spec_pattern: "spec/sentry/**/*_spec.rb",
+  spec_rspec_opts: "--order rand --format progress"
+)
+
+task default: :spec

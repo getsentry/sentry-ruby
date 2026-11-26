@@ -1,0 +1,11 @@
+# frozen_string_literal: true
+
+source "https://rubygems.org"
+git_source(:github) { |name| "https://github.com/#{name}.git" }
+
+eval_gemfile "../Gemfile.dev"
+
+gemspec
+
+gem "ruby_llm", "~> 2.2"
+gem "sentry-ruby", path: "../sentry-ruby"
