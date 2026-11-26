@@ -86,16 +86,21 @@ module Sentry
             around_perform { |job, block| Sentry::Rails::SolidQueueRecurring.perform(job, &block) }
           end
 
-          apply = proc do
-            if defined?(::SolidQueue::RecurringTask) && !(::SolidQueue::RecurringTask < Sentry::Rails::SolidQueueRecurring::RecurringTask)
-              ::SolidQueue::RecurringTask.prepend(Sentry::Rails::SolidQueueRecurring::RecurringTask)
-            end
+          # Referencing RecurringTask loads Active Record and Active Job, so wait for it to be
+          # loaded. The callback runs again after every code reload.
+          ::Rails.autoloaders.main.on_load("SolidQueue::RecurringTask") { |klass, _| prepend_recurring_task(klass) }
+
+          # The callback doesn't fire for a model that is already loaded.
+          if defined?(::SolidQueue::RecurringTask) && !::SolidQueue.autoload?(:RecurringTask)
+            prepend_recurring_task(::SolidQueue::RecurringTask)
           end
-          ::Rails.application.reloader.to_prepare(&apply)
-          apply.call if ::Rails.application.initialized?
         end
 
         private
+
+        def prepend_recurring_task(klass)
+          klass.prepend(RecurringTask) unless klass < RecurringTask
+        end
 
         # Mirrors RecurringTask, which applies SolidQueue.time_zone to zoneless schedules.
         def cron_for(task)
