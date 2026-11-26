@@ -1,0 +1,47 @@
+# getsentry/sentry-ruby eca24096568a277a8779fb6c9948edd2cd489041
+
+rubric = "sdk"
+
+# One gem per sentry-*/ directory. Each gemspec packages `git ls-files` of its directory minus
+# spec/, benchmarks/, examples/, test-matrix.json and .rubocop.yml, so most other files in a gem
+# directory end up inside the published .gem.
+[[area]]
+paths = ["sentry-*/**"]
+families = ["server"]
+
+# sentry-ruby (and the sentry-ruby-core wrapper gem) is required by every other gem.
+# Its built-in integrations (net/http, rack, redis, puma, excon, faraday, ...) live in the same lib tree.
+# Its gemspecs declare the runtime dependencies every other gem inherits.
+[[area]]
+paths = ["sentry-ruby/lib/**", "sentry-ruby/*.gemspec"]
+families = ["server"]
+shared_core = true
+
+[[kind]]
+paths = [
+  "sentry-*/spec/**", "sentry-*/benchmarks/**", "sentry-*/test-matrix.json", ".rspec", "sentry-*/.rspec",
+  "spec/**", "lib/sentry/test/**",
+]
+kind = "tests"
+
+# Per-gem test-matrix lockfiles; they are packaged into the .gem, so not marked as tests.
+[[kind]]
+paths = ["sentry-*/gemfiles/**", "Gemfile.dev", "Gemfile.rubocop", "Gemfile.rubocop.lock"]
+kind = "dependencies"
+
+[[kind]]
+paths = [
+  "**/Rakefile", "bin/**", "sentry-*/bin/**", ".scripts/**", ".mise.toml", ".mise.ci.toml",
+  ".devcontainer/**",
+]
+kind = "build-release"
+
+[[kind]]
+paths = ["sentry-*/.yardopts"]
+kind = "docs"
+
+[[kind]]
+paths = [
+  ".rubocop.yml", "codecov.yml", "sentry-ruby.code-workspace", "agents.toml",
+]
+kind = "dev-tooling"
