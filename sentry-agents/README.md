@@ -2,7 +2,14 @@
 
 [![Build Status](https://github.com/getsentry/sentry-ruby/actions/workflows/tests.yml/badge.svg)](https://github.com/getsentry/sentry-ruby/actions/workflows/tests.yml)
 
-`sentry-agents` integrates [RubyLLM](https://github.com/crmne/ruby_llm) with Sentry.
+`sentry-agents` integrates [RubyLLM](https://github.com/crmne/ruby_llm) with Sentry. Loading the gem instruments the global RubyLLM configuration when Sentry is initialized.
+
+For an isolated RubyLLM context, install the adapter explicitly:
+
+```ruby
+context = RubyLLM.context
+Sentry::Agents::RubyLLM.install(context.config)
+```
 
 ## Requirements
 
@@ -28,4 +35,4 @@ Sentry.init do |config|
 end
 ```
 
-These settings only control GenAI content. HTTP body, breadcrumb, and exception-local collection have separate controls; disabling GenAI content is not a blanket redaction switch.
+These settings only control GenAI content. HTTP body, breadcrumb, and exception-local collection have separate controls; disabling GenAI content is not a blanket redaction switch. With RubyLLM 2.2+, also set `RubyLLM.config.redact_error_messages = true` when inputs are disabled so provider errors do not include prompts.
