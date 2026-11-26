@@ -118,35 +118,22 @@ module Sentry
     end
 
     def handle_rate_limited_response(headers)
-      rate_limits =
-        if rate_limits = headers[RATE_LIMIT_HEADER]
-          parse_rate_limit_header(rate_limits)
-        elsif retry_after = headers[RETRY_AFTER_HEADER]
-          # although Sentry doesn't send a date string back
-          # based on HTTP specification, this could be a date string (instead of an integer)
-          retry_after = retry_after.to_i
-          retry_after = DEFAULT_DELAY if retry_after == 0
+      if rate_limit_header = headers[RATE_LIMIT_HEADER]
+        update_from_rate_limit_header(rate_limit_header)
+      elsif retry_after = headers[RETRY_AFTER_HEADER]
+        # although Sentry doesn't send a date string back
+        # based on HTTP specification, this could be a date string (instead of an integer)
+        retry_after = retry_after.to_i
+        retry_after = DEFAULT_DELAY if retry_after == 0
 
-          { nil => Time.now + retry_after }
-        else
-          { nil => Time.now + DEFAULT_DELAY }
-        end
-
-      rate_limits.each do |category, limit|
-        if current_limit = @rate_limits[category]
-          if current_limit < limit
-            @rate_limits[category] = limit
-          end
-        else
-          @rate_limits[category] = limit
-        end
+        @rate_limits.update(nil, Time.now + retry_after)
+      else
+        @rate_limits.update(nil, Time.now + DEFAULT_DELAY)
       end
     end
 
-    def parse_rate_limit_header(rate_limit_header)
+    def update_from_rate_limit_header(rate_limit_header)
       time = Time.now
-
-      result = {}
 
       limits = rate_limit_header.split(",")
       limits.each do |limit|
@@ -158,17 +145,15 @@ module Sentry
           categories = categories.split(";")
 
           if categories.empty?
-            result[nil] = retry_after
+            @rate_limits.update(nil, retry_after)
           else
             categories.each do |category|
-              result[category] = retry_after
+              @rate_limits.update(category, retry_after)
             end
           end
         rescue StandardError
         end
       end
-
-      result
     end
 
     def should_compress?(data)

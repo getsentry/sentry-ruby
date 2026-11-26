@@ -267,7 +267,7 @@ RSpec.describe Sentry::Transport do
       end
 
       context "when a batched log item is rate limited" do
-        before { subject.rate_limits.merge!("log_item" => Time.now + 60) }
+        before { subject.instance_variable_get(:@rate_limits).update("log_item", Time.now + 60) }
 
         it "records log_item count and log_byte size" do
           log_item = log_envelope.items.first
@@ -279,7 +279,7 @@ RSpec.describe Sentry::Transport do
       end
 
       context "when a batched trace metric item is rate limited" do
-        before { subject.rate_limits.merge!("trace_metric" => Time.now + 60) }
+        before { subject.instance_variable_get(:@rate_limits).update("trace_metric", Time.now + 60) }
 
         it "records trace_metric count and trace_metric_byte size" do
           metric_item = metric_envelope.items.first

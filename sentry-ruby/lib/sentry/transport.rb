@@ -2,6 +2,7 @@
 
 require "json"
 require "sentry/envelope"
+require "sentry/transport/rate_limits"
 
 module Sentry
   class Transport
@@ -25,13 +26,13 @@ module Sentry
 
     include LoggingHelper
 
-    attr_reader :rate_limits, :discarded_events, :last_client_report_sent
+    attr_reader :discarded_events, :last_client_report_sent
 
     def initialize(configuration)
       @sdk_logger = configuration.sdk_logger
       @transport_configuration = configuration.transport
       @dsn = configuration.dsn
-      @rate_limits = {}
+      @rate_limits = RateLimits.new
       @send_client_reports = configuration.send_client_reports
 
       if @send_client_reports
@@ -91,30 +92,18 @@ module Sentry
       [data, serialized_items]
     end
 
+    # @return [Hash{String, nil => Time}] a copy of the rate limit deadlines by data category,
+    #   where +nil+ is the limit for all categories; changing it does not change the rate limits
+    def rate_limits
+      @rate_limits.to_h
+    end
+
     def is_rate_limited?(data_category)
-      # check category-specific limit
-      category_delay = @rate_limits[data_category]
-      # check universal limit if not category limit
-      universal_delay = @rate_limits[nil]
-
-      delay =
-        if category_delay && universal_delay
-          if category_delay > universal_delay
-            category_delay
-          else
-            universal_delay
-          end
-        elsif category_delay
-          category_delay
-        else
-          universal_delay
-        end
-
-      !!delay && delay > Time.now
+      @rate_limits.limited?(data_category)
     end
 
     def any_rate_limited?
-      @rate_limits.values.any? { |t| t && t > Time.now }
+      @rate_limits.any_limited?
     end
 
     def envelope_from_event(event)
