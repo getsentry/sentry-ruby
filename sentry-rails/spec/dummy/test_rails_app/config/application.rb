@@ -13,7 +13,25 @@ module Sentry
   module Rails
     module Test
       class Application < ::Rails::Application
+        LOAD_HOOK_IVARS = %i[@load_hooks @loaded @run_once].freeze
+
+        def self.snapshot_load_hook_state
+          @load_hook_snapshot ||= LOAD_HOOK_IVARS.select { |name| ActiveSupport.instance_variable_defined?(name) }.to_h do |name|
+            [name, ActiveSupport.instance_variable_get(name).transform_values(&:dup)]
+          end
+        end
+
+        def self.restore_load_hook_state
+          snapshot_load_hook_state.each do |name, saved|
+            current = ActiveSupport.instance_variable_get(name)
+            current.clear
+            saved.each { |key, entries| current[key] = entries.dup }
+          end
+        end
+
         def self.define
+          snapshot_load_hook_state
+
           klass = Class.new(Sentry::TestRailsApp)
 
           klass.define_singleton_method(:name) {
@@ -189,7 +207,42 @@ module Sentry
         end
 
         def cleanup!
+          Test::Application.restore_load_hook_state
+
+          release_global_state
           ::Rails.application = nil
+        end
+
+        def release_global_state
+          if ::ActiveRecord::Base.respond_to?(:filter_attributes=)
+            ::ActiveRecord::Base.filter_attributes = []
+          end
+
+          if defined?(::ActiveRecord::Encryption)
+            ::ActiveRecord::Encryption.encrypted_attribute_declaration_listeners = nil
+          end
+
+          if defined?(::ActiveRecord::FilterAttributeHandler)
+            handler = ::ActiveRecord::FilterAttributeHandler
+            if handler.instance_variable_defined?(:@sensitive_attribute_declaration_listeners)
+              handler.remove_instance_variable(:@sensitive_attribute_declaration_listeners)
+            end
+          end
+
+          if defined?(::ActionCable) && ::ActionCable.instance_variable_defined?(:@server)
+            ::ActionCable.remove_instance_variable(:@server)
+          end
+
+          mounted_helpers = ::ActionDispatch::Routing::RouteSet::MountedHelpers
+          %i[main_app _main_app].each do |name|
+            mounted_helpers.send(:remove_method, name) if mounted_helpers.method_defined?(name, false)
+          end
+
+          ::Rails.cache = nil
+
+          if defined?(::ActionView::PartialRenderer) && ::ActionView::PartialRenderer.respond_to?(:collection_cache=)
+            ::ActionView::PartialRenderer.collection_cache = ::ActiveSupport::Cache::MemoryStore.new
+          end
         end
 
         require_relative "applications/#{application_file}"
