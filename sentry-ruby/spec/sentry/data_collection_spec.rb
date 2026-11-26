@@ -28,6 +28,8 @@ RSpec.describe Sentry::DataCollection do
       expect(data_collection.database_query_data).to eq(false)
       expect(data_collection.graphql.document).to eq(false)
       expect(data_collection.graphql.variables).to eq(false)
+      expect(data_collection.gen_ai.inputs).to eq(false)
+      expect(data_collection.gen_ai.outputs).to eq(false)
       expect(data_collection.queues).to eq(false)
       expect(data_collection.stack_frame_variables.mode).to eq(:off)
       expect(data_collection.frame_context_lines).to eq(3)
@@ -84,6 +86,8 @@ RSpec.describe Sentry::DataCollection do
       expect(data_collection.database_query_data).to eq(true)
       expect(data_collection.graphql.document).to eq(true)
       expect(data_collection.graphql.variables).to eq(true)
+      expect(data_collection.gen_ai.inputs).to eq(true)
+      expect(data_collection.gen_ai.outputs).to eq(true)
       expect(data_collection.queues).to eq(true)
       expect(data_collection.stack_frame_variables.mode).to eq(:off)
       expect(data_collection.frame_context_lines).to eq(3)
@@ -154,6 +158,16 @@ RSpec.describe Sentry::DataCollection do
 
       expect(data_collection.graphql.document).to eq(false)
       expect(data_collection.graphql.variables).to eq(false)
+    end
+
+    [[true, true], [true, false], [false, true], [false, false]].each do |inputs, outputs|
+      it "supports configuring GenAI inputs=#{inputs} and outputs=#{outputs}" do
+        data_collection.gen_ai.inputs = inputs
+        data_collection.gen_ai.outputs = outputs
+
+        expect(data_collection.gen_ai.inputs).to eq(inputs)
+        expect(data_collection.gen_ai.outputs).to eq(outputs)
+      end
     end
   end
 end
