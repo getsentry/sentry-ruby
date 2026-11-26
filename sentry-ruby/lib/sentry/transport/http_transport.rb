@@ -93,7 +93,7 @@ module Sentry
 
       connection.use_ssl = server.scheme == "https"
       connection.read_timeout = @transport_configuration.timeout
-      connection.write_timeout = @transport_configuration.timeout if connection.respond_to?(:write_timeout)
+      connection.write_timeout = @transport_configuration.timeout
       connection.open_timeout = @transport_configuration.open_timeout
 
       ssl_configuration.each do |key, value|

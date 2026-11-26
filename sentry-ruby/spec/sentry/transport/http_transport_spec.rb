@@ -156,10 +156,7 @@ RSpec.describe Sentry::HTTPTransport do
 
       sentry_stub_request(fake_response) do |_, http_obj|
         expect(http_obj.read_timeout).to eq(10)
-
-        if Gem::Version.new(RUBY_VERSION) >= Gem::Version.new("2.6")
-          expect(http_obj.write_timeout).to eq(10)
-        end
+        expect(http_obj.write_timeout).to eq(10)
       end
 
       subject.send_data(data)
