@@ -5,7 +5,7 @@ require "spec_helper"
 if RAILS_VERSION >= 7.1 && RUBY_VERSION >= "3.1"
   require "solid_queue"
 
-  RSpec.describe "Sentry + ActiveJob on SolidQueue", type: :job do
+  RSpec.describe "Sentry + ActiveJob on SolidQueue", type: :job, isolate: :group do
     include ActiveSupport::Testing::TimeHelpers
     include_context "active_job backend harness", adapter: :solid_queue
 

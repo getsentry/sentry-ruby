@@ -5,7 +5,7 @@ require "spec_helper"
 if RAILS_VERSION >= 8.1
   require "active_job/continuation/test_helper"
 
-  RSpec.describe "Sentry + ActiveJob::Continuable", type: :job do
+  RSpec.describe "Sentry + ActiveJob::Continuable", type: :job, isolate: :group do
     include_context "active_job backend harness", adapter: :test
     include_context "test adapter"
     include ActiveJob::Continuation::TestHelper

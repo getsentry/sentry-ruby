@@ -23,7 +23,7 @@ rescue LoadError
   return
 end
 
-RSpec.describe "Sentry + ActiveJob on the sidekiq adapter", type: :job do
+RSpec.describe "Sentry + ActiveJob on the sidekiq adapter", type: :job, isolate: :group do
   include_context "active_job backend harness", adapter: :sidekiq
   include_context "sidekiq adapter"
 

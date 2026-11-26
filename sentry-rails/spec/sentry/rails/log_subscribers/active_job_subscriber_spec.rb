@@ -2,7 +2,7 @@
 
 require "spec_helper"
 
-RSpec.describe Sentry::Rails::LogSubscribers::ActiveJobSubscriber, skip: Rails.version.to_f < 5.1 do
+RSpec.describe Sentry::Rails::LogSubscribers::ActiveJobSubscriber, skip: Rails.version.to_f < 5.1, isolate: true do
   context "when logging is enabled" do
     let(:send_default_pii) { false }
 

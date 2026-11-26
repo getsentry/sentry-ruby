@@ -21,7 +21,7 @@ rescue LoadError
   return
 end
 
-RSpec.describe "Sentry + ActiveJob on the resque adapter", type: :job do
+RSpec.describe "Sentry + ActiveJob on the resque adapter", type: :job, isolate: :group do
   include ActiveSupport::Testing::TimeHelpers
   include_context "active_job backend harness", adapter: :resque
   include_context "resque adapter"

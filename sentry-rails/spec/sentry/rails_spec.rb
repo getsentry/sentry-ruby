@@ -2,7 +2,7 @@
 
 require "spec_helper"
 
-RSpec.describe Sentry::Rails, type: :request do
+RSpec.describe Sentry::Rails, type: :request, isolate: true do
   let(:transport) do
     Sentry.get_current_client.transport
   end

@@ -2,7 +2,7 @@
 
 require "spec_helper"
 
-RSpec.describe "Sentry::Rails.active_job_owns_adapter?" do
+RSpec.describe "Sentry::Rails.active_job_owns_adapter?", isolate: true do
   let(:adapter_class_name) { "ActiveJob::QueueAdapters::SidekiqAdapter" }
 
   it "is true when Sentry is initialized and the adapter is not skipped" do

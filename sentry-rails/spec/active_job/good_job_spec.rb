@@ -12,7 +12,7 @@ end
 
 GOOD_JOB_ADAPTER_FOR_TEST = ::ActiveJob::QueueAdapters::GoodJobAdapter.new(execution_mode: :external)
 
-RSpec.describe "Sentry + ActiveJob on GoodJob", type: :job do
+RSpec.describe "Sentry + ActiveJob on GoodJob", type: :job, isolate: :group do
   include ActiveSupport::Testing::TimeHelpers
   include_context "active_job backend harness", adapter: :good_job
   include_context "good_job database"

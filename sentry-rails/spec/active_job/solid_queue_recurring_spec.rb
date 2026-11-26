@@ -7,7 +7,7 @@ if RAILS_VERSION >= 7.1 && RUBY_VERSION >= "3.1"
 
   SOLID_QUEUE_RECURRING_ADAPTER = ::ActiveJob::QueueAdapters::SolidQueueAdapter.new
 
-  RSpec.describe Sentry::Rails::SolidQueueRecurring, type: :job do
+  RSpec.describe Sentry::Rails::SolidQueueRecurring, type: :job, isolate: :group do
     include_context "active_job backend harness", adapter: :solid_queue
 
     let(:excluded_tasks) { [] }

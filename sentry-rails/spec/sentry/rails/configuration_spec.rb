@@ -2,7 +2,7 @@
 
 require "spec_helper"
 
-RSpec.describe Sentry::Rails::Configuration do
+RSpec.describe Sentry::Rails::Configuration, isolate: true do
   it "adds #rails option to Sentry::Configuration" do
     config = Sentry::Configuration.new
 
