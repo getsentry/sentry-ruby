@@ -9,9 +9,13 @@ module Sentry
       class Instrumenter
         CHAT_EVENT = "chat.ruby_llm"
         TOOL_EVENT = "tool_call.ruby_llm"
+        WORKFLOW_EVENT = "workflow.ruby_llm"
+        WORKFLOW_STEP_EVENT = "workflow_step.ruby_llm"
         USAGE_EVENT = "usage.ruby_llm"
         OPERATION = "gen_ai.chat"
         TOOL_OPERATION = "gen_ai.execute_tool"
+        WORKFLOW_OPERATION = "ai.pipeline"
+        WORKFLOW_STEP_OPERATION = "ai.run"
         ORIGIN = "auto.ai.ruby_llm"
 
         def self.install(config)
@@ -24,6 +28,10 @@ module Sentry
             with_chat_span(payload) { yield } if block_given?
           when TOOL_EVENT
             with_tool_span(payload) { yield } if block_given?
+          when WORKFLOW_EVENT
+            with_operation_span(payload, WORKFLOW_OPERATION, workflow_description(payload)) { yield } if block_given?
+          when WORKFLOW_STEP_EVENT
+            with_operation_span(payload, WORKFLOW_STEP_OPERATION, workflow_step_description(payload)) { yield } if block_given?
           when USAGE_EVENT
             update_usage(payload)
             yield if block_given?
@@ -84,6 +92,8 @@ module Sentry
             set_chat_request_data(span, payload)
           when TOOL_OPERATION
             set_tool_request_data(span, payload)
+          when WORKFLOW_OPERATION, WORKFLOW_STEP_OPERATION
+            set_pipeline_data(span, payload)
           end
         rescue => e
           Sentry.sdk_logger.debug(Sentry::LOGGER_PROGNAME) { "Failed to set RubyLLM request data: #{e}" }
@@ -91,6 +101,7 @@ module Sentry
 
         def set_chat_request_data(span, payload)
           span.set_data(Sentry::Span::DataConventions::GEN_AI_OPERATION_NAME, "chat")
+          set_pipeline_data(span, payload)
 
           if provider = provider_name(payload[:provider])
             span.set_data(Sentry::Span::DataConventions::GEN_AI_PROVIDER_NAME, provider)
@@ -134,6 +145,7 @@ module Sentry
 
         def set_tool_request_data(span, payload)
           span.set_data(Sentry::Span::DataConventions::GEN_AI_OPERATION_NAME, "execute_tool")
+          set_pipeline_data(span, payload)
 
           if tool_name = payload[:tool_name] || payload[:tool]&.name
             span.set_data(Sentry::Span::DataConventions::GEN_AI_TOOL_NAME, tool_name.to_s)
@@ -143,6 +155,12 @@ module Sentry
 
           if arguments = payload[:tool_arguments]
             span.set_data(Sentry::Span::DataConventions::GEN_AI_TOOL_CALL_ARGUMENTS, JSON.generate(arguments))
+          end
+        end
+
+        def set_pipeline_data(span, payload)
+          if pipeline_name = payload[:workflow_name]
+            span.set_data(Sentry::Span::DataConventions::GEN_AI_PIPELINE_NAME, pipeline_name.to_s)
           end
         end
 
@@ -224,6 +242,14 @@ module Sentry
         def tool_description(payload)
           tool = payload[:tool_name] || payload[:tool]&.name
           tool ? "execute_tool #{tool}" : "execute_tool"
+        end
+
+        def workflow_description(payload)
+          payload[:workflow_name] || "workflow"
+        end
+
+        def workflow_step_description(payload)
+          payload[:workflow_step_name] || "workflow step"
         end
 
         def collect_inputs?

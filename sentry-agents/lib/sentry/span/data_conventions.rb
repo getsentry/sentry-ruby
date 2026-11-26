@@ -16,6 +16,7 @@ module Sentry
       GEN_AI_TOOL_NAME = "gen_ai.tool.name"
       GEN_AI_TOOL_CALL_ARGUMENTS = "gen_ai.tool.call.arguments"
       GEN_AI_TOOL_CALL_RESULT = "gen_ai.tool.call.result"
+      GEN_AI_PIPELINE_NAME = "gen_ai.pipeline.name"
       GEN_AI_RESPONSE_MODEL = "gen_ai.response.model"
       GEN_AI_RESPONSE_FINISH_REASONS = "gen_ai.response.finish_reasons"
       GEN_AI_OUTPUT_MESSAGES = "gen_ai.output.messages"

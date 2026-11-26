@@ -24,6 +24,10 @@ Add the gem to your bundle:
 gem "sentry-agents"
 ```
 
+## Workflows
+
+`RubyLLM.workflow` and its steps create pipeline grouping spans. Chat and tool descendants carry `gen_ai.pipeline.name` without being labeled as agent runs.
+
 ## GenAI data collection
 
 Configure prompt and completion content independently:
