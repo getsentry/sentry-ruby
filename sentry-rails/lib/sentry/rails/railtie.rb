@@ -56,7 +56,7 @@ module Sentry
       configure_trusted_proxies
       configure_cron_timezone
       extend_controller_methods if defined?(ActionController)
-      patch_background_worker if defined?(ActiveRecord)
+      patch_background_worker if defined?(ActiveRecord::Base)
       override_streaming_reporter if defined?(ActionView)
       setup_backtrace_cleanup_callback
       inject_breadcrumbs_logger
