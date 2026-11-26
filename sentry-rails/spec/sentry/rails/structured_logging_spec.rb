@@ -2,7 +2,7 @@
 
 require "spec_helper"
 
-RSpec.describe Sentry::Rails::StructuredLogging, type: :request do
+RSpec.describe Sentry::Rails::StructuredLogging, type: :request, isolate: true do
   context "when rails structured logging is disabled" do
     before do
       make_basic_app do |config|

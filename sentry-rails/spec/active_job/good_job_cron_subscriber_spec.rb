@@ -8,7 +8,7 @@ rescue LoadError
 end
 
 if defined?(::GoodJob)
-  RSpec.describe "GoodJob cron notification subscriber", type: :job do
+  RSpec.describe "GoodJob cron notification subscriber", type: :job, isolate: :group do
     include_context "active_job backend harness", adapter: :test
     include_context "test adapter"
 

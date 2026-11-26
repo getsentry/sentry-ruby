@@ -2,7 +2,7 @@
 
 require "spec_helper"
 
-RSpec.describe "ActiveJob hub isolation through the Rails request stack", type: :request do
+RSpec.describe "ActiveJob hub isolation through the Rails request stack", type: :request, isolate: true do
   let(:transport) { Sentry.get_current_client.transport }
 
   before do

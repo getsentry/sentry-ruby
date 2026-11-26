@@ -20,7 +20,7 @@ rescue LoadError
   return
 end
 
-RSpec.describe "Sentry + ActiveJob on the delayed_job adapter", type: :job do
+RSpec.describe "Sentry + ActiveJob on the delayed_job adapter", type: :job, isolate: :group do
   include ActiveSupport::Testing::TimeHelpers
   include_context "active_job backend harness", adapter: :delayed_job
   include_context "delayed_job adapter"

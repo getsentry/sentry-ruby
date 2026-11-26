@@ -2,7 +2,7 @@
 
 require "spec_helper"
 
-RSpec.describe Sentry::Rails::LogSubscribers::ActiveRecordSubscriber do
+RSpec.describe Sentry::Rails::LogSubscribers::ActiveRecordSubscriber, isolate: true do
   context "when logging is enabled" do
     let(:send_default_pii) { false }
 

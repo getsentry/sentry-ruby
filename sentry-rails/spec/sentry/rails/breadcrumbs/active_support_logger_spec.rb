@@ -2,7 +2,7 @@
 
 require "spec_helper"
 
-RSpec.describe "Sentry::Breadcrumbs::ActiveSupportLogger", type: :request do
+RSpec.describe "Sentry::Breadcrumbs::ActiveSupportLogger", type: :request, isolate: true do
   after do
     Sentry::Rails::Breadcrumb::ActiveSupportLogger.detach
     # even though we cleanup breadcrumbs in the rack middleware

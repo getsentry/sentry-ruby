@@ -2,7 +2,7 @@
 
 require 'spec_helper'
 
-RSpec.describe Sentry::Event do
+RSpec.describe Sentry::Event, isolate: true do
   before do
     make_basic_app
   end

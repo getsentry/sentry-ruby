@@ -2,7 +2,7 @@
 
 require "spec_helper"
 
-RSpec.describe "Sentry + ActiveJob with a registered job extension", type: :job do
+RSpec.describe "Sentry + ActiveJob with a registered job extension", type: :job, isolate: :group do
   include_context "active_job backend harness", adapter: :test
   include_context "test adapter"
 

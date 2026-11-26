@@ -40,7 +40,7 @@ if defined?(ActionCable) && ActionCable.version >= Gem::Version.new('6.0.0')
     end
   end
 
-  RSpec.describe "without Sentry initialized" do
+  RSpec.describe "without Sentry initialized", isolate: true do
     before do
       allow(Sentry).to receive(:get_main_hub).and_return(nil)
       make_basic_app
@@ -66,7 +66,7 @@ if defined?(ActionCable) && ActionCable.version >= Gem::Version.new('6.0.0')
     end
   end
 
-  RSpec.describe "Sentry::Rails::ActionCableExtensions", type: :channel do
+  RSpec.describe "Sentry::Rails::ActionCableExtensions", type: :channel, isolate: true do
     let(:transport) { Sentry.get_current_client.transport }
 
     after do

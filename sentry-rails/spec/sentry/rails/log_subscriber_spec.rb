@@ -4,7 +4,7 @@ require "spec_helper"
 
 require "sentry/rails/log_subscriber"
 
-RSpec.describe Sentry::Rails::LogSubscriber, type: :request do
+RSpec.describe Sentry::Rails::LogSubscriber, type: :request, isolate: true do
   let!(:test_subscriber) { test_subscriber_class.new }
 
   after do

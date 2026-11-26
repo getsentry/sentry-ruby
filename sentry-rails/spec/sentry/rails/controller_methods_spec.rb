@@ -3,7 +3,7 @@
 require 'spec_helper'
 require "sentry/rails/controller_methods"
 
-RSpec.describe Sentry::Rails::ControllerMethods do
+RSpec.describe Sentry::Rails::ControllerMethods, isolate: true do
   include described_class
 
   def request
