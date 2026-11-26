@@ -39,11 +39,58 @@ jobs:
       - id: set
         run: echo "include=$(jq -c . ${{ inputs.gem }}/test-matrix.json)" >> "$GITHUB_OUTPUT"
 
+  # Builds one Bundler download cache (gems, compiled extensions, git checkouts,
+  # index) covering every cell of the gem, so test jobs stop re-downloading the
+  # same gems. Runs only when the gem's lockfiles change; test jobs don't wait
+  # for it and fall back to the previous cache until it's saved.
+  gem-cache:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    env:
+      CC: gcc-13
+      CXX: g++-13
+      BUNDLE_GLOBAL_GEM_CACHE: "true"
+    steps:
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+
+      - name: Check for an existing gem cache
+        id: lookup
+        uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: ~/.bundle/cache
+          key: bundle-v1-${{ runner.os }}-${{ inputs.gem }}-${{ hashFiles(format('{0}/gemfiles/*.lock', inputs.gem)) }}
+          lookup-only: true
+
+      - name: Install apt packages
+        if: steps.lookup.outputs.cache-hit != 'true' && inputs.sqlite
+        run: |
+          sudo apt-get update
+          sudo apt-get install --no-install-recommends libsqlite3-dev
+
+      - name: Set up Ruby
+        if: steps.lookup.outputs.cache-hit != 'true'
+        uses: ./.github/actions/setup-mise
+
+      - name: Install every cell's gems
+        if: steps.lookup.outputs.cache-hit != 'true'
+        run: |
+          for cell in $(ruby bin/test --gem "${{ inputs.gem }}" -l); do
+            ruby bin/test --cell "$cell" --install-only
+          done
+
+      - name: Save gem cache
+        if: steps.lookup.outputs.cache-hit != 'true'
+        uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: ~/.bundle/cache
+          key: ${{ steps.lookup.outputs.cache-primary-key }}
+
   test:
     needs: matrix
     env:
       CC: gcc-13
       CXX: g++-13
+      BUNDLE_GLOBAL_GEM_CACHE: "true"
     defaults:
       run:
         working-directory: ${{ inputs.gem }}
@@ -95,6 +142,13 @@ jobs:
 
       - name: Set up Ruby
         uses: ./.github/actions/setup-mise
+
+      - name: Restore gem cache
+        uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: ~/.bundle/cache
+          key: bundle-v1-${{ runner.os }}-${{ inputs.gem }}-${{ hashFiles(format('{0}/gemfiles/*.lock', inputs.gem)) }}
+          restore-keys: bundle-v1-${{ runner.os }}-${{ inputs.gem }}-
 
       - name: Run specs
         env:
