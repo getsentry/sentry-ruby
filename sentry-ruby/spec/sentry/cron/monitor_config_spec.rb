@@ -25,6 +25,21 @@ RSpec.describe Sentry::Cron::MonitorConfig do
       expect(described_class.from_interval(5, :bla)).to eq(nil)
     end
 
+    it 'logs a debug message without valid unit' do
+      string_io = StringIO.new
+      Sentry.configuration.sdk_logger = Logger.new(string_io)
+
+      described_class.from_interval(5, :bla)
+
+      expect(string_io.string).to include("Invalid interval unit :bla for monitor config")
+    end
+
+    it 'returns nil without valid unit when SDK is not initialized' do
+      allow(Sentry).to receive(:initialized?).and_return(false)
+
+      expect(described_class.from_interval(5, :bla)).to eq(nil)
+    end
+
     it 'has correct attributes' do
       subject = described_class.from_interval(
         5,
