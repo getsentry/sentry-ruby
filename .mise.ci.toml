@@ -1,7 +1,9 @@
 # Loaded only when MISE_ENV=ci. The full per-matrix Ruby set the lockfile CI job
 # and bin/relock resolve against; overrides the single Ruby in .mise.toml.
 [env]
-RUBY_CFLAGS = "{{ '-std=gnu17' if arch() == 'arm64' else '' }}"
+# Rubies without a precompiled build (2.7, 3.0, 3.1) are compiled from source,
+# and setting RUBY_CFLAGS replaces Ruby's default -O3, so it must be repeated here.
+RUBY_CFLAGS = "{{ '-std=gnu17 -O3' if arch() == 'arm64' else '-O3' }}"
 
 [tools]
 # postinstall ensures latest bundlers possible on each version
